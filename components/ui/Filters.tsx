@@ -148,7 +148,7 @@ const Filters: React.FC<FiltersProps> = ({
     ));
 
     const desktopContent = (
-        <div className={`${variant === 'modern' ? 'flex items-center gap-2' : `filter-bar-neumorphic ${plain ? '!shadow-none !bg-transparent !p-0 !border-none' : ''}`}`}>
+        <div className={`${variant === 'modern' ? 'flex items-center gap-2' : `flex items-center gap-2 ${plain ? '!shadow-none !bg-transparent !p-0 !border-none' : ''}`}`}>
             {!hideSearch && (
                 <div className={`relative flex items-center ${variant === 'modern' ? 'w-40 flex-shrink' : 'flex-grow min-w-[200px] lg:min-w-[300px]'}`}>
                     <i className={`fas fa-search absolute left-3 z-10 ${variant === 'modern' ? 'text-accent-primary text-xs' : 'left-4 text-gray-400'}`}></i>
@@ -228,7 +228,7 @@ const Filters: React.FC<FiltersProps> = ({
     return (
         <>
             {/* --- Mobile View --- */}
-            <div className={`md:hidden flex w-full items-center gap-2 ${plain ? '' : 'filter-bar-neumorphic'}`}>
+            <div className={`md:hidden flex w-full items-center gap-2 ${plain ? '' : ''}`}>
                 {!hideSearch && (
                     <div className="relative flex-grow flex items-center min-w-0">
                         <i className="fas fa-search absolute left-4 text-gray-400 z-10"></i>

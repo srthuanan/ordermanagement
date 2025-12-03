@@ -98,25 +98,26 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   const isCompact = size === 'compact';
   const areAllFilteredSelected = selectionMode === 'multiple' && filteredOptions.length > 0 && filteredOptions.every(opt => selectedOptions.includes(opt));
 
+
   // --- STYLES ---
   const buttonClasses = useMemo(() => {
-    const base = 'flex items-center justify-between transition-all duration-200 border outline-none focus:ring-2 focus:ring-accent-primary/20';
+    const base = 'flex items-center justify-between transition-all duration-200 outline-none focus:ring-2 focus:ring-accent-primary/20';
     const rounded = 'rounded-xl'; // More rounded for modern look
     const disabledClass = disabled ? 'opacity-60 cursor-not-allowed bg-gray-50' : 'cursor-pointer';
 
     if (variant === 'modern') {
       const sizeClass = isCompact ? 'px-3 h-8 text-xs' : 'px-4 h-10 text-sm';
       const activeState = !disabled && (isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple'))
-        ? 'bg-accent-primary/5 border-accent-primary text-accent-primary shadow-sm'
-        : 'bg-white border-gray-200 text-gray-600 hover:border-accent-primary/50 hover:text-gray-900 hover:shadow-sm';
+        ? 'bg-accent-primary/5 border border-accent-primary text-accent-primary shadow-sm'
+        : 'bg-white border border-gray-200 text-gray-600 hover:border-accent-primary/50 hover:text-gray-900 hover:shadow-sm';
       return `${base} ${rounded} ${sizeClass} ${activeState} ${disabledClass} w-full`;
     }
 
-    // Default variant
+    // Default variant (Neumorphism Style)
     const sizeClass = isCompact ? 'px-3 h-9 text-xs' : 'px-4 h-11 text-sm';
     const activeState = !disabled && (isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple'))
-      ? 'bg-white border-accent-primary text-accent-primary ring-1 ring-accent-primary/10'
-      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50';
+      ? 'bg-white text-[#6d5dfc] shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] font-bold'
+      : 'bg-white text-gray-700 shadow-[-2px_-2px_5px_#ffffff,2px_2px_5px_#e5e7eb] hover:text-[#6d5dfc] font-medium';
     return `${base} ${rounded} ${sizeClass} ${activeState} ${disabledClass} w-full`;
   }, [isCompact, isOpen, selectedOptions.length, variant, selectionMode, disabled]);
 

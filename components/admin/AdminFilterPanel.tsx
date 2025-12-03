@@ -133,8 +133,8 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
             isLoading={isLoading}
             hideSearch={false}
             size="compact"
-            variant="modern"
-            dropdownClassName="w-20 md:w-24 lg:w-28"
+
+            dropdownClassName="w-16 md:w-20 lg:w-24"
             searchable={false}
         />
     );

@@ -135,7 +135,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     }, []);
 
     const tabs: AdminSubView[] = ['dashboard', 'invoices', 'matching', 'vc', 'phongkd'];
-    const labels: Record<AdminSubView, string> = { dashboard: 'Tổng Quan', invoices: 'Xử Lý Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', matching: 'Ghép Xe', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
+    const labels: Record<AdminSubView, string> = { dashboard: 'Tổng Quan', invoices: 'Hóa Đơn', pending: 'Chờ Ghép', paired: 'Đã Ghép', matching: 'Ghép Xe', vc: 'Xử Lý VC', phongkd: 'Phòng KD' };
     const counts: Record<AdminSubView, number | null> = { dashboard: null, invoices: invoiceRequests.length, pending: pendingData.length, paired: pairedData.length, matching: pendingData.length + pairedData.length, vc: vcRequests.length, phongkd: Object.keys(teamData).length };
 
     const adminTools = [
@@ -309,7 +309,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 {/* Row 1: Navigation & Actions */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between px-2 md:px-4 py-2 border-b border-border-secondary/50 gap-2 md:gap-0">
                     {/* Tabs (Segmented Control Style) */}
-                    <div className="flex p-1 bg-surface-ground rounded-lg border border-border-secondary/50 overflow-x-auto md:overflow-hidden no-scrollbar w-full md:w-auto">
+                    <div className="flex p-1.5 bg-white rounded-xl shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] border border-gray-100 overflow-x-auto md:overflow-hidden no-scrollbar w-full md:w-auto">
                         {tabs.map(view => {
                             const count = counts[view];
                             const isActive = adminView === view;
@@ -317,11 +317,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 <button
                                     key={view}
                                     onClick={() => handleManualTabChange(view)}
-                                    className={`relative px-3 py-1.5 text-xs uppercase transition-all rounded-md flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0 w-28 ${isActive ? 'bg-white text-accent-primary shadow-sm ring-1 ring-black/5 font-bold' : 'text-text-secondary hover:text-text-primary hover:bg-white/50 font-medium'}`}
+                                    className={`relative px-3 py-1.5 text-xs uppercase transition-all rounded-lg flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0 w-28 ${isActive ? 'bg-white text-[#6d5dfc] shadow-[-2px_-2px_5px_#ffffff,2px_2px_5px_#e5e7eb] font-bold' : 'text-gray-500 hover:text-[#6d5dfc] font-medium'}`}
                                 >
                                     {labels[view]}
                                     {count !== null && (
-                                        <span className={`text-xs font-mono px-1.5 py-0.5 rounded-full ${isActive ? 'bg-accent-primary/10 text-accent-primary' : 'bg-black/5 text-text-secondary'}`}>
+                                        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full ${isActive ? 'bg-white shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] text-[#6d5dfc]' : 'bg-transparent text-gray-400'}`}>
                                             {count}
                                         </span>
                                     )}
