@@ -150,7 +150,7 @@ const Filters: React.FC<FiltersProps> = ({
     const desktopContent = (
         <div className={`${variant === 'modern' ? 'flex items-center gap-2' : `flex items-center gap-2 ${plain ? '!shadow-none !bg-transparent !p-0 !border-none' : ''}`}`}>
             {!hideSearch && (
-                <div className={`relative flex items-center transition-all duration-300 ${variant === 'modern' ? 'w-40 focus-within:w-60 flex-shrink' : 'flex-grow min-w-[200px] lg:min-w-[300px]'}`}>
+                <div className={`relative flex items-center transition-all duration-300 ${variant === 'modern' ? 'w-32 focus-within:w-48 flex-shrink' : 'flex-grow min-w-[200px] lg:min-w-[300px]'}`}>
                     <i className={`fas fa-search absolute left-3 z-10 ${variant === 'modern' ? 'text-accent-primary text-xs' : 'left-4 text-gray-400'}`}></i>
                     <input
                         type="text"

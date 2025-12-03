@@ -36,6 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const [noelImageIndex, setNoelImageIndex] = useState(0);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const profileMenuRef = useRef<HTMLDivElement>(null);
+    const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Effect cho slideshow ảnh Noel
     useEffect(() => {
@@ -44,6 +45,23 @@ const Sidebar: React.FC<SidebarProps> = ({
         }, 4000);
         return () => clearInterval(interval);
     }, []);
+
+    // Auto-collapse sidebar after 30 seconds when expanded
+    useEffect(() => {
+        // Only set timer if sidebar is NOT collapsed
+        if (!isSidebarCollapsed) {
+            inactivityTimerRef.current = setTimeout(() => {
+                toggleSidebar();
+            }, 30000); // 30 seconds
+        }
+
+        // Cleanup timer when sidebar state changes or component unmounts
+        return () => {
+            if (inactivityTimerRef.current) {
+                clearTimeout(inactivityTimerRef.current);
+            }
+        };
+    }, [isSidebarCollapsed, toggleSidebar]);
 
     // Click outside for profile menu
     useEffect(() => {
