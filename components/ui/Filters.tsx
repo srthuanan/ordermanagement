@@ -150,7 +150,7 @@ const Filters: React.FC<FiltersProps> = ({
     const desktopContent = (
         <div className={`${variant === 'modern' ? 'flex items-center gap-2' : `flex items-center gap-2 ${plain ? '!shadow-none !bg-transparent !p-0 !border-none' : ''}`}`}>
             {!hideSearch && (
-                <div className={`relative flex items-center ${variant === 'modern' ? 'w-40 flex-shrink' : 'flex-grow min-w-[200px] lg:min-w-[300px]'}`}>
+                <div className={`relative flex items-center transition-all duration-300 ${variant === 'modern' ? 'w-40 focus-within:w-60 flex-shrink' : 'flex-grow min-w-[200px] lg:min-w-[300px]'}`}>
                     <i className={`fas fa-search absolute left-3 z-10 ${variant === 'modern' ? 'text-accent-primary text-xs' : 'left-4 text-gray-400'}`}></i>
                     <input
                         type="text"
@@ -158,8 +158,17 @@ const Filters: React.FC<FiltersProps> = ({
                         placeholder={searchPlaceholder}
                         value={localKeyword}
                         onChange={(e) => setLocalKeyword(e.target.value)}
-                        className={`w-full h-8 pl-9 pr-4 py-1.5 focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm ${variant === 'modern' ? 'bg-white border border-border-secondary rounded-full shadow-sm focus:border-accent-primary' : 'relative'}`}
+                        className={`w-full h-8 pl-9 pr-8 py-1.5 focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm transition-all duration-300 ${variant === 'modern' ? 'bg-white border border-border-secondary rounded-full shadow-sm focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20' : 'relative'}`}
                     />
+                    {localKeyword && (
+                        <button
+                            onClick={() => { setLocalKeyword(''); onFilterChange({ keyword: '' }); }}
+                            className="absolute right-2 text-gray-400 hover:text-danger transition-colors"
+                            title="Xóa tìm kiếm"
+                        >
+                            <i className="fas fa-times-circle text-xs"></i>
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -238,8 +247,16 @@ const Filters: React.FC<FiltersProps> = ({
                             placeholder={searchPlaceholder}
                             value={localKeyword}
                             onChange={(e) => setLocalKeyword(e.target.value)}
-                            className="w-full h-9 pl-11 pr-4 py-1.5 relative focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm"
+                            className="w-full h-9 pl-11 pr-9 py-1.5 relative focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm bg-surface-ground rounded-lg border border-transparent focus:bg-white focus:border-accent-primary transition-all duration-300"
                         />
+                        {localKeyword && (
+                            <button
+                                onClick={() => { setLocalKeyword(''); onFilterChange({ keyword: '' }); }}
+                                className="absolute right-3 text-gray-400 hover:text-danger transition-colors"
+                            >
+                                <i className="fas fa-times-circle"></i>
+                            </button>
+                        )}
                     </div>
                 )}
                 <Button onClick={() => setIsMobilePanelOpen(true)} variant="ghost" className="flex-shrink-0 w-9 h-9 relative !p-0">

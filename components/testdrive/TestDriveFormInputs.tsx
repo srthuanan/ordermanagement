@@ -174,13 +174,40 @@ interface TestDriveFormInputsProps {
     scheduleForSelectedCar: TestDriveBooking[];
     suggestions: string[];
     onSuggestionClick: (slot: string) => void;
+    onReset: () => void;
+    onSave: () => void;
+    isSubmitting: boolean;
 }
 
-const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, handleInputChange, handleRadioChange, conflictError, scheduleForSelectedCar, suggestions, onSuggestionClick }) => {
+const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, handleInputChange, handleRadioChange, conflictError, scheduleForSelectedCar, suggestions, onSuggestionClick, onReset, onSave, isSubmitting }) => {
     return (
         <aside className="lg:col-span-2 print-hidden overflow-y-auto pr-4 space-y-5">
             <section>
-                <h3 className="font-semibold text-accent-primary text-base border-b border-border-primary pb-2 mb-3">Thông tin Lịch Hẹn</h3>
+                <div className="flex items-center justify-between border-b border-border-primary pb-2 mb-3">
+                    <h3 className="font-semibold text-accent-primary text-base">Thông tin Lịch Hẹn</h3>
+                    <div className="flex items-center gap-2 md:hidden">
+                        <Button
+                            onClick={onReset}
+                            variant="secondary"
+                            size="sm"
+                            className="!py-1 !px-2 text-xs !h-auto"
+                            leftIcon={<i className="fas fa-undo"></i>}
+                        >
+                            Làm Mới
+                        </Button>
+                        <Button
+                            onClick={onSave}
+                            disabled={!!conflictError || isSubmitting}
+                            isLoading={isSubmitting}
+                            variant="primary"
+                            size="sm"
+                            className="!py-1 !px-2 text-xs !h-auto"
+                            leftIcon={!isSubmitting ? <i className="fas fa-save"></i> : undefined}
+                        >
+                            Lưu & In
+                        </Button>
+                    </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
                     <InputField name="ngayThuXe" label="Ngày thử xe / Ngày cam kết" type="date" value={formData.ngayThuXe} onChange={handleInputChange} required />
                     <InputField name="tenTuVan" label="Tư vấn bán hàng" value={formData.tenTuVan} onChange={() => { }} readOnly />

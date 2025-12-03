@@ -435,12 +435,21 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
 
         if (historyFilters.keyword) {
             const kw = historyFilters.keyword.toLowerCase();
-            filtered = filtered.filter(b =>
-                b.soPhieu.toLowerCase().includes(kw) ||
-                b.tenKhachHang.toLowerCase().includes(kw) ||
-                b.dienThoai.includes(kw) ||
-                b.tenTuVan.toLowerCase().includes(kw)
-            );
+            filtered = filtered.filter(b => {
+                const searchStr = [
+                    b.soPhieu,
+                    b.tenKhachHang,
+                    b.dienThoai,
+                    b.tenTuVan,
+                    b.loaiXe,
+                    b.diaChi,
+                    b.email,
+                    b.loTrinh,
+                    b.dacDiem,
+                    b.gplxSo
+                ].map(val => String(val || '').toLowerCase()).join(' ');
+                return searchStr.includes(kw);
+            });
         }
         if (historyFilters.dateRange.start && historyFilters.dateRange.end) {
             const start = moment(historyFilters.dateRange.start).startOf('day');
@@ -538,9 +547,9 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                         Danh sách Lái thử
                     </Button>
                 </div>
-                <div className="w-full md:w-auto flex items-center justify-end gap-2">
+                <div className="w-full md:w-auto flex items-center justify-end gap-2 flex-1 ml-4">
                     {activeTab === 'create' && (
-                        <>
+                        <div className="hidden md:flex items-center gap-2">
                             <Button
                                 onClick={handleReset}
                                 variant="secondary"
@@ -561,7 +570,24 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                             >
                                 Lưu & In
                             </Button>
-                        </>
+                        </div>
+                    )}
+                    {activeTab === 'history' && (
+                        <div className="flex-1 w-full">
+                            <Filters
+                                filters={historyFilters}
+                                onFilterChange={(f) => setHistoryFilters(prev => ({ ...prev, ...f }))}
+                                onReset={() => setHistoryFilters({ keyword: '', dateRange: { start: '', end: '' }, car: [], status: [] })}
+                                dropdowns={historyDropdowns}
+                                searchPlaceholder="Tìm SĐT, Tên KH, TVBH, Số phiếu..."
+                                totalCount={processedHistory.length}
+                                onRefresh={() => fetchSchedule()}
+                                isLoading={isLoading}
+                                dateRangeEnabled={true}
+                                plain
+                                size="compact"
+                            />
+                        </div>
                     )}
                 </div>
             </header>
@@ -576,6 +602,9 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                         scheduleForSelectedCar={scheduleForSelectedCar}
                         suggestions={suggestions}
                         onSuggestionClick={handleSuggestionClick}
+                        onReset={handleReset}
+                        onSave={handleSaveAndPrint}
+                        isSubmitting={isSubmitting}
                     />
                     <TestDrivePreview data={formData} />
                 </div>
@@ -583,21 +612,6 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
 
             {activeTab === 'history' && (
                 <div className="flex-grow flex flex-col overflow-hidden print-hidden">
-                    <div className="flex-shrink-0 p-2 border-b border-border-primary bg-surface-ground">
-                        <Filters
-                            filters={historyFilters}
-                            onFilterChange={(f) => setHistoryFilters(prev => ({ ...prev, ...f }))}
-                            onReset={() => setHistoryFilters({ keyword: '', dateRange: { start: '', end: '' }, car: [], status: [] })}
-                            dropdowns={historyDropdowns}
-                            searchPlaceholder="Tìm SĐT, Tên KH, TVBH, Số phiếu..."
-                            totalCount={processedHistory.length}
-                            onRefresh={() => fetchSchedule()}
-                            isLoading={isLoading}
-                            dateRangeEnabled={true}
-                            plain
-                            size="compact"
-                        />
-                    </div>
                     {isLoading ? (
                         <div className="flex items-center justify-center h-full">
                             <i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i>
@@ -610,6 +624,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                             onDelete={setBookingToDelete}
                             currentUser={currentUser}
                             isAdmin={isAdmin}
+                            onOpenImagePreview={onOpenImagePreview}
                             sortConfig={historySortConfig}
                             onSort={(key) => setHistorySortConfig(prev => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))}
                         />
