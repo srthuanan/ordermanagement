@@ -5,7 +5,7 @@ import StatusBadge from '../ui/StatusBadge';
 import CarImage from '../ui/CarImage';
 import PdfThumbnail from '../ui/PdfThumbnail';
 import Button from '../ui/Button';
-import { toEmbeddableUrl, toViewableUrl, getDriveFileId } from '../../utils/imageUtils';
+import { toEmbeddableUrl, getDriveFileId } from '../../utils/imageUtils';
 
 interface InvoiceInboxViewProps {
     orders: Order[];
