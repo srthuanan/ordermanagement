@@ -54,7 +54,13 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
     const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
     // State for Filters & Sorting
-    const [filters, setFilters] = useState({ keyword: '', tvbh: [] as string[], carModel: [] as string[] });
+    const [filters, setFilters] = useState({
+        keyword: '',
+        tvbh: [] as string[],
+        carModel: [] as string[],
+        version: [] as string[],
+        exterior: [] as string[]
+    });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedDetailOrder, setSelectedDetailOrder] = useState<Order | null>(null);
@@ -88,6 +94,13 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
         if (filters.carModel.length > 0) {
             filteredData = filteredData.filter(o => filters.carModel.includes(o['Dòng xe']));
         }
+        if (filters.version.length > 0) {
+            filteredData = filteredData.filter(o => filters.version.includes(o['Phiên bản']));
+        }
+        if (filters.exterior.length > 0) {
+            filteredData = filteredData.filter(o => filters.exterior.includes(o['Ngoại thất']));
+        }
+
         if (filters.tvbh.length > 0) {
             filteredData = filteredData.filter(o => filters.tvbh.includes(synchronizeTvbhName(o['Tên tư vấn bán hàng'])));
         }
@@ -142,7 +155,13 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
 
     const handleResetFilters = useCallback(() => {
         setCurrentPage(1);
-        setFilters({ keyword: '', tvbh: [], carModel: [] });
+        setFilters({
+            keyword: '',
+            tvbh: [],
+            carModel: [],
+            version: [],
+            exterior: []
+        });
     }, []);
 
     const handleRowClick = (order: Order) => {
@@ -153,10 +172,15 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
 
     const uniqueTvbh = useMemo(() => [...new Set(soldData.map(o => synchronizeTvbhName(o['Tên tư vấn bán hàng'])).filter(Boolean))].sort(), [soldData]);
     const uniqueCarModels = useMemo(() => [...new Set(soldData.map(o => o['Dòng xe']).filter(Boolean))].sort(), [soldData]);
+    const uniqueVersions = useMemo(() => [...new Set(soldData.map(o => o['Phiên bản']).filter(Boolean))].sort(), [soldData]);
+    const uniqueExteriors = useMemo(() => [...new Set(soldData.map(o => o['Ngoại thất']).filter(Boolean))].sort(), [soldData]);
+
 
     const dropdownConfigs: DropdownFilterConfig[] = [
         { id: 'sold-filter-tvbh', key: 'tvbh', label: 'Tư vấn', options: uniqueTvbh, icon: 'fa-user-tie' },
         { id: 'sold-filter-car-model', key: 'carModel', label: 'Dòng Xe', options: uniqueCarModels, icon: 'fa-car' },
+        { id: 'sold-filter-version', key: 'version', label: 'Phiên Bản', options: uniqueVersions, icon: 'fa-cogs' },
+        { id: 'sold-filter-exterior', key: 'exterior', label: 'Ngoại Thất', options: uniqueExteriors, icon: 'fa-palette' },
     ];
 
     if (error) {
@@ -209,6 +233,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
                             isLoading={isLoading}
                             plain
                             size="compact"
+                            searchable={false}
                         />
                     </div>
                     <div className="flex-grow overflow-auto hidden-scrollbar p-1">

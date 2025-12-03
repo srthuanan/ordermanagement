@@ -9,7 +9,13 @@ interface UseOrderFilteringProps {
 }
 
 export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeView, orderView }: UseOrderFilteringProps) => {
-    const [filters, setFilters] = useState({ keyword: '', carModel: [] as string[], status: [] as string[] });
+    const [filters, setFilters] = useState({
+        keyword: '',
+        carModel: [] as string[],
+        version: [] as string[],
+        status: [] as string[],
+        exterior: [] as string[]
+    });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -27,7 +33,13 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
 
     const handleResetFilters = useCallback(() => {
         setCurrentPage(1);
-        setFilters({ keyword: '', carModel: [], status: [] });
+        setFilters({
+            keyword: '',
+            carModel: [],
+            version: [],
+            status: [],
+            exterior: []
+        });
     }, []);
 
     const handleSort = (key: keyof Order) => {
@@ -46,9 +58,16 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
         if (filters.carModel.length > 0) {
             filteredOrders = filteredOrders.filter(order => filters.carModel.includes(order["Dòng xe"]));
         }
+        if (filters.version.length > 0) {
+            filteredOrders = filteredOrders.filter(order => filters.version.includes(order["Phiên bản"]));
+        }
         if (filters.status.length > 0) {
             filteredOrders = filteredOrders.filter(order => filters.status.includes(order["Trạng thái VC"] || order["Kết quả"] || "Chưa ghép"));
         }
+        if (filters.exterior.length > 0) {
+            filteredOrders = filteredOrders.filter(order => filters.exterior.includes(order["Ngoại thất"]));
+        }
+
         if (sortConfig !== null) {
             filteredOrders.sort((a, b) => {
                 const aValue = a[sortConfig.key];

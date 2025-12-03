@@ -317,7 +317,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 <button
                                     key={view}
                                     onClick={() => handleManualTabChange(view)}
-                                    className={`relative px-3 py-1.5 text-xs uppercase transition-all rounded-md flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${isActive ? 'bg-white text-accent-primary shadow-sm ring-1 ring-black/5 font-bold' : 'text-text-secondary hover:text-text-primary hover:bg-white/50 font-medium'}`}
+                                    className={`relative px-3 py-1.5 text-xs uppercase transition-all rounded-md flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0 w-28 ${isActive ? 'bg-white text-accent-primary shadow-sm ring-1 ring-black/5 font-bold' : 'text-text-secondary hover:text-text-primary hover:bg-white/50 font-medium'}`}
                                 >
                                     {labels[view]}
                                     {count !== null && (

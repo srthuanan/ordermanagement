@@ -253,7 +253,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
           <ul className="flex-grow max-h-64 overflow-y-auto p-2 space-y-0.5 custom-scrollbar">
             {selectionMode === 'multiple' && filteredOptions.length > 0 && (
               <li>
-                <label className="flex items-center gap-3 w-full px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-all cursor-pointer group">
+                <label className={`flex items-center gap-3 w-full ${isCompact ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm'} text-gray-700 rounded-lg hover:bg-gray-50 transition-all cursor-pointer group`}>
                   <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${areAllFilteredSelected ? 'bg-accent-primary border-accent-primary' : 'border-gray-300 group-hover:border-accent-primary'}`}>
                     {areAllFilteredSelected && <i className="fas fa-check text-white text-[10px]"></i>}
                   </div>
@@ -271,7 +271,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
               const isSelected = selectedOptions.includes(option);
               return (
                 <li key={option}>
-                  <label className={`flex items-center gap-3 w-full px-3 py-2 text-sm rounded-lg transition-all cursor-pointer group ${isSelected ? 'bg-accent-primary/5 text-accent-primary font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                  <label className={`flex items-center gap-3 w-full ${isCompact ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm'} rounded-lg transition-all cursor-pointer group ${isSelected ? 'bg-accent-primary/5 text-accent-primary font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
                     {selectionMode === 'multiple' && (
                       <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected ? 'bg-accent-primary border-accent-primary' : 'border-gray-300 group-hover:border-accent-primary'}`}>
                         {isSelected && <i className="fas fa-check text-white text-[10px]"></i>}
@@ -289,7 +289,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                 </li>
               );
             }) : (
-              <li className="px-3 py-8 text-sm text-gray-400 text-center flex flex-col items-center gap-2">
+              <li className={`px-3 ${isCompact ? 'py-4 text-xs' : 'py-8 text-sm'} text-gray-400 text-center flex flex-col items-center gap-2`}>
                 <i className="fas fa-search text-2xl opacity-20"></i>
                 <span>Không tìm thấy kết quả</span>
               </li>

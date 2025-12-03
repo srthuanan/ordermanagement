@@ -126,6 +126,9 @@ export const useAdminData = ({
                 ...vcReq,
                 VIN: correspondingOrder?.VIN,
                 "Dòng xe": correspondingOrder?.['Dòng xe'],
+                "Phiên bản": correspondingOrder?.['Phiên bản'],
+                "Ngoại thất": correspondingOrder?.['Ngoại thất'],
+                "Nội thất": correspondingOrder?.['Nội thất'],
             };
         });
         const allPending = allOrders.filter(o => String(o['Kết quả'] || '').toLowerCase().includes('chưa'));
@@ -158,6 +161,19 @@ export const useAdminData = ({
                 const tvbhMatch = view === 'vc' ? (filters.nguoiyc.length === 0 || filters.nguoiyc.includes((row as VcRequest)['Người YC'])) : (filters.tvbh.length === 0 || filters.tvbh.includes(row['Tên tư vấn bán hàng']));
                 const dongXeMatch = view !== 'vc' ? (filters.dongXe.length === 0 || filters.dongXe.includes(row['Dòng xe'])) : true;
 
+                const versionMatch = view !== 'vc' ? (filters.version?.length === 0 || !filters.version || filters.version.includes(row['Phiên bản'])) : true;
+
+                let exteriorMatch = true;
+                // let interiorMatch = true; // Removed
+
+                if (view === 'matching') {
+                    exteriorMatch = filters.ngoaiThat?.length === 0 || !filters.ngoaiThat || filters.ngoaiThat.includes(row['Ngoại thất']);
+                    // interiorMatch = filters.noiThat?.length === 0 || !filters.noiThat || filters.noiThat.includes(row['Nội thất']);
+                } else if (view !== 'vc') {
+                    exteriorMatch = filters.exterior?.length === 0 || !filters.exterior || filters.exterior.includes(row['Ngoại thất']);
+                    // interiorMatch = filters.interior?.length === 0 || !filters.interior || filters.interior.includes(row['Nội thất']);
+                }
+
                 let trangThaiMatch = true;
                 if (view === 'invoices' && filters.trangThai) {
                     trangThaiMatch = filters.trangThai.length === 0 || filters.trangThai.includes((row as any)['Trạng thái xử lý']);
@@ -173,7 +189,7 @@ export const useAdminData = ({
                     (dmsCode && dmsCode.toLowerCase().includes(lowerKeyword))
                 );
 
-                return tvbhMatch && dongXeMatch && trangThaiMatch && keywordMatch;
+                return tvbhMatch && dongXeMatch && versionMatch && exteriorMatch && trangThaiMatch && keywordMatch;
             });
         };
 
@@ -233,9 +249,9 @@ export const useAdminData = ({
             suggestionsMap: suggestions,
             ordersWithMatches: ordersWithMatches,
             filterOptions: {
-                invoices: getFilterOptions(processedInvoices, ['Tên tư vấn bán hàng', 'Dòng xe', 'Kết quả']),
-                pending: getFilterOptions(allPending, ['Tên tư vấn bán hàng', 'Dòng xe', 'Ngoại thất', 'Nội thất']),
-                paired: getFilterOptions(allPaired, ['Tên tư vấn bán hàng', 'Dòng xe']),
+                invoices: getFilterOptions(processedInvoices, ['Tên tư vấn bán hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất', 'Kết quả']),
+                pending: getFilterOptions(allPending, ['Tên tư vấn bán hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất']),
+                paired: getFilterOptions(allPaired, ['Tên tư vấn bán hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất']),
                 vc: getFilterOptions(allVcRequests, ['Người YC', 'Trạng thái xử lý']),
             }
         };

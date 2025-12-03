@@ -52,7 +52,6 @@ const StockView: React.FC<StockViewProps> = ({
         version: [] as string[],
         status: [] as string[],
         exterior: [] as string[],
-        interior: [] as string[],
     });
     const [sortConfig, setSortConfig] = useState<StockSortConfig | null>({ key: 'VIN', direction: 'asc' });
     const [currentPage, setCurrentPage] = useState(1);
@@ -72,7 +71,6 @@ const StockView: React.FC<StockViewProps> = ({
             version: [],
             status: [],
             exterior: [],
-            interior: [],
         });
     }, []);
 
@@ -132,9 +130,7 @@ const StockView: React.FC<StockViewProps> = ({
         if (filters.exterior.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.exterior.includes(vehicle["Ngoại thất"]));
         }
-        if (filters.interior.length > 0) {
-            filteredVehicles = filteredVehicles.filter(vehicle => filters.interior.includes(vehicle["Nội thất"]));
-        }
+
 
         // Sort: "Đang giữ" on top, then by user-selected column
         filteredVehicles.sort((a, b) => {
@@ -180,14 +176,13 @@ const StockView: React.FC<StockViewProps> = ({
     const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]).filter(v => v))].sort(), [stockData]);
     const uniqueStatuses = useMemo(() => [...new Set(stockData.map(v => v["Trạng thái"]).filter(v => v))].sort(), [stockData]);
     const uniqueExteriors = useMemo(() => [...new Set(stockData.map(v => v["Ngoại thất"]).filter(v => v))].sort(), [stockData]);
-    const uniqueInteriors = useMemo(() => [...new Set(stockData.map(v => v["Nội thất"]).filter(v => v))].sort(), [stockData]);
+
 
     const dropdownConfigs: DropdownFilterConfig[] = [
         { id: 'stock-filter-car-model', key: 'carModel', label: 'Dòng Xe', options: uniqueCarModels, icon: 'fa-car' },
         { id: 'stock-filter-version', key: 'version', label: 'Phiên Bản', options: uniqueVersions, icon: 'fa-cogs' },
         { id: 'stock-filter-status', key: 'status', label: 'Trạng Thái', options: uniqueStatuses, icon: 'fa-tag' },
         { id: 'stock-filter-exterior', key: 'exterior', label: 'Ngoại Thất', options: uniqueExteriors, icon: 'fa-palette' },
-        { id: 'stock-filter-interior', key: 'interior', label: 'Nội Thất', options: uniqueInteriors, icon: 'fa-chair' },
     ].filter(d => d.options.length > 0);
 
     const renderContent = () => {
@@ -251,6 +246,7 @@ const StockView: React.FC<StockViewProps> = ({
                         viewSwitcherEnabled={true}
                         activeView={view}
                         onViewChange={setView}
+                        searchable={false}
                     />
                 </div>
                 <div className="flex-1 flex flex-col min-h-0">

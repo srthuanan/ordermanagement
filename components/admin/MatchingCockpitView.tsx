@@ -14,8 +14,8 @@ interface MatchingCockpitViewProps {
         keyword: string;
         tvbh: string[];
         dongXe: string[];
+        version: string[];
         ngoaiThat: string[];
-        noiThat: string[];
     };
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     activeTab: 'pending' | 'paired';
@@ -58,8 +58,8 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
             if (filters) {
                 if (filters.tvbh && filters.tvbh.length > 0 && !filters.tvbh.includes(order['Tên tư vấn bán hàng'])) return false;
                 if (filters.dongXe && filters.dongXe.length > 0 && !filters.dongXe.includes(order['Dòng xe'])) return false;
+                if (filters.version && filters.version.length > 0 && !filters.version.includes(order['Phiên bản'])) return false;
                 if (filters.ngoaiThat && filters.ngoaiThat.length > 0 && !filters.ngoaiThat.includes(order['Ngoại thất'])) return false;
-                if (filters.noiThat && filters.noiThat.length > 0 && !filters.noiThat.includes(order['Nội thất'])) return false;
             }
 
             return true;

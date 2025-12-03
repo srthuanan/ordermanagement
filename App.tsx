@@ -210,8 +210,12 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         return result.sort((a, b) => b.total - a.total);
     }, [allHistoryData]);
 
-    const uniqueCarModels = useMemo(() => [...new Set(allHistoryData.map(o => o["Dòng xe"]))].sort(), [allHistoryData]);
-    const uniqueStatuses = useMemo(() => [...new Set(allHistoryData.map(o => o["Trạng thái VC"] || o["Kết quả"] || "Chưa ghép"))].sort(), [allHistoryData]);
+    const uniqueCarModels = useMemo(() => [...new Set(allHistoryData.map(o => o["Dòng xe"]).filter(Boolean))].sort(), [allHistoryData]);
+    const uniqueVersions = useMemo(() => [...new Set(allHistoryData.map(o => o["Phiên bản"]).filter(Boolean))].sort(), [allHistoryData]);
+    const uniqueStatuses = useMemo(() => [...new Set(allHistoryData.map(o => o["Trạng thái VC"] || o["Kết quả"] || "Chưa ghép").filter(Boolean))].sort(), [allHistoryData]);
+    const uniqueExteriors = useMemo(() => [...new Set(allHistoryData.map(o => o["Ngoại thất"]).filter(Boolean))].sort(), [allHistoryData]);
+
+
 
     const renderOrdersContent = () => {
         const animationClass = 'animate-fade-in-up';
@@ -220,7 +224,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
         const dropdownConfigs: DropdownFilterConfig[] = [
             { id: 'order-filter-car-model', key: 'carModel', label: 'Dòng Xe', options: uniqueCarModels, icon: 'fa-car' },
-            { id: 'order-filter-status', key: 'status', label: 'Trạng Thái', options: uniqueStatuses, icon: 'fa-tag' }
+            { id: 'order-filter-version', key: 'version', label: 'Phiên Bản', options: uniqueVersions, icon: 'fa-cogs' },
+            { id: 'order-filter-status', key: 'status', label: 'Trạng Thái', options: uniqueStatuses, icon: 'fa-tag' },
+            { id: 'order-filter-exterior', key: 'exterior', label: 'Ngoại Thất', options: uniqueExteriors, icon: 'fa-palette' },
+
         ].filter(d => d.options.length > 0);
 
         const pendingStatsButton = (
@@ -298,6 +305,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         extraActionButton={pendingStatsButton}
                         viewSwitcherEnabled={true}
                         activeView={orderView}
+                        searchable={false}
                         onViewChange={setOrderView}
                     />
                 </div>

@@ -53,6 +53,9 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
             dropdownConfigs = [
                 { id: 'admin-filter-tvbh', key: 'tvbh', label: 'TVBH', options: filterOptions.invoices['Tên tư vấn bán hàng'], icon: 'fa-user-tie' },
                 { id: 'admin-filter-dongxe', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.invoices['Dòng xe'], icon: 'fa-car' },
+                { id: 'admin-filter-version', key: 'version', label: 'Phiên Bản', options: filterOptions.invoices['Phiên bản'], icon: 'fa-cogs' },
+                { id: 'admin-filter-exterior', key: 'exterior', label: 'Ngoại Thất', options: filterOptions.invoices['Ngoại thất'], icon: 'fa-palette' },
+
                 { id: 'admin-filter-status', key: 'trangThai', label: 'Trạng Thái', options: filterOptions.invoices['Kết quả'], icon: 'fa-tag' }
             ];
             searchPlaceholder = "Tìm SĐH, Tên KH, VIN...";
@@ -64,7 +67,10 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
             currentFilters = pendingFilters;
             dropdownConfigs = [
                 { id: 'admin-filter-tvbh-pending', key: 'tvbh', label: 'TVBH', options: filterOptions.pending['Tên tư vấn bán hàng'], icon: 'fa-user-tie' },
-                { id: 'admin-filter-dongxe-pending', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.pending['Dòng xe'], icon: 'fa-car' }
+                { id: 'admin-filter-dongxe-pending', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.pending['Dòng xe'], icon: 'fa-car' },
+                { id: 'admin-filter-version-pending', key: 'version', label: 'Phiên Bản', options: filterOptions.pending['Phiên bản'], icon: 'fa-cogs' },
+                { id: 'admin-filter-exterior-pending', key: 'exterior', label: 'Ngoại Thất', options: filterOptions.pending['Ngoại thất'], icon: 'fa-palette' },
+
             ];
             searchPlaceholder = "Tìm SĐH, Tên KH...";
             totalCount = pendingData.length;
@@ -75,7 +81,10 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
             currentFilters = pairedFilters;
             dropdownConfigs = [
                 { id: 'admin-filter-tvbh-paired', key: 'tvbh', label: 'TVBH', options: filterOptions.paired['Tên tư vấn bán hàng'], icon: 'fa-user-tie' },
-                { id: 'admin-filter-dongxe-paired', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.paired['Dòng xe'], icon: 'fa-car' }
+                { id: 'admin-filter-dongxe-paired', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.paired['Dòng xe'], icon: 'fa-car' },
+                { id: 'admin-filter-version-paired', key: 'version', label: 'Phiên Bản', options: filterOptions.paired['Phiên bản'], icon: 'fa-cogs' },
+                { id: 'admin-filter-exterior-paired', key: 'exterior', label: 'Ngoại Thất', options: filterOptions.paired['Ngoại thất'], icon: 'fa-palette' },
+
             ];
             searchPlaceholder = "Tìm SĐH, Tên KH, VIN...";
             totalCount = pairedData.length;
@@ -87,7 +96,9 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
             dropdownConfigs = [
                 { id: 'admin-filter-tvbh-matching', key: 'tvbh', label: 'TVBH', options: filterOptions.pending['Tên tư vấn bán hàng'], icon: 'fa-user-tie' },
                 { id: 'admin-filter-dongxe-matching', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.pending['Dòng xe'], icon: 'fa-car' },
+                { id: 'admin-filter-version-matching', key: 'version', label: 'Phiên Bản', options: filterOptions.pending['Phiên bản'], icon: 'fa-cogs' },
                 { id: 'admin-filter-ngoaithat-matching', key: 'ngoaiThat', label: 'Ngoại Thất', options: filterOptions.pending['Ngoại thất'], icon: 'fa-palette' },
+
 
             ];
             searchPlaceholder = "Tìm SĐH, Tên KH...";
@@ -123,6 +134,8 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
             hideSearch={false}
             size="compact"
             variant="modern"
+            dropdownClassName="w-20 md:w-24 lg:w-28"
+            searchable={false}
         />
     );
 };

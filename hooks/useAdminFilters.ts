@@ -9,11 +9,11 @@ interface UseAdminFiltersProps {
 export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFiltersProps) => {
     const [adminView, setAdminView] = useState<AdminSubView>('dashboard');
 
-    const [invoiceFilters, setInvoiceFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], trangThai: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], trangThai: [] });
-    const [pendingFilters, setPendingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [] });
-    const [pairedFilters, setPairedFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [] });
+    const [invoiceFilters, setInvoiceFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], version: string[], exterior: string[], trangThai: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [], trangThai: [] });
+    const [pendingFilters, setPendingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], version: string[], exterior: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] });
+    const [pairedFilters, setPairedFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], version: string[], exterior: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] });
     const [vcFilters, setVcFilters] = useState<{ keyword: string, nguoiyc: string[], trangthai: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', nguoiyc: [], trangthai: [] });
-    const [matchingFilters, setMatchingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], ngoaiThat: string[], noiThat: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], ngoaiThat: [], noiThat: [] });
+    const [matchingFilters, setMatchingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], version: string[], ngoaiThat: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], version: [], ngoaiThat: [] });
 
     useEffect(() => {
         if (initialState) {
@@ -37,11 +37,11 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
                 }
                 setAdminView(targetTab as AdminSubView);
 
-                setInvoiceFilters({ keyword: '', tvbh: [], dongXe: [], trangThai: [] });
-                setPendingFilters({ keyword: '', tvbh: [], dongXe: [] });
-                setPairedFilters({ keyword: '', tvbh: [], dongXe: [] });
+                setInvoiceFilters({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [], trangThai: [] });
+                setPendingFilters({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] });
+                setPairedFilters({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] });
                 setVcFilters({ keyword: '', nguoiyc: [], trangthai: [] });
-                setMatchingFilters({ keyword: '', tvbh: [], dongXe: [], ngoaiThat: [], noiThat: [] });
+                setMatchingFilters({ keyword: '', tvbh: [], dongXe: [], version: [], ngoaiThat: [] });
 
                 const keyword = order['Số đơn hàng'];
                 if (targetTab === 'invoices') {
@@ -74,15 +74,15 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
 
     const handleReset = useCallback(() => {
         if (adminView === 'invoices') {
-            setInvoiceFilters({ keyword: '', tvbh: [], dongXe: [], trangThai: [] });
+            setInvoiceFilters({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [], trangThai: [] });
         } else if (adminView === 'pending') {
-            setPendingFilters({ keyword: '', tvbh: [], dongXe: [] });
+            setPendingFilters({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] });
         } else if (adminView === 'paired') {
-            setPairedFilters({ keyword: '', tvbh: [], dongXe: [] });
+            setPairedFilters({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] });
         } else if (adminView === 'vc') {
             setVcFilters({ keyword: '', nguoiyc: [], trangthai: [] });
         } else if (adminView === 'matching') {
-            setMatchingFilters({ keyword: '', tvbh: [], dongXe: [], ngoaiThat: [], noiThat: [] });
+            setMatchingFilters({ keyword: '', tvbh: [], dongXe: [], version: [], ngoaiThat: [] });
         }
     }, [adminView]);
 
