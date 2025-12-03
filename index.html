@@ -882,6 +882,19 @@
       pointer-events: none;
     }
 
+    @media (max-width: 640px) {
+      .notification-panel {
+        position: fixed;
+        top: 60px;
+        /* Below header */
+        left: 10px;
+        right: 10px;
+        width: auto;
+        max-height: calc(100vh - 80px);
+        transform-origin: top right;
+      }
+    }
+
     .notification-panel.visible {
       opacity: 1;
       transform: translateY(0) scale(1);
@@ -2218,7 +2231,7 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/ordermanagement/assets/index-BkWUxVCq.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-Bd8n8gv2.js"></script>
   <link rel="stylesheet" crossorigin href="/ordermanagement/assets/index-D2lL5mX7.css">
 </head>
 
