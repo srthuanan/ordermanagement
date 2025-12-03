@@ -314,6 +314,7 @@ const Filters: React.FC<FiltersProps> = ({
                                                             displayMode={dropdown.displayMode}
                                                             size="default"
                                                             mode={dropdown.mode || (dropdown.options.length > 6 ? 'inline' : 'chips')}
+                                                            searchable={false}
                                                         />
                                                     </div>
                                                 </div>
