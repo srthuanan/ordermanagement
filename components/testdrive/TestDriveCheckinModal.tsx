@@ -260,76 +260,134 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex flex-col justify-end md:justify-center md:items-center p-0 md:p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full md:max-w-4xl h-[85vh] md:h-auto md:max-h-[90vh] rounded-t-2xl md:rounded-2xl shadow-xl animate-fade-in-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
-                <header className="flex-shrink-0 p-5 border-b border-border-primary flex justify-between items-center">
+            <div
+                className="bg-surface-card w-full md:max-w-5xl h-[85vh] md:h-auto md:max-h-[90vh] rounded-t-2xl md:rounded-2xl shadow-xl animate-fade-in-up flex flex-col"
+                onClick={e => e.stopPropagation()}
+                style={bgStyle}
+            >
+                <header className="flex-shrink-0 px-6 py-4 border-b border-border-primary/50 flex justify-between items-center bg-white/50 backdrop-blur-sm rounded-t-2xl">
                     <h2 className="text-xl font-bold text-text-primary">
-                        {mode === 'view' ? 'Xem Thông Tin Lái Thử' : 'Cập Nhật Thông Tin Lái Thử'}
+                        {mode === 'view' ? 'Chi Tiết Lái Thử' : 'Cập Nhật Lái Thử'}
                     </h2>
-                    <Button onClick={onClose} variant="ghost" className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover !p-0"><i className="fas fa-times"></i></Button>
+                    <Button onClick={onClose} variant="ghost" className="text-text-secondary hover:text-text-primary !p-2"><i className="fas fa-times text-lg"></i></Button>
                 </header>
 
-                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0">
-                    <div className="p-3 bg-surface-ground rounded-lg border border-border-primary text-sm mb-6">
-                        <span className="font-semibold">Số phiếu:</span> <span className="font-mono text-accent-primary">{booking.soPhieu}</span> | <span className="font-semibold">KH:</span> {booking.tenKhachHang}
+                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0 bg-surface-ground/50">
+                    <div className="p-4 bg-white rounded-xl border border-border-primary/60 shadow-sm text-sm mb-6 flex flex-wrap items-center gap-3">
+                        <div className="flex items-center gap-2 px-3 py-1 bg-accent-primary/10 text-accent-primary rounded-full border border-accent-primary/20">
+                            <i className="fas fa-ticket-alt text-xs"></i>
+                            <span className="font-bold font-mono">{booking.soPhieu}</span>
+                        </div>
+                        <span className="text-border-primary hidden md:inline">|</span>
+                        <div className="flex items-center gap-2">
+                            <span className="text-text-secondary font-medium">Khách hàng:</span>
+                            <span className="font-bold text-text-primary text-base">{booking.tenKhachHang}</span>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* BEFORE SECTION */}
-                        <div className={`space-y-4 p-4 border border-border-primary rounded-lg ${isViewOnly && mode !== 'update' ? 'opacity-70 bg-surface-input' : ''}`}>
-                            <legend className="font-bold text-lg text-text-primary px-2 -mx-2">Trước Khi Đi</legend>
-                            <div>
-                                <label htmlFor="odoBefore" className="block text-sm font-medium text-text-primary mb-2">Số ODO (km) {mode === 'checkin' && <span className="text-danger">*</span>}</label>
-                                <input type="number" id="odoBefore" value={odoBefore} readOnly={mode !== 'checkin' || isViewOnly} onChange={e => setOdoBefore(e.target.value)} className="w-full futuristic-input read-only:bg-surface-input read-only:cursor-not-allowed" placeholder="Nhập số km hiện tại" />
+                        <div className={`group relative bg-white rounded-xl p-5 border border-border-primary/60 shadow-sm hover:shadow-md transition-all duration-300 ${isViewOnly && mode !== 'update' ? 'opacity-80' : ''}`}>
+                            <div className="mb-4 flex items-center gap-3 border-b border-border-primary/50 pb-3">
+                                <i className="fas fa-car-side text-lg text-accent-primary"></i>
+                                <legend className="font-bold text-lg text-text-primary">Trước Khi Đi</legend>
                             </div>
 
-                            {existingImagesBefore.length > 0 && (
-                                <ImageGallery
-                                    images={existingImagesBefore}
-                                    label="Hình ảnh đã tải lên"
-                                    onImageClick={(_, index) => {
-                                        const imageSources = existingImagesBefore.map((imgUrl, i) => ({
-                                            src: imgUrl, originalUrl: imgUrl, label: `Ảnh trước khi đi ${i + 1}`
-                                        }));
-                                        onOpenImagePreview(imageSources, index, booking.tenKhachHang);
-                                    }}
-                                />
-                            )}
-                            {(mode === 'checkin' || mode === 'update') && canUpdate && (
-                                <MultiImageUpload label={mode === 'update' ? 'Thêm ảnh trước khi đi' : 'Hình ảnh xe'} onFilesChange={setImagesBefore} />
-                            )}
+                            <div className="space-y-4">
+                                <div>
+                                    <label htmlFor="odoBefore" className="block text-sm font-medium text-text-secondary mb-2">Số ODO (km) {mode === 'checkin' && <span className="text-danger">*</span>}</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            id="odoBefore"
+                                            value={odoBefore}
+                                            readOnly={mode !== 'checkin' || isViewOnly}
+                                            onChange={e => setOdoBefore(e.target.value)}
+                                            className="w-full futuristic-input read-only:bg-surface-input read-only:cursor-not-allowed"
+                                            placeholder="Nhập số km hiện tại"
+                                        />
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-text-placeholder text-sm font-medium">km</span>
+                                    </div>
+                                </div>
+
+                                {existingImagesBefore.length > 0 && (
+                                    <div className="bg-surface-ground rounded-xl p-3 border border-border-primary/30">
+                                        <ImageGallery
+                                            images={existingImagesBefore}
+                                            label="Ảnh đã lưu"
+                                            onImageClick={(_, index) => {
+                                                const imageSources = existingImagesBefore.map((imgUrl, i) => ({
+                                                    src: imgUrl, originalUrl: imgUrl, label: `Ảnh trước khi đi ${i + 1}`
+                                                }));
+                                                onOpenImagePreview(imageSources, index, booking.tenKhachHang);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                                {(mode === 'checkin' || mode === 'update') && canUpdate && (
+                                    <MultiImageUpload label={mode === 'update' ? 'Thêm ảnh mới' : 'Chụp ảnh xe'} onFilesChange={setImagesBefore} />
+                                )}
+                            </div>
                         </div>
 
                         {/* AFTER SECTION */}
-                        <div className={`space-y-4 p-4 border border-border-primary rounded-lg ${isViewOnly && mode !== 'update' ? 'opacity-70 bg-surface-input' : ''}`}>
-                            <legend className="font-bold text-lg text-text-primary px-2 -mx-2">Sau Khi Về</legend>
-                            <div>
-                                <label htmlFor="odoAfter" className="block text-sm font-medium text-text-primary mb-2">Số ODO (km) {mode === 'checkout' && <span className="text-danger">*</span>}</label>
-                                <input type="number" id="odoAfter" value={odoAfter} readOnly={mode !== 'checkout' || isViewOnly} onChange={e => setOdoAfter(e.target.value)} className="w-full futuristic-input read-only:bg-surface-input read-only:cursor-not-allowed" placeholder="Nhập số km sau khi lái thử" />
+                        <div className={`group relative bg-white rounded-xl p-5 border border-border-primary/60 shadow-sm hover:shadow-md transition-all duration-300 ${isViewOnly && mode !== 'update' ? 'opacity-80' : ''}`}>
+                            <div className="mb-4 flex items-center gap-3 border-b border-border-primary/50 pb-3">
+                                <i className="fas fa-flag-checkered text-lg text-accent-secondary"></i>
+                                <legend className="font-bold text-lg text-text-primary">Sau Khi Về</legend>
                             </div>
-                            {existingImagesAfter.length > 0 && (
-                                <ImageGallery
-                                    images={existingImagesAfter}
-                                    label="Hình ảnh đã tải lên"
-                                    onImageClick={(_, index) => {
-                                        const imageSources = existingImagesAfter.map((imgUrl, i) => ({
-                                            src: imgUrl, originalUrl: imgUrl, label: `Ảnh sau khi về ${i + 1}`
-                                        }));
-                                        onOpenImagePreview(imageSources, index, booking.tenKhachHang);
-                                    }}
-                                />
-                            )}
-                            {(mode === 'checkout' || mode === 'update') && canUpdate && (
-                                <MultiImageUpload label={mode === 'update' ? 'Thêm ảnh sau khi về' : 'Hình ảnh xe'} onFilesChange={setImagesAfter} />
-                            )}
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label htmlFor="odoAfter" className="block text-sm font-medium text-text-secondary mb-2">Số ODO (km) {mode === 'checkout' && <span className="text-danger">*</span>}</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            id="odoAfter"
+                                            value={odoAfter}
+                                            readOnly={mode !== 'checkout' || isViewOnly}
+                                            onChange={e => setOdoAfter(e.target.value)}
+                                            className="w-full futuristic-input read-only:bg-surface-input read-only:cursor-not-allowed"
+                                            placeholder="Nhập số km sau khi lái thử"
+                                        />
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-text-placeholder text-sm font-medium">km</span>
+                                    </div>
+                                </div>
+                                {existingImagesAfter.length > 0 && (
+                                    <div className="bg-surface-ground rounded-xl p-3 border border-border-primary/30">
+                                        <ImageGallery
+                                            images={existingImagesAfter}
+                                            label="Ảnh đã lưu"
+                                            onImageClick={(_, index) => {
+                                                const imageSources = existingImagesAfter.map((imgUrl, i) => ({
+                                                    src: imgUrl, originalUrl: imgUrl, label: `Ảnh sau khi về ${i + 1}`
+                                                }));
+                                                onOpenImagePreview(imageSources, index, booking.tenKhachHang);
+                                            }}
+                                        />
+                                    </div>
+                                )}
+                                {(mode === 'checkout' || mode === 'update') && canUpdate && (
+                                    <MultiImageUpload label={mode === 'update' ? 'Thêm ảnh mới' : 'Chụp ảnh xe'} onFilesChange={setImagesAfter} />
+                                )}
+                            </div>
                         </div>
                     </div>
                 </main>
 
                 {mode !== 'view' && canUpdate && (
-                    <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
-                        <Button onClick={onClose} disabled={isSubmitting} variant="secondary">Hủy</Button>
-                        <Button onClick={handleSubmit} disabled={isSubmitting} isLoading={isSubmitting} variant="primary" leftIcon={!isSubmitting ? <i className="fas fa-save"></i> : undefined}>
-                            {mode === 'update' ? 'Cập Nhật Ảnh' : 'Lưu Thông Tin'}
+                    <footer className="flex-shrink-0 px-6 py-4 border-t border-border-primary/50 flex justify-end gap-3 bg-white rounded-b-2xl">
+                        <Button onClick={onClose} disabled={isSubmitting} variant="secondary" size="md" className="min-w-[100px]">Hủy</Button>
+                        <Button
+                            onClick={handleSubmit}
+                            disabled={isSubmitting}
+                            isLoading={isSubmitting}
+                            variant="primary"
+                            size="md"
+                            className="min-w-[140px]"
+                            leftIcon={!isSubmitting ? <i className="fas fa-save"></i> : undefined}
+                        >
+                            {mode === 'update' ? 'Cập Nhật' : 'Lưu Thông Tin'}
                         </Button>
                     </footer>
                 )}

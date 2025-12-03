@@ -557,6 +557,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 activeView={activeView}
                 setActiveView={setActiveView}
                 isCurrentUserAdmin={isCurrentUserAdmin}
+                currentUser={currentUser}
+                userRole={userRole}
+                onLogout={onLogout}
+                setIsChangePasswordModalOpen={setIsChangePasswordModalOpen}
             />
         </>
     );
