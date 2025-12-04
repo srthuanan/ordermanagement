@@ -106,12 +106,14 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
 
     const selectedRequest = useMemo(() => requests.find(r => r['Số đơn hàng'] === selectedRequestId), [requests, selectedRequestId]);
 
-    // Auto-select first request if none selected or folder changes
+    // Auto-select first request if none selected or folder changes (Robust version)
     useEffect(() => {
         if (filteredRequests.length > 0) {
-            onRequestSelect(filteredRequests[0]['Số đơn hàng']);
+            const firstId = filteredRequests[0]['Số đơn hàng'];
+            onRequestSelect(firstId);
         }
-    }, [selectedFolder, onRequestSelect]); // Trigger on folder change
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filteredRequests]);
 
     // Ensure selection on initial load if nothing selected
     useEffect(() => {
@@ -251,7 +253,7 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
                                 <div
                                     key={req['Số đơn hàng']}
                                     onClick={() => handleRequestClick(req['Số đơn hàng'])}
-                                    className={`px-3 py-2 cursor-pointer hover:bg-surface-hover transition-colors flex items-center justify-between ${selectedRequestId === req['Số đơn hàng'] ? 'bg-accent-primary/5 border-l-4 border-accent-primary' : 'border-l-4 border-transparent'}`}
+                                    className={`px-3 py-2 cursor-pointer hover:bg-surface-hover transition-all duration-200 flex items-center justify-between ${selectedRequestId === req['Số đơn hàng'] ? 'bg-accent-primary/10 border-l-4 border-accent-primary shadow-inner' : 'border-l-4 border-transparent'}`}
                                 >
                                     <span className="text-text-primary text-sm truncate pr-2">{req['Tên khách hàng']}</span>
                                     <div className="flex-shrink-0">

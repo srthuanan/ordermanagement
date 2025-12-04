@@ -77,8 +77,8 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full md:max-w-lg h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
-                <div className={`h-1.5 rounded-t-2xl ${currentTheme.barBg}`}></div>
+            <div className="bg-surface-card w-full md:max-w-lg h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
+                <div className={`h-1.5 rounded-t-none md:rounded-t-2xl ${currentTheme.barBg} flex-shrink-0`}></div>
                 <header className="flex items-start justify-between p-3">
                     <div className="flex items-start gap-2">
                         <div className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${currentTheme.iconBg}`}>
@@ -108,7 +108,7 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                         )}
                     </div>
                 </main>
-                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-b-2xl border-t border-border-primary">
+                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-none md:rounded-b-2xl border-t border-border-primary flex-shrink-0">
                     <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
                         <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
                     </div>
@@ -155,8 +155,8 @@ export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, 
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full md:max-w-lg h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
-                <div className="h-1.5 rounded-t-2xl bg-success"></div>
+            <div className="bg-surface-card w-full md:max-w-lg h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
+                <div className="h-1.5 rounded-t-none md:rounded-t-2xl bg-success flex-shrink-0"></div>
                 <header className="flex items-start justify-between p-3">
                     <div className="flex items-start gap-2">
                         <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-success-bg">
@@ -178,7 +178,7 @@ export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, 
                         accept=".pdf,.jpeg,.png,.jpg"
                     />
                 </main>
-                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-b-2xl border-t border-border-primary">
+                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-none md:rounded-b-2xl border-t border-border-primary flex-shrink-0">
                     <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
                         <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
                     </div>
@@ -230,8 +230,8 @@ export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = (
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full md:max-w-md h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up" onClick={e => e.stopPropagation()} style={bgStyle}>
-                <div className="h-1.5 rounded-t-2xl bg-accent-secondary"></div>
+            <div className="bg-surface-card w-full md:max-w-md h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
+                <div className="h-1.5 rounded-t-none md:rounded-t-2xl bg-accent-secondary flex-shrink-0"></div>
                 <header className="flex items-start justify-between p-3">
                     <div className="flex items-start gap-2">
                         <div className="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-blue-100">
@@ -276,7 +276,7 @@ export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = (
                         />
                     </div>
                 </main>
-                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-b-2xl border-t border-border-primary">
+                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-none md:rounded-b-2xl border-t border-border-primary flex-shrink-0">
                     <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
                         <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
                     </div>

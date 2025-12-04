@@ -113,11 +113,11 @@ const ActionModal: React.FC<ActionModalProps> = ({
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div
-                className="bg-surface-card w-full md:max-w-md h-[100dvh] md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
+                className="bg-surface-card w-full md:max-w-md h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
                 onClick={e => e.stopPropagation()}
                 style={bgStyle}
             >
-                <div className={`h-1.5 rounded-t-2xl ${selectedColor.bg}`}></div>
+                <div className={`h-1.5 rounded-t-none md:rounded-t-2xl ${selectedColor.bg} flex-shrink-0`}></div>
 
                 <header className="p-3 flex items-start gap-2">
                     <div className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg ${selectedColor.iconBg}`}>
@@ -179,7 +179,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
                         </div>
                     )}
                 </main>
-                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-b-2xl border-t border-border-primary">
+                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-none md:rounded-b-2xl border-t border-border-primary flex-shrink-0">
                     <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
                         <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
                     </div>

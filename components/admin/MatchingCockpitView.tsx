@@ -68,13 +68,14 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
 
     const selectedOrder = useMemo(() => filteredOrders.find(o => o['Số đơn hàng'] === selectedOrderId), [filteredOrders, selectedOrderId]);
 
-    // Auto-select first order if none selected or tab changes
+    // Auto-select first order if none selected or tab changes (Robust version)
     useEffect(() => {
         if (filteredOrders.length > 0) {
             const firstId = filteredOrders[0]['Số đơn hàng'];
-            if (firstId) onOrderSelect(firstId);
+            onOrderSelect(firstId);
         }
-    }, [activeTab, onOrderSelect]); // Trigger on tab change
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filteredOrders]);
 
     // Ensure selection on initial load if nothing selected
     useEffect(() => {
@@ -227,7 +228,7 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
                                     <div
                                         key={order['Số đơn hàng']}
                                         onClick={() => handleOrderClick(order['Số đơn hàng'])}
-                                        className={`p-3 cursor-pointer transition-all relative group ${isSelected ? 'bg-accent-primary/5 border-l-4 border-accent-primary' : 'hover:bg-surface-hover border-l-4 border-transparent'}`}
+                                        className={`p-3 cursor-pointer transition-all duration-200 relative group ${isSelected ? 'bg-accent-primary/10 border-l-4 border-accent-primary shadow-inner' : 'hover:bg-surface-hover border-l-4 border-transparent'}`}
                                     >
                                         {isPending ? (
                                             // PENDING ORDER LAYOUT

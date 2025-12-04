@@ -199,25 +199,14 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
 
     const selectedOrder = useMemo(() => orders.find(o => o['Số đơn hàng'] === selectedOrderId), [orders, selectedOrderId]);
 
-    // Auto-select first order if none selected
-    // Auto-select first order if none selected or folder changes
+    // Auto-select first order if none selected or folder changes (Robust version)
     useEffect(() => {
         if (filteredOrders.length > 0) {
             const firstId = filteredOrders[0]['Số đơn hàng'];
-            // Select if no order is selected OR if the folder changed (we want to reset selection to top)
-            // Note: We use a ref to track previous folder if we want to be strict, 
-            // but simply running this effect when selectedFolder changes is enough.
-            if (firstId) onOrderSelect(firstId);
+            onOrderSelect(firstId);
         }
-    }, [selectedFolder, onOrderSelect]); // Trigger on folder change
-
-    // Ensure selection on initial load or filter change if nothing selected
-    useEffect(() => {
-        if (!selectedOrderId && filteredOrders.length > 0) {
-            const firstId = filteredOrders[0]['Số đơn hàng'];
-            if (firstId) onOrderSelect(firstId);
-        }
-    }, [filteredOrders, selectedOrderId, onOrderSelect]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filteredOrders]);
 
     // Sync edit data
     useEffect(() => {
@@ -356,7 +345,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                 <div
                                     key={order['Số đơn hàng']}
                                     onClick={() => handleOrderSelect(order['Số đơn hàng'])}
-                                    className={`p-3 cursor-pointer hover:bg-surface-hover transition-colors group ${selectedOrderId === order['Số đơn hàng'] ? 'bg-accent-primary/5 border-l-4 border-accent-primary' : 'border-l-4 border-transparent'}`}
+                                    className={`p-3 cursor-pointer hover:bg-surface-hover transition-all duration-200 group ${selectedOrderId === order['Số đơn hàng'] ? 'bg-accent-primary/10 border-l-4 border-accent-primary shadow-inner' : 'border-l-4 border-transparent'}`}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex-1 min-w-0 pr-3">
