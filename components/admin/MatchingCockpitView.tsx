@@ -68,7 +68,15 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
 
     const selectedOrder = useMemo(() => filteredOrders.find(o => o['Số đơn hàng'] === selectedOrderId), [filteredOrders, selectedOrderId]);
 
-    // Auto-select first order
+    // Auto-select first order if none selected or tab changes
+    useEffect(() => {
+        if (filteredOrders.length > 0) {
+            const firstId = filteredOrders[0]['Số đơn hàng'];
+            if (firstId) onOrderSelect(firstId);
+        }
+    }, [activeTab, onOrderSelect]); // Trigger on tab change
+
+    // Ensure selection on initial load if nothing selected
     useEffect(() => {
         if (!selectedOrderId && filteredOrders.length > 0) {
             const firstId = filteredOrders[0]['Số đơn hàng'];

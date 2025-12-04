@@ -5,11 +5,11 @@ import StatusBadge from '../ui/StatusBadge';
 import CarImage from '../ui/CarImage';
 import PdfThumbnail from '../ui/PdfThumbnail';
 import Button from '../ui/Button';
-import { toEmbeddableUrl, getDriveFileId } from '../../utils/imageUtils';
+import { toEmbeddableUrl, getDriveFileId, toDownloadableUrl } from '../../utils/imageUtils';
 
 interface InvoiceInboxViewProps {
     orders: Order[];
-    onAction: (type: ActionType, order: Order) => void;
+    onAction: (type: ActionType, order: Order, data?: any) => void;
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     onOpenFilePreview: (url: string, label: string) => void;
     onUpdateInvoiceDetails?: (orderNumber: string, data: { engineNumber: string; policy: string; po: string }) => Promise<boolean>;
@@ -144,7 +144,21 @@ const DocumentThumbnail: React.FC<{
                     <span className={`text-[10px] px-2 py-0.5 rounded-full ${url ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
                         {url ? 'Đã có file' : 'Chưa có'}
                     </span>
-                    {url && <i className="fas fa-external-link-alt text-xs text-text-placeholder group-hover:text-accent-primary transition-colors"></i>}
+                    {url && (
+                        <div className="flex items-center gap-2">
+                            <a
+                                href={toDownloadableUrl(url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-text-placeholder hover:text-accent-primary transition-colors"
+                                title="Tải xuống"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <i className="fas fa-download text-xs"></i>
+                            </a>
+                            <i className="fas fa-external-link-alt text-xs text-text-placeholder group-hover:text-accent-primary transition-colors"></i>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -155,6 +169,16 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [editData, setEditData] = useState({ engineNumber: '', policy: '', po: '' });
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file && selectedOrder) {
+            onAction('uploadInvoice', selectedOrder, { file });
+        }
+        // Reset input value to allow selecting the same file again
+        if (event.target) event.target.value = '';
+    };
 
     // 1. Filter Orders by Folder
     const filteredOrders = useMemo(() => {
@@ -176,6 +200,18 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
     const selectedOrder = useMemo(() => orders.find(o => o['Số đơn hàng'] === selectedOrderId), [orders, selectedOrderId]);
 
     // Auto-select first order if none selected
+    // Auto-select first order if none selected or folder changes
+    useEffect(() => {
+        if (filteredOrders.length > 0) {
+            const firstId = filteredOrders[0]['Số đơn hàng'];
+            // Select if no order is selected OR if the folder changed (we want to reset selection to top)
+            // Note: We use a ref to track previous folder if we want to be strict, 
+            // but simply running this effect when selectedFolder changes is enough.
+            if (firstId) onOrderSelect(firstId);
+        }
+    }, [selectedFolder, onOrderSelect]); // Trigger on folder change
+
+    // Ensure selection on initial load or filter change if nothing selected
     useEffect(() => {
         if (!selectedOrderId && filteredOrders.length > 0) {
             const firstId = filteredOrders[0]['Số đơn hàng'];
@@ -218,7 +254,14 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
             { type: 'approve', label: 'Phê Duyệt', icon: 'fa-check-double', variant: 'primary', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
             { type: 'supplement', label: 'Yêu Cầu Bổ Sung', icon: 'fa-exclamation-triangle', variant: 'secondary', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
             { type: 'pendingSignature', label: 'Chuyển Chờ Ký', icon: 'fa-signature', variant: 'primary', condition: s === 'đã phê duyệt' },
-            { type: 'uploadInvoice', label: 'Tải Lên Hóa Đơn', icon: 'fa-upload', variant: 'success', condition: s === 'chờ ký hóa đơn' },
+            {
+                type: 'uploadInvoice',
+                label: 'Tải Lên Hóa Đơn',
+                icon: 'fa-upload',
+                variant: 'success',
+                condition: s === 'chờ ký hóa đơn',
+                onClick: () => fileInputRef.current?.click()
+            },
             { type: 'resend', label: 'Gửi Lại Email', icon: 'fa-paper-plane', variant: 'secondary', condition: s === 'yêu cầu bổ sung' || s === 'đã xuất hóa đơn' },
             { type: 'cancel', label: 'Hủy Yêu Cầu', icon: 'fa-trash-alt', variant: 'danger', condition: s !== 'đã xuất hóa đơn' && s !== 'đã hủy' },
         ].filter(a => a.condition);
@@ -389,7 +432,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                     {getActions(selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || '').map(action => (
                                         <Button
                                             key={action.type}
-                                            onClick={() => onAction(action.type as any, selectedOrder)}
+                                            onClick={action.onClick ? action.onClick : () => onAction(action.type as any, selectedOrder)}
                                             variant={action.variant as any}
                                             size="sm"
                                             leftIcon={<i className={`fas ${action.icon}`}></i>}
@@ -543,6 +586,13 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                         </div>
                     )}
             </div >
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept=".pdf,.jpeg,.png,.jpg"
+                onChange={handleFileChange}
+            />
         </div >
     );
 };

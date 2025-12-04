@@ -137,10 +137,11 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
 
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full md:max-w-4xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
-                <header className="flex-shrink-0 p-2.5 border-b border-border-primary flex justify-between items-center">
+            <div className="bg-surface-card w-full md:max-w-4xl h-full md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
+                <div className="h-1.5 rounded-t-none md:rounded-t-2xl bg-accent-primary flex-shrink-0"></div>
+                <header className="flex-shrink-0 p-3 border-b border-border-primary flex justify-between items-center">
                     <h2 className="text-xl font-bold text-text-primary">Tải Lên Hóa Đơn Hàng Loạt</h2>
-                    <button onClick={handleClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover"><i className="fas fa-times"></i></button>
+                    <button onClick={handleClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover -mt-1 -mr-1"><i className="fas fa-times"></i></button>
                 </header>
                 <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0">
                     <div onDragEnter={handleDrag} onDragOver={handleDrag} onDragLeave={handleDrag} onDrop={handleDrop} className="w-full">
@@ -177,7 +178,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                         </div>
                     )}
                 </main>
-                <footer className="flex-shrink-0 p-2 border-t border-border-primary flex justify-end items-center gap-1.5 bg-surface-ground rounded-b-2xl">
+                <footer className="flex-shrink-0 px-3 py-2 border-t border-border-primary flex justify-end items-center gap-1.5 bg-surface-ground rounded-none md:rounded-b-2xl">
                     <div onClick={!isUploading ? handleClose : undefined} title="Hủy" className={`cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
                         <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
                     </div>

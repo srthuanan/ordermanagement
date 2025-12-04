@@ -106,7 +106,14 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
 
     const selectedRequest = useMemo(() => requests.find(r => r['Số đơn hàng'] === selectedRequestId), [requests, selectedRequestId]);
 
-    // Auto-select first request if none selected
+    // Auto-select first request if none selected or folder changes
+    useEffect(() => {
+        if (filteredRequests.length > 0) {
+            onRequestSelect(filteredRequests[0]['Số đơn hàng']);
+        }
+    }, [selectedFolder, onRequestSelect]); // Trigger on folder change
+
+    // Ensure selection on initial load if nothing selected
     useEffect(() => {
         if (!selectedRequestId && filteredRequests.length > 0) {
             onRequestSelect(filteredRequests[0]['Số đơn hàng']);

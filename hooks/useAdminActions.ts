@@ -131,6 +131,31 @@ export const useAdminActions = ({
             if (orderToRequest) {
                 showToast('Chức năng đang phát triển', 'Yêu cầu xuất hóa đơn từ Admin Panel sẽ sớm được cập nhật.', 'info');
             }
+        } else if (type === 'approve') {
+            handleAdminSubmit(
+                'approveSelectedInvoiceRequest',
+                { orderNumbers: JSON.stringify([order['Số đơn hàng']]) },
+                'Đã phê duyệt yêu cầu.'
+            );
+        } else if (type === 'pendingSignature') {
+            handleAdminSubmit(
+                'markAsPendingSignature',
+                { orderNumbers: JSON.stringify([order['Số đơn hàng']]) },
+                'Đã chuyển trạng thái.'
+            );
+        } else if (type === 'uploadInvoice' && data?.file) {
+            const file = data.file as File;
+            const fileToBase64 = (f: File): Promise<string> => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res((r.result as string).split(',')[1]); r.onerror = e => rej(e); });
+
+            fileToBase64(file).then(base64Data => {
+                handleAdminSubmit(
+                    'handleBulkUploadIssuedInvoices',
+                    { filesData: JSON.stringify([{ orderNumber: order['Số đơn hàng'], base64Data, mimeType: file.type, fileName: file.name }]) },
+                    'Đã tải lên hóa đơn thành công.'
+                );
+            }).catch(err => {
+                showToast('Lỗi', 'Không thể đọc file.', 'error');
+            });
         } else if (type === 'edit') {
             setEditingOrder(order as Order);
         } else {
