@@ -113,7 +113,7 @@ const DocumentThumbnail: React.FC<{
             onClick={() => url && onPreview()}
         >
             <div className={`w-full h-24 md:h-40 flex items-center justify-center overflow-hidden border-b border-border-secondary relative ${url ? 'bg-white' : 'bg-gray-100'}`}>
-                {fileType === 'pdf' && url ? (
+                {(fileType === 'pdf' || (fileType === 'drive' && label.toLowerCase().includes('pdf'))) && url ? (
                     <PdfThumbnail url={url} width={200} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                 ) : useIframe && drivePreviewUrl ? (
                     <>
