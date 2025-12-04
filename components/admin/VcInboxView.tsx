@@ -113,7 +113,7 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({ requests, onAction, showToast
             onRequestSelect(firstId);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filteredRequests]);
+    }, [selectedFolder]);
 
     // Ensure selection on initial load if nothing selected
     useEffect(() => {

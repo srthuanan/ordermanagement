@@ -206,7 +206,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
             onOrderSelect(firstId);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filteredOrders]);
+    }, [selectedFolder]);
 
     // Sync edit data
     useEffect(() => {

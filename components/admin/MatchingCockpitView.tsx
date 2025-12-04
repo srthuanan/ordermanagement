@@ -75,7 +75,7 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({ pendingOrders
             onOrderSelect(firstId);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filteredOrders]);
+    }, [activeTab]);
 
     // Ensure selection on initial load if nothing selected
     useEffect(() => {
