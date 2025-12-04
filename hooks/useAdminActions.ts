@@ -153,7 +153,7 @@ export const useAdminActions = ({
                     { filesData: JSON.stringify([{ orderNumber: order['Số đơn hàng'], base64Data, mimeType: file.type, fileName: file.name }]) },
                     'Đã tải lên hóa đơn thành công.'
                 );
-            }).catch(err => {
+            }).catch(() => {
                 showToast('Lỗi', 'Không thể đọc file.', 'error');
             });
         } else if (type === 'edit') {
