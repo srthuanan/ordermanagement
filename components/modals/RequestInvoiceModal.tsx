@@ -119,7 +119,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     }, [filteredSalesPolicies]);
 
 
-    const isStep1Valid = policy.length > 0 && commission && parseFloat(commission) >= 0;
+    const isStep1Valid = policy.length > 0 && commission && parseFloat(commission) >= 0 && vpoint && parseFloat(vpoint) >= 0;
     const isStep2Valid = contractFile && proposalFile;
     const isStep3Valid = vinClubConfirmed;
     const isFormValid = isStep1Valid && isStep2Valid && isStep3Valid;
@@ -138,13 +138,13 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
     return (
         <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full md:max-w-4xl h-[100dvh] md:h-auto md:max-h-[95vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
-                <header className="relative flex-shrink-0 flex flex-col items-center justify-center p-6 text-center border-b border-border-primary">
+            <div className="bg-surface-card w-full md:max-w-4xl h-[100dvh] md:h-[700px] md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
+                <header className="relative flex-shrink-0 flex flex-col items-center justify-center p-4 text-center border-b border-border-primary">
                     <div className="animate-fade-in-down">
-                        <h2 className="text-xl font-bold text-gradient">Yêu Cầu Xuất Hóa Đơn</h2>
-                        <p className="text-sm text-text-secondary mt-1">Cung cấp chứng từ để tiến hành xuất hóa đơn.</p>
+                        <h2 className="text-lg font-bold text-gradient uppercase">YÊU CẦU XUẤT HÓA ĐƠN</h2>
+                        <p className="text-xs text-text-secondary mt-0.5">Cung cấp chứng từ để tiến hành xuất hóa đơn.</p>
                     </div>
-                    <button onClick={onClose} className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover">
+                    <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover">
                         <i className="fas fa-times"></i>
                     </button>
                 </header>
@@ -153,10 +153,33 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     <div className="flex-grow overflow-y-auto p-4 md:p-6 custom-scrollbar">
                         <Stepper currentStep={step} />
 
-                        <div className="p-3 bg-surface-ground rounded-lg border border-border-primary space-y-2 mb-6">
-                            <InfoRow label="Số đơn hàng" value={order["Số đơn hàng"]} icon="fa-barcode" isMono />
-                            <InfoRow label="Khách hàng" value={order["Tên khách hàng"]} icon="fa-user" />
-                            <InfoRow label="Số VIN" value={order.VIN || 'N/A'} icon="fa-car" isMono />
+                        <div className="bg-surface-accent/50 rounded-xl border border-accent-primary/20 p-2.5 mb-4 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <i className="fas fa-file-invoice-dollar text-5xl text-accent-primary transform rotate-12"></i>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 relative z-10">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] uppercase tracking-wider text-text-secondary font-semibold mb-0.5">Số đơn hàng</span>
+                                    <div className="flex items-center gap-1.5 text-accent-primary">
+                                        <i className="fas fa-barcode text-base opacity-70"></i>
+                                        <span className="text-base font-bold font-mono tracking-tight">{order["Số đơn hàng"]}</span>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col md:border-l md:border-accent-primary/20 md:pl-3">
+                                    <span className="text-[10px] uppercase tracking-wider text-text-secondary font-semibold mb-0.5">Khách hàng</span>
+                                    <div className="flex items-center gap-1.5 text-text-primary">
+                                        <i className="fas fa-user text-base text-accent-secondary opacity-70"></i>
+                                        <span className="text-base font-bold truncate" title={order["Tên khách hàng"]}>{order["Tên khách hàng"]}</span>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col md:border-l md:border-accent-primary/20 md:pl-3">
+                                    <span className="text-[10px] uppercase tracking-wider text-text-secondary font-semibold mb-0.5">Số VIN</span>
+                                    <div className="flex items-center gap-1.5 text-text-primary">
+                                        <i className="fas fa-car text-base text-accent-secondary opacity-70"></i>
+                                        <span className="text-base font-bold font-mono tracking-tight">{order.VIN || '---'}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div style={{ display: step === 1 ? 'block' : 'none' }}>
@@ -202,30 +225,32 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                         </div>
                                     )}
                                 </div>
-                                <div>
-                                    <label htmlFor="commission-amount" className="block text-sm font-medium text-text-primary mb-2">
-                                        Hoa hồng ứng trước (VND) <span className="text-danger">*</span>
-                                    </label>
-                                    <input id="commission-amount" type="number" value={commission} onChange={(e) => setCommission(e.target.value)}
-                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
-                                        placeholder="Nhập số tiền" min="0" required
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="vpoint-amount" className="block text-sm font-medium text-text-primary mb-2">
-                                        Số điểm Vpoint sử dụng (Điểm)
-                                    </label>
-                                    <input id="vpoint-amount" type="number" value={vpoint} onChange={(e) => setVpoint(e.target.value)}
-                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
-                                        placeholder="Nhập số điểm (nếu có)" min="0"
-                                    />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label htmlFor="commission-amount" className="block text-sm font-medium text-text-primary mb-2">
+                                            Hoa hồng ứng trước (VND) <span className="text-danger">*</span>
+                                        </label>
+                                        <input id="commission-amount" type="number" value={commission} onChange={(e) => setCommission(e.target.value)}
+                                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
+                                            placeholder="Nhập số tiền" min="0" required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="vpoint-amount" className="block text-sm font-medium text-text-primary mb-2">
+                                            Số điểm Vpoint sử dụng (Điểm) <span className="text-danger">*</span>
+                                        </label>
+                                        <input id="vpoint-amount" type="number" value={vpoint} onChange={(e) => setVpoint(e.target.value)}
+                                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
+                                            placeholder="Nhập số điểm" min="0" required
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div style={{ display: step === 2 ? 'block' : 'none' }}>
                             <h3 className="font-semibold text-text-primary text-base mb-3">2. Tải lên chứng từ</h3>
-                            <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <SimpleFileUpload id="hop_dong_file_input" label="Hợp đồng mua bán" onFileSelect={setContractFile} required accept=".pdf" />
                                 <SimpleFileUpload id="denghi_xhd_file_input" label="Đề nghị xuất hóa đơn" onFileSelect={setProposalFile} required accept=".pdf" />
                             </div>
@@ -233,35 +258,61 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
                         <div style={{ display: step === 3 ? 'block' : 'none' }}>
                             <h3 className="font-semibold text-text-primary text-base mb-3">3. Xác nhận cuối cùng</h3>
-                            <div className="p-4 bg-surface-ground rounded-lg border border-border-primary space-y-3 mb-4">
-                                <div>
-                                    <p className="text-xs text-text-secondary">Chính sách bán hàng</p>
-                                    <p className="font-semibold text-text-primary">{policy.join(', ') || 'Chưa chọn'}</p>
-                                </div>
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <p className="text-xs text-text-secondary">Hoa hồng ứng trước</p>
-                                        <p className="font-semibold text-text-primary">{commission ? `${parseInt(commission).toLocaleString('vi-VN')} VND` : 'Chưa nhập'}</p>
+                            <div className="p-4 bg-surface-ground rounded-lg border border-border-primary mb-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Left Column: Policy */}
+                                    <div className="flex flex-col h-full">
+                                        <p className="text-xs text-text-secondary mb-1.5 font-semibold uppercase">Chính sách bán hàng</p>
+                                        {policy.length > 0 ? (
+                                            <div className="bg-surface-card rounded-md border border-border-secondary divide-y divide-border-secondary/50 flex-grow overflow-y-auto custom-scrollbar shadow-sm min-h-[120px]">
+                                                {policy.map((p, idx) => (
+                                                    <div key={idx} className="p-2.5 text-sm font-medium text-text-primary flex items-start hover:bg-surface-hover transition-colors">
+                                                        <i className="fas fa-check-circle text-success mt-0.5 mr-2.5 flex-shrink-0"></i>
+                                                        <span className="leading-tight">{p}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="bg-surface-card rounded-md border border-border-secondary flex items-center justify-center flex-grow min-h-[120px]">
+                                                <p className="font-semibold text-text-placeholder italic">Chưa chọn chính sách nào</p>
+                                            </div>
+                                        )}
                                     </div>
-                                    {vpoint && (
-                                        <div className="text-right">
-                                            <p className="text-xs text-text-secondary">Vpoint sử dụng</p>
-                                            <p className="font-semibold text-purple-600">{`${parseInt(vpoint).toLocaleString('vi-VN')} điểm`}</p>
+
+                                    {/* Right Column: Financials & Files */}
+                                    <div className="flex flex-col gap-4">
+                                        {/* Financials */}
+                                        <div className="bg-surface-card p-3 rounded-md border border-border-secondary shadow-sm">
+                                            <p className="text-xs text-text-secondary mb-2 font-semibold uppercase border-b border-border-secondary pb-1">Thông tin thanh toán</p>
+                                            <div className="space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-text-secondary">Hoa hồng ứng:</span>
+                                                    <span className="font-bold text-text-primary">{commission ? `${parseInt(commission).toLocaleString('vi-VN')} VND` : 'Chưa nhập'}</span>
+                                                </div>
+                                                {vpoint && (
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-sm text-text-secondary">Vpoint sử dụng:</span>
+                                                        <span className="font-bold text-purple-600">{`${parseInt(vpoint).toLocaleString('vi-VN')} điểm`}</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-xs text-text-secondary">Tệp đã tải lên</p>
-                                    <ul className="list-none text-sm text-text-primary space-y-1 mt-1">
-                                        <li className={contractFile ? 'text-success' : 'text-danger'}>
-                                            <i className={`fas ${contractFile ? 'fa-check-circle' : 'fa-times-circle'} mr-2`}></i>
-                                            Hợp đồng: {contractFile?.name || 'Chưa có'}
-                                        </li>
-                                        <li className={proposalFile ? 'text-success' : 'text-danger'}>
-                                            <i className={`fas ${proposalFile ? 'fa-check-circle' : 'fa-times-circle'} mr-2`}></i>
-                                            Đề nghị XHD: {proposalFile?.name || 'Chưa có'}
-                                        </li>
-                                    </ul>
+
+                                        {/* Files */}
+                                        <div className="bg-surface-card p-3 rounded-md border border-border-secondary shadow-sm flex-grow">
+                                            <p className="text-xs text-text-secondary mb-2 font-semibold uppercase border-b border-border-secondary pb-1">Tệp đính kèm</p>
+                                            <ul className="list-none text-sm text-text-primary space-y-2">
+                                                <li className={`flex items-center ${contractFile ? 'text-text-primary' : 'text-danger'}`}>
+                                                    <i className={`fas ${contractFile ? 'fa-file-contract text-success' : 'fa-times-circle'} mr-2 w-4 text-center`}></i>
+                                                    <span className="truncate flex-1" title={contractFile?.name}>{contractFile?.name || 'Thiếu Hợp đồng'}</span>
+                                                </li>
+                                                <li className={`flex items-center ${proposalFile ? 'text-text-primary' : 'text-danger'}`}>
+                                                    <i className={`fas ${proposalFile ? 'fa-file-invoice text-success' : 'fa-times-circle'} mr-2 w-4 text-center`}></i>
+                                                    <span className="truncate flex-1" title={proposalFile?.name}>{proposalFile?.name || 'Thiếu Đề nghị XHD'}</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
