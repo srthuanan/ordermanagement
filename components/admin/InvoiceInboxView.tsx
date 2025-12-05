@@ -138,7 +138,7 @@ const DocumentThumbnail: React.FC<{
                 )}
             </div>
 
-            <div className="p-2 md:p-3">
+            <div className="px-2 py-0.5 md:px-3 md:py-1">
                 <div className="font-bold text-xs md:text-sm text-text-primary truncate mb-1" title={label}>{label}</div>
                 <div className="flex items-center justify-between">
                     <span className={`text-[10px] px-2 py-0.5 rounded-full ${url ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
@@ -438,7 +438,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                             < div className="flex-1 overflow-y-auto p-2 custom-scrollbar" >
                                 <div className="max-w-5xl mx-auto space-y-2">
                                     {/* Status Card */}
-                                    <div className="bg-white rounded-lg border border-border-primary px-4 py-3 flex items-center justify-between shadow-sm">
+                                    <div className="bg-white rounded-lg border border-border-primary px-3 py-2 flex items-center justify-between shadow-sm">
                                         <div className="flex items-center gap-3">
                                             <div className="text-xs text-text-secondary">Trạng thái:</div>
                                             <StatusBadge status={selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || ''} size="sm" />
@@ -451,10 +451,10 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
 
                                     {/* Vehicle Info */}
                                     <div className="bg-white rounded-lg border border-border-primary shadow-sm">
-                                        <div className="bg-gray-100 px-3 py-2 border-b border-border-secondary">
+                                        <div className="bg-gray-100 px-3 py-1.5 border-b border-border-secondary">
                                             <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Thông Tin Xe</h3>
                                         </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-3">
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 p-2">
                                             <div>
                                                 <label className="text-[10px] text-text-secondary block mb-0.5 uppercase">Dòng xe / Phiên bản</label>
                                                 <div className="text-sm font-medium truncate" title={`${selectedOrder['Dòng xe']} - ${selectedOrder['Phiên bản']}`}>{selectedOrder['Dòng xe']} - {selectedOrder['Phiên bản']}</div>
@@ -482,16 +482,13 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                {/* Policy & PO & Documents Grid */}
-                                <div className="flex flex-col gap-2 mt-2">
+                                    {/* Policy & PO & Documents Grid */}
                                     {/* Top Row: Policy & PO */}
                                     {/* Combined Policy & PO Card */}
                                     {/* Combined Policy & PO Card */}
                                     {/* Combined Policy & PO Card */}
                                     <div className="bg-white rounded-lg border border-border-primary shadow-sm">
-                                        <div className="bg-gray-100 px-3 py-2 border-b border-border-secondary flex justify-between items-center rounded-t-lg">
+                                        <div className="bg-gray-100 px-3 py-1.5 border-b border-border-secondary flex justify-between items-center rounded-t-lg">
                                             <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Thanh Toán & Chính Sách</h3>
                                             {!isEditing ? (
                                                 <Button onClick={() => setIsEditing(true)} variant="ghost" size="sm" className="!p-1 h-auto text-accent-primary hover:text-accent-primary-hover" leftIcon={<i className="fas fa-edit"></i>}>
@@ -520,8 +517,36 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                                         placeholder="Nhập nội dung chính sách..."
                                                     />
                                                 ) : (
-                                                    <div className="text-xs whitespace-pre-wrap bg-surface-ground p-2 rounded border border-border-secondary flex-1 min-h-[80px] leading-tight overflow-y-auto max-h-[120px]">
-                                                        {selectedOrder['CHÍNH SÁCH'] || 'Không có chính sách'}
+                                                    <div className="text-xs bg-surface-ground rounded border border-border-secondary flex-1 min-h-[60px] max-h-[100px] overflow-y-auto">
+                                                        {(() => {
+                                                            const policyTxt = selectedOrder['CHÍNH SÁCH'];
+                                                            if (!policyTxt) return <div className="p-2 text-gray-400">Không có chính sách</div>;
+                                                            const items = String(policyTxt).split(', ').filter(i => i.trim());
+                                                            const mid = Math.ceil(items.length / 2);
+                                                            const left = items.slice(0, mid);
+                                                            const right = items.slice(mid);
+
+                                                            return (
+                                                                <div className="grid grid-cols-2 h-full divide-x divide-border-secondary">
+                                                                    <div className="flex flex-col gap-1 p-2">
+                                                                        {left.map((item, idx) => (
+                                                                            <div key={`l-${idx}`} className="leading-tight flex items-start">
+                                                                                <span className="mr-1.5 font-bold text-text-secondary">-</span>
+                                                                                <span>{item}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                    <div className="flex flex-col gap-1 p-2">
+                                                                        {right.map((item, idx) => (
+                                                                            <div key={`r-${idx}`} className="leading-tight flex items-start">
+                                                                                <span className="mr-1.5 font-bold text-text-secondary">-</span>
+                                                                                <span>{item}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })()}
                                                     </div>
                                                 )}
                                             </div>
@@ -579,10 +604,10 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
 
                                     {/* Bottom Row: Documents */}
                                     <div className="bg-white rounded-lg border border-border-primary shadow-sm flex flex-col h-full">
-                                        <div className="bg-gray-100 px-3 py-2 border-b border-border-secondary">
+                                        <div className="bg-gray-100 px-3 py-1.5 border-b border-border-secondary">
                                             <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Hồ Sơ Đính Kèm</h3>
                                         </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-3">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 p-2">
                                             {[{ key: 'LinkHopDong', label: 'Hợp đồng', icon: 'fa-file-contract' }, { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' }, { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Đã Xuất', icon: 'fa-file-invoice-dollar' }].map(file => {
                                                 const url = selectedOrder[file.key] as string | undefined;
                                                 return (
