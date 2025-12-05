@@ -96,7 +96,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         // Modal will handle the loading UI
 
         try {
-            const result = await apiService.requestInvoice(order["Số đơn hàng"], contractFile, proposalFile, policy.join(', '), commission, vpoint);
+            await apiService.requestInvoice(order["Số đơn hàng"], contractFile, proposalFile, policy.join(', '), commission, vpoint);
             await refetchHistory();
             hideToast();
             // showToast('Gửi Thành Công', result.message, 'success', 3000); // Removed as per user request
