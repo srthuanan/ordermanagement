@@ -198,13 +198,14 @@ interface EditInvoiceDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     order: Order;
-    onSubmit: (data: { engineNumber: string; policy: string; po: string }) => Promise<boolean>;
+    onSubmit: (data: { engineNumber: string; policy: string; commission: string; vpoint: string }) => Promise<boolean>;
 }
 
 export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = ({ isOpen, onClose, order, onSubmit }) => {
     const [engineNumber, setEngineNumber] = useState('');
     const [policy, setPolicy] = useState('');
-    const [po, setPo] = useState('');
+    const [commission, setCommission] = useState('');
+    const [vpoint, setVpoint] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const bgStyle = useModalBackground();
 
@@ -212,13 +213,14 @@ export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = (
         if (isOpen && order) {
             setEngineNumber(order["Số động cơ"] || '');
             setPolicy(order["CHÍNH SÁCH"] || '');
-            setPo(order["PO PIN"] || '');
+            setCommission(order["Hoa hồng ứng"] || '');
+            setVpoint(order["Điểm Vpoint sử dụng"] || '');
         }
     }, [isOpen, order]);
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
-        const success = await onSubmit({ engineNumber, policy, po });
+        const success = await onSubmit({ engineNumber, policy, commission, vpoint });
         if (success) {
             onClose();
         } else {
@@ -266,13 +268,23 @@ export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = (
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-text-primary mb-1">PO PIN</label>
+                        <label className="block text-sm font-medium text-text-primary mb-1">Hoa Hồng Ứng</label>
                         <input
                             type="text"
-                            value={po}
-                            onChange={e => setPo(e.target.value)}
+                            value={commission}
+                            onChange={e => setCommission(e.target.value)}
                             className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input"
-                            placeholder="Nhập PO..."
+                            placeholder="Nhập số tiền hoa hồng..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-text-primary mb-1">Điểm Vpoint Sử Dụng</label>
+                        <input
+                            type="text"
+                            value={vpoint}
+                            onChange={e => setVpoint(e.target.value)}
+                            className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 futuristic-input"
+                            placeholder="Nhập điểm Vpoint..."
                         />
                     </div>
                 </main>

@@ -490,55 +490,86 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                     {/* Combined Policy & PO Card */}
                                     {/* Combined Policy & PO Card */}
                                     <div className="bg-white rounded-lg border border-border-primary shadow-sm">
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 bg-gray-100 px-3 py-2 border-b border-border-secondary items-center rounded-t-lg">
-                                            <div className="md:col-span-2">
-                                                <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Thanh Toán & Chính Sách</h3>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">PO PIN</h3>
-                                                {!isEditing ? (
-                                                    <Button onClick={() => setIsEditing(true)} variant="ghost" size="sm" className="!p-1 h-auto text-accent-primary hover:text-accent-primary-hover" leftIcon={<i className="fas fa-edit"></i>}>
-                                                        Sửa
+                                        <div className="bg-gray-100 px-3 py-2 border-b border-border-secondary flex justify-between items-center rounded-t-lg">
+                                            <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Thanh Toán & Chính Sách</h3>
+                                            {!isEditing ? (
+                                                <Button onClick={() => setIsEditing(true)} variant="ghost" size="sm" className="!p-1 h-auto text-accent-primary hover:text-accent-primary-hover" leftIcon={<i className="fas fa-edit"></i>}>
+                                                    Sửa
+                                                </Button>
+                                            ) : (
+                                                <div className="flex gap-2">
+                                                    <Button onClick={handleSaveEdit} disabled={isSaving} variant="success" size="sm" className="!p-1 h-auto" leftIcon={<i className="fas fa-save"></i>}>
+                                                        Lưu
                                                     </Button>
-                                                ) : (
-                                                    <div className="flex gap-2">
-                                                        <Button onClick={handleSaveEdit} disabled={isSaving} variant="success" size="sm" className="!p-1 h-auto" leftIcon={<i className="fas fa-save"></i>}>
-                                                            Lưu
-                                                        </Button>
-                                                        <Button onClick={() => setIsEditing(false)} disabled={isSaving} variant="danger" size="sm" className="!p-1 h-auto" leftIcon={<i className="fas fa-times"></i>}>
-                                                            Hủy
-                                                        </Button>
-                                                    </div>
-                                                )}
-                                            </div>
+                                                    <Button onClick={() => setIsEditing(false)} disabled={isSaving} variant="danger" size="sm" className="!p-1 h-auto" leftIcon={<i className="fas fa-times"></i>}>
+                                                        Hủy
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 p-3">
-                                            {/* Policy Content */}
-                                            <div className="md:col-span-2">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 p-2">
+                                            {/* Left Column: Policy (Takes 2/3 width) */}
+                                            <div className="md:col-span-2 flex flex-col">
+                                                <label className="text-[10px] text-text-secondary block mb-0.5 uppercase font-semibold">Chính Sách</label>
                                                 {isEditing ? (
                                                     <textarea
                                                         value={editData.policy}
                                                         onChange={e => setEditData({ ...editData, policy: e.target.value })}
-                                                        rows={5}
-                                                        className="w-full text-xs border border-accent-primary rounded px-2 py-1"
+                                                        className="w-full text-xs border border-accent-primary rounded px-2 py-1.5 flex-1 min-h-[80px] resize-none focus:outline-none focus:ring-1 focus:ring-accent-primary leading-tight"
+                                                        placeholder="Nhập nội dung chính sách..."
                                                     />
                                                 ) : (
-                                                    <div className="text-xs whitespace-pre-wrap bg-surface-ground p-2 rounded border border-border-secondary">{selectedOrder['CHÍNH SÁCH'] || 'Không có'}</div>
+                                                    <div className="text-xs whitespace-pre-wrap bg-surface-ground p-2 rounded border border-border-secondary flex-1 min-h-[80px] leading-tight overflow-y-auto max-h-[120px]">
+                                                        {selectedOrder['CHÍNH SÁCH'] || 'Không có chính sách'}
+                                                    </div>
                                                 )}
                                             </div>
 
-                                            {/* PO PIN Content */}
-                                            <div className="flex flex-col">
-                                                <div className="flex-1 flex flex-col justify-center">
+                                            {/* Right Column: Financial Info (Takes 1/3 width) */}
+                                            <div className="flex flex-col gap-2">
+                                                {/* Commission */}
+                                                <div className="flex flex-col flex-1">
+                                                    <label className="text-[10px] text-text-secondary block mb-0.5 uppercase font-semibold">Hoa Hồng Ứng</label>
                                                     {isEditing ? (
                                                         <input
                                                             type="text"
-                                                            value={editData.po}
-                                                            onChange={e => setEditData({ ...editData, po: e.target.value })}
-                                                            className="w-full text-xs border border-accent-primary rounded px-2 py-1 font-mono"
+                                                            value={editData.commission}
+                                                            onChange={e => setEditData({ ...editData, commission: e.target.value })}
+                                                            className="w-full text-xs border border-accent-primary rounded px-2 py-1 font-semibold h-full focus:outline-none focus:ring-1 focus:ring-accent-primary"
+                                                            placeholder="Nhập số tiền..."
                                                         />
                                                     ) : (
-                                                        <CopyableField text={selectedOrder['PO PIN'] || ''} showToast={showToast} className="font-mono text-sm font-bold bg-surface-ground p-3 rounded border border-border-secondary block break-words text-center" wrap={true} />
+                                                        <div className="h-full">
+                                                            <CopyableField
+                                                                text={selectedOrder['Hoa hồng ứng'] ? (Number(String(selectedOrder['Hoa hồng ứng']).replace(/[^0-9]/g, '')).toLocaleString('en-US') + ' đ') : ''}
+                                                                showToast={showToast}
+                                                                className="text-xs font-bold bg-surface-ground p-0 rounded border border-border-secondary w-full h-full flex items-center justify-center text-green-600 hover:bg-surface-hover transition-colors"
+                                                                wrap={true}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Vpoint */}
+                                                <div className="flex flex-col flex-1">
+                                                    <label className="text-[10px] text-text-secondary block mb-0.5 uppercase font-semibold">Điểm Vpoint Sử Dụng</label>
+                                                    {isEditing ? (
+                                                        <input
+                                                            type="text"
+                                                            value={editData.vpoint}
+                                                            onChange={e => setEditData({ ...editData, vpoint: e.target.value })}
+                                                            className="w-full text-xs border border-accent-primary rounded px-2 py-1 font-semibold h-full focus:outline-none focus:ring-1 focus:ring-accent-primary"
+                                                            placeholder="Nhập điểm..."
+                                                        />
+                                                    ) : (
+                                                        <div className="h-full">
+                                                            <CopyableField
+                                                                text={selectedOrder['Điểm Vpoint sử dụng'] ? (Number(String(selectedOrder['Điểm Vpoint sử dụng']).replace(/[^0-9]/g, '')).toLocaleString('en-US') + ' Điểm') : ''}
+                                                                showToast={showToast}
+                                                                className="text-xs font-bold bg-surface-ground p-0 rounded border border-border-secondary w-full h-full flex items-center justify-center text-blue-600 hover:bg-surface-hover transition-colors"
+                                                                wrap={true}
+                                                            />
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>

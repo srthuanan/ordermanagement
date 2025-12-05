@@ -17,7 +17,7 @@ interface AdminInvoiceTableProps {
     onShowSuggestions?: (order: Order, cars: StockVehicle[]) => void;
     onOpenFilePreview: (url: string, label: string) => void;
     // New prop for inline editing
-    onUpdateInvoiceDetails?: (orderNumber: string, data: { engineNumber: string; policy: string; po: string }) => Promise<boolean>;
+    onUpdateInvoiceDetails?: (orderNumber: string, data: { engineNumber: string; policy: string; commission: string; vpoint: string }) => Promise<boolean>;
 }
 
 const SortableHeader: React.FC<{ colKey: keyof Order, title: string, sortConfig: SortConfig | null, onSort: (key: keyof Order) => void }> = ({ colKey, title, sortConfig, onSort }) => {
@@ -37,7 +37,7 @@ const CopyableField: React.FC<{ text: string; showToast: Function; className?: s
             showToast('Đã sao chép!', `${text} đã được sao chép.`, 'success', 2000);
         }).catch(() => showToast('Lỗi', 'Không thể sao chép.', 'error'));
     };
-    
+
     return (
         <div className={`cursor-pointer ${className}`} title={`Click để sao chép: ${text}`} onClick={handleCopy}>
             <span>{label ? `${label}: ` : ''}</span>
@@ -66,28 +66,28 @@ const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pendin
     }, [onToggle]);
 
     const s = status.toLowerCase();
-    
+
     const actions = (
         viewType === 'invoices'
             ? [
-                  { type: 'approve', label: 'Phê Duyệt', icon: 'fa-check-double', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
-                  { type: 'supplement', label: 'Y/C Bổ Sung', icon: 'fa-exclamation-triangle', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
-                  { type: 'pendingSignature', label: 'Chờ Ký HĐ', icon: 'fa-signature', condition: s === 'đã phê duyệt' },
-                  { type: 'uploadInvoice', label: 'Tải Lên HĐ', icon: 'fa-upload', condition: s === 'chờ ký hóa đơn' },
-                  { type: 'resend', label: 'Gửi lại Email', icon: 'fa-paper-plane', condition: s === 'yêu cầu bổ sung' || s === 'đã xuất hóa đơn' },
-                  { type: 'cancel', label: 'Hủy Yêu Cầu', icon: 'fa-trash-alt', isDanger: true, condition: s !== 'đã xuất hóa đơn' && s !== 'đã hủy' },
-              ]
+                { type: 'approve', label: 'Phê Duyệt', icon: 'fa-check-double', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
+                { type: 'supplement', label: 'Y/C Bổ Sung', icon: 'fa-exclamation-triangle', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
+                { type: 'pendingSignature', label: 'Chờ Ký HĐ', icon: 'fa-signature', condition: s === 'đã phê duyệt' },
+                { type: 'uploadInvoice', label: 'Tải Lên HĐ', icon: 'fa-upload', condition: s === 'chờ ký hóa đơn' },
+                { type: 'resend', label: 'Gửi lại Email', icon: 'fa-paper-plane', condition: s === 'yêu cầu bổ sung' || s === 'đã xuất hóa đơn' },
+                { type: 'cancel', label: 'Hủy Yêu Cầu', icon: 'fa-trash-alt', isDanger: true, condition: s !== 'đã xuất hóa đơn' && s !== 'đã hủy' },
+            ]
             : viewType === 'pending'
-            ? [
-                  { type: 'manualMatch', label: 'Ghép Thủ Công', icon: 'fa-link', condition: true },
-                  { type: 'cancel', label: 'Hủy Yêu Cầu', icon: 'fa-trash-alt', isDanger: true, condition: true },
-              ]
-            : viewType === 'paired'
-            ? [
-                  { type: 'requestInvoice', label: 'Y/C Xuất Hóa Đơn', icon: 'fa-file-invoice-dollar', condition: true },
-                  { type: 'unmatch', label: 'Hủy Ghép Xe', icon: 'fa-unlink', isDanger: true, condition: true },
-              ]
-            : []
+                ? [
+                    { type: 'manualMatch', label: 'Ghép Thủ Công', icon: 'fa-link', condition: true },
+                    { type: 'cancel', label: 'Hủy Yêu Cầu', icon: 'fa-trash-alt', isDanger: true, condition: true },
+                ]
+                : viewType === 'paired'
+                    ? [
+                        { type: 'requestInvoice', label: 'Y/C Xuất Hóa Đơn', icon: 'fa-file-invoice-dollar', condition: true },
+                        { type: 'unmatch', label: 'Hủy Ghép Xe', icon: 'fa-unlink', isDanger: true, condition: true },
+                    ]
+                    : []
     ).filter(a => a.condition);
 
     const handleActionClick = (action: typeof actions[0]) => {
@@ -99,9 +99,9 @@ const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pendin
     return (
         <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
             <button onClick={(e) => { e.stopPropagation(); setOpenState(!isOpen) }} className="w-8 h-8 rounded-full hover:bg-surface-hover flex items-center justify-center"><i className="fas fa-ellipsis-h text-text-secondary"></i></button>
-            
+
             {isOpen && (
-                <div className="absolute right-0 mt-1 w-48 bg-surface-card border border-border-secondary rounded-lg shadow-2xl z-20 p-0.5 animate-fade-in-scale-up" style={{animationDuration: '150ms'}}>
+                <div className="absolute right-0 mt-1 w-48 bg-surface-card border border-border-secondary rounded-lg shadow-2xl z-20 p-0.5 animate-fade-in-scale-up" style={{ animationDuration: '150ms' }}>
                     {actions.map((action) => (
                         <button key={action.type} onClick={() => handleActionClick(action)}
                             className={`flex items-center gap-3 w-full text-left px-2 py-1.5 text-sm font-medium rounded-md ${action.isDanger ? 'text-danger hover:bg-danger-bg' : 'text-text-primary hover:bg-surface-hover'}`}
@@ -110,7 +110,7 @@ const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pendin
                             <span>{action.label}</span>
                         </button>
                     ))}
-                     {actions.length === 0 && <div className="px-3 py-2 text-sm text-text-secondary text-center">Không có hành động</div>}
+                    {actions.length === 0 && <div className="px-3 py-2 text-sm text-text-secondary text-center">Không có hành động</div>}
                 </div>
             )}
         </div>
@@ -128,7 +128,7 @@ const AdminInvoiceTableRow: React.FC<{
     suggestions?: Map<string, StockVehicle[]>;
     onShowSuggestions?: (order: Order, cars: StockVehicle[]) => void;
     onOpenFilePreview: (url: string, label: string) => void;
-    onUpdateInvoiceDetails?: (orderNumber: string, data: { engineNumber: string; policy: string; po: string }) => Promise<boolean>;
+    onUpdateInvoiceDetails?: (orderNumber: string, data: { engineNumber: string; policy: string; commission: string; vpoint: string }) => Promise<boolean>;
 }> = ({ order, index, viewType, selectedRows, onToggleRow, onAction, showToast, suggestions, onShowSuggestions, onOpenFilePreview, onUpdateInvoiceDetails }) => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -136,7 +136,8 @@ const AdminInvoiceTableRow: React.FC<{
     const [editData, setEditData] = useState({
         engineNumber: order["Số động cơ"] || '',
         policy: order["CHÍNH SÁCH"] || '',
-        po: order["PO PIN"] || ''
+        commission: order["Hoa hồng ứng"] || '',
+        vpoint: order["Điểm Vpoint sử dụng"] || ''
     });
 
     const orderNumber = order['Số đơn hàng'];
@@ -149,7 +150,8 @@ const AdminInvoiceTableRow: React.FC<{
             setEditData({
                 engineNumber: order["Số động cơ"] || '',
                 policy: order["CHÍNH SÁCH"] || '',
-                po: order["PO PIN"] || ''
+                commission: order["Hoa hồng ứng"] || '',
+                vpoint: order["Điểm Vpoint sử dụng"] || ''
             });
         }
     }, [order, isEditing]);
@@ -177,7 +179,8 @@ const AdminInvoiceTableRow: React.FC<{
         setEditData({
             engineNumber: order["Số động cơ"] || '',
             policy: order["CHÍNH SÁCH"] || '',
-            po: order["PO PIN"] || ''
+            commission: order["Hoa hồng ứng"] || '',
+            vpoint: order["Điểm Vpoint sử dụng"] || ''
         });
     };
 
@@ -195,7 +198,7 @@ const AdminInvoiceTableRow: React.FC<{
     };
 
     return (
-        <tr 
+        <tr
             className={`hover:bg-surface-hover transition-colors ${isMenuOpen || isEditing ? 'relative z-20 bg-surface-accent/30' : ''}`}
             onDoubleClick={handleDoubleClick}
         >
@@ -203,14 +206,14 @@ const AdminInvoiceTableRow: React.FC<{
                 <input type="checkbox" className="custom-checkbox" checked={selectedRows.has(orderNumber)} onChange={() => onToggleRow(orderNumber)} disabled={isEditing} />
             </td>
             <td data-label="#" className="px-1.5 py-2 text-sm text-center text-text-secondary">{index + 1}</td>
-            
+
             {/* Customer/Order Info - Not Editable Inline */}
             <td data-label="Khách Hàng / SĐH" className="px-1.5 py-2 text-sm">
                 <CopyableField text={order["Tên khách hàng"]} showToast={showToast} className="font-semibold text-text-primary" wrap={true} />
                 <CopyableField text={orderNumber} showToast={showToast} className="text-text-secondary font-mono text-xs" />
                 <div className="text-text-secondary text-xs mt-1">TVBH: {order["Tên tư vấn bán hàng"] || 'N/A'}</div>
             </td>
-            
+
             {/* Dynamic Columns */}
             {viewType === 'invoices' && (
                 <>
@@ -218,14 +221,14 @@ const AdminInvoiceTableRow: React.FC<{
                         <div className="font-medium text-text-primary">{order["Dòng xe"]} - {order["Phiên bản"]}</div>
                         <div className="text-text-secondary text-xs mt-1">{order["Ngoại thất"]} / {order["Nội thất"]}</div>
                         <CopyableField text={order.VIN || ''} showToast={showToast} className="font-bold text-accent-primary text-sm font-mono mt-1 hover:text-accent-primary-hover hover:underline" label="VIN" />
-                        
+
                         {/* Engine Number Editing */}
                         {isEditing ? (
-                             <div className="mt-1" onClick={e => e.stopPropagation()}>
-                                <input 
-                                    type="text" 
+                            <div className="mt-1" onClick={e => e.stopPropagation()}>
+                                <input
+                                    type="text"
                                     value={editData.engineNumber}
-                                    onChange={e => setEditData({...editData, engineNumber: e.target.value})}
+                                    onChange={e => setEditData({ ...editData, engineNumber: e.target.value })}
                                     className="w-full text-xs font-mono border border-accent-primary rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-accent-primary bg-white"
                                     placeholder="Số máy..."
                                 />
@@ -242,46 +245,54 @@ const AdminInvoiceTableRow: React.FC<{
                             {order["Ngày xuất hóa đơn"] ? moment(order["Ngày xuất hóa đơn"]).format('DD/MM/YYYY') : 'Chưa XHĐ'}
                         </div>
                     </td>
-                    <td data-label="Chính Sách / PO" className="px-1.5 py-2 text-sm min-w-[150px]">
-                         {/* Policy & PO Editing */}
-                         {isEditing ? (
-                             <div className="space-y-1.5" onClick={e => e.stopPropagation()}>
-                                <textarea 
+                    <td data-label="Chính Sách / Hoa Hồng / Vpoint" className="px-1.5 py-2 text-sm min-w-[180px]">
+                        {/* Policy, Commission & Vpoint Editing */}
+                        {isEditing ? (
+                            <div className="space-y-1.5" onClick={e => e.stopPropagation()}>
+                                <textarea
                                     value={editData.policy}
-                                    onChange={e => setEditData({...editData, policy: e.target.value})}
+                                    onChange={e => setEditData({ ...editData, policy: e.target.value })}
                                     className="w-full text-xs border border-accent-primary rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-accent-primary bg-white resize-y min-h-[40px]"
                                     placeholder="Chính sách..."
                                     rows={2}
                                 />
-                                <input 
-                                    type="text" 
-                                    value={editData.po}
-                                    onChange={e => setEditData({...editData, po: e.target.value})}
+                                <input
+                                    type="text"
+                                    value={editData.commission}
+                                    onChange={e => setEditData({ ...editData, commission: e.target.value })}
                                     className="w-full text-xs font-mono border border-accent-primary rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-accent-primary bg-white"
-                                    placeholder="PO PIN..."
+                                    placeholder="Hoa hồng ứng..."
+                                />
+                                <input
+                                    type="text"
+                                    value={editData.vpoint}
+                                    onChange={e => setEditData({ ...editData, vpoint: e.target.value })}
+                                    className="w-full text-xs font-mono border border-accent-primary rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-accent-primary bg-white"
+                                    placeholder="Điểm Vpoint..."
                                 />
                             </div>
                         ) : (
                             <>
-                                <div className="text-xs font-medium text-text-primary line-clamp-3" title={order["CHÍNH SÁCH"]}>{order["CHÍNH SÁCH"] || 'N/A'}</div>
-                                <CopyableField text={order["PO PIN"] || ''} showToast={showToast} className="text-text-secondary text-xs font-mono mt-1" label="PO" />
+                                <div className="text-xs font-medium text-text-primary line-clamp-2" title={order["CHÍNH SÁCH"]}>{order["CHÍNH SÁCH"] || 'N/A'}</div>
+                                <CopyableField text={order["Hoa hồng ứng"] || ''} showToast={showToast} className="text-green-600 text-xs font-semibold mt-1" label="HH" />
+                                <CopyableField text={order["Điểm Vpoint sử dụng"] || ''} showToast={showToast} className="text-blue-600 text-xs font-semibold mt-1" label="VP" />
                             </>
                         )}
                     </td>
                     <td data-label="Hồ Sơ" className="px-1.5 py-2 text-sm">
                         <div className="flex items-center gap-1.5">
-                            {[ { key: 'LinkHopDong', label: 'Hợp đồng', icon: 'fa-file-contract' }, { key: 'LinkDeNghiXHD', label: 'Đề nghị', icon: 'fa-file-invoice' }, { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn', icon: 'fa-file-invoice-dollar' }].map(file => {
+                            {[{ key: 'LinkHopDong', label: 'Hợp đồng', icon: 'fa-file-contract' }, { key: 'LinkDeNghiXHD', label: 'Đề nghị', icon: 'fa-file-invoice' }, { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn', icon: 'fa-file-invoice-dollar' }].map(file => {
                                 const url = order[file.key] as string | undefined;
                                 return (
-                                    <button 
-                                        key={file.key} 
-                                        onClick={(e) => { 
-                                            if (!url) return; 
-                                            e.preventDefault(); 
-                                            e.stopPropagation(); 
+                                    <button
+                                        key={file.key}
+                                        onClick={(e) => {
+                                            if (!url) return;
+                                            e.preventDefault();
+                                            e.stopPropagation();
                                             onOpenFilePreview(url, `${file.label} - ${order["Tên khách hàng"]}`);
-                                        }} 
-                                        className={`transition-opacity ${url ? 'hover:opacity-70 cursor-pointer' : 'cursor-not-allowed'}`} 
+                                        }}
+                                        className={`transition-opacity ${url ? 'hover:opacity-70 cursor-pointer' : 'cursor-not-allowed'}`}
                                         title={file.label + (url ? '' : ' (chưa có)')}
                                         disabled={!url}
                                     >
@@ -293,7 +304,7 @@ const AdminInvoiceTableRow: React.FC<{
                     </td>
                 </>
             )}
-             {viewType === 'pending' && (
+            {viewType === 'pending' && (
                 <>
                     <td data-label="Yêu Cầu Xe" className="px-1.5 py-2 text-sm">
                         <div className="font-medium text-text-primary">{order["Dòng xe"]} - {order["Phiên bản"]}</div>
@@ -309,7 +320,7 @@ const AdminInvoiceTableRow: React.FC<{
                     </td>
                 </>
             )}
-             {viewType === 'paired' && (
+            {viewType === 'paired' && (
                 <>
                     <td data-label="Thông Tin Xe" className="px-1.5 py-2 text-sm">
                         <div className="font-medium text-text-primary">{order["Dòng xe"]} - {order["Phiên bản"]}</div>
@@ -329,23 +340,23 @@ const AdminInvoiceTableRow: React.FC<{
 
             {/* Status */}
             <td data-label="Trạng Thái" className="px-1.5 py-2 text-sm"><StatusBadge status={status} /></td>
-            
+
             {/* Actions */}
             <td data-label="Hành Động" className="px-1.5 py-2 text-center">
                 <div className="flex items-center justify-center gap-2" onClick={e => e.stopPropagation()}>
                     {isEditing ? (
                         <div className="flex gap-1">
-                            <button 
-                                onClick={handleSaveEdit} 
+                            <button
+                                onClick={handleSaveEdit}
                                 disabled={isSaving}
                                 className="w-8 h-8 rounded-full bg-success/10 text-success hover:bg-success hover:text-white flex items-center justify-center transition-colors"
                                 title="Lưu"
                             >
                                 {isSaving ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-check"></i>}
                             </button>
-                            <button 
+                            <button
                                 onClick={handleCancelEdit}
-                                disabled={isSaving} 
+                                disabled={isSaving}
                                 className="w-8 h-8 rounded-full bg-danger/10 text-danger hover:bg-danger hover:text-white flex items-center justify-center transition-colors"
                                 title="Hủy"
                             >
@@ -376,7 +387,7 @@ const AdminInvoiceTable: React.FC<AdminInvoiceTableProps> = ({ orders, viewType,
             { key: 'Tên khách hàng', title: 'Khách Hàng / SĐH', sortable: true },
             { key: 'Dòng xe', title: 'Thông Tin Xe', sortable: false },
             { key: 'Thời gian nhập', title: 'Ngày YC / XHĐ', sortable: true },
-            { key: 'CHÍNH SÁCH', title: 'Chính Sách / PO', sortable: false },
+            { key: 'CHÍNH SÁCH', title: 'Chính Sách / HH / VP', sortable: false },
             { key: 'Hồ sơ', title: 'Hồ Sơ', sortable: false },
             { key: 'Kết quả', title: 'Trạng Thái', sortable: true },
         ],
@@ -393,7 +404,7 @@ const AdminInvoiceTable: React.FC<AdminInvoiceTableProps> = ({ orders, viewType,
             { key: 'Kết quả', title: 'Trạng Thái', sortable: true },
         ]
     };
-    
+
     const currentHeaders = headersConfig[viewType];
 
     return (

@@ -21,7 +21,8 @@ export interface Order {
   LinkDeNghiXHD?: string;
   "Số động cơ"?: string;
   "Ngày xuất hóa đơn"?: string;
-  "PO PIN"?: string;
+  "Hoa hồng ứng"?: string;
+  "Điểm Vpoint sử dụng"?: string;
   "CHÍNH SÁCH"?: string;
   "Số tiền hoa hồng ứng trước"?: number;
   "Ngày cọc"?: string;

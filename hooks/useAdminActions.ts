@@ -79,14 +79,15 @@ export const useAdminActions = ({
         refetchXuathoadon(true);
     }, [showToast, refetchHistory, refetchXuathoadon]);
 
-    const handleEditInvoiceDetails = useCallback(async (orderNumber: string, data: { engineNumber: string; policy: string; po: string }) => {
+    const handleEditInvoiceDetails = useCallback(async (orderNumber: string, data: { engineNumber: string; policy: string; commission: string; vpoint: string }) => {
         return handleAdminSubmit('updateRowData', {
             sheetName: 'Xuathoadon',
             primaryKeyColumn: 'SỐ ĐƠN HÀNG',
             primaryKeyValue: orderNumber,
             "SỐ ĐỘNG CƠ": data.engineNumber,
             "CHÍNH SÁCH": data.policy,
-            "PO PIN": data.po
+            "Hoa hồng ứng": data.commission,
+            "Điểm Vpoint sử dụng": data.vpoint
         }, 'Đã cập nhật thông tin hóa đơn.', 'history');
     }, [handleAdminSubmit]);
 
