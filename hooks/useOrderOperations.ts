@@ -91,23 +91,26 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     };
 
     const handleRequestInvoice = async (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string) => {
+
         setProcessingOrder(order["Số đơn hàng"]);
-        setOrderToRequestInvoice(null);
-        showToast('Đang Gửi Chứng Từ', 'Quá trình này có thể mất một lúc. Vui lòng không đóng trang.', 'loading');
+        // Modal will handle the loading UI
 
         try {
             const result = await apiService.requestInvoice(order["Số đơn hàng"], contractFile, proposalFile, policy.join(', '), commission, vpoint);
             await refetchHistory();
             hideToast();
             showToast('Gửi Thành Công', result.message, 'success', 3000);
+            return true;
         } catch (error) {
             hideToast();
             const message = error instanceof Error ? error.message : "Lỗi không xác định";
             showToast('Gửi Thất Bại', message, 'error', 5000);
+            // Do NOT close modal on error so user can retry
         } finally {
             setProcessingOrder(null);
         }
     };
+
 
     const handleSupplementFiles = async (order: Order, contractFile: File | null, proposalFile: File | null) => {
         setProcessingOrder(order["Số đơn hàng"]);

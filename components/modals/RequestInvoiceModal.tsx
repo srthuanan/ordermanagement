@@ -9,16 +9,10 @@ import { useModalBackground } from '../../utils/styleUtils';
 interface RequestInvoiceModalProps {
     order: Order;
     onClose: () => void;
-    onConfirm: (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string) => void;
+    onConfirm: (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string) => Promise<any>;
 }
 
-const InfoRow: React.FC<{ label: string; value: string; icon: string; isMono?: boolean }> = ({ label, value, icon, isMono = false }) => (
-    <div className="flex items-center gap-3 text-sm">
-        <i className={`fas ${icon} fa-fw w-4 text-center text-accent-secondary`}></i>
-        <span className="text-text-secondary">{label}:</span>
-        <span className={`font-semibold text-text-primary ${isMono ? 'font-mono' : ''}`}>{value}</span>
-    </div>
-);
+
 
 const Stepper: React.FC<{ currentStep: number }> = ({ currentStep }) => {
     const steps = ["Thông tin BH", "Tải chứng từ", "Xác nhận"];
@@ -119,6 +113,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     }, [filteredSalesPolicies]);
 
 
+    const [processingStage, setProcessingStage] = useState(0); // 0: Idle, 1: Contract, 2: Proposal, 3: Sending
+
     const isStep1Valid = policy.length > 0 && commission && parseFloat(commission) >= 0 && vpoint && parseFloat(vpoint) >= 0;
     const isStep2Valid = contractFile && proposalFile;
     const isStep3Valid = vinClubConfirmed;
@@ -127,14 +123,91 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const handleNext = () => setStep(prev => Math.min(prev + 1, 3));
     const handleBack = () => setStep(prev => Math.max(prev - 1, 1));
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!isFormValid || !contractFile || !proposalFile) {
             alert("Vui lòng hoàn thành tất cả các bước.");
             return;
         }
         setIsSubmitting(true);
-        onConfirm(order, contractFile, proposalFile, policy, commission, vpoint);
+
+        try {
+            // Simulate detailed steps
+            setProcessingStage(1); // Processing Contract
+            await new Promise(r => setTimeout(r, 800));
+
+            setProcessingStage(2); // Processing Proposal
+            await new Promise(r => setTimeout(r, 800));
+
+            setProcessingStage(3); // Sending
+            await onConfirm(order, contractFile, proposalFile, policy, commission, vpoint);
+
+            setProcessingStage(4); // Done
+            await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds
+            onClose();
+        } catch (error) {
+            console.error("Submission failed", error);
+            setIsSubmitting(false);
+            setProcessingStage(0);
+        }
     };
+
+    const ProcessingStep = ({ label, status }: { label: string, status: 'pending' | 'active' | 'completed' }) => {
+        let icon = "fa-circle text-border-secondary";
+        let textClass = "text-text-secondary";
+        let bgClass = "bg-surface-ground";
+
+        if (status === 'active') {
+            icon = "fa-spinner fa-spin text-accent-primary";
+            textClass = "text-accent-primary font-semibold";
+            bgClass = "bg-accent-primary/5 border-accent-primary/20";
+        } else if (status === 'completed') {
+            icon = "fa-check-circle text-success";
+            textClass = "text-text-primary font-medium";
+            bgClass = "bg-success/5 border-success/20";
+        }
+
+        return (
+            <div className={`flex items-center p-3 rounded-lg border ${status === 'pending' ? 'border-transparent' : 'border-border-secondary'} ${bgClass} transition-all duration-300`}>
+                <div className="w-8 flex justify-center mr-3">
+                    <i className={`fas ${icon} text-lg transition-all duration-300`}></i>
+                </div>
+                <span className={`${textClass} transition-all duration-300`}>{label}</span>
+            </div>
+        );
+    };
+
+    if (isSubmitting) {
+        return (
+            <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+                <div className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl p-6 flex flex-col items-center animate-fade-in-scale-up" style={bgStyle}>
+                    <div className="w-16 h-16 mb-4 relative">
+                        <div className="absolute inset-0 rounded-full border-4 border-border-primary"></div>
+                        <div className={`absolute inset-0 rounded-full border-4 ${processingStage === 4 ? 'border-success' : 'border-accent-primary border-t-transparent animate-spin'}`}></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <i className={`fas ${processingStage === 4 ? 'fa-check text-success' : 'fa-paper-plane text-accent-primary'} text-xl`}></i>
+                        </div>
+                    </div>
+                    <h3 className="text-lg font-bold text-text-primary mb-1">{processingStage === 4 ? 'Hoàn tất!' : 'Đang xử lý hồ sơ'}</h3>
+                    <p className="text-sm text-text-secondary mb-6">{processingStage === 4 ? 'Yêu cầu đã được gửi thành công.' : 'Vui lòng không tắt trình duyệt...'}</p>
+
+                    <div className="w-full space-y-3">
+                        <ProcessingStep
+                            label="Xử lý Hợp đồng mua bán"
+                            status={processingStage > 1 ? 'completed' : processingStage === 1 ? 'active' : 'pending'}
+                        />
+                        <ProcessingStep
+                            label="Xử lý Đề nghị xuất hóa đơn"
+                            status={processingStage > 2 ? 'completed' : processingStage === 2 ? 'active' : 'pending'}
+                        />
+                        <ProcessingStep
+                            label="Đang gửi dữ liệu..."
+                            status={processingStage > 3 ? 'completed' : processingStage === 3 ? 'active' : 'pending'}
+                        />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
