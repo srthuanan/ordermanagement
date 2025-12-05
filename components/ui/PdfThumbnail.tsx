@@ -4,23 +4,27 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import { getDriveFileId, toDownloadableUrl } from '../../utils/imageUtils';
 
-// Configure worker
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url,
-).toString();
+// Configure worker using local file resolved by Vite
+import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
 interface PdfThumbnailProps {
     url: string;
     width?: number;
+    height?: number;
     className?: string;
 }
 
-const PdfThumbnail: React.FC<PdfThumbnailProps> = ({ url, width = 100, className }) => {
+const PdfThumbnail: React.FC<PdfThumbnailProps> = ({ url, width, height, className }) => {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [useIframeFallback, setUseIframeFallback] = useState(false);
+
+    // Default to width=100 if neither width nor height is provided
+    if (!width && !height) {
+        width = 100;
+    }
 
     const fileId = useMemo(() => getDriveFileId(url), [url]);
     const isGoogleDrive = useMemo(() => !!fileId, [fileId]);
@@ -67,7 +71,7 @@ const PdfThumbnail: React.FC<PdfThumbnailProps> = ({ url, width = 100, className
 
     if (error) {
         return (
-            <div className={`flex items-center justify-center bg-gray-100 text-red-400 ${className}`} style={{ width, height: width * 1.4 }}>
+            <div className={`flex items-center justify-center bg-gray-100 text-red-400 ${className}`} style={{ width: width || 'auto', height: height || (width ? width * 1.4 : 'auto') }}>
                 <i className="fas fa-file-pdf text-2xl"></i>
             </div>
         );
@@ -76,7 +80,7 @@ const PdfThumbnail: React.FC<PdfThumbnailProps> = ({ url, width = 100, className
     // Use iframe fallback for Google Drive PDFs when direct loading fails
     if (useIframeFallback && drivePreviewUrl) {
         return (
-            <div className={`relative overflow-hidden ${className}`} style={{ width, height: width * 1.4 }}>
+            <div className={`relative overflow-hidden ${className}`} style={{ width: width || '100%', height: height || '100%' }}>
                 <iframe
                     src={drivePreviewUrl}
                     className="w-full h-full border-0 pointer-events-none scale-[2] origin-top-left"
@@ -90,7 +94,7 @@ const PdfThumbnail: React.FC<PdfThumbnailProps> = ({ url, width = 100, className
     }
 
     return (
-        <div className={`relative overflow-hidden ${className}`} style={{ width, height: width * 1.4 }}>
+        <div className={`relative overflow-hidden ${className}`}>
             {loading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
                     <i className="fas fa-spinner fa-spin text-gray-400"></i>
@@ -101,16 +105,12 @@ const PdfThumbnail: React.FC<PdfThumbnailProps> = ({ url, width = 100, className
                 onLoadSuccess={onDocumentLoadSuccess}
                 onLoadError={onDocumentLoadError}
                 loading={<div className="w-full h-full bg-gray-100" />}
-                className="w-full h-full"
-                options={{
-                    cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
-                    cMapPacked: true,
-                    standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/',
-                }}
+                className="flex items-center justify-center"
             >
                 <Page
                     pageNumber={1}
                     width={width}
+                    height={height}
                     renderTextLayer={false}
                     renderAnnotationLayer={false}
                 />

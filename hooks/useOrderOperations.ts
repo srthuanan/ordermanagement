@@ -99,7 +99,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
             const result = await apiService.requestInvoice(order["Số đơn hàng"], contractFile, proposalFile, policy.join(', '), commission, vpoint);
             await refetchHistory();
             hideToast();
-            showToast('Gửi Thành Công', result.message, 'success', 3000);
+            // showToast('Gửi Thành Công', result.message, 'success', 3000); // Removed as per user request
             return true;
         } catch (error) {
             hideToast();

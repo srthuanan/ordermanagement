@@ -115,7 +115,25 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
     const [processingStage, setProcessingStage] = useState(0); // 0: Idle, 1: Contract, 2: Proposal, 3: Sending
 
-    const isStep1Valid = policy.length > 0 && commission && parseFloat(commission) >= 0 && vpoint && parseFloat(vpoint) >= 0;
+    const formatNumber = (value: string) => {
+        // Remove non-digit characters
+        const cleanValue = value.replace(/\D/g, '');
+        // Format with dots
+        return cleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+
+    const handleNumberChange = (setter: (value: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        // Allow only numbers and control keys (handled by input type text but good to enforce)
+        // We format the input value
+        setter(formatNumber(value));
+    };
+
+    const getRawValue = (value: string) => {
+        return value.replace(/\./g, '');
+    };
+
+    const isStep1Valid = policy.length > 0 && commission && parseFloat(getRawValue(commission)) >= 0 && vpoint && parseFloat(getRawValue(vpoint)) >= 0;
     const isStep2Valid = contractFile && proposalFile;
     const isStep3Valid = vinClubConfirmed;
     const isFormValid = isStep1Valid && isStep2Valid && isStep3Valid;
@@ -139,7 +157,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             await new Promise(r => setTimeout(r, 800));
 
             setProcessingStage(3); // Sending
-            await onConfirm(order, contractFile, proposalFile, policy, commission, vpoint);
+            // Send raw values (without dots) to API
+            await onConfirm(order, contractFile, proposalFile, policy, getRawValue(commission), getRawValue(vpoint));
 
             setProcessingStage(4); // Done
             await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds
@@ -178,7 +197,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
     if (isSubmitting) {
         return (
-            <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
                 <div className="bg-surface-card w-full max-w-md rounded-2xl shadow-xl p-6 flex flex-col items-center animate-fade-in-scale-up" style={bgStyle}>
                     <div className="w-16 h-16 mb-4 relative">
                         <div className="absolute inset-0 rounded-full border-4 border-border-primary"></div>
@@ -303,18 +322,18 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                         <label htmlFor="commission-amount" className="block text-sm font-medium text-text-primary mb-2">
                                             Hoa hồng ứng trước (VND) <span className="text-danger">*</span>
                                         </label>
-                                        <input id="commission-amount" type="number" value={commission} onChange={(e) => setCommission(e.target.value)}
+                                        <input id="commission-amount" type="text" value={commission} onChange={handleNumberChange(setCommission)}
                                             className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
-                                            placeholder="Nhập số tiền" min="0" required
+                                            placeholder="Nhập số tiền" required
                                         />
                                     </div>
                                     <div>
                                         <label htmlFor="vpoint-amount" className="block text-sm font-medium text-text-primary mb-2">
                                             Số điểm Vpoint sử dụng (Điểm) <span className="text-danger">*</span>
                                         </label>
-                                        <input id="vpoint-amount" type="number" value={vpoint} onChange={(e) => setVpoint(e.target.value)}
+                                        <input id="vpoint-amount" type="text" value={vpoint} onChange={handleNumberChange(setVpoint)}
                                             className="w-full bg-surface-ground border border-border-primary rounded-lg p-2.5 futuristic-input"
-                                            placeholder="Nhập số điểm" min="0" required
+                                            placeholder="Nhập số điểm" required
                                         />
                                     </div>
                                 </div>

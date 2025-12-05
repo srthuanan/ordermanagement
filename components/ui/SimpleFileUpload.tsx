@@ -1,6 +1,7 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import Button from './Button';
 import { compressImage, compressPdf } from '../../services/ocrService';
+import PdfThumbnail from './PdfThumbnail';
 
 interface SimpleFileUploadProps {
   id: string;
@@ -12,9 +13,20 @@ interface SimpleFileUploadProps {
 
 const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSelect, required = false, accept }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (selectedFile) {
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  }, [selectedFile]);
 
   const validateFile = useCallback((file: File) => {
     if (accept) {
@@ -115,13 +127,23 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
         {required && <span className="text-danger ml-1">*</span>}
       </label>
       {selectedFile ? (
-        <div className="flex items-center gap-3 p-2 bg-surface-accent border border-accent-primary/20 rounded-lg">
-          <i className="fas fa-file-alt text-accent-primary text-xl flex-shrink-0 ml-2"></i>
-          <div className="flex-grow min-w-0">
-            <p className="text-sm font-semibold text-text-primary truncate" title={selectedFile.name}>{selectedFile.name}</p>
-            <p className="text-xs text-text-secondary">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+        <div className="relative group overflow-hidden rounded-lg border border-accent-primary/20 bg-surface-accent transition-all duration-300 hover:shadow-md">
+          <div className="w-full h-48 bg-surface-ground flex items-start justify-center overflow-hidden relative border-b border-accent-primary/10">
+            {selectedFile.type === 'application/pdf' && previewUrl ? (
+              <PdfThumbnail url={previewUrl} width={500} className="w-full h-full flex justify-center" />
+            ) : (
+              <i className="fas fa-file-alt text-accent-primary text-6xl opacity-50 self-center"></i>
+            )}
+
+            <div className="absolute top-2 right-2 z-10">
+              <Button type="button" onClick={handleRemoveFile} disabled={isProcessing} variant="ghost" className="w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-danger hover:text-white transition-colors backdrop-blur-sm !p-0 shadow-sm"><i className="fas fa-times"></i></Button>
+            </div>
           </div>
-          <Button type="button" onClick={handleRemoveFile} disabled={isProcessing} variant="ghost" className="flex-shrink-0 w-8 h-8 bg-surface-hover text-text-secondary rounded-full flex items-center justify-center hover:bg-danger-bg hover:text-danger-hover transition-colors disabled:opacity-50 !p-0"><i className="fas fa-times"></i></Button>
+
+          <div className="p-3 bg-surface-card">
+            <p className="text-sm font-bold text-text-primary truncate" title={selectedFile.name}>{selectedFile.name}</p>
+            <p className="text-xs text-text-secondary mt-1">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+          </div>
         </div>
       ) : (
         <div
