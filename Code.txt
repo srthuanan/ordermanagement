@@ -7065,6 +7065,9 @@ function handleRequestInvoice(e, daGhepSheet, mailSheet, xuathoadonSheet, thongt
             so_don_hang: orderNumber,
             ten_khach_hang: customerName,
             vin: vin,
+            policy: policyContent,
+            commission: commissionAmount,
+            vpoint: vpointAmount,
         };
         sendInvoiceRequestConfirmationEmailToTVBH(mailSheet, emailData);
         recordOrderHistory(orderNumber, vin, "Yêu cầu xuất hóa đơn", `Đơn hàng được chuyển sang danh sách chờ bởi ${requestedBy}`);
@@ -7117,6 +7120,9 @@ function sendInvoiceRequestConfirmationEmailToTVBH(mailSheet, data) {
     "Số đơn hàng": `<b>${data.so_don_hang}</b>`,
     "Tên khách hàng": data.ten_khach_hang,
     "Số VIN": `<b>${data.vin}</b>`,
+    "Chính sách": data.policy,
+    "Hoa hồng ứng": data.commission,
+    "Vpoint sử dụng": data.vpoint,
     "Trạng thái mới": "<b>Chờ xuất hóa đơn</b>"
   };
   const note = "Yêu cầu của bạn đã được chuyển đến bộ phận liên quan để xử lý. Hệ thống sẽ có thông báo tiếp theo khi hóa đơn được chính thức phát hành. Xin cảm ơn!";
