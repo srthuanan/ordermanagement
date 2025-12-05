@@ -138,12 +138,14 @@ const DocumentThumbnail: React.FC<{
                 )}
             </div>
 
-            <div className="px-2 py-0.5 md:px-3 md:py-1">
-                <div className="font-bold text-xs md:text-sm text-text-primary truncate mb-1" title={label}>{label}</div>
-                <div className="flex items-center justify-between">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${url ? 'bg-green-50 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
-                        {url ? 'Đã có file' : 'Chưa có'}
-                    </span>
+            <div className="p-1">
+                <div className="font-bold text-[10px] md:text-xs text-text-primary truncate" title={label}>{label}</div>
+                <div className="flex items-center justify-between h-5">
+                    {!url ? (
+                        <span className="text-[10px] px-1.5 rounded-full bg-gray-100 text-gray-400">
+                            Chưa có
+                        </span>
+                    ) : <div></div>}
                     {url && (
                         <div className="flex items-center gap-2">
                             <a

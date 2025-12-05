@@ -35,7 +35,7 @@ export const postApi = async (payload: Record<string, any>, url: string = API_UR
         }
 
         const response = await axios.post(url, bodyParams);
-        
+
         // Handle cases where Google Apps Script returns a stringified JSON
         const result = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
 
@@ -58,15 +58,15 @@ export const getApi = async (params: Record<string, any>, baseUrl: string = API_
         const url = new URL(baseUrl);
         Object.keys(params).forEach(key => {
             if (params[key] !== undefined && params[key] !== null) {
-                 url.searchParams.append(key, String(params[key]));
+                url.searchParams.append(key, String(params[key]));
             }
         });
-        
+
         const response = await axios.get(url.toString());
 
         // Handle cases where Google Apps Script returns a stringified JSON
         const result = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
-        
+
         if (result.status !== 'SUCCESS') {
             throw new Error(result.message || 'API returned an unspecified error.');
         }
@@ -160,7 +160,7 @@ export const releaseCar = async (vin: string) => {
 
 export const addRequest = async (formData: Record<string, string>, chicFile: File) => {
     const chicFileBase64 = await fileToBase64(chicFile);
-    
+
     // Create a mutable copy of the form data to avoid side effects
     const payloadData: Record<string, string> = { ...formData };
 
@@ -169,7 +169,7 @@ export const addRequest = async (formData: Record<string, string>, chicFile: Fil
         payloadData.vin_giu_yeu_cau = payloadData.vin;
         delete payloadData.vin; // Remove the original 'vin' key to avoid confusion
     }
-    
+
     const payload = {
         ...payloadData,
         thoi_gian_nhap: new Date().toISOString(),
@@ -219,11 +219,11 @@ export const requestInvoice = async (orderNumber: string, contractFile: File, pr
         denghi_xhd_file_base64: proposalBase64,
         denghi_xhd_file_name: proposalFile.name,
         denghi_xhd_file_type: proposalFile.type,
-        selectedPolicies: policy,
-        commissionAmount: commission,
-        vpointAmount: vpoint,
+        policy: policy,
+        commission: commission,
+        vpoint: vpoint,
     };
-    
+
     return postApi(payload);
 };
 
@@ -337,7 +337,7 @@ const mapSoldDataRowToOrder = (row: any[], index: number, month?: string): Order
         "VIN": String(row[8] || ''),
         "CHÍNH SÁCH": String(row[9] || ''),
         // Mock required fields from Order type for consistency
-        "Ngày cọc": saleDate, 
+        "Ngày cọc": saleDate,
         "Thời gian nhập": saleDate,
         "Thời gian ghép": saleDate,
         "Kết quả": "Đã xuất hóa đơn",
@@ -365,18 +365,18 @@ export const getSoldCarsDataByMonth = async (month: string): Promise<ApiResult> 
 // This function will be used by the useSoldCarsApi hook to get all yearly data
 export const getAllSoldCarsData = async (): Promise<ApiResult> => {
     try {
-        const fetchPromises = MONTHS.map(month => 
+        const fetchPromises = MONTHS.map(month =>
             getSoldDataForMonth(month).then(data => ({ month, data }))
         );
         const monthlyResults = await Promise.all(fetchPromises);
-        
-        const allSoldDataWithMonth = monthlyResults.flatMap(({ month, data }) => 
+
+        const allSoldDataWithMonth = monthlyResults.flatMap(({ month, data }) =>
             data
                 .filter(row => Array.isArray(row) && row.length > 8 && row[8]) // Filter for rows with a VIN
                 .map(row => ({ row, month }))
         );
 
-        const mappedData: Order[] = allSoldDataWithMonth.map(({row, month}, index) => mapSoldDataRowToOrder(row, index, month));
+        const mappedData: Order[] = allSoldDataWithMonth.map(({ row, month }, index) => mapSoldDataRowToOrder(row, index, month));
 
         return {
             status: 'SUCCESS',
@@ -384,7 +384,7 @@ export const getAllSoldCarsData = async (): Promise<ApiResult> => {
             data: mappedData
         };
     } catch (error) {
-         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while fetching sold cars data.';
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred while fetching sold cars data.';
         return {
             status: 'ERROR',
             message: errorMessage
@@ -445,7 +445,7 @@ export const getUsers = async (): Promise<ApiResult> => {
 
 export const performAdminAction = async (action: string, params: Record<string, any>): Promise<ApiResult> => {
     const currentUser = sessionStorage.getItem("currentUser") || "Unknown Admin";
-    
+
     // Actions related to user/team management use a different API format but same URL now
     if (['addUser', 'updateTeams'].includes(action)) {
         return postUserApi({ action, ...params, adminUser: currentUser });
@@ -487,7 +487,7 @@ const postLegacyApi = async (payload: Record<string, any>): Promise<ApiResult> =
 
         const response = await axios.post(API_URL, bodyParams);
         const result = (typeof response.data === 'string') ? JSON.parse(response.data) : response.data;
-        
+
         // FIX: Accommodate inconsistent backend responses for success status.
         // Some functions return `success: true`, while others return `status: 'SUCCESS'`.
         const isSuccess = result.success === true || result.status === 'SUCCESS';
@@ -536,7 +536,7 @@ export const updateTestDriveCheckin = async (payload: {
     if (payload.imagesBefore) apiPayload.imagesBefore = JSON.stringify(payload.imagesBefore);
     if (payload.odoAfter) apiPayload.odoAfter = payload.odoAfter;
     if (payload.imagesAfter) apiPayload.imagesAfter = JSON.stringify(payload.imagesAfter);
-    
+
     return postLegacyApi(apiPayload);
 };
 

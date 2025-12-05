@@ -27,9 +27,10 @@ const SuccessAnimation: React.FC<SuccessAnimationProps> = ({ title, message, onC
     }, [onClose]);
 
     useEffect(() => {
-        if (playerRef.current) {
-            playerRef.current.stop();
-            playerRef.current.play();
+        const player = playerRef.current as any;
+        if (player && typeof player.stop === 'function') {
+            player.stop();
+            player.play();
         }
 
         timeoutRef.current = window.setTimeout(() => {

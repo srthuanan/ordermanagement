@@ -96,7 +96,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         showToast('Đang Gửi Chứng Từ', 'Quá trình này có thể mất một lúc. Vui lòng không đóng trang.', 'loading');
 
         try {
-            const result = await apiService.requestInvoice(order["Số đơn hàng"], contractFile, proposalFile, JSON.stringify(policy), commission, vpoint);
+            const result = await apiService.requestInvoice(order["Số đơn hàng"], contractFile, proposalFile, policy.join(', '), commission, vpoint);
             await refetchHistory();
             hideToast();
             showToast('Gửi Thành Công', result.message, 'success', 3000);

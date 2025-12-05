@@ -1,4 +1,4 @@
-export const API_URL = "https://script.google.com/macros/s/AKfycbwbz0JL22Y5B7-F2E3lpLiHUYMtlmTP5SUhKklGXt8ZpfhQJw1KAglSMj8QP5JoyJIayQ/exec";
+export const API_URL = "https://script.google.com/macros/s/AKfycbzAyYepvY67We4rTFwV7tpINadZiqThO0Td8folDbSQNyg7SJ5acHMbTUHvO258EvTz6g/exec";
 export const ADMIN_USER = "PHẠM THÀNH NHÂN";
 
 export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
