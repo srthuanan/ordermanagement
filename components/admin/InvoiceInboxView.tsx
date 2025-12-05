@@ -12,7 +12,7 @@ interface InvoiceInboxViewProps {
     onAction: (type: ActionType, order: Order, data?: any) => void;
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     onOpenFilePreview: (url: string, label: string) => void;
-    onUpdateInvoiceDetails?: (orderNumber: string, data: { engineNumber: string; policy: string; po: string }) => Promise<boolean>;
+    onUpdateInvoiceDetails?: (orderNumber: string, data: { engineNumber: string; policy: string; commission: string; vpoint: string }) => Promise<boolean>;
     selectedFolder: string;
     selectedOrderId: string | null;
     onFolderChange: (folder: string) => void;
@@ -168,7 +168,7 @@ const DocumentThumbnail: React.FC<{
 const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, showToast, onOpenFilePreview, onUpdateInvoiceDetails, selectedFolder, selectedOrderId, onFolderChange, onOrderSelect }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [editData, setEditData] = useState({ engineNumber: '', policy: '', po: '' });
+    const [editData, setEditData] = useState({ engineNumber: '', policy: '', commission: '', vpoint: '' });
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -214,7 +214,8 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
             setEditData({
                 engineNumber: selectedOrder["Số động cơ"] || '',
                 policy: selectedOrder["CHÍNH SÁCH"] || '',
-                po: selectedOrder["PO PIN"] || ''
+                commission: selectedOrder["Hoa hồng ứng"] || '',
+                vpoint: selectedOrder["Điểm Vpoint sử dụng"] || ''
             });
         }
     }, [selectedOrder, isEditing]);
@@ -541,7 +542,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                                     ) : (
                                                         <div className="h-full">
                                                             <CopyableField
-                                                                text={selectedOrder['Hoa hồng ứng'] ? (Number(String(selectedOrder['Hoa hồng ứng']).replace(/[^0-9]/g, '')).toLocaleString('en-US') + ' đ') : ''}
+                                                                text={selectedOrder['Hoa hồng ứng'] ? (Number(String(selectedOrder['Hoa hồng ứng']).replace(/[^0-9]/g, '')).toLocaleString('en-US') + ' đ') : '0 đ'}
                                                                 showToast={showToast}
                                                                 className="text-xs font-bold bg-surface-ground p-0 rounded border border-border-secondary w-full h-full flex items-center justify-center text-green-600 hover:bg-surface-hover transition-colors"
                                                                 wrap={true}
@@ -564,7 +565,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                                     ) : (
                                                         <div className="h-full">
                                                             <CopyableField
-                                                                text={selectedOrder['Điểm Vpoint sử dụng'] ? (Number(String(selectedOrder['Điểm Vpoint sử dụng']).replace(/[^0-9]/g, '')).toLocaleString('en-US') + ' Điểm') : ''}
+                                                                text={selectedOrder['Điểm Vpoint sử dụng'] ? (Number(String(selectedOrder['Điểm Vpoint sử dụng']).replace(/[^0-9]/g, '')).toLocaleString('en-US') + ' Điểm') : '0 Điểm'}
                                                                 showToast={showToast}
                                                                 className="text-xs font-bold bg-surface-ground p-0 rounded border border-border-secondary w-full h-full flex items-center justify-center text-blue-600 hover:bg-surface-hover transition-colors"
                                                                 wrap={true}
