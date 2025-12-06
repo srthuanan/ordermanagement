@@ -85,6 +85,13 @@ const StockView: React.FC<StockViewProps> = ({
             const containerHeight = containerRef.current.clientHeight;
             const containerWidth = containerRef.current.clientWidth;
 
+            // If container hasn't been laid out yet, use fallback
+            if (containerHeight === 0 || containerWidth === 0) {
+                const fallbackSize = 12;
+                setPageSize(fallbackSize);
+                return;
+            }
+
             const minCardWidth = 190;
             const gap = 8;
             let cardHeight = 230;
@@ -104,7 +111,10 @@ const StockView: React.FC<StockViewProps> = ({
                 // Get actual card height from first card
                 const firstCard = gridElement.querySelector('.relative.flex.flex-col');
                 if (firstCard) {
-                    cardHeight = firstCard.getBoundingClientRect().height;
+                    const measuredHeight = firstCard.getBoundingClientRect().height;
+                    if (measuredHeight > 0) {
+                        cardHeight = measuredHeight;
+                    }
                 }
             }
 
@@ -118,16 +128,6 @@ const StockView: React.FC<StockViewProps> = ({
             // Ensure at least some items are shown
             const optimalRows = Math.max(2, rows); // At least 2 rows
             const optimalColumns = Math.max(1, columns);
-
-            console.log('Grid calculation:', {
-                gridElement: !!gridElement,
-                columns,
-                cardHeight,
-                availableHeight,
-                rows,
-                optimalRows,
-                pageSize: optimalRows * optimalColumns
-            });
 
             setPageSize(optimalRows * optimalColumns);
         } else {

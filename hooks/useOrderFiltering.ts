@@ -45,6 +45,13 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
             const containerHeight = containerRef.current.clientHeight;
             const containerWidth = containerRef.current.clientWidth;
 
+            // If container hasn't been laid out yet, use fallback
+            if (containerHeight === 0 || containerWidth === 0) {
+                const fallbackSize = isSidebarCollapsed ? 15 : 12;
+                setPageSize(fallbackSize);
+                return;
+            }
+
             const minCardWidth = 190;
             const gap = 8;
             let cardHeight = 230;
@@ -61,7 +68,10 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
 
                 const firstCard = gridElement.querySelector('.bg-white.rounded-xl');
                 if (firstCard) {
-                    cardHeight = firstCard.getBoundingClientRect().height;
+                    const measuredHeight = firstCard.getBoundingClientRect().height;
+                    if (measuredHeight > 0) {
+                        cardHeight = measuredHeight;
+                    }
                 }
             }
 
