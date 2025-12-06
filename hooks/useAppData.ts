@@ -160,7 +160,13 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
         const startPolling = () => {
             stopPolling();
             handleRealtimeStockUpdate();
-            intervalId = window.setInterval(handleRealtimeStockUpdate, POLLING_INTERVAL);
+            // Also poll for invoice data
+            refetchXuathoadon(true);
+
+            intervalId = window.setInterval(() => {
+                handleRealtimeStockUpdate();
+                refetchXuathoadon(true);
+            }, POLLING_INTERVAL);
         };
 
         const stopPolling = () => {
@@ -185,7 +191,7 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
             stopPolling();
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, [isLoadingStock, errorStock, handleRealtimeStockUpdate]);
+    }, [isLoadingStock, errorStock, handleRealtimeStockUpdate, refetchXuathoadon]);
 
     return {
         allHistoryData,

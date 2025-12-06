@@ -5,6 +5,7 @@ import Button from './ui/Button';
 import StockGridView from './StockGridView';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
 import Pagination from './ui/Pagination';
+import { includesNormalized } from '../utils/stringUtils';
 
 
 interface StockViewProps {
@@ -109,13 +110,13 @@ const StockView: React.FC<StockViewProps> = ({
         if (filters.keyword) {
             const keyword = filters.keyword.toLowerCase();
             filteredVehicles = filteredVehicles.filter(vehicle =>
-                vehicle.VIN?.toLowerCase().includes(keyword) ||
-                vehicle["Dòng xe"]?.toLowerCase().includes(keyword) ||
-                vehicle["Phiên bản"]?.toLowerCase().includes(keyword) ||
-                vehicle["Ngoại thất"]?.toLowerCase().includes(keyword) ||
-                vehicle["Nội thất"]?.toLowerCase().includes(keyword) ||
-                vehicle["Vị trí"]?.toLowerCase().includes(keyword) ||
-                vehicle["Người Giữ Xe"]?.toLowerCase().includes(keyword)
+                includesNormalized(vehicle.VIN, keyword) ||
+                includesNormalized(vehicle["Dòng xe"], keyword) ||
+                includesNormalized(vehicle["Phiên bản"], keyword) ||
+                includesNormalized(vehicle["Ngoại thất"], keyword) ||
+                includesNormalized(vehicle["Nội thất"], keyword) ||
+                includesNormalized(vehicle["Vị trí"], keyword) ||
+                includesNormalized(vehicle["Người Giữ Xe"], keyword)
             );
         }
         if (filters.carModel.length > 0) {

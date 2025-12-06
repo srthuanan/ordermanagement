@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Order, StockVehicle, AdminSubView } from '../../types';
-import AdminInvoiceTable from './AdminInvoiceTable';
+import AdminOrderList from './AdminOrderList';
 import InvoiceInboxView from './InvoiceInboxView';
 import MatchingCockpitView from './MatchingCockpitView';
 import VcInboxView from './VcInboxView';
@@ -231,11 +231,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     />
                 </div>
 
-                {/* Pending View (Table) */}
+                {/* Pending View (Card List) */}
                 <div className={adminView === 'pending' ? 'flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in' : 'hidden'}>
                     {selectedRows.size > 0 && <BulkActionBar view="pending" selectedRows={selectedRows} setSelectedRows={setSelectedRows} setBulkActionModal={actions.setBulkActionModal} />}
-                    <div className="flex-grow overflow-auto relative hidden-scrollbar">
-                        <AdminInvoiceTable
+                    <div className="flex-grow overflow-hidden relative">
+                        <AdminOrderList
                             viewType="pending"
                             orders={pendingData}
                             sortConfig={pendingSortConfig}
@@ -253,11 +253,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     </div>
                 </div>
 
-                {/* Paired View (Table) */}
+                {/* Paired View (Card List) */}
                 <div className={adminView === 'paired' ? 'flex-1 bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col min-h-0 animate-fade-in' : 'hidden'}>
                     {selectedRows.size > 0 && <BulkActionBar view="paired" selectedRows={selectedRows} setSelectedRows={setSelectedRows} setBulkActionModal={actions.setBulkActionModal} />}
-                    <div className="flex-grow overflow-auto relative hidden-scrollbar">
-                        <AdminInvoiceTable
+                    <div className="flex-grow overflow-hidden relative">
+                        <AdminOrderList
                             viewType="paired"
                             orders={pairedData}
                             sortConfig={pairedSortConfig}

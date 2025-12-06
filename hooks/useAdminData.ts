@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Order, VcRequest, StockVehicle, SortConfig, VcSortConfig, AdminSubView } from '../types';
 import * as apiService from '../services/apiService';
+import { includesNormalized } from '../utils/stringUtils';
 
 interface UseAdminDataProps {
     allOrders: Order[];
@@ -184,10 +185,17 @@ export const useAdminData = ({
 
                 const dmsCode = (row as VcRequest)['Mã KH DMS'];
                 const keywordMatch = !lowerKeyword || (
-                    (row['Số đơn hàng'] && row['Số đơn hàng'].toLowerCase().includes(lowerKeyword)) ||
-                    (row['Tên khách hàng'] && row['Tên khách hàng'].toLowerCase().includes(lowerKeyword)) ||
-                    (row.VIN && row.VIN.toLowerCase().includes(lowerKeyword)) ||
-                    (dmsCode && dmsCode.toLowerCase().includes(lowerKeyword))
+                    includesNormalized(row['Số đơn hàng'], lowerKeyword) ||
+                    includesNormalized(row['Tên khách hàng'], lowerKeyword) ||
+                    includesNormalized(row.VIN, lowerKeyword) ||
+                    includesNormalized(dmsCode, lowerKeyword) ||
+                    includesNormalized(row['Dòng xe'], lowerKeyword) ||
+                    includesNormalized(row['Phiên bản'], lowerKeyword) ||
+                    includesNormalized(row['Ngoại thất'], lowerKeyword) ||
+                    includesNormalized(row['Nội thất'], lowerKeyword) ||
+                    includesNormalized(row['Tên tư vấn bán hàng'], lowerKeyword) ||
+                    includesNormalized(row['CHÍNH SÁCH'], lowerKeyword) ||
+                    includesNormalized(row['Số động cơ'], lowerKeyword)
                 );
 
                 return tvbhMatch && dongXeMatch && versionMatch && exteriorMatch && trangThaiMatch && keywordMatch;

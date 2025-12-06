@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { includesNormalized } from '../../utils/stringUtils';
 import Button from './Button';
 
 export interface DropdownFilterConfig {
@@ -51,9 +52,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   }, []);
 
   const filteredOptions = options.filter(option =>
-    option && option.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(
-      searchTerm.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    )
+    includesNormalized(option, searchTerm)
   );
 
   const handleOptionToggle = (option: string) => {

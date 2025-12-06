@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Order, SortConfig } from '../types';
+import { includesNormalized } from '../utils/stringUtils';
 
 interface UseOrderFilteringProps {
     allHistoryData: Order[];
@@ -53,7 +54,18 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
         let filteredOrders = [...allHistoryData];
         if (filters.keyword) {
             const keyword = filters.keyword.toLowerCase();
-            filteredOrders = filteredOrders.filter(order => order["Tên khách hàng"]?.toLowerCase().includes(keyword) || order["Số đơn hàng"]?.toLowerCase().includes(keyword) || order.VIN?.toLowerCase().includes(keyword));
+            filteredOrders = filteredOrders.filter(order =>
+                includesNormalized(order["Tên khách hàng"], keyword) ||
+                includesNormalized(order["Số đơn hàng"], keyword) ||
+                includesNormalized(order.VIN, keyword) ||
+                includesNormalized(order["Dòng xe"], keyword) ||
+                includesNormalized(order["Phiên bản"], keyword) ||
+                includesNormalized(order["Ngoại thất"], keyword) ||
+                includesNormalized(order["Nội thất"], keyword) ||
+                includesNormalized(order["Tên tư vấn bán hàng"], keyword) ||
+                includesNormalized(order["CHÍNH SÁCH"], keyword) ||
+                includesNormalized(order["Số động cơ"], keyword)
+            );
         }
         if (filters.carModel.length > 0) {
             filteredOrders = filteredOrders.filter(order => filters.carModel.includes(order["Dòng xe"]));

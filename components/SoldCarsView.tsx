@@ -9,6 +9,7 @@ import Filters, { DropdownFilterConfig } from './ui/Filters';
 import DateFilter from './ui/DateFilter';
 import { MONTHS } from '../constants';
 import moment from 'moment';
+import { includesNormalized } from '../utils/stringUtils';
 
 // Chart.js is loaded globally via index.html
 declare const Chart: any;
@@ -86,9 +87,13 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
         if (filters.keyword) {
             const keyword = filters.keyword.toLowerCase();
             filteredData = filteredData.filter(o =>
-                o['Tên khách hàng']?.toLowerCase().includes(keyword) ||
-                o['Số đơn hàng']?.toLowerCase().includes(keyword) ||
-                o.VIN?.toLowerCase().includes(keyword)
+                includesNormalized(o['Tên khách hàng'], keyword) ||
+                includesNormalized(o['Số đơn hàng'], keyword) ||
+                includesNormalized(o.VIN, keyword) ||
+                includesNormalized(o['Dòng xe'], keyword) ||
+                includesNormalized(o['Phiên bản'], keyword) ||
+                includesNormalized(o['Ngoại thất'], keyword) ||
+                includesNormalized(o['Tên tư vấn bán hàng'], keyword)
             );
         }
         if (filters.carModel.length > 0) {
