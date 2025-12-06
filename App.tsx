@@ -107,7 +107,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
     const {
         filters, sortConfig, currentPage, setCurrentPage, handleFilterChange, handleResetFilters, handleSort,
-        processedData, paginatedData, totalPages, PAGE_SIZE
+        processedData, paginatedData, totalPages, pageSize, containerRef
     } = useOrderFiltering({ allHistoryData: historyData, isSidebarCollapsed, activeView, orderView });
 
     const handleLoadMoreArchives = async () => {
@@ -309,7 +309,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         onViewChange={setOrderView}
                     />
                 </div>
-                <div className="flex-1 flex flex-col min-h-0">
+                <div ref={containerRef} className="flex-1 flex flex-col min-h-0">
                     {orderView === 'table' ? (
                         <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
                             <div className="overflow-auto relative hidden-scrollbar">
@@ -324,7 +324,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                     onConfirmVC={setOrderToConfirmVC}
                                     sortConfig={sortConfig}
                                     onSort={handleSort}
-                                    startIndex={(currentPage - 1) * PAGE_SIZE}
+                                    startIndex={(currentPage - 1) * pageSize}
                                     processingOrder={processingOrder}
                                 />
                             </div>

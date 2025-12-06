@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Order, SortConfig } from '../types';
 import { includesNormalized } from '../utils/stringUtils';
 
@@ -19,13 +19,84 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
     });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
     const [currentPage, setCurrentPage] = useState(1);
-
-    const PAGE_SIZE = useMemo(() => {
+    const [pageSize, setPageSize] = useState(() => {
         if (activeView === 'orders' && orderView === 'grid') {
             return isSidebarCollapsed ? 15 : 12;
         }
         return isSidebarCollapsed ? 14 : 12;
+    });
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const calculatePageSize = useCallback(() => {
+        if (!containerRef.current) return;
+
+        if (activeView === 'orders' && orderView === 'grid') {
+            // Find the grid container
+            const gridContainer = containerRef.current.querySelector('.flex-grow.overflow-y-auto');
+            const gridElement = gridContainer?.querySelector('.grid');
+
+            if (!gridContainer || !gridElement) {
+                // Fallback
+                const fallbackSize = isSidebarCollapsed ? 15 : 12;
+                setPageSize(fallbackSize);
+                return;
+            }
+
+            const containerHeight = containerRef.current.clientHeight;
+            const containerWidth = containerRef.current.clientWidth;
+
+            const minCardWidth = 190;
+            const gap = 8;
+            let cardHeight = 230;
+
+            // Measure actual columns and card height if grid exists
+            let columns = Math.floor((containerWidth - 8 + gap) / (minCardWidth + gap));
+
+            if (gridElement) {
+                const gridStyle = window.getComputedStyle(gridElement);
+                const gridCols = gridStyle.gridTemplateColumns;
+                if (gridCols && gridCols !== 'none') {
+                    columns = gridCols.split(' ').length;
+                }
+
+                const firstCard = gridElement.querySelector('.bg-white.rounded-xl');
+                if (firstCard) {
+                    cardHeight = firstCard.getBoundingClientRect().height;
+                }
+            }
+
+            // Calculate rows to fill available height
+            const paginationOffset = 50;
+            const availableHeight = containerHeight - paginationOffset;
+            const rows = availableHeight >= cardHeight
+                ? Math.ceil((availableHeight - cardHeight / 2) / (cardHeight + gap))
+                : 0;
+
+            const optimalRows = Math.max(2, rows);
+            const optimalColumns = Math.max(1, columns);
+
+            setPageSize(optimalRows * optimalColumns);
+        } else {
+            // Table view - keep simple calculation
+            const fallbackSize = isSidebarCollapsed ? 14 : 12;
+            setPageSize(fallbackSize);
+        }
     }, [activeView, orderView, isSidebarCollapsed]);
+
+    // ResizeObserver to recalculate on container size change
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const observer = new ResizeObserver(() => {
+            calculatePageSize();
+        });
+
+        observer.observe(container);
+        calculatePageSize();
+
+        return () => observer.disconnect();
+    }, [calculatePageSize]);
 
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
         setCurrentPage(1);
@@ -94,18 +165,27 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
         return filteredOrders;
     }, [allHistoryData, filters, sortConfig]);
 
-    const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
+    const totalPages = Math.ceil(processedData.length / pageSize);
 
     useEffect(() => {
         if (currentPage > totalPages && totalPages > 0) {
             setCurrentPage(totalPages);
         }
-    }, [totalPages, currentPage, PAGE_SIZE]);
+    }, [totalPages, currentPage, pageSize]);
+
 
     const paginatedData = useMemo(() => {
-        const startIndex = (currentPage - 1) * PAGE_SIZE;
-        return processedData.slice(startIndex, startIndex + PAGE_SIZE);
-    }, [processedData, currentPage, PAGE_SIZE]);
+        const startIndex = (currentPage - 1) * pageSize;
+        return processedData.slice(startIndex, startIndex + pageSize);
+    }, [processedData, currentPage, pageSize]);
+
+    // Recalculate when data changes (after render)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            calculatePageSize();
+        }, 200);
+        return () => clearTimeout(timer);
+    }, [paginatedData.length, calculatePageSize]);
 
     return {
         filters,
@@ -118,6 +198,7 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
         processedData,
         paginatedData,
         totalPages,
-        PAGE_SIZE
+        pageSize,
+        containerRef
     };
 };

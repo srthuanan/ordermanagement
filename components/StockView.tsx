@@ -45,8 +45,6 @@ const StockView: React.FC<StockViewProps> = ({
     showOrderInAdmin,
     showAdminTab
 }) => {
-    const PAGE_SIZE = isSidebarCollapsed ? 16 : 14;
-
     const [filters, setFilters] = useState({
         keyword: '',
         carModel: [] as string[],
@@ -57,6 +55,112 @@ const StockView: React.FC<StockViewProps> = ({
     const [sortConfig, setSortConfig] = useState<StockSortConfig | null>({ key: 'VIN', direction: 'asc' });
     const [currentPage, setCurrentPage] = useState(1);
     const [view, setView] = useState<'table' | 'grid'>('grid');
+
+    // Dynamic Page Size Calculation
+    const [pageSize, setPageSize] = useState(isSidebarCollapsed ? 16 : 14);
+    const containerRef = React.useRef<HTMLDivElement>(null);
+
+    const calculatePageSize = useCallback(() => {
+        if (!containerRef.current) return;
+
+        if (view === 'grid') {
+            // Find the grid container (the one with overflow-y-auto)
+            const gridContainer = containerRef.current.querySelector('.flex-grow.overflow-y-auto');
+            const gridElement = gridContainer?.querySelector('.grid');
+
+            if (!gridContainer || !gridElement) {
+                // Fallback if elements not found
+                const minCardWidth = 190;
+                const gap = 8;
+                const containerWidth = containerRef.current.clientWidth;
+                const containerHeight = containerRef.current.clientHeight;
+                const availableWidth = containerWidth - 8;
+                const availableHeight = containerHeight - 60;
+                const columns = Math.floor((availableWidth + gap) / (minCardWidth + gap));
+                const rows = Math.max(2, Math.floor(availableHeight / 230));
+                setPageSize(rows * Math.max(1, columns));
+                return;
+            }
+
+            const containerHeight = containerRef.current.clientHeight;
+            const containerWidth = containerRef.current.clientWidth;
+
+            const minCardWidth = 190;
+            const gap = 8;
+            let cardHeight = 230;
+
+
+            // Measure actual columns and card height if grid exists
+            let columns = Math.floor((containerWidth - 8 + gap) / (minCardWidth + gap));
+
+            if (gridElement) {
+                // Get actual columns from CSS Grid
+                const gridStyle = window.getComputedStyle(gridElement);
+                const gridCols = gridStyle.gridTemplateColumns;
+                if (gridCols && gridCols !== 'none') {
+                    columns = gridCols.split(' ').length;
+                }
+
+                // Get actual card height from first card
+                const firstCard = gridElement.querySelector('.relative.flex.flex-col');
+                if (firstCard) {
+                    cardHeight = firstCard.getBoundingClientRect().height;
+                }
+            }
+
+            // Calculate rows to fill available height (reduced offset for more rows)
+            const availableHeight = containerHeight - 50;
+            // Use ceiling to be more aggressive in filling space
+            const rows = availableHeight >= cardHeight
+                ? Math.ceil((availableHeight - cardHeight / 2) / (cardHeight + gap))
+                : 0;
+
+            // Ensure at least some items are shown
+            const optimalRows = Math.max(2, rows); // At least 2 rows
+            const optimalColumns = Math.max(1, columns);
+
+            console.log('Grid calculation:', {
+                gridElement: !!gridElement,
+                columns,
+                cardHeight,
+                availableHeight,
+                rows,
+                optimalRows,
+                pageSize: optimalRows * optimalColumns
+            });
+
+            setPageSize(optimalRows * optimalColumns);
+        } else {
+            // Table View Calculation
+            const containerHeight = containerRef.current.clientHeight;
+            const rowHeight = 50; // Approximate height of a table row
+            const headerRowHeight = 50; // Table header
+
+            const availableHeightForRows = containerHeight - headerRowHeight - 60; // Account for pagination
+            const rows = Math.floor(availableHeightForRows / rowHeight);
+
+            setPageSize(Math.max(5, rows));
+        }
+    }, [view]);
+
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const observer = new ResizeObserver(() => {
+            calculatePageSize();
+        });
+
+        observer.observe(container);
+        calculatePageSize(); // Initial calculation
+
+        return () => observer.disconnect();
+    }, [calculatePageSize]);
+
+
+
+
 
 
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
@@ -160,7 +264,7 @@ const StockView: React.FC<StockViewProps> = ({
 
 
 
-    const totalPages = Math.ceil(processedData.length / PAGE_SIZE);
+    const totalPages = Math.ceil(processedData.length / pageSize);
 
     useEffect(() => {
         if (currentPage > totalPages && totalPages > 0) {
@@ -169,9 +273,17 @@ const StockView: React.FC<StockViewProps> = ({
     }, [totalPages, currentPage]);
 
     const paginatedData = useMemo(() => {
-        const startIndex = (currentPage - 1) * PAGE_SIZE;
-        return processedData.slice(startIndex, startIndex + PAGE_SIZE);
-    }, [processedData, currentPage, PAGE_SIZE]);
+        const startIndex = (currentPage - 1) * pageSize;
+        return processedData.slice(startIndex, startIndex + pageSize);
+    }, [processedData, currentPage, pageSize]);
+
+    // Recalculate page size when data changes (after render)
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            calculatePageSize();
+        }, 200); // Increased delay to ensure DOM is fully rendered
+        return () => clearTimeout(timer);
+    }, [paginatedData.length, calculatePageSize]);
 
     const uniqueCarModels = useMemo(() => [...new Set(stockData.map(v => v["Dòng xe"]).filter(v => v))].sort(), [stockData]);
     const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]).filter(v => v))].sort(), [stockData]);
@@ -218,7 +330,7 @@ const StockView: React.FC<StockViewProps> = ({
         const commonProps = {
             sortConfig,
             onSort: handleSort,
-            startIndex: (currentPage - 1) * PAGE_SIZE,
+            startIndex: (currentPage - 1) * pageSize,
             onHoldCar: onHoldCar,
             onReleaseCar: onReleaseCar,
             onCreateRequestForVehicle,
@@ -250,7 +362,7 @@ const StockView: React.FC<StockViewProps> = ({
                         searchable={false}
                     />
                 </div>
-                <div className="flex-1 flex flex-col min-h-0">
+                <div ref={containerRef} className="flex-1 flex flex-col min-h-0">
                     {view === 'table' ? (
                         <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
                             <div className="flex-grow overflow-auto relative hidden-scrollbar">
