@@ -163,7 +163,7 @@ const StockCard: React.FC<StockCardProps> = ({
                     <div className="absolute bottom-0 w-3/4 h-4 bg-black/10 rounded-[100%] blur-sm animate-shadow-pulse transform translate-y-1"></div>
 
                     {/* Animated Car */}
-                    <div className="relative z-10 w-full h-full flex items-center justify-center transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-1 animate-float">
+                    <div className={`relative z-10 w-full h-full flex items-center justify-center transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-1 animate-float ${vehicle["Người Giữ Xe"] ? 'group-hover:blur-[1px] group-hover:opacity-90' : ''}`}>
                         <CarImage
                             model={vehicle['Dòng xe']}
                             exteriorColor={vehicle['Ngoại thất']}
@@ -171,6 +171,27 @@ const StockCard: React.FC<StockCardProps> = ({
                             alt={`VinFast ${vehicle['Dòng xe']}`}
                         />
                     </div>
+
+                    {/* Keeper Info Overlay */}
+                    {vehicle["Người Giữ Xe"] && (
+                        <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
+                            <div className="bg-black/60 backdrop-blur-sm text-white rounded-lg p-2 shadow-xl border border-white/10 flex flex-col items-center transform scale-95 group-hover:scale-100 transition-transform duration-300 min-w-[100px]">
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                    <div className="w-4 h-4 rounded-full bg-accent-primary/90 flex items-center justify-center shadow-sm">
+                                        <i className="fas fa-user-shield text-white text-[8px]"></i>
+                                    </div>
+                                    <span className="font-semibold text-[10px] text-accent-primary tracking-wide uppercase">Đang Giữ</span>
+                                </div>
+                                <p className="font-bold text-xs whitespace-nowrap mb-0.5 text-shadow-sm">{vehicle["Người Giữ Xe"]}</p>
+                                {vehicle["Thời Gian Hết Hạn Giữ"] && (
+                                    <div className="flex items-center gap-1 text-[9px] text-gray-200 bg-white/5 px-1.5 py-0.5 rounded-full mt-0.5">
+                                        <i className="fas fa-clock text-[8px]"></i>
+                                        <span>{moment(vehicle["Thời Gian Hết Hạn Giữ"]).format('HH:mm DD/MM')}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Shine Effect */}
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-15deg] w-full h-full animate-shine opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
