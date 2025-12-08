@@ -107,8 +107,37 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
     const {
         filters, sortConfig, currentPage, setCurrentPage, handleFilterChange, handleResetFilters, handleSort,
-        processedData, paginatedData, totalPages, pageSize, containerRef
+        processedData, paginatedData, totalPages, pageSize, containerRef,
+        visibleCount, setVisibleCount, batchSize
     } = useOrderFiltering({ allHistoryData: historyData, isSidebarCollapsed, activeView, orderView });
+
+    const loadMoreRef = React.useRef<HTMLDivElement>(null);
+
+    // Intersection Observer for Infinite Scroll in Order Grid View
+    React.useEffect(() => {
+        if (orderView !== 'grid') return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    if (visibleCount < processedData.length) {
+                        setVisibleCount((prev: number) => Math.min(prev + batchSize, processedData.length));
+                    }
+                }
+            },
+            { threshold: 0.1, rootMargin: '100px' }
+        );
+
+        if (loadMoreRef.current) {
+            observer.observe(loadMoreRef.current);
+        }
+
+        return () => {
+            if (loadMoreRef.current) {
+                observer.unobserve(loadMoreRef.current);
+            }
+        };
+    }, [visibleCount, processedData.length, batchSize, orderView, setVisibleCount]);
 
     const handleLoadMoreArchives = async () => {
         setIsLoadingArchives(true);
@@ -344,12 +373,27 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                     onConfirmVC={setOrderToConfirmVC}
                                     processingOrder={processingOrder}
                                 />
+                                {/* Load More Trigger for Infinite Scroll */}
+                                {visibleCount < processedData.length && (
+                                    <div ref={loadMoreRef} className="h-10 w-full flex items-center justify-center py-4">
+                                        <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
+                                    </div>
+                                )}
+
+                                {/* Load More Archives Trigger (if local data exhausted) */}
+                                {visibleCount >= processedData.length && !isLastArchive && (
+                                    <div className="p-4 flex justify-center">
+                                        <button
+                                            onClick={handleLoadMoreArchives}
+                                            disabled={isLoadingArchives}
+                                            className="btn-secondary"
+                                        >
+                                            {isLoadingArchives ? <i className="fas fa-spinner fa-spin mr-2"></i> : <i className="fas fa-cloud-download-alt mr-2"></i>}
+                                            Tải thêm dữ liệu cũ
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                            {(totalPages > 0 || !isLastArchive) && (
-                                <div className="relative z-20">
-                                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={handleLoadMoreArchives} isLoadingArchives={isLoadingArchives} isLastArchive={isLastArchive} />
-                                </div>
-                            )}
                         </div>
                     )}
                 </div>

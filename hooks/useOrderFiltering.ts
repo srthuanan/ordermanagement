@@ -19,6 +19,11 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
     });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Infinite Scroll State for Grid View
+    const [visibleCount, setVisibleCount] = useState(20);
+    const [batchSize, setBatchSize] = useState(20);
+
     const [pageSize, setPageSize] = useState(() => {
         if (activeView === 'orders' && orderView === 'grid') {
             return isSidebarCollapsed ? 15 : 12;
@@ -27,7 +32,7 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
     });
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const calculatePageSize = useCallback(() => {
+    const calculateLayout = useCallback(() => {
         if (!containerRef.current) return;
 
         if (activeView === 'orders' && orderView === 'grid') {
@@ -37,18 +42,15 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
 
             if (!gridContainer || !gridElement) {
                 // Fallback
-                const fallbackSize = isSidebarCollapsed ? 15 : 12;
-                setPageSize(fallbackSize);
+                setBatchSize(20);
                 return;
             }
 
-            const containerHeight = containerRef.current.clientHeight;
             const containerWidth = containerRef.current.clientWidth;
+            const containerHeight = containerRef.current.clientHeight;
 
-            // If container hasn't been laid out yet, use fallback
             if (containerHeight === 0 || containerWidth === 0) {
-                const fallbackSize = isSidebarCollapsed ? 15 : 12;
-                setPageSize(fallbackSize);
+                setBatchSize(20);
                 return;
             }
 
@@ -75,9 +77,7 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
                 }
             }
 
-            // Calculate rows to fill available height
-            const paginationOffset = 50;
-            const availableHeight = containerHeight - paginationOffset;
+            const availableHeight = containerHeight - 50;
             const rows = availableHeight >= cardHeight
                 ? Math.ceil((availableHeight - cardHeight / 2) / (cardHeight + gap))
                 : 0;
@@ -85,7 +85,13 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
             const optimalRows = Math.max(2, rows);
             const optimalColumns = Math.max(1, columns);
 
-            setPageSize(optimalRows * optimalColumns);
+            // For infinite scroll, load roughly 2 screens worth
+            const newBatchSize = Math.max(12, optimalRows * optimalColumns * 2);
+            setBatchSize(newBatchSize);
+
+            // Ensure visible count is at least one batch
+            setVisibleCount(prev => Math.max(prev, newBatchSize));
+
         } else {
             // Table view - keep simple calculation
             const fallbackSize = isSidebarCollapsed ? 14 : 12;
@@ -99,22 +105,24 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
         if (!container) return;
 
         const observer = new ResizeObserver(() => {
-            calculatePageSize();
+            calculateLayout();
         });
 
         observer.observe(container);
-        calculatePageSize();
+        calculateLayout();
 
         return () => observer.disconnect();
-    }, [calculatePageSize]);
+    }, [calculateLayout]);
 
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
         setCurrentPage(1);
+        setVisibleCount(batchSize); // Reset infinite scroll
         setFilters(prev => ({ ...prev, ...newFilters }));
-    }, []);
+    }, [batchSize]);
 
     const handleResetFilters = useCallback(() => {
         setCurrentPage(1);
+        setVisibleCount(batchSize);
         setFilters({
             keyword: '',
             carModel: [],
@@ -122,10 +130,11 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
             status: [],
             exterior: []
         });
-    }, []);
+    }, [batchSize]);
 
     const handleSort = (key: keyof Order) => {
         setCurrentPage(1);
+        setVisibleCount(batchSize);
         let direction: 'asc' | 'desc' = 'asc';
         if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') { direction = 'desc'; }
         setSortConfig({ key, direction });
@@ -185,17 +194,20 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
 
 
     const paginatedData = useMemo(() => {
+        if (orderView === 'grid') {
+            return processedData.slice(0, visibleCount);
+        }
         const startIndex = (currentPage - 1) * pageSize;
         return processedData.slice(startIndex, startIndex + pageSize);
-    }, [processedData, currentPage, pageSize]);
+    }, [processedData, currentPage, pageSize, orderView, visibleCount]);
 
     // Recalculate when data changes (after render)
     useEffect(() => {
         const timer = setTimeout(() => {
-            calculatePageSize();
+            calculateLayout();
         }, 200);
         return () => clearTimeout(timer);
-    }, [paginatedData.length, calculatePageSize]);
+    }, [paginatedData.length, calculateLayout]);
 
     return {
         filters,
@@ -209,6 +221,9 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
         paginatedData,
         totalPages,
         pageSize,
-        containerRef
+        containerRef,
+        visibleCount,
+        setVisibleCount,
+        batchSize
     };
 };

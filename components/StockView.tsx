@@ -1,10 +1,8 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { StockVehicle, StockSortConfig, Order, AdminSubView } from '../types';
-import StockTable from './StockTable';
 import Button from './ui/Button';
 import StockGridView from './StockGridView';
 import Filters, { DropdownFilterConfig } from './ui/Filters';
-import Pagination from './ui/Pagination';
 import { includesNormalized } from '../utils/stringUtils';
 
 
@@ -40,7 +38,6 @@ const StockView: React.FC<StockViewProps> = ({
     onHoldCar,
     onReleaseCar,
     processingVin,
-    isSidebarCollapsed,
     allOrders,
     showOrderInAdmin,
     showAdminTab
@@ -53,95 +50,74 @@ const StockView: React.FC<StockViewProps> = ({
         exterior: [] as string[],
     });
     const [sortConfig, setSortConfig] = useState<StockSortConfig | null>({ key: 'VIN', direction: 'asc' });
-    const [currentPage, setCurrentPage] = useState(1);
-    const [view, setView] = useState<'table' | 'grid'>('grid');
 
-    // Dynamic Page Size Calculation
-    const [pageSize, setPageSize] = useState(isSidebarCollapsed ? 16 : 14);
-    const containerRef = React.useRef<HTMLDivElement>(null);
+    // Infinite Scroll State
+    const [visibleCount, setVisibleCount] = useState(20); // Initial count
+    const [batchSize, setBatchSize] = useState(20); // Items to add on scroll
+    const containerRef = useRef<HTMLDivElement>(null);
+    const loadMoreRef = useRef<HTMLDivElement>(null);
 
-    const calculatePageSize = useCallback(() => {
+
+    // Dynamic Batch Size Calculation
+    const calculateBatchSize = useCallback(() => {
         if (!containerRef.current) return;
 
-        if (view === 'grid') {
-            // Find the grid container (the one with overflow-y-auto)
-            const gridContainer = containerRef.current.querySelector('.flex-grow.overflow-y-auto');
-            const gridElement = gridContainer?.querySelector('.grid');
+        // Find the grid container (the one with overflow-y-auto)
+        const gridContainer = containerRef.current.querySelector('.flex-grow.overflow-y-auto');
+        const gridElement = gridContainer?.querySelector('.grid');
 
-            if (!gridContainer || !gridElement) {
-                // Fallback if elements not found
-                const minCardWidth = 190;
-                const gap = 8;
-                const containerWidth = containerRef.current.clientWidth;
-                const containerHeight = containerRef.current.clientHeight;
-                const availableWidth = containerWidth - 8;
-                const availableHeight = containerHeight - 60;
-                const columns = Math.floor((availableWidth + gap) / (minCardWidth + gap));
-                const rows = Math.max(2, Math.floor(availableHeight / 230));
-                setPageSize(rows * Math.max(1, columns));
-                return;
-            }
-
-            const containerHeight = containerRef.current.clientHeight;
-            const containerWidth = containerRef.current.clientWidth;
-
-            // If container hasn't been laid out yet, use fallback
-            if (containerHeight === 0 || containerWidth === 0) {
-                const fallbackSize = 12;
-                setPageSize(fallbackSize);
-                return;
-            }
-
-            const minCardWidth = 190;
-            const gap = 8;
-            let cardHeight = 230;
-
-
-            // Measure actual columns and card height if grid exists
-            let columns = Math.floor((containerWidth - 8 + gap) / (minCardWidth + gap));
-
-            if (gridElement) {
-                // Get actual columns from CSS Grid
-                const gridStyle = window.getComputedStyle(gridElement);
-                const gridCols = gridStyle.gridTemplateColumns;
-                if (gridCols && gridCols !== 'none') {
-                    columns = gridCols.split(' ').length;
-                }
-
-                // Get actual card height from first card
-                const firstCard = gridElement.querySelector('.relative.flex.flex-col');
-                if (firstCard) {
-                    const measuredHeight = firstCard.getBoundingClientRect().height;
-                    if (measuredHeight > 0) {
-                        cardHeight = measuredHeight;
-                    }
-                }
-            }
-
-            // Calculate rows to fill available height (reduced offset for more rows)
-            const availableHeight = containerHeight - 50;
-            // Use ceiling to be more aggressive in filling space
-            const rows = availableHeight >= cardHeight
-                ? Math.ceil((availableHeight - cardHeight / 2) / (cardHeight + gap))
-                : 0;
-
-            // Ensure at least some items are shown
-            const optimalRows = Math.max(2, rows); // At least 2 rows
-            const optimalColumns = Math.max(1, columns);
-
-            setPageSize(optimalRows * optimalColumns);
-        } else {
-            // Table View Calculation
-            const containerHeight = containerRef.current.clientHeight;
-            const rowHeight = 50; // Approximate height of a table row
-            const headerRowHeight = 50; // Table header
-
-            const availableHeightForRows = containerHeight - headerRowHeight - 60; // Account for pagination
-            const rows = Math.floor(availableHeightForRows / rowHeight);
-
-            setPageSize(Math.max(5, rows));
+        if (!gridContainer || !gridElement) {
+            // Fallback
+            setBatchSize(20);
+            return;
         }
-    }, [view]);
+
+        const containerWidth = containerRef.current.clientWidth;
+        const containerHeight = containerRef.current.clientHeight;
+
+        if (containerHeight === 0 || containerWidth === 0) {
+            setBatchSize(20);
+            return;
+        }
+
+        const minCardWidth = 190;
+        const gap = 8;
+        let cardHeight = 230;
+
+        // Measure actual columns and card height if grid exists
+        let columns = Math.floor((containerWidth - 8 + gap) / (minCardWidth + gap));
+
+        if (gridElement) {
+            const gridStyle = window.getComputedStyle(gridElement);
+            const gridCols = gridStyle.gridTemplateColumns;
+            if (gridCols && gridCols !== 'none') {
+                columns = gridCols.split(' ').length;
+            }
+            const firstCard = gridElement.querySelector('.relative.flex.flex-col');
+            if (firstCard) {
+                const measuredHeight = firstCard.getBoundingClientRect().height;
+                if (measuredHeight > 0) {
+                    cardHeight = measuredHeight;
+                }
+            }
+        }
+
+        const availableHeight = containerHeight - 50;
+        const rows = availableHeight >= cardHeight
+            ? Math.ceil((availableHeight - cardHeight / 2) / (cardHeight + gap))
+            : 0;
+
+        const optimalRows = Math.max(2, rows);
+        const optimalColumns = Math.max(1, columns);
+
+        // Load roughly 2 screens worth of data at a time
+        const newBatchSize = Math.max(12, optimalRows * optimalColumns * 2);
+        setBatchSize(newBatchSize);
+
+        // If visible count is very low (e.g. initial load), set it to at least one batch
+        setVisibleCount(prev => Math.max(prev, newBatchSize));
+
+    }, []);
 
 
     useEffect(() => {
@@ -149,27 +125,23 @@ const StockView: React.FC<StockViewProps> = ({
         if (!container) return;
 
         const observer = new ResizeObserver(() => {
-            calculatePageSize();
+            calculateBatchSize();
         });
 
         observer.observe(container);
-        calculatePageSize(); // Initial calculation
+        calculateBatchSize(); // Initial calculation
 
         return () => observer.disconnect();
-    }, [calculatePageSize]);
-
-
-
-
+    }, [calculateBatchSize]);
 
 
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
-        setCurrentPage(1);
+        setVisibleCount(batchSize); // Reset to first batch
         setFilters(prev => ({ ...prev, ...newFilters }));
-    }, []);
+    }, [batchSize]);
 
     const handleResetFilters = useCallback(() => {
-        setCurrentPage(1);
+        setVisibleCount(batchSize);
         setFilters({
             keyword: '',
             carModel: [],
@@ -177,10 +149,10 @@ const StockView: React.FC<StockViewProps> = ({
             status: [],
             exterior: [],
         });
-    }, []);
+    }, [batchSize]);
 
     const handleSort = (key: keyof StockVehicle) => {
-        setCurrentPage(1);
+        setVisibleCount(batchSize);
         let direction: 'asc' | 'desc' = 'asc';
         if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') { direction = 'desc'; }
         setSortConfig({ key, direction });
@@ -196,16 +168,10 @@ const StockView: React.FC<StockViewProps> = ({
                     showOrderInAdmin(order, 'paired');
                 } else {
                     showToast('Không Tìm Thấy', `Không tìm thấy đơn hàng đã ghép với xe VIN ${vehicle.VIN}.`, 'warning', 4000);
-                    // Fallback to showing stock details if order not found
-                    // setStockVehicleToView(vehicle);
                 }
             } else if (status === 'Đang giữ') {
-                // Navigate to the "Pending" tab in Admin view
                 showAdminTab('pending');
             }
-        } else {
-            // Default behavior for "Chưa ghép" or non-admins
-            // setStockVehicleToView(vehicle); // Modal removed
         }
     };
 
@@ -263,27 +229,42 @@ const StockView: React.FC<StockViewProps> = ({
     }, [stockData, filters, sortConfig]);
 
 
+    const visibleData = useMemo(() => {
+        return processedData.slice(0, visibleCount);
+    }, [processedData, visibleCount]);
 
-    const totalPages = Math.ceil(processedData.length / pageSize);
-
+    // Intersection Observer for Infinite Scroll
     useEffect(() => {
-        if (currentPage > totalPages && totalPages > 0) {
-            setCurrentPage(totalPages);
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting) {
+                    if (visibleCount < processedData.length) {
+                        setVisibleCount((prev) => Math.min(prev + batchSize, processedData.length));
+                    }
+                }
+            },
+            { threshold: 0.1, rootMargin: '100px' } // Load more before reaching the very bottom
+        );
+
+        if (loadMoreRef.current) {
+            observer.observe(loadMoreRef.current);
         }
-    }, [totalPages, currentPage]);
 
-    const paginatedData = useMemo(() => {
-        const startIndex = (currentPage - 1) * pageSize;
-        return processedData.slice(startIndex, startIndex + pageSize);
-    }, [processedData, currentPage, pageSize]);
+        return () => {
+            if (loadMoreRef.current) {
+                observer.unobserve(loadMoreRef.current);
+            }
+        };
+    }, [visibleCount, processedData.length, batchSize]);
 
-    // Recalculate page size when data changes (after render)
+
+    // Recalculate batch size when data changes (after render)
     useEffect(() => {
         const timer = setTimeout(() => {
-            calculatePageSize();
-        }, 200); // Increased delay to ensure DOM is fully rendered
+            calculateBatchSize();
+        }, 200);
         return () => clearTimeout(timer);
-    }, [paginatedData.length, calculatePageSize]);
+    }, [visibleData.length, calculateBatchSize]);
 
     const uniqueCarModels = useMemo(() => [...new Set(stockData.map(v => v["Dòng xe"]).filter(v => v))].sort(), [stockData]);
     const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]).filter(v => v))].sort(), [stockData]);
@@ -330,7 +311,7 @@ const StockView: React.FC<StockViewProps> = ({
         const commonProps = {
             sortConfig,
             onSort: handleSort,
-            startIndex: (currentPage - 1) * pageSize,
+            startIndex: 0, // Infinite scroll always starts from 0
             onHoldCar: onHoldCar,
             onReleaseCar: onReleaseCar,
             onCreateRequestForVehicle,
@@ -356,32 +337,25 @@ const StockView: React.FC<StockViewProps> = ({
                         isLoading={isLoading}
                         plain={true}
                         size="compact"
-                        viewSwitcherEnabled={true}
-                        activeView={view}
-                        onViewChange={setView}
+                        viewSwitcherEnabled={false}
+                        activeView={'grid'}
+                        onViewChange={() => { }}
                         searchable={false}
                     />
                 </div>
                 <div ref={containerRef} className="flex-1 flex flex-col min-h-0">
-                    {view === 'table' ? (
-                        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
-                            <div className="flex-grow overflow-auto relative hidden-scrollbar">
-                                <StockTable vehicles={paginatedData} {...commonProps} />
-                            </div>
-                            {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => { }} isLoadingArchives={false} isLastArchive={true} />}
-                        </div>
-                    ) : (
-                        <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
-                            <div className="flex-grow overflow-y-auto relative hidden-scrollbar p-1">
-                                <StockGridView vehicles={paginatedData} {...commonProps} />
-                            </div>
-                            {totalPages > 0 && (
-                                <div className="relative z-20">
-                                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => { }} isLoadingArchives={false} isLastArchive={true} />
+                    <div className="bg-surface-card rounded-xl shadow-md border border-border-primary flex flex-col h-full">
+                        <div className="flex-grow overflow-y-auto relative hidden-scrollbar p-1">
+                            <StockGridView vehicles={visibleData} {...commonProps} />
+
+                            {/* Load More Trigger */}
+                            {visibleCount < processedData.length && (
+                                <div ref={loadMoreRef} className="h-10 w-full flex items-center justify-center py-4">
+                                    <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
                                 </div>
                             )}
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
         );
