@@ -118,7 +118,8 @@ const TotalViewDashboard: React.FC<TotalViewDashboardProps> = ({ allOrders, stoc
 
         const invoicedDataCurrentMonth = invoiceData.filter(order => {
             if (!order['Ngày xuất hóa đơn']) return false;
-            const orderDate = moment(order['Ngày xuất hóa đơn']);
+            // Support multiple date formats including ISO and Vietnamese format
+            const orderDate = moment(order['Ngày xuất hóa đơn'], ['YYYY-MM-DD', 'DD/MM/YYYY', 'D/M/YYYY', moment.ISO_8601]);
             return orderDate.isValid() && orderDate.month() === currentMonth && orderDate.year() === currentYear;
         });
 
