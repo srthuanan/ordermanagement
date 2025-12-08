@@ -7507,7 +7507,7 @@ function handleUploadIssuedInvoice(e) {
             }
         }
         
-        xuathoadonSheet.getRange(xuathoadonRowIndex, xuathoadonHeaders.indexOf("BÁO BÁN") + 1).check();
+        // xuathoadonSheet.getRange(xuathoadonRowIndex, xuathoadonHeaders.indexOf("BÁO BÁN") + 1).check(); // REMOVED: Column no longer exists
         if (fileFormulaObject && fileFormulaObject.formula) {
             const urlFinalInvoiceCol = xuathoadonHeaders.indexOf("URL Hóa Đơn Đã Xuất");
             if (urlFinalInvoiceCol !== -1) {

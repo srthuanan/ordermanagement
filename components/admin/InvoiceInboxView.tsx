@@ -308,6 +308,48 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
         }
     };
 
+    // Group orders by Invoice Date for 'pending_signature' folder
+    const groupedOrders = useMemo(() => {
+        if (selectedFolder !== 'pending_signature') return null;
+
+        const groups: { [key: string]: Order[] } = {};
+        filteredOrders.forEach(order => {
+            const dateVal = order['Ngày xuất hóa đơn'];
+            const dateStr = dateVal ? moment(dateVal).format('DD/MM/YYYY') : 'Chưa có ngày';
+            if (!groups[dateStr]) groups[dateStr] = [];
+            groups[dateStr].push(order);
+        });
+
+        // Return array of [date, orders] sorted by date
+        return Object.entries(groups).sort((a, b) => {
+            if (a[0] === 'Chưa có ngày') return 1;
+            if (b[0] === 'Chưa có ngày') return -1;
+            return moment(a[0], 'DD/MM/YYYY').valueOf() - moment(b[0], 'DD/MM/YYYY').valueOf();
+        });
+    }, [filteredOrders, selectedFolder]);
+
+    const renderOrder = (order: Order) => (
+        <div
+            key={order['Số đơn hàng']}
+            onClick={() => handleOrderSelect(order['Số đơn hàng'])}
+            className={`p-3 cursor-pointer hover:bg-surface-hover transition-all duration-200 group ${selectedOrderId === order['Số đơn hàng'] ? 'bg-accent-primary/10 border-l-4 border-accent-primary shadow-inner' : 'border-l-4 border-transparent'}`}
+        >
+            <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0 pr-3">
+                    <div className="text-text-primary text-sm truncate mb-0.5">{order['Tên khách hàng']}</div>
+                    <div className="text-xs text-text-secondary truncate">{order['Dòng xe']} <span className="text-text-placeholder">•</span> {order['Phiên bản']}</div>
+                </div>
+                <div className="w-16 h-10 flex-shrink-0">
+                    <CarImage
+                        model={order['Dòng xe']}
+                        exteriorColor={order['Ngoại thất']}
+                        className="w-full h-full object-contain opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300"
+                    />
+                </div>
+            </div>
+        </div>
+    );
+
     return (
         <div className="flex h-full bg-surface-card rounded-xl shadow-md border border-border-primary overflow-hidden animate-fade-in relative">
             {/* Column 1: Folders */}
@@ -344,27 +386,19 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                         <div className="p-8 text-center text-text-placeholder text-sm">Không tìm thấy đơn hàng nào.</div>
                     ) : (
                         <div className="divide-y divide-border-secondary">
-                            {filteredOrders.map(order => (
-                                <div
-                                    key={order['Số đơn hàng']}
-                                    onClick={() => handleOrderSelect(order['Số đơn hàng'])}
-                                    className={`p-3 cursor-pointer hover:bg-surface-hover transition-all duration-200 group ${selectedOrderId === order['Số đơn hàng'] ? 'bg-accent-primary/10 border-l-4 border-accent-primary shadow-inner' : 'border-l-4 border-transparent'}`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex-1 min-w-0 pr-3">
-                                            <div className="text-text-primary text-sm truncate mb-0.5">{order['Tên khách hàng']}</div>
-                                            <div className="text-xs text-text-secondary truncate">{order['Dòng xe']} <span className="text-text-placeholder">•</span> {order['Phiên bản']}</div>
+                            {groupedOrders ? (
+                                groupedOrders.map(([date, groupOrders]) => (
+                                    <React.Fragment key={date}>
+                                        <div className="bg-surface-ground px-3 py-2 text-xs font-bold text-text-secondary sticky top-0 z-10 border-b border-border-secondary flex justify-between items-center shadow-sm">
+                                            <span>{date}</span>
+                                            <span className="bg-surface-card px-1.5 py-0.5 rounded-full text-[10px] border border-border-secondary">{groupOrders.length}</span>
                                         </div>
-                                        <div className="w-16 h-10 flex-shrink-0">
-                                            <CarImage
-                                                model={order['Dòng xe']}
-                                                exteriorColor={order['Ngoại thất']}
-                                                className="w-full h-full object-contain opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                                        {groupOrders.map(order => renderOrder(order))}
+                                    </React.Fragment>
+                                ))
+                            ) : (
+                                filteredOrders.map(order => renderOrder(order))
+                            )}
                         </div>
                     )}
                 </div>
@@ -449,6 +483,12 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({ orders, onAction, s
                                             <span className="text-text-secondary">Ngày yêu cầu:</span>
                                             <span className="font-medium text-text-primary">{moment(selectedOrder['Thời gian nhập']).format('HH:mm DD/MM/YYYY')}</span>
                                         </div>
+                                        {selectedOrder['Ngày xuất hóa đơn'] && (
+                                            <div className="flex items-center gap-2 text-xs">
+                                                <span className="text-text-secondary">Ngày XHĐ:</span>
+                                                <span className="font-medium text-text-primary">{moment(selectedOrder['Ngày xuất hóa đơn']).format('DD/MM/YYYY')}</span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Vehicle Info */}

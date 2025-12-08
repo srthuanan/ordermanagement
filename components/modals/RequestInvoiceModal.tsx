@@ -379,12 +379,12 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                             <div className="space-y-2">
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-sm text-text-secondary">Hoa hồng ứng:</span>
-                                                    <span className="font-bold text-text-primary">{commission ? `${parseInt(commission).toLocaleString('vi-VN')} VND` : 'Chưa nhập'}</span>
+                                                    <span className="font-bold text-text-primary">{commission ? `${parseInt(getRawValue(commission)).toLocaleString('vi-VN')} VND` : 'Chưa nhập'}</span>
                                                 </div>
                                                 {vpoint && (
                                                     <div className="flex justify-between items-center">
                                                         <span className="text-sm text-text-secondary">Vpoint sử dụng:</span>
-                                                        <span className="font-bold text-purple-600">{`${parseInt(vpoint).toLocaleString('vi-VN')} điểm`}</span>
+                                                        <span className="font-bold text-purple-600">{`${parseInt(getRawValue(vpoint)).toLocaleString('vi-VN')} điểm`}</span>
                                                     </div>
                                                 )}
                                             </div>
