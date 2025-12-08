@@ -119,6 +119,7 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                             <SortableHeaderCell columnKey="Phiên bản" title="Phiên Bản" sortConfig={sortConfig} onSort={onSort} />
                             <SortableHeaderCell columnKey="Ngoại thất" title="Ngoại Thất" sortConfig={sortConfig} onSort={onSort} />
                             <SortableHeaderCell columnKey="Nội thất" title="Nội Thất" sortConfig={sortConfig} onSort={onSort} />
+                            <SortableHeaderCell columnKey="Ngày vận tải" title="Ngày Vận Tải" sortConfig={sortConfig} onSort={onSort} />
                             <SortableHeaderCell columnKey="Trạng thái" title="Trạng Thái" sortConfig={sortConfig} onSort={onSort} />
                             <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6 text-center text-xs font-bold text-text-secondary uppercase tracking-wider">Hành động</th>
                         </tr>
@@ -156,6 +157,7 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                     <td data-label="Phiên Bản" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Phiên bản"]}</td>
                                     <td data-label="Ngoại Thất" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary font-medium" style={getExteriorColorStyle(vehicle['Ngoại thất'])}>{vehicle["Ngoại thất"]}</td>
                                     <td data-label="Nội Thất" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Nội thất"]}</td>
+                                    <td data-label="Ngày Vận Tải" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Ngày vận tải"] ? moment(vehicle["Ngày vận tải"]).format('DD/MM/YYYY') : ''}</td>
                                     <td data-label="Trạng Thái" className="whitespace-nowrap px-3 py-4 text-sm">
                                         <div>
                                             <StatusBadge status={vehicle["Trạng thái"]} />

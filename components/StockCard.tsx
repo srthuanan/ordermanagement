@@ -225,6 +225,12 @@ const StockCard: React.FC<StockCardProps> = ({
                             <p className="text-xs truncate">{vehicle['Nội thất']}</p>
                         </div>
                     </div>
+                    {vehicle["Ngày vận tải"] && (
+                        <div className="flex items-center gap-1.5 mt-1 text-light-text-secondary" title={`Ngày vận tải: ${moment(vehicle["Ngày vận tải"]).format('DD/MM/YYYY')}`}>
+                            <span className="material-symbols-outlined flex-shrink-0" style={{ fontSize: '14px' }}>local_shipping</span>
+                            <p className="text-xs truncate">VT: {moment(vehicle["Ngày vận tải"]).format('DD/MM/YYYY')}</p>
+                        </div>
+                    )}
                     <div className="flex items-center justify-between mt-1">
                         <StatusBadge status={vehicle['Trạng thái']} />
                         {daysInStock !== null && (

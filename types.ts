@@ -60,6 +60,7 @@ export interface StockVehicle {
   "Thời Gian Hết Hạn Giữ"?: string; // ISO Date string
   "Vị trí"?: string;
   "Thời gian nhập"?: string; // ISO Date string
+  "Ngày vận tải"?: string;
   [key: string]: any; // Allow for other properties
 }
 

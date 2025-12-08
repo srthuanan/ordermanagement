@@ -44,7 +44,7 @@ const SHEET_HEADERS = {
   "YeuCauVC": ["Số đơn hàng", "Tên khách hàng", "Thời gian YC", "Người YC", "Loại YC", "Trạng thái xử lý", "Ghi chú", "FileUrls", "Mã KH DMS", "VIN"],
   "ChuaGhep": ["Tên tư vấn bán hàng", "Tên khách hàng", "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Số đơn hàng", "Ngày cọc", "Thời gian nhập", "Kết quả", "Trạng thái gửi mail"],
   "DangKyCho": ["ID Yêu Cầu", "Thời gian đăng ký", "Tên TVBH", "Tên khách hàng", "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Trạng thái", "VIN gợi ý", "Ghi chú"],
-  "KhoXe": ["Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "VIN", "Mã DMS", "Trạng thái", "Ngày nhập", "Đã thông báo", "Người Giữ Xe", "Thời Gian Hết Hạn Giữ"],
+  "KhoXe": ["Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "VIN", "Mã DMS", "Trạng thái", "Ngày nhập", "Đã thông báo", "Người Giữ Xe", "Thời Gian Hết Hạn Giữ", "Ngày vận tải"],
   "HuyGhep": ["Tên tư vấn bán hàng", "Tên khách hàng", "Dòng xe", "Phiên bản", "Số đơn hàng", "VIN", "Kết quả", "Người hủy", "Thời gian hủy"],
   "Mail": ["Tên tư vấn bán hàng", "Email"],
   "ThongBaoWebApp": ["Timestamp", "Message", "Type", "TargetView", "TargetID", "CreatedBy", "IsRead", "Recipient"],
