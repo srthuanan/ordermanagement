@@ -203,7 +203,7 @@ const StockCard: React.FC<StockCardProps> = ({
                         <span className="text-light-text-primary text-base font-bold whitespace-nowrap group-hover:text-accent-primary transition-colors">
                             {vehicle['Dòng xe']}
                         </span>
-                        <span className="text-light-text-secondary text-sm font-medium truncate" title={vehicle['Phiên bản']}>
+                        <span className="text-light-text-secondary text-xs font-medium truncate" title={vehicle['Phiên bản']}>
                             {vehicle['Phiên bản']}
                         </span>
                     </div>
