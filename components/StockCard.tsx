@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import moment from 'moment';
 import { StockVehicle } from '../types';
+import { getExteriorColorStyle, getInteriorColorStyle } from '../utils/styleUtils';
 import Button from './ui/Button';
 import CarImage from './ui/CarImage'; // Import the new component
 import StatusBadge from './ui/StatusBadge';
@@ -218,11 +219,11 @@ const StockCard: React.FC<StockCardProps> = ({
                     <div className="flex items-center gap-3 mt-1 text-light-text-secondary">
                         <div className="flex items-center gap-1.5 min-w-0 max-w-[50%]" title={`Ngoại thất: ${vehicle['Ngoại thất']}`}>
                             <span className="material-symbols-outlined flex-shrink-0" style={{ fontSize: '14px' }}>palette</span>
-                            <p className="text-xs truncate">{vehicle['Ngoại thất']}</p>
+                            <p className="text-xs truncate font-medium" style={getExteriorColorStyle(vehicle['Ngoại thất'])}>{vehicle['Ngoại thất']}</p>
                         </div>
                         <div className="flex items-center gap-1.5 min-w-0 max-w-[50%]" title={`Nội thất: ${vehicle['Nội thất']}`}>
                             <span className="material-symbols-outlined flex-shrink-0" style={{ fontSize: '14px' }}>chair</span>
-                            <p className="text-xs truncate">{vehicle['Nội thất']}</p>
+                            <p className="text-xs truncate font-medium" style={getInteriorColorStyle(vehicle['Nội thất'])}>{vehicle['Nội thất']}</p>
                         </div>
                     </div>
                     {vehicle["Ngày vận tải"] && (
