@@ -7529,10 +7529,15 @@ function handleUploadIssuedInvoice(e) {
         noi_that: daGhepRowData["Nội thất"]
     };
 
-    sendIssuedInvoiceWithAttachment(mailSheet, orderDataForEmail, blob, xuathoadonSheet, xuathoadonRowIndex);
-    addNotification(`Hóa đơn cho ĐH ${orderNumber} đã được tải lên bởi ${uploadedBy}.`, 'success', 'xuatHoaDon', orderNumber, uploadedBy, tvbhName);
+    const emailSent = sendIssuedInvoiceWithAttachment(mailSheet, orderDataForEmail, blob, xuathoadonSheet, xuathoadonRowIndex);
     
-    return createJsonResponse({ status: 'SUCCESS', message: 'Tải lên hóa đơn và gửi email thành công!' });
+    if (emailSent) {
+      addNotification(`Hóa đơn cho ĐH ${orderNumber} đã được tải lên bởi ${uploadedBy}.`, 'success', 'xuatHoaDon', orderNumber, uploadedBy, tvbhName);
+      return createJsonResponse({ status: 'SUCCESS', message: 'Tải lên hóa đơn và gửi email thành công!' });
+    } else {
+      addNotification(`Hóa đơn cho ĐH ${orderNumber} đã được tải lên NHƯNG GỬI MAIL THẤT BẠI.`, 'warning', 'xuatHoaDon', orderNumber, uploadedBy, tvbhName);
+      return createJsonResponse({ status: 'WARNING', message: 'Tải lên thành công nhưng GỬI MAIL THẤT BẠI. Vui lòng kiểm tra lại email TVBH.' });
+    }
 
   } catch (err) {
     Logger.log(`Lỗi nghiêm trọng trong handleUploadIssuedInvoice: ${err.message}. Stack: ${err.stack}`);
@@ -10450,6 +10455,9 @@ function handleBulkUploadIssuedInvoices(e) {
 
         if (resultObject.status === "SUCCESS") {
           successCount++;
+        } else if (resultObject.status === "WARNING") {
+          successCount++;
+          errorDetails.push(`- ${fileInfo.orderNumber} (Cảnh báo): ${resultObject.message}`);
         } else {
           errorCount++;
           errorDetails.push(`- ${fileInfo.orderNumber}: ${resultObject.message}`);
