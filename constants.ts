@@ -11,7 +11,7 @@ export const versionsMap = {
     "VF 8": ["Eco Tiêu chuẩn", "Eco Nâng cấp", "Plus"],
     "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal"],
     "HERIO": ["HERIO"], "NERIO": ["NERIO"], "LIMO": ["LIMO"], "MINIO": ["MINIO"],
-    "EC Van": ["EC Van"]
+    "EC Van": ["Base", "Plus", "Plus_Cửa trượt"]
 };
 
 export const allPossibleVersions = [
@@ -21,7 +21,7 @@ export const allPossibleVersions = [
     "Plus_US", "Plus Tiêu chuẩn 1", "Plus Tiêu chuẩn 2", "Eco Tiêu chuẩn 1", "Eco Tiêu chuẩn 2",
     "Eco_HUD Tiêu chuẩn 1", "Eco_HUD Tiêu chuẩn 2", "Plus_Metal Tiêu chuẩn 1", "Plus_Metal Tiêu chuẩn 2",
     "Base Tiêu chuẩn 2", "Plus_Metal Tiêu chuẩn 1 (FWD)", "Plus_Metal Tiêu chuẩn 1 (AWD)",
-    "EC Van"
+    "Plus_Cửa trượt"
 ];
 
 // --- Color Rules ---
