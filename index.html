@@ -1208,6 +1208,12 @@
         margin: 0.6cm;
       }
 
+      html, body {
+        overflow: visible !important;
+        height: auto !important;
+        background: white !important;
+      }
+
       /* Hide everything by default */
       body * {
         visibility: hidden;
@@ -1215,17 +1221,20 @@
 
       /* Then, make the print container and its children visible */
       #print-container,
-      #print-container * {
-        visibility: visible;
+      #print-wrapper,
+      #print-container *,
+      #print-wrapper * {
+        visibility: visible !important;
       }
 
       /* Position the print container at the top of the page AND override display:none */
-      #print-container {
+      #print-container,
+      #print-wrapper {
         display: block !important;
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: static !important;
       }
 
       /* Hide non-essential UI elements again just in case */
@@ -1246,39 +1255,40 @@
         height: auto;
         box-sizing: border-box;
         page-break-inside: avoid !important;
-        margin: 0 !important;
+        break-inside: avoid !important;
+        margin: 0 0 0.5cm 0 !important;
         transform: none !important;
-        aspect-ratio: auto !important;
+        display: block !important;
+      }
+
+      /* Explicit Page Breaker */
+      .page-break {
+        display: block !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        visibility: hidden !important;
       }
 
       .print-area.is-cam-ket {
         border: none !important;
-        font-size: 14px !important;
-        line-height: 1.6 !important;
-        padding: 0.7cm !important;
-        page-break-inside: avoid !important;
+        font-size: 12.5px !important;
+        line-height: 1.4 !important;
+        padding: 0.5cm !important;
       }
 
-      /* Override Tailwind's specific font-size utility on the OL for print */
-      .print-area.is-cam-ket .text-\[12\.5px\] {
-        font-size: 10.5px !important;
+      /* Adjust list spacing to prevent overflow */
+      .print-area.is-cam-ket ol.list-decimal li {
+        margin-top: 0.1rem !important;
+        margin-bottom: 0.1rem !important;
       }
 
-      /* Override Tailwind's space-y utility for the list items for print */
-      .print-area.is-cam-ket .space-y-2>*+* {
-        margin-top: 0.25rem !important;
-      }
-
-      /* Define a printable page and force a break after it */
-      .print-page,
-      .print-page-break-after {
-        page-break-after: always;
-      }
-
-      /* Don't add a page break after the very last page */
-      .print-page:last-of-type,
-      .print-page-break-after:last-of-type {
-        page-break-after: auto;
+      .print-area.is-cam-ket p {
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
       }
     }
 
@@ -1348,7 +1358,7 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/ordermanagement/assets/index-DNO8WMws.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-_peG482O.js"></script>
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-react-KfUPlHYY.js">
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-pdf-Dyj7cThZ.js">
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-utils-C5S46NFB.js">
