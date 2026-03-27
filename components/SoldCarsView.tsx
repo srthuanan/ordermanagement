@@ -1,26 +1,27 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { Order, SortConfig } from '../types';
 import HistoryTable from './HistoryTable';
+import { useSoldCarsApi } from '../hooks/useSoldCarsApi';
 import Pagination from './ui/Pagination';
 import SoldCarDetailPanel from './ui/SoldCarDetailPanel';
-import SummaryCard from './ui/SummaryCard';
 
-import Filters, { DropdownFilterConfig } from './ui/Filters';
+import { DropdownFilterConfig } from './ui/Filters';
+import TabbedFilter from './ui/TabbedFilter';
+import MultiSelectDropdown from './ui/MultiSelectDropdown';
 import DateFilter from './ui/DateFilter';
 import { MONTHS } from '../constants';
-import moment from 'moment';
 import { includesNormalized } from '../utils/stringUtils';
+import AnimatedBackground from './ui/AnimatedBackground';
 
 // Chart.js is loaded globally via index.html
 declare const Chart: any;
 
 interface SoldCarsViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
-    soldData: Order[];
-    isLoading: boolean;
-    error: string | null;
-    refetch: () => void;
     isSidebarCollapsed: boolean;
+    showOrderInAdmin?: (order: Order, targetTab: any) => void;
+    showAdminTab?: (targetTab: any) => void;
+    isAdmin?: boolean;
 }
 
 const synchronizeTvbhName = (name?: string): string => {
@@ -47,14 +48,16 @@ const aggregateData = (data: Order[], key: keyof Order): { key: string, count: n
     return Object.entries(stats).map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count);
 };
 
-const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoading, error, refetch, isSidebarCollapsed }) => {
+const SoldCarsView: React.FC<SoldCarsViewProps> = ({ isSidebarCollapsed, showOrderInAdmin, showAdminTab, isAdmin }) => {
     const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
 
     // State for Date Filter
-    const [selectedMonth, setSelectedMonth] = useState<number | null>(null); // null = All Year
+    // Default to current month and year
+    const [selectedMonth, setSelectedMonth] = useState<number | null>(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
-    // State for Filters & Sorting
+    // Fetch data based on selected filters
+    const { soldData, isLoading, error, refetch } = useSoldCarsApi(selectedMonth, selectedYear);
     const [filters, setFilters] = useState({
         keyword: '',
         tvbh: [] as string[],
@@ -68,18 +71,11 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
     const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
 
     // Filter Data by Date
+    // Filter Data by Date
+    // Since API now filters by date, we don't need client-side date filtering anymore
     const dateFilteredData = useMemo(() => {
-        return soldData.filter(order => {
-            if (!order['Thời gian nhập']) return false;
-            const orderDate = moment(order['Thời gian nhập']);
-            const orderYear = orderDate.year();
-            const orderMonth = orderDate.month(); // 0-11
-
-            if (orderYear !== selectedYear) return false;
-            if (selectedMonth !== null && orderMonth !== selectedMonth) return false;
-            return true;
-        });
-    }, [soldData, selectedMonth, selectedYear]);
+        return soldData;
+    }, [soldData]);
 
     // Filter Data by Keywords/Dropdowns
     const displayData = useMemo(() => {
@@ -188,105 +184,178 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showToast, soldData, isLoad
         { id: 'sold-filter-exterior', key: 'exterior', label: 'Ngoại Thất', options: uniqueExteriors, icon: 'fa-palette' },
     ];
 
+    const skeletons = useMemo(() => Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="p-4 border-b border-border-secondary flex items-center justify-between animate-fade-in">
+            <div className="flex-1 space-y-2">
+                <div className="skeleton-item h-4 w-3/4 rounded-md"></div>
+                <div className="skeleton-item h-3 w-1/2 rounded-md"></div>
+            </div>
+            <div className="skeleton-item h-3 w-20 rounded-md"></div>
+        </div>
+    )), []);
+
     if (error) {
         return <div className="flex items-center justify-center h-full text-center p-8 bg-surface-card rounded-lg shadow-xl"><i className="fas fa-exclamation-triangle fa-3x text-danger"></i><p className="mt-4 text-lg font-semibold">Không thể tải dữ liệu</p><p className="mt-2 text-sm text-text-secondary max-w-sm">{error}</p><button onClick={refetch} className="mt-6 btn-primary">Thử lại</button></div>;
     }
 
+    // --- TABS LOGIC ---
+    const carModelTabs = uniqueCarModels.map(model => ({
+        id: model,
+        label: model,
+        count: soldData.filter(o => o['Dòng xe'] === model).length
+    }));
+
+    const totalCount = soldData.length;
+    const tabs = [
+        { id: 'all', label: 'Tất cả', count: totalCount },
+        ...carModelTabs
+    ];
+
+    const activeTab = (filters.carModel && filters.carModel.length === 1) ? filters.carModel[0] : 'all';
+
+    const handleTabChange = (tabId: string) => {
+        handleFilterChange({ carModel: tabId === 'all' ? [] : [tabId] });
+    };
+
+    const activeDropdowns = dropdownConfigs.filter(d => d.key !== 'carModel');
+
     return (
-        <div className="flex flex-col h-full animate-fade-in space-y-3 p-2 md:p-0">
-            {/* Header & Controls */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-surface-card p-3 rounded-xl shadow-sm border border-border-primary">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-accent-primary/10 rounded-lg">
-                        <i className="fa-solid fa-chart-line text-accent-primary text-xl"></i>
-                    </div>
-                    <div>
-                        <h2 className="text-lg font-bold text-text-primary">Lịch Sử Bán Hàng</h2>
-                        <p className="text-xs text-text-secondary">Theo dõi doanh số và hiệu quả kinh doanh</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <DateFilter
-                        selectedMonth={selectedMonth}
-                        selectedYear={selectedYear}
-                        onMonthChange={setSelectedMonth}
-                        onYearChange={setSelectedYear}
-                    />
-                </div>
+        <div className="flex flex-col h-full space-y-2 p-1 md:p-0">
+            {/* Header with Tabs & Filters */}
+            <div className="flex-shrink-0 bg-white/40 backdrop-blur-md rounded-xl border border-white/60 p-1.5 shadow-sm">
+                <TabbedFilter
+                    tabs={tabs}
+                    activeTab={activeTab}
+                    onTabChange={handleTabChange}
+                    searchValue={filters.keyword || ''}
+                    onSearchChange={(val) => handleFilterChange({ keyword: val })}
+                    onReset={handleResetFilters}
+                    canReset={true}
+                    extraActions={
+                        <DateFilter
+                            selectedMonth={selectedMonth}
+                            selectedYear={selectedYear}
+                            onMonthChange={setSelectedMonth}
+                            onYearChange={setSelectedYear}
+                        />
+                    }
+                >
+                    {activeDropdowns.map(dropdown => (
+                        <div key={dropdown.id} className="min-w-[100px]">
+                            <MultiSelectDropdown
+                                id={dropdown.id}
+                                label={dropdown.label}
+                                options={dropdown.options}
+                                selectedOptions={(filters[dropdown.key as keyof typeof filters] || []) as string[]}
+                                onChange={(selected) => handleFilterChange({ [dropdown.key]: selected })}
+                                icon={dropdown.icon}
+                                displayMode="selection"
+                                size="compact"
+                                variant="modern"
+                                searchable={true}
+                                align="right"
+                            />
+                        </div>
+                    ))}
+                </TabbedFilter>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <SummaryCard icon="fa-car" title={`Tổng Xe (${selectedMonth !== null ? MONTHS[selectedMonth] : 'Năm'})`} value={stats.total} size="compact" />
-                <SummaryCard icon="fa-trophy" title="Xe Bán Chạy Nhất" value={stats.topCarDisplay} size="compact" />
-                <SummaryCard icon="fa-crown" title="TVBH Xuất Sắc Nhất" value={stats.topTvbhDisplay} size="compact" />
+            {/* Stats Cards - More Compact */}
+            <div className="grid grid-cols-3 gap-2 px-1">
+                {isLoading && soldData.length === 0 ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="bg-white/40 backdrop-blur-sm rounded-lg p-2 border border-white/60 h-14 animate-pulse"></div>
+                    ))
+                ) : (
+                    <>
+                        <div className="bg-white/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-2.5 group hover:shadow-md transition-all">
+                            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                                <i className="fas fa-car text-sm"></i>
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{selectedMonth !== null ? MONTHS[selectedMonth] : 'Năm'}</p>
+                                <p className="text-sm font-bold text-gray-800">{stats.total} Xe</p>
+                            </div>
+                        </div>
+                        <div className="bg-white/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-2.5 group hover:shadow-md transition-all">
+                            <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                                <i className="fas fa-trophy text-sm"></i>
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Top Xe</p>
+                                <p className="text-sm font-bold text-gray-800 truncate">{stats.topCarDisplay}</p>
+                            </div>
+                        </div>
+                        <div className="bg-white/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-2.5 group hover:shadow-md transition-all">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                                <i className="fas fa-crown text-sm"></i>
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Top TVBH</p>
+                                <p className="text-sm font-bold text-gray-800 truncate">{stats.topTvbhDisplay}</p>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-grow flex flex-col lg:flex-row gap-3 min-h-0">
-                {/* Left Column: List & Filters */}
-                <div className="flex-1 flex flex-col bg-surface-card rounded-xl shadow-md border border-border-primary min-w-0">
-                    <div className="p-3 border-b border-border-primary">
-                        <Filters
-                            filters={filters}
-                            onFilterChange={handleFilterChange}
-                            onReset={handleResetFilters}
-                            dropdowns={dropdownConfigs}
-                            searchPlaceholder="Tìm kiếm..."
-                            totalCount={sortedData.length}
-                            onRefresh={refetch}
-                            isLoading={isLoading}
-                            plain
-                            size="compact"
-                            searchable={false}
-                        />
+            <div className="flex-grow flex flex-col lg:flex-row gap-2 min-h-0">
+                {/* Left Column: List */}
+                <div className="flex-1 flex flex-col relative rounded-2xl shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-white/60 min-w-0 overflow-hidden bg-white/40">
+                    <AnimatedBackground />
+                    <div className="flex-grow overflow-auto hidden-scrollbar relative z-10">
+                        {isLoading && soldData.length === 0 ? (
+                            <div className="p-2 space-y-1">
+                                {skeletons}
+                            </div>
+                        ) : (
+                            <HistoryTable
+                                orders={paginatedData}
+                                onRowClick={handleRowClick}
+                                selectedOrder={selectedDetailOrder}
+                                sortConfig={sortConfig}
+                                onSort={handleSort}
+                                startIndex={(currentPage - 1) * PAGE_SIZE}
+                                viewMode="sold"
+                                showOrderInAdmin={showOrderInAdmin}
+                            />
+                        )}
                     </div>
-                    <div className="flex-grow overflow-auto hidden-scrollbar p-1">
-                        <HistoryTable
-                            orders={paginatedData}
-                            onRowClick={handleRowClick}
-                            selectedOrder={selectedDetailOrder}
-                            sortConfig={sortConfig}
-                            onSort={handleSort}
-                            startIndex={(currentPage - 1) * PAGE_SIZE}
-                            viewMode="sold"
-                        />
-                    </div>
-                    <div className="p-2 border-t border-border-primary">
+                    <div className="p-2 border-t border-white/60 bg-white/20 backdrop-blur-sm z-10">
                         {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => { }} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
                 </div>
 
-                {/* Right Column: Details (Desktop) or Drawer (Mobile) */}
+                {/* Right Column: Details */}
                 <div className={`
-                    fixed inset-y-0 right-0 w-full md:w-[400px] bg-surface-card shadow-2xl z-50 transform transition-transform duration-300 ease-in-out
-                    lg:relative lg:transform-none lg:w-[450px] lg:shadow-none lg:z-0 lg:flex lg:flex-col lg:bg-transparent
+                    fixed inset-y-0 right-0 w-full md:w-[400px] bg-white z-[9999] transform transition-transform duration-300 ease-in-out
+                    lg:relative lg:transform-none lg:w-[420px] lg:z-0 lg:flex lg:flex-col lg:bg-transparent
                     ${isDetailDrawerOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
                 `}>
-                    {/* Mobile Close Button */}
-                    <div className="lg:hidden absolute top-4 right-4 z-50">
-                        <button onClick={() => setIsDetailDrawerOpen(false)} className="p-2 bg-surface-ground rounded-full shadow-md text-text-secondary">
-                            <i className="fas fa-times"></i>
-                        </button>
-                    </div>
-
-                    {/* Detail Panel Content */}
-                    <div className="h-full flex flex-col bg-surface-card lg:rounded-xl lg:border lg:border-border-primary lg:shadow-md overflow-hidden">
-                        <div className="p-3 border-b border-border-primary bg-surface-ground/50">
-                            <h3 className="font-bold text-text-primary">Chi Tiết Đơn Hàng</h3>
+                    <div className="h-full flex flex-col lg:bg-white/60 lg:backdrop-blur-md lg:rounded-2xl lg:border lg:border-white/80 lg:shadow-[0_4px_30px_rgba(0,0,0,0.03)] overflow-hidden">
+                        <div className="p-3 border-b border-white/60 bg-gray-50/50 flex items-center justify-between">
+                            <h3 className="font-bold text-xs uppercase tracking-widest text-gray-500">Chi Tiết Đơn Hàng</h3>
+                            <button onClick={() => setIsDetailDrawerOpen(false)} className="lg:hidden p-1.5 bg-gray-100 rounded-full text-gray-400">
+                                <i className="fas fa-times text-xs"></i>
+                            </button>
                         </div>
-                        <div className="flex-grow overflow-y-auto hidden-scrollbar p-0">
-                            <SoldCarDetailPanel order={selectedDetailOrder} showToast={showToast} />
+                        <div className="flex-grow overflow-y-auto hidden-scrollbar">
+                            <SoldCarDetailPanel
+                                order={selectedDetailOrder}
+                                showOrderInAdmin={showOrderInAdmin}
+                                showAdminTab={showAdminTab}
+                                isAdmin={isAdmin}
+                            />
                         </div>
-
-                        {/* Mini Charts removed as per user request */}
                     </div>
                 </div>
             </div>
 
+
             {/* Mobile Overlay for Drawer */}
             {isDetailDrawerOpen && (
-                <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setIsDetailDrawerOpen(false)}></div>
+                <div className="fixed inset-0 bg-black/50 z-[9990] lg:hidden" onClick={() => setIsDetailDrawerOpen(false)}></div>
             )}
         </div>
     );

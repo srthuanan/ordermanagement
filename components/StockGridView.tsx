@@ -9,6 +9,9 @@ interface StockGridViewProps {
   startIndex: number;
   onHoldCar: (vin: string) => void;
   onReleaseCar: (vin: string) => void;
+  onJoinQueue: (vin: string) => void;
+  onLeaveQueue: (vin: string) => void;
+  onOpenExtensionModal: (vehicle: StockVehicle) => void;
   onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
   onShowDetails: (vehicle: StockVehicle) => void;
   currentUser: string;
@@ -16,15 +19,21 @@ interface StockGridViewProps {
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
   highlightedVins: Set<string>;
   processingVin: string | null;
+  queuedVins: string[];
+  canHoldMore: boolean;
 }
 
 const StockGridView: React.FC<StockGridViewProps> = (props) => {
   if (props.vehicles.length === 0) {
     return (
-      <div className="text-center py-16 text-text-secondary">
-        <i className="fas fa-box-open fa-3x mb-4 text-text-placeholder"></i>
-        <p className="font-semibold text-text-primary">Không tìm thấy xe nào trong kho.</p>
-        <p className="text-sm">Hãy thử thay đổi bộ lọc hoặc kiểm tra lại sau.</p>
+      <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full bg-slate-50 rounded-2xl">
+        <div className="relative w-24 h-24 bg-white border border-gray-100 shadow-sm rounded-full flex items-center justify-center mb-6">
+          <div className="absolute inset-0 border border-gray-200/60 rounded-full transform scale-110"></div>
+          <div className="absolute inset-0 border border-gray-100 rounded-full transform scale-125"></div>
+          <i className="fas fa-car-side text-gray-300 text-4xl"></i>
+        </div>
+        <h3 className="text-xl font-bold text-gray-600 mb-2 tracking-tight">Trống Không!</h3>
+        <p className="text-sm text-gray-400 max-w-sm text-center">Không tìm thấy chiếc xe nào trong kho thỏa mãn tiêu chí của bạn. Hãy thử thay đổi bộ lọc nhé.</p>
       </div>
     );
   }

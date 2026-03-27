@@ -1,8 +1,6 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import * as apiService from '../../services/apiService';
-import { compressImage, compressPdf } from '../../services/ocrService';
-import yesAnimationUrl from '../../pictures/yes.json?url';
-import noAnimationUrl from '../../pictures/no-animation.json?url';
+// import { compressImage, compressPdf } from '../../services/ocrService';
 import { useModalBackground } from '../../utils/styleUtils';
 
 interface BulkUploadModalProps {
@@ -35,6 +33,13 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     const inputRef = useRef<HTMLInputElement>(null);
     const bgStyle = useModalBackground();
 
+    useEffect(() => {
+        if (isOpen) {
+            setFiles([]);
+            setIsUploading(false);
+        }
+    }, [isOpen]);
+
     const handleClose = useCallback(() => {
         setFiles([]);
         setIsUploading(false);
@@ -44,28 +49,11 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     const handleFiles = useCallback(async (incomingFiles: FileList | null) => {
         if (!incomingFiles) return;
 
-        showToast('Đang xử lý', `Đang chuẩn bị và nén ${incomingFiles.length} tệp...`, 'loading');
+//         showToast('Đang xử lý', `Đang chuẩn bị ${incomingFiles.length} tệp...`, 'loading');
 
         const newFilesArray = Array.from(incomingFiles);
         const processedFiles = await Promise.all(newFilesArray.map(async file => {
-            if (file.type.startsWith('image/')) {
-                try {
-                    return await compressImage(file);
-                } catch (e) {
-                    console.error('Lỗi nén ảnh cho:', file.name, e);
-                    showToast('Lỗi Nén Ảnh', `Không thể nén tệp ${file.name}.`, 'warning');
-                    return file; // fallback to original on error
-                }
-            }
-            if (file.type === 'application/pdf') {
-                try {
-                    return await compressPdf(file);
-                } catch (e) {
-                    console.error('Lỗi nén PDF cho:', file.name, e);
-                    showToast('Lỗi Nén PDF', `Không thể nén tệp ${file.name}.`, 'warning');
-                    return file;
-                }
-            }
+            // ADMIN REQUEST: Disable compression for all uploads
             return file;
         }));
 
@@ -103,7 +91,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
         }
 
         setIsUploading(true);
-        showToast('Đang tải lên...', `Chuẩn bị tải lên ${validFiles.length} hóa đơn.`, 'loading');
+//         showToast('Đang tải lên...', `Chuẩn bị tải lên ${validFiles.length} hóa đơn.`, 'loading');
 
         try {
             const filesData = await Promise.all(
@@ -112,18 +100,17 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                     base64Data: await fileToBase64(file),
                     mimeType: file.type,
                     fileName: file.name,
+                    fileObject: file
                 }))
             );
 
             const result = await apiService.uploadBulkInvoices(filesData);
-            hideToast();
             showToast('Hoàn tất!', result.message, result.status === 'SUCCESS' ? 'success' : 'warning', 10000);
             if (result.status === 'SUCCESS') {
                 onSuccess();
                 handleClose();
             }
         } catch (error) {
-            hideToast();
             const message = error instanceof Error ? error.message : 'Lỗi không xác định.';
             showToast('Tải lên thất bại', message, 'error');
         } finally {
@@ -136,7 +123,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
     const validFiles = files.filter(f => f.status === 'valid');
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div className="bg-surface-card w-full md:max-w-4xl h-full md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <div className="h-1.5 rounded-t-none md:rounded-t-2xl bg-accent-primary flex-shrink-0"></div>
                 <header className="flex-shrink-0 p-3 border-b border-border-primary flex justify-between items-center">
@@ -178,13 +165,28 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
                         </div>
                     )}
                 </main>
-                <footer className="flex-shrink-0 px-3 py-2 border-t border-border-primary flex justify-end items-center gap-1.5 bg-surface-ground rounded-none md:rounded-b-2xl">
-                    <div onClick={!isUploading ? handleClose : undefined} title="Hủy" className={`cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
-                    </div>
-                    <div onClick={!isUploading && validFiles.length > 0 ? handleUpload : undefined} title="Tải Lên & Hoàn Tất" className={`cursor-pointer ${(isUploading || validFiles.length === 0) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
-                    </div>
+                <footer className="px-4 py-3 flex justify-end items-center gap-3 bg-slate-50 rounded-none md:rounded-b-2xl border-t border-slate-200/60 flex-shrink-0">
+                    <button
+                        onClick={!isUploading ? handleClose : undefined}
+                        disabled={isUploading}
+                        className="px-6 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all disabled:opacity-50"
+                    >
+                        HỦY
+                    </button>
+                    <button
+                        onClick={!isUploading && validFiles.length > 0 ? handleUpload : undefined}
+                        disabled={isUploading || validFiles.length === 0}
+                        className="px-6 py-2 rounded-xl text-sm font-black text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 bg-accent-primary hover:brightness-110 flex items-center justify-center min-w-[120px] h-[40px]"
+                    >
+                        {isUploading ? (
+                            <div className="flex items-center gap-2">
+                                <i className="fas fa-spinner fa-spin"></i>
+                                <span>ĐANG TẢI LÊN...</span>
+                            </div>
+                        ) : (
+                            "TẢI LÊN & HOÀN TẤT"
+                        )}
+                    </button>
                 </footer>
             </div>
         </div>

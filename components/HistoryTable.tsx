@@ -22,6 +22,7 @@ interface HistoryTableProps {
     selectedOrder?: Order | null;
     viewMode?: 'full' | 'sold';
     processingOrder?: string | null;
+    showOrderInAdmin?: (order: Order, targetTab: any) => void;
 }
 
 const SortableHeaderCell: React.FC<{ columnKey: keyof Order; title: string; sortConfig: SortConfig | null; onSort: (key: keyof Order) => void; className?: string; }> =
@@ -30,8 +31,8 @@ const SortableHeaderCell: React.FC<{ columnKey: keyof Order; title: string; sort
         const directionIcon = sortConfig?.direction === 'asc' ? '▲' : '▼';
 
         return (
-            <th scope="col" onClick={() => onSort(columnKey)} className={`py-2 px-2 text-left text-xs font-bold text-text-secondary cursor-pointer hover:bg-surface-hover transition-colors whitespace-nowrap uppercase tracking-wider ${className}`}>
-                {title} {isSorted && <span className="text-xs ml-1">{directionIcon}</span>}
+            <th scope="col" onClick={() => onSort(columnKey)} className={`py-3 px-3 text-left text-[11px] font-bold text-gray-500 cursor-pointer hover:bg-black/5 transition-colors whitespace-nowrap uppercase tracking-widest ${className}`}>
+                {title} {isSorted && <span className="text-[11px] ml-1">{directionIcon}</span>}
             </th>
         );
     };
@@ -51,12 +52,13 @@ interface HistoryTableRowProps {
     selectedOrder?: Order | null;
     viewMode: 'full' | 'sold';
     processingOrder?: string | null;
+    showOrderInAdmin?: (order: Order, targetTab: any) => void;
 }
 
 
 const HistoryTableRow: React.FC<HistoryTableRowProps> =
     // FIX: Added missing props for VinClub actions to the function signature.
-    ({ order, index, onViewDetails, onCancel, onRequestInvoice, onSupplement, onEdit, onRequestVC, onConfirmVC, onRowClick, selectedOrder, viewMode, processingOrder }) => {
+    ({ order, index, onViewDetails, onCancel, onRequestInvoice, onSupplement, onEdit, onRequestVC, onConfirmVC, onRowClick, selectedOrder, viewMode, processingOrder, showOrderInAdmin }) => {
         const [isMenuOpen, setIsMenuOpen] = useState(false);
         const statusText = order["Trạng thái VC"] || order["Kết quả"] || "Chưa ghép";
         const isSelected = selectedOrder && selectedOrder["Số đơn hàng"] === order["Số đơn hàng"];
@@ -64,35 +66,64 @@ const HistoryTableRow: React.FC<HistoryTableRowProps> =
 
         return (
             <tr
-                className={`hover:bg-surface-hover transition-colors duration-200 animate-fade-in-up ${onRowClick ? 'cursor-pointer' : ''} ${isSelected ? 'selected-row-highlight' : ''} ${isMenuOpen ? 'relative z-20' : ''}`}
-                style={{ animationDelay: `${index * 20}ms` }}
+                className={`hover:bg-slate-50 transition-colors duration-200 animate-fade-in-up ${onRowClick ? 'cursor-pointer' : ''} ${isSelected ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.05)] ring-1 ring-blue-100 relative z-10' : ''} ${isMenuOpen ? 'relative z-20' : ''}`}
+                style={{ animationDelay: `${index * 15}ms` }}
                 onClick={() => onRowClick ? onRowClick(order) : onViewDetails?.(order)}
             >
-                <td className="whitespace-nowrap py-2 pl-2 pr-2 text-sm text-center text-text-secondary font-medium sm:pl-3" data-label="#">{index + 1}</td>
-                <td className="whitespace-nowrap px-2 py-2 text-sm" data-label="Khách hàng / SĐH">
-                    <div className="font-semibold text-text-primary">{order["Tên khách hàng"] || "N/A"}</div>
-                    <div className="text-text-secondary font-mono text-xs">{order["Số đơn hàng"]}</div>
+                <td className="whitespace-nowrap py-3 px-2 text-xs text-center text-gray-400 font-medium border-r border-gray-100/80" data-label="#">{index + 1}</td>
+                <td className="whitespace-nowrap px-3 py-3 text-sm border-r border-gray-100/80" data-label="Khách hàng / SĐH">
+                    <div className="font-bold text-gray-800 text-sm tracking-tight">{order["Tên khách hàng"] || "N/A"}</div>
+                    <div className="text-gray-400 font-mono text-[11px]">{order["Số đơn hàng"]}</div>
                 </td>
-                <td className="whitespace-nowrap px-2 py-2 text-sm" data-label="Thông Tin Xe">
-                    <div className="text-text-primary">{order["Dòng xe"]} / {order["Phiên bản"]}</div>
-                    <div className="text-text-secondary text-xs" style={getExteriorColorStyle(order['Ngoại thất'])}>{order["Ngoại thất"]} / {order["Nội thất"]}</div>
+                <td className="whitespace-nowrap px-3 py-3 text-sm border-r border-gray-100/80" data-label="Thông Tin Xe">
+                    <div className="text-gray-700 text-[13px] font-medium">{order["Dòng xe"]} / {order["Phiên bản"]}</div>
+                    <div className="text-gray-400 text-[11px]" style={getExteriorColorStyle(order['Ngoại thất'])}>{order["Ngoại thất"]} / {order["Nội thất"]}</div>
                 </td>
                 {viewMode === 'full' && (
-                    <td className="whitespace-nowrap px-2 py-2 text-sm" data-label="Ngày Yêu Cầu">
-                        <div className="text-text-primary" title={moment(order["Thời gian nhập"]).format('DD/MM/YYYY HH:mm:ss')}>
+                    <td className="whitespace-nowrap px-3 py-3 text-sm border-r border-gray-100/80" data-label="Ngày Yêu Cầu">
+                        <div className="text-gray-700 text-[13px] font-medium" title={moment(order["Thời gian nhập"]).format('DD/MM/YYYY HH:mm:ss')}>
                             {moment(order["Thời gian nhập"]).format('DD/MM/YY HH:mm')}
                         </div>
-                        <div className="text-text-secondary text-xs">{moment(order["Thời gian nhập"]).fromNow()}</div>
+                        <div className="text-gray-400 text-[11px]">{moment(order["Thời gian nhập"]).fromNow()}</div>
                     </td>
                 )}
-                <td className="whitespace-nowrap px-2 py-2 text-sm text-text-primary truncate" data-label="Tư vấn" title={order["Tên tư vấn bán hàng"]}>{order["Tên tư vấn bán hàng"] || "N/A"}</td>
+                <td className="whitespace-nowrap px-3 py-3 text-[13px] text-gray-600 font-medium truncate border-r border-gray-100/80" data-label="Tư vấn" title={order["Tên tư vấn bán hàng"]}>{order["Tên tư vấn bán hàng"] || "N/A"}</td>
+                <td className="whitespace-nowrap px-2 py-3 border-r border-gray-100/80" data-label="Truy nguyên">
+                    {(() => {
+                        if (!showOrderInAdmin) return <span className="text-gray-300 text-xs px-2">—</span>;
+                        const ketQua = (order["Kết quả"] || '').toLowerCase();
+                        const INVOICE_STATUSES = ['chờ phê duyệt', 'đã phê duyệt', 'yêu cầu bổ sung', 'đã bổ sung', 'chờ ký hóa đơn', 'đã xuất hóa đơn'];
+                        const hasInvoiceData = !!order.LinkHoaDonDaXuat || INVOICE_STATUSES.includes(ketQua);
+                        const vcStatus = (order["Trạng thái VC"] || '').toLowerCase();
+                        const hasVC = hasInvoiceData && (
+                            vcStatus === 'chờ duyệt ycvc' || vcStatus.includes('đã duyệt') ||
+                            vcStatus.includes('hoàn thành') || vcStatus.includes('đã phê duyệt') ||
+                            vcStatus.includes('từ chối') || vcStatus.includes('hủy') ||
+                            vcStatus.includes('đã cấp') || vcStatus.includes('đã có vc')
+                        );
+                        // Chỉ ghép xe, chưa xuất hóa đơn
+                        if (!hasInvoiceData && !!order.VIN) return (
+                            <div onClick={(e) => e.stopPropagation()}>
+                                <button onClick={() => showOrderInAdmin(order, 'matching')} className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-accent-primary hover:text-white text-slate-400 transition-all border border-slate-200/50" title="Đến Ghép Xe"><i className="fas fa-car text-[10px]"></i></button>
+                            </div>
+                        );
+                        // Đã xuất hóa đơn (⭐ có thể có thêm VC)
+                        if (hasInvoiceData) return (
+                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                <button onClick={() => showOrderInAdmin(order, 'invoices')} className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-accent-primary hover:text-white text-slate-400 transition-all border border-slate-200/50" title="Đến Hóa Đơn"><i className="fas fa-file-invoice-dollar text-[10px]"></i></button>
+                                {hasVC && <button onClick={() => showOrderInAdmin(order, 'vc')} className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-accent-primary hover:text-white text-slate-400 transition-all border border-slate-200/50" title="Đến Xử Lý VC"><i className="fas fa-id-card text-[10px]"></i></button>}
+                            </div>
+                        );
+                        return <span className="text-gray-300 text-xs px-2">—</span>;
+                    })()}
+                </td>
                 {viewMode === 'full' && (
                     <>
-                        <td className="whitespace-nowrap px-2 py-2 text-sm text-text-primary" data-label="Trạng thái"><StatusBadge status={statusText} /></td>
-                        <td className="relative whitespace-nowrap py-2 pl-2 pr-2 text-center text-sm font-medium sm:pr-3" data-label="Hành động" onClick={(e) => e.stopPropagation()}>
+                        <td className="whitespace-nowrap px-3 py-3 text-sm text-text-primary border-r border-gray-100/80" data-label="Trạng thái"><StatusBadge status={statusText} size="sm" /></td>
+                        <td className="relative whitespace-nowrap py-2 px-2 text-center text-sm font-medium" data-label="Hành động" onClick={(e) => e.stopPropagation()}>
                             {isProcessing ? (
-                                <div className="flex items-center justify-center h-9">
-                                    <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
+                                <div className="flex items-center justify-center h-8">
+                                    <i className="fas fa-spinner fa-spin text-blue-500 text-lg"></i>
                                 </div>
                             ) : (
                                 <ActionMenu
@@ -102,7 +133,6 @@ const HistoryTableRow: React.FC<HistoryTableRowProps> =
                                     onRequestInvoice={onRequestInvoice!}
                                     onSupplement={onSupplement!}
                                     onEdit={onEdit}
-                                    // FIX: Pass VinClub action handlers to ActionMenu.
                                     onRequestVC={onRequestVC!}
                                     onConfirmVC={onConfirmVC!}
                                     onToggle={setIsMenuOpen}
@@ -116,7 +146,7 @@ const HistoryTableRow: React.FC<HistoryTableRowProps> =
     };
 
 // FIX: Added missing props for VinClub actions to the function signature.
-const HistoryTable: React.FC<HistoryTableProps> = ({ orders, onViewDetails, onCancel, onRequestInvoice, onSupplement, onEdit, onRequestVC, onConfirmVC, sortConfig, onSort, startIndex, onRowClick, selectedOrder, viewMode = 'full', processingOrder }) => {
+const HistoryTable: React.FC<HistoryTableProps> = ({ orders, onViewDetails, onCancel, onRequestInvoice, onSupplement, onEdit, onRequestVC, onConfirmVC, sortConfig, onSort, startIndex, onRowClick, selectedOrder, viewMode = 'full', processingOrder, showOrderInAdmin }) => {
     if (orders.length === 0) {
         return (
             <div className="text-center py-8 text-text-secondary">
@@ -184,49 +214,78 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ orders, onViewDetails, onCa
                         <div className="my-2 border-t border-dashed border-gray-300"></div>
 
                         <div className="flex items-center justify-between text-xs text-slate-500 mt-auto">
-                            <span>Tư vấn</span>
-                            <span className="font-medium uppercase text-slate-700 truncate">{order["Tên tư vấn bán hàng"] || "N/A"}</span>
+                            {showOrderInAdmin && (() => {
+                                const ketQua = (order["Kết quả"] || '').toLowerCase();
+                                const INVOICE_STATUSES = ['chờ phê duyệt', 'đã phê duyệt', 'yêu cầu bổ sung', 'đã bổ sung', 'chờ ký hóa đơn', 'đã xuất hóa đơn'];
+                                const hasInvoiceData = !!order.LinkHoaDonDaXuat || INVOICE_STATUSES.includes(ketQua);
+                                const vcStatus = (order["Trạng thái VC"] || '').toLowerCase();
+                                const hasVC = hasInvoiceData && (
+                                    vcStatus === 'chờ duyệt ycvc' || vcStatus.includes('đã duyệt') ||
+                                    vcStatus.includes('hoàn thành') || vcStatus.includes('đã phê duyệt') ||
+                                    vcStatus.includes('từ chối') || vcStatus.includes('hủy') ||
+                                    vcStatus.includes('đã cấp') || vcStatus.includes('đã có vc')
+                                );
+                                // Chỉ ghép xe, chưa xuất hóa đơn
+                                if (!hasInvoiceData && !!order.VIN) return (
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                        <button onClick={() => showOrderInAdmin?.(order, 'matching')} className="h-7 px-2 bg-slate-100 hover:bg-accent-primary hover:text-white text-slate-400 transition-all border border-slate-200/50 rounded-lg flex items-center gap-1 font-bold text-[8px] uppercase"><i className="fas fa-car"></i><span>Ghép Xe</span></button>
+                                    </div>
+                                );
+                                // Đã xuất hóa đơn (⭐ có thể có thêm VC)
+                                if (hasInvoiceData) return (
+                                    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                        <button onClick={() => showOrderInAdmin?.(order, 'invoices')} className="h-7 px-2 bg-slate-100 hover:bg-accent-primary hover:text-white text-slate-400 transition-all border border-slate-200/50 rounded-lg flex items-center gap-1 font-bold text-[8px] uppercase"><i className="fas fa-file-invoice-dollar"></i><span>Hóa Đơn</span></button>
+                                        {hasVC && <button onClick={() => showOrderInAdmin?.(order, 'vc')} className="h-7 px-2 bg-slate-100 hover:bg-accent-primary hover:text-white text-slate-400 transition-all border border-slate-200/50 rounded-lg flex items-center gap-1 font-bold text-[8px] uppercase"><i className="fas fa-id-card"></i><span>VC</span></button>}
+                                    </div>
+                                );
+                                return null;
+                            })()}
+                            <span className="font-medium uppercase text-slate-700 truncate ml-2">{order["Tên tư vấn bán hàng"] || "N/A"}</span>
                         </div>
                     </div>
                 ))}
             </div>
 
             {/* Desktop View: Table */}
-            <div className="hidden md:block min-w-full py-1 align-middle">
-                <table className="min-w-full divide-y divide-border-primary responsive-table">
-                    <thead className="bg-surface-hover sticky top-0 z-10">
-                        <tr>
-                            <th scope="col" className="py-2 pl-2 pr-2 text-center text-xs font-bold text-text-secondary sm:pl-3 w-12 uppercase tracking-wider">#</th>
-                            <SortableHeaderCell columnKey="Tên khách hàng" title="Khách hàng / SĐH" sortConfig={sortConfig} onSort={onSort} />
-                            <SortableHeaderCell columnKey="Dòng xe" title="Thông Tin Xe" sortConfig={sortConfig} onSort={onSort} />
-                            {viewMode === 'full' && <SortableHeaderCell columnKey="Thời gian nhập" title="Ngày Yêu Cầu" sortConfig={sortConfig} onSort={onSort} />}
-                            <SortableHeaderCell columnKey="Tên tư vấn bán hàng" title="Tư vấn" sortConfig={sortConfig} onSort={onSort} />
-                            {viewMode === 'full' && <SortableHeaderCell columnKey="Kết quả" title="Trạng thái" sortConfig={sortConfig} onSort={onSort} />}
-                            {viewMode === 'full' && <th scope="col" className="relative py-2 pl-2 pr-2 sm:pr-3 text-center text-xs font-bold text-text-secondary uppercase tracking-wider">Hành động</th>}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border-primary bg-surface-card">
-                        {orders.map((order, index) => (
-                            <HistoryTableRow
-                                key={order["Số đơn hàng"] || index}
-                                order={order}
-                                index={startIndex + index}
-                                onViewDetails={onViewDetails}
-                                onCancel={onCancel}
-                                onRequestInvoice={onRequestInvoice}
-                                onSupplement={onSupplement}
-                                onEdit={onEdit}
-                                // FIX: Pass VinClub action handlers to HistoryTableRow.
-                                onRequestVC={onRequestVC}
-                                onConfirmVC={onConfirmVC}
-                                onRowClick={onRowClick}
-                                selectedOrder={selectedOrder}
-                                viewMode={viewMode}
-                                processingOrder={processingOrder}
-                            />
-                        ))}
-                    </tbody>
-                </table>
+            <div className="hidden md:block min-w-full align-middle">
+                <div className="rounded-xl border border-gray-200 shadow-sm overflow-visible">
+                    <table className="min-w-full border-separate border-spacing-0">
+                        <thead>
+                            <tr>
+                                <th scope="col" className="sticky top-0 z-20 bg-slate-100 py-3 px-3 text-center text-[11px] font-bold text-gray-500 w-12 uppercase tracking-widest border-b border-r border-gray-200 first:rounded-tl-xl">#</th>
+                                <SortableHeaderCell columnKey="Tên khách hàng" title="Khách hàng / SĐH" sortConfig={sortConfig} onSort={onSort} className="sticky top-0 z-20 bg-slate-100 border-b border-r border-gray-200" />
+                                <SortableHeaderCell columnKey="Dòng xe" title="Thông Tin Xe" sortConfig={sortConfig} onSort={onSort} className="sticky top-0 z-20 bg-slate-100 border-b border-r border-gray-200" />
+                                <SortableHeaderCell columnKey="Tên tư vấn bán hàng" title="Tư vấn" sortConfig={sortConfig} onSort={onSort} className="sticky top-0 z-20 bg-slate-100 border-b border-r border-gray-200" />
+                                <th scope="col" className="sticky top-0 z-20 bg-slate-100 py-3 px-3 text-left text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-r border-gray-200">Truy nguyên</th>
+                                {viewMode === 'full' && <SortableHeaderCell columnKey="Thời gian nhập" title="Ngày Yêu Cầu" sortConfig={sortConfig} onSort={onSort} className="sticky top-0 z-20 bg-slate-100 border-b border-r border-gray-200" />}
+                                {viewMode === 'full' && <SortableHeaderCell columnKey="Kết quả" title="Trạng thái" sortConfig={sortConfig} onSort={onSort} className="sticky top-0 z-20 bg-slate-100 border-b border-r border-gray-200" />}
+                                {viewMode === 'full' && <th scope="col" className="sticky top-0 z-20 bg-slate-100 relative py-3 px-3 text-center text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-200 last:rounded-tr-xl">Hành động</th>}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 bg-white/40">
+                            {orders.map((order, index) => (
+                                <HistoryTableRow
+                                    key={order["Số đơn hàng"] || index}
+                                    order={order}
+                                    index={startIndex + index}
+                                    onViewDetails={onViewDetails}
+                                    onCancel={onCancel}
+                                    onRequestInvoice={onRequestInvoice}
+                                    onSupplement={onSupplement}
+                                    onEdit={onEdit}
+                                    // FIX: Pass VinClub action handlers to HistoryTableRow.
+                                    onRequestVC={onRequestVC}
+                                    onConfirmVC={onConfirmVC}
+                                    onRowClick={onRowClick}
+                                    selectedOrder={selectedOrder}
+                                    viewMode={viewMode}
+                                    processingOrder={processingOrder}
+                                    showOrderInAdmin={showOrderInAdmin}
+                                />
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

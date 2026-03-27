@@ -1,0 +1,67 @@
+﻿export const postApi = async (payload: Record<string, any>, url: string = API_URL): Promise<ApiResult> => {
+export const getApi = async (params: Record<string, any>, baseUrl: string = API_URL): Promise<ApiResult> => {
+export const getLogData = async (): Promise<ApiResult> => {
+export const getActiveUsers = async (): Promise<ApiResult> => {
+export const recordUserPresence = async (): Promise<void> => {
+export const getPaginatedData = async (_?: string[], __?: string, ___?: boolean): Promise<ApiResult> => {
+export const getXuathoadonData = async (): Promise<ApiResult> => {
+export const getSalesPolicies = async (): Promise<ApiResult> => {
+export const getYeuCauVcData = async (): Promise<ApiResult> => {
+export const getStockData = async (): Promise<ApiResult> => {
+export const holdCar = async (vin: string) => {
+export const releaseCar = async (vin: string, outcome: 'released' | 'expired' | 'matched' = 'released') => {
+export const joinHoldQueue = async (vin: string) => {
+export const getMyQueuedVins = async (): Promise<string[]> => {
+export const uploadHoldEvidence = async (vin: string, file: File) => {
+export const requestHoldExtension = async (vin: string, evidenceUrl: string, reason: string) => {
+export const approveHoldExtension = async (vin: string) => {
+export const rejectHoldExtension = async (vin: string) => {
+export const getPendingHoldExtensions = async () => {
+export const getHoldReputation = async (email: string) => {
+export const addRequest = async (formData: Record<string, string>, _chicFile: File) => {
+export const pairVinToOrder = async (orderNumber: string, vin: string) => {
+export const cancelRequest = async (orderNumber: string, reason: string, unmatchType: string = 'Hủy luôn đơn hàng (Hủy đơn)') => {
+export const requestInvoice = async (
+export const uploadSupplementaryFiles = async (orderNumber: string, contractFile: File | null, proposalFile: File | null) => {
+export const updateOrderDetails = async (orderNumber: string, details: Partial<Order>): Promise<ApiResult> => {
+export const superUpdateOrderDetails = async (oldOrderNumber: string, details: any): Promise<ApiResult> => {
+export const changeOrderConfiguration = async (orderNumber: string, newConfig: Partial<Order>): Promise<ApiResult> => {
+export const fetchAllArchivedData = async (): Promise<ApiResult> => {
+export const fetchNotifications = async (): Promise<ApiResult> => {
+export const markAllNotificationsAsRead = async () => {
+export const markNotificationAsRead = async (notificationId: string) => {
+export const createNotification = async (payload: {
+export const getSoldCarsDataByMonth = async (month: string, year: number): Promise<ApiResult> => {
+export const getAllSoldCarsData = async (year: number): Promise<ApiResult> => {
+export const requestVinClub = async (payload: {
+export const getGlobalNotification = async (): Promise<ApiResult> => {
+export const updateGlobalNotification = async (notification: { content: string; isActive: boolean; type: string }): Promise<ApiResult> => {
+export const getAppSetting = async (key: string): Promise<ApiResult> => {
+export const updateAppSetting = async (key: string, value: any): Promise<ApiResult> => {
+export const logAction = async (action: string, details: any = {}, targetId?: string, targetType?: string): Promise<void> => {
+export const getAuditLogs = async (limit: number = 100): Promise<ApiResult> => {
+export const getUsers = async (): Promise<ApiResult> => {
+export const toggleUserBlock = async (username: string, isBlocked: boolean, reason?: string): Promise<ApiResult> => {
+export const getTeamData = async (): Promise<ApiResult> => {
+export const globalSearch = async (keyword: string, scope: 'active' | 'archive' | 'all' = 'all'): Promise<ApiResult> => {
+export const performAdminAction = async (action: string, params: Record<string, any>): Promise<ApiResult> => {
+export const getOrderHistory = async (orderNumber: string): Promise<ApiResult> => {
+export const uploadBulkInvoices = async (filesData: any[]): Promise<ApiResult> => {
+export const getTestDriveSchedule = async (): Promise<ApiResult> => {
+export const saveTestDriveBooking = async (bookingData: any): Promise<ApiResult> => {
+export const updateTestDriveCheckin = async (payload: {
+export const updateCarInfo = async (vin: string, updates: Partial<StockVehicle>): Promise<ApiResult> => {
+export const deleteTestDriveBooking = async (soPhieu: string): Promise<ApiResult> => {
+export const submitCarInquiry = async (inquiry: {
+export const getCarInquiries = async (email?: string): Promise<any[]> => {
+export const respondToCarInquiry = async (id: string, response: string, matched_vin?: string, status: any = 'manual_responded'): Promise<ApiResult> => {
+export const markInquiryAsRead = async (id: string, forWhom: 'admin' | 'tvbh'): Promise<void> => {
+export const deleteCarInquiry = async (id: string): Promise<ApiResult> => {
+export const getInquiryComments = async (inquiryId: string): Promise<any[]> => {
+export const addInquiryComment = async (comment: {
+export const processExpiredQueuePriorities = async () => {
+export const getAllHoldQueues = async () => {
+export const getVehiclesByVins = async (vins: string[]) => {
+export const getAllUsersReputations = async () => {
+export const updateUserReputation = async (username: string, targetScore: number, reason: string) => {
+export const getUserReputationHistory = async (email: string) => {

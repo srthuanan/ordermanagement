@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Order } from '../types';
 import * as apiService from '../services/apiService';
 
-export const useSoldCarsApi = () => {
+export const useSoldCarsApi = (selectedMonth: number | null, selectedYear: number) => {
     const [soldData, setSoldData] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -11,8 +11,16 @@ export const useSoldCarsApi = () => {
         setIsLoading(true);
         setError(null);
         try {
-            // Using the new service function
-            const result = await apiService.getAllSoldCarsData();
+            let result;
+            if (selectedMonth !== null) {
+                // Fetch specific month
+                const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                result = await apiService.getSoldCarsDataByMonth(months[selectedMonth], selectedYear);
+            } else {
+                // Fetch all months for year
+                result = await apiService.getAllSoldCarsData(selectedYear);
+            }
+
             if (result.status === 'SUCCESS') {
                 setSoldData(result.data || []);
             } else {
@@ -24,7 +32,7 @@ export const useSoldCarsApi = () => {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [selectedMonth, selectedYear]);
 
     useEffect(() => {
         fetchData();

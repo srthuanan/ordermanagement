@@ -16,6 +16,7 @@ interface AdminFilterPanelProps {
         pending: Record<string, string[]>;
         paired: Record<string, string[]>;
         vc: Record<string, string[]>;
+        matching: Record<string, string[]>;
     };
     invoiceRequests: Order[];
     pendingData: Order[];
@@ -27,6 +28,7 @@ interface AdminFilterPanelProps {
     isLoadingXuathoadon: boolean;
     isLoadingHistory: boolean;
     isLoadingVc: boolean;
+    activeMatchingTab?: 'pending' | 'paired';
 }
 
 const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
@@ -34,7 +36,7 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
     handleFilterChange, handleReset, filterOptions,
     invoiceRequests, pendingData, pairedData, vcRequests,
     refetchXuathoadon, refetchHistory, fetchVcData,
-    isLoadingXuathoadon, isLoadingHistory, isLoadingVc
+    isLoadingXuathoadon, isLoadingHistory, isLoadingVc, activeMatchingTab
 }) => {
     if (['dashboard', 'phongkd', 'activityLog', 'activeUsers'].includes(adminView)) {
         return null;
@@ -94,15 +96,13 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
         case 'matching':
             currentFilters = matchingFilters;
             dropdownConfigs = [
-                { id: 'admin-filter-tvbh-matching', key: 'tvbh', label: 'TVBH', options: filterOptions.pending['Tên tư vấn bán hàng'], icon: 'fa-user-tie' },
-                { id: 'admin-filter-dongxe-matching', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.pending['Dòng xe'], icon: 'fa-car' },
-                { id: 'admin-filter-version-matching', key: 'version', label: 'Phiên Bản', options: filterOptions.pending['Phiên bản'], icon: 'fa-cogs' },
-                { id: 'admin-filter-ngoaithat-matching', key: 'ngoaiThat', label: 'Ngoại Thất', options: filterOptions.pending['Ngoại thất'], icon: 'fa-palette' },
-
-
+                { id: 'admin-filter-tvbh-matching', key: 'tvbh', label: 'TVBH', options: filterOptions.matching['Tên tư vấn bán hàng'], icon: 'fa-user-tie' },
+                { id: 'admin-filter-dongxe-matching', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.matching['Dòng xe'], icon: 'fa-car' },
+                { id: 'admin-filter-version-matching', key: 'version', label: 'Phiên Bản', options: filterOptions.matching['Phiên bản'], icon: 'fa-cogs' },
+                { id: 'admin-filter-ngoaithat-matching', key: 'ngoaiThat', label: 'Ngoại Thất', options: filterOptions.matching['Ngoại thất'], icon: 'fa-palette' },
             ];
             searchPlaceholder = "Tìm SĐH, Tên KH...";
-            totalCount = pendingData.length; // Or combined count if needed
+            totalCount = activeMatchingTab === 'paired' ? pairedData.length : pendingData.length;
             onRefresh = () => refetchHistory();
             isLoading = isLoadingHistory;
             break;
@@ -133,8 +133,8 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
             isLoading={isLoading}
             hideSearch={false}
             size="compact"
-
-            dropdownClassName="w-16 md:w-20 lg:w-24"
+            variant="modern"
+            dropdownClassName="w-20 md:w-24 lg:w-28"
             searchable={false}
         />
     );

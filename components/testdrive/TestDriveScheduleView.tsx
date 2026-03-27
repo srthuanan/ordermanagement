@@ -10,7 +10,7 @@ interface TestDriveScheduleViewProps {
 
 const timeToMinutes = (time: string): number => {
     if (!time) return 0;
-    
+
     // Handle full ISO/Date string from Google Sheets
     if (time.includes('T') || time.includes(' ')) {
         const date = moment(time);
@@ -28,7 +28,7 @@ const timeToMinutes = (time: string): number => {
             return hours * 60 + minutes;
         }
     }
-    
+
     return 0; // Fallback
 };
 
@@ -40,7 +40,7 @@ const TestDriveScheduleView: React.FC<TestDriveScheduleViewProps> = ({ allTestDr
         if (!selectedDate || !selectedCar) return [];
         return allTestDrives
             .filter(drive => drive.ngayThuXe === selectedDate && drive.loaiXe === selectedCar)
-            .sort((a,b) => timeToMinutes(a.thoiGianKhoiHanh) - timeToMinutes(b.thoiGianKhoiHanh));
+            .sort((a, b) => timeToMinutes(a.thoiGianKhoiHanh) - timeToMinutes(b.thoiGianKhoiHanh));
     }, [allTestDrives, selectedDate, selectedCar]);
 
     const renderSchedule = () => {
@@ -50,8 +50,14 @@ const TestDriveScheduleView: React.FC<TestDriveScheduleViewProps> = ({ allTestDr
 
         if (!selectedDate || !selectedCar) {
             return (
-                <div className="flex items-center justify-center h-48 bg-surface-ground rounded-lg border border-border-primary">
-                    <p className="text-text-secondary">Chọn ngày và loại xe để xem lịch.</p>
+                <div className="flex flex-col items-center justify-center h-48 bg-slate-50/50 rounded-xl border border-slate-200/50">
+                    <div className="relative mb-3 group">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-blue-300/30 rounded-full blur-xl opacity-60 group-hover:scale-125 transition-all duration-700"></div>
+                        <div className="relative w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-sm flex items-center justify-center border border-white/60">
+                            <i className="fas fa-calendar-day text-slate-400 text-lg"></i>
+                        </div>
+                    </div>
+                    <p className="text-sm text-slate-500 font-medium">Chọn ngày và loại xe để xem lịch</p>
                 </div>
             );
         }
@@ -62,8 +68,8 @@ const TestDriveScheduleView: React.FC<TestDriveScheduleViewProps> = ({ allTestDr
                 <div className="relative bg-white h-10 rounded shadow-inner-sm border border-border-secondary">
                     {/* Time markers */}
                     <div className="absolute top-0 left-0 w-full h-full flex justify-between text-xs text-text-placeholder px-1 items-end">
-                       {Array.from({ length: 12 }).map((_, i) => <span key={i} className={`border-l ${i % 3 === 0 ? 'h-2 border-border-secondary' : 'h-1 border-border-primary'}`}></span>)}
-                       <span className="border-l h-2 border-border-secondary"></span>
+                        {Array.from({ length: 12 }).map((_, i) => <span key={i} className={`border-l ${i % 3 === 0 ? 'h-2 border-border-secondary' : 'h-1 border-border-primary'}`}></span>)}
+                        <span className="border-l h-2 border-border-secondary"></span>
                     </div>
 
                     {/* Saved Bookings */}
@@ -73,15 +79,15 @@ const TestDriveScheduleView: React.FC<TestDriveScheduleViewProps> = ({ allTestDr
                         const dayStartMinutes = 8 * 60;
                         const dayEndMinutes = 20 * 60;
                         const totalDayMinutes = dayEndMinutes - dayStartMinutes;
-                        
+
                         const left = Math.max(0, ((startMinutes - dayStartMinutes) / totalDayMinutes) * 100);
                         const width = Math.min(100 - left, ((endMinutes - startMinutes) / totalDayMinutes) * 100);
-                        
+
                         return (
                             <div key={booking.soPhieu}
-                                 className="absolute h-full bg-slate-400/70 rounded border border-slate-500 hover:bg-slate-500 transition-colors"
-                                 style={{ left: `${left}%`, width: `${width}%` }}
-                                 title={`Đã đặt - KH: ${booking.tenKhachHang}\nThời gian: ${moment(booking.thoiGianKhoiHanh).format('HH:mm')} - ${moment(booking.thoiGianTroVe).format('HH:mm')}\nTVBH: ${booking.tenTuVan || 'N/A'}`}>
+                                className="absolute h-full bg-slate-400/70 rounded border border-slate-500 hover:bg-slate-500 transition-colors"
+                                style={{ left: `${left}%`, width: `${width}%` }}
+                                title={`Đã đặt - KH: ${booking.tenKhachHang}\nThời gian: ${moment(booking.thoiGianKhoiHanh).format('HH:mm')} - ${moment(booking.thoiGianTroVe).format('HH:mm')}\nTVBH: ${booking.tenTuVan || 'N/A'}`}>
                             </div>
                         );
                     })}
@@ -103,9 +109,17 @@ const TestDriveScheduleView: React.FC<TestDriveScheduleViewProps> = ({ allTestDr
                         ))}
                     </ul>
                 )}
-                 {scheduleForSelected.length === 0 && (
-                     <p className="text-sm text-text-secondary text-center py-4 mt-2">Chưa có lịch đặt cho xe này vào ngày đã chọn.</p>
-                 )}
+                {scheduleForSelected.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 mt-2">
+                        <div className="relative mb-3 group">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-emerald-300/30 rounded-full blur-xl opacity-60 group-hover:scale-125 transition-all duration-700"></div>
+                            <div className="relative w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-sm flex items-center justify-center border border-white/60">
+                                <i className="far fa-calendar-check text-slate-400 text-lg"></i>
+                            </div>
+                        </div>
+                        <p className="text-sm text-slate-500">Chưa có lịch đặt cho xe này vào ngày đã chọn.</p>
+                    </div>
+                )}
             </div>
         );
     };

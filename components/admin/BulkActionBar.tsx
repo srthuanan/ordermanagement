@@ -9,12 +9,10 @@ interface BulkActionBarProps {
 }
 
 const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string; icon: string; isDanger?: boolean }[]> = {
-    dashboard: [],
     invoices: [
         { type: 'approve', label: 'Phê duyệt', icon: 'fa-check-double' },
         { type: 'supplement', label: 'Y/C Bổ sung', icon: 'fa-exclamation-triangle' },
         { type: 'pendingSignature', label: 'Chuyển sang "Chờ ký HĐ"', icon: 'fa-signature' },
-        { type: 'cancel', label: 'Hủy Yêu cầu', icon: 'fa-trash-alt', isDanger: true },
     ],
     pending: [
         { type: 'cancel', label: 'Hủy Yêu cầu (Xóa)', icon: 'fa-trash-alt', isDanger: true },
@@ -23,6 +21,14 @@ const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string
     matching: [],
     vc: [],
     phongkd: [],
+    tracking: [],
+    stats: [],
+    incomplete_cars: [],
+    super_edit: [],
+    inquiries: [],
+    holds: [],
+    policies: [],
+    don_ton: [],
 };
 
 const BulkActionBar: React.FC<BulkActionBarProps> = ({ view, selectedRows, setSelectedRows, setBulkActionModal }) => {

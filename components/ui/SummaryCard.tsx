@@ -1,14 +1,14 @@
 import React from 'react';
 
 interface SummaryCardProps {
-  icon: string;
-  title: string;
-  value: string | number;
-  iconBgClass?: string;
-  valueClassName?: string;
-  className?: string;
-  colorClass?: string;
-  size?: 'default' | 'compact';
+    icon: string;
+    title: string;
+    value: string | number;
+    iconBgClass?: string;
+    valueClassName?: string;
+    className?: string;
+    colorClass?: string;
+    size?: 'default' | 'compact';
 }
 
 const SummaryCard: React.FC<SummaryCardProps> = ({ icon, title, value, iconBgClass = 'bg-accent-primary/10', valueClassName = '', className = '', colorClass = 'text-accent-primary', size = 'default' }) => {

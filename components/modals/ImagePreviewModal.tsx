@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { toEmbeddableUrl, toDownloadableUrl, toViewableUrl, getDriveFileId, getSanitizedFilename } from '../../utils/imageUtils';
+import { toEmbeddableUrl, toViewableUrl, getDriveFileId, getSanitizedFilename, forceDownload } from '../../utils/imageUtils';
 
 interface ImageSource {
     src: string;
@@ -147,15 +147,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
         const currentImage = images[currentIndex];
         if (!currentImage) return;
 
-        const downloadUrl = toDownloadableUrl(currentImage.originalUrl || currentImage.src);
-        const filename = getSanitizedFilename(customerName, currentImage.label);
-
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        forceDownload(currentImage.originalUrl || currentImage.src, getSanitizedFilename(customerName, currentImage.label, currentImage.originalUrl || currentImage.src));
     };
 
     if (!isOpen) return null;
@@ -165,7 +157,7 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
     return (
         <div
             ref={containerRef}
-            className="fixed inset-0 bg-black z-[100] flex flex-col animate-fade-in overflow-hidden select-none"
+            className="fixed inset-0 bg-black/95 z-[9999] flex flex-col animate-fade-in overflow-hidden select-none"
             onClick={() => setShowControls(prev => !prev)}
             onWheel={handleWheel}
         >
@@ -245,51 +237,55 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
                 )}
 
                 {isIframeMode && displayUrl && (
-                    <iframe
-                        src={displayUrl}
-                        title="File Preview"
-                        className="w-full h-full max-w-[95vw] max-h-[90vh] bg-white rounded-lg shadow-lg"
-                        allow="autoplay"
-                        onLoad={() => setIsLoading(false)}
-                    />
+                    <div className="w-full h-full md:max-w-6xl md:max-h-[85vh] relative shadow-2xl md:rounded-2xl overflow-hidden bg-[#1e1e1e] border border-white/10">
+                        <iframe
+                            src={displayUrl}
+                            title="File Preview"
+                            className="w-full h-full w-full h-full border-0"
+                            allow="autoplay"
+                            onLoad={() => setIsLoading(false)}
+                        />
+                        {/* Mask for Google Drive Pop-out Button */}
+                        <div className="absolute top-0 right-0 w-14 h-14 bg-[#1e1e1e] z-20 pointer-events-none"></div>
+                    </div>
                 )}
             </div>
 
-            {/* Top Bar - Floating */}
-            <div className={`absolute top-0 left-0 right-0 p-4 transition-all duration-300 transform ${showControls ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
-                <div className="flex items-start justify-between max-w-7xl mx-auto" onClick={e => e.stopPropagation()}>
-                    <div className="flex items-center gap-3 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-white shadow-lg">
-                        <div className="flex flex-col">
-                            <span className="font-bold text-sm truncate max-w-[150px] sm:max-w-xs">{currentImage?.label}</span>
-                            <span className="text-[10px] text-white/70">{customerName} • {currentIndex + 1}/{images.length}</span>
-                        </div>
+            {/* Top Bar - Premium Gradient Overlay */}
+            <div
+                className={`absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/90 via-black/50 to-transparent z-50 flex items-start pt-6 px-6 justify-between transition-all duration-500 transform ${showControls ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}
+                style={{ pointerEvents: showControls ? 'auto' : 'none' }}
+                onClick={e => e.stopPropagation()}
+            >
+                <div className="flex items-center gap-4 animate-slide-in-left">
+                    <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center shadow-glow-sm">
+                        <i className="fas fa-image text-xl text-purple-500 drop-shadow-md"></i>
                     </div>
+                    <div>
+                        <h3 className="font-bold text-lg text-white tracking-wide drop-shadow-sm line-clamp-1 max-w-[200px] md:max-w-md">{currentImage?.label}</h3>
+                        <p className="text-xs text-white/60 font-medium tracking-wider uppercase">
+                            {customerName} • {currentIndex + 1}/{images.length}
+                        </p>
+                    </div>
+                </div>
 
-                    <div className="flex gap-2">
-                        <a
-                            href={currentImage?.originalUrl || currentImage?.src}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors shadow-lg"
-                            title="Mở tab mới"
-                        >
-                            <i className="fas fa-external-link-alt text-sm"></i>
-                        </a>
-                        <button
-                            onClick={handleDownload}
-                            className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:bg-gray-200 transition-colors shadow-lg"
-                            title="Tải về"
-                        >
-                            <i className="fas fa-download"></i>
-                        </button>
-                        <button
-                            onClick={onClose}
-                            className="w-10 h-10 rounded-full bg-red-600 text-white flex items-center justify-center hover:bg-red-700 transition-colors shadow-lg"
-                            title="Đóng (Esc)"
-                        >
-                            <i className="fas fa-times"></i>
-                        </button>
-                    </div>
+                <div className="flex items-center gap-3 animate-slide-in-right">
+                    <button
+                        onClick={handleDownload}
+                        className="group relative w-12 h-12 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white transition-all duration-300 shadow-lg hover:shadow-cyan-500/20 hover:scale-110 active:scale-95"
+                        title="Tải về"
+                    >
+                        <i className="fas fa-download text-lg group-hover:text-cyan-400 transition-colors"></i>
+                        <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-[10px] bg-black/80 text-white px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Tải về</span>
+                    </button>
+
+                    <button
+                        onClick={onClose}
+                        className="group relative w-12 h-12 rounded-full bg-white/5 hover:bg-red-500/20 backdrop-blur-md border border-white/10 hover:border-red-500/50 flex items-center justify-center text-white transition-all duration-300 shadow-lg hover:shadow-red-500/20 hover:scale-110 active:scale-95"
+                        title="Đóng (Esc)"
+                    >
+                        <i className="fas fa-times text-lg group-hover:text-red-400 transition-colors"></i>
+                    </button>
                 </div>
             </div>
 
@@ -312,8 +308,8 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
             )}
 
             {/* Bottom Controls - Floating */}
-            <div className={`absolute bottom-0 left-0 right-0 p-6 transition-all duration-300 transform ${showControls ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`}>
-                <div className="max-w-3xl mx-auto flex flex-col gap-4" onClick={e => e.stopPropagation()}>
+            <div className={`absolute bottom-0 left-0 right-0 p-6 transition-all duration-300 transform ${showControls ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'}`} onClick={e => e.stopPropagation()}>
+                <div className="max-w-3xl mx-auto flex flex-col gap-4">
 
                     {/* Thumbnails */}
                     {images.length > 1 && (
@@ -360,6 +356,12 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
                             <i className="fas fa-expand"></i>
                         </button>
                     </div>
+                </div>
+                {/* Bottom Hint */}
+                <div className="mt-4 text-center">
+                    <span className="px-4 py-2 rounded-full bg-black/60 backdrop-blur-md border border-white/5 text-white/50 text-xs inline-block">
+                        Nhấn vào màn hình để ẩn/hiện công cụ
+                    </span>
                 </div>
             </div>
         </div>

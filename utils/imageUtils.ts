@@ -60,16 +60,65 @@ export const toViewableUrl = (url: string): string => {
 };
 
 /**
- * Transforms a Google Drive URL into a direct download link.
- * @param url The original Google Drive URL.
+ * Transforms a Google Drive or Supabase URL into a direct download link.
+ * @param url The original file URL.
  * @returns A direct download URL.
  */
 export const toDownloadableUrl = (url: string): string => {
+    if (!url) return '';
     const fileId = getDriveFileId(url);
     if (fileId) {
         return `https://drive.google.com/uc?export=download&id=${fileId}`;
     }
-    return url; // Fallback to original if not a recognizable Drive URL
+    // For Supabase Storage URLs, we can append download query parameter to force it
+    if (url.includes('supabase.co/storage/v1/object/public/')) {
+        return url.includes('?') ? `${url}&download=` : `${url}?download=`;
+    }
+    return url; // Fallback to original if not a recognizable specialized URL
+};
+
+/**
+ * Robustly forces a file download by fetching the blob.
+ * This bypasses browser internal viewers for PDFs and images.
+ * @param url The file URL.
+ * @param filename The desired filename.
+ */
+export const forceDownload = async (url: string, filename: string) => {
+    try {
+        // First try the specialized download URL if it's drive
+        let targetUrl = url;
+        const fileId = getDriveFileId(url);
+        if (fileId) {
+            targetUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+            // Drive uc?export=download usually works with direct window.open or a simple link,
+            // but for consistency we can try to fetch it if CORS allows.
+            // However, Drive CORS is strict, so we might just use window.open for Drive.
+            window.open(targetUrl, '_blank');
+            return;
+        }
+
+        // For Supabase and others, try to fetch to force download name and bypass viewer
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+    } catch (e) {
+        console.error('Download failed, falling back to window.open:', e);
+        // Fallback: Add ?download= for Supabase if not present
+        let fallbackUrl = url;
+        if (url.includes('supabase.co/storage/v1/object/public/') && !url.includes('download=')) {
+            fallbackUrl = url.includes('?') ? `${url}&download=${filename}` : `${url}?download=${filename}`;
+        }
+        window.open(fallbackUrl, '_blank');
+    }
 };
 
 /**
@@ -78,11 +127,29 @@ export const toDownloadableUrl = (url: string): string => {
  * @param fileLabel A label for the file (e.g., 'UNC', 'ID Card').
  * @returns A sanitized filename string.
  */
-export const getSanitizedFilename = (customerName?: string, fileLabel?: string): string => {
-    if (!customerName || !fileLabel) return 'image.jpg';
+export const getSanitizedFilename = (customerName?: string, fileLabel?: string, fileUrl?: string): string => {
+    if (!customerName && !fileLabel) return 'document.pdf';
 
-    const removeDiacritics = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/Đ/g, "D").replace(/đ/g, "d");
-    const cleanCustomer = removeDiacritics(customerName).replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    const cleanLabel = fileLabel.replace(/\s+/g, '_');
-    return `${cleanCustomer}_${cleanLabel}.jpg`;
+    const cleanCustomer = customerName ? customerName.trim() : 'KhachHang';
+    let cleanLabel = fileLabel ? fileLabel.trim() : 'TaiLieu';
+
+    // Map labels to requested shorthand formats
+    if (cleanLabel === 'Hợp đồng MB') cleanLabel = 'HĐMB';
+    else if (cleanLabel === 'Đề nghị XHĐ') cleanLabel = 'ĐNXHĐ';
+
+    // Remove only characters that are invalid in Windows filenames
+    const safeCustomer = cleanCustomer.replace(/[\\/:*?"<>|]/g, '');
+    const safeLabel = cleanLabel.replace(/[\\/:*?"<>|]/g, '');
+
+    // Decide extension based on URL or label
+    let extension = 'pdf';
+    if (fileUrl) {
+        const lowerUrl = fileUrl.toLowerCase();
+        if (lowerUrl.includes('.jpg') || lowerUrl.includes('.jpeg')) extension = 'jpg';
+        else if (lowerUrl.includes('.png')) extension = 'png';
+    } else {
+        if (fileLabel?.toLowerCase().includes('png') || fileLabel?.toLowerCase().includes('jpg')) extension = 'jpg';
+    }
+
+    return `${safeLabel} ${safeCustomer}.${extension}`;
 };

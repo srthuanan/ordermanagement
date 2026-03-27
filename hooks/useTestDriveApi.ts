@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import useSWR from 'swr';
+import { useCallback } from 'react';
 import { TestDriveBooking } from '../types';
 import * as apiService from '../services/apiService';
 import moment from 'moment';
@@ -23,37 +24,28 @@ const timeToMinutes = (time: string): number => {
 };
 
 export const useTestDriveApi = () => {
-    const [testDriveData, setTestDriveData] = useState<TestDriveBooking[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    const fetchData = useCallback(async (isSilent = false) => {
-        if (!isSilent) setIsLoading(true);
-        setError(null);
-        try {
-            const result = await apiService.getTestDriveSchedule();
-            if (result.status === 'SUCCESS' && result.data) {
-                const schedule: TestDriveBooking[] = result.data;
-                const sortedSchedule = schedule.sort((a, b) => {
-                    const dateCompare = b.ngayThuXe.localeCompare(a.ngayThuXe);
-                    if (dateCompare !== 0) return dateCompare;
-                    return timeToMinutes(b.thoiGianKhoiHanh) - timeToMinutes(a.thoiGianKhoiHanh);
-                });
-                setTestDriveData(sortedSchedule);
-            } else {
-                throw new Error(result.message || 'Không thể tải dữ liệu lịch lái thử.');
-            }
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'An unknown error occurred';
-            setError(message);
-        } finally {
-            if (!isSilent) setIsLoading(false);
+    const { data: result, error, mutate } = useSWR('testDriveSchedule', async () => {
+        const res = await apiService.getTestDriveSchedule();
+        if (res.status === 'SUCCESS' && res.data) {
+            const schedule: TestDriveBooking[] = res.data;
+            const sortedSchedule = schedule.sort((a, b) => {
+                const dateA = moment(a.ngayThuXe, ["YYYY-MM-DD", "DD/MM/YYYY"]);
+                const dateB = moment(b.ngayThuXe, ["YYYY-MM-DD", "DD/MM/YYYY"]);
+                if (dateB.isAfter(dateA)) return 1;
+                if (dateB.isBefore(dateA)) return -1;
+                return timeToMinutes(b.thoiGianKhoiHanh) - timeToMinutes(a.thoiGianKhoiHanh);
+            });
+            return sortedSchedule;
+        } else {
+            throw new Error(res.message || 'Không thể tải dữ liệu lịch lái thử.');
         }
-    }, []);
+    });
 
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
-
-    return { testDriveData, setTestDriveData, isLoading, error, refetch: fetchData };
+    return {
+        testDriveData: result || [],
+        setTestDriveData: (newData: TestDriveBooking[]) => mutate(newData, false),
+        isLoading: !result && !error,
+        error: error instanceof Error ? error.message : (error ? String(error) : null),
+        refetch: useCallback(() => mutate(), [mutate])
+    };
 };

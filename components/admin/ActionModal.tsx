@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import yesAnimationUrl from '../../pictures/yes.json?url';
-import noAnimationUrl from '../../pictures/no-animation.json?url';
 import { useModalBackground } from '../../utils/styleUtils';
 
 interface InputConfig {
     id: string;
     label: string;
     placeholder?: string;
-    type?: 'text' | 'textarea' | 'select';
+    type?: 'text' | 'textarea' | 'select' | 'date' | 'number' | 'password';
     isVIN?: boolean;
     options?: string[];
 }
@@ -23,10 +21,11 @@ interface ActionModalProps {
     submitColor: 'primary' | 'danger' | 'success';
     icon: string;
     targetId?: string;
+    showToast?: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
 const ActionModal: React.FC<ActionModalProps> = ({
-    isOpen, onClose, onSubmit, title, description, inputs = [], submitText, submitColor, icon, targetId
+    isOpen, onClose, onSubmit, title, description, inputs = [], submitText, submitColor, icon, targetId, showToast
 }) => {
     const [formData, setFormData] = useState<Record<string, string>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,10 +45,12 @@ const ActionModal: React.FC<ActionModalProps> = ({
                     return acc;
                 }, {} as Record<string, string>);
             });
+            setIsSubmitting(false); // Reset submitting state on open
         } else {
             // Optional: Clear form data when modal closes to save memory, 
             // though not strictly necessary as it will be reset on next open.
             setFormData({});
+            setIsSubmitting(false); // Ensure it's reset on close too
         }
         // Removing 'inputs' from dependency array is intentional to prevent form reset
         // when parent re-renders and passes a new inputs array reference.
@@ -77,10 +78,11 @@ const ActionModal: React.FC<ActionModalProps> = ({
 
     const handleSubmit = async () => {
         if (inputs.length > 0 && !isFormValid()) {
-            // Let's use a toast for better UX
-            // This assumes a global toast function is available or passed via props if this was a larger app.
-            // For now, an alert will suffice.
-            alert('Vui lòng điền đầy đủ và chính xác thông tin.');
+            if (showToast) {
+                showToast('Thông tin không hợp lệ', 'Vui lòng điền đầy đủ và chính xác thông tin.', 'warning');
+            } else {
+                alert('Vui lòng điền đầy đủ và chính xác thông tin.');
+            }
             return;
         }
         setIsSubmitting(true);
@@ -111,7 +113,7 @@ const ActionModal: React.FC<ActionModalProps> = ({
     const selectedColor = colorMap[submitColor] || colorMap.primary;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div
                 className="bg-surface-card w-full md:max-w-md h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
                 onClick={e => e.stopPropagation()}
@@ -179,17 +181,28 @@ const ActionModal: React.FC<ActionModalProps> = ({
                         </div>
                     )}
                 </main>
-                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-none md:rounded-b-2xl border-t border-border-primary flex-shrink-0">
-                    <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
-                    </div>
-                    <div
-                        onClick={!isSubmitting ? handleSubmit : undefined}
-                        title={submitText}
-                        className={`cursor-pointer ${(isSubmitting || (inputs.length > 0 && !isFormValid())) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}
+                <footer className="px-4 py-3 flex justify-end items-center gap-3 bg-slate-50 rounded-none md:rounded-b-2xl border-t border-slate-200/60 flex-shrink-0">
+                    <button
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                        className="px-6 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all disabled:opacity-50"
                     >
-                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
-                    </div>
+                        HỦY
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || (inputs.length > 0 && !isFormValid())}
+                        className={`px-6 py-2 rounded-xl text-sm font-black text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 ${selectedColor.bg} hover:brightness-110 flex items-center justify-center min-w-[120px] h-[40px]`}
+                    >
+                        {isSubmitting ? (
+                            <div className="flex items-center gap-2">
+                                <i className="fas fa-spinner fa-spin"></i>
+                                <span>ĐANG XỬ LÝ...</span>
+                            </div>
+                        ) : (
+                            submitText.toUpperCase()
+                        )}
+                    </button>
                 </footer>
             </div>
         </div>

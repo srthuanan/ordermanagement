@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import useSWR from 'swr';
 import { Order, VcRequest, StockVehicle, SortConfig, VcSortConfig, AdminSubView } from '../types';
 import * as apiService from '../services/apiService';
 import { includesNormalized } from '../utils/stringUtils';
@@ -11,12 +12,13 @@ interface UseAdminDataProps {
     pendingFilters: any;
     pairedFilters: any;
     vcFilters: any;
+    matchingFilters: any;
     adminView: AdminSubView;
     isSidebarCollapsed: boolean;
 }
 
 export const useAdminData = ({
-    allOrders, xuathoadonData, stockData, invoiceFilters, pendingFilters, pairedFilters, vcFilters, isSidebarCollapsed
+    allOrders, xuathoadonData, stockData, invoiceFilters, pendingFilters, pairedFilters, vcFilters, matchingFilters, adminView, isSidebarCollapsed
 }: UseAdminDataProps) => {
     const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
 
@@ -30,32 +32,22 @@ export const useAdminData = ({
     const [currentPage, setCurrentPage] = useState(1);
 
     // VC Data State
-    const [vcRequestsData, setVcRequestsData] = useState<VcRequest[]>([]);
-    const [isLoadingVc, setIsLoadingVc] = useState(true);
-    const [errorVc, setErrorVc] = useState<string | null>(null);
+    const { data: vcRes, error: errorVcRaw, mutate: mutateVc } = useSWR('vcData', async () => {
+        const result = await apiService.getYeuCauVcData();
+        return result.data || [];
+    }, {
+        refreshInterval: 30000,
+        revalidateOnFocus: true,
+        revalidateOnReconnect: true,
+    });
 
+    const vcRequestsData = vcRes || [];
+    const isLoadingVc = !vcRes && !errorVcRaw;
+    const errorVc = errorVcRaw instanceof Error ? errorVcRaw.message : (errorVcRaw ? String(errorVcRaw) : null);
+    const fetchVcData = () => mutateVc();
 
     // Selection State
     const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-
-    const fetchVcData = useCallback(async (isSilent = false) => {
-        if (!isSilent) setIsLoadingVc(true);
-        setErrorVc(null);
-        try {
-            const result = await apiService.getYeuCauVcData();
-            setVcRequestsData(result.data || []);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'Lỗi không xác định khi tải yêu cầu VC.';
-            setErrorVc(message);
-        } finally {
-            if (!isSilent) setIsLoadingVc(false);
-        }
-    }, []);
-
-
-    useEffect(() => {
-        fetchVcData();
-    }, [fetchVcData]);
 
     // Heartbeat
     useEffect(() => {
@@ -76,43 +68,78 @@ export const useAdminData = ({
         filterOptions,
         ordersWithMatches
     } = useMemo(() => {
+        const stockMap = new Map<string, StockVehicle>();
+        stockData.forEach(car => { if (car.VIN) stockMap.set(car.VIN, car); });
+
         const orderStatusMap = new Map<string, Order>();
-        allOrders.forEach(order => { if (order['Số đơn hàng']) orderStatusMap.set(order['Số đơn hàng'], order); });
+        allOrders.forEach(order => { 
+            if (order['Số đơn hàng']) {
+                // Enrich order with matched car info if available
+                if (order.VIN && stockMap.has(order.VIN)) {
+                    const matchedCar = stockMap.get(order.VIN)!;
+                    order["Số động cơ"] = matchedCar["Số máy"] || matchedCar.so_may;
+                    order["Mã DMS"] = matchedCar["Mã DMS"] || matchedCar.ma_dms;
+                }
+                orderStatusMap.set(order['Số đơn hàng'], order); 
+            }
+        });
 
         const processedInvoices: Order[] = xuathoadonData
             .filter(invoice => invoice && invoice['SỐ ĐƠN HÀNG'])
             .map(invoice => {
                 const orderNumber = invoice['SỐ ĐƠN HÀNG'];
                 const correspondingOrder = orderStatusMap.get(orderNumber);
+                // Lọc bỏ URL rác (ví dụ: chữ "HOADON" do xuất phát từ file Excel =HYPERLINK)
+                const isValidUrl = (url: any) => typeof url === 'string' && url.length > 10 && (url.startsWith('http') || url.includes('.com'));
+                let bestUrl = invoice['LinkHoaDonDaXuat'];
+                if (!isValidUrl(bestUrl)) bestUrl = invoice['URL Hóa Đơn Đã Xuất'];
+                if (!isValidUrl(bestUrl) && correspondingOrder) bestUrl = correspondingOrder['LinkHoaDonDaXuat'];
+
+                let urlHopDongTemp = invoice['LinkHopDong'];
+                if (!isValidUrl(urlHopDongTemp)) urlHopDongTemp = invoice['URL Hợp Đồng'];
+                if (!isValidUrl(urlHopDongTemp) && correspondingOrder) urlHopDongTemp = correspondingOrder['LinkHopDong'];
+
+                let urlDeNghiTemp = invoice['LinkDeNghiXHD'];
+                if (!isValidUrl(urlDeNghiTemp)) urlDeNghiTemp = invoice['URL Đề Nghị XHĐ'];
+                if (!isValidUrl(urlDeNghiTemp) && correspondingOrder) urlDeNghiTemp = correspondingOrder['LinkDeNghiXHD'];
+
                 const mergedOrder: Order = {
                     "Số đơn hàng": orderNumber,
-                    "Tên khách hàng": invoice['TÊN KHÁCH HÀNG'],
-                    "Dòng xe": invoice['DÒNG XE'],
-                    "Phiên bản": invoice['PHIÊN BẢN'],
-                    "Ngoại thất": invoice['NGOẠI THẤT'],
-                    "Nội thất": invoice['NỘI THẤT'],
-                    "Tên tư vấn bán hàng": invoice['TƯ VẤN BÁN HÀNG'],
-                    "VIN": invoice['SỐ VIN'],
-                    "Số động cơ": invoice['SỐ ĐỘNG CƠ'],
-                    "Thời gian nhập": invoice['NGÀY YÊU CẦU XHĐ'],
-                    "Ngày xuất hóa đơn": invoice['NGÀY XUẤT HÓA ĐƠN'],
+                    "Tên khách hàng": invoice['TÊN KHÁCH HÀNG'] || invoice['Tên khách hàng'],
+                    "Dòng xe": invoice['DÒNG XE'] || invoice['Dòng xe'],
+                    "Phiên bản": invoice['PHIÊN BẢN'] || invoice['Phiên bản'],
+                    "Ngoại thất": invoice['NGOẠI THẤT'] || invoice['Ngoại thất'],
+                    "Nội thất": invoice['NỘI THẤT'] || invoice['Nội thất'],
+                    "Tên tư vấn bán hàng": invoice['TƯ VẤN BÁN HÀNG'] || invoice['Tên tư vấn bán hàng'],
+                    "VIN": invoice['SỐ VIN'] || invoice['VIN'],
+                    "Số động cơ": invoice['SỐ ĐỘNG CƠ'] || invoice['Số động cơ'],
+                    "Mã DMS": invoice['MÃ DMS'] || invoice['Mã DMS'],
+                    "Thời gian nhập": invoice['NGÀY YÊU CẦU XHĐ'] || invoice['Thời gian nhập'],
+                    "Ngày xuất hóa đơn": invoice['NGÀY XUẤT HÓA ĐƠN'] || invoice['Ngày xuất hóa đơn'],
                     "Hoa hồng ứng": invoice['Hoa hồng ứng'],
                     "Điểm Vpoint sử dụng": invoice['Điểm Vpoint sử dụng'],
                     "CHÍNH SÁCH": invoice['CHÍNH SÁCH'],
-                    "Ngày cọc": invoice['NGÀY CỌC'],
+                    "Ngày cọc": invoice['NGÀY CỌC'] || invoice['Ngày cọc'],
                     "BÁO BÁN": invoice['BÁO BÁN'],
                     "KẾT QUẢ GỬI MAIL": invoice['KẾT QUẢ GỬI MAIL'],
-                    "LinkHopDong": invoice['URL Hợp Đồng'],
-                    "LinkDeNghiXHD": invoice['URL Đề Nghị XHĐ'],
-                    "LinkHoaDonDaXuat": invoice['URL Hóa Đơn Đã Xuất'],
+                    "LinkHopDong": isValidUrl(urlHopDongTemp) ? urlHopDongTemp : '',
+                    "LinkDeNghiXHD": isValidUrl(urlDeNghiTemp) ? urlDeNghiTemp : '',
+                    "LinkHoaDonDaXuat": isValidUrl(bestUrl) ? bestUrl : '',
                     "Kết quả": 'N/A',
                 };
 
                 if (correspondingOrder) {
                     mergedOrder["Kết quả"] = correspondingOrder["Trạng thái VC"] || correspondingOrder["Kết quả"] || 'Không rõ';
+                    // Priority merge: Use correspondingOrder data (which is enriched with stock info)
+                    mergedOrder["Số động cơ"] = correspondingOrder["Số động cơ"] || mergedOrder["Số động cơ"];
+                    mergedOrder["Mã DMS"] = correspondingOrder["Mã DMS"] || mergedOrder["Mã DMS"];
+                    
                     Object.keys(correspondingOrder).forEach(key => {
-                        if (!mergedOrder[key as keyof Order]) {
-                            mergedOrder[key as keyof Order] = correspondingOrder[key as keyof Order];
+                        // Tránh ghi đè các trường quan trọng đã được lấy từ yeucauxhd (đặc biệt là Thời gian nhập)
+                        if (key === 'Thời gian nhập' || key === 'NGÀY YÊU CẦU XHĐ') return;
+                        
+                        if ((!mergedOrder[key as keyof Order] || (typeof mergedOrder[key as keyof Order] === 'string' && !isValidUrl(mergedOrder[key as keyof Order])))) {
+                            (mergedOrder as any)[key] = (correspondingOrder as any)[key] || (mergedOrder as any)[key];
                         }
                     });
                 } else {
@@ -122,11 +149,12 @@ export const useAdminData = ({
                 return mergedOrder;
             });
 
-        const allVcRequests: VcRequest[] = vcRequestsData.map(vcReq => {
+        const allVcRequests: VcRequest[] = vcRequestsData.map((vcReq: any) => {
             const correspondingOrder = orderStatusMap.get(vcReq['Số đơn hàng']);
             return {
                 ...vcReq,
-                VIN: correspondingOrder?.VIN,
+                VIN: correspondingOrder?.VIN || correspondingOrder?.['SỐ VIN'] || vcReq.VIN || vcReq['SỐ VIN'],
+                "Số động cơ": correspondingOrder?.['Số động cơ'] || correspondingOrder?.['SỐ ĐỘNG CƠ'] || vcReq['Số động cơ'] || vcReq['SỐ ĐỘNG CƠ'],
                 "Dòng xe": correspondingOrder?.['Dòng xe'],
                 "Phiên bản": correspondingOrder?.['Phiên bản'],
                 "Ngoại thất": correspondingOrder?.['Ngoại thất'],
@@ -203,8 +231,8 @@ export const useAdminData = ({
         };
 
         const filteredInvoices = applyFilters(processedInvoices, invoiceFilters, 'invoices') as Order[];
-        const filteredPending = applyFilters(allPending, pendingFilters, 'pending') as Order[];
-        const filteredPaired = applyFilters(allPaired, pairedFilters, 'paired') as Order[];
+        const filteredPending = applyFilters(allPending, adminView === 'matching' ? matchingFilters : pendingFilters, adminView === 'matching' ? 'matching' : 'pending') as Order[];
+        const filteredPaired = applyFilters(allPaired, adminView === 'matching' ? matchingFilters : pairedFilters, adminView === 'matching' ? 'matching' : 'paired') as Order[];
         const filteredVc = applyFilters(allVcRequests, vcFilters, 'vc') as VcRequest[];
 
         const applySort = (data: (Order | VcRequest)[], sortConfig: SortConfig | VcSortConfig | null) => {
@@ -262,9 +290,10 @@ export const useAdminData = ({
                 pending: getFilterOptions(allPending, ['Tên tư vấn bán hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất']),
                 paired: getFilterOptions(allPaired, ['Tên tư vấn bán hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất']),
                 vc: getFilterOptions(allVcRequests, ['Người YC', 'Trạng thái xử lý']),
+                matching: getFilterOptions([...allPending, ...allPaired], ['Tên tư vấn bán hàng', 'Dòng xe', 'Phiên bản', 'Ngoại thất'])
             }
         };
-    }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, vcSortConfig, invoiceFilters, pendingFilters, pairedFilters, vcFilters, vcRequestsData]);
+    }, [allOrders, xuathoadonData, stockData, sortConfig, pendingSortConfig, pairedSortConfig, vcSortConfig, invoiceFilters, pendingFilters, pairedFilters, vcFilters, matchingFilters, vcRequestsData, adminView]);
 
     const paginatedInvoices = useMemo(() => invoiceRequests.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [invoiceRequests, currentPage, PAGE_SIZE]);
     const totalInvoicePages = Math.ceil(invoiceRequests.length / PAGE_SIZE);
@@ -275,10 +304,10 @@ export const useAdminData = ({
         }
     }, [currentPage, totalInvoicePages]);
 
-    const allInvoiceOrderNumbers = useMemo(() => invoiceRequests.map(o => o['Số đơn hàng']), [invoiceRequests]);
-    const allPendingOrderNumbers = useMemo(() => pendingData.map(o => o['Số đơn hàng']), [pendingData]);
-    const allPairedOrderNumbers = useMemo(() => pairedData.map(o => o['Số đơn hàng']), [pairedData]);
-    const allVcOrderNumbers = useMemo(() => vcRequests.map(o => o['Số đơn hàng']), [vcRequests]);
+    const allInvoiceOrderNumbers = useMemo(() => invoiceRequests.map((o: any) => o['Số đơn hàng']), [invoiceRequests]);
+    const allPendingOrderNumbers = useMemo(() => pendingData.map((o: any) => o['Số đơn hàng']), [pendingData]);
+    const allPairedOrderNumbers = useMemo(() => pairedData.map((o: any) => o['Số đơn hàng']), [pairedData]);
+    const allVcOrderNumbers = useMemo(() => vcRequests.map((o: any) => o['Số đơn hàng']), [vcRequests]);
 
     const handleToggleAll = (allIds: string[]) => {
         if (selectedRows.size >= allIds.length) {

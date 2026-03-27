@@ -6,7 +6,6 @@ import { getExteriorColorStyle } from '../utils/styleUtils';
 import sandTimerAnimationUrl from '../pictures/sand-timer.json?url';
 import pairCarAnimationUrl from '../pictures/pair-animation.json?url';
 import huygiuAnimationUrl from '../pictures/huygiu.json?url';
-import yesAnimationUrl from '../pictures/yes.json?url';
 import Button from './ui/Button';
 
 interface StockTableProps {
@@ -89,10 +88,14 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
 
     if (vehicles.length === 0) {
         return (
-            <div className="text-center py-16 text-text-secondary">
-                <i className="fas fa-box-open fa-3x mb-4 text-text-placeholder"></i>
-                <p className="font-semibold text-text-primary">Không tìm thấy xe nào trong kho.</p>
-                <p className="text-sm">Hãy thử thay đổi bộ lọc hoặc kiểm tra lại sau.</p>
+            <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full bg-slate-50 rounded-2xl">
+                <div className="relative w-24 h-24 bg-white border border-gray-100 shadow-sm rounded-full flex items-center justify-center mb-6">
+                    <div className="absolute inset-0 border border-gray-200/60 rounded-full transform scale-110"></div>
+                    <div className="absolute inset-0 border border-gray-100 rounded-full transform scale-125"></div>
+                    <i className="fas fa-car-side text-gray-300 text-4xl"></i>
+                </div>
+                <h3 className="text-xl font-bold text-gray-600 mb-2 tracking-tight">Trống Không!</h3>
+                <p className="text-sm text-gray-400 max-w-sm text-center">Không tìm thấy chiếc xe nào trong kho thỏa mãn tiêu chí của bạn. Hãy thử thay đổi bộ lọc nhé.</p>
             </div>
         );
     }
@@ -179,21 +182,29 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                                     <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
                                                 </div>
                                             ) : isConfirmOpen && confirmAction ? (
-                                                <div className="flex justify-center items-center gap-2 w-full animate-fade-in" style={{ animationDuration: '150ms' }}>
-                                                    <div onClick={(e) => { e.stopPropagation(); setConfirmAction(null); }} className="cursor-pointer hover:scale-110 transition-transform" title="Hủy">
-                                                        <lottie-player src={huygiuAnimationUrl} background="transparent" speed="1" style={{ width: '40px', height: '40px' }} loop autoplay />
-                                                    </div>
-                                                    <div onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (confirmAction.action === 'hold') {
-                                                            onHoldCar(confirmAction.vin);
-                                                        } else {
-                                                            onReleaseCar(confirmAction.vin);
-                                                        }
-                                                        setConfirmAction(null);
-                                                    }} className="cursor-pointer hover:scale-110 transition-transform" title="Xác nhận">
-                                                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '70px', height: '70px' }} loop autoplay />
-                                                    </div>
+                                                <div className="flex justify-center items-center gap-3 w-full animate-fade-in" style={{ animationDuration: '150ms' }}>
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); setConfirmAction(null); }}
+                                                        className="w-10 h-8 flex items-center justify-center bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all rounded-full shadow-sm"
+                                                        title="Hủy"
+                                                    >
+                                                        <i className="fas fa-times text-xs"></i>
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (confirmAction.action === 'hold') {
+                                                                onHoldCar(confirmAction.vin);
+                                                            } else {
+                                                                onReleaseCar(confirmAction.vin);
+                                                            }
+                                                            setConfirmAction(null);
+                                                        }}
+                                                        className="w-10 h-8 flex items-center justify-center bg-accent-primary text-white hover:bg-accent-primary-hover transition-all rounded-full shadow-md font-black text-[10px]"
+                                                        title="Xác nhận"
+                                                    >
+                                                        OK
+                                                    </button>
                                                 </div>
                                             ) : (
                                                 <>

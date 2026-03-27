@@ -2,12 +2,16 @@ import { useState, useCallback, useEffect } from 'react';
 import { AdminSubView, Order } from '../types';
 
 interface UseAdminFiltersProps {
-    initialState: { targetTab?: AdminSubView; orderToShow?: Order } | null;
+    initialState: { targetTab?: AdminSubView; orderToShow?: Order; inquiryId?: string } | null;
     clearInitialState: () => void;
 }
 
 export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFiltersProps) => {
-    const [adminView, setAdminView] = useState<AdminSubView>('dashboard');
+    const [adminView, setAdminView] = useState<AdminSubView>('invoices');
+    const [matchingTab, setMatchingTab] = useState<'pending' | 'paired'>('pending');
+    // Lưu số đơn hàng hoặc inquiry ID cần được select ngay khi navigate đến tab
+    const [targetOrderId, setTargetOrderId] = useState<string | null>(null);
+    const [targetInquiryId, setTargetInquiryId] = useState<string | null>(null);
 
     const [invoiceFilters, setInvoiceFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], version: string[], exterior: string[], trangThai: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [], trangThai: [] });
     const [pendingFilters, setPendingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], version: string[], exterior: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] });
@@ -37,23 +41,37 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
                 }
                 setAdminView(targetTab as AdminSubView);
 
+                // Reset tất cả filter
                 setInvoiceFilters({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [], trangThai: [] });
                 setPendingFilters({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] });
                 setPairedFilters({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] });
                 setVcFilters({ keyword: '', nguoiyc: [], trangthai: [] });
                 setMatchingFilters({ keyword: '', tvbh: [], dongXe: [], version: [], ngoaiThat: [] });
 
-                const keyword = order['Số đơn hàng'];
-                if (targetTab === 'invoices') {
-                    setInvoiceFilters(prev => ({ ...prev, keyword }));
+                // Đặt targetOrderId để AdminView có thể select ngay lập tức
+                const orderId = order['Số đơn hàng'];
+                setTargetOrderId(orderId);
+
+                if (targetTab === 'matching') {
+                    setMatchingFilters(prev => ({ ...prev, keyword: orderId }));
+                    // Nếu đơn đã ghép (có VIN), chuyển sang sub-tab "Đã Ghép"
+                    setMatchingTab(order.VIN ? 'paired' : 'pending');
+                } else if (targetTab === 'invoices') {
+                    setInvoiceFilters(prev => ({ ...prev, keyword: orderId }));
+                } else if (targetTab === 'vc') {
+                    setVcFilters(prev => ({ ...prev, keyword: orderId }));
                 } else if (targetTab === 'pending') {
-                    setPendingFilters(prev => ({ ...prev, keyword }));
+                    setPendingFilters(prev => ({ ...prev, keyword: orderId }));
                 } else if (targetTab === 'paired') {
-                    setPairedFilters(prev => ({ ...prev, keyword }));
-                } else if (targetTab === 'matching') {
-                    setMatchingFilters(prev => ({ ...prev, keyword }));
+                    setPairedFilters(prev => ({ ...prev, keyword: orderId }));
                 }
             }
+
+            if (initialState.inquiryId) {
+                setAdminView('inquiries');
+                setTargetInquiryId(initialState.inquiryId);
+            }
+
             clearInitialState();
         }
     }, [initialState, clearInitialState]);
@@ -89,6 +107,12 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
     return {
         adminView,
         setAdminView,
+        matchingTab,
+        setMatchingTab,
+        targetOrderId,
+        setTargetOrderId,
+        targetInquiryId,
+        setTargetInquiryId,
         invoiceFilters,
         pendingFilters,
         pairedFilters,

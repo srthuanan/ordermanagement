@@ -3,6 +3,7 @@ import { TestDriveBooking, TestDriveSortConfig } from '../../types';
 import moment from 'moment';
 import { normalizeName } from '../../services/authService';
 import StatusBadge from '../ui/StatusBadge';
+import AnimatedBackground from '../ui/AnimatedBackground';
 
 import { toEmbeddableUrl, toViewableUrl } from '../../utils/imageUtils';
 
@@ -89,82 +90,103 @@ const DocumentCard: React.FC<{ url: string; label: string; icon: string; onClick
 };
 
 const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings, onSelectBooking, onUpdateCheckin, onDelete, currentUser, isAdmin, onOpenImagePreview }) => {
-    const [selectedFolder, setSelectedFolder] = useState<string>('all');
+    // Extract unique consultants for display in column 1
+    const consultants = useMemo(() => {
+        const uniqueNames = Array.from(new Set(bookings.map(b => b.tenTuVan || 'Chưa xác định')));
+
+        // Sort: Current user first, then others alphabetically
+        uniqueNames.sort((a, b) => {
+            const isUserA = normalizeName(a) === normalizeName(currentUser);
+            const isUserB = normalizeName(b) === normalizeName(currentUser);
+            if (isUserA && !isUserB) return -1;
+            if (!isUserA && isUserB) return 1;
+            return a.localeCompare(b);
+        });
+
+        return uniqueNames.map(name => ({
+            id: `consultant_${name}`,
+            label: name,
+            count: bookings.filter(b => normalizeName(b.tenTuVan || 'Chưa xác định') === normalizeName(name)).length
+        }));
+    }, [bookings, currentUser]);
+
+    // Use lazy initialization to compute initial selectedFolder
+    const [selectedFolder, setSelectedFolder] = useState<string>(() => {
+        // Find if current user is in consultants list
+        const userFolderId = `consultant_${currentUser}`;
+        if (consultants.some(c => normalizeName(c.label) === normalizeName(currentUser))) {
+            return userFolderId;
+        }
+        if (consultants.length > 0) {
+            return consultants[0].id;
+        }
+        return '';
+    });
+
+    const [selectedStatus, setSelectedStatus] = useState<string>('all'); // 'all', 'pending', 'ongoing', 'completed'
     const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
     const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
 
-    // Filter bookings by folder/status
+    // Update selectedFolder when consultants change and current selection becomes invalid
+    useEffect(() => {
+        if (consultants.length > 0 && !selectedFolder) {
+            setSelectedFolder(consultants[0].id);
+        }
+    }, [consultants, selectedFolder]);
+
+    // Filter bookings by consultant and status
     const filteredBookings = useMemo(() => {
         return bookings.filter(booking => {
-            const status = getStatus(booking);
-
-            // Check for consultant filter
+            // First filter by consultant name
             if (selectedFolder.startsWith('consultant_')) {
                 const consultantName = selectedFolder.replace('consultant_', '');
-                return normalizeName(booking.tenTuVan) === normalizeName(consultantName);
-            }
+                const matchesConsultant = normalizeName(booking.tenTuVan) === normalizeName(consultantName);
 
-            switch (selectedFolder) {
-                case 'pending': return status === 'Chờ Check-in';
-                case 'ongoing': return status === 'Đang lái thử';
-                case 'completed': return status === 'Đã hoàn tất';
-                case 'all': return true;
-                default: return true;
+                if (!matchesConsultant) return false;
+
+                // Then filter by status if not 'all'
+                if (selectedStatus !== 'all') {
+                    const status = getStatus(booking);
+                    switch (selectedStatus) {
+                        case 'pending': return status === 'Chờ Check-in';
+                        case 'ongoing': return status === 'Đang lái thử';
+                        case 'completed': return status === 'Đã hoàn tất';
+                        default: return true;
+                    }
+                }
+
+                return true;
             }
+            // If no valid folder selected, show all
+            return true;
         });
-    }, [bookings, selectedFolder]);
+    }, [bookings, selectedFolder, selectedStatus]);
 
     const selectedBooking = useMemo(() =>
         bookings.find(b => b.soPhieu === selectedBookingId),
         [bookings, selectedBookingId]
     );
 
-    // Auto-select first booking if none selected
+    // Auto-select first booking when filtered list changes
     useEffect(() => {
-        if (!selectedBookingId && filteredBookings.length > 0) {
+        if (filteredBookings.length > 0) {
+            // Always select the first booking in the filtered list
             setSelectedBookingId(filteredBookings[0].soPhieu);
+        } else {
+            // Clear selection if no bookings
+            setSelectedBookingId(null);
         }
-    }, [filteredBookings, selectedBookingId]);
+    }, [filteredBookings]);
 
-    const folders = [
-        {
-            id: 'pending',
-            label: 'Chờ Check-in',
-            icon: 'fa-clock',
-            count: bookings.filter(b => getStatus(b) === 'Chờ Check-in').length
-        },
-        {
-            id: 'ongoing',
-            label: 'Đang Lái Thử',
-            icon: 'fa-car',
-            count: bookings.filter(b => getStatus(b) === 'Đang lái thử').length
-        },
-        {
-            id: 'completed',
-            label: 'Đã Hoàn Tất',
-            icon: 'fa-check-circle',
-            count: bookings.filter(b => getStatus(b) === 'Đã hoàn tất').length
-        },
-        {
-            id: 'all',
-            label: 'Tất Cả',
-            icon: 'fa-list',
-            count: bookings.length
-        },
-    ];
-
-    // Extract unique consultants
-    const consultants = useMemo(() => {
-        const uniqueNames = Array.from(new Set(bookings.map(b => b.tenTuVan))).sort((a, b) => a.localeCompare(b));
-        return uniqueNames.map(name => ({
-            id: `consultant_${name}`,
-            label: name,
-            count: bookings.filter(b => normalizeName(b.tenTuVan) === normalizeName(name)).length
-        }));
-    }, [bookings]);
+    // Get selected consultant name for display
+    const selectedConsultantName = useMemo(() => {
+        const consultant = consultants.find(c => c.id === selectedFolder);
+        return consultant?.label || '';
+    }, [consultants, selectedFolder]);
 
     const handleFolderClick = (folderId: string) => {
         setSelectedFolder(folderId);
+        setSelectedStatus('all'); // Reset status filter when changing consultant
         setMobileView('list');
     };
 
@@ -185,45 +207,29 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
 
     if (bookings.length === 0) {
         return (
-            <div className="text-center py-16 text-text-secondary flex flex-col items-center justify-center h-full">
-                <i className="fas fa-calendar-times fa-3x mb-4"></i>
-                <p className="font-semibold">Không tìm thấy lịch lái thử nào.</p>
-                <p className="text-sm">Hãy thử thay đổi bộ lọc hoặc xóa ngày đã chọn.</p>
+            <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full bg-slate-50 rounded-2xl relative overflow-hidden">
+                <AnimatedBackground />
+                <div className="relative mb-6 z-10 w-24 h-24 bg-white border border-gray-100 shadow-sm rounded-full flex items-center justify-center">
+                    <div className="absolute inset-0 border border-gray-200/60 rounded-full transform scale-110"></div>
+                    <div className="absolute inset-0 border border-gray-100 rounded-full transform scale-125"></div>
+                    <i className="fas fa-calendar-times text-gray-300 text-4xl"></i>
+                </div>
+                <h3 className="text-xl font-bold text-gray-600 mb-2 tracking-tight z-10">Trống Không!</h3>
+                <p className="text-sm text-gray-400 max-w-sm text-center z-10">Không tìm thấy lịch lái thử nào. Hãy thử theo dõi các ngày khác.</p>
             </div>
         );
     }
 
     return (
-        <div className="flex h-full bg-surface-card rounded-xl shadow-md border border-border-primary overflow-hidden animate-fade-in relative">
-            {/* Column 1: Folders/Status Categories - Increased width to w-72 */}
-            <div className={`w-full md:w-72 flex-shrink-0 border-r border-border-primary bg-surface-ground flex flex-col absolute md:relative inset-0 z-20 md:z-auto transition-transform duration-300 ${mobileView === 'folders' ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <div className="flex h-full bg-slate-50 relative rounded-xl shadow-md border border-border-primary overflow-hidden animate-fade-in">
+            <AnimatedBackground />
+            {/* Column 1: Consultant Names (TVBH) */}
+            <div className={`w-full md:w-72 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col absolute md:relative inset-0 z-20 md:z-10 transition-transform duration-300 ${mobileView === 'folders' ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
                 <div className="p-4 border-b border-border-primary md:hidden flex items-center justify-between bg-white">
-                    <span className="font-bold text-lg">Trạng Thái</span>
+                    <span className="font-bold text-lg">Tư Vấn Bán Hàng</span>
                 </div>
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-                    {/* Status Folders */}
-                    {folders.map(folder => (
-                        <button
-                            key={folder.id}
-                            onClick={() => handleFolderClick(folder.id)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedFolder === folder.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <i className={`fas ${folder.icon} w-5 text-center`}></i>
-                                <span>{folder.label}</span>
-                            </div>
-                            {folder.count > 0 && <span className={`text-xs px-2 py-0.5 rounded-full ${selectedFolder === folder.id ? 'bg-accent-primary text-white' : 'bg-surface-hover text-text-secondary'}`}>{folder.count}</span>}
-                        </button>
-                    ))}
-
-                    {/* Consultant Separator */}
-                    <div className="mt-4 mb-2 px-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider flex items-center gap-2">
-                        <div className="h-px bg-border-secondary flex-1"></div>
-                        <span>Theo Tư Vấn</span>
-                        <div className="h-px bg-border-secondary flex-1"></div>
-                    </div>
-
-                    {/* Consultant Folders */}
+                    {/* Consultant List */}
                     {consultants.map(consultant => (
                         <button
                             key={consultant.id}
@@ -232,7 +238,7 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                         >
                             <div className="flex items-center gap-3">
                                 <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${selectedFolder === consultant.id ? 'bg-accent-primary text-white' : 'bg-gray-200 text-gray-600'}`}>
-                                    {consultant.label.charAt(0)}
+                                    {(consultant.label || '?').charAt(0)}
                                 </div>
                                 <span className="truncate text-left">{consultant.label}</span>
                             </div>
@@ -242,37 +248,70 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                 </nav>
             </div>
 
-            {/* Column 2: Booking List - Adjusted width to w-80 */}
-            <div className={`w-full md:w-80 flex-shrink-0 border-r border-border-primary flex flex-col bg-white absolute md:relative inset-0 z-20 md:z-auto transition-transform duration-300 ${mobileView === 'list' ? 'translate-x-0' : (mobileView === 'detail' ? '-translate-x-full md:translate-x-0' : 'translate-x-full md:translate-x-0')}`}>
+            {/* Column 2: Booking List - Adjusted width to w-96 */}
+            <div className={`w-full md:w-96 flex-shrink-0 border-r border-border-primary flex flex-col bg-white/90 absolute md:relative inset-0 z-20 md:z-10 transition-transform duration-300 ${mobileView === 'list' ? 'translate-x-0' : (mobileView === 'detail' ? '-translate-x-full md:translate-x-0' : 'translate-x-full md:translate-x-0')}`}>
                 {/* Mobile Header */}
                 <div className="p-3 border-b border-border-primary md:hidden flex items-center gap-3 bg-white shadow-sm">
                     <button onClick={() => setMobileView('folders')} className="w-8 h-8 rounded-full bg-surface-ground flex items-center justify-center text-text-secondary hover:bg-surface-hover">
                         <i className="fas fa-arrow-left"></i>
                     </button>
                     <span className="font-bold text-text-primary">
-                        {folders.find(f => f.id === selectedFolder)?.label || consultants.find(c => c.id === selectedFolder)?.label}
+                        {selectedConsultantName}
                     </span>
+                </div>
+
+                {/* Status Filter Tabs */}
+                <div className="flex items-center gap-1 p-2 bg-surface-ground border-b border-border-primary">
+                    <button
+                        onClick={() => setSelectedStatus('all')}
+                        className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${selectedStatus === 'all' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:bg-white/50'}`}
+                    >
+                        Tất cả
+                    </button>
+                    <button
+                        onClick={() => setSelectedStatus('pending')}
+                        className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${selectedStatus === 'pending' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:bg-white/50'}`}
+                    >
+                        Chờ Check-in
+                    </button>
+                    <button
+                        onClick={() => setSelectedStatus('ongoing')}
+                        className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${selectedStatus === 'ongoing' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:bg-white/50'}`}
+                    >
+                        Đang lái
+                    </button>
+                    <button
+                        onClick={() => setSelectedStatus('completed')}
+                        className={`flex-1 px-3 py-1.5 rounded text-xs font-medium transition-colors ${selectedStatus === 'completed' ? 'bg-white text-accent-primary shadow-sm' : 'text-text-secondary hover:bg-white/50'}`}
+                    >
+                        Hoàn tất
+                    </button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
                     {filteredBookings.length === 0 ? (
-                        <div className="p-8 text-center text-text-placeholder text-sm">Không tìm thấy lịch lái thử nào.</div>
+                        <div className="flex flex-col items-center justify-center py-12 px-4 h-full">
+                            <div className="relative mb-4 w-16 h-16 bg-white border border-gray-100 shadow-sm rounded-2xl flex items-center justify-center">
+                                <i className="fas fa-filter text-gray-300 text-2xl"></i>
+                            </div>
+                            <p className="text-sm text-slate-500">Không có lịch thỏa mãn.</p>
+                        </div>
                     ) : (
                         <div className="divide-y divide-border-secondary">
-                            {filteredBookings.map(booking => {
+                            {filteredBookings.map((booking, index) => {
                                 const status = getStatus(booking);
                                 const isMyRequest = normalizeName(currentUser) === normalizeName(booking.tenTuVan);
 
                                 return (
                                     <div
-                                        key={booking.soPhieu}
+                                        key={`${booking.soPhieu}-${index}`}
                                         onClick={() => handleBookingClick(booking.soPhieu)}
                                         className={`px-3 py-3 cursor-pointer hover:bg-surface-hover transition-colors ${selectedBookingId === booking.soPhieu ? 'bg-accent-primary/5 border-l-4 border-accent-primary' : 'border-l-4 border-transparent'}`}
                                     >
                                         <div className="flex items-center gap-3">
                                             {/* Avatar */}
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${isMyRequest ? 'bg-accent-primary text-white' : 'bg-gray-200 text-gray-600'}`}>
-                                                {booking.tenKhachHang.charAt(0)}
+                                                {(booking.tenKhachHang || '?').charAt(0)}
                                             </div>
 
                                             {/* Info */}
@@ -280,7 +319,7 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                                                 <div className="font-semibold text-sm text-text-primary truncate">{booking.tenKhachHang}</div>
                                                 <div className="text-xs text-text-secondary truncate">{booking.loaiXe}</div>
                                                 <div className="text-xs text-accent-primary font-medium mt-0.5">
-                                                    {moment(booking.ngayThuXe).format('DD/MM')} • {formatTime(booking.thoiGianKhoiHanh)}
+                                                    {moment(booking.ngayThuXe, ["YYYY-MM-DD", "DD/MM/YYYY"]).format('DD/MM')} • {formatTime(booking.thoiGianKhoiHanh)}
                                                 </div>
                                             </div>
 
@@ -300,7 +339,7 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
             </div>
 
             {/* Column 3: Detail Panel */}
-            <div className={`w-full flex-1 flex flex-col bg-surface-ground min-w-0 absolute md:relative inset-0 z-30 md:z-auto transition-transform duration-300 ${mobileView === 'detail' ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
+            <div className={`w-full flex-1 flex flex-col bg-surface-ground/90 min-w-0 absolute md:relative inset-0 z-30 md:z-10 transition-transform duration-300 ${mobileView === 'detail' ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
                 {selectedBooking ? (
                     <>
                         {/* Header */}
@@ -406,7 +445,7 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                                         </div>
                                         <div className="min-w-0">
                                             <div className="text-[10px] text-text-secondary uppercase font-bold">Lịch Trình</div>
-                                            <div className="text-sm font-medium text-text-primary truncate">{moment(selectedBooking.ngayThuXe).format('DD/MM/YYYY')}</div>
+                                            <div className="text-sm font-medium text-text-primary truncate">{moment(selectedBooking.ngayThuXe, ["YYYY-MM-DD", "DD/MM/YYYY"]).format('DD/MM/YYYY')}</div>
                                             <div className="text-[10px] text-accent-primary font-bold">
                                                 {formatTime(selectedBooking.thoiGianKhoiHanh)} - {formatTime(selectedBooking.thoiGianTroVe)}
                                             </div>
@@ -453,10 +492,13 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                                 // Check-in images (imagesBefore)
                                 if (selectedBooking.imagesBefore) {
                                     try {
-                                        const checkInUrls = JSON.parse(selectedBooking.imagesBefore);
+                                        const checkInUrls = typeof selectedBooking.imagesBefore === 'string' ? JSON.parse(selectedBooking.imagesBefore) : selectedBooking.imagesBefore;
                                         if (Array.isArray(checkInUrls)) {
-                                            checkInUrls.forEach((url: string, idx: number) => {
-                                                images.push({ src: url, originalUrl: url, label: `Trước khi đi ${idx + 1}` });
+                                            checkInUrls.forEach((url: string | any, idx: number) => {
+                                                const urlStr = typeof url === 'string' ? url : url?.url; // handle if object
+                                                if (urlStr) {
+                                                    images.push({ src: urlStr, originalUrl: urlStr, label: `Trước khi đi ${idx + 1}` });
+                                                }
                                             });
                                         }
                                     } catch (e) { console.error('Failed to parse imagesBefore', e); }
@@ -465,10 +507,13 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                                 // Check-out images (imagesAfter)
                                 if (selectedBooking.imagesAfter) {
                                     try {
-                                        const checkOutUrls = JSON.parse(selectedBooking.imagesAfter);
+                                        const checkOutUrls = typeof selectedBooking.imagesAfter === 'string' ? JSON.parse(selectedBooking.imagesAfter) : selectedBooking.imagesAfter;
                                         if (Array.isArray(checkOutUrls)) {
-                                            checkOutUrls.forEach((url: string, idx: number) => {
-                                                images.push({ src: url, originalUrl: url, label: `Sau khi về ${idx + 1}` });
+                                            checkOutUrls.forEach((url: string | any, idx: number) => {
+                                                const urlStr = typeof url === 'string' ? url : url?.url;
+                                                if (urlStr) {
+                                                    images.push({ src: urlStr, originalUrl: urlStr, label: `Sau khi về ${idx + 1}` });
+                                                }
                                             });
                                         }
                                     } catch (e) { console.error('Failed to parse imagesAfter', e); }
@@ -500,11 +545,14 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                         </div>
                     </>
                 ) : (
-                    <div className="flex items-center justify-center h-full text-text-placeholder">
-                        <div className="text-center">
-                            <i className="fas fa-hand-pointer fa-3x mb-4"></i>
-                            <p>Chọn một lịch lái thử để xem chi tiết</p>
+                    <div className="flex flex-col items-center justify-center h-full p-6 text-slate-400 bg-slate-50/50">
+                        <div className="relative mb-6 w-20 h-20 bg-white border border-gray-100 shadow-sm rounded-full flex items-center justify-center">
+                            <div className="absolute inset-0 border border-gray-200/60 rounded-full transform scale-110"></div>
+                            <div className="absolute inset-0 border border-gray-100 rounded-full transform scale-125"></div>
+                            <i className="fas fa-hand-pointer text-gray-300 text-3xl"></i>
                         </div>
+                        <h4 className="text-lg font-bold text-slate-500 mb-1">Chọn Lịch Lái Thử</h4>
+                        <p className="text-xs text-center">Bấm vào một mục bên danh sách để xem chi tiết thông tin và thực hiện check-in.</p>
                     </div>
                 )}
             </div>

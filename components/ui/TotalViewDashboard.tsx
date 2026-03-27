@@ -37,9 +37,14 @@ const StatListCard: React.FC<{ title: string; icon: string; children: React.Reac
                         {children}
                     </div>
                 ) : (
-                    <div className="text-center text-text-secondary py-8 flex flex-col items-center justify-center h-full">
-                        <i className="fas fa-box-open fa-2x mb-2"></i>
-                        <p>{emptyText}</p>
+                    <div className="flex flex-col items-center justify-center h-full">
+                        <div className="relative mb-3 group">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-slate-300/30 rounded-full blur-xl opacity-60 group-hover:scale-125 transition-all duration-700"></div>
+                            <div className="relative w-12 h-12 bg-white/80 backdrop-blur-md rounded-full shadow-sm flex items-center justify-center border border-white/60">
+                                <i className={`fas ${icon} text-slate-400 text-lg`}></i>
+                            </div>
+                        </div>
+                        <p className="text-sm text-slate-500 text-center px-4 font-medium">{emptyText}</p>
                     </div>
                 )}
             </div>

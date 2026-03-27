@@ -12,9 +12,11 @@ interface OrderGridViewProps {
     onRequestVC: (order: Order) => void;
     onConfirmVC: (order: Order) => void;
     processingOrder: string | null;
+    showOrderInAdmin?: (order: Order, targetTab: any) => void;
+    showAdminTab?: (targetTab: any) => void;
 }
 
-const OrderGridView: React.FC<OrderGridViewProps> = (props) => {
+const OrderGridView: React.FC<OrderGridViewProps> = React.memo((props) => {
     if (props.orders.length === 0) {
         return (
             <div className="text-center py-16 text-text-secondary">
@@ -28,14 +30,18 @@ const OrderGridView: React.FC<OrderGridViewProps> = (props) => {
     return (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 p-1">
             {props.orders.map((order) => (
-                <OrderCard
+                <div
                     key={order['Số đơn hàng']}
-                    order={order}
-                    {...props}
-                />
+                    className="animate-entry"
+                >
+                    <OrderCard
+                        order={order}
+                        {...props}
+                    />
+                </div>
             ))}
         </div>
     );
-};
+});
 
 export default OrderGridView;

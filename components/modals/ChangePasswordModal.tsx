@@ -22,8 +22,8 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
             showToast('Thiếu Thông Tin', 'Vui lòng điền đầy đủ các trường.', 'warning');
             return;
         }
-        if (newPassword.length < 6) {
-            showToast('Mật Khẩu Yếu', 'Mật khẩu mới phải có ít nhất 6 ký tự.', 'warning');
+        if (newPassword.length < 8) {
+            showToast('Mật Khẩu Yếu', 'Mật khẩu mới phải có ít nhất 8 ký tự.', 'warning');
             return;
         }
         if (newPassword !== confirmPassword) {
@@ -61,7 +61,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
     const inputClass = "peer w-full pl-12 pr-4 py-3 bg-surface-ground text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary transition-all placeholder:text-text-placeholder focus:shadow-glow-accent";
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={handleClose}>
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={handleClose}>
             <div className="bg-surface-card w-full md:max-w-md h-[100dvh] md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <form onSubmit={handleSubmit}>
                     <header className="relative flex flex-col items-center justify-center p-6 text-center bg-surface-card border-b border-border-primary">
@@ -92,7 +92,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
                                 type="password"
                                 value={newPassword}
                                 onChange={e => setNewPassword(e.target.value)}
-                                placeholder="Mật khẩu mới (ít nhất 6 ký tự)"
+                                placeholder="Mật khẩu mới (ít nhất 8 ký tự)"
                                 required
                                 className={inputClass}
                             />

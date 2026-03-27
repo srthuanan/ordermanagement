@@ -1,12 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { Document, Page } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import { getDriveFileId, toDownloadableUrl } from '../../utils/imageUtils';
 
 // Configure worker using local file resolved by Vite
-import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+import '../../utils/pdfWorkerSetup'; // Centralized PDF worker configuration
 
 interface PdfThumbnailProps {
     url: string;

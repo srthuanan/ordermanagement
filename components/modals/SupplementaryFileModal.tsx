@@ -2,90 +2,319 @@ import React, { useState } from 'react';
 import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
 import Button from '../ui/Button';
-import { useModalBackground } from '../../utils/styleUtils';
+
+import { extractDocumentWithGemini, compareDocumentWithOrder } from '../../utils/aiGeminiPdfScanner';
 
 interface SupplementaryFileModalProps {
     order: Order;
     onClose: () => void;
-    onConfirm: (order: Order, contractFile: File | null, proposalFile: File | null) => void;
+    onConfirm: (order: Order, contractFile: File | null, proposalFile: File | null, aiNote?: string) => void;
+    showToast?: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
-const InfoRow: React.FC<{ label: string; value: string; icon: string; isMono?: boolean }> = ({ label, value, icon, isMono = false }) => (
-    <div className="flex items-center gap-3 text-sm">
-        <i className={`fas ${icon} fa-fw w-4 text-center text-accent-secondary`}></i>
-        <span className="text-text-secondary">{label}:</span>
-        <span className={`font-semibold text-text-primary ${isMono ? 'font-mono' : ''}`}>{value}</span>
-    </div>
-);
 
-const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, onClose, onConfirm }) => {
+
+const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, onClose, onConfirm, showToast }) => {
     const [contractFile, setContractFile] = useState<File | null>(null);
     const [proposalFile, setProposalFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const bgStyle = useModalBackground();
 
-    const handleSubmit = () => {
+
+    // AI Scanner state — track mismatches per file label
+    const [isScanning, setIsScanning] = useState(false);
+    const [scanResult, setScanResult] = useState<{ isValid: boolean; mismatches: string[] } | null>(null);
+
+    const [processingStage, setProcessingStage] = useState(0);
+
+    const scanSingleFile = async (file: File, fileLabel: string) => {
+        setIsScanning(true);
+        try {
+            const data = await extractDocumentWithGemini(file);
+            const { mismatches } = compareDocumentWithOrder(data, order);
+            const prefixedMismatches = mismatches.map(m => `[${fileLabel}] ${m}`);
+
+            setScanResult(prev => {
+                const prevMismatches = prev ? (prev.mismatches || []) : [];
+                const filteredOther = prevMismatches.filter(m => !m.startsWith(`[${fileLabel}]`));
+                const combined = [...filteredOther, ...prefixedMismatches];
+                return {
+                    isValid: combined.length === 0,
+                    mismatches: [...new Set(combined)],
+                };
+            });
+        } catch (e: any) {
+            if (showToast) showToast('Lỗi tự động quét', e.message || 'Quét thất bại', 'error');
+        } finally {
+            setIsScanning(false);
+        }
+    };
+
+    const handleContractFileSelect = (file: File | null) => {
+        setContractFile(file);
+        if (file) {
+            scanSingleFile(file, 'HĐMB');
+        } else {
+            setScanResult(prev => prev ? {
+                ...prev,
+                mismatches: prev.mismatches.filter(m => !m.startsWith('[HĐMB]'))
+            } : null);
+        }
+    };
+
+    const handleProposalFileSelect = (file: File | null) => {
+        setProposalFile(file);
+        if (file) {
+            scanSingleFile(file, 'ĐNXHĐ');
+        } else {
+            setScanResult(prev => prev ? {
+                ...prev,
+                mismatches: prev.mismatches.filter(m => !m.startsWith('[ĐNXHĐ]'))
+            } : null);
+        }
+    };
+
+    const handleSubmit = async () => {
         if (!contractFile && !proposalFile) {
-            alert("Vui lòng chọn ít nhất một file để bổ sung.");
+            if (showToast) showToast('Thiếu tệp', 'Vui lòng chọn ít nhất một file để bổ sung.', 'warning');
             return;
         }
         setIsSubmitting(true);
-        onConfirm(order, contractFile, proposalFile);
+        setProcessingStage(1);
+
+        try {
+            let aiNote = '';
+            if (scanResult) {
+                if (scanResult.mismatches && scanResult.mismatches.length > 0) {
+                    aiNote = '⚠️ ' + scanResult.mismatches.join(' | ');
+                } else {
+                    aiNote = '✅ Khớp 100% chứng từ, không phát hiện sai lệch.';
+                }
+            }
+
+            await new Promise(r => setTimeout(r, 600)); // fake delay for UX
+            setProcessingStage(2);
+            await new Promise(r => setTimeout(r, 600));
+
+            setProcessingStage(3);
+            await onConfirm(order, contractFile, proposalFile, aiNote || undefined);
+
+            setProcessingStage(4);
+            await new Promise(r => setTimeout(r, 1500));
+            onClose();
+        } catch (error) {
+            setIsSubmitting(false);
+            setProcessingStage(0);
+            if (showToast) showToast('Lỗi', 'Có lỗi xảy ra khi nộp hồ sơ bổ sung', 'error');
+        }
     };
 
     const isFormValid = contractFile || proposalFile;
+    const hasErrors = !!(scanResult && !scanResult.isValid && (scanResult.mismatches || []).length > 0);
+
+    const ProcessingStep = ({ label, status }: { label: string, status: 'pending' | 'active' | 'completed' }) => {
+        let icon = "fa-circle text-border-secondary";
+        let textClass = "text-text-secondary";
+        let bgClass = "bg-surface-ground";
+
+        if (status === 'active') {
+            icon = "fa-spinner fa-spin text-accent-primary";
+            textClass = "text-accent-primary font-semibold";
+            bgClass = "bg-accent-primary/5 border-accent-primary/20";
+        } else if (status === 'completed') {
+            icon = "fa-check-circle text-success";
+            textClass = "text-text-primary font-medium";
+            bgClass = "bg-success/5 border-success/20";
+        }
+
+        return (
+            <div className={`flex items-center p-3 rounded-lg border ${status === 'pending' ? 'border-transparent' : 'border-border-secondary'} ${bgClass} transition-all duration-300`}>
+                <div className="w-8 flex justify-center mr-3">
+                    <i className={`fas ${icon} text-lg transition-all duration-300`}></i>
+                </div>
+                <span className={`${textClass} transition-all duration-300`}>{label}</span>
+            </div>
+        );
+    };
+
+    if (isSubmitting) {
+        return (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-slate-800/40">
+                    <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-500/15 to-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }} />
+                    <div className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-gradient-to-tl from-purple-500/15 to-pink-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '12s', animationDelay: '4s' }} />
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/20" />
+                </div>
+
+                <div className="relative z-10 bg-white/95 backdrop-blur-3xl w-full max-w-md rounded-2xl shadow-2xl p-6 flex flex-col items-center animate-fade-in-scale-up border border-white/20">
+                    <div className="w-16 h-16 mb-4 relative">
+                        <div className="absolute inset-0 rounded-full border-4 border-border-primary"></div>
+                        <div className={`absolute inset-0 rounded-full border-4 ${processingStage === 4 ? 'border-success' : 'border-accent-primary border-t-transparent animate-spin'}`}></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <i className={`fas ${processingStage === 4 ? 'fa-check text-success' : 'fa-paper-plane text-accent-primary'} text-xl`}></i>
+                        </div>
+                    </div>
+                    <h3 className="text-lg font-bold text-text-primary mb-1">{processingStage === 4 ? 'Hoàn tất!' : 'Đang xử lý tải lên'}</h3>
+                    <p className="text-sm text-text-secondary mb-6">{processingStage === 4 ? 'Hồ sơ đã được gửi hệ thống thành công.' : 'Vui lòng không tắt trình duyệt...'}</p>
+
+                    <div className="w-full space-y-3">
+                        <ProcessingStep label="Phân tích Hợp đồng mua bán" status={processingStage > 1 ? 'completed' : processingStage === 1 ? 'active' : 'pending'} />
+                        <ProcessingStep label="Phân tích Đề nghị xuất hóa đơn" status={processingStage > 2 ? 'completed' : processingStage === 2 ? 'active' : 'pending'} />
+                        <ProcessingStep label="Đang đồng bộ dữ liệu..." status={processingStage > 3 ? 'completed' : processingStage === 3 ? 'active' : 'pending'} />
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
-            <div className="bg-surface-card w-full md:max-w-2xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
-                <header className="relative flex flex-col items-center justify-center p-6 text-center bg-surface-card border-b border-border-primary">
-                    <div className="animate-fade-in-down">
-                        <h2 className="text-xl font-bold text-gradient">Bổ Sung Chứng Từ</h2>
-                        <p className="text-sm text-text-secondary mt-1">Tải lên các tệp mới để cập nhật hoặc thay thế.</p>
-                    </div>
-                    <button onClick={onClose} className="absolute top-4 right-4 w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-text-secondary hover:bg-surface-hover">
-                        <i className="fas fa-times"></i>
-                    </button>
-                </header>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in overflow-hidden" onClick={onClose}>
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-slate-800/40">
+                <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-500/15 to-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }} />
+                <div className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-gradient-to-tl from-purple-500/15 to-pink-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '12s', animationDelay: '4s' }} />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/20" />
+            </div>
 
-                <main className="flex-grow min-h-0 flex flex-col overflow-hidden">
-                    <div className="flex-grow overflow-y-auto p-4 md:p-6 custom-scrollbar">
-                        {/* Order Summary */}
-                        <div className="p-4 bg-surface-ground rounded-lg border border-border-primary space-y-2">
-                            <h3 className="font-semibold text-text-primary text-base mb-2">Tóm tắt yêu cầu</h3>
-                            <InfoRow label="Số đơn hàng" value={order["Số đơn hàng"]} icon="fa-barcode" isMono />
-                            <InfoRow label="Khách hàng" value={order["Tên khách hàng"]} icon="fa-user" />
-                        </div>
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-2 md:px-4 py-8 flex flex-col justify-center min-h-[100dvh] pointer-events-none">
+                <div className="flex flex-col w-full h-[90vh] animate-fade-in-scale-up pointer-events-auto border border-white/20 rounded-2xl overflow-hidden shadow-2xl bg-white/95 backdrop-blur-3xl relative" onClick={e => e.stopPropagation()}>
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none"></div>
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:128px_128px] pointer-events-none"></div>
+                    
+                    <header className="flex-shrink-0">
+                        <div className="bg-gradient-to-r from-blue-50 via-white to-blue-50 p-4 md:p-5 border-b border-blue-200/30 shadow-sm relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-blue-400/10 rounded-full blur-2xl pointer-events-none group-hover:bg-blue-400/20 transition-all duration-700"></div>
 
-                        {/* Alert/Instruction */}
-                        <div className="flex items-start gap-3 p-3 text-sm bg-warning-bg rounded-lg border border-warning/30 text-yellow-800 my-4">
-                            <i className="fas fa-info-circle mt-0.5"></i>
-                            <p>
-                                <strong>Lưu ý:</strong> Chỉ cần tải lên tệp bạn muốn thay thế. Các tệp không được tải lên sẽ được giữ nguyên.
-                            </p>
-                        </div>
-
-                        {/* File Uploads */}
-                        <div>
-                            <h3 className="font-semibold text-text-primary text-base mb-3">Tải lên tệp mới</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <SimpleFileUpload id="supp_hop_dong_file_input" label="Hợp đồng mua bán (Mới)" onFileSelect={setContractFile} accept=".pdf" />
-                                <SimpleFileUpload id="supp_denghi_xhd_file_input" label="Đề nghị XHD (Mới)" onFileSelect={setProposalFile} accept=".pdf" />
+                            <div className="flex items-center justify-between relative z-10">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-1.5 h-10 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full shadow-sm"></div>
+                                    <div className="flex flex-col">
+                                        <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+                                            BỔ SUNG <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-700">CHỨNG TỪ</span>
+                                        </h1>
+                                        <p className="text-[10px] md:text-xs text-text-secondary font-bold uppercase tracking-wider mt-0.5">Tải lên các tệp mới để cập nhật hoặc thay thế</p>
+                                    </div>
+                                </div>
+                                <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center bg-white/50 hover:bg-white text-gray-400 hover:text-gray-900 transition-all hover:rotate-90 hover:scale-110 shadow-sm border border-gray-100">
+                                    <i className="fas fa-times text-xl"></i>
+                                </button>
                             </div>
                         </div>
-                    </div>
-                </main>
-                <footer className="flex-shrink-0 p-4 border-t border-border-primary flex justify-end items-center gap-3 bg-surface-card relative z-10">
-                    <Button onClick={onClose} disabled={isSubmitting} variant="secondary" size="sm" leftIcon={<i className="fas fa-times"></i>}>
-                        Hủy
-                    </Button>
-                    <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid} variant="primary" size="sm" isLoading={isSubmitting} leftIcon={<i className="fas fa-save"></i>}>
-                        Cập nhật & Gửi
-                    </Button>
-                </footer>
+                    </header>
+
+                    <main className="flex-grow min-h-0 flex flex-col overflow-hidden relative z-10">
+                        <div className={`flex-grow flex flex-col ${hasErrors ? 'p-3 gap-3' : 'p-4 md:p-5 gap-4'} overflow-hidden`}>
+                            {/* Summary Box */}
+                            <div className={`bg-gradient-to-br from-blue-50/80 via-white to-blue-50/80 flex-shrink-0 rounded-xl border border-blue-200/40 relative overflow-hidden group shadow-sm transition-all duration-300 ${hasErrors ? 'p-2 md:p-2.5' : 'p-3 md:p-4'}`}>
+                                <div className="absolute top-0 right-0 p-2 md:p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <i className="fas fa-folder-open text-4xl md:text-5xl text-blue-600 transform rotate-12"></i>
+                                </div>
+                                <div className={`grid grid-cols-1 md:grid-cols-4 relative z-10 ${hasErrors ? 'gap-1.5' : 'gap-3 md:gap-4'}`}>
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-text-secondary font-semibold mb-0.5">Số đơn hàng</span>
+                                        <div className={`flex items-center gap-1.5 text-blue-600 ${hasErrors ? 'text-xs' : ''}`}>
+                                            <i className="fas fa-barcode opacity-70"></i>
+                                            <span className="font-bold font-mono tracking-tight">{order["Số đơn hàng"]}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col md:border-l md:border-accent-primary/20 md:pl-4">
+                                        <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-text-secondary font-semibold mb-0.5">Khách hàng</span>
+                                        <div className={`flex items-center gap-1.5 text-text-primary ${hasErrors ? 'text-xs' : ''}`}>
+                                            <i className="fas fa-user text-blue-600 opacity-70"></i>
+                                            <span className="font-bold truncate" title={order["Tên khách hàng"]}>{order["Tên khách hàng"]}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col md:border-l md:border-accent-primary/20 md:pl-4">
+                                        <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-text-secondary font-semibold mb-0.5">Số VIN</span>
+                                        <div className={`flex items-center gap-1.5 text-text-primary ${hasErrors ? 'text-xs' : ''}`}>
+                                            <i className="fas fa-car text-blue-600 opacity-70"></i>
+                                            <span className="font-bold font-mono tracking-tight">{order.VIN || '---'}</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col md:border-l md:border-accent-primary/20 md:pl-4">
+                                        <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-text-secondary font-semibold mb-0.5">Ngoại thất / Máy</span>
+                                        <div className={`flex items-center gap-1.5 text-text-primary ${hasErrors ? 'text-xs' : ''}`}>
+                                            <i className="fas fa-palette text-blue-600 opacity-70"></i>
+                                            <span className="font-bold tracking-tight">{order["Ngoại thất"] || '---'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Alert/Instruction */}
+                            {!hasErrors && (
+                                <div className="flex flex-shrink-0 items-start gap-3 p-4 text-sm bg-warning-bg/80 rounded-lg border border-warning/40 text-amber-900 shadow-sm backdrop-blur-md">
+                                    <i className="fas fa-info-circle mt-0.5 text-amber-600 text-lg"></i>
+                                    <p className="leading-relaxed">
+                                        <strong>Lưu ý:</strong> Chỉ cần tải lên tệp bạn muốn bổ sung hoặc thay thế. Các chứng từ cũ không được chọn tải lên sẽ vẫn giữ nguyên an toàn trên hệ thống.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* File Uploads */}
+                            <div className={`bg-white/60 flex flex-col ${hasErrors ? 'p-2' : 'p-4 md:p-5'} rounded-xl border border-gray-200/60 shadow-sm transition-all duration-300`}>
+                                <div className={`flex items-center justify-between ${hasErrors ? 'mb-1 items-end' : 'mb-4'}`}>
+                                    <h3 className={`font-bold text-gray-800 flex items-center gap-2 ${hasErrors ? 'text-xs' : 'text-base'}`}>
+                                        <i className="fas fa-cloud-upload-alt text-blue-500"></i> {hasErrors ? 'Tải tệp thay thế' : 'Khu vực tải tệp mới'}
+                                    </h3>
+                                    {isScanning && (
+                                        <div className="flex items-center text-accent-primary text-xs font-semibold animate-pulse bg-purple-50/80 px-2 py-0.5 rounded-full border border-purple-100">
+                                            <i className="fas fa-microchip fa-spin text-purple-500 mr-1.5"></i>
+                                            Đang đối chiếu...
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className={`grid grid-cols-1 md:grid-cols-2 ${hasErrors ? 'gap-2' : 'gap-4 md:gap-6'}`}>
+                                    <SimpleFileUpload id="supp_hop_dong_file_input" label="Hợp đồng mua bán (Mới)" onFileSelect={handleContractFileSelect} accept=".pdf" disableCompression={true} showPreview={false} compact={hasErrors} />
+                                    <SimpleFileUpload id="supp_denghi_xhd_file_input" label="Đề nghị XHD (Mới)" onFileSelect={handleProposalFileSelect} accept=".pdf" disableCompression={true} showPreview={false} compact={hasErrors} />
+                                </div>
+                            </div>
+
+                            {/* AI Scan Result */}
+                            {!isScanning && scanResult && (
+                                <div className={`flex flex-col rounded-xl border shadow-sm animate-fade-in-up min-h-0 ${scanResult.isValid ? 'p-3 flex-shrink-0 bg-green-50/90 border-green-200 text-green-800' : 'flex-grow p-3 bg-red-50/90 border-red-200 text-red-800 overflow-hidden'}`}>
+                                    {scanResult.isValid ? (
+                                        <p className="font-bold flex items-center gap-2 text-sm uppercase tracking-wider">
+                                            <i className="fas fa-check-circle text-green-500 text-xl"></i>
+                                            Hệ thống AI xác nhận: Hồ sơ hợp lệ!
+                                        </p>
+                                    ) : (
+                                        hasErrors && scanResult.mismatches.length > 0 && (
+                                            <div className="flex-grow flex flex-col bg-white/60 p-2 md:p-3 rounded-lg border border-red-100/50 overflow-hidden">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 content-start">
+                                                {scanResult.mismatches.map((m, idx) => {
+                                                    const isInfo = m.startsWith('Ngân hàng') || m.startsWith('Số tiền');
+                                                    const isWarning = m.startsWith('⚠️') || m.includes('Cảnh báo');
+                                                    return (
+                                                        <div key={idx} className="flex items-start gap-1.5 leading-tight">
+                                                            <i className={`fas mt-0.5 text-[0.65rem] shadow-sm rounded-full bg-white flex-shrink-0 ${isInfo ? 'fa-info-circle text-blue-500' : isWarning ? 'fa-exclamation-triangle text-amber-500' : 'fa-times-circle text-red-500'}`}></i>
+                                                            <span className={`text-[0.8rem] ${isInfo ? 'text-blue-800 font-medium' : isWarning ? 'text-amber-800 font-medium' : 'font-medium'}`}>{m.replace(/^(🚨|⚠️|ℹ️)\s*/, '')}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                                </div>
+                                            </div>
+                                        )
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </main>
+
+                    <footer className="flex-shrink-0 p-4 md:p-5 border-t border-blue-200/30 bg-gradient-to-r from-blue-50/95 via-white/95 to-blue-50/95 backdrop-blur-xl flex justify-end items-center gap-3 relative z-10 shadow-inner">
+                        <Button onClick={onClose} disabled={isSubmitting} variant="secondary" size="md">
+                            Hủy Bỏ
+                        </Button>
+                        <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid || isScanning} variant="success" size="md" isLoading={isSubmitting} leftIcon={!isSubmitting ? <i className="fas fa-cloud-upload-alt"></i> : undefined}>
+                            Xác Nhận Bổ Sung
+                        </Button>
+                    </footer>
+                </div>
             </div>
         </div>
     );
 };
 
 export default SupplementaryFileModal;
+

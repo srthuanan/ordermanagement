@@ -49,10 +49,10 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ title, icon, items, color }) 
             </h3>
             <div className="flex-grow min-h-0 overflow-y-auto pr-2 space-y-1 hidden-scrollbar">
                 {items.length > 0 ? items.map((item, index) => (
-                    <div 
-                        key={item.key} 
+                    <div
+                        key={item.key}
                         className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-2 p-1 rounded-lg transition-all duration-200 hover:bg-surface-hover animate-fade-in-up"
-                        style={{animationDelay: `${index * 50}ms`}}
+                        style={{ animationDelay: `${index * 50}ms` }}
                     >
                         {/* Rank */}
                         <div className="flex items-center justify-center h-full w-full text-center">
@@ -65,9 +65,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ title, icon, items, color }) 
                                 {item.key}
                             </p>
                             <div className="bg-surface-ground rounded-full h-2 mt-1.5 overflow-hidden shadow-inner-sm">
-                                <div 
-                                    className="h-full rounded-full transition-all duration-500 ease-out" 
-                                    style={{ 
+                                <div
+                                    className="h-full rounded-full transition-all duration-500 ease-out"
+                                    style={{
                                         width: `${maxCount > 0 ? (item.count / maxCount) * 100 : 0}%`,
                                         backgroundImage: `linear-gradient(to right, ${selectedColor.progressStart}, ${selectedColor.progressEnd})`
                                     }}
@@ -81,9 +81,14 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ title, icon, items, color }) 
                         </div>
                     </div>
                 )) : (
-                    <div className="text-center text-text-secondary py-8 flex flex-col items-center justify-center h-full">
-                        <i className="fas fa-box-open fa-2x mb-2"></i>
-                        <p>Không có dữ liệu</p>
+                    <div className="flex flex-col items-center justify-center py-6 h-full">
+                        <div className="relative mb-3 group">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-amber-200/40 rounded-full blur-xl opacity-60 group-hover:scale-125 transition-all duration-700"></div>
+                            <div className="relative w-10 h-10 bg-white/80 backdrop-blur-md rounded-full shadow-sm flex items-center justify-center border border-white/60">
+                                <i className={`fas ${icon} text-slate-300 text-base`}></i>
+                            </div>
+                        </div>
+                        <p className="text-xs text-slate-400 font-medium">Chưa có dữ liệu xếp hạng</p>
                     </div>
                 )}
             </div>

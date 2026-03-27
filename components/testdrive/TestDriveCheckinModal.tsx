@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { TestDriveBooking } from '../../types';
 import { normalizeName } from '../../services/authService';
 import { compressImage } from '../../services/ocrService';
@@ -171,16 +171,18 @@ const ImageGallery: React.FC<{
     </div>
 );
 
-const parseImageData = (jsonString: string | undefined): string[] => {
-    if (!jsonString) return [];
+const parseImageData = (data: any): string[] => {
+    if (!data) return [];
+    if (Array.isArray(data)) {
+        return data.filter((item): item is string => typeof item === 'string');
+    }
     try {
-        const parsed = JSON.parse(jsonString);
+        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
         if (Array.isArray(parsed)) {
-            // This now correctly handles an array of strings, which is the new format from the server.
             return parsed.filter((item): item is string => typeof item === 'string');
         }
     } catch (e) {
-        console.error("Failed to parse image data:", e, "Data was:", jsonString);
+        console.error("Failed to parse image data:", e, "Data was:", data);
     }
     return [];
 };
@@ -259,7 +261,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex flex-col justify-end md:justify-center md:items-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex flex-col justify-end md:justify-center md:items-center p-0 md:p-4" onClick={onClose}>
             <div
                 className="bg-surface-card w-full md:max-w-5xl h-[85vh] md:h-auto md:max-h-[90vh] rounded-t-2xl md:rounded-2xl shadow-xl animate-fade-in-up flex flex-col"
                 onClick={e => e.stopPropagation()}

@@ -7,6 +7,7 @@ declare global {
   const axios: any;
   const Chart: any;
   const Choices: any;
+  const __APP_VERSION__: string;
 
   // Lottie player interface extending standard HTMLElement
   interface LottiePlayer extends HTMLElement {

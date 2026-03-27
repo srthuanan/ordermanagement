@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { useModalBackground } from '../../utils/styleUtils';
 
 interface Variant {
@@ -59,7 +59,7 @@ const PendingStatsModal: React.FC<PendingStatsModalProps> = ({ isOpen, onClose, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div
                 className="bg-surface-card w-full md:max-w-4xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
                 onClick={(e) => e.stopPropagation()}
@@ -107,9 +107,15 @@ const PendingStatsModal: React.FC<PendingStatsModalProps> = ({ isOpen, onClose, 
                             </div>
                         </div>
                     ) : (
-                        <div className="text-center text-text-secondary py-12 flex flex-col items-center justify-center h-full">
-                            <i className="fas fa-box-open fa-3x mb-4"></i>
-                            <p>Không có yêu cầu nào đang chờ.</p>
+                        <div className="flex flex-col items-center justify-center py-16 px-4 h-full bg-slate-50/50 rounded-xl border border-slate-200/50">
+                            <div className="relative mb-6 group">
+                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-amber-400/30 rounded-full blur-2xl opacity-60 group-hover:scale-125 transition-all duration-700"></div>
+                                <div className="relative w-16 h-16 bg-white/80 backdrop-blur-md rounded-full shadow-sm flex items-center justify-center border border-white/60">
+                                    <i className="fas fa-chart-pie fa-2x text-slate-300"></i>
+                                </div>
+                            </div>
+                            <h3 className="text-lg font-bold text-slate-600 mb-1">Trống!</h3>
+                            <p className="text-sm text-slate-500">Không có yêu cầu nào đang chờ.</p>
                         </div>
                     )}
                 </main>

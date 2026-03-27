@@ -1,0 +1,1 @@
+['chinh_sach', 'created_at', 'dong_xe', 'ghi_chu_admin', 'hoa_hong_ung', 'id', 'ket_qua_gui_mail', 'ngay_coc', 'ngay_xuat_hoa_don', 'ngay_yeu_cau', 'ngoai_that', 'noi_that', 'phien_ban', 'so_don_hang', 'so_may', 'ten_khach_hang', 'trang_thai_vc', 'tvbh', 'url_de_nghi_xhd', 'url_hoa_don_da_xuat', 'url_hop_dong', 'vin', 'vpoint']

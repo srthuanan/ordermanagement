@@ -11,9 +11,9 @@ interface ImageSource {
 interface UseOrderOperationsProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     hideToast: () => void;
-    refetchHistory: (isSilent?: boolean) => Promise<void>;
-    refetchStock: (isSilent?: boolean) => Promise<void>;
-    setAllHistoryData: React.Dispatch<React.SetStateAction<Order[]>>;
+    refetchHistory: any;
+    refetchStock: any;
+    setAllHistoryData: any;
 }
 
 export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refetchStock, setAllHistoryData }: UseOrderOperationsProps) => {
@@ -25,11 +25,13 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     const [orderToEdit, setOrderToEdit] = useState<Order | null>(null);
     const [orderToRequestVC, setOrderToRequestVC] = useState<Order | null>(null);
     const [orderToConfirmVC, setOrderToConfirmVC] = useState<Order | null>(null);
+    const [orderToSuperEdit, setOrderToSuperEdit] = useState<Order | null>(null);
     const [createRequestData, setCreateRequestData] = useState<{ isOpen: boolean; initialVehicle?: StockVehicle }>({ isOpen: false });
     const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
     const [imagePreview, setImagePreview] = useState<{ images: ImageSource[], startIndex: number, customerName: string } | null>(null);
     const [filePreview, setFilePreview] = useState<{ url: string, label: string } | null>(null);
     const [isPendingStatsModalOpen, setIsPendingStatsModalOpen] = useState(false);
+    const [extensionVehicle, setExtensionVehicle] = useState<StockVehicle | null>(null);
 
     const [processingOrder, setProcessingOrder] = useState<string | null>(null);
     const [processingVin, setProcessingVin] = useState<string | null>(null);
@@ -38,14 +40,16 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
 
     const handleHoldCar = async (vin: string) => {
         setProcessingVin(vin);
-        showToast('Đang xử lý...', `Đang giữ xe VIN ${vin}.`, 'loading');
+//         showToast('Đang xử lý...', `Đang giữ xe VIN ${vin}.`, 'loading'); 
         try {
-            const result = await apiService.holdCar(vin);
-            hideToast();
-            showToast('Giữ Xe Thành Công', result.message, 'success', 3000);
-            refetchStock(true);
+            const res = await apiService.holdCar(vin);
+            if (res && res.status === 'ERROR') {
+                showToast('Giữ Xe Thất Bại', res.message || 'Không thể giữ xe.', 'error', 5000);
+            } else {
+                showToast('Giữ Xe Thành Công', `Đã giữ xe ${vin}.`, 'success', 3000);
+                refetchStock(true);
+            }
         } catch (err) {
-            hideToast();
             const message = err instanceof Error ? err.message : 'Không thể giữ xe.';
             showToast('Giữ Xe Thất Bại', message, 'error', 5000);
         } finally {
@@ -53,35 +57,90 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         }
     };
 
-    const handleReleaseCar = async (vin: string) => {
+    const handleReleaseCar = async (vin: string, outcome: 'released' | 'expired' | 'matched' = 'released') => {
         setProcessingVin(vin);
-        showToast('Đang xử lý...', `Đang hủy giữ xe VIN ${vin}.`, 'loading');
+        const actionText = outcome === 'matched' ? 'đã ghép' : 'hủy giữ';
+//         showToast('Đang xử lý...', `Đang ${actionText} xe VIN ${vin}.`, 'loading'); 
         try {
-            const result = await apiService.releaseCar(vin);
-            hideToast();
-            showToast('Hủy Giữ Thành Công', result.message, 'info', 3000);
+            await apiService.releaseCar(vin, outcome);
+            showToast('Thành Công', `Đã ${actionText} xe ${vin}.`, 'success', 3000);
             refetchStock(true);
         } catch (err) {
-            hideToast();
-            const message = err instanceof Error ? err.message : 'Không thể hủy giữ xe.';
-            showToast('Hủy Giữ Thất Bại', message, 'error', 5000);
+            const message = err instanceof Error ? err.message : `Không thể ${actionText} xe.`;
+            showToast('Lỗi', message, 'error', 5000);
         } finally {
             setProcessingVin(null);
         }
     };
 
-    const handleViewDetails = (order: Order) => setSelectedOrder(order);
-
-    const handleCancelOrder = async (order: Order, reason: string) => {
-        setProcessingOrder(order["Số đơn hàng"]);
-        showToast('Đang Hủy Yêu Cầu', `Hủy yêu cầu cho đơn hàng ${order["Số đơn hàng"]}.`, 'loading');
+    const handleJoinQueue = async (vin: string) => {
+        setProcessingVin(vin);
+//         showToast('Đang xử lý...', 'Đang đăng ký hàng chờ...', 'loading');
         try {
-            const result = await apiService.cancelRequest(order["Số đơn hàng"], reason);
+            const res = await apiService.joinHoldQueue(vin);
+            if (res.status === 'SUCCESS') {
+                showToast('Thành Công', res.message, 'success', 3000);
+            } else {
+                showToast('Lỗi', res.message, 'error', 3000);
+            }
+        } catch (err) {
+            showToast('Lỗi', 'Không thể gia nhập hàng chờ.', 'error', 3000);
+        } finally {
+            setProcessingVin(null);
+            refetchStock(true);
+        }
+    };
+
+    const handleLeaveQueue = async (vin: string) => {
+        setProcessingVin(vin);
+//         showToast('Đang xử lý...', 'Đang hủy hàng chờ...', 'loading');
+        try {
+            const res = await apiService.leaveHoldQueue(vin);
+            if (res.status === 'SUCCESS') {
+                showToast('Thành Công', res.message, 'success', 3000);
+            } else {
+                showToast('Lỗi', res.message, 'error', 3000);
+            }
+        } catch (err) {
+            showToast('Lỗi', 'Không thể hủy hàng chờ.', 'error', 3000);
+        } finally {
+            setProcessingVin(null);
+            refetchStock(true);
+        }
+    };
+
+    const handleRequestExtension = async (vin: string, file: File, reason: string) => {
+        setProcessingVin(vin);
+//         showToast('Đang xử lý...', 'Đang tải file minh chứng...', 'loading');
+        try {
+            const uploadRes = await apiService.uploadHoldEvidence(vin, file);
+            if (uploadRes.status === 'ERROR') throw new Error(uploadRes.message);
+
+            const res = await apiService.requestHoldExtension(vin, uploadRes.url!, reason);
+            if (res.status === 'SUCCESS') {
+                showToast('Thành Công', 'Đã gửi yêu cầu gia hạn. Chờ Admin duyệt.', 'success', 3000);
+            } else {
+                showToast('Lỗi', res.message, 'error', 3000);
+            }
+        } catch (err: any) {
+            showToast('Lỗi', err.message || 'Không thể yêu cầu gia hạn.', 'error', 3000);
+        } finally {
+            setProcessingVin(null);
+            refetchStock(true);
+        }
+    };
+
+    const handleViewDetails = useCallback((order: Order) => setSelectedOrder(order), []);
+
+    const handleCancelOrder = async (order: Order, reason: string, unmatchType: string = 'Hủy luôn đơn hàng (Hủy đơn)') => {
+        setProcessingOrder(order["Số đơn hàng"]);
+//         showToast('Đang Hủy Yêu Cầu', `Hủy yêu cầu cho đơn hàng ${order["Số đơn hàng"]}.`, 'loading'); 
+        try {
+            await apiService.cancelRequest(order["Số đơn hàng"], reason, unmatchType);
             await refetchHistory();
-            hideToast();
-            showToast('Hủy Thành Công', result.message, 'success', 3000);
+            showToast('Hủy Thành Công', 'Đã hủy yêu cầu thành công.', 'success', 3000);
+            setSelectedOrder(null);
         } catch (error) {
-            hideToast();
             const message = error instanceof Error ? error.message : "Lỗi không xác định";
             showToast('Hủy Thất Bại', message, 'error', 5000);
         } finally {
@@ -90,16 +149,34 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         }
     };
 
-    const handleRequestInvoice = async (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string) => {
+    const handleRequestInvoice = async (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string, aiNote?: string) => {
 
         setProcessingOrder(order["Số đơn hàng"]);
         // Modal will handle the loading UI
 
         try {
-            await apiService.requestInvoice(order["Số đơn hàng"], contractFile, proposalFile, policy.join(', '), commission, vpoint);
+            await apiService.requestInvoice(
+                order["Số đơn hàng"],
+                contractFile,
+                proposalFile,
+                policy.join(', '),
+                commission,
+                vpoint,
+                {
+                    ten_khach_hang: order["Tên khách hàng"],
+                    tvbh: order["Tên tư vấn bán hàng"],
+                    vin: order["VIN"],
+                    dong_xe: order["Dòng xe"],
+                    phien_ban: order["Phiên bản"],
+                    ngoai_that: order["Ngoại thất"],
+                    noi_that: order["Nội thất"],
+                    ngay_coc: order["Ngày cọc"] ? new Date(order["Ngày cọc"]).toISOString() : undefined,
+                },
+                aiNote
+            );
             await refetchHistory();
             hideToast();
-            // showToast('Gửi Thành Công', result.message, 'success', 3000); // Removed as per user request
+            showToast('Gửi Thành Công', 'Đã gửi yêu cầu xuất hóa đơn.', 'success', 3000);
             return true;
         } catch (error) {
             hideToast();
@@ -112,16 +189,13 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     };
 
 
-    const handleSupplementFiles = async (order: Order, contractFile: File | null, proposalFile: File | null) => {
+    const handleSupplementFiles = async (order: Order, contractFile: File | null, proposalFile: File | null, aiNote?: string) => {
         setProcessingOrder(order["Số đơn hàng"]);
-        showToast('Đang Bổ Sung Chứng Từ', 'Hệ thống đang xử lý tệp của bạn.', 'loading');
         try {
-            const result = await apiService.uploadSupplementaryFiles(order["Số đơn hàng"], contractFile, proposalFile);
+            await apiService.uploadSupplementaryFiles(order["Số đơn hàng"], contractFile, proposalFile, aiNote);
             await refetchHistory();
-            hideToast();
-            showToast('Bổ Sung Thành Công', result.message, 'success', 3000);
+            showToast('Bổ Sung Thành Công', 'Đã bổ sung hồ sơ thành công.', 'success', 3000);
         } catch (error) {
-            hideToast();
             const message = error instanceof Error ? error.message : "Lỗi không xác định";
             showToast('Bổ Sung Thất Bại', message, 'error', 5000);
         } finally {
@@ -130,9 +204,26 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         }
     };
 
-    const handleEditSuccess = (message: string) => {
+    const handleEditSuccess = (message?: string, updatedOrder?: Order) => {
         setOrderToEdit(null);
-        showToast('Cập nhật thành công!', message, 'success');
+        hideToast();
+        showToast('Cập nhật thành công!', message || 'Thông tin đơn hàng đã được cập nhật.', 'success', 3000);
+        
+        if (updatedOrder) {
+            setSelectedOrder(updatedOrder);
+            setAllHistoryData((current: Order[]) => 
+                current.map(o => o['Số đơn hàng'] === updatedOrder['Số đơn hàng'] ? { ...o, ...updatedOrder } : o)
+            );
+        }
+
+        refetchHistory(true);
+        refetchStock(true);
+    };
+
+    const handleSuperEditSuccess = (message: string) => {
+        setOrderToSuperEdit(null);
+        hideToast();
+        showToast('Siêu đồng bộ thành công!', message, 'success', 3000);
         refetchHistory(true);
         refetchStock(true);
     };
@@ -140,37 +231,13 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     const handleConfirmRequestVC = async (payload: any, vin?: string): Promise<boolean> => {
         if (!orderToRequestVC) return false;
         setProcessingOrder(orderToRequestVC["Số đơn hàng"]);
-        showToast('Đang gửi YC VinClub', `Vui lòng chờ trong giây lát...`, 'loading');
-
-        const fileToBase64 = (file: File) => {
-            return new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve((reader.result as string).split(',')[1]); // Only data part
-                reader.onerror = error => reject(error);
-            });
-        };
 
         try {
-            const filesData = [];
-            for (const key in payload.files) {
-                if (payload.files[key]) {
-                    const file = payload.files[key];
-                    const base64 = await fileToBase64(file);
-                    filesData.push({
-                        key: key,
-                        name: file.name,
-                        type: file.type,
-                        data: base64
-                    });
-                }
-            }
-
             const serverPayload = {
                 orderNumber: payload.orderNumber,
                 customerType: payload.customerType,
                 dmsCode: payload.dmsCode,
-                filesData: JSON.stringify(filesData),
+                files: payload.files,
                 vin: vin,
             };
 
@@ -180,15 +247,32 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
             showToast('Thành Công', result.message || 'Yêu cầu VinClub đã được gửi.', 'success');
 
             if (result.updatedOrder) {
-                setAllHistoryData(currentOrders =>
-                    currentOrders.map(order =>
-                        order['Số đơn hàng'] === result.updatedOrder['Số đơn hàng']
-                            ? { ...order, ...result.updatedOrder }
+                const updatedOrder = result.updatedOrder;
+                
+                // 1. Update memory (State)
+                setAllHistoryData((currentOrders: Order[]) =>
+                    currentOrders.map((order: Order) =>
+                        order['Số đơn hàng'] === updatedOrder['Số đơn hàng']
+                            ? { ...order, ...updatedOrder }
                             : order
                     )
                 );
+
+                // 2. Update session cache (Persistence within login session)
+                try {
+                    const archivesRaw = sessionStorage.getItem('archivedOrdersData');
+                    if (archivesRaw) {
+                        const parsedArchives: Order[] = JSON.parse(archivesRaw);
+                        const updatedArchives = parsedArchives.map(o => 
+                            o['Số đơn hàng'] === updatedOrder['Số đơn hàng'] ? { ...o, ...updatedOrder } : o
+                        );
+                        sessionStorage.setItem('archivedOrdersData', JSON.stringify(updatedArchives));
+                    }
+                } catch (e) {
+                    console.error("Failed to sync cache during VC request:", e);
+                }
             } else {
-                refetchHistory(true); // Silent refetch
+                refetchHistory(true); 
             }
 
             setOrderToRequestVC(null);
@@ -205,11 +289,34 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
 
     const handleConfirmVC = async (): Promise<boolean> => {
         if (!orderToConfirmVC) return false;
-        setProcessingOrder(orderToConfirmVC["Số đơn hàng"]);
-        showToast('Đang Xác Thực VC', 'Vui lòng chờ...', 'loading');
+        const orderId = orderToConfirmVC["Số đơn hàng"];
+        setProcessingOrder(orderId);
         try {
-            await apiService.performAdminAction('confirmVcUnc', { orderNumber: orderToConfirmVC['Số đơn hàng'] });
-            await refetchHistory();
+            await apiService.performAdminAction('confirmVcUnc', { orderNumber: orderId });
+            
+            // Optimistically update memory and cache
+            const updateObj = { 'Trạng thái VC': 'Đã có VC' };
+            setAllHistoryData((currentOrders: Order[]) =>
+                currentOrders.map((order: Order) =>
+                    order['Số đơn hàng'] === orderId ? { ...order, ...updateObj } : order
+                )
+            );
+
+            // Sync with session cache
+            try {
+                const archivesRaw = sessionStorage.getItem('archivedOrdersData');
+                if (archivesRaw) {
+                    const parsedArchives: Order[] = JSON.parse(archivesRaw);
+                    const updatedArchives = parsedArchives.map(o => 
+                        o['Số đơn hàng'] === orderId ? { ...o, ...updateObj } : o
+                    );
+                    sessionStorage.setItem('archivedOrdersData', JSON.stringify(updatedArchives));
+                }
+            } catch (e) {
+                console.error("Failed to sync cache during VC confirm:", e);
+            }
+
+            await refetchHistory(true); 
             hideToast();
             showToast('Thành Công', 'Đã xác thực UNC cho VinClub.', 'success');
             setOrderToConfirmVC(null);
@@ -224,9 +331,9 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         }
     };
 
-    const handleCreateRequestForVehicle = (vehicle: StockVehicle) => {
+    const handleCreateRequestForVehicle = useCallback((vehicle: StockVehicle) => {
         setCreateRequestData({ isOpen: true, initialVehicle: vehicle });
-    };
+    }, []);
 
     const handleCreateRequestClose = useCallback(() => {
         setCreateRequestData({ isOpen: false });
@@ -234,7 +341,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
 
     const handleFormSuccess = useCallback((newOrder: Order) => {
         setCreateRequestData({ isOpen: false });
-        setAllHistoryData(prev => [newOrder, ...prev].sort((a, b) => new Date(b['Thời gian nhập']).getTime() - new Date(a['Thời gian nhập']).getTime()));
+        setAllHistoryData((prev: Order[]) => [newOrder, ...prev].sort((a, b) => new Date(b['Thời gian nhập']).getTime() - new Date(a['Thời gian nhập']).getTime()));
         showToast('Yêu Cầu Đã Gửi', 'Yêu cầu ghép xe của bạn đã được ghi nhận thành công.', 'success', 4000);
         refetchStock(true);
         setTimeout(() => { setSelectedOrder(newOrder); }, 500);
@@ -256,11 +363,13 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         orderToEdit, setOrderToEdit,
         orderToRequestVC, setOrderToRequestVC,
         orderToConfirmVC, setOrderToConfirmVC,
+        orderToSuperEdit, setOrderToSuperEdit,
         createRequestData, setCreateRequestData,
         isChangePasswordModalOpen, setIsChangePasswordModalOpen,
         imagePreview, setImagePreview,
         filePreview, setFilePreview,
         isPendingStatsModalOpen, setIsPendingStatsModalOpen,
+        extensionVehicle, setExtensionVehicle,
         processingOrder,
         processingVin,
 
@@ -271,8 +380,12 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         handleRequestInvoice,
         handleSupplementFiles,
         handleEditSuccess,
+        handleSuperEditSuccess,
         handleConfirmRequestVC,
         handleConfirmVC,
+        handleJoinQueue,
+        handleLeaveQueue,
+        handleRequestExtension,
         handleCreateRequestForVehicle,
         handleCreateRequestClose,
         handleFormSuccess,

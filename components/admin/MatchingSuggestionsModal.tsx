@@ -1,16 +1,19 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { Order, StockVehicle } from '../../types';
 import { useModalBackground, getExteriorColorStyle, getInteriorColorStyle } from '../../utils/styleUtils';
 import moment from 'moment';
+import Button from '../ui/Button';
 
 interface MatchingSuggestionsModalProps {
     isOpen: boolean;
     onClose: () => void;
     matches: { order: Order; cars: StockVehicle[] }[];
     onConfirmMatch: (orderNumber: string, vin: string) => void;
+    processingId?: string | null;
+    processingActionType?: string | null;
 }
 
-const MatchingSuggestionsModal: React.FC<MatchingSuggestionsModalProps> = ({ isOpen, onClose, matches, onConfirmMatch }) => {
+const MatchingSuggestionsModal: React.FC<MatchingSuggestionsModalProps> = ({ isOpen, onClose, matches, onConfirmMatch, processingId, processingActionType }) => {
     const bgStyle = useModalBackground();
 
     const sortedMatches = useMemo(() => {
@@ -29,7 +32,7 @@ const MatchingSuggestionsModal: React.FC<MatchingSuggestionsModalProps> = ({ isO
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div
                 className="bg-surface-card w-full md:max-w-3xl h-[100dvh] md:h-auto md:max-h-[85vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
                 onClick={e => e.stopPropagation()}
@@ -89,12 +92,15 @@ const MatchingSuggestionsModal: React.FC<MatchingSuggestionsModalProps> = ({ isO
                                             </div>
                                             <p className="font-mono font-bold text-base text-text-primary tracking-wide">{bestCar.VIN}</p>
                                         </div>
-                                        <button
+                                        <Button
                                             onClick={() => onConfirmMatch(order['Số đơn hàng'], bestCar.VIN)}
-                                            className="btn-primary !px-3 !py-1.5 !text-xs !h-auto shadow-sm hover:shadow transition-all active:scale-95 flex-shrink-0 whitespace-nowrap"
+                                            variant="primary"
+                                            size="sm"
+                                            className="!h-auto shadow-sm hover:shadow transition-all active:scale-95 flex-shrink-0 whitespace-nowrap"
+                                            isLoading={processingId === order['Số đơn hàng'] && processingActionType === 'pair'}
                                         >
                                             <i className="fas fa-link mr-1.5"></i>Ghép Ngay
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             );

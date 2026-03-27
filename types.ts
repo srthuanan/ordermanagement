@@ -1,7 +1,7 @@
 // This file now contains the centralized type definitions for the application,
 // resolving numerous "has no exported member" errors.
 
-export type AdminSubView = 'dashboard' | 'invoices' | 'pending' | 'paired' | 'matching' | 'vc' | 'phongkd';
+export type AdminSubView = 'invoices' | 'pending' | 'paired' | 'matching' | 'vc' | 'phongkd' | 'tracking' | 'stats' | 'incomplete_cars' | 'super_edit' | 'inquiries' | 'holds' | 'policies' | 'don_ton';
 
 export interface Order {
   "Số đơn hàng": string;
@@ -16,10 +16,12 @@ export interface Order {
   VIN?: string;
   "Thời gian ghép"?: string; // ISO Date string
   "Ghi chú hủy"?: string;
+  "Thời gian hủy"?: string;
   LinkHoaDonDaXuat?: string;
   LinkHopDong?: string;
   LinkDeNghiXHD?: string;
   "Số động cơ"?: string;
+  "Mã DMS"?: string;
   "Ngày xuất hóa đơn"?: string;
   "Hoa hồng ứng"?: string;
   "Điểm Vpoint sử dụng"?: string;
@@ -61,6 +63,8 @@ export interface StockVehicle {
   "Vị trí"?: string;
   "Thời gian nhập"?: string; // ISO Date string
   "Ngày vận tải"?: string;
+  "Mã DMS"?: string;
+  "Số máy"?: string;
   [key: string]: any; // Allow for other properties
 }
 
@@ -116,7 +120,7 @@ export interface AnalyticsData {
   stockStatus: { [key: string]: { count: number, isSlowMoving: boolean } };
 }
 
-export type NotificationType = 'success' | 'error' | 'warning' | 'info' | 'danger';
+export type NotificationType = 'success' | 'error' | 'warning' | 'info' | 'danger' | 'stock_hero' | 'broadcast';
 
 export interface Notification {
   id: string;
@@ -124,6 +128,8 @@ export interface Notification {
   timestamp: string; // ISO Date string
   isRead: boolean;
   link?: string;
+  targetView?: string;
+  targetId?: string;
   type: NotificationType;
 }
 
@@ -142,3 +148,52 @@ export interface ActiveUser {
 }
 
 export type User = { name: string, role: string, username: string };
+
+export interface AuditLog {
+  id: string;
+  timestamp: string;
+  action: string;
+  details: any;
+  user_email?: string;
+  user_full_name?: string;
+  target_id?: string;
+  target_type?: string;
+}
+
+export type InquiryStatus = 'pending' | 'auto_found' | 'manual_responded' | 'not_found' | 'held' | 'auto_checking';
+
+export interface CarInquiry {
+  id: string;
+  created_at: string;
+  tvbh_name: string;
+  tvbh_email: string;
+  model: string;
+  version: string;
+  exterior_color: string;
+  interior_color: string;
+  status: InquiryStatus;
+  admin_response?: string;
+  matched_vin?: string;
+  responded_at?: string;
+  is_read_by_admin: boolean;
+  is_read_by_tvbh: boolean;
+  chat_history?: any[];
+}
+
+declare global {
+  interface Window {
+    electronAPI: {
+      ping: () => Promise<string>;
+      onUpdateAvailable: (callback: (info: any) => void) => void;
+      onUpdateDownloaded: (callback: (info: any) => void) => void;
+      onDownloadProgress: (callback: (progressObj: any) => void) => void;
+      onUpdateError: (callback: (error: string) => void) => void;
+      startDownload: () => void;
+      quitAndInstall: () => void;
+      removeAllListeners: (channel: string) => void;
+      minimizeWindow: () => void;
+      maximizeWindow: () => void;
+      closeWindow: () => void;
+    };
+  }
+}

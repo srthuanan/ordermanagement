@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import MultiSelectDropdown, { DropdownFilterConfig } from './MultiSelectDropdown';
 import moment from 'moment';
@@ -60,7 +60,7 @@ const Filters: React.FC<FiltersProps> = ({
     filters, onFilterChange, onReset, dropdowns, searchPlaceholder, totalCount, onRefresh, isLoading,
     hideSearch = false, size = 'default', plain = false, dateRangeEnabled = false, dateFilterEnabled = false,
     viewSwitcherEnabled = false, activeView = 'table', onViewChange, extraActionButton, variant = 'default',
-    dropdownClassName = 'w-32 md:w-40 lg:w-48', searchable = true
+    dropdownClassName = 'w-28 md:w-36 lg:w-64', searchable = true
 }) => {
     const [localKeyword, setLocalKeyword] = useState(filters.keyword || '');
     const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
@@ -148,83 +148,105 @@ const Filters: React.FC<FiltersProps> = ({
     ));
 
     const desktopContent = (
-        <div className={`${variant === 'modern' ? 'flex items-center gap-2' : `flex items-center gap-2 ${plain ? '!shadow-none !bg-transparent !p-0 !border-none' : ''}`}`}>
-            {!hideSearch && (
-                <div className={`relative flex items-center transition-all duration-300 ${variant === 'modern' ? 'w-32 focus-within:w-48 flex-shrink' : 'flex-grow min-w-[200px] lg:min-w-[300px]'}`}>
-                    <i className={`fas fa-search absolute left-3 z-10 ${variant === 'modern' ? 'text-accent-primary text-xs' : 'left-4 text-gray-400'}`}></i>
-                    <input
-                        type="text"
-                        id="search-input-desktop"
-                        placeholder={searchPlaceholder}
-                        value={localKeyword}
-                        onChange={(e) => setLocalKeyword(e.target.value)}
-                        className={`w-full h-8 pl-9 pr-8 py-1.5 focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm transition-all duration-300 ${variant === 'modern' ? 'bg-white border border-border-secondary rounded-full shadow-sm focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20' : 'relative'}`}
-                    />
-                    {localKeyword && (
-                        <button
-                            onClick={() => { setLocalKeyword(''); onFilterChange({ keyword: '' }); }}
-                            className="absolute right-2 text-gray-400 hover:text-danger transition-colors"
-                            title="Xóa tìm kiếm"
-                        >
-                            <i className="fas fa-times-circle text-xs"></i>
-                        </button>
+        <div className={`flex items-center gap-2 ${variant === 'modern' ? 'py-0.5' : ''}`}>
+            {variant === 'modern' ? (
+                <div className="flex items-center bg-transparent p-0 gap-1">
+                    {!hideSearch && (
+                        <div className="relative flex items-center group">
+                            <i className="fas fa-search absolute left-2 top-1/2 -translate-y-1/2 z-10 text-gray-400 group-focus-within:text-accent-primary text-[10px] transition-colors"></i>
+                            <input
+                                type="text"
+                                placeholder={searchPlaceholder}
+                                value={localKeyword}
+                                onChange={(e) => setLocalKeyword(e.target.value)}
+                                className="w-28 mt-0.5 focus:w-44 h-7 pl-7 pr-2 text-[11px] bg-gray-50/50 hover:bg-gray-100/80 focus:bg-white border border-gray-100/50 focus:border-accent-primary/30 rounded-md focus:shadow-sm focus:ring-0 text-gray-900 placeholder:text-gray-400 transition-all duration-300 font-bold"
+                            />
+                            {localKeyword && (
+                                <button onClick={() => { setLocalKeyword(''); onFilterChange({ keyword: '' }); }} className="absolute right-1 text-gray-300 hover:text-danger p-1"><i className="fas fa-times-circle text-[9px]"></i></button>
+                            )}
+                        </div>
                     )}
-                </div>
-            )}
 
-            {dropdownControls}
+                    {!hideSearch && <div className="w-[1px] h-3 bg-gray-300 mx-1 opacity-20"></div>}
 
-            <div className={`w-8 h-8 flex items-center justify-center transition-all duration-200 ${variant === 'modern' ? '' : 'ml-2'}`}>
-                <Button
-                    onClick={onReset}
-                    variant="danger"
-                    className={`!p-0 w-8 h-8 rounded-full transition-all duration-200 ${hasActiveFilters ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}
-                    title="Xóa tất cả bộ lọc"
-                    tabIndex={hasActiveFilters ? 0 : -1}
-                >
-                    <i className="fas fa-times"></i>
-                </Button>
-            </div>
+                    <div className="flex items-center gap-0.5">
+                        {dropdownControls}
+                    </div>
 
-            {dateRangeEnabled && (
-                <div className="relative" ref={datePickerRef}>
-                    <Button
-                        onClick={() => setIsDatePopoverOpen(!isDatePopoverOpen)}
-                        variant="ghost"
-                        className={`h-9 px-3 text-xs ${(dateValue.start && dateValue.end) || isDatePopoverOpen ? 'bg-surface-hover text-accent-primary' : ''}`}
-                        leftIcon={<i className="fas fa-calendar-alt text-text-placeholder text-xs"></i>}
-                    >
-                        <span className={`${dateValue.start && dateValue.end ? 'font-semibold' : ''}`}>
-                            {dateValue.start && dateValue.end ? `${moment(dateValue.start).format('DD/MM')} - ${moment(dateValue.end).format('DD/MM')}` : 'Chọn ngày'}
-                        </span>
-                    </Button>
-                    {isDatePopoverOpen && (
-                        <div className="absolute top-full mt-2 right-0 z-20 bg-surface-card p-4 rounded-lg shadow-lg border border-border-primary date-range-picker-popover">
-                            <div className="space-y-3">
-                                <DatePicker label="Từ ngày" value={dateValue.start} onChange={(val) => handleDateChange('start', val)} />
-                                <DatePicker label="Đến ngày" value={dateValue.end} onChange={(val) => handleDateChange('end', val)} />
-                            </div>
+                    <div className="flex items-center">
+                        <button
+                            onClick={onReset}
+                            className={`flex items-center justify-center w-7 h-7 rounded-md text-[10px] transition-all duration-200 ${hasActiveFilters ? 'text-danger hover:bg-danger/10' : 'opacity-0 pointer-events-none'}`}
+                            title="Xóa tất cả bộ lọc"
+                        >
+                            <i className="fas fa-rotate-left"></i>
+                        </button>
+                    </div>
+
+                    <div className="w-[1px] h-3 bg-gray-300 mx-1 opacity-20"></div>
+
+                    {dateRangeEnabled && (
+                        <div className="relative" ref={datePickerRef}>
+                            <button
+                                onClick={() => setIsDatePopoverOpen(!isDatePopoverOpen)}
+                                className={`h-7 px-2 rounded-md text-[10px] font-medium transition-all flex items-center gap-1.5 ${((dateValue.start && dateValue.end) || isDatePopoverOpen) ? 'bg-white text-accent-primary shadow-sm' : 'text-slate-500 hover:bg-white/50'}`}
+                            >
+                                <i className="fas fa-calendar-alt opacity-70 text-[9px]"></i>
+                                <span>{dateValue.start && dateValue.end ? `${moment(dateValue.start).format('DD/MM')} - ${moment(dateValue.end).format('DD/MM')}` : 'Ngày'}</span>
+                            </button>
+                            {isDatePopoverOpen && (
+                                <div className="absolute top-full mt-2 right-0 z-20 bg-white p-3 rounded-lg shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-gray-100 min-w-[240px] animate-in fade-in zoom-in-95 duration-150">
+                                    <div className="space-y-2">
+                                        <DatePicker label="Từ ngày" value={dateValue.start} onChange={(val) => handleDateChange('start', val)} />
+                                        <DatePicker label="Đến ngày" value={dateValue.end} onChange={(val) => handleDateChange('end', val)} />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
+            ) : (
+                <>
+                    {!hideSearch && (
+                        <div className="relative flex-grow min-w-[200px] lg:min-w-[300px]">
+                            <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input
+                                type="text"
+                                placeholder={searchPlaceholder}
+                                value={localKeyword}
+                                onChange={(e) => setLocalKeyword(e.target.value)}
+                                className="w-full h-10 pl-11 pr-4 bg-white border border-border-primary rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary/20 transition-all font-medium text-text-primary"
+                            />
+                        </div>
+                    )}
+                    {dropdownControls}
+                    <Button onClick={onReset} variant="danger" className={`!p-0 w-10 h-10 rounded-xl transition-all ${hasActiveFilters ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none'}`}><i className="fas fa-times"></i></Button>
+                </>
             )}
 
-            <span className="text-sm font-medium text-text-secondary px-3 whitespace-nowrap border-l border-border-primary/50 ml-auto">
-                {totalCount} kết quả
-            </span>
-
-            {viewSwitcherEnabled && (
-                <div className="view-switcher-group flex gap-1">
-                    <Button onClick={() => onViewChange?.('table')} variant={activeView === 'table' ? 'primary' : 'ghost'} size="sm" className="!p-2" title="Xem dạng danh sách"><i className="fas fa-list"></i></Button>
-                    <Button onClick={() => onViewChange?.('grid')} variant={activeView === 'grid' ? 'primary' : 'ghost'} size="sm" className="!p-2" title="Xem dạng lưới"><i className="fas fa-th-large"></i></Button>
+            <div className={`flex items-center gap-1.5 ml-auto`}>
+                {extraActionButton}
+                <div className={`px-2 py-1 rounded-md ${variant === 'modern' ? 'bg-transparent' : 'bg-slate-100'}`}>
+                    <span className="text-[10px] font-medium text-slate-500 whitespace-nowrap">
+                        <span className="text-accent-primary mr-1">{totalCount}</span>Kết quả
+                    </span>
                 </div>
-            )}
 
-            {extraActionButton}
+                {viewSwitcherEnabled && (
+                    <div className="view-switcher-group flex gap-0.5 p-0.5 bg-transparent border border-gray-100 rounded-md">
+                        <button onClick={() => onViewChange?.('table')} className={`w-6 h-6 flex items-center justify-center rounded transition-all ${activeView === 'table' ? 'bg-gray-100 text-accent-primary' : 'text-gray-300 hover:text-gray-500'}`}><i className="fas fa-list text-[9px]"></i></button>
+                        <button onClick={() => onViewChange?.('grid')} className={`w-6 h-6 flex items-center justify-center rounded transition-all ${activeView === 'grid' ? 'bg-gray-100 text-accent-primary' : 'text-gray-300 hover:text-gray-500'}`}><i className="fas fa-th-large text-[9px]"></i></button>
+                    </div>
+                )}
 
-            <Button onClick={onRefresh} disabled={isLoading} variant="ghost" className={`w-9 h-9 flex-shrink-0 ${variant === 'modern' ? '!rounded-full !bg-gray-50 hover:!bg-gray-100 !border-transparent' : ''}`} aria-label="Làm mới" title="Làm mới">
-                <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
-            </Button>
+                <button
+                    onClick={onRefresh}
+                    disabled={isLoading}
+                    className={`w-7 h-7 flex items-center justify-center rounded-md transition-all ${variant === 'modern' ? 'bg-transparent text-slate-400 hover:text-accent-primary hover:bg-gray-50' : 'bg-white'}`}
+                >
+                    <i className={`fas fa-sync-alt text-[10px] ${isLoading ? 'animate-spin' : ''}`}></i>
+                </button>
+            </div>
         </div>
     );
 
@@ -237,52 +259,67 @@ const Filters: React.FC<FiltersProps> = ({
     return (
         <>
             {/* --- Mobile View --- */}
-            <div className={`md:hidden flex w-full items-center gap-2 ${plain ? '' : ''}`}>
+            {/* --- Mobile View --- */}
+            <div className={`md:hidden flex w-full items-center gap-3 ${plain ? '' : ''}`}>
                 {!hideSearch && (
                     <div className="relative flex-grow flex items-center min-w-0">
-                        <i className="fas fa-search absolute left-4 text-gray-400 z-10"></i>
+                        <div className="absolute left-3 text-gray-400 z-10">
+                            <i className="fas fa-search text-sm"></i>
+                        </div>
                         <input
                             type="text"
                             id="search-input-mobile"
                             placeholder={searchPlaceholder}
                             value={localKeyword}
                             onChange={(e) => setLocalKeyword(e.target.value)}
-                            className="w-full h-9 pl-11 pr-9 py-1.5 relative focus:outline-none text-text-primary placeholder:text-text-placeholder text-sm bg-surface-ground rounded-lg border border-transparent focus:bg-white focus:border-accent-primary transition-all duration-300"
+                            className="w-full h-10 pl-10 pr-9 py-2 relative focus:outline-none text-text-primary placeholder:text-gray-400 text-sm bg-gray-50 rounded-xl border border-gray-100 focus:bg-white focus:border-accent-primary/50 focus:ring-2 focus:ring-accent-primary/10 transition-all duration-300"
                         />
                         {localKeyword && (
                             <button
                                 onClick={() => { setLocalKeyword(''); onFilterChange({ keyword: '' }); }}
-                                className="absolute right-3 text-gray-400 hover:text-danger transition-colors"
+                                className="absolute right-3 text-gray-400 hover:text-danger w-6 h-6 flex items-center justify-center rounded-full active:bg-gray-100 transition-colors"
                             >
-                                <i className="fas fa-times-circle"></i>
+                                <i className="fas fa-times-circle text-xs"></i>
                             </button>
                         )}
                     </div>
                 )}
-                <Button onClick={() => setIsMobilePanelOpen(true)} variant="ghost" className="flex-shrink-0 w-9 h-9 relative !p-0">
-                    <i className="fas fa-filter text-accent-primary"></i>
+                <Button onClick={() => setIsMobilePanelOpen(true)} variant="ghost" className={`flex-shrink-0 w-10 h-10 relative !p-0 rounded-xl border border-gray-100 bg-white ${activeFilters.length > 0 ? 'border-accent-primary/30 text-accent-primary bg-accent-primary/5' : 'text-gray-500'}`}>
+                    <i className="fas fa-filter text-sm"></i>
                     {activeFilters.length > 0 && (
-                        <span className="absolute -top-1 -right-1 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-surface-ground">{activeFilters.length}</span>
+                        <span className="absolute -top-1 -right-1 bg-danger text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white shadow-sm">{activeFilters.length}</span>
                     )}
                 </Button>
-                <Button onClick={onRefresh} disabled={isLoading} variant="ghost" className="flex-shrink-0 w-9 h-9 !p-0" aria-label="Làm mới" title="Làm mới">
-                    <i className={`fas fa-sync-alt text-base ${isLoading ? 'animate-spin' : ''}`}></i>
+                <Button onClick={onRefresh} disabled={isLoading} variant="ghost" className="flex-shrink-0 w-10 h-10 !p-0 rounded-xl border border-gray-100 bg-white text-gray-500 hover:text-accent-primary hover:bg-gray-50" aria-label="Làm mới" title="Làm mới">
+                    <i className={`fas fa-sync-alt text-sm ${isLoading ? 'animate-spin' : ''}`}></i>
                 </Button>
             </div>
 
             {/* --- Mobile Filter Panel (Modal) --- */}
             {isMobilePanelOpen && createPortal(
-                <div className="fixed inset-0 bg-black/60 z-[60] flex flex-col justify-end md:hidden" onClick={() => setIsMobilePanelOpen(false)}>
-                    <div className="bg-surface-card rounded-t-2xl p-4 animate-fade-in-up flex flex-col max-h-[85vh]" style={{ animationDuration: '300ms' }} onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-border-primary flex-shrink-0">
-                            <h3 className="font-bold text-lg text-text-primary">Bộ Lọc</h3>
-                            <Button onClick={() => setIsMobilePanelOpen(false)} variant="ghost" className="w-8 h-8 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover !p-0"><i className="fas fa-times"></i></Button>
+                <div className="fixed inset-0 z-[9999] flex flex-col justify-end md:hidden" onClick={() => setIsMobilePanelOpen(false)}>
+                    {/* Backdrop */}
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" />
+
+                    {/* Content */}
+                    <div className="relative z-10 bg-white rounded-t-3xl p-5 animate-slide-up-mobile flex flex-col max-h-[85vh] shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-5 pb-0 flex-shrink-0">
+                            <div>
+                                <h3 className="font-bold text-xl text-slate-800">Bộ Lọc</h3>
+                                <p className="text-xs text-slate-500 mt-1">Tùy chỉnh hiển thị danh sách</p>
+                            </div>
+                            <Button onClick={() => setIsMobilePanelOpen(false)} variant="ghost" className="w-9 h-9 rounded-full flex items-center justify-center bg-gray-100 text-gray-500 hover:bg-gray-200 !p-0 transition-transform active:scale-95"><i className="fas fa-times"></i></Button>
                         </div>
 
-                        <div className="space-y-3 overflow-y-auto pr-2 -mr-2 custom-scrollbar py-2 flex-grow">
+                        <div className="space-y-4 overflow-y-auto px-1 -mx-1 custom-scrollbar py-2 flex-grow">
                             {(dateRangeEnabled || dateFilterEnabled) && (
-                                <div className="bg-gray-50/50 rounded-xl p-3 border border-gray-100">
-                                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 block">{dateRangeEnabled ? 'Thời gian' : 'Ngày'}</label>
+                                <div className="bg-gray-50/80 rounded-2xl p-4 border border-gray-100">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                                            <i className="fas fa-calendar-alt text-xs"></i>
+                                        </div>
+                                        <label className="text-sm font-bold text-slate-700">{dateRangeEnabled ? 'Khoảng Thời Gian' : 'Ngày'}</label>
+                                    </div>
                                     <div className={`grid ${dateRangeEnabled ? 'grid-cols-2 gap-3' : 'grid-cols-1'}`}>
                                         <DatePicker label={dateRangeEnabled ? 'Từ ngày' : 'Chọn ngày'} value={dateValue.start} onChange={(val) => handleDateChange('start', val)} />
                                         {dateRangeEnabled && <DatePicker label="Đến ngày" value={dateValue.end} onChange={(val) => handleDateChange('end', val)} />}
@@ -293,34 +330,37 @@ const Filters: React.FC<FiltersProps> = ({
                             {dropdowns.map(dropdown => {
                                 const isExpanded = expandedMobileFilters.includes(dropdown.id);
                                 const hasSelection = (filters[dropdown.key] as string[])?.length > 0;
+                                const selectionCount = (filters[dropdown.key] as string[])?.length || 0;
 
                                 return (
-                                    <div key={'mobile-' + dropdown.id} className={`border rounded-xl transition-all duration-300 overflow-hidden ${isExpanded ? 'bg-white border-accent-primary/30 shadow-sm' : 'bg-white border-gray-100'}`}>
+                                    <div key={'mobile-' + dropdown.id} className={`border rounded-2xl transition-all duration-300 overflow-hidden ${isExpanded ? 'bg-white border-accent-primary/40 shadow-md shadow-accent-primary/5' : 'bg-white border-gray-100'}`}>
                                         <button
                                             type="button"
                                             onClick={() => toggleMobileFilter(dropdown.id)}
-                                            className="flex items-center justify-between w-full p-3 text-left group"
+                                            className="flex items-center justify-between w-full p-4 text-left group"
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${hasSelection ? 'bg-accent-primary text-white shadow-sm shadow-accent-primary/30' : 'bg-gray-100 text-gray-400 group-hover:bg-accent-primary/10 group-hover:text-accent-primary'}`}>
-                                                    <i className={`fas ${dropdown.icon} text-xs`}></i>
+                                                <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${hasSelection ? 'bg-accent-primary text-white shadow-md shadow-accent-primary/30' : 'bg-gray-50 text-gray-400 group-hover:bg-accent-primary/10 group-hover:text-accent-primary'}`}>
+                                                    <i className={`fas ${dropdown.icon} text-sm`}></i>
                                                 </div>
                                                 <div>
-                                                    <span className={`text-sm font-semibold transition-colors ${hasSelection ? 'text-accent-primary' : 'text-gray-700 group-hover:text-gray-900'}`}>{dropdown.label}</span>
-                                                    {hasSelection && (
-                                                        <div className="text-[10px] text-gray-500 font-medium">Đã chọn {(filters[dropdown.key] as string[]).length}</div>
+                                                    <span className={`text-sm font-bold transition-colors block ${hasSelection ? 'text-accent-primary' : 'text-slate-700 group-hover:text-slate-900'}`}>{dropdown.label}</span>
+                                                    {hasSelection ? (
+                                                        <div className="text-[11px] text-accent-primary/80 font-medium mt-0.5">Đã chọn {selectionCount}</div>
+                                                    ) : (
+                                                        <div className="text-[11px] text-gray-400 mt-0.5">Tất cả</div>
                                                     )}
                                                 </div>
                                             </div>
-                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-gray-100 text-gray-600' : 'text-gray-300'}`}>
+                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-300 border ${isExpanded ? 'rotate-180 bg-accent-primary/10 text-accent-primary border-accent-primary/20' : 'bg-white text-gray-300 border-gray-100'}`}>
                                                 <i className="fas fa-chevron-down text-xs"></i>
                                             </div>
                                         </button>
 
                                         <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                                             <div className="overflow-hidden">
-                                                <div className="p-3 pt-0 border-t border-gray-50">
-                                                    <div className="mt-3">
+                                                <div className="p-4 pt-0 border-t border-dashed border-gray-100">
+                                                    <div className="mt-4">
                                                         <MultiSelectDropdown
                                                             id={'mobile-' + dropdown.id}
                                                             label={dropdown.label}
@@ -330,8 +370,9 @@ const Filters: React.FC<FiltersProps> = ({
                                                             icon={dropdown.icon}
                                                             displayMode={dropdown.displayMode}
                                                             size="default"
-                                                            mode={dropdown.mode || (dropdown.options.length > 6 ? 'inline' : 'chips')}
+                                                            mode="chips"
                                                             searchable={false}
+                                                            variant="modern"
                                                         />
                                                     </div>
                                                 </div>
@@ -341,9 +382,13 @@ const Filters: React.FC<FiltersProps> = ({
                                 );
                             })}
                         </div>
-                        <div className="mt-4 grid grid-cols-2 gap-3 pt-3 border-t border-border-primary flex-shrink-0">
-                            <Button onClick={() => { onReset(); }} disabled={!hasActiveFilters} variant="secondary" fullWidth className="rounded-xl">Xóa Lọc</Button>
-                            <Button onClick={() => setIsMobilePanelOpen(false)} variant="primary" fullWidth className="rounded-xl shadow-lg shadow-accent-primary/20">Xem {totalCount} kết quả</Button>
+                        <div className="mt-2 grid grid-cols-2 gap-3 pt-4 border-t border-gray-100 flex-shrink-0">
+                            <Button onClick={() => { onReset(); }} disabled={!hasActiveFilters} variant="secondary" fullWidth className="rounded-xl h-12 text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-slate-600 border-none">
+                                Xóa Lọc ({activeFilters.length})
+                            </Button>
+                            <Button onClick={() => setIsMobilePanelOpen(false)} variant="primary" fullWidth className="rounded-xl h-12 text-sm font-bold shadow-lg shadow-accent-primary/25">
+                                Xem {totalCount} kết quả
+                            </Button>
                         </div>
                     </div>
                 </div>,

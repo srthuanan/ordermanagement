@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ActiveView } from '../../hooks/useAppNavigation';
 import Avatar from '../ui/Avatar';
-import slidebarnoelImg from '../../pictures/slidebarnoel.png';
-import noel1Gif from '../../pictures/noel1.gif';
-import noel2Gif from '../../pictures/noel2.gif';
+
 import Button from '../ui/Button';
 
 interface SidebarProps {
@@ -33,35 +31,11 @@ const Sidebar: React.FC<SidebarProps> = ({
     onLogout,
     setIsChangePasswordModalOpen
 }) => {
-    const [noelImageIndex, setNoelImageIndex] = useState(0);
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const profileMenuRef = useRef<HTMLDivElement>(null);
-    const inactivityTimerRef = useRef<NodeJS.Timeout | null>(null);
-
-    // Effect cho slideshow ảnh Noel
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setNoelImageIndex(prev => (prev === 0 ? 1 : 0));
-        }, 4000);
-        return () => clearInterval(interval);
-    }, []);
 
     // Auto-collapse sidebar after 30 seconds when expanded
-    useEffect(() => {
-        // Only set timer if sidebar is NOT collapsed
-        if (!isSidebarCollapsed) {
-            inactivityTimerRef.current = setTimeout(() => {
-                toggleSidebar();
-            }, 30000); // 30 seconds
-        }
 
-        // Cleanup timer when sidebar state changes or component unmounts
-        return () => {
-            if (inactivityTimerRef.current) {
-                clearTimeout(inactivityTimerRef.current);
-            }
-        };
-    }, [isSidebarCollapsed, toggleSidebar]);
 
     // Click outside for profile menu
     useEffect(() => {
@@ -74,62 +48,46 @@ const Sidebar: React.FC<SidebarProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const sidebarClasses = `fixed top-0 left-0 h-full z-40 bg-surface-card/70 backdrop-blur-xl w-64 transition-all duration-300 ease-in-out flex flex-col border-r border-border-primary/50
-        lg:top-4 lg:left-4 lg:h-[calc(100%-2rem)] lg:rounded-2xl lg:border lg:shadow-xl
+    const sidebarClasses = `fixed top-0 left-0 h-full z-40 glass-panel w-64 transition-all duration-300 ease-in-out flex flex-col border-r border-border-primary/50
+        lg:top-4 lg:left-4 lg:h-[calc(100%-2rem)] lg:rounded-2xl lg:shadow-2xl
         ${isSidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`;
 
     return (
         <aside className={sidebarClasses}>
-            <div className="flex items-center h-16 border-b border-border-primary/50 flex-shrink-0 px-4">
+            <div className="flex items-center h-20 border-b border-border-primary/30 flex-shrink-0 px-6">
                 <a href="#" onClick={(e) => e.preventDefault()} className="flex items-center justify-center h-full group">
-                    <img src={slidebarnoelImg} alt="Order Management Logo" className={`object-contain transition-all duration-300 group-hover:scale-105 ${isSidebarCollapsed ? 'h-10' : 'h-13'}`} />
+                    <span className={`text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-accent-primary to-blue-700 uppercase tracking-[0.2em] transition-all duration-300 ${isSidebarCollapsed ? 'text-[10px] tracking-normal' : ''}`}>VinFast</span>
                 </a>
-                <Button onClick={toggleSidebar} variant="ghost" className="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg !p-0 ml-auto">
-                    <i className={`fa-solid fa-chevron-left transition-transform duration-300 ${isSidebarCollapsed ? 'rotate-180' : ''}`}></i>
+                <Button onClick={toggleSidebar} variant="ghost" className="hidden lg:flex items-center justify-center w-8 h-8 rounded-full !p-0 ml-auto hover:bg-white/50">
+                    <i className={`fa-solid fa-chevron-left text-[10px] transition-transform duration-500 ${isSidebarCollapsed ? 'rotate-180' : ''}`}></i>
                 </Button>
             </div>
 
             <nav className="p-2 flex flex-col flex-grow overflow-y-auto relative">
-                <div className="space-y-1">
-                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('orders'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'orders'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                        <i className={`fa-solid fa-car-side fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
-                        <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Quản lý Ghép xe</span>
+                <div className="space-y-2 mt-2">
+                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('orders'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'orders'} className="nav-link group flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm transition-all duration-300 text-text-primary font-bold hover:bg-white/50 active:scale-95">
+                        <i className={`fa-solid fa-car-side fa-fw w-6 text-center text-text-secondary ${isSidebarCollapsed ? 'lg:mx-auto' : ''} group-hover:text-accent-primary`}></i>
+                        <span className={`whitespace-nowrap transition-all duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>Quản lý Ghép xe</span>
                     </a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('stock'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'stock'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                        <i className={`fa-solid fa-warehouse fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
-                        <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Kho Xe</span>
+                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('stock'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'stock'} className="nav-link group flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm transition-all duration-300 text-text-primary font-bold hover:bg-white/50 active:scale-95">
+                        <i className={`fa-solid fa-warehouse fa-fw w-6 text-center text-text-secondary ${isSidebarCollapsed ? 'lg:mx-auto' : ''} group-hover:text-accent-primary`}></i>
+                        <span className={`whitespace-nowrap transition-all duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>Kho Xe</span>
                     </a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('laithu'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'laithu'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                        <i className={`fa-solid fa-gauge-high fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
-                        <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Lái Thử</span>
+                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('laithu'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'laithu'} className="nav-link group flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm transition-all duration-300 text-text-primary font-bold hover:bg-white/50 active:scale-95">
+                        <i className={`fa-solid fa-gauge-high fa-fw w-6 text-center text-text-secondary ${isSidebarCollapsed ? 'lg:mx-auto' : ''} group-hover:text-accent-primary`}></i>
+                        <span className={`whitespace-nowrap transition-all duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>Lái Thử</span>
                     </a>
-                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('sold'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'sold'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                        <i className={`fa-solid fa-receipt fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
-                        <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Lịch Sử Bán Hàng</span>
+                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('sold'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'sold'} className="nav-link group flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm transition-all duration-300 text-text-primary font-bold hover:bg-white/50 active:scale-95">
+                        <i className={`fa-solid fa-receipt fa-fw w-6 text-center text-text-secondary ${isSidebarCollapsed ? 'lg:mx-auto' : ''} group-hover:text-accent-primary`}></i>
+                        <span className={`whitespace-nowrap transition-all duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>Lịch Sử Bán Hàng</span>
                     </a>
                     {isCurrentUserAdmin && (
-                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('admin'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'admin'} className="nav-link flex items-center gap-4 px-4 py-3 rounded-lg text-sm transition-colors duration-200 text-text-primary font-semibold hover:bg-surface-hover">
-                            <i className={`fa-solid fa-user-shield fa-fw w-5 text-center text-text-secondary text-lg transition-colors ${isSidebarCollapsed ? 'lg:mx-auto' : ''}`}></i>
-                            <span className={`whitespace-nowrap transition-opacity duration-200 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : ''}`}>Admin</span>
+                        <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('admin'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'admin'} className="nav-link group flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm transition-all duration-300 text-text-primary font-bold hover:bg-white/50 active:scale-95">
+                            <i className={`fa-solid fa-user-shield fa-fw w-6 text-center text-text-secondary ${isSidebarCollapsed ? 'lg:mx-auto' : ''} group-hover:text-accent-primary`}></i>
+                            <span className={`whitespace-nowrap transition-all duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>Quản trị viên</span>
                         </a>
                     )}
-                </div>
-
-                {/* Animated Noel Images */}
-                <div className={`mt-auto w-full overflow-hidden rounded-lg transition-all duration-300 ${isSidebarCollapsed ? 'hidden' : 'block'}`}>
-                    <div className="relative w-full" style={{ height: '250px' }}>
-                        <img
-                            src={noel1Gif}
-                            alt="Noel 1"
-                            className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ease-in-out ${noelImageIndex === 0 ? 'opacity-100' : 'opacity-0'}`}
-                        />
-                        <img
-                            src={noel2Gif}
-                            alt="Noel 2"
-                            className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-1000 ease-in-out ${noelImageIndex === 1 ? 'opacity-100' : 'opacity-0'}`}
-                        />
-                    </div>
                 </div>
             </nav>
 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+﻿import React, { useState, useCallback } from 'react';
 import moment from 'moment';
 import * as apiService from '../../services/apiService';
 import { useModalBackground } from '../../utils/styleUtils';
@@ -72,7 +72,7 @@ const OrderTimelineModal: React.FC<OrderTimelineModalProps> = ({ isOpen, onClose
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div className="bg-surface-card w-full md:max-w-3xl h-[100dvh] md:h-auto md:max-h-[85vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <header className="flex items-center justify-between p-2.5 border-b border-border-primary flex-shrink-0">
                     <div className="flex items-center gap-3">

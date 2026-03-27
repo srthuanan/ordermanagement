@@ -1,9 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
-import { compressImage } from '../../services/ocrService';
-import yesAnimationUrl from '../../pictures/yes.json?url';
-import noAnimationUrl from '../../pictures/no-animation.json?url';
+// import { compressImage } from '../../services/ocrService';
 import { useModalBackground } from '../../utils/styleUtils';
 
 // --- Modal 1: Request with Reason and Optional Image Paste ---
@@ -17,13 +15,18 @@ interface RequestWithImageModalProps {
     reasonLabel: string;
     icon: string;
     theme: 'primary' | 'danger' | 'warning';
+    showToast?: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
-export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ isOpen, onClose, onSubmit, title, orderNumber, reasonLabel, icon, theme }) => {
+export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ isOpen, onClose, onSubmit, title, orderNumber, reasonLabel, icon, theme, showToast }) => {
     const [reason, setReason] = useState('');
     const [images, setImages] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const bgStyle = useModalBackground();
+
+    useEffect(() => {
+        if (isOpen) setIsSubmitting(false);
+    }, [isOpen]);
 
     const handleImagePaste = useCallback(async (event: React.ClipboardEvent<HTMLDivElement>) => {
         const items = event.clipboardData.items;
@@ -34,13 +37,14 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                 if (blob) {
                     const file = new File([blob], "pasted_image.jpg", { type: blob.type });
                     try {
-                        const compressedFile = await compressImage(file);
+                        // ADMIN REQUEST: Disable compression for pasted images
+                        // const compressedFile = await compressImage(file);
                         const reader = new FileReader();
                         reader.onload = (e) => setImages(prev => [...prev, e.target?.result as string]);
-                        reader.readAsDataURL(compressedFile);
+                        reader.readAsDataURL(file);
                     } catch (err) {
-                        console.error("Paste compression failed", err);
-                        // Fallback to original blob if compression fails
+                        console.error("Paste handling failed", err);
+                        // Fallback
                         const reader = new FileReader();
                         reader.onload = (e) => setImages(prev => [...prev, e.target?.result as string]);
                         reader.readAsDataURL(blob);
@@ -56,7 +60,11 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
 
     const handleSubmit = async () => {
         if (!reason.trim() && reasonLabel.includes('bắt buộc')) {
-            alert('Vui lòng nhập nội dung yêu cầu.');
+            if (showToast) {
+                showToast('Thông tin không hợp lệ', 'Vui lòng nhập nội dung yêu cầu.', 'warning');
+            } else {
+                alert('Vui lòng nhập nội dung yêu cầu.');
+            }
             return;
         }
         setIsSubmitting(true);
@@ -76,7 +84,7 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
     const currentTheme = themeClasses[theme] || themeClasses.primary;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div className="bg-surface-card w-full md:max-w-lg h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <div className={`h-1.5 rounded-t-none md:rounded-t-2xl ${currentTheme.barBg} flex-shrink-0`}></div>
                 <header className="flex items-start justify-between p-3">
@@ -108,13 +116,28 @@ export const RequestWithImageModal: React.FC<RequestWithImageModalProps> = ({ is
                         )}
                     </div>
                 </main>
-                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-none md:rounded-b-2xl border-t border-border-primary flex-shrink-0">
-                    <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
-                    </div>
-                    <div onClick={!isSubmitting ? handleSubmit : undefined} title="Gửi Yêu Cầu" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
-                    </div>
+                <footer className="px-4 py-3 flex justify-end items-center gap-3 bg-slate-50 rounded-none md:rounded-b-2xl border-t border-slate-200/60 flex-shrink-0">
+                    <button
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                        className="px-6 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all disabled:opacity-50"
+                    >
+                        HỦY
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className={`px-6 py-2 rounded-xl text-sm font-black text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 ${currentTheme.barBg} hover:brightness-110 flex items-center justify-center min-w-[120px] h-[40px]`}
+                    >
+                        {isSubmitting ? (
+                            <div className="flex items-center gap-2">
+                                <i className="fas fa-spinner fa-spin"></i>
+                                <span>ĐANG GỬI...</span>
+                            </div>
+                        ) : (
+                            "GỬI YÊU CẦU"
+                        )}
+                    </button>
                 </footer>
             </div>
         </div>
@@ -129,16 +152,21 @@ interface UploadInvoiceModalProps {
     onClose: () => void;
     onSubmit: (file: File) => Promise<boolean>;
     order: Order;
+    showToast?: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
-export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, onClose, onSubmit, order }) => {
+export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, onClose, onSubmit, order, showToast }) => {
     const [file, setFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const bgStyle = useModalBackground();
 
     const handleSubmit = async () => {
         if (!file) {
-            alert('Vui lòng chọn một tệp hóa đơn.');
+            if (showToast) {
+                showToast('Chưa chọn tệp', 'Vui lòng chọn một tệp hóa đơn.', 'warning');
+            } else {
+                alert('Vui lòng chọn một tệp hóa đơn.');
+            }
             return;
         }
         setIsSubmitting(true);
@@ -154,7 +182,7 @@ export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div className="bg-surface-card w-full md:max-w-lg h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <div className="h-1.5 rounded-t-none md:rounded-t-2xl bg-success flex-shrink-0"></div>
                 <header className="flex items-start justify-between p-3">
@@ -176,15 +204,31 @@ export const UploadInvoiceModal: React.FC<UploadInvoiceModalProps> = ({ isOpen, 
                         onFileSelect={setFile}
                         required
                         accept=".pdf,.jpeg,.png,.jpg"
+                        disableCompression={true}
                     />
                 </main>
-                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-none md:rounded-b-2xl border-t border-border-primary flex-shrink-0">
-                    <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
-                    </div>
-                    <div onClick={!isSubmitting && file ? handleSubmit : undefined} title="Tải Lên & Hoàn Tất" className={`cursor-pointer ${(isSubmitting || !file) ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
-                    </div>
+                <footer className="px-4 py-3 flex justify-end items-center gap-3 bg-slate-50 rounded-none md:rounded-b-2xl border-t border-slate-200/60 flex-shrink-0">
+                    <button
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                        className="px-6 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all disabled:opacity-50"
+                    >
+                        HỦY
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || !file}
+                        className={`px-6 py-2 rounded-xl text-sm font-black text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 bg-success hover:brightness-110 flex items-center justify-center min-w-[120px] h-[40px]`}
+                    >
+                        {isSubmitting ? (
+                            <div className="flex items-center gap-2">
+                                <i className="fas fa-spinner fa-spin"></i>
+                                <span>ĐANG TẢI LÊN...</span>
+                            </div>
+                        ) : (
+                            "TẢI LÊN & HOÀN TẤT"
+                        )}
+                    </button>
                 </footer>
             </div>
         </div>
@@ -231,7 +275,7 @@ export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = (
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
             <div className="bg-surface-card w-full md:max-w-md h-full md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
                 <div className="h-1.5 rounded-t-none md:rounded-t-2xl bg-accent-secondary flex-shrink-0"></div>
                 <header className="flex items-start justify-between p-3">
@@ -288,13 +332,28 @@ export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = (
                         />
                     </div>
                 </main>
-                <footer className="px-3 py-2 flex justify-end items-center gap-1.5 bg-surface-ground rounded-none md:rounded-b-2xl border-t border-border-primary flex-shrink-0">
-                    <div onClick={!isSubmitting ? onClose : undefined} title="Hủy" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={noAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
-                    </div>
-                    <div onClick={!isSubmitting ? handleSubmit : undefined} title="Lưu Thay Đổi" className={`cursor-pointer ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-110 transition-transform'}`}>
-                        <lottie-player src={yesAnimationUrl} background="transparent" speed="1" style={{ width: '52px', height: '52px' }} loop autoplay />
-                    </div>
+                <footer className="px-4 py-3 flex justify-end items-center gap-3 bg-slate-50 rounded-none md:rounded-b-2xl border-t border-slate-200/60 flex-shrink-0">
+                    <button
+                        onClick={onClose}
+                        disabled={isSubmitting}
+                        className="px-6 py-2 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all disabled:opacity-50"
+                    >
+                        HỦY
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className={`px-6 py-2 rounded-xl text-sm font-black text-white shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:scale-100 bg-accent-primary hover:brightness-110 flex items-center justify-center min-w-[120px] h-[40px]`}
+                    >
+                        {isSubmitting ? (
+                            <div className="flex items-center gap-2">
+                                <i className="fas fa-spinner fa-spin"></i>
+                                <span>ĐANG LƯU...</span>
+                            </div>
+                        ) : (
+                            "LƯU THAY ĐỔI"
+                        )}
+                    </button>
                 </footer>
             </div>
         </div>

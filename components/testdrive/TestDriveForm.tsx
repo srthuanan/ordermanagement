@@ -6,7 +6,8 @@ import TestDriveFormInputs from './TestDriveFormInputs';
 import TestDrivePreview from './TestDrivePreview';
 import TestDriveHistoryTable from './TestDriveHistoryTable';
 import TestDriveCheckinModal from './TestDriveCheckinModal';
-import Filters, { DropdownFilterConfig } from '../ui/Filters';
+import TabbedFilter from '../ui/TabbedFilter';
+import MultiSelectDropdown from '../ui/MultiSelectDropdown';
 import ActionModal from '../admin/ActionModal';
 import Button from '../ui/Button';
 
@@ -74,16 +75,9 @@ const timeToMinutes = (time: string): number => {
 
 const BUFFER_MINUTES = 15;
 
-const getStatus = (booking: TestDriveBooking): string => {
-    if (booking.odoBefore && booking.odoAfter) return 'Đã hoàn tất';
-    if (booking.odoBefore) return 'Đang lái thử';
-    return 'Chờ Check-in';
-};
-
-const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onOpenImagePreview, currentUser, isAdmin, allTestDrives, setAllTestDrives, isLoading, refetch: fetchSchedule }) => {
+const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onOpenImagePreview, currentUser, isAdmin, allTestDrives, setAllTestDrives, isLoading }) => {
     const [formData, setFormData] = useState<TestDriveBooking>(() => {
-        const user = sessionStorage.getItem('currentConsultant') || '';
-        return { ...initialFormData, tenTuVan: user };
+        return { ...initialFormData, tenTuVan: currentUser || '' };
     });
     const [conflictError, setConflictError] = useState('');
     const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -141,22 +135,20 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
         // This runs whether there are existing bookings or not.
         if (!isLoading && formData.soPhieu === '') {
             const latestSoPhieu = getLatestSoPhieuForCurrentMonth(allTestDrives);
-            const user = sessionStorage.getItem('currentConsultant') || '';
-            setFormData({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) });
+            setFormData(prev => ({ ...prev, tenTuVan: currentUser || '', soPhieu: generateNextSoPhieu(latestSoPhieu) }));
         }
-    }, [isLoading, allTestDrives, formData.soPhieu, generateNextSoPhieu, getLatestSoPhieuForCurrentMonth]);
+    }, [isLoading, allTestDrives, formData.soPhieu, generateNextSoPhieu, getLatestSoPhieuForCurrentMonth, currentUser]);
 
     const handleReset = useCallback(() => {
         const latestSoPhieu = getLatestSoPhieuForCurrentMonth(allTestDrives);
-        const user = sessionStorage.getItem('currentConsultant') || '';
-        setFormData({ ...initialFormData, tenTuVan: user, soPhieu: generateNextSoPhieu(latestSoPhieu) });
+        setFormData({ ...initialFormData, tenTuVan: currentUser || '', soPhieu: generateNextSoPhieu(latestSoPhieu) });
         setSelectedBookingForPreview(null);
         setActiveTab('create');
-    }, [allTestDrives, generateNextSoPhieu, getLatestSoPhieuForCurrentMonth]);
+    }, [allTestDrives, generateNextSoPhieu, getLatestSoPhieuForCurrentMonth, currentUser]);
 
     const triggerPrint = useCallback((bookingData: TestDriveBooking) => {
         setDataForPrinting(bookingData);
-        showToast('Đang chuẩn bị...', 'Vui lòng chờ trong khi tài liệu in đang được tạo.', 'loading');
+//         showToast('Đang chuẩn bị...', 'Vui lòng chờ trong khi tài liệu in đang được tạo.', 'loading');
 
         setTimeout(() => {
             const printContents = document.getElementById('print-container')?.innerHTML;
@@ -201,7 +193,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
             // which is essential for the print CSS rules to apply correctly. By wrapping the
             // contents in a div with the correct ID, we ensure the print styles can target
             // and display the content.
-            iframeDoc.write('<div id="print-container">' + printContents + '</div>');
+            iframeDoc.write('<div id="print-wrapper">' + printContents + '</div>');
             iframeDoc.write('</body></html>');
             iframeDoc.close();
 
@@ -368,7 +360,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
     };
 
     const handleUpdateCheckin = async (payload: any): Promise<boolean> => {
-        showToast('Đang Cập Nhật', 'Vui lòng chờ...', 'loading');
+//         showToast('Đang Cập Nhật', 'Vui lòng chờ...', 'loading');
         try {
             const result = await apiService.updateTestDriveCheckin(payload);
             if (result.status === 'SUCCESS' && result.updatedRecord) {
@@ -396,7 +388,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
 
     const handleDeleteBooking = async (): Promise<boolean> => {
         if (!bookingToDelete) return false;
-        showToast('Đang Xóa', `Đang xóa phiếu ${bookingToDelete.soPhieu}...`, 'loading');
+//         showToast('Đang Xóa', `Đang xóa phiếu ${bookingToDelete.soPhieu}...`, 'loading');
         try {
             const result = await apiService.deleteTestDriveBooking(bookingToDelete.soPhieu);
             if (result.status === 'SUCCESS') {
@@ -463,9 +455,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
         if (historyFilters.car.length > 0) {
             filtered = filtered.filter(b => historyFilters.car.includes(b.loaiXe));
         }
-        if (historyFilters.status.length > 0) {
-            filtered = filtered.filter(b => historyFilters.status.includes(getStatus(b)));
-        }
+        // Status filtering removed - now handled by consultant selection in TestDriveHistoryTable
 
         if (historySortConfig) {
             filtered.sort((a, b) => {
@@ -475,8 +465,8 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                 if (bVal === null || bVal === undefined || bVal === '') return -1;
 
                 if (historySortConfig.key === 'ngayThuXe' || historySortConfig.key === 'thoiGianKhoiHanh') {
-                    const timeA = moment(`${a.ngayThuXe} ${a.thoiGianKhoiHanh}`);
-                    const timeB = moment(`${b.ngayThuXe} ${b.thoiGianKhoiHanh}`);
+                    const timeA = moment(`${a.ngayThuXe} ${a.thoiGianKhoiHanh}`, ["YYYY-MM-DD HH:mm", "DD/MM/YYYY HH:mm"]);
+                    const timeB = moment(`${b.ngayThuXe} ${b.thoiGianKhoiHanh}`, ["YYYY-MM-DD HH:mm", "DD/MM/YYYY HH:mm"]);
                     if (timeA.isBefore(timeB)) return historySortConfig.direction === 'asc' ? -1 : 1;
                     if (timeA.isAfter(timeB)) return historySortConfig.direction === 'asc' ? 1 : -1;
                     return 0;
@@ -491,11 +481,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
     }, [allTestDrives, historyFilters, historySortConfig]);
 
     const uniqueCars = useMemo(() => [...new Set(allTestDrives.map(b => b.loaiXe))].sort(), [allTestDrives]);
-    const uniqueStatuses = ['Chờ Check-in', 'Đang lái thử', 'Đã hoàn tất'];
-    const historyDropdowns: DropdownFilterConfig[] = [
-        { id: 'td-filter-car', key: 'car', label: 'Loại Xe', options: uniqueCars, icon: 'fa-car' },
-        { id: 'td-filter-status', key: 'status', label: 'Trạng Thái', options: uniqueStatuses, icon: 'fa-tag' }
-    ];
+
 
     if (selectedBookingForPreview) {
         return (
@@ -513,9 +499,10 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                 </header>
                 <TestDrivePreview data={selectedBookingForPreview} />
                 <div id="print-container" className="hidden">
-                    <div className="print-page-break-after">
+                    <div>
                         <TestDrivePreview.PhieuLaiThu data={dataForPrinting} />
                     </div>
+                    <div className="page-break" />
                     <div>
                         <TestDrivePreview.GiayCamKet data={dataForPrinting} />
                     </div>
@@ -524,73 +511,98 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
         );
     }
 
+    const historyCarTabs = uniqueCars.map(car => ({
+        id: car,
+        label: car,
+        count: allTestDrives.filter(b => b.loaiXe === car).length
+    }));
+
+    const historyTabs = [
+        { id: 'all', label: 'Tất cả', count: allTestDrives.length },
+        ...historyCarTabs
+    ];
+
+    const activeHistoryCarTab = (historyFilters.car && historyFilters.car.length === 1) ? historyFilters.car[0] : 'all';
+
+    const handleHistoryTabChange = (tabId: string) => {
+        setHistoryFilters(prev => ({ ...prev, car: tabId === 'all' ? [] : [tabId] }));
+    };
+
     return (
-        <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-lg flex flex-col h-full overflow-hidden animate-fade-in-up">
-            <header className="print-hidden flex-shrink-0 flex flex-col md:flex-row items-start md:items-center justify-between mb-4 pb-3 gap-3 border-b border-border-primary/50">
-                <div className="w-full md:w-auto flex items-center border border-border-primary rounded-lg bg-surface-ground p-1">
-                    <Button
-                        onClick={() => setActiveTab('create')}
-                        variant={activeTab === 'create' ? 'secondary' : 'ghost'}
-                        size="sm"
-                        className={`flex-1 md:flex-none whitespace-nowrap ${activeTab === 'create' ? 'bg-white shadow-sm text-accent-primary' : 'text-text-secondary hover:text-text-primary'}`}
-                        leftIcon={<i className="fas fa-edit"></i>}
+        <div className="bg-surface-card p-4 rounded-xl border border-border-primary shadow-lg flex flex-col h-full overflow-hidden">
+            {activeTab === 'history' && (
+                <div className="flex-shrink-0 mb-2">
+                    <TabbedFilter
+                        tabs={historyTabs}
+                        activeTab={activeHistoryCarTab}
+                        onTabChange={handleHistoryTabChange}
+                        searchValue={historyFilters.keyword}
+                        onSearchChange={(val) => setHistoryFilters(prev => ({ ...prev, keyword: val }))}
+                        onReset={() => setHistoryFilters({ keyword: '', dateRange: { start: '', end: '', }, car: [], status: [] })}
+                        canReset={true}
+                        extraActions={
+                            <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 bg-gray-50/50 border border-gray-100 rounded-md px-2 py-1 lg:py-0.5">
+                                    <i className="fas fa-calendar-alt text-accent-primary opacity-60 text-[10px] lg:text-[9px]"></i>
+                                    <input
+                                        type="date"
+                                        className="bg-transparent text-[11px] lg:text-[10px] border-none focus:ring-0 p-0 text-gray-700 w-[95px] lg:w-[85px] font-bold"
+                                        value={historyFilters.dateRange.start}
+                                        onChange={(e) => setHistoryFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, start: e.target.value } }))}
+                                    />
+                                    <span className="text-gray-300 text-[10px]">-</span>
+                                    <input
+                                        type="date"
+                                        className="bg-transparent text-[11px] lg:text-[10px] border-none focus:ring-0 p-0 text-gray-700 w-[95px] lg:w-[85px] font-bold"
+                                        value={historyFilters.dateRange.end}
+                                        onChange={(e) => setHistoryFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, end: e.target.value } }))}
+                                    />
+                                </div>
+                                <Button
+                                    onClick={() => setActiveTab('create')}
+                                    variant="primary"
+                                    className="h-8 lg:h-7 !px-3 lg:!px-2.5 !rounded-md"
+                                    leftIcon={<i className="fas fa-plus text-[10px]"></i>}
+                                >
+                                    <span className="text-[11px] lg:text-[10px] font-bold">Tạo Mới</span>
+                                </Button>
+                            </div>
+                        }
                     >
-                        Tạo Phiếu Mới
-                    </Button>
-                    <Button
-                        onClick={() => setActiveTab('history')}
-                        variant={activeTab === 'history' ? 'secondary' : 'ghost'}
-                        size="sm"
-                        className={`flex-1 md:flex-none whitespace-nowrap ${activeTab === 'history' ? 'bg-white shadow-sm text-accent-primary' : 'text-text-secondary hover:text-text-primary'}`}
-                        leftIcon={<i className="fas fa-list-alt"></i>}
-                    >
-                        Danh sách Lái thử
-                    </Button>
-                </div>
-                <div className="w-full md:w-auto flex items-center justify-end gap-2 flex-1 ml-4">
-                    {activeTab === 'create' && (
-                        <div className="hidden md:flex items-center gap-2">
-                            <Button
-                                onClick={handleReset}
-                                variant="secondary"
-                                size="md"
-                                title="Xóa toàn bộ thông tin đã nhập"
-                                leftIcon={<i className="fas fa-eraser"></i>}
-                            >
-                                Làm Mới
-                            </Button>
-                            <Button
-                                onClick={handleSaveAndPrint}
-                                disabled={!!conflictError || isSubmitting}
-                                isLoading={isSubmitting}
-                                variant="primary"
-                                size="md"
-                                title="Lưu & In văn bản"
-                                leftIcon={!isSubmitting ? <i className="fas fa-print"></i> : undefined}
-                            >
-                                Lưu & In
-                            </Button>
-                        </div>
-                    )}
-                    {activeTab === 'history' && (
-                        <div className="flex-1 w-full">
-                            <Filters
-                                filters={historyFilters}
-                                onFilterChange={(f) => setHistoryFilters(prev => ({ ...prev, ...f }))}
-                                onReset={() => setHistoryFilters({ keyword: '', dateRange: { start: '', end: '' }, car: [], status: [] })}
-                                dropdowns={historyDropdowns}
-                                searchPlaceholder="Tìm SĐT, Tên KH, TVBH, Số phiếu..."
-                                totalCount={processedHistory.length}
-                                onRefresh={() => fetchSchedule()}
-                                isLoading={isLoading}
-                                dateRangeEnabled={true}
-                                plain
+                        {/* Secondary Filters */}
+                        <div className="min-w-[110px] hidden lg:block">
+                            <MultiSelectDropdown
+                                id="car-filter"
+                                label="Dòng xe"
+                                options={uniqueCars}
+                                selectedOptions={historyFilters.car}
+                                onChange={(selected: string[]) => setHistoryFilters(prev => ({ ...prev, car: selected }))}
+                                icon="fa-car"
+                                displayMode="selection"
                                 size="compact"
+                                variant="modern"
+                                searchable={true}
+                                align="right"
                             />
                         </div>
-                    )}
+                        <div className="min-w-[110px]">
+                            <MultiSelectDropdown
+                                id="status-filter"
+                                label="Trạng thái"
+                                options={['Chờ check-in', 'Đang lái thử', 'Hoàn tất', 'Hủy']}
+                                selectedOptions={historyFilters.status}
+                                onChange={(selected: string[]) => setHistoryFilters(prev => ({ ...prev, status: selected }))}
+                                icon="fa-tasks"
+                                displayMode="selection"
+                                size="compact"
+                                variant="modern"
+                                align="right"
+                            />
+                        </div>
+                    </TabbedFilter>
                 </div>
-            </header>
+            )}
+
 
             {activeTab === 'create' && (
                 <div className="flex-grow grid grid-cols-1 lg:grid-cols-5 gap-6 overflow-hidden print-hidden">
@@ -605,32 +617,44 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                         onReset={handleReset}
                         onSave={handleSaveAndPrint}
                         isSubmitting={isSubmitting}
+                        onSwitchToList={() => setActiveTab('history')}
                     />
                     <TestDrivePreview data={formData} />
                 </div>
-            )}
+            )
+            }
 
-            {activeTab === 'history' && (
-                <div className="flex-grow flex flex-col overflow-hidden print-hidden">
-                    {isLoading ? (
-                        <div className="flex items-center justify-center h-full">
-                            <i className="fas fa-spinner fa-spin text-4xl text-accent-primary"></i>
-                        </div>
-                    ) : (
-                        <TestDriveHistoryTable
-                            bookings={processedHistory}
-                            onSelectBooking={setSelectedBookingForPreview}
-                            onUpdateCheckin={handleOpenCheckinModal}
-                            onDelete={setBookingToDelete}
-                            currentUser={currentUser}
-                            isAdmin={isAdmin}
-                            onOpenImagePreview={onOpenImagePreview}
-                            sortConfig={historySortConfig}
-                            onSort={(key) => setHistorySortConfig(prev => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))}
-                        />
-                    )}
-                </div>
-            )}
+            {
+                activeTab === 'history' && (
+                    <div className="flex-grow flex flex-col overflow-hidden print-hidden">
+                        {isLoading && allTestDrives.length === 0 ? (
+                            <div className="bg-white/50 h-full rounded-lg overflow-hidden divide-y divide-border-secondary">
+                                {Array.from({ length: 8 }).map((_, i) => (
+                                    <div key={i} className="p-4 flex items-center justify-between animate-pulse">
+                                        <div className="flex-1 space-y-2">
+                                            <div className="skeleton-item h-4 w-1/3 rounded-md"></div>
+                                            <div className="skeleton-item h-3 w-1/2 rounded-md"></div>
+                                        </div>
+                                        <div className="skeleton-item h-8 w-24 rounded-lg"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <TestDriveHistoryTable
+                                bookings={processedHistory}
+                                onSelectBooking={setSelectedBookingForPreview}
+                                onUpdateCheckin={handleOpenCheckinModal}
+                                onDelete={setBookingToDelete}
+                                currentUser={currentUser}
+                                isAdmin={isAdmin}
+                                onOpenImagePreview={onOpenImagePreview}
+                                sortConfig={historySortConfig}
+                                onSort={(key) => setHistorySortConfig(prev => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))}
+                            />
+                        )}
+                    </div>
+                )
+            }
 
             <div id="print-container" className="hidden">
                 <div className="print-page-break-after">

@@ -1,9 +1,5 @@
 import React from 'react';
-import modal1 from '../pictures/modal1.png';
-import modal2 from '../pictures/modal2.png';
-import modal3 from '../pictures/modal3.png';
-import modal4 from '../pictures/modal4.png';
-import modal5 from '../pictures/modal5.png';
+
 
 // Centralized helper function to apply dynamic styles based on exterior color text.
 export const getExteriorColorStyle = (exteriorValue: string | undefined): React.CSSProperties => {
@@ -49,7 +45,7 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
     if (lowerExteriorValue.includes("jet black_mystery bronze roof (2911)")) return isDarkMode ? { color: 'white' } : { color: 'white', ...outlineStyle };
     if (lowerExteriorValue.includes("champagne creme_infinity blanc roof (1823)")) return { color: 'var(--exterior-yellow-text)' };
     if (lowerExteriorValue.includes("de sat silver ind12007 (ce17)")) return { color: 'var(--exterior-grey-text)' };
-    if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet")) return { color: 'var(--exterior-red-text)' };
+    if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet") || lowerExteriorValue.includes("ruby")) return { color: 'var(--exterior-red-text)' };
     if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) return { color: 'var(--exterior-pink-text)' };
     if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) return { color: 'var(--exterior-blue-text)' };
     if (lowerExteriorValue.includes("deep ocean")) return isDarkMode ? { color: 'white' } : { color: 'white', ...outlineStyle };
@@ -60,6 +56,8 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
     if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) return { color: 'var(--exterior-white-text)' };
     if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) return { color: 'var(--exterior-grey-text)' };
     if (lowerExteriorValue.includes("mystery bronz")) return { color: 'var(--exterior-bronze-text)' };
+    if (lowerExteriorValue.includes("pink gold (ce2k)")) return { color: 'var(--exterior-pink-text)' };
+    if (lowerExteriorValue.includes("solar ruby (ce2q)")) return { color: 'var(--exterior-red-text)' };
 
     return {};
 };
@@ -76,6 +74,9 @@ export const getInteriorColorStyle = (interiorValue: string | undefined): React.
     }
     if (lowerInteriorValue.includes("beige")) {
         return { color: '#B45309' }; // amber-700, a dark beige for readability
+    }
+    if (lowerInteriorValue.includes("grey")) {
+        return { color: '#4B5563' }; // gray-600
     }
 
     return {};
@@ -101,10 +102,10 @@ const colorMap: { [key: string]: string } = {
 export const getBackgroundColorStyle = (colorName: string | undefined): React.CSSProperties => {
     if (!colorName) return {};
     const lowerColor = colorName.toLowerCase();
-    
+
     // Find a matching key in our map
     const matchedKey = Object.keys(colorMap).find(key => lowerColor.includes(key));
-    
+
     if (matchedKey) {
         const hex = colorMap[matchedKey];
         const style: React.CSSProperties = { backgroundColor: hex };
@@ -165,15 +166,18 @@ export const getCarImage = (model?: string, exteriorColor?: string): string => {
     const modelKey = model ? (modelNameToImageKeyMap[model] || model.toLowerCase().replace(/\s+/g, '')) : 'default';
     const lowerExterior = exteriorColor?.toLowerCase() || '';
 
+    // Use Supabase Storage for car images
+    const supabaseStorageUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/car-images/`;
+
     // 1. Prioritize finding a unique code in parentheses.
     const codeMatch = lowerExterior.match(/\(([^)]+)\)/);
     if (codeMatch && codeMatch[1]) {
         const colorCodeKey = codeMatch[1].trim().toLowerCase();
         if (colorCodeKey) {
-            return `pictures/${modelKey}-${colorCodeKey}.png`;
+            return `${supabaseStorageUrl}${modelKey}-${colorCodeKey}.webp`;
         }
     }
-    
+
     // 2. Fallback to keyword-based mapping if no code is found.
     let colorKey = '';
     const sortedColorKeys = Object.keys(colorNameToImageKeyMap).sort((a, b) => b.length - a.length);
@@ -183,9 +187,9 @@ export const getCarImage = (model?: string, exteriorColor?: string): string => {
             break;
         }
     }
-    
+
     if (colorKey) {
-        return `pictures/${modelKey}-${colorKey}.png`;
+        return `${supabaseStorageUrl}${modelKey}-${colorKey}.webp`;
     }
 
     // 3. If no specific color is found by either method, return the model's default image path.
@@ -196,11 +200,12 @@ export const getCarImage = (model?: string, exteriorColor?: string): string => {
 /**
  * Returns the path to the default image for a given car model.
  * @param model - The car's model name.
- * @returns The path to the model's default image (e.g., "pictures/vf6-default.png").
+ * @returns The path to the model's default image (e.g., "pictures/vf6-default.webp").
  */
 export const getModelDefaultImage = (model?: string): string => {
+    const supabaseStorageUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/car-images/`;
     const modelKey = model ? (modelNameToImageKeyMap[model] || model.toLowerCase().replace(/\s+/g, '')) : 'default';
-    return `pictures/${modelKey}-default.png`;
+    return `${supabaseStorageUrl}${modelKey}-default.webp`;
 };
 
 /**
@@ -208,33 +213,29 @@ export const getModelDefaultImage = (model?: string): string => {
  * @returns The path to the global default image.
  */
 export const getGlobalDefaultImage = (): string => {
-    return 'pictures/default.png'; // A generic placeholder image
+    const supabaseStorageUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/car-images/`;
+    return `${supabaseStorageUrl}default.webp`;
 };
 
 
 const avatarColors = [
-  '#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#10b981',
-  '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
-  '#ec4899', '#f43f5e'
+    '#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#10b981',
+    '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef',
+    '#ec4899', '#f43f5e'
 ];
 
 export const generateColorFromName = (name: string): string => {
-  if (!name) return avatarColors[0];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  const index = Math.abs(hash % avatarColors.length);
-  return avatarColors[index];
+    if (!name) return avatarColors[0];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    const index = Math.abs(hash % avatarColors.length);
+    return avatarColors[index];
 };
 
 // Hook for random modal background
 export const useModalBackground = () => {
-    const bg = React.useMemo(() => {
-        const images = [modal1, modal2, modal3, modal4, modal5];
-        const randomImg = images[Math.floor(Math.random() * images.length)];
-        return { '--modal-bg-image': `url(${randomImg})` } as React.CSSProperties;
-    }, []);
-    return bg;
+    return {} as React.CSSProperties;
 };

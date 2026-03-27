@@ -1,6 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
 import Button from './Button';
-import { compressImage } from '../../services/ocrService';
 
 interface FileUploadProps {
   onFileSelect: (file: File | null) => void;
@@ -14,7 +13,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [isCompressing, setIsCompressing] = useState(false);
+
 
 
   const handleFile = useCallback(async (file: File | null) => {
@@ -29,25 +28,15 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
         return;
       }
 
-      setIsCompressing(true);
-      try {
-        const compressedFile = await compressImage(file);
+      // skip compression as requested
+      setSelectedFile(file);
+      onFileSelect(file); // This triggers the OCR in the parent component
 
-        setSelectedFile(compressedFile);
-        onFileSelect(compressedFile); // This triggers the OCR in the parent component
-
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPreviewUrl(reader.result as string);
-        };
-        reader.readAsDataURL(compressedFile);
-
-      } catch (error) {
-        console.error("Image compression failed:", error);
-        showToast('Lỗi Nén Ảnh', 'Không thể xử lý ảnh của bạn. Vui lòng thử ảnh khác.', 'error');
-      } finally {
-        setIsCompressing(false);
-      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   }, [onFileSelect, showToast]);
 
@@ -145,9 +134,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isProcessing, ocr
           </>
         )}
       </div>
-      {(isCompressing || isProcessing || ocrStatus) && (
+      {(isProcessing || ocrStatus) && (
         <p className={`mt-2 text-sm text-center italic ${getOcrStatusClass()} `}>
-          {isCompressing ? <><i className="fas fa-spinner fa-spin mr-2"></i>Đang nén ảnh...</> : (isProcessing ? <><i className="fas fa-spinner fa-spin mr-2"></i>{ocrStatus}</> : ocrStatus)}
+          {isProcessing ? <><i className="fas fa-spinner fa-spin mr-2"></i>{ocrStatus}</> : ocrStatus}
         </p>
       )}
     </div>

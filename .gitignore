@@ -10,7 +10,16 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+release
+out
+.venv
+price
 *.local
+.env
+.env.*
+*.exe
+*.msi
+*.zip
 
 # Editor directories and files
 .vscode/*

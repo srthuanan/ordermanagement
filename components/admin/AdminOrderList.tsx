@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import moment from 'moment';
 import { Order, SortConfig, StockVehicle, ActionType } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
+import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 
 interface AdminOrderListProps {
     orders: Order[];
@@ -17,29 +18,27 @@ interface AdminOrderListProps {
     onShowSuggestions?: (order: Order, cars: StockVehicle[]) => void;
     onOpenFilePreview: (url: string, label: string) => void;
     onUpdateInvoiceDetails?: (orderNumber: string, data: { engineNumber: string; policy: string; commission: string; vpoint: string }) => Promise<boolean>;
+    processingId?: string | null;
 }
 
-const CopyableField: React.FC<{ text: string; showToast: Function; className?: string; label?: string; wrap?: boolean }> = ({ text, showToast, className, label, wrap = false }) => {
+const CopyableField: React.FC<{ text: string; showToast?: Function; className?: string; label?: string; wrap?: boolean }> = ({ text, className, label, wrap = false }) => {
+    const copyWithFeedback = useCopyFeedback();
     if (!text || text === 'N/A') {
         return <div className={className}>{label ? `${label}: ` : ''}N/A</div>;
     }
-
-    const handleCopy = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        navigator.clipboard.writeText(text).then(() => {
-            showToast('Đã sao chép!', `${text} đã được sao chép.`, 'success', 2000);
-        }).catch(() => showToast('Lỗi', 'Không thể sao chép.', 'error'));
-    };
-
     return (
-        <div className={`cursor-pointer ${className}`} title={`Click để sao chép: ${text}`} onClick={handleCopy}>
+        <div
+            className={`cursor-pointer ${className}`}
+            title={`Click để sao chép: ${text}`}
+            onClick={(e) => { e.stopPropagation(); copyWithFeedback(text, e); }}
+        >
             <span>{label ? `${label}: ` : ''}</span>
             <span className={wrap ? 'break-words' : 'truncate'}>{text}</span>
         </div>
     );
 };
 
-const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pending' | 'paired', onAction: (type: ActionType) => void, onToggle: (isOpen: boolean) => void }> = ({ status, viewType, onAction, onToggle }) => {
+const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pending' | 'paired', onAction: (type: ActionType) => void, onToggle: (isOpen: boolean) => void, isProcessing?: boolean }> = ({ status, viewType, onAction, onToggle, isProcessing }) => {
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = React.useRef<HTMLDivElement>(null);
 
@@ -68,7 +67,6 @@ const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pendin
                 { type: 'pendingSignature', label: 'Chờ Ký HĐ', icon: 'fa-signature', condition: s === 'đã phê duyệt' },
                 { type: 'uploadInvoice', label: 'Tải Lên HĐ', icon: 'fa-upload', condition: s === 'chờ ký hóa đơn' },
                 { type: 'resend', label: 'Gửi lại Email', icon: 'fa-paper-plane', condition: s === 'yêu cầu bổ sung' || s === 'đã xuất hóa đơn' },
-                { type: 'cancel', label: 'Hủy Yêu Cầu', icon: 'fa-trash-alt', isDanger: true, condition: s !== 'đã xuất hóa đơn' && s !== 'đã hủy' },
             ]
             : viewType === 'pending'
                 ? [
@@ -91,7 +89,9 @@ const AdminActionMenu: React.FC<{ status: string; viewType: 'invoices' | 'pendin
 
     return (
         <div className="relative" ref={menuRef} onClick={e => e.stopPropagation()}>
-            <button onClick={(e) => { e.stopPropagation(); setOpenState(!isOpen) }} className="w-8 h-8 rounded-full hover:bg-surface-hover flex items-center justify-center"><i className="fas fa-ellipsis-h text-text-secondary"></i></button>
+            <button onClick={(e) => { e.stopPropagation(); !isProcessing && setOpenState(!isOpen) }} className={`w-8 h-8 rounded-full ${isProcessing ? 'bg-surface-ground cursor-wait' : 'hover:bg-surface-hover'} flex items-center justify-center`}>
+                {isProcessing ? <i className="fas fa-spinner fa-spin text-accent-primary"></i> : <i className="fas fa-ellipsis-h text-text-secondary"></i>}
+            </button>
 
             {isOpen && (
                 <div className="absolute right-0 mt-1 w-48 bg-surface-card border border-border-secondary rounded-lg shadow-2xl z-20 p-0.5 animate-fade-in-scale-up" style={{ animationDuration: '150ms' }}>
@@ -120,15 +120,24 @@ const AdminOrderCard: React.FC<{
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     suggestions?: Map<string, StockVehicle[]>;
     onShowSuggestions?: (order: Order, cars: StockVehicle[]) => void;
-}> = ({ order, index, viewType, selectedRows, onToggleRow, onAction, showToast, suggestions, onShowSuggestions }) => {
+    processingId?: string | null;
+}> = ({ order, index, viewType, selectedRows, onToggleRow, onAction, showToast, suggestions, onShowSuggestions, processingId }) => {
     const orderNumber = order['Số đơn hàng'];
     const status = (order as any)['Trạng thái xử lý'] || order['Kết quả'] || 'N/A';
     const matchingCars = suggestions?.get(orderNumber);
     const isSelected = selectedRows.has(orderNumber);
+    const isProcessing = processingId === orderNumber;
 
     const handleActionInternal = (type: ActionType) => {
         onAction(type, order);
     };
+
+    let daysSinceMatched = null;
+    if (order["Thời gian ghép"]) {
+        const mDate = moment(order["Thời gian ghép"]);
+        const diff = moment().diff(mDate, 'days');
+        daysSinceMatched = Math.max(0, diff);
+    }
 
     return (
         <div
@@ -170,9 +179,15 @@ const AdminOrderCard: React.FC<{
                         </div>
                     </div>
                     {viewType === 'paired' && (
-                        <div className="mt-1.5 pt-1.5 border-t border-border-secondary/50 flex justify-between items-center">
-                            <span className="text-[10px] text-text-secondary uppercase font-bold">VIN</span>
-                            <CopyableField text={order.VIN || ''} showToast={showToast} className="font-mono font-bold text-accent-primary text-xs" />
+                        <div className="mt-1.5 pt-1.5 border-t border-border-secondary/50 space-y-1">
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] text-text-secondary uppercase font-bold tracking-wider">VIN</span>
+                                <CopyableField text={order.VIN || ''} showToast={showToast} className="font-mono font-bold text-accent-primary text-[11px]" />
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] text-text-secondary uppercase font-bold tracking-wider">Số Máy</span>
+                                <CopyableField text={order['Số động cơ'] || ''} showToast={showToast} className="font-mono font-bold text-slate-600 text-[11px]" />
+                            </div>
                         </div>
                     )}
                 </div>
@@ -199,9 +214,17 @@ const AdminOrderCard: React.FC<{
                                     <i className="fas fa-money-bill-wave text-text-placeholder w-3"></i>
                                     <span>{order["Ngày cọc"] ? moment(order["Ngày cọc"]).format('DD/MM') : '--'}</span>
                                 </div>
-                                <div className="flex items-center gap-1.5" title="Ngày ghép">
-                                    <i className="fas fa-link text-text-placeholder w-3"></i>
-                                    <span>{order["Thời gian ghép"] ? moment(order["Thời gian ghép"]).format('DD/MM') : '--'}</span>
+                                <div className="flex items-center gap-2" title="Số ngày ghép">
+                                    {daysSinceMatched !== null && daysSinceMatched > 0 ? (
+                                        <div className={`flex items-center gap-1.5 px-1.5 rounded text-[11px] font-medium ${daysSinceMatched >= 15 ? 'bg-danger/10 text-danger' : daysSinceMatched >= 7 ? 'bg-warning/10 text-warning-dark' : 'bg-success/10 text-success'}`}>
+                                            <i className="fas fa-clock w-2"></i> {daysSinceMatched} ngày
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-1.5 text-text-secondary pr-1">
+                                            <i className="fas fa-link text-text-placeholder w-3"></i>
+                                            <span>{order["Thời gian ghép"] ? moment(order["Thời gian ghép"]).format('DD/MM') : '--'}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </>
                         )}
@@ -217,7 +240,7 @@ const AdminOrderCard: React.FC<{
                                 <i className="fas fa-lightbulb"></i>
                             </button>
                         )}
-                        <AdminActionMenu status={status} viewType={viewType} onAction={handleActionInternal} onToggle={() => { }} />
+                        <AdminActionMenu status={status} viewType={viewType} onAction={handleActionInternal} onToggle={() => { }} isProcessing={isProcessing} />
                     </div>
                 </div>
             </div>
@@ -225,7 +248,7 @@ const AdminOrderCard: React.FC<{
     );
 };
 
-const AdminOrderList: React.FC<AdminOrderListProps> = ({ orders, viewType, sortConfig, onSort, selectedRows, onToggleRow, onToggleAllRows, onAction, showToast, suggestions, onShowSuggestions }) => {
+const AdminOrderList: React.FC<AdminOrderListProps> = ({ orders, viewType, sortConfig, onSort, selectedRows, onToggleRow, onToggleAllRows, onAction, showToast, suggestions, onShowSuggestions, processingId }) => {
     const isAllSelected = orders.length > 0 && selectedRows.size === orders.length;
 
     const sortOptions = [
@@ -277,9 +300,14 @@ const AdminOrderList: React.FC<AdminOrderListProps> = ({ orders, viewType, sortC
             {/* Grid Content */}
             <div className="flex-1 overflow-y-auto p-3 custom-scrollbar bg-surface-ground">
                 {orders.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-64 text-text-placeholder">
-                        <i className="fas fa-box-open text-4xl mb-3 opacity-50"></i>
-                        <p>Không có đơn hàng nào</p>
+                    <div className="flex flex-col items-center justify-center py-20 px-4 w-full h-full bg-slate-50 rounded-2xl">
+                        <div className="relative w-20 h-20 bg-white border border-gray-100 shadow-sm rounded-full flex items-center justify-center mb-5">
+                            <div className="absolute inset-0 border border-gray-200/60 rounded-full transform scale-110"></div>
+                            <div className="absolute inset-0 border border-gray-100 rounded-full transform scale-125"></div>
+                            <i className="fas fa-file-invoice text-gray-300 text-3xl"></i>
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-600 mb-1 tracking-tight">Trống Không!</h3>
+                        <p className="text-xs text-gray-400 max-w-xs text-center">Không có đơn hàng nào tại đây.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -295,6 +323,7 @@ const AdminOrderList: React.FC<AdminOrderListProps> = ({ orders, viewType, sortC
                                 showToast={showToast}
                                 suggestions={suggestions}
                                 onShowSuggestions={onShowSuggestions}
+                                processingId={processingId}
                             />
                         ))}
                     </div>

@@ -4,7 +4,6 @@ import { TestDriveBooking } from '../../types';
 import moment from 'moment';
 import Button from '../ui/Button';
 
-
 interface InputFieldProps {
     name: keyof TestDriveBooking;
     label: string;
@@ -16,13 +15,14 @@ interface InputFieldProps {
     readOnly?: boolean;
     pattern?: string;
     title?: string;
+    className?: string;
 }
 
-const InputField: React.FC<InputFieldProps> = ({ name, label, value, onChange, type = "text", placeholder, required, readOnly, pattern, title }) => (
-    <div>
-        <label htmlFor={String(name)} className="block text-sm font-medium text-text-secondary">
+const InputField: React.FC<InputFieldProps> = ({ name, label, value, onChange, type = "text", placeholder, required, readOnly, pattern, title, className = "" }) => (
+    <div className={className}>
+        <label htmlFor={String(name)} className="block text-[11px] font-medium text-text-secondary mb-0.5 whitespace-nowrap">
             {label}
-            {required && <span className="text-danger ml-1">*</span>}
+            {required && <span className="text-danger ml-0.5">*</span>}
         </label>
         <input
             type={type}
@@ -34,7 +34,7 @@ const InputField: React.FC<InputFieldProps> = ({ name, label, value, onChange, t
             readOnly={readOnly}
             pattern={pattern}
             title={title}
-            className={`mt-1 block w-full futuristic-input p-2 text-sm ${readOnly ? 'bg-surface-input cursor-not-allowed' : ''}`}
+            className={`block w-full futuristic-input px-2.5 py-1.5 text-sm rounded-lg border-border-secondary focus:border-accent-primary focus:ring-1 focus:ring-accent-primary bg-surface-ground ${readOnly ? 'bg-surface-input cursor-not-allowed text-text-secondary' : 'text-text-primary'} h-9 transition-all`}
         />
     </div>
 );
@@ -46,55 +46,48 @@ interface TextAreaFieldProps {
     onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
     placeholder?: string;
     required?: boolean;
+    className?: string;
 }
 
-const TextAreaField: React.FC<TextAreaFieldProps> = ({ name, label, value, onChange, placeholder, required }) => (
-    <div>
-        <label htmlFor={String(name)} className="block text-sm font-medium text-text-secondary">
+const TextAreaField: React.FC<TextAreaFieldProps> = ({ name, label, value, onChange, placeholder, required, className = "" }) => (
+    <div className={`flex flex-col ${className}`}>
+        <label htmlFor={String(name)} className="block text-[11px] font-medium text-text-secondary mb-0.5 whitespace-nowrap">
             {label}
-            {required && <span className="text-danger ml-1">*</span>}
+            {required && <span className="text-danger ml-0.5">*</span>}
         </label>
-        <textarea name={String(name)} id={String(name)} value={value} onChange={onChange} placeholder={placeholder} className="mt-1 block w-full futuristic-input p-2 text-sm" rows={2} />
+        <textarea
+            name={String(name)}
+            id={String(name)}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            className="block w-full flex-grow futuristic-input px-2.5 py-2 text-sm rounded-lg border-border-secondary resize-none bg-surface-ground leading-tight focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all h-full"
+        />
     </div>
 );
 
 
 const timeToMinutes = (time: string): number => {
     if (!time) return 0;
-
-    // Handle full ISO/Date string from Google Sheets
     if (time.includes('T') || time.includes(' ')) {
         const date = moment(time);
-        if (date.isValid()) {
-            return date.hour() * 60 + date.minute();
-        }
+        if (date.isValid()) return date.hour() * 60 + date.minute();
     }
-
-    // Handle HH:mm format from input
     const parts = time.split(':');
     if (parts.length >= 2) {
         const hours = parseInt(parts[0], 10);
         const minutes = parseInt(parts[1], 10);
-        if (!isNaN(hours) && !isNaN(minutes)) {
-            return hours * 60 + minutes;
-        }
+        if (!isNaN(hours) && !isNaN(minutes)) return hours * 60 + minutes;
     }
-
-    return 0; // Fallback
+    return 0;
 };
 
 const formatDisplayTime = (timeStr: string): string => {
     if (!timeStr) return '';
-    // Handle HH:mm format directly
-    if (/^\d{2}:\d{2}$/.test(timeStr)) {
-        return timeStr;
-    }
-    // Handle full ISO/Date string from Google Sheets
+    if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr;
     const time = moment(timeStr);
-    if (time.isValid()) {
-        return time.format('HH:mm');
-    }
-    return timeStr; // Fallback
+    if (time.isValid()) return time.format('HH:mm');
+    return timeStr;
 };
 
 const BUFFER_MINUTES = 15;
@@ -116,40 +109,31 @@ const Timeline: React.FC<{
         return { start, end };
     }, [formData.thoiGianKhoiHanh, formData.thoiGianTroVe]);
 
-    if (!formData.ngayThuXe || !formData.loaiXe) {
-        return <div className="p-4 text-center bg-surface-ground rounded-lg text-sm text-text-secondary">Vui lòng chọn ngày và loại xe để xem lịch.</div>;
-    }
-
     return (
-        <div className="space-y-2">
-            <div className="relative bg-white h-10 rounded shadow-inner-sm border border-border-secondary overflow-hidden">
-                {/* Booked slots with buffers */}
+        <div className="space-y-1 mt-1">
+            <div className="relative bg-white h-7 rounded-md shadow-inner border border-border-secondary overflow-hidden">
                 {bookings.map(booking => {
                     const start = timeToMinutes(booking.thoiGianKhoiHanh);
                     const end = timeToMinutes(booking.thoiGianTroVe);
-
                     const bufferStart = Math.max(dayStartMinutes, start - BUFFER_MINUTES);
                     const bufferEnd = Math.min(dayEndMinutes, end + BUFFER_MINUTES);
-
                     const left = ((bufferStart - dayStartMinutes) / totalDayMinutes) * 100;
                     const width = ((bufferEnd - bufferStart) / totalDayMinutes) * 100;
-
                     const actualLeft = ((start - bufferStart) / (bufferEnd - bufferStart)) * 100;
                     const actualWidth = ((end - start) / (bufferEnd - bufferStart)) * 100;
 
                     return (
                         <div key={booking.soPhieu}
-                            className="absolute h-full group"
+                            className="absolute h-full group top-0"
                             style={{ left: `${left}%`, width: `${width}%` }}
                             title={`Đã đặt: ${formatDisplayTime(booking.thoiGianKhoiHanh)} - ${formatDisplayTime(booking.thoiGianTroVe)}\nKH: ${booking.tenKhachHang}`}>
-                            <div className="absolute inset-0 bg-slate-300/60 rounded"></div>
-                            <div className="absolute h-full bg-slate-400/80 border-x border-slate-500" style={{ left: `${actualLeft}%`, width: `${actualWidth}%` }}></div>
+                            <div className="absolute inset-0 bg-slate-200/50"></div>
+                            <div className="absolute h-full bg-slate-400/80 border-x border-slate-500 top-0 cursor-not-allowed" style={{ left: `${actualLeft}%`, width: `${actualWidth}%` }}></div>
                         </div>
                     );
                 })}
-                {/* Current selection */}
                 {currentSelection && (
-                    <div className={`absolute h-full rounded border-2 z-10 ${conflictError ? 'bg-danger/50 border-danger' : 'bg-success/50 border-success'}`}
+                    <div className={`absolute h-full top-0 border-2 z-10 transition-all duration-300 ${conflictError ? 'bg-danger/20 border-danger' : 'bg-success/20 border-success'}`}
                         style={{
                             left: `${((currentSelection.start - dayStartMinutes) / totalDayMinutes) * 100}%`,
                             width: `${((currentSelection.end - currentSelection.start) / totalDayMinutes) * 100}%`
@@ -157,9 +141,8 @@ const Timeline: React.FC<{
                     </div>
                 )}
             </div>
-            {/* Time markers */}
-            <div className="flex justify-between text-xs text-text-secondary px-1">
-                <span>8:00</span><span>10:00</span><span>12:00</span><span>14:00</span><span>16:00</span><span>18:00</span><span>20:00</span>
+            <div className="flex justify-between text-[10px] text-text-secondary px-0.5 leading-none font-medium">
+                <span>08:00</span><span>10:00</span><span>12:00</span><span>14:00</span><span>16:00</span><span>18:00</span><span>20:00</span>
             </div>
         </div>
     );
@@ -177,109 +160,166 @@ interface TestDriveFormInputsProps {
     onReset: () => void;
     onSave: () => void;
     isSubmitting: boolean;
+    onSwitchToList: () => void;
 }
 
-const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, handleInputChange, handleRadioChange, conflictError, scheduleForSelectedCar, suggestions, onSuggestionClick, onReset, onSave, isSubmitting }) => {
+const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, handleInputChange, handleRadioChange, conflictError, scheduleForSelectedCar, suggestions, onSuggestionClick, onReset, onSave, isSubmitting, onSwitchToList }) => {
     return (
-        <aside className="lg:col-span-2 print-hidden overflow-y-auto pr-4 space-y-5">
-            <section>
-                <div className="flex items-center justify-between border-b border-border-primary pb-2 mb-3">
-                    <h3 className="font-semibold text-accent-primary text-base">Thông tin Lịch Hẹn</h3>
-                    <div className="flex items-center gap-2 md:hidden">
+        <aside className="lg:col-span-2 print-hidden h-full overflow-hidden flex flex-col">
+            <div className="bg-surface-card rounded-xl flex flex-col h-full overflow-hidden shadow-sm border border-border-primary/50">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-border-primary/50 p-2.5 bg-surface-ground/30 flex-shrink-0">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-accent-primary/10 flex items-center justify-center">
+                            <i className="fas fa-steering-wheel text-accent-primary text-sm"></i>
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-text-primary text-sm whitespace-nowrap leading-none">Thông Tin Lái Thử</h3>
+                            {formData.tenTuVan && <p className="text-[10px] text-text-secondary mt-0.5"><i className="fas fa-user-tie mr-1"></i>{formData.tenTuVan}</p>}
+                        </div>
+                    </div>
+
+                    <div className="flex bg-surface-ground p-1 rounded-lg border border-border-secondary/50 shadow-sm">
                         <Button
                             onClick={onReset}
-                            variant="secondary"
+                            variant="ghost"
                             size="sm"
-                            className="!py-1 !px-2 text-xs !h-auto"
-                            leftIcon={<i className="fas fa-undo"></i>}
+                            className="text-[11px] font-medium text-text-secondary hover:bg-white hover:text-text-primary px-2.5 py-1 rounded-md h-7"
+                            leftIcon={<i className="fas fa-sync-alt text-[10px]"></i>}
                         >
                             Làm Mới
                         </Button>
+                        <div className="w-px bg-border-secondary/50 mx-1 h-3 self-center"></div>
                         <Button
                             onClick={onSave}
                             disabled={!!conflictError || isSubmitting}
                             isLoading={isSubmitting}
                             variant="primary"
                             size="sm"
-                            className="!py-1 !px-2 text-xs !h-auto"
-                            leftIcon={!isSubmitting ? <i className="fas fa-save"></i> : undefined}
+                            className={`text-[11px] font-bold px-2.5 py-1 rounded-md h-7 shadow-sm ${!!conflictError ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            leftIcon={!isSubmitting ? <i className="fas fa-save text-[10px]"></i> : undefined}
                         >
                             Lưu & In
                         </Button>
+                        <div className="w-px bg-border-secondary/50 mx-1 h-3 self-center"></div>
+                        <Button
+                            onClick={onSwitchToList}
+                            variant="ghost"
+                            size="sm"
+                            className="text-[11px] font-medium text-text-secondary hover:bg-white hover:text-text-primary px-2.5 py-1 rounded-md h-7"
+                            leftIcon={<i className="fas fa-list text-[10px]"></i>}
+                        >
+                            Danh Sách
+                        </Button>
                     </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-                    <InputField name="ngayThuXe" label="Ngày thử xe / Ngày cam kết" type="date" value={formData.ngayThuXe} onChange={handleInputChange} required />
-                    <InputField name="tenTuVan" label="Tư vấn bán hàng" value={formData.tenTuVan} onChange={() => { }} readOnly />
-                    <div className="sm:col-span-2">
-                        <label htmlFor="loaiXe" className="block text-sm font-medium text-text-secondary">Loại xe<span className="text-danger ml-1">*</span></label>
-                        <select name="loaiXe" id="loaiXe" value={formData.loaiXe} onChange={handleInputChange} className="mt-1 block w-full futuristic-input p-2 text-sm">
-                            <option value="" disabled>Chọn loại xe</option>
-                            {Object.keys(versionsMap).map(model => (<option key={model} value={model}>{model}</option>))}
-                        </select>
-                    </div>
 
-                    <div className="sm:col-span-2 pt-2">
+                {/* Content - Removed overflow-y-auto to prevent scrollbar, uses flex to fit */}
+                <div className="p-3 overflow-hidden flex-grow flex flex-col gap-3">
+                    {/* SECTION 1: LỊCH TRÌNH - Flex shrink allowed but minimized */}
+                    <div className="bg-surface-ground/50 rounded-xl p-3 border border-border-secondary/30 shadow-sm flex-shrink-0">
+                        <h4 className="text-[11px] font-bold text-accent-primary uppercase tracking-wider mb-2 border-b border-border-secondary/30 pb-0.5 flex items-center">
+                            <i className="fas fa-calendar-alt mr-1.5 opacity-70"></i>Lịch Trình & Xe
+                        </h4>
+
+                        <div className="grid grid-cols-2 gap-3 mb-2">
+                            <InputField name="ngayThuXe" label="Ngày lái thử" type="date" value={formData.ngayThuXe} onChange={handleInputChange} required />
+                            <div>
+                                <label htmlFor="loaiXe" className="block text-[11px] font-medium text-text-secondary mb-0.5 whitespace-nowrap">Loại xe <span className="text-danger ml-0.5">*</span></label>
+                                <select name="loaiXe" id="loaiXe" value={formData.loaiXe} onChange={handleInputChange} className="block w-full futuristic-input px-2.5 py-1.5 text-sm rounded-lg border-border-secondary bg-surface-ground h-9 transition-all focus:border-accent-primary focus:ring-1 focus:ring-accent-primary">
+                                    <option value="" disabled>Chọn xe</option>
+                                    {Object.keys(versionsMap).map(model => (<option key={model} value={model}>{model}</option>))}
+                                </select>
+                            </div>
+                        </div>
+
                         <Timeline bookings={scheduleForSelectedCar} formData={formData} conflictError={conflictError} />
-                    </div>
 
-                    <InputField name="thoiGianKhoiHanh" label="Giờ khởi hành" type="time" value={formData.thoiGianKhoiHanh} onChange={handleInputChange} required />
-                    <InputField name="thoiGianTroVe" label="Giờ trở về" type="time" value={formData.thoiGianTroVe} onChange={handleInputChange} required />
-                    <div className="sm:col-span-2"><TextAreaField name="loTrinh" label="Lộ trình" value={formData.loTrinh} onChange={handleInputChange} required /></div>
-                    {conflictError && (
-                        <div className="sm:col-span-2 mt-1 p-3 bg-danger-bg/50 border border-danger/30 rounded-lg text-sm animate-fade-in-up">
-                            <p className="text-danger font-semibold"><i className="fas fa-exclamation-triangle mr-2"></i>{conflictError}</p>
-                            {suggestions.length > 0 && (
-                                <div className="mt-2 pt-2 border-t border-danger/20">
-                                    <p className="font-semibold text-text-primary">Gợi ý các khung giờ trống tiếp theo:</p>
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                        {suggestions.map(slot => (
-                                            <Button
-                                                key={slot}
-                                                onClick={() => onSuggestionClick(slot)}
-                                                variant="ghost"
-                                                size="sm"
-                                                className="text-xs bg-success/10 text-success font-semibold px-2 py-1 rounded hover:bg-success/20 transition-colors !h-auto"
-                                            >
-                                                {slot}
-                                            </Button>
-                                        ))}
-                                    </div>
+                        <div className="grid grid-cols-6 gap-3 mt-2 items-end">
+                            <div className="col-span-2 grid grid-cols-2 gap-2">
+                                <InputField name="thoiGianKhoiHanh" label="Từ" type="time" value={formData.thoiGianKhoiHanh} onChange={handleInputChange} required />
+                                <InputField name="thoiGianTroVe" label="Đến" type="time" value={formData.thoiGianTroVe} onChange={handleInputChange} required />
+                            </div>
+                            <div className="col-span-4">
+                                <InputField name="loTrinh" label="Lộ trình" value={formData.loTrinh} onChange={handleInputChange} required placeholder="VD: Showroom -> Đại Lộ Bình Dương..." />
+                            </div>
+                        </div>
+
+                        {conflictError && (
+                            <div className="text-[10px] text-danger mt-1.5 flex items-start bg-danger-bg/20 rounded-md p-1.5 border border-danger/20">
+                                <i className="fas fa-exclamation-triangle mr-1.5 mt-0.5"></i>
+                                <div>
+                                    <span className="font-bold">Trùng lịch:</span> {conflictError}
+                                    {suggestions.length > 0 && (
+                                        <div className="mt-0.5 flex flex-wrap gap-1.5 items-center">
+                                            <span className="text-text-primary">Gợi ý:</span>
+                                            {suggestions.map((s, i) => (
+                                                <button
+                                                    key={i}
+                                                    type="button"
+                                                    onClick={() => onSuggestionClick(s)}
+                                                    className="bg-accent-primary/10 hover:bg-accent-primary/20 text-accent-primary px-1.5 py-0.5 rounded text-[10px] font-bold border border-accent-primary/30 transition-colors"
+                                                >
+                                                    {s}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            </section>
-
-            <section>
-                <h3 className="font-semibold text-accent-primary text-base border-b border-border-primary pb-2 mb-3">Thông tin Khách hàng</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-                    <div className="sm:col-span-2"><InputField name="tenKhachHang" label="Tên khách hàng" value={formData.tenKhachHang} onChange={handleInputChange} required /></div>
-                    <InputField
-                        name="dienThoai"
-                        label="Điện thoại"
-                        type="tel"
-                        value={formData.dienThoai}
-                        onChange={handleInputChange}
-                        required
-                        pattern="0[0-9]{9,10}"
-                        title="Số điện thoại phải bắt đầu bằng 0 và có 10 hoặc 11 chữ số."
-                    />
-                    <InputField name="email" label="Email" type="email" value={formData.email} onChange={handleInputChange} />
-                    <div className="sm:col-span-2"><TextAreaField name="diaChi" label="Địa chỉ" value={formData.diaChi} onChange={handleInputChange} required /></div>
-                    <InputField name="gplxSo" label="Số GPLX" value={formData.gplxSo} onChange={handleInputChange} required />
-                    <InputField name="hieuLucGPLX" label="Hiệu lực GPLX" type="date" value={formData.hieuLucGPLX} onChange={handleInputChange} required />
-                    <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-text-secondary">Tự lái thử<span className="text-danger ml-1">*</span></label>
-                        <div className="mt-2 flex gap-6">
-                            <label className="flex items-center gap-2"><input type="radio" name="tuLai" value="co" checked={formData.tuLai === 'co'} onChange={handleRadioChange} className="h-4 w-4" /> Có</label>
-                            <label className="flex items-center gap-2"><input type="radio" name="tuLai" value="khong" checked={formData.tuLai === 'khong'} onChange={handleRadioChange} className="h-4 w-4" /> Không</label>
-                        </div>
+                            </div>
+                        )}
                     </div>
-                    <div className="sm:col-span-2"><TextAreaField name="dacDiem" label="Đặc điểm khách hàng quan tâm" value={formData.dacDiem} onChange={handleInputChange} /></div>
+
+                    {/* SECTION 2: KHÁCH HÀNG - Expands to fill remaining space */}
+                    <div className="bg-surface-ground/50 rounded-xl p-3 border border-border-secondary/30 shadow-sm flex-grow flex flex-col min-h-0">
+                        <h4 className="text-[11px] font-bold text-accent-primary uppercase tracking-wider mb-2 border-b border-border-secondary/30 pb-0.5 flex items-center flex-shrink-0">
+                            <i className="fas fa-user mr-1.5 opacity-70"></i>Thông Tin Khách Hàng
+                        </h4>
+
+                        <div className="grid grid-cols-3 gap-3 mb-2 flex-shrink-0">
+                            <div className="col-span-2">
+                                <InputField name="tenKhachHang" label="Họ và tên" value={formData.tenKhachHang} onChange={handleInputChange} required placeholder="Nhập tên khách hàng" />
+                            </div>
+                            <InputField name="dienThoai" label="Số điện thoại" type="tel" value={formData.dienThoai} onChange={handleInputChange} required pattern="0[0-9]{9,10}" placeholder="09..." />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 mb-2 flex-shrink-0">
+                            <InputField name="email" label="Email" type="email" value={formData.email} onChange={handleInputChange} placeholder="email@example.com" />
+                            <InputField name="diaChi" label="Địa chỉ" value={formData.diaChi} onChange={handleInputChange} required placeholder="Địa chỉ thường trú" />
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-3 mb-2 flex-shrink-0">
+                            <div className="col-span-4">
+                                <InputField name="gplxSo" label="Số GPLX" value={formData.gplxSo} onChange={handleInputChange} required />
+                            </div>
+                            <div className="col-span-4">
+                                <InputField name="hieuLucGPLX" label="Ngày hết hạn" type="date" value={formData.hieuLucGPLX} onChange={handleInputChange} required />
+                            </div>
+                            <div className="col-span-4 flex flex-col justify-end pb-1.5">
+                                <span className="text-[10px] font-medium text-text-secondary mb-1.5 block">Tự lái? <span className="text-danger">*</span></span>
+                                <div className="flex gap-3">
+                                    <label className="flex items-center gap-1.5 cursor-pointer group">
+                                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors ${formData.tuLai === 'co' ? 'border-accent-primary bg-accent-primary' : 'border-text-secondary bg-transparent group-hover:border-accent-primary'}`}>
+                                            {formData.tuLai === 'co' && <i className="fas fa-check text-white text-[7px]"></i>}
+                                        </div>
+                                        <input type="radio" name="tuLai" value="co" checked={formData.tuLai === 'co'} onChange={handleRadioChange} className="hidden" />
+                                        <span className="text-xs">Có</span>
+                                    </label>
+                                    <label className="flex items-center gap-1.5 cursor-pointer group">
+                                        <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors ${formData.tuLai === 'khong' ? 'border-accent-primary bg-accent-primary' : 'border-text-secondary bg-transparent group-hover:border-accent-primary'}`}>
+                                            {formData.tuLai === 'khong' && <i className="fas fa-check text-white text-[7px]"></i>}
+                                        </div>
+                                        <input type="radio" name="tuLai" value="khong" checked={formData.tuLai === 'khong'} onChange={handleRadioChange} className="hidden" />
+                                        <span className="text-xs">Không</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <TextAreaField name="dacDiem" label="Ghi chú thêm" value={formData.dacDiem} onChange={handleInputChange} placeholder="Ghi chú thông tin..." className="flex-grow mt-1" />
+                    </div>
                 </div>
-            </section>
+            </div>
         </aside>
     );
 };

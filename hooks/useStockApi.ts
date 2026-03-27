@@ -1,30 +1,47 @@
-import { useState, useEffect, useCallback } from 'react';
+import useSWR from 'swr';
+import { useEffect, useCallback } from 'react';
 import { StockVehicle } from '../types';
 import * as apiService from '../services/apiService';
+import { supabase } from '../services/supabaseClient';
 
 export const useStockApi = () => {
-    const [stockData, setStockData] = useState<StockVehicle[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { data: result, error, mutate } = useSWR('stockData', () => apiService.getStockData(), {
+        revalidateOnFocus: true,
+        revalidateOnReconnect: true,
+    });
 
-    const fetchData = useCallback(async (isSilent = false) => {
-        if (!isSilent) setIsLoading(true);
-        setError(null);
-        try {
-            const result = await apiService.getStockData();
-            // The API is expected to return data in a 'khoxe' property based on the provided sample code.
-            setStockData(result.khoxe || []);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : 'An unknown error occurred';
-            setError(message);
-        } finally {
-            if (!isSilent) setIsLoading(false);
-        }
-    }, []);
+    const { data: queuedVins, mutate: mutateQueued } = useSWR('myQueuedVins', () => apiService.getMyQueuedVins(), {
+        revalidateOnFocus: true,
+        revalidateOnReconnect: true,
+    });
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        const channel = supabase.channel('khoxe_realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'khoxe' }, (payload) => {
+                console.log('Real-time stock change:', payload);
+                mutate(); 
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'car_hold_activities' }, (payload) => {
+                console.log('Real-time hold activity change:', payload);
+                mutateQueued();
+                mutate();
+            })
+            .subscribe();
 
-    return { stockData, setStockData, isLoading, error, refetch: fetchData };
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [mutate, mutateQueued]);
+
+    return {
+        stockData: result?.khoxe || [],
+        queuedVins: queuedVins || [],
+        setStockData: (data: StockVehicle[]) => mutate({ ...result, status: 'SUCCESS', message: result?.message || '', khoxe: data }, false),
+        isLoading: (!result && !error) || (!queuedVins),
+        error: error instanceof Error ? error.message : (error ? String(error) : null),
+        refetch: useCallback(() => {
+            mutate();
+            mutateQueued();
+        }, [mutate, mutateQueued])
+    };
 };

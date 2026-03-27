@@ -1,8 +1,6 @@
 import React from 'react';
 import RequestForm from '../RequestForm';
 import { AnalyticsData, Order, StockVehicle } from '../../types';
-import { useModalBackground } from '../../utils/styleUtils';
-import Button from '../ui/Button';
 
 interface ImageSource {
     src: string;
@@ -24,48 +22,92 @@ interface CreateRequestModalProps {
 }
 
 const CreateRequestModal: React.FC<CreateRequestModalProps> = ({ isOpen, onClose, onSuccess, showToast, hideToast, existingOrderNumbers, initialVehicle, currentUser, vehicleAnalyticsData, onOpenImagePreview }) => {
-    const bgStyle = useModalBackground();
+
     if (!isOpen) return null;
 
     return (
         <div
-            className="fixed inset-0 bg-slate-900/80 z-[60] flex items-center justify-center p-0 md:p-4 animate-fade-in"
+            className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in overflow-hidden"
             onClick={onClose}
         >
-            <div
-                className="bg-[image:var(--modal-bg-image)] bg-cover bg-center w-full h-[100dvh] md:h-[90vh] md:max-w-7xl flex flex-col md:rounded-2xl shadow-2xl animate-fade-in-scale-up border border-white/20"
-                onClick={(e) => e.stopPropagation()}
-                style={bgStyle}
-            >
-                <div className="absolute inset-0 bg-white/75 backdrop-blur-[3px] z-0 md:rounded-2xl"></div>
-                <header className="flex items-center justify-center p-4 sm:p-5 border-b border-border-primary flex-shrink-0 relative z-10">
-                    <div className="text-center animate-fade-in-down">
-                        <h2 className="text-xl sm:text-2xl font-bold text-gradient">
-                            YÊU CẦU GHÉP XE
-                        </h2>
-                        <p className="text-sm text-text-secondary mt-1">Điền thông tin và tải lên Ủy nhiệm chi để gửi yêu cầu.</p>
-                    </div>
-                    <Button
-                        onClick={onClose}
-                        variant="ghost"
-                        className="absolute top-3 right-3 md:top-4 md:right-4 w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors !p-0"
-                    >
-                        <i className="fas fa-times text-lg"></i>
-                    </Button>
-                </header>
+            {/* Full-Screen Animated Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-slate-800/40">
+                {/* Animated Gradient Orbs */}
+                <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-amber-500/15 to-orange-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s' }} />
+                <div className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-gradient-to-tl from-blue-500/15 to-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '12s', animationDelay: '4s' }} />
 
-                <main className="flex-grow min-h-0 flex flex-col overflow-hidden relative z-10">
-                    <RequestForm
-                        onSuccess={onSuccess}
-                        showToast={showToast}
-                        hideToast={hideToast}
-                        existingOrderNumbers={existingOrderNumbers}
-                        initialVehicle={initialVehicle}
-                        currentUser={currentUser}
-                        vehicleAnalyticsData={vehicleAnalyticsData}
-                        onOpenImagePreview={onOpenImagePreview}
-                    />
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/20" />
+            </div>
+
+            {/* Floating Content Container */}
+            <div
+                className="relative z-10 w-full max-w-7xl mx-auto px-2 md:px-4 py-8 flex flex-col justify-center min-h-[100dvh] pointer-events-none"
+            >
+                <div
+                    className="flex flex-col w-full h-[90vh] animate-fade-in-scale-up pointer-events-auto border border-white/20 rounded-2xl overflow-hidden shadow-2xl bg-white/95 backdrop-blur-3xl relative"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <header className="flex-shrink-0">
+                    <div className="bg-gradient-to-r from-amber-50 via-white to-amber-50 rounded-xl md:rounded-2xl p-3 md:p-4 border-b border-amber-200/30 shadow-sm relative overflow-hidden group">
+                        {/* Decorative background element from Details Modal */}
+                        <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-400/20 transition-all duration-700"></div>
+
+                        <div className="flex items-center justify-between relative z-10">
+                            {/* Branding Layout from Details Modal */}
+                            <div className="flex items-center gap-4">
+                                <div className="w-1.5 h-10 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full shadow-sm"></div>
+                                <div className="flex flex-col">
+                                    <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
+                                        YÊU CẦU <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-amber-800">GHÉP XE</span>
+                                    </h1>
+                                    <div className="flex items-center gap-3 mt-1 pl-1">
+                                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500/80">
+                                            <i className="fas fa-user-circle text-amber-500"></i>
+                                            <span className="uppercase tracking-wider">{currentUser}</span>
+                                        </div>
+                                        <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+                                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500/80">
+                                            <i className="fas fa-calendar-alt text-amber-500"></i>
+                                            <span>{new Date().toLocaleDateString('vi-VN')}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Close Button Style from Details Modal */}
+                            <button
+                                onClick={onClose}
+                                className="w-10 h-10 rounded-full flex items-center justify-center bg-white/50 hover:bg-white text-gray-400 hover:text-gray-900 transition-all hover:rotate-90 hover:scale-110 shadow-sm border border-gray-100"
+                            >
+                                <i className="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </header>
+                <main className="flex-1 min-h-0 overflow-hidden relative">
+                    <div className="h-full bg-white/95 backdrop-blur-3xl rounded-xl md:rounded-2xl shadow-2xl border border-white/20 overflow-hidden flex flex-col relative">
+                        {/* High Contrast Grid Pattern for White background */}
+                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000008_1px,transparent_1px),linear-gradient(to_bottom,#00000008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none opacity-100"></div>
+                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:128px_128px] pointer-events-none opacity-100"></div>
+
+                        {/* Content Area */}
+                        <div className="flex-1 min-h-0 overflow-hidden relative z-10">
+                            <RequestForm
+                                onSuccess={onSuccess}
+                                showToast={showToast}
+                                hideToast={hideToast}
+                                existingOrderNumbers={existingOrderNumbers}
+                                initialVehicle={initialVehicle}
+                                currentUser={currentUser}
+                                vehicleAnalyticsData={vehicleAnalyticsData}
+                                onOpenImagePreview={onOpenImagePreview}
+                            />
+                        </div>
+                    </div>
                 </main>
+                </div>
             </div>
         </div>
     );

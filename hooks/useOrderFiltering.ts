@@ -1,6 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Order, SortConfig } from '../types';
-import { includesNormalized } from '../utils/stringUtils';
 
 interface UseOrderFilteringProps {
     allHistoryData: Order[];
@@ -99,19 +98,26 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
         }
     }, [activeView, orderView, isSidebarCollapsed]);
 
-    // ResizeObserver to recalculate on container size change
+    // ResizeObserver to recalculate on container size change - Debounced
     useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
 
+        let resizeTimer: number;
         const observer = new ResizeObserver(() => {
-            calculateLayout();
+            clearTimeout(resizeTimer);
+            resizeTimer = window.setTimeout(() => {
+                calculateLayout();
+            }, 150); // Debounce resize calculations
         });
 
         observer.observe(container);
         calculateLayout();
 
-        return () => observer.disconnect();
+        return () => {
+            observer.disconnect();
+            clearTimeout(resizeTimer);
+        };
     }, [calculateLayout]);
 
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
@@ -143,19 +149,37 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
     const processedData = useMemo(() => {
         let filteredOrders = [...allHistoryData];
         if (filters.keyword) {
-            const keyword = filters.keyword.toLowerCase();
-            filteredOrders = filteredOrders.filter(order =>
-                includesNormalized(order["Tên khách hàng"], keyword) ||
-                includesNormalized(order["Số đơn hàng"], keyword) ||
-                includesNormalized(order.VIN, keyword) ||
-                includesNormalized(order["Dòng xe"], keyword) ||
-                includesNormalized(order["Phiên bản"], keyword) ||
-                includesNormalized(order["Ngoại thất"], keyword) ||
-                includesNormalized(order["Nội thất"], keyword) ||
-                includesNormalized(order["Tên tư vấn bán hàng"], keyword) ||
-                includesNormalized(order["CHÍNH SÁCH"], keyword) ||
-                includesNormalized(order["Số động cơ"], keyword)
-            );
+            const keyword = filters.keyword.toLowerCase().trim();
+            const normalizedKeyword = filters.keyword.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd').trim();
+            const hasAccents = keyword !== normalizedKeyword;
+            const normalizedKeywordNFC = filters.keyword.normalize('NFC').toLowerCase();
+
+            filteredOrders = filteredOrders.filter(order => {
+                // Optimization: Inline selective normalization for speed
+                const fieldsToSearch = [
+                    order["Tên khách hàng"],
+                    order["Số đơn hàng"],
+                    order.VIN,
+                    order["Dòng xe"],
+                    order["Phiên bản"],
+                    order["Ngoại thất"],
+                    order["Nội thất"],
+                    order["Tên tư vấn bán hàng"],
+                    order["CHÍNH SÁCH"],
+                    order["Số động cơ"]
+                ];
+
+                return fieldsToSearch.some(source => {
+                    if (!source) return false;
+                    if (hasAccents) {
+                        return source.normalize('NFC').toLowerCase().includes(normalizedKeywordNFC);
+                    } else {
+                        // Custom fast normalization for search
+                        const normalizedSource = source.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'd').trim();
+                        return normalizedSource.includes(normalizedKeyword);
+                    }
+                });
+            });
         }
         if (filters.carModel.length > 0) {
             filteredOrders = filteredOrders.filter(order => filters.carModel.includes(order["Dòng xe"]));

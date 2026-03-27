@@ -1,7 +1,7 @@
 import React from 'react';
 import { TestDriveBooking } from '../../types';
 import moment from 'moment';
-import logoMd from '/pictures/logomd.jpg';
+import logoMd from '../../pictures/logomd.webp';
 
 interface PreviewProps {
     data: TestDriveBooking;
@@ -34,8 +34,9 @@ const formatTime = (timeStr?: string): string => {
 };
 
 const PhieuLaiThuPreview: React.FC<PreviewProps> = ({ data }) => {
-    const [year, month, day] = data.ngayThuXe ? data.ngayThuXe.split('-') : ['', '', ''];
-    const hieuLucGPLXFormatted = data.hieuLucGPLX ? new Date(data.hieuLucGPLX).toLocaleDateString('vi-VN') : "";
+    const mDate = moment(data.ngayThuXe, ["YYYY-MM-DD", "DD/MM/YYYY"]);
+    const [year, month, day] = mDate.isValid() ? [mDate.year().toString(), (mDate.month() + 1).toString().padStart(2, '0'), mDate.date().toString().padStart(2, '0')] : ['', '', ''];
+    const hieuLucGPLXFormatted = data.hieuLucGPLX ? moment(data.hieuLucGPLX, ["YYYY-MM-DD", "DD/MM/YYYY"]).format('DD/MM/YYYY') : "";
 
     return (
         <div className="print-area document-preview bg-white p-[12.5px] border border-gray-800 shadow-lg w-full font-serif text-black" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
@@ -46,7 +47,7 @@ const PhieuLaiThuPreview: React.FC<PreviewProps> = ({ data }) => {
                 <h1 className="font-bold text-lg flex-grow text-center">PHIẾU YÊU CẦU LÁI THỬ</h1>
                 <div className="w-12"></div> {/* Spacer to keep title centered */}
             </header>
-            
+
             <div className="flex justify-between items-center mb-4 text-sm">
                 <div className="flex items-center">
                     <span>Tên showroom:</span>
@@ -65,13 +66,13 @@ const PhieuLaiThuPreview: React.FC<PreviewProps> = ({ data }) => {
                     <span className="ml-8">Loại xe:</span>
                     <DottedLineText value={data.loaiXe} />
                 </div>
-                 <div className="flex items-center">
+                <div className="flex items-center">
                     <span>Thời gian khởi hành:</span>
                     <DottedLineText value={formatTime(data.thoiGianKhoiHanh)} />
                     <span className="ml-8">Thời gian trở về:</span>
                     <DottedLineText value={formatTime(data.thoiGianTroVe)} />
                 </div>
-                 <div className="flex items-center">
+                <div className="flex items-center">
                     <span>Lộ trình:</span>
                     <DottedLineText value={data.loTrinh} />
                 </div>
@@ -88,10 +89,10 @@ const PhieuLaiThuPreview: React.FC<PreviewProps> = ({ data }) => {
                 <div className="flex items-center">
                     <span>Khách hàng muốn tự lái thử xe:</span>
                     <div className="flex-grow"></div>
-                    <div className="flex items-center gap-2 ml-4">Có <Checkbox checked={data.tuLai === 'co'}/></div>
-                    <div className="flex items-center gap-2 ml-4">Không <Checkbox checked={data.tuLai === 'khong'}/></div>
+                    <div className="flex items-center gap-2 ml-4">Có <Checkbox checked={data.tuLai === 'co'} /></div>
+                    <div className="flex items-center gap-2 ml-4">Không <Checkbox checked={data.tuLai === 'khong'} /></div>
                 </div>
-                 <div className="flex items-center">
+                <div className="flex items-center">
                     <span>Đặc điểm khách hàng quan tâm:</span>
                     <DottedLineText value={data.dacDiem} />
                 </div>
@@ -130,15 +131,16 @@ const PhieuLaiThuPreview: React.FC<PreviewProps> = ({ data }) => {
 };
 
 const GiayCamKetPreview: React.FC<PreviewProps> = ({ data }) => {
-    const hieuLucGPLXFormatted = data.hieuLucGPLX ? new Date(data.hieuLucGPLX).toLocaleDateString('vi-VN') : "";
-    const [year, month, day] = data.ngayCamKet ? data.ngayCamKet.split('-') : ['', '', ''];
+    const hieuLucGPLXFormatted = data.hieuLucGPLX ? moment(data.hieuLucGPLX, ["YYYY-MM-DD", "DD/MM/YYYY"]).format('DD/MM/YYYY') : "";
+    const mCamKet = moment(data.ngayCamKet, ["YYYY-MM-DD", "DD/MM/YYYY"]);
+    const [year, month, day] = mCamKet.isValid() ? [mCamKet.year().toString(), (mCamKet.month() + 1).toString().padStart(2, '0'), mCamKet.date().toString().padStart(2, '0')] : ['', '', ''];
     return (
         <div className="print-area document-preview is-cam-ket bg-white p-8 border border-gray-400 shadow-lg w-full font-serif text-black" style={{ fontFamily: '"Times New Roman", Times, serif', lineHeight: '1.5' }}>
             <div className="text-center font-bold">
                 <p>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
                 <p>Độc lập - Tự do - Hạnh phúc</p>
             </div>
-            
+
             <h1 className="text-center font-bold text-base my-3">GIẤY CAM KẾT</h1>
             <p className="text-center font-bold">Kính gửi: CÔNG TY TNHH MINH ĐẠO PHÁT</p>
             <p className="text-center italic mb-4">(Sau đây được gọi chung là “Công ty”)</p>
@@ -151,15 +153,15 @@ const GiayCamKetPreview: React.FC<PreviewProps> = ({ data }) => {
                 <div className="flex items-end"><span className="shrink-0">Số Giấy phép lái xe:</span><DottedLineText value={data.gplxSo} /></div>
                 <div className="flex items-end"><span className="shrink-0">Hiệu lực đến:</span><DottedLineText value={hieuLucGPLXFormatted} /></div>
             </div>
-            
+
             <div className="flex items-center my-2 text-sm">
                 <span className="shrink-0">Khách hàng muốn tự lái thử xe:</span>
-                <div className="flex items-center gap-2 ml-4">Có <Checkbox checked={data.tuLai === 'co'}/></div>
-                <div className="flex items-center gap-2 ml-4">Không <Checkbox checked={data.tuLai === 'khong'}/></div>
+                <div className="flex items-center gap-2 ml-4">Có <Checkbox checked={data.tuLai === 'co'} /></div>
+                <div className="flex items-center gap-2 ml-4">Không <Checkbox checked={data.tuLai === 'khong'} /></div>
             </div>
 
             <p className="text-sm">Bằng Giấy Cam Kết này, tôi tự nguyện đăng ký tham gia lái thử xe: <DottedLineText value={data.loaiXe} /> do Công ty tổ chức tại cơ sở và cam kết tuân thủ theo những điều khoản sau:</p>
-            
+
             <ol className="list-decimal list-inside space-y-2 text-[12.5px] text-justify mt-2" style={{ textIndent: '-1.5em', marginLeft: '1.5em' }}>
                 <li>Cung cấp đầy đủ và chịu hoàn toàn mọi trách nhiệm pháp lý về các thông tin, giấy tờ cá nhân theo yêu cầu của Công ty và các bên liên quan trong thời gian tham gia chương trình.</li>
                 <li>Tuyệt đối tuân thủ các điều lệ, nguyên tắc của Luật giao thông đường bộ và xe cơ giới. Đồng thời tuân thủ theo các hướng dẫn của nhân viên hướng dẫn lái thử xe trong khi tham gia lái thử xe, cũng như không được thực hiện bất kỳ hoạt động nào khác không nằm trong chương trình.</li>
@@ -169,9 +171,9 @@ const GiayCamKetPreview: React.FC<PreviewProps> = ({ data }) => {
                 <li>Giấy Cam Kết này chịu sự điều chỉnh của Pháp luật Việt Nam. Trong trường hợp có bất kì vấn đề, tranh chấp nảy sinh thì tranh chấp đó sẽ được đưa ra giải quyết tại cơ quan Tòa án có thẩm quyền tại Việt Nam.</li>
                 <li>Giấy Cam Kết này sẽ có hiệu lực ràng buộc với bất kỳ bên thứ ba nào là người thừa kế và/ hoặc người được ủy quyền từ tôi.</li>
             </ol>
-            
+
             <p className="text-center font-bold my-3">TÔI ĐÃ ĐỌC VÀ HIỂU RÕ MỌI NỘI DUNG NÊU TRÊN CỦA "GIẤY CAM KẾT" VÀ TỰ NGUYỆN ĐỒNG Ý VỚI NHỮNG CAM KẾT NÊU TRÊN.</p>
-            
+
             <div className="flex justify-end">
                 <div className="text-center w-64">
                     <p className="italic">..........., Ngày {day || '.....'} tháng {month || '.....'} năm {year || '.......'}</p>

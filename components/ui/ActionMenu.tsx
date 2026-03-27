@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Order } from '../../types';
 import animationDataUrl from '../../pictures/loading-animation.json?url';
 import Button from './Button';
+import moment from 'moment';
 
 interface ActionMenuProps {
   order: Order;
@@ -40,12 +41,24 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
   const vcStatus = (order["Trạng thái VC"] || "").toLowerCase().trim().normalize('NFC');
   const status = vcStatus || generalStatus;
 
-  const canCancel = ['chưa ghép', 'chờ ghép (bulk)', 'đã ghép', 'chờ phê duyệt', 'yêu cầu bổ sung'].includes(generalStatus);
+  const canCancel = ['chưa ghép', 'đã ghép'].includes(generalStatus);
   const canRequestInvoice = generalStatus === 'đã ghép';
   const canAddSupplement = generalStatus === 'yêu cầu bổ sung';
   const canEdit = !['đã xuất hóa đơn', 'đã hủy', 'chờ ký hóa đơn'].includes(generalStatus);
+
+  // Kiểm tra ngày xuất hóa đơn (phải <= 28/02/2026)
+  const invoiceDateStr = order["Ngày xuất hóa đơn"];
+  const isDateValidForVC = !invoiceDateStr || (() => {
+    const formats = ["DD/MM/YYYY", moment.ISO_8601, "YYYY-MM-DD HH:mm:ss", "D/M/YYYY"];
+    const date = moment(invoiceDateStr, formats, 'vi', true);
+    const cutoffDate = moment("2026-02-28").endOf('day');
+    return date.isValid() && date.isSameOrBefore(cutoffDate);
+  })();
+
   // Allow requesting VC if invoiced and the VC process is not active or completed
-  const canRequestVC = (generalStatus === 'đã xuất hóa đơn' || vcStatus === 'từ chối ycvc') && !['yêu cầu vinclub', 'chờ duyệt ycvc', 'chờ xác thực vc (tvbh)', 'đã có vc'].includes(vcStatus);
+  const canRequestVC = (generalStatus === 'đã xuất hóa đơn') &&
+    !['chờ duyệt vc', 'đã cấp vc', 'từ chối vc', 'yêu cầu vinclub', 'chờ duyệt ycvc', 'chờ xác thực vc (tvbh)', 'đã có vc', 'từ chối ycvc'].includes(vcStatus) &&
+    isDateValidForVC;
   const canConfirmVC = status === 'chờ xác thực vc (tvbh)';
 
 
