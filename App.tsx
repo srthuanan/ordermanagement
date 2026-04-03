@@ -195,31 +195,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         };
     }, [fetchAppConfig, refetchStock]); // Thêm refetchStock vào dependency
 
-    // --- REALTIME LISTENER FOR AUTO SYNC TO GOOGLE SHEETS ---
-    useEffect(() => {
-        let syncTimeout: NodeJS.Timeout;
-        const channel = supabaseAdmin.channel('global_auto_sync')
-            .on('postgres_changes', { event: '*', schema: 'public' }, (payload: any) => {
-                 const t = payload.table;
-                 if (['donhang', 'khoxe', 'yeucauxhd', 'archived_orders'].includes(t)) {
-                     const lastSync = parseInt(localStorage.getItem('last_auto_sync') || '0');
-                     if (Date.now() - lastSync > 15000) { // Limit to 1 sync per 15s per browser
-                         localStorage.setItem('last_auto_sync', Date.now().toString());
-                         clearTimeout(syncTimeout);
-                         syncTimeout = setTimeout(() => {
-                             apiService.triggerAutoSync();
-                         }, 5000); // 5 sec debounce
-                     }
-                 }
-            })
-            .subscribe((status: any) => {
-                if (status === 'SUBSCRIBED') {
-                    console.log('Successfully subscribed to auto-sync channel.');
-                }
-            });
-        return () => { supabaseAdmin.removeChannel(channel); clearTimeout(syncTimeout); }
-    }, []);
-
     const prevStockEnabledRef = useRef<boolean | null>(null);
     useEffect(() => {
         if (prevStockEnabledRef.current !== null && prevStockEnabledRef.current !== isStockEnabled) {

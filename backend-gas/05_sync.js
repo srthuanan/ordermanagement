@@ -7,34 +7,70 @@
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('🚀 VINFO SYNC')
-      .addItem('Làm mới toàn bộ dữ liệu (Sync Supabase)', 'syncAllFromSupabase')
+      .addItem('📥 Làm mới toàn bộ dữ liệu (Sync Supabase)', 'syncAllFromSupabase')
+      .addSeparator()
+      .addItem('🧹 Hút Bụi: Xóa sạch các Sheet rác', 'cleanUpGhostSheets')
       .addToUi();
+}
+
+var TABLES_TO_SYNC = [
+  { table: 'donhang', sheet: 'Donhang' },
+  { table: 'khoxe', sheet: 'Khoxe' },
+  { table: 'yeucauxhd', sheet: 'Xuathoadon' },
+  { table: 'yeucauvc', sheet: 'Vanchuyen' },
+  { table: 'archived_orders', sheet: 'Luutru_Donhang' },
+  { table: 'users', sheet: 'Thanhvien' },
+  { table: 'car_inquiries', sheet: 'Tuvan_Hoidap' }
+];
+
+function cleanUpGhostSheets() {
+  try {
+    SpreadsheetApp.getActiveSpreadsheet().toast('Đang dò tìm và dọn dẹp sheet rác...', 'Máy Hút Bụi', 5);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheets = ss.getSheets();
+    
+    var keep = TABLES_TO_SYNC.map(function(t) { return t.sheet; });
+    keep = keep.concat(['Mail', 'log', 'Backend', 'lichsu_donhang', 'lichsu_xe']);
+    var count = 0;
+    
+    if (!ss.getSheetByName("Donhang")) { ss.insertSheet("Donhang"); }
+
+    for (var i = 0; i < sheets.length; i++) {
+       var name = sheets[i].getName();
+       if (keep.indexOf(name) === -1) {
+           ss.deleteSheet(sheets[i]);
+           count++;
+       }
+    }
+    SpreadsheetApp.getActiveSpreadsheet().toast('Đã dọn dẹp thành công ' + count + ' sheet rác!', 'Hoàn tất', 10);
+  } catch (e) {
+    Logger.log(e);
+    SpreadsheetApp.getActiveSpreadsheet().toast('Lỗi: ' + e.message, 'Lỗi', 10);
+  }
 }
 
 function syncAllFromSupabase() {
   var timestamp = new Date().toLocaleString('vi-VN');
   try {
-    SpreadsheetApp.getActiveSpreadsheet().toast('Đang tải dữ liệu từ Supabase...', 'Đồng bộ', 3);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (!ss) ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     
-    // 1. Sync Kho Xe
-    syncTable('khoxe', 'Khoxe', ["ID", "VIN", "Dòng xe", "Phiên bản", "Ngoại thất", "Nội thất", "Trạng thái", "Người giữ xe"]);
+    try { SpreadsheetApp.getActiveSpreadsheet().toast('Đang nạp 100% dữ liệu từ Supabase...', 'Đồng bộ', 3); } catch(ex){}
     
-    // 2. Sync Đơn Hàng
-    syncTable('donhang', 'Donhang', ["Số đơn hàng", "Khách hàng", "VIN", "Dòng xe", "Phiên bản", "Trạng thái VC", "TVBH", "Kết quả", "Ghi chú"]);
+    for (var i = 0; i < TABLES_TO_SYNC.length; i++) {
+       syncTable(ss, TABLES_TO_SYNC[i].table, TABLES_TO_SYNC[i].sheet);
+    }
     
-    // 3. Sync Yêu cầu XHĐ
-    syncTable('yeucauxhd', 'Xuathoadon', ["Số đơn hàng", "Khách hàng", "VIN", "Dòng xe", "Phiên bản", "Ngày yêu cầu", "Ngày XHĐ", "TVBH", "Kết quả"]);
-    
-    SpreadsheetApp.getActiveSpreadsheet().toast('Đồng bộ thành công lúc ' + timestamp, 'Hoàn tất', 5);
+    try { SpreadsheetApp.getActiveSpreadsheet().toast('Đồng bộ thành công lúc ' + timestamp, 'Hoàn tất', 5); } catch(ex){}
     return true;
   } catch (e) {
     Logger.log("Lỗi đồng bộ: " + e.message);
-    SpreadsheetApp.getActiveSpreadsheet().toast('Lỗi: ' + e.message, 'Thất bại!', 10);
+    try { SpreadsheetApp.getActiveSpreadsheet().toast('Lỗi: ' + e.message, 'Thất bại!', 10); } catch(ex){}
     return false;
   }
 }
 
-function syncTable(tableName, sheetName, headers) {
+function syncTable(ss, tableName, sheetName) {
   var url = SUPABASE_URL + "/rest/v1/" + tableName + "?select=*&order=created_at.desc";
   var options = {
     "method": "get",
@@ -47,38 +83,45 @@ function syncTable(tableName, sheetName, headers) {
   var response = UrlFetchApp.fetch(url, options);
   var data = JSON.parse(response.getContentText());
   
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
-  // Nếu chưa có thì tự động tạo Sheet mới với tên đó
+  var sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
-    sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet(sheetName);
+    sheet = ss.insertSheet(sheetName);
   }
   
-  // Xóa toàn bộ dữ liệu cũ
   sheet.clearContents();
   
-  var rows = [headers];
+  var rows = [];
   
   if (data && data.length > 0) {
+    var headers = Object.keys(data[0]);
+    rows.push(headers);
+    
     data.forEach(function(row) {
-      if (tableName === 'khoxe') {
-        rows.push([row.id || '', row.vin, row.dong_xe, row.phien_ban, row.ngoai_that, row.noi_that, row.trang_thai, row.nguoi_giu_xe || '']);
-      } 
-      else if (tableName === 'donhang') {
-        rows.push([row.so_don_hang, row.ten_khach_hang, row.vin || '', row.dong_xe, row.phien_ban, row.trang_thai_vc || '', row.ten_tu_van_ban_hang, row.ket_qua, row.ghi_chu_admin || '']);
-      }
-      else if (tableName === 'yeucauxhd') {
-        var ngay_yc = row.ngay_yeu_cau ? new Date(row.ngay_yeu_cau).toLocaleDateString('vi-VN') : '';
-        var ngay_xhd = row.ngay_xuat_hoa_don ? new Date(row.ngay_xuat_hoa_don).toLocaleDateString('vi-VN') : '';
-        rows.push([row.so_don_hang, row.ten_khach_hang, row.vin || '', row.dong_xe, row.phien_ban, ngay_yc, ngay_xhd, row.tvbh, row.ket_qua]);
-      }
+      var rowData = [];
+      headers.forEach(function(h) {
+          var val = row[h];
+          if (val === null || val === undefined) {
+             val = "";
+          } else if (typeof val === 'object') {
+             val = JSON.stringify(val);
+          } else if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)) {
+             // Optional: Format ISO date string
+             // val = new Date(val).toLocaleString('vi-VN');
+          }
+          rowData.push(val);
+      });
+      rows.push(rowData);
     });
+  } else {
+    rows.push(['Không có dữ liệu (' + tableName + ')']);
   }
   
-  // Dán một cục dữ liệu siêu nhanh xuống file
   if (rows.length > 0) {
     sheet.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
-    
-    // Trang trí Header cho đẹp
-    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#e2e8f0");
+    if (data && data.length > 0) {
+       sheet.getRange(1, 1, 1, rows[0].length).setFontWeight("bold").setBackground("#e2e8f0");
+       // Add frozen row for headers
+       try { sheet.setFrozenRows(1); } catch (err){}
+    }
   }
 }
