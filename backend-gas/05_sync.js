@@ -14,13 +14,23 @@ function onOpen() {
 }
 
 var TABLES_TO_SYNC = [
-  { table: 'donhang', sheet: 'Donhang' },
-  { table: 'khoxe', sheet: 'Khoxe' },
-  { table: 'yeucauxhd', sheet: 'Xuathoadon' },
-  { table: 'yeucauvc', sheet: 'Vanchuyen' },
-  { table: 'archived_orders', sheet: 'Luutru_Donhang' },
-  { table: 'users', sheet: 'Thanhvien' },
-  { table: 'car_inquiries', sheet: 'Tuvan_Hoidap' }
+  { table: 'car_inquiries', sheet: 'car_inquiries' },
+  { table: 'chinhsach', sheet: 'chinhsach' },
+  { table: 'donhang', sheet: 'donhang' },
+  { table: 'donhang_ton', sheet: 'donhang_ton' },
+  { table: 'donhanghienhuu', sheet: 'donhanghienhuu' },
+  { table: 'interactions', sheet: 'interactions' },
+  { table: 'khoxe', sheet: 'khoxe' },
+  { table: 'reputation_adjustments', sheet: 'reputation_adjustments' },
+  { table: 'test_drive_schedule', sheet: 'test_drive_schedule' },
+  { table: 'thongtinxe', sheet: 'thongtinxe' },
+  { table: 'user_presence', sheet: 'user_presence' },
+  { table: 'user_reputation_cache', sheet: 'user_reputation_cache' },
+  { table: 'users', sheet: 'users' },
+  { table: 'yeucauvc', sheet: 'yeucauvc' },
+  { table: 'yeucauxhd', sheet: 'yeucauxhd' },
+  { table: 'archived_orders', sheet: 'archived_orders' },
+  { table: 'app_settings', sheet: 'app_settings' }
 ];
 
 function cleanUpGhostSheets() {
@@ -33,7 +43,7 @@ function cleanUpGhostSheets() {
     keep = keep.concat(['Mail', 'log', 'Backend', 'lichsu_donhang', 'lichsu_xe']);
     var count = 0;
     
-    if (!ss.getSheetByName("Donhang")) { ss.insertSheet("Donhang"); }
+    if (!ss.getSheetByName("donhang")) { ss.insertSheet("donhang"); }
 
     for (var i = 0; i < sheets.length; i++) {
        var name = sheets[i].getName();

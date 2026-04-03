@@ -49,7 +49,7 @@ import BroadcastPopup from './components/ui/BroadcastPopup';
 // import LuckyMoneyWidget from './components/ui/LuckyMoneyWidget';
 import { ADMIN_USER } from './constants';
 import * as apiService from './services/apiService';
-import { supabase, supabaseAdmin } from './services/apiService';
+import { supabase } from './services/apiService';
 import { AnalyticsData, Order } from './types';
 import { GlobalNotificationProvider } from './components/context/GlobalNotificationContext';
 import footerImg from './pictures/footer.png';
