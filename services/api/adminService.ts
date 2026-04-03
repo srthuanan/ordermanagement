@@ -116,6 +116,14 @@ export const performAdminAction = async (action: string, params: Record<string, 
             });
 
             if (error) throw error;
+
+            // Kích hoạt Archival ngay lập tức cho các đơn đã phê duyệt
+            if (Array.isArray(nos)) {
+                nos.forEach((no: string) => {
+                    postApi({ action: 'archiveOrderNow', orderNumber: no }).catch(e => console.warn(`Silent error triggering archive for ${no}:`, e));
+                });
+            }
+
             return data;
         }
         if (action === 'markAsPendingSignature') {
@@ -224,6 +232,9 @@ export const performAdminAction = async (action: string, params: Record<string, 
                 await supabaseAdmin.from('donhang').update({ ket_qua: 'Đã xuất hóa đơn' }).eq('so_don_hang', tr);
                 if (o && (o as any).vin) await supabaseAdmin.from('car_hold_activities').update({ status: 'invoiced' }).eq('vin', (o as any).vin).eq('status', 'matched');
                 if (o && (o as any).ten_tu_van_ban_hang) await createNotification({ message: `Đã có hóa đơn cho ĐH ${tr}.`, type: 'success', recipient: (o as any).ten_tu_van_ban_hang, targetView: 'sold', targetId: tr });
+                
+                // Kích hoạt Archival ngay lập tức cho hóa đơn
+                postApi({ action: 'archiveOrderNow', orderNumber: tr }).catch(e => console.warn(`Silent error triggering archive for ${tr}:`, e));
             }
             await logAction('UPLOAD_INVOICE_BULK', { count: files.length }, 'bulk', 'invoice');
             return { status: 'SUCCESS', message: 'Đã xuất hóa đơn thành công' };
@@ -469,7 +480,87 @@ export const performAdminAction = async (action: string, params: Record<string, 
     }
     if (action === 'archiveInvoicedOrdersMonthly') {
         await logAction('ARCHIVE_DATA', {}, 'system', 'archive');
-        return await postApi({ action, ...params });
+        try {
+            const now = new Date();
+            const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            const { data: invoicedOrders, error: fetchErr } = await supabaseAdmin
+                .from('yeucauxhd')
+                .select('*')
+                .not('ngay_xuat_hoa_don', 'is', null);
+
+            if (fetchErr) throw fetchErr;
+
+            const ordersToArchive = invoicedOrders?.filter(o => {
+                if (!o.ngay_xuat_hoa_don) return false;
+                let date = new Date(o.ngay_xuat_hoa_don);
+                if (isNaN(date.getTime())) {
+                    const parts = String(o.ngay_xuat_hoa_don).split('/');
+                    if (parts.length === 3) {
+                        date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                    }
+                }
+                return date && !isNaN(date.getTime()) && date < firstOfMonth;
+            }) || [];
+
+            let archivedCount = 0;
+            if (ordersToArchive.length > 0) {
+                const parseDateSafe = (d: any) => {
+                    if (!d) return null;
+                    const parsed = new Date(d);
+                    if (!isNaN(parsed.getTime())) return parsed.toISOString();
+                    const parts = String(d).split('/');
+                    if (parts.length === 3) {
+                        const parsedVi = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                        if (!isNaN(parsedVi.getTime())) return parsedVi.toISOString();
+                    }
+                    return null;
+                };
+
+                const archivePayload = ordersToArchive.map(y => ({
+                    so_don_hang: y.so_don_hang,
+                    ten_khach_hang: y.ten_khach_hang,
+                    dong_xe: y.dong_xe,
+                    phien_ban: y.phien_ban,
+                    ngoai_that: y.ngoai_that,
+                    noi_that: y.noi_that,
+                    tvbh: y.tvbh,
+                    vin: y.vin,
+                    so_may: y.so_may,
+                    ngay_coc: parseDateSafe(y.ngay_coc),
+                    ngay_yeu_cau: parseDateSafe(y.ngay_yeu_cau),
+                    ngay_xuat_hoa_don: parseDateSafe(y.ngay_xuat_hoa_don),
+                    chinh_sach: y.chinh_sach,
+                    hoa_hong_ung: typeof y.hoa_hong_ung === 'number' ? y.hoa_hong_ung : 0,
+                    vpoint: typeof y.vpoint === 'number' ? y.vpoint : 0,
+                    url_hop_dong: y.url_hop_dong,
+                    url_de_nghi_xhd: y.url_de_nghi_xhd,
+                    url_hoa_don_da_xuat: y.url_hoa_don_da_xuat,
+                    trang_thai_vc: y.trang_thai_vc,
+                    ket_qua: 'Đã xuất hóa đơn',
+                    created_at: parseDateSafe(y.created_at) || new Date().toISOString()
+                }));
+
+                const { error: insertErr } = await supabaseAdmin.from('archived_orders').upsert(archivePayload, { onConflict: 'so_don_hang' });
+                if (insertErr) throw insertErr;
+
+                archivedCount = archivePayload.length;
+                const soDonHangs = archivePayload.map(o => o.so_don_hang);
+
+                // Use bulk delete to avoid large parameter lists (batch 100 at a time)
+                for (let i = 0; i < soDonHangs.length; i += 100) {
+                    const batch = soDonHangs.slice(i, i + 100);
+                    await supabaseAdmin.from('yeucauxhd').delete().in('so_don_hang', batch);
+                    await supabaseAdmin.from('donhang').delete().in('so_don_hang', batch);
+                }
+            }
+
+            postApi({ action, ...params }).catch(e => console.warn('GAS archive backup error:', e));
+            return { status: 'SUCCESS', message: `Đã lưu trữ ${archivedCount} đơn hàng thành công.` };
+        } catch (err: any) {
+            console.error('Archive error:', err);
+            return { status: 'ERROR', message: `Lỗi lưu trữ: ${err.message}` };
+        }
     }
     if (action === 'resendEmail' || action === 'addUser') {
         if (action === 'addUser') {
@@ -560,6 +651,9 @@ export const uploadBulkInvoices = async (files: any[]): Promise<ApiResult> => {
                     url, 
                     uploadedBy: 'Admin' 
                 }).catch(err => console.error('GAS Notify Error:', err));
+
+                // Kích hoạt Archival ngay lập tức cho hóa đơn
+                postApi({ action: 'archiveOrderNow', orderNumber: exactOrderNo }).catch(e => console.warn(`Silent error triggering archive for ${exactOrderNo}:`, e));
                 
                 results.push(trimmedOrderNo);
             }

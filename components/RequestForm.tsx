@@ -50,6 +50,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         ngoai_that: '',
         noi_that: '',
         ngay_coc: '',
+        thoi_gian_can_xe: '',
         vin: '',
     });
     const [chicFile, setChicFile] = useState<File | null>(null);
@@ -119,7 +120,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
             if (name === 'dong_xe') {
                 newState.phien_ban = ''; newState.ngoai_that = ''; newState.noi_that = '';
-                if (value === 'VF 5') newState.phien_ban = 'Plus';
+                const versions = versionsMap[value as keyof typeof versionsMap] || [];
+                if (versions.length === 1) newState.phien_ban = versions[0];
                 const modelKey = value.toLowerCase().replace(/\s+/g, '');
                 const validCodes = VALID_IMAGES_BY_MODEL[modelKey];
                 if (validCodes) {
@@ -178,7 +180,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
     }, []);
 
     const handleClearForm = () => {
-        setFormData({ ten_ban_hang: currentUser, ten_khach_hang: '', so_don_hang: '', dong_xe: '', phien_ban: '', ngoai_that: '', noi_that: '', ngay_coc: '', vin: '', });
+        setFormData({ ten_ban_hang: currentUser, ten_khach_hang: '', so_don_hang: '', dong_xe: '', phien_ban: '', ngoai_that: '', noi_that: '', ngay_coc: '', thoi_gian_can_xe: '', vin: '', });
         handleFileSelect(null);
         setStep(1);
     };
@@ -330,7 +332,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                             <input id="ten_khach_hang" type="text" name="ten_khach_hang" value={formData.ten_khach_hang} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} required className={`${inputClass} !py-2.5`} placeholder="" />
                                         </InputGroup>
                                     </div>
-                                    <div className="md:col-span-2">
+                                    <div className={formData.vin ? "md:col-span-2" : "md:col-span-1"}>
                                         <InputGroup label="Số đơn hàng" htmlFor="so_don_hang" icon="fa-barcode" required>
                                             <input
                                                 id="so_don_hang"
@@ -354,7 +356,13 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                             )}
                                         </InputGroup>
                                     </div>
-
+                                    {!formData.vin && (
+                                        <div className="md:col-span-1">
+                                            <InputGroup label="Thời gian cần xe" htmlFor="thoi_gian_can_xe" icon="fa-clock">
+                                                <input id="thoi_gian_can_xe" type="date" name="thoi_gian_can_xe" value={formData.thoi_gian_can_xe} onChange={handleInputChange} className={`${inputClass} !py-2.5`} />
+                                            </InputGroup>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="p-4 md:p-5 bg-slate-50/50 backdrop-blur-sm rounded-2xl border border-slate-200/50 shadow-inner">
                                     <div className="flex justify-between items-center mb-3">

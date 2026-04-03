@@ -46,7 +46,8 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                 newState['Phiên bản'] = '';
                 newState['Ngoại thất'] = '';
                 newState['Nội thất'] = '';
-                if (value === 'VF 5') newState['Phiên bản'] = 'Plus';
+                const versions = versionsMap[value as keyof typeof versionsMap] || [];
+                if (versions.length === 1) newState['Phiên bản'] = versions[0];
             }
             if (name === 'Phiên bản') {
                 newState['Ngoại thất'] = '';

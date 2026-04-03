@@ -207,6 +207,12 @@ const AdminOrderCard: React.FC<{
                                         {order["Thời gian nhập"] ? moment(order["Thời gian nhập"]).format('DD/MM') : '--'}
                                     </span>
                                 </div>
+                                {order["Thời gian cần xe"] && (
+                                    <div className="flex items-center gap-1.5 text-accent-primary font-bold" title="Hẹn giao xe">
+                                        <i className="fas fa-calendar-check w-3"></i>
+                                        <span>{moment(order["Thời gian cần xe"]).format('DD/MM')}</span>
+                                    </div>
+                                )}
                             </>
                         ) : (
                             <>

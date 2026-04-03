@@ -18,6 +18,7 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
     if (lowerExteriorValue.includes("neptune grey (ce14)")) return isDarkMode ? { color: '#aebcc5' } : { color: '#778899' };
     if (lowerExteriorValue.includes("jet black (ce11)")) return isDarkMode ? { color: 'white' } : { color: 'black' };
     if (lowerExteriorValue.includes("electric blue (ce1j)")) return { color: 'var(--exterior-blue-text)' };
+    if (lowerExteriorValue.includes("moonlit ocean (ce2j)")) return { color: '#103975' };
     if (lowerExteriorValue.includes("zenith grey (ce1v)")) return isDarkMode ? { color: '#d4e0f2' } : { color: '#B0C4DE' };
     if (lowerExteriorValue.includes("jet black roof- summer yellow body (111u)")) return { color: 'var(--exterior-yellow-text)' };
     if (lowerExteriorValue.includes("brahminy white roof- aquatic azure body (181y)")) return { color: 'var(--exterior-blue-text)' };
@@ -47,7 +48,7 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
     if (lowerExteriorValue.includes("de sat silver ind12007 (ce17)")) return { color: 'var(--exterior-grey-text)' };
     if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet") || lowerExteriorValue.includes("ruby")) return { color: 'var(--exterior-red-text)' };
     if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) return { color: 'var(--exterior-pink-text)' };
-    if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue")) return { color: 'var(--exterior-blue-text)' };
+    if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue") || lowerExteriorValue.includes("moonlit ocean")) return { color: 'var(--exterior-blue-text)' };
     if (lowerExteriorValue.includes("deep ocean")) return isDarkMode ? { color: 'white' } : { color: 'white', ...outlineStyle };
     if (lowerExteriorValue.includes("sunset orb")) return { color: 'var(--exterior-orange-text)' };
     if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) return { color: 'var(--exterior-yellow-text)' };
@@ -92,7 +93,7 @@ const colorMap: { [key: string]: string } = {
     'black': '#1E1E1E',
     'yellow': '#EAB308', 'creme': '#F5DEB3',
     'pink': '#EC4899', 'berry': '#EC4899',
-    'mint': '#3CB371', 'green': '#22C55E', 'ocean': '#006400',
+    'mint': '#3CB371', 'green': '#22C55E', 'ocean': '#006400', 'moonlit ocean': '#103975',
     'bronze': '#92400E',
     // Interior
     'beige': '#F5F5DC',

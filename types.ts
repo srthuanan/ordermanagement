@@ -11,6 +11,7 @@ export interface Order {
   "Ngoại thất": string;
   "Nội thất": string;
   "Thời gian nhập": string; // ISO Date string
+  "Thời gian cần xe"?: string; // ISO Date string (Expected delivery date)
   "Tên tư vấn bán hàng": string;
   "Kết quả": string; // e.g., "Chưa ghép", "Đã ghép"
   VIN?: string;

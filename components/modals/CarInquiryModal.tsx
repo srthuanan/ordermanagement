@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as apiService from '../../services/apiService';
 import { submitCarInquiry, getCarInquiries, markInquiryAsRead, deleteCarInquiry } from '../../services/apiService';
 import { CarInquiry } from '../../types';
@@ -47,6 +47,11 @@ const CarInquiryModal: React.FC<CarInquiryModalProps> = ({ isOpen, onClose, curr
         const { model, version } = formData;
         
         if (model) {
+            const versions = versionsMap[model as keyof typeof versionsMap] || [];
+            if (versions.length === 1 && formData.version !== versions[0]) {
+                setFormData(prev => ({ ...prev, version: versions[0] }));
+            }
+
             const modelKey = model.toLowerCase().replace(/\s+/g, '');
             const validCodes = VALID_IMAGES_BY_MODEL[modelKey];
             if (validCodes) {

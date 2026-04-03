@@ -368,7 +368,11 @@ export const useAdminActions = ({
 
         // Perform the action in the background
         apiService.performAdminAction(action, params)
-            .then(() => {
+            .then((res) => {
+                // Phải kiểm tra status vì hàm postApi trả về kết quả mọc (kèm catch bên trong)
+                if (res && res.status !== 'SUCCESS') {
+                    throw new Error(res.message || "Thao tác thất bại.");
+                }
                 showToast('Thành công!', successMessage, 'success');
                 if (refetchType === 'history' || refetchType === 'both') {
                     refetchHistory(true);

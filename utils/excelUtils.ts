@@ -42,8 +42,10 @@ export const exportOrderReport = async (pendingOrders: Order[], pairedOrders: Or
     // 2. Prepare headers (EXACT strings with spaces as requested)
     const headers = [
         "Showroom  ",
+        "Số đơn hàng",
         "Loại xe ",
         "Ngoại thất ",
+        "Nội thất ",
         "Số khung (vin)",
         "Tên khách hàng ",
         "Tên TVBH",
@@ -61,8 +63,10 @@ export const exportOrderReport = async (pendingOrders: Order[], pairedOrders: Or
     // 4. Set Column Widths (Matches your visual request)
     worksheet.columns = [
         { width: 12 }, // Showroom
+        { width: 18 }, // Số đơn hàng
         { width: 25 }, // Loại xe
         { width: 25 }, // Ngoại thất
+        { width: 20 }, // Nội thất
         { width: 22 }, // Số khung
         { width: 30 }, // Tên khách hàng
         { width: 20 }, // Tên TVBH
@@ -78,7 +82,7 @@ export const exportOrderReport = async (pendingOrders: Order[], pairedOrders: Or
 
     // Add Title Row (Merged)
     const titleRow = worksheet.addRow([titleText]);
-    worksheet.mergeCells(`A1:J1`);
+    worksheet.mergeCells(`A1:L1`);
     titleRow.height = 30;
     titleRow.getCell(1).font = { bold: true, size: 14, name: 'Arial' };
     titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
@@ -119,9 +123,11 @@ export const exportOrderReport = async (pendingOrders: Order[], pairedOrders: Or
         const fullCarInfo = carVersion && !carModel.includes(carVersion) ? `${carModel} ${carVersion}` : carModel;
 
         const row = worksheet.addRow([
-            "Thuận An",
+            "Thuận An",
+            order["Số đơn hàng"] || '',
             fullCarInfo,
             order["Ngoại thất"] || '',
+            order["Nội thất"] || '',
             order["VIN"] || '',
             (order["Tên khách hàng"] || '').toUpperCase(),
             order["Tên tư vấn bán hàng"] || '',
@@ -135,7 +141,7 @@ export const exportOrderReport = async (pendingOrders: Order[], pairedOrders: Or
         row.eachCell((cell, colNumber) => {
             cell.font = { name: 'Arial', size: 11 };
             // Center align for Showroom, Loai xe, Ngay ghep, So ngay ghep, Ngay du XHD
-            const centerCols = [1, 2, 7, 8, 9];
+            const centerCols = [1, 2, 3, 9, 10, 11];
             cell.alignment = { vertical: 'middle', horizontal: centerCols.includes(colNumber) ? 'center' : 'left' };
             cell.border = {
                 top: { style: 'thin' },

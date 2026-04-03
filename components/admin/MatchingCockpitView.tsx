@@ -53,7 +53,17 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
 }) => {
 
     // 1. Target Orders (The data is already filtered in parent useAdminData)
-    const filteredOrders = activeTab === 'pending' ? pendingOrders : pairedOrders;
+    const filteredOrders = useMemo(() => {
+        const raw = activeTab === 'pending' ? pendingOrders : pairedOrders;
+        if (activeTab === 'pending') {
+            return [...raw].sort((a, b) => {
+                const dateA = a['Ngày cọc'] ? moment(a['Ngày cọc']).valueOf() : 0;
+                const dateB = b['Ngày cọc'] ? moment(b['Ngày cọc']).valueOf() : 0;
+                return dateA - dateB; // Oldest deposit first for priority
+            });
+        }
+        return raw;
+    }, [activeTab, pendingOrders, pairedOrders]);
     const copyWithFeedback = useCopyFeedback();
 
     const selectedOrder = useMemo(() => filteredOrders.find(o => o['Số đơn hàng'] === selectedOrderId), [filteredOrders, selectedOrderId]);
@@ -163,6 +173,12 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
                                 {isPending && matchCount > 0 && (
                                     <div className="text-[9px] bg-emerald-50 text-emerald-600 px-1.5 py-0.5 rounded border border-emerald-100 font-black uppercase tracking-tighter">
                                         {matchCount} xe sẵn có
+                                    </div>
+                                )}
+                                {order['Thời gian cần xe'] && (
+                                    <div className="text-[9px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded border border-red-100 font-black uppercase tracking-tighter flex items-center gap-1">
+                                        <i className="fas fa-calendar-check text-[8px]"></i>
+                                        {moment(order['Thời gian cần xe']).format('DD/MM')}
                                     </div>
                                 )}
                             </div>
@@ -290,6 +306,15 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
                                             <i className="far fa-calendar-alt text-[9px] opacity-40"></i>
                                             <span>{moment(selectedOrder['Thời gian nhập']).format('DD/MM/YYYY')}</span>
                                         </div>
+                                        {selectedOrder['Thời gian cần xe'] && (
+                                            <>
+                                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                                <div className="flex items-center gap-1.5 text-red-600 bg-red-50 px-2 py-0.5 rounded-lg border border-red-100/50">
+                                                    <i className="fas fa-calendar-check text-[10px]"></i>
+                                                    <span className="font-black">CẦN XE: {moment(selectedOrder['Thời gian cần xe']).format('DD/MM/YYYY')}</span>
+                                                </div>
+                                            </>
+                                        )}
                                         <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                                         <div className="flex items-center gap-1.5">
                                             <i className="fas fa-user-tie text-[9px] opacity-40"></i>
@@ -343,7 +368,10 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
                                                                 <h2 className="text-[13px] font-black text-slate-800 tracking-tight uppercase">Đang Chờ Ghép Xe</h2>
                                                                 <div className="bg-amber-100 text-amber-600 text-[8px] font-black px-1.5 py-0.5 rounded-full border border-amber-200 uppercase tracking-widest">Priority</div>
                                                             </div>
-                                                            <p className="text-[10px] text-slate-500 font-medium truncate">Hệ thống đang tìm xe phù hợp nhất.</p>
+                                                            <div className="text-[10px] text-slate-500 font-bold flex items-center gap-2">
+                                                                <span className="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 italic">Ngày cọc: {selectedOrder['Ngày cọc'] ? moment(selectedOrder['Ngày cọc']).format('DD/MM/YYYY') : 'N/A'}</span>
+                                                                {!selectedOrder['Thời gian cần xe'] && <p className="text-[10px] text-slate-500 font-medium truncate italic">Hệ thống đang tìm xe phù hợp nhất.</p>}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     {/* Cancel button */}

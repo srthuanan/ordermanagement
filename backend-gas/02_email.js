@@ -29,6 +29,10 @@ function sendEmailViaEdge(options_or_recipient, subject, htmlBody_or_body) {
   const options = {
     method: 'post',
     contentType: 'application/json',
+    headers: {
+      'apikey': SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`
+    },
     payload: JSON.stringify(payload),
     muteHttpExceptions: true
   };
@@ -381,33 +385,27 @@ function createNewCarNotificationBody(newCars) {
  * Ưu tiên từ bảng users trên Supabase.
  * Fallback về sheet "Mail" nếu Supabase trống hoặc không tìm thấy.
  */
-function getEmailForAdvisor(mailSheet, advisorName) {
-  if (!advisorName) {
-    logAction("Lỗi getEmailForAdvisor", "Tên tư vấn rỗng hoặc không xác định");
-    return null;
-  }
+function getEmailForAdvisor(advisorName) {
+  if (!advisorName) return null;
 
   const cache = CacheService.getScriptCache();
-  const cacheKey = 'EMAIL_MAP_USERS_V3';
+  const cacheKey = 'EMAIL_MAP_USERS_V4';
   let emailMap = null;
   const cachedData = cache.get(cacheKey);
 
   if (cachedData) {
-    try {
-      emailMap = JSON.parse(cachedData);
-    } catch (e) { }
+    try { emailMap = JSON.parse(cachedData); } catch (e) {}
   }
 
   if (!emailMap) {
     emailMap = {};
     try {
       const url = `${SUPABASE_URL}/rest/v1/users?select=full_name,username,email&limit=500`;
-      let finalApiKey = (typeof SUPABASE_SERVICE_KEY !== 'undefined' ? SUPABASE_SERVICE_KEY : "").toString().trim();
       const response = UrlFetchApp.fetch(url, {
         method: 'GET',
         headers: {
-          'apikey': finalApiKey,
-          'Authorization': `Bearer ${finalApiKey}`,
+          'apikey': SUPABASE_SERVICE_KEY,
+          'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
           'Content-Type': 'application/json'
         },
         muteHttpExceptions: true
@@ -417,65 +415,29 @@ function getEmailForAdvisor(mailSheet, advisorName) {
         const rows = JSON.parse(response.getContentText());
         rows.forEach(row => {
           const normalizedName = normalizeString(String(row.full_name || ""));
-          if (normalizedName) {
-            emailMap[normalizedName] = String(row.email || "").trim();
-          }
+          if (normalizedName) emailMap[normalizedName] = String(row.email || "").trim();
+          
           const uName = String(row.username || "").trim().toLowerCase();
-          if (uName) {
-            emailMap[uName] = String(row.email || "").trim();
-          }
+          if (uName) emailMap[uName] = String(row.email || "").trim();
         });
-        logAction("getEmailForAdvisor", `Đã tải ${rows.length} email từ Supabase (Họ tên + Username)`);
-      } else {
-        logAction("Lỗi getEmailForAdvisor", `Supabase trả về ${response.getResponseCode()}, dùng fallback sheet`);
       }
     } catch (e) {
-      logAction("Lỗi getEmailForAdvisor", `Lỗi Supabase API: ${e.message}, dùng fallback sheet`);
+      Logger.log("getEmailForAdvisor Supabase Error: " + e.message);
     }
 
-    // === FALLBACK: Nếu Supabase trống, đọc từ sheet "Mail" cũ ===
-    if (Object.keys(emailMap).length === 0 && mailSheet) {
-      try {
-        const data = mailSheet.getDataRange().getValues();
-        if (data.length > 1) {
-          for (let i = 1; i < data.length; i++) {
-            const sheetAdvisorName = normalizeString(String(data[i][0] || ""));
-            const email = String(data[i][1] || "").trim();
-            if (sheetAdvisorName && email) {
-              emailMap[sheetAdvisorName] = email;
-            }
-          }
-          logAction("getEmailForAdvisor", `Fallback: Đã tải ${Object.keys(emailMap).length} email từ sheet Mail`);
-        }
-      } catch (e) {
-        logAction("Lỗi getEmailForAdvisor", `Lỗi đọc sheet Mail: ${e.message}`);
-      }
-    }
-
-    // Cache 6 tiếng (chỉ cache nếu có dữ liệu)
     if (Object.keys(emailMap).length > 0) {
-      cache.put(cacheKey, JSON.stringify(emailMap), 21600);
+      cache.put(cacheKey, JSON.stringify(emailMap), 21600); // 6 hours
     }
   }
 
   const normalizedAdvisorName = normalizeString(advisorName);
-  let email = emailMap[normalizedAdvisorName];
+  let email = emailMap[normalizedAdvisorName] || emailMap[String(advisorName).trim().toLowerCase()];
   
-  // Thử thêm tìm kiếm theo username (không dấu, lowercase)
   if (!email) {
-    const usernameKey = String(advisorName).trim().toLowerCase();
-    email = emailMap[usernameKey];
+    logAction("Lỗi tìm Email", `Không tìm thấy email cho nhân viên: '${advisorName}'. Vui lòng kiểm tra lại bảng users trên Supabase.`);
   }
 
-  if (email) {
-    return email;
-  } else if (email === "") {
-    logAction("Lỗi getEmailForAdvisor", `Tư vấn: '${advisorName}' có email rỗng`);
-    return null;
-  }
-
-  logAction("Lỗi getEmailForAdvisor", `Không tìm thấy email cho tư vấn '${advisorName}'`);
-  return null;
+  return email || null;
 }
 
 
@@ -490,14 +452,13 @@ function getEmailForAdvisor(mailSheet, advisorName) {
  * @param {Date} timestamp - Thời gian thực hiện ghép.
  * @returns {boolean} - Trả về true nếu gửi thành công.
  */
-function sendEmailNotification(mailSheet, data, vin, maDMS, timestamp) {
+function sendEmailNotification(data, vin, maDMS, timestamp) {
   const tenTVBH = data.ten_ban_hang;
   const ngayGhep = formatDateTimeForSheet(timestamp);
   const subject = `[THÔNG BÁO] V/v Ghép xe thành công cho Đơn hàng ${data.so_don_hang}`;
-  const recipientEmail = getEmailForAdvisor(mailSheet, tenTVBH);
+  const recipientEmail = getEmailForAdvisor(tenTVBH);
 
   if (!recipientEmail) {
-    logAction("Lỗi gửi email ghép", `Không tìm thấy email cho ${tenTVBH}, đơn ${data.so_don_hang}`);
     return { success: false, dmsMismatch: false };
   }
 
@@ -551,14 +512,13 @@ function sendEmailNotification(mailSheet, data, vin, maDMS, timestamp) {
   }
 }
 
-function sendPendingEmail(mailSheet, data, timestamp) {
+function sendPendingEmail(data, timestamp) {
   const tenTVBH = data.ten_ban_hang;
   const thoiGianNhapFormatted = formatDateTimeForSheet(timestamp);
   const subject = `[HỆ THỐNG] Đã tiếp nhận yêu cầu ghép xe cho Đơn hàng ${data.so_don_hang}`;
-  const recipientEmail = getEmailForAdvisor(mailSheet, tenTVBH);
+  const recipientEmail = getEmailForAdvisor(tenTVBH);
 
   if (!recipientEmail) {
-    logAction("Lỗi gửi email chờ ghép", `Không tìm thấy email cho ${tenTVBH}, đơn ${data.so_don_hang}`);
     return false;
   }
 
@@ -597,14 +557,13 @@ function sendPendingEmail(mailSheet, data, timestamp) {
  * @param {string} reason - Lý do hủy.
  * @returns {boolean} - Trả về true nếu gửi thành công.
  */
-function sendCancelEmail(mailSheet, data, vin, timestamp, cancelledBy, reason) {
+function sendCancelEmail(data, vin, timestamp, cancelledBy, reason) {
   const tenTVBH = data.ten_ban_hang || data.ten_tu_van_ban_hang;
   const thoiGianHuyFormatted = formatDateTimeForSheet(timestamp);
   const subject = `[THÔNG BÁO] V/v hủy ghép xe cho đơn hàng của KH ${data.ten_khach_hang}`;
-  const recipientEmail = getEmailForAdvisor(mailSheet, tenTVBH);
+  const recipientEmail = getEmailForAdvisor(tenTVBH);
 
   if (!recipientEmail) {
-    logAction("Lỗi gửi email hủy ghép", `Không tìm thấy email cho ${tenTVBH}, đơn ${data.so_don_hang}`);
     return false;
   }
 
@@ -702,15 +661,10 @@ function sendInvoiceNotification(sheet, row) {
  * @param {Object} record - Dữ liệu record từ donhang table của Supabase.
  */
 function sendInvoiceEmailFromSupabase(record) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheets = getSheets(ss);
-  const mailSheet = sheets.mailSheet;
-
   const tenTVBH = record.ten_ban_hang;
-  const recipientEmail = getEmailForAdvisor(mailSheet, tenTVBH);
+  const recipientEmail = getEmailForAdvisor(tenTVBH);
 
   if (!recipientEmail) {
-    logAction("Lỗi gửi mail XHĐ (Supabase Webhook)", `Không tìm thấy email cho TVBH '${tenTVBH}', đơn ${record.so_don_hang}`);
     return { success: false, message: "Không tìm thấy email TVBH." };
   }
 
@@ -1082,11 +1036,10 @@ function createDmsMismatchEmailBody(recipientName, orders) {
 /**
  * Thiết lập trigger tự động chạy hàm sendDmsMismatchWarningEmail mỗi ngày một lần.
  */
-function sendInvoiceRequestConfirmationEmailToTVBH(mailSheet, data) {
+function sendInvoiceRequestConfirmationEmailToTVBH(data) {
   const tenTVBH = data.ten_ban_hang;
-  const recipientEmail = getEmailForAdvisor(mailSheet, tenTVBH);
+  const recipientEmail = getEmailForAdvisor(tenTVBH);
   if (!recipientEmail) {
-    logAction("Lỗi gửi mail xác nhận Y/C XHĐ", `Không tìm thấy email cho TVBH '${tenTVBH}', đơn ${data.so_don_hang}`);
     return false;
   }
   const subject = `[XÁC NHẬN] Yêu cầu xuất hóa đơn cho ĐH ${data.so_don_hang} đã được gửi`;
@@ -1134,11 +1087,10 @@ function sendInvoiceRequestConfirmationEmailToTVBH(mailSheet, data) {
     return false;
   }
 }
-function sendSupplementRequestEmail(mailSheet, data, reason, imagesBase64Json = null) {
+function sendSupplementRequestEmail(data, reason, imagesBase64Json = null) {
   const tenTVBH = data.ten_ban_hang;
-  const recipientEmail = getEmailForAdvisor(mailSheet, tenTVBH);
+  const recipientEmail = getEmailForAdvisor(tenTVBH);
   if (!recipientEmail) {
-    logAction("Lỗi gửi mail YCBS", `Không tìm thấy email cho TVBH '${tenTVBH}', đơn ${data.so_don_hang}`);
     return;
   }
 
@@ -1564,8 +1516,7 @@ function resendNotificationEmail(orderNumber, emailType, userEmail, ss) {
             };
         }
         const reason = "[GỬI LẠI] Vui lòng kiểm tra và bổ sung hồ sơ theo yêu cầu trước đó.";
-        const mailS = getS(MAIL_SHEET_NAME);
-        sendSupplementRequestEmail(mailS, orderData, reason);
+        sendSupplementRequestEmail(orderData, reason);
         recordOrderHistory(orderNumber, orderData.vin, "Gửi lại Email YCBS", `Gửi lại bởi ${userEmail}`);
         return { success: true, message: "Đã gửi lại email yêu cầu bổ sung hồ sơ." };
       }
@@ -1584,8 +1535,7 @@ function resendNotificationEmail(orderNumber, emailType, userEmail, ss) {
           dmsCode: rowData["Mã KH DMS"]
         };
 
-        const mailS = getS(MAIL_SHEET_NAME);
-        const success = sendVcRequestConfirmationEmailToTVBH(mailS, emailData);
+        const success = sendVcRequestConfirmationEmailToTVBH(emailData);
         if (!success) throw new Error("Lỗi hệ thống khi cố gắng gửi email.");
 
         recordOrderHistory(orderNumber, rowData["VIN"], "Gửi lại Email Y/C VC", `Gửi lại bởi ${userEmail}`);
@@ -1600,11 +1550,10 @@ function resendNotificationEmail(orderNumber, emailType, userEmail, ss) {
     return { success: false, message: e.message };
   }
 }
-function sendUnmatchNotificationEmail(mailSheet, data, vin, reason, unmatchedBy) {
+function sendUnmatchNotificationEmail(data, vin, reason, unmatchedBy) {
   const tenTVBH = data.ten_ban_hang;
-  const recipientEmail = getEmailForAdvisor(mailSheet, tenTVBH);
+  const recipientEmail = getEmailForAdvisor(tenTVBH);
   if (!recipientEmail) {
-    logAction("Lỗi gửi email Hủy Ghép", `Không tìm thấy email cho ${tenTVBH}, đơn ${data.so_don_hang}`);
     return false;
   }
 
@@ -1630,11 +1579,10 @@ function sendUnmatchNotificationEmail(mailSheet, data, vin, reason, unmatchedBy)
     return false;
   }
 }
-function sendCarAvailableNotification(mailSheet, orderData, carDetails) {
+function sendCarAvailableNotification(orderData, carDetails) {
   const tenTVBH = orderData.ten_tvbh;
-  const recipientEmail = getEmailForAdvisor(mailSheet, tenTVBH);
+  const recipientEmail = getEmailForAdvisor(tenTVBH);
   if (!recipientEmail) {
-    logAction("Lỗi gửi mail báo có xe", `Không tìm thấy email cho ${tenTVBH}, YC ID: ${orderData.request_id}`);
     return false;
   }
 
@@ -1684,12 +1632,11 @@ function sendCarAvailableNotification(mailSheet, orderData, carDetails) {
     return false;
   }
 }
-function sendAdminReplyNotification(mailSheet, requestData) {
+function sendAdminReplyNotification(requestData) {
   const tenTVBH = requestData.ten_tvbh;
-  const recipientEmail = getEmailForAdvisor(mailSheet, tenTVBH);
+  const recipientEmail = getEmailForAdvisor(tenTVBH);
 
   if (!recipientEmail) {
-    logAction("Lỗi gửi mail phản hồi Admin", `Không tìm thấy email cho TVBH '${tenTVBH}', YC ID: ${requestData.id}`);
     return false;
   }
 
@@ -1903,18 +1850,21 @@ function createFullHtmlEmail(emailTitle, bodyContent) {
 </html>`;
 }
 
-function findUserByEmail(sheet, email) {
-  return findUserBy(sheet, 4, email); // Column E for Email
+function findUserByEmail(email) {
+  const data = fetchSupabase("users", `email=eq.${encodeURIComponent(email)}&select=*`);
+  if (data && data.length > 0) {
+    return data[0];
+  }
+  return null;
 }
 /**
  * [HÀM MỚI] - Xử lý cập nhật thông tin chi tiết cho một đơn hàng đã tồn tại.
  * Tự động kiểm tra và chạy lại thuật toán ghép xe nếu cần.
  */
-function sendVcRequestConfirmationEmailToTVBH(mailSheet, data) {
+function sendVcRequestConfirmationEmailToTVBH(data) {
   const tenTVBH = data.ten_ban_hang;
-  const recipientEmail = getEmailForAdvisor(mailSheet, tenTVBH);
+  const recipientEmail = getEmailForAdvisor(tenTVBH);
   if (!recipientEmail) {
-    logAction("Lỗi gửi mail xác nhận Y/C VC", `Không tìm thấy email cho TVBH '${tenTVBH}', đơn ${data.so_don_hang}`);
     return false;
   }
 
@@ -2270,12 +2220,11 @@ function testSendEmail(targetEmail) {
   Logger.log(`Đã gửi mail test tới: ${targetEmail}`);
 }
 
-function sendSupplementSubmittedEmail(mailSheet, data, filesInfo, attachments) {
+function sendSupplementSubmittedEmail(data, filesInfo, attachments) {
   const tenTVBH = data.ten_ban_hang || 'TVBH';
-  const recipientEmail = getEmailForAdvisor(mailSheet, tenTVBH);
+  const recipientEmail = getEmailForAdvisor(tenTVBH);
 
   if (!recipientEmail) {
-    Logger.log("Không tìm thấy email cho TVBH: " + tenTVBH);
     return;
   }
 

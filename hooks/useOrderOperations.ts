@@ -132,13 +132,13 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
 
     const handleViewDetails = useCallback((order: Order) => setSelectedOrder(order), []);
 
-    const handleCancelOrder = async (order: Order, reason: string, unmatchType: string = 'Hủy luôn đơn hàng (Hủy đơn)') => {
+    const handleCancelOrder = async (order: Order, reason: string, unmatchType: string = 'Hủy luôn đơn hàng (Hủy đơn)', thoiGianCanXe?: string) => {
         setProcessingOrder(order["Số đơn hàng"]);
 //         showToast('Đang Hủy Yêu Cầu', `Hủy yêu cầu cho đơn hàng ${order["Số đơn hàng"]}.`, 'loading'); 
         try {
-            await apiService.cancelRequest(order["Số đơn hàng"], reason, unmatchType);
+            await apiService.cancelRequest(order["Số đơn hàng"], reason, unmatchType, thoiGianCanXe);
             await refetchHistory();
-            showToast('Hủy Thành Công', 'Đã hủy yêu cầu thành công.', 'success', 3000);
+            showToast('Thành Công', unmatchType.includes('Chờ xe') ? 'Đã hủy ghép và đưa vào danh sách chờ xe.' : 'Đã hủy yêu cầu thành công.', 'success', 3000);
             setSelectedOrder(null);
         } catch (error) {
             const message = error instanceof Error ? error.message : "Lỗi không xác định";

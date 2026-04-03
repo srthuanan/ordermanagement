@@ -222,7 +222,8 @@ export const getPaginatedData = async (_?: string[], __?: string, ___?: boolean)
             'LinkHoaDonDaXuat': order.link_hoa_don_da_xuat,
             'Trạng thái VC': order.trang_thai_vc,
             'Ghi chú hủy': order.ghi_chu_huy,
-            'Thời gian hủy': order.thoi_gian_huy
+            'Thời gian hủy': order.thoi_gian_huy,
+            'Thời gian cần xe': order.thoi_gian_can_xe
         }));
 
         return {
@@ -899,6 +900,7 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
             ket_qua: ketQua,
             vin: vinDk,
             thoi_gian_ghep: pairedTime,
+            thoi_gian_can_xe: payloadData.thoi_gian_can_xe || null,
         };
 
         const { error } = await supabase.from('donhang')
@@ -908,6 +910,14 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
             console.error('Supabase addRequest process error:', error.message);
             throw error;
         }
+
+        // CHỦ ĐỘNG GỌI ROBOT GỬI MAIL (Thay vì đợi Trigger)
+        supabase.functions.invoke('send-email', {
+            body: { 
+                actionId: ketQua === 'Đã ghép' ? 'match_success' : 'match_request_pending', 
+                record: insertPayload 
+            }
+        }).then();
 
         // Thử patch url_chic riêng nếu có (bỏ qua nếu cột không tồn tại)
         if (chicUrl && payloadData.so_don_hang) {
@@ -1048,6 +1058,14 @@ export const pairVinToOrder = async (orderNumber: string, vin: string) => {
         // Xóa hàng chờ vì xe đã được ghép chính thức
         await supabase.from('car_hold_activities').delete().eq('vin', vin).eq('type', 'QUEUE');
 
+        // GỬI EMAIL THÔNG BÁO GHÉP XE THÀNH CÔNG
+        supabase.functions.invoke('send-email', {
+            body: { 
+                actionId: 'match_success', 
+                record: { so_don_hang: orderNumber, vin } 
+            }
+        }).then();
+
         await logAction('PAIR_VIN', { orderNumber, vin }, orderNumber, 'order');
     } catch (e) {
         console.error("Supabase pairVin error:", e);
@@ -1058,75 +1076,156 @@ export const pairVinToOrder = async (orderNumber: string, vin: string) => {
 
 
 
-export const cancelRequest = async (orderNumber: string, reason: string, unmatchType: string = 'Hủy luôn đơn hàng (Hủy đơn)') => {
-    // 1. Ghi Supabase (Kiểm tra nếu có VIN thì trả xe về kho, Cập nhật trạng thái Đơn hàng thành Đã hủy hoặc Chờ xe)
+export const cancelRequest = async (orderNumber: string, reason: string, unmatchType: string = 'Hủy luôn đơn hàng (Hủy đơn)', thoiGianCanXe?: string) => {
     try {
         const currentUser = getStorageItem("currentConsultant") || "Unknown";
         const ketQuaMoi = unmatchType.includes('Chờ xe') ? 'Chưa ghép' : 'Đã hủy';
+        const trimmedOrderNo = orderNumber.trim();
 
-        const { data: order } = await supabase.from('donhang').select('vin').eq('so_don_hang', orderNumber).single();
-        if (order && order.vin) {
+        // ========== BƯỚC 1: TÌM ĐƠN HÀNG ==========
+        let order: any = null;
+        
+        // Exact match trước
+        const { data: exactMatch } = await supabase.from('donhang')
+            .select('*').eq('so_don_hang', trimmedOrderNo).maybeSingle();
+        
+        if (exactMatch) {
+            order = exactMatch;
+        } else {
+            // Fallback: case-insensitive
+            const { data: ilikeMatch } = await supabase.from('donhang')
+                .select('*').ilike('so_don_hang', trimmedOrderNo).maybeSingle();
+            order = ilikeMatch;
+        }
+
+        if (!order) {
+            throw new Error(`Không tìm thấy đơn hàng "${trimmedOrderNo}" trong hệ thống.`);
+        }
+
+        console.log("Cancelling order:", order.so_don_hang, "| ID:", order.id, "| VIN:", order.vin || 'N/A');
+
+        // ========== BƯỚC 2: TRẢ XE VỀ KHO (nếu có VIN) ==========
+        if (order.vin) {
             await supabase.from('khoxe').update({
                 trang_thai: 'Chưa ghép',
                 nguoi_giu_xe: null,
                 thoi_gian_het_han_giu: null
             }).eq('vin', order.vin);
 
-            // 1.5 CẬP NHẬT ĐIỂM UY TÍN KHI HỦY ĐƠN HOẶC HỦY GHÉP
-            const { data: matchedHold } = await supabase.from('car_hold_activities')
-                .select('id')
-                .eq('vin', order.vin)
-                .in('status', ['matched', 'active'])
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .single();
+            // Cập nhật uy tín (non-critical, không bỏ 'reason' để tránh 400 nếu cột chưa tồn tại)
+            try {
+                const { data: matchedHold } = await supabase.from('car_hold_activities')
+                    .select('id')
+                    .eq('vin', order.vin)
+                    .in('status', ['matched', 'active'])
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
 
-            if (matchedHold) {
-                await supabase.from('car_hold_activities').update({
-                    status: ketQuaMoi === 'Đã hủy' ? 'order_cancelled' : 'unmatched', // differentiate between cancel order and unmatch car
-                    reason: reason,
-                    updated_at: new Date().toISOString()
-                }).eq('id', matchedHold.id);
-            } else {
-                 await supabase.from('car_hold_activities').insert({
-                     vin: order.vin,
-                     username: currentUser,
-                     tvbh_name: currentUser,
-                     type: 'HOLD',
-                     status: ketQuaMoi === 'Đã hủy' ? 'order_cancelled' : 'unmatched',
-                     reason: reason,
-                     created_at: new Date().toISOString(),
-                     updated_at: new Date().toISOString()
-                 });
+                const holdStatus = ketQuaMoi === 'Đã hủy' ? 'order_cancelled' : 'unmatched';
+                if (matchedHold) {
+                    await supabase.from('car_hold_activities').update({
+                        status: holdStatus,
+                        updated_at: new Date().toISOString()
+                    }).eq('id', matchedHold.id);
+                } else {
+                    await supabase.from('car_hold_activities').insert({
+                        vin: order.vin,
+                        username: currentUser,
+                        tvbh_name: currentUser,
+                        type: 'HOLD',
+                        status: holdStatus,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    });
+                }
+            } catch (holdErr) {
+                console.warn("car_hold_activities update (non-critical):", holdErr);
             }
         }
 
-        const updatePayload: any = {
-            ket_qua: ketQuaMoi,
-            vin: ketQuaMoi === 'Đã hủy' ? order?.vin : null, // If 'Chờ xe', clear the VIN completely. If 'Đã hủy' we keep the vin to indicate what was requested (or delete it, depending on business, but normally order keeps history). Actually, if we unmatched, we just clear vin anyway. Wait, Admin's unmatchOrder sets vin to null. Let's do that for both.
-            thoi_gian_ghep: null
-        };
-        
-        if (ketQuaMoi === 'Đã hủy') {
-            updatePayload.ghi_chu_huy = `Bị hủy bởi ${currentUser}. Lý do: ${reason}`;
-            updatePayload.thoi_gian_huy = new Date().toISOString();
-        }
+        // ========== BƯỚC 3: GỬI EMAIL (trước khi xóa) ==========
+        try {
+            supabase.functions.invoke('send-email', {
+                body: { 
+                    actionId: 'order_self_cancelled', 
+                    record: { 
+                        so_don_hang: order.so_don_hang, 
+                        ten_ban_hang: order.ten_tu_van_ban_hang,
+                        ten_khach_hang: order.ten_khach_hang,
+                        dong_xe: order.dong_xe,
+                        phien_ban: order.phien_ban,
+                        ngoai_that: order.ngoai_that,
+                        noi_that: order.noi_that,
+                        vin: order.vin || 'N/A',
+                        ghi_chu_huy: reason, 
+                        is_waiting: (ketQuaMoi === 'Chưa ghép'),
+                        status: ketQuaMoi 
+                    } 
+                }
+            }).catch(e => console.warn("Email send failed (non-critical):", e));
+        } catch (_) { /* ignore */ }
 
-        await supabase.from('donhang').update(updatePayload).eq('so_don_hang', orderNumber);
-
-        // Also update yeucauxhd if needed
+        // ========== BƯỚC 4: THỰC HIỆN HỦY/XÓA ==========
         if (ketQuaMoi === 'Đã hủy') {
-            await supabase.from('yeucauxhd').update({ trang_thai: 'Đã hủy', ghi_chu_admin: `Sale hủy: ${reason}` }).eq('so_don_hang', orderNumber);
+            // === HỦY HẲN: XÓA TRỰC TIẾP bằng supabaseAdmin (KHÔNG qua RPC) ===
+            console.log(`Direct DELETE order: id=${order.id}, so_don_hang=${order.so_don_hang}`);
+
+            // Lưu snapshot trước khi xóa
+            try {
+                await supabaseAdmin.from('interactions').insert({
+                    category: 'LOG',
+                    type: 'CANCEL_REQUEST',
+                    actor_id: currentUser,
+                    actor_name: currentUser,
+                    target_id: order.so_don_hang,
+                    target_view: 'order',
+                    message: `Hủy và xóa đơn hàng. Lý do: ${reason}`,
+                    metadata: { reason, snapshot: order }
+                });
+            } catch (logErr) {
+                console.warn("Interaction log failed (non-critical):", logErr);
+            }
+
+            // Xóa bản ghi liên quan (bỏ qua nếu không tồn tại)
+            await supabaseAdmin.from('yeucauxhd').delete().eq('so_don_hang', order.so_don_hang);
+            await supabaseAdmin.from('yeucauvc').delete().eq('so_don_hang', order.so_don_hang);
+
+            // XÓA ĐƠN HÀNG CHÍNH — dùng ID chính xác từ DB
+            const { error: deleteErr } = await supabaseAdmin.from('donhang').delete().eq('id', order.id);
+            if (deleteErr) {
+                console.error("donhang DELETE error:", deleteErr);
+                throw new Error(`Lỗi xóa đơn hàng: ${deleteErr.message}`);
+            }
+
+            console.log("✅ Đã xóa đơn hàng thành công:", order.so_don_hang);
+
         } else {
-            await supabase.from('yeucauxhd').update({ vin: null }).eq('so_don_hang', orderNumber);
+            // === CHỜ XE (Unmatch): Chỉ update, không xóa ===
+            const updatePayload: any = {
+                ket_qua: ketQuaMoi,
+                vin: null,
+                thoi_gian_ghep: null
+            };
+            if (thoiGianCanXe) {
+                updatePayload.thoi_gian_can_xe = thoiGianCanXe;
+            }
+
+            const { error: dhErr } = await supabase.from('donhang').update(updatePayload).eq('so_don_hang', trimmedOrderNo);
+            if (dhErr) throw dhErr;
+
+            // yeucauxhd update — non-critical
+            const { error: ycxErr } = await supabase.from('yeucauxhd').update({ vin: null }).eq('so_don_hang', trimmedOrderNo);
+            if (ycxErr) console.warn("yeucauxhd update (non-critical):", ycxErr.message);
         }
         
-        await logAction('CANCEL_REQUEST', { orderNumber, reason, ketQuaMoi }, orderNumber, 'order');
-    } catch (e) {
-        console.error("Supabase cancel error:", e);
-    }
+        await logAction('CANCEL_REQUEST', { orderNumber: order.so_don_hang, reason, ketQuaMoi }, order.so_don_hang, 'order');
+        return { status: 'SUCCESS', message: 'Hủy yêu cầu thành công!' };
 
-    return { status: 'SUCCESS', message: 'Hủy yêu cầu thành công!' };
+    } catch (e: any) {
+        console.error("Supabase cancel error details:", e);
+        throw new Error(e.message || 'Lỗi khi xử lý yêu cầu hủy trên hệ thống.');
+    }
 };
 
 export const requestInvoice = async (
@@ -1459,20 +1558,22 @@ export const updateOrderDetails = async (orderNumber: string, details: Partial<O
             await supabase.from('car_hold_activities').delete().eq('vin', matchedVin).eq('type', 'QUEUE');
         }
 
-        // 3. Phản hồi cho UI TRONG TÍCH TẮC
+        // CHỦ ĐỘNG GỌI ROBOT THÔNG BÁO GÁN VIN TỰ ĐỘNG
         if (matchedVin) {
-            return {
-                status: 'SUCCESS',
-                message: `Cập nhật thành công! Mối nối tự động ghép với VIN: ${matchedVin}`,
-                autoMatched: true,
-                vin: matchedVin
-            };
-        } else {
-            return {
-                status: 'SUCCESS',
-                message: "Cập nhật thông tin đơn hàng thành công."
-            };
+             supabase.functions.invoke('send-email', {
+                 body: { 
+                     actionId: 'match_success', 
+                     record: { so_don_hang: orderNumber, vin: matchedVin, ...updateData } 
+                 }
+             }).then();
         }
+
+        return {
+            status: 'SUCCESS',
+            message: matchedVin ? `Cập nhật thành công! Mối nối tự động ghép với VIN: ${matchedVin}` : "Cập nhật thông tin đơn hàng thành công.",
+            autoMatched: !!matchedVin,
+            vin: matchedVin
+        };
 
     } catch (e: any) {
         console.error("Supabase updateOrderDetails error:", e);
@@ -1513,7 +1614,8 @@ export const superUpdateOrderDetails = async (oldOrderNumber: string, details: a
                 ket_qua: details['Kết quả'],
                 trang_thai_vc: details['Trạng thái VC'],
                 ngay_xuat_hoa_don: details['Ngày xuất hóa đơn'],
-                link_hoa_don_da_xuat: details['LinkHoaDonDaXuat']
+                link_hoa_don_da_xuat: details['LinkHoaDonDaXuat'],
+                thoi_gian_can_xe: details['Thời gian cần xe'] || details['thoi_gian_can_xe']
             },
             yeucauxhd: {
                 so_don_hang: details['Số đơn hàng'],
@@ -1527,7 +1629,8 @@ export const superUpdateOrderDetails = async (oldOrderNumber: string, details: a
                 so_may: details['Số máy'] || details['SỐ ĐỘNG CƠ'],
                 ngay_coc: details['Ngày cọc'],
                 ngay_xuat_hoa_don: details['Ngày xuất hóa đơn'],
-                url_hoa_don_da_xuat: details['LinkHoaDonDaXuat']
+                url_hoa_don_da_xuat: details['LinkHoaDonDaXuat'],
+                thoi_gian_can_xe: details['Thời gian cần xe'] || details['thoi_gian_can_xe']
             },
             yeucauvc: {
                 so_don_hang: details['Số đơn hàng'],
@@ -3530,6 +3633,109 @@ export const performAdminAction = async (action: string, params: Record<string, 
     // -------------------------------------
     if (action === 'archiveInvoicedOrdersMonthly') {
         await logAction('ARCHIVE_DATA', {}, 'system', 'archive');
+        try {
+            const now = new Date();
+            // Lấy ngày mùng 1 của tháng hiện tại (first of month)
+            const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            const { data: invoicedOrders, error: fetchErr } = await supabaseAdmin
+                .from('yeucauxhd')
+                .select('*')
+                .not('ngay_xuat_hoa_don', 'is', null)
+                .limit(10000);
+
+            if (fetchErr) throw fetchErr;
+
+            const ordersToArchive = invoicedOrders?.filter(o => {
+                if (!o.ngay_xuat_hoa_don) return false;
+                let date = new Date(o.ngay_xuat_hoa_don);
+                if (isNaN(date.getTime())) {
+                    const parts = String(o.ngay_xuat_hoa_don).split('/');
+                    if (parts.length === 3) {
+                        date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                    }
+                }
+                return date && !isNaN(date.getTime()) && date < firstOfMonth;
+            }) || [];
+
+            let archivedCount = 0;
+            if (ordersToArchive.length > 0) {
+                const parseDateSafe = (d: any) => {
+                    if (!d) return null;
+                    const parsed = new Date(d);
+                    if (!isNaN(parsed.getTime())) return parsed.toISOString();
+                    const parts = String(d).split('/');
+                    if (parts.length === 3) {
+                        const parsedVi = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                        if (!isNaN(parsedVi.getTime())) return parsedVi.toISOString();
+                    }
+                    return null;
+                };
+
+                const archivePayload = ordersToArchive.map(y => ({
+                    so_don_hang: y.so_don_hang,
+                    ten_khach_hang: y.ten_khach_hang,
+                    dong_xe: y.dong_xe,
+                    phien_ban: y.phien_ban,
+                    ngoai_that: y.ngoai_that,
+                    noi_that: y.noi_that,
+                    tvbh: y.tvbh,
+                    vin: y.vin,
+                    so_may: y.so_may,
+                    ngay_coc: parseDateSafe(y.ngay_coc),
+                    ngay_yeu_cau: parseDateSafe(y.ngay_yeu_cau),
+                    ngay_xuat_hoa_don: parseDateSafe(y.ngay_xuat_hoa_don),
+                    chinh_sach: y.chinh_sach,
+                    hoa_hong_ung: typeof y.hoa_hong_ung === 'number' ? y.hoa_hong_ung : 0,
+                    vpoint: typeof y.vpoint === 'number' ? y.vpoint : 0,
+                    url_hop_dong: y.url_hop_dong,
+                    url_de_nghi_xhd: y.url_de_nghi_xhd,
+                    url_hoa_don_da_xuat: y.url_hoa_don_da_xuat,
+                    trang_thai_vc: y.trang_thai_vc,
+                    ket_qua: 'Đã xuất hóa đơn',
+                    created_at: parseDateSafe(y.created_at) || new Date().toISOString()
+                }));
+
+                archivedCount = archivePayload.length;
+                const soDonHangs = archivePayload.map(o => o.so_don_hang);
+
+                // Kiểm tra các đơn đã lưu trữ để tránh trùng lặp do thiếu ON CONFLICT (unique constraint)
+                const { data: existingArchived } = await supabaseAdmin.from('archived_orders').select('so_don_hang').in('so_don_hang', soDonHangs);
+                const existingSet = new Set(existingArchived?.map(a => a.so_don_hang) || []);
+                const newPayload = archivePayload.filter(a => !existingSet.has(a.so_don_hang));
+
+                if (newPayload.length > 0) {
+                    const { error: insertErr } = await supabaseAdmin.from('archived_orders').insert(newPayload);
+                    if (insertErr) throw insertErr;
+                }
+
+                // Use bulk delete to avoid large parameter lists (batch 100 at a time)
+                for (let i = 0; i < soDonHangs.length; i += 100) {
+                    const batch = soDonHangs.slice(i, i + 100);
+                    
+                    // Xóa file trong kho lưu trữ (yeucauxhd-files) để giải phóng dung lượng (Egress/Storage)
+                    for (const orderNo of batch) {
+                        try {
+                            const { data: files } = await supabaseAdmin.storage.from('yeucauxhd-files').list(orderNo);
+                            if (files && files.length > 0) {
+                                const toDelete = files.map(f => `${orderNo}/${f.name}`);
+                                await supabaseAdmin.storage.from('yeucauxhd-files').remove(toDelete);
+                            }
+                        } catch (e) { console.warn(`Lỗi xóa file kho của ${orderNo}`, e); }
+                    }
+
+                    const { error: delYeuCauErr } = await supabaseAdmin.from('yeucauxhd').delete().in('so_don_hang', batch);
+                    if (delYeuCauErr) console.warn("Lỗi xóa yeucauxhd:", delYeuCauErr);
+                    const { error: delDonHangErr } = await supabaseAdmin.from('donhang').delete().in('so_don_hang', batch);
+                    if (delDonHangErr) console.warn("Lỗi xóa donhang:", delDonHangErr);
+                }
+            }
+
+            return { status: 'SUCCESS', message: `Đã lưu trữ ${archivedCount} đơn hàng thành công.` };
+        } catch (err: any) {
+            console.error('Archive error:', err);
+            return { status: 'ERROR', message: `Lỗi lưu trữ: ${err.message}` };
+        }
     }
     if (action === 'addUser') {
         await logAction('ADD_USER', { fullName: params.fullName, email: params.email }, params.email, 'user');

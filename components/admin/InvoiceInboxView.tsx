@@ -217,7 +217,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
     // 1. Filter Orders by Folder
     const filteredOrders = useMemo(() => {
-        return orders.filter(order => {
+        const list = orders.filter(order => {
             const status = (order['Trạng thái xử lý'] || order['Kết quả'] || '').toLowerCase().trim().normalize('NFC');
             switch (selectedFolder) {
                 case 'pending_approval': return status === 'chờ phê duyệt';
@@ -229,6 +229,18 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                 case 'all': return true;
                 default: return true;
             }
+        });
+
+        // 2. Sort by Invoice Date (descending), then by Request Date
+        return list.sort((a, b) => {
+            const dateA = a['Ngày xuất hóa đơn'] ? new Date(a['Ngày xuất hóa đơn']).getTime() : 0;
+            const dateB = b['Ngày xuất hóa đơn'] ? new Date(b['Ngày xuất hóa đơn']).getTime() : 0;
+
+            if (dateA !== dateB) return dateB - dateA;
+
+            const timeA = a['Thời gian nhập'] ? new Date(a['Thời gian nhập']).getTime() : 0;
+            const timeB = b['Thời gian nhập'] ? new Date(b['Thời gian nhập']).getTime() : 0;
+            return timeB - timeA;
         });
     }, [orders, selectedFolder]);
 
@@ -341,9 +353,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         }
     };
 
-    // Group orders by Invoice Date for 'pending_signature' folder
+    // Group orders by Invoice Date for 'pending_signature' and 'completed' folders
     const groupedOrders = useMemo(() => {
-        if (selectedFolder !== 'pending_signature') return null;
+        if (selectedFolder !== 'pending_signature' && selectedFolder !== 'completed') return null;
 
         const groups: { [key: string]: Order[] } = {};
         filteredOrders.forEach(order => {
@@ -353,11 +365,14 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
             groups[dateStr].push(order);
         });
 
-        // Return array of [date, orders] sorted by date
+        // Return array of [date, orders] sorted by date descending
         return Object.entries(groups).sort((a, b) => {
             if (a[0] === 'Chưa có ngày') return 1;
             if (b[0] === 'Chưa có ngày') return -1;
-            return moment(a[0], 'DD/MM/YYYY').valueOf() - moment(b[0], 'DD/MM/YYYY').valueOf();
+            // moment comparison for DD/MM/YYYY
+            const dateA = moment(a[0], 'DD/MM/YYYY').valueOf();
+            const dateB = moment(b[0], 'DD/MM/YYYY').valueOf();
+            return dateB - dateA;
         });
     }, [filteredOrders, selectedFolder]);
 

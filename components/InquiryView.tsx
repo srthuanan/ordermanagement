@@ -156,6 +156,11 @@ const CarInquiryView: React.FC<CarInquiryViewProps> = ({ currentUser, showToast,
     useEffect(() => {
         const { model, version } = formData;
         if (model) {
+            const versions = versionsMap[model as keyof typeof versionsMap] || [];
+            if (versions.length === 1 && formData.version !== versions[0]) {
+                setFormData(prev => ({ ...prev, version: versions[0] }));
+            }
+
             const modelKey = model.toLowerCase().replace(/\s+/g, '');
             const validCodes = VALID_IMAGES_BY_MODEL[modelKey];
             if (validCodes) {

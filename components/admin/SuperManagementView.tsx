@@ -74,14 +74,22 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                 "Kết quả": selectedOrder["Kết quả"],
                 "Trạng thái VC": selectedOrder["Trạng thái VC"],
                 "Ngày xuất hóa đơn": selectedOrder["Ngày xuất hóa đơn"] ? moment(selectedOrder["Ngày xuất hóa đơn"], ["DD/MM/YYYY", "YYYY-MM-DD"]).format('YYYY-MM-DD') : '',
-                "LinkHoaDonDaXuat": selectedOrder["LinkHoaDonDaXuat"] || selectedOrder["url_hoa_don_da_xuat"] || ''
+                "LinkHoaDonDaXuat": selectedOrder["LinkHoaDonDaXuat"] || selectedOrder["url_hoa_don_da_xuat"] || '',
+                "Thời gian cần xe": selectedOrder["Thời gian cần xe"] ? moment(selectedOrder["Thời gian cần xe"]).format('YYYY-MM-DD') : ''
             });
         }
     }, [selectedOrder]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData((prev: any) => ({ ...prev, [name]: value }));
+        setFormData((prev: any) => {
+            const newState = { ...prev, [name]: value };
+            if (name === 'Dòng xe') {
+                const versions = versionsMap[value as keyof typeof versionsMap] || [];
+                if (versions.length === 1) newState['Phiên bản'] = versions[0];
+            }
+            return newState;
+        });
     };
 
     useEffect(() => {
@@ -334,7 +342,11 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                                                 <label className={labelClass}>Ngày Xuất HĐ</label>
                                                 <input name="Ngày xuất hóa đơn" type="date" value={formData["Ngày xuất hóa đơn"] || ''} onChange={handleInputChange} className={inputClass} />
                                             </div>
-                                            <div className="md:col-span-3">
+                                            <div className="md:col-span-1">
+                                                <label className={labelClass}>Thời gian cần xe</label>
+                                                <input name="Thời gian cần xe" type="date" value={formData["Thời gian cần xe"] || ''} onChange={handleInputChange} className={inputClass} />
+                                            </div>
+                                            <div className="md:col-span-2">
                                                 <label className={labelClass}>Link Hóa Đơn (URL)</label>
                                                 <div className="relative">
                                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

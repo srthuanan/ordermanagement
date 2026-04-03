@@ -73,11 +73,7 @@ export const uploadSupplementaryFiles = async (orderNumber: string, contractFile
             if (updatedRecord) {
                 const { postApi } = await import('./baseService');
                 
-                // Đồng bộ update sang Google Sheets chạy ngầm (fire and forget)
-                postApi({
-                    action: 'syncYeuCauXhd',
-                    payload: JSON.stringify({ type: 'UPDATE', record: updatedRecord })
-                }).catch(e => console.warn('Lỗi gọi đồng bộ GAS:', e));
+                // (removed GAS sync block to avoid recreating deleted sheets)
 
                 let filesInfo = [];
                 if (urlH) filesInfo.push("Hợp đồng mua bán");

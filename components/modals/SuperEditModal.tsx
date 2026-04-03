@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { Order } from '../../types';
 import { versionsMap, allPossibleVersions, defaultExteriors, interiorColorRules } from '../../constants';
 import * as apiService from '../../services/apiService';
@@ -42,7 +42,14 @@ const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSucc
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData((prev: any) => ({ ...prev, [name]: value }));
+        setFormData((prev: any) => {
+            const newState = { ...prev, [name]: value };
+            if (name === 'Dòng xe') {
+                const versions = versionsMap[value as keyof typeof versionsMap] || [];
+                if (versions.length === 1) newState['Phiên bản'] = versions[0];
+            }
+            return newState;
+        });
     };
 
     useEffect(() => {
