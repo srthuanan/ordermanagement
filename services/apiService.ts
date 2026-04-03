@@ -11,6 +11,13 @@ declare const axios: any;
 
 const getStorageItem = (key: string) => localStorage.getItem(key) || sessionStorage.getItem(key);
 
+export const triggerAutoSync = () => {
+    try {
+        const bodyParams = new URLSearchParams();
+        bodyParams.append('action', 'forceSync');
+        axios.post("https://script.google.com/macros/s/AKfycbwC_Xw8YcudogtxpPJztqjFdttcL4tgDaHIdgFWqGcnZ0M44oH6KVb-2r52OKPtLex0Fg/exec", bodyParams).catch(() => {});
+    } catch(e) {}
+};
 
 const uploadToSupabase = async (file: File | Blob, path: string, bucket: string = 'yeucauxhd-files'): Promise<string> => {
     const { error } = await supabaseAdmin.storage.from(bucket).upload(path, file, { upsert: true });

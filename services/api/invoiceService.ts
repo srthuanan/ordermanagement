@@ -71,8 +71,7 @@ export const uploadSupplementaryFiles = async (orderNumber: string, contractFile
         try {
             const { data: updatedRecord } = await supabaseAdmin.from('yeucauxhd').select('*').eq('so_don_hang', orderNumber).single();
             if (updatedRecord) {
-                const { postApi } = await import('./baseService');
-                
+
                 // (removed GAS sync block to avoid recreating deleted sheets)
 
                 let filesInfo = [];

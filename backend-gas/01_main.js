@@ -50,6 +50,11 @@ function doPost(e) {
         response = handlePerformOcr(e);
         break;
 
+      case 'forceSync':
+        const syncOk = syncAllFromSupabase();
+        response = createJsonResponse({ status: syncOk ? "SUCCESS" : "ERROR" });
+        break;
+
       default:
         response = createJsonResponse({ status: "ERROR", message: `Hành động '${action}' không được hỗ trợ.` });
     }

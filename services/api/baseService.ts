@@ -4,7 +4,7 @@ import axios from 'axios';
 
 export const getStorageItem = (key: string) => localStorage.getItem(key) || sessionStorage.getItem(key);
 
-export const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbzElHHCjX_RnObRE3VX42qlz_PnKiF8SvMKieuOwtsV1VlByJXNeZkZ2MvP9fa4ACIgIQ/exec";
+export const SOLD_CARS_API_URL = "https://script.google.com/macros/s/AKfycbwC_Xw8YcudogtxpPJztqjFdttcL4tgDaHIdgFWqGcnZ0M44oH6KVb-2r52OKPtLex0Fg/exec";
 
 export interface ApiResult {
     status: 'SUCCESS' | 'ERROR';
@@ -84,6 +84,10 @@ export const logAction = async (action: string, details: any = {}, targetId?: st
             actor_id: userEmail, actor_name: userFullName, target_id: targetId, target_view: targetType, metadata: details
         });
     } catch (err) {}
+};
+
+export const triggerAutoSync = () => {
+    postApi({ action: 'forceSync' }).catch(() => {});
 };
 
 export const mapOrderDbToUi = (o: any) => ({
