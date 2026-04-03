@@ -62,37 +62,63 @@ function cleanUpGhostSheets() {
 function syncAllFromSupabase() {
   var timestamp = new Date().toLocaleString('vi-VN');
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss;
+    try { ss = SpreadsheetApp.getActiveSpreadsheet(); } catch(e) { ss = null; }
     if (!ss) ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     
-    try { SpreadsheetApp.getActiveSpreadsheet().toast('Đang nạp 100% dữ liệu từ Supabase...', 'Đồng bộ', 3); } catch(ex){}
+    try { ss.toast('Đang nạp dữ liệu từ Supabase...', 'Đồng bộ', 30); } catch(ex){}
+    
+    var successCount = 0;
+    var failedTables = [];
     
     for (var i = 0; i < TABLES_TO_SYNC.length; i++) {
-       syncTable(ss, TABLES_TO_SYNC[i].table, TABLES_TO_SYNC[i].sheet);
+      var tbl = TABLES_TO_SYNC[i];
+      try {
+        var url = SUPABASE_URL + "/rest/v1/" + tbl.table + "?select=*";
+        var response = UrlFetchApp.fetch(url, {
+          method: "get",
+          headers: {
+            "apikey": SUPABASE_SERVICE_KEY,
+            "Authorization": "Bearer " + SUPABASE_SERVICE_KEY
+          },
+          muteHttpExceptions: true
+        });
+        
+        var code = response.getResponseCode();
+        if (code !== 200) {
+          Logger.log("Bỏ qua bảng " + tbl.table + " (HTTP " + code + "): " + response.getContentText().substring(0, 200));
+          failedTables.push(tbl.table + "(HTTP" + code + ")");
+          continue;
+        }
+        
+        var data = JSON.parse(response.getContentText());
+        if (!Array.isArray(data)) {
+          Logger.log("Bỏ qua bảng " + tbl.table + " - không phải mảng");
+          failedTables.push(tbl.table + "(not array)");
+          continue;
+        }
+        
+        writeSheet(ss, tbl.table, tbl.sheet, data);
+        successCount++;
+      } catch (tableErr) {
+        Logger.log("Lỗi bảng " + tbl.table + ": " + tableErr.message);
+        failedTables.push(tbl.table);
+      }
     }
     
-    try { SpreadsheetApp.getActiveSpreadsheet().toast('Đồng bộ thành công lúc ' + timestamp, 'Hoàn tất', 5); } catch(ex){}
+    SpreadsheetApp.flush();
+    var msg = 'Đồng bộ ' + successCount + '/' + TABLES_TO_SYNC.length + ' bảng lúc ' + timestamp;
+    if (failedTables.length > 0) msg += ' | Bỏ qua: ' + failedTables.join(', ');
+    Logger.log(msg);
+    try { ss.toast(msg, 'Hoàn tất', 10); } catch(ex){}
     return true;
   } catch (e) {
-    Logger.log("Lỗi đồng bộ: " + e.message);
-    try { SpreadsheetApp.getActiveSpreadsheet().toast('Lỗi: ' + e.message, 'Thất bại!', 10); } catch(ex){}
+    Logger.log("Lỗi đồng bộ tổng: " + e.message + " | Stack: " + e.stack);
     return false;
   }
 }
 
-function syncTable(ss, tableName, sheetName) {
-  var url = SUPABASE_URL + "/rest/v1/" + tableName + "?select=*&order=created_at.desc";
-  var options = {
-    "method": "get",
-    "headers": {
-      "apikey": SUPABASE_SERVICE_KEY,
-      "Authorization": "Bearer " + SUPABASE_SERVICE_KEY
-    }
-  };
-  
-  var response = UrlFetchApp.fetch(url, options);
-  var data = JSON.parse(response.getContentText());
-  
+function writeSheet(ss, tableName, sheetName, data) {
   var sheet = ss.getSheetByName(sheetName);
   if (!sheet) {
     sheet = ss.insertSheet(sheetName);
@@ -101,7 +127,6 @@ function syncTable(ss, tableName, sheetName) {
   sheet.clearContents();
   
   var rows = [];
-  
   if (data && data.length > 0) {
     var headers = Object.keys(data[0]);
     rows.push(headers);
@@ -110,14 +135,8 @@ function syncTable(ss, tableName, sheetName) {
       var rowData = [];
       headers.forEach(function(h) {
           var val = row[h];
-          if (val === null || val === undefined) {
-             val = "";
-          } else if (typeof val === 'object') {
-             val = JSON.stringify(val);
-          } else if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)) {
-             // Optional: Format ISO date string
-             // val = new Date(val).toLocaleString('vi-VN');
-          }
+          if (val === null || val === undefined) { val = ""; } 
+          else if (typeof val === 'object') { val = JSON.stringify(val); }
           rowData.push(val);
       });
       rows.push(rowData);
@@ -127,10 +146,15 @@ function syncTable(ss, tableName, sheetName) {
   }
   
   if (rows.length > 0) {
+    var maxRows = sheet.getMaxRows();
+    var maxCols = sheet.getMaxColumns();
+    // Expand if needed
+    if (rows.length > maxRows) sheet.insertRowsAfter(maxRows, rows.length - maxRows);
+    if (rows[0].length > maxCols) sheet.insertColumnsAfter(maxCols, rows[0].length - maxCols);
+    
     sheet.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
     if (data && data.length > 0) {
        sheet.getRange(1, 1, 1, rows[0].length).setFontWeight("bold").setBackground("#e2e8f0");
-       // Add frozen row for headers
        try { sheet.setFrozenRows(1); } catch (err){}
     }
   }

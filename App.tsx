@@ -195,6 +195,36 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         };
     }, [fetchAppConfig, refetchStock]); // Thêm refetchStock vào dependency
 
+    // === TỰ ĐỘNG ĐẨY DỮ LIỆU SANG GOOGLE SHEET KHI CÓ THAY ĐỔI ===
+    useEffect(() => {
+        let syncTimeout: NodeJS.Timeout;
+        const channel = supabase.channel('global_auto_sync')
+            .on('postgres_changes', { event: '*', schema: 'public' }, (payload: any) => {
+                 const t = payload.table;
+                 // Các bảng quan trọng cần đồng bộ ngay
+                 if (['donhang', 'khoxe', 'yeucauxhd', 'yeucauvc', 'archived_orders'].includes(t)) {
+                     const lastSyncStr = localStorage.getItem('last_auto_push_sync') || '0';
+                     const lastSync = parseInt(lastSyncStr);
+                     
+                     // Chỉ cho phép tự động đẩy tối đa 1 lần mỗi 20 giây để tránh nghẽn server
+                     if (Date.now() - lastSync > 20000) { 
+                         localStorage.setItem('last_auto_push_sync', Date.now().toString());
+                         clearTimeout(syncTimeout);
+                         syncTimeout = setTimeout(() => {
+                             apiService.triggerAutoSync();
+                             console.log('Real-time: Auto Sync triggered for table', t);
+                         }, 3000); // Đợi 3s sau khi thao tác xong để chốt dữ liệu
+                     }
+                 }
+            })
+            .subscribe();
+            
+        return () => { 
+            supabase.removeChannel(channel); 
+            clearTimeout(syncTimeout); 
+        }
+    }, []);
+
     const prevStockEnabledRef = useRef<boolean | null>(null);
     useEffect(() => {
         if (prevStockEnabledRef.current !== null && prevStockEnabledRef.current !== isStockEnabled) {
