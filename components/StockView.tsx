@@ -7,6 +7,7 @@ import TabbedFilter from './ui/TabbedFilter';
 import MultiSelectDropdown from './ui/MultiSelectDropdown';
 import { includesNormalized } from '../utils/stringUtils';
 import AnimatedBackground from './ui/AnimatedBackground';
+import AdminCarEditModal from './modals/AdminCarEditModal';
 
 
 interface StockViewProps {
@@ -33,6 +34,7 @@ interface StockViewProps {
     queuedVins: string[];
     canHoldMore: boolean;
     onNavigateToInquiry: () => void;
+    onViewCarOnMap?: (vin: string) => void;
 }
 
 const StockView: React.FC<StockViewProps> = ({
@@ -57,7 +59,8 @@ const StockView: React.FC<StockViewProps> = ({
     forcedSearch,
     queuedVins,
     canHoldMore,
-    onNavigateToInquiry
+    onNavigateToInquiry,
+    onViewCarOnMap
 }) => {
     const [filters, setFilters] = useState({
         keyword: '',
@@ -79,6 +82,9 @@ const StockView: React.FC<StockViewProps> = ({
         }
     }, [forcedSearch]);
     const [sortConfig, setSortConfig] = useState<StockSortConfig | null>({ key: 'Ngày nhập', direction: 'desc' });
+
+    // Admin Edit Modal
+    const [adminEditVehicle, setAdminEditVehicle] = useState<StockVehicle | null>(null);
 
     // Stock Welcome Video/Popup Tracker
     const [showStockWelcome, setShowStockWelcome] = useState(false);
@@ -454,7 +460,9 @@ const StockView: React.FC<StockViewProps> = ({
             highlightedVins,
             processingVin: processingVin,
             queuedVins: queuedVins,
-            canHoldMore: canHoldMore
+            canHoldMore: canHoldMore,
+            onViewCarOnMap: onViewCarOnMap,
+            ...(isAdmin ? { onAdminEdit: (vehicle: StockVehicle) => setAdminEditVehicle(vehicle) } : {})
         };
 
         return (
@@ -517,6 +525,15 @@ const StockView: React.FC<StockViewProps> = ({
     return (
         <>
             {renderContent()}
+            {isAdmin && (
+                <AdminCarEditModal
+                    isOpen={!!adminEditVehicle}
+                    vehicle={adminEditVehicle}
+                    onClose={() => setAdminEditVehicle(null)}
+                    showToast={showToast}
+                    onSuccess={() => refetchStock(true)}
+                />
+            )}
             {showStockWelcome && (
                 <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-[2px] z-[100] flex items-start justify-center pt-24 sm:pt-32 p-4 animate-fade-in transition-all duration-500">
                     <div className="bg-white/90 backdrop-blur-2xl rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] max-w-sm w-full overflow-hidden border border-white/60 relative p-5 ring-1 ring-slate-900/5 transform transition-all hover:-translate-y-1 animate-[bounce_3s_infinite]">

@@ -1,8 +1,7 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Order, SortConfig } from '../types';
 import HistoryTable from './HistoryTable';
 import { useSoldCarsApi } from '../hooks/useSoldCarsApi';
-import Pagination from './ui/Pagination';
 import SoldCarDetailPanel from './ui/SoldCarDetailPanel';
 
 import { DropdownFilterConfig } from './ui/Filters';
@@ -48,8 +47,9 @@ const aggregateData = (data: Order[], key: keyof Order): { key: string, count: n
     return Object.entries(stats).map(([key, count]) => ({ key, count })).sort((a, b) => b.count - a.count);
 };
 
-const SoldCarsView: React.FC<SoldCarsViewProps> = ({ isSidebarCollapsed, showOrderInAdmin, showAdminTab, isAdmin }) => {
-    const PAGE_SIZE = isSidebarCollapsed ? 14 : 12;
+const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdminTab, isAdmin }) => {
+    const INITIAL_LOAD_COUNT = 20;
+    const LOAD_MORE_STEP = 20;
 
     // State for Date Filter
     // Default to current month and year
@@ -66,13 +66,14 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ isSidebarCollapsed, showOrd
         exterior: [] as string[]
     });
     const [sortConfig, setSortConfig] = useState<SortConfig | null>({ key: 'Thời gian nhập', direction: 'desc' });
-    const [currentPage, setCurrentPage] = useState(1);
+    const [visibleItemsCount, setVisibleItemsCount] = useState(INITIAL_LOAD_COUNT);
     const [selectedDetailOrder, setSelectedDetailOrder] = useState<Order | null>(null);
     const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
 
+    // Sentinel ref for infinite scroll
+    const observerTarget = useRef<HTMLDivElement>(null);
+
     // Filter Data by Date
-    // Filter Data by Date
-    // Since API now filters by date, we don't need client-side date filtering anymore
     const dateFilteredData = useMemo(() => {
         return soldData;
     }, [soldData]);
@@ -125,7 +126,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ isSidebarCollapsed, showOrd
 
     // Sorting
     const handleSort = (key: keyof Order) => {
-        setCurrentPage(1);
+        setVisibleItemsCount(INITIAL_LOAD_COUNT);
         setSortConfig((prev: SortConfig | null) => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }));
     };
 
@@ -144,18 +145,38 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ isSidebarCollapsed, showOrd
         return sortableData;
     }, [displayData, sortConfig]);
 
-    // Pagination
-    const totalPages = Math.ceil(sortedData.length / PAGE_SIZE);
-    const paginatedData = useMemo(() => sortedData.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE), [sortedData, currentPage, PAGE_SIZE]);
+    // Intersection Observer for Infinite Scroll
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && visibleItemsCount < sortedData.length) {
+                    setVisibleItemsCount(prev => prev + LOAD_MORE_STEP);
+                }
+            },
+            { threshold: 0.1 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => {
+            if (observerTarget.current) {
+                observer.unobserve(observerTarget.current);
+            }
+        };
+    }, [sortedData.length, visibleItemsCount]);
+
+    const visibleData = useMemo(() => sortedData.slice(0, visibleItemsCount), [sortedData, visibleItemsCount]);
 
     // Handlers
     const handleFilterChange = useCallback((newFilters: Partial<typeof filters>) => {
-        setCurrentPage(1);
+        setVisibleItemsCount(INITIAL_LOAD_COUNT);
         setFilters(prev => ({ ...prev, ...newFilters }));
     }, []);
 
     const handleResetFilters = useCallback(() => {
-        setCurrentPage(1);
+        setVisibleItemsCount(INITIAL_LOAD_COUNT);
         setFilters({
             keyword: '',
             tvbh: [],
@@ -268,7 +289,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ isSidebarCollapsed, showOrd
                     ))
                 ) : (
                     <>
-                        <div className="bg-white/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-2.5 group hover:shadow-md transition-all">
+                        <div className="bg-white/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/80 shadow-[0_2px_8_rgba(0,0,0,0.04)] flex items-center gap-2.5 group hover:shadow-md transition-all">
                             <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
                                 <i className="fas fa-car text-sm"></i>
                             </div>
@@ -277,7 +298,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ isSidebarCollapsed, showOrd
                                 <p className="text-sm font-bold text-gray-800">{stats.total} Xe</p>
                             </div>
                         </div>
-                        <div className="bg-white/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-2.5 group hover:shadow-md transition-all">
+                        <div className="bg-white/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/80 shadow-[0_2px_8_rgba(0,0,0,0.04)] flex items-center gap-2.5 group hover:shadow-md transition-all">
                             <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
                                 <i className="fas fa-trophy text-sm"></i>
                             </div>
@@ -286,7 +307,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ isSidebarCollapsed, showOrd
                                 <p className="text-sm font-bold text-gray-800 truncate">{stats.topCarDisplay}</p>
                             </div>
                         </div>
-                        <div className="bg-white/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center gap-2.5 group hover:shadow-md transition-all">
+                        <div className="bg-white/60 backdrop-blur-md px-3 py-2 rounded-xl border border-white/80 shadow-[0_2px_8_rgba(0,0,0,0.04)] flex items-center gap-2.5 group hover:shadow-md transition-all">
                             <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
                                 <i className="fas fa-crown text-sm"></i>
                             </div>
@@ -310,20 +331,27 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ isSidebarCollapsed, showOrd
                                 {skeletons}
                             </div>
                         ) : (
-                            <HistoryTable
-                                orders={paginatedData}
-                                onRowClick={handleRowClick}
-                                selectedOrder={selectedDetailOrder}
-                                sortConfig={sortConfig}
-                                onSort={handleSort}
-                                startIndex={(currentPage - 1) * PAGE_SIZE}
-                                viewMode="sold"
-                                showOrderInAdmin={showOrderInAdmin}
-                            />
+                            <>
+                                <HistoryTable
+                                    orders={visibleData}
+                                    onRowClick={handleRowClick}
+                                    selectedOrder={selectedDetailOrder}
+                                    sortConfig={sortConfig}
+                                    onSort={handleSort}
+                                    startIndex={0}
+                                    viewMode="sold"
+                                />
+                                {/* Intersection Observer Target */}
+                                <div ref={observerTarget} className="h-10 w-full flex items-center justify-center py-4">
+                                    {visibleItemsCount < sortedData.length && (
+                                        <div className="flex items-center gap-2 text-slate-400 text-xs font-bold uppercase tracking-widest animate-pulse">
+                                            <i className="fas fa-spinner fa-spin"></i>
+                                            Đang tải thêm...
+                                        </div>
+                                    )}
+                                </div>
+                            </>
                         )}
-                    </div>
-                    <div className="p-2 border-t border-white/60 bg-white/20 backdrop-blur-sm z-10">
-                        {totalPages > 0 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} onLoadMore={() => { }} isLoadingArchives={false} isLastArchive={true} />}
                     </div>
                 </div>
 

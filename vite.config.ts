@@ -1,13 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-import viteCompression from 'vite-plugin-compression';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    viteCompression(),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
@@ -38,22 +36,21 @@ export default defineConfig({
         clientsClaim: true,
         skipWaiting: true,
         globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024 // Increased to 10MB to avoid precache failures
+        maximumFileSizeToCacheInBytes: 20 * 1024 * 1024 // 20MB
       }
     })
   ],
   define: {
     '__APP_VERSION__': JSON.stringify(new Date().getTime().toString())
   },
-  base: (process.env.IS_ELECTRON || process.env.IS_MOBILE) ? './' : '/ordermanagement/',
+  base: '/ordermanagement/',
   build: {
-    chunkSizeWarningLimit: 3000,
+    chunkSizeWarningLimit: 5000,
     rollupOptions: {
       output: {
         manualChunks: {
           'vendor-react': ['react', 'react-dom'],
-          'vendor-pdf': ['react-pdf'],
-          'excel-lib': ['exceljs']
+          'vendor-jspdf': ['jspdf']
         }
       }
     }

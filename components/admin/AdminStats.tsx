@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Order } from '../../types';
 import moment from 'moment';
 
@@ -9,8 +9,6 @@ interface AdminStatsProps {
 }
 
 const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pairedData }) => {
-    const startOfMonth = useMemo(() => moment().startOf('month'), []);
-
     // Modal State
     const [detailModal, setDetailModal] = useState<{
         isOpen: boolean;
@@ -22,17 +20,16 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
         data: []
     });
 
-    // 1. Thống kê Số lượng Yêu cầu Xuất hóa đơn (XHĐ) - CHỈ LẤY THÁNG NÀY
+    // 1. Thống kê Số lượng Yêu cầu Xuất hóa đơn (XHĐ) 
     const tvbhInvoiceStats = useMemo(() => {
         const stats: Record<string, Record<string, number> & { total: number }> = {};
 
-        const currentMonthInvoices = xuathoadonData.filter(order => {
-            const date = moment(order['Thời gian YC'] || order['Thời gian nhập']);
-            return date.isSameOrAfter(startOfMonth);
-        });
+        const currentInvoices = xuathoadonData || [];
 
-        currentMonthInvoices.forEach(order => {
-            const tvbh = order['Người YC'] || order['Tư vấn bán hàng'] || order['Tên tư vấn bán hàng'] || 'Không rõ';
+        currentInvoices.forEach(order => {
+            const tvbhNameRaw = order['Tên tư vấn bán hàng'] || order['Người YC'] || order['Tư vấn bán hàng'] || 'Không rõ';
+            // Chuẩn hóa tên giống SoldCarsView
+            const tvbh = String(tvbhNameRaw).normalize("NFC").trim().toLowerCase().split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
             const model = order['Dòng xe'] || 'Khác';
 
             if (!stats[tvbh]) stats[tvbh] = { total: 0 };
@@ -41,7 +38,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
         });
 
         return stats;
-    }, [xuathoadonData, startOfMonth]);
+    }, [xuathoadonData]);
 
     // Lọc ra các Dòng xe thực sự có yêu cầu XHĐ > 0 trong tháng này
     const invoiceModels = useMemo(() => {
@@ -87,11 +84,8 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
     // Click handlers
     const showInvoiceDetails = (tvbh?: string, model?: string) => {
         const filtered = xuathoadonData.filter(order => {
-            const date = moment(order['Thời gian YC'] || order['Thời gian nhập']);
-            const matchesMonth = date.isSameOrAfter(startOfMonth);
-            if (!matchesMonth) return false;
-
-            const orderTvbh = order['Người YC'] || order['Tư vấn bán hàng'] || order['Tên tư vấn bán hàng'] || 'Không rõ';
+            const tvbhNameRaw = order['Tên tư vấn bán hàng'] || order['Người YC'] || order['Tư vấn bán hàng'] || 'Không rõ';
+            const orderTvbh = String(tvbhNameRaw).normalize("NFC").trim().toLowerCase().split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
             const orderModel = order['Dòng xe'] || 'Khác';
 
             if (tvbh && model) return orderTvbh === tvbh && orderModel === model;
@@ -140,7 +134,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                 </div>
                                 <h3 className="text-sm font-bold text-slate-800 tracking-tight">XUẤT HÓA ĐƠN THEO TVBH</h3>
                             </div>
-                            <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest bg-slate-50 px-2 py-1 rounded">Tháng {moment().format('MM')}</span>
+                            <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest bg-slate-50 px-2 py-1 rounded">Tất cả</span>
                         </div>
 
                         <div className="flex-1 overflow-auto bg-white custom-scrollbar">
@@ -304,7 +298,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
             {detailModal.isOpen && (
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setDetailModal(prev => ({ ...prev, isOpen: false }))}></div>
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl xl:max-w-7xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
                         <div className="px-6 py-4 bg-white border-b border-slate-100 flex items-center justify-between">
                             <h3 className="text-base font-bold text-slate-800">{detailModal.title}</h3>
                             <button
@@ -319,22 +313,37 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                 <thead className="sticky top-0 bg-slate-50 z-10">
                                     <tr>
                                         <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">Số đơn</th>
-                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">Khách hàng</th>
-                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">Dòng xe / Phiên bản</th>
-                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">VIN</th>
+                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">Khách hàng / TVBH</th>
+                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">Dòng xe / Phân loại</th>
+                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">Màu sắc</th>
+                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">VIN / Tình trạng</th>
                                         <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100 text-right">Ngày</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {detailModal.data.map(order => (
-                                        <tr key={order['Số đơn hàng']} className="hover:bg-slate-50/50">
+                                    {detailModal.data.map((order, index) => (
+                                        <tr key={order['Số đơn hàng'] || order.VIN || index} className="hover:bg-slate-50/50">
                                             <td className="px-4 py-3 text-xs font-bold text-blue-600 uppercase tracking-wider">{order['Số đơn hàng']}</td>
-                                            <td className="px-4 py-3 text-xs text-slate-700 font-medium">{order['Tên khách hàng'] || order['TÊN KHÁCH HÀNG']}</td>
+                                            <td className="px-4 py-3 text-xs text-slate-700">
+                                                <div className="font-bold">{order['Tên khách hàng'] || order['TÊN KHÁCH HÀNG']}</div>
+                                                <div className="text-[10px] text-slate-400 mt-0.5" title="Tư vấn bán hàng"><i className="fas fa-user-tie mr-1"></i>{order['Tên tư vấn bán hàng'] || order['Tư vấn bán hàng'] || order['Người YC']}</div>
+                                            </td>
                                             <td className="px-4 py-3 text-xs text-slate-600">
-                                                <div className="font-bold">{order['Dòng xe'] || order['DÒNG XE']}</div>
+                                                <div className="font-bold text-slate-800">{order['Dòng xe'] || order['DÒNG XE']}</div>
                                                 <div className="text-[10px] opacity-70">{order['Phiên bản'] || order['PHIÊN BẢN']}</div>
                                             </td>
-                                            <td className="px-4 py-3 text-xs font-mono text-slate-500 whitespace-nowrap">{order.VIN || order['SỐ VIN'] || '-'}</td>
+                                            <td className="px-4 py-3 text-xs text-slate-600">
+                                                <div className="font-medium text-slate-700" title="Ngoại thất">{order['Ngoại thất']}</div>
+                                                <div className="text-[10px] opacity-70" title="Nội thất">{order['Nội thất']}</div>
+                                            </td>
+                                            <td className="px-4 py-3 text-xs font-mono whitespace-nowrap">
+                                                <div className="font-bold text-slate-600">{order.VIN || order['SỐ VIN'] || '-'}</div>
+                                                <div className="mt-1">
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${(order['Kết quả'] || order['Trạng thái VC'] || '').toLowerCase().includes('chưa') ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                        {order['Kết quả'] || order['Trạng thái VC'] || 'Không rõ'}
+                                                    </span>
+                                                </div>
+                                            </td>
                                             <td className="px-4 py-3 text-[10px] text-slate-400 text-right font-medium">
                                                 {moment(order['Thời gian YC'] || order['Thời gian nhập']).format('DD/MM/YYYY')}
                                             </td>
@@ -342,7 +351,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                     ))}
                                     {detailModal.data.length === 0 && (
                                         <tr>
-                                            <td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic text-xs">Không có dữ liệu chi tiết</td>
+                                            <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic text-xs">Không có dữ liệu chi tiết</td>
                                         </tr>
                                     )}
                                 </tbody>

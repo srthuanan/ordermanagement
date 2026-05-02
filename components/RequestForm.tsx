@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, FormEvent } from 'react';
 import { AnalyticsData, Order, StockVehicle } from '../types';
-import { extractDateFromImageTesseract } from '../services/ocrService';
+import { extractDateFromImageTesseract, extractDateWithGemini } from '../services/ocrService';
 import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, interiorColorRules, VALID_IMAGES_BY_MODEL } from '../constants';
 import * as apiService from '../services/apiService';
 import FileUpload from './ui/FileUpload';
@@ -155,14 +155,24 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
     }, [formData.dong_xe, formData.phien_ban]);
 
     const handleFileSelect = useCallback(async (file: File | null) => {
+        console.log('[RequestForm] File selected:', file?.name);
         setChicFile(file);
         setFormData(prev => ({ ...prev, ngay_coc: '' }));
         setOcrStatus('');
         if (file) {
             setIsProcessingOcr(true);
-            setOcrStatus('Đang nhận diện ngày...');
+            setOcrStatus('Đang xử lý');
+            console.log('[RequestForm] Triggering Gemini OCR...');
             try {
-                const extractedDate = await extractDateFromImageTesseract(file, (status) => setOcrStatus(status));
+                // Ưu tiên dùng Gemini AI (Chính xác cao hơn)
+                let extractedDate = await extractDateWithGemini(file, (status) => setOcrStatus(status));
+                
+                // Nếu Gemini thất bại hoặc không ra kết quả, dùng Tesseract dự phòng
+                if (!extractedDate) {
+                    setOcrStatus('Đang xử lý');
+                    extractedDate = await extractDateFromImageTesseract(file, (status) => setOcrStatus(status));
+                }
+
                 if (extractedDate) {
                     const formattedDate = extractedDate.includes('T') ? extractedDate.split('T')[0] : extractedDate;
                     setFormData(prev => ({ ...prev, ngay_coc: formattedDate }));
@@ -226,6 +236,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         const pattern = new RegExp("^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$");
         if (!pattern.test(formData.so_don_hang)) { showToast('Sai Định Dạng', 'Số đơn hàng không đúng.', 'warning', 4000); return; }
         if (existingOrderNumbers.includes(formData.so_don_hang)) { showToast('Trùng Lặp', 'Số đơn hàng đã tồn tại.', 'error', 4000); return; }
+        // [CHỐNG GIAN LẬN]: Chặn cứng khi mã DMS không khớp với 6 ký tự đầu SĐH
+        if (initialVehicle && dmsWarning) { showToast('Không Hợp Lệ', 'Mã DMS xe không khớp với Số đơn hàng. Không thể tiếp tục.', 'error', 5000); return; }
         if (!chicFile) { showToast('Thiếu Chứng Từ', 'Vui lòng tải lên UNC.', 'warning', 3000); return; }
         if (!formData.ngay_coc) { showToast('Chờ Xử Lý Ảnh', 'Vui lòng chờ OCR.', 'warning', 3000); return; }
 
@@ -376,7 +388,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                     </div>
                                     <FileUpload onFileSelect={handleFileSelect} isProcessing={isProcessingOcr} ocrStatus={ocrStatus} showToast={showToast} />
                                     <div className="mt-4 flex items-center justify-between text-xs text-slate-500 bg-white/80 p-3 rounded-xl border border-slate-100 shadow-sm">
-                                        <span className="font-medium">Ngày cọc (OCR tự động):</span>
+                                        <span className="font-medium">Ngày cọc:</span>
                                         <span className={`font-mono font-bold px-2 py-0.5 rounded ${formData.ngay_coc ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-50'}`}>
                                             {formData.ngay_coc ? new Date(formData.ngay_coc).toLocaleDateString('vi-VN') : 'CHƯA NHẬN DIỆN'}
                                         </span>

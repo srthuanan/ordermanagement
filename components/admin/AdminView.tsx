@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Order, StockVehicle, AdminSubView } from '../../types';
 import InvoiceInboxView from './InvoiceInboxView';
@@ -13,6 +13,7 @@ import BulkUploadModal from './BulkUploadModal';
 import BulkAddCarExcelModal from './BulkAddCarExcelModal';
 import EditOrderModal from '../modals/EditOrderModal';
 import ThongTinXeUploadModal from './ThongTinXeUploadModal';
+
 import { useAdminFilters } from '../../hooks/useAdminFilters';
 import { useAdminActions } from '../../hooks/useAdminActions';
 import { useAdminData } from '../../hooks/useAdminData';
@@ -21,8 +22,8 @@ import { TeamManagementComponent, TeamEditorModal } from './TeamManagement';
 import ActiveUsersModal from './ActiveUsersModal';
 import TvbhEmailManager from './TvbhEmailManager';
 import AnnouncementModal from './AnnouncementModal';
+import DataRecoveryModal from './DataRecoveryModal';
 import { useGlobalNotification } from '../../hooks/useGlobalNotification';
-import TrackingDashboard from './TrackingDashboard';
 import AdminStats from './AdminStats';
 import IncompleteCarsView from './IncompleteCarsView';
 import SuperManagementView from './SuperManagementView';
@@ -31,6 +32,9 @@ import HoldManagementView from './HoldManagementView';
 import PolicyManagementView from './PolicyManagementView';
 import { exportOrderReport, exportAllSavedOrdersToExcel } from '../../utils/excelUtils';
 import DonHangTonView from './DonHangTonView';
+import AIKnowledgeManagement from './AIKnowledgeManagement';
+import PolicySummaryView from './PolicySummaryView';
+import PricingCalculatorView from './PricingCalculatorView';
 
 import * as apiService from '../../services/apiService';
 
@@ -64,31 +68,82 @@ interface AdminViewProps {
     clearInitialState: () => void;
 }
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingXuathoadon, isLoadingHistory, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState }) => {
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingHistory, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState }) => {
 
     const [showMatchingModal, setShowMatchingModal] = useState(false);
     const [isActiveUsersModalOpen, setIsActiveUsersModalOpen] = useState(false);
     const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
     const [isTvbhEmailManagerOpen, setIsTvbhEmailManagerOpen] = useState(false);
+    const [isDataRecoveryModalOpen, setIsDataRecoveryModalOpen] = useState(false);
     const { notification, updateNotification } = useGlobalNotification();
 
     // Persistent View State
-    const [viewState, setViewState] = useState({
-        invoices: { folder: 'pending_approval', orderId: null as string | null },
-        matching: { tab: 'pending', orderId: null as string | null },
-        vc: { folder: 'pending', requestId: null as string | null }
+    const [viewState, setViewState] = useState(() => {
+        try {
+            const saved = localStorage.getItem('adminViewState');
+            return saved ? JSON.parse(saved) : {
+                invoices: { folder: 'pending_approval', orderId: null as string | null },
+                matching: { tab: 'pending' as 'pending' | 'paired' | 'suggested', orderId: null as string | null },
+                vc: { folder: 'pending', requestId: null as string | null }
+            };
+        } catch {
+            return {
+                invoices: { folder: 'pending_approval', orderId: null as string | null },
+                matching: { tab: 'pending' as 'pending' | 'paired' | 'suggested', orderId: null as string | null },
+                vc: { folder: 'pending', requestId: null as string | null }
+            };
+        }
     });
 
+    useEffect(() => {
+        localStorage.setItem('adminViewState', JSON.stringify(viewState));
+    }, [viewState]);
+
+    const [hiddenTabs, setHiddenTabs] = useState<AdminSubView[]>(() => {
+        try {
+            const saved = localStorage.getItem('adminHiddenTabs');
+            return saved ? JSON.parse(saved) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        localStorage.setItem('adminHiddenTabs', JSON.stringify(hiddenTabs));
+    }, [hiddenTabs]);
+
+    useEffect(() => {
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'adminHiddenTabs' && e.newValue) {
+                try {
+                    setHiddenTabs(JSON.parse(e.newValue));
+                } catch (err) {
+                    console.error("Failed to sync hiddenTabs from storage event", err);
+                }
+            }
+        };
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
+    const toggleTabVisibility = (view: AdminSubView) => {
+        setHiddenTabs(prev => 
+            prev.includes(view) ? prev.filter(v => v !== view) : [...prev, view]
+        );
+    };
+
+    const [isManageTabsModalOpen, setIsManageTabsModalOpen] = useState(false);
+
     const handleInvoiceStateChange = (updates: Partial<typeof viewState.invoices>) => {
-        setViewState(prev => ({ ...prev, invoices: { ...prev.invoices, ...updates } }));
+        setViewState((prev: any) => ({ ...prev, invoices: { ...prev.invoices, ...updates } }));
     };
 
     const handleMatchingStateChange = (updates: Partial<typeof viewState.matching>) => {
-        setViewState(prev => ({ ...prev, matching: { ...prev.matching, ...updates } }));
+        setViewState((prev: any) => ({ ...prev, matching: { ...prev.matching, ...updates } }));
     };
 
     const handleVcStateChange = (updates: Partial<typeof viewState.vc>) => {
-        setViewState(prev => ({ ...prev, vc: { ...prev.vc, ...updates } }));
+        setViewState((prev: any) => ({ ...prev, vc: { ...prev.vc, ...updates } }));
     };
 
     // 1. Filters Hook
@@ -101,6 +156,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         targetOrderId, setTargetOrderId,
         targetInquiryId, setTargetInquiryId
     } = filterState;
+
+
 
     // Khi targetOrderId thay đổi (từ navigate bên ngoài), set selectedOrderId cho đúng tab ngay lập tức
     useEffect(() => {
@@ -120,12 +177,14 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     // 2. Data Hook
     const {
         isLoadingVc,
+        isLoadingXuathoadon: isLoadingXuathoadonLocal,
         selectedRows, setSelectedRows,
         fetchVcData,
+        fetchXuathoadonData,
         processedInvoices, invoiceRequests, pendingData, pairedData, vcRequests,
         suggestionsMap, ordersWithMatches, filterOptions
     } = useAdminData({
-        allOrders, xuathoadonData, stockData,
+        allOrders, stockData,
         invoiceFilters: filterState.invoiceFilters,
         pendingFilters: filterState.pendingFilters,
         pairedFilters: filterState.pairedFilters,
@@ -137,7 +196,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
     // 3. Actions Hook
     const actions = useAdminActions({
-        showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, fetchVcData,
+        showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon: fetchXuathoadonData, refetchAdminData, fetchVcData,
         teamData, allUsers, allOrders, suggestionsMap,
         selectedRows, setSelectedRows, setShowMatchingModal
     });
@@ -145,10 +204,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     // 4. Custom Tab Handlers
 
 
-    const handleManualTabChange = (view: AdminSubView) => {
-        setAdminView(view);
-        if (view === 'pending' && ordersWithMatches.length > 0) setShowMatchingModal(true);
-    };
+
 
     const navigateToTab = (view: AdminSubView, subState?: { folder?: string; id?: string }) => {
         setAdminView(view);
@@ -172,7 +228,54 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const tabs: AdminSubView[] = ['invoices', 'matching', 'vc', 'inquiries', 'don_ton', 'holds', 'super_edit', 'stats', 'policies', 'incomplete_cars', 'phongkd'];
+    const [currentCategory, setCurrentCategory] = useState<'orders' | 'inventory' | 'system' | 'stats'>(() => {
+        return (localStorage.getItem('adminCurrentCategory') as any) || 'orders';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('adminCurrentCategory', currentCategory);
+    }, [currentCategory]);
+
+    const categories = {
+        orders: {
+            label: 'ĐƠN HÀNG',
+            icon: 'fa-file-invoice-dollar',
+            views: ['matching', 'invoices', 'policy_summary', 'pricing_calculator', 'don_ton'] as AdminSubView[]
+        },
+        inventory: {
+            label: 'KHO XE',
+            icon: 'fa-car-side',
+            views: ['inquiries', 'holds'] as AdminSubView[]
+        },
+        system: {
+            label: 'HỆ THỐNG',
+            icon: 'fa-cogs',
+            views: ['super_edit', 'incomplete_cars', 'policies', 'ai_knowledge', 'phongkd'] as AdminSubView[]
+        },
+        stats: {
+            label: 'THỐNG KÊ',
+            icon: 'fa-chart-pie',
+            views: ['stats'] as AdminSubView[]
+        }
+    };
+
+    // Auto-redirect if current adminView is hidden
+    useEffect(() => {
+        if (hiddenTabs.includes(adminView)) {
+            // Find first visible tab in current category
+            const visibleInCurrent = categories[currentCategory].views.filter(v => !hiddenTabs.includes(v));
+            if (visibleInCurrent.length > 0) {
+                setAdminView(visibleInCurrent[0]);
+            } else {
+                // If all in current are hidden, find first visible in ANY category
+                const allVisible = Object.values(categories).flatMap(c => c.views).filter(v => !hiddenTabs.includes(v));
+                if (allVisible.length > 0) {
+                    setAdminView(allVisible[0]);
+                }
+            }
+        }
+    }, [hiddenTabs, adminView, currentCategory, categories]);
+
     const labels: Record<AdminSubView, string> = {
         invoices: 'HÓA ĐƠN',
         pending: 'CHỜ GHÉP',
@@ -180,16 +283,31 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         matching: 'GHÉP XE',
         vc: 'XỬ LÝ VC',
         phongkd: 'PHÒNG KD',
-        tracking: 'GIÁM SÁT',
         stats: 'THỐNG KÊ',
         incomplete_cars: 'BỔ SUNG PB',
         inquiries: 'TRA CỨU KHO',
         holds: 'QUẢN LÝ GIỮ',
         super_edit: 'QUẢN LÝ NÂNG CAO',
         policies: 'CHÍNH SÁCH',
-        don_ton: 'ĐƠN TỒN DMS'
+        don_ton: 'ĐƠN TỒN DMS',
+        policy_summary: 'TỔNG HỢP CS',
+        pricing_calculator: 'CÔNG CỤ TÍNH GIÁ',
+        ai_knowledge: 'TRI THỨC AI',
+        ai_health: 'SỨC KHỎE AI',
+        management: 'QUẢN TRỊ',
+        inventory: 'KHO XE',
+        system: 'HỆ THỐNG'
     };
     const [unreadInquiryCount, setUnreadInquiryCount] = useState<number>(0);
+
+    useEffect(() => {
+        // Tự động chuyển Category khi adminView thay đổi (ví dụ khi bấm Notification)
+        Object.entries(categories).forEach(([key, cat]) => {
+            if (cat.views.includes(adminView)) {
+                setCurrentCategory(key as any);
+            }
+        });
+    }, [adminView]);
 
     useEffect(() => {
         const fetchUnreadCount = async () => {
@@ -206,6 +324,29 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         return () => clearInterval(interval);
     }, []);
 
+    const suggestedCount = useMemo(() => {
+        const normalizeStr = (str: any) => {
+            if (!str) return '';
+            return String(str).normalize('NFC').trim();
+        };
+
+        return pendingData.filter(order => {
+            const oModel = normalizeStr(order['Dòng xe']);
+            const oExterior = normalizeStr(order['Ngoại thất']);
+            const oInterior = normalizeStr(order['Nội thất']);
+            const oVersion = normalizeStr(order['Phiên bản']);
+
+            const exactMatches = stockData.filter(car =>
+                normalizeStr(car['Dòng xe']) === oModel &&
+                normalizeStr(car['Ngoại thất']) === oExterior &&
+                normalizeStr(car['Nội thất']) === oInterior &&
+                (!oVersion || normalizeStr(car['Phiên bản']) === oVersion) &&
+                (!car['Trạng thái'] || car['Trạng thái'] === 'Chưa ghép')
+            );
+            return exactMatches.length > 0;
+        }).length;
+    }, [pendingData, stockData]);
+
     const counts: Record<AdminSubView, number | null> = { 
         invoices: invoiceRequests.length, 
         pending: pendingData.length, 
@@ -213,18 +354,25 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         matching: pendingData.length + pairedData.length, 
         vc: vcRequests.length, 
         phongkd: Object.keys(teamData).length, 
-        tracking: null, 
         stats: null, 
         incomplete_cars: stockData.filter(car => !car['Phiên bản'] || car['Phiên bản'].trim() === '').length, 
         super_edit: null, 
         inquiries: unreadInquiryCount || null,
         holds: null,
         policies: null,
-        don_ton: null
+        don_ton: null,
+        policy_summary: allOrders.filter(o => o['CHÍNH SÁCH'] && o['CHÍNH SÁCH'].trim() !== '' && (o['Kết quả'] === 'Đã ghép' || o['Kết quả'] === 'Chưa ghép')).length,
+        pricing_calculator: null,
+        ai_knowledge: null,
+        ai_health: null,
+        management: null,
+        inventory: null,
+        system: null
     };
 
 
     const adminTools = [
+        { title: 'Hộp thư Xử lý VC', icon: 'fa-file-invoice-dollar text-red-500', action: () => setAdminView('vc') },
         { title: 'Thêm Xe Mới', icon: 'fa-plus-circle', action: () => actions.setAdminModal('addCar') },
         { title: 'Thêm Xe Hàng Loạt', icon: 'fa-layer-group', action: () => actions.setAdminModal('bulkAddCar') },
         { title: 'Nhập Xe Từ Excel', icon: 'fa-file-excel', action: () => actions.setAdminModal('bulkAddCarExcel') },
@@ -237,10 +385,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         { title: 'Tải Lên HĐ Hàng Loạt', icon: 'fa-file-upload', action: () => actions.setIsBulkUploadModalOpen(true) },
         { title: 'Xuất Toàn Bộ Hệ Thống KH', icon: 'fa-file-excel', action: () => exportAllSavedOrdersToExcel(showToast) },
         { title: 'Xuất Báo Cáo Ghép Xe', icon: 'fa-file-export', action: () => exportOrderReport(pendingData, pairedData) },
+        { title: 'Cài Đặt Hiển Thị Tab', icon: 'fa-eye-slash', action: () => setIsManageTabsModalOpen(true) },
         { title: 'Cài Đặt Thông Báo', icon: 'fa-bullhorn', action: () => setIsAnnouncementModalOpen(true) },
-        { title: 'Tra Cứu Hoạt Động', icon: 'fa-microscope', action: () => setAdminView('tracking') },
+        { title: 'Khôi Phục CSDL Lõi', icon: 'fa-database text-red-500', action: () => setIsDataRecoveryModalOpen(true) },
         { title: 'Cập Nhật Core/thongtinxe', icon: 'fa-database', action: () => actions.setAdminModal('thongTinXeExcel') },
         { title: 'Lưu Trữ Hóa Đơn Tháng Trước', icon: 'fa-archive', action: () => actions.setAdminModal('archive') },
+
     ];
 
     // Modal Inputs
@@ -255,8 +405,14 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const revertOrderInputs = [{ id: 'orderNumber', label: 'Nhập Số đơn hàng cần hoàn tác', placeholder: 'Ví dụ: N31913-VSO-25-08-0019' }];
     const advanceOrderInputs = [{ id: 'orderNumber', label: 'Nhập Số đơn hàng cần tiến tới trạng thái', placeholder: 'Ví dụ: N31913-VSO-25-08-0019' }];
     const addUserInputs = [
-        { id: 'fullName', label: 'Họ và Tên', placeholder: 'VD: Nguyễn Văn A', type: 'text' as const },
-        { id: 'email', label: 'Email', placeholder: 'VD: an.nguyen@email.com', type: 'text' as const },
+        { id: 'fullName', label: 'Họ và Tên Nhân Viên', placeholder: 'VD: Nguyễn Văn A', type: 'text' as const },
+        { id: 'email', label: 'Email Nhân Viên', placeholder: 'VD: nhanvien@vinfast.vn', type: 'email' as const },
+        { 
+            id: 'role', 
+            label: 'Chức Vụ / Vai Trò', 
+            type: 'select' as const, 
+            options: ['Tư vấn bán hàng', 'Trưởng Phòng Kinh Doanh', 'Admin', 'Kế Toán', 'Điều Phối'] 
+        },
     ];
     const cancelRequestInputs = [{ id: 'reason', label: 'Lý do hủy (bắt buộc)', placeholder: 'VD: Khách hàng đổi ý, sai thông tin...', type: 'textarea' as const }];
     const unmatchInputs = [
@@ -273,7 +429,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
                 <div className={adminView === 'invoices' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
                     <InvoiceInboxView
-                        isLoading={isLoadingXuathoadon}
+                        isLoading={isLoadingXuathoadonLocal}
                         orders={invoiceRequests}
                         onAction={actions.handleAction}
                         showToast={showToast}
@@ -339,10 +495,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     />
                 </div>
 
-                {/* Tracking View */}
-                <div className={adminView === 'tracking' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
-                    <TrackingDashboard />
-                </div>
 
                 {/* Stats View */}
                 <div className={adminView === 'stats' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
@@ -392,6 +544,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <PolicyManagementView showToast={showToast} />
                 </div>
 
+                {/* Policy Summary View */}
+                <div className={adminView === 'policy_summary' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
+                    <PolicySummaryView orders={allOrders} showToast={showToast} />
+                </div>
+
                 {/* Backlog Orders View */}
                 <div className={adminView === 'don_ton' ? 'flex-1 flex flex-col min-h-0 overflow-y-auto' : 'hidden'}>
                     <DonHangTonView 
@@ -401,87 +558,157 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         processedInvoices={processedInvoices}
                     />
                 </div>
+
+                {/* AI Knowledge Management View */}
+                <div className={adminView === 'ai_knowledge' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
+                    <AIKnowledgeManagement />
+                </div>
+
+                {/* Pricing Calculator View */}
+                <div className={adminView === 'pricing_calculator' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
+                    <PricingCalculatorView />
+                </div>
             </>
         );
     };
 
     return (
-        <div className="flex flex-col h-full">
-            <div className="flex-shrink-0 bg-white border-b border-border-primary shadow-sm z-[60]">
-                {/* Row 1: Navigation & Actions */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between px-2 py-0.5 border-b border-border-secondary/50 gap-1 md:gap-0">
-                    {/* Tabs (Minimalist Segmented Control) */}
-                    <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-200/60 overflow-x-auto md:overflow-hidden no-scrollbar w-full md:w-auto gap-0.5">
-                        {tabs.map(view => {
-                            const count = counts[view];
-                            const isActive = adminView === view;
+        <div className="flex h-full w-full overflow-hidden bg-slate-50/50">
+            {/* COMPACT LEFT SIDEBAR: Main Categories */}
+            <div className="hidden md:flex w-[56px] flex-shrink-0 flex-col bg-white border-r border-slate-200 z-[60] shadow-sm">
+                <div className="flex flex-col items-center py-6 gap-4">
+                    <div className="flex flex-col gap-2 w-full px-2">
+                        {Object.entries(categories).map(([key, cat]) => {
+                            const isActive = currentCategory === key;
                             return (
                                 <button
-                                    key={view}
-                                    onClick={() => handleManualTabChange(view)}
+                                    key={key}
+                                    onClick={() => {
+                                        setCurrentCategory(key as any);
+                                        const visibleInCat = cat.views.filter(v => !hiddenTabs.includes(v));
+                                        if (visibleInCat.length > 0) {
+                                            setAdminView(visibleInCat[0]);
+                                        }
+                                    }}
+                                    title={cat.label}
                                     className={`
-                                        relative px-4 py-2 lg:py-1.5 min-w-[100px] lg:min-w-[90px] min-h-[38px] lg:min-h-0 text-[10px] lg:text-[9.5px] font-black tracking-wider transition-all duration-300 rounded-lg flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0
-                                        ${isActive
-                                            ? 'bg-white text-slate-700 shadow-sm z-10'
-                                            : 'text-slate-400 hover:text-slate-600 hover:bg-white/40'}
+                                        relative w-full aspect-square flex items-center justify-center rounded-xl transition-all duration-300 group
+                                        ${isActive 
+                                            ? 'bg-red-50 text-red-600 shadow-sm border border-red-100' 
+                                            : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600'}
                                     `}
                                 >
-                                    <span className="relative z-10">{labels[view]}</span>
-                                    {count !== null && (
-                                        <span className={`
-                                            relative z-10 text-[9px] font-mono px-1.5 py-0.5 rounded transition-colors duration-300
-                                            ${isActive ? 'bg-slate-100 text-slate-600' : 'bg-slate-200/30 text-slate-400'}
-                                        `}>
-                                            {count}
-                                        </span>
-                                    )}
-                                    {isActive && (
-                                        <div className="absolute inset-0 bg-white rounded-lg animate-in fade-in duration-300"></div>
-                                    )}
+                                    <div className={`
+                                        w-8 h-8 rounded-lg flex items-center justify-center transition-all
+                                        ${isActive ? 'bg-red-600 text-white shadow-sm' : 'bg-slate-100 group-hover:bg-slate-200'}
+                                    `}>
+                                        <i className={`fas ${cat.icon} text-[12px]`}></i>
+                                    </div>
                                 </button>
-                            )
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+
+            {/* MAIN CONTENT AREA */}
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                {/* Header for Content Pane: Sub-tabs & Filters */}
+                <div className="flex-shrink-0 bg-white border-b border-slate-200 z-[50]">
+                    {/* MOBILE TOP NAV (Shown only on small screens) */}
+                    <div className="flex md:hidden items-center gap-1 overflow-x-auto no-scrollbar p-2 border-b border-border-secondary/20 bg-slate-900">
+                        {Object.entries(categories).map(([key, cat]) => {
+                            const isActive = currentCategory === key;
+                            return (
+                                <button
+                                    key={key}
+                                    onClick={() => {
+                                        setCurrentCategory(key as any);
+                                        const visibleInCat = cat.views.filter(v => !hiddenTabs.includes(v));
+                                        if (visibleInCat.length > 0) {
+                                            setAdminView(visibleInCat[0]);
+                                        }
+                                    }}
+                                    className={`
+                                        flex items-center gap-2 px-3 py-1.5 rounded-lg whitespace-nowrap transition-all
+                                        ${isActive ? 'bg-red-600 text-white shadow-sm' : 'text-slate-400'}
+                                    `}
+                                >
+                                    <i className={`fas ${cat.icon} text-[10px]`}></i>
+                                    <span className="text-[10px] font-bold uppercase tracking-tighter">{cat.label}</span>
+                                </button>
+                            );
                         })}
                     </div>
 
-                    {/* Divider - Hidden on mobile */}
-                    <div className="hidden md:block h-8 w-px bg-border-secondary/50 mx-2"></div>
-
-                    {/* Empty spacer or additional controls */}
-                    <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-3">
-                        {/* Filters (Right) */}
-                        <div id="admin-filter-portal-target" className="flex-grow md:flex-grow-0 flex justify-end items-center min-w-0 md:mr-4">
-                            <AdminFilterPanel
-                                adminView={adminView}
-                                invoiceFilters={invoiceFilters}
-                                pendingFilters={pendingFilters}
-                                pairedFilters={pairedFilters}
-                                vcFilters={vcFilters}
-                                matchingFilters={matchingFilters}
-                                handleFilterChange={handleFilterChange}
-                                handleReset={handleReset}
-
-                                filterOptions={filterOptions}
-                                invoiceRequests={invoiceRequests}
-                                pendingData={pendingData}
-                                pairedData={pairedData}
-                                vcRequests={vcRequests}
-                                refetchXuathoadon={refetchXuathoadon}
-                                refetchHistory={refetchHistory}
-                                fetchVcData={fetchVcData}
-                                isLoadingXuathoadon={isLoadingXuathoadon}
-                                isLoadingHistory={isLoadingHistory}
-                                isLoadingVc={isLoadingVc}
-                                activeMatchingTab={viewState.matching.tab as any}
-                            />
+                    <div className="flex items-center justify-between px-4 py-1.5 bg-slate-50/50 gap-4">
+                        <div className="flex items-center overflow-x-auto no-scrollbar gap-1 flex-1">
+                            {categories[currentCategory].views.filter(view => !hiddenTabs.includes(view)).map(view => {
+                                const count = counts[view];
+                                const isActive = adminView === view;
+                                return (
+                                    <button
+                                        key={view}
+                                        onClick={() => setAdminView(view)}
+                                        className={`
+                                            relative px-3 py-1.5 min-w-[80px] text-[9.5px] font-bold tracking-tight transition-all duration-300 rounded-lg flex items-center justify-center gap-2 whitespace-nowrap
+                                            ${isActive
+                                                ? 'bg-white text-red-600 shadow-sm border border-red-100'
+                                                : 'text-slate-400 hover:text-slate-600'}
+                                        `}
+                                    >
+                                        <span>{labels[view]}</span>
+                                        {count !== null && (
+                                            <span className={`
+                                                text-[8px] font-mono px-1 py-0.5 rounded
+                                                ${isActive ? 'bg-red-50 text-red-500' : 'bg-slate-200/50 text-slate-400'}
+                                            `}>
+                                                {count}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
 
-                        {/* portal for lightning bolt menu is now handled outside this flow */}
+                        <div className="flex-shrink-0 flex items-center">
+                            <div id="admin-filter-portal-target" className="flex items-center">
+                                <AdminFilterPanel
+                                    adminView={adminView}
+                                    invoiceFilters={invoiceFilters}
+                                    pendingFilters={pendingFilters}
+                                    pairedFilters={pairedFilters}
+                                    vcFilters={vcFilters}
+                                    matchingFilters={matchingFilters}
+                                    handleFilterChange={handleFilterChange}
+                                    handleReset={handleReset}
+                                    filterOptions={filterOptions}
+                                    invoiceRequests={invoiceRequests}
+                                    pendingData={pendingData}
+                                    pairedData={pairedData}
+                                    vcRequests={vcRequests}
+                                    refetchXuathoadon={fetchXuathoadonData}
+                                    refetchHistory={refetchHistory}
+                                    fetchVcData={fetchVcData}
+                                    isLoadingXuathoadon={isLoadingXuathoadonLocal}
+                                    isLoadingHistory={isLoadingHistory}
+                                    isLoadingVc={isLoadingVc}
+                                    activeMatchingTab={matchingTab}
+                                    suggestedCount={suggestedCount}
+                                />
+                            </div>
+                            
+                            {/* PORTAL: Admin Lightning Action Menu into local header if needed, but portal stays the same */}
+                        </div>
                     </div>
                 </div>
 
+                <div className="flex-grow min-h-0 flex flex-col relative overflow-hidden">
+                    {renderCurrentView()}
+                </div>
             </div>
 
-            {/* PORTAL: Admin Lightning Action Menu into Header */}
+            {/* PORTAL: Admin Lightning Action Menu into Global Header */}
             {document.getElementById('admin-portal-target') && createPortal(
                 <div className="relative mr-0.5" ref={actionMenuRef}>
                     <button
@@ -515,11 +742,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 </div>,
                 document.getElementById('admin-portal-target')!
             )}
-
-
-            <div className="flex-grow min-h-0 flex flex-col">
-                {renderCurrentView()}
-            </div>
 
             {/* PORTAL FOR ALL ADMIN MODALS: Ensures they work from any tab via the Lightning Bolt menu */}
             {createPortal(
@@ -588,7 +810,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'bulkAddCar'} onClose={actions.handleCloseAdminModal} title="Thêm Xe Hàng Loạt" description="Nhập danh sách các số VIN để thêm hàng loạt vào kho." inputs={bulkAddCarInputs} submitText="Thêm Hàng Loạt" submitColor="primary" icon="fa-layer-group" onSubmit={actions.handleBulkAddCarSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'deleteCar'} onClose={actions.handleCloseAdminModal} title="Xóa Xe Khỏi Kho" description="Xe sẽ bị xóa khỏi trang Kho Xe và thông tin sẽ được lưu vào nhật ký. Có thể phục hồi lại sau bằng chức năng 'Phục Hồi Xe'." inputs={deleteCarInputs} submitText="Xác Nhận Xóa" submitColor="danger" icon="fa-trash-alt" onSubmit={actions.handleDeleteCarSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'restoreCar'} onClose={actions.handleCloseAdminModal} title="Phục Hồi Xe Đã Xóa" description="Dựa vào nhật ký xe đã xóa, hệ thống sẽ thêm xe trở lại Kho Xe với trạng thái 'Chưa ghép'." inputs={restoreCarInputs} submitText="Phục Hồi Xe" submitColor="primary" icon="fa-undo" onSubmit={actions.handleRestoreCarSubmit} />
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'addUser'} onClose={actions.handleCloseAdminModal} title="Thêm Nhân Viên Mới" description="Thêm một tài khoản nhân viên mới. Hệ thống sẽ tự động tạo tên đăng nhập, mật khẩu và gửi email thông báo." inputs={addUserInputs} submitText="Thêm & Gửi Email" submitColor="primary" icon="fa-user-plus" onSubmit={actions.handleAddUserSubmit} />
+                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'addUser'} onClose={actions.handleCloseAdminModal} title="Mời Nhân Viên Mới" description="Hệ thống sẽ tạo một Link mời riêng biệt. Admin hãy COPY và GỬI Link này cho nhân viên để họ tự đăng ký Email và Mật khẩu." inputs={addUserInputs} submitText="Tạo Link Mời" submitColor="primary" icon="fa-user-plus" onSubmit={actions.handleAddUserSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'deleteOrder'} onClose={actions.handleCloseAdminModal} title="Xóa Đơn Hàng" description="CẢNH BÁO: Đơn hàng sẽ bị xóa vĩnh viễn và chuyển vào mục 'Đã Hủy'." inputs={deleteOrderInputs} submitText="Tôi hiểu, Xóa Đơn Hàng" submitColor="danger" icon="fa-times-circle" onSubmit={actions.handleDeleteOrderSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'revertOrder'} onClose={actions.handleCloseAdminModal} title="Hoàn Tác Trạng Thái" description="Khôi phục lại trạng thái cuối cùng của đơn hàng." inputs={revertOrderInputs} submitText="Thực Hiện Hoàn Tác" submitColor="primary" icon="fa-history" onSubmit={actions.handleRevertOrderSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'advanceOrder'} onClose={actions.handleCloseAdminModal} title="Tiến Tới Trạng Thái" description="Đẩy đơn hàng này tiến lên trạng thái tiếp theo trong quy trình." inputs={advanceOrderInputs} submitText="Thực Hiện Tiến Tới" submitColor="primary" icon="fa-step-forward" onSubmit={actions.handleAdvanceOrderSubmit} />
@@ -609,6 +831,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     />
 
                     <OrderTimelineModal isOpen={actions.adminModal === 'timeline'} onClose={() => actions.setAdminModal(null)} />
+
                     <BulkUploadModal
                         isOpen={actions.isBulkUploadModalOpen}
                         onClose={() => actions.setIsBulkUploadModalOpen(false)}
@@ -655,15 +878,112 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                             }}
                         />
                     )}
-                    <TvbhEmailManager
+                        <TvbhEmailManager
                         isOpen={isTvbhEmailManagerOpen}
                         onClose={() => setIsTvbhEmailManagerOpen(false)}
                         showToast={showToast}
                     />
+                    <DataRecoveryModal
+                        isOpen={isDataRecoveryModalOpen}
+                        onClose={() => setIsDataRecoveryModalOpen(false)}
+                        showToast={showToast}
+                    />
+                    
+                    {isManageTabsModalOpen && (
+                        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[150] flex items-center justify-center p-2 sm:p-6">
+                            <div className="bg-white/95 backdrop-blur-xl rounded-[2rem] sm:rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col animate-fade-in-up border border-white/20">
+                                {/* Header */}
+                                <div className="p-4 sm:p-6 border-b border-slate-100/50 flex items-center justify-between">
+                                    <div className="flex items-center gap-3 sm:gap-4">
+                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg transform -rotate-3">
+                                            <i className="fas fa-th-large text-sm sm:text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h3 className="font-black text-slate-800 text-lg sm:text-2xl tracking-tight">Cấu Hình Tab</h3>
+                                            <p className="text-[10px] sm:text-sm text-slate-400 font-medium">Bật/tắt các thẻ chức năng quan trọng</p>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => setIsManageTabsModalOpen(false)} 
+                                        className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl sm:rounded-2xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all shadow-sm group"
+                                    >
+                                        <i className="fas fa-times group-hover:rotate-90 transition-transform duration-300 text-xs sm:text-base"></i>
+                                    </button>
+                                </div>
+
+                                {/* Body - Horizontal Grid */}
+                                <div className="p-4 sm:p-8 bg-slate-50/30 overflow-y-auto">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
+                                        {Object.entries(categories).map(([catKey, cat]) => (
+                                            <div key={catKey} className="flex flex-col h-full bg-white/50 p-4 sm:p-6 rounded-3xl border border-slate-100/50 shadow-sm">
+                                                <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                                                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-red-600 text-white flex items-center justify-center text-[10px] sm:text-[11px] shadow-md shadow-red-100">
+                                                        <i className={`fas ${cat.icon}`}></i>
+                                                    </div>
+                                                    <div className="text-[10px] sm:text-[12px] font-black text-slate-800 uppercase tracking-widest">{cat.label}</div>
+                                                </div>
+                                                
+                                                <div className="flex flex-col gap-2 sm:gap-3">
+                                                    {cat.views.map(view => {
+                                                        const isVisible = !hiddenTabs.includes(view);
+                                                        return (
+                                                            <div 
+                                                                key={view} 
+                                                                onClick={() => toggleTabVisibility(view)}
+                                                                className={`
+                                                                    group flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all duration-300
+                                                                    ${isVisible 
+                                                                        ? 'bg-white shadow-sm border border-slate-200' 
+                                                                        : 'bg-slate-100/50 opacity-50 border border-transparent'}
+                                                                    hover:border-red-200 hover:shadow-md
+                                                                `}
+                                                            >
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={`
+                                                                        w-8 h-8 rounded-lg flex items-center justify-center transition-all
+                                                                        ${isVisible ? 'bg-red-50 text-red-600 font-bold' : 'bg-slate-200 text-slate-400'}
+                                                                    `}>
+                                                                        <i className={`fas ${isVisible ? 'fa-check' : 'fa-eye-slash'} text-[10px]`}></i>
+                                                                    </div>
+                                                                    <span className={`text-[12.5px] font-bold tracking-tight ${isVisible ? 'text-slate-700' : 'text-slate-400'}`}>
+                                                                        {labels[view]}
+                                                                    </span>
+                                                                </div>
+                                                                
+                                                                <div className={`
+                                                                    w-8 h-4 rounded-full transition-colors duration-300 flex items-center px-0.5
+                                                                    ${isVisible ? 'bg-red-600' : 'bg-slate-300'}
+                                                                `}>
+                                                                    <div className={`
+                                                                        w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 transform
+                                                                        ${isVisible ? 'translate-x-4' : 'translate-x-0'}
+                                                                    `}></div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Footer */}
+                                <div className="p-4 sm:p-8 border-t border-slate-100/50 bg-white flex justify-end">
+                                    <button 
+                                        onClick={() => setIsManageTabsModalOpen(false)}
+                                        className="w-full sm:w-auto px-10 py-3.5 bg-slate-900 text-white rounded-2xl text-xs sm:text-sm font-black hover:bg-red-600 transition-all shadow-xl hover:shadow-red-200 active:scale-95"
+                                    >
+                                        LƯU CẤU HÌNH & ĐÓNG
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </>,
                 document.body
             )}
-        </div >
+        </div>
     );
 };
 

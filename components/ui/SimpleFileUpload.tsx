@@ -1,5 +1,4 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import Button from './Button';
 import { compressImage, compressPdf } from '../../services/ocrService';
 import PdfThumbnail from './PdfThumbnail';
 
@@ -12,9 +11,11 @@ interface SimpleFileUploadProps {
   disableCompression?: boolean;
   showPreview?: boolean;
   compact?: boolean;
+  showScan?: boolean; // Legacy prop, can be removed or ignored
+  className?: string;
 }
 
-const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSelect, required = false, accept, disableCompression = false, showPreview = true, compact = false }) => {
+const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSelect, required = false, accept, disableCompression = false, showPreview = true, compact = false, className = "" }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -56,50 +57,62 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
   const handleFile = useCallback(async (file: File | null) => {
     if (file) {
       if (!validateFile(file)) {
-        setSelectedFile(null);
-        onFileSelect(null);
         if (inputRef.current) inputRef.current.value = '';
         return;
       }
-
       setIsProcessing(true);
       try {
-        let processedFile: File;
+        let processedFile: File = file;
+        
+        // 1. Nén nếu là ảnh
         if (file.type.startsWith('image/')) {
           if (!disableCompression) {
             setProcessingStatus('Đang nén ảnh...');
             processedFile = await compressImage(file);
-          } else {
-            processedFile = file;
           }
-        } else if (file.type === 'application/pdf') {
+        } 
+        // 2. Tối ưu PDF
+        else if (file.type === 'application/pdf') {
           if (!disableCompression) {
             setProcessingStatus('Đang tối ưu file...');
-            processedFile = await compressPdf(file, (_progress: number) => {
-              // User requested to remove % display
-              setProcessingStatus('Đang tối ưu file...');
+            processedFile = await compressPdf(file, (p) => {
+              setProcessingStatus(`Đang tối ưu (${p}%)`);
             });
-          } else {
-            processedFile = file;
           }
-        } else {
-          processedFile = file;
         }
+
         setSelectedFile(processedFile);
         onFileSelect(processedFile);
-      } catch (error) {
+
+        // 3. TÁCH TRANG PDF THÀNH ẢNH NGAY LẬP TỨC (LIỀN)
+        // Đây chính là yêu cầu của người dùng: tách ngay khi tải lên
+        if (processedFile) {
+            const { preProcessFile } = await import('../../utils/aiGeminiPdfScanner');
+            setProcessingStatus('Đang tách trang...');
+            const payload = await preProcessFile(processedFile);
+            
+            // Nếu component cha có prop này, gửi payload đã tách xong lên
+            if ((onFileSelect as any).onPayloadReady) {
+                (onFileSelect as any).onPayloadReady(payload);
+            }
+            // Một cách sạch hơn là thêm prop mới vào SimpleFileUpload (sẽ làm ở bước sau nếu cần)
+            // Hiện tại tôi sẽ bắn sự kiện custom để parent bắt được
+            const event = new CustomEvent(`file_processed_${id}`, { detail: payload });
+            window.dispatchEvent(event);
+        }
+
+      } catch (error: any) {
         console.error("File processing failed:", error);
-        alert('Lỗi xử lý file. Vui lòng thử lại.');
-        setSelectedFile(null);
-        onFileSelect(null);
+        alert('Lỗi xử lý file: ' + error.message);
       } finally {
         setIsProcessing(false);
+        setProcessingStatus('');
       }
     } else {
       setSelectedFile(null);
       onFileSelect(null);
     }
-  }, [onFileSelect, validateFile]);
+  }, [onFileSelect, validateFile, disableCompression, id]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleFile(event.target.files?.[0] || null);
@@ -111,115 +124,97 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
     if (inputRef.current) inputRef.current.value = '';
   }
 
-  const handleCancelProcessing = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    setIsProcessing(false);
-    setSelectedFile(null);
-    onFileSelect(null);
-    if (inputRef.current) inputRef.current.value = '';
-    // Note: The async compression process might continue in background but result will be ignored 
-    // because we reset the state, although a true cancellation would require AbortController which is complex here.
-  }
-
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
+    setDragActive(e.type === "dragenter" || e.type === "dragover");
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFile(e.dataTransfer.files[0]);
-    }
+    if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
   };
 
-
-
   return (
-    <div className="relative">
-      <label className={`block font-medium text-text-primary ${compact ? 'text-xs mb-1' : 'text-sm mb-2'}`}>
+    <div className={`relative ${className}`}>
+      <label className={`block font-bold text-text-primary ${compact ? 'text-[10px] mb-1' : 'text-sm mb-2'}`}>
         {label}
         {required && <span className="text-danger ml-1">*</span>}
       </label>
+      
       {selectedFile ? (
-        <div className="relative group overflow-hidden rounded-lg border border-accent-primary/20 bg-surface-accent transition-all duration-300 hover:shadow-md">
+        <div className="relative overflow-hidden rounded-xl bg-surface-ground border border-border-primary/50 shadow-sm animate-fade-in group">
           {showPreview && (
-            <div className="w-full h-48 bg-surface-ground flex items-center justify-center overflow-hidden relative border-b border-accent-primary/10">
+            <div className="w-full h-40 bg-black flex items-center justify-center overflow-hidden relative border-b border-border-primary/20">
               {selectedFile.type === 'application/pdf' && previewUrl ? (
                 <PdfThumbnail url={previewUrl} width={500} className="w-full h-full flex justify-center" />
               ) : selectedFile.type.startsWith('image/') && previewUrl ? (
                 <img src={previewUrl} alt="Preview" className="w-full h-full object-contain" />
               ) : (
-                <i className="fas fa-file-alt text-accent-primary text-6xl opacity-50 self-center"></i>
+                <i className="fas fa-file-alt text-accent-primary text-5xl opacity-40"></i>
               )}
-
-              <div className="absolute top-2 right-2 z-10">
-                <Button type="button" onClick={handleRemoveFile} disabled={isProcessing} variant="ghost" className="w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-danger hover:text-white transition-colors backdrop-blur-sm !p-0 shadow-sm"><i className="fas fa-times"></i></Button>
+              <div className="absolute top-2 right-2 flex items-center gap-2">
+                 {isProcessing && (
+                   <span className="bg-black/60 backdrop-blur-xl text-[8px] font-black text-white px-2 py-1 rounded-full animate-pulse border border-white/10 uppercase">{processingStatus}</span>
+                 )}
+                 <button onClick={handleRemoveFile} className="w-8 h-8 bg-danger text-white rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform border border-danger shadow-lg shadow-danger/20"><i className="fas fa-times"></i></button>
               </div>
             </div>
           )}
-
-          <div className={`${compact ? 'p-1.5 px-2' : 'p-3'} bg-surface-card flex items-center justify-between gap-2`}>
-            <div className={`min-w-0 flex-1 ${compact ? 'flex flex-row items-center gap-2' : ''}`}>
-              <p className={`${compact ? 'text-xs max-w-[120px]' : 'text-sm'} font-bold text-text-primary truncate`} title={selectedFile.name}>{selectedFile.name}</p>
-              <p className={`text-[10px] text-text-secondary ${compact ? 'mt-0' : 'mt-1'}`}>{(selectedFile.size / 1024).toFixed(1)} KB</p>
+          <div className="p-3 flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-black text-text-primary truncate uppercase tracking-widest">{selectedFile.name}</p>
+              <p className="text-[9px] text-text-secondary mt-0.5">{(selectedFile.size / 1024).toFixed(1)} KB</p>
             </div>
-            <Button
-              type="button"
-              onClick={handleRemoveFile}
-              disabled={isProcessing}
-              variant="ghost"
-              className={`text-text-secondary hover:text-danger hover:bg-danger/10 ${compact ? 'w-6 h-6' : 'w-8 h-8'} rounded-full flex items-center justify-center transition-colors flex-shrink-0 !p-0`}
-              title="Xóa file"
-            >
-              <i className={`fas fa-trash-alt ${compact ? 'text-xs' : ''}`}></i>
-            </Button>
+            <div className="flex items-center gap-2">
+                <p className="text-[8px] font-black text-accent-primary bg-accent-primary/10 px-2 py-1 rounded-full uppercase tracking-tighter">ĐÃ TẢI LÊN</p>
+                {!showPreview && (
+                  <button 
+                    onClick={handleRemoveFile} 
+                    className="w-6 h-6 bg-red-50 text-red-500 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors border border-red-100"
+                    title="Xóa tệp"
+                  >
+                    <i className="fas fa-times text-[10px]"></i>
+                  </button>
+                )}
+            </div>
           </div>
         </div>
       ) : (
         <div
-          onClick={() => inputRef.current?.click()}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
-          className={`mt-1 flex items-center justify-center cursor-pointer transition-all duration-300 border group ${dragActive ? 'border-accent-primary bg-accent-primary/5' : 'border-border-primary/50 bg-gradient-to-br from-surface-ground to-surface-card hover:border-accent-primary/50 hover:shadow-lg hover:shadow-accent-primary/5'} ${compact ? 'h-9 flex-row gap-2 px-3 rounded-lg' : 'h-32 flex-col rounded-2xl'}`}
+          onClick={() => inputRef.current?.click()}
+          className={`relative group flex items-center justify-center transition-all duration-500 border rounded-2xl cursor-pointer ${dragActive ? 'border-accent-primary bg-accent-primary/5 ring-4 ring-accent-primary/5' : 'border-border-primary/50 bg-gradient-to-br from-surface-ground to-surface-card hover:border-accent-primary/40'} ${compact ? 'h-10 px-4' : 'h-32 flex-col flex-grow'}`}
         >
-          <div className={`${compact ? 'w-5 h-5 mb-0 bg-transparent shadow-none border-none' : 'w-12 h-12 mb-3 bg-white shadow-sm border border-border-primary/50'} rounded-full flex flex-shrink-0 items-center justify-center group-hover:scale-110 group-hover:bg-accent-primary group-hover:text-white transition-all duration-300`}>
-            <i className={`fas fa-cloud-upload-alt ${compact ? 'text-[11px]' : 'text-xl'} ${dragActive ? 'text-accent-primary' : 'text-text-secondary'} group-hover:text-white transition-colors`}></i>
+          <div className={`flex items-center gap-3 ${compact ? 'w-full' : 'flex-col'}`}>
+            <div className={`flex items-center justify-center rounded-xl bg-accent-primary/10 text-accent-primary transition-transform group-hover:scale-110 duration-500 ${compact ? 'w-6 h-6' : 'w-12 h-12'}`}>
+              <i className={`fas fa-cloud-upload-alt ${compact ? 'text-xs' : 'text-xl'}`}></i>
+            </div>
+            <div className={compact ? 'flex-1' : 'text-center'}>
+              <p className={`font-black text-text-primary uppercase tracking-[0.2em] ${compact ? 'text-[9px]' : 'text-[10px]'}`}>Chọn tệp tin</p>
+              {!compact && <p className="text-[8px] text-text-secondary font-medium tracking-tight mt-1">Hỗ trợ Ảnh, PDF (Tối ưu tự động)</p>}
+            </div>
+            {!compact && isProcessing && (
+               <div className="absolute inset-0 bg-black/50 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center text-white z-10 animate-fade-in">
+                  <i className="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                  <p className="text-[10px] font-black uppercase tracking-widest">{processingStatus}</p>
+               </div>
+            )}
           </div>
-
-          <div className={compact ? 'text-left flex items-center gap-1.5' : 'text-center'}>
-            <span className={`block font-semibold text-text-primary group-hover:text-accent-primary transition-colors ${compact ? 'text-xs' : 'text-sm'}`}>
-              Chạm tải tệp
-            </span>
-            <input ref={inputRef} id={id} name={id} type="file" className="sr-only" onChange={handleFileChange} accept={accept} />
-            {!compact && <p className="text-[10px] text-text-secondary/70 mt-0.5 uppercase tracking-wider font-medium">hoặc kéo và thả</p>}
-          </div>
-        </div>
-      )}
-      {isProcessing && (
-        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg z-20">
-          <i className="fas fa-spinner fa-spin text-2xl text-accent-primary"></i>
-          <p className="text-sm font-semibold text-accent-primary mt-2 mb-3">
-            {processingStatus ? processingStatus : "Đang xử lý..."}
-          </p>
-          <Button
-            type="button"
-            onClick={handleCancelProcessing}
-            variant="ghost"
-            className="text-xs text-danger hover:bg-danger-bg px-3 py-1 rounded-full border border-danger/30"
-          >
-            Hủy bỏ
-          </Button>
+          
+          <input
+            id={id}
+            ref={inputRef}
+            type="file"
+            className="hidden"
+            accept={accept}
+            onChange={handleFileChange}
+          />
         </div>
       )}
     </div>

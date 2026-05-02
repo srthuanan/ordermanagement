@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import MultiSelectDropdown, { DropdownFilterConfig } from './MultiSelectDropdown';
 import moment from 'moment';
@@ -262,7 +262,7 @@ const Filters: React.FC<FiltersProps> = ({
             {/* --- Mobile View --- */}
             <div className={`md:hidden flex w-full items-center gap-3 ${plain ? '' : ''}`}>
                 {!hideSearch && (
-                    <div className="relative flex-grow flex items-center min-w-0">
+                    <div className="relative flex-grow max-w-[180px] flex items-center min-w-0">
                         <div className="absolute left-3 text-gray-400 z-10">
                             <i className="fas fa-search text-sm"></i>
                         </div>

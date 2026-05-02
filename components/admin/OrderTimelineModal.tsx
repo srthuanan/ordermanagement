@@ -1,4 +1,4 @@
-﻿import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import moment from 'moment';
 import * as apiService from '../../services/apiService';
 import { useModalBackground } from '../../utils/styleUtils';
@@ -23,7 +23,7 @@ const TimelineItem: React.FC<{ item: TimelineItemData }> = ({ item }) => (
             <p className="text-sm text-text-secondary mt-1">{item['Chi tiết']}</p>
             <div className="text-xs text-text-secondary mt-2 flex items-center gap-2">
                 <span><i className="fas fa-user fa-fw mr-1.5"></i>{item['Người thực hiện']}</span>
-                <span><i className="fas fa-clock fa-fw mr-1.5"></i>{moment(item['Thời gian']).format('HH:mm DD/MM/YYYY')}</span>
+                <span><i className="fas fa-clock fa-fw mr-1.5"></i>{moment(item['Thời gian']).format('DD/MM/YYYY HH:mm:ss')}</span>
             </div>
         </div>
         <div className="absolute top-4 left-[7px] h-full border-l-2 border-dashed border-border-primary group-last:border-none"></div>

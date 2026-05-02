@@ -562,7 +562,7 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({
                                         </div>
                                         <div className="flex justify-between items-center">
                                             <span className="text-[9px] font-bold text-gray-400 uppercase">Thời Gian YC</span>
-                                            <span className="text-[11px] font-medium text-gray-700">{moment(selectedRequest['Thời gian YC']).format('HH:mm DD/MM/YYYY')}</span>
+                                            <span className="text-[11px] font-medium text-gray-700">{moment(selectedRequest['Thời gian YC']).format('DD/MM/YYYY HH:mm:ss')}</span>
                                         </div>
                                         {selectedRequest['Ghi chú'] && (
                                             <div className="pt-2 border-t border-gray-50">

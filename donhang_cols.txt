@@ -1,1 +1,0 @@
-['canh_bao_qua_han', 'canh_bao_sai_dms', 'created_at', 'dong_xe', 'ghi_chu_huy', 'id', 'ket_qua', 'link_hoa_don_da_xuat', 'ngay_coc', 'ngay_xuat_hoa_don', 'ngoai_that', 'noi_that', 'phien_ban', 'so_don_hang', 'so_ngay_ghep', 'ten_khach_hang', 'ten_tu_van_ban_hang', 'thoi_gian_ghep', 'thoi_gian_huy', 'thoi_gian_nhap', 'trang_thai_vc', 'vin']

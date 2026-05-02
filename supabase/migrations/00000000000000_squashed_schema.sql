@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS archived_orders (
     phien_ban TEXT,
     ngoai_that TEXT,
     noi_that TEXT,
+    ma_dms TEXT,
     
     -- Personnel
     tvbh TEXT, -- Tư vấn bán hàng / ten_tu_van_ban_hang
@@ -88,13 +89,13 @@ BEGIN
     -- 1. Insert into archived_orders from yeucauxhd
     INSERT INTO archived_orders (
         so_don_hang, ten_khach_hang, dong_xe, phien_ban, ngoai_that, noi_that,
-        tvbh, vin, so_may, ngay_coc, ngay_yeu_cau, ngay_xuat_hoa_don,
+        tvbh, vin, so_may, ma_dms, ngay_coc, ngay_yeu_cau, ngay_xuat_hoa_don,
         chinh_sach, hoa_hong_ung, vpoint, url_hop_dong, url_de_nghi_xhd,
         trang_thai_vc, ket_qua, created_at, updated_at
     )
     SELECT 
         y.so_don_hang, y.ten_khach_hang, y.dong_xe, y.phien_ban, y.ngoai_that, y.noi_that,
-        y.tvbh, y.vin, y.so_may, y.ngay_coc, y.ngay_yeu_cau, y.ngay_xuat_hoa_don,
+        y.tvbh, y.vin, y.so_may, y.ma_dms, y.ngay_coc, y.ngay_yeu_cau, y.ngay_xuat_hoa_don,
         y.chinh_sach, y.hoa_hong_ung, y.vpoint, y.url_hop_dong, y.url_de_nghi_xhd,
         y.trang_thai_vc, 'Đã xuất hóa đơn', y.created_at, y.updated_at
     FROM yeucauxhd y
@@ -341,6 +342,8 @@ BEGIN
     SET 
         ten_khach_hang = NEW.ten_khach_hang,
         vin = NEW.vin,
+        so_may = NEW.so_may,
+        ma_dms = NEW.ma_dms,
         dong_xe = NEW.dong_xe,
         phien_ban = NEW.phien_ban,
         ngoai_that = NEW.ngoai_that,
@@ -369,6 +372,8 @@ BEGIN
     SET 
         ten_khach_hang = NEW.ten_khach_hang,
         vin = NEW.vin,
+        so_may = NEW.so_may,
+        ma_dms = NEW.ma_dms,
         dong_xe = NEW.dong_xe,
         phien_ban = NEW.phien_ban,
         ngoai_that = NEW.ngoai_that,

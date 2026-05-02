@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Order } from '../../types';
+import { getBackgroundColorStyle } from '../../utils/styleUtils';
 
-const DetailInfoRow: React.FC<{ icon: string, label: string; value?: string | number; valueClassName?: string }> = ({ icon, label, value, valueClassName }) => (
-    <div className="flex items-start gap-2 py-2 border-b border-dashed border-border-primary/50">
-        <i className={`fas ${icon} text-accent-secondary text-base w-5 text-center mt-1`}></i>
-        <div className="flex-1">
-            <p className="text-xs text-text-secondary">{label}</p>
-            <p className={`text-sm text-text-primary font-semibold break-words ${valueClassName}`}>{value || '—'}</p>
+const DetailRow: React.FC<{ icon: string, label: string; value?: string | number }> = ({ icon, label, value }) => (
+    <div className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 group hover:bg-slate-50/50 px-2 rounded-lg transition-colors">
+        <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-accent-primary/10 group-hover:text-accent-primary transition-all duration-300">
+                <i className={`fas ${icon} text-xs`}></i>
+            </div>
+            <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">{label}</span>
         </div>
+        <span className="text-[13px] font-bold text-slate-700 text-right">{value || '—'}</span>
     </div>
 );
 
@@ -18,8 +21,7 @@ interface SoldCarDetailPanelProps {
     isAdmin?: boolean;
 }
 
-
-const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order, showOrderInAdmin, isAdmin }) => {
+const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order }) => {
     const [isCopied, setIsCopied] = useState(false);
 
     const handleCopy = (textToCopy: string) => {
@@ -30,91 +32,78 @@ const SoldCarDetailPanel: React.FC<SoldCarDetailPanelProps> = ({ order, showOrde
         }).catch(() => { });
     };
 
+    if (!order) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center p-8 bg-slate-50/30 rounded-2xl border border-dashed border-slate-200 m-3 animate-fade-in">
+                <i className="fas fa-hand-pointer text-slate-200 text-4xl mb-4"></i>
+                <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Chọn Đơn Hàng</p>
+                <p className="text-slate-300 text-xs mt-1">Vui lòng chọn từ danh sách bên trái</p>
+            </div>
+        );
+    }
+
     return (
-        <div className="detail-panel h-full">
-            <h3 className="text-lg font-bold text-text-primary mb-0 p-2 border-b border-border-primary flex items-center justify-between flex-shrink-0">
-                <div className="flex items-center gap-3">
-                    <i className="fas fa-file-invoice text-accent-primary"></i>
-                    Chi Tiết Đơn Hàng
+        <div className="p-4 flex flex-col h-full space-y-4 animate-fade-in overflow-hidden">
+            {/* Header / Order ID Section */}
+            <div className="flex items-start justify-between">
+                <div>
+                    <h2 className="text-xl font-black text-slate-800 tracking-tight leading-none mb-1">
+                        {order["Tên khách hàng"]}
+                    </h2>
+                    <p className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 rounded-full text-[10px] font-mono font-bold text-slate-500 uppercase">
+                        <i className="fas fa-hashtag text-[8px]"></i>
+                        {order["Số đơn hàng"]}
+                    </p>
                 </div>
-                {isAdmin && order && (
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={() => showOrderInAdmin?.(order, 'matching')}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-accent-primary hover:text-white text-slate-400 transition-all border border-slate-200/50"
-                            title="Đến Ghép Xe"
-                        >
-                            <i className="fas fa-car text-[11px]"></i>
-                        </button>
-                        <button
-                            onClick={() => showOrderInAdmin?.(order, 'invoices')}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-accent-primary hover:text-white text-slate-400 transition-all border border-slate-200/50"
-                            title="Đến Hóa Đơn"
-                        >
-                            <i className="fas fa-file-invoice-dollar text-[11px]"></i>
-                        </button>
-                        <button
-                            onClick={() => showOrderInAdmin?.(order, 'vc')}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-accent-primary hover:text-white text-slate-400 transition-all border border-slate-200/50"
-                            title="Đến Xử Lý VC"
-                        >
-                            <i className="fas fa-id-card text-[11px]"></i>
-                        </button>
-                    </div>
-                )}
-            </h3>
-            <div className="detail-panel-body flex-grow hidden-scrollbar">
-                {order ? (
-                    <div className="space-y-2">
-                        {/* VIN Display */}
-                        <div
-                            className="relative p-2 my-1 rounded-lg bg-slate-800 text-center shadow-lg cursor-pointer hover:bg-slate-700 transition-colors"
-                            onClick={() => handleCopy(order.VIN || '')}
-                            title="Click để sao chép VIN"
-                        >
-                            <p className="text-xs text-slate-400 uppercase tracking-widest">Số Khung (VIN)</p>
-                            <p className="text-white font-mono tracking-wider text-xl break-all">{order.VIN}</p>
-                            {isCopied && (
-                                <div className="absolute top-1 right-1 text-xs font-semibold text-success bg-success-bg/20 px-1.5 py-0.5 rounded-full animate-fade-in">
-                                    ✓
-                                </div>
-                            )}
-                        </div>
+            </div>
 
-                        {/* Customer Info */}
-                        <div>
-                            <h4 className="font-semibold text-text-primary mb-1 mt-1">
-                                <i className="fas fa-user-circle mr-2 text-accent-secondary"></i>
-                                Thông tin Khách Hàng
-                            </h4>
-                            <div className="pl-2">
-                                <DetailInfoRow icon="fa-user" label="Tên Khách Hàng" value={order["Tên khách hàng"]} />
-                                <DetailInfoRow icon="fa-barcode" label="Số Đơn Hàng" value={order["Số đơn hàng"]} valueClassName="font-mono" />
-                                <DetailInfoRow icon="fa-user-tie" label="Tư Vấn Bán Hàng" value={order["Tên tư vấn bán hàng"]} />
-                            </div>
-                        </div>
+            {/* Main Info Card */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] p-4 space-y-1 relative overflow-hidden flex-shrink-0">
+                {/* Visual Accent */}
+                <div className="absolute top-0 left-0 w-1 h-full bg-accent-primary/40"></div>
+                
+                <div className="flex items-center justify-between mb-4">
+                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Thông tin chung</span>
+                    <div 
+                        onClick={() => handleCopy(order.VIN || '')}
+                        className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-lg transition-all ${isCopied ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-500 hover:bg-slate-100'}`}
+                    >
+                        <span className="text-[10px] font-mono font-bold">{order.VIN}</span>
+                        <i className={`fas ${isCopied ? 'fa-check' : 'fa-copy'} text-[10px]`}></i>
+                    </div>
+                </div>
 
-                        {/* Vehicle Info */}
-                        <div>
-                            <h4 className="font-semibold text-text-primary mb-1 mt-2">
-                                <i className="fas fa-car mr-2 text-accent-secondary"></i>
-                                Chi tiết Xe
-                            </h4>
-                            <div className="pl-2">
-                                <DetailInfoRow icon="fa-car-side" label="Dòng Xe" value={order["Dòng xe"]} />
-                                <DetailInfoRow icon="fa-cogs" label="Phiên Bản" value={order["Phiên bản"]} />
-                                <DetailInfoRow icon="fa-palette" label="Ngoại Thất" value={order["Ngoại thất"]} />
-                                <DetailInfoRow icon="fa-chair" label="Nội Thất" value={order["Nội thất"]} />
-                            </div>
-                        </div>
+                <DetailRow icon="fa-user-tie" label="Sale" value={order["Tên tư vấn bán hàng"]} />
+                <DetailRow icon="fa-car" label="Xe" value={order["Dòng xe"]} />
+                <DetailRow icon="fa-layer-group" label="Bản" value={order["Phiên bản"]} />
+            </div>
+
+            {/* Colors Section - Horizontal Cards */}
+            <div className="grid grid-cols-2 gap-3 flex-shrink-0">
+                <div className="bg-slate-50/50 border border-white rounded-2xl p-3 hover:bg-white hover:shadow-md transition-all group">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="w-5 h-5 rounded-full border border-white flex-shrink-0 shadow-sm" style={getBackgroundColorStyle(order["Ngoại thất"])}></div>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Ngoại thất</span>
                     </div>
-                ) : (
-                    <div className="text-center text-text-secondary p-8 flex flex-col items-center justify-center h-full min-h-[200px]">
-                        <i className="fas fa-mouse-pointer fa-2x mb-4 text-text-placeholder"></i>
-                        <p className="font-semibold">Chưa chọn đơn hàng</p>
-                        <p className="text-sm">Chọn một mục từ bảng để xem chi tiết.</p>
+                    <p className="text-xs font-bold text-slate-700 truncate group-hover:text-accent-primary transition-colors">{order["Ngoại thất"]}</p>
+                </div>
+                <div className="bg-slate-50/50 border border-white rounded-2xl p-3 hover:bg-white hover:shadow-md transition-all group">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="w-5 h-5 rounded-full border border-white flex-shrink-0 shadow-sm" style={getBackgroundColorStyle(order["Nội thất"])}></div>
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Nội thất</span>
                     </div>
-                )}
+                    <p className="text-xs font-bold text-slate-700 truncate group-hover:text-accent-primary transition-colors">{order["Nội thất"]}</p>
+                </div>
+            </div>
+
+            {/* Footer Status Badge or Info */}
+            <div className="mt-auto pt-2 flex items-center justify-between border-t border-slate-50">
+                <span className="text-[10px] text-slate-300 italic font-medium">Cập nhật 2 phút trước</span>
+                <div className="flex gap-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/20"></div>
+                </div>
             </div>
         </div>
     );

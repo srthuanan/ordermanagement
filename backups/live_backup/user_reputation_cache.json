@@ -1,0 +1,210 @@
+[
+  {
+    "username": "lanvt",
+    "score": 100,
+    "total_holds": 2,
+    "matched_holds": 2,
+    "is_champion": false,
+    "last_updated": "2026-04-08T03:51:11.686628+00:00"
+  },
+  {
+    "username": "admin",
+    "score": 100,
+    "total_holds": 0,
+    "matched_holds": 0,
+    "is_champion": true,
+    "last_updated": "2026-04-08T06:32:55.068964+00:00"
+  },
+  {
+    "username": "tuongtb",
+    "score": 100,
+    "total_holds": 2,
+    "matched_holds": 2,
+    "is_champion": false,
+    "last_updated": "2026-04-08T06:35:45.364399+00:00"
+  },
+  {
+    "username": "thaont",
+    "score": 100,
+    "total_holds": 12,
+    "matched_holds": 4,
+    "is_champion": false,
+    "last_updated": "2026-04-08T06:45:51.841852+00:00"
+  },
+  {
+    "username": "dattt",
+    "score": 100,
+    "total_holds": 0,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T06:50:04.028562+00:00"
+  },
+  {
+    "username": "dieuvtt",
+    "score": 100,
+    "total_holds": 4,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T02:17:25.443359+00:00"
+  },
+  {
+    "username": "phuongtd",
+    "score": 100,
+    "total_holds": 2,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T04:05:16.677807+00:00"
+  },
+  {
+    "username": "tienna",
+    "score": 100,
+    "total_holds": 2,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T04:10:37.413258+00:00"
+  },
+  {
+    "username": "cant",
+    "score": 100,
+    "total_holds": 0,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T04:16:31.063517+00:00"
+  },
+  {
+    "username": "ngaptt",
+    "score": 100,
+    "total_holds": 19,
+    "matched_holds": 2,
+    "is_champion": false,
+    "last_updated": "2026-04-08T04:17:02.335988+00:00"
+  },
+  {
+    "username": "huypt",
+    "score": 100,
+    "total_holds": 0,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T04:21:06.821188+00:00"
+  },
+  {
+    "username": "vinhtn",
+    "score": 100,
+    "total_holds": 6,
+    "matched_holds": 2,
+    "is_champion": false,
+    "last_updated": "2026-04-08T04:24:39.32918+00:00"
+  },
+  {
+    "username": "kydm",
+    "score": 100,
+    "total_holds": 0,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T02:57:02.167344+00:00"
+  },
+  {
+    "username": "thangtq",
+    "score": 100,
+    "total_holds": 0,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-07T01:32:49.9385+00:00"
+  },
+  {
+    "username": "diennt",
+    "score": 100,
+    "total_holds": 0,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T03:06:26.337792+00:00"
+  },
+  {
+    "username": "nhandt",
+    "score": 100,
+    "total_holds": 6,
+    "matched_holds": 2,
+    "is_champion": false,
+    "last_updated": "2026-04-08T04:26:56.415979+00:00"
+  },
+  {
+    "username": "phamtn",
+    "score": 100,
+    "total_holds": 10,
+    "matched_holds": 2,
+    "is_champion": false,
+    "last_updated": "2026-04-07T03:33:36.62293+00:00"
+  },
+  {
+    "username": "huyhh",
+    "score": 100,
+    "total_holds": 0,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T04:26:56.415979+00:00"
+  },
+  {
+    "username": "cuongpv",
+    "score": 100,
+    "total_holds": 8,
+    "matched_holds": 2,
+    "is_champion": false,
+    "last_updated": "2026-04-08T04:27:53.505182+00:00"
+  },
+  {
+    "username": "thanhnth",
+    "score": 100,
+    "total_holds": 2,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T04:33:43.787798+00:00"
+  },
+  {
+    "username": "huynhk",
+    "score": 100,
+    "total_holds": 2,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T04:37:44.154793+00:00"
+  },
+  {
+    "username": "thuannd",
+    "score": 100,
+    "total_holds": 8,
+    "matched_holds": 2,
+    "is_champion": false,
+    "last_updated": "2026-04-08T04:53:00.16703+00:00"
+  },
+  {
+    "username": "phucnh",
+    "score": 100,
+    "total_holds": 7,
+    "matched_holds": 6,
+    "is_champion": false,
+    "last_updated": "2026-04-08T05:07:35.068952+00:00"
+  },
+  {
+    "username": "vynty",
+    "score": 100,
+    "total_holds": 6,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T05:12:56.507873+00:00"
+  },
+  {
+    "username": "xuyennb",
+    "score": 100,
+    "total_holds": 2,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-08T05:19:10.846353+00:00"
+  },
+  {
+    "username": "tramhdt",
+    "score": 100,
+    "total_holds": 0,
+    "matched_holds": 0,
+    "is_champion": false,
+    "last_updated": "2026-04-07T10:04:07.116112+00:00"
+  }
+]

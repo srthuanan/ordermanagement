@@ -255,7 +255,7 @@ export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = (
 
     useEffect(() => {
         if (isOpen && order) {
-            setEngineNumber(order["Số động cơ"] || '');
+            setEngineNumber(order["Số máy"] || '');
             setPolicy(order["CHÍNH SÁCH"] || '');
             setCommission(order["Hoa hồng ứng"] || '');
             setVpoint(order["Điểm Vpoint sử dụng"] || '');
@@ -292,7 +292,7 @@ export const EditInvoiceDetailsModal: React.FC<EditInvoiceDetailsModalProps> = (
                 </header>
                 <main className="px-3 pb-3 space-y-3">
                     <div>
-                        <label className="block text-sm font-medium text-text-primary mb-1">Số Máy (Số Động Cơ)</label>
+                        <label className="block text-sm font-medium text-text-primary mb-1">Số Máy</label>
                         <input
                             type="text"
                             value={engineNumber}

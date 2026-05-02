@@ -26,9 +26,9 @@ interface MatchingCockpitViewProps {
         ngoaiThat: string[];
     };
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
-    activeTab: 'pending' | 'paired';
+    activeTab: 'pending' | 'paired' | 'suggested';
     selectedOrderId: string | null;
-    onTabChange: (tab: 'pending' | 'paired') => void;
+    onTabChange: (tab: 'pending' | 'paired' | 'suggested') => void;
     onOrderSelect: (orderId: string | null) => void;
     processingId?: string | null;
     processingActionType?: ActionType | null;
@@ -53,9 +53,39 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
 }) => {
 
     // 1. Target Orders (The data is already filtered in parent useAdminData)
+    // 2. Matching Logic Helpers
+    // Normalize strings for matching (Vietnamese NFC/NFD issue)
+    const normalizeStr = (str: any) => {
+        if (!str) return '';
+        return String(str).normalize('NFC').trim();
+    };
+
+    const getStockStatus = (order: Order) => {
+        const oModel = normalizeStr(order['Dòng xe']);
+        const oExterior = normalizeStr(order['Ngoại thất']);
+        const oInterior = normalizeStr(order['Nội thất']);
+        const oVersion = normalizeStr(order['Phiên bản']);
+
+        const exactMatches = stockData.filter(car =>
+            normalizeStr(car['Dòng xe']) === oModel &&
+            normalizeStr(car['Ngoại thất']) === oExterior &&
+            normalizeStr(car['Nội thất']) === oInterior &&
+            (!oVersion || normalizeStr(car['Phiên bản']) === oVersion) &&
+            (!car['Trạng thái'] || car['Trạng thái'] === 'Chưa ghép')
+        );
+        return exactMatches.length;
+    };
+
+    const suggestedOrders = useMemo(() => {
+        return pendingOrders.filter(order => getStockStatus(order) > 0);
+    }, [pendingOrders, stockData]);
+
     const filteredOrders = useMemo(() => {
-        const raw = activeTab === 'pending' ? pendingOrders : pairedOrders;
-        if (activeTab === 'pending') {
+        let raw = pendingOrders;
+        if (activeTab === 'paired') raw = pairedOrders;
+        else if (activeTab === 'suggested') raw = suggestedOrders;
+
+        if (activeTab === 'pending' || activeTab === 'suggested') {
             return [...raw].sort((a, b) => {
                 const dateA = a['Ngày cọc'] ? moment(a['Ngày cọc']).valueOf() : 0;
                 const dateB = b['Ngày cọc'] ? moment(b['Ngày cọc']).valueOf() : 0;
@@ -63,7 +93,7 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
             });
         }
         return raw;
-    }, [activeTab, pendingOrders, pairedOrders]);
+    }, [activeTab, pendingOrders, pairedOrders, suggestedOrders]);
     const copyWithFeedback = useCopyFeedback();
 
     const selectedOrder = useMemo(() => filteredOrders.find(o => o['Số đơn hàng'] === selectedOrderId), [filteredOrders, selectedOrderId]);
@@ -79,13 +109,6 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
         }
     }, [filteredOrders, activeTab]); // Depend on activeTab to reset on switch
 
-    // Normalize strings for matching (Vietnamese NFC/NFD issue)
-    const normalizeStr = (str: any) => {
-        if (!str) return '';
-        return String(str).normalize('NFC').trim();
-    };
-
-    // 2. Matching Logic
     const matchingSuggestions = useMemo(() => {
         if (!selectedOrder || !isPendingOrder(selectedOrder)) return [];
 
@@ -105,27 +128,10 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
         }).map(car => ({ ...car, matchScore: 100 } as StockVehicle & { matchScore: number }));
     }, [selectedOrder, stockData]);
 
-    const getStockStatus = (order: Order) => {
-        const oModel = normalizeStr(order['Dòng xe']);
-        const oExterior = normalizeStr(order['Ngoại thất']);
-        const oInterior = normalizeStr(order['Nội thất']);
-        const oVersion = normalizeStr(order['Phiên bản']);
-
-        const exactMatches = stockData.filter(car =>
-            normalizeStr(car['Dòng xe']) === oModel &&
-            normalizeStr(car['Ngoại thất']) === oExterior &&
-            normalizeStr(car['Nội thất']) === oInterior &&
-            (!oVersion || normalizeStr(car['Phiên bản']) === oVersion) &&
-            (!car['Trạng thái'] || car['Trạng thái'] === 'Chưa ghép')
-        );
-        return exactMatches.length;
-    };
-
-
     // Mobile View State
     const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
 
-    const handleTabSwitch = (tab: 'pending' | 'paired') => {
+    const handleTabSwitch = (tab: 'pending' | 'paired' | 'suggested') => {
         onTabChange(tab);
         setMobileView('list');
     };
@@ -137,6 +143,7 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
 
     const tabs = [
         { id: 'pending', label: 'Chờ Ghép Xe', icon: 'fa-clock', count: pendingOrders.length },
+        { id: 'suggested', label: 'Đơn Có Xe', icon: 'fa-magic', count: suggestedOrders.length, color: 'text-emerald-500' },
         { id: 'paired', label: 'Đã Ghép Xe', icon: 'fa-check-circle', count: pairedOrders.length },
     ];
 
@@ -205,16 +212,16 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
                     {tabs.map(tab => (
                         <button
                             key={tab.id}
-                            onClick={() => handleTabSwitch(tab.id as 'pending' | 'paired')}
+                            onClick={() => handleTabSwitch(tab.id as any)}
                             className={`w-full group relative flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 ${activeTab === tab.id
                                 ? 'bg-white text-accent-primary shadow-lg shadow-black/5 ring-1 ring-black/5'
-                                : 'text-slate-500 hover:bg-white/60 hover:text-slate-900'}`}
+                                : `${(tab as any).color || 'text-slate-500'} hover:bg-white/60 hover:text-slate-900`}`}
                         >
                             <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300 ${activeTab === tab.id ? 'bg-accent-primary text-white shadow-[0_4px_10px_rgba(var(--accent-primary-rgb),0.3)]' : 'bg-slate-100 text-slate-400 group-hover:bg-white group-hover:text-slate-600'}`}>
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300 ${activeTab === tab.id ? 'bg-accent-primary text-white shadow-[0_4px_10px_rgba(var(--accent-primary-rgb),0.3)]' : `bg-slate-100 ${(tab as any).color || 'text-slate-400'} group-hover:bg-white group-hover:text-slate-600`}`}>
                                     <i className={`fas ${tab.icon} text-xs`}></i>
                                 </div>
-                                <span className={`text-[13px] font-black uppercase tracking-tight transition-all ${activeTab === tab.id ? 'translate-x-0.5' : ''}`}>{tab.label}</span>
+                                <span className={`text-[13px] font-black uppercase tracking-tight transition-all ${activeTab === tab.id ? 'translate-x-0.5' : ''} ${activeTab !== tab.id && (tab as any).color ? (tab as any).color : ''}`}>{tab.label}</span>
                             </div>
                             {tab.count > 0 && (
                                 <span className={`text-[10px] px-2 py-0.5 rounded-lg flex items-center justify-center font-black ${activeTab === tab.id ? 'bg-accent-primary text-white' : 'bg-slate-100 text-slate-500'}`}>
@@ -599,7 +606,7 @@ const MatchingCockpitView: React.FC<MatchingCockpitViewProps> = ({
                                                             </div>
                                                             <div className="text-[8px] text-slate-500 font-mono uppercase tracking-tighter text-right">
                                                                 Hệ thống ghi nhận lúc:<br />
-                                                                {selectedOrder['Thời gian ghép'] ? moment(selectedOrder['Thời gian ghép']).format('HH:mm DD/MM/YYYY') : moment().format('HH:mm DD/MM/YYYY')}
+                                                                {selectedOrder['Thời gian ghép'] ? moment(selectedOrder['Thời gian ghép']).format('DD/MM/YYYY HH:mm:ss') : moment().format('DD/MM/YYYY HH:mm:ss')}
                                                             </div>
                                                         </div>
                                                     </div>

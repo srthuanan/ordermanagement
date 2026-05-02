@@ -21,6 +21,7 @@ interface OrderCardProps {
 }
 
 const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingOrder, showOrderInAdmin }) => {
+    const [copiedLabel, setCopiedLabel] = React.useState<string | null>(null);
     const statusText = order["Trạng thái VC"] || order["Kết quả"] || "Chưa ghép";
     const isProcessing = processingOrder === order["Số đơn hàng"];
 
@@ -50,14 +51,17 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
 
                 <div className="flex justify-between items-start">
                     <p
-                        className="text-light-text-primary text-sm font-bold leading-tight pr-2 truncate cursor-pointer hover:text-accent-primary transition-colors"
+                        className={`text-sm font-bold leading-tight pr-2 truncate cursor-pointer transition-colors ${copiedLabel === 'customer' ? 'text-green-500' : 'text-light-text-primary hover:text-accent-primary'}`}
                         title="Click để sao chép tên khách hàng"
                         onClick={(e) => {
                             e.stopPropagation();
-                            navigator.clipboard.writeText(order["Tên khách hàng"]);
+                            navigator.clipboard.writeText(order["Tên khách hàng"]).then(() => {
+                                setCopiedLabel('customer');
+                                setTimeout(() => setCopiedLabel(null), 2000);
+                            });
                         }}
                     >
-                        {order["Tên khách hàng"]}
+                        {copiedLabel === 'customer' ? <span className="flex items-center gap-1"><i className="fas fa-check text-[10px]"></i> Đã copy</span> : order["Tên khách hàng"]}
                     </p>
                     <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                         {isProcessing && (
@@ -68,14 +72,17 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
                     </div>
                 </div>
                 <p
-                    className="text-light-text-secondary text-xs font-mono truncate cursor-pointer hover:text-accent-primary transition-colors"
+                    className={`text-xs font-mono truncate cursor-pointer transition-colors ${copiedLabel === 'orderId' ? 'text-green-500 font-bold' : 'text-light-text-secondary hover:text-accent-primary'}`}
                     title="Click để sao chép Số đơn hàng"
                     onClick={(e) => {
                         e.stopPropagation();
-                        navigator.clipboard.writeText(order["Số đơn hàng"]);
+                        navigator.clipboard.writeText(order["Số đơn hàng"]).then(() => {
+                            setCopiedLabel('orderId');
+                            setTimeout(() => setCopiedLabel(null), 2000);
+                        });
                     }}
                 >
-                    {order["Số đơn hàng"]}
+                    {copiedLabel === 'orderId' ? <span className="flex items-center gap-1"><i className="fas fa-check text-[9px]"></i> Đã copy</span> : order["Số đơn hàng"]}
                 </p>
                 <div className="text-xs text-light-text-secondary space-y-1 my-1 py-1 border-y border-dashed">
                     <p className="truncate" title={`${order["Dòng xe"]} - ${order["Phiên bản"]}`}>

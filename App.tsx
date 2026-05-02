@@ -10,6 +10,7 @@ import AnimatedBackground from './components/ui/AnimatedBackground';
 import StockView from './components/StockView';
 import SoldCarsView from './components/SoldCarsView';
 import AdminView from './components/admin/AdminView';
+import MapView from './components/MapView';
 const TestDriveForm = React.lazy(() => import('./components/testdrive/TestDriveForm'));
 
 // Eager imports for modals (lightweight enough or critical)
@@ -32,6 +33,7 @@ import OrderGridView from './components/OrderGridView';
 import CustomTitleBar from './components/layout/CustomTitleBar';
 import CarInquiryView from './components/InquiryView';
 import ReportBacklogModal from './components/modals/ReportBacklogModal';
+import { VirtualAssistant } from './components/VirtualAssistant';
 
 
 import { useAppNavigation } from './hooks/useAppNavigation';
@@ -74,7 +76,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const currentUser = localStorage.getItem("currentConsultant") || sessionStorage.getItem("currentConsultant") || ADMIN_USER;
     const currentUserName = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser") || "User";
     const userRoleRaw = localStorage.getItem("userRole") || sessionStorage.getItem("userRole");
-    
+
     // Nâng cấp logic check Admin: Dựa trên Username, Role hoặc Tên đầy đủ
     const isCurrentUserAdmin = useMemo(() => {
         const username = currentUserName.toLowerCase();
@@ -89,6 +91,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         isSidebarCollapsed, isMobileMenuOpen, setIsMobileMenuOpen, activeView, setActiveView,
         initialAdminState, showOrderInAdmin, showAdminTab, showInquiryInAdmin, clearInitialState
     } = useAppNavigation();
+
+    const [targetVinOnMap, setTargetVinOnMap] = useState<string | null>(null);
 
     const {
         allHistoryData, setAllHistoryData, historyData, isLoadingHistory, errorHistory, refetchHistory, archivesLoadedFromCache,
@@ -124,7 +128,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         handleSupplementFiles, handleEditSuccess, handleSuperEditSuccess, handleConfirmRequestVC, handleConfirmVC,
         handleCreateRequestForVehicle, handleCreateRequestClose, handleFormSuccess,
         openImagePreviewModal, openFilePreviewModal,
-        extensionVehicle, setExtensionVehicle
+        extensionVehicle, setExtensionVehicle, handleSelectPolicy
     } = useOrderOperations({ showToast, hideToast, refetchHistory, refetchStock, setAllHistoryData });
 
     const [isBacklogModalOpen, setIsBacklogModalOpen] = useState(false);
@@ -138,15 +142,21 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
     const [isStockEnabled, setIsStockEnabled] = useState(true);
     const [isTogglingStock, setIsTogglingStock] = useState(false);
+    const [isChatEnabled, setIsChatEnabled] = useState(true);
+    const [isTogglingChat, setIsTogglingChat] = useState(false);
 
     const fetchAppConfig = useCallback(async () => {
         try {
-            const [stockRes] = await Promise.all([
-                apiService.getAppSetting('stock_visibility')
+            const [stockRes, chatRes] = await Promise.all([
+                apiService.getAppSetting('stock_visibility'),
+                apiService.getAppSetting('chat_visibility')
             ]);
 
             if (stockRes && stockRes.status === 'SUCCESS' && stockRes.data) {
                 setIsStockEnabled(!stockRes.data.isStockHidden);
+            }
+            if (chatRes && chatRes.status === 'SUCCESS' && chatRes.data) {
+                setIsChatEnabled(!chatRes.data.isChatHidden);
             }
         } catch (e) {
             console.error("Failed to fetch app config from Supabase:", e);
@@ -179,6 +189,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                 refetchStock();
                             }
                         }
+                        if (newData.key === 'chat_visibility') {
+                            const isHidden = !!newData.value?.isChatHidden;
+                            console.log("Chat visibility changed! Hidden:", isHidden);
+                            setIsChatEnabled(!isHidden);
+                        }
                     }
                 }
             )
@@ -195,35 +210,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         };
     }, [fetchAppConfig, refetchStock]); // Thêm refetchStock vào dependency
 
-    // === TỰ ĐỘNG ĐẨY DỮ LIỆU SANG GOOGLE SHEET KHI CÓ THAY ĐỔI ===
-    useEffect(() => {
-        let syncTimeout: NodeJS.Timeout;
-        const channel = supabase.channel('global_auto_sync')
-            .on('postgres_changes', { event: '*', schema: 'public' }, (payload: any) => {
-                 const t = payload.table;
-                 // Các bảng quan trọng cần đồng bộ ngay
-                 if (['donhang', 'khoxe', 'yeucauxhd', 'yeucauvc', 'archived_orders'].includes(t)) {
-                     const lastSyncStr = localStorage.getItem('last_auto_push_sync') || '0';
-                     const lastSync = parseInt(lastSyncStr);
-                     
-                     // Chỉ cho phép tự động đẩy tối đa 1 lần mỗi 20 giây để tránh nghẽn server
-                     if (Date.now() - lastSync > 20000) { 
-                         localStorage.setItem('last_auto_push_sync', Date.now().toString());
-                         clearTimeout(syncTimeout);
-                         syncTimeout = setTimeout(() => {
-                             apiService.triggerAutoSync();
-                             console.log('Real-time: Auto Sync triggered for table', t);
-                         }, 3000); // Đợi 3s sau khi thao tác xong để chốt dữ liệu
-                     }
-                 }
-            })
-            .subscribe();
-            
-        return () => { 
-            supabase.removeChannel(channel); 
-            clearTimeout(syncTimeout); 
-        }
-    }, []);
+    // NOTE: Global auto-sync via Realtime channel was removed to prevent race conditions 
+    // and data duplication. Synchronization is now handled reliably by database triggers
+    // at the Supabase level (see 20260410160000_re_enable_gas_sync.sql).
+
 
     const prevStockEnabledRef = useRef<boolean | null>(null);
     useEffect(() => {
@@ -257,9 +247,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             .channel(`reputation_${identifier}`)
             .on(
                 'postgres_changes',
-                { 
-                    event: 'UPDATE', 
-                    schema: 'public', 
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
                     table: 'user_reputation_cache',
                     filter: `username=eq.${identifier}`
                 },
@@ -287,11 +277,14 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     }, [currentUserName, currentUser]); // Removed activeView to keep it focused on data
 
     const canHoldMore = useMemo(() => {
+        // QUYỀN ADMIN: Không bao giờ bị chặn giữ xe
+        if (isCurrentUserAdmin) return true;
+
         // Đếm số xe đang giữ của người dùng hiện tại
-        const currentHoldsCount = stockData.filter((v: any) => 
-            v['Trạng thái'] === 'Đang giữ' && 
+        const currentHoldsCount = stockData.filter((v: any) =>
+            v['Trạng thái'] === 'Đang giữ' &&
             (v['Người Giữ Xe']?.trim().toLowerCase().normalize('NFC') === currentUser?.trim().toLowerCase().normalize('NFC') ||
-             v['username_giu_xe']?.trim().toLowerCase() === currentUserName?.trim().toLowerCase())
+                v['username_giu_xe']?.trim().toLowerCase() === currentUserName?.trim().toLowerCase())
         ).length;
 
         // Nếu chưa tải xong reputation, nhưng đã giữ >= 5 xe thì khóa tạm thời để an toàn
@@ -347,6 +340,27 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             showToast('Lỗi', 'Có lỗi xảy ra khi cập nhật cài đặt.', 'error');
         } finally {
             setIsTogglingStock(false);
+        }
+    };
+
+    const handleToggleChatGlobal = async () => {
+        if (!isCurrentUserAdmin) return;
+        setIsTogglingChat(true);
+        try {
+            const newIsHidden = isChatEnabled;
+            const res = await apiService.updateAppSetting('chat_visibility', { isChatHidden: newIsHidden });
+
+            if (res && res.status === 'SUCCESS') {
+                setIsChatEnabled(!newIsHidden);
+                showToast('Thành công', `Đã ${newIsHidden ? 'Ẩn' : 'Bật'} trợ lý AI toàn hệ thống.`, 'success');
+            } else {
+                showToast('Lỗi', res.message || "Không thể thay đổi trạng thái AI", 'error');
+            }
+        } catch (e) {
+            console.error("Lỗi khi thay đổi trạng thái AI:", e);
+            showToast('Lỗi', 'Có lỗi xảy ra khi cập nhật cài đặt AI.', 'error');
+        } finally {
+            setIsTogglingChat(false);
         }
     };
 
@@ -439,7 +453,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     console.warn("Dữ liệu lưu trữ quá lớn cho bộ nhớ đệm, chỉ giữ trong RAM:", storageError);
                     // Vẫn tiếp tục thực hiện, dữ liệu sẽ chỉ tồn tại trong phiên làm việc hiện tại (RAM)
                 }
-                
+
                 setAllHistoryData((prevData: Order[]) => {
                     // Tránh duplicate nếu dữ liệu đã tồn tại
                     const existingNumbers = new Set(prevData.map(o => o['Số đơn hàng']));
@@ -560,7 +574,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
         const quickActionMenu = (
             <div className="flex items-center gap-2">
-                <button 
+                <button
                     onClick={() => setIsPendingStatsModalOpen(true)}
                     className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-accent-primary hover:border-accent-primary/30 hover:bg-accent-primary/5 transition-all duration-300 shadow-sm"
                     title="Thống kê yêu cầu"
@@ -760,9 +774,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         requestNotificationPermission={requestNotificationPermission}
                         reputation={reputation}
                         currentUserName={currentUserName || ''}
-                        isChatEnabled={false}
-                        isTogglingChat={false}
-                        handleToggleChatGlobal={() => {}}
+                        isChatEnabled={isChatEnabled}
+                        isTogglingChat={isTogglingChat}
+                        handleToggleChatGlobal={handleToggleChatGlobal}
                         onOpenBacklogReport={() => setIsBacklogModalOpen(true)}
                     />
 
@@ -771,6 +785,18 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         <div hidden={activeView !== 'orders'} className="h-full">
                             {renderOrdersContent()}
                         </div>
+                        {activeView === 'map' && (
+                            <div className="h-full">
+                                <MapView
+                                    stockData={stockData}
+                                    refetchStock={refetchStock}
+                                    showToast={showToast}
+                                    currentUser={currentUser}
+                                    targetVinOnMap={targetVinOnMap}
+                                    onClearTargetVinOnMap={() => setTargetVinOnMap(null)}
+                                />
+                            </div>
+                        )}
                         <div hidden={activeView !== 'stock'} className="h-full relative overflow-hidden flex flex-col">
                             {!isStockEnabled && isCurrentUserAdmin && (
                                 <div className="flex-shrink-0 bg-amber-500/10 backdrop-blur-md border-b border-amber-500/20 px-4 py-2 flex items-center justify-center gap-3 animate-fade-in z-20">
@@ -843,6 +869,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                             setTargetInquiryIdForTVBH('new');
                                             setActiveView('inquiry');
                                         }}
+                                        onViewCarOnMap={(vin: string) => {
+                                            setTargetVinOnMap(vin);
+                                            setActiveView('map');
+                                        }}
                                     />
                                 )}
                             </div>
@@ -872,7 +902,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             </Suspense>
                         </div>
                         <div hidden={activeView !== 'inquiry'} className="h-full">
-                            <CarInquiryView 
+                            <CarInquiryView
                                 currentUser={{ name: currentUserName, email: currentUser }}
                                 showToast={showToast}
                                 initialInquiryId={targetInquiryIdForTVBH || undefined}
@@ -921,9 +951,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     }}
                 />
 
-                <BroadcastPopup 
-                    notifications={notifications} 
-                    onRefresh={fetchNotificationsInternal} 
+                <BroadcastPopup
+                    notifications={notifications}
+                    onRefresh={fetchNotificationsInternal}
                 />
 
                 <CreateRequestModal
@@ -939,7 +969,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     onOpenImagePreview={openImagePreviewModal}
                 />
 
-                <HoldExtensionModal 
+                <HoldExtensionModal
                     isOpen={!!extensionVehicle}
                     onClose={() => setExtensionVehicle(null)}
                     vehicle={extensionVehicle}
@@ -963,6 +993,23 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     onRequestVC={setOrderToRequestVC}
                     onConfirmVC={setOrderToConfirmVC}
                     onEdit={setOrderToEdit}
+                    onSelectPolicy={handleSelectPolicy}
+                    isAdmin={isCurrentUserAdmin}
+                    onEditVin={async (order: Order, newVin: string) => {
+                        showToast('Đang cập nhật...', 'Vui lòng chờ trong giây lát.', 'loading');
+                        try {
+                            const res = await apiService.updateCarInfo(order.VIN || '', { VIN: newVin });
+                            if (res.status === 'SUCCESS') {
+                                showToast('Thành công', `Đã cập nhật số VIN thành ${newVin}`, 'success');
+                                refetchHistory();
+                                refetchStock();
+                            } else {
+                                showToast('Lỗi', res.message, 'error');
+                            }
+                        } catch (error: any) {
+                            showToast('Lỗi', error.message, 'error');
+                        }
+                    }}
                 />
                 <EditOrderModal
                     isOpen={!!orderToEdit}
@@ -1039,6 +1086,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     showToast={showToast}
                     currentUser={currentUser}
                 />
+
+                {isChatEnabled && <VirtualAssistant />}
 
                 <BottomNav
                     activeView={activeView}

@@ -116,6 +116,7 @@ const Header: React.FC<HeaderProps> = ({
     const navItems = [
         { id: 'orders', label: 'Đơn Hàng', icon: 'fa-car-side' },
         { id: 'stock', label: 'Kho Xe', icon: 'fa-warehouse' },
+        { id: 'map', label: 'Bản Đồ', icon: 'fa-map-location-dot' },
         { id: 'inquiry', label: 'Tra Cứu', icon: 'fa-search-location' },
         { id: 'laithu', label: 'Lái Thử', icon: 'fa-gauge-high' },
         { id: 'sold', label: 'Lịch Sử', icon: 'fa-receipt' },
@@ -166,7 +167,7 @@ const Header: React.FC<HeaderProps> = ({
                     <div
                         onClick={() => setCreateRequestData({ isOpen: true })}
                         title="Tạo Yêu Cầu Mới"
-                        className="hidden sm:flex cursor-pointer relative z-10 items-center justify-center w-[120px] lg:w-[150px] h-[40px] transition-transform hover:scale-105 active:scale-95 mr-1"
+                        className="flex cursor-pointer relative z-10 items-center justify-center w-[90px] sm:w-[120px] lg:w-[150px] h-[40px] transition-transform hover:scale-105 active:scale-95 mr-1"
                     >
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <lottie-player
@@ -218,6 +219,15 @@ const Header: React.FC<HeaderProps> = ({
                                     title={isStockEnabled ? 'Ẩn kho xe' : 'Hiện kho xe'}
                                 >
                                     <i className={`fas ${isTogglingStock ? 'fa-spinner fa-spin' : (isStockEnabled ? 'fa-eye-slash' : 'fa-warehouse')} text-[13px]`}></i>
+                                </Button>
+                                <Button
+                                    onClick={_handleToggleChatGlobal}
+                                    variant="ghost"
+                                    disabled={_isTogglingChat}
+                                    className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 transition-all hover:bg-white hover:shadow-sm ${isChatEnabled ? 'text-blue-500' : 'text-gray-400'}`}
+                                    title={isChatEnabled ? 'Tắt trợ lý AI' : 'Bật trợ lý AI'}
+                                >
+                                    <i className={`fas ${_isTogglingChat ? 'fa-spinner fa-spin' : (isChatEnabled ? 'fa-robot' : 'fa-user-slash')} text-[13px]`}></i>
                                 </Button>
                             </div>
                         )}

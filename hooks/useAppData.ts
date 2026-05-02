@@ -45,26 +45,22 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
 
     const { data: xuathoadonRes, error: errorXuathoadonRaw, mutate: mutateXuathoadon } = useSWR('xuathoadonData', async () => {
         const { supabase } = await import('../services/supabaseClient');
+        
+        // Use a limit to keep the 'Inbox' view fast. 300 records is plenty for immediate action.
         const { data: rawData, error } = await supabase
             .from('yeucauxhd')
             .select('*')
-            .order('ngay_yeu_cau', { ascending: false });
+            .order('ngay_yeu_cau', { ascending: false })
+            .limit(300);
+            
         if (error) throw new Error(error.message);
+        return rawData || [];
+    }, { refreshInterval: 10000, revalidateOnFocus: false }); // Disable revalidateOnFocus to avoid UI flicker on tab switch
 
-        // Fetch corresponding statuses from 'donhang' to ensure a Single Source of Truth
-        const orderNumbers = (rawData || []).map((row: any) => row.so_don_hang).filter(Boolean);
-        const statusMap = new Map();
-
-        if (orderNumbers.length > 0) {
-            const { data: dhData } = await supabase
-                .from('donhang')
-                .select('so_don_hang, ket_qua, vin')
-                .in('so_don_hang', orderNumbers);
-            if (dhData) dhData.forEach((d: any) => statusMap.set(d.so_don_hang, { ket_qua: d.ket_qua, vin: d.vin }));
-        }
-
-        // Map sang cấu trúc Order để AdminView dùng được
-        return (rawData || []).map((row: any) => ({
+    const xuathoadonData = useMemo(() => {
+        if (!xuathoadonRes) return [];
+        
+        return xuathoadonRes.map((row: any) => ({
             'Tên khách hàng': row.ten_khach_hang,
             'Số đơn hàng': row.so_don_hang,
             'Dòng xe': row.dong_xe,
@@ -72,10 +68,10 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
             'Ngoại thất': row.ngoai_that,
             'Nội thất': row.noi_that,
             'Tên tư vấn bán hàng': row.tvbh,
-            'VIN': statusMap.has(row.so_don_hang) ? statusMap.get(row.so_don_hang).vin : row.vin,
+            'VIN': row.vin,
             'Ngày cọc': row.ngay_coc,
             'Thời gian nhập': row.ngay_yeu_cau,
-            'Kết quả': statusMap.has(row.so_don_hang) ? statusMap.get(row.so_don_hang).ket_qua : row.trang_thai, // Unified column
+            'Kết quả': row.trang_thai || 'Chờ phê duyệt',
             'CHÍNH SÁCH': row.chinh_sach,
             'Hoa hồng ứng': row.hoa_hong_ung,
             'Điểm Vpoint sử dụng': row.vpoint,
@@ -85,36 +81,17 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
             'SỐ ĐƠN HÀNG': row.so_don_hang,
             'TÊN KHÁCH HÀNG': row.ten_khach_hang,
             'TƯ VẤN BÁN HÀNG': row.tvbh,
-            'SỐ VIN': statusMap.has(row.so_don_hang) ? statusMap.get(row.so_don_hang).vin : row.vin,
-            'Số động cơ': row.so_may,
-            'SỐ ĐỘNG CƠ': row.so_may,
+            'SỐ VIN': row.vin,
+            'Số máy': row.so_may,
+            'SỐ MÁY': row.so_may,
             'NGÀY YÊU CẦU XHĐ': row.ngay_yeu_cau,
             'NGÀY XUẤT HÓA ĐƠN': row.ngay_xuat_hoa_don,
             'Trạng thái VC': row.trang_thai_vc || '',
+            'Ghi chú AI': row.ghi_chu_ai,
             '_sourceId': row.id,
         }));
-    }, { refreshInterval: 10000, revalidateOnFocus: true });
+    }, [xuathoadonRes]);
 
-    const { data: vehicleInfoRes } = useSWR('thongtinxeData', async () => {
-        const { supabase: s } = await import('../services/supabaseClient');
-        const mapRes: Record<string, { engine?: string; dms?: string }> = {};
-        let stepSize = 1000;
-        for (let i = 0; i < 20; i++) {
-            const { data, error } = await s.from('thongtinxe').select('vin, so_may').range(i * stepSize, (i + 1) * stepSize - 1);
-            if (error || !data || data.length === 0) break;
-            data.forEach(row => {
-                if (row.vin) {
-                    mapRes[row.vin.trim().toUpperCase()] = {
-                        engine: row.so_may?.trim()
-                    };
-                }
-            });
-            if (data.length < stepSize) break;
-        }
-        return mapRes;
-    }, { refreshInterval: 600000 }); // Re-fetch master data rarely (10 mins)
-
-    const xuathoadonData = xuathoadonRes || [];
     const isLoadingXuathoadon = !xuathoadonRes && !errorXuathoadonRaw;
     const errorXuathoadon = errorXuathoadonRaw instanceof Error ? errorXuathoadonRaw.message : (errorXuathoadonRaw ? String(errorXuathoadonRaw) : null);
     const refetchXuathoadon = () => mutateXuathoadon();
@@ -155,22 +132,15 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
         const engineMapByOrder = new Map();
         if (xuathoadonRes) {
             xuathoadonRes.forEach((row: any) => {
-                if (row['Số đơn hàng'] && row['Số động cơ']) {
-                    engineMapByOrder.set(row['Số đơn hàng'], row['Số động cơ']);
+                if (row['Số đơn hàng'] && row['Số máy']) {
+                    engineMapByOrder.set(row['Số đơn hàng'], row['Số máy']);
                 }
             });
         }
 
         const vinMap: Record<string, { engine?: string; dms?: string }> = {};
 
-        // 1. Map from master data (thongtinxe)
-        if (vehicleInfoRes) {
-            Object.entries(vehicleInfoRes).forEach(([vin, info]: [string, any]) => {
-                vinMap[vin] = typeof info === 'string' ? { engine: info } : info;
-            });
-        }
-
-        // 2. Overlay from stock data (more accurate for current inventory)
+        // 1. Overlay from stock data (more accurate for current inventory)
         if (stockData) {
             stockData.forEach((car: any) => {
                 if (car.VIN) {
@@ -199,14 +169,14 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
             if (engineNum || dmsCode) {
                 return {
                     ...order,
-                    'Số động cơ': engineNum || order['Số động cơ'],
-                    'SỐ ĐỘNG CƠ': engineNum || order['Số động cơ'],
+                    'Số máy': engineNum || order['Số máy'],
+                    'SỐ MÁY': engineNum || order['Số máy'],
                     'Mã DMS': dmsCode || order['Mã DMS']
                 };
             }
             return order;
         });
-    }, [allHistoryData, xuathoadonRes, vehicleInfoRes, stockData]);
+    }, [allHistoryData, xuathoadonRes, stockData]);
 
     const historyData = useMemo(() => {
         if (isCurrentUserAdmin) {

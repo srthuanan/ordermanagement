@@ -6,6 +6,7 @@ import StatusBadge from '../ui/StatusBadge';
 import CarImage from '../ui/CarImage';
 import { getExteriorColorStyle, getInteriorColorStyle } from '../../utils/styleUtils';
 import Button from '../ui/Button';
+import SelectPolicyModal from './SelectPolicyModal';
 
 moment.locale('vi');
 
@@ -18,7 +19,7 @@ const formatDateTime = (dateString?: string) => {
         "YYYY-MM-DD HH:mm:ss"
     ];
     const date = moment(dateString, formats, 'vi', true);
-    return date.isValid() ? date.format('HH:mm DD/MM/YYYY') : '—';
+    return date.isValid() ? date.format('DD/MM/YYYY HH:mm:ss') : '—';
 };
 
 const InfoItem: React.FC<{ icon?: string; label: string; value?: string | number; children?: React.ReactNode; valueClassName?: string; valueStyle?: React.CSSProperties; className?: string; onClick?: (e: React.MouseEvent) => void; hideIconOnMobile?: boolean }> = ({ icon, label, value, children, valueClassName = '', valueStyle, className = '', onClick, hideIconOnMobile }) => (
@@ -122,11 +123,18 @@ interface OrderDetailsModalProps {
     onRequestVC: (order: Order) => void;
     onConfirmVC: (order: Order) => void;
     onEdit?: (order: Order) => void;
+    onSelectPolicy?: (order: Order, policy: string) => void;
+    isAdmin?: boolean;
+    onEditVin?: (order: Order, newVin: string) => Promise<void>;
 }
 
-const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: initialOrder, onClose, orderList, onNavigate, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, onEdit }) => {
+const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: initialOrder, onClose, orderList, onNavigate, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, onEdit, onSelectPolicy, isAdmin, onEditVin }) => {
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
+    const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
+    const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
+
+    if (false) console.log(isAdmin, onEditVin);
 
     if (!isOpen || !initialOrder) return null;
 
@@ -135,6 +143,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: in
     const vcStatus = (order["Trạng thái VC"] || "").toLowerCase().trim().normalize('NFC');
     const statusText = order["Trạng thái VC"] || order["Kết quả"] || "Chưa ghép";
     const isCancelled = statusText.toLowerCase().includes('đã hủy') || statusText.toLowerCase().includes('từ chối');
+    const hasPolicy = !!order["CHÍNH SÁCH"];
 
     const canCancel = ['chưa ghép', 'đã ghép'].includes(generalStatus);
     const canRequestInvoice = generalStatus === 'đã ghép';
@@ -227,11 +236,14 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: in
                                         title="Click để sao chép Số đơn hàng"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            navigator.clipboard.writeText(order["Số đơn hàng"]);
+                                            navigator.clipboard.writeText(order["Số đơn hàng"]).then(() => {
+                                                setCopiedLabel('orderId');
+                                                setTimeout(() => setCopiedLabel(null), 2000);
+                                            });
                                         }}
                                     >
-                                        <i className="fas fa-hashtag text-[10px] text-amber-500"></i>
-                                        <p className="text-xs md:text-sm font-mono text-slate-500 font-bold tracking-wider">{order["Số đơn hàng"]}</p>
+                                        <i className={`fas ${copiedLabel === 'orderId' ? 'fa-check text-green-500' : 'fa-hashtag text-amber-500'} text-[10px]`}></i>
+                                        <p className={`text-xs md:text-sm font-mono font-bold tracking-wider ${copiedLabel === 'orderId' ? 'text-green-500' : 'text-slate-500'}`}>{copiedLabel === 'orderId' ? 'Đã copy' : order["Số đơn hàng"]}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 md:gap-4">
@@ -262,18 +274,18 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: in
                                 </button>
                             )}
 
-                            <div className="flex-1 min-h-0 overflow-y-auto md:overflow-hidden z-10 p-2 md:p-6 custom-scrollbar md:scrollbar-default space-y-3 md:space-y-0 flex flex-col">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 md:gap-6 flex-1 min-h-0">
+                            <div className={`flex-1 min-h-0 overflow-y-auto md:overflow-hidden z-10 p-2 ${hasPolicy ? 'md:p-3.5' : 'md:p-6'} custom-scrollbar md:scrollbar-default space-y-3 md:space-y-0 flex flex-col`}>
+                                <div className={`grid grid-cols-1 md:grid-cols-3 ${hasPolicy ? 'gap-2 md:gap-4' : 'gap-2.5 md:gap-6'} flex-1 min-h-0`}>
                                     {/* Column 1: Customer & Timeline */}
-                                    <div className="md:col-span-1 flex flex-col gap-3 md:gap-6">
+                                    <div className={`md:col-span-1 flex flex-col ${hasPolicy ? 'gap-2 md:gap-4' : 'gap-3 md:gap-6'}`}>
                                         {/* Customer Info */}
-                                        <div className="bg-white md:bg-gray-50/50 p-3 md:p-5 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm">
-                                            <div className="grid grid-cols-2 md:grid-cols-1 gap-3 md:gap-6">
+                                        <div className={`bg-white md:bg-gray-50/50 p-3 ${hasPolicy ? 'md:p-3.5' : 'md:p-5'} rounded-xl md:rounded-2xl border border-gray-100 shadow-sm`}>
+                                            <div className={`grid grid-cols-2 md:grid-cols-1 ${hasPolicy ? 'gap-2 md:gap-4' : 'gap-3 md:gap-6'}`}>
                                                 <InfoItem icon="fa-user-circle" label="Khách hàng" value={order["Tên khách hàng"]} valueClassName="uppercase text-sm md:text-base text-slate-800" />
                                                 <InfoItem icon="fa-user-tie" label="TVBH" value={order["Tên tư vấn bán hàng"]} valueClassName="text-sm md:text-base text-slate-800" />
                                             </div>
-                                            <div className="border-t border-gray-100 mt-3 pt-3 md:pt-6 md:mt-6">
-                                                <h4 className="font-bold text-amber-700 mb-2 md:mb-4 tracking-wide uppercase text-[10px] md:text-xs text-center md:text-left">Tiến độ đơn hàng</h4>
+                                            <div className={`border-t border-gray-100 ${hasPolicy ? 'mt-2 pt-2 md:pt-4 md:mt-4' : 'mt-3 pt-3 md:pt-6 md:mt-6'}`}>
+                                                <h4 className={`font-bold text-amber-700 ${hasPolicy ? 'mb-1 md:mb-2' : 'mb-2 md:mb-4'} tracking-wide uppercase text-[10px] md:text-xs text-center md:text-left`}>Tiến độ đơn hàng</h4>
 
                                                 {/* Mobile timeline: Horizontal-ish or 2x2 grid? Let's try 2-col grid for milestones on mobile */}
                                                 <div className="grid grid-cols-2 md:grid-cols-1 gap-2 md:gap-1">
@@ -287,7 +299,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: in
                                     </div>
 
                                     {/* Column 2 & 3: Car Info & VIN */}
-                                    <div className="md:col-span-2 flex flex-col gap-3 md:gap-6 flex-1 min-h-0">
+                                    <div className={`md:col-span-2 flex flex-col ${hasPolicy ? 'gap-2 md:gap-3' : 'gap-3 md:gap-6'} flex-1 min-h-0`}>
                                         {isCancelled && order["Ghi chú hủy"] && (
                                             <div className="shrink-0 p-3 md:p-4 rounded-xl bg-red-50 border border-red-100 flex items-start">
                                                 <i className="fas fa-exclamation-triangle text-red-500 text-lg md:text-xl mr-3 md:mr-4 mt-1"></i>
@@ -300,18 +312,47 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: in
 
                                         {order.VIN && <div className="shrink-0"><VINDisplay vin={order.VIN} /></div>}
 
-                                        <div className="flex-1 bg-white md:bg-gray-50/50 p-3 md:p-5 rounded-xl md:rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-                                            <div className="shrink-0 flex items-center justify-between mb-3 md:mb-4">
+                                        {order["CHÍNH SÁCH"] && (
+                                            <div className={`shrink-0 p-2 md:p-3 rounded-xl bg-amber-50 border border-amber-100 flex flex-col gap-1 group animate-fade-in relative overflow-hidden`}>
+                                                <div className="absolute top-0 right-0 p-2">
+                                                    {onSelectPolicy && (
+                                                        <button 
+                                                            onClick={() => setIsPolicyModalOpen(true)}
+                                                            className="text-[10px] font-bold text-amber-600 hover:text-amber-800 underline uppercase tracking-tighter"
+                                                        >
+                                                            Thay đổi
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2 mb-0.5">
+                                                    <div className="w-5 h-5 rounded-lg bg-amber-200/50 text-amber-700 flex items-center justify-center">
+                                                        <i className="fas fa-file-contract text-[10px]"></i>
+                                                    </div>
+                                                    <p className="text-[10px] font-black text-amber-600 uppercase tracking-wider">Chính sách ưu đãi áp dụng</p>
+                                                </div>
+                                                <div className={`grid grid-cols-1 ${order["CHÍNH SÁCH"].split('; ').length > 1 ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-x-6 gap-y-1 pl-7`}>
+                                                    {order["CHÍNH SÁCH"].split('; ').map((p, i) => (
+                                                        <div key={i} className="flex items-start gap-2">
+                                                            <i className="fas fa-check-circle text-amber-500 text-[10px] mt-0.5"></i>
+                                                            <p className="text-[10px] md:text-xs font-bold text-slate-800 leading-tight">{p}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        <div className={`flex-1 bg-white md:bg-gray-50/50 p-3 ${hasPolicy ? 'md:p-3.5' : 'md:p-5'} rounded-xl md:rounded-2xl border border-gray-100 shadow-sm flex flex-col`}>
+                                            <div className="shrink-0 flex items-center justify-between mb-2 md:mb-3">
                                                 <h3 className="font-bold text-sm md:text-base text-amber-700 tracking-wide uppercase">Thông Tin Xe</h3>
                                             </div>
 
-                                            <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-8 items-stretch">
-                                                <div className="flex-shrink-0 w-full md:w-3/5 flex items-center justify-center min-h-[110px] md:min-h-[200px] h-auto md:h-full rounded-xl p-1.5 md:p-4 bg-gradient-to-br from-gray-50 to-white border border-gray-100 shadow-inner hover:shadow-lg transition-all duration-300">
-                                                    <CarImage model={order['Dòng xe']} exteriorColor={order['Ngoại thất']} className="w-full h-auto object-contain max-h-[130px] md:max-h-[250px] drop-shadow-2xl transform hover:scale-105 transition-transform duration-500" alt={order['Dòng xe']} />
+                                            <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-8 items-stretch min-h-0">
+                                                <div className={`flex-shrink-0 w-full md:w-3/5 flex items-center justify-center min-h-[100px] ${hasPolicy ? 'md:min-h-[150px] md:max-h-[180px]' : 'md:min-h-[200px] md:max-h-[250px]'} h-auto rounded-xl p-1.5 ${hasPolicy ? 'md:p-2' : 'md:p-4'} bg-gradient-to-br from-gray-50 to-white border border-gray-100 shadow-inner hover:shadow-lg transition-all duration-300`}>
+                                                    <CarImage model={order['Dòng xe']} exteriorColor={order['Ngoại thất']} className={`w-full h-auto object-contain ${hasPolicy ? 'max-h-[120px] md:max-h-[180px]' : 'max-h-[130px] md:max-h-[250px]'} drop-shadow-2xl transform hover:scale-105 transition-transform duration-500`} alt={order['Dòng xe']} />
                                                 </div>
 
-                                                <div className="flex-1 grid grid-cols-2 md:grid-cols-1 gap-x-4 gap-y-3 md:gap-y-0 md:justify-around text-xs md:text-base">
-                                                    <div className="col-span-2 md:col-span-1 pb-1.5 md:pb-0 border-b border-gray-100 md:border-none">
+                                                <div className="flex-1 grid grid-cols-2 md:grid-cols-1 gap-x-4 gap-y-2 md:gap-y-0 md:justify-around text-xs md:text-base">
+                                                    <div className="col-span-2 md:col-span-1 pb-1 md:pb-0 border-b border-gray-100 md:border-none">
                                                         <InfoItem icon="fa-car-side" label="Dòng xe" value={`${order["Dòng xe"]} - ${order["Phiên bản"]}`} valueClassName="text-base md:text-lg text-slate-800" />
                                                     </div>
                                                     <div className="pb-0 md:pb-0">
@@ -325,14 +366,17 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: in
                                                             icon="fa-cogs"
                                                             hideIconOnMobile
                                                             label="Số máy"
-                                                            value={order["Số động cơ"] || '—'}
-                                                            valueClassName="font-mono font-bold text-xs md:text-base text-slate-700"
                                                             onClick={(e) => {
-                                                                if (order["Số động cơ"]) {
+                                                                if (order["Số máy"]) {
                                                                     e.stopPropagation();
-                                                                    navigator.clipboard.writeText(order["Số động cơ"]);
+                                                                    navigator.clipboard.writeText(order["Số máy"]).then(() => {
+                                                                        setCopiedLabel('engineNum');
+                                                                        setTimeout(() => setCopiedLabel(null), 2000);
+                                                                    });
                                                                 }
                                                             }}
+                                                            valueClassName={`font-mono font-bold text-xs md:text-base ${copiedLabel === 'engineNum' ? 'text-green-500' : 'text-slate-700'}`}
+                                                            value={copiedLabel === 'engineNum' ? 'Đã copy' : (order["Số máy"] || '—')}
                                                         />
                                                     </div>
                                                     <div className="pb-0 md:pb-0">
@@ -358,6 +402,17 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: in
 
                                     {/* Primary Actions */}
                                     {canRequestInvoice && <Button onClick={() => onRequestInvoice(order)} variant="primary" size="sm" leftIcon={<i className="fas fa-file-invoice-dollar"></i>}>Xuất HĐ</Button>}
+                                    {canRequestInvoice && onSelectPolicy && !order["CHÍNH SÁCH"] && (
+                                        <Button 
+                                            onClick={() => setIsPolicyModalOpen(true)} 
+                                            variant="secondary" 
+                                            size="sm" 
+                                            className="bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100" 
+                                            leftIcon={<i className="fas fa-scroll"></i>}
+                                        >
+                                            Chọn CS
+                                        </Button>
+                                    )}
                                     {canAddSupplement && <Button onClick={() => onSupplement(order)} variant="primary" size="sm" className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-none shadow-lg shadow-amber-500/30" leftIcon={<i className="fas fa-edit"></i>}>Bổ Sung</Button>}
                                     {canRequestVC && <Button onClick={() => onRequestVC(order)} variant="primary" size="sm" className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-none shadow-lg shadow-purple-500/30" leftIcon={<i className="fas fa-id-card"></i>}>Y/C VC</Button>}
                                     {canConfirmVC && <Button onClick={() => onConfirmVC(order)} variant="success" size="sm" leftIcon={<i className="fas fa-check"></i>}>Xác Thực</Button>}
@@ -367,6 +422,17 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: in
                     </main>
                 </div>
             </div>
+
+            <SelectPolicyModal 
+                isOpen={isPolicyModalOpen}
+                onClose={() => setIsPolicyModalOpen(false)}
+                currentPolicy={order["CHÍNH SÁCH"]}
+                carModel={order["Dòng xe"]}
+                onSelect={(policyName) => {
+                    onSelectPolicy?.(order, policyName);
+                    setIsPolicyModalOpen(false);
+                }}
+            />
         </div>
     );
 };

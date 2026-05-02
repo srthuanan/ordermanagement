@@ -60,7 +60,8 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
         hideToast();
 
         const newUploadableFiles: UploadableFile[] = processedFiles.map(file => {
-            const orderNumberRegex = /^(N\d{5}-VSO-\d{2}-\d{2}-\d{4})/i;
+            // Cải tiến Regex để nhận diện nhiều định dạng mã đơn hàng hơn (N... hoặc SO-...)
+            const orderNumberRegex = /((N\d{5}-VSO-\d{2}-\d{2}-\d{4})|(SO-\d+))/i;
             const match = file.name.match(orderNumberRegex);
             const orderNumber = match ? match[1].toUpperCase() : null;
             const status = orderNumber ? 'valid' : 'invalid_name';
@@ -85,6 +86,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
 
     const handleUpload = async () => {
         const validFiles = files.filter(f => f.status === 'valid');
+        console.log('[DEBUG-UI] Files being uploaded:', validFiles.map(v => v.orderNumber));
         if (validFiles.length === 0) {
             showToast('Không có tệp hợp lệ', 'Vui lòng chọn các tệp có tên đúng định dạng.', 'warning');
             return;

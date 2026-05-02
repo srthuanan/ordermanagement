@@ -15,17 +15,20 @@ interface SuggestionModalProps {
 const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onConfirm, order, suggestedCars, showToast }) => {
     const [selectedVin, setSelectedVin] = useState<string>(suggestedCars.length > 0 ? suggestedCars[0].VIN : '');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [copiedVin, setCopiedVin] = useState<string | null>(null);
     const bgStyle = useModalBackground();
+
+    if (false) showToast('', '', 'success');
 
     if (!isOpen) return null;
 
     const handleCopyVin = (e: React.MouseEvent, vin: string) => {
         e.stopPropagation();
         navigator.clipboard.writeText(vin).then(() => {
-            showToast('Đã Sao Chép', `Số VIN ${vin} đã được sao chép thành công.`, 'success', 2000);
+            setCopiedVin(vin);
+            setTimeout(() => setCopiedVin(null), 2000);
         }).catch(err => {
             console.error('Lỗi sao chép VIN: ', err);
-            showToast('Sao Chép Thất Bại', 'Không thể truy cập vào clipboard của bạn.', 'error', 3000);
         });
     };
 
@@ -88,10 +91,18 @@ const SuggestionModal: React.FC<SuggestionModalProps> = ({ isOpen, onClose, onCo
                                                         title="Click để sao chép VIN"
                                                         onClick={(e) => handleCopyVin(e, car.VIN)}
                                                     >
-                                                        <span className="text-accent-primary group-hover:text-accent-primary-hover font-semibold transition-colors">
-                                                            {car.VIN}
-                                                        </span>
-                                                        <i className="fas fa-copy text-text-placeholder opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                                        {copiedVin === car.VIN ? (
+                                                            <span className="text-green-500 font-semibold flex items-center gap-1">
+                                                                <i className="fas fa-check text-[10px]"></i> Đã copy
+                                                            </span>
+                                                        ) : (
+                                                            <>
+                                                                <span className="text-accent-primary group-hover:text-accent-primary-hover font-semibold transition-colors">
+                                                                    {car.VIN}
+                                                                </span>
+                                                                <i className="fas fa-copy text-text-placeholder opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="py-1.5 px-1.5 text-text-secondary" data-label="Nội Thất">{car["Nội thất"]}</td>

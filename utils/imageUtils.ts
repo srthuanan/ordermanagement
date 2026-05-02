@@ -29,18 +29,35 @@ export const getDriveFileId = (url: string): string | null => {
  * @param size Optional desired width for the image.
  * @returns An embeddable image URL.
  */
+/**
+ * Transforms a Google Drive URL into an embeddable URL.
+ * For images, it can use the thumbnail endpoint.
+ * For PDFs or general file viewing, it uses the /preview endpoint.
+ * @param url The original Google Drive URL or other file URL.
+ * @param size Optional desired width for the image.
+ * @returns An embeddable URL.
+ */
 export const toEmbeddableUrl = (url: string, size?: number): string => {
+    if (!url || typeof url !== 'string') return '';
+    
     // If it's already a data URL, return it directly
-    if (url && url.startsWith('data:image')) {
+    if (url.startsWith('data:image')) {
         return url;
     }
+
     const fileId = getDriveFileId(url);
     if (fileId) {
-        // Use the thumbnail endpoint which supports resizing via sz parameter
-        // sz=w{width}
+        const lowerUrl = url.toLowerCase();
+        // If it looks like a PDF or a document, or if no size/large size is requested, use /preview
+        if (lowerUrl.includes('.pdf') || !size || size > 1000) {
+            return `https://drive.google.com/file/d/${fileId}/preview`;
+        }
+        
+        // For small thumbnails (e.g. in lists), use the thumbnail endpoint
         const sizeParam = size ? `w${size}` : 'w1920';
         return `https://drive.google.com/thumbnail?id=${fileId}&sz=${sizeParam}`;
     }
+    
     // If it's not a known Google Drive URL, return it as is.
     return url;
 };

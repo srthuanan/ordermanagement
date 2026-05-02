@@ -167,6 +167,8 @@ const DocumentThumbnail: React.FC<{
     );
 };
 
+
+
 const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     orders,
     onAction,
@@ -185,6 +187,8 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const [isSaving, setIsSaving] = useState(false);
     const [editData, setEditData] = useState({ engineNumber: '', policy: '', commission: '', vpoint: '' });
     const [dbPolicies, setDbPolicies] = useState<{ten_chinh_sach: string, dong_xe: string}[]>([]);
+    const [isSplitView, setIsSplitView] = useState(false);
+    const [activeDocKey, setActiveDocKey] = useState<'LinkHopDong' | 'LinkDeNghiXHD' | 'LinkHoaDonDaXuat'>('LinkDeNghiXHD');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const copyWithFeedback = useCopyFeedback();
 
@@ -259,7 +263,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     useEffect(() => {
         if (selectedOrder && !isEditing) {
             setEditData({
-                engineNumber: selectedOrder["Số động cơ"] || '',
+                engineNumber: selectedOrder["Số máy"] || '',
                 policy: selectedOrder["CHÍNH SÁCH"] || '',
                 commission: selectedOrder["Hoa hồng ứng"] || '',
                 vpoint: selectedOrder["Điểm Vpoint sử dụng"] || ''
@@ -275,19 +279,41 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         if (success) setIsEditing(false);
     };
 
-    const folders = [
-        { id: 'pending_approval', label: 'Chờ Phê Duyệt', icon: 'fa-clock', count: orders.filter(o => (o['Trạng thái xử lý'] || o['Kết quả'] || '').toLowerCase().trim().normalize('NFC') === 'chờ phê duyệt').length },
-        { id: 'approved', label: 'Đã Phê Duyệt', icon: 'fa-check', count: orders.filter(o => (o['Trạng thái xử lý'] || o['Kết quả'] || '').toLowerCase().trim().normalize('NFC') === 'đã phê duyệt').length },
-        { id: 'request_supplement', label: 'Yêu Cầu Bổ Sung', icon: 'fa-exclamation-circle', count: orders.filter(o => (o['Trạng thái xử lý'] || o['Kết quả'] || '').toLowerCase().trim().normalize('NFC') === 'yêu cầu bổ sung').length },
-        { id: 'supplemented', label: 'Đã Bổ Sung', icon: 'fa-plus-circle', count: orders.filter(o => (o['Trạng thái xử lý'] || o['Kết quả'] || '').toLowerCase().trim().normalize('NFC') === 'đã bổ sung').length },
-        { id: 'pending_signature', label: 'Chờ Ký Hóa Đơn', icon: 'fa-file-signature', count: orders.filter(o => { const s = (o['Trạng thái xử lý'] || o['Kết quả'] || '').toLowerCase().trim().normalize('NFC'); return s === 'chờ ký hóa đơn' || s === 'chờ ký hóa đơn'; }).length },
-        { id: 'completed', label: 'Đã Xuất Hóa Đơn', icon: 'fa-check-double', count: orders.filter(o => (o['Trạng thái xử lý'] || o['Kết quả'] || '').toLowerCase().trim().normalize('NFC') === 'đã xuất hóa đơn').length },
-        { id: 'all', label: 'Tất Cả', icon: 'fa-list', count: orders.length },
-    ];
+    const folders = useMemo(() => {
+        const counts = {
+            pending_approval: 0,
+            approved: 0,
+            request_supplement: 0,
+            supplemented: 0,
+            pending_signature: 0,
+            completed: 0
+        };
+
+        orders.forEach(o => {
+            const s = (o['Trạng thái xử lý'] || o['Kết quả'] || '').toLowerCase().trim().normalize('NFC');
+            if (s === 'chờ phê duyệt') counts.pending_approval++;
+            else if (s === 'đã phê duyệt') counts.approved++;
+            else if (s === 'yêu cầu bổ sung') counts.request_supplement++;
+            else if (s === 'đã bổ sung') counts.supplemented++;
+            else if (s === 'chờ ký hóa đơn' || s === 'chờ ký hóa đơn') counts.pending_signature++;
+            else if (s === 'đã xuất hóa đơn') counts.completed++;
+        });
+
+        return [
+            { id: 'pending_approval', label: 'Chờ Phê Duyệt', icon: 'fa-clock', count: counts.pending_approval },
+            { id: 'approved', label: 'Đã Phê Duyệt', icon: 'fa-check', count: counts.approved },
+            { id: 'request_supplement', label: 'Yêu Cầu Bổ Sung', icon: 'fa-exclamation-circle', count: counts.request_supplement },
+            { id: 'supplemented', label: 'Đã Bổ Sung', icon: 'fa-plus-circle', count: counts.supplemented },
+            { id: 'pending_signature', label: 'Chờ Ký Hóa Đơn', icon: 'fa-file-signature', count: counts.pending_signature },
+            { id: 'completed', label: 'Đã Xuất Hóa Đơn', icon: 'fa-check-double', count: counts.completed },
+            { id: 'all', label: 'Tất Cả', icon: 'fa-list', count: orders.length },
+        ];
+    }, [orders]);
 
     const getActions = (status: string) => {
         const s = status.toLowerCase().trim().normalize('NFC');
         return [
+            { type: 'reScan', label: 'Quét AI', icon: 'fa-sync', variant: 'primary', condition: true },
             { type: 'approve', label: 'Phê Duyệt', icon: 'fa-check-double', variant: 'primary', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
             { type: 'supplement', label: 'Yêu Cầu Bổ Sung', icon: 'fa-exclamation-triangle', variant: 'secondary', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
             { type: 'pendingSignature', label: 'Chuyển Chờ Ký', icon: 'fa-signature', variant: 'primary', condition: s === 'đã phê duyệt' },
@@ -300,6 +326,15 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                 onClick: () => fileInputRef.current?.click()
             },
             { type: 'resend', label: 'Gửi Lại Email', icon: 'fa-paper-plane', variant: 'secondary', condition: s === 'yêu cầu bổ sung' || s === 'đã xuất hóa đơn' },
+            { 
+                type: 'migrateToDrive', 
+                label: 'Bốc sang Drive', 
+                icon: 'fa-cloud-upload-alt', 
+                variant: 'secondary',
+                condition: s !== 'đã xuất hóa đơn' && s !== 'đã hủy' && 
+                          ((selectedOrder?.LinkHopDong && selectedOrder.LinkHopDong.includes('supabase.co')) || 
+                           (selectedOrder?.LinkDeNghiXHD && selectedOrder.LinkDeNghiXHD.includes('supabase.co')))
+            },
             { type: 'cancel', label: 'Hủy Yêu Cầu', icon: 'fa-trash-alt', variant: 'danger', condition: s !== 'đã xuất hóa đơn' && s !== 'đã hủy' && s !== 'chờ ký hóa đơn' && s !== 'chờ ký hóa đơn' },
         ].filter(a => a.condition);
     };
@@ -405,6 +440,11 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                 <span>{order['Dòng xe']}</span>
                                 <span className="w-1 h-1 rounded-full bg-slate-200"></span>
                                 <span className="truncate">{order['Phiên bản']}</span>
+                                {(order['Ghi chú AI'] || (order['CHÍNH SÁCH'] && (order['CHÍNH SÁCH'].includes('✅') || order['CHÍNH SÁCH'].includes('⚠️')))) && (
+                                    <span className="ml-auto flex items-center gap-1 text-[9px] animate-pulse">
+                                        <i className={`fas ${order['Ghi chú AI']?.includes('⚠️') || order['CHÍNH SÁCH']?.includes('⚠️') ? 'fa-exclamation-triangle text-amber-500' : 'fa-robot text-blue-500'} scale-90`}></i>
+                                    </span>
+                                )}
                             </div>
                             <div className="flex items-center gap-1 text-[9px] text-slate-400 font-medium mt-0.5">
                                 <i className="fas fa-user-tie text-[8px] opacity-40"></i>
@@ -529,9 +569,8 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                     selectedOrder ? (
                         <>
                             {/* Header Actions - Compact */}
-                            {/* Clean Compact Header */}
-                            <div className="bg-white border-b border-gray-100 z-10">
-                                <div className="px-4 md:px-6 py-2 md:py-3 flex flex-col md:flex-row md:items-center gap-3 md:gap-8">
+                            <div className={`bg-white border-b border-gray-100 z-10 ${isSplitView ? 'lg:hidden' : ''}`}>
+                                <div className="px-4 md:px-5 py-2 md:py-2 flex flex-col md:flex-row md:items-center gap-2 md:gap-6">
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
                                         {/* Mobile Back Button - Premium Refined */}
                                         <button
@@ -541,7 +580,6 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                             <i className="fas fa-arrow-left text-xs"></i>
                                         </button>
 
-                                        {/* Avatar - Elevated Design */}
                                         <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/50 border border-indigo-100/50 flex items-center justify-center text-accent-primary font-black text-lg md:text-xl flex-shrink-0 shadow-sm ring-4 ring-white">
                                             {selectedOrder['Tên khách hàng'].charAt(0)}
                                         </div>
@@ -561,450 +599,460 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                 <StatusBadge status={selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || ''} size="sm" />
                                             </div>
 
-                                            {/* Consultant Name - Added */}
                                             <div className="flex items-center gap-1.5 mb-1.5">
                                                 <div className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-500 border border-slate-200/50">
                                                     <i className="fas fa-user-tie text-[8px] opacity-60"></i>
                                                     <span className="uppercase tracking-tighter">TVBH: {selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ'}</span>
                                                 </div>
                                             </div>
-
-
                                         </div>
-                                    </div>
 
-                                    {/* Right Actions - Refined Grouping */}
-                                    {/* Right Actions - Minimalist Grouping */}
-                                    <div className="flex items-center gap-2 p-1 bg-slate-50/80 rounded-xl border border-slate-200/50 ml-auto overflow-x-auto no-scrollbar">
-                                        {getActions(selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || '').map(action => {
-                                            let variant: 'primary' | 'success' | 'danger' | 'secondary' = 'primary';
-
-                                            switch (action.type) {
-                                                case 'approve': variant = 'success'; break;
-                                                case 'cancel': variant = 'danger'; break;
-                                                case 'supplement': variant = 'secondary'; break;
-                                                default: variant = action.variant === 'success' ? 'success' : (action.variant === 'danger' ? 'danger' : (action.variant === 'secondary' ? 'secondary' : 'primary'));
+                                        {(() => {
+                                            const rawPolicies = selectedOrder['CHÍNH SÁCH'] || '';
+                                            const explicitAiNote = selectedOrder['Ghi chú AI'] || '';
+                                            const aiNotes: string[] = [];
+                                            
+                                            if (explicitAiNote) {
+                                                if (explicitAiNote.includes(' | ')) {
+                                                    const parts = explicitAiNote.split(' | ');
+                                                    parts.forEach((p: string) => { if (p.trim()) aiNotes.push(p.trim()); });
+                                                } else { 
+                                                    aiNotes.push(explicitAiNote.trim()); 
+                                                }
+                                            }
+                                            
+                                            const successMatch = rawPolicies.match(/✅[^⚠️]*(?=(?:⚠️)|$)/);
+                                            if (successMatch) {
+                                                const match = successMatch[0].trim();
+                                                if (!aiNotes.some(n => n.includes(match) || match.includes(n))) aiNotes.push(match);
+                                            }
+                                            
+                                            const errorMatch = rawPolicies.match(/⚠️[^✅]*(?=(?:✅)|$)/);
+                                            if (errorMatch) {
+                                                const match = errorMatch[0].trim();
+                                                if (!aiNotes.some(n => n.includes(match) || match.includes(n))) aiNotes.push(match);
                                             }
 
-                                            return (
-                                                <Button
-                                                    key={action.type}
-                                                    onClick={action.onClick ? action.onClick : () => onAction(action.type as any, selectedOrder)}
-                                                    variant={variant}
-                                                    size="sm"
-                                                    leftIcon={<i className={`fas ${action.icon} text-[10px]`}></i>}
-                                                    className="font-bold px-3"
-                                                    isLoading={processingId === selectedOrder['Số đơn hàng'] && processingActionType === action.type}
-                                                    disabled={!!processingId}
-                                                >
-                                                    {action.label}
-                                                </Button>
-                                            );
-                                        })}
+                                            // @ts-ignore
+                                            selectedOrder._aiNotes = aiNotes;
+                                            return null;
+                                        })()}
+                                    </div>
+
+                                    <div className="flex items-center gap-3 ml-auto">
+                                        <button 
+                                            onClick={() => setIsSplitView(!isSplitView)}
+                                            className={`hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl border transition-all ${isSplitView ? 'bg-accent-primary border-accent-primary text-white shadow-lg shadow-accent-primary/20' : 'bg-white border-slate-200 text-slate-500 hover:border-accent-primary hover:text-accent-primary'}`}
+                                            title="Chế độ xem song song"
+                                        >
+                                            <i className={`fas ${isSplitView ? 'fa-columns' : 'fa-chalkboard'} text-xs`}></i>
+                                            <span className="text-[10px] font-black uppercase tracking-tight">Split View</span>
+                                        </button>
+
+                                        <div className="flex items-center gap-1 p-1 bg-slate-50/80 rounded-xl border border-slate-200/50">
+                                            {getActions(selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || '').map(action => {
+                                                let variant: 'primary' | 'success' | 'danger' | 'secondary' = 'primary';
+                                                switch (action.type) {
+                                                    case 'approve': variant = 'success'; break;
+                                                    case 'cancel': variant = 'danger'; break;
+                                                    case 'supplement': variant = 'secondary'; break;
+                                                    default: variant = action.variant === 'success' ? 'success' : (action.variant === 'danger' ? 'danger' : (action.variant === 'secondary' ? 'secondary' : 'primary'));
+                                                }
+                                                return (
+                                                    <Button
+                                                        key={action.type}
+                                                        onClick={action.onClick ? action.onClick : () => onAction(action.type as any, selectedOrder)}
+                                                        variant={variant}
+                                                        size="sm"
+                                                        leftIcon={<i className={`fas ${action.icon} text-[9px]`}></i>}
+                                                        className="font-bold px-2.5 py-1 h-7 text-[10px]"
+                                                        isLoading={processingId === selectedOrder['Số đơn hàng'] && processingActionType === action.type}
+                                                        disabled={!!processingId}
+                                                    >
+                                                        {action.label}
+                                                    </Button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Main Content Area */}
-                            <div className="flex-1 p-2 md:p-3 flex flex-col gap-2 md:gap-3 min-h-0 overflow-y-auto bg-gray-50/30 lg:overflow-hidden">
-                                {/* Top Row: 3 Columns Info */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 flex-shrink-0">
-                                    {/* Column 1: Vehicle & Specs */}
-                                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
-                                        <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center gap-2">
-                                            <i className="fas fa-car text-accent-primary text-[10px]"></i>
-                                            <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Thông tin xe</h3>
+                            {/* Main Content Area - Split View Support */}
+                            <div className={`flex-1 p-1.5 md:p-2 flex ${isSplitView ? 'flex-row' : 'flex-col'} gap-1.5 md:gap-2 min-h-0 overflow-y-auto bg-gray-50/30 lg:overflow-hidden`}>
+                                
+                                {isSplitView && (
+                                    <div className="hidden lg:flex flex-[2] flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-0 relative">
+                                        <div className="bg-gray-50 px-3 py-2 border-b border-gray-100 flex items-center justify-between">
+                                            <div className="flex gap-2">
+                                                {[
+                                                    { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' },
+                                                    { key: 'LinkHopDong', label: 'Hợp đồng MB', icon: 'fa-file-contract' },
+                                                    { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Red', icon: 'fa-file-invoice-dollar' }
+                                                ].map(doc => (
+                                                    <button 
+                                                        key={doc.key}
+                                                        onClick={() => setActiveDocKey(doc.key as any)}
+                                                        className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 ${activeDocKey === doc.key ? 'bg-accent-primary text-white shadow-md' : 'bg-white border border-gray-100 text-gray-500 hover:bg-gray-50'}`}
+                                                    >
+                                                        <i className={`fas ${doc.icon} ${activeDocKey === doc.key ? 'text-white' : 'text-accent-primary'} opacity-80 text-[9px]`}></i>
+                                                        {doc.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {selectedOrder[activeDocKey] && (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const url = selectedOrder[activeDocKey] as string;
+                                                            const labels: any = {
+                                                                LinkDeNghiXHD: 'Đề nghị XHĐ',
+                                                                LinkHopDong: 'Hợp đồng MB',
+                                                                LinkHoaDonDaXuat: 'Hóa Đơn Red'
+                                                            };
+                                                            forceDownload(url, getSanitizedFilename(selectedOrder["Tên khách hàng"], labels[activeDocKey], url));
+                                                        }}
+                                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-accent-primary hover:border-accent-primary transition-all shadow-sm group"
+                                                        title="Tải xuống tài liệu này"
+                                                    >
+                                                        <i className="fas fa-download text-[10px] group-hover:bounce"></i>
+                                                    </button>
+                                                )}
+                                                
+                                                <button 
+                                                    onClick={() => setIsSplitView(!isSplitView)}
+                                                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-accent-primary hover:border-accent-primary transition-all group shadow-sm"
+                                                    title={isSplitView ? "Thu nhỏ (Tắt Split View)" : "Mở rộng (Bật Split View)"}
+                                                >
+                                                    <i className={`fas ${isSplitView ? 'fa-compress-alt' : 'fa-expand-arrows-alt'} text-[10px] group-hover:scale-110 transition-transform`}></i>
+                                                    <span className="text-[10px] font-bold uppercase tracking-tight">
+                                                        {isSplitView ? 'Đóng Preview' : 'Mở Preview'}
+                                                    </span>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="p-3 space-y-1">
-                                            <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors group">
-                                                <div className="flex items-center gap-2.5">
-                                                    <i className="fas fa-car text-blue-500 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
-                                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Dòng xe / Phiên bản</span>
+                                        
+                                        <div className="flex-1 bg-slate-100 relative">
+                                            {selectedOrder[activeDocKey] ? (
+                                                (() => {
+                                                    const url = selectedOrder[activeDocKey] as string;
+                                                    const isPdf = url.toLowerCase().includes('.pdf') || (url.toLowerCase().includes('drive.google.com') && activeDocKey.toLowerCase().includes('pdf'));
+                                                    const isDrive = url.toLowerCase().includes('drive.google.com');
+                                                    
+                                                    if (isDrive) {
+                                                        const fileId = getDriveFileId(url);
+                                                        return (
+                                                            <iframe 
+                                                                src={`https://drive.google.com/file/d/${fileId}/preview`} 
+                                                                className="w-full h-full border-0"
+                                                                title="Document Preview"
+                                                            />
+                                                        );
+                                                    }
+                                                    
+                                                    if (isPdf) {
+                                                        return (
+                                                            <iframe 
+                                                                src={url} 
+                                                                className="w-full h-full border-0"
+                                                                title="PDF Preview"
+                                                            />
+                                                        );
+                                                    }
+                                                    
+                                                    return (
+                                                        <div className="w-full h-full overflow-auto flex items-start justify-center p-4 bg-slate-200">
+                                                            <img src={url} alt="Large Preview" className="max-w-full shadow-2xl rounded-sm" />
+                                                        </div>
+                                                    );
+                                                })()
+                                            ) : (
+                                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                                                    <i className="fas fa-file-excel text-4xl mb-4 opacity-20"></i>
+                                                    <span className="text-xs font-medium italic">Tài liệu này chưa được tải lên</span>
                                                 </div>
-                                                <span className="text-[10px] font-black text-gray-900 truncate ml-4" title={`${selectedOrder['Dòng xe']} - ${selectedOrder['Phiên bản']}`}>
-                                                    {selectedOrder['Dòng xe']} - {selectedOrder['Phiên bản']}
-                                                </span>
-                                            </div>
-
-                                            <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors group">
-                                                <div className="flex items-center gap-2.5">
-                                                    <i className="fas fa-palette text-orange-400 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
-                                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Màu sắc</span>
-                                                </div>
-                                                <span className="text-[10px] font-black text-gray-700 truncate ml-4" title={`${selectedOrder['Ngoại thất']} / ${selectedOrder['Nội thất']}`}>
-                                                    {selectedOrder['Ngoại thất']} / {selectedOrder['Nội thất']}
-                                                </span>
-                                            </div>
-
-                                            <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors group">
-                                                <div className="flex items-center gap-2.5">
-                                                    <i className="fas fa-fingerprint text-accent-primary opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
-                                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số VIN</span>
-                                                </div>
-                                                <div className="text-sm font-black text-accent-primary truncate ml-4 font-mono tracking-normal bg-accent-primary/5 px-2 py-0.5 rounded border border-accent-primary/10">
-                                                    <CopyableField text={selectedOrder.VIN || ''} showToast={showToast} />
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors group border-t border-gray-50 mt-1 pt-2">
-                                                <div className="flex items-center gap-2.5">
-                                                    <i className="fas fa-cogs text-gray-400 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
-                                                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số Máy</span>
-                                                </div>
-                                                <div className="text-[10px] font-black text-gray-600 truncate ml-4 font-mono">
-                                                    {isEditing ? (
-                                                        <input
-                                                            type="text"
-                                                            value={editData.engineNumber}
-                                                            onChange={e => setEditData({ ...editData, engineNumber: e.target.value })}
-                                                            className="w-full text-[10px] border border-accent-primary/30 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-accent-primary text-right"
-                                                        />
-                                                    ) : (
-                                                        <CopyableField text={selectedOrder['Số động cơ'] || ''} showToast={showToast} />
-                                                    )}
-                                                </div>
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
+                                )}
 
-                                    {/* Column 2: Transaction Details */}
-                                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
-                                        <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center gap-2">
-                                            <i className="fas fa-receipt text-accent-primary text-[10px]"></i>
-                                            <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Giao dịch</h3>
-                                        </div>
-                                        <div className="p-3 space-y-3">
-                                            <div className="text-left">
-                                                <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 ml-0.5">Số đơn hàng</div>
-                                                <div className="flex justify-center bg-gray-50/50 border border-gray-100 rounded-lg py-1">
-                                                    <CopyableField text={selectedOrder['Số đơn hàng'] || ''} showToast={showToast} className="text-xs font-bold text-accent-primary truncate font-mono" />
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div className="flex flex-col">
-                                                    <div className="text-[8px] font-black text-green-600/50 uppercase tracking-tighter mb-0.5 ml-0.5">Hoa hồng ứng</div>
-                                                    <div className="w-full bg-green-50/50 border border-green-100 rounded-lg px-2.5 py-1.5 flex items-baseline justify-center">
-                                                        <span className="text-xs font-black text-green-600">
-                                                            {isEditing ? (
-                                                                <input type="text" value={editData.commission} onChange={e => setEditData({ ...editData, commission: e.target.value })} className="w-full bg-transparent focus:outline-none text-center" />
-                                                            ) : (
-                                                                `${Number(String(selectedOrder['Hoa hồng ứng'] || 0).replace(/[^0-9]/g, '')).toLocaleString()}đ`
-                                                            )}
-                                                        </span>
+                                <div className={`flex flex-col gap-2 min-w-0 ${isSplitView ? 'flex-[1] overflow-y-auto custom-scrollbar pr-1' : 'w-full'}`}>
+                                    
+                                    {/* CUSTOMER HEADER & ACTIONS (Only in Split View) */}
+                                    {isSplitView && (
+                                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col gap-4 animate-in slide-in-from-right-4 duration-300">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50 border border-indigo-100 flex items-center justify-center text-accent-primary font-black text-xl flex-shrink-0 shadow-sm">
+                                                        {selectedOrder['Tên khách hàng'].charAt(0)}
                                                     </div>
-                                                </div>
-                                                <div className="flex flex-col">
-                                                    <div className="text-[8px] font-black text-blue-600/50 uppercase tracking-tighter mb-0.5 ml-0.5">Vpoint sử dụng</div>
-                                                    <div className="w-full bg-blue-50/50 border border-blue-100 rounded-lg px-2.5 py-1.5 flex items-baseline justify-center">
-                                                        <span className="text-xs font-black text-blue-600">
-                                                            {isEditing ? (
-                                                                <input type="text" value={editData.vpoint} onChange={e => setEditData({ ...editData, vpoint: e.target.value })} className="w-full bg-transparent focus:outline-none text-center" />
-                                                            ) : (
-                                                                `${Number(String(selectedOrder['Điểm Vpoint sử dụng'] || 0).replace(/[^0-9]/g, '')).toLocaleString()}`
-                                                            )}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Date Info */}
-                                            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-gray-50">
-                                                <div className="flex flex-col">
-                                                    <div className="text-[8px] font-bold text-gray-400 uppercase tracking-wider mb-0.5 ml-0.5">Ngày yêu cầu</div>
-                                                    <div className="bg-gray-50/30 rounded-lg px-2 py-1 flex items-center justify-center gap-1.5">
-                                                        <i className="far fa-clock text-[9px] text-gray-400"></i>
-                                                        <span className="text-[10px] font-bold text-gray-600">{moment(selectedOrder['Thời gian nhập']).format('HH:mm DD/MM/YYYY')}</span>
-                                                    </div>
-                                                </div>
-                                                {selectedOrder['Ngày xuất hóa đơn'] && (
-                                                    <div className="flex flex-col">
-                                                        <div className="text-[8px] font-bold text-blue-400 uppercase tracking-wider mb-0.5 ml-0.5">Ngày xuất HĐ</div>
-                                                        <div className="bg-blue-50/30 rounded-lg px-2 py-1 flex items-center justify-center gap-1.5">
-                                                            <i className="fas fa-file-invoice text-[9px] text-blue-400"></i>
-                                                            <span className="text-[10px] font-bold text-blue-600">{moment(selectedOrder['Ngày xuất hóa đơn']).format('HH:mm DD/MM/YYYY')}</span>
+                                                    <div className="min-w-0">
+                                                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                            <h2 className="text-base font-black text-slate-800 truncate leading-tight tracking-tight">
+                                                                {selectedOrder['Tên khách hàng']}
+                                                            </h2>
+                                                            <StatusBadge status={selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || ''} size="sm" />
                                                         </div>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-500 border border-slate-200/50">
+                                                                <i className="fas fa-user-tie text-[8px] opacity-60"></i>
+                                                                <span className="uppercase tracking-tighter">TVBH: {selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button 
+                                                    onClick={() => setIsSplitView(false)}
+                                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
+                                                    title="Đóng Split View"
+                                                >
+                                                    <i className="fas fa-times text-xs"></i>
+                                                </button>
+                                            </div>
+
+                                            {/* Actions moved here in Split View */}
+                                            <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-50 rounded-xl border border-slate-100">
+                                                {getActions(selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || '').map(action => {
+                                                    let variant: 'primary' | 'success' | 'danger' | 'secondary' = 'primary';
+                                                    switch (action.type) {
+                                                        case 'approve': variant = 'success'; break;
+                                                        case 'cancel': variant = 'danger'; break;
+                                                        case 'supplement': variant = 'secondary'; break;
+                                                        default: variant = action.variant === 'success' ? 'success' : (action.variant === 'danger' ? 'danger' : (action.variant === 'secondary' ? 'secondary' : 'primary'));
+                                                    }
+                                                    return (
+                                                        <Button
+                                                            key={action.type}
+                                                            onClick={action.onClick ? action.onClick : () => onAction(action.type as any, selectedOrder)}
+                                                            variant={variant}
+                                                            size="sm"
+                                                            leftIcon={<i className={`fas ${action.icon} text-[9px]`}></i>}
+                                                            className="font-bold px-2 py-0.5 h-7 text-[10px] flex-1 justify-center whitespace-nowrap"
+                                                            isLoading={processingId === selectedOrder['Số đơn hàng'] && processingActionType === action.type}
+                                                            disabled={!!processingId}
+                                                        >
+                                                            {action.label}
+                                                        </Button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className={`grid grid-cols-1 ${isSplitView ? 'grid-cols-1' : 'md:grid-cols-3'} gap-2 flex-shrink-0`}>
+                                        {/* Column 1: Vehicle & Specs */}
+                                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
+                                            <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <i className="fas fa-car text-accent-primary text-[10px]"></i>
+                                                    <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Thông tin xe</h3>
+                                                </div>
+                                            </div>
+                                            <div className="p-2 space-y-0.5">
+                                                <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-lg transition-colors group">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <i className="fas fa-car text-blue-500 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
+                                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Dòng xe / PB</span>
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-gray-900 truncate ml-4" title={`${selectedOrder['Dòng xe']} - ${selectedOrder['Phiên bản']}`}>
+                                                        {selectedOrder['Dòng xe']} - {selectedOrder['Phiên bản']}
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-lg transition-colors group border-t border-gray-50 mt-0.5">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <i className="fas fa-palette text-amber-500 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
+                                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Màu sắc</span>
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-gray-700 truncate ml-4">
+                                                        {selectedOrder['Ngoại thất'] || 'N/A'} / {selectedOrder['Nội thất'] || 'N/A'}
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-lg transition-colors group border-t border-gray-50 mt-0.5 pt-1">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <i className="fas fa-fingerprint text-accent-primary opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
+                                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số VIN</span>
+                                                    </div>
+                                                    <div className="text-sm font-black text-accent-primary truncate ml-4 font-mono tracking-normal bg-accent-primary/5 px-2 py-0.5 rounded border border-accent-primary/10">
+                                                        <CopyableField text={selectedOrder.VIN || ''} showToast={showToast} />
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-lg transition-colors group">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <i className="fas fa-cogs text-gray-400 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
+                                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số Máy</span>
+                                                    </div>
+                                                    <div className="text-[10px] font-black text-gray-600 truncate ml-4 font-mono">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="text"
+                                                                value={editData.engineNumber}
+                                                                onChange={e => setEditData({ ...editData, engineNumber: e.target.value })}
+                                                                className="w-full text-[10px] border border-accent-primary/30 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-accent-primary text-right"
+                                                            />
+                                                        ) : (
+                                                            <CopyableField text={selectedOrder['Số máy'] || ''} showToast={showToast} />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Column 2: Transaction Details */}
+                                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-full overflow-visible relative">
+                                            <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center gap-2 rounded-t-xl">
+                                                <i className="fas fa-receipt text-accent-primary text-[10px]"></i>
+                                                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Giao dịch</h3>
+                                            </div>
+                                            <div className="p-2.5 space-y-2 relative">
+                                                <div className="text-left relative">
+                                                    <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 ml-0.5">Số đơn hàng</div>
+                                                    {(() => {
+                                                        const aiNotes = (selectedOrder as any)._aiNotes || [];
+                                                        const hasWarning = aiNotes.some((n: string) => n.includes('⚠️') || n.includes('🚨'));
+
+                                                        return (
+                                                            <div className={`flex justify-center bg-gray-50/50 border rounded-xl py-1 pr-8 relative transition-all duration-300 ${hasWarning ? 'border-red-200 bg-red-50/30' : 'border-gray-100 shadow-sm'}`}>
+                                                                <CopyableField text={selectedOrder['Số đơn hàng'] || ''} showToast={showToast} className={`text-[13px] font-black truncate font-mono tracking-tight ${hasWarning ? 'text-red-600' : 'text-accent-primary'}`} />
+                                                                {hasWarning && (
+                                                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 group/err">
+                                                                        <div className="text-red-500 animate-pulse cursor-help">
+                                                                            <i className="fas fa-exclamation-triangle text-xs"></i>
+                                                                        </div>
+                                                                        <div className="absolute top-full left-0 mt-2 w-72 bg-slate-900 text-white rounded-xl p-3 shadow-2xl opacity-0 group-hover/err:opacity-100 transition-all invisible group-hover/err:visible z-[100] transform scale-95 group-hover/err:scale-100 origin-top-left">
+                                                                            <div className="text-[10px] font-black text-red-400 uppercase mb-2 border-b border-white/10 pb-1">Chi tiết sai lệch (AI)</div>
+                                                                            <div className="space-y-2">
+                                                                                {aiNotes.filter((n: string) => !n.includes('✅')).map((note: string, idx: number) => (
+                                                                                    <div key={`ai-note-${idx}`} className="flex items-start gap-2">
+                                                                                        <i className="fas fa-caret-right text-red-500 mt-1 text-[8px]"></i>
+                                                                                        <span className="text-[10px] font-medium leading-relaxed text-slate-200">{note.replace(/^[⚠️🚨ℹ️]\s*/, '').trim()}</span>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                            <div className="absolute top-[-4px] left-3 w-3 h-3 bg-slate-900 rotate-45"></div>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })()}
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div className="flex flex-col">
+                                                        <div className="text-[8px] font-black text-green-600/50 uppercase tracking-tighter mb-0.5 ml-0.5">Hoa hồng ứng</div>
+                                                        <div className="w-full bg-green-50/50 border border-green-100 rounded-lg px-2 py-1 flex items-baseline justify-center">
+                                                            <span className="text-xs font-black text-green-600">
+                                                                {isEditing ? (
+                                                                    <input type="text" value={editData.commission} onChange={e => setEditData({ ...editData, commission: e.target.value })} className="w-full bg-transparent focus:outline-none text-center" />
+                                                                ) : (
+                                                                    `${Number(String(selectedOrder['Hoa hồng ứng'] || 0).replace(/[^0-9]/g, '')).toLocaleString()}đ`
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <div className="text-[8px] font-black text-blue-600/50 uppercase tracking-tighter mb-0.5 ml-0.5">Vpoint</div>
+                                                        <div className="w-full bg-blue-50/50 border border-blue-100 rounded-lg px-2 py-1 flex items-baseline justify-center">
+                                                            <span className="text-xs font-black text-blue-600">
+                                                                {isEditing ? (
+                                                                    <input type="text" value={editData.vpoint} onChange={e => setEditData({ ...editData, vpoint: e.target.value })} className="w-full bg-transparent focus:outline-none text-center" />
+                                                                ) : (
+                                                                    `${Number(String(selectedOrder['Điểm Vpoint sử dụng'] || 0).replace(/[^0-9]/g, '')).toLocaleString()}`
+                                                                )}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Column 3: Policy List */}
+                                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
+                                            <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex justify-between items-center">
+                                                <div className="flex items-center gap-2">
+                                                    <i className="fas fa-shield-alt text-accent-primary text-[10px]"></i>
+                                                    <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Chính sách</h3>
+                                                </div>
+                                                {!isEditing ? (
+                                                    <button onClick={() => setIsEditing(true)} className="text-[9px] font-bold text-accent-primary hover:text-accent-primary-hover flex items-center gap-1 transition-colors">
+                                                        <i className="fas fa-edit"></i> SỬA
+                                                    </button>
+                                                ) : (
+                                                    <div className="flex gap-2">
+                                                        <button onClick={handleSaveEdit} disabled={isSaving} className="text-[8px] font-bold text-green-600">LƯU</button>
+                                                        <button onClick={() => setIsEditing(false)} disabled={isSaving} className="text-[8px] font-bold text-red-500">HỦY</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className={`p-2.5 overflow-y-auto custom-scrollbar ${isSplitView ? 'max-h-[300px]' : 'flex-1 min-h-[100px]'}`}>
+                                                {isEditing ? (
+                                                    <div className="space-y-2 p-1">
+                                                        {dbPolicies.map((p, idx) => (
+                                                            <label key={idx} className="flex items-start gap-2 px-2 py-1 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                                                <input 
+                                                                    type="checkbox" 
+                                                                    checked={editData.policy.includes(p.ten_chinh_sach)} 
+                                                                    onChange={() => {
+                                                                        const current = editData.policy.split('; ').filter(Boolean);
+                                                                        const exists = current.includes(p.ten_chinh_sach);
+                                                                        const updated = exists ? current.filter(x => x !== p.ten_chinh_sach) : [...current, p.ten_chinh_sach];
+                                                                        setEditData({...editData, policy: updated.join('; ')});
+                                                                    }}
+                                                                    className="mt-0.5"
+                                                                />
+                                                                <span className="text-[10px] text-gray-700">{p.ten_chinh_sach}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-1.5">
+                                                        {(selectedOrder['CHÍNH SÁCH'] || '').split(/; |, /).filter(Boolean).map((item, idx) => (
+                                                            <div key={idx} className="flex items-start gap-2">
+                                                                <div className="w-1 h-1 rounded-full bg-accent-primary mt-1.5 flex-shrink-0"></div>
+                                                                <span className="text-[10px] font-semibold text-gray-600 leading-tight">{item}</span>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Column 3: Policy List */}
-                                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
-                                        <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex justify-between items-center">
-                                            <div className="flex items-center gap-2">
-                                                <i className="fas fa-shield-alt text-accent-primary text-[10px]"></i>
-                                                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Chính sách</h3>
-                                            </div>
-                                            {!isEditing ? (
-                                                <button onClick={() => setIsEditing(true)} className="text-[9px] font-bold text-accent-primary hover:text-accent-primary-hover flex items-center gap-1 transition-colors">
-                                                    <i className="fas fa-edit"></i> SỬA
-                                                </button>
-                                            ) : (
-                                                <div className="flex gap-2">
-                                                    <button onClick={handleSaveEdit} disabled={isSaving} className="text-[8px] font-bold text-green-600 hover:text-green-700 disabled:opacity-50">LƯU</button>
-                                                    <button onClick={() => setIsEditing(false)} disabled={isSaving} className="text-[8px] font-bold text-red-500 hover:text-red-600 disabled:opacity-50">HỦY</button>
+                                    {!isSplitView && (
+                                        <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm flex flex-col min-h-0 lg:flex-1">
+                                            <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-50">
+                                                <div className="flex items-center gap-2">
+                                                    <i className="fas fa-folder-open text-accent-primary text-[10px]"></i>
+                                                    <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Hồ Sơ Chứng Từ</h3>
                                                 </div>
-                                            )}
-                                        </div>
-                                        <div className="flex-1 p-3 overflow-hidden min-h-[100px]">
-                                            {isEditing ? (
-                                                <div className="w-full max-h-[400px] overflow-y-auto custom-scrollbar">
-                                                    {(() => {
-                                                        const orderCarModel = (selectedOrder?.['Dòng xe'] || '').toLowerCase().replace(/\s+/g, '');
-                                                        const selectedPolicies = editData.policy
-                                                            ? editData.policy.split(',').map(s => s.trim()).filter(Boolean)
-                                                            : [];
-
-                                                        const dbPolicyNames = dbPolicies.map(p => p.ten_chinh_sach);
-                                                        const unmatchedPolicies = selectedPolicies.filter(p => !dbPolicyNames.includes(p));
-                                                        const matchedSelected = selectedPolicies.filter(p => dbPolicyNames.includes(p));
-
-                                                        const visiblePolicies = dbPolicies.filter(p => {
-                                                            const dx = (p.dong_xe || '').toLowerCase();
-                                                            if (!dx || dx.trim() === '' || dx.includes('tất cả') || dx === 'all') return true;
-                                                            if (!orderCarModel) return true;
-                                                            const dxArr = dx.split(',').map(s => s.replace(/\s+/g, ''));
-                                                            return dxArr.some(d => orderCarModel.includes(d) || d.includes(orderCarModel));
-                                                        });
-
-                                                        const togglePolicy = (name: string) => {
-                                                            const current = editData.policy
-                                                                ? editData.policy.split(',').map(s => s.trim()).filter(Boolean)
-                                                                : [];
-                                                            const exists = current.includes(name);
-                                                            const updated = exists
-                                                                ? current.filter(p => p !== name)
-                                                                : [...current, name];
-                                                            setEditData({ ...editData, policy: updated.join(', ') });
-                                                        };
-
-                                                        const removeUnmatched = (name: string) => {
-                                                            const current = editData.policy
-                                                                ? editData.policy.split(',').map(s => s.trim()).filter(Boolean)
-                                                                : [];
-                                                            const updated = current.filter(p => p !== name);
-                                                            setEditData({ ...editData, policy: updated.join(', ') });
-                                                        };
-
-                                                        const clearAll = () => {
-                                                            setEditData({ ...editData, policy: '' });
-                                                        };
-
+                                            </div>
+                                            <div className="flex-1 min-h-0 overflow-visible lg:overflow-hidden">
+                                                <div className="flex flex-col lg:flex-row gap-3 lg:h-full pb-1">
+                                                    {[
+                                                        { key: 'LinkHopDong', label: 'Hợp đồng MB', icon: 'fa-file-contract' },
+                                                        { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' },
+                                                        { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Red', icon: 'fa-file-invoice-dollar' }
+                                                    ].map(file => {
+                                                        const url = selectedOrder[file.key] as string | undefined;
                                                         return (
-                                                            <div className="space-y-2 p-1">
-                                                                {/* Header with count and clear button */}
-                                                                <div className="flex items-center justify-between pb-1 border-b border-gray-100">
-                                                                    <span className="text-[9px] text-gray-500 font-medium">
-                                                                        Đã chọn: <b className="text-accent-primary">{matchedSelected.length}</b>
-                                                                    </span>
-                                                                    {selectedPolicies.length > 0 && (
-                                                                        <button
-                                                                            onClick={clearAll}
-                                                                            className="text-[9px] text-red-500 hover:text-red-700 font-bold transition-colors"
-                                                                        >
-                                                                            <i className="fas fa-trash-alt mr-1"></i>Xóa tất cả
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-
-                                                                {/* Show old unmatched policies as removable tags */}
-                                                                {unmatchedPolicies.length > 0 && (
-                                                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-2">
-                                                                        <p className="text-[9px] text-amber-700 font-bold mb-1">
-                                                                            <i className="fas fa-exclamation-triangle mr-1"></i>
-                                                                            CS cũ không khớp ({unmatchedPolicies.length}):
-                                                                        </p>
-                                                                        <div className="flex flex-wrap gap-1">
-                                                                            {unmatchedPolicies.map(name => (
-                                                                                <span 
-                                                                                    key={name}
-                                                                                    className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-[9px] px-1.5 py-0.5 rounded font-medium"
-                                                                                >
-                                                                                    {name.length > 25 ? name.substring(0, 25) + '...' : name}
-                                                                                    <button 
-                                                                                        onClick={() => removeUnmatched(name)}
-                                                                                        className="text-amber-600 hover:text-red-600 ml-0.5"
-                                                                                    >
-                                                                                        <i className="fas fa-times text-[7px]"></i>
-                                                                                    </button>
-                                                                                </span>
-                                                                            ))}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
-                                                                {/* Checkbox list */}
-                                                                {visiblePolicies.length === 0 && (
-                                                                    <p className="text-[10px] text-gray-400 italic p-2">Không có chính sách phù hợp</p>
-                                                                )}
-                                                                {visiblePolicies.map(p => {
-                                                                    const isChecked = selectedPolicies.includes(p.ten_chinh_sach);
-                                                                    return (
-                                                                        <label
-                                                                            key={p.ten_chinh_sach}
-                                                                            className={`flex items-start gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors ${
-                                                                                isChecked
-                                                                                    ? 'bg-accent-primary/10 border border-accent-primary/30'
-                                                                                    : 'hover:bg-gray-50 border border-transparent'
-                                                                            }`}
-                                                                        >
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                checked={isChecked}
-                                                                                onChange={() => togglePolicy(p.ten_chinh_sach)}
-                                                                                className="mt-0.5 accent-accent-primary flex-shrink-0"
-                                                                            />
-                                                                            <span className={`text-[10px] leading-snug font-medium ${
-                                                                                isChecked ? 'text-accent-primary' : 'text-gray-700'
-                                                                            }`}>
-                                                                                {p.ten_chinh_sach}
-                                                                            </span>
-                                                                        </label>
-                                                                    );
-                                                                })}
+                                                            <div key={file.key} className="h-48 lg:h-full flex-none lg:flex-1 lg:min-w-[200px]">
+                                                                <DocumentThumbnail
+                                                                    url={url}
+                                                                    label={file.label}
+                                                                    icon={file.icon}
+                                                                    onPreview={() => url && onOpenFilePreview(url, `${file.label} - ${selectedOrder["Tên khách hàng"]}`)}
+                                                                    customerName={selectedOrder["Tên khách hàng"]}
+                                                                />
                                                             </div>
                                                         );
-                                                    })()}
+                                                    })}
                                                 </div>
-                                            ) : (
-                                                <div className="h-full overflow-y-auto custom-scrollbar">
-                                                    <div className="text-[10px] text-gray-700 leading-relaxed">
-                                                        {selectedOrder['CHÍNH SÁCH'] ? (
-                                                            <div className="space-y-2">
-                                                                {(() => {
-                                                                    const rawPolicies = selectedOrder['CHÍNH SÁCH'] || '';
-                                                                    let cleanPoliciesStr = rawPolicies;
-                                                                    const aiNotes: string[] = [];
-                                                                    
-                                                                    // Extract success notes
-                                                                    const successMatch = cleanPoliciesStr.match(/✅[^⚠️]*(?=(?:⚠️)|$)/);
-                                                                    if (successMatch) {
-                                                                        aiNotes.push(successMatch[0].trim());
-                                                                        cleanPoliciesStr = cleanPoliciesStr.replace(successMatch[0], '');
-                                                                    }
-                                                                    
-                                                                    // Extract error notes
-                                                                    const errorMatch = cleanPoliciesStr.match(/⚠️[^✅]*(?=(?:✅)|$)/);
-                                                                    if (errorMatch) {
-                                                                        aiNotes.push(errorMatch[0].trim());
-                                                                        cleanPoliciesStr = cleanPoliciesStr.replace(errorMatch[0], '');
-                                                                    }
-                                                                    
-                                                                    cleanPoliciesStr = cleanPoliciesStr.replace(/^[,\s]+|[,\s]+$/g, '');
-
-                                                                    let parsedPolicies: string[] = [];
-
-                                                                    if (cleanPoliciesStr) {
-                                                                        if (dbPolicies && dbPolicies.length > 0) {
-                                                                            let remainingStr = cleanPoliciesStr;
-                                                                            const matches: { policy: string, index: number }[] = [];
-                                                                            
-                                                                            for (const p of dbPolicies) {
-                                                                                const name = p.ten_chinh_sach;
-                                                                                if (name && remainingStr.includes(name)) {
-                                                                                    matches.push({ policy: name, index: cleanPoliciesStr.indexOf(name) });
-                                                                                    remainingStr = remainingStr.replace(name, '');
-                                                                                }
-                                                                            }
-                                                                            matches.sort((a, b) => a.index - b.index);
-                                                                            const sortedMatchedPolicies = matches.map(m => m.policy);
-
-                                                                            const leftover = remainingStr.split(/[,;]/).map(s => s.trim()).filter(s => s.length > 1 && !/^[\s,;\.]+$/.test(s));
-                                                                            parsedPolicies = [...sortedMatchedPolicies, ...leftover];
-                                                                        } else {
-                                                                            const parts = cleanPoliciesStr.split(/(?<!\d),(?![^(]*\))|,(?!\d)(?![^(]*\))/);
-                                                                            for (const p of parts) {
-                                                                                const item = p ? p.trim() : '';
-                                                                                if (!item) continue;
-                                                                                
-                                                                                if (parsedPolicies.length > 0 && !/[\d%]|Giảm|Tặng|VinClub|Voucher|Miễn|Thẻ|BH|Bảo hiểm/i.test(item) && item.split(' ').length <= 6) {
-                                                                                    parsedPolicies[parsedPolicies.length - 1] += ', ' + item;
-                                                                                } else {
-                                                                                    parsedPolicies.push(item);
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-
-                                                                    return (
-                                                                        <>
-                                                                            {parsedPolicies.length > 0 ? (
-                                                                                <div className="space-y-1.5 mb-3">
-                                                                                    {parsedPolicies.map((item, idx) => (
-                                                                                        <div key={`p-${idx}`} className="flex items-start gap-2 group">
-                                                                                            <div className="w-1.5 h-1.5 rounded-full bg-accent-primary mt-1 flex-shrink-0 opacity-40"></div>
-                                                                                            <span className="font-semibold text-gray-600 truncate-2-lines">{item}</span>
-                                                                                        </div>
-                                                                                    ))}
-                                                                                </div>
-                                                                            ) : (!aiNotes.length && <span className="text-gray-400 italic">Không có</span>)}
-                                                                            
-                                                                            {aiNotes.length > 0 && (
-                                                                                <div className="space-y-2 mt-2 pt-2 border-t border-gray-100 flex flex-col">
-                                                                                    {aiNotes.map((note, idx) => {
-                                                                                        const isSuccess = note.includes('✅');
-                                                                                        return (
-                                                                                            <div key={`ai-${idx}`} className={`p-2.5 rounded-lg border ${isSuccess ? 'bg-success/5 border-success/30 text-success' : 'bg-danger/5 border-danger/30 text-danger animate-pulse'}`}>
-                                                                                                <div className="flex items-start gap-2">
-                                                                                                    <i className={`fas mt-0.5 ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-triangle'}`}></i>
-                                                                                                    <span className="font-bold text-[10px] leading-snug">{note.replace(/^[✅⚠️]\s*/, '')}</span>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        );
-                                                                                    })}
-                                                                                </div>
-                                                                            )}
-                                                                        </>
-                                                                    );
-                                                                })()}
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex flex-col items-center justify-center h-full py-4 text-gray-400 opacity-60">
-                                                                <i className="fas fa-info-circle mb-1 text-xs"></i>
-                                                                <span className="italic text-[9px]">Chưa có chính sách</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-
-                                {/* Documents Section - Fills remaining space on large screens, expands on mobile */}
-                                <div className="bg-white rounded-xl border border-gray-200 p-3 shadow-sm flex flex-col min-h-0 lg:flex-1">
-                                    <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-gray-50">
-                                        <div className="flex items-center gap-2">
-                                            <i className="fas fa-folder-open text-accent-primary text-[10px]"></i>
-                                            <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Hồ Sơ Chứng Từ</h3>
-                                        </div>
-                                        <div className="text-[9px] font-bold text-accent-primary bg-accent-primary/5 px-2.5 py-0.5 rounded-full">
-                                            Chứng từ đính kèm
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 min-h-0 overflow-visible lg:overflow-hidden">
-                                        <div className="flex flex-col lg:flex-row gap-3 lg:h-full pb-1">
-                                            {[
-                                                { key: 'LinkHopDong', label: 'Hợp đồng MB', icon: 'fa-file-contract' },
-                                                { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' },
-                                                { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Red', icon: 'fa-file-invoice-dollar' }
-                                            ].map(file => {
-                                                const url = selectedOrder[file.key] as string | undefined;
-                                                return (
-                                                    <div key={file.key} className="h-48 lg:h-full flex-none lg:flex-1 lg:min-w-[200px]">
-                                                        <DocumentThumbnail
-                                                            url={url}
-                                                            label={file.label}
-                                                            icon={file.icon}
-                                                            onPreview={() => url && onOpenFilePreview(url, `${file.label} - ${selectedOrder["Tên khách hàng"]}`)}
-                                                            customerName={selectedOrder["Tên khách hàng"]}
-                                                        />
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         </>

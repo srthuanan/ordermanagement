@@ -149,7 +149,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         }
     };
 
-    const handleRequestInvoice = async (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string, aiNote?: string) => {
+    const handleRequestInvoice = async (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string, aiNote?: string, preProcessedPayloads?: { contract: any, proposal: any }) => {
 
         setProcessingOrder(order["Số đơn hàng"]);
         // Modal will handle the loading UI
@@ -159,7 +159,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
                 order["Số đơn hàng"],
                 contractFile,
                 proposalFile,
-                policy.join(', '),
+                policy.join('; '),
                 commission,
                 vpoint,
                 {
@@ -172,7 +172,8 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
                     noi_that: order["Nội thất"],
                     ngay_coc: order["Ngày cọc"] ? new Date(order["Ngày cọc"]).toISOString() : undefined,
                 },
-                aiNote
+                aiNote,
+                preProcessedPayloads
             );
             await refetchHistory();
             hideToast();
@@ -226,6 +227,32 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         showToast('Siêu đồng bộ thành công!', message, 'success', 3000);
         refetchHistory(true);
         refetchStock(true);
+    };
+    
+    const handleSelectPolicy = async (order: Order, policy: string) => {
+        setProcessingOrder(order["Số đơn hàng"]);
+        try {
+            const res = await apiService.updateOrderPolicy(order["Số đơn hàng"], policy);
+            if (res.status === 'SUCCESS') {
+                showToast('Thành Công', `Đã chọn chính sách: ${policy}`, 'success', 3000);
+                
+                // Cập nhật state cục bộ để UI phản hồi ngay lập tức
+                setAllHistoryData((prev: Order[]) => 
+                    prev.map(o => o["Số đơn hàng"] === order["Số đơn hàng"] ? { ...o, "CHÍNH SÁCH": policy } : o)
+                );
+                
+                // Nếu đơn hàng đang được chọn trong modal, cập nhật nó luôn
+                if (selectedOrder && selectedOrder["Số đơn hàng"] === order["Số đơn hàng"]) {
+                    setSelectedOrder({ ...selectedOrder, "CHÍNH SÁCH": policy });
+                }
+            } else {
+                showToast('Lỗi', res.message, 'error', 3000);
+            }
+        } catch (error: any) {
+            showToast('Lỗi', error.message || 'Không thể cập nhật chính sách.', 'error', 3000);
+        } finally {
+            setProcessingOrder(null);
+        }
     };
 
     const handleConfirmRequestVC = async (payload: any, vin?: string): Promise<boolean> => {
@@ -390,6 +417,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         handleCreateRequestClose,
         handleFormSuccess,
         openImagePreviewModal,
-        openFilePreviewModal
+        openFilePreviewModal,
+        handleSelectPolicy
     };
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { Order } from '../../types';
-import { versionsMap, allPossibleVersions, defaultExteriors, interiorColorRules } from '../../constants';
+import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, interiorColorRules } from '../../constants';
 import * as apiService from '../../services/apiService';
 import moment from 'moment';
 
@@ -17,7 +17,7 @@ interface SuperEditModalProps {
 const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSuccess, showToast, order }) => {
     const [formData, setFormData] = useState<any>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultExteriors);
+    const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
 
     useEffect(() => {
         if (order) {
@@ -31,7 +31,8 @@ const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSucc
                 "Ngày cọc": order["Ngày cọc"] ? moment(order["Ngày cọc"]).format('YYYY-MM-DDTHH:mm') : '',
                 "Tên tư vấn bán hàng": order["Tên tư vấn bán hàng"],
                 "VIN": order["VIN"] || order["SỐ VIN"] || '',
-                "Số máy": order["Số động cơ"] || order["SỐ ĐỘNG CƠ"] || '',
+                "Số máy": order["Số máy"] || order["SỐ MÁY"] || '',
+                "Mã DMS": order["Mã DMS"] || '',
                 "Kết quả": order["Kết quả"],
                 "Trạng thái VC": order["Trạng thái VC"],
                 "Ngày xuất hóa đơn": order["Ngày xuất hóa đơn"] ? moment(order["Ngày xuất hóa đơn"], ["DD/MM/YYYY", "YYYY-MM-DD"]).format('YYYY-MM-DD') : '',
@@ -54,10 +55,10 @@ const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSucc
 
     useEffect(() => {
         const { 'Dòng xe': dong_xe, 'Phiên bản': phien_ban } = formData;
-        if (!dong_xe) { setAvailableInteriors(defaultExteriors); return; }
+        if (!dong_xe) { setAvailableInteriors(defaultInteriors); return; }
         const lowerDongXe = (dong_xe as string).toLowerCase();
         const lowerPhienBan = (phien_ban as string).toLowerCase();
-        let interiors = defaultExteriors;
+        let interiors = defaultInteriors;
         for (const rule of interiorColorRules) {
             if (rule.models.includes(lowerDongXe) && (!rule.versions || rule.versions.includes(lowerPhienBan))) {
                 interiors = rule.colors; break;
@@ -138,6 +139,10 @@ const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSucc
                                 <div className="md:col-span-1">
                                     <label className={labelClass}>Số Máy</label>
                                     <input name="Số máy" value={formData["Số máy"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono`} placeholder="Nhập số máy..." />
+                                </div>
+                                <div className="md:col-span-1">
+                                    <label className={labelClass}>Mã DMS</label>
+                                    <input name="Mã DMS" value={formData["Mã DMS"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono`} placeholder="Nhập mã DMS..." />
                                 </div>
                             </div>
                         </section>

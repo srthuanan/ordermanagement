@@ -90,7 +90,7 @@ export const useAdminActions = ({
             sheetName: 'Xuathoadon',
             primaryKeyColumn: 'SỐ ĐƠN HÀNG',
             primaryKeyValue: orderNumber,
-            "SỐ ĐỘNG CƠ": data.engineNumber,
+            "Số máy": data.engineNumber,
             "CHÍNH SÁCH": data.policy,
             "Hoa hồng ứng": data.commission,
             "Điểm Vpoint sử dụng": data.vpoint
@@ -126,8 +126,11 @@ export const useAdminActions = ({
         return success;
     }, [selectedRows, handleAdminSubmit, showToast, setSelectedRows]);
 
+
+
     const handleAction = async (type: ActionType, order: Order | VcRequest, data?: any) => {
         if (type === 'manualMatch') {
+
             const suggestedCars = suggestionsMap.get(order['Số đơn hàng']) || [];
             setSuggestionModalState({ order: order as Order, cars: suggestedCars });
         } else if (type === 'pair' && data?.vin) {
@@ -146,11 +149,15 @@ export const useAdminActions = ({
         } else if (type === 'approve') {
             setProcessingState({ id: order['Số đơn hàng'], type });
             try {
-                await handleAdminSubmit(
+                const success = await handleAdminSubmit(
                     'approveSelectedInvoiceRequest',
                     { orderNumbers: JSON.stringify([order['Số đơn hàng']]) },
                     'Đã phê duyệt yêu cầu.'
                 );
+
+                if (success) {
+                    // Email is now handled by backend (approveSelectedInvoiceRequest)
+                }
             } finally {
                 setProcessingState(null);
             }
@@ -209,13 +216,97 @@ export const useAdminActions = ({
             setProcessingState({ id: order['Số đơn hàng'], type });
             try {
                 const s = String(order['Trạng thái xử lý'] || order['Kết quả'] || '').toLowerCase();
-                const emailType = s === 'yêu cầu bổ sung' ? 'invoice_supplement_requested' : 'invoice_issued';
+                let actionId = 'invoice_issued'; // default
+                if (s === 'yêu cầu bổ sung') actionId = 'invoice_supplement_requested';
+                else if (s === 'đã ghép' || s === 'chưa ghép') actionId = s === 'đã ghép' ? 'match_success' : 'match_request_pending';
 
-                await handleAdminSubmit(
-                    'resendEmail',
-                    { orderNumbers: JSON.stringify([order['Số đơn hàng']]), emailType },
-                    'Đã gửi lại email.'
-                );
+                console.log(`[Admin] Resending email: ${actionId} for order ${order['Số đơn hàng']}`);
+                
+                const { data: res, error } = await supabaseAdmin.functions.invoke('send-email', {
+                    body: { 
+                        actionId, 
+                        record: { 
+                            ...order,
+                            so_don_hang: order['Số đơn hàng'],
+                            ten_khach_hang: order['Tên khách hàng'],
+                            ten_ban_hang: order['Tên tư vấn bán hàng']
+                        } 
+                    }
+                });
+
+                if (error) throw error;
+                if (res?.status === 'SUCCESS') {
+                    showToast('Thành công!', 'Đã gửi lại email với giao diện mới.', 'success');
+                } else {
+                    throw new Error(res?.message || "Gửi mail thất bại.");
+                }
+            } catch (e: any) {
+                showToast('Lỗi', e.message || 'Không thể gửi lại email.', 'error');
+            } finally {
+                setProcessingState(null);
+            }
+        } else if (type === 'migrateToDrive') {
+            setProcessingState({ id: order['Số đơn hàng'], type });
+            try {
+                const res = await apiService.forceMigrateToDrive(order['Số đơn hàng']);
+                if (res.status === 'SUCCESS') {
+                    showToast('Thành công!', 'Đã gửi yêu cầu bốc HS sang Drive. Vui lòng chờ vài giây để hệ thống xử lý.', 'success');
+                    // Refetch sau vài giây để cập nhật Link
+                    setTimeout(() => refetchXuathoadon(true), 3000);
+                } else {
+                    showToast('Lỗi', res.message, 'error');
+                }
+            } catch (e: any) {
+                showToast('Lỗi', e.message || 'Không thể yêu cầu bốc HS.', 'error');
+            } finally {
+                setProcessingState(null);
+            }
+        } else if (type === 'reScan') {
+            setProcessingState({ id: order['Số đơn hàng'], type });
+            try {
+                showToast('Đang quét lại', 'Đang lấy dữ liệu ảnh từ Supabase Storage...', 'loading');
+                const storageRes = await apiService.getSupabaseScanImages(order['Số đơn hàng']);
+                
+                if (storageRes.status === 'ERROR' || !storageRes.files) {
+                    throw new Error(storageRes.message || "Không tìm thấy ảnh trên Storage.");
+                }
+
+                showToast('Đang phân tích', `Đang gửi ${storageRes.files.length} ảnh cho AI kiểm toán...`, 'loading');
+                
+                // Call edge function
+                const { data, error } = await supabaseAdmin.functions.invoke('scan-pdf', {
+                    body: { 
+                        files: storageRes.files, 
+                        orderData: order 
+                    }
+                });
+
+                if (error) throw error;
+                if (!data?.success) throw new Error(data?.error || "AI gặp lỗi khi xử lý.");
+
+                const aiData = data.data;
+                
+                // Construct result comment similar to manual audit
+                let resultComment = '';
+                if (aiData.canh_bao_sai_lech && aiData.canh_bao_sai_lech.toLowerCase() !== 'không có') {
+                    resultComment = `⚠️ SAI LỆCH AI: ${aiData.canh_bao_sai_lech}`;
+                } else {
+                    resultComment = `✅ AI QUÉT LẠI: Khớp dữ liệu.`;
+                }
+
+                // Update database
+                await handleAdminSubmit('updateRowData', {
+                    sheetName: 'Xuathoadon',
+                    primaryKeyColumn: 'SỐ ĐƠN HÀNG',
+                    primaryKeyValue: order['Số đơn hàng'],
+                    "Ghi chú AI": resultComment
+                }, 'Đã quét lại thành công.', 'history');
+
+                // 🎯 [DỌN DẸP] Xóa ảnh sau khi quét thành công
+                await apiService.deleteSupabaseScanImages(order['Số đơn hàng']);
+
+            } catch (e: any) {
+                showToast('Lỗi quét lại', e.message || 'Thao tác thất bại.', 'error');
             } finally {
                 setProcessingState(null);
             }
@@ -283,7 +374,11 @@ export const useAdminActions = ({
     const handleConfirmSuggestion = async (orderNumber: string, vin: string) => {
         setProcessingState({ id: orderNumber, type: 'pair' });
         try {
-            await handleAdminSubmit('manualMatchCar', { orderNumber, vin }, `Đã ghép thành công ĐH ${orderNumber}.`, 'both');
+            const success = await handleAdminSubmit('manualMatchCar', { orderNumber, vin }, `Đã ghép thành công ĐH ${orderNumber}.`, 'both');
+            
+            if (success) {
+                // Email is now handled by backend (manualMatchCar)
+            }
         } finally {
             setProcessingState(null);
         }
@@ -400,29 +495,47 @@ export const useAdminActions = ({
     const handleBulkAddCarSubmit = useCallback((data: Record<string, string>) => handleBackgroundAdminSubmit('bulkAddCarsByVin', { vins: data.vins }, 'Đã xử lý thêm xe hàng loạt.', 'stock'), [handleBackgroundAdminSubmit]);
     const handleBulkAddCarDetailedSubmit = useCallback((carData: any[]) => handleBackgroundAdminSubmit('bulkAddCarsDetailed', { carData: JSON.stringify(carData) }, 'Đã xử lý nhập xe hàng loạt từ Excel.', 'stock'), [handleBackgroundAdminSubmit]);
     const handleAddUserSubmit = useCallback(async (data: Record<string, string>) => {
-//         showToast('Đang xử lý...', `Đang tạo tài khoản cho ${data.fullName}...`, 'loading');
         try {
-            // Revert to GAS-first for user creation because GAS handles:
-            // 1. Username generation
-            // 2. Password generation & hashing
-            // 3. Email sending
-            // 4. Supabase sync
-            const res = await apiService.performAdminAction('addUser', data);
+            if (!data.email) throw new Error("Vui lòng nhập Email nhân viên.");
             
-            if (res.status === 'ERROR') {
-                throw new Error(res.message || "Không thể tạo tài khoản.");
+            showToast('Đang xử lý', 'Đang gửi Email mời nhân viên...', 'loading');
+
+            // 1. GỬI EMAIL MỜI QUA SUPABASE AUTH
+            // link sẽ được gửi trực tiếp tới email của nhân viên
+            const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
+                data: {
+                    full_name: data.fullName,
+                    role: data.role || 'Tư vấn bán hàng'
+                },
+                redirectTo: window.location.origin // Quay về trang chủ sau khi xác nhận
+            });
+
+            if (inviteError) throw inviteError;
+
+            // 2. LƯU THÔNG TIN VÀO BẢNG USERS (Dự phòng để hiển thị ngay)
+            // (Thường Supabase Trigger sẽ xử lý, nhưng ta có thể gọi API để chắc chắn)
+            try {
+                await apiService.performAdminAction('syncNewUser', {
+                    email: data.email,
+                    fullName: data.fullName,
+                    role: data.role || 'Tư vấn bán hàng'
+                });
+            } catch (syncErr) {
+                console.warn("User sync warning:", syncErr);
             }
 
-            showToast('Thành công!', `Đã gửi yêu cầu tạo tài khoản cho ${data.fullName}.`, 'success');
+            showToast('Thành công!', `Đã gửi Email mời chuyên nghiệp tới: ${data.email}. Nhân viên hãy kiểm tra hộp thư (cả mục Spam) để kích hoạt tài khoản.`, 'success', 6000);
+            
             refetchAdminData(true);
             setAdminModal(null);
             return true;
         } catch (error: any) {
-            console.error("Add User Error:", error);
-            showToast('Thao tác thất bại', error.message || "Không thể tạo tài khoản.", 'error');
+            console.error("Invite Error:", error);
+            showToast('Thao tác thất bại', error.message || "Không thể gửi email mời.", 'error');
             return false;
         }
     }, [showToast, refetchAdminData]);
+
     const handleDeleteOrderSubmit = useCallback((data: Record<string, string>) => handleBackgroundAdminSubmit('deleteOrderLogic', data, 'Đã xóa đơn hàng thành công.', 'history'), [handleBackgroundAdminSubmit]);
     const handleRevertOrderSubmit = useCallback((data: Record<string, string>) => handleBackgroundAdminSubmit('revertOrderStatus', data, 'Đã hoàn tác trạng thái đơn hàng.', 'history'), [handleBackgroundAdminSubmit]);
     const handleAdvanceOrderSubmit = useCallback((data: Record<string, string>) => handleBackgroundAdminSubmit('advanceOrderStatus', data, 'Đã tiến tới trạng thái đơn hàng.', 'history'), [handleBackgroundAdminSubmit]);

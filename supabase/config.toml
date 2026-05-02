@@ -217,14 +217,14 @@ otp_length = 6
 otp_expiry = 3600
 
 # Use a production-ready SMTP server
-# [auth.email.smtp]
-# enabled = true
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+[auth.email.smtp]
+enabled = true
+host = "smtp.gmail.com"
+port = 587
+user = "showroomthuanan@gmail.com"
+pass = "env(SMTP_PASSWORD)"
+admin_email = "showroomthuanan@gmail.com"
+sender_name = "VinFast Thuan An"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
@@ -389,7 +389,7 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 
 [functions.send-email]
 enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/send-email/deno.json"
 # Uncomment to specify a custom file path to the entrypoint.
 # Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
@@ -408,3 +408,40 @@ entrypoint = "./functions/fetch-emails-imap/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/fetch-emails-imap/*.html" ]
+
+[functions.ai-chat]
+enabled = true
+verify_jwt = true
+import_map = "./functions/ai-chat/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/ai-chat/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/ai-chat/*.html" ]
+
+[functions.scan-knowledge]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/scan-knowledge/index.ts"
+
+[functions.scan-pdf]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/scan-pdf/index.ts"
+
+[functions.get-secrets]
+enabled = true
+verify_jwt = true
+import_map = "./functions/get-secrets/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/get-secrets/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/get-secrets/*.html" ]
+
+[functions.extract-date]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/extract-date/index.ts"

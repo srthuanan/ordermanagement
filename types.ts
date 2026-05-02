@@ -1,7 +1,7 @@
 // This file now contains the centralized type definitions for the application,
 // resolving numerous "has no exported member" errors.
 
-export type AdminSubView = 'invoices' | 'pending' | 'paired' | 'matching' | 'vc' | 'phongkd' | 'tracking' | 'stats' | 'incomplete_cars' | 'super_edit' | 'inquiries' | 'holds' | 'policies' | 'don_ton';
+export type AdminSubView = 'invoices' | 'pending' | 'paired' | 'matching' | 'vc' | 'phongkd' | 'stats' | 'incomplete_cars' | 'super_edit' | 'inquiries' | 'holds' | 'policies' | 'don_ton' | 'ai_knowledge' | 'ai_health' | 'management' | 'inventory' | 'system' | 'policy_summary' | 'pricing_calculator';
 
 export interface Order {
   "Số đơn hàng": string;
@@ -21,7 +21,7 @@ export interface Order {
   LinkHoaDonDaXuat?: string;
   LinkHopDong?: string;
   LinkDeNghiXHD?: string;
-  "Số động cơ"?: string;
+  "Số máy"?: string;
   "Mã DMS"?: string;
   "Ngày xuất hóa đơn"?: string;
   "Hoa hồng ứng"?: string;
@@ -87,6 +87,12 @@ export interface TestDriveBooking {
   hieuLucGPLX: string;
   ngayCamKet: string;
   tenTuVan: string;
+  bienSo?: string;
+  gplxHang?: string;
+  coSo?: string;
+  cmndO?: string;
+  cmndNoiCap?: string;
+  cmndNgayCap?: string;
   odoBefore?: string;
   imagesBefore?: string; // JSON string of image URLs
   odoAfter?: string;
@@ -134,7 +140,7 @@ export interface Notification {
   type: NotificationType;
 }
 
-export type ActionType = 'approve' | 'supplement' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc' | 'vinclub' | 'confirmVc' | 'edit' | 'pair';
+export type ActionType = 'approve' | 'supplement' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc' | 'vinclub' | 'confirmVc' | 'edit' | 'pair' | 'migrateToDrive' | 'reScan';
 
 export interface LogEntry {
   "Thời gian": string;
@@ -150,16 +156,6 @@ export interface ActiveUser {
 
 export type User = { name: string, role: string, username: string };
 
-export interface AuditLog {
-  id: string;
-  timestamp: string;
-  action: string;
-  details: any;
-  user_email?: string;
-  user_full_name?: string;
-  target_id?: string;
-  target_type?: string;
-}
 
 export type InquiryStatus = 'pending' | 'auto_found' | 'manual_responded' | 'not_found' | 'held' | 'auto_checking';
 

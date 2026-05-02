@@ -15,7 +15,8 @@ export const getPaginatedData = async (_?: string[], __?: string, ___?: boolean)
             'Thời gian ghép': order.thoi_gian_ghep, 'Số ngày ghép': order.so_ngay_ghep, 'Ngày xuất hóa đơn': order.ngay_xuat_hoa_don,
             'Cảnh báo quá hạn': order.canh_bao_qua_han, 'Cảnh báo sai DMS': order.canh_bao_sai_dms,
             'LinkHoaDonDaXuat': order.link_hoa_don_da_xuat, 'Trạng thái VC': order.trang_thai_vc,
-            'Ghi chú hủy': order.ghi_chu_huy, 'Thời gian hủy': order.thoi_gian_huy
+            'Ghi chú hủy': order.ghi_chu_huy, 'Thời gian hủy': order.thoi_gian_huy,
+            'CHÍNH SÁCH': order.chinh_sach
         }));
         return { status: 'SUCCESS', message: 'Fetched orders from Supabase', data: formattedData };
     } catch (err: any) {
@@ -39,7 +40,7 @@ export const fetchAllArchivedData = async (): Promise<ApiResult> => {
             'Số đơn hàng': order.so_don_hang, 'SỐ ĐƠN HÀNG': order.so_don_hang, 'Ngày cọc': order.ngay_coc,
             'VIN': order.vin, 'SỐ VIN': order.vin, 'Ngày xuất hóa đơn': order.ngay_xuat_hoa_don,
             'NGÀY XUẤT HÓA ĐƠN': order.ngay_xuat_hoa_don, 'Kết quả': order.ket_qua || 'Đã xuất hóa đơn',
-            'Số động cơ': order.so_may, 'SỐ ĐỘNG CƠ': order.so_may, 'LinkHopDong': order.url_hop_dong,
+            'Số máy': order.so_may, 'SỐ MÁY': order.so_may, 'LinkHopDong': order.url_hop_dong,
             'LinkDeNghiXHD': order.url_de_nghi_xhd, 'LinkHoaDonDaXuat': order.url_hoa_don_da_xuat, 'Trạng thái VC': order.trang_thai_vc
         }));
         return { status: 'SUCCESS', message: 'Fetched archived orders from Supabase', data: formattedData };
@@ -105,17 +106,16 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
             await supabase.from('car_hold_activities').update({ updated_at: nowISO, status: 'matched' }).eq('vin', vinDk).eq('status', 'active');
             await supabase.from('car_hold_activities').delete().eq('vin', vinDk).eq('type', 'QUEUE');
         }
-        await logAction('CREATE_ORDER', { ...insertPayload }, payloadData.so_don_hang, 'order');
-        
-        try {
-            const { createNotification } = await import('./notificationService');
-            if (vinDk) {
-                await createNotification({ message: `TVBH ${payloadData.ten_ban_hang} đã tạo ĐH mới ${payloadData.so_don_hang} và ghép với xe ${vinDk}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: payloadData.so_don_hang });
-            } else {
-                await createNotification({ message: `TVBH ${payloadData.ten_ban_hang} đã tạo ĐH mới ${payloadData.so_don_hang} (Chưa có xe, đang chờ ghép).`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: payloadData.so_don_hang });
-            }
-        } catch(e) {}
-        
+        // GỬI EMAIL THÔNG BÁO (match_success)
+        if (vinDk) {
+            supabaseAdmin.functions.invoke('send-email', {
+                body: { 
+                    actionId: 'match_success', 
+                    record: insertPayload 
+                }
+            }).then(({ error }) => { if (error) console.warn('Lỗi gửi mail addRequest:', error) });
+        }
+
         return { status: 'SUCCESS', message: 'Đã gửi yêu cầu thành công', newRecord: { ...mapOrderDbToUi(insertPayload) } };
     } catch (err: any) {
         return { status: 'ERROR', message: `Lỗi khi tạo đơn hàng: ${err?.message || 'Không xác định'}` };
@@ -151,6 +151,17 @@ export const pairVinToOrder = async (orderNumber: string, vin: string) => {
         try {
             const { createNotification } = await import('./notificationService');
             await createNotification({ message: `TVBH ${pairedBy} đã ghép xe ${vin} cho ĐH ${orderNumber}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: orderNumber });
+            
+            // GỬI EMAIL THÔNG BÁO (match_success)
+            const { data: fullOrder } = await supabaseAdmin.from('donhang').select('*').eq('so_don_hang', orderNumber).single();
+            if (fullOrder) {
+                supabaseAdmin.functions.invoke('send-email', {
+                    body: { 
+                        actionId: 'match_success', 
+                        record: fullOrder 
+                    }
+                }).then(({ error }) => { if (error) console.warn('Lỗi gửi mail pairVinToOrder:', error) });
+            }
         } catch(e) {}
         
         return { status: 'SUCCESS', message: 'Ghép xe thành công!' };
@@ -280,6 +291,7 @@ export const superUpdateOrderDetails = async (oldOrderNumber: string, details: a
         
         const mappings = {
             donhang: {
+                so_don_hang: details['Số đơn hàng'],
                 ten_tu_van_ban_hang: details['Tên tư vấn bán hàng'], 
                 ten_khach_hang: details['Tên khách hàng'], 
                 dong_xe: details['Dòng xe'], 
@@ -291,9 +303,12 @@ export const superUpdateOrderDetails = async (oldOrderNumber: string, details: a
                 ket_qua: details['Kết quả'], 
                 trang_thai_vc: details['Trạng thái VC'], 
                 ngay_xuat_hoa_don: details['Ngày xuất hóa đơn'] || null, 
-                link_hoa_don_da_xuat: details['LinkHoaDonDaXuat']
+                link_hoa_don_da_xuat: details['LinkHoaDonDaXuat'],
+                so_may: details['Số máy'] || details['SỐ MÁY'],
+                ma_dms: details['Mã DMS']
             },
             yeucauxhd: {
+                so_don_hang: details['Số đơn hàng'],
                 ten_khach_hang: details['Tên khách hàng'], 
                 tvbh: details['Tên tư vấn bán hàng'], 
                 dong_xe: details['Dòng xe'], 
@@ -301,23 +316,28 @@ export const superUpdateOrderDetails = async (oldOrderNumber: string, details: a
                 ngoai_that: details['Ngoại thất'], 
                 noi_that: details['Nội thất'], 
                 vin: details['VIN'], 
-                so_may: details['Số máy'] || details['SỐ ĐỘNG CƠ'], 
+                so_may: details['Số máy'] || details['SỐ MÁY'], 
+                ma_dms: details['Mã DMS'],
                 ngay_coc: details['Ngày cọc'] || null, 
                 ngay_xuat_hoa_don: details['Ngày xuất hóa đơn'] || null, 
                 url_hoa_don_da_xuat: details['LinkHoaDonDaXuat']
             },
             yeucauvc: { 
+                so_don_hang: details['Số đơn hàng'],
                 ten_khach_hang: details['Tên khách hàng'], 
-                vin: details['VIN'] 
+                vin: details['VIN'],
+                ma_kh_dms: details['Mã DMS']
             },
             archived_orders: {
+                so_don_hang: details['Số đơn hàng'],
                 ten_khach_hang: details['Tên khách hàng'], 
                 vin: details['VIN'] || details['SỐ VIN'], 
-                so_may: details['Số máy'] || details['SỐ ĐỘNG CƠ'], 
+                so_may: details['Số máy'] || details['SỐ MÁY'], 
                 dong_xe: details['Dòng xe'], 
                 phien_ban: details['Phiên bản'], 
                 ngoai_that: details['Ngoại thất'], 
                 noi_that: details['Nội thất'], 
+                ma_dms: details['Mã DMS'],
                 tvbh: details['Tên tư vấn bán hàng'], 
                 ngay_coc: details['Ngày cọc'] || null, 
                 ngay_xuat_hoa_don: details['Ngày xuất hóa đơn'] || details['NGÀY XUẤT HÓA ĐƠN'] || null, 
@@ -349,10 +369,11 @@ export const superUpdateOrderDetails = async (oldOrderNumber: string, details: a
         }
 
         // Nếu donhang thành công, tiến hành cập nhật các bảng còn lại
+        const newOrOldMatch = `so_don_hang.eq.${oldOrderNumber},so_don_hang.eq.${details['Số đơn hàng'] || oldOrderNumber}`;
         const updates = [];
-        if (Object.keys(cleanYeucauxhd).length > 0) updates.push(supabaseAdmin.from('yeucauxhd').update(cleanYeucauxhd).eq('so_don_hang', oldOrderNumber));
-        if (Object.keys(cleanYeucauvc).length > 0) updates.push(supabaseAdmin.from('yeucauvc').update(cleanYeucauvc).eq('so_don_hang', oldOrderNumber));
-        if (Object.keys(cleanArchived).length > 0) updates.push(supabaseAdmin.from('archived_orders').update(cleanArchived).eq('so_don_hang', oldOrderNumber));
+        if (Object.keys(cleanYeucauxhd).length > 0) updates.push(supabaseAdmin.from('yeucauxhd').update(cleanYeucauxhd).or(newOrOldMatch));
+        if (Object.keys(cleanYeucauvc).length > 0) updates.push(supabaseAdmin.from('yeucauvc').update(cleanYeucauvc).or(newOrOldMatch));
+        if (Object.keys(cleanArchived).length > 0) updates.push(supabaseAdmin.from('archived_orders').update(cleanArchived).or(newOrOldMatch));
 
         if (isVinChanged) {
             if (oldVin && oldVin !== 'N/A' && oldVin !== '') {
@@ -540,5 +561,20 @@ export const getYeuCauVcData = async (): Promise<ApiResult> => {
         } catch (gasErr) {
             return { status: 'ERROR', message: err.message };
         }
+    }
+};
+
+export const updateOrderPolicy = async (orderNumber: string, policy: string): Promise<ApiResult> => {
+    try {
+        const { error } = await supabase.from('donhang').update({ chinh_sach: policy }).eq('so_don_hang', orderNumber);
+        if (error) throw error;
+        
+        // Also update yeucauxhd if exists
+        await supabase.from('yeucauxhd').update({ chinh_sach: policy }).eq('so_don_hang', orderNumber);
+
+        await logAction('UPDATE_POLICY', { orderNumber, policy }, orderNumber, 'order');
+        return { status: 'SUCCESS', message: 'Cập nhật chính sách thành công.' };
+    } catch (e: any) {
+        return { status: 'ERROR', message: e.message || 'Lỗi khi cập nhật chính sách' };
     }
 };

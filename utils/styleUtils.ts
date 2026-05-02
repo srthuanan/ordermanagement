@@ -45,10 +45,11 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
     if (lowerExteriorValue.includes("alantic blue_denim blue roof (2a26)")) return { color: 'var(--exterior-blue-text)' };
     if (lowerExteriorValue.includes("jet black_mystery bronze roof (2911)")) return isDarkMode ? { color: 'white' } : { color: 'white', ...outlineStyle };
     if (lowerExteriorValue.includes("champagne creme_infinity blanc roof (1823)")) return { color: 'var(--exterior-yellow-text)' };
+    if (lowerExteriorValue.includes("infinity blanc roof-sky blue (182g)")) return { color: 'var(--exterior-blue-text)' };
     if (lowerExteriorValue.includes("de sat silver ind12007 (ce17)")) return { color: 'var(--exterior-grey-text)' };
     if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet") || lowerExteriorValue.includes("ruby")) return { color: 'var(--exterior-red-text)' };
     if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) return { color: 'var(--exterior-pink-text)' };
-    if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue") || lowerExteriorValue.includes("moonlit ocean")) return { color: 'var(--exterior-blue-text)' };
+    if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue") || lowerExteriorValue.includes("moonlit ocean") || lowerExteriorValue.includes("sky blue")) return { color: 'var(--exterior-blue-text)' };
     if (lowerExteriorValue.includes("deep ocean")) return isDarkMode ? { color: 'white' } : { color: 'white', ...outlineStyle };
     if (lowerExteriorValue.includes("sunset orb")) return { color: 'var(--exterior-orange-text)' };
     if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) return { color: 'var(--exterior-yellow-text)' };
@@ -67,6 +68,9 @@ export const getInteriorColorStyle = (interiorValue: string | undefined): React.
     if (!interiorValue) return {};
     const lowerInteriorValue = interiorValue.toLowerCase().trim();
 
+    if (lowerInteriorValue.includes("introspective brown (ce2n)")) {
+        return { color: '#634030' }; // Specific deep earthy brown
+    }
     if (lowerInteriorValue.includes("black")) {
         return { color: '#1F2937' }; // Almost black from theme
     }
@@ -88,7 +92,7 @@ const colorMap: { [key: string]: string } = {
     'white': '#F8F8F8', 'blanc': '#F5F5DC',
     'sunset orb': '#F97316', 'orange': '#F97316',
     'red': '#EF4444', 'crimson': '#DC143C',
-    'blue': '#3B82F6', 'azure': '#007FFF',
+    'blue': '#3B82F6', 'azure': '#007FFF', 'sky blue': '#87CEEB',
     'grey': '#778899', 'gray': '#778899', 'silver': '#A9A9A9', 'graphite': '#36454F',
     'black': '#1E1E1E',
     'yellow': '#EAB308', 'creme': '#F5DEB3',
@@ -97,6 +101,7 @@ const colorMap: { [key: string]: string } = {
     'bronze': '#92400E',
     // Interior
     'beige': '#F5F5DC',
+    'introspective brown': '#634030',
     'brown': '#A52A2A',
 };
 
@@ -154,6 +159,8 @@ const colorNameToImageKeyMap: Record<string, string> = {
     "yellow": "yellow",
     "zenith": "zenith",
     "deep ocean": "deepocean",
+    "sky blue": "182g",
+    "182g": "182g",
 };
 
 /**

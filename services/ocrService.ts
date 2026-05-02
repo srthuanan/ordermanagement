@@ -1,3 +1,4 @@
+import { supabase } from './supabaseClient';
 declare var Tesseract: any;
 
 
@@ -159,20 +160,16 @@ export const compressPdf = async (file: File, onProgress?: (percent: number) => 
             if (!context) continue;
 
             // Render page to canvas
-            // Fix: Some type definitions require 'canvas' property in RenderParameters
             await page.render({
                 canvasContext: context,
                 viewport: viewport,
-                canvas: canvas as any // Cast to any to satisfy potential type mismatches
+                canvas: canvas as any
             }).promise;
 
             // Convert canvas to compressed JPEG Data URL
             const imgData = canvas.toDataURL('image/jpeg', quality);
 
             // Add page to new PDF
-            // Calculate aspect ratio to fit into PDF page
-            // Add page to new PDF
-            // Use current viewport dimensions for PDF page size to match the image
             const widthMm = viewport.width * 0.264583;
             const heightMm = viewport.height * 0.264583;
             const orientation = widthMm > heightMm ? 'l' : 'p';
@@ -203,6 +200,59 @@ export const compressPdf = async (file: File, onProgress?: (percent: number) => 
     } catch (error) {
         console.error('Error during PDF compression:', error);
         return file;
+    }
+};
+
+/**
+ * Chuyển đổi một tệp PDF thành danh sách các ảnh Base64 (JPEG)
+ * Hàm này rất quan trọng để AI có thể đọc được nội dung các tệp PDF đã tách trang.
+ * @param file Đối tượng File PDF
+ * @returns Mảng các đối tượng chứa base64Data và mimeType
+ */
+export const convertPdfToImages = async (
+    file: File, 
+    onPageProcessed?: (img: { base64Data: string; mimeType: string }) => Promise<void>
+): Promise<{ base64Data: string; mimeType: string }[]> => {
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
+        const pdfDocument = await loadingTask.promise;
+        const numPages = pdfDocument.numPages;
+
+        const results: { base64Data: string; mimeType: string }[] = [];
+
+        // Xử lý tuần tự để có thể gọi callback ngay lập tức và tránh quá tải bộ nhớ
+        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+            const page = await pdfDocument.getPage(pageNum);
+            
+            // Tính toán scale để giới hạn chiều rộng/cao tối đa 1600px
+            const unscaledViewport = page.getViewport({ scale: 1.0 });
+            const maxDimension = 1600;
+            const scale = Math.min(maxDimension / unscaledViewport.width, maxDimension / unscaledViewport.height, 1.2);
+            
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            if (!context) throw new Error('Canvas context error');
+            
+            await page.render({ canvasContext: context, viewport: viewport, canvas: canvas as any }).promise;
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+            const img = { base64Data: dataUrl.split(',')[1], mimeType: 'image/jpeg' };
+            
+            results.push(img);
+            
+            // Gọi callback ngay khi xử lý xong một trang
+            if (onPageProcessed) {
+                await onPageProcessed(img);
+            }
+        }
+
+        return results;
+    } catch (error) {
+        console.error('Lỗi khi chuyển đổi PDF sang ảnh:', error);
+        throw new Error('Không thể xử lý tệp PDF.');
     }
 };
 
@@ -241,7 +291,6 @@ const parseAndValidateDate = (
         '12': 12, 'tháng 12': 12, 'thg 12': 12, 't12': 12, 'dec': 12, 'december': 12,
     };
 
-    // FIX: Sort keys by length descending to match "10" before "1".
     const sortedKeys = Object.keys(monthMap).sort((a, b) => b.length - a.length);
     const foundMonthKey = sortedKeys.find(key => monthText.includes(key));
 
@@ -278,6 +327,57 @@ const parseAndValidateDate = (
     return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:${pad(second)}`;
 };
 
+/**
+ * Sử dụng AI Gemini (qua Edge Function) để nhận diện ngày cọc chính xác hơn Tesseract.
+ * Thường dùng cho các tài liệu khó đọc hoặc chữ viết tay.
+ */
+export const extractDateWithGemini = async (
+    file: File,
+    onProgress: (status: string) => void
+): Promise<string | null> => {
+    try {
+        console.log(`[extractDateWithGemini] Starting for file: ${file.name} (${file.type})`);
+        onProgress('Đang xử lý');
+        
+        // Chuyển file sang Base64
+        const reader = new FileReader();
+        const base64Promise = new Promise<string>((resolve, reject) => {
+            reader.onload = () => {
+                const result = reader.result as string;
+                const base64 = result.includes(',') ? result.split(',')[1] : result;
+                resolve(base64);
+            };
+            reader.onerror = (e) => reject(new Error('Lỗi đọc file: ' + e));
+            reader.readAsDataURL(file);
+        });
+        
+        const base64Data = await base64Promise;
+        
+        if (!supabase || !supabase.functions) {
+            throw new Error('Supabase client chưa được khởi tạo đúng cách.');
+        }
+
+        const { data: result, error } = await supabase.functions.invoke('extract-date', {
+            body: {
+                files: [
+                    { base64Data, mimeType: file.type || 'image/jpeg', fileName: file.name }
+                ]
+            }
+        });
+
+        if (error) throw error;
+        
+        if (result && result.data && result.data.ngay_coc) {
+            return result.data.ngay_coc;
+        }
+
+        return null;
+    } catch (error: any) {
+        console.error('Gemini OCR Error:', error);
+        return null;
+    }
+};
+
 export const extractDateFromImageTesseract = async (
     file: File,
     onProgress: (status: string) => void
@@ -287,143 +387,49 @@ export const extractDateFromImageTesseract = async (
     }
 
     try {
-        onProgress('Đang nhận dạng... (0%)');
+        onProgress('Đang xử lý');
         const { data: { text } } = await Tesseract.recognize(file, 'vie+eng', {
             logger: (m: any) => {
                 if (m.status === 'recognizing text') {
-                    onProgress(`Đang nhận dạng... (${Math.round(m.progress * 100)}%)`);
+                    onProgress('Đang xử lý');
                 }
             }
         });
-        onProgress('Đang tìm ngày giờ...');
+        onProgress('Đang xử lý');
 
-        // --- TEXT CLEANING AND NORMALIZATION ---
-        // Replace newlines with spaces for easier regex matching
         let cleanedText = text.replace(/\n+/g, ' ');
-
-        // Normalize various time expressions into HH:MM:SS format
         cleanedText = cleanedText.replace(/(\d{1,2})\s*(giờ|h|hr|g)\s*(\d{1,2})\s*(?:phút|phut|ph|p|min|m)?\s*(?:(\d{1,2})\s*(?:giây|giay|s|sec)?)?/gi, (_match: string, h: string, _hourWord: string, m: string, s: string) => `${h}:${m}${s ? ':' + s : ''}`);
-        cleanedText = cleanedText.replace(/(\d{1,2})\s*(?:giờ|h|hr|g)\s*(\d{1,2})(?!\s*(?:phút|phut|ph|p|min|m))/gi, '$1:$2'); // Handle "14 giờ 30"
-        cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)\s*(\d{1,2})/gi, '$1:$2'); // Handle "30 phút 15"
-        cleanedText = cleanedText.replace(/(\d{1,2})\s*:\s*(\d{1,2})\s*(?:phút|phut|ph|p|min|m)/gi, '$1:$2'); // Handle "14:30 phút"
-        cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)/gi, '$1'); // clean up dangling "phút"
-        cleanedText = cleanedText.replace(/(\d{1,2})\s*(giây|giay|s|sec)/gi, '$1'); // clean up dangling "giây"
-
-        // Normalize separators
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(?:giờ|h|hr|g)\s*(\d{1,2})(?!\s*(?:phút|phut|ph|p|min|m))/gi, '$1:$2');
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*(phút|phut|ph|p|min|m)\s*(\d{1,2})/gi, '$1:$2');
+        cleanedText = cleanedText.replace(/(\d{1,2})\s*:\s*(\d{1,2})\s*(?:phút|phut|ph|p|min|m)/gi, '$1:$2');
         cleanedText = cleanedText.replace(/\s*:\s*/g, ':').replace(/\s*-\s*/g, '-').replace(/\s*\/\s*/g, '/').replace(/\s*\.\s*/g, '.');
-
-        // Try to fix 2-digit years by assuming current century. e.g. 12/05/24 -> 12/05/2024
-        cleanedText = cleanedText.replace(/(\d{1,2})([\/.-])(\d{1,2})\2(\d{2})(?!\d)/g, (_match: string, day: string, _sep: string, month: string, yearYY: string) => {
-            const cY = new Date().getFullYear();
-            const yYI = parseInt(yearYY, 10);
-            let fY;
-            // Guess century. If yy > current_yy + 15, assume last century. Otherwise this century.
-            // e.g. if current is 2024, '40' becomes 1940. '25' becomes 2025.
-            if (yYI > (cY % 100 + 15) && yYI <= 99) {
-                fY = 1900 + yYI;
-            } else {
-                fY = Math.floor(cY / 100) * 100 + yYI;
-            }
-            return `${day}/${month}/${fY}`;
-        });
-
-        // Fix more specific OCR errors
-        cleanedText = cleanedText.replace(/(\d{1,2})\.(\d{1,2})\/(\d{1,2})\/(\d{4})/g, '$2/$3/$4'); // e.g. 29.08/08/2024 -> 08/08/2024
-        cleanedText = cleanedText.replace(/(\d{1,2})\/(\d{1,2})\.(\d{1,2})\/(\d{4})/g, '$1/$2/$4'); // e.g. 29/08.08/2024 -> 29/08/2024
-
-        // Remove zero-width spaces that can break regex
         cleanedText = cleanedText.replace(/[\u200B-\u200D\uFEFF]/g, '');
-
 
         let extractedDateTime = null;
         let bestMatchScore = -1;
-        let bestMatchDetails: any = {};
 
         const monthTextRegexPart = `(?:tháng|thg|t|Tháng|Thg\\.?|T\\.)?\\s*\\d{1,2}[\\.,]{0,2}|[A-Za-zÀ-ỹ]{3,}`;
         const dateSeparatorRegexPart = `[\\s\\/\\.-]+`;
 
         const patternsWithParsers = [
-            // --- HIGHEST CONFIDENCE (Specific keywords + full timestamp) ---
-            { regex: new RegExp(`Ngày in:?\\s*(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})\\s+(\\d{1,2}):(\\d{1,2}):(\\d{1,2})`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 20, name: "BIDV Print Date (Ngày in)" },
-            { regex: new RegExp(`\\b(\\d{2})(\\d{2})(\\d{2})-(\\d{2}):(\\d{2}):(\\d{2})\\b`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 18, name: "DDMMYY-HH:MM:SS format" },
-            { regex: new RegExp(`(\\d{1,2})-(\\d{1,2})-(\\d{4})`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00' }), score: 16, name: "BIDV/Specific DD-MM-YYYY with Keyword" },
-            { regex: new RegExp(`(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*-\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m: any) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 15.5, name: "HH:MM(:SS) - DD/MM/YYYY (MB Bank, etc.)" },
-            { regex: new RegExp(`(?:Ngày\\s*chuyển|Ngày\\s*thực hiện|Transaction Date)\\s*[:\\s]*?(\\d{1,2})\\s*(?:tháng|thg|/|-|\\.)\\s*(\\d{1,2})(?:,\\s*|\\s+|/|-|\\.)(\\d{4})\\s*(?:lúc|\\@|at|\\s)\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 15, name: "Techcombank & similar" },
-            { regex: new RegExp(`(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})-(\\d{1,2}):(\\d{1,2})`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: '00' }), score: 14.9, name: "DD/MM/YYYY-HH:MM (Cleaned Vietinbank iPay style)" },
-            { regex: new RegExp(`\\b(\\d{1,2})${dateSeparatorRegexPart}(\\d{1,2})${dateSeparatorRegexPart}(\\d{4})\\s+(\\d{1,2}):(\\d{1,2}):(\\d{1,2})\\b`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 14.8, name: "DD/MM/YYYY HH:MM:SS (Common, Boosted)" },
-            { regex: new RegExp(`(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(?:Thứ\\s*[2-7CNTtBbSsHhNn]{1,7}|Chủ\\s*Nhật|Mon|Tue|Wed|Thu|Fri|Sat|Sun)?\\s*,?\\s*(?:ngày\\s*|date\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m: any) => ({ hour: m[1], minute: m[2], second: m[3] || '00', day: m[4], month: m[5], year: m[6] }), score: 14.5, name: "HH:MM(:SS) [DayOfWeek] DD/MM/YYYY (VCB)" },
-            { regex: new RegExp(`Chuyển\\s*nhanh\\s*Napas\\s*247\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{4})`, "i"), parser: (m: any) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 14, name: "TPBank Napas" },
-
-            // --- MEDIUM CONFIDENCE (Keywords with date/time or reliable formats) ---
-            { regex: new RegExp(`(\\d{4})${dateSeparatorRegexPart}(\\d{1,2})${dateSeparatorRegexPart}(\\d{1,2})[\\sT]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m: any) => ({ year: m[1], month: m[2], day: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 13.5, name: "YYYY-MM-DD[ T]HH:MM:SS (Sacombank, ISO)" },
-            { regex: new RegExp(`(?:Ngày\\s*thực\\s*hiện|Date\\s*of\\s*transaction)\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s+(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m: any) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 13, name: "Ngày thực hiện HH:MM:SS DD/MM/YYYY" },
-            { regex: new RegExp(`(?:vào\\s*lúc|lúc|at)\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})\\s*,?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 12.5, name: "(vào) lúc/at DD/MM/YYYY HH:MM:SS (BIDV)" },
-            { regex: new RegExp(`(?:Thời\\s*gian|Time)\\s*:?\\s*(\\d{1,2}):(\\d{1,2}):(\\d{1,2}),\\s*(?:ngày\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m: any) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 12, name: "SHB Thời gian/Time" },
-            { regex: new RegExp(`(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2})(?!\\d)\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 11.2, name: "DD/MM/YY HH:MM:SS (2-digit year)" },
-            { regex: new RegExp(`(?:Ngày\\s*giao dịch|GD|lập lệnh|tạo|thanh toán|chuyển tiền|hạch toán|lập|hiệu lực|ghi nhận|transaction|payment|value)\\s*:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})(?:\\s*,?\\s*(?:lúc|at|@|thời gian|time)|\\s*-)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 11, name: "Ngày GD/Keyword DD/MM/YYYY lúc/time HH:MM(:SS)" },
-            { regex: new RegExp(`(?:Thời\\s*gian|Time)\\s*(?:lập|tạo|giao dịch|thanh toán|GD|thực hiện|record)\\s*:?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(?:ngày|,|on)?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m: any) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 10, name: "Thời gian/Time ... HH:MM:SS ngày/on DD/MM/YYYY" },
-
-            // --- LOWER CONFIDENCE (More generic, less context) ---
-            { regex: new RegExp(`(?<![:\\d\\w])(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{4})\\s+(\\d{1,2}):(\\d{1,2})(?![:\\d])`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: '00' }), score: 9.5, name: "DD/MM/YYYY HH:MM (Standalone, Vietinbank)" },
-            { regex: new RegExp(`(?:Ngày\\s*)?(\\d{1,2})\\s*(?:tháng|Thg\\.?|T)?\\s*(${monthTextRegexPart})\\s*(?:năm|nam)?\\s*(\\d{2,4})\\s*(?:vào\\s*lúc|lúc|Time|@)?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 9, name: "Ngày DD tháng MM năm Yokohama lúc HHMMSS" },
-            { regex: new RegExp(`(${monthTextRegexPart})\\s+(\\d{1,2}),\\s*(\\d{4})\\s+(?:at|lúc)\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(AM|PM)?`, "i"), parser: (m: any) => { let h = parseInt(m[4], 10); if (m[7] && m[7].toUpperCase() === 'PM' && h < 12) h += 12; if (m[7] && m[7].toUpperCase() === 'AM' && h === 12) h = 0; return { month: m[1], day: m[2], year: m[3], hour: String(h), minute: m[5], second: m[6] }; }, score: 8.8, name: "Month DD, YYYY at HH:MM(:SS) AM/PM" },
-            { regex: new RegExp(`(?:Ngày|Date\\s*Time)?:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})[\\s,T]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 8.5, name: "DD/MM/YYYY[ T]HH:MM:SS (Generic)" },
-            { regex: new RegExp(`(?:Vào\\s*lúc|Time):?\\s*(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?,\\s*(?:ngày)?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m: any) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 8, name: "Vào lúc HH:MM, ngày DD/MM/YYYY" },
-            { regex: new RegExp(`(?:Date:|Ngày:)?\\s*(\\d{4})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{1,2})[\\sT,]+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?`, "i"), parser: (m: any) => ({ year: m[1], month: m[2], day: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 7.5, name: "YYYY/MM/DD[ T]HH:MM:SS (Generic)" },
-            { regex: new RegExp(`(?:^|\\s|[^\\d\\w.,])(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?(?!=\\d{3}[,\\.])\\s+(?:ngày\\s*)?(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m: any) => ({ hour: m[1], minute: m[2], second: m[3], day: m[4], month: m[5], year: m[6] }), score: 7, name: "HH:MM:SS DD/MM/YYYY (Improved)" },
-            { regex: new RegExp(`(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})\\s+(\\d{1,2}):(\\d{1,2})(?::(\\d{1,2}))?\\s*(AM|PM|SA|CH)`, "i"), parser: (m: any) => { let h = parseInt(m[4], 10); const ampm = m[7] ? m[7].toUpperCase() : null; if (ampm) { if ((ampm === 'PM' || ampm === 'CH') && h < 12) h += 12; if ((ampm === 'AM' || ampm === 'SA') && h === 12) h = 0; } return { day: m[1], month: m[2], year: m[3], hour: String(h), minute: m[5], second: m[6] }; }, score: 6.5, name: "DD/MM/YYYY HH:MM(:SS) AM/PM/SA/CH" },
-
-            // --- LOWEST CONFIDENCE (Date only or ambiguous formats) ---
-            { regex: new RegExp(`(?:Ngày\\s*giao dịch|GD|lập lệnh|tạo|thanh toán|chuyển tiền|hạch toán|lập|hiệu lực|ghi nhận|transaction|payment|value)\\s*:?\\s*(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})(?!\\s*[:\\d])(?!\\s*\\d{1,2}\\s*VND)`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00' }), score: 5, name: "Date only with keyword" },
-            { regex: new RegExp(`(?<![\\d:\\/\\.-])(\\d{1,2})([\\/\\.-])(${monthTextRegexPart})\\2(\\d{2,4})(?![.,:\\/\\.-]?\\d)(?!\\s*VND|\\s*USD)`, "i"), parser: (m: any) => ({ day: m[1], month: m[3], year: m[4], hour: '00', minute: '00', second: '00' }), score: 4, name: "Date only DD/MM/YYYY (generic)" },
-            { regex: new RegExp(`(?:Ngày|Date):?\\s*(\\d{2})(\\d{2})(\\d{4})(?!\\d)`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00' }), score: 3.5, name: "Date only DDMMYYYY with keyword" },
-            { regex: new RegExp(`(?:Ngày|Date):?\\s*(\\d{4})(\\d{2})(\\d{2})(?!\\d)`, "i"), parser: (m: any) => ({ year: m[1], month: m[2], day: m[3], hour: '00', minute: '00', second: '00' }), score: 3, name: "Date only YYYYMMDD with keyword" }
+            { regex: new RegExp(`(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})\\s+(\\d{1,2}):(\\d{1,2}):(\\d{1,2})`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: m[6] }), score: 20 },
+            { regex: new RegExp(`(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})\\s+(\\d{1,2}):(\\d{1,2})`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: m[4], minute: m[5], second: '00' }), score: 15 },
+            { regex: new RegExp(`(\\d{1,2})${dateSeparatorRegexPart}(${monthTextRegexPart})${dateSeparatorRegexPart}(\\d{2,4})`, "i"), parser: (m: any) => ({ day: m[1], month: m[2], year: m[3], hour: '00', minute: '00', second: '00' }), score: 10 }
         ];
 
-        // --- MATCHING LOGIC ---
         for (const item of patternsWithParsers) {
             let match;
             const gRegex = new RegExp(item.regex.source, item.regex.flags + (item.regex.flags.includes('g') ? '' : 'g'));
-
             while ((match = gRegex.exec(cleanedText)) !== null) {
                 const components = item.parser(match);
-                if (components) {
-                    const tempDateTime = parseAndValidateDate(
-                        components.day,
-                        components.month,
-                        components.year,
-                        components.hour,
-                        components.minute,
-                        components.second
-                    );
-
-                    if (tempDateTime) {
-                        // Prioritize better scores
-                        if (item.score > bestMatchScore) {
-                            bestMatchScore = item.score;
-                            extractedDateTime = tempDateTime;
-                            bestMatchDetails = { name: item.name, score: item.score, components, match, rawText: match[0] };
-                        }
-                        // If scores are equal, prefer matches with a time component over date-only matches
-                        else if (item.score === bestMatchScore) {
-                            const currentHasTime = bestMatchDetails.components && (bestMatchDetails.components.hour !== '00' || bestMatchDetails.components.minute !== '00');
-                            const newHasTime = components.hour && (components.hour !== '00' || components.minute !== '00');
-                            if (newHasTime && !currentHasTime) {
-                                extractedDateTime = tempDateTime;
-                                bestMatchDetails = { name: item.name, score: item.score, components, match, rawText: match[0] };
-                            }
-                        }
-                    }
+                const tempDateTime = parseAndValidateDate(components.day, components.month, components.year, components.hour, components.minute, components.second);
+                if (tempDateTime && item.score > bestMatchScore) {
+                    bestMatchScore = item.score;
+                    extractedDateTime = tempDateTime;
                 }
             }
-            // Early exit if a high-confidence match is found
-            if (bestMatchScore >= 15 && extractedDateTime) {
-                break;
-            }
         }
-
         return extractedDateTime;
-
     } catch (error) {
         console.error('Lỗi OCR:', error);
         throw new Error('Xử lý ảnh thất bại.');

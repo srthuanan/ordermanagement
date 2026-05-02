@@ -1,6 +1,6 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
-import { createClient } from "jsr:@supabase/supabase-js@2"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.0"
 import nodemailer from "npm:nodemailer@6.9.13"
+import { Buffer } from "node:buffer"
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -59,11 +59,9 @@ async function enrichRecord(record: Record<string, any>): Promise<Record<string,
       .maybeSingle();
     
     if (fullOrder) {
-      // Merge: record (caller's data) takes precedence, but fill in missing fields from DB
-      return {
+      const result = {
         ...fullOrder,
         ...record,
-        // Normalize advisor name field (DB uses ten_tu_van_ban_hang, email funcs use ten_ban_hang)
         ten_ban_hang: record.ten_ban_hang || record.ten_tu_van_ban_hang || fullOrder.ten_tu_van_ban_hang || fullOrder.ten_ban_hang,
         ten_tu_van_ban_hang: record.ten_tu_van_ban_hang || fullOrder.ten_tu_van_ban_hang,
         ten_khach_hang: record.ten_khach_hang || fullOrder.ten_khach_hang,
@@ -74,6 +72,31 @@ async function enrichRecord(record: Record<string, any>): Promise<Record<string,
         vin: record.vin || fullOrder.vin,
         ngay_coc: record.ngay_coc || fullOrder.ngay_coc,
       };
+
+      // Nếu là yêu cầu xuất hóa đơn, lấy thêm thông tin từ yeucauxhd (Link file, chính sách, hoa hồng, vpoint)
+      try {
+        const { data: requestData } = await supabase
+          .from('yeucauxhd')
+          .select('*')
+          .eq('so_don_hang', record.so_don_hang)
+          .maybeSingle();
+        
+        if (requestData) {
+          return {
+            ...result,
+            policy: record.policy || requestData.chinh_sach,
+            commission: record.commission || requestData.hoa_hong_ung,
+            vpoint: record.vpoint || requestData.vpoint,
+            url_hop_dong: record.url_hop_dong || requestData.url_hop_dong,
+            url_de_nghi_xhd: record.url_de_nghi_xhd || requestData.url_de_nghi_xhd,
+            ghi_chu_ai: record.ghi_chu_ai || requestData.ghi_chu_ai,
+          };
+        }
+      } catch (reqErr) {
+        console.warn("Error enriching from yeucauxhd:", reqErr);
+      }
+      
+      return result;
     }
   } catch (e) {
     console.warn("enrichRecord error:", e);
@@ -84,45 +107,125 @@ async function enrichRecord(record: Record<string, any>): Promise<Record<string,
 function buildHtml(title: string, user: string, details: Record<string, string>, note: string, color: string = "#1e3a8a") {
   let rows = "";
   for (const [key, val] of Object.entries(details)) {
+    const isAction = key === 'Hành động';
     const isVin = ['vin', 'số vin', 'vin đã hủy', 'xe mới đã về'].includes(key.toLowerCase());
-    const rowBg = isVin ? "background-color: #eff6ff;" : "";
-    const valColor = isVin ? "color: #2563eb; font-weight: 700;" : "color: #1f2937; font-weight: 600;";
+    
+    if (isAction) {
+       rows += `
+        <tr>
+          <td colspan="2" style="padding: 20px 0; text-align: center;">
+            ${val}
+          </td>
+        </tr>
+      `;
+      continue;
+    }
+
+    const rowBg = isVin ? "background-color: #f8fafc;" : "";
+    const valColor = isVin ? "color: #1e40af; font-weight: 700;" : "color: #334155; font-weight: 600;";
+    
+    const rowClass = isVin ? "row-highlight" : "";
     rows += `
-      <tr style="${rowBg}">
-        <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280; width: 40%; font-weight: 500; font-size: 13px;">${key}:</td>
-        <td style="padding: 12px 10px; border-bottom: 1px solid #e5e7eb; ${valColor} font-size: 14px;">${val}</td>
+      <tr class="${rowClass}" style="${rowBg}">
+        <td class="text-muted" style="padding: 12px 15px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #f1f5f9; color: #94a3b8; width: 35%; font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; vertical-align: top;">${key}</td>
+        <td class="${isVin ? 'text-blue' : 'text-main'}" style="padding: 12px 15px; border-bottom: 1px solid #e2e8f0; ${valColor} font-size: 13px; text-align: right; word-break: break-word;">${val}</td>
       </tr>
     `;
   }
+
+  const fontStack = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, Arial, 'Helvetica Neue', Helvetica";
+
   return `<!DOCTYPE html>
 <html lang="vi">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${title}</title></head>
-<body style="margin: 0; padding: 0; font-family: 'Roboto', Arial, sans-serif; background-color: #f3f4f6;">
-    <div style="background-color: #f3f4f6; padding: 40px 0;">
-      <table align="center" width="600" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <title>${title}</title>
+  <style>
+    :root { color-scheme: light; supported-color-schemes: light; }
+    body { font-family: ${fontStack} !important; -webkit-font-smoothing: antialiased; background-color: #f4f7f9; }
+    .btn-primary:hover { opacity: 0.9 !important; }
+    @media only screen and (max-width: 600px) {
+      .container { width: 100% !important; border-radius: 0 !important; }
+      .header-content { padding: 20px !important; }
+      .body-content { padding: 0 20px 30px 20px !important; }
+      .detail-card { padding: 15px !important; }
+      .logo { height: 32px !important; }
+      .header-text { font-size: 11px !important; }
+    }
+    /* Professional Dark Mode Overrides */
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #111827 !important; }
+      .container { background-color: #1f2937 !important; border-color: #374151 !important; color: #f9fafb !important; }
+      /* Protect Header: Keep it light for the logo */
+      .header-content { background-color: #ffffff !important; border-bottom: 1px solid #f1f5f9 !important; }
+      .header-text { color: #1e3a8a !important; }
+      
+      .body-content { background-color: #1f2937 !important; }
+      .detail-card { background-color: #111827 !important; border-color: #374151 !important; }
+      
+      /* Text Colors */
+      .text-main { color: #f9fafb !important; }
+      .text-muted { color: #9ca3af !important; }
+      .text-blue { color: #60a5fa !important; }
+      
+      /* Table Adjustments */
+      td { border-bottom-color: #374151 !important; }
+      .row-highlight { background-color: #1e293b !important; }
+    }
+  </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f7f9; color: #334155; font-family: ${fontStack};">
+    <div style="background-color: #f4f7f9; padding: 20px 0;">
+      <table class="container" align="center" width="550" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto; width: 100%; max-width: 550px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;">
+        <!-- Header -->
         <tr>
-          <td style="background-color: ${color}; padding: 25px 40px; text-align: center;">
-            <h1 style="margin: 0; font-size: 20px; color: #ffffff; font-weight: 700; letter-spacing: 0.5px;">THÔNG BÁO HỆ THỐNG</h1>
-            <div style="color: #bfdbfe; font-size: 13px; margin-top: 5px;">VinFast Thuận An</div>
+          <td class="header-content" style="padding: 30px 40px 25px 40px; background-color: #ffffff;">
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tr>
+                <td align="left" style="vertical-align: middle;">
+                  <img class="logo" src="https://jwvgxqrkjlbewvpkvucj.supabase.co/storage/v1/object/public/car-images/logoweb.png" alt="VinFast" style="height: 48px; width: auto; display: block;">
+                </td>
+                <td align="right" style="text-align: right; vertical-align: middle;">
+                  <div style="font-size: 9px; font-weight: 800; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px;">Hệ thống thông báo</div>
+                  <div class="header-text" style="font-size: 14px; font-weight: 800; color: #1e3a8a; white-space: nowrap; letter-spacing: -0.5px;">VINFAST THUẬN AN</div>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
+
+        <!-- Main Body -->
         <tr>
-          <td style="padding: 30px 40px;">
-            <div style="font-size: 15px; color: #374151; margin-bottom: 20px;">
-              Kính gửi <b>${user}</b>,
+          <td class="body-content" style="padding: 0 40px 40px 40px; background-color: #ffffff;">
+            <div style="height: 1px; background-color: #1e3a8a; margin-bottom: 30px; opacity: 0.15;"></div>
+            
+            <div class="text-muted" style="font-size: 13px; color: #64748b; margin-bottom: 5px; font-weight: 500;">Thân gửi,</div>
+            <div class="text-main" style="font-size: 18px; color: #0f172a; font-weight: 700; margin-bottom: 20px;">${user}</div>
+            
+            <div class="detail-card" style="background-color: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 25px; border: 1px solid #f1f5f9;">
+              <div class="text-blue" style="color: ${color}; margin-top: 0; margin-bottom: 15px; font-size: 15px; font-weight: 700;">
+                ${title}
+              </div>
+              
+              <table width="100%" border="0" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                ${rows}
+              </table>
+
+              ${note ? `
+                <div style="height: 1px; background-color: #f1f5f9; margin: 12px 0;"></div>
+                <div style="color: #64748b; font-size: 13px; line-height: 1.6; padding: 0 5px; text-align: center;">
+                  ${note}
+                </div>
+              ` : ''}
             </div>
-            <h3 style="color: ${color}; margin-top: 0; margin-bottom: 20px; font-size: 18px; line-height: 1.4;">
-              ${title}
-            </h3>
-            <table width="100%" border="0" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
-              ${rows}
-            </table>
-            <div style="color: #4b5563; font-size: 14px; line-height: 1.6;">
-              ${note}
-            </div>
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center;">
-              <div style="font-size: 12px; color: #9ca3af; margin-bottom: 8px;">Thông báo tự động từ hệ thống quản lý.</div>
-              <div style="font-size: 12px; color: #9ca3af;">Vui lòng không trả lời email này.</div>
+
+            <!-- Footer Section -->
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #1e3a8a; border-top-color: rgba(30, 58, 138, 0.4); text-align: center;">
+              <div style="font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Hệ thống Quản lý Bán hàng</div>
+              <div style="font-size: 9px; color: #cbd5e1;">Đây là email tự động từ hệ thống quản trị. Vui lòng không phản hồi.</div>
             </div>
           </td>
         </tr>
@@ -144,17 +247,59 @@ function formatDate(isoStr: string | null): string {
 
 async function sendMail(to: string, subject: string, html: string, attachments: any[] = []) {
   const mailOptions: any = {
-    from: `"Hệ thống Quản lý VinFast Thuận An" <${SMTP_EMAIL}>`,
+    from: `"VINFAST THUAN AN MANAGEMENT SYSTEM" <${SMTP_EMAIL}>`,
     to,
     subject,
     html,
+    attachments: attachments.map(a => ({
+      ...a,
+      // Ensure content is passed correctly to nodemailer using Node-compatible Buffer
+      content: a.content instanceof Uint8Array ? Buffer.from(a.content) : a.content
+    }))
   };
-  if (attachments.length > 0) {
-    mailOptions.attachments = attachments;
-  }
   const info = await transporter.sendMail(mailOptions);
-  console.log(`✅ Email sent to ${to} (ID: ${info.messageId})`);
+  console.log(`✅ Email sent to ${to} (ID: ${info.messageId}) with ${attachments.length} attachments`);
   return info;
+}
+
+/**
+ * Common helper to download a file from URL and add to attachments array
+ */
+async function attachFileFromUrl(url: string, label: string, orderNumber: string, attachments: any[]) {
+  if (!url) return;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout per file
+
+  try {
+    // Basic URL conversion for Google Drive
+    let downloadUrl = url;
+    if (url.includes('drive.google.com') && url.includes('/file/d/')) {
+      const match = url.match(/\/file\/d\/([^/]+)/);
+      if (match) downloadUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+    }
+
+    const res = await fetch(downloadUrl, { signal: controller.signal });
+    if (res.ok) {
+      const buffer = await res.arrayBuffer();
+      // Use clean filenames
+      const filename = `${label}_${orderNumber}.pdf`.replace(/\s+/g, '_');
+      attachments.push({ 
+        filename: filename, 
+        content: new Uint8Array(buffer) 
+      });
+      console.log(`📎 Attached: ${filename} (${buffer.byteLength} bytes)`);
+    } else {
+      console.warn(`⚠️ Failed to download attachment from ${url}: ${res.statusText}`);
+    }
+  } catch (e: any) {
+    if (e.name === 'AbortError') {
+      console.warn(`⚠️ Timeout: Bỏ qua đính kèm ${label} do tải quá lâu (>12s)`);
+    } else {
+      console.warn(`⚠️ Error attaching file from ${url}:`, e);
+    }
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 Deno.serve(async (req: Request) => {
@@ -198,7 +343,17 @@ Deno.serve(async (req: Request) => {
     }
 
     const tenTVBH = record?.ten_ban_hang || record?.ten_tu_van_ban_hang || record?.tvbh || "TVBH";
-    let recipientEmail = await getEmailForAdvisor(tenTVBH);
+    let recipientEmail = payload.recipient_email;
+
+    // Đối với các tác vụ liên quan đến tài khoản, lấy thẳng từ record.email
+    if (actionId === 'welcome_new_user' || actionId === 'forgot_password_otp' || actionId === 'forgot_password_secure') {
+      recipientEmail = record.email;
+    }
+
+    // Nếu chưa có recipientEmail thì mới tra cứu theo tên TVBH
+    if (!recipientEmail) {
+      recipientEmail = await getEmailForAdvisor(tenTVBH);
+    }
     
     if (!recipientEmail) {
       console.warn(`❌ Could not find email for advisor: "${tenTVBH}" (actionId: ${actionId})`);
@@ -266,15 +421,54 @@ Deno.serve(async (req: Request) => {
     // 4. XUẤT HÓA ĐƠN (invoice_issued)
     // ============================================================
     else if (actionId === 'invoice_issued') {
-      subject = `✅ [Hóa Đơn] ${record.ten_khach_hang || "KH"} (${record.so_don_hang})`;
+      subject = `✅ [Hóa Đơn Đã Phát Hành] - Đơn hàng ${record.so_don_hang} cho KH ${(record.ten_khach_hang || "KH").toUpperCase()}`;
       const details: Record<string, string> = {
         "Số đơn hàng": `<b>${record.so_don_hang}</b>`,
-        "Tên khách hàng": `<b>${record.ten_khach_hang || "N/A"}</b>`,
-        "VIN": `<b>${record.vin || "N/A"}</b>`,
-        "Dòng xe": `${record.dong_xe || ""} - ${record.phien_ban || ""}`,
-        "Ngoại thất / Nội thất": `${record.ngoai_that || ""} / ${record.noi_that || ""}`,
+        "Tên khách hàng": `<b>${(record.ten_khach_hang || "N/A").toUpperCase()}</b>`,
+        "Số VIN": `<b>${record.vin || "N/A"}</b>`,
+        "Ngày xuất hóa đơn": formatDate(new Date().toISOString()),
+        "Dòng xe": record.dong_xe || "N/A",
+        "Phiên bản": record.phien_ban || "N/A",
+        "Ngoại thất": record.ngoai_that || "N/A",
+        "Nội thất": record.noi_that || "N/A",
       };
-      htmlBody = buildHtml("🎉 Đơn hàng đã được xuất hóa đơn thành công!", tenTVBH, details, "Đơn hàng đã được cập nhật trạng thái đã xuất hóa đơn. Vui lòng liên hệ bộ phận Kế toán để nhận tài liệu. Trân trọng!", "#1e3a8a");
+      htmlBody = buildHtml("🎉 Hóa đơn đã được phát hành thành công!", tenTVBH, details, "Hóa đơn điện tử đã được phát hành và đính kèm trong email này. Anh/Chị vui lòng tải về và gửi cho khách hàng. Trân trọng!", "#1e3a8a");
+
+      // Đính kèm file hóa đơn (Ưu tiên Base64 nếu có, sau đó đến URL)
+      if (record.invoice_content) {
+        // Hỗ trợ gửi trực tiếp content (Base64) từ caller
+        attachments.push({ 
+          filename: `HOADON_${record.so_don_hang}_${normalizeString(record.ten_khach_hang || 'KH').replace(/\s+/g, '_')}.png`, 
+          content: record.invoice_content,
+          encoding: 'base64'
+        });
+      } else {
+        const invoiceUrl = record.link_hoa_don_da_xuat || record.url_hoa_don_da_xuat;
+        if (invoiceUrl) {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+          try {
+            let downloadUrl = invoiceUrl;
+            if (invoiceUrl.includes('drive.google.com') && invoiceUrl.includes('/file/d/')) {
+              const match = invoiceUrl.match(/\/file\/d\/([^/]+)/);
+              if (match) downloadUrl = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+            }
+            const res = await fetch(downloadUrl, { signal: controller.signal });
+            if (res.ok) {
+              const buffer = await res.arrayBuffer();
+              const safeName = normalizeString(record.ten_khach_hang || 'KH').replace(/\s+/g, '_');
+              attachments.push({ 
+                filename: `HOADON_${record.so_don_hang}_${safeName}.pdf`, 
+                content: new Uint8Array(buffer) 
+              });
+            }
+          } catch (e: any) { 
+            console.warn("⚠️ Lỗi đính kèm hóa đơn:", e.name === 'AbortError' ? "Timeout (>15s)" : e.message); 
+          } finally {
+            clearTimeout(timeoutId);
+          }
+        }
+      }
     }
     // ============================================================
     // 5. YÊU CẦU BỔ SUNG HỒ SƠ (invoice_supplement_requested)
@@ -299,45 +493,143 @@ Deno.serve(async (req: Request) => {
         "Tên khách hàng": `<b>${record.ten_khach_hang || "N/A"}</b>`,
         "Chứng từ đã nộp": `<b style="color: #2e7d32;">${record.filesInfo || 'Các tệp bổ sung'}</b>`,
       };
-      htmlBody = buildHtml("Nộp Bổ Sung Hồ Sơ Thành Công!", tenTVBH, details, "Hệ thống đã ghi nhận các chứng từ cập nhật của bạn an toàn trên nền tảng Cloud.", "#2e7d32");
+      htmlBody = buildHtml("Nộp Bổ Sung Hồ Sơ Thành Công!", tenTVBH, details, "Hệ thống đã ghi nhận các chứng từ cập nhật của bạn an toàn trên nền tảng Cloud. Các tệp tin được đính kèm bên dưới để bạn lưu trữ.", "#2e7d32");
 
-      // Tải và đính kèm file
-      try {
-        const fetchAttachment = async (url: string, prefix: string) => {
-          if (!url) return null;
-          try {
-            const res = await fetch(url);
-            if (res.ok) {
-              const buffer = await res.arrayBuffer();
-              return { filename: `BoSung_${prefix}_${record.so_don_hang}.pdf`, content: new Uint8Array(buffer) };
-            }
-          } catch (e) { console.warn(`Fetch lỗi cho ${prefix}:`, e) }
-          return null;
-        };
-
-        const results = await Promise.all([
-          fetchAttachment(record.url_hop_dong, 'HD'),
-          fetchAttachment(record.url_de_nghi_xhd, 'DNXHD')
-        ]);
-
-        if (results[0]) attachments.push(results[0]);
-        if (results[1]) attachments.push(results[1]);
-      } catch (e) {
-        console.error("Lỗi đính kèm file:", e);
-      }
+      // Đính kèm các file đã nộp
+      await Promise.all([
+        attachFileFromUrl(record.url_hop_dong, 'HDMB_BoSung', record.so_don_hang, attachments),
+        attachFileFromUrl(record.url_de_nghi_xhd, 'DNXHD_BoSung', record.so_don_hang, attachments)
+      ]);
     }
     // ============================================================
     // 7. XÁC NHẬN YÊU CẦU XHĐ (invoice_request_submitted) 
     // ============================================================
     else if (actionId === 'invoice_request_submitted') {
       subject = `[XÁC NHẬN] Yêu cầu xuất hóa đơn cho ĐH ${record.so_don_hang} đã được gửi`;
+      const formatCurrency = (val: any) => {
+        if (!val) return "0";
+        const num = String(val).replace(/[^0-9]/g, "");
+        return new Intl.NumberFormat('vi-VN').format(parseInt(num || "0"));
+      };
+
       const details: Record<string, string> = {
         "Số đơn hàng": `<b>${record.so_don_hang}</b>`,
         "Tên khách hàng": record.ten_khach_hang || "N/A",
         "Số VIN": `<b>${record.vin || "N/A"}</b>`,
+        "Chính sách": Array.isArray(record.policy) ? record.policy.join(', ') : (record.policy || "N/A"),
+        "Hoa hồng ứng": record.commission ? `<b>${formatCurrency(record.commission)} VND</b>` : "0 VND",
+        "Vpoint dùng": record.vpoint ? `<b>${formatCurrency(record.vpoint)} Điểm</b>` : "0 Điểm",
         "Trạng thái mới": "<b>Chờ xuất hóa đơn</b>",
       };
-      htmlBody = buildHtml("Yêu cầu xuất hóa đơn đã được gửi thành công!", tenTVBH, details, "Yêu cầu của bạn đã được chuyển đến bộ phận liên quan để xử lý. Hệ thống sẽ có thông báo tiếp theo khi hóa đơn được chính thức phát hành. Xin cảm ơn!", "#1e3a8a");
+      htmlBody = buildHtml("Yêu cầu xuất hóa đơn đã được gửi thành công!", tenTVBH, details, "Yêu cầu của bạn đã được chuyển đến bộ phận liên quan để xử lý. Các tệp hồ sơ gốc bạn đã nộp được đính kèm bên dưới. Trân trọng!", "#1e3a8a");
+
+      // Đính kèm các file hồ sơ gốc
+      await Promise.all([
+        attachFileFromUrl(record.url_hop_dong, 'HDMB', record.so_don_hang, attachments),
+        attachFileFromUrl(record.url_de_nghi_xhd, 'DNXHD', record.so_don_hang, attachments)
+      ]);
+    }
+    // ============================================================
+    // 8. CHÀO MỪNG NHÂN VIÊN MỚI (welcome_new_user - NEW FLOW)
+    // ============================================================
+    else if (actionId === 'welcome_new_user') {
+      const { email, full_name, redirectTo } = record;
+      
+      // 1. Tạo Link Invite từ Supabase (Mặc định cho nhân viên mới)
+      let { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+        type: 'invite',
+        email: email,
+        options: { redirectTo: redirectTo }
+      });
+
+      // 2. FALLBACK: Nếu nhân viên đã tồn tại, chuyển sang dùng Link Recovery (Khôi phục)
+      if (linkErr && linkErr.message.includes('already been registered')) {
+        console.log("User already exists, falling back to recovery link...");
+        const recoveryResult = await supabase.auth.admin.generateLink({
+          type: 'recovery',
+          email: email,
+          options: { redirectTo: redirectTo }
+        });
+        linkData = recoveryResult.data;
+        linkErr = recoveryResult.error;
+      }
+
+      if (linkErr) {
+        console.error("Link Generation Error:", linkErr.message);
+        return new Response(JSON.stringify({ success: false, message: "Không thể tạo link xác thực. " + linkErr.message }), { status: 200, headers: corsHeaders });
+      }
+
+      const actionLink = linkData.properties.action_link;
+
+      subject = `✨ [CHÀO MỪNG] Tài khoản truy cập hệ thống Quản lý VinFast Thuận An`;
+      recipientEmail = email;
+      
+      const details: Record<string, string> = {
+        "Họ và tên": `<b>${full_name}</b>`,
+        "Tên đăng nhập": `<b>${email}</b>`,
+        "Vai trò": "Nhân viên (TVBH)",
+        "Hành động": `<a href="${actionLink}" class="btn-primary" style="display: inline-block; background-color: #1e3a8a; color: #ffffff; padding: 10px 22px; border-radius: 30px; text-decoration: none; font-weight: 600; font-size: 13px; margin: 5px 0; transition: all 0.3s ease;">Kích hoạt tài khoản</a>`
+      };
+      
+      htmlBody = buildHtml(
+        "Chào mừng Bạn đến với hệ thống!", 
+        full_name, 
+        details, 
+        "<b>Chào mừng Bạn gia nhập đội ngũ VinFast Thuận An!</b><br/>Tài khoản của bạn đã được khởi tạo thành công. Vui lòng bấm vào nút phía trên để thiết lập mật khẩu và bắt đầu hành trình tuyệt vời cùng chúng tôi.", 
+        "#1e3a8a"
+      );
+    }
+    // ============================================================
+    // 9. QUÊN MẬT KHẨU - LINK BẢO MẬT (forgot_password_secure - NEW)
+    // ============================================================
+    else if (actionId === 'forgot_password_secure') {
+      const { email, redirectTo } = record;
+      
+      // Tạo Link bảo mật từ Supabase Auth
+      const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+        type: 'recovery',
+        email: email,
+        options: { redirectTo: redirectTo }
+      });
+
+      if (linkErr) {
+        console.error("Link Generation Error:", linkErr.message);
+        return new Response(JSON.stringify({ success: false, message: "Không thể tạo link khôi phục. Email có thể không tồn tại." }), { status: 200, headers: corsHeaders });
+      }
+
+      const resetLink = linkData.properties.action_link;
+      
+      // Tìm tên nhân viên để đưa vào email
+      const { data: userData } = await supabase.from('users').select('full_name, username').eq('email', email).maybeSingle();
+      const displayName = userData?.full_name || email.split('@')[0];
+
+      subject = `🔐 [XÁC THỰC] Yêu cầu đặt lại mật khẩu - VinFast Thuận An`;
+      recipientEmail = email;
+      
+      const details: Record<string, string> = {
+        "Tên tài khoản": `<b>${email}</b>`,
+        "Hành động": "Đặt lại mật khẩu truy cập",
+        "Truy cập ngay": `<a href="${resetLink}" class="btn-primary" style="display: inline-block; background-color: #dc2626; color: #ffffff; padding: 10px 22px; border-radius: 30px; text-decoration: none; font-weight: 600; font-size: 13px; margin: 5px 0; transition: all 0.3s ease;">Đặt lại mật khẩu</a>`
+      };
+      
+      htmlBody = buildHtml("Khôi Phục Mật Khẩu Truy Cập", displayName, details, "Bạn (hoặc ai đó) vừa yêu cầu đặt lại mật khẩu cho tài khoản này. Vui lòng bấm vào nút phía trên để tiếp tục. <br/><br/><b>Lưu ý:</b> Đường dẫn này chỉ có hiệu lực trong thời gian ngắn. Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.", "#dc2626");
+    }
+    // ============================================================
+    // 10. THAY THẾ VIN (vin_replaced)
+    // ============================================================
+    else if (actionId === 'vin_replaced') {
+      subject = `⚠️ [THAY ĐỔI VIN] Đơn hàng ${record.so_don_hang} đã được thay VIN`;
+      const details: Record<string, string> = {
+        "Số đơn hàng": `<b>${record.so_don_hang}</b>`,
+        "Tên khách hàng": record.ten_khach_hang || "N/A",
+        "Dòng xe": record.dong_xe || "N/A",
+        "Phiên bản": record.phien_ban || "N/A",
+        "Ngoại thất": record.ngoai_that || "N/A",
+        "Nội thất": record.noi_that || "N/A",
+        "VIN cũ": `<span style="color:#dc2626; text-decoration: line-through; font-weight:700;">${record.old_vin || "N/A"}</span>`,
+        "VIN mới": `<span style="color:#16a34a; font-weight:700;">${record.new_vin || "N/A"}</span>`,
+      };
+      htmlBody = buildHtml("Thông báo thay đổi số VIN trên đơn hàng:", tenTVBH, details, "Số VIN trên đơn hàng của Anh/Chị đã được Admin cập nhật. Vui lòng kiểm tra lại thông tin trên hệ thống. Trân trọng.", "#d97706");
     }
     // ============================================================
     // UNKNOWN ACTION

@@ -85,6 +85,8 @@ const SortableHeaderCell: React.FC<{ columnKey: keyof StockVehicle; title: strin
 
 const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, startIndex, onHoldCar, onReleaseCar, onCreateRequestForVehicle, onShowDetails, currentUser, isAdmin, showToast, highlightedVins, processingVin }) => {
     const [confirmAction, setConfirmAction] = useState<{ vin: string; action: 'hold' | 'release' } | null>(null);
+    const [copiedVin, setCopiedVin] = useState<string | null>(null);
+    if (false) showToast?.('', '', 'success');
 
     if (vehicles.length === 0) {
         return (
@@ -103,10 +105,10 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
     const handleCopyVin = (e: React.MouseEvent, vin: string) => {
         e.stopPropagation();
         navigator.clipboard.writeText(vin).then(() => {
-            showToast('Đã Sao Chép', `Số VIN ${vin} đã được sao chép thành công.`, 'success', 2000);
+            setCopiedVin(vin);
+            setTimeout(() => setCopiedVin(null), 2000);
         }).catch(err => {
             console.error('Lỗi sao chép VIN: ', err);
-            showToast('Sao Chép Thất Bại', 'Không thể truy cập vào clipboard của bạn.', 'error', 3000);
         });
     };
 
@@ -150,10 +152,10 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                     <td data-label="#" className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-center text-text-secondary font-medium sm:pl-6">{startIndex + index + 1}</td>
                                     <td data-label="Số VIN" className="whitespace-nowrap px-3 py-4 text-sm font-mono text-text-primary">
                                         <span
-                                            className="text-base font-bold text-accent-primary hover:text-accent-primary-hover hover:underline cursor-pointer transition-colors"
+                                            className={`text-base font-bold hover:underline cursor-pointer transition-colors ${copiedVin === vehicle.VIN ? 'text-green-500' : 'text-accent-primary hover:text-accent-primary-hover'}`}
                                             title="Click để sao chép VIN"
                                             onClick={(e) => handleCopyVin(e, vehicle.VIN)}>
-                                            {vehicle.VIN}
+                                            {copiedVin === vehicle.VIN ? <span className="flex items-center gap-1"><i className="fas fa-check text-sm"></i> Đã copy</span> : vehicle.VIN}
                                         </span>
                                     </td>
                                     <td data-label="Dòng Xe" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Dòng xe"]}</td>

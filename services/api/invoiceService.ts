@@ -19,15 +19,19 @@ export const requestInvoice = async (
     if (pUp.error) throw new Error(`Lỗi upload Đề nghị XHĐ: ${pUp.error.message}`);
     const { data: cUrl } = supabase.storage.from('yeucauxhd-files').getPublicUrl(cPath);
     const { data: pUrl } = supabase.storage.from('yeucauxhd-files').getPublicUrl(pPath);
-    let soMay = '', vinLookup = orderData?.vin;
-    if (!vinLookup) { const { data: orderRec } = await supabase.from('donhang').select('vin').eq('so_don_hang', orderNumber).single(); if (orderRec?.vin) vinLookup = orderRec.vin; }
+    let soMay = '', maDms = '', vinLookup = orderData?.vin;
+    if (!vinLookup) { const { data: orderRec } = await supabase.from('donhang').select('vin, ma_dms').eq('so_don_hang', orderNumber).single(); if (orderRec?.vin) { vinLookup = orderRec.vin; maDms = orderRec.ma_dms || ''; } }
     if (vinLookup) {
         const cleanVin = vinLookup.trim().toUpperCase();
-        const { data: kx } = await supabase.from('khoxe').select('so_may').eq('vin', cleanVin).maybeSingle();
-        if (kx?.so_may) soMay = kx.so_may;
-        else { const { data: ttx } = await supabase.from('thongtinxe').select('so_may').eq('vin', cleanVin).maybeSingle(); soMay = ttx?.so_may || ''; }
+        const { data: kx } = await supabase.from('khoxe').select('so_may, ma_dms').eq('vin', cleanVin).maybeSingle();
+        if (kx?.so_may) { soMay = kx.so_may; if (!maDms) maDms = kx.ma_dms || ''; }
+        else { 
+            const { data: ttx } = await supabase.from('thongtinxe').select('so_may, khu_vuc').eq('vin', cleanVin).maybeSingle(); 
+            soMay = ttx?.so_may || ''; 
+            if (!maDms) maDms = ttx?.khu_vuc || ''; 
+        }
     }
-    const row = { so_don_hang: orderNumber, ten_khach_hang: orderData?.ten_khach_hang || '', tvbh: orderData?.tvbh || requestedBy, dong_xe: orderData?.dong_xe || '', phien_ban: orderData?.phien_ban || '', ngoai_that: orderData?.ngoai_that || '', noi_that: orderData?.noi_that || '', ngay_coc: orderData?.ngay_coc || null, ngay_yeu_cau: now, chinh_sach: policy || '', hoa_hong_ung: commission || '', vpoint: vpoint || '', url_hop_dong: cUrl.publicUrl, url_de_nghi_xhd: pUrl.publicUrl, so_may: soMay, vin: vinLookup || '', ngay_xuat_hoa_don: null, ket_qua_gui_mail: '', url_hoa_don_da_xuat: '', trang_thai_vc: '', ghi_chu_ai: aiNote || '' };
+    const row = { so_don_hang: orderNumber, ten_khach_hang: orderData?.ten_khach_hang || '', tvbh: orderData?.tvbh || requestedBy, dong_xe: orderData?.dong_xe || '', phien_ban: orderData?.phien_ban || '', ngoai_that: orderData?.ngoai_that || '', noi_that: orderData?.noi_that || '', ngay_coc: orderData?.ngay_coc || null, ngay_yeu_cau: now, chinh_sach: policy || '', hoa_hong_ung: commission || '', vpoint: vpoint || '', url_hop_dong: cUrl.publicUrl, url_de_nghi_xhd: pUrl.publicUrl, so_may: soMay, vin: vinLookup || '', ma_dms: maDms, ngay_xuat_hoa_don: null, ket_qua_gui_mail: '', url_hoa_don_da_xuat: '', trang_thai_vc: '', ghi_chu_ai: aiNote || '' };
     const { error: insErr } = await supabaseAdmin.from('yeucauxhd').insert([row]);
     if (insErr) throw new Error(`Lỗi lưu Supabase: ${insErr.message}`);
     await supabaseAdmin.from('donhang').update({ ket_qua: 'Chờ phê duyệt' }).eq('so_don_hang', orderNumber);
@@ -81,9 +85,16 @@ export const uploadSupplementaryFiles = async (orderNumber: string, contractFile
                 supabaseAdmin.functions.invoke('send-email', {
                     body: {
                         actionId: 'invoice_supplement_submitted',
-                        record: { ...updatedRecord, filesInfo: filesInfo.join(', ') }
+                        record: { 
+                            ...updatedRecord, 
+                            filesInfo: filesInfo.join(', '),
+                            ma_dms: updatedRecord.ma_dms || ''
+                        }
                     }
-                }).catch(e => console.warn('Lỗi gọi gửi email biên nhận qua Edge Function:', e));
+                }).then(({ error }) => {
+                    if (error) console.error(`[ERROR-MAIL] Gửi mail bổ sung cho đơn ${orderNumber} lỗi:`, error);
+                    else console.log(`[SUCCESS-MAIL] Đã gửi mail bổ sung thành công cho đơn ${orderNumber}`);
+                }).catch(e => console.error(`[CRITICAL-MAIL] Lỗi gọi Edge Function gửi mail bổ sung cho đơn ${orderNumber}:`, e));
             }
         } catch (e) {
             console.warn('Không thể đồng bộ trực tiếp file bổ sung về GS:', e);
@@ -91,9 +102,50 @@ export const uploadSupplementaryFiles = async (orderNumber: string, contractFile
     }
     return { status: 'SUCCESS', message: 'Đã bổ sung hồ sơ thành công (file cũ đã tự động xóa).' };
 };
-export const getXuathoadonData = async () => {
-    const { getApi } = await import('./baseService');
-    return getApi({ action: 'getXuathoadonData' });
+export const getXuathoadonData = async (): Promise<ApiResult> => {
+    try {
+        const { data, error } = await supabase.from('yeucauxhd').select('*').order('ngay_yeu_cau', { ascending: false });
+        if (error) throw error;
+
+        const formattedData = data.map((req: any) => ({
+            "Số đơn hàng": req.so_don_hang,
+            "Tên khách hàng": req.ten_khach_hang,
+            "Dòng xe": req.dong_xe,
+            "Phiên bản": req.phien_ban,
+            "Ngoại thất": req.ngoai_that,
+            "Nội thất": req.noi_that,
+            "Tên tư vấn bán hàng": req.tvbh,
+            "VIN": req.vin,
+            "Số máy": req.so_may,
+            "Mã DMS": req.ma_dms,
+            "Ngày yêu cầu": req.ngay_yeu_cau,
+            "Thời gian nhập": req.ngay_yeu_cau, // Đồng bộ với useAdminData
+            "Ngày cọc": req.ngay_coc,
+            "Chính sách": req.chinh_sach,
+            "CHÍNH SÁCH": req.chinh_sach,
+            "Hoa hồng ứng": req.hoa_hong_ung,
+            "Điểm Vpoint sử dụng": req.vpoint,
+            "LinkHopDong": req.url_hop_dong,
+            "LinkDeNghiXHD": req.url_de_nghi_xhd,
+            "LinkHoaDonDaXuat": req.url_hoa_don_da_xuat,
+            "Ngày xuất hóa đơn": req.ngay_xuat_hoa_don,
+            "Kết quả gửi mail": req.ket_qua_gui_mail,
+            "Trạng thái VC": req.trang_thai_vc,
+            "Ghi chú AI": req.ghi_chu_ai
+        }));
+
+        return {
+            status: 'SUCCESS',
+            message: 'Fetched xuathoadon data from Supabase',
+            data: formattedData
+        };
+    } catch (err: any) {
+        console.error("Supabase getXuathoadonData error: ", err);
+        return {
+            status: 'ERROR',
+            message: err.message
+        };
+    }
 };
 
 export const getSalesPolicies = async (): Promise<ApiResult> => {

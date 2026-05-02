@@ -14,6 +14,7 @@ interface StockGridViewProps {
   onOpenExtensionModal: (vehicle: StockVehicle) => void;
   onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
   onShowDetails: (vehicle: StockVehicle) => void;
+  onAdminEdit?: (vehicle: StockVehicle) => void;
   currentUser: string;
   isAdmin: boolean;
   showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -21,6 +22,7 @@ interface StockGridViewProps {
   processingVin: string | null;
   queuedVins: string[];
   canHoldMore: boolean;
+  onViewCarOnMap?: (vin: string) => void;
 }
 
 const StockGridView: React.FC<StockGridViewProps> = (props) => {

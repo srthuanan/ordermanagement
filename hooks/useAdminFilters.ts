@@ -7,17 +7,60 @@ interface UseAdminFiltersProps {
 }
 
 export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFiltersProps) => {
-    const [adminView, setAdminView] = useState<AdminSubView>('invoices');
-    const [matchingTab, setMatchingTab] = useState<'pending' | 'paired'>('pending');
+    const [adminView, setAdminView] = useState<AdminSubView>(() => {
+        return (localStorage.getItem('lastAdminView') as AdminSubView) || 'invoices';
+    });
+    const [matchingTab, setMatchingTab] = useState<'pending' | 'paired' | 'suggested'>(() => {
+        return (localStorage.getItem('lastMatchingTab') as 'pending' | 'paired' | 'suggested') || 'pending';
+    });
+
+    useEffect(() => {
+        localStorage.setItem('lastAdminView', adminView);
+    }, [adminView]);
+
+    useEffect(() => {
+        localStorage.setItem('lastMatchingTab', matchingTab);
+    }, [matchingTab]);
     // Lưu số đơn hàng hoặc inquiry ID cần được select ngay khi navigate đến tab
     const [targetOrderId, setTargetOrderId] = useState<string | null>(null);
     const [targetInquiryId, setTargetInquiryId] = useState<string | null>(null);
 
-    const [invoiceFilters, setInvoiceFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], version: string[], exterior: string[], trangThai: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [], trangThai: [] });
-    const [pendingFilters, setPendingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], version: string[], exterior: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] });
-    const [pairedFilters, setPairedFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], version: string[], exterior: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] });
-    const [vcFilters, setVcFilters] = useState<{ keyword: string, nguoiyc: string[], trangthai: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', nguoiyc: [], trangthai: [] });
-    const [matchingFilters, setMatchingFilters] = useState<{ keyword: string, tvbh: string[], dongXe: string[], version: string[], ngoaiThat: string[], dateRange?: { start: string; end: string; } }>({ keyword: '', tvbh: [], dongXe: [], version: [], ngoaiThat: [] });
+    const [invoiceFilters, setInvoiceFilters] = useState(() => {
+        try {
+            const saved = localStorage.getItem('adminInvoiceFilters');
+            return saved ? JSON.parse(saved) : { keyword: '', tvbh: [], dongXe: [], version: [], exterior: [], trangThai: [] };
+        } catch { return { keyword: '', tvbh: [], dongXe: [], version: [], exterior: [], trangThai: [] }; }
+    });
+    const [pendingFilters, setPendingFilters] = useState(() => {
+        try {
+            const saved = localStorage.getItem('adminPendingFilters');
+            return saved ? JSON.parse(saved) : { keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] };
+        } catch { return { keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] }; }
+    });
+    const [pairedFilters, setPairedFilters] = useState(() => {
+        try {
+            const saved = localStorage.getItem('adminPairedFilters');
+            return saved ? JSON.parse(saved) : { keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] };
+        } catch { return { keyword: '', tvbh: [], dongXe: [], version: [], exterior: [] }; }
+    });
+    const [vcFilters, setVcFilters] = useState(() => {
+        try {
+            const saved = localStorage.getItem('adminVcFilters');
+            return saved ? JSON.parse(saved) : { keyword: '', nguoiyc: [], trangthai: [] };
+        } catch { return { keyword: '', nguoiyc: [], trangthai: [] }; }
+    });
+    const [matchingFilters, setMatchingFilters] = useState(() => {
+        try {
+            const saved = localStorage.getItem('adminMatchingFilters');
+            return saved ? JSON.parse(saved) : { keyword: '', tvbh: [], dongXe: [], version: [], ngoaiThat: [] };
+        } catch { return { keyword: '', tvbh: [], dongXe: [], version: [], ngoaiThat: [] }; }
+    });
+
+    useEffect(() => { localStorage.setItem('adminInvoiceFilters', JSON.stringify(invoiceFilters)); }, [invoiceFilters]);
+    useEffect(() => { localStorage.setItem('adminPendingFilters', JSON.stringify(pendingFilters)); }, [pendingFilters]);
+    useEffect(() => { localStorage.setItem('adminPairedFilters', JSON.stringify(pairedFilters)); }, [pairedFilters]);
+    useEffect(() => { localStorage.setItem('adminVcFilters', JSON.stringify(vcFilters)); }, [vcFilters]);
+    useEffect(() => { localStorage.setItem('adminMatchingFilters', JSON.stringify(matchingFilters)); }, [matchingFilters]);
 
     useEffect(() => {
         if (initialState) {
@@ -53,17 +96,17 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
                 setTargetOrderId(orderId);
 
                 if (targetTab === 'matching') {
-                    setMatchingFilters(prev => ({ ...prev, keyword: orderId }));
+                    setMatchingFilters((prev: any) => ({ ...prev, keyword: orderId }));
                     // Nếu đơn đã ghép (có VIN), chuyển sang sub-tab "Đã Ghép"
                     setMatchingTab(order.VIN ? 'paired' : 'pending');
                 } else if (targetTab === 'invoices') {
-                    setInvoiceFilters(prev => ({ ...prev, keyword: orderId }));
+                    setInvoiceFilters((prev: any) => ({ ...prev, keyword: orderId }));
                 } else if (targetTab === 'vc') {
-                    setVcFilters(prev => ({ ...prev, keyword: orderId }));
+                    setVcFilters((prev: any) => ({ ...prev, keyword: orderId }));
                 } else if (targetTab === 'pending') {
-                    setPendingFilters(prev => ({ ...prev, keyword: orderId }));
+                    setPendingFilters((prev: any) => ({ ...prev, keyword: orderId }));
                 } else if (targetTab === 'paired') {
-                    setPairedFilters(prev => ({ ...prev, keyword: orderId }));
+                    setPairedFilters((prev: any) => ({ ...prev, keyword: orderId }));
                 }
             }
 
@@ -78,15 +121,15 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
 
     const handleFilterChange = useCallback((newFilters: any) => {
         if (adminView === 'invoices') {
-            setInvoiceFilters(prev => ({ ...prev, ...newFilters }));
+            setInvoiceFilters((prev: any) => ({ ...prev, ...newFilters }));
         } else if (adminView === 'pending') {
-            setPendingFilters(prev => ({ ...prev, ...newFilters }));
+            setPendingFilters((prev: any) => ({ ...prev, ...newFilters }));
         } else if (adminView === 'paired') {
-            setPairedFilters(prev => ({ ...prev, ...newFilters }));
+            setPairedFilters((prev: any) => ({ ...prev, ...newFilters }));
         } else if (adminView === 'vc') {
-            setVcFilters(prev => ({ ...prev, ...newFilters }));
+            setVcFilters((prev: any) => ({ ...prev, ...newFilters }));
         } else if (adminView === 'matching') {
-            setMatchingFilters(prev => ({ ...prev, ...newFilters }));
+            setMatchingFilters((prev: any) => ({ ...prev, ...newFilters }));
         }
     }, [adminView]);
 

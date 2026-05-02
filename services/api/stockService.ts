@@ -1,6 +1,7 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
 import { getStorageItem, mapStockDbToUi, ApiResult, ADMIN_USER, uploadToSupabase } from './baseService';
 import { createNotification } from './notificationService';
+import { logAction } from './baseService';
 
 export const getStockData = async (): Promise<ApiResult> => {
     try {
@@ -33,10 +34,28 @@ export const holdCar = async (vin: string) => {
 
 export const releaseCar = async (vin: string, outcome: 'released' | 'expired' | 'matched' = 'released') => {
     try {
+        // Fetch car configuration before releasing so we can try auto-matching
+        const { data: car } = await supabaseAdmin.from('khoxe')
+            .select('dong_xe, phien_ban, ngoai_that, noi_that')
+            .eq('vin', vin)
+            .single();
+
         const { data, error } = await supabase.rpc('rpc_release_car', { p_vin: vin, p_outcome: outcome });
         if (error) throw error;
+
+        // If successfully released and there was configuration found, try auto-matching
+        if (car && (outcome === 'released' || outcome === 'expired')) {
+            await tryAutoMatchWaitingOrder(vin, {
+                dong_xe: car.dong_xe,
+                phien_ban: car.phien_ban,
+                ngoai_that: car.ngoai_that,
+                noi_that: car.noi_that
+            });
+        }
+
         return { status: 'SUCCESS', message: data.message };
     } catch (err: any) {
+        console.error("Error releasing car:", err);
         return { status: 'ERROR', message: 'Lỗi khi hủy giữ xe.' };
     }
 };
@@ -221,11 +240,138 @@ export const getAllHoldQueues = async () => {
 
 export const autoReleaseExpiredHolds = async () => {
     try {
-        const { error } = await supabase.rpc('auto_release_expired_holds');
-        if (error) throw error;
+        console.log("[autoReleaseExpiredHolds] Đang kiểm tra các xe hết hạn giữ...");
+        
+        // 1. Tìm các xe đã quá hạn thoi_gian_het_han_giu (Trùng logic với RPC SQL để đảm bảo chính xác)
+        const { data: expiredCars, error: fetchErr } = await supabaseAdmin.from('khoxe')
+            .select('vin, dong_xe, phien_ban, ngoai_that, noi_that')
+            .eq('trang_thai', 'Đang giữ')
+            .neq('thoi_gian_het_han_giu', 'Vô thời hạn')
+            .not('thoi_gian_het_han_giu', 'is', null);
+
+        if (fetchErr) throw fetchErr;
+
+        if (!expiredCars || expiredCars.length === 0) {
+            return { status: 'SUCCESS', message: 'Không có xe nào hết hạn.' };
+        }
+
+        const now = new Date();
+        const parseDate = (str: string) => {
+            const [d, t] = str.split(' ');
+            const [day, month, year] = d.split('/').map(Number);
+            const [h, m, s] = t.split(':').map(Number);
+            return new Date(year, month - 1, day, h, m, s);
+        };
+
+        for (const car of expiredCars) {
+            try {
+                const { data: currentCar } = await supabaseAdmin.from('khoxe').select('thoi_gian_het_han_giu').eq('vin', car.vin).single();
+                if (!currentCar?.thoi_gian_het_han_giu || currentCar.thoi_gian_het_han_giu === 'Vô thời hạn') continue;
+
+                const expiryDate = parseDate(currentCar.thoi_gian_het_han_giu);
+                if (expiryDate < now) {
+                    console.log(`[autoReleaseExpiredHolds] Xử lý hết hạn cho VIN: ${car.vin}`);
+                    
+                    // A. Giải phóng xe (Dùng RPC để xử lý uy tín và hàng chờ cũ)
+                    await supabase.rpc('rpc_release_car', { p_vin: car.vin, p_outcome: 'expired' });
+
+                    // B. Thử ghép tự động cho người đang chờ (Dự phòng đơn hàng)
+                    await tryAutoMatchWaitingOrder(car.vin, {
+                        dong_xe: car.dong_xe,
+                        phien_ban: car.phien_ban,
+                        ngoai_that: car.ngoai_that,
+                        noi_that: car.noi_that
+                    });
+                }
+            } catch (carErr) {
+                console.error(`Lỗi khi xử lý hết hạn cho xe ${car.vin}:`, carErr);
+            }
+        }
+
         return { status: 'SUCCESS' };
     } catch (err) {
+        console.error("[autoReleaseExpiredHolds] Lỗi tổng quát:", err);
         return { status: 'ERROR' };
+    }
+};
+
+/**
+ * [MỚI] Tự động ghép nối đơn hàng đang chờ khi có xe được nhả ra
+ * Logic ưu tiên: Ngày cọc (ngay_coc) -> Ngày cần xe (thoi_gian_can_xe) -> Thời gian tạo đơn (created_at)
+ */
+export const tryAutoMatchWaitingOrder = async (vin: string, config: { dong_xe: string, phien_ban: string, ngoai_that: string, noi_that: string }): Promise<boolean> => {
+    try {
+        console.log(`[tryAutoMatchWaitingOrder] Tìm đơn hàng chờ cho VIN: ${vin}`, config);
+        
+        // 1. Tìm đơn hàng "Chưa ghép" có cấu hình khớp tuyệt đối
+        const { data: waitingOrders, error } = await supabaseAdmin.from('donhang')
+            .select('*')
+            .eq('ket_qua', 'Chưa ghép')
+            .eq('dong_xe', config.dong_xe)
+            .eq('phien_ban', config.phien_ban)
+            .eq('ngoai_that', config.ngoai_that)
+            .eq('noi_that', config.noi_that)
+            .order('ngay_coc', { ascending: true }) // Ai cọc trước lấy trước
+            .order('thoi_gian_can_xe', { ascending: true, nullsFirst: false }) // Ưu tiên ngày cần xe sớm
+            .order('created_at', { ascending: true }) // Ưu tiên người vào hệ thống trước
+            .limit(1);
+
+        if (error) {
+            console.error("[tryAutoMatchWaitingOrder] Lỗi truy vấn đơn hàng chờ:", error);
+            return false;
+        }
+
+        if (waitingOrders && waitingOrders.length > 0) {
+            const bestMatch = waitingOrders[0];
+            const orderNumber = bestMatch.so_don_hang;
+            const tvbh = bestMatch.ten_tu_van_ban_hang;
+
+            console.log(`[tryAutoMatchWaitingOrder] Khớp thành công: ĐH ${orderNumber} (TVBH: ${tvbh})`);
+
+            // 2. Cập nhật trạng thái Kho xe
+            const { error: khoxeError } = await supabaseAdmin.from('khoxe').update({
+                trang_thai: 'Đã ghép',
+                nguoi_giu_xe: tvbh,
+                thoi_gian_het_han_giu: 'Vô thời hạn'
+            }).eq('vin', vin);
+            if (khoxeError) throw khoxeError;
+
+            // 3. Cập nhật trạng thái Đơn hàng
+            const { error: orderError } = await supabaseAdmin.from('donhang').update({
+                vin: vin,
+                ket_qua: 'Đã ghép',
+                thoi_gian_ghep: new Date().toISOString()
+            }).eq('so_don_hang', orderNumber);
+            if (orderError) throw orderError;
+
+            // 4. Gửi thông báo & Email (Đồng bộ với logic hệ thống)
+            if (tvbh) {
+                await createNotification({
+                    message: `Hệ thống tự động ghép xe dự phòng (VIN: ${vin}) cho đơn hàng ${orderNumber} của bạn.`,
+                    type: 'success',
+                    recipient: tvbh,
+                    targetView: 'orders',
+                    targetId: orderNumber
+                });
+            }
+
+            // Gửi email match_success
+            const { data: fullOrder } = await supabaseAdmin.from('donhang').select('*').eq('so_don_hang', orderNumber).single();
+            supabaseAdmin.functions.invoke('send-email', {
+                body: { 
+                    actionId: 'match_success', 
+                    record: fullOrder || bestMatch
+                }
+            }).then();
+
+            await logAction('AUTO_MATCH_BACKUP', { orderNumber, vin, config }, orderNumber, 'order');
+            return true;
+        }
+
+        return false;
+    } catch (e) {
+        console.error("[tryAutoMatchWaitingOrder] Lỗi hệ thống:", e);
+        return false;
     }
 };
 

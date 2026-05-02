@@ -39,33 +39,6 @@ const InputField: React.FC<InputFieldProps> = ({ name, label, value, onChange, t
     </div>
 );
 
-interface TextAreaFieldProps {
-    name: keyof TestDriveBooking;
-    label: string;
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-    placeholder?: string;
-    required?: boolean;
-    className?: string;
-}
-
-const TextAreaField: React.FC<TextAreaFieldProps> = ({ name, label, value, onChange, placeholder, required, className = "" }) => (
-    <div className={`flex flex-col ${className}`}>
-        <label htmlFor={String(name)} className="block text-[11px] font-medium text-text-secondary mb-0.5 whitespace-nowrap">
-            {label}
-            {required && <span className="text-danger ml-0.5">*</span>}
-        </label>
-        <textarea
-            name={String(name)}
-            id={String(name)}
-            value={value}
-            onChange={onChange}
-            placeholder={placeholder}
-            className="block w-full flex-grow futuristic-input px-2.5 py-2 text-sm rounded-lg border-border-secondary resize-none bg-surface-ground leading-tight focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all h-full"
-        />
-    </div>
-);
-
 
 const timeToMinutes = (time: string): number => {
     if (!time) return 0;
@@ -214,33 +187,58 @@ const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, han
                     </div>
                 </div>
 
-                {/* Content - Removed overflow-y-auto to prevent scrollbar, uses flex to fit */}
-                <div className="p-3 overflow-hidden flex-grow flex flex-col gap-3">
-                    {/* SECTION 1: LỊCH TRÌNH - Flex shrink allowed but minimized */}
+                {/* Content - single flowing layout, no scroll */}
+                <div className="p-3 flex-grow flex flex-col gap-4 overflow-y-auto">
+                    {/* SECTION 1: LỊCH TRÌNH & XE */}
                     <div className="bg-surface-ground/50 rounded-xl p-3 border border-border-secondary/30 shadow-sm flex-shrink-0">
-                        <h4 className="text-[11px] font-bold text-accent-primary uppercase tracking-wider mb-2 border-b border-border-secondary/30 pb-0.5 flex items-center">
+                        <h4 className="text-[11px] font-bold text-accent-primary uppercase tracking-wider mb-2.5 border-b border-border-secondary/30 pb-0.5 flex items-center">
                             <i className="fas fa-calendar-alt mr-1.5 opacity-70"></i>Lịch Trình & Xe
                         </h4>
 
-                        <div className="grid grid-cols-2 gap-3 mb-2">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2.5">
                             <InputField name="ngayThuXe" label="Ngày lái thử" type="date" value={formData.ngayThuXe} onChange={handleInputChange} required />
                             <div>
                                 <label htmlFor="loaiXe" className="block text-[11px] font-medium text-text-secondary mb-0.5 whitespace-nowrap">Loại xe <span className="text-danger ml-0.5">*</span></label>
-                                <select name="loaiXe" id="loaiXe" value={formData.loaiXe} onChange={handleInputChange} className="block w-full futuristic-input px-2.5 py-1.5 text-sm rounded-lg border-border-secondary bg-surface-ground h-9 transition-all focus:border-accent-primary focus:ring-1 focus:ring-accent-primary">
+                                <select name="loaiXe" id="loaiXe" value={formData.loaiXe} onChange={handleInputChange} className="block w-full futuristic-input px-2.5 py-1.5 text-sm rounded-lg border-border-secondary bg-surface-ground h-9 transition-all focus:border-accent-primary focus:ring-1 focus:ring-accent-primary text-text-primary">
                                     <option value="" disabled>Chọn xe</option>
                                     {Object.keys(versionsMap).map(model => (<option key={model} value={model}>{model}</option>))}
                                 </select>
                             </div>
+                            <InputField name="bienSo" label="Biển số xe" value={formData.bienSo || ''} onChange={handleInputChange} placeholder="VD: 98A-123.45" required />
                         </div>
 
                         <Timeline bookings={scheduleForSelectedCar} formData={formData} conflictError={conflictError} />
 
-                        <div className="grid grid-cols-6 gap-3 mt-2 items-end">
-                            <div className="col-span-2 grid grid-cols-2 gap-2">
-                                <InputField name="thoiGianKhoiHanh" label="Từ" type="time" value={formData.thoiGianKhoiHanh} onChange={handleInputChange} required />
-                                <InputField name="thoiGianTroVe" label="Đến" type="time" value={formData.thoiGianTroVe} onChange={handleInputChange} required />
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-3 mt-2.5 items-end">
+                            <div className="md:col-span-2 grid grid-cols-2 gap-2">
+                                <div>
+                                    <label htmlFor="thoiGianKhoiHanh" className="block text-[11px] font-medium text-text-secondary mb-0.5">Từ <span className="text-danger ml-0.5">*</span></label>
+                                    <select name="thoiGianKhoiHanh" id="thoiGianKhoiHanh" value={formData.thoiGianKhoiHanh} onChange={handleInputChange} className="block w-full futuristic-input px-2 py-1.5 text-sm rounded-lg border-border-secondary bg-surface-ground h-9 transition-all focus:border-accent-primary focus:ring-1 focus:ring-accent-primary text-text-primary">
+                                        <option value="">--:--</option>
+                                        {Array.from({ length: 49 }, (_, i) => {
+                                            const h = Math.floor(i * 15 / 60) + 8;
+                                            const m = (i * 15) % 60;
+                                            if (h > 20) return null;
+                                            const val = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                                            return <option key={val} value={val}>{val}</option>;
+                                        })}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="thoiGianTroVe" className="block text-[11px] font-medium text-text-secondary mb-0.5">Đến <span className="text-danger ml-0.5">*</span></label>
+                                    <select name="thoiGianTroVe" id="thoiGianTroVe" value={formData.thoiGianTroVe} onChange={handleInputChange} className="block w-full futuristic-input px-2 py-1.5 text-sm rounded-lg border-border-secondary bg-surface-ground h-9 transition-all focus:border-accent-primary focus:ring-1 focus:ring-accent-primary text-text-primary">
+                                        <option value="">--:--</option>
+                                        {Array.from({ length: 49 }, (_, i) => {
+                                            const h = Math.floor(i * 15 / 60) + 8;
+                                            const m = (i * 15) % 60;
+                                            if (h > 20) return null;
+                                            const val = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                                            return <option key={val} value={val}>{val}</option>;
+                                        })}
+                                    </select>
+                                </div>
                             </div>
-                            <div className="col-span-4">
+                            <div className="md:col-span-4">
                                 <InputField name="loTrinh" label="Lộ trình" value={formData.loTrinh} onChange={handleInputChange} required placeholder="VD: Showroom -> Đại Lộ Bình Dương..." />
                             </div>
                         </div>
@@ -270,32 +268,44 @@ const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, han
                         )}
                     </div>
 
-                    {/* SECTION 2: KHÁCH HÀNG - Expands to fill remaining space */}
-                    <div className="bg-surface-ground/50 rounded-xl p-3 border border-border-secondary/30 shadow-sm flex-grow flex flex-col min-h-0">
-                        <h4 className="text-[11px] font-bold text-accent-primary uppercase tracking-wider mb-2 border-b border-border-secondary/30 pb-0.5 flex items-center flex-shrink-0">
+                    {/* SECTION 2: KHÁCH HÀNG */}
+                    <div className="bg-surface-ground/50 rounded-xl p-3 border border-border-secondary/30 shadow-sm flex-shrink-0 flex flex-col">
+                        <h4 className="text-[11px] font-bold text-accent-primary uppercase tracking-wider mb-2.5 border-b border-border-secondary/30 pb-0.5 flex items-center">
                             <i className="fas fa-user mr-1.5 opacity-70"></i>Thông Tin Khách Hàng
                         </h4>
 
-                        <div className="grid grid-cols-3 gap-3 mb-2 flex-shrink-0">
-                            <div className="col-span-2">
-                                <InputField name="tenKhachHang" label="Họ và tên" value={formData.tenKhachHang} onChange={handleInputChange} required placeholder="Nhập tên khách hàng" />
+                        <div className="flex flex-col justify-between flex-grow gap-2">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div className="md:col-span-2">
+                                    <InputField name="tenKhachHang" label="Họ và tên" value={formData.tenKhachHang} onChange={handleInputChange} required placeholder="Nhập tên khách hàng" />
+                                </div>
+                                <InputField name="dienThoai" label="Số điện thoại" type="tel" value={formData.dienThoai} onChange={handleInputChange} required pattern="0[0-9]{9,10}" placeholder="09..." />
                             </div>
-                            <InputField name="dienThoai" label="Số điện thoại" type="tel" value={formData.dienThoai} onChange={handleInputChange} required pattern="0[0-9]{9,10}" placeholder="09..." />
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-3 mb-2 flex-shrink-0">
-                            <InputField name="email" label="Email" type="email" value={formData.email} onChange={handleInputChange} placeholder="email@example.com" />
-                            <InputField name="diaChi" label="Địa chỉ" value={formData.diaChi} onChange={handleInputChange} required placeholder="Địa chỉ thường trú" />
-                        </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <InputField name="email" label="Email" type="email" value={formData.email} onChange={handleInputChange} placeholder="email@example.com" required />
+                                <div className="md:col-span-2">
+                                    <InputField name="diaChi" label="Địa chỉ" value={formData.diaChi} onChange={handleInputChange} required placeholder="Địa chỉ thường trú" />
+                                </div>
+                            </div>
 
-                        <div className="grid grid-cols-12 gap-3 mb-2 flex-shrink-0">
-                            <div className="col-span-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <InputField name="cmndO" label="Số CMND/CCCD" value={formData.cmndO || ''} onChange={handleInputChange} placeholder="Mã định danh" required />
+                                <InputField name="cmndNgayCap" label="Ngày cấp" type="date" value={formData.cmndNgayCap || ''} onChange={handleInputChange} required />
+                                <InputField name="cmndNoiCap" label="Nơi cấp" value={formData.cmndNoiCap || ''} onChange={handleInputChange} placeholder="Cục CS QLHC..." required />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                            <div className="md:col-span-3">
                                 <InputField name="gplxSo" label="Số GPLX" value={formData.gplxSo} onChange={handleInputChange} required />
                             </div>
-                            <div className="col-span-4">
-                                <InputField name="hieuLucGPLX" label="Ngày hết hạn" type="date" value={formData.hieuLucGPLX} onChange={handleInputChange} required />
+                            <div className="md:col-span-2">
+                                <InputField name="gplxHang" label="Hạng Bằng" value={formData.gplxHang || ''} onChange={handleInputChange} placeholder="B2..." required />
                             </div>
-                            <div className="col-span-4 flex flex-col justify-end pb-1.5">
+                            <div className="md:col-span-4">
+                                <InputField name="hieuLucGPLX" label="Hết hạn GPLX" type="date" value={formData.hieuLucGPLX} onChange={handleInputChange} required />
+                            </div>
+                            <div className="md:col-span-3 flex flex-col justify-end pb-1.5 pl-0 md:pl-2 pt-2 md:pt-0 border-t border-border-secondary/30 md:border-t-0 mt-2 md:mt-0">
                                 <span className="text-[10px] font-medium text-text-secondary mb-1.5 block">Tự lái? <span className="text-danger">*</span></span>
                                 <div className="flex gap-3">
                                     <label className="flex items-center gap-1.5 cursor-pointer group">
@@ -315,8 +325,7 @@ const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, han
                                 </div>
                             </div>
                         </div>
-
-                        <TextAreaField name="dacDiem" label="Ghi chú thêm" value={formData.dacDiem} onChange={handleInputChange} placeholder="Ghi chú thông tin..." className="flex-grow mt-1" />
+                        </div>
                     </div>
                 </div>
             </div>

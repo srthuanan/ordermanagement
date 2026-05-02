@@ -1,37 +1,46 @@
 import React, { useState } from 'react';
 import * as authService from '../../services/authService';
-import { useModalBackground } from '../../utils/styleUtils';
 
 interface ChangePasswordModalProps {
     isOpen: boolean;
     onClose: () => void;
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     username: string;
+    isFirstLogin?: boolean;
 }
 
-const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose, showToast, username }) => {
+const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose, showToast, username, isFirstLogin }) => {
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const bgStyle = useModalBackground();
+    const [localError, setLocalError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLocalError(null);
+
         if (!oldPassword || !newPassword || !confirmPassword) {
-            showToast('Thiếu Thông Tin', 'Vui lòng điền đầy đủ các trường.', 'warning');
+            setLocalError('Vui lòng điền đầy đủ các thông tin.');
             return;
         }
-        if (newPassword.length < 8) {
-            showToast('Mật Khẩu Yếu', 'Mật khẩu mới phải có ít nhất 8 ký tự.', 'warning');
+        
+        // Quy luật mật khẩu mới: 10 ký tự, có cả chữ và số
+        const hasLetter = /[a-zA-Z]/.test(newPassword);
+        const hasNumber = /[0-9]/.test(newPassword);
+
+        if (newPassword.length < 10 || !hasLetter || !hasNumber) {
+            setLocalError('Mật khẩu phải có ít nhất 10 ký tự, bao gồm cả chữ và số.');
             return;
         }
+
         if (newPassword !== confirmPassword) {
-            showToast('Lỗi', 'Mật khẩu xác nhận không khớp.', 'error');
+            setLocalError('Mật khẩu xác nhận không khớp.');
             return;
         }
+
         if (oldPassword === newPassword) {
-            showToast('Lưu Ý', 'Mật khẩu mới phải khác mật khẩu cũ.', 'info');
+            setLocalError('Mật khẩu mới phải khác mật khẩu cũ.');
             return;
         }
 
@@ -43,7 +52,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
             showToast('Thành Công', result.message || 'Mật khẩu đã được thay đổi thành công!', 'success');
             onClose();
         } else {
-            showToast('Thất Bại', result.message || 'Đổi mật khẩu không thành công.', 'error');
+            setLocalError(result.message || 'Đổi mật khẩu không thành công.');
         }
     };
 
@@ -53,67 +62,104 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
         setNewPassword('');
         setConfirmPassword('');
         setIsSubmitting(false);
+        setLocalError(null);
         onClose();
     };
 
     if (!isOpen) return null;
 
-    const inputClass = "peer w-full pl-12 pr-4 py-3 bg-surface-ground text-text-primary border border-border-primary rounded-lg focus:outline-none focus:border-accent-primary transition-all placeholder:text-text-placeholder focus:shadow-glow-accent";
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={handleClose}>
-            <div className="bg-surface-card w-full md:max-w-md h-[100dvh] md:h-auto rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col" onClick={e => e.stopPropagation()} style={bgStyle}>
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 font-['Segoe_UI',Tahoma,Geneva,Verdana,sans-serif]" onClick={handleClose}>
+            <div className="w-full max-w-[500px] bg-white rounded-[16px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-[#e2e8f0] overflow-hidden animate-fade-in-scale-up" onClick={e => e.stopPropagation()}>
                 <form onSubmit={handleSubmit}>
-                    <header className="relative flex flex-col items-center justify-center p-6 text-center bg-surface-card border-b border-border-primary">
-                        <div className="animate-fade-in-down">
-                            <h2 className="text-xl font-bold text-gradient">Đổi Mật Khẩu</h2>
-                            <p className="text-sm text-text-secondary mt-1">Bảo mật tài khoản của bạn.</p>
+                    {/* Header matching Email & ResetPasswordView */}
+                    <header className="px-8 pt-[25px] pb-[15px] border-b border-[#f1f5f9]">
+                        <div className="flex justify-between items-start">
+                            <img 
+                                src="https://raw.githubusercontent.com/srthuanan/ordermanagement/main/pictures/logomd.webp" 
+                                alt="VinFast" 
+                                className="h-[38px] w-auto block"
+                            />
+                            <div className="text-right">
+                                <div className="text-[12px] font-bold text-[#1e3a8a]">VINFAST THUẬN AN</div>
+                            </div>
                         </div>
-                        <button type="button" onClick={handleClose} className="absolute top-4 right-4 w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-text-secondary hover:bg-surface-hover">
-                            <i className="fas fa-times"></i>
-                        </button>
                     </header>
 
-                    <main className="p-4 md:p-6 space-y-4 overflow-y-auto flex-grow min-h-0">
-                        <div className="relative">
-                            <i className="fas fa-shield-alt absolute top-1/2 left-4 -translate-y-1/2 text-text-secondary peer-focus:text-accent-primary"></i>
-                            <input
-                                type="password"
-                                value={oldPassword}
-                                onChange={e => setOldPassword(e.target.value)}
-                                placeholder="Mật khẩu cũ"
-                                required
-                                className={inputClass}
-                            />
+                    <main className="px-8 py-6">
+                        <div className="text-[13px] text-[#64748b] mb-[5px] font-medium">Chào Bạn,</div>
+                        <div className="text-[18px] text-[#0f172a] font-bold mb-6 uppercase">
+                            {isFirstLogin ? 'Kích Hoạt Tài Khoản' : 'Đổi Mật Khẩu'}
                         </div>
-                        <div className="relative">
-                            <i className="fas fa-lock absolute top-1/2 left-4 -translate-y-1/2 text-text-secondary peer-focus:text-accent-primary"></i>
-                            <input
-                                type="password"
-                                value={newPassword}
-                                onChange={e => setNewPassword(e.target.value)}
-                                placeholder="Mật khẩu mới (ít nhất 8 ký tự)"
-                                required
-                                className={inputClass}
-                            />
-                        </div>
-                        <div className="relative">
-                            <i className="fas fa-check-circle absolute top-1/2 left-4 -translate-y-1/2 text-text-secondary peer-focus:text-accent-primary"></i>
-                            <input
-                                type="password"
-                                value={confirmPassword}
-                                onChange={e => setConfirmPassword(e.target.value)}
-                                placeholder="Xác nhận mật khẩu mới"
-                                required
-                                className={inputClass}
-                            />
+
+                        {/* Inner Form Box */}
+                        <div className="bg-[#f8fafc] border border-[#f1f5f9] rounded-[12px] p-5 space-y-4">
+                            {localError && (
+                                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-xs font-medium flex items-center gap-2 animate-shake">
+                                    <i className="fas fa-exclamation-circle"></i>
+                                    {localError}
+                                </div>
+                            )}
+
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider block">Mật khẩu hiện tại</label>
+                                <input
+                                    type="password"
+                                    value={oldPassword}
+                                    onChange={e => setOldPassword(e.target.value)}
+                                    placeholder={isFirstLogin ? "Mật khẩu tạm thời" : "Nhập mật khẩu hiện tại..."}
+                                    required
+                                    className="w-full py-2.5 bg-transparent border-b border-[#e2e8f0] focus:border-[#1e3a8a] outline-none text-[13px] text-[#334155] font-semibold transition-all placeholder:text-[#cbd5e1] placeholder:font-normal"
+                                />
+                            </div>
+
+                            <div className="space-y-1 pt-2">
+                                <label className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider block">Mật khẩu mới</label>
+                                <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={e => setNewPassword(e.target.value)}
+                                    placeholder="Nhập mật khẩu mới..."
+                                    required
+                                    className="w-full py-2.5 bg-transparent border-b border-[#e2e8f0] focus:border-[#1e3a8a] outline-none text-[13px] text-[#334155] font-semibold transition-all placeholder:text-[#cbd5e1] placeholder:font-normal"
+                                />
+                            </div>
+
+                            <div className="space-y-1 pt-2">
+                                <label className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider block">Xác nhận mật khẩu mới</label>
+                                <input
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={e => setConfirmPassword(e.target.value)}
+                                    placeholder="Nhập lại mật khẩu mới..."
+                                    required
+                                    className="w-full py-2.5 bg-transparent border-b border-[#e2e8f0] focus:border-[#1e3a8a] outline-none text-[13px] text-[#334155] font-semibold transition-all placeholder:text-[#cbd5e1] placeholder:font-normal"
+                                />
+                            </div>
                         </div>
                     </main>
 
-                    <footer className="p-4 border-t border-border-primary flex justify-end gap-4 bg-surface-ground rounded-b-2xl">
-                        <button type="button" onClick={handleClose} disabled={isSubmitting} className="btn-secondary">Hủy</button>
-                        <button type="submit" disabled={isSubmitting} className="btn-primary">
-                            {isSubmitting ? <><i className="fas fa-spinner fa-spin mr-2"></i> Đang xử lý...</> : <><i className="fas fa-save mr-2"></i> Xác Nhận</>}
+                    <footer className="px-8 pb-8 flex items-center justify-between">
+                        <button 
+                            type="button" 
+                            onClick={handleClose} 
+                            disabled={isSubmitting}
+                            className="text-[#64748b] hover:text-[#1e3a8a] text-[13px] font-medium transition-colors"
+                        >
+                            {isFirstLogin ? 'Thoát' : 'Hủy bỏ'}
+                        </button>
+                        
+                        <button 
+                            type="submit" 
+                            disabled={isSubmitting}
+                            className="bg-[#1e3a8a] hover:bg-[#162e70] text-white px-8 py-2.5 rounded-[30px] font-bold text-[13px] shadow-[0_4px_12px_rgba(30,58,138,0.15)] transition-all transform hover:scale-[1.05] active:scale-[0.95] disabled:opacity-70 flex items-center justify-center gap-2"
+                        >
+                            {isSubmitting ? (
+                                <><i className="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...</>
+                            ) : (
+                                <>{isFirstLogin ? 'KÍCH HOẠT NGAY' : 'XÁC NHẬN ĐỔI'}</>
+                            )}
                         </button>
                     </footer>
                 </form>

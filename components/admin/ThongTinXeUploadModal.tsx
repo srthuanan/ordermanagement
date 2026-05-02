@@ -19,7 +19,7 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
     const handleDownloadTemplate = () => {
         const ws = xlsx.utils.json_to_sheet([{
             'Số VIN': '12345678901234567',
-            'Số động cơ': 'JKA1234567',
+            'Số máy': 'JKA1234567',
             'Mô tả sản phẩm': 'VF 3',
             'Khu vực': 'DMS-HCM',
             'Phiên bản': 'Base',
@@ -59,30 +59,45 @@ const ThongTinXeUploadModal: React.FC<ThongTinXeUploadModalProps> = ({ isOpen, o
             }
 
 
-            const formattedData = rows.map(row => ({
-                vin: String(row['Số VIN'] || '').trim().toUpperCase(),
-                so_may: String(row['Số động cơ'] || ''),
-                mo_ta: String(row['Mô tả sản phẩm'] || ''),
-                khu_vuc: String(row['Khu vực'] || ''),
-                phien_ban: String(row['Phiên bản'] || ''),
-                ngoai_that: String(row['Màu ngoại thất xe'] || ''),
-                noi_that: String(row['Màu nội thất xe'] || ''),
-                nam_san_xuat: row['Năm sản xuất'] ? parseInt(row['Năm sản xuất']) : null,
-                // Default the other table columns to empty string so it doesn't fail if they're required
-                inventory_id: '',
-                check_sum: '',
-                so_ton_kho: '',
-                so_tham_chieu: '',
-                ma_san_pham: '',
-                so_don_hang_cuoi: ''
-            })).filter(item => item.vin && item.vin.length === 17);
+            const formattedData = rows.map(row => {
+                const normalizedRow: Record<string, any> = {};
+                for (const key in row) {
+                    normalizedRow[key.trim()] = row[key];
+                }
+                
+                return {
+                    vin: String(normalizedRow['Số VIN'] || '').trim().toUpperCase(),
+                    so_may: String(normalizedRow['Số máy'] || normalizedRow['Số động cơ'] || ''),
+                    mo_ta: String(normalizedRow['Mô tả sản phẩm'] || ''),
+                    khu_vuc: String(normalizedRow['Khu vực'] || ''),
+                    phien_ban: String(normalizedRow['Phiên bản'] || ''),
+                    ngoai_that: String(normalizedRow['Màu ngoại thất xe'] || ''),
+                    noi_that: String(normalizedRow['Màu nội thất xe'] || ''),
+                    nam_san_xuat: normalizedRow['Năm sản xuất'] ? parseInt(normalizedRow['Năm sản xuất']) : null,
+                    // Default the other table columns to empty string so it doesn't fail if they're required
+                    inventory_id: '',
+                    check_sum: '',
+                    so_ton_kho: '',
+                    so_tham_chieu: '',
+                    ma_san_pham: '',
+                    so_don_hang_cuoi: '',
+                    _ngay_sua_doi: Number(normalizedRow['(Không Sửa đổi) Ngày sửa đổi']) || 0
+                };
+            }).filter(item => item.vin && item.vin.length === 17);
 
-            // Remove duplicate VINs and keep the last one to prevent "ON CONFLICT DO UPDATE command cannot affect row a second time"
+
+            // Remove duplicate VINs and keep the one with the latest modification date
             const uniqueDataMap = new Map();
             formattedData.forEach(item => {
-                uniqueDataMap.set(item.vin, item);
+                const existing = uniqueDataMap.get(item.vin);
+                if (!existing || item._ngay_sua_doi >= existing._ngay_sua_doi) {
+                    uniqueDataMap.set(item.vin, item);
+                }
             });
-            const uniqueFormattedData = Array.from(uniqueDataMap.values());
+            const uniqueFormattedData = Array.from(uniqueDataMap.values()).map(item => {
+                const { _ngay_sua_doi, ...rest } = item;
+                return rest;
+            });
 
             if (uniqueFormattedData.length === 0) {
                 throw new Error('Không có dòng nào có số VIN hợp lệ (17 ký tự)');

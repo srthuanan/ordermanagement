@@ -21,7 +21,6 @@ const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string
     matching: [],
     vc: [],
     phongkd: [],
-    tracking: [],
     stats: [],
     incomplete_cars: [],
     super_edit: [],
@@ -29,6 +28,13 @@ const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string
     holds: [],
     policies: [],
     don_ton: [],
+    ai_knowledge: [],
+    ai_health: [],
+    management: [],
+    inventory: [],
+    system: [],
+    policy_summary: [],
+    pricing_calculator: [],
 };
 
 const BulkActionBar: React.FC<BulkActionBarProps> = ({ view, selectedRows, setSelectedRows, setBulkActionModal }) => {

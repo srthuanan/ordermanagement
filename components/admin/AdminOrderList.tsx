@@ -186,8 +186,22 @@ const AdminOrderCard: React.FC<{
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-[10px] text-text-secondary uppercase font-bold tracking-wider">Số Máy</span>
-                                <CopyableField text={order['Số động cơ'] || ''} showToast={showToast} className="font-mono font-bold text-slate-600 text-[11px]" />
+                                <CopyableField text={order['Số máy'] || ''} showToast={showToast} className="font-mono font-bold text-slate-600 text-[11px]" />
                             </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] text-text-secondary uppercase font-bold tracking-wider">Mã DMS</span>
+                                <CopyableField text={order['Mã DMS'] || ''} showToast={showToast} className="font-mono font-bold text-slate-500 text-[11px]" />
+                            </div>
+                            {order['CHÍNH SÁCH'] && (
+                                <div className="flex justify-between items-center mt-1 p-1 bg-amber-50 rounded border border-amber-100">
+                                    <span className="text-[9px] text-amber-600 uppercase font-black tracking-tighter">
+                                        {order['CHÍNH SÁCH'].includes('; ') ? `CS (${order['CHÍNH SÁCH'].split('; ').length})` : 'CHÍNH SÁCH'}
+                                    </span>
+                                    <span className="text-[10px] font-black text-amber-900 truncate max-w-[150px]" title={order['CHÍNH SÁCH'].replace(/; /g, '\n')}>
+                                        {order['CHÍNH SÁCH']}
+                                    </span>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

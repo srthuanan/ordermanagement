@@ -47,6 +47,12 @@ const initialFormData: TestDriveBooking = {
     hieuLucGPLX: '',
     ngayCamKet: '',
     tenTuVan: '',
+    coSo: 'VF Minh Đạo Thuận An',
+    bienSo: '',
+    gplxHang: '',
+    cmndO: '',
+    cmndNoiCap: '',
+    cmndNgayCap: '',
 };
 
 const timeToMinutes = (time: string): number => {
@@ -321,6 +327,9 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
             { key: 'loTrinh', label: 'Lộ trình' }, { key: 'tenKhachHang', label: 'Tên khách hàng' },
             { key: 'dienThoai', label: 'Điện thoại' }, { key: 'diaChi', label: 'Địa chỉ' },
             { key: 'gplxSo', label: 'Số GPLX' }, { key: 'hieuLucGPLX', label: 'Hiệu lực GPLX' },
+            { key: 'cmndO', label: 'Số CMND/CCCD' }, { key: 'cmndNgayCap', label: 'Ngày cấp CMND' },
+            { key: 'cmndNoiCap', label: 'Nơi cấp CMND' }, { key: 'gplxHang', label: 'Hạng bằng' },
+            { key: 'bienSo', label: 'Biển số xe' },
         ];
 
         const missingFields = requiredFields.filter(({ key }) => !formData[key]?.trim()).map(({ label }) => label);
@@ -619,7 +628,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                         isSubmitting={isSubmitting}
                         onSwitchToList={() => setActiveTab('history')}
                     />
-                    <TestDrivePreview data={formData} />
+                    <TestDrivePreview data={formData} hideOnMobile={true} />
                 </div>
             )
             }

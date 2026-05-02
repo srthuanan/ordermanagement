@@ -1,0 +1,110 @@
+[
+  {
+    "id": "982433f1-05b0-4eee-ac6f-fff17bc36c26",
+    "created_at": "2026-03-17T05:23:57.183784+00:00",
+    "tvbh_name": "cant",
+    "tvbh_email": "NGUYỄN THANH CẢ",
+    "model": "LIMO",
+    "version": "LIMO",
+    "exterior_color": "Brahminy White (CE18)",
+    "interior_color": "Black",
+    "status": "manual_responded",
+    "admin_response": "Chờ phân bổ mới",
+    "matched_vin": null,
+    "is_read_by_admin": true,
+    "is_read_by_tvbh": true,
+    "responded_at": null,
+    "chat_history": [
+      {
+        "type": "system",
+        "telegram_thread_id": 18
+      },
+      {
+        "id": "eb28958b-e7b8-4b03-b4c1-068e9cd5e1a4",
+        "content": "",
+        "created_at": "2026-03-17T05:23:59.875Z",
+        "inquiry_id": "982433f1-05b0-4eee-ac6f-fff17bc36c26",
+        "sender_name": "Admin (Telegram)",
+        "sender_email": "admin@showroom.telegram",
+        "is_admin_comment": true
+      },
+      {
+        "id": "d78b23ad-28d9-4de3-92f7-bff1065f30cf",
+        "content": "Chờ phân bổ mới",
+        "created_at": "2026-03-17T05:24:26.861Z",
+        "inquiry_id": "982433f1-05b0-4eee-ac6f-fff17bc36c26",
+        "sender_name": "Admin (Telegram)",
+        "sender_email": "admin@showroom.telegram",
+        "is_admin_comment": true
+      }
+    ]
+  },
+  {
+    "id": "06f59e52-ca21-4d5b-a439-bb2593fd5592",
+    "created_at": "2026-03-22T05:44:24.155387+00:00",
+    "tvbh_name": "huyhh",
+    "tvbh_email": "HÀ HỮU HUY",
+    "model": "VF 3",
+    "version": "Base Tiêu chuẩn 2",
+    "exterior_color": "Crimson Red (CE1M)",
+    "interior_color": "Black",
+    "status": "auto_checking",
+    "admin_response": "",
+    "matched_vin": null,
+    "is_read_by_admin": true,
+    "is_read_by_tvbh": false,
+    "responded_at": null,
+    "chat_history": []
+  },
+  {
+    "id": "d3633ee2-ece6-4fe8-8109-eeb1837db513",
+    "created_at": "2026-03-25T07:02:26.649195+00:00",
+    "tvbh_name": "diennt",
+    "tvbh_email": "NGUYỄN THỊ DIỆN",
+    "model": "VF 3",
+    "version": "Plus",
+    "exterior_color": "Brahminy White (CE18)",
+    "interior_color": "Black",
+    "status": "auto_found",
+    "admin_response": "Hệ thống tự động tìm thấy 1 xe phù hợp. Xe đầu tiên: RLNVBL9K7TT709675",
+    "matched_vin": "RLNVBL9K7TT709675",
+    "is_read_by_admin": true,
+    "is_read_by_tvbh": true,
+    "responded_at": "2026-03-25T07:02:26.351+00:00",
+    "chat_history": []
+  },
+  {
+    "id": "bcdfa3bc-319b-4320-bf8d-7ea59034107b",
+    "created_at": "2026-03-25T09:00:57.083899+00:00",
+    "tvbh_name": "thanhnth",
+    "tvbh_email": "NGUYỄN TRẦN HOÀNG THANH",
+    "model": "VF 6",
+    "version": "Plus Tiêu chuẩn",
+    "exterior_color": "Zenith Grey (CE1V)",
+    "interior_color": "Brown",
+    "status": "auto_checking",
+    "admin_response": "",
+    "matched_vin": null,
+    "is_read_by_admin": true,
+    "is_read_by_tvbh": false,
+    "responded_at": null,
+    "chat_history": []
+  },
+  {
+    "id": "f6d0f5f3-b42a-470b-a1c5-b5d3a72c2399",
+    "created_at": "2026-04-03T02:42:56.501462+00:00",
+    "tvbh_name": "huypt",
+    "tvbh_email": "PHẠM TRỌNG HUY",
+    "model": "VF 3",
+    "version": "Plus",
+    "exterior_color": "Brahminy White Roof- Rose Pink Body (1821)",
+    "interior_color": "Black",
+    "status": "auto_checking",
+    "admin_response": "",
+    "matched_vin": null,
+    "is_read_by_admin": true,
+    "is_read_by_tvbh": false,
+    "responded_at": null,
+    "chat_history": []
+  }
+]

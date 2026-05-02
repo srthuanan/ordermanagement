@@ -10,7 +10,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Client thông thường (anon key) — dùng cho read và các thao tác user thông thường
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        detectSessionInUrl: true
+    }
+});
 
 /**
  * Client admin (service role key) — bypass RLS, dùng cho ghi dữ liệu phía admin.

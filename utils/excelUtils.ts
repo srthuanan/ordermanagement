@@ -4,6 +4,13 @@ import { Order } from '../types';
 import moment from 'moment';
 import { supabase } from '../services/supabaseClient';
 
+export const exportOrdersToExcel = (data: any[], filename: string) => {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, "Dữ liệu");
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+};
+
 export const exportAllSavedOrdersToExcel = async (showToast: Function) => {
     try {
         showToast('Đang tải', 'Đang kết xuất dữ liệu Excel...', 'info', 3000);

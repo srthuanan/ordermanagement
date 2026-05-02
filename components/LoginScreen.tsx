@@ -1,10 +1,7 @@
 import React, { useState, FormEvent, useEffect } from 'react';
 import * as authService from '../services/authService';
 // Import images
-import modernBg from '../pictures/complex_luxury_car_bg.jpg';
-
-
-
+import kepgiay from '../pictures/kepgiay.webp';
 
 interface LoginScreenProps {
     onLoginSuccess: () => void;
@@ -13,16 +10,93 @@ interface LoginScreenProps {
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [viewMode, setViewMode] = useState<'login' | 'forgot' | 'reset'>('login');
+    const [viewMode, setViewMode] = useState<'login' | 'forgot' | 'reset' | 'join'>('login');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [email, setEmail] = useState('');
-    const [otp, setOtp] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
+    const [isEmailSent, setIsEmailSent] = useState(false);
+    const [invitationDetails, setInvitationDetails] = useState<{ full_name: string, role: string } | null>(null);
+    const [inviteToken, setInviteToken] = useState('');
+
+    // Kiểm tra phiên đăng nhập (từ Link Email) để ẩn ô OTP
+    useEffect(() => {
+        const checkSession = async (session: any, event?: string) => {
+            const hash = window.location.hash;
+            
+            // 1. Kiểm tra luồng Join (Onboarding tự phục vụ)
+            if (hash.includes('/join')) {
+                const params = new URLSearchParams(hash.split('?')[1]);
+                const token = params.get('token');
+                if (token) {
+                    setInviteToken(token);
+                    setViewMode('join');
+                    const res = await authService.getInvitationDetails(token);
+                    if (res.success) {
+                        setInvitationDetails(res.data);
+                    } else {
+                        showToast('Lỗi Link', res.message, 'error');
+                        setViewMode('login');
+                    }
+                    return;
+                }
+            }
+
+            // 2. Chỉ hiển thị chế độ reset nếu có dấu hiệu khôi phục mật khẩu
+            const isRecoveryFlow = hash.includes('type=recovery') || 
+                                   hash.includes('type=invite') || 
+                                   hash.includes('access_token') || 
+                                   hash.includes('reset-password') ||
+                                   hash.includes('recovery') ||
+                                   hash.includes('invite') ||
+                                   event === 'PASSWORD_RECOVERY';
+
+            console.log(`[Auth Debug] event: ${event}, hash: ${hash}, isRecoveryFlow: ${isRecoveryFlow}`);
+
+            if (isRecoveryFlow) {
+                console.log("[Auth] 🛡️ Chế độ khôi phục/mời phát hiện. Chuyển hướng xử lý cho index.tsx hoặc hiển thị Reset Password.");
+                // Chúng ta để cho index.tsx xử lý việc chuyển vào App và hiện Modal
+                // Nhưng vẫn giữ viewMode reset ở đây đề phòng
+                setViewMode('reset');
+                
+                if (session) {
+                    // GỌI LUÔN onLoginSuccess để index.tsx bắt được và hiện App + Modal
+                    onLoginSuccess();
+                } else {
+                    const { data } = await authService.supabase.auth.getSession();
+                    if (data.session) {
+                        onLoginSuccess();
+                    }
+                }
+                return;
+            } 
+            
+            if (session) {
+                const restored = await authService.restoreSession();
+                if (restored) onLoginSuccess();
+            }
+        };
+
+        // Lắng nghe thay đổi auth state
+        const { data: { subscription } } = authService.supabase.auth.onAuthStateChange((event, session) => {
+            console.log("[Auth Event]", event);
+            // Quan trọng: Nếu event là SIGNED_IN nhưng là từ luồng recovery, Supabase thường bắn PASSWORD_RECOVERY trước
+            // Hoặc chúng ta dựa vào hash ở thời điểm này.
+            checkSession(session, event);
+        });
+
+        // Chạy lần đầu
+        authService.supabase.auth.getSession().then(({ data }) => {
+            if (data.session) {
+                checkSession(data.session, 'INITIAL_CHECK');
+            }
+        });
+
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [onLoginSuccess, showToast]);
 
     // --- LOGIC GIAO DIỆN MỚI ---
-    const [typingText, setTypingText] = useState('');
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     const handleMouseMove = (e: React.MouseEvent) => {
@@ -41,22 +115,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
 
 
 
-    const fullText = "Quản Lý Đơn Hàng";
-
-
-
     // Typing effect logic
     useEffect(() => {
-        let currentIndex = 0;
-        const interval = setInterval(() => {
-            if (currentIndex <= fullText.length) {
-                setTypingText(fullText.slice(0, currentIndex));
-                currentIndex++;
-            } else {
-                clearInterval(interval);
-            }
-        }, 100); // Speed of typing
-        return () => clearInterval(interval);
+        // Log removed to fix TS6133
     }, []);
 
     // Typewriter effect for tagline
@@ -89,35 +150,49 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
 
     const handleForgotPasswordSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        if (!email) return;
         setIsSubmitting(true);
         const result = await authService.forgotPassword(email);
         setIsSubmitting(false);
         if (result.success) {
-            showToast('Thành công', 'Mã xác thực đã gửi.', 'success');
-            setViewMode('reset');
+            setIsEmailSent(true);
+            showToast('Đã Gửi Email', 'Vui lòng kiểm tra hộp thư của bạn.', 'success');
         } else {
             showToast('Lỗi', result.message || 'Lỗi gửi yêu cầu.', 'error');
         }
     };
 
-    const handleResetPasswordSubmit = async (e: FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        const result = await authService.resetPassword(email, otp, newPassword);
-        setIsSubmitting(false);
-        if (result.success) {
-            showToast('Thành công', 'Đổi mật khẩu thành công.', 'success');
-            handleBackToLogin();
-        } else {
-            showToast('Lỗi', result.message || 'Thất bại.', 'error');
-        }
-    };
-
     const handleBackToLogin = () => {
-        setEmail(''); setOtp(''); setUsername(''); setPassword('');
+        setEmail(''); setUsername(''); setPassword('');
+        setIsEmailSent(false);
         setViewMode('login');
     };
 
+    const handleJoinSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        if (!email || !password) return;
+        
+        setIsSubmitting(true);
+        try {
+            const res = await authService.completeOnboarding(inviteToken, email, password);
+            if (res.success) {
+                showToast('Thành công', 'Tài khoản của bạn đã được kích hoạt. Đang đăng nhập...', 'success');
+                // Tự động đăng nhập sau khi signup
+                const loginRes = await authService.login(email, password);
+                if (loginRes.success) {
+                    onLoginSuccess();
+                } else {
+                    setViewMode('login');
+                }
+            } else {
+                showToast('Lỗi', res.message, 'error');
+            }
+        } catch (err) {
+            showToast('Lỗi', 'Không thể hoàn tất kích hoạt.', 'error');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div
@@ -128,45 +203,19 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
 
 
 
-            {/* Background */}
-            <div className="absolute inset-0 z-0 bg-slate-950 overflow-hidden overflow-x-hidden pointer-events-none max-w-full">
-                {/* 3D Depth Wrapper for Background Parallax */}
-                <div
-                    className="absolute inset-[-5%] w-[110%] h-[110%] transition-transform duration-300 ease-out"
-                    style={{ transform: `translate(${-mousePos.x * 2.5}px, ${mousePos.y * 2.5}px)` }}
-                >
-                    <img src={modernBg} alt="Modern Background" className="w-full h-full object-cover object-center select-none opacity-90 animate-cinema-pan mix-blend-screen" draggable="false" />
-                </div>
-                {/* Premium Vignette Overlay */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_30%,rgba(0,0,0,0.5)_120%)] pointer-events-none"></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/30 to-white/60 max-h-screen pointer-events-none"></div>
+            {/* Animated Background - Simple and Minimalist */}
+            <div className="absolute inset-0 z-0 bg-white overflow-hidden pointer-events-none flex items-center justify-center">
+                {/* Subtle mesh background without bright colors */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-white via-slate-50/50 to-slate-100/30 opacity-90 animate-mesh-pulse mix-blend-multiply"></div>
+                
+                {/* School Notebook Grid Pattern (Ô ly tập) - Moving and Clearer */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#7dd3fc_1px,transparent_1px),linear-gradient(to_bottom,#7dd3fc_1px,transparent_1px)] bg-[size:12px_12px] opacity-25 select-none pointer-events-none animate-grid-drift"></div>
 
-                {/* Animated Perspective Grid */}
-                <div className="absolute inset-0 perspective-1000 origin-bottom opacity-20 mt-[30vh] pointer-events-none">
-                    <div className="absolute inset-0 w-[200%] md:w-[150%] left-[-50%] md:left-[-25%] h-[200%] bg-grid animate-grid-rotate mix-blend-overlay"></div>
-                </div>
+                {/* Sub-line Notebook Grid Pattern - Moving and Clearer */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#38bdf8_1px,transparent_1px),linear-gradient(to_bottom,#38bdf8_1px,transparent_1px)] bg-[size:60px_60px] opacity-40 select-none pointer-events-none animate-grid-drift"></div>
 
-                {/* Animated Electric Light Beams */}
-                <div className="absolute inset-0 overflow-hidden opacity-60 pointer-events-none">
-                    <div className="beam left-[15%] animation-delay-0 mix-blend-screen"></div>
-                    <div className="beam left-[45%] animation-delay-2000 mix-blend-screen"></div>
-                    <div className="beam left-[75%] animation-delay-4000 mix-blend-screen"></div>
-                    <div className="beam left-[90%] animation-delay-1000 mix-blend-screen"></div>
-                </div>
-
-                {/* Floating Glowing Orbs - Optimized with transform-gpu and radial gradients */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute top-[10%] left-[20%] w-[40rem] h-[40rem] bg-[radial-gradient(circle,rgba(103,232,249,0.15)_0%,transparent_70%)] rounded-full mix-blend-screen animate-blob transform-gpu will-change-transform"></div>
-                    <div className="absolute top-[30%] right-[5%] w-[35rem] h-[35rem] bg-[radial-gradient(circle,rgba(147,197,253,0.15)_0%,transparent_70%)] rounded-full mix-blend-screen animate-blob animation-delay-2000 transform-gpu will-change-transform"></div>
-                    <div className="absolute bottom-[0%] left-[40%] w-[45rem] h-[45rem] bg-[radial-gradient(circle,rgba(165,180,252,0.1)_0%,transparent_70%)] rounded-full mix-blend-screen animate-blob animation-delay-4000 transform-gpu will-change-transform"></div>
-                </div>
-
-                {/* Horizontal Sweeping Laser */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute w-full h-[1px] bg-cyan-400/50 shadow-[0_0_20px_2px_rgba(34,211,238,0.5)] animate-scanline mix-blend-screen"></div>
-                </div>
-
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E')] opacity-[0.05] mix-blend-overlay pointer-events-none"></div>
+                {/* Single subtle slow sweeping line of light */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-50 animate-light-sweep pointer-events-none"></div>
             </div>
 
             {/* Main Content Container - Expanded for multi-section */}
@@ -200,67 +249,138 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
 
 
                 <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;700&display=swap');
+
                 @keyframes text-glow {
                     0%, 100% { opacity: 0.5; filter: brightness(1.2) blur(1px); }
                     50% { opacity: 1; filter: brightness(2) blur(2px) drop-shadow(0 0 5px #00ff00); }
                 }
                 .animate-text-glow { animation: text-glow 2s ease-in-out infinite; }
+
+                @keyframes handwritten-pulse {
+                    0%, 100% { opacity: 0.35; }
+                    50% { opacity: 0.55; }
+                }
+                .animate-handwritten-pulse { animation: handwritten-pulse 6s ease-in-out infinite; }
                 
                 @keyframes float-up {
                     0% { transform: translateY(20px); opacity: 0; }
                     100% { transform: translateY(0); opacity: 1; }
                 }
                 .animate-float-up { animation: float-up 0.8s ease-out forwards; }
+
+                @keyframes mesh-pulse {
+                    0%, 100% { opacity: 0.85; }
+                    50% { opacity: 0.95; }
+                }
+                @keyframes grid-drift {
+                    0% { background-position: 0px 0px; }
+                    100% { background-position: 60px 60px; }
+                }
+                @keyframes float-shape-1 {
+                    0%, 100% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+                    33% { transform: translate(30px, -50px) rotate(120deg) scale(1.1); }
+                    66% { transform: translate(-20px, 20px) rotate(240deg) scale(0.9); }
+                }
+                @keyframes float-shape-2 {
+                    0%, 100% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+                    33% { transform: translate(-40px, 30px) rotate(-120deg) scale(0.9); }
+                    66% { transform: translate(30px, -30px) rotate(-240deg) scale(1.1); }
+                }
+                @keyframes float-shape-3 {
+                    0%, 100% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+                    50% { transform: translate(40px, 40px) rotate(180deg) scale(1.15); }
+                }
+                @keyframes light-sweep {
+                    0% { transform: translateX(-100%) skewX(-12deg); }
+                    50%, 100% { transform: translateX(100%) skewX(-12deg); }
+                }
+                .animate-mesh-pulse { animation: mesh-pulse 8s ease-in-out infinite; }
+                .animate-grid-drift { animation: grid-drift 20s linear infinite; }
+                .animate-float-shape-1 { animation: float-shape-1 18s ease-in-out infinite; }
+                .animate-float-shape-2 { animation: float-shape-2 22s ease-in-out infinite; }
+                .animate-float-shape-3 { animation: float-shape-3 25s ease-in-out infinite; }
+                .animate-light-sweep { animation: light-sweep 12s ease-in-out infinite; }
+
+                @keyframes bubble-float {
+                    0% { transform: translateY(0) scale(1); opacity: 0; }
+                    20% { opacity: 0.45; }
+                    80% { opacity: 0.45; }
+                    100% { transform: translateY(-105vh) scale(1.5); opacity: 0; }
+                }
+                .animate-bubble-float { animation: bubble-float linear infinite; }
+
+                @keyframes aurora-1 {
+                    0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+                    33% { transform: translate(40px, -40px) rotate(120deg) scale(1.1); }
+                    66% { transform: translate(-20px, 30px) rotate(240deg) scale(0.9); }
+                }
+                @keyframes aurora-2 {
+                    0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+                    33% { transform: translate(-30px, 40px) rotate(-120deg) scale(1.1); }
+                    66% { transform: translate(40px, -20px) rotate(-240deg) scale(0.9); }
+                }
+                @keyframes aurora-3 {
+                    0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+                    50% { transform: translate(50px, 50px) rotate(180deg) scale(1.1); }
+                }
+                .animate-aurora-1 { animation: aurora-1 18s ease-in-out infinite; }
+                .animate-aurora-2 { animation: aurora-2 22s ease-in-out infinite; }
+                .animate-aurora-3 { animation: aurora-3 25s ease-in-out infinite; }
+
+                @keyframes clip-glow {
+                    0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.4)); }
+                    50% { filter: drop-shadow(0 0 16px rgba(255, 255, 255, 1)) drop-shadow(0 0 24px rgba(255, 255, 255, 0.6)); }
+                }
+                .animate-clip-glow { animation: clip-glow 3s ease-in-out infinite; }
             `}</style>
 
 
-                {/* Left Side: Features Showcase (New Redesign) */}
+                {/* Left Side: Features Showcase (Updated Neo-Brutalist EV Redesign) */}
                 <div className="hidden lg:flex w-full lg:w-1/2 flex-col justify-center relative z-50 px-2 sm:px-4 lg:px-0 lg:pr-12 mt-2 lg:mt-0 order-3 lg:order-1 pt-4 lg:pt-0 pb-12 sm:pb-20 lg:pb-0">
                     {/* Desktop Title Section */}
                     <div className="hidden lg:block text-left mb-10 w-full relative z-10">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50/80 border border-blue-200/50 text-blue-700 text-xs font-semibold tracking-[0.2em] uppercase mb-6 shadow-sm backdrop-blur-md animate-transformer-drop">
-                            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Hệ Thống Nội Bộ
+                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 text-xs font-bold tracking-[0.2em] uppercase mb-6 shadow-[4px_4px_0px_0px_#e2e8f0] animate-transformer-drop">
+                            <span className="w-2.5 h-2.5 bg-[#10b981] animate-pulse"></span> Hệ Thống Nội Bộ
                         </div>
-                        <h1 className="font-extrabold mb-4 tracking-tight leading-[1.2] drop-shadow-xl flex flex-row flex-nowrap whitespace-nowrap items-baseline gap-x-2 sm:gap-x-3">
-                            <span className="flex text-slate-800 text-xl sm:text-2xl lg:text-3xl xl:text-4xl">
+                        <h1 className="font-black mb-4 tracking-tight leading-none text-slate-800 flex flex-row flex-nowrap whitespace-nowrap items-baseline gap-x-2 sm:gap-x-3 uppercase">
+                            <span className="flex text-lg sm:text-xl lg:text-2xl xl:text-3xl italic font-black">
                                 {'Showroom'.split('').map((char, index) => (
                                     <span key={`sr-${index}`} className="inline-block animate-transformer-letter" style={{ animationDelay: `${0.2 + index * 0.06}s` }}>
                                         {char === ' ' ? '\u00A0' : char}
                                     </span>
                                 ))}
                             </span>
-                            <span className="flex text-3xl sm:text-4xl lg:text-5xl xl:text-6xl pb-2">
-                                {'Thuận An'.split('').map((char, index) => (
-                                    <span key={`ta-${index}`} className="inline-block animate-transformer-letter text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 drop-shadow-sm pb-2" style={{ animationDelay: `${0.8 + index * 0.06}s` }}>
-                                        {char === ' ' ? '\u00A0' : char}
-                                    </span>
-                                ))}
+                             <span className="inline-flex items-center text-3xl sm:text-4xl lg:text-5xl xl:text-5xl px-6 py-2.5 bg-[#0f172a] text-white font-black uppercase tracking-widest select-none shadow-[6px_6px_0px_0px_#0284c7] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[8px_8px_0px_0px_#0284c7] transition-all duration-300 ml-2">
+                                Thuận An
                             </span>
                         </h1>
-                        <p className="text-slate-600 text-sm sm:text-base max-w-md mx-auto lg:mx-0 leading-relaxed font-medium animate-transformer-fade-up">
-                            Hệ thống quản lý giúp bạn dễ dàng theo dõi đơn hàng, kiểm tra kho xe và tối ưu quy trình bán hàng.
+                        <p className="text-slate-600 text-sm sm:text-base max-w-md mx-auto lg:mx-0 leading-relaxed font-bold animate-transformer-fade-up">
+                            Hệ thống quản lý thông minh giúp bạn dễ dàng theo dõi đơn hàng, kiểm tra kho xe và tối ưu quy trình bán hàng.
                         </p>
                     </div>
 
-                    {/* Features Showcase - Glass Panel */}
-                    <div className="relative w-full max-w-[560px] mx-auto lg:mx-0 p-[1px] rounded-3xl shadow-[0_30px_60px_rgba(59,130,246,0.05)] animate-transformer-slam">
-                        <div className="absolute inset-0 rounded-3xl bg-slate-50/5 backdrop-blur-[15px] border border-white/20 shadow-[inset_0_0_20px_rgba(255,255,255,0.1)]"></div>
-                        <div className="relative flex flex-col gap-1 p-3 sm:p-5 overflow-hidden">
+                    {/* Features Showcase - Neo-Brutalist Panel */}
+                    <div className="relative w-full max-w-[560px] mx-auto lg:mx-0 p-0 bg-white border-2 border-slate-300 shadow-[8px_8px_0px_0px_#e2e8f0] animate-transformer-slam flex flex-col overflow-hidden">
+                        {/* Top banner accent */}
+                        <div className="h-2 bg-gradient-to-r from-[#0284c7] via-[#06b6d4] to-[#10b981] border-b border-slate-200 w-full"></div>
+                        
+                        <div className="relative flex flex-col gap-3 p-5 overflow-hidden">
                             {[
-                                { icon: 'fa-file-signature', title: 'Tiến Độ Đơn Hàng', desc: 'Theo dõi toàn bộ vòng đời của đơn hàng của\u00A0bạn' },
-                                { icon: 'fa-warehouse', title: 'Kho Xe', desc: 'Tra cứu thông tin phiên bản màu sắc theo nhu\u00A0cầu' },
-                                { icon: 'fa-chart-line', title: 'Lịch Sử Bán Hàng', desc: 'Sổ sách và báo cáo phân tích trực\u00A0quan.' }
+                                { icon: 'fa-file-signature', title: 'Tiến Độ Đơn Hàng', desc: 'Theo dõi toàn bộ vòng đời của đơn hàng của bạn' },
+                                { icon: 'fa-warehouse', title: 'Kho Xe', desc: 'Tra cứu thông tin phiên bản màu sắc theo nhu cầu' },
+                                { icon: 'fa-chart-line', title: 'Lịch Sử Bán Hàng', desc: 'Sổ sách và báo cáo phân tích trực quan.' }
                             ].map((feat, idx) => (
-                                <div key={idx} className={`animate-transformer-item-${idx + 1} flex items-center gap-4 sm:gap-5 p-3 sm:p-4 rounded-2xl hover:bg-white/20 transition-all duration-300 group cursor-default shadow-sm border border-transparent hover:border-white/30 hover:shadow-lg backdrop-blur-sm`}>
-                                    <div className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 rounded-full flex items-center justify-center bg-white/30 border border-white/50 text-slate-700 group-hover:text-blue-600 group-hover:border-cyan-300 group-hover:bg-white/60 transition-all duration-300 shadow-sm">
-                                        <i className={`fa-solid ${feat.icon} text-lg sm:text-xl transform group-hover:scale-110 transition-transform duration-300`}></i>
+                                <div key={idx} className={`animate-transformer-item-${idx + 1} flex items-center gap-4 sm:gap-5 p-4 bg-white border border-slate-300 shadow-[4px_4px_0px_0px_#e2e8f0] hover:shadow-[6px_6px_0px_0px_#e2e8f0] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all duration-300 cursor-default`}>
+                                    <div className="w-12 h-12 sm:w-14 sm:h-14 shrink-0 bg-slate-50 border border-slate-200 text-slate-700 flex items-center justify-center shadow-[2px_2px_0px_0px_#f1f5f9] transition-all duration-300">
+                                        <i className={`fa-solid ${feat.icon} text-xl sm:text-2xl text-[#0284c7]`}></i>
                                     </div>
                                     <div className="text-left flex-1">
-                                        <h3 className="text-slate-800 font-bold text-sm sm:text-base tracking-wide mb-1 group-hover:text-blue-600 transition-colors drop-shadow-sm">{feat.title}</h3>
-                                        <p className="text-slate-500 text-sm leading-relaxed">{feat.desc}</p>
+                                        <h3 className="text-slate-800 font-black text-sm sm:text-base tracking-wide mb-1 transition-colors">{feat.title}</h3>
+                                        <p className="text-slate-500 text-sm font-bold leading-relaxed">{feat.desc}</p>
                                     </div>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-blue-500/70 pr-2 transform translate-x-[-10px] group-hover:translate-x-0">
-                                        <i className="fa-solid fa-chevron-right text-xs"></i>
+                                    <div className="text-[#0284c7] pr-2">
+                                        <i className="fa-solid fa-chevron-right text-sm"></i>
                                     </div>
                                 </div>
                             ))}
@@ -268,166 +388,216 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                     </div>
                 </div>
 
-                {/* Right Side: Modern Login Frame with 3D Parallax */}
+                {/* Right Side: Neo-Brutalist Premium Login Frame with 3D Parallax */}
                 <div className="w-full lg:w-1/2 flex items-center justify-center lg:justify-end relative z-50 px-2 sm:px-4 lg:px-0 perspective-1000 order-2 lg:order-2">
                     <div
-                        className="relative w-full max-w-[420px] p-6 sm:p-8 md:p-10 rounded-[2rem] bg-white/5 backdrop-blur-[20px] border border-white/20 shadow-[0_30px_60px_rgba(0,0,0,0.1),inset_0_0_20px_rgba(255,255,255,0.2)] flex flex-col items-center justify-center group transition-transform duration-300 ease-out pointer-events-auto"
+                        className="relative w-full max-w-[420px] transition-all duration-500 ease-out pointer-events-auto p-0 bg-transparent border-none shadow-none"
                         style={{ transform: `translate(${mousePos.x}px, ${mousePos.y}px) scale3d(1.02, 1.02, 1.02)` }}
                     >
 
-                        {/* Edge Lighting Shimmer */}
-                        <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
-                            <div className="absolute top-0 -left-[100%] w-[200%] h-full bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent group-hover:transition-all group-hover:duration-1500 group-hover:left-[100%]"></div>
-                        </div>
+                        {/* Asymmetric Hard-Edged Card - Neo-Brutalist Signature Style */}
+                        <div className="w-full bg-white border-2 border-slate-300 shadow-[8px_8px_0px_0px_#e2e8f0] hover:shadow-[12px_12px_0px_0px_#e2e8f0] transition-all overflow-visible relative z-20 flex flex-col">
+                            
+                            {/* Card Accent Top Banner - Soft EV cyan to emerald */}
+                            <div className="h-4 bg-gradient-to-r from-[#0284c7] via-[#06b6d4] to-[#10b981] border-b border-slate-200 w-full relative"></div>
 
-                        {/* Top Gloss Highlight */}
-                        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-80"></div>
+                            {/* Paperclip Image in Top Right */}
+                            <div className="absolute top-[-26px] right-6 z-30 select-none hover:scale-110 transition-all cursor-pointer rotate-[30deg] animate-clip-glow">
+                                <img src={kepgiay} alt="Paperclip" className="w-16 h-16 object-contain drop-shadow-lg" />
+                            </div>
 
-
-                        <div className="text-center mb-8 w-full relative z-10 animate-stagger-1">
-                            <h2 className="text-2xl font-bold text-slate-800 mb-2 tracking-tight">
-                                {viewMode === 'login' ? 'Truy Cập Hệ Thống' : viewMode === 'forgot' ? 'Khôi Phục' : 'Mật Khẩu Mới'}
-                            </h2>
-                            <p className="text-blue-600 text-[10px] tracking-[0.2em] uppercase font-semibold min-h-[16px] opacity-80">
-                                {typingText}<span className="animate-blink text-slate-800">|</span>
-                            </p>
-                        </div>
-
-                        {viewMode === 'login' && (
-                            <form onSubmit={handleLoginSubmit} className="space-y-3 w-full relative z-10">
-                                <div className="space-y-2 animate-stagger-2 pt-2">
-                                    <div className="relative group/input">
-                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <i className="fas fa-user text-slate-400 text-sm transition-colors group-focus-within/input:text-blue-500"></i>
+                            {/* Dynamic Content Area */}
+                            <main className="px-6 py-10 transition-all duration-300">
+                                {viewMode === 'login' && (
+                                    <div key="login-view" className="animate-fade-in">
+                                        <div className="text-[12px] font-mono tracking-wider font-bold text-[#0284c7] mb-1 uppercase">Xin chào,</div>
+                                        <div className="text-[26px] text-slate-800 font-black mb-8 uppercase tracking-tight leading-none">
+                                            Đăng Nhập
                                         </div>
-                                        <input
-                                            value={username}
-                                            onChange={e => setUsername(e.target.value)}
-                                            type="text"
-                                            className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/30 rounded-xl text-slate-800 placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:bg-white/30 transition-all text-sm shadow-inner focus:shadow-[0_0_20px_rgba(34,211,238,0.2)] backdrop-blur-md font-medium"
-                                            placeholder="Tên đăng nhập"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2 pb-2 animate-stagger-3">
-                                    <div className="relative group/input">
-                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <i className="fas fa-lock text-slate-500 text-sm transition-colors group-focus-within/input:text-cyan-500"></i>
-                                        </div>
-                                        <input
-                                            value={password}
-                                            onChange={e => setPassword(e.target.value)}
-                                            type="password"
-                                            className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/30 rounded-xl text-slate-800 placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:bg-white/30 transition-all text-sm shadow-inner focus:shadow-[0_0_20px_rgba(34,211,238,0.2)] backdrop-blur-md font-medium"
-                                            placeholder="Mật khẩu"
-                                        />
-                                    </div>
-                                </div>
 
-                                <div className="animate-stagger-4 pt-4">
-                                    <button
-                                        type="submit"
-                                        disabled={isSubmitting}
-                                        className={`w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transform transition-all hover:-translate-y-0.5 active:scale-[0.98] uppercase tracking-[0.15em] text-xs flex items-center justify-center gap-3 relative overflow-hidden`}
-                                    >
-                                        {isSubmitting ? (
+                                        <div className="space-y-6">
+                                            <form onSubmit={handleLoginSubmit} className="space-y-5">
+                                                <div className="space-y-2">
+                                                    <label className="text-[11px] font-black text-slate-800 uppercase tracking-wider block">
+                                                        Tài khoản Email
+                                                    </label>
+                                                    <div className="relative">
+                                                        <input
+                                                            value={username}
+                                                            onChange={e => setUsername(e.target.value)}
+                                                            type="text"
+                                                            required
+                                                            placeholder="example@gmail.com"
+                                                            className="w-full px-4 py-4 bg-white border border-slate-300 focus:bg-slate-50 focus:outline-none focus:shadow-[4px_4px_0px_0px_#f1f5f9] outline-none text-[14px] text-slate-800 font-bold transition-all placeholder:text-slate-400 font-mono"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="text-[11px] font-black text-slate-800 uppercase tracking-wider block">
+                                                        Mật khẩu
+                                                    </label>
+                                                    <div className="relative">
+                                                        <input
+                                                            value={password}
+                                                            onChange={e => setPassword(e.target.value)}
+                                                            type="password"
+                                                            required
+                                                            placeholder="••••••••"
+                                                            className="w-full px-4 py-4 bg-white border border-slate-300 focus:bg-slate-50 focus:outline-none focus:shadow-[4px_4px_0px_0px_#f1f5f9] outline-none text-[14px] text-slate-800 font-bold transition-all placeholder:text-slate-400 font-mono"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex justify-center pt-2">
+                                                    <button
+                                                        type="submit"
+                                                        disabled={isSubmitting}
+                                                        className="w-full bg-[#0284c7] hover:bg-[#0369a1] text-white py-4 px-10 border border-slate-300 font-black text-[14px] tracking-[1.5px] shadow-[4px_4px_0px_0px_#e2e8f0] hover:shadow-[6px_6px_0px_0px_#cbd5e1] hover:translate-x-[-2px] hover:translate-y-[-2px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-70 flex items-center justify-center gap-3 uppercase cursor-pointer"
+                                                    >
+                                                        {isSubmitting ? <i className="fas fa-spinner fa-spin"></i> : 'ĐĂNG NHẬP'}
+                                                    </button>
+                                                </div>
+                                            </form>
+
+                                            <div className="text-center mt-6">
+                                                <button type="button" onClick={() => setViewMode('forgot')} className="text-slate-700 hover:text-[#0284c7] underline text-[12px] font-bold tracking-wider transition-colors uppercase">
+                                                    Bạn quên mật khẩu?
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {viewMode === 'forgot' && (
+                                    <div key="forgot-view" className="animate-fade-in">
+                                        {!isEmailSent ? (
                                             <>
-                                                <i className="fas fa-circle-notch fa-spin text-lg"></i>
-                                                <span>Đang Xác Thực...</span>
+                                                <div className="text-[12px] font-mono tracking-wider font-bold text-[#0284c7] mb-1 uppercase">Khôi phục,</div>
+                                                <div className="text-[26px] text-slate-800 font-black mb-8 uppercase tracking-tight leading-none">
+                                                    Quên Mật Khẩu
+                                                </div>
+
+                                                <div className="space-y-6">
+                                                    <div className="text-[13px] text-slate-800 leading-relaxed font-bold bg-slate-50 p-4 border border-slate-300 shadow-[4px_4px_0px_0px_#f1f5f9]">
+                                                        Vui lòng nhập email đã đăng ký. Link khôi phục sẽ được gửi ngay lập tức.
+                                                    </div>
+
+                                                    <form onSubmit={handleForgotPasswordSubmit} className="space-y-5">
+                                                        <div className="space-y-2">
+                                                            <label className="text-[11px] font-black text-slate-800 uppercase tracking-wider block">Địa chỉ Email</label>
+                                                            <input
+                                                                value={email}
+                                                                onChange={e => setEmail(e.target.value)}
+                                                                type="email"
+                                                                required
+                                                                placeholder="example@gmail.com"
+                                                                className="w-full px-4 py-4 bg-white border border-slate-300 focus:bg-slate-50 focus:outline-none focus:shadow-[4px_4px_0px_0px_#f1f5f9] outline-none text-[14px] text-slate-800 font-bold transition-all placeholder:text-slate-400 font-mono"
+                                                            />
+                                                        </div>
+
+                                                        <div className="flex justify-center pt-2">
+                                                            <button
+                                                                type="submit"
+                                                                disabled={isSubmitting}
+                                                                className="w-full bg-[#0284c7] hover:bg-[#0369a1] text-white py-4 px-10 border border-slate-300 font-black text-[14px] tracking-[1.5px] shadow-[4px_4px_0px_0px_#e2e8f0] hover:shadow-[6px_6px_0px_0px_#cbd5e1] hover:translate-x-[-2px] hover:translate-y-[-2px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-70 flex items-center justify-center gap-3 uppercase cursor-pointer"
+                                                            >
+                                                                {isSubmitting ? <i className="fas fa-spinner fa-spin"></i> : 'Gửi yêu cầu'}
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
                                             </>
-                                        ) : 'Đăng Nhập'}
-                                    </button>
-                                </div>
-
-                                <div className="text-center flex justify-center mt-6 animate-stagger-5 pt-2">
-                                    <button type="button" onClick={() => setViewMode('forgot')} className="text-slate-500 hover:text-blue-600 text-xs transition-colors font-semibold relative z-20 p-2 cursor-pointer inline-block">
-                                        Quên mật khẩu?
-                                    </button>
-                                </div>
-                            </form>
-                        )}
-
-                        {viewMode === 'forgot' && (
-                            <form key="forgot" onSubmit={handleForgotPasswordSubmit} className="space-y-4 w-full relative z-10">
-                                <div className="space-y-2 animate-stagger-2 pt-2">
-                                    <div className="relative group/input">
-                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                            <i className="fas fa-envelope text-slate-400 text-sm transition-colors group-focus-within/input:text-blue-500"></i>
+                                        ) : (
+                                            <div className="text-center py-6">
+                                                <div className="w-16 h-16 bg-[#10b981] border border-slate-200 rounded-none flex items-center justify-center mx-auto mb-6 shadow-[4px_4px_0px_0px_#f1f5f9]">
+                                                    <i className="fas fa-check text-white text-2xl"></i>
+                                                </div>
+                                                <h3 className="text-[22px] font-black text-slate-800 mb-2 uppercase tracking-tight">Đã Gửi Link!</h3>
+                                                <p className="text-slate-800 text-[13px] leading-relaxed px-4 font-bold">
+                                                    Vui lòng kiểm tra email <span className="underline decoration-[#0284c7] decoration-2">{email}</span>.
+                                                </p>
+                                                
+                                                <div className="mt-8 p-4 bg-slate-50 rounded-none border border-slate-200 text-[12px] font-bold text-slate-700 text-left flex items-start gap-3 shadow-[4px_4px_0px_0px_#f1f5f9]">
+                                                    <i className="fas fa-info-circle mt-0.5 text-sm"></i>
+                                                    <span className="leading-relaxed">Nếu không thấy email, vui lòng kiểm tra hộp thư rác (Spam).</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                        
+                                        <div className="text-center mt-10">
+                                            <button type="button" onClick={handleBackToLogin} className="text-slate-700 hover:text-[#0284c7] text-[13px] font-black underline transition-colors flex items-center justify-center gap-2 mx-auto group">
+                                                <i className="fas fa-arrow-left text-[11px] transition-transform group-hover:-translate-x-1"></i>
+                                                Quay lại Đăng nhập
+                                            </button>
                                         </div>
-                                        <input
-                                            value={email}
-                                            onChange={e => setEmail(e.target.value)}
-                                            type="email"
-                                            className="w-full pl-11 pr-4 py-3.5 bg-white/10 border border-white/30 rounded-xl text-slate-800 placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:bg-white/30 transition-all text-sm shadow-inner focus:shadow-[0_0_20px_rgba(34,211,238,0.2)] backdrop-blur-md font-medium z-10 relative"
-                                            placeholder="Email đăng ký"
-                                        />
                                     </div>
-                                </div>
-                                <div className="animate-stagger-3 pt-4">
-                                    <button
-                                        type="submit"
-                                        disabled={isSubmitting}
-                                        className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transform transition-all hover:-translate-y-0.5 active:scale-[0.98] uppercase tracking-[0.15em] text-xs flex items-center justify-center gap-3 relative overflow-hidden z-10"
-                                    >
-                                        {isSubmitting ? <i className="fas fa-circle-notch fa-spin"></i> : 'Gửi Mã Xác Nhận'}
-                                    </button>
-                                </div>
-                                <div className="text-center flex justify-center mt-6 animate-stagger-4 pt-2">
-                                    <button type="button" onClick={handleBackToLogin} className="text-slate-500 hover:text-blue-600 text-xs transition-colors font-semibold relative z-20 p-2 cursor-pointer inline-block">
-                                        Quay lại đăng nhập
-                                    </button>
-                                </div>
-                            </form>
-                        )}
+                                )}
 
-                        {viewMode === 'reset' && (
-                            <form key="reset" onSubmit={handleResetPasswordSubmit} className="space-y-4 w-full relative z-10">
-                                <div className="space-y-2 animate-stagger-2 pt-2">
-                                    <input
-                                        value={otp}
-                                        onChange={e => setOtp(e.target.value)}
-                                        type="text"
-                                        className="w-full px-4 py-3.5 bg-white/10 border border-white/30 rounded-xl text-slate-800 placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:bg-white/30 transition-all text-sm shadow-inner text-center tracking-[0.5em] focus:shadow-[0_0_20px_rgba(34,211,238,0.2)] backdrop-blur-md font-bold"
-                                        placeholder="Mã OTP"
-                                    />
-                                </div>
-                                <div className="space-y-2 animate-stagger-3">
-                                    <input
-                                        value={newPassword}
-                                        onChange={e => setNewPassword(e.target.value)}
-                                        type="password"
-                                        className="w-full px-4 py-3.5 bg-white/10 border border-white/30 rounded-xl text-slate-800 placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:bg-white/30 transition-all text-sm shadow-inner focus:shadow-[0_0_20px_rgba(34,211,238,0.2)] backdrop-blur-md font-medium"
-                                        placeholder="Mật khẩu mới"
-                                    />
-                                </div>
-                                <div className="space-y-2 animate-stagger-4">
-                                    <input
-                                        value={confirmPassword}
-                                        onChange={e => setConfirmPassword(e.target.value)}
-                                        type="password"
-                                        className="w-full px-4 py-3.5 bg-white/10 border border-white/30 rounded-xl text-slate-800 placeholder-slate-600 focus:outline-none focus:border-cyan-400 focus:bg-white/30 transition-all text-sm shadow-inner focus:shadow-[0_0_20px_rgba(34,211,238,0.2)] backdrop-blur-md font-medium"
-                                        placeholder="Nhập lại mật khẩu"
-                                    />
-                                </div>
-                                <div className="animate-stagger-5 pt-4">
-                                    <button
-                                        type="submit"
-                                        disabled={isSubmitting}
-                                        className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transform transition-all hover:-translate-y-0.5 active:scale-[0.98] uppercase tracking-[0.15em] text-xs flex items-center justify-center gap-3 relative overflow-hidden z-10"
-                                    >
-                                        {isSubmitting ? <i className="fas fa-circle-notch fa-spin"></i> : 'Đổi Mật Khẩu'}
-                                    </button>
-                                </div>
-                                <div className="text-center flex justify-center mt-6 animate-stagger-5 pt-2">
-                                    <button type="button" onClick={handleBackToLogin} className="text-slate-500 hover:text-blue-600 text-xs transition-colors font-semibold relative z-20 p-2 cursor-pointer inline-block">
-                                        Hủy bỏ
-                                    </button>
-                                </div>
-                            </form>
-                        )}
+                                {viewMode === 'join' && (
+                                    <div key="join-view" className="animate-fade-in">
+                                        <div className="text-[12px] font-mono tracking-wider font-bold text-[#0284c7] mb-1 uppercase">Chào mừng,</div>
+                                        <div className="text-[22px] text-slate-800 font-black mb-6 uppercase tracking-tight leading-none">Tham Gia Hệ Thống</div>
+
+                                        <div className="bg-white border border-slate-300 p-5 space-y-5 shadow-[4px_4px_0px_0px_#e2e8f0]">
+                                            <div className="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200">
+                                                <div className="w-12 h-12 border border-slate-300 bg-white flex items-center justify-center text-slate-800 shadow-[2px_2px_0px_0px_#f1f5f9]">
+                                                    <i className="fas fa-user-tie text-xl"></i>
+                                                </div>
+                                                <div className="overflow-hidden">
+                                                    <div className="text-[10px] text-[#0284c7] font-black uppercase tracking-wider">Nhân viên mới</div>
+                                                    <div className="text-slate-800 text-[15px] font-black leading-tight truncate">{invitationDetails?.full_name}</div>
+                                                    <div className="text-[11px] font-mono font-bold text-slate-600 truncate">{invitationDetails?.role}</div>
+                                                </div>
+                                            </div>
+
+                                            <form onSubmit={handleJoinSubmit} className="space-y-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-[10px] font-black text-slate-800 uppercase tracking-wider block">Xác nhận Email</label>
+                                                    <input
+                                                        value={email}
+                                                        onChange={e => setEmail(e.target.value)}
+                                                        required
+                                                        type="email"
+                                                        className="w-full px-3 py-3 bg-white border border-slate-300 focus:bg-slate-50 focus:outline-none focus:shadow-[4px_4px_0px_0px_#f1f5f9] text-[13px] text-slate-800 font-bold transition-all placeholder:text-slate-400 font-mono"
+                                                        placeholder="example@gmail.com"
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-1 pt-2">
+                                                    <label className="text-[10px] font-black text-slate-800 uppercase tracking-wider block">Thiết lập mật khẩu</label>
+                                                    <input
+                                                        value={password}
+                                                        onChange={e => setPassword(e.target.value)}
+                                                        required
+                                                        type="password"
+                                                        className="w-full px-3 py-3 bg-white border border-slate-300 focus:bg-slate-50 focus:outline-none focus:shadow-[4px_4px_0px_0px_#f1f5f9] text-[13px] text-slate-800 font-bold transition-all placeholder:text-slate-400 font-mono"
+                                                        placeholder="Tối thiểu 10 ký tự..."
+                                                    />
+                                                </div>
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={isSubmitting}
+                                                    className="w-full bg-[#0284c7] hover:bg-[#0369a1] text-white py-4 border border-slate-300 font-black text-[13px] shadow-[4px_4px_0px_0px_#e2e8f0] hover:shadow-[6px_6px_0px_0px_#cbd5e1] hover:translate-x-[-2px] hover:translate-y-[-2px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-70 flex items-center justify-center gap-2 mt-4 uppercase cursor-pointer"
+                                                >
+                                                    {isSubmitting ? <i className="fas fa-spinner fa-spin"></i> : 'KÍCH HOẠT TÀI KHOẢN'}
+                                                </button>
+                                            </form>
+                                        </div>
+
+                                        <div className="text-center mt-8">
+                                            <button type="button" onClick={handleBackToLogin} className="text-slate-700 hover:text-[#0284c7] text-[11px] font-black uppercase tracking-widest underline transition-colors">
+                                                Quay lại đăng nhập
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </main>
+                        </div>
                     </div>
-                </div >
-            </div >
+                </div>
+            </div>
 
             <style>{`
                 @keyframes cinema-pan {

@@ -28,7 +28,8 @@ interface AdminFilterPanelProps {
     isLoadingXuathoadon: boolean;
     isLoadingHistory: boolean;
     isLoadingVc: boolean;
-    activeMatchingTab?: 'pending' | 'paired';
+    activeMatchingTab?: 'pending' | 'paired' | 'suggested';
+    suggestedCount?: number;
 }
 
 const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
@@ -36,7 +37,7 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
     handleFilterChange, handleReset, filterOptions,
     invoiceRequests, pendingData, pairedData, vcRequests,
     refetchXuathoadon, refetchHistory, fetchVcData,
-    isLoadingXuathoadon, isLoadingHistory, isLoadingVc, activeMatchingTab
+    isLoadingXuathoadon, isLoadingHistory, isLoadingVc, activeMatchingTab, suggestedCount
 }) => {
     if (['dashboard', 'phongkd', 'activityLog', 'activeUsers'].includes(adminView)) {
         return null;
@@ -103,6 +104,9 @@ const AdminFilterPanel: React.FC<AdminFilterPanelProps> = ({
             ];
             searchPlaceholder = "Tìm SĐH, Tên KH...";
             totalCount = activeMatchingTab === 'paired' ? pairedData.length : pendingData.length;
+            if (activeMatchingTab === 'suggested' && suggestedCount !== undefined) {
+                totalCount = suggestedCount;
+            }
             onRefresh = () => refetchHistory();
             isLoading = isLoadingHistory;
             break;

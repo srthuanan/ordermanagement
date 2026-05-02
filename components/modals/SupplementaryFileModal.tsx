@@ -3,7 +3,7 @@ import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
 import Button from '../ui/Button';
 
-import { extractDocumentWithGemini, compareDocumentWithOrder } from '../../utils/aiGeminiPdfScanner';
+
 
 interface SupplementaryFileModalProps {
     order: Order;
@@ -18,59 +18,14 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
     const [contractFile, setContractFile] = useState<File | null>(null);
     const [proposalFile, setProposalFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-
-    // AI Scanner state — track mismatches per file label
-    const [isScanning, setIsScanning] = useState(false);
-    const [scanResult, setScanResult] = useState<{ isValid: boolean; mismatches: string[] } | null>(null);
-
     const [processingStage, setProcessingStage] = useState(0);
-
-    const scanSingleFile = async (file: File, fileLabel: string) => {
-        setIsScanning(true);
-        try {
-            const data = await extractDocumentWithGemini(file);
-            const { mismatches } = compareDocumentWithOrder(data, order);
-            const prefixedMismatches = mismatches.map(m => `[${fileLabel}] ${m}`);
-
-            setScanResult(prev => {
-                const prevMismatches = prev ? (prev.mismatches || []) : [];
-                const filteredOther = prevMismatches.filter(m => !m.startsWith(`[${fileLabel}]`));
-                const combined = [...filteredOther, ...prefixedMismatches];
-                return {
-                    isValid: combined.length === 0,
-                    mismatches: [...new Set(combined)],
-                };
-            });
-        } catch (e: any) {
-            if (showToast) showToast('Lỗi tự động quét', e.message || 'Quét thất bại', 'error');
-        } finally {
-            setIsScanning(false);
-        }
-    };
 
     const handleContractFileSelect = (file: File | null) => {
         setContractFile(file);
-        if (file) {
-            scanSingleFile(file, 'HĐMB');
-        } else {
-            setScanResult(prev => prev ? {
-                ...prev,
-                mismatches: prev.mismatches.filter(m => !m.startsWith('[HĐMB]'))
-            } : null);
-        }
     };
 
     const handleProposalFileSelect = (file: File | null) => {
         setProposalFile(file);
-        if (file) {
-            scanSingleFile(file, 'ĐNXHĐ');
-        } else {
-            setScanResult(prev => prev ? {
-                ...prev,
-                mismatches: prev.mismatches.filter(m => !m.startsWith('[ĐNXHĐ]'))
-            } : null);
-        }
     };
 
     const handleSubmit = async () => {
@@ -82,14 +37,8 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
         setProcessingStage(1);
 
         try {
-            let aiNote = '';
-            if (scanResult) {
-                if (scanResult.mismatches && scanResult.mismatches.length > 0) {
-                    aiNote = '⚠️ ' + scanResult.mismatches.join(' | ');
-                } else {
-                    aiNote = '✅ Khớp 100% chứng từ, không phát hiện sai lệch.';
-                }
-            }
+            // AI note will be handled in background by the API service
+            const aiNote = '';
 
             await new Promise(r => setTimeout(r, 600)); // fake delay for UX
             setProcessingStage(2);
@@ -109,7 +58,6 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
     };
 
     const isFormValid = contractFile || proposalFile;
-    const hasErrors = !!(scanResult && !scanResult.isValid && (scanResult.mismatches || []).length > 0);
 
     const ProcessingStep = ({ label, status }: { label: string, status: 'pending' | 'active' | 'completed' }) => {
         let icon = "fa-circle text-border-secondary";
@@ -158,8 +106,8 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
                     <p className="text-sm text-text-secondary mb-6">{processingStage === 4 ? 'Hồ sơ đã được gửi hệ thống thành công.' : 'Vui lòng không tắt trình duyệt...'}</p>
 
                     <div className="w-full space-y-3">
-                        <ProcessingStep label="Phân tích Hợp đồng mua bán" status={processingStage > 1 ? 'completed' : processingStage === 1 ? 'active' : 'pending'} />
-                        <ProcessingStep label="Phân tích Đề nghị xuất hóa đơn" status={processingStage > 2 ? 'completed' : processingStage === 2 ? 'active' : 'pending'} />
+                        <ProcessingStep label="Đang tải Hợp đồng mua bán" status={processingStage > 1 ? 'completed' : processingStage === 1 ? 'active' : 'pending'} />
+                        <ProcessingStep label="Đang tải Đề nghị xuất hóa đơn" status={processingStage > 2 ? 'completed' : processingStage === 2 ? 'active' : 'pending'} />
                         <ProcessingStep label="Đang đồng bộ dữ liệu..." status={processingStage > 3 ? 'completed' : processingStage === 3 ? 'active' : 'pending'} />
                     </div>
                 </div>
@@ -203,37 +151,37 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
                     </header>
 
                     <main className="flex-grow min-h-0 flex flex-col overflow-hidden relative z-10">
-                        <div className={`flex-grow flex flex-col ${hasErrors ? 'p-3 gap-3' : 'p-4 md:p-5 gap-4'} overflow-hidden`}>
+                        <div className="flex-grow flex flex-col p-4 md:p-5 gap-4 overflow-hidden">
                             {/* Summary Box */}
-                            <div className={`bg-gradient-to-br from-blue-50/80 via-white to-blue-50/80 flex-shrink-0 rounded-xl border border-blue-200/40 relative overflow-hidden group shadow-sm transition-all duration-300 ${hasErrors ? 'p-2 md:p-2.5' : 'p-3 md:p-4'}`}>
+                            <div className="bg-gradient-to-br from-blue-50/80 via-white to-blue-50/80 flex-shrink-0 rounded-xl border border-blue-200/40 relative overflow-hidden group shadow-sm transition-all duration-300 p-3 md:p-4">
                                 <div className="absolute top-0 right-0 p-2 md:p-3 opacity-10 group-hover:opacity-20 transition-opacity">
                                     <i className="fas fa-folder-open text-4xl md:text-5xl text-blue-600 transform rotate-12"></i>
                                 </div>
-                                <div className={`grid grid-cols-1 md:grid-cols-4 relative z-10 ${hasErrors ? 'gap-1.5' : 'gap-3 md:gap-4'}`}>
+                                <div className="grid grid-cols-1 md:grid-cols-4 relative z-10 gap-3 md:gap-4">
                                     <div className="flex flex-col">
                                         <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-text-secondary font-semibold mb-0.5">Số đơn hàng</span>
-                                        <div className={`flex items-center gap-1.5 text-blue-600 ${hasErrors ? 'text-xs' : ''}`}>
+                                        <div className="flex items-center gap-1.5 text-blue-600">
                                             <i className="fas fa-barcode opacity-70"></i>
                                             <span className="font-bold font-mono tracking-tight">{order["Số đơn hàng"]}</span>
                                         </div>
                                     </div>
                                     <div className="flex flex-col md:border-l md:border-accent-primary/20 md:pl-4">
                                         <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-text-secondary font-semibold mb-0.5">Khách hàng</span>
-                                        <div className={`flex items-center gap-1.5 text-text-primary ${hasErrors ? 'text-xs' : ''}`}>
+                                        <div className="flex items-center gap-1.5 text-text-primary">
                                             <i className="fas fa-user text-blue-600 opacity-70"></i>
                                             <span className="font-bold truncate" title={order["Tên khách hàng"]}>{order["Tên khách hàng"]}</span>
                                         </div>
                                     </div>
                                     <div className="flex flex-col md:border-l md:border-accent-primary/20 md:pl-4">
                                         <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-text-secondary font-semibold mb-0.5">Số VIN</span>
-                                        <div className={`flex items-center gap-1.5 text-text-primary ${hasErrors ? 'text-xs' : ''}`}>
+                                        <div className="flex items-center gap-1.5 text-text-primary">
                                             <i className="fas fa-car text-blue-600 opacity-70"></i>
                                             <span className="font-bold font-mono tracking-tight">{order.VIN || '---'}</span>
                                         </div>
                                     </div>
                                     <div className="flex flex-col md:border-l md:border-accent-primary/20 md:pl-4">
                                         <span className="text-[9px] md:text-[10px] uppercase tracking-wider text-text-secondary font-semibold mb-0.5">Ngoại thất / Máy</span>
-                                        <div className={`flex items-center gap-1.5 text-text-primary ${hasErrors ? 'text-xs' : ''}`}>
+                                        <div className="flex items-center gap-1.5 text-text-primary">
                                             <i className="fas fa-palette text-blue-600 opacity-70"></i>
                                             <span className="font-bold tracking-tight">{order["Ngoại thất"] || '---'}</span>
                                         </div>
@@ -242,63 +190,42 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
                             </div>
 
                             {/* Alert/Instruction */}
-                            {!hasErrors && (
-                                <div className="flex flex-shrink-0 items-start gap-3 p-4 text-sm bg-warning-bg/80 rounded-lg border border-warning/40 text-amber-900 shadow-sm backdrop-blur-md">
-                                    <i className="fas fa-info-circle mt-0.5 text-amber-600 text-lg"></i>
-                                    <p className="leading-relaxed">
-                                        <strong>Lưu ý:</strong> Chỉ cần tải lên tệp bạn muốn bổ sung hoặc thay thế. Các chứng từ cũ không được chọn tải lên sẽ vẫn giữ nguyên an toàn trên hệ thống.
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* File Uploads */}
-                            <div className={`bg-white/60 flex flex-col ${hasErrors ? 'p-2' : 'p-4 md:p-5'} rounded-xl border border-gray-200/60 shadow-sm transition-all duration-300`}>
-                                <div className={`flex items-center justify-between ${hasErrors ? 'mb-1 items-end' : 'mb-4'}`}>
-                                    <h3 className={`font-bold text-gray-800 flex items-center gap-2 ${hasErrors ? 'text-xs' : 'text-base'}`}>
-                                        <i className="fas fa-cloud-upload-alt text-blue-500"></i> {hasErrors ? 'Tải tệp thay thế' : 'Khu vực tải tệp mới'}
-                                    </h3>
-                                    {isScanning && (
-                                        <div className="flex items-center text-accent-primary text-xs font-semibold animate-pulse bg-purple-50/80 px-2 py-0.5 rounded-full border border-purple-100">
-                                            <i className="fas fa-microchip fa-spin text-purple-500 mr-1.5"></i>
-                                            Đang đối chiếu...
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className={`grid grid-cols-1 md:grid-cols-2 ${hasErrors ? 'gap-2' : 'gap-4 md:gap-6'}`}>
-                                    <SimpleFileUpload id="supp_hop_dong_file_input" label="Hợp đồng mua bán (Mới)" onFileSelect={handleContractFileSelect} accept=".pdf" disableCompression={true} showPreview={false} compact={hasErrors} />
-                                    <SimpleFileUpload id="supp_denghi_xhd_file_input" label="Đề nghị XHD (Mới)" onFileSelect={handleProposalFileSelect} accept=".pdf" disableCompression={true} showPreview={false} compact={hasErrors} />
-                                </div>
+                            <div className="flex flex-shrink-0 items-start gap-3 p-4 text-sm bg-warning-bg/80 rounded-lg border border-warning/40 text-amber-900 shadow-sm backdrop-blur-md">
+                                <i className="fas fa-info-circle mt-0.5 text-amber-600 text-lg"></i>
+                                <p className="leading-relaxed">
+                                    <strong>Lưu ý:</strong> Chỉ cần tải lên tệp bạn muốn bổ sung hoặc thay thế. Các chứng từ cũ không được chọn tải lên sẽ vẫn giữ nguyên an toàn trên hệ thống.
+                                </p>
                             </div>
 
-                            {/* AI Scan Result */}
-                            {!isScanning && scanResult && (
-                                <div className={`flex flex-col rounded-xl border shadow-sm animate-fade-in-up min-h-0 ${scanResult.isValid ? 'p-3 flex-shrink-0 bg-green-50/90 border-green-200 text-green-800' : 'flex-grow p-3 bg-red-50/90 border-red-200 text-red-800 overflow-hidden'}`}>
-                                    {scanResult.isValid ? (
-                                        <p className="font-bold flex items-center gap-2 text-sm uppercase tracking-wider">
-                                            <i className="fas fa-check-circle text-green-500 text-xl"></i>
-                                            Hệ thống AI xác nhận: Hồ sơ hợp lệ!
-                                        </p>
-                                    ) : (
-                                        hasErrors && scanResult.mismatches.length > 0 && (
-                                            <div className="flex-grow flex flex-col bg-white/60 p-2 md:p-3 rounded-lg border border-red-100/50 overflow-hidden">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 content-start">
-                                                {scanResult.mismatches.map((m, idx) => {
-                                                    const isInfo = m.startsWith('Ngân hàng') || m.startsWith('Số tiền');
-                                                    const isWarning = m.startsWith('⚠️') || m.includes('Cảnh báo');
-                                                    return (
-                                                        <div key={idx} className="flex items-start gap-1.5 leading-tight">
-                                                            <i className={`fas mt-0.5 text-[0.65rem] shadow-sm rounded-full bg-white flex-shrink-0 ${isInfo ? 'fa-info-circle text-blue-500' : isWarning ? 'fa-exclamation-triangle text-amber-500' : 'fa-times-circle text-red-500'}`}></i>
-                                                            <span className={`text-[0.8rem] ${isInfo ? 'text-blue-800 font-medium' : isWarning ? 'text-amber-800 font-medium' : 'font-medium'}`}>{m.replace(/^(🚨|⚠️|ℹ️)\s*/, '')}</span>
-                                                        </div>
-                                                    );
-                                                })}
-                                                </div>
-                                            </div>
-                                        )
-                                    )}
+                            {/* File Uploads */}
+                            <div className="bg-white/60 flex flex-col p-5 md:p-8 rounded-2xl border border-gray-200/60 shadow-sm flex-grow overflow-hidden">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="font-bold text-gray-800 flex items-center gap-2 text-base">
+                                        <i className="fas fa-cloud-upload-alt text-blue-500"></i> Khu vực tải tệp mới
+                                    </h3>
                                 </div>
-                            )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-grow">
+                                    <SimpleFileUpload 
+                                        id="supp_hop_dong_file_input" 
+                                        label="Hợp đồng mua bán (Mới)" 
+                                        onFileSelect={handleContractFileSelect} 
+                                        accept=".pdf,image/*" 
+                                        disableCompression={true} 
+                                        showPreview={false} 
+                                        className="flex flex-col h-full"
+                                    />
+                                    <SimpleFileUpload 
+                                        id="supp_denghi_xhd_file_input" 
+                                        label="Đề nghị XHD (Mới)" 
+                                        onFileSelect={handleProposalFileSelect} 
+                                        accept=".pdf,image/*" 
+                                        disableCompression={true} 
+                                        showPreview={false} 
+                                        className="flex flex-col h-full"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </main>
 
@@ -306,7 +233,7 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
                         <Button onClick={onClose} disabled={isSubmitting} variant="secondary" size="md">
                             Hủy Bỏ
                         </Button>
-                        <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid || isScanning} variant="success" size="md" isLoading={isSubmitting} leftIcon={!isSubmitting ? <i className="fas fa-cloud-upload-alt"></i> : undefined}>
+                        <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid} variant="success" size="md" isLoading={isSubmitting} leftIcon={!isSubmitting ? <i className="fas fa-cloud-upload-alt"></i> : undefined}>
                             Xác Nhận Bổ Sung
                         </Button>
                     </footer>

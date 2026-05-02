@@ -24,6 +24,40 @@ function insertSupabase(table, data) {
   }
 }
 
+function upsertSupabase(table, data, onConflict = "") {
+  try {
+    let url = `${SUPABASE_URL}/rest/v1/${table}`;
+    if (onConflict) url += `?on_conflict=${onConflict}`;
+    
+    const options = {
+      method: 'post',
+      contentType: 'application/json',
+      headers: {
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': `Bearer ${SUPABASE_SERVICE_KEY}`,
+        'Prefer': onConflict ? 'resolution=merge-duplicates' : 'return=minimal'
+      },
+      payload: JSON.stringify(data),
+      muteHttpExceptions: true
+    };
+    const response = UrlFetchApp.fetch(url, options);
+    const code = response.getResponseCode();
+    if (code >= 200 && code < 300) return { success: true };
+    
+    const errorMsg = response.getContentText();
+    // CỨU CÁNH CUỐI CÙNG: Nếu là lỗi trùng khóa (23505), coi như thành công (vì người dùng muốn bỏ qua)
+    if (errorMsg.includes("23505") || errorMsg.includes("already exists")) {
+      return { success: true, ignored: true };
+    }
+    
+    Logger.log(`Supabase Upsert Error (${code}): ${errorMsg}`);
+    return { success: false, message: errorMsg, code: code };
+  } catch (e) {
+    Logger.log(`Supabase Upsert Exception: ${e.message}`);
+    return { success: false, message: e.message };
+  }
+}
+
 function updateSupabase(table, queryParams, data) {
   try {
     const url = `${SUPABASE_URL}/rest/v1/${table}?${queryParams}`;
@@ -172,4 +206,17 @@ function normalizeString(str) {
   }
   // Xóa các ký tự đặc biệt khác nếu cần
   return result.replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Chuyển đổi link Drive xem trước sang link tải trực tiếp
+ */
+function toDownloadUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  if (url.includes('drive.google.com')) {
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|id=([a-zA-Z0-9_-]{25,})/);
+    const id = match ? (match[1] || match[2]) : null;
+    if (id) return "https://drive.google.com/uc?export=download&id=" + id;
+  }
+  return url;
 }

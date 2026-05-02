@@ -15,6 +15,7 @@ interface StockCardProps {
     onOpenExtensionModal: (vehicle: StockVehicle) => void;
     onCreateRequestForVehicle: (vehicle: StockVehicle) => void;
     onShowDetails: (vehicle: StockVehicle) => void;
+    onAdminEdit?: (vehicle: StockVehicle) => void;
     currentUser: string;
     isAdmin: boolean;
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
@@ -22,6 +23,7 @@ interface StockCardProps {
     processingVin: string | null;
     queuedVins: string[];
     canHoldMore: boolean;
+    onViewCarOnMap?: (vin: string) => void;
 }
 
 const StockCard: React.FC<StockCardProps> = ({
@@ -33,31 +35,36 @@ const StockCard: React.FC<StockCardProps> = ({
     onOpenExtensionModal,
     onCreateRequestForVehicle,
     onShowDetails,
+    onAdminEdit,
     currentUser,
     isAdmin,
     showToast,
     processingVin,
     queuedVins,
-    canHoldMore
+    canHoldMore,
+    onViewCarOnMap
 }) => {
     const [confirmAction, setConfirmAction] = useState<{ action: 'hold' | 'release' } | null>(null);
+    if (false) showToast?.('', '', 'success');
+    const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
 
     const handleCopyVin = (e: React.MouseEvent, vin: string) => {
         e.stopPropagation();
         navigator.clipboard.writeText(vin).then(() => {
-            showToast('Đã Sao Chép', `Số VIN ${vin} đã được sao chép thành công.`, 'success', 2000);
+            setCopiedLabel('VIN_MAIN');
+            setTimeout(() => setCopiedLabel(null), 2000);
         }).catch(err => {
             console.error('Lỗi sao chép VIN: ', err);
-            showToast('Sao Chép Thất Bại', 'Không thể truy cập vào clipboard của bạn.', 'error', 3000);
         });
     };
 
     const DATE_FORMATS = ['DD/MM/YYYY HH:mm:ss', 'D/M/YYYY H:m:s', 'DD/MM/YYYY', 'YYYY-MM-DD HH:mm:ss', moment.ISO_8601];
 
 
-    const isHeldByCurrentUser = vehicle["Trạng thái"] === 'Đang giữ' && vehicle["Người Giữ Xe"]?.trim().toLowerCase().normalize('NFC') === currentUser?.trim().toLowerCase().normalize('NFC');
+    const isMine = vehicle["Người Giữ Xe"]?.trim().toLowerCase().normalize('NFC') === currentUser?.trim().toLowerCase().normalize('NFC');
+    const isHeldByCurrentUser = vehicle["Trạng thái"] === 'Đang giữ' && isMine;
     const isAvailable = vehicle["Trạng thái"] === 'Chưa ghép';
-    const isHeldByOther = vehicle["Trạng thái"] === 'Đang giữ' && !isHeldByCurrentUser;
+    const isTakenByOther = (vehicle["Trạng thái"] === 'Đang giữ' || vehicle["Trạng thái"] === 'Đã ghép') && !isMine;
     const isProcessing = processingVin === vehicle.VIN;
     const isMissingVersion = !vehicle['Phiên bản'] || vehicle['Phiên bản'].trim() === '';
 
@@ -149,7 +156,7 @@ const StockCard: React.FC<StockCardProps> = ({
             );
         }
 
-        if (isHeldByOther) {
+        if (isTakenByOther) {
             const isQueued = queuedVins.some(v => v?.toUpperCase() === vehicle.VIN?.toUpperCase());
             return (
                 <div className="flex items-center gap-2 w-full">
@@ -177,7 +184,7 @@ const StockCard: React.FC<StockCardProps> = ({
                         </Button>
                     )}
                     
-                    {isAdmin && (
+                    {isAdmin && vehicle["Trạng thái"] === 'Đang giữ' && (
                         <Button 
                             variant="ghost" 
                             size="sm"
@@ -198,12 +205,12 @@ const StockCard: React.FC<StockCardProps> = ({
     const detailsList = [
         { icon: 'fa-car-side', label: 'Dòng xe', value: `${vehicle['Dòng xe'] || ''} - ${vehicle['Phiên bản'] || 'Chưa rõ phiên bản'}`, copyable: false },
         { icon: 'fa-palette', label: 'Màu sắc', value: `${vehicle['Ngoại thất'] || '---'} / ${vehicle['Nội thất'] || '---'}`, copyable: false },
-        { icon: 'fa-fingerprint', label: 'Số VIN', value: vehicle.VIN || '---', copyable: true },
-        { icon: 'fa-microchip', label: 'Số máy', value: vehicle['Số máy'] || '---', copyable: true },
+        vehicle.VIN && vehicle.VIN !== '---' ? { icon: 'fa-fingerprint', label: 'Số VIN', value: vehicle.VIN, copyable: true } : null,
+        vehicle['Số máy'] && vehicle['Số máy'] !== '---' ? { icon: 'fa-microchip', label: 'Số máy', value: vehicle['Số máy'], copyable: true } : null,
         { icon: 'fa-info-circle', label: 'Trạng thái', value: vehicle['Trạng thái'] || '---', copyable: false },
         vehicle['Người Giữ Xe'] ? { icon: 'fa-user-shield', label: 'Người giữ', value: vehicle['Người Giữ Xe'], copyable: false } : null,
-        vehicle['Thời Gian Hết Hạn Giữ'] ? { icon: 'fa-clock', label: 'Thời hạn', value: moment(vehicle['Thời Gian Hết Hạn Giữ'], DATE_FORMATS).format('HH:mm DD/MM/YYYY'), copyable: false } : null,
-        vehicle['Ngày vận tải'] && vehicle['Ngày vận tải'] !== '#N/A' ? { icon: 'fa-shipping-fast', label: 'Vận tải', value: moment(vehicle['Ngày vận tải'], DATE_FORMATS).format('DD/MM/YYYY'), copyable: false } : null,
+        vehicle['Thời Gian Hết Hạn Giữ'] && moment(vehicle['Thời Gian Hết Hạn Giữ'], DATE_FORMATS).isValid() ? { icon: 'fa-clock', label: 'Thời hạn', value: moment(vehicle['Thời Gian Hết Hạn Giữ'], DATE_FORMATS).format('DD/MM/YYYY HH:mm:ss'), copyable: false } : null,
+        vehicle['Ngày vận tải'] && vehicle['Ngày vận tải'] !== '#N/A' && moment(vehicle['Ngày vận tải'], DATE_FORMATS).isValid() ? { icon: 'fa-shipping-fast', label: 'Vận tải', value: moment(vehicle['Ngày vận tải'], DATE_FORMATS).format('DD/MM/YYYY'), copyable: false } : null,
         vehicle['Ghi chú dms'] && vehicle['Ghi chú dms'] !== '#N/A' && vehicle['Ghi chú dms'].trim() !== '' ? { icon: 'fa-comment-dots', label: 'Ghi chú', value: vehicle['Ghi chú dms'], copyable: false } : null,
     ].filter((item): item is { icon: string; label: string; value: string; copyable: boolean } => item !== null);
 
@@ -211,8 +218,8 @@ const StockCard: React.FC<StockCardProps> = ({
         <div 
             className={`relative flex flex-col gap-2 rounded-xl bg-white/70 backdrop-blur-sm p-2 shadow-md border ${isMissingVersion ? 'border-amber-300 ring-1 ring-amber-100/50 shadow-amber-50' : 'border-light-border'} hover:shadow-xl hover:z-[99] transition-all duration-300 ease-out active:scale-[0.98] group`}
         >
-            {/* Premium Glassmorphism Interactive Tooltip */}
-            <div className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%+12px)] min-w-[190px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_25px_60px_-15px_rgba(59,130,246,0.25)] border border-blue-100/80 p-2.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-400 z-[100] scale-95 group-hover:scale-100 pointer-events-auto delay-100">
+            {/* Premium Glassmorphism Interactive Tooltip - Hidden on mobile where tap opens details */}
+            <div className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%+12px)] min-w-[190px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_25px_60px_-15px_rgba(59,130,246,0.25)] border border-blue-100/80 p-2.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-400 z-[100] scale-95 group-hover:scale-100 pointer-events-auto delay-100 hidden md:block">
                 <div className="text-[10px] font-black uppercase text-blue-600 mb-2 border-b border-blue-50 pb-1.5 tracking-[0.1em] flex items-center gap-2">
                     <div className="w-5 h-5 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
                         <i className="fas fa-list-ul text-[10px]"></i>
@@ -227,24 +234,23 @@ const StockCard: React.FC<StockCardProps> = ({
                              </div>
                              <div className="flex-1 min-w-0 flex items-baseline">
                                  <span className="text-slate-500 font-medium whitespace-nowrap text-[10px]">{item.label}: </span>
-                                 <span className="font-bold text-slate-800 break-words ml-1.5 text-[10px]">{item.value}</span>
-                                 {item.copyable && item.value !== '---' && (
-                                     <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigator.clipboard.writeText(item.value).then(() => {
-                                                showToast('Đã Sao Chép', `${item.label} ${item.value} đã được lưu.`, 'success', 2000);
-                                            }).catch(err => {
-                                                console.error('Lỗi sao chép: ', err);
-                                                showToast('Sao Chép Thất Bại', 'Không thể truy cập vào clipboard của bạn.', 'error', 3000);
-                                            });
-                                        }} 
-                                        className="ml-auto text-blue-500 hover:text-blue-700 hover:bg-blue-50 w-6 h-6 flex items-center justify-center rounded-lg transition-all -my-1"
-                                        title={`Copy ${item.label}`}
-                                     >
-                                        <i className="fas fa-copy text-[11px]"></i>
-                                     </button>
-                                 )}
+                                 <span 
+                                     className={`font-bold text-slate-800 break-words ml-1.5 text-[10px] flex items-center ${item.copyable && item.value !== '---' ? 'cursor-pointer hover:text-blue-600 hover:bg-blue-50 rounded px-1 -mx-1 py-0.5 -my-0.5 transition-colors border border-transparent hover:border-blue-100' : ''}`}
+                                     onClick={(e) => {
+                                         if (item.copyable && item.value !== '---') {
+                                             e.stopPropagation();
+                                             navigator.clipboard.writeText(item.value).then(() => {
+                                                 setCopiedLabel(item.label);
+                                                 setTimeout(() => setCopiedLabel(null), 2000);
+                                             }).catch(err => {
+                                                 console.error('Lỗi sao chép: ', err);
+                                             });
+                                         }
+                                     }}
+                                     title={item.copyable && item.value !== '---' ? `Click để copy ${item.label}` : undefined}
+                                 >
+                                     {copiedLabel === item.label ? <span className="text-green-600 flex items-center gap-1"><i className="fas fa-check text-[9px]"></i> Đã copy</span> : item.value}
+                                 </span>
                              </div>
                         </div>
                     ))}
@@ -258,6 +264,15 @@ const StockCard: React.FC<StockCardProps> = ({
                     <i className="fas fa-edit"></i>
                     Bổ sung PB
                 </div>
+            )}
+            {isAdmin && onAdminEdit && (
+                <button
+                    onClick={(e) => { e.stopPropagation(); onAdminEdit(vehicle); }}
+                    className="absolute top-1 left-1 z-[110] w-6 h-6 flex items-center justify-center rounded-lg bg-slate-700/70 text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-accent-primary transition-all duration-200 backdrop-blur-sm shadow-sm"
+                    title="Sửa / Xóa xe (Admin)"
+                >
+                    <i className="fas fa-cog text-[9px]"></i>
+                </button>
             )}
 
             <div className="cursor-pointer" onClick={() => onShowDetails(vehicle)}>
@@ -339,8 +354,8 @@ const StockCard: React.FC<StockCardProps> = ({
                                 title="Click để sao chép VIN"
                                 onClick={(e) => handleCopyVin(e, vehicle.VIN)}
                             >
-                                <span className="material-symbols-outlined text-gray-400" style={{ fontSize: '16px' }} title="VIN">fingerprint</span>
-                                <span className="text-sm font-mono font-bold text-accent-primary hover:text-accent-primary-hover hover:underline transition-colors">{vehicle.VIN}</span>
+                                <span className={`material-symbols-outlined ${copiedLabel === 'VIN_MAIN' ? 'text-green-500' : 'text-gray-400'}`} style={{ fontSize: '16px' }} title="VIN">{copiedLabel === 'VIN_MAIN' ? 'check_circle' : 'fingerprint'}</span>
+                                <span className={`text-sm font-mono font-bold hover:underline transition-colors ${copiedLabel === 'VIN_MAIN' ? 'text-green-500' : 'text-accent-primary hover:text-accent-primary-hover'}`}>{copiedLabel === 'VIN_MAIN' ? 'Đã copy!' : vehicle.VIN}</span>
                             </div>
 
                             {(() => {
@@ -387,16 +402,38 @@ const StockCard: React.FC<StockCardProps> = ({
                             />
                         )}
 
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                            {(() => {
+                                const hasGps = (vehicle.extension_reason && typeof vehicle.extension_reason === 'string' && vehicle.extension_reason.includes('GPS:')) ||
+                                               ((vehicle as any)['extension_reason'] && typeof (vehicle as any)['extension_reason'] === 'string' && (vehicle as any)['extension_reason'].includes('GPS:')) ||
+                                               (vehicle["Vị trí"] && typeof vehicle["Vị trí"] === 'string' && vehicle["Vị trí"].includes('GPS:')) ||
+                                               ((vehicle as any)['Vị trí'] && typeof (vehicle as any)['Vị trí'] === 'string' && (vehicle as any)['Vị trí'].includes('GPS:'));
+
+                                if (hasGps && onViewCarOnMap) {
+                                    return (
+                                        <span 
+                                            className="cursor-pointer text-base select-none hover:scale-125 transition-transform active:scale-95 px-1 flex items-center justify-center"
+                                            title="Xem vị trí xe trên Bản Đồ"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onViewCarOnMap(vehicle.VIN);
+                                            }}
+                                        >
+                                            📍
+                                        </span>
+                                    );
+                                }
+                                return null;
+                            })()}
+
                             {vehicle["Ngày vận tải"] && vehicle["Ngày vận tải"] !== '#N/A' && moment(vehicle["Ngày vận tải"], DATE_FORMATS).isValid() && (
                                 <div className="flex items-center gap-1 text-blue-600/80" title={`Ngày vận tải: ${moment(vehicle["Ngày vận tải"], DATE_FORMATS).format('DD/MM/YYYY')}`}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>local_shipping</span>
                                     <span className="text-[11px] font-medium">{moment(vehicle["Ngày vận tải"], DATE_FORMATS).format('DD/MM/YYYY')}</span>
                                 </div>
                             )}
-
-                            {/* daysInStock display removed as per user request */}
                         </div>
+                        {/* daysInStock display removed as per user request */}
                     </div>
                 </div>
             </div>

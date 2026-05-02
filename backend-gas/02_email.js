@@ -661,35 +661,105 @@ function sendInvoiceNotification(sheet, row) {
  * @param {Object} record - Dữ liệu record từ donhang table của Supabase.
  */
 function sendInvoiceEmailFromSupabase(record) {
-  const tenTVBH = record.ten_ban_hang;
+  // 1. Chuẩn bị dữ liệu
+  const tenTVBH = (record.ten_tu_van_ban_hang || record.ten_ban_hang || record.tvbh || "Admin").toUpperCase();
   const recipientEmail = getEmailForAdvisor(tenTVBH);
 
   if (!recipientEmail) {
+    logAction("Email Error", `Không tìm thấy email cho TVBH: ${tenTVBH} của đơn ${record.so_don_hang}`);
     return { success: false, message: "Không tìm thấy email TVBH." };
   }
 
-  const subject = `✅ [Hóa Đơn] ${record.ten_khach_hang} (${record.so_don_hang})`;
+  // 2. Tiêu đề Email giống 100% mẫu
+  const subject = `[HÓA ĐƠN ĐÃ PHÁT HÀNH] - Đơn hàng ${record.so_don_hang} cho KH ${record.ten_khach_hang.toUpperCase()}`;
 
+  // 3. Ngày xuất hóa đơn (lấy ngày hiện tại nếu không có trong record)
+  let ngayXuat = "Vừa xong";
+  try {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    ngayXuat = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  } catch (e) {}
+
+  // 4. Nội dung HTML giống 100% mẫu
   const details = {
-    "Số đơn hàng": `<b>${record.so_don_hang}</b>`,
-    "Tên khách hàng": `<b>${record.ten_khach_hang}</b>`,
-    "VIN": `<b>${record.vin || "N/A"}</b>`,
-    "Dòng xe": record.dong_xe,
-    "Phiên bản": record.phien_ban,
-    "Ngoại thất": record.ngoai_that,
-    "Nội thất": record.noi_that
+    "Số đơn hàng:": `<b>${record.so_don_hang}</b>`,
+    "Tên khách hàng:": `<b>${record.ten_khach_hang.toUpperCase()}</b>`,
+    "Số VIN:": `<b>${record.vin || "N/A"}</b>`,
+    "Ngày xuất hóa đơn:": `<b>${ngayXuat}</b>`,
+    "Dòng xe:": record.dong_xe,
+    "Phiên bản:": record.phien_ban,
+    "Ngoại thất:": record.ngoai_that,
+    "Nội thất:": record.noi_that
   };
 
-  const note = "Đơn hàng đã được cập nhật trạng thái đã xuất hóa đơn. Vui lòng liên hệ bộ phận Kế toán để nhận tài liệu. Trân trọng!";
-  const bodyContent = createUnifiedEmailBody(`Thông báo xuất hóa đơn (Tự động từ Supabase):`, tenTVBH, details, note);
-  const fullHtml = createFullHtmlEmail(subject, bodyContent);
+  const note = `Hóa đơn điện tử đã được phát hành và đính kèm trong email này. Anh/Chị vui lòng tải về và gửi cho khách hàng. Trân trọng!`;
+  
+  // Custom Body Builder to match the design 100%
+  let detailsHtml = "";
+  Object.keys(details).forEach(key => {
+    const isVin = key.includes("VIN");
+    const rowStyle = isVin ? "background-color: #eff6ff;" : "";
+    const valStyle = isVin ? "color: #1e3a8a; font-weight: 700;" : "color: #1f2937; font-weight: 600;";
+    
+    detailsHtml += `
+      <tr style="${rowStyle}">
+        <td style="padding: 12px 15px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-size: 13px; width: 40%;">${key}</td>
+        <td style="padding: 12px 15px; border-bottom: 1px solid #e5e7eb; ${valStyle} font-size: 14px;">${details[key]}</td>
+      </tr>`;
+  });
+
+  const fullHtml = `
+  <div style="background-color: #f3f4f6; padding: 40px 0; font-family: 'Roboto', Arial, sans-serif;">
+    <table align="center" width="650" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+      <tr>
+        <td style="background-color: #1a3673; padding: 30px; text-align: center;">
+          <h1 style="margin: 0; font-size: 20px; color: #ffffff; font-weight: 700; letter-spacing: 1px;">THÔNG BÁO HỆ THỐNG</h1>
+          <div style="color: #bfdbfe; font-size: 13px; margin-top: 5px;">VinFast Thuận An</div>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 40px;">
+          <div style="font-size: 15px; color: #374151; margin-bottom: 25px;">Kính gửi <b>${tenTVBH}</b>,</div>
+          <h2 style="color: #1e3a8a; margin-top: 0; margin-bottom: 30px; font-size: 18px; font-weight: 700;">Hóa đơn đã được phát hành thành công!</h2>
+          
+          <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse; margin-bottom: 30px;">
+            ${detailsHtml}
+          </table>
+          
+          <div style="color: #4b5563; font-size: 14px; line-height: 1.6; margin-bottom: 30px;">
+            ${note}
+          </div>
+          
+          <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; text-align: center;">
+            <div style="font-size: 12px; color: #9ca3af; margin-bottom: 5px;">Thông báo tự động từ hệ thống quản lý.</div>
+            <div style="font-size: 12px; color: #9ca3af;">Vui lòng không trả lời email này.</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>`;
+
+  // 5. Đính kèm và gửi
+  const attachments = [];
+  const invoiceUrl = record.link_hoa_don_da_xuat || record.url_hoa_don_da_xuat;
+  if (invoiceUrl) {
+    try {
+      const res = UrlFetchApp.fetch(toDownloadUrl(invoiceUrl), { muteHttpExceptions: true });
+      if (res.getResponseCode() === 200) {
+        const blob = res.getBlob();
+        blob.setName(`HOADON_${record.so_don_hang}_${normalizeString(record.ten_khach_hang)}.pdf`);
+        attachments.push(blob);
+      }
+    } catch (e) {}
+  }
 
   try {
-    sendEmailViaEdge({ to: recipientEmail, subject: subject, htmlBody: fullHtml });
-    logAction("Gửi mail XHĐ thành công (Supabase Webhook)", `Tới ${recipientEmail} cho đơn ${record.so_don_hang}`);
+    sendEmailViaEdge({ to: recipientEmail, subject: subject, htmlBody: fullHtml, attachments: attachments });
+    logAction("Gửi mail XHĐ thành công (V346)", `${recipientEmail} - ${record.so_don_hang}`);
     return { success: true };
   } catch (e) {
-    logAction("Lỗi gửi mail XHĐ (Supabase Webhook)", `Đơn: ${record.so_don_hang}, Lỗi: ${e.message}`);
+    logAction("Lỗi gửi mail XHĐ (V346)", `${record.so_don_hang} - ${e.message}`);
     return { success: false, message: e.message };
   }
 }

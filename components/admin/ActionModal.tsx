@@ -5,7 +5,7 @@ interface InputConfig {
     id: string;
     label: string;
     placeholder?: string;
-    type?: 'text' | 'textarea' | 'select' | 'date' | 'number' | 'password';
+    type?: 'text' | 'textarea' | 'select' | 'date' | 'number' | 'password' | 'email';
     isVIN?: boolean;
     options?: string[];
 }

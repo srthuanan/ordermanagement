@@ -6,6 +6,8 @@ export interface Policy {
   trang_thai: string;
   han_su_dung?: string;
   dong_xe?: string;
+  gia_tri_hoa_don?: number;
+  gia_tri_thuc_thu?: number;
 }
 
 export const normalizePolicyName = (name: string) => {

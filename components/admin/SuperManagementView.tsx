@@ -4,7 +4,7 @@ import Button from '../ui/Button';
 import StatusBadge from '../ui/StatusBadge';
 import AnimatedBackground from '../ui/AnimatedBackground';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
-import { versionsMap, allPossibleVersions, defaultExteriors, interiorColorRules } from '../../constants';
+import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, interiorColorRules } from '../../constants';
 import * as apiService from '../../services/apiService';
 import moment from 'moment';
 
@@ -22,18 +22,39 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
 
     const [formData, setFormData] = useState<any>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultExteriors);
+    const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
+
+    const [filterModel, setFilterModel] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
 
     const filteredOrders = useMemo(() => {
-        if (!searchTerm.trim()) return allOrders.slice(0, 50); // Show recent 50 if no search
+        let result = allOrders;
+
+        if (filterModel) {
+            result = result.filter(o => o['Dòng xe'] === filterModel);
+        }
+
+        if (filterStatus) {
+            if (filterStatus === 'Đã ghép') {
+                result = result.filter(o => o['VIN'] && o['VIN'] !== 'N/A' && o['VIN'] !== '');
+            } else if (filterStatus === 'Chưa ghép') {
+                result = result.filter(o => !o['VIN'] || o['VIN'] === 'N/A' || o['VIN'] === '');
+            } else {
+                result = result.filter(o => (o['Kết quả'] || '').includes(filterStatus));
+            }
+        }
+
+        if (!searchTerm.trim()) return result.slice(0, 100); 
         
         const term = searchTerm.toLowerCase().trim();
-        return allOrders.filter(o => 
-            o['Số đơn hàng'].toLowerCase().includes(term) || 
+        return result.filter(o => 
+            o['Số đơn hàng']?.toLowerCase().includes(term) || 
             (o['VIN'] && o['VIN'].toLowerCase().includes(term)) ||
-            o['Tên khách hàng'].toLowerCase().includes(term)
+            (o['Số máy'] && o['Số máy'].toLowerCase().includes(term)) ||
+            o['Tên khách hàng']?.toLowerCase().includes(term) ||
+            o['Tên tư vấn bán hàng']?.toLowerCase().includes(term)
         );
-    }, [allOrders, searchTerm]);
+    }, [allOrders, searchTerm, filterModel, filterStatus]);
 
     const selectedOrder = useMemo(() => filteredOrders.find(o => o['Số đơn hàng'] === selectedOrderId), [filteredOrders, selectedOrderId]);
 
@@ -70,7 +91,8 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                 "Ngày cọc": selectedOrder["Ngày cọc"] ? moment(selectedOrder["Ngày cọc"]).format('YYYY-MM-DDTHH:mm') : '',
                 "Tên tư vấn bán hàng": selectedOrder["Tên tư vấn bán hàng"],
                 "VIN": selectedOrder["VIN"] || selectedOrder["SỐ VIN"] || '',
-                "Số máy": selectedOrder["Số động cơ"] || selectedOrder["SỐ ĐỘNG CƠ"] || '',
+                "Số máy": selectedOrder["Số máy"] || selectedOrder["SỐ MÁY"] || '',
+                "Mã DMS": selectedOrder["Mã DMS"] || '',
                 "Kết quả": selectedOrder["Kết quả"],
                 "Trạng thái VC": selectedOrder["Trạng thái VC"],
                 "Ngày xuất hóa đơn": selectedOrder["Ngày xuất hóa đơn"] ? moment(selectedOrder["Ngày xuất hóa đơn"], ["DD/MM/YYYY", "YYYY-MM-DD"]).format('YYYY-MM-DD') : '',
@@ -94,10 +116,10 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
 
     useEffect(() => {
         const { 'Dòng xe': dong_xe, 'Phiên bản': phien_ban } = formData;
-        if (!dong_xe) { setAvailableInteriors(defaultExteriors); return; }
+        if (!dong_xe) { setAvailableInteriors(defaultInteriors); return; }
         const lowerDongXe = (dong_xe as string).toLowerCase();
         const lowerPhienBan = (phien_ban as string).toLowerCase();
-        let interiors = defaultExteriors;
+        let interiors = defaultInteriors;
         for (const rule of interiorColorRules) {
             if (rule.models.includes(lowerDongXe) && (!rule.versions || rule.versions.includes(lowerPhienBan))) {
                 interiors = rule.colors; break;
@@ -133,19 +155,41 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
 
             {/* Column 1: List / Search */}
             <div className={`w-full md:w-80 lg:w-[380px] flex-shrink-0 border-r border-border-primary flex flex-col bg-white/90 backdrop-blur-md relative z-10 transition-transform duration-300 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
-                {/* Search Header */}
-                <div className="shrink-0 p-3 border-b border-border-secondary bg-white">
+                {/* Search & Filters Header */}
+                <div className="shrink-0 p-3 border-b border-border-secondary bg-white space-y-2">
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <i className="fas fa-search text-slate-400 group-focus-within:text-red-500 transition-colors text-sm"></i>
                         </div>
                         <input
                             type="text"
-                            placeholder="Tìm Số ĐH, VIN, Khách hàng..."
+                            placeholder="Tìm Số ĐH, VIN, Máy, KH..."
                             value={searchTerm}
                             onChange={handleSearchChange}
                             className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm font-medium placeholder:text-slate-400"
                         />
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                        <select 
+                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold outline-none focus:border-red-500"
+                            value={filterModel}
+                            onChange={(e) => setFilterModel(e.target.value)}
+                        >
+                            <option value="">Tất cả dòng xe</option>
+                            {Object.keys(versionsMap).map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                        <select 
+                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold outline-none focus:border-red-500"
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                        >
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="Đã ghép">Đã ghép</option>
+                            <option value="Chưa ghép">Chưa ghép</option>
+                            <option value="Đã xuất hóa đơn">Đã xuất HĐ</option>
+                            <option value="Đã hủy">Đã hủy</option>
+                        </select>
                     </div>
                 </div>
 
@@ -267,8 +311,8 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                                             
                                             {/* Row 1: Core Order Context */}
                                             <div className="md:col-span-1">
-                                                <label className={labelClass}>Số Đơn Hàng <span className="text-red-500 lowercase normal-case ml-1 relative group"><i className="fas fa-lock text-[8px]"></i><span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-slate-800 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap">Không thể sửa mã ĐH</span></span></label>
-                                                <input name="Số đơn hàng" value={formData["Số đơn hàng"] || ''} disabled readOnly className={`${inputClass} font-mono text-slate-500 bg-slate-100 border-slate-200 font-bold opacity-80 cursor-not-allowed`} />
+                                                <label className={labelClass}>Số Đơn Hàng</label>
+                                                <input name="Số đơn hàng" value={formData["Số đơn hàng"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono font-bold`} />
                                             </div>
                                             <div className="md:col-span-1">
                                                 <label className={labelClass}>Tên Khách Hàng</label>
@@ -329,13 +373,14 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                                                 <input name="Số máy" value={formData["Số máy"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono`} placeholder="Nhập số máy..." />
                                             </div>
                                             <div className="md:col-span-1">
+                                                <label className={labelClass}>Mã DMS</label>
+                                                <input name="Mã DMS" value={formData["Mã DMS"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono`} placeholder="Nhập mã DMS..." />
+                                            </div>
+                                            <div className="md:col-span-1">
                                                 <label className={labelClass}>Kết Quả (TT ĐH)</label>
                                                 <input name="Kết quả" value={formData["Kết quả"] || ''} onChange={handleInputChange} className={inputClass} placeholder="Trạng thái..." />
                                             </div>
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Thanh Toán (VC)</label>
-                                                <input name="Trạng thái VC" value={formData["Trạng thái VC"] || ''} onChange={handleInputChange} className={inputClass} placeholder="TT thanh toán..." />
-                                            </div>
+
 
                                             {/* Row 4: Invoice specifics */}
                                             <div className="md:col-span-1">

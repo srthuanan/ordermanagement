@@ -1,0 +1,20 @@
+[
+  {
+    "key": "global_notification",
+    "value": {
+      "type": "info",
+      "content": "XHĐ ĐI!!!!!!!!!!!!!!!!",
+      "isActive": false
+    },
+    "updated_at": "2026-03-07T06:40:29.054+00:00",
+    "updated_by": "PHẠM THÀNH NHÂN"
+  },
+  {
+    "key": "stock_visibility",
+    "value": {
+      "isStockHidden": false
+    },
+    "updated_at": "2026-04-07T10:18:05.184+00:00",
+    "updated_by": "PHẠM THÀNH NHÂN"
+  }
+]

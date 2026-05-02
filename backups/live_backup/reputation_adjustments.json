@@ -1,0 +1,38 @@
+[
+  {
+    "username": "vinhtn",
+    "adjustment_value": 0,
+    "system_score_at_update": 100,
+    "target_score": 100,
+    "updated_at": "2026-03-14T11:17:52.532+00:00",
+    "updated_by": "PHẠM THÀNH NHÂN",
+    "reason": "Admin điều chỉnh trực tiếp"
+  },
+  {
+    "username": "huyhh",
+    "adjustment_value": 34,
+    "system_score_at_update": 36,
+    "target_score": 70,
+    "updated_at": "2026-03-16T14:58:15.967+00:00",
+    "updated_by": "PHẠM THÀNH NHÂN",
+    "reason": "Admin điều chỉnh trực tiếp"
+  },
+  {
+    "username": "phamtn",
+    "adjustment_value": 34,
+    "system_score_at_update": 66,
+    "target_score": 100,
+    "updated_at": "2026-03-22T02:12:40.616+00:00",
+    "updated_by": "PHẠM THÀNH NHÂN",
+    "reason": "Admin điều chỉnh trực tiếp"
+  },
+  {
+    "username": "admin",
+    "adjustment_value": 62,
+    "system_score_at_update": 38,
+    "target_score": 100,
+    "updated_at": "2026-04-03T06:23:03.306+00:00",
+    "updated_by": "PHẠM THÀNH NHÂN",
+    "reason": "Admin điều chỉnh trực tiếp"
+  }
+]

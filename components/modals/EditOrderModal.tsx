@@ -1,6 +1,6 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { Order } from '../../types';
-import { versionsMap, allPossibleVersions, defaultExteriors, interiorColorRules } from '../../constants';
+import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, interiorColorRules } from '../../constants';
 import * as apiService from '../../services/apiService';
 import moment from 'moment';
 
@@ -20,7 +20,7 @@ interface EditOrderModalProps {
 const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSuccess, showToast, order, existingOrderNumbers, isAdmin }) => {
     const [formData, setFormData] = useState<Partial<Order>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultExteriors);
+    const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
 
     useEffect(() => {
         if (order) {
@@ -59,10 +59,10 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
 
     useEffect(() => {
         const { 'Dòng xe': dong_xe, 'Phiên bản': phien_ban } = formData;
-        if (!dong_xe) { setAvailableInteriors(defaultExteriors); return; }
+        if (!dong_xe) { setAvailableInteriors(defaultInteriors); return; }
         const lowerDongXe = (dong_xe as string).toLowerCase();
         const lowerPhienBan = (phien_ban as string).toLowerCase();
-        let interiors = defaultExteriors;
+        let interiors = defaultInteriors;
         for (const rule of interiorColorRules) {
             if (rule.models.includes(lowerDongXe) && (!rule.versions || rule.versions.includes(lowerPhienBan))) {
                 interiors = rule.colors; break;

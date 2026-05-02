@@ -144,7 +144,7 @@ const InternalChat: React.FC<InternalChatProps> = ({
 
     const fetchUsers = async () => {
         try {
-            const result = await apiService.getApi({ action: 'getUsers' });
+            const result = await apiService.getUsers();
             if (result && result.status === 'SUCCESS' && Array.isArray(result.users)) {
                 setUsers(result.users.map((u: any) => ({
                     username: u.username,

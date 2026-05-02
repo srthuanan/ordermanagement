@@ -166,7 +166,7 @@ export const useOrderFiltering = ({ allHistoryData, isSidebarCollapsed, activeVi
                     order["Nội thất"],
                     order["Tên tư vấn bán hàng"],
                     order["CHÍNH SÁCH"],
-                    order["Số động cơ"]
+                    order["Số máy"]
                 ];
 
                 return fieldsToSearch.some(source => {

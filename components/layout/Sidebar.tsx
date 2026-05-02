@@ -74,6 +74,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                         <i className={`fa-solid fa-warehouse fa-fw w-6 text-center text-text-secondary ${isSidebarCollapsed ? 'lg:mx-auto' : ''} group-hover:text-accent-primary`}></i>
                         <span className={`whitespace-nowrap transition-all duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>Kho Xe</span>
                     </a>
+                    <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('map'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'map'} className="nav-link group flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm transition-all duration-300 text-text-primary font-bold hover:bg-white/50 active:scale-95">
+                        <i className={`fa-solid fa-map-location-dot fa-fw w-6 text-center text-text-secondary ${isSidebarCollapsed ? 'lg:mx-auto' : ''} group-hover:text-accent-primary`}></i>
+                        <span className={`whitespace-nowrap transition-all duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>Bản đồ Kho</span>
+                    </a>
                     <a href="#" onClick={(e) => { e.preventDefault(); setActiveView('laithu'); setIsMobileMenuOpen(false); }} data-active-link={activeView === 'laithu'} className="nav-link group flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm transition-all duration-300 text-text-primary font-bold hover:bg-white/50 active:scale-95">
                         <i className={`fa-solid fa-gauge-high fa-fw w-6 text-center text-text-secondary ${isSidebarCollapsed ? 'lg:mx-auto' : ''} group-hover:text-accent-primary`}></i>
                         <span className={`whitespace-nowrap transition-all duration-300 ${isSidebarCollapsed ? 'lg:opacity-0 lg:hidden' : 'opacity-100'}`}>Lái Thử</span>

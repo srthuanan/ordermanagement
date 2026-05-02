@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { StockVehicle } from '../../types';
-import { versionsMap, defaultExteriors, defaultInteriors } from '../../constants';
+import { versionsMap, defaultExteriors, defaultInteriors, VALID_IMAGES_BY_MODEL } from '../../constants';
 import Button from '../ui/Button';
 import CarImage from '../ui/CarImage';
 import * as apiService from '../../services/apiService';
@@ -11,10 +11,10 @@ interface IncompleteCarsViewProps {
     onRefresh: () => void;
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
-
 const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRefresh, showToast }) => {
     const [updatingVin, setUpdatingVin] = useState<string | null>(null);
     const [localChanges, setLocalChanges] = useState<Record<string, Partial<StockVehicle>>>({});
+    const [searchQuery, setSearchQuery] = useState('');
     const [selectedFolder, setSelectedFolder] = useState<string>('all');
     const [selectedVin, setSelectedVin] = useState<string | null>(null);
     const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
@@ -29,6 +29,24 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
         );
     }, [stockData]);
 
+    const displayCars = useMemo(() => {
+        if (searchQuery.trim()) {
+            return stockData.filter(car => 
+                car.VIN.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+                car['Số máy']?.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+                car['Mã DMS']?.toLowerCase().includes(searchQuery.toLowerCase().trim())
+            ).slice(0, 50);
+        }
+
+        switch (selectedFolder) {
+            case 'missing_model': return incompleteCars.filter(c => !c['Dòng xe'] || c['Dòng xe'].trim() === '');
+            case 'missing_version': return incompleteCars.filter(c => !c['Phiên bản'] || c['Phiên bản'].trim() === '');
+            case 'missing_color': return incompleteCars.filter(c => !c['Ngoại thất'] || !c['Nội thất']);
+            case 'missing_dms': return incompleteCars.filter(c => !c['Số máy'] || !c['Mã DMS']);
+            default: return incompleteCars;
+        }
+    }, [incompleteCars, stockData, selectedFolder, searchQuery]);
+
     const folders = [
         { id: 'all', label: 'Tất Cả', icon: 'fa-layer-group', count: incompleteCars.length },
         { id: 'missing_model', label: 'Thiếu Dòng Xe', icon: 'fa-car', count: incompleteCars.filter(c => !c['Dòng xe'] || c['Dòng xe'].trim() === '').length },
@@ -37,32 +55,30 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
         { id: 'missing_dms', label: 'Thiếu Số Máy/DMS', icon: 'fa-id-card', count: incompleteCars.filter(c => !c['Số máy'] || !c['Mã DMS']).length },
     ];
 
-    const filteredCars = useMemo(() => {
-        switch (selectedFolder) {
-            case 'missing_model': return incompleteCars.filter(c => !c['Dòng xe'] || c['Dòng xe'].trim() === '');
-            case 'missing_version': return incompleteCars.filter(c => !c['Phiên bản'] || c['Phiên bản'].trim() === '');
-            case 'missing_color': return incompleteCars.filter(c => !c['Ngoại thất'] || !c['Nội thất']);
-            case 'missing_dms': return incompleteCars.filter(c => !c['Số máy'] || !c['Mã DMS']);
-            default: return incompleteCars;
-        }
-    }, [incompleteCars, selectedFolder]);
-
-    const selectedCar = useMemo(() => incompleteCars.find(c => c.VIN === selectedVin), [incompleteCars, selectedVin]);
+    const selectedCar = useMemo(() => stockData.find(c => c.VIN === selectedVin), [stockData, selectedVin]);
 
     // Auto-select first car
     useEffect(() => {
-        if (filteredCars.length > 0) {
-            setSelectedVin(filteredCars[0].VIN);
+        if (displayCars.length > 0) {
+            setSelectedVin(displayCars[0].VIN);
         } else {
             setSelectedVin(null);
         }
-    }, [selectedFolder, filteredCars.length]);
+    }, [selectedFolder, searchQuery, displayCars.length]);
 
     const handleFieldChange = (vin: string, field: keyof StockVehicle, value: string) => {
-        setLocalChanges(prev => ({
-            ...prev,
-            [vin]: { ...(prev[vin] || {}), [field]: value }
-        }));
+        setLocalChanges(prev => {
+            const next = { ...prev };
+            const currentChanges = { ...(next[vin] || {}), [field]: value };
+            
+            // VF5 version default logic
+            if (field === 'Dòng xe' && (value === 'VF5' || value === 'vf5')) {
+                currentChanges['Phiên bản'] = 'Plus';
+            }
+            
+            next[vin] = currentChanges;
+            return next;
+        });
     };
 
     const handleSave = async (vin: string) => {
@@ -184,16 +200,44 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
 
             {/* Column 2: List */}
             <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary flex flex-col bg-white/90 relative z-10 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-3 bg-white border-b border-border-secondary flex items-center gap-2">
-                    <button onClick={() => setMobileView('folders')} className="md:hidden p-1.5 hover:bg-surface-ground rounded-full">
-                        <i className="fas fa-arrow-left text-gray-500"></i>
-                    </button>
-                    <span className="font-bold text-sm uppercase tracking-tight text-slate-700">
-                        {folders.find(f => f.id === selectedFolder)?.label || 'Danh sách'}
-                    </span>
+                <div className="p-3 bg-white border-b border-border-secondary flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setMobileView('folders')} className="md:hidden p-1.5 hover:bg-surface-ground rounded-full">
+                            <i className="fas fa-arrow-left text-gray-500"></i>
+                        </button>
+                        <span className="font-bold text-sm uppercase tracking-tight text-slate-700">
+                            {searchQuery ? 'Tìm kiếm VIN' : (folders.find(f => f.id === selectedFolder)?.label || 'Danh sách')}
+                        </span>
+                    </div>
+                    
+                    {/* Search Bar - Allow Admin to search any car to edit */}
+                    <div className="relative group">
+                        <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-accent-primary transition-colors text-[10px]"></i>
+                        <input 
+                            type="text"
+                            placeholder="Tìm VIN / Máy / DMS..."
+                            className="w-full bg-slate-50 border border-slate-100 rounded-lg pl-8 pr-3 py-1.5 text-[11px] font-bold focus:bg-white focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/10 transition-all outline-none"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        {searchQuery && (
+                            <button 
+                                onClick={() => setSearchQuery('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center bg-slate-200 hover:bg-slate-300 text-slate-500 rounded-full transition-colors"
+                            >
+                                <i className="fas fa-times text-[8px]"></i>
+                            </button>
+                        )}
+                    </div>
                 </div>
                 <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-                    {filteredCars.map(car => renderCarListItem(car))}
+                    {displayCars.map(car => renderCarListItem(car))}
+                    {displayCars.length === 0 && (
+                        <div className="p-8 text-center">
+                            <i className="fas fa-search text-slate-100 fa-3x mb-3"></i>
+                            <p className="text-[10px] text-slate-300 font-bold uppercase">Không tìm thấy xe</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -283,7 +327,21 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
                                                     onChange={(e) => handleFieldChange(selectedCar.VIN, 'Ngoại thất', e.target.value)}
                                                 >
                                                     <option value="">-- Chọn Màu --</option>
-                                                    {defaultExteriors.map(c => <option key={c} value={c}>{c}</option>)}
+                                                    {(() => {
+                                                        const currentModel = (localChanges[selectedCar.VIN]?.['Dòng xe'] || selectedCar['Dòng xe'] || '').toLowerCase().replace(/\s+/g, '');
+                                                        const validCodes = VALID_IMAGES_BY_MODEL[currentModel] || []; 
+                                                        
+                                                        // Nếu không có modelKey hoặc không có validCodes, hiện hết (fallback)
+                                                        if (!currentModel || validCodes.length === 0) return defaultExteriors.map(c => <option key={c} value={c}>{c}</option>);
+                                                        
+                                                        return defaultExteriors
+                                                            .filter(colorStr => {
+                                                                const codeMatch = colorStr.match(/\(([^)]+)\)/);
+                                                                if (!codeMatch) return true; 
+                                                                return validCodes.includes(codeMatch[1].toLowerCase());
+                                                            })
+                                                            .map(c => <option key={c} value={c}>{c}</option>);
+                                                    })()}
                                                 </select>
                                                 <input
                                                     type="text"

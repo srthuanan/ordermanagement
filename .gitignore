@@ -31,3 +31,18 @@ price
 *.njsproj
 *.sln
 *.sw?
+
+# Temp & cache
+__pycache__/
+*.pyc
+temp_pdfs/
+tmp/
+scratch/
+mobile_ui_test_results/
+*.part
+vite.config.ts.timestamp-*
+
+# Temp data files
+*.xlsx
+tmp_*.json
+tmp_*.js

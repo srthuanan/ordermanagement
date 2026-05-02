@@ -119,7 +119,7 @@ const ExtensionDetail = React.memo(({ item, onOpenFilePreview }: { item: StockVe
                 <div className="flex justify-between items-center text-xs">
                     <span className="text-slate-400">Thời hạn hiện tại:</span>
                     <span className="font-mono font-bold text-rose-500">
-                        {moment(item.thoi_gian_het_han_giu).format('HH:mm DD/MM/YYYY')}
+                        {moment(item.thoi_gian_het_han_giu).format('DD/MM/YYYY HH:mm:ss')}
                     </span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
@@ -359,7 +359,7 @@ const QueueDetail = React.memo(({ item, vehicles }: { item: { vin: string, items
                                 </div>
                                 <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1.5">
                                     <i className="far fa-clock"></i>
-                                    <span>Đăng ký lúc: {moment(person.created_at).format('HH:mm DD/MM/YYYY')}</span>
+                                    <span>Đăng ký lúc: {moment(person.created_at).format('DD/MM/YYYY HH:mm:ss')}</span>
                                 </div>
                             </div>
                         </div>
@@ -388,6 +388,7 @@ const HoldManagementView: React.FC<HoldManagementViewProps> = ({ showToast, onOp
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [vehicles, setVehicles] = useState<Record<string, any>>({});
     const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const fetchData = React.useCallback(async (silent = false) => {
         if (!silent) setIsLoading(true);
@@ -437,13 +438,45 @@ const HoldManagementView: React.FC<HoldManagementViewProps> = ({ showToast, onOp
     ], [extensions.length, reputations.length, groupedQueue]);
 
     const currentList = useMemo(() => {
-        switch (activeSubTab) {
-            case 'extensions': return extensions;
-            case 'reputation': return [...reputations].sort((a, b) => b.score - a.score);
-            case 'queue': return Object.entries(groupedQueue).map(([vin, items]) => ({ vin, items }));
-            default: return [];
-        }
-    }, [activeSubTab, extensions, reputations, groupedQueue]);
+        const filtered = (() => {
+            switch (activeSubTab) {
+                case 'extensions': return extensions;
+                case 'reputation': 
+                    return [...reputations]
+                        .filter(r => {
+                            const email = (r.email || '').toLowerCase();
+                            const name = (r.name || '').toLowerCase();
+                            // Filter out obvious test/junk accounts
+                            if (['user', 'admin', 'test'].includes(email)) return false;
+                            if (email.includes('test@') || email.includes('demo@')) return false;
+                            if (name === 'user' || name === 'admin' || name.includes('tài khoản test')) return false;
+                            // Filter out accounts that only have a short slug as both name and email (likely system/test)
+                            if (r.name === r.email && !r.email.includes(' ') && r.email.length < 8) return false;
+                            return true;
+                        })
+                        .sort((a, b) => {
+                            if (b.score !== a.score) return b.score - a.score;
+                            return (a.name || '').localeCompare(b.name || '', 'vi');
+                        });
+                case 'queue': return Object.entries(groupedQueue).map(([vin, items]) => ({ vin, items }));
+                default: return [];
+            }
+        })();
+
+        if (!searchTerm.trim()) return filtered;
+        
+        const term = searchTerm.toLowerCase();
+        return (filtered as any[]).filter(item => {
+            if (activeSubTab === 'reputation') {
+                return item.name.toLowerCase().includes(term) || item.email.toLowerCase().includes(term);
+            } else if (activeSubTab === 'extensions') {
+                return item.vin.toLowerCase().includes(term) || item.nguoi_giu_xe.toLowerCase().includes(term);
+            } else if (activeSubTab === 'queue') {
+                return item.vin.toLowerCase().includes(term);
+            }
+            return true;
+        });
+    }, [activeSubTab, extensions, reputations, groupedQueue, searchTerm]);
 
     useEffect(() => {
         if (currentList.length > 0) {
@@ -567,6 +600,27 @@ const HoldManagementView: React.FC<HoldManagementViewProps> = ({ showToast, onOp
                         <i className="fas fa-arrow-left text-gray-500"></i>
                     </button>
                     <span className="font-bold text-sm">{folders.find(f => f.id === activeSubTab)?.label || 'Danh sách'}</span>
+                </div>
+
+                <div className="px-3 py-2 bg-slate-50 border-b border-border-secondary">
+                    <div className="relative">
+                        <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+                        <input 
+                            type="text" 
+                            placeholder="Tìm kiếm..." 
+                            className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/20 transition-all"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        {searchTerm && (
+                            <button 
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500"
+                            >
+                                <i className="fas fa-times-circle text-[10px]"></i>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
