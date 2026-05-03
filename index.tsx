@@ -89,7 +89,7 @@ type ToastItem = {
 };
 
 const Root = () => {
-    const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('isLoggedIn') === 'true');
+    const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('isLoggedIn') === 'true' || localStorage.getItem('isLoggedIn') === 'true');
     const [toasts, setToasts] = useState<ToastItem[]>([]);
     const [successInfo, setSuccessInfo] = useState<{title: string; message: string} | null>(null);
     const [isResettingPassword, setIsResettingPassword] = useState(false);

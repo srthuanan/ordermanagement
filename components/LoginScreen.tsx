@@ -17,6 +17,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
     const [isEmailSent, setIsEmailSent] = useState(false);
     const [invitationDetails, setInvitationDetails] = useState<{ full_name: string, role: string } | null>(null);
     const [inviteToken, setInviteToken] = useState('');
+    const [rememberMe, setRememberMe] = useState<boolean>(() => localStorage.getItem('rememberMe') !== 'false');
 
     // Kiểm tra phiên đăng nhập (từ Link Email) để ẩn ô OTP
     useEffect(() => {
@@ -138,7 +139,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
         }
         setIsSubmitting(true);
         await new Promise(resolve => setTimeout(resolve, 800));
-        const result = await authService.login(username, password);
+        const result = await authService.login(username, password, rememberMe);
         setIsSubmitting(false);
         if (result.success) {
             // showToast('Xuân Bính Ngọ 2026', 'Đăng nhập thành công!', 'success'); // Removed redundant toast
@@ -447,6 +448,18 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
                                                             className="w-full px-4 py-4 bg-white border border-slate-300 focus:bg-slate-50 focus:outline-none focus:shadow-[4px_4px_0px_0px_#f1f5f9] outline-none text-[14px] text-slate-800 font-bold transition-all placeholder:text-slate-400 font-mono"
                                                         />
                                                     </div>
+                                                </div>
+
+                                                <div className="flex items-center justify-between pt-1 pb-1 select-none">
+                                                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={rememberMe}
+                                                            onChange={e => setRememberMe(e.target.checked)}
+                                                            className="form-checkbox h-4 w-4 text-[#0284c7] border-slate-300 rounded-none cursor-pointer"
+                                                        />
+                                                        <span className="text-[12px] font-black text-slate-800 uppercase tracking-wide">Duy trì đăng nhập</span>
+                                                    </label>
                                                 </div>
 
                                                 <div className="flex justify-center pt-2">

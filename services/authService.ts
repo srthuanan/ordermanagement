@@ -26,7 +26,7 @@ interface LoginResult {
  * PURE SUPABASE AUTH LOGIN
  * Đăng nhập trực tiếp qua hệ thống bảo mật của Supabase.
  */
-export const login = async (emailOrUsername: string, password: string): Promise<LoginResult> => {
+export const login = async (emailOrUsername: string, password: string, rememberMe: boolean = false): Promise<LoginResult> => {
     try {
         const input = emailOrUsername.toLowerCase().trim();
         let email = input;
@@ -74,7 +74,7 @@ export const login = async (emailOrUsername: string, password: string): Promise<
                 role: profile?.role || 'Tư vấn bán hàng',
                 email: email,
                 token: authData.session?.access_token
-            });
+            }, rememberMe);
         }
 
         return { success: false, message: "Không thể xác định danh tính." };
@@ -84,7 +84,7 @@ export const login = async (emailOrUsername: string, password: string): Promise<
     }
 };
 
-export function applyLoginState(data: any): LoginResult {
+export function applyLoginState(data: any, rememberMe: boolean = false): LoginResult {
     sessionStorage.setItem("isLoggedIn", "true");
     sessionStorage.setItem("currentUser", data.username);
     sessionStorage.setItem("currentConsultant", data.consultantName);
@@ -92,12 +92,37 @@ export function applyLoginState(data: any): LoginResult {
     sessionStorage.setItem("userEmail", data.email);
     if (data.token) sessionStorage.setItem("token", data.token);
 
+    if (rememberMe) {
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("currentUser", data.username);
+        localStorage.setItem("currentConsultant", data.consultantName);
+        localStorage.setItem("userRole", data.role);
+        localStorage.setItem("userEmail", data.email);
+        if (data.token) localStorage.setItem("token", data.token);
+        localStorage.setItem("rememberMe", "true");
+    } else {
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("currentUser");
+        localStorage.removeItem("currentConsultant");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("userEmail");
+        localStorage.removeItem("token");
+        localStorage.removeItem("rememberMe");
+    }
+
     return { success: true, ...data };
 }
 
 export const logout = async () => {
     await supabase.auth.signOut();
     sessionStorage.clear();
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("currentConsultant");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("token");
+    localStorage.removeItem("rememberMe");
 };
 
 /**
@@ -114,13 +139,15 @@ export const restoreSession = async (): Promise<boolean> => {
             .eq('email', session.user.email)
             .maybeSingle();
 
+        const rememberMe = localStorage.getItem('rememberMe') === 'true';
+
         applyLoginState({
             username: profile?.username || session.user.email?.split('@')[0],
             consultantName: profile?.full_name || 'Nhân viên',
             role: profile?.role || 'Tư vấn bán hàng',
             email: session.user.email,
             token: session.access_token
-        });
+        }, rememberMe);
         return true;
     } catch (e) {
         console.error("Restore session error:", e);
