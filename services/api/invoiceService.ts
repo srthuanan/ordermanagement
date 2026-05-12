@@ -5,11 +5,35 @@ import { createNotification } from './notificationService';
 export const requestInvoice = async (
     orderNumber: string, contractFile: File, proposalFile: File, policy: string, commission: string, vpoint: string,
     orderData?: { ten_khach_hang?: string; tvbh?: string; vin?: string; dong_xe?: string; phien_ban?: string; ngoai_that?: string; noi_that?: string; ngay_coc?: string; },
-    aiNote?: string
+    aiNote?: string,
+    xeXangVin?: string, xeXangHang?: string, xeXangModel?: string,
+    _preProcessedPayloads?: { contract: any, proposal: any }
 ) => {
     const requestedBy = getStorageItem("currentConsultant") || "Unknown User";
     const now = new Date().toISOString();
     const timestamp = Date.now();
+
+    if (xeXangVin) {
+        const cleanGasVin = xeXangVin.trim().toUpperCase();
+        const { data: existingGasCar } = await supabase.from('yeucauxhd')
+            .select('xe_xang_vin, so_don_hang')
+            .ilike('xe_xang_vin', cleanGasVin);
+
+        const { data: existingArchivedGasCar } = await supabase.from('archived_orders')
+            .select('xe_xang_vin, so_don_hang')
+            .ilike('xe_xang_vin', cleanGasVin);
+
+        const matchY = !!(existingGasCar && existingGasCar.length > 0);
+        const matchA = !!(existingArchivedGasCar && existingArchivedGasCar.length > 0);
+
+        if (matchY || matchA) {
+            const matched = matchY && existingGasCar ? existingGasCar[0] : (existingArchivedGasCar ? existingArchivedGasCar[0] : null);
+            if (matched) {
+                throw new Error(`Xe xăng có số VIN ${cleanGasVin} đã được sử dụng trước đó trong yêu cầu xuất hóa đơn ${matched.so_don_hang}.`);
+            }
+        }
+    }
+
     const sanitize = (name: string): string => name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._\-]/g, '').toUpperCase();
     const custSafe = orderData?.ten_khach_hang ? sanitize(orderData.ten_khach_hang) : 'KH';
     const cPath = `${orderNumber}/HDMB_${custSafe}_${timestamp}.${contractFile.name.split('.').pop()}`;
@@ -31,11 +55,11 @@ export const requestInvoice = async (
             if (!maDms) maDms = ttx?.khu_vuc || ''; 
         }
     }
-    const row = { so_don_hang: orderNumber, ten_khach_hang: orderData?.ten_khach_hang || '', tvbh: orderData?.tvbh || requestedBy, dong_xe: orderData?.dong_xe || '', phien_ban: orderData?.phien_ban || '', ngoai_that: orderData?.ngoai_that || '', noi_that: orderData?.noi_that || '', ngay_coc: orderData?.ngay_coc || null, ngay_yeu_cau: now, chinh_sach: policy || '', hoa_hong_ung: commission || '', vpoint: vpoint || '', url_hop_dong: cUrl.publicUrl, url_de_nghi_xhd: pUrl.publicUrl, so_may: soMay, vin: vinLookup || '', ma_dms: maDms, ngay_xuat_hoa_don: null, ket_qua_gui_mail: '', url_hoa_don_da_xuat: '', trang_thai_vc: '', ghi_chu_ai: aiNote || '' };
+    const row = { so_don_hang: orderNumber, ten_khach_hang: orderData?.ten_khach_hang || '', tvbh: orderData?.tvbh || requestedBy, dong_xe: orderData?.dong_xe || '', phien_ban: orderData?.phien_ban || '', ngoai_that: orderData?.ngoai_that || '', noi_that: orderData?.noi_that || '', ngay_coc: orderData?.ngay_coc || null, ngay_yeu_cau: now, chinh_sach: policy || '', hoa_hong_ung: commission || '', vpoint: vpoint || '', url_hop_dong: cUrl.publicUrl, url_de_nghi_xhd: pUrl.publicUrl, so_may: soMay, vin: vinLookup || '', ma_dms: maDms, ngay_xuat_hoa_don: null, ket_qua_gui_mail: '', url_hoa_don_da_xuat: '', trang_thai_vc: '', ghi_chu_ai: aiNote || '', xe_xang_vin: xeXangVin || '', xe_xang_hang: xeXangHang || '', xe_xang_model: xeXangModel || '' };
     const { error: insErr } = await supabaseAdmin.from('yeucauxhd').insert([row]);
     if (insErr) throw new Error(`Lỗi lưu Supabase: ${insErr.message}`);
     await supabaseAdmin.from('donhang').update({ ket_qua: 'Chờ phê duyệt' }).eq('so_don_hang', orderNumber);
-    await logAction('REQUEST_INVOICE', { orderNumber, policy, commission, vpoint, aiNote }, orderNumber, 'order');
+    await logAction('REQUEST_INVOICE', { orderNumber, policy, commission, vpoint, aiNote, xeXangVin, xeXangHang, xeXangModel }, orderNumber, 'order');
     if (vinLookup) await supabaseAdmin.from('khoxe').delete().eq('vin', vinLookup);
     await createNotification({ message: `TVBH đã yêu cầu xuất hóa đơn cho đơn hàng ${orderNumber}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: orderNumber });
     return { status: 'SUCCESS', message: `Đã gửi yêu cầu xuất hóa đơn cho đơn hàng ${orderNumber} và xóa xe khỏi kho.` };

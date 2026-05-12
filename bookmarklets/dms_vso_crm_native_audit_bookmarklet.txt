@@ -1,0 +1,83 @@
+javascript:(function(){
+    if (typeof Xrm === "undefined" || !Xrm.Page || !Xrm.Page.data || !Xrm.Page.data.entity) {
+        alert("Vui lòng mở một bản ghi (ví dụ Đơn hàng VSO) trên DMS trước khi bấm!");
+        return;
+    }
+
+    var entity = Xrm.Page.data.entity;
+    var id = entity.getId().replace(/[{}]/g, "");
+    var etn = entity.getEntityName();
+    var recordName = entity.getPrimaryAttributeValue() || "Bản ghi";
+
+    // Lấy Object Type Code (OTC) của thực thể hiện tại
+    var otc = "";
+    try {
+        if (typeof Xrm.Internal !== "undefined" && typeof Xrm.Internal.getEntityCode === "function") {
+            otc = Xrm.Internal.getEntityCode(etn);
+        } else {
+            // Fallback lấy từ query string
+            var urlParams = new URLSearchParams(window.location.search);
+            otc = urlParams.get("etc") || "";
+        }
+    } catch (e) {
+        console.error("Lỗi lấy OTC:", e);
+    }
+
+    if (!otc) {
+        // Fallback mặc định cho xts_newvehiclesalesorder thường là OTC tùy biến
+        alert("Không thể xác định mã thực thể (OTC). Trình duyệt sẽ mở lịch sử bằng phương pháp dự phòng.");
+    }
+
+    // Tạo URL mở trang Audit gốc của CRM
+    var clientUrl = Xrm.Utility.getGlobalContext().getClientUrl();
+    var auditUrl = clientUrl + "/userdefined/areas.aspx?oId=%7b" + id + "%7d&oType=" + otc + "&pagemode=iframe&security=852023&tabKey=audit";
+
+    // Hiển thị Popup Iframe đẹp mắt ngay trên màn hình hiện tại
+    var oldOverlay = document.getElementById('crm-native-audit-overlay');
+    if (oldOverlay) oldOverlay.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'crm-native-audit-overlay';
+    overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999998;background:rgba(15,15,20,0.8);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;';
+
+    var modal = document.createElement('div');
+    modal.style = 'width:85%;height:85%;background:#1e1e24;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;overflow:hidden;color:#e2e8f0;font-family:system-ui, -apple-system, sans-serif;';
+    overlay.appendChild(modal);
+
+    // Header
+    var header = document.createElement('div');
+    header.style = 'background:rgba(30,41,59,0.7);padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;';
+    header.innerHTML = '<div style="display:flex;align-items:center;gap:12px;">' +
+                       '<span style="font-size:24px;">🕵️‍♂️</span>' +
+                       '<div>' +
+                       '<h2 style="margin:0;font-size:16px;font-weight:700;color:#38bdf8;">Nhật ký hành động hệ thống gốc (CRM Audit Grid)</h2>' +
+                       '<p style="margin:2px 0 0 0;font-size:12px;color:#94a3b8;">Đơn hàng: ' + recordName + '</p>' +
+                       '</div>' +
+                       '</div>';
+
+    var rightHeader = document.createElement('div');
+    rightHeader.style = 'display:flex;gap:10px;';
+
+    var openNewTabBtn = document.createElement('button');
+    openNewTabBtn.textContent = '↗ Mở tab mới';
+    openNewTabBtn.style = 'background:#0284c7;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;';
+    openNewTabBtn.onclick = function() { window.open(auditUrl, '_blank'); };
+
+    var closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕ Đóng';
+    closeBtn.style = 'background:#ef4444;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;';
+    closeBtn.onclick = function(){ overlay.remove(); };
+
+    rightHeader.appendChild(openNewTabBtn);
+    rightHeader.appendChild(closeBtn);
+    header.appendChild(rightHeader);
+    modal.appendChild(header);
+
+    // Iframe load trang gốc CRM Audit
+    var iframe = document.createElement('iframe');
+    iframe.src = auditUrl;
+    iframe.style = 'flex-grow:1;border:none;background:#fff;';
+    modal.appendChild(iframe);
+
+    document.body.appendChild(overlay);
+})();

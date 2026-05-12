@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TestDriveBooking } from '../../types';
 import { normalizeName } from '../../services/authService';
 import { compressImage } from '../../services/ocrService';
@@ -21,6 +21,7 @@ interface TestDriveCheckinModalProps {
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
     currentUser: string;
     isAdmin: boolean;
+    isReferenceAccount?: boolean;
 }
 
 const fileToBase64 = (file: File): Promise<string> => {
@@ -188,7 +189,7 @@ const parseImageData = (data: any): string[] => {
 };
 
 
-const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, mode, onClose, onSubmit, showToast, onOpenImagePreview, currentUser, isAdmin }) => {
+const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, mode, onClose, onSubmit, showToast, onOpenImagePreview, currentUser, isAdmin, isReferenceAccount }) => {
     const [odoBefore, setOdoBefore] = useState(booking.odoBefore || '');
     const [imagesBefore, setImagesBefore] = useState<File[]>([]);
     const [odoAfter, setOdoAfter] = useState(booking.odoAfter || '');
@@ -196,7 +197,7 @@ const TestDriveCheckinModal: React.FC<TestDriveCheckinModalProps> = ({ booking, 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const bgStyle = useModalBackground();
 
-    const canUpdate = useMemo(() => isAdmin || normalizeName(currentUser) === normalizeName(booking.tenTuVan), [isAdmin, currentUser, booking.tenTuVan]);
+    const canUpdate = useMemo(() => !isReferenceAccount && (isAdmin || normalizeName(currentUser) === normalizeName(booking.tenTuVan)), [isAdmin, currentUser, booking.tenTuVan, isReferenceAccount]);
     const isViewOnly = mode === 'view' || !canUpdate;
 
     const existingImagesBefore = useMemo(() => parseImageData(booking.imagesBefore), [booking.imagesBefore]);

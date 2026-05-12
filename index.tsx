@@ -12,6 +12,7 @@ import * as apiService from './services/apiService';
 import * as authService from './services/authService';
 import UpdateModal from './components/modals/UpdateModal';
 import ChangePasswordModal from './components/modals/ChangePasswordModal';
+import { PublicLiveMapView } from './components/PublicLiveMapView';
 import { registerSW } from 'virtual:pwa-register';
 
 // Build version from Vite define (timestamp)
@@ -95,6 +96,7 @@ const Root = () => {
     const [isResettingPassword, setIsResettingPassword] = useState(false);
     const [resetContext, setResetContext] = useState<'recovery' | 'invite'>('recovery');
     const [directChangePassword, setDirectChangePassword] = useState<{ isOpen: boolean, username: string }>({ isOpen: false, username: '' });
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
 
     useEffect(() => {
         console.log("Checking URL params...", window.location.search, window.location.hash);
@@ -117,9 +119,9 @@ const Root = () => {
             console.log("Detected direct-change-password action for user:", user);
             setDirectChangePassword({ isOpen: true, username: user });
             
-            // Clean up URL
             const cleanUrl = window.location.origin + window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
+            setIsInitialLoading(false);
         } else {
             // Xử lý Double Hash cho Supabase Auth (VD: #/reset-password#access_token=...)
             const fullHash = window.location.hash;
@@ -175,7 +177,9 @@ const Root = () => {
                     }
                 }
             };
-            initAuth();
+            initAuth().finally(() => {
+                setIsInitialLoading(false);
+            });
         }
 
         return () => {
@@ -198,6 +202,24 @@ const Root = () => {
     const hideToast = useCallback((id: string) => setToasts(prev => prev.filter(t => t.id !== id)), []);
     const hideAllToasts = useCallback(() => setToasts([]), []);
 
+    // Get tokens immediately from URL
+    const getTokens = () => {
+        const params = new URLSearchParams(window.location.search);
+        let vin = params.get('shared_vin');
+        let token = params.get('token');
+
+        // Fallback to hash
+        if ((!vin || !token) && window.location.hash.includes('?')) {
+            const hashSearch = window.location.hash.split('?')[1];
+            const hashParams = new URLSearchParams(hashSearch);
+            if (!vin) vin = hashParams.get('shared_vin');
+            if (!token) token = hashParams.get('token');
+        }
+        return { vin, token };
+    };
+
+    const { vin: sharedVin, token: shareToken } = getTokens();
+
     useEffect(() => {
         if (isAuthenticated) {
             apiService.recordUserPresence(); 
@@ -207,6 +229,14 @@ const Root = () => {
     }, [isAuthenticated]);
 
     const renderContent = () => {
+        if (shareToken) {
+            return <PublicLiveMapView shareToken={shareToken} />;
+        }
+
+        if (sharedVin) {
+            return <PublicLiveMapView sharedVin={sharedVin} />;
+        }
+
         if (isResettingPassword) {
             return (
                 <ResetPasswordView 
@@ -228,6 +258,15 @@ const Root = () => {
 
         if (isAuthenticated) {
             return <App onLogout={handleLogout} showToast={showToast} hideToast={hideAllToasts} />;
+        }
+
+        if (isInitialLoading) {
+            return (
+                <div className="w-screen h-screen bg-slate-50 flex flex-col items-center justify-center gap-3 animate-fade-in">
+                    <i className="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-600"></i>
+                    <p className="text-sm font-black text-slate-800 uppercase tracking-widest">Đang khởi tạo ứng dụng...</p>
+                </div>
+            );
         }
 
         return <LoginScreen onLoginSuccess={handleLoginSuccess} showToast={showToast} />;

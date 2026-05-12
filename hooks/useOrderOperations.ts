@@ -14,9 +14,10 @@ interface UseOrderOperationsProps {
     refetchHistory: any;
     refetchStock: any;
     setAllHistoryData: any;
+    isReferenceAccount?: boolean;
 }
 
-export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refetchStock, setAllHistoryData }: UseOrderOperationsProps) => {
+export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refetchStock, setAllHistoryData, isReferenceAccount }: UseOrderOperationsProps) => {
     // --- STATE ---
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
@@ -37,8 +38,16 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     const [processingVin, setProcessingVin] = useState<string | null>(null);
 
     // --- HANDLERS ---
+    const checkReference = useCallback(() => {
+        if (isReferenceAccount) {
+            showToast('Thông báo', 'Đây là <b>Tài khoản tham khảo</b>. Bạn chỉ có quyền xem dữ liệu chứ không thể thực hiện hành động này.', 'info');
+            return true;
+        }
+        return false;
+    }, [isReferenceAccount, showToast]);
 
     const handleHoldCar = async (vin: string) => {
+        if (checkReference()) return;
         setProcessingVin(vin);
 //         showToast('Đang xử lý...', `Đang giữ xe VIN ${vin}.`, 'loading'); 
         try {
@@ -58,6 +67,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     };
 
     const handleReleaseCar = async (vin: string, outcome: 'released' | 'expired' | 'matched' = 'released') => {
+        if (checkReference()) return;
         setProcessingVin(vin);
         const actionText = outcome === 'matched' ? 'đã ghép' : 'hủy giữ';
 //         showToast('Đang xử lý...', `Đang ${actionText} xe VIN ${vin}.`, 'loading'); 
@@ -74,6 +84,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     };
 
     const handleJoinQueue = async (vin: string) => {
+        if (checkReference()) return;
         setProcessingVin(vin);
 //         showToast('Đang xử lý...', 'Đang đăng ký hàng chờ...', 'loading');
         try {
@@ -92,6 +103,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     };
 
     const handleLeaveQueue = async (vin: string) => {
+        if (checkReference()) return;
         setProcessingVin(vin);
 //         showToast('Đang xử lý...', 'Đang hủy hàng chờ...', 'loading');
         try {
@@ -110,6 +122,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     };
 
     const handleRequestExtension = async (vin: string, file: File, reason: string) => {
+        if (checkReference()) return;
         setProcessingVin(vin);
 //         showToast('Đang xử lý...', 'Đang tải file minh chứng...', 'loading');
         try {
@@ -133,6 +146,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     const handleViewDetails = useCallback((order: Order) => setSelectedOrder(order), []);
 
     const handleCancelOrder = async (order: Order, reason: string, unmatchType: string = 'Hủy luôn đơn hàng (Hủy đơn)', thoiGianCanXe?: string) => {
+        if (checkReference()) return;
         setProcessingOrder(order["Số đơn hàng"]);
 //         showToast('Đang Hủy Yêu Cầu', `Hủy yêu cầu cho đơn hàng ${order["Số đơn hàng"]}.`, 'loading'); 
         try {
@@ -149,8 +163,12 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         }
     };
 
-    const handleRequestInvoice = async (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string, aiNote?: string, preProcessedPayloads?: { contract: any, proposal: any }) => {
-
+    const handleRequestInvoice = async (
+        order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string, 
+        aiNote?: string, _preProcessedPayloads?: { contract: any, proposal: any },
+        xeXangVin?: string, xeXangHang?: string, xeXangModel?: string
+    ) => {
+        if (checkReference()) return;
         setProcessingOrder(order["Số đơn hàng"]);
         // Modal will handle the loading UI
 
@@ -173,7 +191,10 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
                     ngay_coc: order["Ngày cọc"] ? new Date(order["Ngày cọc"]).toISOString() : undefined,
                 },
                 aiNote,
-                preProcessedPayloads
+                xeXangVin,
+                xeXangHang,
+                xeXangModel,
+                _preProcessedPayloads
             );
             await refetchHistory();
             hideToast();
@@ -191,6 +212,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
 
 
     const handleSupplementFiles = async (order: Order, contractFile: File | null, proposalFile: File | null, aiNote?: string) => {
+        if (checkReference()) return;
         setProcessingOrder(order["Số đơn hàng"]);
         try {
             await apiService.uploadSupplementaryFiles(order["Số đơn hàng"], contractFile, proposalFile, aiNote);
@@ -230,6 +252,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     };
     
     const handleSelectPolicy = async (order: Order, policy: string) => {
+        if (checkReference()) return;
         setProcessingOrder(order["Số đơn hàng"]);
         try {
             const res = await apiService.updateOrderPolicy(order["Số đơn hàng"], policy);
@@ -257,6 +280,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
 
     const handleConfirmRequestVC = async (payload: any, vin?: string): Promise<boolean> => {
         if (!orderToRequestVC) return false;
+        if (checkReference()) return false;
         setProcessingOrder(orderToRequestVC["Số đơn hàng"]);
 
         try {
@@ -316,6 +340,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
 
     const handleConfirmVC = async (): Promise<boolean> => {
         if (!orderToConfirmVC) return false;
+        if (checkReference()) return false;
         const orderId = orderToConfirmVC["Số đơn hàng"];
         setProcessingOrder(orderId);
         try {
@@ -367,12 +392,13 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
     }, []);
 
     const handleFormSuccess = useCallback((newOrder: Order) => {
+        if (checkReference()) return;
         setCreateRequestData({ isOpen: false });
         setAllHistoryData((prev: Order[]) => [newOrder, ...prev].sort((a, b) => new Date(b['Thời gian nhập']).getTime() - new Date(a['Thời gian nhập']).getTime()));
         showToast('Yêu Cầu Đã Gửi', 'Yêu cầu ghép xe của bạn đã được ghi nhận thành công.', 'success', 4000);
         refetchStock(true);
         setTimeout(() => { setSelectedOrder(newOrder); }, 500);
-    }, [setAllHistoryData, showToast, refetchStock]);
+    }, [setAllHistoryData, showToast, refetchStock, checkReference]);
 
     const openImagePreviewModal = useCallback((images: ImageSource[], startIndex: number = 0, customerName: string) => {
         setImagePreview({ images, startIndex, customerName });

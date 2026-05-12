@@ -1,0 +1,304 @@
+javascript:(function(){
+    if (typeof Xrm === 'undefined') { 
+        alert('Vui lòng mở trang DMS VinFast trước khi bấm!'); 
+        return; 
+    }
+
+    const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU";
+    
+    const container = document.createElement('div');
+    container.style = 'position:fixed;top:10px;right:10px;background:#111;color:white;padding:20px;z-index:999999;border-radius:10px;font-family:sans-serif;font-size:14px;box-shadow:0 10px 25px rgba(0,0,0,0.5);border:1px solid #333;width:280px;';
+    container.innerHTML = '<h3 style="margin:0 0 10px 0;font-size:16px;border-bottom:1px solid #333;padding-bottom:10px;color:#0f0;text-align:center;">HỆ THỐNG ĐỒNG BỘ DMS</h3>' +
+                          '<div style="margin-bottom:15px;color:#ccc;text-align:center;font-size:12px;">Vui lòng chọn tác vụ đồng bộ:</div>' +
+                          '<button id="btnOrders" style="width:100%;background:#0078d4;color:white;border:none;padding:10px;margin-bottom:10px;cursor:pointer;border-radius:5px;font-weight:bold;">1. Đồng bộ Đơn hàng mở</button>' +
+                          '<button id="btnInventory" style="width:100%;background:#2b88d8;color:white;border:none;padding:10px;margin-bottom:10px;cursor:pointer;border-radius:5px;font-weight:bold;">2. Đồng bộ Kho xe chưa bán</button>' +
+                          '<button id="btnBoth" style="width:100%;background:#107c41;color:white;border:none;padding:10px;margin-bottom:15px;cursor:pointer;border-radius:5px;font-weight:bold;">3. Đồng bộ Cả hai (Mỗi 1 Giờ)</button>' +
+                          '<button id="btnClose" style="width:100%;background:#444;color:white;border:none;padding:8px;cursor:pointer;border-radius:5px;font-size:12px;">Đóng</button>';
+    document.body.appendChild(container);
+
+    const statusDiv = document.createElement('div');
+    statusDiv.style = 'display:none;position:fixed;top:10px;right:10px;background:black;color:white;padding:15px;z-index:999999;border-radius:5px;font-family:sans-serif;font-size:14px;box-shadow:0 4px 6px rgba(0,0,0,0.3);width:280px;';
+    document.body.appendChild(statusDiv);
+
+    function showStatus(text) {
+        container.style.display = 'none';
+        statusDiv.style.display = 'block';
+        statusDiv.innerHTML = text;
+    }
+
+    function closeAll() {
+        container.remove();
+        statusDiv.remove();
+    }
+
+    container.querySelector('#btnClose').onclick = closeAll;
+
+    function getLookupName(item, field) {
+        if (!item) return "";
+        const f = field.toLowerCase();
+        for (let k in item) {
+            if (item.hasOwnProperty(k)) {
+                const kl = k.toLowerCase();
+                if (kl.indexOf(f) !== -1 && kl.indexOf('@odata.community.display.v1.formattedvalue') !== -1) {
+                    return item[k];
+                }
+            }
+        }
+        for (let k in item) {
+            if (item.hasOwnProperty(k)) {
+                const kl = k.toLowerCase();
+                if (kl.indexOf(f) !== -1 && kl.indexOf('_value') !== -1) {
+                    return item[k];
+                }
+            }
+        }
+        return item[field] || "";
+    }
+
+    function isOpenStatus(status) {
+        if (!status) return true;
+        const s = status.toLowerCase();
+        const openKeywords = ["mở", "open", "mới", "new", "draft", "nháp", "active", "hoạt động"];
+        for (let i = 0; i < openKeywords.length; i++) {
+            if (s.indexOf(openKeywords[i]) !== -1) return true;
+        }
+        return false;
+    }
+
+    function syncOrders(onComplete) {
+        showStatus('Đang bắt đầu tải dữ liệu đơn hàng MỞ...');
+        let allRecords = [];
+
+        function fetchPage(query) {
+            Xrm.WebApi.retrieveMultipleRecords("xts_newvehiclesalesorder", query).then(function success(result) {
+                allRecords = allRecords.concat(result.entities);
+                showStatus('Đang tải đơn hàng: ' + allRecords.length + ' dòng...');
+                const nextLink = result["@odata.nextLink"] || result.nextLink;
+                if (nextLink) {
+                    fetchPage(nextLink.substring(nextLink.indexOf('?')));
+                } else {
+                    processAndSend();
+                }
+            }, function (error) {
+                statusDiv.style.display = 'none';
+                container.style.display = 'block';
+                alert('Lỗi tải đơn hàng: ' + error.message);
+            });
+        }
+
+        function processAndSend() {
+            const mapped = allRecords.filter(item => {
+                const statusText = item["xts_status@OData.Community.Display.V1.FormattedValue"] || item["statuscode@OData.Community.Display.V1.FormattedValue"] || "";
+                return isOpenStatus(statusText);
+            }).map(item => ({
+                new_vehicle_sales_order_id: item.xts_newvehiclesalesorderid || "",
+                kiem_tra_tong_cho_hang: "",
+                ngay_sua_doi: item.modifiedon || null,
+                ngay_giao_dich: item.xts_transactiondate ? new Date(item.xts_transactiondate).toISOString().split('T')[0] : null,
+                tu_van_ban_hang: getLookupName(item, "xts_salespersonid") || getLookupName(item, "ownerid") || "",
+                so_don_hang_ban: item.xts_newvehiclesalesordernumber || "",
+                so_bao_gia_xe: getLookupName(item, "xts_newvehiclesalesquoteid") || "",
+                ngay_xuat_hoa_don: item.xvf_sapinvoicedate ? new Date(item.xvf_sapinvoicedate).toISOString().split('T')[0] : (item.xts_salesdate ? new Date(item.xts_salesdate).toISOString().split('T')[0] : (item.xts_deliverydate ? new Date(item.xts_deliverydate).toISOString().split('T')[0] : null)),
+                khach_hang_tiem_nang: getLookupName(item, "xts_potentialcustomerid") || item.xts_potentiallookupname || item.xts_potentialcustomerdescription || "",
+                promotion: getLookupName(item, "xvf_promotionid") || item.itv_promotiondetail || "",
+                ma_khach_hang: item.xts_customernumber || "",
+                mo_ta_san_pham: item.xts_productdescription || getLookupName(item, "xts_productid") || "",
+                ten_phien_ban: getLookupName(item, "xvf_characteristicconfiguration") || getLookupName(item, "xts_productconfigurationid") || getLookupName(item, "xts_productid") || "",
+                loai_tran: getLookupName(item, "itv_characteristicceilingid") || "",
+                mau_ngoai_that: item.xvf_exteriorcolor || getLookupName(item, "xts_productexteriorcolorid") || "",
+                mau_noi_that: item.xvf_interiorcolor || getLookupName(item, "xts_productinteriorcolorid") || "",
+                ma_phien_ban: getLookupName(item, "xvf_vehiclepackage") || getLookupName(item, "xts_productconfigurationid") || "",
+                ma_mau_ngoai_that: getLookupName(item, "xts_productexteriorcolorid") || getLookupName(item, "xvf_characteristicexteriorcolor") || "",
+                ma_mau_noi_that: getLookupName(item, "xts_productinteriorcolorid") || getLookupName(item, "xvf_characteristicinteriorcolor") || "",
+                trang_thai: item["xts_status@OData.Community.Display.V1.FormattedValue"] || item["statuscode@OData.Community.Display.V1.FormattedValue"] || "",
+                pre_customer: getLookupName(item, "itv_customerpreorderid") || getLookupName(item, "itv_leadid") || "",
+                so_vin: getLookupName(item, "xts_chassisid") || item.xts_chassisnumber || item.itv_vinnumber || "",
+                accessory_serial: getLookupName(item, "xts_stockid") || "",
+                ma_san_pham: getLookupName(item, "xts_productid") || "",
+                so_ton_kho: getLookupName(item, "xts_stockid") || "",
+                so_tien_thuc_sau_thue: item.xts_netamountaftertax || item.xvf_grandtotal || 0,
+                don_hang_goc: getLookupName(item, "xts_originalnewvehiclesalesorderreferenceid") || getLookupName(item, "itv_originalvso") || "",
+                chi_nhanh: getLookupName(item, "xts_businessunitid") || getLookupName(item, "xts_siteid") || "",
+                modified_timestamp: item.modifiedon ? new Date(item.modifiedon).getTime() : 0
+            }));
+
+            const uniqueMap = new Map();
+            mapped.forEach(item => {
+                const key = item.so_don_hang_ban;
+                if (key) {
+                    const existing = uniqueMap.get(key);
+                    if (!existing || item.modified_timestamp >= existing.modified_timestamp) uniqueMap.set(key, item);
+                }
+            });
+
+            const finalData = Array.from(uniqueMap.values()).map(({ modified_timestamp, ...rest }) => rest);
+            if (finalData.length === 0) {
+                alert('Không có đơn hàng mở nào để đồng bộ.');
+                if (onComplete) onComplete(0);
+                else closeAll();
+                return;
+            }
+
+            let successCount = 0;
+            function sendChunk(index) {
+                if (index >= finalData.length) {
+                    if (onComplete) onComplete(successCount);
+                    else {
+                        alert('Đã đồng bộ thành công ' + successCount + ' đơn hàng mở!');
+                        closeAll();
+                    }
+                    return;
+                }
+                const chunk = finalData.slice(index, index + 200);
+                showStatus('Đang gửi đơn hàng lên hệ thống (' + index + ' / ' + finalData.length + ')...');
+                
+                fetch("https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/donhanghienhuu?on_conflict=so_don_hang_ban", {
+                    method: 'POST',
+                    headers: {
+                        'apikey': apiKey,
+                        'Authorization': 'Bearer ' + apiKey,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'resolution=merge-duplicates, return=minimal'
+                    },
+                    body: JSON.stringify(chunk)
+                }).then(res => {
+                    if (res.ok) {
+                        successCount += chunk.length;
+                        sendChunk(index + 200);
+                    } else {
+                        res.text().then(err => {
+                            alert('Lỗi chunk đơn hàng: ' + err);
+                            closeAll();
+                        });
+                    }
+                }).catch(err => {
+                    alert('Lỗi kết nối đơn hàng: ' + err.message);
+                    closeAll();
+                });
+            }
+            sendChunk(0);
+        }
+        fetchPage("?$filter=statecode eq 0");
+    }
+
+    function syncInventory(onComplete) {
+        showStatus('Đang bắt đầu tải dữ liệu kho xe...');
+        let allRecords = [];
+
+        function fetchPage(query) {
+            Xrm.WebApi.retrieveMultipleRecords("xts_inventorynewvehicle", query).then(function success(result) {
+                allRecords = allRecords.concat(result.entities);
+                showStatus('Đang tải dữ liệu kho xe: ' + allRecords.length + ' dòng...');
+                const nextLink = result["@odata.nextLink"] || result.nextLink;
+                if (nextLink) {
+                    fetchPage(nextLink.substring(nextLink.indexOf('?')));
+                } else {
+                    processAndSend();
+                }
+            }, function (error) {
+                statusDiv.style.display = 'none';
+                container.style.display = 'block';
+                alert('Lỗi tải dữ liệu kho xe: ' + error.message);
+            });
+        }
+
+        function processAndSend() {
+            const soldVins = new Set(allRecords.filter(item => item._xts_lastvehicleorderid_value).map(item => String(item.xts_chassisnumber || "").trim().toUpperCase()));
+            
+            const mapped = allRecords.filter(item => {
+                const vin = String(item.xts_chassisnumber || "").trim().toUpperCase();
+                return vin && vin.length === 17 && !soldVins.has(vin);
+            }).map(item => ({
+                vin: String(item.xts_chassisnumber || "").trim().toUpperCase(),
+                so_may: String(item.xts_enginenumber || ""),
+                mo_ta: String(item.xts_productdescription || ""),
+                khu_vuc: String(item["_xts_siteid_value@OData.Community.Display.V1.FormattedValue"] || ""),
+                phien_ban: String(item["_xts_configurationid_value@OData.Community.Display.V1.FormattedValue"] || ""),
+                ngoai_that: String(item["_xts_vehicleexteriorcolorid_value@OData.Community.Display.V1.FormattedValue"] || ""),
+                noi_that: String(item["_xts_vehicleinteriorcolorid_value@OData.Community.Display.V1.FormattedValue"] || ""),
+                nam_san_xuat: item.xts_productionyear ? parseInt(item.xts_productionyear) : null,
+                inventory_id: "",
+                check_sum: "",
+                so_ton_kho: "",
+                so_tham_chieu: "",
+                ma_san_pham: "",
+                so_don_hang_cuoi: "",
+                modified_timestamp: item.modifiedon ? new Date(item.modifiedon).getTime() : 0
+            }));
+
+            const uniqueMap = new Map();
+            mapped.forEach(item => {
+                const existing = uniqueMap.get(item.vin);
+                if (!existing || item.modified_timestamp >= existing.modified_timestamp) uniqueMap.set(item.vin, item);
+            });
+
+            const finalData = Array.from(uniqueMap.values()).map(({ modified_timestamp, ...rest }) => rest);
+            if (finalData.length === 0) {
+                alert('Không có xe chưa bán nào để đồng bộ.');
+                if (onComplete) onComplete(0);
+                else closeAll();
+                return;
+            }
+
+            let successCount = 0;
+            function sendChunk(index) {
+                if (index >= finalData.length) {
+                    if (onComplete) onComplete(successCount);
+                    else {
+                        alert('Đã đồng bộ thành công ' + successCount + ' xe chưa bán!');
+                        closeAll();
+                    }
+                    return;
+                }
+                const chunk = finalData.slice(index, index + 200);
+                showStatus('Đang gửi kho xe lên hệ thống (' + index + ' / ' + finalData.length + ')...');
+                
+                fetch("https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/thongtinxe?on_conflict=vin", {
+                    method: 'POST',
+                    headers: {
+                        'apikey': apiKey,
+                        'Authorization': 'Bearer ' + apiKey,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'resolution=merge-duplicates, return=minimal'
+                    },
+                    body: JSON.stringify(chunk)
+                }).then(res => {
+                    if (res.ok) {
+                        successCount += chunk.length;
+                        sendChunk(index + 200);
+                    } else {
+                        res.text().then(err => {
+                            alert('Lỗi chunk kho xe: ' + err);
+                            closeAll();
+                        });
+                    }
+                }).catch(err => {
+                    alert('Lỗi kết nối kho xe: ' + err.message);
+                    closeAll();
+                });
+            }
+            sendChunk(0);
+        }
+        fetchPage("");
+    }
+
+    container.querySelector('#btnOrders').onclick = function() { syncOrders(); };
+    container.querySelector('#btnInventory').onclick = function() { syncInventory(); };
+    
+    container.querySelector('#btnBoth').onclick = function() {
+        function runLoop() {
+            showStatus('🤖 Đang tự động đồng bộ ngầm cả Đơn hàng & Kho xe...');
+            syncOrders(function(ordersCount){
+                syncInventory(function(inventoryCount){
+                    showStatus('✅ Đồng bộ ngầm hoàn thành (' + ordersCount + ' đơn, ' + inventoryCount + ' xe).<br><br>Sẽ tự chạy lại sau 1 giờ.');
+                    setTimeout(function() {
+                        container.style.display = 'block';
+                        statusDiv.style.display = 'none';
+                    }, 5000);
+                });
+            });
+        }
+        runLoop();
+        setInterval(runLoop, 60 * 60 * 1000); // Đồng bộ lặp lại mỗi 1 tiếng (60 * 60 * 1000 ms)
+    };
+})();

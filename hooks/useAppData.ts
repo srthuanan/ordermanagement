@@ -41,7 +41,21 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
 
     const { historyData: allHistoryData, setHistoryData: setAllHistoryData, isLoading: isLoadingHistory, error: errorHistory, refetch: refetchHistory, archivesLoadedFromCache } = useVinFastApi(currentUser, isCurrentUserAdmin, usersToView);
     const { stockData, queuedVins, setStockData, isLoading: isLoadingStock, error: errorStock, refetch: refetchStock } = useStockApi();
-    const { testDriveData, setTestDriveData, isLoading: isLoadingTestDrive, refetch: refetchTestDrive } = useTestDriveApi();
+    const { testDriveData: rawTestDriveData, setTestDriveData, isLoading: isLoadingTestDrive, refetch: refetchTestDrive } = useTestDriveApi();
+
+    const testDriveData = useMemo(() => {
+        if (!rawTestDriveData) return [];
+        if (isCurrentUserAdmin) {
+            return rawTestDriveData;
+        }
+        if (userRole === 'Trưởng Phòng Kinh Doanh' && usersToView) {
+            const teamNames = new Set(usersToView.map(name => normalizeName(name).toLowerCase()));
+            return rawTestDriveData.filter((drive: any) => teamNames.has(normalizeName(drive.tenTuVan || '').toLowerCase()));
+        }
+        // Regular user
+        const normalizedCurrentUser = normalizeName(currentUser).toLowerCase();
+        return rawTestDriveData.filter((drive: any) => normalizeName(drive.tenTuVan || '').toLowerCase() === normalizedCurrentUser);
+    }, [rawTestDriveData, isCurrentUserAdmin, userRole, usersToView, currentUser]);
 
     const { data: xuathoadonRes, error: errorXuathoadonRaw, mutate: mutateXuathoadon } = useSWR('xuathoadonData', async () => {
         const { supabase } = await import('../services/supabaseClient');
@@ -60,7 +74,18 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
     const xuathoadonData = useMemo(() => {
         if (!xuathoadonRes) return [];
         
-        return xuathoadonRes.map((row: any) => ({
+        let filtered = xuathoadonRes;
+        if (!isCurrentUserAdmin) {
+            if (userRole === 'Trưởng Phòng Kinh Doanh' && usersToView) {
+                const teamNames = new Set(usersToView.map(name => normalizeName(name).toLowerCase()));
+                filtered = xuathoadonRes.filter((row: any) => teamNames.has(normalizeName(row.tvbh || '').toLowerCase()));
+            } else {
+                const normalizedCurrentUser = normalizeName(currentUser).toLowerCase();
+                filtered = xuathoadonRes.filter((row: any) => normalizeName(row.tvbh || '').toLowerCase() === normalizedCurrentUser);
+            }
+        }
+        
+        return filtered.map((row: any) => ({
             'Tên khách hàng': row.ten_khach_hang,
             'Số đơn hàng': row.so_don_hang,
             'Dòng xe': row.dong_xe,
@@ -88,9 +113,12 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
             'NGÀY XUẤT HÓA ĐƠN': row.ngay_xuat_hoa_don,
             'Trạng thái VC': row.trang_thai_vc || '',
             'Ghi chú AI': row.ghi_chu_ai,
+            'Xe xăng VIN': row.xe_xang_vin,
+            'Xe xăng Hãng': row.xe_xang_hang,
+            'Xe xăng Model': row.xe_xang_model,
             '_sourceId': row.id,
         }));
-    }, [xuathoadonRes]);
+    }, [xuathoadonRes, isCurrentUserAdmin, userRole, usersToView, currentUser]);
 
     const isLoadingXuathoadon = !xuathoadonRes && !errorXuathoadonRaw;
     const errorXuathoadon = errorXuathoadonRaw instanceof Error ? errorXuathoadonRaw.message : (errorXuathoadonRaw ? String(errorXuathoadonRaw) : null);
@@ -183,12 +211,12 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
             return mergedAllHistoryData;
         }
         if (userRole === 'Trưởng Phòng Kinh Doanh' && usersToView) {
-            const teamNames = new Set(usersToView.map(name => normalizeName(name)));
-            return mergedAllHistoryData.filter((order: Order) => teamNames.has(normalizeName(order['Tên tư vấn bán hàng'])));
+            const teamNames = new Set(usersToView.map(name => normalizeName(name).toLowerCase()));
+            return mergedAllHistoryData.filter((order: Order) => teamNames.has(normalizeName(order['Tên tư vấn bán hàng']).toLowerCase()));
         }
         // Regular user
-        const normalizedCurrentUser = normalizeName(currentUser);
-        return mergedAllHistoryData.filter((order: Order) => normalizeName(order['Tên tư vấn bán hàng']) === normalizedCurrentUser);
+        const normalizedCurrentUser = normalizeName(currentUser).toLowerCase();
+        return mergedAllHistoryData.filter((order: Order) => normalizeName(order['Tên tư vấn bán hàng']).toLowerCase() === normalizedCurrentUser);
     }, [mergedAllHistoryData, isCurrentUserAdmin, userRole, usersToView, currentUser]);
 
     useEffect(() => {

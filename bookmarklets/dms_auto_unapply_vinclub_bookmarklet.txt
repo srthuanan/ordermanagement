@@ -1,0 +1,113 @@
+javascript:(function(){
+    var x = typeof Xrm !== "undefined" ? Xrm : null;
+    if (!x) {
+        for (var i = 0; i < frames.length; i++) {
+            try {
+                if (frames[i].Xrm) { x = frames[i].Xrm; break; }
+            } catch (e) {}
+        }
+    }
+    if (!x) { 
+        alert("Vui lòng mở trang đơn hàng DMS VinFast trước khi bấm!"); 
+        return; 
+    }
+
+    try {
+        var entity = x.Page.data.entity;
+        var progressDiv = document.createElement('div');
+        progressDiv.style = 'position:fixed;top:10px;right:10px;background:#f59e0b;color:white;padding:15px;z-index:999999;border-radius:5px;font-family:sans-serif;font-size:14px;box-shadow:0 4px 6px rgba(0,0,0,0.3);font-weight:600;';
+        progressDiv.innerHTML = '⚡ Đang phân tích các trường chiết khấu VinClub...';
+        document.body.appendChild(progressDiv);
+
+        var vinClubDiscountAttr = null;
+        var otherVinClubAttrs = [];
+        var vinClubDiscountVal = 0;
+
+        // Quét tìm tất cả các trường liên quan đến VinClub/Vpoint
+        entity.attributes.forEach(function(attr) {
+            var name = attr.getName().toLowerCase();
+            if (name.indexOf("club") !== -1 || name.indexOf("vpoint") !== -1 || name.indexOf("membership") !== -1) {
+                var val = attr.getValue();
+                // Nếu là trường số tiền giảm giá VinClub
+                if ((name.indexOf("discount") !== -1 || name.indexOf("amount") !== -1 || name.indexOf("money") !== -1) && typeof val === "number") {
+                    vinClubDiscountAttr = attr;
+                    vinClubDiscountVal = val;
+                } else {
+                    otherVinClubAttrs.push(attr);
+                }
+            }
+        });
+
+        // Nếu không quét được tự động, thiết lập các trường mặc định phổ biến của DMS
+        if (!vinClubDiscountAttr) {
+            try {
+                var defaultAttr = x.Page.getAttribute("xvf_vinclubdiscountamount") || x.Page.getAttribute("itv_vinclubdiscount") || x.Page.getAttribute("xts_totaldiscountamount");
+                if (defaultAttr && typeof defaultAttr.getValue() === "number") {
+                    // Dự phòng nếu không tìm thấy trường con, tính toán bằng 1% hoặc 1.5% tổng tiền xe
+                    var totalAttr = x.Page.getAttribute("xts_netamountaftertax") || x.Page.getAttribute("xvf_grandtotal");
+                    var totalVal = totalAttr ? totalAttr.getValue() : 0;
+                    // Lấy số tiền giảm giá ước tính (ví dụ chiết khấu 1% VinClub thường gặp)
+                    vinClubDiscountVal = totalVal * 0.01; 
+                }
+            } catch(e) {}
+        }
+
+        // Lấy các trường Tài chính tổng hợp trên đơn hàng
+        var totalDiscountAttr = x.Page.getAttribute("xts_totaldiscountamount");
+        var grandTotalAttr = x.Page.getAttribute("xvf_grandtotal") || x.Page.getAttribute("xts_netamountaftertax");
+
+        var currentTotalDiscount = totalDiscountAttr ? totalDiscountAttr.getValue() || 0 : 0;
+        var currentGrandTotal = grandTotalAttr ? grandTotalAttr.getValue() || 0 : 0;
+
+        if (vinClubDiscountVal === 0) {
+            // Hỏi người dùng nhập số tiền VinClub muốn gỡ nếu quét tự động chưa ra số
+            var inputVal = prompt("Không tìm thấy ô giảm giá VinClub tự động, hoặc số giảm giá bằng 0.\n\nVui lòng nhập số tiền chiết khấu VinClub muốn hoàn trả (Ví dụ: 3150000 hoặc nhập 0 để bỏ qua):", "0");
+            if (inputVal !== null) {
+                vinClubDiscountVal = parseFloat(inputVal) || 0;
+            }
+        }
+
+        // Thực hiện tính toán và gỡ áp dụng trực tiếp trên Form
+        progressDiv.innerHTML = '⚡ Đang thực hiện gỡ áp dụng & hoàn trả tiền...';
+
+        // 1. Clear các trường gán thông tin VinClub về rỗng/bằng 0
+        if (vinClubDiscountAttr) {
+            try { vinClubDiscountAttr.setValue(0); } catch(e) {}
+        }
+        otherVinClubAttrs.forEach(function(attr) {
+            try { attr.setValue(null); } catch(e) {}
+        });
+
+        // 2. Tính toán hoàn trả lại tiền trước khi áp hạng
+        var newTotalDiscount = currentTotalDiscount - vinClubDiscountVal;
+        var newGrandTotal = currentGrandTotal + vinClubDiscountVal;
+
+        if (newTotalDiscount < 0) newTotalDiscount = 0;
+
+        // Cập nhật lại số tiền trên Form
+        if (totalDiscountAttr) {
+            try { totalDiscountAttr.setValue(newTotalDiscount); } catch(e) {}
+        }
+        if (grandTotalAttr) {
+            try { grandTotalAttr.setValue(newGrandTotal); } catch(e) {}
+        }
+
+        // 3. Tự động gọi Save bản ghi để lưu thay đổi lên máy chủ DMS
+        progressDiv.innerHTML = '💾 Đang tự động lưu đơn hàng đã cập nhật lên DMS...';
+        x.Page.data.save().then(function() {
+            progressDiv.remove();
+            alert("🎉 ĐÃ TỰ ĐỘNG GỠ ÁP HẠNG VINCLUB THÀNH CÔNG!\n\n" +
+                  "💰 Số tiền hoàn trả (Cộng lại): " + vinClubDiscountVal.toLocaleString('vi-VN') + " VNĐ\n" +
+                  "🏷️ Tổng chiết khấu mới: " + newTotalDiscount.toLocaleString('vi-VN') + " VNĐ\n" +
+                  "💵 Tổng thanh toán mới trước khi áp hạng: " + newGrandTotal.toLocaleString('vi-VN') + " VNĐ\n\n" +
+                  "✅ Đơn hàng đã được lưu trữ thành công trên Dynamics 365!");
+        }, function(err) {
+            progressDiv.remove();
+            alert("❌ Lỗi lưu đơn hàng trên DMS: " + (err.message || err));
+        });
+
+    } catch (globalErr) {
+        if (progressDiv) progressDiv.remove();
+        alert("❌ Lỗi thực thi gỡ VinClub: " + globalErr.message);
+    }
+})();

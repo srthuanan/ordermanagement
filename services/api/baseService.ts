@@ -91,7 +91,7 @@ export const triggerAutoSync = () => {
 };
 
 export const mapOrderDbToUi = (o: any) => ({
-    "Số đơn hàng": o.so_don_hang, "Tên khách hàng": o.ten_khach_hang, "Tên tư vấn bán hàng": o.ten_tu_van_ban_hang, "Phân loại": o.phan_loai, "Mã DMS": o.ma_dms, "Dòng xe": o.dong_xe, "Phiên bản": o.phien_ban, "Ngoại thất": o.ngoai_that, "Nội thất": o.noi_that, "Dự kiến giao": o.du_kien_giao, "Ghi chú": o.ghi_chu, "Kết quả": o.ket_qua, "VIN": o.vin, "Số máy": o.so_may, "Thời gian ghép": o.thoi_gian_ghep, "Ghi chú hủy": o.ghi_chu_huy, "Thời gian hủy": o.thoi_gian_huy, "Trạng thái VC": o.trang_thai_vc, "link_hoa_don_da_xuat": o.link_hoa_don_da_xuat, "ngay_xuat_hoa_don": o.ngay_xuat_hoa_don, "Thời gian nhập": o.thoi_gian_nhap
+    "Số đơn hàng": o.so_don_hang, "Tên khách hàng": o.ten_khach_hang, "Tên tư vấn bán hàng": o.ten_tu_van_ban_hang, "Phân loại": o.phan_loai, "Mã DMS": o.ma_dms, "Dòng xe": o.dong_xe, "Phiên bản": o.phien_ban, "Ngoại thất": o.ngoai_that, "Nội thất": o.noi_that, "Dự kiến giao": o.du_kien_giao, "Ghi chú": o.ghi_chu, "Kết quả": o.ket_qua, "VIN": o.vin, "Số máy": o.so_may, "Thời gian ghép": o.thoi_gian_ghep, "Ghi chú hủy": o.ghi_chu_huy, "Thời gian hủy": o.thoi_gian_huy, "Trạng thái VC": o.trang_thai_vc, "link_hoa_don_da_xuat": o.link_hoa_don_da_xuat, "LinkHoaDonDaXuat": o.link_hoa_don_da_xuat, "ngay_xuat_hoa_don": o.ngay_xuat_hoa_don, "Thời gian nhập": o.thoi_gian_nhap, "CHÍNH SÁCH": o.chinh_sach, "Ngày cọc": o.ngay_coc, "Ngày xuất hóa đơn": o.ngay_xuat_hoa_don, "hoa_hong_ung": o.hoa_hong_ung, "Hoa hồng ứng": o.hoa_hong_ung, "Hoa hồng ứng trước": o.hoa_hong_ung
 });
 
 export const mapStockDbToUi = (s: any) => ({

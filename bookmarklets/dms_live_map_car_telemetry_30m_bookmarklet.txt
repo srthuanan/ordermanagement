@@ -1,0 +1,263 @@
+javascript:(function(){
+    if (window.location.hostname.indexOf('dynamics.com') === -1) { 
+        alert('Vui lòng mở trang DMS VinFast trước khi bấm!'); 
+        return; 
+    }
+
+    var supabaseUrl = 'https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/khoxe?select=*&limit=10000';
+    var apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU';
+    
+    var bgControl = document.createElement('div');
+    bgControl.style = 'position:fixed;top:10px;right:10px;background:#1e1e24;color:#cbd5e1;padding:15px;z-index:999999;border-radius:10px;font-family:sans-serif;font-size:13px;box-shadow:0 10px 25px rgba(0,0,0,0.4);border:1px solid rgba(56,189,248,0.2);width:280px;display:flex;flex-direction:column;gap:8px;backdrop-filter:blur(10px);';
+    bgControl.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;"><b>📡 GPS BACKGROUND AUTO-SYNC</b><button id="btnBgClose" style="background:#ef4444;color:white;border:none;padding:2px 6px;border-radius:4px;cursor:pointer;font-size:11px;font-weight:bold;">✕</button></div>' +
+                          '<span id="bgStatus" style="color:#f59e0b;font-weight:500;">📍 Đang nạp danh sách xe...</span>' +
+                          '<div style="font-size:11px;color:#94a3b8;">Cập nhật cuối: <span id="bgLastTime">Chưa cập nhật</span></div>' +
+                          '<button id="btnShowMap" style="background:#38bdf8;color:#0f172a;border:none;padding:8px;border-radius:6px;cursor:pointer;font-weight:bold;font-size:12px;margin-top:4px;">🗺️ Xem Bản Đồ Xe Live</button>';
+    document.body.appendChild(bgControl);
+    
+    document.getElementById('btnBgClose').onclick = function(){ bgControl.remove(); };
+    
+    var dmsMetadataMap = {};
+    var khoxeMap = {};
+    var lastTrackingResults = [];
+
+    function runSync(isInitialRun) {
+        var statusEl = document.getElementById('bgStatus');
+        if (statusEl) {
+            statusEl.style.color = '#f59e0b';
+            statusEl.innerHTML = '📍 Đang đồng bộ danh sách xe...';
+        }
+        
+        fetch(supabaseUrl, { headers: { 'apikey': apiKey, 'Authorization': 'Bearer ' + apiKey } })
+        .then(function(res){ return res.json(); })
+        .then(function(khoxeData){
+            if (!khoxeData.length) { 
+                if (statusEl) statusEl.innerHTML = '⚠️ Kho xe trống!'; 
+                return; 
+            }
+            khoxeMap = {};
+            khoxeData.forEach(function(row){ 
+                khoxeMap[(row.vin || '').trim().toUpperCase()] = row; 
+            });
+            var vins = Object.keys(khoxeMap).filter(function(v){ return v.length === 17; });
+            if (statusEl) statusEl.innerHTML = '🎨 Đang quét màu sắc & bãi đậu...';
+            
+            fetchDMSMetadataBatch(vins, 0, function(){
+                if (statusEl) statusEl.innerHTML = '📡 Đang quét Live tọa độ Radar...';
+                fetchLiveLocations(vins).then(function(results){
+                    lastTrackingResults = results;
+                    var now = new Date();
+                    var timeEl = document.getElementById('bgLastTime');
+                    if (timeEl) timeEl.textContent = now.toLocaleTimeString();
+                    if (statusEl) {
+                        statusEl.style.color = '#10b981';
+                        statusEl.innerHTML = '✅ Lưu car_telemetry thành công. Sẽ chạy lại sau 30 phút nữa.';
+                    }
+                    if (isInitialRun) { loadLeaflet(results, vins.length); }
+                });
+            });
+        })
+        .catch(function(err){
+            if (statusEl) {
+                statusEl.style.color = '#ef4444';
+                statusEl.innerHTML = '❌ Lỗi: ' + err.message;
+            }
+        });
+    }
+
+    function fetchDMSMetadataBatch(vins, index, onComplete) {
+        if (index >= vins.length) { onComplete(); return; }
+        var batchSize = 15;
+        var batch = vins.slice(index, index + batchSize);
+        var filter = batch.map(function(v){ return "xts_chassisnumber eq '" + v + "'"; }).join(' or ');
+
+        function fetchSingleBatchPage(query) {
+            Xrm.WebApi.retrieveMultipleRecords("xts_inventorynewvehicle", query).then(function(result) {
+                result.entities.forEach(function(item) {
+                    var vin = String(item.xts_chassisnumber || '').trim().toUpperCase();
+                    if(vin && !dmsMetadataMap[vin]) {
+                        dmsMetadataMap[vin] = {
+                            model: item.xts_productdescription,
+                            color: item["_xts_vehicleexteriorcolorid_value@OData.Community.Display.V1.FormattedValue"],
+                            interior: item["_xts_vehicleinteriorcolorid_value@OData.Community.Display.V1.FormattedValue"],
+                            site: item["_xts_siteid_value@OData.Community.Display.V1.FormattedValue"]
+                        };
+                    }
+                });
+                var nextLink = result["@odata.nextLink"] || result.nextLink;
+                if (nextLink) fetchSingleBatchPage(nextLink.substring(nextLink.indexOf('?')));
+                else fetchDMSMetadataBatch(vins, index + batchSize, onComplete);
+            }, function() { fetchDMSMetadataBatch(vins, index + batchSize, onComplete); });
+        }
+        var query = "?$filter=" + filter;
+        fetchSingleBatchPage(query);
+    }
+
+    function fetchLiveLocation(vin) {
+        return new Promise(function(resolve){
+            var payload = { itv_requestObject: JSON.stringify({ data: [{ vinCode: vin }], isUpdate: false }) };
+            var req = new XMLHttpRequest();
+            req.open("POST", "/api/data/v9.2/itv_trackingvehicleposition", true);
+            req.setRequestHeader("OData-MaxVersion", "4.0");
+            req.setRequestHeader("OData-Version", "4.0");
+            req.setRequestHeader("Accept", "application/json");
+            req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+            req.onreadystatechange = function() {
+                if (this.readyState === 4) {
+                    if (this.status === 200 || this.status === 204) {
+                        try {
+                            var data = JSON.parse(JSON.parse(this.response).itv_responseObject);
+                            if(data && data.Lat && data.Long) {
+                                var speedVal = data.Speed || data.speed || data.Velocity || data.velocity || 0;
+                                var headingVal = data.Heading || data.heading || data.Bearing || data.bearing || data.Angle || data.angle || 0;
+                                
+                                var updateReq = new XMLHttpRequest();
+                                updateReq.open("POST", "https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/car_telemetry", true);
+                                updateReq.setRequestHeader("apikey", apiKey);
+                                updateReq.setRequestHeader("Authorization", "Bearer " + apiKey);
+                                updateReq.setRequestHeader("Content-Type", "application/json");
+                                updateReq.setRequestHeader("Prefer", "resolution=merge-duplicates");
+                                updateReq.send(JSON.stringify({ 
+                                    vin: vin, 
+                                    lat: parseFloat(data.Lat), 
+                                    lng: parseFloat(data.Long),
+                                    speed: parseFloat(speedVal),
+                                    heading: parseFloat(headingVal),
+                                    updated_at: new Date().toISOString()
+                                }));
+                                resolve({ vin: vin, lat: data.Lat, lng: data.Long, speed: speedVal, heading: headingVal, success: true });
+                            }
+                            else resolve({ vin: vin, success: false });
+                        } catch(e) { resolve({ vin: vin, success: false }); }
+                    } else resolve({ vin: vin, success: false });
+                }
+            };
+            req.send(JSON.stringify(payload));
+        });
+    }
+
+    async function fetchLiveLocations(vins) {
+        var results = [];
+        var concurrency = 5;
+        for (var i = 0; i < vins.length; i += concurrency) {
+            var batch = vins.slice(i, i + concurrency);
+            results = results.concat(await Promise.all(batch.map(function(v){ return fetchLiveLocation(v); })));
+        }
+        return results;
+    }
+
+    function loadLeaflet(trackingData, totalKho) {
+        if (window.L) { showMap(trackingData, totalKho); return; }
+        var css = document.createElement('link'); css.rel = 'stylesheet'; css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+        var js = document.createElement('script'); js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        js.onload = function() { showMap(trackingData, totalKho); }; document.head.appendChild(js);
+    }
+
+    function showMap(trackingData, totalKho) {
+        var carsWithGPS = [];
+        trackingData.forEach(function(item){
+            if (item.success && item.lat && item.lng) {
+                var kho = khoxeMap[item.vin] || {};
+                var meta = dmsMetadataMap[item.vin] || {};
+                carsWithGPS.push({
+                    vin: item.vin, lat: item.lat, lng: item.lng,
+                    model: meta.model || kho.dong_xe || 'Dữ liệu nội bộ',
+                    color: meta.color || '',
+                    interior: meta.interior || '',
+                    site: meta.site || 'Không rõ bãi',
+                    trangThai: kho.trang_thai || 'Trống', nguoiGiu: kho.nguoi_giu_xe || ''
+                });
+            }
+        });
+
+        if (carsWithGPS.length === 0) {
+            alert('📡 Đã quét Live ' + totalKho + ' xe.\nTuy nhiên, máy chủ VinFast không trả về tọa độ cho chiếc nào.');
+            return;
+        }
+
+        function getColor(st) {
+            if(st==='Chưa ghép') return '#00ff88';
+            if(st==='Đang giữ') return '#ffbb00';
+            if(st==='Đã chốt') return '#ff4466';
+            return '#00bfff';
+        }
+
+        var overlay = document.createElement('div'); overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999998;background:rgba(0,0,0,0.7);';
+        var container = document.createElement('div'); container.style = 'position:fixed;top:20px;left:20px;right:20px;bottom:20px;z-index:999999;background:white;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.5); display:flex; flex-direction:column;';
+        var header = document.createElement('div'); header.style = 'background:#111;color:white;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;font-family:sans-serif; flex-shrink:0;';
+        header.innerHTML = '<span style="font-size:15px;font-weight:bold">📡 ' + carsWithGPS.length + ' xe đang phát tín hiệu GPS LIVE</span>';
+        
+        var closeBtn = document.createElement('button'); closeBtn.textContent = '✕ Đóng'; closeBtn.style = 'background:#ff4466;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:bold;';
+        closeBtn.onclick = function() { overlay.remove(); container.remove(); };
+        header.appendChild(closeBtn); container.appendChild(header);
+
+        var mainBody = document.createElement('div'); mainBody.style = 'display:flex; flex-grow:1; height:calc(100% - 48px); overflow:hidden;'; container.appendChild(mainBody);
+        var mapDiv = document.createElement('div'); mapDiv.style = 'flex-grow:1; height:100%;'; mainBody.appendChild(mapDiv);
+        var listDiv = document.createElement('div'); listDiv.style = 'width:340px; height:100%; background:#f9f9f9; border-left:1px solid #ccc; display:flex; flex-direction:column;'; mainBody.appendChild(listDiv);
+        
+        var listHeader = document.createElement('div'); listHeader.style = 'padding:12px 15px; background:#fff; font-weight:bold; font-family:sans-serif; font-size:14px; border-bottom:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; box-shadow:0 2px 4px rgba(0,0,0,0.05); z-index:2;';
+        listHeader.innerHTML = '<span>📋 Danh sách xe</span> <span style="color:#fff; background:#007bff; padding:2px 8px; border-radius:12px; font-size:11px;">' + carsWithGPS.length + ' chiếc</span>'; 
+        listDiv.appendChild(listHeader);
+
+        var listItems = document.createElement('div'); listItems.style = 'flex-grow:1; overflow-y:auto; font-family:sans-serif;'; listDiv.appendChild(listItems);
+        document.body.appendChild(overlay); document.body.appendChild(container);
+
+        var map = L.map(mapDiv).setView([carsWithGPS[0].lat, carsWithGPS[0].lng], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+        
+        var bounds = [];
+        carsWithGPS.forEach(function(car){
+            var clr = getColor(car.trangThai);
+            var marker = L.circleMarker([car.lat, car.lng], { radius: 7, fillColor: clr, color: '#000', weight: 1.5, opacity: 1, fillOpacity: 0.85 }).addTo(map);
+            var popupId = "addr-" + car.vin;
+            var colorText = (car.color || 'Chưa rõ') + (car.interior ? ' / ' + car.interior : '');
+            var popupContent = '<div style="font-family:sans-serif; min-width:240px; font-size:13px; line-height:1.5;">' +
+                               '<b style="font-size:15px">' + car.vin + '</b><br><br>' +
+                               '🚗 <b>' + car.model + '</b><br>' +
+                               '🎨 Màu sắc: ' + colorText + '<br>' +
+                               '🏢 Khu vực: ' + car.site + '<br><br>' +
+                               '📍 <b>Vị trí hiện tại:</b><br>' +
+                               '<span id="'+popupId+'" style="color:#555; font-style:italic;">⏳ Đang giải mã tên đường...</span><br><br>' +
+                               '<span style="color:'+clr+';font-weight:bold; font-size:14px;">● ' + car.trangThai + (car.nguoiGiu ? ' - ' + car.nguoiGiu : '') + '</span>' +
+                               '</div>';
+            marker.bindPopup(popupContent);
+            bounds.push([car.lat, car.lng]);
+
+            marker.on('popupopen', function() {
+                if(!marker.addressLoaded) {
+                    fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + car.lat + '&lon=' + car.lng)
+                    .then(function(r){ return r.json(); })
+                    .then(function(d){
+                        var el = document.getElementById(popupId);
+                        if(el) el.innerHTML = '<b style="color:#000;">' + (d.display_name || 'Không tìm thấy tên đường') + '</b>';
+                        marker.addressLoaded = true;
+                    }).catch(function(e){
+                        var el = document.getElementById(popupId);
+                        if(el) el.innerHTML = 'Lỗi không thể giải mã địa chỉ';
+                    });
+                }
+            });
+
+            var item = document.createElement('div');
+            item.style = 'padding:12px 15px; border-bottom:1px solid #eee; cursor:pointer; display:flex; flex-direction:column; gap:6px; background:#fff; transition:0.2s;';
+            item.onmouseover = function() { item.style.background = '#f0f5ff'; };
+            item.onmouseout = function() { item.style.background = '#fff'; };
+            item.onclick = function() { map.setView([car.lat, car.lng], 18, { animate: true }); marker.openPopup(); };
+            
+            var formattedVin = car.vin.slice(0, 11) + '<strong style="color:#000;font-size:14px;">' + car.vin.slice(11) + '</strong>';
+            item.innerHTML = '<div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-size:12px; color:#555;">' + formattedVin + '</span><span style="font-size:11px; padding:3px 8px; border-radius:12px; background:'+clr+'40; color:#000; font-weight:bold; border:1px solid '+clr+';">' + car.trangThai + '</span></div><div style="font-size:13px; font-weight:500; color:#222;">' + car.model + '</div><div style="font-size:11px; color:#555;">🎨 ' + colorText + '</div>';
+            listItems.appendChild(item);
+        });
+
+        if (bounds.length > 1) { map.fitBounds(bounds, { padding: [50, 50] }); }
+        setTimeout(function() { map.invalidateSize(); }, 200);
+    }
+
+    document.getElementById('btnShowMap').onclick = function(){
+        if (lastTrackingResults.length > 0) { loadLeaflet(lastTrackingResults, Object.keys(khoxeMap).length); } 
+        else { alert('Vui lòng đợi Tool đồng bộ dữ liệu lần đầu xong!'); }
+    };
+
+    runSync(true);
+    setInterval(function(){ runSync(false); }, 30 * 60 * 1000); // Đã chuyển đổi thành 30 phút một lần (30 * 60 * 1000 ms)
+})();

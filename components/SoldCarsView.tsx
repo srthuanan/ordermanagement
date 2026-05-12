@@ -9,6 +9,8 @@ import TabbedFilter from './ui/TabbedFilter';
 import MultiSelectDropdown from './ui/MultiSelectDropdown';
 import DateFilter from './ui/DateFilter';
 import { MONTHS } from '../constants';
+import moment from 'moment';
+import { exportOrdersToExcel } from '../utils/excelUtils';
 import { includesNormalized } from '../utils/stringUtils';
 import AnimatedBackground from './ui/AnimatedBackground';
 
@@ -69,6 +71,44 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
     const [visibleItemsCount, setVisibleItemsCount] = useState(INITIAL_LOAD_COUNT);
     const [selectedDetailOrder, setSelectedDetailOrder] = useState<Order | null>(null);
     const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
+
+    const handleExportExcel = () => {
+        if (!soldData || soldData.length === 0) {
+            alert('Không có dữ liệu để tải xuống.');
+            return;
+        }
+        const exportData = soldData.map((order, index) => {
+            const policy = order["CHÍNH SÁCH"] || order["chinh_sach"] || (order as any)["Chính sách"] || '';
+            const depositDate = order["Ngày cọc"] || order["ngay_coc"] || (order as any)["ngày_coc"] || '';
+            const invoiceDate = order["Ngày xuất hóa đơn"] || order["ngay_xuat_hoa_don"] || (order as any)["Ngay_xuat_hoa_don"] || '';
+            
+            const formattedDepositDate = depositDate ? moment(depositDate, [moment.ISO_8601, 'YYYY-MM-DD', 'DD/MM/YYYY']).format('DD/MM/YYYY') : '';
+            const formattedInvoiceDate = invoiceDate ? moment(invoiceDate, [moment.ISO_8601, 'YYYY-MM-DD', 'DD/MM/YYYY']).format('DD/MM/YYYY') : '';
+
+            return {
+                "STT": index + 1,
+                "Số đơn hàng": order["Số đơn hàng"] || '',
+                "Tên khách hàng": order["Tên khách hàng"] || '',
+                "Dòng xe": order["Dòng xe"] || '',
+                "Phiên bản": order["Phiên bản"] || '',
+                "Ngoại thất": order["Ngoại thất"] || '',
+                "Nội thất": order["Nội thất"] || '',
+                "Số máy": order["Số máy"] || '',
+                "Số khung (VIN)": order["VIN"] || '',
+                "Mã DMS": order["Mã DMS"] || '',
+                "Chính sách": policy,
+                "Hoa hồng ứng trước": order["Hoa hồng ứng trước"] || order["Hoa hồng ứng"] || order["hoa_hong_ung"] || order.hoa_hong_ung || (order as any)["Hoa hồng ứng trước"] || (order as any)["Hoa hồng ứng"] || (order as any)["hoa_hong_ung"] || '',
+                "Tên TVBH": order["Tên tư vấn bán hàng"] || '',
+                "Ngày cọc": formattedDepositDate && formattedDepositDate !== 'Invalid date' ? formattedDepositDate : depositDate,
+                "Thời gian ghép": order["Thời gian ghép"] ? moment(order["Thời gian ghép"]).format('DD/MM/YYYY') : '',
+                "Ngày xuất hóa đơn": formattedInvoiceDate && formattedInvoiceDate !== 'Invalid date' ? formattedInvoiceDate : invoiceDate,
+                "Link hóa đơn": order.LinkHoaDonDaXuat || order.link_hoa_don_da_xuat || ''
+            };
+        });
+        const monthStr = selectedMonth !== null ? (selectedMonth + 1).toString().padStart(2, '0') : 'Năm';
+        const filename = `LichSuBanHang_Thang_${monthStr}_${selectedYear}`;
+        exportOrdersToExcel(exportData, filename);
+    };
 
     // Sentinel ref for infinite scroll
     const observerTarget = useRef<HTMLDivElement>(null);
@@ -253,12 +293,24 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
                     onReset={handleResetFilters}
                     canReset={true}
                     extraActions={
-                        <DateFilter
-                            selectedMonth={selectedMonth}
-                            selectedYear={selectedYear}
-                            onMonthChange={setSelectedMonth}
-                            onYearChange={setSelectedYear}
-                        />
+                        <div className="flex items-center gap-2">
+                            <DateFilter
+                                selectedMonth={selectedMonth}
+                                selectedYear={selectedYear}
+                                onMonthChange={setSelectedMonth}
+                                onYearChange={setSelectedYear}
+                            />
+                            {isAdmin && (
+                                <button
+                                    onClick={handleExportExcel}
+                                    className="h-9 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-1.5 transition-all text-xs border border-emerald-500/30 shadow-md hover:scale-[1.02] flex-shrink-0"
+                                    title="Tải dữ liệu lịch sử tháng này về máy dưới dạng Excel"
+                                >
+                                    <i className="fas fa-file-excel"></i>
+                                    <span className="hidden md:inline">Tải Excel</span>
+                                </button>
+                            )}
+                        </div>
                     }
                 >
                     {activeDropdowns.map(dropdown => (

@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { Order } from '../../types';
 import moment from 'moment';
+import html2canvas from 'html2canvas';
 
 interface AdminStatsProps {
     xuathoadonData: Order[];
@@ -14,11 +15,57 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
         isOpen: boolean;
         title: string;
         data: Order[];
+        showDaysColumn?: boolean;
+        isMatchedView?: boolean;
     }>({
         isOpen: false,
         title: '',
-        data: []
+        data: [],
+        showDaysColumn: false,
+        isMatchedView: true
     });
+
+    const tableRef = useRef<HTMLDivElement>(null);
+    const [isCopying, setIsCopying] = useState(false);
+
+    const handleCopyImage = async () => {
+        if (!tableRef.current) return;
+        setIsCopying(true);
+        try {
+            const canvas = await html2canvas(tableRef.current, {
+                scale: 2, // Tăng chất lượng ảnh
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+            canvas.toBlob(async (blob) => {
+                if (blob) {
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({
+                                'image/png': blob
+                            })
+                        ]);
+                        alert('Đã copy hình ảnh bảng thành công!');
+                    } catch (err) {
+                        console.warn('Không thể copy ảnh vào clipboard, chuyển sang tải xuống:', err);
+                        // Fallback: Tự động tải ảnh xuống
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `Bang_Ghep_Xe_${moment().format('DD_MM_YYYY_HHmm')}.png`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        alert('Trình duyệt không hỗ trợ copy trực tiếp. Đã tự động TẢI ẢNH XUỐNG máy tính thay thế!');
+                    }
+                }
+            }, 'image/png');
+        } catch (error) {
+            console.error('Lỗi khi tạo ảnh:', error);
+            alert('Có lỗi xảy ra khi tạo ảnh.');
+        } finally {
+            setIsCopying(false);
+        }
+    };
 
     // 1. Thống kê Số lượng Yêu cầu Xuất hóa đơn (XHĐ) 
     const tvbhInvoiceStats = useMemo(() => {
@@ -101,9 +148,15 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
         });
     };
 
-    const showMatchingDetails = (model: string, type: 'matched' | 'unmatched' | 'total') => {
+    const showMatchingDetails = (model: string | null, type: 'matched' | 'unmatched' | 'total' | 'total_all' | 'unmatched_all') => {
         let filtered: Order[] = [];
-        if (type === 'matched') {
+        if (type === 'total_all') {
+            // Tất cả đã ghép, mọi dòng xe
+            filtered = [...pairedData];
+        } else if (type === 'unmatched_all') {
+            // Tất cả chờ ghép, mọi dòng xe
+            filtered = [...pendingData];
+        } else if (type === 'matched') {
             filtered = pairedData.filter(o => (o['Dòng xe'] || 'Khác') === model);
         } else if (type === 'unmatched') {
             filtered = pendingData.filter(o => (o['Dòng xe'] || 'Khác') === model);
@@ -111,10 +164,27 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
             filtered = [...pairedData, ...pendingData].filter(o => (o['Dòng xe'] || 'Khác') === model);
         }
 
+        // Sort: đã ghép lâu nhất lên đầu
+        filtered.sort((a, b) => {
+            const dA = a['Thời gian ghép'] ? moment(a['Thời gian ghép']).valueOf() : 0;
+            const dB = b['Thời gian ghép'] ? moment(b['Thời gian ghép']).valueOf() : 0;
+            return dA - dB; // lâu nhất (nhỏ nhất) lên đầu
+        });
+
+        const titleMap: Record<string, string> = {
+            'total_all': 'Tất Cả Đơn Đã Ghép',
+            'unmatched_all': 'Tất Cả Đơn Chờ Ghép',
+            'matched': `Đã Ghép — ${model}`,
+            'unmatched': `Chờ Ghép — ${model}`,
+            'total': `Tổng — ${model}`,
+        };
+
         setDetailModal({
             isOpen: true,
-            title: `Chi tiết Ghép xe: ${model} (${type === 'matched' ? 'Đã ghép' : type === 'unmatched' ? 'Chưa ghép' : 'Tổng'})`,
-            data: filtered
+            title: `Chi tiết Ghép xe: ${titleMap[type] ?? model}`,
+            data: filtered,
+            showDaysColumn: type === 'matched' || type === 'total_all',
+            isMatchedView: type === 'matched' || type === 'total_all'
         });
     };
 
@@ -138,7 +208,8 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                         </div>
 
                         <div className="flex-1 overflow-auto bg-white custom-scrollbar">
-                            <table className="w-full text-left border-collapse min-w-[500px]">
+                            <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[480px]">
                                 <thead className="sticky top-0 z-20">
                                     <tr className="bg-slate-50">
                                         <th className="sticky left-0 z-30 bg-slate-50 px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">Tư Vấn</th>
@@ -199,6 +270,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                     </tfoot>
                                 )}
                             </table>
+                            </div>
                         </div>
                     </div>
 
@@ -224,7 +296,8 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                         </div>
 
                         <div className="flex-1 overflow-auto bg-white custom-scrollbar">
-                            <table className="w-full text-left border-collapse">
+                            <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[320px]">
                                 <thead className="sticky top-0 z-20">
                                     <tr className="bg-slate-50">
                                         <th className="px-5 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">Dòng Xe</th>
@@ -275,10 +348,22 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                         <tr>
                                             <td className="px-5 py-2.5 text-xs font-black text-slate-800 border border-slate-200 text-center">TỔNG</td>
                                             <td className="px-2 py-2.5 text-xs font-black text-emerald-700 text-center border border-slate-200">
-                                                {matchingModels.reduce((sum, m) => sum + currentMonthStats[m].matched, 0)}
+                                                <button
+                                                    onClick={() => showMatchingDetails(null, 'total_all')}
+                                                    className="w-full h-full px-2 py-0.5 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-black transition-colors cursor-pointer"
+                                                    title="Bấm để xem chi tiết toàn bộ xe đã ghép"
+                                                >
+                                                    {matchingModels.reduce((sum, m) => sum + currentMonthStats[m].matched, 0)}
+                                                </button>
                                             </td>
                                             <td className="px-2 py-2.5 text-xs font-black text-slate-500 text-center border border-slate-200">
-                                                {matchingModels.reduce((sum, m) => sum + currentMonthStats[m].unmatched, 0)}
+                                                <button
+                                                    onClick={() => showMatchingDetails(null, 'unmatched_all')}
+                                                    className="w-full h-full px-2 py-0.5 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 font-black transition-colors cursor-pointer"
+                                                    title="Bấm để xem chi tiết toàn bộ xe chờ ghép"
+                                                >
+                                                    {matchingModels.reduce((sum, m) => sum + currentMonthStats[m].unmatched, 0)}
+                                                </button>
                                             </td>
                                             <td className="px-5 py-2.5 text-center border border-slate-200">
                                                 <span className="text-[10px] font-black text-slate-700">
@@ -289,6 +374,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                     </tfoot>
                                 )}
                             </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -308,65 +394,121 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                 <i className="fas fa-times"></i>
                             </button>
                         </div>
-                        <div className="flex-1 overflow-auto p-0 custom-scrollbar">
-                            <table className="w-full text-left border-collapse">
-                                <thead className="sticky top-0 bg-slate-50 z-10">
+                        <div className="flex-1 overflow-auto p-0 custom-scrollbar bg-slate-50">
+                            <div className="overflow-x-auto p-4" ref={tableRef}>
+                                {/* Bọc thêm 1 div bg-white để khi chụp ảnh có viền trắng đẹp */}
+                                <div className="bg-white overflow-hidden">
+                            <table className="w-full text-left border-collapse border-2 border-slate-400 min-w-[800px] text-[11px] font-medium bg-white font-sans">
+                                <thead className="sticky top-0 bg-slate-100 z-10 shadow-sm">
                                     <tr>
-                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">Số đơn</th>
-                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">Khách hàng / TVBH</th>
-                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">Dòng xe / Phân loại</th>
-                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">Màu sắc</th>
-                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100">VIN / Tình trạng</th>
-                                        <th className="px-4 py-3 text-[10px] font-bold text-slate-400 uppercase border-b border-slate-100 text-right">Ngày</th>
+                                        <th className="px-2 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center w-8 bg-slate-200">STT</th>
+                                        <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 bg-slate-200">Số đơn</th>
+                                        <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 bg-slate-200">Khách hàng / TVBH</th>
+                                        <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 bg-slate-200">Dòng xe / Phiên bản</th>
+                                        <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 bg-slate-200">Màu sắc (Ngoại/Nội)</th>
+                                        {detailModal.isMatchedView ? (
+                                            <>
+                                                <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 bg-slate-200 text-center">Số VIN</th>
+                                                <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center bg-slate-200">Trạng thái</th>
+                                                {detailModal.showDaysColumn && (
+                                                    <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center bg-slate-200">Số ngày ghép</th>
+                                                )}
+                                                <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center bg-slate-200">Ngày ghép</th>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center bg-slate-200">Trạng thái</th>
+                                                <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center bg-slate-200">Ngày Yêu Cầu</th>
+                                                <th className="px-3 py-2 font-bold text-slate-800 uppercase border border-slate-300 text-center bg-slate-200">Ngày Cọc</th>
+                                            </>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {detailModal.data.map((order, index) => (
-                                        <tr key={order['Số đơn hàng'] || order.VIN || index} className="hover:bg-slate-50/50">
-                                            <td className="px-4 py-3 text-xs font-bold text-blue-600 uppercase tracking-wider">{order['Số đơn hàng']}</td>
-                                            <td className="px-4 py-3 text-xs text-slate-700">
-                                                <div className="font-bold">{order['Tên khách hàng'] || order['TÊN KHÁCH HÀNG']}</div>
-                                                <div className="text-[10px] text-slate-400 mt-0.5" title="Tư vấn bán hàng"><i className="fas fa-user-tie mr-1"></i>{order['Tên tư vấn bán hàng'] || order['Tư vấn bán hàng'] || order['Người YC']}</div>
+                                    {detailModal.data.map((order, index) => {
+                                        const matchedDate = order['Thời gian ghép'];
+                                        const daysSinceMatch = matchedDate
+                                            ? Math.max(0, moment().diff(moment(matchedDate), 'days'))
+                                            : null;
+                                        return (
+                                        <tr key={order['Số đơn hàng'] || order.VIN || index} className="hover:bg-slate-50">
+                                            <td className="px-2 py-2 text-center text-slate-600 border border-slate-300">{index + 1}</td>
+                                            <td className="px-3 py-2 text-slate-900 border border-slate-300 whitespace-nowrap">{order['Số đơn hàng']}</td>
+                                            <td className="px-3 py-2 text-slate-900 border border-slate-300">
+                                                <div>{order['Tên khách hàng'] || order['TÊN KHÁCH HÀNG']}</div>
+                                                <div className="text-slate-500">{order['Tên tư vấn bán hàng'] || order['Tư vấn bán hàng'] || order['Người YC']}</div>
                                             </td>
-                                            <td className="px-4 py-3 text-xs text-slate-600">
-                                                <div className="font-bold text-slate-800">{order['Dòng xe'] || order['DÒNG XE']}</div>
-                                                <div className="text-[10px] opacity-70">{order['Phiên bản'] || order['PHIÊN BẢN']}</div>
+                                            <td className="px-3 py-2 text-slate-900 border border-slate-300">
+                                                <div>{order['Dòng xe'] || order['DÒNG XE']}</div>
+                                                <div className="text-slate-500">{order['Phiên bản'] || order['PHIÊN BẢN']}</div>
                                             </td>
-                                            <td className="px-4 py-3 text-xs text-slate-600">
-                                                <div className="font-medium text-slate-700" title="Ngoại thất">{order['Ngoại thất']}</div>
-                                                <div className="text-[10px] opacity-70" title="Nội thất">{order['Nội thất']}</div>
+                                            <td className="px-3 py-2 text-slate-900 border border-slate-300">
+                                                <div>{order['Ngoại thất']}</div>
+                                                <div className="text-slate-500">{order['Nội thất']}</div>
                                             </td>
-                                            <td className="px-4 py-3 text-xs font-mono whitespace-nowrap">
-                                                <div className="font-bold text-slate-600">{order.VIN || order['SỐ VIN'] || '-'}</div>
-                                                <div className="mt-1">
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${(order['Kết quả'] || order['Trạng thái VC'] || '').toLowerCase().includes('chưa') ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                                                        {order['Kết quả'] || order['Trạng thái VC'] || 'Không rõ'}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-[10px] text-slate-400 text-right font-medium">
-                                                {moment(order['Thời gian YC'] || order['Thời gian nhập']).format('DD/MM/YYYY')}
-                                            </td>
+                                            {detailModal.isMatchedView ? (
+                                                <>
+                                                    <td className="px-3 py-2 text-slate-900 font-mono whitespace-nowrap border border-slate-300 text-center">
+                                                        {order.VIN || order['SỐ VIN'] || '-'}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-center border border-slate-300 whitespace-nowrap text-emerald-700 font-bold">
+                                                        {order['Kết quả'] || order['Trạng thái VC'] || 'Đã ghép'}
+                                                    </td>
+                                                    {detailModal.showDaysColumn && (
+                                                        <td className={`px-3 py-2 text-center border border-slate-300 font-bold ${daysSinceMatch !== null && daysSinceMatch >= 20 ? 'text-red-600' : daysSinceMatch !== null && daysSinceMatch >= 10 ? 'text-amber-600' : 'text-slate-800'}`}>
+                                                            {daysSinceMatch !== null ? `${daysSinceMatch}` : '-'}
+                                                        </td>
+                                                    )}
+                                                    <td className="px-3 py-2 text-center text-slate-800 border border-slate-300 whitespace-nowrap font-medium">
+                                                        {matchedDate ? moment(matchedDate).format('DD/MM/YYYY') : '-'}
+                                                    </td>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <td className="px-3 py-2 text-center border border-slate-300 whitespace-nowrap text-amber-600 font-bold">
+                                                        {order['Kết quả'] || order['Trạng thái VC'] || 'Chưa ghép'}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-center text-slate-800 border border-slate-300 whitespace-nowrap font-medium">
+                                                        {moment(order['Thời gian YC'] || order['Thời gian nhập']).format('DD/MM/YYYY')}
+                                                    </td>
+                                                    <td className="px-3 py-2 text-center text-slate-800 border border-slate-300 whitespace-nowrap font-medium">
+                                                        {order['Ngày cọc'] ? moment(order['Ngày cọc']).format('DD/MM/YYYY') : <span className="text-slate-300">-</span>}
+                                                    </td>
+                                                </>
+                                            )}
                                         </tr>
-                                    ))}
+                                        );
+                                    })}
                                     {detailModal.data.length === 0 && (
                                         <tr>
-                                            <td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic text-xs">Không có dữ liệu chi tiết</td>
+                                            <td colSpan={detailModal.showDaysColumn ? 9 : 8} className="px-6 py-12 text-center text-slate-400 italic border border-slate-300">Không có dữ liệu chi tiết</td>
                                         </tr>
                                     )}
                                 </tbody>
                             </table>
-                        </div>
-                        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
-                            <div className="text-xs text-slate-500">
-                                Tổng cộng: <span className="font-bold text-slate-800">{detailModal.data.length}</span> mục
+                                </div>
                             </div>
-                            <button
-                                onClick={() => setDetailModal(prev => ({ ...prev, isOpen: false }))}
-                                className="px-5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-50 active:bg-slate-100 transition-all shadow-sm"
-                            >
-                                Đóng
-                            </button>
+                        </div>
+                        <div className="px-6 py-4 bg-white border-t border-slate-200 flex justify-between items-center z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                            <div className="text-xs text-slate-500 flex items-center gap-2">
+                                <span>Tổng cộng: <strong className="text-slate-800">{detailModal.data.length}</strong> mục</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={handleCopyImage}
+                                    disabled={isCopying || detailModal.data.length === 0}
+                                    className="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 hover:border-blue-600 rounded-lg text-xs font-bold transition-all shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isCopying ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-copy"></i>}
+                                    Copy Ảnh
+                                </button>
+                                <button
+                                    onClick={() => setDetailModal(prev => ({ ...prev, isOpen: false }))}
+                                    className="px-5 py-2 bg-slate-800 border border-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700 active:bg-slate-900 transition-all shadow-sm"
+                                >
+                                    Đóng
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

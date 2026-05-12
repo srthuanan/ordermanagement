@@ -7,7 +7,19 @@ import * as apiService from '../../services/apiService';
 interface RequestInvoiceModalProps {
     order: Order;
     onClose: () => void;
-    onConfirm: (order: Order, contractFile: File, proposalFile: File, policy: string[], commission: string, vpoint: string, aiNote?: string, preProcessedPayloads?: any) => Promise<any>;
+    onConfirm: (
+        order: Order, 
+        contractFile: File, 
+        proposalFile: File, 
+        policy: string[], 
+        commission: string, 
+        vpoint: string, 
+        aiNote?: string, 
+        preProcessedPayloads?: any,
+        xeXangVin?: string,
+        xeXangHang?: string,
+        xeXangModel?: string
+    ) => Promise<any>;
     stockData?: any[]; 
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
@@ -95,6 +107,11 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const [policy, setPolicy] = useState<string[]>([]);
     const [commission, setCommission] = useState('');
     const [vpoint, setVpoint] = useState('');
+    const [xeXangVin, setXeXangVin] = useState('');
+    const [xeXangHang, setXeXangHang] = useState('');
+    const [xeXangModel, setXeXangModel] = useState('');
+    const [vinCheckError, setVinCheckError] = useState('');
+    const [isCheckingVin, setIsCheckingVin] = useState(false);
     
     // Background tracking for Google Drive
     const [capturedImages, setCapturedImages] = useState<any[]>([]);
@@ -162,7 +179,54 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
     const getRawValue = (value: string) => value.replace(/\./g, '');
 
-    const isStep1Valid = policy.length > 0 && commission && parseFloat(getRawValue(commission)) >= 0 && vpoint && parseFloat(getRawValue(vpoint)) >= 0;
+    const isGasToElectricPolicy = useMemo(() => {
+        return policy.some(p => {
+            const low = p.toLowerCase();
+            return (low.includes('xăng') && low.includes('điện')) ||
+                   low.includes('thu cũ đổi mới');
+        });
+    }, [policy]);
+
+    useEffect(() => {
+        if (!isGasToElectricPolicy || !xeXangVin.trim()) {
+            setVinCheckError('');
+            return;
+        }
+
+        const timeoutId = setTimeout(async () => {
+            try {
+                setIsCheckingVin(true);
+                setVinCheckError('');
+                const cleanGasVin = xeXangVin.trim().toUpperCase();
+
+                const { data: existingGasCar } = await apiService.supabase.from('yeucauxhd')
+                    .select('xe_xang_vin, so_don_hang')
+                    .ilike('xe_xang_vin', cleanGasVin);
+
+                const { data: existingArchivedGasCar } = await apiService.supabase.from('archived_orders')
+                    .select('xe_xang_vin, so_don_hang')
+                    .ilike('xe_xang_vin', cleanGasVin);
+
+                const matchY = !!(existingGasCar && existingGasCar.length > 0);
+                const matchA = !!(existingArchivedGasCar && existingArchivedGasCar.length > 0);
+
+                if (matchY || matchA) {
+                    const matched = matchY && existingGasCar ? existingGasCar[0] : (existingArchivedGasCar ? existingArchivedGasCar[0] : null);
+                    if (matched) {
+                        setVinCheckError(`Xe xăng có số VIN ${cleanGasVin} đã được sử dụng trong yêu cầu ${matched.so_don_hang}.`);
+                    }
+                }
+            } catch (err) {
+                console.error('Error checking duplicate old gas car VIN:', err);
+            } finally {
+                setIsCheckingVin(false);
+            }
+        }, 400);
+
+        return () => clearTimeout(timeoutId);
+    }, [xeXangVin, isGasToElectricPolicy]);
+
+    const isStep1Valid = policy.length > 0 && commission && parseFloat(getRawValue(commission)) >= 0 && vpoint && parseFloat(getRawValue(vpoint)) >= 0 && (!isGasToElectricPolicy || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError));
     const isStep2Valid = contractFile && proposalFile;
     const isStep3Valid = vinClubConfirmed;
     const isFormValid = isStep1Valid && isStep2Valid && isStep3Valid;
@@ -293,7 +357,19 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 triggerArchival();
             }
 
-            await onConfirm(order, contractFile, proposalFile, policy, getRawValue(commission), getRawValue(vpoint), '', payloadsRef.current);
+            await onConfirm(
+                order, 
+                contractFile, 
+                proposalFile, 
+                policy, 
+                getRawValue(commission), 
+                getRawValue(vpoint), 
+                '', 
+                payloadsRef.current,
+                xeXangVin.trim() || undefined,
+                xeXangHang.trim() || undefined,
+                xeXangModel.trim() || undefined
+            );
             sessionStorage.removeItem(`invoice_draft_${order["Số đơn hàng"]}`);
             setProcessingStage(4);
             await new Promise(r => setTimeout(r, 1500));
@@ -425,14 +501,14 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                             <label className="block text-sm font-bold text-text-primary mb-3 uppercase tracking-wider">
                                                 Chính sách bán hàng áp dụng <span className="text-danger">*</span>
                                             </label>
-                                            <div className="p-4 bg-surface-ground rounded-xl border border-border-primary shadow-inner min-h-[100px]">
+                                            <div className="p-3 bg-surface-ground rounded-xl border border-border-primary shadow-inner max-h-[220px] overflow-y-auto custom-scrollbar">
                                                 {isLoadingPolicies ? (
-                                                    <div className="flex items-center justify-center py-10 text-text-secondary">
+                                                    <div className="flex items-center justify-center py-6 text-text-secondary">
                                                         <i className="fas fa-spinner fa-spin mr-3 text-xl"></i>
                                                         <span className="font-medium">Đang tải danh sách chính sách...</span>
                                                     </div>
                                                 ) : (
-                                                    <div className="flex flex-wrap gap-2.5">
+                                                    <div className="flex flex-wrap gap-2">
                                                         {filteredSalesPolicies.map(option => (
                                                             <button 
                                                                 key={option} 
@@ -440,7 +516,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                                                 onClick={() => {
                                                                     setPolicy(prev => prev.includes(option) ? prev.filter(p => p !== option) : [...prev, option]);
                                                                 }} 
-                                                                className={`px-4 py-2 text-[11px] font-bold rounded-lg border-2 transition-all duration-300 shadow-sm flex items-center gap-2 ${
+                                                                className={`px-3 py-1.5 text-[11px] font-bold rounded-lg border-2 transition-all duration-300 shadow-sm flex items-center gap-2 ${
                                                                     policy.includes(option) 
                                                                         ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-[0_0_10px_rgba(59,130,246,0.15)] scale-[1.02]' 
                                                                         : 'bg-white border-border-secondary text-text-secondary hover:border-blue-300 hover:text-blue-600'
@@ -455,9 +531,9 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-auto pt-6 border-t border-gray-100">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 pt-2 border-t border-gray-100">
                                             <div className="group">
-                                                <label className="block text-[11px] font-bold text-text-primary mb-2 uppercase tracking-wider flex items-center gap-2">
+                                                <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center gap-2">
                                                     <i className="fas fa-money-bill-wave text-emerald-500"></i>
                                                     Hoa hồng ứng trước (VND) *
                                                 </label>
@@ -466,14 +542,14 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                                         type="text" 
                                                         value={commission} 
                                                         onChange={handleNumberChange(setCommission)} 
-                                                        className="w-full bg-surface-ground border-2 border-border-primary rounded-xl p-2.5 px-4 text-base font-bold text-blue-700 focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/10 transition-all outline-none" 
+                                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-1.5 px-3 text-sm font-bold text-blue-700 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/10 transition-all outline-none" 
                                                         placeholder="0" 
                                                     />
-                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 font-black text-gray-300 pointer-events-none uppercase text-[10px]">VNĐ</div>
+                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-gray-400 pointer-events-none uppercase text-[9px]">VNĐ</div>
                                                 </div>
                                             </div>
                                             <div className="group">
-                                                <label className="block text-[11px] font-bold text-text-primary mb-2 uppercase tracking-wider flex items-center gap-2">
+                                                <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center gap-2">
                                                     <i className="fas fa-star text-purple-500"></i>
                                                     Số điểm Vpoint sử dụng *
                                                 </label>
@@ -482,13 +558,65 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                                         type="text" 
                                                         value={vpoint} 
                                                         onChange={handleNumberChange(setVpoint)} 
-                                                        className="w-full bg-surface-ground border-2 border-border-primary rounded-xl p-2.5 px-4 text-base font-bold text-purple-700 focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/10 transition-all outline-none" 
+                                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-1.5 px-3 text-sm font-bold text-purple-700 focus:border-accent-primary focus:ring-1 focus:ring-accent-primary/10 transition-all outline-none" 
                                                         placeholder="0" 
                                                     />
-                                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 font-black text-gray-300 pointer-events-none uppercase text-[10px]">ĐIỂM</div>
+                                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 font-black text-gray-400 pointer-events-none uppercase text-[9px]">ĐIỂM</div>
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {isGasToElectricPolicy && (
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-gray-100 mt-1 animate-fade-in">
+                                                <div className="group relative">
+                                                    <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider">
+                                                        <i className="fas fa-barcode text-amber-500 mr-1"></i> Số VIN xe xăng *
+                                                        {isCheckingVin && <i className="fas fa-spinner fa-spin ml-2 text-blue-500"></i>}
+                                                    </label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={xeXangVin} 
+                                                        onChange={(e) => setXeXangVin(e.target.value.toUpperCase())} 
+                                                        className={`w-full bg-surface-ground border rounded-lg p-2 text-sm font-bold text-slate-800 outline-none focus:ring-1 transition-all font-mono tracking-tight placeholder:italic placeholder:font-normal placeholder:text-[11px] placeholder:text-slate-400 ${
+                                                            vinCheckError 
+                                                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500/30' 
+                                                                : 'border-border-primary focus:border-amber-500 focus:ring-amber-500/30'
+                                                        }`}
+                                                        placeholder="VD: VIN123..." 
+                                                    />
+                                                    {vinCheckError && (
+                                                        <p className="text-[10px] text-red-600 font-bold mt-1 leading-normal flex items-start gap-1">
+                                                            <i className="fas fa-exclamation-triangle mt-0.5 flex-shrink-0"></i>
+                                                            <span>{vinCheckError}</span>
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="group">
+                                                    <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider">
+                                                        <i className="fas fa-car text-amber-500 mr-1"></i> Hãng xe xăng *
+                                                    </label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={xeXangHang} 
+                                                        onChange={(e) => setXeXangHang(e.target.value)} 
+                                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 text-sm font-semibold text-slate-800 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all placeholder:italic placeholder:font-normal placeholder:text-[11px] placeholder:text-slate-400" 
+                                                        placeholder="VD: Toyota" 
+                                                    />
+                                                </div>
+                                                <div className="group">
+                                                    <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider">
+                                                        <i className="fas fa-cog text-amber-500 mr-1"></i> Model xe xăng *
+                                                    </label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={xeXangModel} 
+                                                        onChange={(e) => setXeXangModel(e.target.value)} 
+                                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 text-sm font-semibold text-slate-800 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all placeholder:italic placeholder:font-normal placeholder:text-[11px] placeholder:text-slate-400" 
+                                                        placeholder="VD: Camry" 
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

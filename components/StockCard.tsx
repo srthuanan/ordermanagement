@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import moment from 'moment';
 import { StockVehicle } from '../types';
-import { getExteriorColorStyle, getInteriorColorStyle } from '../utils/styleUtils';
+import { getExteriorColorStyle, getInteriorColorStyle, getBrochureUrl } from '../utils/styleUtils';
 import Button from './ui/Button';
 import CarImage from './ui/CarImage'; // Import the new component
 import StatusBadge from './ui/StatusBadge';
@@ -24,6 +24,7 @@ interface StockCardProps {
     queuedVins: string[];
     canHoldMore: boolean;
     onViewCarOnMap?: (vin: string) => void;
+    isReferenceAccount?: boolean;
 }
 
 const StockCard: React.FC<StockCardProps> = ({
@@ -42,7 +43,8 @@ const StockCard: React.FC<StockCardProps> = ({
     processingVin,
     queuedVins,
     canHoldMore,
-    onViewCarOnMap
+    onViewCarOnMap,
+    isReferenceAccount
 }) => {
     const [confirmAction, setConfirmAction] = useState<{ action: 'hold' | 'release' } | null>(null);
     if (false) showToast?.('', '', 'success');
@@ -77,6 +79,13 @@ const StockCard: React.FC<StockCardProps> = ({
     }
 
     const renderActions = () => {
+        if (isReferenceAccount) {
+            return (
+                <div className="flex items-center justify-center w-full h-8 bg-amber-50/30 border border-dashed border-amber-200/50 rounded-xl">
+                     <span className="text-[9px] font-black text-amber-600/60 uppercase tracking-widest">Chỉ Xem</span>
+                </div>
+            );
+        }
         if (isProcessing) {
             return (
                 <div className="flex items-center justify-center w-full h-9">
@@ -220,11 +229,26 @@ const StockCard: React.FC<StockCardProps> = ({
         >
             {/* Premium Glassmorphism Interactive Tooltip - Hidden on mobile where tap opens details */}
             <div className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%+12px)] min-w-[190px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_25px_60px_-15px_rgba(59,130,246,0.25)] border border-blue-100/80 p-2.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-400 z-[100] scale-95 group-hover:scale-100 pointer-events-auto delay-100 hidden md:block">
-                <div className="text-[10px] font-black uppercase text-blue-600 mb-2 border-b border-blue-50 pb-1.5 tracking-[0.1em] flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500">
-                        <i className="fas fa-list-ul text-[10px]"></i>
+                <div className="text-[10px] font-black uppercase text-blue-600 mb-2 border-b border-blue-50 pb-1.5 tracking-[0.1em] flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-5 h-5 rounded-lg bg-blue-50 flex items-center justify-center text-blue-500 flex-shrink-0">
+                            <i className="fas fa-list-ul text-[10px]"></i>
+                        </div>
+                        <span className="whitespace-nowrap">Chi tiết thông tin</span>
                     </div>
-                    Chi tiết thông tin
+                    {getBrochureUrl(vehicle['Dòng xe']) && (
+                        <a 
+                            href={getBrochureUrl(vehicle['Dòng xe'])!} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center justify-center gap-1 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-blue-200/50 hover:border-blue-300/80 text-blue-600 px-2 h-6 rounded-lg text-[9px] font-black uppercase transition-all flex-shrink-0 shadow-sm hover:shadow active:scale-95"
+                            title="Xem tài liệu kỹ thuật (Brochure)"
+                        >
+                            <span className="material-symbols-outlined text-[14px]">menu_book</span>
+                            <span className="whitespace-nowrap">Brochure</span>
+                        </a>
+                    )}
                 </div>
                 <div className="flex flex-col gap-1.5 relative z-10 w-full">
                     {detailsList.map((item, idx) => (
@@ -265,7 +289,7 @@ const StockCard: React.FC<StockCardProps> = ({
                     Bổ sung PB
                 </div>
             )}
-            {isAdmin && onAdminEdit && (
+            {isAdmin && onAdminEdit && !isReferenceAccount && (
                 <button
                     onClick={(e) => { e.stopPropagation(); onAdminEdit(vehicle); }}
                     className="absolute top-1 left-1 z-[110] w-6 h-6 flex items-center justify-center rounded-lg bg-slate-700/70 text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-accent-primary transition-all duration-200 backdrop-blur-sm shadow-sm"
@@ -327,13 +351,27 @@ const StockCard: React.FC<StockCardProps> = ({
                 </div>
 
                 <div className="flex flex-col gap-1 mt-1">
-                    <div className="flex items-baseline gap-1.5 overflow-hidden">
-                        <span className="text-light-text-primary text-base font-bold whitespace-nowrap group-hover:text-accent-primary transition-colors">
-                            {vehicle['Dòng xe']}
-                        </span>
-                        <span className="text-light-text-secondary text-xs font-medium truncate" title={vehicle['Phiên bản']}>
-                            {vehicle['Phiên bản'] || <span className="text-amber-500 font-bold italic animate-pulse">Chưa có FB</span>}
-                        </span>
+                    <div className="flex items-center justify-between gap-1 overflow-hidden">
+                        <div className="flex items-baseline gap-1.5 overflow-hidden flex-1">
+                            <span className="text-light-text-primary text-base font-bold whitespace-nowrap group-hover:text-accent-primary transition-colors">
+                                {vehicle['Dòng xe']}
+                            </span>
+                            <span className="text-light-text-secondary text-xs font-medium truncate" title={vehicle['Phiên bản']}>
+                                {vehicle['Phiên bản'] || <span className="text-amber-500 font-bold italic animate-pulse">Chưa có FB</span>}
+                            </span>
+                        </div>
+                        {getBrochureUrl(vehicle['Dòng xe']) && (
+                            <a 
+                                href={getBrochureUrl(vehicle['Dòng xe'])!} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="flex items-center justify-center p-1 rounded-full text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-all flex-shrink-0"
+                                title="Xem tài liệu kỹ thuật (Brochure)"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">menu_book</span>
+                            </a>
+                        )}
                     </div>
 
                     <div className="flex items-center justify-between gap-2 text-light-text-secondary mb-1">
@@ -412,14 +450,15 @@ const StockCard: React.FC<StockCardProps> = ({
                                 if (hasGps && onViewCarOnMap) {
                                     return (
                                         <span 
-                                            className="cursor-pointer text-base select-none hover:scale-125 transition-transform active:scale-95 px-1 flex items-center justify-center"
-                                            title="Xem vị trí xe trên Bản Đồ"
+                                            className="group/gps cursor-pointer w-6 h-6 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 hover:border-indigo-200 flex items-center justify-center transition-all shadow-sm hover:shadow-md relative group"
+                                            title="Click để định vị xe trên Bản Đồ Live"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 onViewCarOnMap(vehicle.VIN);
                                             }}
                                         >
-                                            📍
+                                            <div className="absolute inset-0 rounded-full bg-indigo-400 animate-ping opacity-20 group-hover/gps:opacity-40 duration-[2s]"></div>
+                                            <i className="fa-solid fa-location-crosshairs text-indigo-600 text-xs group-hover/gps:scale-110 transition-transform"></i>
                                         </span>
                                     );
                                 }

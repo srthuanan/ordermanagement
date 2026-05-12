@@ -23,6 +23,7 @@ interface TestDriveHistoryTableProps {
     sortConfig: TestDriveSortConfig | null;
     onSort: (key: keyof TestDriveBooking) => void;
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
+    isReferenceAccount?: boolean;
 }
 
 const formatTime = (timeStr?: string): string => {
@@ -89,7 +90,7 @@ const DocumentCard: React.FC<{ url: string; label: string; icon: string; onClick
     );
 };
 
-const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings, onSelectBooking, onUpdateCheckin, onDelete, currentUser, isAdmin, onOpenImagePreview }) => {
+const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings, onSelectBooking, onUpdateCheckin, onDelete, currentUser, isAdmin, onOpenImagePreview, isReferenceAccount }) => {
     // Extract unique consultants for display in column 1
     const consultants = useMemo(() => {
         const uniqueNames = Array.from(new Set(bookings.map(b => b.tenTuVan || 'Chưa xác định')));
@@ -199,7 +200,7 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
             const status = getStatus(booking);
             const canUpdate = isAdmin || normalizeName(currentUser) === normalizeName(booking.tenTuVan);
 
-            if (status !== 'Đã hoàn tất' && canUpdate) {
+            if (status !== 'Đã hoàn tất' && canUpdate && !isReferenceAccount) {
                 onUpdateCheckin(booking);
             }
         }
@@ -373,22 +374,24 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
 
                                     return (
                                         <>
-                                            <button
-                                                onClick={() => {
-                                                    if (canUpdate) {
-                                                        if (status === 'Đã hoàn tất') {
-                                                            onUpdateCheckin(selectedBooking, 'update');
-                                                        } else {
-                                                            onUpdateCheckin(selectedBooking);
+                                            {!isReferenceAccount && (
+                                                <button
+                                                    onClick={() => {
+                                                        if (canUpdate) {
+                                                            if (status === 'Đã hoàn tất') {
+                                                                onUpdateCheckin(selectedBooking, 'update');
+                                                            } else {
+                                                                onUpdateCheckin(selectedBooking);
+                                                            }
                                                         }
-                                                    }
-                                                }}
-                                                className={`w-9 h-9 rounded-full hover:bg-surface-hover flex items-center justify-center ${!canUpdate ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                disabled={!canUpdate}
-                                                title={status === 'Đã hoàn tất' ? "Cập nhật hình ảnh" : "Check-in/out"}
-                                            >
-                                                <i className={`fas ${status === 'Đã hoàn tất' ? 'fa-images' : 'fa-camera'} text-text-secondary`}></i>
-                                            </button>
+                                                    }}
+                                                    className={`w-9 h-9 rounded-full hover:bg-surface-hover flex items-center justify-center ${!canUpdate ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    disabled={!canUpdate}
+                                                    title={status === 'Đã hoàn tất' ? "Cập nhật hình ảnh" : "Check-in/out"}
+                                                >
+                                                    <i className={`fas ${status === 'Đã hoàn tất' ? 'fa-images' : 'fa-camera'} text-text-secondary`}></i>
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => onSelectBooking(selectedBooking)}
                                                 className="w-9 h-9 rounded-full hover:bg-surface-hover flex items-center justify-center"
@@ -396,14 +399,16 @@ const TestDriveHistoryTable: React.FC<TestDriveHistoryTableProps> = ({ bookings,
                                             >
                                                 <i className="fas fa-print text-text-secondary"></i>
                                             </button>
-                                            <button
-                                                onClick={() => onDelete(selectedBooking)}
-                                                className={`w-9 h-9 rounded-full hover:bg-surface-hover flex items-center justify-center ${(!canUpdate || status !== 'Chờ Check-in') ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                disabled={!canUpdate || status !== 'Chờ Check-in'}
-                                                title="Xóa phiếu"
-                                            >
-                                                <i className="fas fa-trash-alt text-danger"></i>
-                                            </button>
+                                            {!isReferenceAccount && (
+                                                <button
+                                                    onClick={() => onDelete(selectedBooking)}
+                                                    className={`w-9 h-9 rounded-full hover:bg-surface-hover flex items-center justify-center ${(!canUpdate || status !== 'Chờ Check-in') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    disabled={!canUpdate || status !== 'Chờ Check-in'}
+                                                    title="Xóa phiếu"
+                                                >
+                                                    <i className="fas fa-trash-alt text-danger"></i>
+                                                </button>
+                                            )}
                                         </>
                                     );
                                 })()}

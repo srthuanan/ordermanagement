@@ -1,0 +1,188 @@
+javascript:(function(){
+    if (typeof Xrm === "undefined" || !Xrm.Page || !Xrm.Page.data || !Xrm.Page.data.entity) {
+        alert("Vui lòng mở một bản ghi đơn hàng VSO trên DMS trước khi bấm!");
+        return;
+    }
+
+    var id = Xrm.Page.data.entity.getId().replace(/[{}]/g, "");
+    var orderNumber = Xrm.Page.data.entity.getPrimaryAttributeValue() || "";
+    
+    var progressDiv = document.createElement('div');
+    progressDiv.style = 'position:fixed;top:10px;right:10px;background:black;color:white;padding:15px;z-index:999999;border-radius:5px;font-family:sans-serif;font-size:14px;box-shadow:0 4px 6px rgba(0,0,0,0.3);';
+    progressDiv.innerHTML = '🔍 Đang phân tích đơn hàng & truy vấn trạng thái VinClub...';
+    document.body.appendChild(progressDiv);
+
+    var supabaseUrl = 'https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/yeucauvc?so_don_hang=eq.' + encodeURIComponent(orderNumber);
+    var apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU';
+
+    // Thực hiện truy vấn CRM Web API
+    var crmPromise = Xrm.WebApi.retrieveRecord("xts_newvehiclesalesorder", id);
+
+    // Thực hiện truy vấn Supabase API
+    var supabasePromise = fetch(supabaseUrl, {
+        method: 'GET',
+        headers: {
+            'apikey': apiKey,
+            'Authorization': 'Bearer ' + apiKey,
+            'Content-Type': 'application/json'
+        }
+    }).then(function(res) {
+        if (res.ok) return res.json();
+        return [];
+    }).catch(function() {
+        return [];
+    });
+
+    Promise.all([crmPromise, supabasePromise])
+    .then(function(results) {
+        progressDiv.remove();
+        var crmItem = results[0];
+        var supabaseItem = results[1] && results[1].length > 0 ? results[1][0] : null;
+        showDeepInspectorPanel(crmItem, supabaseItem);
+    })
+    .catch(function(err) {
+        progressDiv.remove();
+        alert("Lỗi khi tải thông tin: " + (err.message || err.description || err));
+    });
+
+    function getFormatted(item, field) {
+        return item[field + "@OData.Community.Display.V1.FormattedValue"] || 
+               item["_" + field + "_value@OData.Community.Display.V1.FormattedValue"] || 
+               item[field] || "Chưa rõ / Trống";
+    }
+
+    function formatMoney(val) {
+        if (val === undefined || val === null) return "0 VNĐ";
+        if (typeof val === "string") return val;
+        return val.toLocaleString('vi-VN') + " VNĐ";
+    }
+
+    // Quét động các trường trên Form CRM có chứa từ khóa liên quan đến VinClub/Phân hạng/Chiết khấu
+    function scanVinClubFormFields() {
+        var foundFields = [];
+        try {
+            Xrm.Page.data.entity.attributes.forEach(function(attr) {
+                var name = attr.getName().toLowerCase();
+                if (name.indexOf("club") !== -1 || name.indexOf("vpoint") !== -1 || name.indexOf("rank") !== -1 || name.indexOf("membership") !== -1) {
+                    var val = attr.getValue();
+                    if (val !== null && val !== undefined) {
+                        foundFields.push({
+                            label: attr.controls.get(0) ? attr.controls.get(0).getLabel() : attr.getName(),
+                            value: typeof val === "object" && val.length > 0 ? val[0].name : val
+                        });
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("Lỗi khi quét form:", e);
+        }
+        return foundFields;
+    }
+
+    function showDeepInspectorPanel(item, vcRequest) {
+        var oldPanel = document.getElementById('dms-deep-inspector-overlay');
+        if (oldPanel) oldPanel.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'dms-deep-inspector-overlay';
+        overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999998;background:rgba(15,15,20,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;';
+
+        var modal = document.createElement('div');
+        modal.style = 'width:620px;background:#1e1e24;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;overflow:hidden;color:#e2e8f0;font-family:system-ui, -apple-system, sans-serif;';
+        overlay.appendChild(modal);
+
+        // Header
+        var header = document.createElement('div');
+        header.style = 'background:rgba(30,41,59,0.7);padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;';
+        
+        var vsoNumber = item.xts_newvehiclesalesordernumber || "Chi tiết Đơn hàng";
+        header.innerHTML = '<div style="display:flex;align-items:center;gap:12px;">' +
+                           '<span style="font-size:24px;">🎖️</span>' +
+                           '<div>' +
+                           '<h2 style="margin:0;font-size:16px;font-weight:700;color:#38bdf8;">Thông tin Phân hạng & Yêu cầu VinClub</h2>' +
+                           '<p style="margin:2px 0 0 0;font-size:12px;color:#94a3b8;">Số đơn: ' + vsoNumber + '</p>' +
+                           '</div>' +
+                           '</div>';
+
+        var closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕ Đóng';
+        closeBtn.style = 'background:#ef4444;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;';
+        closeBtn.onclick = function(){ overlay.remove(); };
+        header.appendChild(closeBtn);
+        modal.appendChild(header);
+
+        // Body Content
+        var body = document.createElement('div');
+        body.style = 'padding:20px;max-height:480px;overflow-y:auto;background:#111827;font-size:13px;line-height:1.6;';
+
+        // 1. Quét thông tin VinClub trên chính giao diện DMS hiện tại
+        var scannedFields = scanVinClubFormFields();
+        var scannedHtml = '';
+        if (scannedFields.length > 0) {
+            scannedFields.forEach(function(f) {
+                scannedHtml += '<div><span style="color:#a0aec0;">🏷️ ' + f.label + ':</span> <strong style="color:#38bdf8;">' + f.value + '</strong></div>';
+            });
+        } else {
+            scannedHtml = '<div style="color:#94a3b8;font-style:italic;">Không tìm thấy thuộc tính VinClub trực tiếp được gán trên form hiện tại.</div>';
+        }
+
+        // 2. Phân tích trạng thái Yêu cầu VinClub từ hệ thống Supabase của bạn
+        var vcHtml = '';
+        if (vcRequest) {
+            var vcStatus = vcRequest.trang_thai_xu_ly || "Chưa rõ";
+            var statusColor = '#f59e0b';
+            var statusBg = 'rgba(245,158,11,0.1)';
+            if (vcStatus.indexOf("Phê duyệt") !== -1 || vcStatus.indexOf("Thành công") !== -1 || vcStatus.indexOf("Duyệt") !== -1) {
+                statusColor = '#10b981';
+                statusBg = 'rgba(16,185,129,0.1)';
+            } else if (vcStatus.indexOf("Từ chối") !== -1 || vcStatus.indexOf("Hủy") !== -1) {
+                statusColor = '#ef4444';
+                statusBg = 'rgba(239,68,68,0.1)';
+            }
+            
+            var requestedAt = vcRequest.thoi_gian_yc ? new Date(vcRequest.thoi_gian_yc).toLocaleString('vi-VN') : "Chưa rõ";
+
+            vcHtml = 
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;background:rgba(56,189,248,0.05);padding:15px;border-radius:10px;border:1px solid rgba(56,189,248,0.15);">' +
+                '<div><span style="color:#cbd5e1;">📌 Trạng thái Yêu cầu:</span> ' +
+                '<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;color:' + statusColor + ';background:' + statusBg + ';border:1px solid ' + statusColor + '30;">' + vcStatus + '</span></div>' +
+                '<div><span style="color:#cbd5e1;">👤 Người yêu cầu:</span> <strong style="color:#fff;">' + (vcRequest.nguoi_yc || "Chưa rõ") + '</strong></div>' +
+                '<div><span style="color:#cbd5e1;">🕒 Thời gian gửi:</span> <strong style="color:#fff;">' + requestedAt + '</strong></div>' +
+                '<div><span style="color:#cbd5e1;">🏷️ Loại Khách hàng:</span> <strong style="color:#fff;">' + (vcRequest.loai_yc || "Cá Nhân") + '</strong></div>' +
+                '<div style="grid-column: span 2;border-top:1px solid rgba(255,255,255,0.05);margin-top:5px;padding-top:5px;"><span style="color:#cbd5e1;">🆔 Mã KH DMS:</span> <strong style="color:#fff;">' + (vcRequest.ma_kh_dms || "Trống") + '</strong></div>' +
+                '</div>';
+        } else {
+            vcHtml = '<div style="background:rgba(239,68,68,0.05);padding:15px;border-radius:10px;border:1px solid rgba(239,68,68,0.15);color:#cbd5e1;text-align:center;">' +
+                     '❌ Chưa có bản ghi yêu cầu VinClub nào được gửi lên hệ thống quản lý Supabase cho đơn hàng này.' +
+                     '</div>';
+        }
+
+        // 3. Thông tin tài chính & tiền bạc để đối chiếu chiết khấu VinClub (giảm giá)
+        var grandTotal = item.xvf_grandtotal !== undefined ? formatMoney(item.xvf_grandtotal) : getFormatted(item, "xvf_grandtotal");
+        var discount = item.xts_totaldiscountamount !== undefined ? formatMoney(item.xts_totaldiscountamount) : getFormatted(item, "xts_totaldiscountamount");
+        var netAmount = item.xts_netamountaftertax !== undefined ? formatMoney(item.xts_netamountaftertax) : getFormatted(item, "xts_netamountaftertax");
+
+        body.innerHTML = 
+            // Section 1: Quét Form DMS
+            '<div style="font-weight:700;color:#38bdf8;margin-bottom:10px;text-transform:uppercase;font-size:11px;letter-spacing:0.05em;">🔍 Thuộc tính VinClub gán trên Form DMS</div>' +
+            '<div style="background:#1e1e24;padding:15px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);margin-bottom:20px;display:flex;flex-direction:column;gap:8px;">' +
+            scannedHtml +
+            '</div>' +
+
+            // Section 2: Trạng thái yêu cầu quản lý Supabase
+            '<div style="font-weight:700;color:#38bdf8;margin-bottom:10px;text-transform:uppercase;font-size:11px;letter-spacing:0.05em;">🏅 Yêu cầu duyệt VinClub (Hệ thống Supabase)</div>' +
+            vcHtml +
+            '<div style="margin-bottom:20px;"></div>' +
+
+            // Section 3: Chi tiết tài chính
+            '<div style="font-weight:700;color:#f59e0b;margin-bottom:10px;text-transform:uppercase;font-size:11px;letter-spacing:0.05em;">💰 Giá trị chiết khấu & Tài chính để đối chiếu</div>' +
+            '<div style="display:grid;grid-template-columns:1fr;gap:10px;background:#1e1e24;padding:15px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);">' +
+            '<div style="display:flex;justify-content:space-between;"><span style="color:#a0aec0;">Tổng tiền sau thuế (Net):</span> <strong style="color:#fff;">' + netAmount + '</strong></div>' +
+            '<div style="display:flex;justify-content:space-between;"><span style="color:#f43f5e;">Tổng tiền chiết khấu (Giảm giá):</span> <strong style="color:#f43f5e;">' + discount + '</strong></div>' +
+            '<div style="display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.05);padding-top:8px;"><span style="color:#38bdf8;font-weight:700;">TỔNG TIỀN THANH TOÁN:</span> <strong style="color:#38bdf8;font-size:15px;">' + grandTotal + '</strong></div>' +
+            '</div>';
+
+        modal.appendChild(body);
+        document.body.appendChild(overlay);
+    }
+})();

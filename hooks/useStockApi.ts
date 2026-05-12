@@ -39,9 +39,8 @@ export const useStockApi = () => {
         setStockData: (data: StockVehicle[]) => mutate({ ...result, status: 'SUCCESS', message: result?.message || '', khoxe: data }, false),
         isLoading: (!result && !error) || (!queuedVins),
         error: error instanceof Error ? error.message : (error ? String(error) : null),
-        refetch: useCallback(() => {
-            mutate();
-            mutateQueued();
+        refetch: useCallback(async () => {
+            await Promise.all([mutate(), mutateQueued()]);
         }, [mutate, mutateQueued])
     };
 };

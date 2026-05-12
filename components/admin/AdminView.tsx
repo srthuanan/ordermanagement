@@ -66,9 +66,10 @@ interface AdminViewProps {
     isSidebarCollapsed: boolean;
     initialState: { targetTab?: AdminSubView; orderToShow?: Order; inquiryId?: string } | null;
     clearInitialState: () => void;
+    isReferenceAccount?: boolean;
 }
 
-const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingHistory, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState }) => {
+const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHistory, refetchStock, refetchXuathoadon, refetchAdminData, allOrders, xuathoadonData, stockData, teamData, allUsers, isLoadingHistory, onOpenImagePreview, onOpenFilePreview, isSidebarCollapsed, initialState, clearInitialState, isReferenceAccount: _isReferenceAccount }) => {
 
     const [showMatchingModal, setShowMatchingModal] = useState(false);
     const [isActiveUsersModalOpen, setIsActiveUsersModalOpen] = useState(false);
@@ -719,7 +720,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         <i className="fas fa-bolt text-[13px]"></i>
                     </button>
                     {isActionMenuOpen && (
-                        <div className="fixed sm:absolute top-[56px] sm:top-full left-2 right-2 sm:left-auto sm:right-0 sm:mt-3 w-auto sm:w-64 bg-white border border-border-primary shadow-[0_10px_40px_rgba(0,0,0,0.12)] rounded-2xl z-[110] p-1.5 animate-fade-in-scale-up origin-top sm:origin-top-right">
+                        <div className="fixed sm:absolute top-[56px] sm:top-full left-2 right-2 sm:left-auto sm:right-0 sm:mt-3 w-auto sm:w-64 bg-white border border-border-primary shadow-[0_10px_40px_rgba(0,0,0,0.12)] rounded-2xl z-[12000] p-1.5 animate-fade-in-scale-up origin-top sm:origin-top-right">
                             <div className="px-3 py-2 border-b border-slate-50 mb-1.5">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Công cụ quản trị</span>
                             </div>

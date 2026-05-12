@@ -15,9 +15,10 @@ interface CarInquiryViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info') => void;
     initialInquiryId?: string;
     onProcessed?: () => void;
+    isReferenceAccount?: boolean;
 }
 
-const CarInquiryView: React.FC<CarInquiryViewProps> = ({ currentUser, showToast, initialInquiryId, onProcessed }) => {
+const CarInquiryView: React.FC<CarInquiryViewProps> = ({ currentUser, showToast, initialInquiryId, onProcessed, isReferenceAccount }) => {
     // --- State ---
     const [formData, setFormData] = useState({
         model: '',
@@ -324,14 +325,21 @@ const CarInquiryView: React.FC<CarInquiryViewProps> = ({ currentUser, showToast,
             {/* Column 1: Sidebar / Folders */}
             <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-5 border-b border-border-secondary/50">
-                    <Button
-                        onClick={() => handleInquirySelect('new')}
-                        variant="primary"
-                        className="w-full flex items-center justify-center gap-2 py-3 shadow-lg shadow-accent-primary/20"
-                        leftIcon={<i className="fas fa-plus-circle"></i>}
-                    >
-                        TẠO YÊU CẦU MỚI
-                    </Button>
+                    {!isReferenceAccount ? (
+                        <Button
+                            onClick={() => handleInquirySelect('new')}
+                            variant="primary"
+                            className="w-full flex items-center justify-center gap-2 py-3 shadow-lg shadow-accent-primary/20"
+                            leftIcon={<i className="fas fa-plus-circle"></i>}
+                        >
+                            TẠO YÊU CẦU MỚI
+                        </Button>
+                    ) : (
+                        <div className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-amber-50 rounded-xl border border-amber-100/50">
+                            <i className="fas fa-eye text-amber-500 text-xs"></i>
+                            <span className="text-[10px] font-black text-amber-700 uppercase tracking-tight">CHỈ XEM DỮ LIỆU</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex-1 p-2 space-y-1 overflow-y-auto">
@@ -534,13 +542,15 @@ const CarInquiryView: React.FC<CarInquiryViewProps> = ({ currentUser, showToast,
                             </div>
                             <div className="flex items-center gap-2 sm:gap-3">
                                 <StatusBadge status={getInquiryStatus(selectedInquiry.status)} size="sm" />
-                                <button
-                                    onClick={() => handleDeleteInquiry(selectedInquiry.id)}
-                                    className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100/50"
-                                    title="Xóa yêu cầu"
-                                >
-                                    <i className="fas fa-trash-alt text-[10px]"></i>
-                                </button>
+                                {!isReferenceAccount && (
+                                    <button
+                                        onClick={() => handleDeleteInquiry(selectedInquiry.id)}
+                                        className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100/50"
+                                        title="Xóa yêu cầu"
+                                    >
+                                        <i className="fas fa-trash-alt text-[10px]"></i>
+                                    </button>
+                                )}
                             </div>
                         </header>
 
@@ -587,7 +597,7 @@ const CarInquiryView: React.FC<CarInquiryViewProps> = ({ currentUser, showToast,
                                                     <div className="text-[8px] font-bold text-emerald-600 uppercase mt-0.5 italic text-center">Đã tìm thấy xe phù hợp</div>
                                                 </div>
                                                 
-                                                {selectedInquiry.status !== 'held' && (
+                                                {selectedInquiry.status !== 'held' && !isReferenceAccount && (
                                                     <button
                                                         onClick={() => handleHoldCar(selectedInquiry)}
                                                         className="w-full py-2.5 sm:py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.98] flex flex-col items-center justify-center font-black"
@@ -658,34 +668,36 @@ const CarInquiryView: React.FC<CarInquiryViewProps> = ({ currentUser, showToast,
                                         )}
                                     </div>
 
-                                    <div className="space-y-3 pt-2 sm:pt-3 border-t border-slate-100">
-                                        <div className="relative">
-                                            <textarea
-                                                className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl min-h-[46px] max-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-xs font-medium placeholder:text-slate-300 resize-none shadow-sm"
-                                                placeholder="Nhập nội dung trao đổi..."
-                                                value={newComment}
-                                                onChange={(e) => setNewComment(e.target.value)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                                        e.preventDefault();
-                                                        if (newComment.trim()) handleSendComment();
-                                                    }
-                                                }}
-                                                rows={1}
-                                            />
+                                    {!isReferenceAccount && (
+                                        <div className="space-y-3 pt-2 sm:pt-3 border-t border-slate-100">
+                                            <div className="relative">
+                                                <textarea
+                                                    className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl min-h-[46px] max-h-[120px] focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 transition-all text-xs font-medium placeholder:text-slate-300 resize-none shadow-sm"
+                                                    placeholder="Nhập nội dung trao đổi..."
+                                                    value={newComment}
+                                                    onChange={(e) => setNewComment(e.target.value)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                                            e.preventDefault();
+                                                            if (newComment.trim()) handleSendComment();
+                                                        }
+                                                    }}
+                                                    rows={1}
+                                                />
+                                            </div>
+                                            <div className="flex justify-end">
+                                                <Button
+                                                    variant="primary"
+                                                    onClick={handleSendComment}
+                                                    isLoading={isSendingComment}
+                                                    disabled={!newComment.trim()}
+                                                    className="bg-blue-600 border-none px-6 py-1.5 h-auto text-[10px] font-black rounded-lg shadow-lg shadow-blue-600/10 text-white"
+                                                >
+                                                    GỬI CHAT
+                                                </Button>
+                                            </div>
                                         </div>
-                                        <div className="flex justify-end">
-                                            <Button
-                                                variant="primary"
-                                                onClick={handleSendComment}
-                                                isLoading={isSendingComment}
-                                                disabled={!newComment.trim()}
-                                                className="bg-blue-600 border-none px-6 py-1.5 h-auto text-[10px] font-black rounded-lg shadow-lg shadow-blue-600/10 text-white"
-                                            >
-                                                GỬI CHAT
-                                            </Button>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

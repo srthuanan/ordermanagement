@@ -77,7 +77,22 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
     { label: 'Bổ Sung File', icon: 'fa-edit text-orange-500', action: onSupplement, condition: canAddSupplement, title: 'Bổ sung hoặc thay thế tệp đã gửi' },
     { label: 'Yêu Cầu Cấp VC', icon: 'fa-id-card text-blue-500', action: onRequestVC!, condition: !!onRequestVC && canRequestVC, title: 'Yêu cầu cấp tài khoản VinClub' },
     { label: 'Xác Thực UNC VC', icon: 'fa-check text-teal-500', action: onConfirmVC!, condition: !!onConfirmVC && canConfirmVC, title: 'Xác thực đã nhận UNC cho VinClub' },
-    { label: 'Tải Hóa Đơn', icon: 'fa-download text-sky-500', action: (o: Order) => { if (o.LinkHoaDonDaXuat) window.open(o.LinkHoaDonDaXuat, '_blank'); }, condition: !!order.LinkHoaDonDaXuat, title: 'Tải về hóa đơn đã xuất' },
+    { 
+      label: 'Tải Hóa Đơn', 
+      icon: 'fa-download text-sky-500', 
+      action: (o: Order) => { 
+        if (o.LinkHoaDonDaXuat) {
+          let url = o.LinkHoaDonDaXuat;
+          if (url.includes('drive.google.com') && url.includes('/file/d/')) {
+            const match = url.match(/\/file\/d\/([^/]+)/);
+            if (match) url = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+          }
+          window.open(url, '_blank');
+        }
+      }, 
+      condition: !!order.LinkHoaDonDaXuat, 
+      title: 'Tải về hóa đơn đã xuất' 
+    },
     { label: 'Hủy Yêu Cầu', icon: 'fa-trash-alt text-danger', action: onCancel, condition: canCancel, isDanger: true, title: 'Hủy yêu cầu ghép xe này' }
   ].filter(item => item.condition);
 

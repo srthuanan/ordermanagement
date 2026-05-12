@@ -96,12 +96,11 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
-    const { messages } = body;
 
-    const OPENROUTER_KEY = Deno.env.get("OPENROUTER_KEY") || "";
     const DEEPSEEK_KEY = Deno.env.get("DEEPSEEK_KEY") || "";
     const GROQ_KEY = Deno.env.get("GROQ_KEY") || "";
     const GITHUB_TOKEN = Deno.env.get("GITHUB_TOKEN") || "";
+    const OPENAI_KEY = Deno.env.get("OPENAI_KEY") || "";
     const geminiKeysEnv = Deno.env.get("GEMINI_KEYS") || "";
     const GEMINI_KEYS = geminiKeysEnv ? geminiKeysEnv.split(",") : [];
 
@@ -109,6 +108,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    if (body.action === 'history') {
+      const username = body.username || "Anonymous";
+      const { data, error } = await supabaseAdmin
+        .from('ai_chat_history')
+        .select('messages')
+        .eq('username', username)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ messages: data?.messages || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { messages } = body;
     
     // ═══════════════════════════════════════════════════════════
     // BƯỚC 1: Gom dữ liệu SONG SONG (triệu hồi cùng lúc)
@@ -296,10 +312,17 @@ Người dùng hiện tại: **${userFullName}** | Vai trò: **${userRole}**
    - **HÀNH ĐỘNG**: Nếu người dùng hỏi về thông tin của người khác, bạn phải từ chối lịch sự: "Dạ, em chỉ có quyền hỗ trợ tra cứu dữ liệu cá nhân của anh/chị thôi ạ". KHÔNG GIẢI THÍCH CHI TIẾT những gì bạn không thấy.
 2. **DỮ LIỆU ĐÃ ĐƯỢC LỌC**: Hệ thống đã tự động ẩn đi các đơn hàng không thuộc quyền hạn của bạn. Nếu bạn thấy danh sách trống, nghĩa là không tìm thấy đơn hàng nào của bạn khớp với từ khóa.`;
 
+    // Giới hạn kích thước data đưa vào prompt để tránh context quá lớn gây chậm
+    const truncate = (obj: any, maxLen: number) => {
+      const str = JSON.stringify(obj || {});
+      return str.length > maxLen ? str.substring(0, maxLen) + '... [truncated]' : str;
+    };
+
     const SYSTEM_PROMPT = `
 MỤC TIÊU: Bạn là một "Người cộng sự đắc lực" của VinFast.
 - Xưng "em", gọi người dùng là "anh" hoặc "chị" dựa trên tên "${userFullName}".
 - TUYỆT ĐỐI TUÂN THỦ PHÂN QUYỀN: Không bao giờ tiết lộ thông tin của TVBH khác.
+- Trả lời NGẮN GỌN, súc tích. Ưu tiên dùng bullet points và bảng.
 
 ${ROLE_RULES}
 
@@ -307,34 +330,23 @@ ${ROLE_RULES}
 Bạn am tường 3 bảng: khoxe (Kho xe), donhang (Đơn hàng), yeucauxhd (Hóa đơn).
 - "Xe rảnh" = Có trong \`khoxe\` với \`trang_thai = 'Chưa ghép'\`.
 
-## QUY TẮC SUY NGHĨ (THINKING PROCESS):
-- TRƯỚC KHI TRẢ LỜI, bạn phải luôn thực hiện suy nghĩ logic bên trong thẻ <thought>.
-- Trong thẻ <thought>, hãy liệt kê các bước: 
-  1. Phân tích ý định người dùng.
-  2. Kiểm tra các dữ liệu [DETECTIVE DATA] và [DỮ LIỆU REALTIME] có sẵn.
-  3. Quyết định xem có cần gọi Tool không.
-  4. Lập kế hoạch trả lời dựa trên phân quyền TVBH.
-- Sau thẻ </thought>, hãy đưa ra câu trả lời cuối cùng cho người dùng.
-- Ví dụ:
-  <thought>Người dùng muốn hỏi về lỗi đơn hàng. Tìm thấy 1 đơn hàng SO123 của họ bị thiếu VIN. Cần nhắc họ bổ sung.</thought>
-  Chào anh, em thấy đơn hàng SO123 của mình đang thiếu số VIN ạ...
-
 ## QUY TẮC BẢO MẬT TỐI THƯỢNG:
 - Nếu dữ liệu [DETECTIVE DATA] trống cho một yêu cầu cụ thể, hãy thông báo lịch sự là không tìm thấy dữ liệu CHÍNH CHỦ.
 - Không bao giờ nói "Đơn hàng này của ông A nên tôi không cho xem". Chỉ cần nói "Em không tìm thấy đơn hàng này trong danh sách quản lý của anh/chị ạ".
 
 ## [DỮ LIỆU REALTIME]:
-${JSON.stringify(fullContext || {})}
+${truncate(fullContext, 4000)}
 
 ## [KẾT QUẢ TRUY VẾT THÁM TỬ]:
-${JSON.stringify(detectiveData)}
+${truncate(detectiveData, 3000)}
 
 ## [KIẾN THỨC NGHIỆP VỤ]:
-${lessonsList}
+${lessonsList.substring(0, 2000)}
 `;
 
     const AI_PROVIDERS = [
-      // ── TIER 1: GOOGLE FLASH (✅ hoạt động tất cả 4 keys) ──
+      // ── TIER 1: GOOGLE FLASH (✅ hoạt động tất cả 4 keys mới) ──
+      { type: "google", model: "gemini-3.1-flash-lite" },
       { type: "google", model: "gemini-3.1-flash-lite-preview" },
       { type: "google", model: "gemini-3-flash-preview" },
       { type: "google", model: "gemini-2.5-flash" },
@@ -342,6 +354,7 @@ ${lessonsList}
 
       // ── TIER 2: EXTERNAL (✅ luôn hoạt động) ──
       { type: "github", apiKey: GITHUB_TOKEN, model: "gpt-4o" },
+      { type: "github", apiKey: GITHUB_TOKEN, model: "Meta-Llama-3.1-405B-Instruct" },
       { type: "groq", apiKey: GROQ_KEY, model: "llama-3.3-70b-versatile" },
       { type: "groq", apiKey: GROQ_KEY, model: "llama-3.1-8b-instant" },
       { type: "groq", apiKey: GROQ_KEY, model: "meta-llama/llama-4-scout-17b-16e-instruct" },
@@ -356,15 +369,16 @@ ${lessonsList}
       { type: "google", model: "gemma-3-4b-it" },
       { type: "google", model: "gemma-3-1b-it" },
 
-      // ── TIER 4: EXTERNAL FALLBACK ──
-      { type: "openrouter", apiKey: OPENROUTER_KEY, model: "deepseek/deepseek-chat:free" },
+      // ── TIER 4: EXTERNAL FALLBACK & OVER-QUOTA BACKUP ──
+      { type: "openai", apiKey: OPENAI_KEY, model: "gpt-4o-mini" },
+      { type: "openai", apiKey: OPENAI_KEY, model: "gpt-4o" },
       { type: "github", apiKey: GITHUB_TOKEN, model: "gpt-4o-mini" },
       { type: "groq", apiKey: GROQ_KEY, model: "openai/gpt-oss-120b" },
       { type: "groq", apiKey: GROQ_KEY, model: "openai/gpt-oss-20b" },
       { type: "groq", apiKey: GROQ_KEY, model: "groq/compound" },
       { type: "groq", apiKey: GROQ_KEY, model: "groq/compound-mini" },
 
-      // ── TIER 5: GOOGLE PRO & LEGACY (hay hết quota, tự phục hồi hàng ngày) ──
+      // ── TIER 6: GOOGLE PRO & LEGACY (hay hết quota, tự phục hồi hàng ngày) ──
       { type: "google", model: "gemini-3-pro-preview" },
       { type: "google", model: "gemini-3.1-pro-preview" },
       { type: "google", model: "gemini-2.5-pro" },
@@ -377,9 +391,9 @@ ${lessonsList}
  
     // Diagnostic: Log trạng thái các API key
     const keyStatus = {
+      OPENAI_KEY: OPENAI_KEY ? '✅' : '❌ MISSING',
       GEMINI_KEYS: GEMINI_KEYS.length > 0 ? `${GEMINI_KEYS.length} key(s)` : '❌ MISSING',
       GROQ_KEY: GROQ_KEY ? '✅' : '❌ MISSING',
-      OPENROUTER_KEY: OPENROUTER_KEY ? '✅' : '❌ MISSING',
       GITHUB_TOKEN: GITHUB_TOKEN ? '✅' : '❌ MISSING',
     };
     console.log(`--- AI Brain v2.1 | User: ${contextData?.userContext?.name || 'Admin'} | Terms: ${searchTerms.join(', ')} | Detective hits: ${detectiveData.length} ---`);
@@ -390,6 +404,14 @@ ${lessonsList}
     
     // Utility to sleep between retries if needed
     const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+    // Strip non-standard fields from messages before sending to OpenAI-compatible APIs.
+    // History DB stores { role, content, time }; Qwen3 adds 'thought' to assistant messages.
+    // Groq/GitHub APIs only accept { role, content } — any extra field causes a 400 error.
+    const sanitizeMessages = (msgs: any[]) => msgs.map(m => ({
+      role: m.role,
+      content: m.content ?? "",
+    }));
  
     // --- LƯU LỊCH SỬ CHAT (PERSISTENCE) ---
     const username = contextData?.userContext?.username || "Anonymous";
@@ -424,7 +446,7 @@ ${lessonsList}
 
     for (const provider of AI_PROVIDERS) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout (system prompt lớn cần thời gian)
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout per provider
  
       try {
         // ... (rest of the provider logic)
@@ -515,7 +537,7 @@ ${lessonsList}
                     });
                   }
                   
-                  currentContents.push({ role: "function", parts: toolResults });
+                  currentContents.push({ role: "user", parts: toolResults });
                   continue; // Loop again with tool results
                 } else if (textPart?.text) {
                   finalResponse = textPart.text;
@@ -550,13 +572,35 @@ ${lessonsList}
           continue;
         }
 
+        if (provider.type === "openai") {
+          const res = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${provider.apiKey}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: provider.model,
+              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitizeMessages(messages)]
+            }),
+            signal: controller.signal
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(JSON.stringify(data?.error || data));
+          if (data.choices?.[0]?.message?.content) {
+            clearTimeout(timeoutId);
+            const content = data.choices[0].message.content;
+            await saveToHistory('assistant', content);
+            return new Response(JSON.stringify({ content, model: provider.model, provider: "openai" }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+        }
+
         if (provider.type === "deepseek") {
           const res = await fetch("https://api.deepseek.com/chat/completions", {
             method: "POST",
             headers: { "Authorization": `Bearer ${provider.apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               model: provider.model,
-              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages]
+              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitizeMessages(messages)]
             }),
             signal: controller.signal
           });
@@ -572,27 +616,6 @@ ${lessonsList}
           }
         }
 
-        if (provider.type === "openrouter") {
-          const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${provider.apiKey}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              model: provider.model,
-              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages]
-            }),
-            signal: controller.signal
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(JSON.stringify(data?.error || data));
-          if (data.choices?.[0]?.message?.content) {
-            clearTimeout(timeoutId);
-            const content = data.choices[0].message.content;
-            await saveToHistory('assistant', content);
-            return new Response(JSON.stringify({ content, model: provider.model, provider: "openrouter" }), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            });
-          }
-        }
 
         if (provider.type === "github" || provider.type === "groq") {
           const url = provider.type === "github" 
@@ -603,7 +626,7 @@ ${lessonsList}
             headers: { "Authorization": `Bearer ${provider.apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               model: provider.model,
-              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages]
+              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitizeMessages(messages)]
             }),
             signal: controller.signal
           });

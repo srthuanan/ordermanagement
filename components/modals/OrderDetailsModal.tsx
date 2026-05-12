@@ -126,9 +126,10 @@ interface OrderDetailsModalProps {
     onSelectPolicy?: (order: Order, policy: string) => void;
     isAdmin?: boolean;
     onEditVin?: (order: Order, newVin: string) => Promise<void>;
+    isReferenceAccount?: boolean;
 }
 
-const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: initialOrder, onClose, orderList, onNavigate, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, onEdit, onSelectPolicy, isAdmin, onEditVin }) => {
+const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: initialOrder, onClose, orderList, onNavigate, onCancel, onRequestInvoice, onSupplement, onRequestVC, onConfirmVC, onEdit, onSelectPolicy, isAdmin, onEditVin, isReferenceAccount }) => {
     const [touchStart, setTouchStart] = useState<number | null>(null);
     const [touchEnd, setTouchEnd] = useState<number | null>(null);
     const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
@@ -315,7 +316,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: in
                                         {order["CHÍNH SÁCH"] && (
                                             <div className={`shrink-0 p-2 md:p-3 rounded-xl bg-amber-50 border border-amber-100 flex flex-col gap-1 group animate-fade-in relative overflow-hidden`}>
                                                 <div className="absolute top-0 right-0 p-2">
-                                                    {onSelectPolicy && (
+                                                    {onSelectPolicy && !isReferenceAccount && (
                                                         <button 
                                                             onClick={() => setIsPolicyModalOpen(true)}
                                                             className="text-[10px] font-bold text-amber-600 hover:text-amber-800 underline uppercase tracking-tighter"
@@ -395,14 +396,37 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: in
                                 <Button onClick={onClose} variant="secondary" size="sm" className="w-full md:w-auto">Đóng</Button>
 
                                 <div className="grid grid-cols-2 gap-2 w-full md:flex md:w-auto md:flex-wrap md:justify-end md:gap-3">
-                                    {/* Secondary Actions */}
-                                    {canDownloadInvoice && <Button onClick={() => window.open(order.LinkHoaDonDaXuat, '_blank')} variant="secondary" size="sm" className="bg-blue-50 text-blue-600 hover:bg-blue-100" leftIcon={<i className="fas fa-download"></i>}>Hóa Đơn</Button>}
-                                    {canEdit && <Button onClick={() => onEdit!(order)} variant="secondary" size="sm" className="bg-orange-50 text-orange-600 hover:bg-orange-100" leftIcon={<i className="fas fa-pencil-alt"></i>}>Sửa</Button>}
-                                    {canCancel && <Button onClick={() => onCancel(order)} variant="danger" size="sm" leftIcon={<i className="fas fa-trash-alt"></i>}>Hủy</Button>}
-
+                                    {isReferenceAccount && (
+                                        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                                            <i className="fa-solid fa-eye text-amber-600 text-sm"></i>
+                                            <span className="text-xs font-black text-amber-700 uppercase tracking-tight">Tài khoản tham khảo (Chỉ xem)</span>
+                                        </div>
+                                    )}
+                                    {canDownloadInvoice && (
+                                        <Button 
+                                            onClick={() => {
+                                                let url = order.LinkHoaDonDaXuat;
+                                                if (url) {
+                                                    if (url.includes('drive.google.com') && url.includes('/file/d/')) {
+                                                        const match = url.match(/\/file\/d\/([^/]+)/);
+                                                        if (match) url = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+                                                    }
+                                                    window.open(url, '_blank');
+                                                }
+                                            }} 
+                                            variant="secondary" 
+                                            size="sm" 
+                                            className="bg-blue-50 text-blue-600 hover:bg-blue-100" 
+                                            leftIcon={<i className="fas fa-download"></i>}
+                                        >
+                                            Hóa Đơn
+                                        </Button>
+                                    )}
+                                    {canEdit && !isReferenceAccount && <Button onClick={() => onEdit!(order)} variant="secondary" size="sm" className="bg-orange-50 text-orange-600 hover:bg-orange-100" leftIcon={<i className="fas fa-pencil-alt"></i>}>Sửa</Button>}
+                                    {canCancel && !isReferenceAccount && <Button onClick={() => onCancel(order)} variant="danger" size="sm" leftIcon={<i className="fas fa-trash-alt"></i>}>Hủy</Button>}
                                     {/* Primary Actions */}
-                                    {canRequestInvoice && <Button onClick={() => onRequestInvoice(order)} variant="primary" size="sm" leftIcon={<i className="fas fa-file-invoice-dollar"></i>}>Xuất HĐ</Button>}
-                                    {canRequestInvoice && onSelectPolicy && !order["CHÍNH SÁCH"] && (
+                                    {canRequestInvoice && !isReferenceAccount && <Button onClick={() => onRequestInvoice(order)} variant="primary" size="sm" leftIcon={<i className="fas fa-file-invoice-dollar"></i>}>Xuất HĐ</Button>}
+                                    {canRequestInvoice && onSelectPolicy && !order["CHÍNH SÁCH"] && !isReferenceAccount && (
                                         <Button 
                                             onClick={() => setIsPolicyModalOpen(true)} 
                                             variant="secondary" 
@@ -413,9 +437,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: in
                                             Chọn CS
                                         </Button>
                                     )}
-                                    {canAddSupplement && <Button onClick={() => onSupplement(order)} variant="primary" size="sm" className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-none shadow-lg shadow-amber-500/30" leftIcon={<i className="fas fa-edit"></i>}>Bổ Sung</Button>}
-                                    {canRequestVC && <Button onClick={() => onRequestVC(order)} variant="primary" size="sm" className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-none shadow-lg shadow-purple-500/30" leftIcon={<i className="fas fa-id-card"></i>}>Y/C VC</Button>}
-                                    {canConfirmVC && <Button onClick={() => onConfirmVC(order)} variant="success" size="sm" leftIcon={<i className="fas fa-check"></i>}>Xác Thực</Button>}
+                                    {canAddSupplement && !isReferenceAccount && <Button onClick={() => onSupplement(order)} variant="primary" size="sm" className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-none shadow-lg shadow-amber-500/30" leftIcon={<i className="fas fa-edit"></i>}>Bổ Sung</Button>}
+                                    {canRequestVC && !isReferenceAccount && <Button onClick={() => onRequestVC(order)} variant="primary" size="sm" className="bg-gradient-to-r from-purple-500 to-purple-600 text-white border-none shadow-lg shadow-purple-500/30" leftIcon={<i className="fas fa-id-card"></i>}>Y/C VC</Button>}
+                                    {canConfirmVC && !isReferenceAccount && <Button onClick={() => onConfirmVC(order)} variant="success" size="sm" leftIcon={<i className="fas fa-check"></i>}>Xác Thực</Button>}
                                 </div>
                             </footer>
                         </div>

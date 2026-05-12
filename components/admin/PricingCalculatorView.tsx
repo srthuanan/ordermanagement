@@ -12,6 +12,7 @@ export const PricingCalculatorView: React.FC = () => {
     const [selectedPolicies, setSelectedPolicies] = useState<Set<string>>(new Set());
     const [csbhDiscount, setCsbhDiscount] = useState<number>(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [mobileTab, setMobileTab] = useState<'car' | 'policy' | 'result'>('car');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -124,9 +125,22 @@ export const PricingCalculatorView: React.FC = () => {
 
     return (
         <div className="flex flex-col h-[calc(100vh-80px)] bg-slate-50 rounded-2xl overflow-hidden border border-slate-200">
-            <div className="flex-1 flex overflow-hidden">
+            {/* Mobile Tab Switcher */}
+            <div className="flex lg:hidden border-b border-slate-200 bg-white shrink-0">
+                {([['car', 'Chọn Xe', 'fa-car'], ['policy', 'Chính Sách', 'fa-shield-alt'], ['result', 'Kết Quả', 'fa-receipt']] as const).map(([tab, label, icon]) => (
+                    <button key={tab} onClick={() => setMobileTab(tab)}
+                        className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-[11px] font-black uppercase tracking-wider transition-colors border-b-2 ${
+                            mobileTab === tab ? 'border-indigo-500 text-indigo-600 bg-indigo-50/50' : 'border-transparent text-slate-400 hover:text-slate-600'
+                        }`}>
+                        <i className={`fas ${icon} text-xs`}></i>
+                        <span>{label}</span>
+                    </button>
+                ))}
+            </div>
+
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
                 {/* 1. Car & Color Selection (Ultra Compact Left) */}
-                <div className="w-64 flex flex-col bg-white border-r border-slate-200 overflow-hidden">
+                <div className={`lg:w-64 flex-col bg-white border-r border-slate-200 overflow-hidden ${mobileTab === 'car' ? 'flex flex-1 lg:flex-none' : 'hidden lg:flex'}`}>
                     <div className="p-3 flex-1 flex flex-col overflow-hidden">
                         <div className="flex items-center gap-2 mb-3 px-1">
                             <Car size={14} className="text-slate-400" />
@@ -180,7 +194,7 @@ export const PricingCalculatorView: React.FC = () => {
                 </div>
 
                 {/* 2. Policies (The "Tùm Lum" Area Fixed) */}
-                <div className="flex-1 bg-slate-50 flex flex-col overflow-hidden">
+                <div className={`flex-1 bg-slate-50 flex-col overflow-hidden ${mobileTab === 'policy' ? 'flex' : 'hidden lg:flex'}`}>
                     <div className="p-4 overflow-y-auto no-scrollbar">
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
@@ -248,7 +262,7 @@ export const PricingCalculatorView: React.FC = () => {
                 </div>
 
                 {/* 3. Result Summary (Premium Sticky Right) */}
-                <div className="w-80 bg-slate-900 flex flex-col shadow-2xl relative overflow-hidden">
+                <div className={`lg:w-80 bg-slate-900 flex-col shadow-2xl relative overflow-hidden ${mobileTab === 'result' ? 'flex flex-1 lg:flex-none' : 'hidden lg:flex'}`}>
                     <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none">
                         <div className="absolute top-[-10%] right-[-10%] w-64 h-64 rounded-full bg-indigo-500 blur-3xl"></div>
                         <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 rounded-full bg-emerald-500 blur-3xl"></div>

@@ -187,7 +187,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const [isSaving, setIsSaving] = useState(false);
     const [editData, setEditData] = useState({ engineNumber: '', policy: '', commission: '', vpoint: '' });
     const [dbPolicies, setDbPolicies] = useState<{ten_chinh_sach: string, dong_xe: string}[]>([]);
-    const [isSplitView, setIsSplitView] = useState(false);
+    const [isSplitView, setIsSplitView] = useState(true);
     const [activeDocKey, setActiveDocKey] = useState<'LinkHopDong' | 'LinkDeNghiXHD' | 'LinkHoaDonDaXuat'>('LinkDeNghiXHD');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const copyWithFeedback = useCopyFeedback();
@@ -720,16 +720,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </button>
                                                 )}
                                                 
-                                                <button 
-                                                    onClick={() => setIsSplitView(!isSplitView)}
-                                                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-accent-primary hover:border-accent-primary transition-all group shadow-sm"
-                                                    title={isSplitView ? "Thu nhỏ (Tắt Split View)" : "Mở rộng (Bật Split View)"}
-                                                >
-                                                    <i className={`fas ${isSplitView ? 'fa-compress-alt' : 'fa-expand-arrows-alt'} text-[10px] group-hover:scale-110 transition-transform`}></i>
-                                                    <span className="text-[10px] font-bold uppercase tracking-tight">
-                                                        {isSplitView ? 'Đóng Preview' : 'Mở Preview'}
-                                                    </span>
-                                                </button>
+
                                             </div>
                                         </div>
                                         
@@ -898,6 +889,29 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         )}
                                                     </div>
                                                 </div>
+
+                                                {selectedOrder['Xe xăng VIN'] && (
+                                                    <div className="mt-2 pt-2 border-t border-dashed border-amber-200 bg-amber-50/60 rounded-lg px-2 pb-1.5 transition-all animate-fade-in shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+                                                        <div className="flex items-center gap-1.5 mb-1.5">
+                                                            <i className="fas fa-gas-pump text-amber-600 text-[10px]"></i>
+                                                            <span className="text-[9px] font-black text-amber-700 uppercase tracking-wider">Thông tin xe xăng thu đổi</span>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <div className="flex justify-between items-center">
+                                                                <span className="text-[9px] text-gray-500 font-bold tracking-wide">Hãng / Model</span>
+                                                                <span className="text-[10px] font-bold text-gray-800">
+                                                                    {selectedOrder['Xe xăng Hãng'] || '—'} {selectedOrder['Xe xăng Model'] ? `(${selectedOrder['Xe xăng Model']})` : ''}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center border-t border-amber-100/50 pt-1 mt-1">
+                                                                <span className="text-[9px] text-gray-500 font-bold tracking-wide">Số VIN gốc</span>
+                                                                <div className="text-[10px] font-black text-amber-800 font-mono bg-white px-1.5 py-0.5 rounded border border-amber-200 shadow-sm">
+                                                                    <CopyableField text={selectedOrder['Xe xăng VIN'] || ''} showToast={showToast} />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 

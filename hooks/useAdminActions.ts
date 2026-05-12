@@ -500,17 +500,20 @@ export const useAdminActions = ({
             
             showToast('Đang xử lý', 'Đang gửi Email mời nhân viên...', 'loading');
 
-            // 1. GỬI EMAIL MỜI QUA SUPABASE AUTH
-            // link sẽ được gửi trực tiếp tới email của nhân viên
-            const { error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(data.email, {
-                data: {
-                    full_name: data.fullName,
-                    role: data.role || 'Tư vấn bán hàng'
-                },
-                redirectTo: window.location.origin // Quay về trang chủ sau khi xác nhận
+            // 1. GỬI EMAIL MỜI QUA SUPABASE EDGE FUNCTION (GIAO DIỆN CHUYÊN NGHIỆP)
+            const { data: resData, error: inviteError } = await supabaseAdmin.functions.invoke('send-email', {
+                body: {
+                    actionId: 'welcome_new_user',
+                    record: {
+                        email: data.email,
+                        full_name: data.fullName,
+                        redirectTo: window.location.origin + window.location.pathname + '#type=invite'
+                    }
+                }
             });
 
             if (inviteError) throw inviteError;
+            if (resData && resData.success === false) throw new Error(resData.message || "Gửi mail thất bại.");
 
             // 2. LƯU THÔNG TIN VÀO BẢNG USERS (Dự phòng để hiển thị ngay)
             // (Thường Supabase Trigger sẽ xử lý, nhưng ta có thể gọi API để chắc chắn)

@@ -94,6 +94,9 @@ export const useAdminData = ({
             'NGÀY XUẤT HÓA ĐƠN': row.ngay_xuat_hoa_don,
             'Trạng thái VC': row.trang_thai_vc || '',
             'Ghi chú AI': row.ghi_chu_ai,
+            'Xe xăng VIN': row.xe_xang_vin,
+            'Xe xăng Hãng': row.xe_xang_hang,
+            'Xe xăng Model': row.xe_xang_model,
             '_sourceId': row.id,
         }));
     }, [localXuathoadonRaw]);

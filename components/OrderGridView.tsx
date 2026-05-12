@@ -14,6 +14,7 @@ interface OrderGridViewProps {
     processingOrder: string | null;
     showOrderInAdmin?: (order: Order, targetTab: any) => void;
     showAdminTab?: (targetTab: any) => void;
+    isReferenceAccount?: boolean;
 }
 
 const OrderGridView: React.FC<OrderGridViewProps> = React.memo((props) => {

@@ -18,9 +18,10 @@ interface OrderCardProps {
     processingOrder: string | null;
     showOrderInAdmin?: (order: Order, targetTab: any) => void;
     showAdminTab?: (targetTab: any) => void;
+    isReferenceAccount?: boolean;
 }
 
-const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingOrder, showOrderInAdmin }) => {
+const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingOrder, showOrderInAdmin, isReferenceAccount }) => {
     const [copiedLabel, setCopiedLabel] = React.useState<string | null>(null);
     const statusText = order["Trạng thái VC"] || order["Kết quả"] || "Chưa ghép";
     const isProcessing = processingOrder === order["Số đơn hàng"];
@@ -103,7 +104,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
                 <div className="mt-auto pt-2 flex items-center justify-between">
                     <StatusBadge status={statusText} />
 
-                    {showOrderInAdmin && (() => {
+                    {!isReferenceAccount && showOrderInAdmin && (() => {
                         const ketQua = (order["Kết quả"] || '').toLowerCase();
                         // Khớp với TT có trong InvoiceInboxView (tất cả folder)
                         const INVOICE_STATUSES = ['chờ phê duyệt', 'đã phê duyệt', 'yêu cầu bổ sung', 'đã bổ sung', 'chờ ký hóa đơn', 'đã xuất hóa đơn'];

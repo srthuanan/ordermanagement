@@ -35,6 +35,7 @@ interface StockViewProps {
     canHoldMore: boolean;
     onNavigateToInquiry: () => void;
     onViewCarOnMap?: (vin: string) => void;
+    isReferenceAccount?: boolean;
 }
 
 const StockView: React.FC<StockViewProps> = ({
@@ -60,7 +61,8 @@ const StockView: React.FC<StockViewProps> = ({
     queuedVins,
     canHoldMore,
     onNavigateToInquiry,
-    onViewCarOnMap
+    onViewCarOnMap,
+    isReferenceAccount
 }) => {
     const [filters, setFilters] = useState({
         keyword: '',
@@ -462,6 +464,7 @@ const StockView: React.FC<StockViewProps> = ({
             queuedVins: queuedVins,
             canHoldMore: canHoldMore,
             onViewCarOnMap: onViewCarOnMap,
+            isReferenceAccount: isReferenceAccount,
             ...(isAdmin ? { onAdminEdit: (vehicle: StockVehicle) => setAdminEditVehicle(vehicle) } : {})
         };
 

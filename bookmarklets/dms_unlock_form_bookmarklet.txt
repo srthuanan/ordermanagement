@@ -1,0 +1,42 @@
+javascript:(function(){
+    var x = typeof Xrm !== "undefined" ? Xrm : null;
+    if (!x) {
+        for (var i = 0; i < frames.length; i++) {
+            try {
+                if (frames[i].Xrm) { x = frames[i].Xrm; break; }
+            } catch (e) {}
+        }
+    }
+    if (!x) { 
+        alert("Vui lòng mở trang DMS VinFast trước khi bấm!"); 
+        return; 
+    }
+
+    try {
+        var count = 0;
+        x.Page.ui.controls.forEach(function(control) {
+            try {
+                if (typeof control.setDisabled === "function") {
+                    control.setDisabled(false);
+                    count++;
+                }
+            } catch (e) {}
+        });
+
+        // Mở khóa các tab và section nếu có
+        try {
+            x.Page.ui.tabs.forEach(function(tab) {
+                try {
+                    tab.setVisible(true);
+                    tab.sections.forEach(function(sec) {
+                        try { sec.setVisible(true); } catch(e) {}
+                    });
+                } catch(e) {}
+            });
+        } catch(e) {}
+
+        alert("🔓 ĐÃ MỞ KHÓA THÀNH CÔNG " + count + " TRƯỜNG DỮ LIỆU!\n\nBây giờ toàn bộ các ô bị khóa mờ (Disabled) trên giao diện DMS đã có thể chỉnh sửa tự do. Bạn có thể bấm nút 'Vinclub info' hoặc xóa thủ công thông tin áp hạng VinClub rồi bấm lưu bản ghi!");
+    } catch (err) {
+        alert("❌ Lỗi khi mở khóa Form: " + (err.message || err));
+    }
+})();

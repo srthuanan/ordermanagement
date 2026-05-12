@@ -173,17 +173,19 @@ export const useNotification = (showToast: (title: string, message: string, type
         notification: SystemNotification,
         event: React.MouseEvent,
         navigationOptions?: {
+            isAdmin?: boolean;
             allHistoryData?: any[];
             setSelectedOrder?: (order: any) => void;
             setActiveView?: (view: any) => void;
             setStockFilter?: (vin: string) => void;
             showInquiryInAdmin?: (inquiryId: string) => void;
             setTargetInquiryIdForTVBH?: (id: string) => void;
+            showAdminTab?: (tab: any) => void;
             setExtensionVehicle?: (vin: string) => void;
         }
     ) => {
         event.stopPropagation();
-        const { allHistoryData = [], setSelectedOrder, setActiveView, setStockFilter, showInquiryInAdmin, setTargetInquiryIdForTVBH, setExtensionVehicle } = navigationOptions || {};
+        const { isAdmin = false, allHistoryData = [], setSelectedOrder, setActiveView, setStockFilter, showInquiryInAdmin, showAdminTab, setTargetInquiryIdForTVBH, setExtensionVehicle } = navigationOptions || {};
 
         if (!notification.isRead) {
             setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n));
@@ -198,38 +200,105 @@ export const useNotification = (showToast: (title: string, message: string, type
         }
 
         // Logic điều hướng dựa trên Target View & Target ID
-        if (notification.targetView) {
-            if (setActiveView) setActiveView(notification.targetView as any);
+        let derivedTargetView = notification.targetView;
+        let derivedTargetId = notification.targetId;
+        const msg = notification.message || '';
+        const msgLower = msg.toLowerCase();
+
+        // Check for Order Numbers first (support en-dash \u2013, em-dash \u2014, and hyphen -)
+        const orderMatch = msg.match(/N\d{5}[-\u2013\u2014]VSO[-\u2013\u2014]\d{2}[-\u2013\u2014]\d{2}[-\u2013\u2014]\d{4}/i);
+        let foundOrderNumber = orderMatch ? orderMatch[0].replace(/[\u2013\u2014]/g, '-').toUpperCase() : null;
+
+        // Check for VINs
+        const vinMatch = msg.match(/\b[A-HJ-NPR-Z0-9]{17}\b/i);
+        let foundVin = vinMatch ? vinMatch[0].toUpperCase() : null;
+
+        // Smart derivation based on words for TVBH vs Admin
+        if (derivedTargetView === 'admin' || !derivedTargetView) {
+            if (msgLower.includes('yêu cầu xuất hóa đơn') || msgLower.includes('đã yêu cầu xuất hóa đơn') || msgLower.includes('hồ sơ bổ sung') || msgLower.includes('hóa đơn')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'invoices';
+            } else if (msgLower.includes('vinclub') || msgLower.includes('unc') || msgLower.includes('yêu cầu cấp vc')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'vc';
+            } else if (msgLower.includes('tra cứu kho') || msgLower.includes('tra cứu')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'inquiries';
+            } else if (msgLower.includes('giữ xe') || msgLower.includes('gia hạn') || msgLower.includes('hàng chờ') || msgLower.includes('hủy giữ xe')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'holds';
+            } else if (msgLower.includes('ghép xe') || msgLower.includes('đã ghép xe')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'paired';
+            } else if (msgLower.includes('xe thiếu') || msgLower.includes('incomplete')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'incomplete_cars';
+            } else if (msgLower.includes('đơn tồn')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'don_ton';
+            } else if (msgLower.includes('chính sách')) {
+                derivedTargetView = 'admin';
+                derivedTargetId = 'policies';
+            }
+        }
+
+        // If it's specifically about an order number or VIN, prioritize directly going to it
+        if (foundOrderNumber) {
+            derivedTargetView = 'orders';
+            derivedTargetId = foundOrderNumber;
+        } else if (foundVin) {
+            derivedTargetView = 'stock';
+            derivedTargetId = foundVin;
+        }
+
+        // NEVER allow non-admins to navigate to the admin view
+        if (!isAdmin && derivedTargetView === 'admin') {
+            derivedTargetView = 'orders';
+            derivedTargetId = undefined;
+        }
+
+        // Logic điều hướng dựa trên Target View & Target ID
+        if (derivedTargetView) {
+            if (setActiveView) setActiveView(derivedTargetView as any);
             
             // Nếu là đơn hàng, mở chi tiết đơn hàng
-            if (notification.targetView === 'orders' && notification.targetId && setSelectedOrder && allHistoryData.length > 0) {
-                const order = allHistoryData.find(o => o['Số đơn hàng'] === notification.targetId);
+            if (derivedTargetView === 'orders' && derivedTargetId && setSelectedOrder && allHistoryData.length > 0) {
+                const order = allHistoryData.find(o => {
+                    if (!o['Số đơn hàng']) return false;
+                    const normalizedOrderNum = o['Số đơn hàng'].replace(/[\u2013\u2014]/g, '-').toUpperCase();
+                    return normalizedOrderNum === derivedTargetId!.toUpperCase();
+                });
                 if (order) setSelectedOrder(order);
             }
             
             // Nếu là kho xe, có thể filter theo VIN
-            if (notification.targetView === 'stock' && notification.targetId && setStockFilter) {
-                setStockFilter(notification.targetId);
+            if (derivedTargetView === 'stock' && derivedTargetId && setStockFilter) {
+                setStockFilter(derivedTargetId);
                 // Nếu là thông báo nhắc nhở gia hạn (có chữ gia hạn trong tin nhắn), mở luôn modal
-                if (notification.message.toLowerCase().includes('gia hạn') && setExtensionVehicle) {
-                    setExtensionVehicle(notification.targetId);
+                if (notification.message && notification.message.toLowerCase().includes('gia hạn') && setExtensionVehicle) {
+                    setExtensionVehicle(derivedTargetId);
                 }
             }
 
             // Nếu là tra cứu kho (TVBH nhắn tin cho admin)
-            if (notification.targetView === 'inquiries' && notification.targetId && showInquiryInAdmin) {
-                showInquiryInAdmin(notification.targetId);
+            if (derivedTargetView === 'inquiries' && derivedTargetId && showInquiryInAdmin) {
+                showInquiryInAdmin(derivedTargetId);
             }
 
             // Nếu là tra cứu kho (Admin nhắn cho TVBH)
-            if (notification.targetView === 'inquiry' && notification.targetId && setTargetInquiryIdForTVBH) {
-                setTargetInquiryIdForTVBH(notification.targetId);
+            if (derivedTargetView === 'inquiry' && derivedTargetId && setTargetInquiryIdForTVBH) {
+                setTargetInquiryIdForTVBH(derivedTargetId);
+            }
+
+            // Nếu là admin view và chọn tab cụ thể
+            if (derivedTargetView === 'admin' && derivedTargetId && showAdminTab) {
+                showAdminTab(derivedTargetId);
             }
         } else if (notification.link) {
             // Logic cũ dự phòng cho các link GAS hoặc liên kết ngoài
             const orderNumberMatch = notification.link.match(/orderNumber=([^&]+)/);
             if (orderNumberMatch && orderNumberMatch[1] && allHistoryData.length > 0 && setSelectedOrder) {
-                const order = allHistoryData.find(o => o['Số đơn hàng'] === decodeURIComponent(orderNumberMatch[1]));
+                const order = allHistoryData.find(o => o['Số đơn hàng'] && o['Số đơn hàng'].toUpperCase() === decodeURIComponent(orderNumberMatch[1]).toUpperCase());
                 if (order) setSelectedOrder(order);
                 else window.location.href = notification.link;
             } else {

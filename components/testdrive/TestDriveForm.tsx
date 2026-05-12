@@ -28,6 +28,7 @@ interface TestDriveFormProps {
     setAllTestDrives: React.Dispatch<React.SetStateAction<TestDriveBooking[]>>;
     isLoading: boolean;
     refetch: (isSilent?: boolean) => void;
+    isReferenceAccount?: boolean;
 }
 
 const initialFormData: TestDriveBooking = {
@@ -81,7 +82,7 @@ const timeToMinutes = (time: string): number => {
 
 const BUFFER_MINUTES = 15;
 
-const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onOpenImagePreview, currentUser, isAdmin, allTestDrives, setAllTestDrives, isLoading }) => {
+const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onOpenImagePreview, currentUser, isAdmin, allTestDrives, setAllTestDrives, isLoading, isReferenceAccount }) => {
     const [formData, setFormData] = useState<TestDriveBooking>(() => {
         return { ...initialFormData, tenTuVan: currentUser || '' };
     });
@@ -89,7 +90,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [activeTab, setActiveTab] = useState<'create' | 'history'>('create');
+    const [activeTab, setActiveTab] = useState<'create' | 'history'>(isReferenceAccount ? 'history' : 'create');
     const [selectedBookingForPreview, setSelectedBookingForPreview] = useState<TestDriveBooking | null>(null);
     const [dataForPrinting, setDataForPrinting] = useState<TestDriveBooking>(formData);
     const [checkinModalState, setCheckinModalState] = useState<{ booking: TestDriveBooking, mode: 'checkin' | 'checkout' | 'update' | 'view' } | null>(null);
@@ -567,14 +568,16 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                                         onChange={(e) => setHistoryFilters(prev => ({ ...prev, dateRange: { ...prev.dateRange, end: e.target.value } }))}
                                     />
                                 </div>
-                                <Button
-                                    onClick={() => setActiveTab('create')}
-                                    variant="primary"
-                                    className="h-8 lg:h-7 !px-3 lg:!px-2.5 !rounded-md"
-                                    leftIcon={<i className="fas fa-plus text-[10px]"></i>}
-                                >
-                                    <span className="text-[11px] lg:text-[10px] font-bold">Tạo Mới</span>
-                                </Button>
+                                {!isReferenceAccount && (
+                                    <Button
+                                        onClick={() => setActiveTab('create')}
+                                        variant="primary"
+                                        className="h-8 lg:h-7 !px-3 lg:!px-2.5 !rounded-md"
+                                        leftIcon={<i className="fas fa-plus text-[10px]"></i>}
+                                    >
+                                        <span className="text-[11px] lg:text-[10px] font-bold">Tạo Mới</span>
+                                    </Button>
+                                )}
                             </div>
                         }
                     >
@@ -659,6 +662,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                                 onOpenImagePreview={onOpenImagePreview}
                                 sortConfig={historySortConfig}
                                 onSort={(key) => setHistorySortConfig(prev => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))}
+                                isReferenceAccount={isReferenceAccount}
                             />
                         )}
                     </div>
@@ -686,6 +690,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                         onOpenImagePreview={onOpenImagePreview}
                         currentUser={currentUser}
                         isAdmin={isAdmin}
+                        isReferenceAccount={isReferenceAccount}
                     />
                 )
             }

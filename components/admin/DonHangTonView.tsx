@@ -36,6 +36,7 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
     const [isLoading, setIsLoading] = useState(true);
     const [selectedTVBH, setSelectedTVBH] = useState('all');
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+    const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
     
     // Detailed Filters
     const [filters, setFilters] = useState<Record<string, string[]>>({
@@ -173,7 +174,7 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
         return (
             <div
                 key={order.id}
-                onClick={() => setSelectedOrderId(order.id)}
+                onClick={() => { setSelectedOrderId(order.id); setMobileView('detail'); }}
                 className={`px-4 py-4 cursor-pointer transition-all duration-300 group relative border-l-2 ${isSelected
                     ? 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)] border-accent-primary z-10'
                     : 'bg-transparent border-transparent hover:bg-slate-50/80 hover:border-slate-200'
@@ -232,13 +233,13 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
             <AnimatedBackground />
             
             {/* Column 1: Sales Consultants */}
-            <div className="w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col relative z-10">
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
                 <div className="hidden md:flex p-4 border-b border-border-secondary">
                     <span className="font-black text-[11px] uppercase tracking-widest text-slate-400">DS Tư Vấn Bán Hàng</span>
                 </div>
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                     <button
-                        onClick={() => setSelectedTVBH('all')}
+                        onClick={() => { setSelectedTVBH('all'); setMobileView('list'); }}
                         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-colors ${selectedTVBH === 'all' ? 'bg-accent-primary text-white shadow-lg' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
                     >
                         <div className="flex items-center gap-3">
@@ -255,7 +256,7 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
                     {tvbhList.map(item => (
                         <button
                             key={item.id}
-                            onClick={() => setSelectedTVBH(item.id)}
+                            onClick={() => { setSelectedTVBH(item.id); setMobileView('list'); }}
                             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedTVBH === item.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
                         >
                             <div className="flex items-center gap-3">
@@ -274,7 +275,17 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
             </div>
 
             {/* Column 2: Filterable List */}
-            <div className="w-full md:w-80 flex-shrink-0 border-r border-border-primary flex flex-col bg-white/95 relative z-10">
+            <div className={`w-full md:w-80 flex-shrink-0 border-r border-border-primary flex flex-col bg-white/95 relative z-10 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
+                {/* Mobile Header for Column 2 */}
+                <div className="flex md:hidden items-center gap-2 px-3 py-2 border-b border-slate-100 bg-white">
+                    <button onClick={() => setMobileView('folders')} className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+                        <i className="fas fa-chevron-left text-xs"></i>
+                    </button>
+                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 truncate">
+                        {selectedTVBH === 'all' ? 'Tất Cả Sales' : selectedTVBH}
+                    </span>
+                    <span className="ml-auto text-[10px] font-bold text-slate-400">{filteredOrders.length} đơn</span>
+                </div>
 
                 <div className="flex-1 overflow-y-auto divide-y divide-border-secondary no-scrollbar">
                     {filteredOrders.length === 0 ? (
@@ -289,7 +300,14 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
             </div>
 
             {/* Column 3: Detailed View */}
-            <div className="flex-1 flex flex-col bg-surface-ground/90 min-w-0 relative z-10">
+            <div className={`flex-1 flex flex-col bg-surface-ground/90 min-w-0 relative z-10 ${mobileView !== 'detail' ? 'hidden md:flex' : 'flex'}`}>
+                {/* Mobile Header for Column 3 */}
+                <div className="flex md:hidden items-center gap-2 px-3 py-2 border-b border-slate-100 bg-white">
+                    <button onClick={() => setMobileView('list')} className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+                        <i className="fas fa-chevron-left text-xs"></i>
+                    </button>
+                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">Chi Tiết Đơn Tồn</span>
+                </div>
                 {selectedOrder ? (
                     <>
                         <div className="bg-white border-b border-gray-100 z-10 shadow-sm">

@@ -133,11 +133,11 @@ export const VirtualAssistant: React.FC = () => {
         const fetchHistory = async () => {
             if (!username) return;
             try {
-                const { data } = await supabaseAdmin
-                    .from('ai_chat_history')
-                    .select('messages')
-                    .eq('username', username)
-                    .maybeSingle();
+                const { data, error } = await supabaseAdmin.functions.invoke('ai-chat', {
+                    body: { action: 'history', username }
+                });
+
+                if (error) throw error;
 
                 if (data?.messages && data.messages.length > 0) {
                     setMessages(data.messages);
@@ -149,6 +149,10 @@ export const VirtualAssistant: React.FC = () => {
                 }
             } catch (err) {
                 console.error("Failed to fetch history:", err);
+                const greeting = shortName
+                    ? `Chào anh **${shortName}**! ✨ Em có thể hỗ trợ gì cho anh hôm nay ạ?`
+                    : `Chào anh! ✨ Em có thể hỗ trợ gì cho anh hôm nay ạ?`;
+                setMessages([{ role: 'assistant', content: greeting }]);
             }
         };
 

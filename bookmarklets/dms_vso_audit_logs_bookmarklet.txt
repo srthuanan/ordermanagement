@@ -1,0 +1,261 @@
+javascript:(function(){
+    var apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU';
+    var supabaseUrlLogs = 'https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/ai_audit_logs?select=*&order=created_at.desc&limit=100';
+    var supabaseUrlOrders = 'https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/donhang?select=so_don_hang,ten_khach_hang,vin,ket_qua';
+
+    var progressDiv = document.createElement('div');
+    progressDiv.style = 'position:fixed;top:10px;right:10px;background:black;color:white;padding:15px;z-index:999999;border-radius:5px;font-family:sans-serif;font-size:14px;box-shadow:0 4px 6px rgba(0,0,0,0.3);';
+    progressDiv.innerHTML = '🔍 Đang tải nhật ký kiểm toán AI và dữ liệu hóa đơn...';
+    document.body.appendChild(progressDiv);
+
+    Promise.all([
+        fetch(supabaseUrlLogs, { headers: { 'apikey': apiKey, 'Authorization': 'Bearer ' + apiKey } }).then(function(res){ return res.json(); }),
+        fetch(supabaseUrlOrders, { headers: { 'apikey': apiKey, 'Authorization': 'Bearer ' + apiKey } }).then(function(res){ return res.json(); })
+    ])
+    .then(function(results){
+        progressDiv.remove();
+        var logs = results[0];
+        var orders = results[1];
+
+        if (!logs || !logs.length) { alert('Không có dữ liệu nhật ký kiểm toán AI nào!'); return; }
+
+        // Map orders for fast lookup
+        var orderMap = {};
+        orders.forEach(function(o){
+            if (o.so_don_hang) {
+                orderMap[o.so_don_hang.trim().toUpperCase()] = o;
+            }
+        });
+
+        // Merge audit logs with order details
+        var mergedData = logs.map(function(log){
+            var oKey = (log.order_id || '').trim().toUpperCase();
+            var orderInfo = orderMap[oKey] || {};
+            return {
+                id: log.id,
+                order_id: log.order_id,
+                customer_name: orderInfo.ten_khach_hang || 'Chưa rõ khách',
+                vin: orderInfo.vin || 'Chưa ghép xe',
+                invoice_status: orderInfo.ket_qua || 'Chưa XL',
+                document_type: log.document_type || 'Chưa phân loại',
+                risk_score: log.risk_score || 0,
+                confidence_score: log.confidence_score || 0,
+                created_at: new Date(log.created_at).toLocaleString('vi-VN'),
+                audit_result: log.audit_result || {},
+                admin_notes: log.admin_notes || ''
+            };
+        });
+
+        showAuditDashboard(mergedData);
+    })
+    .catch(function(err){
+        progressDiv.remove();
+        alert('Lỗi khi tải dữ liệu: ' + err.message);
+    });
+
+    function showAuditDashboard(data) {
+        // Remove existing container if any
+        var oldContainer = document.getElementById('ai-audit-dashboard-container');
+        if (oldContainer) oldContainer.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'ai-audit-dashboard-container';
+        overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999998;background:rgba(15,15,20,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;';
+
+        var modal = document.createElement('div');
+        modal.style = 'width:90%;height:85%;background:#1e1e24;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;overflow:hidden;color:#e2e8f0;font-family:system-ui, -apple-system, sans-serif;';
+        overlay.appendChild(modal);
+
+        // Header
+        var header = document.createElement('div');
+        header.style = 'background:rgba(30,41,59,0.7);padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;';
+        header.innerHTML = '<div style="display:flex;align-items:center;gap:12px;">' +
+                           '<span style="font-size:24px;">📡</span>' +
+                           '<div>' +
+                           '<h2 style="margin:0;font-size:18px;font-weight:700;color:#38bdf8;">Nhật ký Kiểm toán AI & Trạng thái Hóa đơn</h2>' +
+                           '<p style="margin:2px 0 0 0;font-size:12px;color:#94a3b8;">Danh sách VSO liên kết hồ sơ kiểm toán tự động bởi Gemini AI</p>' +
+                           '</div>' +
+                           '</div>';
+
+        // Actions & Search in Header
+        var rightHeader = document.createElement('div');
+        rightHeader.style = 'display:flex;align-items:center;gap:16px;';
+
+        var searchBar = document.createElement('input');
+        searchBar.type = 'text';
+        searchBar.placeholder = 'Tìm kiếm số VIN, số đơn, khách hàng...';
+        searchBar.style = 'padding:8px 16px;background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;font-size:13px;width:280px;outline:none;transition:0.3s;';
+        searchBar.onfocus = function(){ searchBar.style.borderColor = '#38bdf8'; };
+        searchBar.onblur = function(){ searchBar.style.borderColor = 'rgba(255,255,255,0.15)'; };
+
+        var closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕ Đóng';
+        closeBtn.style = 'background:#ef4444;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;transition:0.2s;';
+        closeBtn.onmouseover = function(){ closeBtn.style.background = '#dc2626'; };
+        closeBtn.onmouseout = function(){ closeBtn.style.background = '#ef4444'; };
+        closeBtn.onclick = function(){ overlay.remove(); };
+
+        rightHeader.appendChild(searchBar);
+        rightHeader.appendChild(closeBtn);
+        header.appendChild(rightHeader);
+        modal.appendChild(header);
+
+        // Grid/Table Container
+        var content = document.createElement('div');
+        content.style = 'flex-grow:1;overflow-y:auto;padding:20px;background:#111827;';
+        modal.appendChild(content);
+
+        function renderRows(filterText) {
+            content.innerHTML = '';
+            var normalizedFilter = (filterText || '').trim().toLowerCase();
+
+            var filtered = data.filter(function(row){
+                if (!normalizedFilter) return true;
+                return (row.order_id || '').toLowerCase().indexOf(normalizedFilter) !== -1 ||
+                       (row.customer_name || '').toLowerCase().indexOf(normalizedFilter) !== -1 ||
+                       (row.vin || '').toLowerCase().indexOf(normalizedFilter) !== -1 ||
+                       (row.invoice_status || '').toLowerCase().indexOf(normalizedFilter) !== -1;
+            });
+
+            if (filtered.length === 0) {
+                content.innerHTML = '<div style="text-align:center;padding:80px;color:#94a3b8;font-size:14px;">🚫 Không tìm thấy kết quả phù hợp!</div>';
+                return;
+            }
+
+            var table = document.createElement('table');
+            table.style = 'width:100%;border-collapse:collapse;text-align:left;font-size:13px;';
+            table.innerHTML = '<thead style="background:#1e293b;color:#94a3b8;text-transform:uppercase;font-size:11px;letter-spacing:0.05em;">' +
+                              '<tr>' +
+                              '<th style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">Số Đơn Hàng (VSO)</th>' +
+                              '<th style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">Khách Hàng / Số VIN</th>' +
+                              '<th style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">Trạng Thái Hóa Đơn</th>' +
+                              '<th style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">Tài Liệu Quét</th>' +
+                              '<th style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);text-align:center;">Hồ Sơ AI</th>' +
+                              '<th style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);text-align:center;">Rủi Ro AI</th>' +
+                              '<th style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">Thời Gian Quét</th>' +
+                              '</tr>' +
+                              '</thead>';
+
+            var tbody = document.createElement('tbody');
+            table.appendChild(tbody);
+
+            filtered.forEach(function(row, idx){
+                var tr = document.createElement('tr');
+                tr.style = 'border-bottom:1px solid rgba(255,255,255,0.05);transition:0.15s;cursor:pointer;';
+                tr.onmouseover = function(){ tr.style.background = 'rgba(255,255,255,0.02)'; };
+                tr.onmouseout = function(){ tr.style.background = 'transparent'; };
+
+                // Get status pill colors
+                var statusColor = '#94a3b8';
+                var statusBg = 'rgba(148,163,184,0.1)';
+                var st = row.invoice_status;
+                if (st.indexOf('Đã xuất hóa đơn') !== -1 || st.indexOf('Đã phê duyệt') !== -1) {
+                    statusColor = '#10b981'; statusBg = 'rgba(16,185,129,0.1)';
+                } else if (st.indexOf('Chờ ký hóa đơn') !== -1 || st.indexOf('Đang giữ') !== -1) {
+                    statusColor = '#f59e0b'; statusBg = 'rgba(245,158,11,0.1)';
+                } else if (st.indexOf('Yêu cầu bổ sung') !== -1 || st.indexOf('Lỗi') !== -1) {
+                    statusColor = '#ef4444'; statusBg = 'rgba(239,68,68,0.1)';
+                }
+
+                // AI Result colors
+                var aiStatus = row.audit_result.trang_thai_ho_so || 'Chưa kiểm';
+                var aiColor = '#94a3b8';
+                var aiBg = 'rgba(148,163,184,0.1)';
+                if (aiStatus === 'HỢP LỆ') {
+                    aiColor = '#10b981'; aiBg = 'rgba(16,185,129,0.15)';
+                } else if (aiStatus === 'KHÔNG HỢP LỆ' || aiStatus === 'SAI LỆCH' || (row.audit_result.danh_sach_loi && row.audit_result.danh_sach_loi.length > 0)) {
+                    aiColor = '#ef4444'; aiBg = 'rgba(239,68,68,0.15)';
+                    aiStatus = 'SAI LỆCH';
+                }
+
+                // Risk Score color
+                var riskColor = '#10b981';
+                if (row.risk_score > 0.6) riskColor = '#ef4444';
+                else if (row.risk_score > 0.2) riskColor = '#f59e0b';
+
+                var formattedVin = row.vin.length === 17 ? row.vin.slice(0, 11) + '<strong style="color:#f8fafc;">' + row.vin.slice(11) + '</strong>' : row.vin;
+
+                tr.innerHTML = '<td style="padding:14px 16px;"><span style="color:#38bdf8;font-weight:600;">' + row.order_id + '</span></td>' +
+                               '<td style="padding:14px 16px;">' +
+                               '<div style="font-weight:500;color:#f8fafc;">' + row.customer_name + '</div>' +
+                               '<div style="font-size:11px;color:#64748b;margin-top:2px;">VIN: ' + formattedVin + '</div>' +
+                               '</td>' +
+                               '<td style="padding:14px 16px;">' +
+                               '<span style="padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600;color:'+statusColor+';background:'+statusBg+';border:1px solid '+statusColor+'40;">' + row.invoice_status + '</span>' +
+                               '</td>' +
+                               '<td style="padding:14px 16px;"><span style="color:#cbd5e1;font-weight:500;">📄 ' + row.document_type + '</span></td>' +
+                               '<td style="padding:14px 16px;text-align:center;">' +
+                               '<span style="padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700;color:'+aiColor+';background:'+aiBg+';border:1px solid '+aiColor+'50;">' + aiStatus + '</span>' +
+                               '</td>' +
+                               '<td style="padding:14px 16px;text-align:center;"><span style="color:'+riskColor+';font-weight:700;">' + Math.round(row.risk_score * 100) + '%</span></td>' +
+                               '<td style="padding:14px 16px;color:#94a3b8;">' + row.created_at + '</td>';
+
+                // On click row -> show detail modal of errors
+                tr.onclick = function() {
+                    showDetailModal(row);
+                };
+
+                tbody.appendChild(tr);
+            });
+
+            content.appendChild(table);
+        }
+
+        searchBar.oninput = function(){
+            renderRows(searchBar.value);
+        };
+
+        renderRows('');
+        document.body.appendChild(overlay);
+    }
+
+    function showDetailModal(row) {
+        var detailOverlay = document.createElement('div');
+        detailOverlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999999;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;';
+
+        var dBox = document.createElement('div');
+        dBox.style = 'width:560px;background:#2d3748;border-radius:12px;box-shadow:0 20px 40px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.1);color:#f7fafc;overflow:hidden;font-family:sans-serif;';
+        detailOverlay.appendChild(dBox);
+
+        // Title
+        var dTitle = document.createElement('div');
+        dTitle.style = 'background:#1a202c;padding:15px 20px;font-weight:bold;font-size:15px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;';
+        dTitle.innerHTML = '<span>📄 Chi tiết Kiểm toán AI - ' + row.order_id + '</span>';
+        
+        var dClose = document.createElement('button');
+        dClose.textContent = '✕';
+        dClose.style = 'background:transparent;border:none;color:#a0aec0;font-size:18px;cursor:pointer;outline:none;';
+        dClose.onclick = function() { detailOverlay.remove(); };
+        dTitle.appendChild(dClose);
+        dBox.appendChild(dTitle);
+
+        // Body
+        var dBody = document.createElement('div');
+        dBody.style = 'padding:20px;max-height:480px;overflow-y:auto;font-size:13px;line-height:1.6;';
+
+        var errorsList = row.audit_result.danh_sach_loi || [];
+        var errorsHtml = '<div style="color:#10b981;font-weight:bold;margin-bottom:10px;">✅ Không phát hiện sai sót nào! Hồ sơ hoàn toàn hợp lệ.</div>';
+        if (errorsList.length > 0) {
+            errorsHtml = '<div style="color:#ef4444;font-weight:bold;margin-bottom:10px;">❌ Phát hiện ' + errorsList.length + ' điểm sai lệch cần bổ sung:</div>' +
+                         '<ul style="margin:0;padding-left:20px;color:#fca5a5;">' +
+                         errorsList.map(function(err){
+                             return '<li style="margin-bottom:6px;">' + err + '</li>';
+                         }).join('') +
+                         '</ul>';
+        }
+
+        dBody.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;background:#1a202c;padding:12px;border-radius:8px;">' +
+                          '<div><span style="color:#a0aec0;">Khách hàng:</span> <strong style="color:#fff;">' + row.customer_name + '</strong></div>' +
+                          '<div><span style="color:#a0aec0;">Số VIN:</span> <strong style="color:#fff;">' + row.vin + '</strong></div>' +
+                          '<div><span style="color:#a0aec0;">Loại tài liệu:</span> <strong style="color:#fff;">' + row.document_type + '</strong></div>' +
+                          '<div><span style="color:#a0aec0;">Trạng thái đơn:</span> <strong style="color:#38bdf8;">' + row.invoice_status + '</strong></div>' +
+                          '</div>' +
+                          '<div style="background:rgba(255,255,255,0.03);padding:15px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);margin-bottom:15px;">' +
+                          errorsHtml +
+                          '</div>' +
+                          (row.admin_notes ? '<div style="margin-top:15px;"><span style="color:#a0aec0;">Ghi chú Admin:</span><p style="margin:5px 0 0 0;padding:10px;background:rgba(245,158,11,0.05);border-left:3px solid #f59e0b;color:#fbd38d;">' + row.admin_notes + '</p></div>' : '');
+
+        dBox.appendChild(dBody);
+        document.body.appendChild(detailOverlay);
+    }
+})();

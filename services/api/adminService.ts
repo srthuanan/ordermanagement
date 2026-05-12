@@ -2,11 +2,94 @@ import { supabase, supabaseAdmin } from '../supabaseClient';
 import { getStorageItem, logAction, ApiResult, postApi, getExteriorColorName, getInteriorColorName, uploadToSupabase, getApi, ADMIN_USER } from './baseService';
 import { createNotification } from './notificationService';
 import { StockVehicle } from '../../types';
-import { tryAutoMatchWaitingOrder } from './stockService';
 
 export const performAdminAction = async (action: string, params: Record<string, any>): Promise<ApiResult> => {
     const currentUser = getStorageItem("currentUser") || "Unknown Admin";
     try {
+        if (action === 'auditDataConsistency') {
+            const { data: stockCars } = await supabaseAdmin.from('khoxe').select('*');
+            const { data: activeOrders } = await supabaseAdmin.from('donhang').select('so_don_hang, vin, ket_qua');
+            const { data: archivedOrders } = await supabaseAdmin.from('archived_orders').select('so_don_hang, vin, ket_qua');
+
+            const issues: any[] = [];
+            const activeVins = new Set(activeOrders?.filter(o => o.vin && o.ket_qua !== 'Đã hủy').map(o => o.vin));
+            const archivedVins = new Set(archivedOrders?.filter(o => o.vin).map(o => o.vin));
+
+            // 1. Xe bị kẹt (Ghost Car) / Xe đã bán (Zombie)
+            stockCars?.forEach(car => {
+                if (car.trang_thai === 'Đã ghép' && !activeVins.has(car.vin)) {
+                    issues.push({
+                        type: 'ghost_car',
+                        vin: car.vin,
+                        description: `Xe ${car.vin} có trạng thái Đã ghép trong Kho nhưng không nằm trong Đơn hàng nào đang hoạt động.`,
+                        actionLabel: 'Trả xe về trạng thái Chưa ghép.'
+                    });
+                }
+                
+                if (archivedVins.has(car.vin)) {
+                    issues.push({
+                        type: 'zombie_car',
+                        vin: car.vin,
+                        description: `Xe ${car.vin} đang nằm trong Kho nhưng thực tế đã được xuất hóa đơn/bán trước đó.`,
+                        actionLabel: 'Xóa xe khỏi kho.'
+                    });
+                }
+            });
+
+            // 3. Mất tích xe (Active order has VIN but VIN not in stock AND not in invoice phase)
+            const stockVins = new Set(stockCars?.map(c => c.vin));
+            activeOrders?.forEach(order => {
+                if (order.ket_qua === 'Đã ghép' && order.vin && !stockVins.has(order.vin)) {
+                    issues.push({
+                        type: 'missing_car',
+                        vin: order.vin,
+                        orderNumber: order.so_don_hang,
+                        description: `Đơn hàng ${order.so_don_hang} báo Đã ghép với VIN ${order.vin} nhưng xe không có trong kho.`,
+                        actionLabel: 'Phục hồi xe vào kho với trạng thái Đã ghép.'
+                    });
+                }
+            });
+
+            return { status: 'SUCCESS', data: issues, message: 'Hoàn tất quét kiểm toán.' };
+        }
+        
+        if (action === 'fixDataConsistency') {
+            const issuesToFix = params.issues ? JSON.parse(params.issues) : [];
+            let fixedCount = 0;
+            
+            for (const issue of issuesToFix) {
+                if (issue.type === 'ghost_car') {
+                    await supabaseAdmin.from('khoxe').update({ trang_thai: 'Chưa ghép', nguoi_giu_xe: null, thoi_gian_het_han_giu: null }).eq('vin', issue.vin);
+                    fixedCount++;
+                } else if (issue.type === 'zombie_car') {
+                    await supabaseAdmin.from('khoxe').delete().eq('vin', issue.vin);
+                    fixedCount++;
+                } else if (issue.type === 'missing_car') {
+                    const { data: m } = await supabaseAdmin.from('thongtinxe').select('*').eq('vin', issue.vin).maybeSingle();
+                    const { data: o } = await supabaseAdmin.from('donhang').select('*').eq('so_don_hang', issue.orderNumber).maybeSingle();
+                    if (o) {
+                        const carData = { 
+                            vin: issue.vin, 
+                            trang_thai: 'Đã ghép', 
+                            nguoi_giu_xe: o.ten_tu_van_ban_hang, 
+                            thoi_gian_het_han_giu: 'Vô thời hạn', 
+                            ngay_nhap: new Date().toISOString(), 
+                            dong_xe: o.dong_xe || (m as any)?.mo_ta || '', 
+                            phien_ban: o.phien_ban || (m as any)?.phien_ban || '', 
+                            ngoai_that: o.ngoai_that || (m as any)?.ngoai_that || '', 
+                            noi_that: o.noi_that || (m as any)?.noi_that || '', 
+                            ma_dms: o.ma_dms || (m as any)?.khu_vuc || '', 
+                            so_may: o.so_may || (m as any)?.so_may || '' 
+                        };
+                        await supabaseAdmin.from('khoxe').upsert([carData]);
+                        fixedCount++;
+                    }
+                }
+            }
+            await logAction('AUDIT_FIX', { count: fixedCount, issues: issuesToFix }, 'system', 'audit');
+            return { status: 'SUCCESS', message: `Đã tự động xử lý thành công ${fixedCount} lỗi bất đồng bộ.` };
+        }
+
         if (action === 'deleteOrderLogic') {
             const orderNumber = params.orderNumber;
             const userEmail = getStorageItem("userEmail") || getStorageItem("currentConsultant") || "admin@system.com";
@@ -45,8 +128,10 @@ export const performAdminAction = async (action: string, params: Record<string, 
             const { error: insErr } = await supabaseAdmin.from('khoxe').insert([{ vin, dong_xe: finalModel, phien_ban: '', ngoai_that: getExteriorColorName(master?.ngoai_that || ''), noi_that: getInteriorColorName(master?.noi_that || ''), so_may: master?.so_may || '', ma_dms: master?.khu_vuc || '', trang_thai: 'Chưa ghép', ngay_nhap: new Date().toISOString() }]);
             if (insErr) { if (insErr.code === '23505') return { status: 'ERROR', message: `Xe với VIN ${vin} đã tồn tại trong kho.` }; throw insErr; }
             await logAction('ADD_CAR', { vin }, vin, 'stock');
-            // Chỉ gửi thông báo nhập kho khi xe có đầy đủ thông tin (dòng xe, ngoại thất, nội thất, mã DMS)
-            const hasCompleteInfo = finalModel && getExteriorColorName(master?.ngoai_that || '') && getInteriorColorName(master?.noi_that || '') && (master?.khu_vuc || '');
+            // Chỉ gửi thông báo nhập kho khi xe có đầy đủ thông tin trừ số máy (dòng xe, phiên bản, ngoại thất, nội thất, mã DMS)
+            // Vì khi thêm mới bằng VIN thì phiên bản luôn để trống (''), xe chưa thể đầy đủ thông tin ngay lập tức.
+            // Thông báo sẽ được gửi sau đó khi Admin cập nhật thông tin phiên bản đầy đủ cho xe.
+            const hasCompleteInfo = false;
             if (hasCompleteInfo) {
                 createNotification({ message: `<b>${finalModel}</b> (${vin}) đã nhập kho. Sẵn sàng giao dịch!`, type: 'stock_hero', targetView: 'stock', targetId: vin });
             }
@@ -100,6 +185,15 @@ export const performAdminAction = async (action: string, params: Record<string, 
             if (matchedOrder) await supabaseAdmin.from('donhang').update({ ket_qua: 'Chưa ghép', vin: null, thoi_gian_ghep: null }).eq('so_don_hang', (matchedOrder as any).so_don_hang);
             await logAction('DELETE_CAR', { vin, reason, snapshot: carSnap }, vin, 'stock');
             await supabaseAdmin.from('khoxe').delete().eq('vin', vin);
+
+            // Xoá xe khỏi bộ nhớ đệm định vị GPS
+            const { data: settingData } = await supabaseAdmin.from('app_settings').select('value').eq('key', 'car_gps_cache').maybeSingle();
+            if (settingData && settingData.value && typeof settingData.value === 'object' && settingData.value !== null) {
+                const updatedCache = { ...settingData.value as object };
+                delete (updatedCache as any)[vin];
+                await supabaseAdmin.from('app_settings').update({ value: updatedCache, updated_at: new Date().toISOString() }).eq('key', 'car_gps_cache');
+            }
+
             return { status: 'SUCCESS', message: `Đã xóa xe ${vin}.` + (matchedOrder ? ` (Đã tự động hủy ghép ĐH ${(matchedOrder as any).so_don_hang})` : '') };
         }
         if (action === 'restoreCarToStockLogic') {
@@ -261,14 +355,6 @@ export const performAdminAction = async (action: string, params: Record<string, 
 
             if (fullOrder.vin) {
                 await supabaseAdmin.from('khoxe').update({ trang_thai: 'Chưa ghép', nguoi_giu_xe: null, thoi_gian_het_han_giu: null }).eq('vin', fullOrder.vin);
-                
-                // [NEW] Tự động tìm đơn hàng chờ ghép cho số VIN vừa được nhả ra
-                await tryAutoMatchWaitingOrder(fullOrder.vin, {
-                    dong_xe: fullOrder.dong_xe,
-                    phien_ban: fullOrder.phien_ban,
-                    ngoai_that: fullOrder.ngoai_that,
-                    noi_that: fullOrder.noi_that
-                });
             }
             
             const up: any = { ket_qua: kqm, vin: null, thoi_gian_ghep: null };
@@ -634,7 +720,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
                     ngay_yeu_cau: parseDateSafe(y.ngay_yeu_cau),
                     ngay_xuat_hoa_don: parseDateSafe(y.ngay_xuat_hoa_don),
                     chinh_sach: y.chinh_sach,
-                    hoa_hong_ung: typeof y.hoa_hong_ung === 'number' ? y.hoa_hong_ung : 0,
+                    hoa_hong_ung: y.hoa_hong_ung ? (typeof y.hoa_hong_ung === 'number' ? y.hoa_hong_ung : parseFloat(String(y.hoa_hong_ung).replace(/[^0-9.-]+/g, "")) || 0) : 0,
                     vpoint: typeof y.vpoint === 'number' ? y.vpoint : 0,
                     url_hop_dong: y.url_hop_dong,
                     url_de_nghi_xhd: y.url_de_nghi_xhd,
@@ -952,12 +1038,13 @@ export const uploadBulkInvoices = async (files: any[]): Promise<ApiResult> => {
                 // Gửi email thông báo: CẦN AWAIT để tránh tình trạng Edge Function bị đóng sớm hoặc Gmail quá tải
                 console.log(`[DEBUG-BULK] Đang xử lý gửi mail cho: "${exactOrderNo}"`);
                 
+                const invoice_ext = f.fileObject?.name ? f.fileObject.name.split('.').pop() : (url ? url.split('?')[0].split('.').pop() : 'pdf');
                 try {
                     console.log(`[DEBUG-BULK] Tiến hành gọi EF cho ${exactOrderNo}...`);
                     const { error: mailErr } = await supabaseAdmin.functions.invoke('send-email', {
                         body: {
                             actionId: 'invoice_issued',
-                            record: { ...o, link_hoa_don_da_xuat: url }
+                            record: { ...o, link_hoa_don_da_xuat: url, invoice_ext }
                         }
                     });
                         
@@ -980,7 +1067,7 @@ export const uploadBulkInvoices = async (files: any[]): Promise<ApiResult> => {
                             console.log(`[RETRY] Thử lại gửi mail cho ${exactOrderNo}...`);
                             await new Promise(res => setTimeout(res, 3000));
                             const { error: retryErr } = await supabaseAdmin.functions.invoke('send-email', {
-                                body: { actionId: 'invoice_issued', record: { ...o, link_hoa_don_da_xuat: url } }
+                                body: { actionId: 'invoice_issued', record: { ...o, link_hoa_don_da_xuat: url, invoice_ext } }
                             });
                             if (retryErr) throw retryErr;
                             

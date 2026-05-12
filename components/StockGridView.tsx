@@ -23,6 +23,7 @@ interface StockGridViewProps {
   queuedVins: string[];
   canHoldMore: boolean;
   onViewCarOnMap?: (vin: string) => void;
+  isReferenceAccount?: boolean;
 }
 
 const StockGridView: React.FC<StockGridViewProps> = (props) => {

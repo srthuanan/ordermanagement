@@ -86,6 +86,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     }, [currentUserName, userRoleRaw, currentUser]);
 
     const userRole = isCurrentUserAdmin ? 'Quản trị viên' : (userRoleRaw || 'Tư vấn bán hàng');
+    const isReferenceAccount = userRoleRaw === 'TK Tham khảo';
 
     const {
         isSidebarCollapsed, isMobileMenuOpen, setIsMobileMenuOpen, activeView, setActiveView,
@@ -129,12 +130,30 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         handleCreateRequestForVehicle, handleCreateRequestClose, handleFormSuccess,
         openImagePreviewModal, openFilePreviewModal,
         extensionVehicle, setExtensionVehicle, handleSelectPolicy
-    } = useOrderOperations({ showToast, hideToast, refetchHistory, refetchStock, setAllHistoryData });
+    } = useOrderOperations({ showToast, hideToast, refetchHistory, refetchStock, setAllHistoryData, isReferenceAccount });
 
     const [isBacklogModalOpen, setIsBacklogModalOpen] = useState(false);
 
     // Tự động nhắc nhở sắp hết hạn giữ xe
     useHoldReminder({ stockData, currentUser, username: currentUserName });
+
+    // Deep link: chuyển hướng sang Bản đồ khi URL có vin
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        let vin = params.get('vin');
+        if (!vin && window.location.hash.includes('?')) {
+            const hashSearch = window.location.hash.split('?')[1];
+            const hashParams = new URLSearchParams(hashSearch);
+            vin = hashParams.get('vin');
+        }
+        if (vin) {
+            console.log("Deep link detected for VIN:", vin);
+            setActiveView('map');
+            setTargetVinOnMap(vin);
+            const cleanUrl = window.location.origin + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+    }, [setActiveView]);
 
     // State để điều hướng từ thông báo đến đúng xe
     const [stockSearch, setStockSearch] = useState('');
@@ -692,6 +711,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                     processingOrder={processingOrder}
                                     showOrderInAdmin={isCurrentUserAdmin ? showOrderInAdmin : undefined}
                                     showAdminTab={isCurrentUserAdmin ? showAdminTab : undefined}
+                                    isReferenceAccount={isReferenceAccount}
                                 />
                             )}
                             {/* Load More Trigger for Infinite Scroll */}
@@ -742,6 +762,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         notifications={notifications}
                         handleMarkAllAsRead={handleMarkAllAsRead}
                         handleNotificationClick={(n, e) => handleNotificationClick(n, e, {
+                            isAdmin: isCurrentUserAdmin,
                             allHistoryData,
                             setSelectedOrder,
                             setActiveView,
@@ -750,6 +771,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                 setActiveView('stock');
                             },
                             showInquiryInAdmin,
+                            showAdminTab,
                             setTargetInquiryIdForTVBH,
                             setExtensionVehicle: (vin) => {
                                 const car = stockData.find((c: any) => c.VIN === vin);
@@ -778,6 +800,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         isTogglingChat={isTogglingChat}
                         handleToggleChatGlobal={handleToggleChatGlobal}
                         onOpenBacklogReport={() => setIsBacklogModalOpen(true)}
+                        isReferenceAccount={isReferenceAccount}
                     />
 
 
@@ -789,11 +812,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             <div className="h-full">
                                 <MapView
                                     stockData={stockData}
+                                    xuathoadonData={xuathoadonData}
                                     refetchStock={refetchStock}
                                     showToast={showToast}
                                     currentUser={currentUser}
                                     targetVinOnMap={targetVinOnMap}
                                     onClearTargetVinOnMap={() => setTargetVinOnMap(null)}
+                                    isReferenceAccount={isReferenceAccount}
                                 />
                             </div>
                         )}
@@ -865,6 +890,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                         showOrderInAdmin={isCurrentUserAdmin ? showOrderInAdmin : undefined}
                                         showAdminTab={isCurrentUserAdmin ? showAdminTab : undefined}
                                         forcedSearch={stockSearch}
+                                        isReferenceAccount={isReferenceAccount}
                                         onNavigateToInquiry={() => {
                                             setTargetInquiryIdForTVBH('new');
                                             setActiveView('inquiry');
@@ -898,6 +924,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                     setAllTestDrives={setTestDriveData as any}
                                     isLoading={isLoadingTestDrive}
                                     refetch={refetchTestDrive}
+                                    isReferenceAccount={isReferenceAccount}
                                 />
                             </Suspense>
                         </div>
@@ -907,6 +934,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                 showToast={showToast}
                                 initialInquiryId={targetInquiryIdForTVBH || undefined}
                                 onProcessed={() => setTargetInquiryIdForTVBH(null)}
+                                isReferenceAccount={isReferenceAccount}
                             />
                         </div>
                         <div hidden={activeView !== 'admin'} className="h-full">
@@ -931,6 +959,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                     isSidebarCollapsed={isSidebarCollapsed}
                                     initialState={initialAdminState}
                                     clearInitialState={clearInitialState}
+                                    isReferenceAccount={isReferenceAccount}
                                 />
                             }
                         </div>
@@ -1080,12 +1109,14 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
 
 
-                <ReportBacklogModal
-                    isOpen={isBacklogModalOpen}
-                    onClose={() => setIsBacklogModalOpen(false)}
-                    showToast={showToast}
-                    currentUser={currentUser}
-                />
+                {!isReferenceAccount && (
+                    <ReportBacklogModal
+                        isOpen={isBacklogModalOpen}
+                        onClose={() => setIsBacklogModalOpen(false)}
+                        showToast={showToast}
+                        currentUser={currentUser}
+                    />
+                )}
 
                 {isChatEnabled && <VirtualAssistant />}
 

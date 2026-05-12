@@ -1,0 +1,121 @@
+javascript:(function(){
+    if (typeof Xrm === "undefined" || !Xrm.Page || !Xrm.Page.data || !Xrm.Page.data.entity) {
+        alert("Vui lòng mở một bản ghi đơn hàng VSO trên DMS trước khi bấm!");
+        return;
+    }
+
+    var id = Xrm.Page.data.entity.getId().replace(/[{}]/g, "");
+    var progressDiv = document.createElement('div');
+    progressDiv.style = 'position:fixed;top:10px;right:10px;background:black;color:white;padding:15px;z-index:999999;border-radius:5px;font-family:sans-serif;font-size:14px;box-shadow:0 4px 6px rgba(0,0,0,0.3);';
+    progressDiv.innerHTML = '🔍 Đang truy vấn sâu cơ sở dữ liệu ngầm của Dynamics 365...';
+    document.body.appendChild(progressDiv);
+
+    Xrm.WebApi.retrieveRecord("xts_newvehiclesalesorder", id)
+    .then(function success(item) {
+        progressDiv.remove();
+        showDeepInspectorPanel(item);
+    })
+    .catch(function error(err) {
+        progressDiv.remove();
+        alert("Lỗi khi thanh tra dữ liệu: " + (err.message || err.description || err));
+    });
+
+    function getFormatted(item, field) {
+        return item[field + "@OData.Community.Display.V1.FormattedValue"] || 
+               item["_" + field + "_value@OData.Community.Display.V1.FormattedValue"] || 
+               item[field] || "Chưa rõ / Trống";
+    }
+
+    function formatMoney(val) {
+        if (val === undefined || val === null) return "0 VNĐ";
+        if (typeof val === "string") return val;
+        return val.toLocaleString('vi-VN') + " VNĐ";
+    }
+
+    function showDeepInspectorPanel(item) {
+        var oldPanel = document.getElementById('dms-deep-inspector-overlay');
+        if (oldPanel) oldPanel.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'dms-deep-inspector-overlay';
+        overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:999998;background:rgba(15,15,20,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;';
+
+        var modal = document.createElement('div');
+        modal.style = 'width:620px;background:#1e1e24;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;overflow:hidden;color:#e2e8f0;font-family:system-ui, -apple-system, sans-serif;';
+        overlay.appendChild(modal);
+
+        // Header
+        var header = document.createElement('div');
+        header.style = 'background:rgba(30,41,59,0.7);padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;';
+        
+        var vsoNumber = item.xts_newvehiclesalesordernumber || "Chi tiết Đơn hàng";
+        header.innerHTML = '<div style="display:flex;align-items:center;gap:12px;">' +
+                           '<span style="font-size:24px;">📊</span>' +
+                           '<div>' +
+                           '<h2 style="margin:0;font-size:16px;font-weight:700;color:#38bdf8;">Thanh tra Đơn hàng VSO (Deep Inspector)</h2>' +
+                           '<p style="margin:2px 0 0 0;font-size:12px;color:#94a3b8;">Số đơn: ' + vsoNumber + '</p>' +
+                           '</div>' +
+                           '</div>';
+
+        var closeBtn = document.createElement('button');
+        closeBtn.textContent = '✕ Đóng';
+        closeBtn.style = 'background:#ef4444;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;';
+        closeBtn.onclick = function(){ overlay.remove(); };
+        header.appendChild(closeBtn);
+        modal.appendChild(header);
+
+        // Body Content
+        var body = document.createElement('div');
+        body.style = 'padding:20px;max-height:480px;overflow-y:auto;background:#111827;font-size:13px;line-height:1.6;';
+
+        // Extracting data
+        var createdByName = getFormatted(item, "createdby");
+        var createdOn = item.createdon ? new Date(item.createdon).toLocaleString('vi-VN') : "Chưa rõ";
+        var modifiedByName = getFormatted(item, "modifiedby");
+        var modifiedOn = item.modifiedon ? new Date(item.modifiedon).toLocaleString('vi-VN') : "Chưa rõ";
+        
+        var salesPerson = getFormatted(item, "xts_salespersonid");
+        var customer = getFormatted(item, "xts_potentialcustomerid");
+        var product = getFormatted(item, "xts_productid") || item.xts_productdescription || "Chưa gán";
+        var vin = item.xts_chassisnumber || getFormatted(item, "xts_chassisid") || "Chưa ghép";
+        
+        // Price Fields
+        var netAmount = item.xts_netamountaftertax !== undefined ? formatMoney(item.xts_netamountaftertax) : getFormatted(item, "xts_netamountaftertax");
+        var grandTotal = item.xvf_grandtotal !== undefined ? formatMoney(item.xvf_grandtotal) : getFormatted(item, "xvf_grandtotal");
+        var discount = item.xts_totaldiscountamount !== undefined ? formatMoney(item.xts_totaldiscountamount) : getFormatted(item, "xts_totaldiscountamount");
+        var status = getFormatted(item, "xts_status") || getFormatted(item, "statuscode");
+
+        body.innerHTML = 
+            // Section 1: Thời gian & Nhân sự
+            '<div style="font-weight:700;color:#38bdf8;margin-bottom:10px;text-transform:uppercase;font-size:11px;letter-spacing:0.05em;">📅 Lịch sử chỉnh sửa & Nhân sự</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;background:#1e1e24;padding:15px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);">' +
+            '<div><span style="color:#a0aec0;">👤 Người tạo đơn:</span> <strong style="color:#fff;">' + createdByName + '</strong></div>' +
+            '<div><span style="color:#a0aec0;">🕒 Thời gian tạo:</span> <strong style="color:#fff;">' + createdOn + '</strong></div>' +
+            '<div style="grid-column: span 2;border-top:1px solid rgba(255,255,255,0.05);margin:5px 0;"></div>' +
+            '<div><span style="color:#f43f5e;font-weight:600;">✏️ Người sửa cuối:</span> <strong style="color:#fff;">' + modifiedByName + '</strong></div>' +
+            '<div><span style="color:#f43f5e;font-weight:600;">🕒 Thời gian sửa cuối:</span> <strong style="color:#fff;">' + modifiedOn + '</strong></div>' +
+            '<div style="grid-column: span 2;border-top:1px solid rgba(255,255,255,0.05);margin:5px 0;"></div>' +
+            '<div><span style="color:#a0aec0;">💼 Tư vấn bán hàng:</span> <strong style="color:#fff;">' + salesPerson + '</strong></div>' +
+            '<div><span style="color:#a0aec0;">👥 Khách hàng:</span> <strong style="color:#fff;">' + customer + '</strong></div>' +
+            '</div>' +
+
+            // Section 2: Chi tiết Sản phẩm & Hóa đơn
+            '<div style="font-weight:700;color:#38bdf8;margin-bottom:10px;text-transform:uppercase;font-size:11px;letter-spacing:0.05em;">🚗 Thông tin xe & Trạng thái</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;background:#1e1e24;padding:15px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);">' +
+            '<div><span style="color:#a0aec0;">📦 Sản phẩm gán:</span> <strong style="color:#fff;">' + product + '</strong></div>' +
+            '<div><span style="color:#a0aec0;">🔑 Trạng thái đơn:</span> <strong style="color:#38bdf8;">' + status + '</strong></div>' +
+            '<div style="grid-column: span 2;"><span style="color:#a0aec0;">🆔 Số khung (VIN):</span> <strong style="color:#10b981;font-size:14px;letter-spacing:0.03em;">' + vin + '</strong></div>' +
+            '</div>' +
+
+            // Section 3: Chi tiết Giá tiền (Phát hiện sửa giá)
+            '<div style="font-weight:700;color:#f59e0b;margin-bottom:10px;text-transform:uppercase;font-size:11px;letter-spacing:0.05em;">💰 Chi tiết tài chính & giá cả</div>' +
+            '<div style="display:grid;grid-template-columns:1fr;gap:12px;background:rgba(245,158,11,0.05);padding:15px;border-radius:10px;border:1px solid rgba(245,158,11,0.15);">' +
+            '<div style="display:flex;justify-content:space-between;"><span style="color:#cbd5e1;">💵 Tổng số tiền sau thuế (Net Amount):</span> <strong style="color:#fff;font-size:14px;">' + netAmount + '</strong></div>' +
+            '<div style="display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.05);padding-top:8px;"><span style="color:#cbd5e1;">🏷️ Tổng tiền chiết khấu (Discount):</span> <strong style="color:#f43f5e;font-size:14px;">' + discount + '</strong></div>' +
+            '<div style="display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.05);padding-top:8px;"><span style="color:#38bdf8;font-weight:bold;">💵 TỔNG TIỀN THANH TOÁN (Grand Total):</span> <strong style="color:#38bdf8;font-size:16px;">' + grandTotal + '</strong></div>' +
+            '</div>';
+
+        modal.appendChild(body);
+        document.body.appendChild(overlay);
+    }
+})();

@@ -27,6 +27,115 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
     const [filterModel, setFilterModel] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
 
+    const [showAuditModal, setShowAuditModal] = useState(false);
+    const [auditIssues, setAuditIssues] = useState<any[]>([]);
+    const [auditStats, setAuditStats] = useState<any>(null);
+    const [isAuditing, setIsAuditing] = useState(false);
+    const [isFixing, setIsFixing] = useState(false);
+    const [isBackgroundAuditing, setIsBackgroundAuditing] = useState(false);
+    const [lastAuditTime, setLastAuditTime] = useState<Date | null>(null);
+
+    const handleAudit = async () => {
+        setIsAuditing(true);
+        setShowAuditModal(true);
+        try {
+            const result = await (apiService as any).performAdminAction('auditDataConsistency', {});
+            if (result.status === 'SUCCESS') {
+                setAuditIssues(result.data || []);
+                setAuditStats(result.stats || null);
+            } else {
+                showToast('Lỗi', result.message || 'Không thể quét đồng bộ.', 'error');
+            }
+        } catch (e: any) {
+            showToast('Lỗi', e.message, 'error');
+        } finally {
+            setIsAuditing(false);
+        }
+    };
+
+    const handleFixIssues = async () => {
+        setIsFixing(true);
+        try {
+            const result = await (apiService as any).performAdminAction('fixDataConsistency', { issues: JSON.stringify(auditIssues) });
+            if (result.status === 'SUCCESS') {
+                showToast('Thành Công', result.message, 'success');
+                setAuditIssues([]);
+                setShowAuditModal(false);
+                onSuccess(); // refresh data
+            } else {
+                showToast('Lỗi', result.message || 'Sửa lỗi thất bại.', 'error');
+            }
+        } catch (e: any) {
+            showToast('Lỗi', e.message, 'error');
+        } finally {
+            setIsFixing(false);
+        }
+    };
+
+    // --- TRỢ LÝ CHẠY NGẦM (BACKGROUND AUTO-SYNC) ---
+    useEffect(() => {
+        let isMounted = true;
+        
+        const runBackgroundAudit = async () => {
+            if (!isMounted) return;
+            setIsBackgroundAuditing(true);
+            console.log("🔍 [Auto-Sync] Trợ lý ngầm bắt đầu quét dữ liệu toàn hệ thống...");
+            
+            try {
+                // 1. Quét lỗi âm thầm (Không làm ảnh hưởng UI)
+                const result = await (apiService as any).performAdminAction('auditDataConsistency', {});
+                
+                if (result.status === 'SUCCESS') {
+                    console.log(`✅ [Auto-Sync] Quét xong. Tìm thấy ${result.data?.length || 0} vấn đề bất đồng bộ.`);
+                    
+                    if (result.data && result.data.length > 0) {
+                        const issues = result.data;
+                        console.log(`🛠️ [Auto-Sync] Bắt đầu tự động sửa ${issues.length} lỗi...`);
+                        
+                        // 2. Tự động gọi API sửa lỗi ngay lập tức
+                        const fixResult = await (apiService as any).performAdminAction('fixDataConsistency', { issues: JSON.stringify(issues) });
+                        
+                        if (fixResult.status === 'SUCCESS' && isMounted) {
+                            console.log(`✨ [Auto-Sync] Sửa lỗi thành công!`);
+                            showToast(
+                                'Trợ lý Ảo (Auto-Sync)', 
+                                `Vừa dọn dẹp âm thầm ${issues.length} lỗi rác dữ liệu/bất đồng bộ. Hệ thống đã an toàn.`, 
+                                'info',
+                                8000
+                            );
+                            // Cập nhật lại dữ liệu giao diện
+                            onSuccess(); 
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("❌ [Auto-Sync] Lỗi khi chạy Audit ngầm:", e);
+            } finally {
+                if (isMounted) {
+                    setIsBackgroundAuditing(false);
+                    setLastAuditTime(new Date());
+                }
+            }
+        };
+
+        // Chạy lần quét đầu tiên sau 15 giây (để nhường tài nguyên cho trang load xong hẳn)
+        const initialTimer = setTimeout(() => {
+            runBackgroundAudit();
+        }, 15000);
+
+        // Chạy lặp lại định kỳ mỗi 15 phút
+        const intervalTimer = setInterval(() => {
+            runBackgroundAudit();
+        }, 15 * 60 * 1000);
+
+        return () => {
+            isMounted = false;
+            clearTimeout(initialTimer);
+            clearInterval(intervalTimer);
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const filteredOrders = useMemo(() => {
         let result = allOrders;
 
@@ -190,6 +299,41 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                             <option value="Đã xuất hóa đơn">Đã xuất HĐ</option>
                             <option value="Đã hủy">Đã hủy</option>
                         </select>
+                    </div>
+                    <div className="relative group/audit">
+                        {isBackgroundAuditing && (
+                            <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl blur opacity-30 animate-pulse"></div>
+                        )}
+                        <button 
+                            type="button" 
+                            onClick={handleAudit}
+                            className={`w-full mt-2 flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all relative overflow-hidden ${
+                                isBackgroundAuditing 
+                                    ? 'bg-indigo-50 border border-indigo-200 text-indigo-700 shadow-inner' 
+                                    : 'bg-white border border-slate-200 text-slate-600 hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-500/10'
+                            }`}
+                        >
+                            <div className="flex items-center gap-2 font-bold">
+                                {isBackgroundAuditing ? (
+                                    <i className="fas fa-radar fa-spin text-indigo-600"></i>
+                                ) : (
+                                    <i className="fas fa-shield-check text-emerald-500"></i>
+                                )}
+                                <span className="text-sm">Trợ Lý Kiểm Toán AI</span>
+                            </div>
+                            <div className="text-[10px] font-medium mt-1 flex items-center gap-1 opacity-80">
+                                {isBackgroundAuditing ? (
+                                    <span className="font-bold text-indigo-600 animate-pulse">Đang phân tích dữ liệu...</span>
+                                ) : lastAuditTime ? (
+                                    <span>Lần quét cuối: {lastAuditTime.toLocaleTimeString('vi-VN')}</span>
+                                ) : (
+                                    <span>Sẽ tự động quét sau 15s</span>
+                                )}
+                            </div>
+                            {!isBackgroundAuditing && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-500/10 to-transparent -translate-x-full group-hover/audit:translate-x-full transition-transform duration-1000 ease-in-out"></div>
+                            )}
+                        </button>
                     </div>
                 </div>
 
@@ -419,6 +563,165 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                     </div>
                 )}
             </div>
+
+            {/* Audit Modal */}
+            {showAuditModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-200">
+                        <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex justify-between items-center shrink-0">
+                            <h3 className="font-black text-xl text-slate-800 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                    <i className="fas fa-satellite-dish"></i>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span>Hệ Thống Kiểm Toán Dữ Liệu</span>
+                                    <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Deep Scan Protocol</span>
+                                </div>
+                            </h3>
+                            <button onClick={() => setShowAuditModal(false)} className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 flex items-center justify-center transition-colors hover:text-slate-700">
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div className="p-0 overflow-y-auto flex-1 custom-scrollbar bg-slate-50/50">
+                            {isAuditing ? (
+                                <div className="flex flex-col items-center justify-center h-full min-h-[400px] relative overflow-hidden bg-slate-900">
+                                    <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                                    <div className="relative w-40 h-40 mb-8 flex items-center justify-center">
+                                        <div className="absolute inset-0 rounded-full border-2 border-indigo-500/30 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
+                                        <div className="absolute inset-4 rounded-full border border-indigo-400/50 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
+                                        <div className="w-20 h-20 bg-indigo-600 rounded-full shadow-[0_0_40px_rgba(79,70,229,0.8)] flex items-center justify-center animate-pulse z-10 relative overflow-hidden">
+                                            <div className="absolute inset-0 border-t-2 border-white rounded-full animate-spin"></div>
+                                            <i className="fas fa-radar text-3xl text-white"></i>
+                                        </div>
+                                    </div>
+                                    <h4 className="font-black text-2xl text-white mb-3 tracking-wide z-10 shadow-black drop-shadow-md">ĐANG ĐỐI CHIẾU DỮ LIỆU</h4>
+                                    <p className="text-sm text-indigo-200 max-w-md text-center z-10 font-medium">
+                                        AI đang kiểm tra chéo hàng nghìn bản ghi giữa Kho Xe, Đơn Hàng Hoạt Động và Lưu Trữ để tìm ra các lỗ hổng...
+                                    </p>
+                                    <div className="w-64 h-2 bg-slate-800 rounded-full mt-8 overflow-hidden z-10 border border-slate-700">
+                                        <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 animate-[pulse_1s_ease-in-out_infinite] w-full" style={{ transformOrigin: 'left', animation: 'scaleX 2s infinite alternate' }}></div>
+                                    </div>
+                                </div>
+                            ) : auditIssues.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-full min-h-[400px] py-12 px-6 text-center">
+                                    <div className="w-28 h-28 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-[2rem] shadow-xl shadow-emerald-500/20 flex items-center justify-center mb-6 rotate-3 hover:rotate-0 transition-transform duration-300">
+                                        <i className="fas fa-shield-check text-6xl text-white"></i>
+                                    </div>
+                                    <h4 className="font-black text-2xl text-slate-800 mb-2">Hệ Sinh Thái Hoàn Hảo</h4>
+                                    <p className="text-slate-500 mb-8 max-w-md">Thuật toán không tìm thấy bất kỳ sự sai lệch nào. Dữ liệu của bạn đang được bảo vệ tuyệt đối và đồng bộ hoàn toàn.</p>
+                                    
+                                    {auditStats && (
+                                        <div className="grid grid-cols-3 gap-4 w-full max-w-lg">
+                                            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                                <div className="text-2xl font-black text-slate-700 mb-1">{auditStats.totalStock}</div>
+                                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Xe trong kho</div>
+                                            </div>
+                                            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                                <div className="text-2xl font-black text-slate-700 mb-1">{auditStats.totalOrders}</div>
+                                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Đơn hàng HĐ</div>
+                                            </div>
+                                            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                                                <div className="text-2xl font-black text-slate-700 mb-1">{auditStats.totalArchived}</div>
+                                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Đơn Lưu trữ</div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="p-6">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 bg-rose-100 text-rose-600 flex items-center justify-center rounded-xl">
+                                                <i className="fas fa-exclamation-triangle text-xl"></i>
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-lg text-slate-800">Phát hiện {auditIssues.length} vấn đề!</h4>
+                                                <p className="text-sm text-slate-500 font-medium">Hệ thống ghi nhận sự cố bất đồng bộ cần được xử lý ngay.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {auditIssues.map((issue, idx) => {
+                                            const typeLabels: Record<string, string> = {
+                                                duplicated_vin_in_stock: 'Trùng lặp Kho',
+                                                ghost_car: 'Xe kẹt (Ghost)',
+                                                zombie_car: 'Xe đã bán (Zombie)',
+                                                cancelled_with_vin: 'Đơn hủy dính VIN',
+                                                missing_car: 'Mất tích xe',
+                                                unmatched_car_in_stock: 'Lệch trạng thái',
+                                                owner_mismatch: 'Lệch chủ xe'
+                                            };
+                                            const severityColors: Record<string, string> = {
+                                                high: 'bg-rose-500 text-white shadow-rose-500/30',
+                                                medium: 'bg-amber-500 text-white shadow-amber-500/30',
+                                                low: 'bg-blue-500 text-white shadow-blue-500/30'
+                                            };
+                                            const severityIcons: Record<string, string> = {
+                                                high: 'fa-skull-crossbones',
+                                                medium: 'fa-exclamation-circle',
+                                                low: 'fa-info-circle'
+                                            };
+
+                                            return (
+                                                <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                                                    <div className={`absolute top-0 left-0 bottom-0 w-1.5 ${issue.severity === 'high' ? 'bg-rose-500' : issue.severity === 'medium' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+                                                    
+                                                    <div className="flex justify-between items-start mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 shadow-sm ${severityColors[issue.severity || 'medium']}`}>
+                                                                <i className={`fas ${severityIcons[issue.severity || 'medium']}`}></i>
+                                                                {issue.severity === 'high' ? 'Nghiêm trọng' : issue.severity === 'medium' ? 'Cảnh báo' : 'Ghi nhận'}
+                                                            </span>
+                                                            <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider">
+                                                                {typeLabels[issue.type] || issue.type}
+                                                            </span>
+                                                        </div>
+                                                        <div className="font-mono font-black text-sm text-slate-800 bg-slate-50 px-3 py-1 rounded-lg border border-slate-200">
+                                                            {issue.vin}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <p className="text-sm text-slate-700 font-medium mb-4 leading-relaxed">
+                                                        {issue.description}
+                                                    </p>
+                                                    
+                                                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 flex items-center gap-3">
+                                                        <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
+                                                            <i className="fas fa-magic"></i>
+                                                        </div>
+                                                        <div className="text-xs font-bold text-slate-700">
+                                                            <span className="text-slate-400 font-medium mr-1">Giải pháp AI:</span> 
+                                                            {issue.actionLabel}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-4 border-t border-slate-100 bg-white flex justify-end gap-3 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] relative z-10">
+                            <Button variant="secondary" onClick={() => setShowAuditModal(false)} className="font-bold">
+                                KẾT THÚC
+                            </Button>
+                            {auditIssues.length > 0 && !isAuditing && (
+                                <Button 
+                                    variant="primary" 
+                                    className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 font-black shadow-lg shadow-emerald-500/30 px-6"
+                                    onClick={handleFixIssues}
+                                    isLoading={isFixing}
+                                    disabled={isFixing}
+                                    leftIcon={<i className="fas fa-tools"></i>}
+                                >
+                                    SỬA TOÀN BỘ LỖI
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

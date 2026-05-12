@@ -1,0 +1,91 @@
+javascript:(function(){
+    try {
+        if (typeof Xrm === "undefined" || !Xrm.Page || !Xrm.Page.data || !Xrm.Page.data.entity) {
+            alert("Vui lòng mở một bản ghi đơn hàng VSO trên DMS trước khi bấm!");
+            return;
+        }
+
+        var orderNumber = "";
+        try {
+            orderNumber = Xrm.Page.data.entity.getPrimaryAttributeValue();
+        } catch (e) {
+            console.warn("Lỗi lấy Primary Attribute:", e);
+        }
+
+        // Fallback đọc trực tiếp thuộc tính trường nếu Primary Attribute trống
+        if (!orderNumber) {
+            try {
+                var attr = Xrm.Page.getAttribute("xts_newvehiclesalesordernumber");
+                if (attr) orderNumber = attr.getValue();
+            } catch (e) {
+                console.warn("Lỗi lấy Attribute:", e);
+            }
+        }
+
+        if (!orderNumber) {
+            alert("Không thể đọc được số đơn hàng bán (VSO) từ bản ghi hiện tại!");
+            return;
+        }
+
+        var confirmGgo = confirm("⚠️ BẠN CÓ CHẮC CHẮN MUỐN GỠ ÁP DỤNG VINCLUB?\n\nĐơn hàng: " + orderNumber + "\n\nHành động này sẽ xóa trạng thái VinClub và chuyển yêu cầu duyệt về 'Từ chối ycvc' trên Supabase!");
+        if (!confirmGgo) return;
+
+        var progressDiv = document.createElement('div');
+        progressDiv.style = 'position:fixed;top:10px;right:10px;background:#f43f5e;color:white;padding:15px;z-index:999999;border-radius:5px;font-family:sans-serif;font-size:14px;box-shadow:0 4px 6px rgba(0,0,0,0.3);font-weight:600;';
+        progressDiv.innerHTML = '⚡ Đang thực hiện gỡ áp dụng VinClub trên Supabase...';
+        document.body.appendChild(progressDiv);
+
+        var apiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU';
+        var headers = {
+            'apikey': apiKey,
+            'Authorization': 'Bearer ' + apiKey,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+        };
+
+        var urlDonHang = 'https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/donhang?so_don_hang=eq.' + encodeURIComponent(orderNumber);
+        var urlArchived = 'https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/archived_orders?so_don_hang=eq.' + encodeURIComponent(orderNumber);
+        var urlYeuCauVc = 'https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/yeucauvc?so_don_hang=eq.' + encodeURIComponent(orderNumber);
+
+        var p1 = fetch(urlDonHang, {
+            method: 'PATCH',
+            headers: headers,
+            body: JSON.stringify({ trang_thai_vc: null })
+        });
+
+        var p2 = fetch(urlArchived, {
+            method: 'PATCH',
+            headers: headers,
+            body: JSON.stringify({ trang_thai_vc: null })
+        });
+
+        var p3 = fetch(urlYeuCauVc, {
+            method: 'PATCH',
+            headers: headers,
+            body: JSON.stringify({ 
+                trang_thai_xu_ly: 'Từ chối ycvc',
+                ghi_chu: 'Bị gỡ áp dụng bằng Bookmarklet Unapply'
+            })
+        });
+
+        Promise.all([p1, p2, p3])
+        .then(function(responses) {
+            progressDiv.remove();
+            var anySuccess = responses.some(function(r) { return r.ok; });
+            if (anySuccess) {
+                alert("🎉 Đã gỡ áp dụng hạng VinClub thành công cho đơn hàng " + orderNumber + " trên hệ thống Supabase!");
+                var oldPanel = document.getElementById('dms-deep-inspector-overlay');
+                if (oldPanel) oldPanel.remove();
+            } else {
+                alert("❌ Không tìm thấy đơn hàng tương ứng trên Supabase để thực hiện gỡ!");
+            }
+        })
+        .catch(function(err) {
+            progressDiv.remove();
+            alert("❌ Lỗi kết nối Supabase: " + (err.message || err));
+        });
+
+    } catch (globalErr) {
+        alert("Lỗi hệ thống: " + globalErr.message);
+    }
+})();

@@ -30,7 +30,7 @@ javascript:(function(){
         var batchSize = 15;
         var batch = vins.slice(index, index + batchSize);
         var filter = batch.map(function(v){ return "xts_chassisnumber eq '" + v + "'"; }).join(' or ');
-
+        
         function fetchSingleBatchPage(query) {
             Xrm.WebApi.retrieveMultipleRecords("xts_inventorynewvehicle", query).then(function(result) {
                 result.entities.forEach(function(item) {
@@ -68,14 +68,26 @@ javascript:(function(){
                         try {
                             var data = JSON.parse(JSON.parse(this.response).itv_responseObject);
                             if(data && data.Lat && data.Long) {
+                                var speedVal = data.Speed || data.speed || data.Velocity || data.velocity || 0;
+                                var headingVal = data.Heading || data.heading || data.Bearing || data.bearing || data.Angle || data.angle || 0;
+                                
                                 var updateReq = new XMLHttpRequest();
-                                updateReq.open("PATCH", "https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/khoxe?vin=eq." + vin, true);
+                                // UPSERT coordinates directly into the new car_telemetry table
+                                updateReq.open("POST", "https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/car_telemetry", true);
                                 updateReq.setRequestHeader("apikey", apiKey);
                                 updateReq.setRequestHeader("Authorization", "Bearer " + apiKey);
                                 updateReq.setRequestHeader("Content-Type", "application/json");
-                                updateReq.send(JSON.stringify({ extension_reason: "GPS:" + data.Lat + "," + data.Long }));
+                                updateReq.setRequestHeader("Prefer", "resolution=merge-duplicates");
+                                updateReq.send(JSON.stringify({ 
+                                    vin: vin, 
+                                    lat: parseFloat(data.Lat), 
+                                    lng: parseFloat(data.Long),
+                                    speed: parseFloat(speedVal),
+                                    heading: parseFloat(headingVal),
+                                    updated_at: new Date().toISOString() 
+                                }));
                                 
-                                resolve({ vin: vin, lat: data.Lat, lng: data.Long, success: true });
+                                resolve({ vin: vin, lat: data.Lat, lng: data.Long, speed: speedVal, heading: headingVal, success: true });
                             }
                             else resolve({ vin: vin, success: false });
                         } catch(e) { resolve({ vin: vin, success: false }); }

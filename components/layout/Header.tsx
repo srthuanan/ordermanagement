@@ -36,6 +36,7 @@ interface HeaderProps {
     requestNotificationPermission: () => Promise<boolean>;
     reputation?: { score: number; total: number; matched: number };
     onOpenBacklogReport?: () => void;
+    isReferenceAccount?: boolean;
 }
 
 
@@ -83,7 +84,8 @@ const Header: React.FC<HeaderProps> = ({
     handleToggleChatGlobal: _handleToggleChatGlobal,
     requestNotificationPermission,
     reputation,
-    onOpenBacklogReport
+    onOpenBacklogReport,
+    isReferenceAccount
 }) => {
 
 
@@ -128,7 +130,7 @@ const Header: React.FC<HeaderProps> = ({
 
     return (
         <>
-            <header className={`relative sticky top-0 w-full z-[80] h-14 bg-surface-card/95 backdrop-blur-md border-b border-border-primary/50 flex items-center justify-between px-4 sm:px-6 shadow-sm`}>
+            <header className={`relative sticky top-0 w-full z-[1010] h-14 bg-surface-card/95 backdrop-blur-md border-b border-border-primary/50 flex items-center justify-between px-4 sm:px-6 shadow-sm`}>
                 <div className="flex items-center gap-4">
                     <div className="flex flex-col">
                         <img src={logo1} alt="OrderMgmt" className="h-11 w-auto -ml-2 object-contain" />
@@ -164,26 +166,35 @@ const Header: React.FC<HeaderProps> = ({
 
 
                 <div className="flex items-center justify-end gap-1.5 sm:gap-3 relative z-10">
-                    <div
-                        onClick={() => setCreateRequestData({ isOpen: true })}
-                        title="Tạo Yêu Cầu Mới"
-                        className="flex cursor-pointer relative z-10 items-center justify-center w-[90px] sm:w-[120px] lg:w-[150px] h-[40px] transition-transform hover:scale-105 active:scale-95 mr-1"
-                    >
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <lottie-player
-                                src={yeucauAnimationUrl}
-                                background="transparent"
-                                speed="1"
-                                style={{ width: '200px', height: '100px' }}
-                                loop
-                                autoplay
-                            />
+                    {!isReferenceAccount && (
+                        <div
+                            onClick={() => setCreateRequestData({ isOpen: true })}
+                            title="Tạo Yêu Cầu Mới"
+                            className="flex cursor-pointer relative z-10 items-center justify-center w-[90px] sm:w-[120px] lg:w-[150px] h-[40px] transition-transform hover:scale-105 active:scale-95 mr-1"
+                        >
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <lottie-player
+                                    src={yeucauAnimationUrl}
+                                    background="transparent"
+                                    speed="1"
+                                    style={{ width: '200px', height: '100px' }}
+                                    loop
+                                    autoplay
+                                />
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Controls Dock */}
                     <div className="flex items-center bg-white/70 backdrop-blur-2xl p-0.5 sm:p-1 rounded-2xl border border-white/80 shadow-[0_2px_12px_rgba(0,0,0,0.06)] gap-0.5 transition-all">
-                        {onOpenBacklogReport && (
+                        {isReferenceAccount && (
+                            <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 shadow-sm animate-pulse mx-1">
+                                <i className="fa-solid fa-eye text-amber-600 text-xs"></i>
+                                <span className="text-[10px] font-black text-amber-700 tracking-tighter uppercase whitespace-nowrap">BẢN THAM KHẢO (CHỈ XEM)</span>
+                            </div>
+                        )}
+
+                        {onOpenBacklogReport && !isReferenceAccount && (
                             <Button 
                                 onClick={onOpenBacklogReport}
                                 variant="ghost"
@@ -201,36 +212,38 @@ const Header: React.FC<HeaderProps> = ({
                         {/* Portal for Admin Actions or View-specific actions */}
                         <div id="admin-portal-target" className="flex items-center"></div>
 
-                        {isCurrentUserAdmin && (
-                            <div className="flex items-center gap-0.5">
-                                <Button
-                                    onClick={onOpenGlobalSearch}
-                                    variant="ghost"
-                                    className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 text-gray-400 hover:text-blue-600 hover:bg-white hover:shadow-sm transition-all"
-                                    title="Tìm kiếm toàn cục"
-                                >
-                                    <i className="fas fa-search text-[13px]"></i>
-                                </Button>
-                                <Button
-                                    onClick={handleToggleStockGlobal}
-                                    variant="ghost"
-                                    disabled={isTogglingStock}
-                                    className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 transition-all hover:bg-white hover:shadow-sm ${isStockEnabled ? 'text-indigo-500' : 'text-gray-400'}`}
-                                    title={isStockEnabled ? 'Ẩn kho xe' : 'Hiện kho xe'}
-                                >
-                                    <i className={`fas ${isTogglingStock ? 'fa-spinner fa-spin' : (isStockEnabled ? 'fa-eye-slash' : 'fa-warehouse')} text-[13px]`}></i>
-                                </Button>
-                                <Button
-                                    onClick={_handleToggleChatGlobal}
-                                    variant="ghost"
-                                    disabled={_isTogglingChat}
-                                    className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 transition-all hover:bg-white hover:shadow-sm ${isChatEnabled ? 'text-blue-500' : 'text-gray-400'}`}
-                                    title={isChatEnabled ? 'Tắt trợ lý AI' : 'Bật trợ lý AI'}
-                                >
-                                    <i className={`fas ${_isTogglingChat ? 'fa-spinner fa-spin' : (isChatEnabled ? 'fa-robot' : 'fa-user-slash')} text-[13px]`}></i>
-                                </Button>
-                            </div>
-                        )}
+                        <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 relative">
+                            {isCurrentUserAdmin && (
+                                <>
+                                    <Button
+                                        onClick={onOpenGlobalSearch}
+                                        variant="ghost"
+                                        className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 text-gray-400 hover:text-blue-600 hover:bg-white hover:shadow-sm transition-all"
+                                        title="Tìm kiếm toàn cục"
+                                    >
+                                        <i className="fas fa-search text-[13px]"></i>
+                                    </Button>
+                                    <Button
+                                        onClick={handleToggleStockGlobal}
+                                        variant="ghost"
+                                        disabled={isTogglingStock}
+                                        className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 transition-all hover:bg-white hover:shadow-sm ${isStockEnabled ? 'text-indigo-500' : 'text-gray-400'}`}
+                                        title={isStockEnabled ? 'Ẩn kho xe' : 'Hiện kho xe'}
+                                    >
+                                        <i className={`fas ${isTogglingStock ? 'fa-spinner fa-spin' : (isStockEnabled ? 'fa-eye-slash' : 'fa-warehouse')} text-[13px]`}></i>
+                                    </Button>
+                                    <Button
+                                        onClick={_handleToggleChatGlobal}
+                                        variant="ghost"
+                                        disabled={_isTogglingChat}
+                                        className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 transition-all hover:bg-white hover:shadow-sm ${isChatEnabled ? 'text-blue-500' : 'text-gray-400'}`}
+                                        title={isChatEnabled ? 'Tắt trợ lý AI' : 'Bật trợ lý AI'}
+                                    >
+                                        <i className={`fas ${_isTogglingChat ? 'fa-spinner fa-spin' : (isChatEnabled ? 'fa-robot' : 'fa-user-slash')} text-[13px]`}></i>
+                                    </Button>
+                                </>
+                            )}
+                        </div>
 
                         <div ref={notificationContainerRef} className="static sm:relative">
                             <Button onClick={toggleNotificationPanel} variant="ghost" className="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 hover:bg-white hover:shadow-sm transition-all group" title="Thông báo">

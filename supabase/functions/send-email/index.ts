@@ -426,7 +426,7 @@ Deno.serve(async (req: Request) => {
         "Số đơn hàng": `<b>${record.so_don_hang}</b>`,
         "Tên khách hàng": `<b>${(record.ten_khach_hang || "N/A").toUpperCase()}</b>`,
         "Số VIN": `<b>${record.vin || "N/A"}</b>`,
-        "Ngày xuất hóa đơn": formatDate(new Date().toISOString()),
+        "Ngày xuất hóa đơn": formatDate(record.ngay_xuat_hoa_don || new Date().toISOString()),
         "Dòng xe": record.dong_xe || "N/A",
         "Phiên bản": record.phien_ban || "N/A",
         "Ngoại thất": record.ngoai_that || "N/A",
@@ -437,8 +437,26 @@ Deno.serve(async (req: Request) => {
       // Đính kèm file hóa đơn (Ưu tiên Base64 nếu có, sau đó đến URL)
       if (record.invoice_content) {
         // Hỗ trợ gửi trực tiếp content (Base64) từ caller
+        let ext = record.invoice_ext;
+        if (!ext) {
+          try {
+            const invoiceUrl = record.link_hoa_don_da_xuat || record.url_hoa_don_da_xuat;
+            if (invoiceUrl) {
+              const cleanUrl = invoiceUrl.split('?')[0].split('#')[0];
+              const parts = cleanUrl.split('.');
+              if (parts.length > 1) {
+                const urlExt = parts.pop()?.toLowerCase();
+                if (urlExt && ['pdf', 'png', 'jpg', 'jpeg'].includes(urlExt)) {
+                  ext = urlExt;
+                }
+              }
+            }
+          } catch (_) {}
+        }
+        if (!ext) ext = 'pdf';
+
         attachments.push({ 
-          filename: `HOADON_${record.so_don_hang}_${normalizeString(record.ten_khach_hang || 'KH').replace(/\s+/g, '_')}.png`, 
+          filename: `HOADON_${record.so_don_hang}_${normalizeString(record.ten_khach_hang || 'KH').replace(/\s+/g, '_')}.${ext}`, 
           content: record.invoice_content,
           encoding: 'base64'
         });
@@ -457,8 +475,24 @@ Deno.serve(async (req: Request) => {
             if (res.ok) {
               const buffer = await res.arrayBuffer();
               const safeName = normalizeString(record.ten_khach_hang || 'KH').replace(/\s+/g, '_');
+              
+              let ext = record.invoice_ext;
+              if (!ext) {
+                try {
+                  const cleanUrl = invoiceUrl.split('?')[0].split('#')[0];
+                  const parts = cleanUrl.split('.');
+                  if (parts.length > 1) {
+                    const urlExt = parts.pop()?.toLowerCase();
+                    if (urlExt && ['pdf', 'png', 'jpg', 'jpeg'].includes(urlExt)) {
+                      ext = urlExt;
+                    }
+                  }
+                } catch (_) {}
+              }
+              if (!ext) ext = 'pdf';
+
               attachments.push({ 
-                filename: `HOADON_${record.so_don_hang}_${safeName}.pdf`, 
+                filename: `HOADON_${record.so_don_hang}_${safeName}.${ext}`, 
                 content: new Uint8Array(buffer) 
               });
             }
