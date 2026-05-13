@@ -104,6 +104,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const [proposalFile, setProposalFile] = useState<File | null>(null);
     const [vinClubConfirmed, setVinClubConfirmed] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isSubmittingRef = useRef(false);
     const [policy, setPolicy] = useState<string[]>([]);
     const [commission, setCommission] = useState('');
     const [vpoint, setVpoint] = useState('');
@@ -299,6 +300,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const handleBack = () => setStep((prev: any) => Math.max(prev - 1, 1));
 
     const handleSubmit = async () => {
+        if (isSubmittingRef.current) return;
+        
         if (!isFormValid || !contractFile || !proposalFile) {
             showToast('Thiếu Thông Tin', "Vui lòng hoàn thành tất cả các bước.", 'warning');
             return;
@@ -316,6 +319,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             }
         }
 
+        isSubmittingRef.current = true;
         setIsSubmitting(true);
         try {
             setProcessingStage(1);
@@ -375,6 +379,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             await new Promise(r => setTimeout(r, 1500));
             onClose();
         } catch (error) {
+            isSubmittingRef.current = false;
             setIsSubmitting(false);
             setProcessingStage(0);
         }

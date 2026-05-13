@@ -6,6 +6,31 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+type CacheEntry<T> = {
+  value: T;
+  expiresAt: number;
+};
+
+const memoryCache = new Map<string, CacheEntry<any>>();
+
+function getCached<T>(key: string): T | null {
+  const hit = memoryCache.get(key);
+  if (!hit) return null;
+  if (Date.now() > hit.expiresAt) {
+    memoryCache.delete(key);
+    return null;
+  }
+  return hit.value as T;
+}
+
+async function cached<T>(key: string, ttlMs: number, loader: () => Promise<T>): Promise<T> {
+  const hit = getCached<T>(key);
+  if (hit !== null) return hit;
+  const value = await loader();
+  memoryCache.set(key, { value, expiresAt: Date.now() + ttlMs });
+  return value;
+}
+
 // ═══════════════════════════════════════════════════════════════
 // HÀM TRUY VẤN VECTƠ (Vector Search)
 // ═══════════════════════════════════════════════════════════════
@@ -125,11 +150,12 @@ serve(async (req) => {
     }
 
     const { messages } = body;
+    const recentMessages = Array.isArray(messages) ? messages.slice(-12) : [];
     
     // ═══════════════════════════════════════════════════════════
     // BƯỚC 1: Gom dữ liệu SONG SONG (triệu hồi cùng lúc)
     // ═══════════════════════════════════════════════════════════
-    const lastUserMessage = messages[messages.length - 1]?.content || "";
+    const lastUserMessage = recentMessages[recentMessages.length - 1]?.content || "";
     
     // Trích xuất từ khóa thông minh v3.0 (Siêu thám tử)
     const extractSearchTerms = (msg: string): string[] => {
@@ -235,24 +261,40 @@ serve(async (req) => {
       searchTerms.push(userFullName);
     }
 
+    const normalizedQuestion = lastUserMessage.toLowerCase();
+    const wantsOverviewContext = /tổng quan|tong quan|báo cáo|bao cao|thống kê|thong ke|dashboard|kho|xe rảnh|xe ranh|đơn hàng mới|don hang moi|mới nhất|moi nhat|lỗi|loi|thiếu|thieu|pending|chờ|cho/.test(normalizedQuestion);
+    const wantsKnowledgeOnly = /quy trình|quy trinh|chính sách|chinh sach|hướng dẫn|huong dan|cách|cach|nghiệp vụ|nghiep vu|quy định|quy dinh/.test(normalizedQuestion);
+    const shouldLoadFullContext = wantsOverviewContext || (!wantsKnowledgeOnly && searchTerms.length <= 1 && lastUserMessage.length < 40);
+    const shouldUseVectorSearch = wantsKnowledgeOnly || lastUserMessage.length >= 12;
+    const shouldSearchTables = !wantsKnowledgeOnly || /vin|đơn|don|khách|khach|vf\s?[3-9]|[0-9]{6,}|[A-Z0-9]+-[A-Z0-9]+-[0-9-]+/i.test(lastUserMessage);
+
     const promises: Promise<any>[] = [
-      supabaseAdmin.rpc('ai_full_context').then(r => filterPrivateData(r.data)).catch(() => null),
-      supabaseAdmin.from('ai_knowledge_base')
-        .select('content')
-        .neq('status', 'PENDING') // LỌC QUA TRẠM KIỂM DUYỆT (Chỉ lấy bài học đã Duyệt)
-        .or(isAdmin ? `visibility.eq.public,visibility.eq.admin` : `visibility.eq.public`) // LỌC KIẾN THỨC THEO QUYỀN
-        .order('importance', { ascending: false })
-        .then(r => r.data)
-        .catch(() => []),
+      shouldLoadFullContext
+        ? cached(`ai_full_context:${isAdmin ? 'admin' : userFullName || 'user'}`, 45_000, () =>
+            supabaseAdmin.rpc('ai_full_context').then(r => filterPrivateData(r.data)).catch(() => null)
+          )
+        : Promise.resolve(null),
+      cached(`ai_lessons:${isAdmin ? 'admin' : 'public'}`, 180_000, () =>
+        supabaseAdmin.from('ai_knowledge_base')
+          .select('content')
+          .neq('status', 'PENDING') // LỌC QUA TRẠM KIỂM DUYỆT (Chỉ lấy bài học đã Duyệt)
+          .or(isAdmin ? `visibility.eq.public,visibility.eq.admin` : `visibility.eq.public`) // LỌC KIẾN THỨC THEO QUYỀN
+          .order('importance', { ascending: false })
+          .limit(20)
+          .then(r => r.data)
+          .catch(() => [])
+      ),
     ];
     
-    for (const term of searchTerms.slice(0, 4)) {
-      if (term && term.length >= 2) {
-        promises.push(
-          supabaseAdmin.rpc('ai_global_search', { search_term: term })
-            .then(r => filterPrivateData(r.data))
-            .catch(() => null)
-        );
+    if (shouldSearchTables) {
+      for (const term of searchTerms.slice(0, 4)) {
+        if (term && term.length >= 2) {
+          promises.push(
+            supabaseAdmin.rpc('ai_global_search', { search_term: term })
+              .then(r => filterPrivateData(r.data))
+              .catch(() => null)
+          );
+        }
       }
     }
 
@@ -260,10 +302,14 @@ serve(async (req) => {
     
     // --- BỔ SUNG: TRUY VẤN VECTƠ (Vector RAG) ---
     let vectorLessons: any[] = [];
-    if (GEMINI_KEYS.length > 0) {
-      const embedding = await getGeminiEmbedding(lastUserMessage, GEMINI_KEYS);
+    if (GEMINI_KEYS.length > 0 && shouldUseVectorSearch) {
+      const embedding = await cached(`embed:${lastUserMessage}`, 300_000, () => getGeminiEmbedding(lastUserMessage, GEMINI_KEYS));
       if (embedding) {
-        vectorLessons = await searchVectorKnowledge(supabaseAdmin, embedding, isAdmin);
+        vectorLessons = await cached(
+          `vector:${isAdmin ? 'admin' : 'public'}:${lastUserMessage}`,
+          300_000,
+          () => searchVectorKnowledge(supabaseAdmin, embedding, isAdmin)
+        );
       }
     }
     // -------------------------------------------
@@ -276,7 +322,7 @@ serve(async (req) => {
     }, 0);
 
     // Nếu RPC trả về rỗng hoặc lỗi, thực hiện tìm kiếm thủ công (Brute force)
-    if (totalHits === 0 && searchTerms.length > 0) {
+    if (shouldSearchTables && totalHits === 0 && searchTerms.length > 0) {
       console.log("[AI-CHAT] RPC returned no hits (or filtered). Falling back to manual table search...");
       const fallbackPromises = [];
       for (const term of searchTerms.slice(0, 2)) {
@@ -296,7 +342,7 @@ serve(async (req) => {
     }
     // -----------------------
     const lessonsList = [
-      ...dbLessons?.map((l: any, i: number) => `[Keyword Match] ${l.content}`) || [],
+      ...dbLessons?.map((l: any) => `[Keyword Match] ${l.content}`) || [],
       ...vectorLessons.map((l: any) => `[Vector Match] ${l.content}`)
     ].join('\n');
 
@@ -467,7 +513,7 @@ ${lessonsList.substring(0, 2000)}
           for (const key of shuffledKeys) {
             try {
               // Format history cho Gemini
-              const geminiContents = messages.map((m: any) => ({
+              const geminiContents = recentMessages.map((m: any) => ({
                 role: m.role === 'assistant' || m.role === 'model' ? 'model' : 'user',
                 parts: [{ text: m.content || "" }]
               }));
@@ -578,7 +624,7 @@ ${lessonsList.substring(0, 2000)}
             headers: { "Authorization": `Bearer ${provider.apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               model: provider.model,
-              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitizeMessages(messages)]
+              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitizeMessages(recentMessages)]
             }),
             signal: controller.signal
           });
@@ -600,7 +646,7 @@ ${lessonsList.substring(0, 2000)}
             headers: { "Authorization": `Bearer ${provider.apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               model: provider.model,
-              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitizeMessages(messages)]
+              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitizeMessages(recentMessages)]
             }),
             signal: controller.signal
           });
@@ -626,7 +672,7 @@ ${lessonsList.substring(0, 2000)}
             headers: { "Authorization": `Bearer ${provider.apiKey}`, "Content-Type": "application/json" },
             body: JSON.stringify({
               model: provider.model,
-              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitizeMessages(messages)]
+              messages: [{ role: "system", content: SYSTEM_PROMPT }, ...sanitizeMessages(recentMessages)]
             }),
             signal: controller.signal
           });

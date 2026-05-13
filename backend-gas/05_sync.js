@@ -16,8 +16,6 @@ function onOpen() {
       .addSeparator()
       .addItem('📥 Làm mới toàn bộ dữ liệu (Sync Supabase)', 'syncAllFromSupabase')
       .addSeparator()
-      .addItem('📤 Đẩy dữ liệu lên Supabase (Upload Current Sheet)', 'syncCurrentSheetToSupabase')
-      .addSeparator()
       .addItem('🧹 Hút Bụi: Xóa sạch các Sheet rác', 'cleanUpGhostSheets')
       .addSeparator()
       .addItem('🚑 KHÔI PHỤC FILE PDF (Từ Thùng Rác)', 'restoreTrashedPdfs')
@@ -60,7 +58,9 @@ var CUSTOM_CONFIGS = {
     headerColor: '#0f172a', // Slate 900
     headerTextColor: '#ffffff',
     rowColor1: '#ffffff',
-    rowColor2: '#f1f5f9' // Slate 100
+    rowColor2: '#f1f5f9', // Slate 100
+    sortColumn: 'ngay_xuat_hoa_don',
+    sortAscending: true // Cũ lên trước, mới xuống dưới, CHƯA XUẤT (Trống) xuống cuối cùng
   }
 };
 
@@ -296,6 +296,9 @@ function writeSheet(ss, tableName, sheetName, data) {
          if (w > 400) sheet.setColumnWidth(c, 400); // Giới hạn max width
          else sheet.setColumnWidth(c, w + 15); // Thêm chút padding
        }
+       
+       // 6. Tự động sắp xếp dòng theo Ngày xuất hóa đơn (hoặc config tùy chỉnh)
+       applySorting(sheet, sheetName);
     }
   }
 }
@@ -457,5 +460,78 @@ function syncOneRecordToSheet(tableName, record, action) {
     rowRange.setBackground(color);
   }
   
+  // Tự động sắp xếp dữ liệu sau khi chèn/sửa đổi dòng
+  applySorting(sheet, tbl.sheet);
+  
   return true;
+}
+
+/**
+ * Tự động sắp xếp Sheet theo cấu hình cột đã định nghĩa
+ */
+function applySorting(sheet, sheetName) {
+  try {
+    var lastRow = sheet.getLastRow();
+    var lastCol = sheet.getLastColumn();
+    if (lastRow <= 1) return;
+    
+    var config = CUSTOM_CONFIGS[sheetName];
+    var sortKey = (config && config.sortColumn) ? config.sortColumn : null;
+    
+    // Mặc định nếu chưa khai báo: Bảng yeucauxhd luôn sort theo ngay_xuat_hoa_don
+    if (sheetName === 'yeucauxhd' && !sortKey) sortKey = 'ngay_xuat_hoa_don';
+    
+    if (!sortKey) return; 
+    
+    var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    var sortColIndex = -1;
+    
+    // 1. Tìm vị trí cột (Index) dựa theo Key
+    if (config && config.columns) {
+      var targetCol = config.columns.find(function(c) { return c.key === sortKey; });
+      if (targetCol) {
+        sortColIndex = headers.indexOf(targetCol.label) + 1;
+      }
+    }
+    if (sortColIndex <= 0) {
+      var normKey = normalizeString(sortKey);
+      for (var c = 0; c < headers.length; c++) {
+        if (normalizeString(headers[c]) === normKey) {
+          sortColIndex = c + 1;
+          break;
+        }
+      }
+    }
+    
+    // 2. Tiến hành Sort
+    if (sortColIndex > 0) {
+      var asc = (config && config.sortAscending !== undefined) ? config.sortAscending : true;
+      
+      // Thực hiện sắp xếp (Blanks tự xuống đáy)
+      sheet.getRange(2, 1, lastRow - 1, lastCol).sort({ column: sortColIndex, ascending: asc });
+      
+      // 3. Khôi phục Số Thứ Tự (STT) liền mạch từ 1 -> N
+      var sttIndex = headers.indexOf("Số thứ tự") + 1;
+      if (sttIndex <= 0) sttIndex = headers.indexOf("stt") + 1;
+      if (sttIndex > 0) {
+        var sttValues = [];
+        for (var i = 1; i < lastRow; i++) {
+          sttValues.push([i]);
+        }
+        sheet.getRange(2, sttIndex, lastRow - 1, 1).setValues(sttValues);
+      }
+      
+      // 4. Đánh lại Striping Color để tránh xáo trộn màu dòng
+      if (config) {
+        var color1 = config.rowColor1 || "#ffffff";
+        var color2 = config.rowColor2 || "#f1f5f9";
+        for (var r = 2; r <= lastRow; r++) {
+          var rowColor = (r % 2 === 0) ? color1 : color2;
+          sheet.getRange(r, 1, 1, lastCol).setBackground(rowColor);
+        }
+      }
+    }
+  } catch (err) {
+    Logger.log("Lỗi sorting: " + err.message);
+  }
 }
