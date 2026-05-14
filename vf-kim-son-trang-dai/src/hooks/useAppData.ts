@@ -212,6 +212,13 @@ export function useAppData() {
       )
       .on(
         'postgres_changes',
+        { event: '*', schema: 'public', table: 'thongtinxe' },
+        () => {
+          loadWorkspace({ showLoading: false });
+        }
+      )
+      .on(
+        'postgres_changes',
         { event: '*', schema: 'public', table: 'car_hold_activities' },
         () => {
           loadWorkspace({ showLoading: false });

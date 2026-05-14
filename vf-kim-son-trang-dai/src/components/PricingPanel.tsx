@@ -177,6 +177,8 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
   const selectedPromotionSet = React.useMemo(() => new Set(selectedPromotionIds), [selectedPromotionIds]);
   const selectedOptionalFeeSet = React.useMemo(() => new Set(selectedOptionalFeeIds), [selectedOptionalFeeIds]);
 
+
+
   function togglePromotion(promotionId: string) {
     if (promotionId === 'p4' && vinClubTierId) {
       setVinClubTierId(null);
@@ -364,6 +366,7 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
 
   return (
     <div className="pricing-shell">
+
       {isAdmin ? (
         <details className="pricing-admin-panel">
           <summary>
@@ -947,10 +950,10 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
       ) : null}
       <section className="pricing-hero">
         <div className="pricing-hero-copy">
-          <p className="eyebrow">Công cụ tính giá</p>
-          <h2>Ước tính giá xe theo dữ liệu cấu hình VinFast</h2>
+          <p className="eyebrow">WORKSPACE</p>
+          <h2>Chọn cấu hình ở bên trái, xem kết quả ở bên phải</h2>
           <p>
-            Chọn dòng xe, phiên bản, màu, nhóm khách hàng và các ưu đãi để hệ thống tự cộng trừ các khoản chi phí.
+            Khung báo giá được sắp theo kiểu master-detail giống tab Đơn hàng để TVBH thao tác nhanh và dễ in.
           </p>
           <div className="pricing-hero-actions">
             <button className="ghost-button" type="button" onClick={handlePrintQuote}>
@@ -988,7 +991,7 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
         </div>
       </section>
 
-      <section className="pricing-layout">
+      <section className="pricing-layout orders-modular-workspace">
         <article className="panel pricing-form-card">
           <div className="dashboard-band-header">
             <div>
@@ -1152,7 +1155,7 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
           </div>
         </article>
 
-        <aside className="panel pricing-summary-card">
+        <aside className="panel pricing-summary-card orders-visual-side" style={{ position: 'sticky', top: '70px', alignSelf: 'start' }}>
           <div className="dashboard-band-header">
             <div>
               <p className="eyebrow">Kết quả</p>

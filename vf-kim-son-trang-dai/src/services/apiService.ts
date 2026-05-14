@@ -64,7 +64,11 @@ export function mapOrderRow(row: DonhangRow, customerMap: Map<string, CustomerRo
     policy: row.chinh_sach ?? '',
     cancelNote: row.ghi_chu_huy ?? '',
     engineNo: row.so_may ?? '',
-    dmsCode: row.ma_dms ?? ''
+    dmsCode: row.ma_dms ?? '',
+    depositAmount: row.so_tien_coc ?? null,
+    invoiceAddress: row.dia_chi_xhd ?? '',
+    contractCode: row.ma_hop_dong ?? '',
+    paymentMethod: row.tm_vay ?? ''
   };
 }
 
@@ -104,6 +108,37 @@ export function mapVehicleLocationRows(rows: VehicleLocationRow[]) {
       updatedAt: row.updated_at
     }))
     .filter((row) => row.latitude !== null && row.longitude !== null);
+}
+
+type ThongTinXeRow = {
+  vin: string;
+  mo_ta: string | null;
+  phien_ban: string | null;
+  khu_vuc: string | null;
+  ngoai_that: string | null;
+  noi_that: string | null;
+  so_may: string | null;
+};
+
+function normalizeVin(value: string) {
+  return value.trim().toUpperCase();
+}
+
+function mergeInventoryWithMasterData(khoxeRows: KhoxeRow[], masterRows: ThongTinXeRow[]) {
+  const masterMap = new Map(masterRows.map((row) => [normalizeVin(row.vin), row]));
+
+  return khoxeRows.map((row) => {
+    const master = masterMap.get(normalizeVin(row.vin));
+    return {
+      ...row,
+      dong_xe: master?.mo_ta?.trim() || row.dong_xe,
+      phien_ban: master?.phien_ban?.trim() || row.phien_ban,
+      ngoai_that: master?.ngoai_that?.trim() || row.ngoai_that,
+      noi_that: master?.noi_that?.trim() || row.noi_that,
+      so_may: master?.so_may?.trim() || row.so_may,
+      ma_dms: master?.khu_vuc?.trim() || row.ma_dms
+    };
+  });
 }
 
 type VehicleMatchInput = {
@@ -279,10 +314,31 @@ export const getOrders = async () => {
 
 export const getInventory = async () => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase
-    .from('khoxe')
-    .select('*')
-    .order('ngay_nhap', { ascending: false });
+
+  const [khoxeResult, masterResult] = await Promise.all([
+    supabase
+      .from('khoxe')
+      .select('*')
+      .order('ngay_nhap', { ascending: false }),
+    supabase
+      .from('thongtinxe')
+      .select('vin,mo_ta,phien_ban,khu_vuc,ngoai_that,noi_that,so_may')
+  ]);
+
+  if (khoxeResult.error) {
+    return khoxeResult;
+  }
+
+  if (masterResult.error) {
+    console.warn('Không tải được dữ liệu thongtinxe, dùng dữ liệu khoxe hiện có.', masterResult.error);
+  }
+
+  const mergedData = mergeInventoryWithMasterData(
+    (khoxeResult.data || []) as KhoxeRow[],
+    (masterResult.data || []) as ThongTinXeRow[]
+  );
+
+  return { data: mergedData, error: null };
 };
 
 export const getVehicleLocations = async () => {
@@ -439,7 +495,11 @@ export const updateOrderDetails = async (
     noi_that: input.interior,
     ngay_coc: input.depositDate || null,
     thoi_gian_can_xe: input.needDate || null,
-    updated_at: new Date().toISOString()
+    updated_at: new Date().toISOString(),
+    so_tien_coc: input.depositAmount || null,
+    dia_chi_xhd: input.invoiceAddress || null,
+    ma_hop_dong: input.contractCode || null,
+    tm_vay: input.paymentMethod || null
   };
 
   if (criticalChanged) {
@@ -637,7 +697,7 @@ export const addNewVehicle = async (vehicle: KhoxeRow) => {
 export const bulkUpsertVehicles = async (
   vehicles: Array<{
     vin: string;
-    dong_xe: string;
+    dong_xe?: string;
     phien_ban?: string;
     ngoai_that?: string;
     noi_that?: string;
@@ -649,13 +709,37 @@ export const bulkUpsertVehicles = async (
 ) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   const syncedAt = new Date().toISOString();
+  const normalizedVins = Array.from(new Set(vehicles.map((item) => normalizeVin(item.vin)).filter(Boolean)));
+
+  const { data: masterRows, error: masterError } = normalizedVins.length > 0
+    ? await supabase
+        .from('thongtinxe')
+        .select('vin,mo_ta,phien_ban,khu_vuc,ngoai_that,noi_that,so_may')
+        .in('vin', normalizedVins)
+    : { data: [], error: null };
+
+  if (masterError) {
+    console.warn('Không tải được dữ liệu thongtinxe khi import kho.', masterError);
+  }
+
+  const masterMap = new Map((masterRows || []).map((row: ThongTinXeRow) => [normalizeVin(row.vin), row]));
+  const missingVins = normalizedVins.filter((vin) => !masterMap.has(vin));
+
+  if (missingVins.length > 0) {
+    return {
+      data: null,
+      error: {
+        message: `Thiếu dữ liệu master trong thongtinxe cho VIN: ${missingVins.join(', ')}`
+      }
+    };
+  }
 
   const rows = vehicles.map((item) => ({
-    vin: item.vin.trim().toUpperCase(),
-    dong_xe: item.dong_xe.trim(),
-    phien_ban: (item.phien_ban || '').trim(),
-    ngoai_that: (item.ngoai_that || '').trim(),
-    noi_that: (item.noi_that || '').trim(),
+    vin: normalizeVin(item.vin),
+    dong_xe: masterMap.get(normalizeVin(item.vin))?.mo_ta?.trim() || 'Chưa xác định',
+    phien_ban: masterMap.get(normalizeVin(item.vin))?.phien_ban?.trim() || '',
+    ngoai_that: masterMap.get(normalizeVin(item.vin))?.ngoai_that?.trim() || '',
+    noi_that: masterMap.get(normalizeVin(item.vin))?.noi_that?.trim() || '',
     vi_tri: item.vi_tri?.trim() || null,
     latitude: item.latitude ?? null,
     longitude: item.longitude ?? null,

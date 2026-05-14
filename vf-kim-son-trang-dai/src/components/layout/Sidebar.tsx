@@ -32,7 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="brand-mark">VF</div>
         <div>
           <strong>VF KIM SƠN</strong>
-          <span>TRANG DÀI</span>
+          <span>TRẢNG DÀI</span>
         </div>
       </div>
 

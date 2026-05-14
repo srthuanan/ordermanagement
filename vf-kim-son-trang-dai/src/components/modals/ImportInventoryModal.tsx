@@ -9,8 +9,8 @@ interface ImportInventoryModalProps {
 }
 
 const sampleTemplate =
-  'vin,dong_xe,phien_ban,ngoai_that,noi_that,vi_tri,latitude,longitude,ngay_nhap\n' +
-  'RLV12345678900001,VF 5,VF 5 Plus,Trắng,Đen,Kho A,10.762622,106.660172,2026-05-13T08:00:00+07:00';
+  'vin,vi_tri,latitude,longitude,ngay_nhap\n' +
+  'RLV12345678900001,Kho A,10.762622,106.660172,2026-05-13T08:00:00+07:00';
 
 export const ImportInventoryModal: React.FC<ImportInventoryModalProps> = ({
   isSubmitting,
@@ -43,13 +43,13 @@ export const ImportInventoryModal: React.FC<ImportInventoryModalProps> = ({
 
         <form className="order-form" onSubmit={handleSubmit}>
           <label className="full-span">
-            <span>Dán dữ liệu CSV (có hoặc không có dòng tiêu đề)</span>
+            <span>Dán dữ liệu CSV (VIN bắt buộc; dòng xe / phiên bản / ngoại thất / nội thất sẽ tự lấy từ thongtinxe)</span>
             <textarea
               value={csvText}
               onChange={(e) => setCsvText(e.target.value)}
               rows={12}
               style={{ resize: 'vertical', minHeight: '220px' }}
-              placeholder="vin,dong_xe,phien_ban,ngoai_that,noi_that,vi_tri,ngay_nhap"
+              placeholder="vin,vi_tri,latitude,longitude,ngay_nhap"
             />
           </label>
 

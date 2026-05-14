@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, Filter, Download, Eye, PackageCheck, X, FileCheck, Ban, Pencil, ScrollText } from 'lucide-react';
+import { Search, Filter, Download, Eye, PackageCheck, X, FileCheck, Ban, Pencil, ScrollText, User, Car, CreditCard, ArrowLeft } from 'lucide-react';
 import { Order, OrderStatus, InventoryItem } from '../types';
 import { statusTone } from '../constants';
 import { matchesVehicleConfig, canUseVehicleForPair } from '../utils/matching';
+import { copyToClipboard } from '../utils/clipboard';
 
 interface OrdersPanelProps {
   orders: Order[];
@@ -49,6 +50,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
 }) => {
   const reviewStatuses: OrderStatus[] = ['Chờ phê duyệt', 'Đã phê duyệt', 'Yêu cầu bổ sung', 'Đã bổ sung', 'Chờ ký hóa đơn'];
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
+  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState<boolean>(false);
   const selectedOrder = useMemo(
     () => orders.find((order) => order.id === selectedOrderId) ?? orders[0] ?? null,
     [orders, selectedOrderId]
@@ -101,42 +103,54 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
 
   return (
     <section className="panel orders-panel">
-      <div className="panel-heading section-heading orders-panel-heading">
-        <div className="orders-panel-title">
-          <p className="eyebrow">Quản lý bán hàng</p>
-          <h2>Đơn hàng</h2>
-          <p className="orders-panel-lead">
-            Bố cục mới: danh sách bên trái, chi tiết và thao tác bên phải.
-          </p>
-          <div className="orders-panel-metrics">
-            <span className="tag">Tổng {totalOrders}</span>
-            <span className="tag">Chưa ghép {unpairedOrders}</span>
-            <span className="tag">Chờ xử lý {reviewOrders}</span>
-            <span className="tag">Đã xuất HĐ {issuedOrders}</span>
-            <span className="tag">Đã hủy {canceledOrders}</span>
+      <div className={`orders-modular-workspace ${isMobileDetailOpen ? 'mobile-detail-active' : ''}`}>
+        {/* Cánh trái: Bảng dữ liệu đơn hàng & Bộ lọc */}
+        <div className="orders-data-side">
+          {/* 1. Hàng Metrics rút gọn siêu gọn */}
+          <div className="no-scrollbar" style={{ display: 'flex', gap: '6px', overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: '2px', width: '100%', boxSizing: 'border-box', flexShrink: 0 }}>
+            <span className="tag" style={{ fontSize: '10.5px', padding: '3px 8px', background: '#f1f5f9', color: '#334155', borderRadius: '6px', border: '1px solid #e2e8f0', fontWeight: 600 }}>
+              Tổng: <strong>{totalOrders}</strong>
+            </span>
+            <span className="tag" style={{ fontSize: '10.5px', padding: '3px 8px', background: '#ecfdf5', color: '#047857', borderRadius: '6px', border: '1px solid #a7f3d0', fontWeight: 600 }}>
+              Chưa ghép: <strong>{unpairedOrders}</strong>
+            </span>
+            <span className="tag" style={{ fontSize: '10.5px', padding: '3px 8px', background: '#fffbeb', color: '#b45309', borderRadius: '6px', border: '1px solid #fde68a', fontWeight: 600 }}>
+              Chờ xử lý: <strong>{reviewOrders}</strong>
+            </span>
+            <span className="tag" style={{ fontSize: '10.5px', padding: '3px 8px', background: '#eff6ff', color: '#1d4ed8', borderRadius: '6px', border: '1px solid #bfdbfe', fontWeight: 600 }}>
+              Đã xuất HĐ: <strong>{issuedOrders}</strong>
+            </span>
+            <span className="tag" style={{ fontSize: '10.5px', padding: '3px 8px', background: '#fff1f2', color: '#be123c', borderRadius: '6px', border: '1px solid #fecdd3', fontWeight: 600 }}>
+              Đã hủy: <strong>{canceledOrders}</strong>
+            </span>
           </div>
-        </div>
-        <div className="orders-panel-badge">
-          <span className="tag">Đang hiển thị {totalOrders} đơn</span>
-        </div>
-      </div>
 
-      <div className="orders-workspace">
-        <div className="orders-toolbar-shell">
-          <div className="toolbar orders-toolbar">
-            <label className="search-box">
-              <Search size={18} />
+          {/* 2. Thanh bộ lọc Toolbar (mô phỏng hệt Kho xe) */}
+          <div style={{ 
+            padding: '4px 0 4px 0', 
+            background: '#ffffff', 
+            display: 'flex', 
+            flexWrap: 'wrap', 
+            alignItems: 'center', 
+            gap: '8px' 
+          }}>
+            <label className="search-box" style={{ flex: '2 1 260px', minHeight: '34px', height: '34px', padding: '0 10px', border: '1px solid #cbd5e1', borderRadius: '8px', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Search size={14} style={{ color: '#64748b' }} />
               <input
+                type="text"
                 value={query}
-                onChange={(event) => onQueryChange(event.target.value)}
-                placeholder="Tìm số đơn, khách hàng, VIN, cấu hình xe..."
+                onChange={(e) => onQueryChange(e.target.value)}
+                placeholder="Tìm nhanh số đơn, KH, VIN..."
+                style={{ fontSize: '12.5px', border: 'none', outline: 'none', width: '100%', color: '#1e293b' }}
               />
             </label>
-            <label className="select-box">
-              <Filter size={18} />
-              <select
-                value={status}
-                onChange={(event) => onStatusChange(event.target.value as OrderStatus | 'Tất cả')}
+
+            <label className="select-box" style={{ flex: '1 1 150px', minHeight: '34px', height: '34px', padding: '0 8px', border: '1px solid #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', background: '#f8fafc' }}>
+              <Filter size={12} style={{ color: '#64748b' }} />
+              <select 
+                value={status} 
+                onChange={(e) => onStatusChange(e.target.value as OrderStatus | 'Tất cả')} 
+                style={{ fontSize: '12px', fontWeight: 600, color: '#334155', border: 'none', background: 'transparent', width: '100%', outline: 'none', cursor: 'pointer' }}
               >
                 <option>Tất cả</option>
                 <option>Chưa ghép</option>
@@ -150,60 +164,165 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                 <option>Đã hủy</option>
               </select>
             </label>
-            <button className="ghost-button" onClick={() => alert('Tính năng xuất Excel đang được xây dựng')}>
-              <Download size={17} />
-              <span>Xuất Excel</span>
+
+            <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 4px' }} />
+
+            {/* Nút phụ tải Excel */}
+            <button
+              type="button"
+              className="ghost-button"
+              title="Xuất Excel"
+              onClick={() => alert('Tính năng xuất Excel đang được xây dựng')}
+              style={{ 
+                height: '34px', 
+                padding: '0 10px', 
+                borderRadius: '8px', 
+                fontSize: '12px', 
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                minWidth: '34px',
+                justifyContent: 'center'
+              }}
+            >
+              <Download size={15} />
+              <span className="desktop-only">Xuất Excel</span>
             </button>
+          </div>
+
+          {/* 3. Bảng dữ liệu DATA TABLE chuyên nghiệp */}
+          {/* 3. HIỂN THỊ DI ĐỘNG: Danh sách dạng Card trực quan */}
+          <div className="mobile-only no-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px', overflowY: 'auto', maxHeight: 'calc(100vh - 210px)', paddingBottom: '20px' }}>
+            {orders.length === 0 ? (
+              <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', fontStyle: 'italic', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+                Không tìm thấy đơn hàng phù hợp.
+              </div>
+            ) : (
+              orders.map((order) => {
+                const isActive = selectedOrder?.id === order.id;
+                return (
+                  <div
+                    key={order.id}
+                    onClick={() => { setSelectedOrderId(order.id); setIsMobileDetailOpen(true); }}
+                    style={{
+                      background: '#ffffff',
+                      border: `1.5px solid ${isActive ? '#0f766e' : '#cbd5e1'}`,
+                      borderRadius: '14px',
+                      padding: '12px 14px',
+                      boxShadow: isActive ? '0 4px 12px rgba(15, 118, 110, 0.08)' : '0 1px 3px rgba(0,0,0,0.02)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed #e2e8f0', paddingBottom: '6px' }}>
+                      <strong style={{ fontSize: '12.5px', color: '#0f766e', letterSpacing: '0.01em' }}>{order.id}</strong>
+                      <span 
+                        className={statusTone[order.status]} 
+                        style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 700 }}
+                      >
+                        {order.status}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '13.5px' }}>{order.customer}</div>
+                        <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '1px' }}>📞 {order.phone || 'Không có SĐT'}</div>
+                      </div>
+                      <div style={{ textAlign: 'right', fontSize: '11px', color: '#64748b' }}>
+                        <div>📍 {order.area || 'N/A'}</div>
+                      </div>
+                    </div>
+                    <div style={{ background: '#fafafb', border: '1px solid #f1f5f9', borderRadius: '8px', padding: '6px 10px', fontSize: '11.5px' }}>
+                      <div style={{ fontWeight: 600, color: '#475569' }}>🚗 {order.line} {order.version}</div>
+                      <div style={{ color: '#64748b', fontSize: '11px', marginTop: '1px' }}>🎨 {order.exterior} · {order.interior}</div>
+                    </div>
+                    {order.vin && (
+                      <div style={{ fontSize: '11px', color: '#0369a1', fontWeight: 700, background: '#e0f2fe', padding: '3px 8px', borderRadius: '6px', display: 'inline-block', alignSelf: 'flex-start' }}>
+                        🔑 VIN: {order.vin}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* 4. HIỂN THỊ MÁY TÍNH: Bảng dữ liệu chuyên nghiệp */}
+          <div className="table-wrap desktop-only" style={{ marginTop: '4px' }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Mã đơn</th>
+                  <th>Khách hàng</th>
+                  <th>Cấu hình xe</th>
+                  <th>VIN ghép</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'center', padding: '30px', color: '#64748b', fontStyle: 'italic' }}>
+                      Không tìm thấy đơn hàng phù hợp.
+                    </td>
+                  </tr>
+                ) : (
+                  orders.map((order) => {
+                    const isActive = selectedOrder?.id === order.id;
+                    return (
+                      <tr
+                        key={order.id}
+                        onClick={() => { setSelectedOrderId(order.id); setIsMobileDetailOpen(true); }}
+                        className={isActive ? 'active-row' : ''}
+                        style={{ cursor: 'pointer', transition: 'background 0.15s' }}
+                      >
+                        <td style={{ fontWeight: 700, color: '#0f766e' }}>
+                          {order.id}
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 600, color: '#1e293b' }}>{order.customer}</div>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>{order.phone}</div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 600, color: '#334155' }}>{order.line} {order.version}</div>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>{order.exterior} · {order.interior}</div>
+                        </td>
+                        <td>
+                          {order.vin ? (
+                            <strong style={{ color: '#0284c7', fontSize: '12.5px', letterSpacing: '0.02em' }}>{order.vin}</strong>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontSize: '11.5px', fontStyle: 'italic' }}>Chưa ghép</span>
+                          )}
+                        </td>
+                        <td>
+                          <span 
+                            className={statusTone[order.status]} 
+                            style={{ 
+                              display: 'inline-block', 
+                              padding: '3px 8px', 
+                              borderRadius: '12px', 
+                              fontSize: '11px', 
+                              fontWeight: 700 
+                            }}
+                          >
+                            {order.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <div className="orders-master-detail">
-          <aside className="orders-list-pane">
-            <div className="orders-list-pane__header">
-              <div>
-                <p className="orders-panel-subtitle">Danh sách đơn</p>
-                <h3>{orders.length} đơn đang lọc</h3>
-              </div>
-              <span className="tag">Click để xem chi tiết</span>
-            </div>
-
-            <div className="orders-list">
-              {orders.length === 0 ? (
-                <div className="orders-empty">
-                  <div className="empty-state">Không tìm thấy đơn hàng phù hợp.</div>
-                </div>
-              ) : (
-                orders.map((order) => (
-                  <button
-                    key={order.id}
-                    type="button"
-                    className={`order-list-item ${selectedOrder?.id === order.id ? 'active' : ''}`}
-                    onClick={() => setSelectedOrderId(order.id)}
-                  >
-                    <div className="order-list-item__top">
-                      <div>
-                        <p className="order-list-item__id">{order.id}</p>
-                        <strong>{order.customer}</strong>
-                      </div>
-                      <span className={statusTone[order.status]}>{order.status}</span>
-                    </div>
-
-                    <div className="order-list-item__meta">
-                      <span>{order.line} / {order.version}</span>
-                      <span>{order.vin || 'Chưa ghép VIN'}</span>
-                    </div>
-
-                    <div className="order-list-item__footer">
-                      <span>{order.staff}</span>
-                      <span>{order.createdAt}</span>
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </aside>
-
-          <section className="orders-detail-pane">
+        {/* Cánh phải: Chi tiết đơn hàng & Các nút hành động */}
+        <div className="orders-visual-side">
+          <div className="order-detail-widget-container">
             {selectedOrder ? (
               (() => {
                 const selectedVehicleSummary = `${selectedOrder.line} / ${selectedOrder.version}`;
@@ -211,65 +330,133 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
 
                 return (
                   <>
-                    <div className="orders-detail-pane__header">
-                      <div>
-                        <p className="orders-panel-subtitle">Chi tiết đơn</p>
-                        <h3>{selectedOrder.id}</h3>
-                      </div>
-                      <button
-                        className="icon-button"
-                        title="Xem chi tiết đầy đủ"
-                        onClick={() => onViewOrder(selectedOrder)}
+                    {/* Nút quay lại cho giao diện Mobile */}
+                    <div className="mobile-only" style={{ paddingBottom: '8px', borderBottom: '1px solid #e2e8f0', marginBottom: '12px' }}>
+                      <button 
+                        type="button"
+                        className="ghost-button" 
+                        onClick={() => setIsMobileDetailOpen(false)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#0f766e', padding: '10px 14px', background: '#f0fdfa', border: '1px solid #5eead4', borderRadius: '10px', width: '100%', justifyContent: 'center', fontSize: '13.5px', cursor: 'pointer' }}
                       >
-                        <Eye size={18} />
+                        <ArrowLeft size={16} strokeWidth={2.5} />
+                        <span>Quay lại danh sách đơn</span>
                       </button>
                     </div>
+                    <div className="orders-detail-pane__header clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedOrder.id, 'Mã đơn')} style={{ paddingBottom: '6px', borderBottom: '1px dashed #e2e8f0', borderRadius: '4px', padding: '4px' }}>
+                      <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', fontWeight: 700, margin: 0 }}>CHI TIẾT ĐƠN</p>
+                      <h3 style={{ fontSize: '16px', margin: 0, fontWeight: 800, color: '#0f766e' }}>{selectedOrder.id}</h3>
+                    </div>
 
-                    <div className="orders-detail-hero">
-                      <div>
-                        <span>Khách hàng</span>
-                        <strong>{selectedOrder.customer}</strong>
-                        <small>{selectedOrder.phone}</small>
+                    {/* Modul 1: Nhân sự & Tiến độ */}
+                    <div className="order-detail-card-module" style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minHeight: 0, boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '6px', borderBottom: '1px dashed #cbd5e1', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#0f766e', letterSpacing: '0.04em' }}>
+                        <User size={14} />
+                        <span>Nhân sự & Lịch hẹn</span>
                       </div>
-                      <div>
-                        <span>Trạng thái</span>
-                        <strong className={statusTone[selectedOrder.status]}>{selectedOrder.status}</strong>
-                        <small>{selectedOrder.vin || 'Chưa ghép xe'}</small>
+                      <div className="dynamic-two-column-grid" style={{ gap: '8px 12px', flex: 1, alignContent: 'center' }}>
+                        <div className="clickable-copy-field" title="Click để copy tên khách" onClick={() => copyToClipboard(selectedOrder.customer, 'Tên khách')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, marginBottom: '1px' }}>Khách hàng</span>
+                          <strong style={{ fontSize: '14px', color: '#0f172a', display: 'block', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedOrder.customer}</strong>
+                          <small className="clickable-copy-field" title="Click để copy SĐT" onClick={(e) => { e.stopPropagation(); copyToClipboard(selectedOrder.phone || '', 'Số điện thoại'); }} style={{ fontSize: '11.5px', color: '#475569', marginTop: '2px', fontWeight: 500 }}>📞 {selectedOrder.phone || 'Chưa có SĐT'}</small>
+                        </div>
+                        
+                        <div className="clickable-copy-field" title="Click để copy tên TVBH" onClick={() => copyToClipboard(selectedOrder.staff, 'Tên TVBH')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, marginBottom: '1px' }}>Tư vấn phụ trách</span>
+                          <strong style={{ fontSize: '13.5px', color: '#0f172a', display: 'block', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedOrder.staff}</strong>
+                          <small style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px', fontWeight: 500 }}>📍 {selectedOrder.area || 'N/A'}</small>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Ngày đặt cọc</span>
+                          <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 600 }}>{selectedOrder.depositDate || 'Chưa có'}</strong>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Thời điểm tạo đơn</span>
+                          <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 600 }}>{selectedOrder.createdAt}</strong>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="orders-detail-grid">
-                      <article>
-                        <span>Tư vấn bán hàng</span>
-                        <strong>{selectedOrder.staff}</strong>
-                        <small>{selectedOrder.area || 'Khu vực chưa cập nhật'}</small>
-                      </article>
-                      <article>
-                        <span>Tiến độ</span>
-                        <strong>{selectedOrder.createdAt}</strong>
-                        <small>Cọc {selectedOrder.depositDate} · Cần xe {selectedOrder.needDate}</small>
-                      </article>
-                      <article>
-                        <span>Dòng xe</span>
-                        <strong>{selectedVehicleSummary}</strong>
-                        <small>{selectedFinishSummary}</small>
-                      </article>
-                      <article>
-                        <span>Xe ghép</span>
-                        <strong>{selectedOrder.vin || 'Trống'}</strong>
-                        <small>{selectedOrder.pairedAt || 'Chưa có thời gian ghép'}</small>
-                      </article>
+                    {/* Modul 2: Cấu hình xe & Hệ thống ghép */}
+                    <div className="order-detail-card-module" style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1.4, minHeight: 0, boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '6px', borderBottom: '1px dashed #cbd5e1', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#0f766e', letterSpacing: '0.04em' }}>
+                        <Car size={14} />
+                        <span>Cấu hình xe & Hệ thống</span>
+                      </div>
+                      <div className="dynamic-two-column-grid" style={{ gap: '8px 12px', flex: 1, alignContent: 'center' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Cấu hình đặt cọc</span>
+                          <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{selectedVehicleSummary}</strong>
+                          <small style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px', fontWeight: 500 }}>🎨 {selectedFinishSummary}</small>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Chính sách (CS)</span>
+                          <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 700, lineHeight: 1.3 }}>{selectedOrder.policy || 'Mặc định'}</strong>
+                        </div>
+
+                        <div className={selectedOrder.vin ? "clickable-copy-field" : ""} title={selectedOrder.vin ? "Click để copy số VIN" : ""} onClick={() => selectedOrder.vin && copyToClipboard(selectedOrder.vin, 'Số VIN')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Số VIN ghép</span>
+                          <strong style={{ fontSize: '13.5px', color: selectedOrder.vin ? '#0f766e' : '#475569', fontWeight: 700 }}>{selectedOrder.vin || 'Chưa ghép'}</strong>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Thời điểm ghép</span>
+                          <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 600 }}>{selectedOrder.pairedAt || 'Chưa ghép'}</strong>
+                        </div>
+
+                        <div className={selectedOrder.engineNo ? "clickable-copy-field" : ""} title={selectedOrder.engineNo ? "Click để copy số máy" : ""} onClick={() => selectedOrder.engineNo && copyToClipboard(selectedOrder.engineNo, 'Số máy')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Số máy</span>
+                          <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 700 }}>{selectedOrder.engineNo || 'Trống'}</strong>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Ngày hẹn cần xe</span>
+                          <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 600 }}>{selectedOrder.needDate || 'N/A'}</strong>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="orders-detail-tags">
-                      <span className="tag">Chính sách: {selectedOrder.policy || 'Chưa chọn'}</span>
-                      <span className="tag">DMS: {selectedOrder.dmsCode || 'Trống'}</span>
-                      <span className="tag">Số máy: {selectedOrder.engineNo || 'Trống'}</span>
+                    {/* Modul 3: Tài chính & Hồ sơ */}
+                    <div className="order-detail-card-module" style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1.2, minHeight: 0, boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '6px', borderBottom: '1px dashed #cbd5e1', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#0f766e', letterSpacing: '0.04em' }}>
+                        <CreditCard size={14} />
+                        <span>Tài chính & Hồ sơ</span>
+                      </div>
+                      <div className="dynamic-two-column-grid" style={{ gap: '8px 12px', flex: 1, alignContent: 'center' }}>
+                        <div className="clickable-copy-field" title="Click để copy số tiền cọc" onClick={() => copyToClipboard(selectedOrder.depositAmount ? selectedOrder.depositAmount.toString() : '', 'Số tiền cọc')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Tiền đã cọc</span>
+                          <strong style={{ fontSize: '14px', color: '#0f766e', fontWeight: 700 }}>
+                            {selectedOrder.depositAmount ? new Intl.NumberFormat('vi-VN').format(selectedOrder.depositAmount) + ' ₫' : 'N/A'}
+                          </strong>
+                        </div>
+
+                        <div className={selectedOrder.contractCode ? "clickable-copy-field" : ""} title={selectedOrder.contractCode ? "Click để copy mã HĐ" : ""} onClick={() => selectedOrder.contractCode && copyToClipboard(selectedOrder.contractCode, 'Mã HĐ')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Hình thức & Hợp đồng</span>
+                          <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 700 }}>{selectedOrder.paymentMethod || 'Tiền mặt'}</strong>
+                          <small style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', fontWeight: 500 }}>📜 HĐ: {selectedOrder.contractCode || 'Chưa tạo'}</small>
+                        </div>
+
+                        <div className="clickable-copy-field" title="Click để copy địa chỉ XHD" onClick={() => copyToClipboard(selectedOrder.invoiceAddress || '', 'Địa chỉ XHD')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '4px 8px', borderRadius: '6px', gridColumn: 'span 2' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Địa chỉ xuất hóa đơn (XHD)</span>
+                          <strong style={{ fontSize: '13px', color: '#1e293b', display: 'block', whiteSpace: 'normal', wordBreak: 'break-all', marginTop: '2px', lineHeight: 1.4, fontWeight: 600 }}>
+                            {selectedOrder.invoiceAddress || 'Chưa khai báo địa chỉ'}
+                          </strong>
+                        </div>
+
+                        {selectedOrder.status === 'Đã hủy' && selectedOrder.cancelNote ? (
+                          <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: '8px', padding: '8px 12px', gridColumn: 'span 2', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <span style={{ fontSize: '10px', color: '#be123c', display: 'block', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Lý do hủy đơn</span>
+                            <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#9f1239', fontStyle: 'italic', lineHeight: 1.4, fontWeight: 500 }}>
+                              {selectedOrder.cancelNote}
+                            </p>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
 
-
-
-                    <div className="orders-detail-actions">
+                    <div className="orders-detail-actions dynamic-two-column-grid" style={{ gap: '6px', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
                       <button
                         className="primary-button"
                         disabled={!selectedCanPair}
@@ -281,8 +468,9 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                               : 'Không có xe rảnh tương ứng trong kho'
                         }
                         onClick={() => onPairOrder(selectedOrder)}
+                        style={{ height: '30px', fontSize: '11.5px' }}
                       >
-                        <PackageCheck size={16} />
+                        <PackageCheck size={14} />
                         <span>Ghép xe</span>
                       </button>
                       <button
@@ -290,8 +478,9 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         disabled={!selectedCanInvoice}
                         title={selectedCanInvoice ? 'Cập nhật hồ sơ bàn giao xe & xuất hóa đơn GTGT' : 'Chỉ đơn đã ghép mới được chốt xuất hóa đơn'}
                         onClick={() => onInvoiceOrder(selectedOrder)}
+                        style={{ height: '30px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
                       >
-                        <FileCheck size={16} />
+                        <FileCheck size={14} />
                         <span>Xuất HĐ</span>
                       </button>
                       <button
@@ -299,17 +488,19 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         disabled={!selectedCanUnpair || isUnpairingOrderId === selectedOrder.id}
                         title={selectedCanUnpair ? 'Hủy ghép và trả xe về trạng thái trống' : 'Chỉ đơn đã ghép mới hủy ghép được'}
                         onClick={() => onUnpairOrder(selectedOrder.id)}
+                        style={{ height: '30px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
                       >
-                        <X size={16} />
-                        <span>{isUnpairingOrderId === selectedOrder.id ? 'Đang hủy...' : 'Hủy ghép'}</span>
+                        <X size={14} />
+                        <span>{isUnpairingOrderId === selectedOrder.id ? 'Đang...' : 'Hủy ghép'}</span>
                       </button>
                       <button
                         className="ghost-button"
                         disabled={!selectedCanEdit}
                         title={selectedCanEdit ? 'Sửa thông tin đơn hàng' : 'Không cho sửa đơn đã hoàn tất'}
                         onClick={() => onEditOrder(selectedOrder)}
+                        style={{ height: '30px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
                       >
-                        <Pencil size={16} />
+                        <Pencil size={14} />
                         <span>Sửa</span>
                       </button>
                       <button
@@ -317,31 +508,35 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         disabled={!selectedCanPolicy || isUpdatingPolicy}
                         title={selectedCanPolicy ? 'Chọn chính sách áp dụng cho đơn hàng' : 'Đơn đã hủy'}
                         onClick={() => onSelectPolicy(selectedOrder)}
+                        style={{ height: '30px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
                       >
-                        <ScrollText size={16} />
-                        <span>{isUpdatingPolicy ? 'Đang lưu...' : 'Chọn CS'}</span>
+                        <ScrollText size={14} />
+                        <span>CS</span>
                       </button>
                       <button
                         className="ghost-button order-card__danger"
                         disabled={!selectedCanCancel}
                         title={selectedCanCancel ? 'Hủy đơn hàng và hoàn cọc' : 'Không cho phép hủy đơn đã hoàn tất hoặc đã hủy'}
                         onClick={() => onCancelOrder(selectedOrder)}
+                        style={{ height: '30px', fontSize: '11.5px', border: '1px solid #fecdd3', color: '#be123c', background: '#fff1f2' }}
                       >
-                        <Ban size={16} />
-                        <span>Hủy đơn</span>
+                        <Ban size={14} />
+                        <span>Hủy</span>
                       </button>
                     </div>
                   </>
                 );
               })()
             ) : (
-              <div className="orders-detail-empty">
-                <div className="empty-state">Chọn một đơn ở bên trái để xem chi tiết.</div>
+              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#64748b', gap: '8px' }}>
+                <Eye size={32} style={{ opacity: 0.3 }} />
+                <span>Chọn một đơn ở bên trái để xem chi tiết.</span>
               </div>
             )}
-          </section>
+          </div>
         </div>
       </div>
     </section>
   );
 };
+

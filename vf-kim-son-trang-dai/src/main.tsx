@@ -25,7 +25,6 @@ import { StaffPanel } from './components/StaffPanel';
 
 // Lớp Popup Modal
 import { CreateOrderModal } from './components/modals/CreateOrderModal';
-import { OrderDetailModal } from './components/modals/OrderDetailModal';
 import { PairVehicleModal } from './components/modals/PairVehicleModal';
 import { HoldVehicleModal } from './components/modals/HoldVehicleModal';
 import { VehicleGpsModal } from './components/modals/VehicleGpsModal';
@@ -83,6 +82,7 @@ function App() {
     setCreateError,
     handleCreateOrder,
     isHolding,
+    isHoldingVin,
     holdError,
     setHoldError,
     handleHoldVehicle,
@@ -141,7 +141,6 @@ function App() {
   const [createFromVehicle, setCreateFromVehicle] = useState<InventoryItem | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [pairingOrder, setPairingOrder] = useState<Order | null>(null);
-  const [holdingItem, setHoldingItem] = useState<InventoryItem | null>(null);
   const [gpsItem, setGpsItem] = useState<InventoryItem | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [cancelingOrder, setCancelingOrder] = useState<Order | null>(null);
@@ -234,6 +233,8 @@ function App() {
     );
   }
 
+  const activeTabObj = visibleTabs.find((t) => t.key === activeTab);
+
   return (
     <div className="app-shell">
       <Sidebar
@@ -255,6 +256,8 @@ function App() {
             if (open) setCreateFromVehicle(null);
             setCreateOpen(open);
           }}
+          activeTabLabel={activeTabObj?.label}
+          activeTabIcon={activeTabObj?.icon}
         />
 
         {sidebarOpen && (
@@ -309,6 +312,7 @@ function App() {
               currentUsername={currentUsername}
               canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
               isReleasingVin={isReleasingVin}
+              isHoldingVin={isHoldingVin}
               isQueueingVin={isQueueingVin}
               isUpdatingVehicleLocation={isUpdatingVehicleLocation}
               queuedVins={queuedVins}
@@ -317,8 +321,7 @@ function App() {
                 setImportOpen(true);
               }}
               onHoldItem={(item) => {
-                setHoldError('');
-                setHoldingItem(item);
+                handleHoldVehicle(item.vin);
               }}
               onCreateOrderFromItem={(item) => {
                 setCreateError('');
@@ -382,20 +385,6 @@ function App() {
         />
       )}
 
-      {selectedOrder && (
-        <OrderDetailModal
-          order={selectedOrder}
-          canUnpair={canManageInventory(userRole) && selectedOrder.status === 'Đã ghép'}
-          canEdit={canManageInventory(userRole) && selectedOrder.status !== 'Đã xuất hóa đơn' && selectedOrder.status !== 'Đã hủy'}
-          canPolicy={canManageInventory(userRole) && selectedOrder.status !== 'Đã hủy'}
-          isUnpairing={isUnpairingOrderId === selectedOrder.id}
-          isUpdatingPolicy={isUpdatingPolicy}
-          onClose={() => setSelectedOrder(null)}
-          onUnpair={handleUnpairVehicle}
-          onEdit={setEditingOrder}
-          onSelectPolicy={setSelectingPolicyOrder}
-        />
-      )}
 
       {pairingOrder && (
         <PairVehicleModal
@@ -420,25 +409,7 @@ function App() {
         />
       )}
 
-      {holdingItem && (
-        <HoldVehicleModal
-          error={holdError}
-          isHolding={isHolding}
-          item={holdingItem}
-          onClose={() => {
-            if (!isHolding) {
-              setHoldingItem(null);
-              setHoldError('');
-            }
-          }}
-          onSubmit={async (vin) => {
-            const success = await handleHoldVehicle(vin);
-            if (success) {
-              setHoldingItem(null);
-            }
-          }}
-        />
-      )}
+
 
       {gpsItem && (
         <VehicleGpsModal

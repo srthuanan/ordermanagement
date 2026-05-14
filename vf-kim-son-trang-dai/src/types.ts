@@ -34,6 +34,10 @@ export interface Order {
   engineNo: string;
   dmsCode: string;
   needDateIso: string | null;
+  depositAmount?: number | null;
+  invoiceAddress?: string | null;
+  contractCode?: string | null;
+  paymentMethod?: string | null;
 }
 
 export interface InventoryItem {
@@ -71,6 +75,10 @@ export interface NewOrderInput {
   needDate: string;
   pairedVin?: string;
   pairedDmsCode?: string;
+  depositAmount?: number | null;
+  invoiceAddress?: string | null;
+  contractCode?: string | null;
+  paymentMethod?: string | null;
 }
 
 // Bảng Supabase (Database Rows)
@@ -103,6 +111,10 @@ export interface DonhangRow {
   ghi_chu_huy: string | null;
   created_at: string;
   updated_at: string;
+  so_tien_coc: number | null;
+  dia_chi_xhd: string | null;
+  ma_hop_dong: string | null;
+  tm_vay: string | null;
 }
 
 export interface KhoxeRow {
@@ -234,4 +246,8 @@ export interface UpdateOrderInput {
   staff: string;
   depositDate: string;
   needDate: string;
+  depositAmount?: number | null;
+  invoiceAddress?: string | null;
+  contractCode?: string | null;
+  paymentMethod?: string | null;
 }

@@ -41,18 +41,17 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     depositDate: '',
     needDate: new Date().toISOString().slice(0, 10),
     pairedVin: initialVehicle?.vin,
-    pairedDmsCode: initialVehicle?.dmsCode
+    pairedDmsCode: initialVehicle?.dmsCode,
+    depositAmount: null,
+    invoiceAddress: '',
+    contractCode: '',
+    paymentMethod: 'Tiền mặt'
   });
   const [depositFile, setDepositFile] = React.useState<File | null>(null);
   const [depositPreview, setDepositPreview] = React.useState('');
   const [isScanningDeposit, setIsScanningDeposit] = React.useState(false);
   const [ocrStatus, setOcrStatus] = React.useState('');
   const isVehicleLocked = !!initialVehicle;
-  const dmsPrefix = form.pairedDmsCode?.trim().toUpperCase() || '';
-  const orderPrefix = form.orderId.trim().slice(0, 6).toUpperCase();
-  const dmsWarning = dmsPrefix && form.orderId.trim().length >= 6 && orderPrefix !== dmsPrefix
-    ? `Mã DMS (${dmsPrefix}) không khớp với 6 ký tự đầu số đơn hàng (${orderPrefix}).`
-    : '';
 
   const versionOptions = React.useMemo(
     () => versionsMap[form.line] || [],
@@ -128,7 +127,6 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (dmsWarning) return;
     if (!depositFile || !form.depositDate) return;
     onSubmit(form);
   }
@@ -155,7 +153,6 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
               onChange={(event) => updateField('orderId', event.target.value.trim().toUpperCase())}
               required
             />
-            {dmsWarning ? <small style={{ color: 'var(--error-color)', fontWeight: 700 }}>{dmsWarning}</small> : null}
           </label>
           {initialVehicle ? (
             <label className="full-span">
@@ -208,17 +205,38 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             </select>
           </label>
           <label>
-            <span>Tư vấn bán hàng *</span>
-            {lockStaffName ? (
-              <input value={form.staff} readOnly />
-            ) : (
-              <select value={form.staff} onChange={(event) => updateField('staff', event.target.value)}>
-                {staffNames.map((staff) => (
-                  <option key={staff} value={staff}>{staff}</option>
-                ))}
-              </select>
-            )}
+            <span>Số tiền đã cọc (VNĐ)</span>
+            <input
+              type="number"
+              value={form.depositAmount !== null && form.depositAmount !== undefined ? form.depositAmount : ''}
+              placeholder="VD: 50000000"
+              onChange={(event) => updateField('depositAmount', event.target.value ? Number(event.target.value) : null)}
+            />
           </label>
+          <label>
+            <span>Hình thức thanh toán</span>
+            <select value={form.paymentMethod || 'Tiền mặt'} onChange={(event) => updateField('paymentMethod', event.target.value)}>
+              <option value="Tiền mặt">Tiền mặt</option>
+              <option value="Vay ngân hàng">Vay ngân hàng</option>
+            </select>
+          </label>
+          <label>
+            <span>Mã hợp đồng</span>
+            <input
+              value={form.contractCode || ''}
+              placeholder="Nhập mã HĐ..."
+              onChange={(event) => updateField('contractCode', event.target.value)}
+            />
+          </label>
+          <label className="full-span">
+            <span>Địa chỉ xuất hóa đơn (XHD)</span>
+            <input
+              value={form.invoiceAddress || ''}
+              placeholder="Nhập địa chỉ đầy đủ để xuất hóa đơn..."
+              onChange={(event) => updateField('invoiceAddress', event.target.value)}
+            />
+          </label>
+
           <label>
             <span>Ảnh UNC / chứng từ cọc *</span>
             <div className="file-drop">
@@ -273,7 +291,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             <button type="button" className="ghost-button" onClick={onClose} disabled={isCreating}>
               Hủy
             </button>
-            <button type="submit" className="primary-button" disabled={isCreating || isScanningDeposit || !!dmsWarning || !form.depositDate}>
+            <button type="submit" className="primary-button" disabled={isCreating || isScanningDeposit || !form.depositDate}>
               <Plus size={18} />
               <span>{isCreating ? 'Đang tạo...' : isScanningDeposit ? 'Đang quét ảnh...' : initialVehicle ? 'Tạo đơn & ghép xe' : 'Tạo đơn'}</span>
             </button>

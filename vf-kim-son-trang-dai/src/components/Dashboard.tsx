@@ -71,10 +71,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="dashboard-shell">
       <section className="dashboard-hero dashboard-hero-compact">
-        <div className="dashboard-hero-copy">
-          <p className="eyebrow">Tổng quan</p>
-          <h2>Bảng điều hành</h2>
-        </div>
+
         <div className="hero-mini-grid hero-mini-grid-compact">
           <MiniStat label="Đơn đang hoạt động" value={activeOrders} icon={Gauge} tone="teal" />
           <MiniStat label="Tỷ lệ đã ghép" value={pairingRate} icon={CheckCircle2} tone="blue" suffix="%" />

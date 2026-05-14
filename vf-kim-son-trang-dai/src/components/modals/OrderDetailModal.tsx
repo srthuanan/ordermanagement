@@ -42,7 +42,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
         <div className="panel-heading">
           <div>
             <p className="eyebrow">Hồ sơ chi tiết</p>
-            <h2 id="order-detail-title">{order.id}</h2>
+            <h2 id="order-detail-title">VSO: {order.id}</h2>
           </div>
           <button className="icon-button" onClick={onClose} title="Đóng">
             <X size={18} />
@@ -74,7 +74,10 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             <DetailField label="Ngày ghép xe" value={order.pairedAt} />
             <DetailField label="Chính sách áp dụng" value={order.policy || 'Chưa áp dụng'} />
             <DetailField label="Số máy" value={order.engineNo || 'N/A'} />
-            <DetailField label="Mã DMS" value={order.dmsCode || 'N/A'} />
+            <DetailField label="Số tiền đã cọc" value={order.depositAmount ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.depositAmount) : 'N/A'} />
+            <DetailField label="Hình thức TT" value={order.paymentMethod || 'N/A'} />
+            <DetailField label="Mã hợp đồng" value={order.contractCode || 'N/A'} />
+            <DetailField label="Địa chỉ XHD" value={order.invoiceAddress || 'N/A'} />
             <DetailField label="Lý do hủy (nếu có)" value={order.cancelNote || 'N/A'} />
           </section>
 

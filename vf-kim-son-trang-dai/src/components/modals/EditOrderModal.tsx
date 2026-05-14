@@ -47,6 +47,10 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
   const [staff, setStaff] = React.useState(order.staff);
   const [depositDate, setDepositDate] = React.useState(toDateInput(order.depositDate));
   const [needDate, setNeedDate] = React.useState(toDateInput(order.needDateIso || order.needDate));
+  const [depositAmount, setDepositAmount] = React.useState<number | null>(order.depositAmount ?? null);
+  const [invoiceAddress, setInvoiceAddress] = React.useState(order.invoiceAddress || '');
+  const [contractCode, setContractCode] = React.useState(order.contractCode || '');
+  const [paymentMethod, setPaymentMethod] = React.useState(order.paymentMethod || 'Tiền mặt');
 
   const versionOptions = React.useMemo(
     () => versionsMap[line] || allPossibleVersions,
@@ -95,7 +99,11 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
       interior,
       staff,
       depositDate,
-      needDate
+      needDate,
+      depositAmount,
+      invoiceAddress,
+      contractCode,
+      paymentMethod
     });
 
     if (ok) onClose();
@@ -174,6 +182,34 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
           <label>
             <span>Ngày cần xe</span>
             <input type="date" value={needDate} onChange={(e) => setNeedDate(e.target.value)} />
+          </label>
+
+          <label>
+            <span>Số tiền đã cọc (VNĐ)</span>
+            <input
+              type="number"
+              value={depositAmount !== null && depositAmount !== undefined ? depositAmount : ''}
+              placeholder="VD: 50000000"
+              onChange={(e) => setDepositAmount(e.target.value ? Number(e.target.value) : null)}
+            />
+          </label>
+
+          <label>
+            <span>Hình thức thanh toán</span>
+            <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+              <option value="Tiền mặt">Tiền mặt</option>
+              <option value="Vay ngân hàng">Vay ngân hàng</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Mã hợp đồng</span>
+            <input value={contractCode} placeholder="Nhập mã HĐ..." onChange={(e) => setContractCode(e.target.value)} />
+          </label>
+
+          <label className="full-span">
+            <span>Địa chỉ xuất hóa đơn (XHD)</span>
+            <input value={invoiceAddress} placeholder="Nhập địa chỉ xuất hóa đơn..." onChange={(e) => setInvoiceAddress(e.target.value)} />
           </label>
 
           {error ? (

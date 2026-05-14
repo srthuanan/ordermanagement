@@ -23,6 +23,7 @@ export function useOrderOperations({
   const [createError, setCreateError] = useState('');
   
   const [isHolding, setIsHolding] = useState(false);
+  const [isHoldingVin, setIsHoldingVin] = useState('');
   const [holdError, setHoldError] = useState('');
   const [isReleasingVin, setIsReleasingVin] = useState('');
   const [isQueueingVin, setIsQueueingVin] = useState('');
@@ -66,7 +67,11 @@ export function useOrderOperations({
           ngay_coc: input.depositDate || null,
           thoi_gian_can_xe: input.needDate || null,
           thoi_gian_nhap: new Date().toISOString(),
-          ket_qua: 'Chưa ghép'
+          ket_qua: 'Chưa ghép',
+          so_tien_coc: input.depositAmount || null,
+          dia_chi_xhd: input.invoiceAddress || null,
+          ma_hop_dong: input.contractCode || null,
+          tm_vay: input.paymentMethod || null
         });
 
         if (orderRes.error) {
@@ -119,26 +124,39 @@ export function useOrderOperations({
 
   async function handleHoldVehicle(vin: string) {
     setIsHolding(true);
+    setIsHoldingVin(vin);
     setHoldError('');
     try {
       const { data, error } = await apiService.holdVehicle(vin, currentUsername, currentFullName);
       if (error) {
         setHoldError(error.message);
-        setIsHolding(false);
+        setSyncState('error');
+        setSyncMessage(`Lỗi giữ xe ${vin}: ${error.message}`);
         return false;
       }
       if (data && data.status === 'ERROR') {
-        setHoldError(String(data.message || 'Không thể giữ xe.'));
-        setIsHolding(false);
+        const msg = String(data.message || 'Không thể giữ xe.');
+        setHoldError(msg);
+        setSyncState('error');
+        setSyncMessage(`Lỗi giữ xe ${vin}: ${msg}`);
         return false;
       }
+      
+      // Thông báo thành công qua Toast
+      setSyncState('success');
+      setSyncMessage(`Đã giữ xe ${vin} thành công tạm thời trong 24h.`);
+      
       await loadWorkspace({ showLoading: false });
-      setIsHolding(false);
       return true;
     } catch (err: any) {
-      setHoldError(err.message);
-      setIsHolding(false);
+      const errMsg = err.message || 'Lỗi kết nối';
+      setHoldError(errMsg);
+      setSyncState('error');
+      setSyncMessage(`Lỗi hệ thống khi giữ xe ${vin}: ${errMsg}`);
       return false;
+    } finally {
+      setIsHolding(false);
+      setIsHoldingVin('');
     }
   }
 
@@ -231,12 +249,12 @@ export function useOrderOperations({
 
       const parsed = dataLines.map((line, idx) => {
         const cols = line.split(',').map((x) => x.trim());
-        if (cols.length < 5) {
-          throw new Error(`Dòng ${idx + 1}: cần tối thiểu 5 cột (vin,dong_xe,phien_ban,ngoai_that,noi_that).`);
+        if (cols.length < 1) {
+          throw new Error(`Dòng ${idx + 1}: cần tối thiểu 1 cột VIN.`);
         }
         const [vin, dong_xe, phien_ban, ngoai_that, noi_that, vi_tri, latitude, longitude, ngay_nhap] = cols;
-        if (!vin || !dong_xe) {
-          throw new Error(`Dòng ${idx + 1}: VIN hoặc dòng xe đang trống.`);
+        if (!vin) {
+          throw new Error(`Dòng ${idx + 1}: VIN đang trống.`);
         }
 
         const parsedLatitude = latitude ? Number(latitude) : null;
@@ -244,7 +262,7 @@ export function useOrderOperations({
 
         return {
           vin,
-          dong_xe,
+          dong_xe: dong_xe || '',
           phien_ban,
           ngoai_that,
           noi_that,
@@ -569,6 +587,7 @@ export function useOrderOperations({
     setCreateError,
     handleCreateOrder,
     isHolding,
+    isHoldingVin,
     holdError,
     setHoldError,
     handleHoldVehicle,
