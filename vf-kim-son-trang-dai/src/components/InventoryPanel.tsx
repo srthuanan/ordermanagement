@@ -1,10 +1,12 @@
 import React from 'react';
 import { PackageCheck, X, Clock, FilePlus2, LocateFixed } from 'lucide-react';
-import { InventoryItem } from '../types';
+import { InventoryItem, VehicleLocationRow } from '../types';
 import { stockTone } from '../constants';
+import { VehicleLocationMapPanel } from './VehicleLocationMapPanel';
 
 interface InventoryPanelProps {
   items: InventoryItem[];
+  vehicleLocations: VehicleLocationRow[];
   canManageInventory: boolean;
   canHoldVehicle: boolean;
   currentUsername: string;
@@ -24,6 +26,7 @@ interface InventoryPanelProps {
 
 export const InventoryPanel: React.FC<InventoryPanelProps> = ({
   items,
+  vehicleLocations,
   canManageInventory,
   canHoldVehicle,
   currentUsername,
@@ -57,6 +60,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
           <span>Nhập kho</span>
         </button>
       </div>
+      <VehicleLocationMapPanel locations={vehicleLocations} />
       <div className="table-wrap">
         <table>
           <thead>

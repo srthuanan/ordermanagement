@@ -8,6 +8,7 @@ import {
   ProfileRow,
   SyncState,
   CustomerRow,
+  VehicleLocationRow,
   CarActivityRow,
   YeucauxhdRow
 } from '../types';
@@ -18,6 +19,7 @@ export function useAppData() {
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [vehicleLocations, setVehicleLocations] = useState<VehicleLocationRow[]>([]);
   const [queuedVins, setQueuedVins] = useState<string[]>([]);
   const [auditLogs, setAuditLogs] = useState<CarActivityRow[]>([]);
   const [invoiceRequests, setInvoiceRequests] = useState<YeucauxhdRow[]>([]);
@@ -54,6 +56,7 @@ export function useAppData() {
         setProfiles([]);
         setOrders([]);
         setInventory([]);
+        setVehicleLocations([]);
         setQueuedVins([]);
         setSyncState('loading');
         setSyncMessage('Đăng nhập để đồng bộ Supabase');
@@ -71,6 +74,7 @@ export function useAppData() {
     if (!session) {
       setOrders([]);
       setInventory([]);
+      setVehicleLocations([]);
       setQueuedVins([]);
       setSyncState('loading');
       setSyncMessage('Đăng nhập để đồng bộ Supabase');
@@ -100,10 +104,11 @@ export function useAppData() {
       await apiService.expireHoldVehicles();
 
       // 2. Tải song song dữ liệu Donhang, Khoxe, Khachhang, Audit
-      const [customersResult, ordersResult, inventoryResult, logsResult, invoicesResult, queueResult, profilesResult] = await Promise.all([
+      const [customersResult, ordersResult, inventoryResult, locationsResult, logsResult, invoicesResult, queueResult, profilesResult] = await Promise.all([
         apiService.getCustomers(),
         apiService.getOrders(),
         apiService.getInventory(),
+        apiService.getVehicleLocations().catch((error) => ({ data: null, error })),
         apiService.getCarHoldActivities(),
         apiService.getYeucauxhd(),
         apiService.getMyQueuedVins(session.user.email || ''),
@@ -151,6 +156,11 @@ export function useAppData() {
 
       setOrders(visibleOrders);
       setInventory(apiService.mapKhoxeRows(inventoryResult.data));
+      setVehicleLocations(
+        locationsResult.error || !locationsResult.data
+          ? []
+          : apiService.mapVehicleLocationRows(locationsResult.data as VehicleLocationRow[])
+      );
       setAuditLogs(visibleLogs);
       setInvoiceRequests(visibleInvoices);
       setQueuedVins(visibleQueue);
@@ -177,7 +187,7 @@ export function useAppData() {
     if (!supabase) return;
 
     // Đăng ký kênh realtime để đồng bộ ngay lập tức khi có bất kỳ ai cập nhật dữ liệu
-    const channel = supabase
+      const channel = supabase
       .channel('schema-db-changes')
       .on(
         'postgres_changes',
@@ -189,6 +199,13 @@ export function useAppData() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'khoxe' },
+        () => {
+          loadWorkspace({ showLoading: false });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vehicle_locations' },
         () => {
           loadWorkspace({ showLoading: false });
         }
@@ -226,6 +243,7 @@ export function useAppData() {
     profile,
     orders,
     inventory,
+    vehicleLocations,
     queuedVins,
     profiles,
     auditLogs,

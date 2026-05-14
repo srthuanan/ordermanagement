@@ -59,6 +59,7 @@ function App() {
     profiles,
     orders,
     inventory,
+    vehicleLocations,
     queuedVins,
     auditLogs,
     invoiceRequests,
@@ -302,6 +303,7 @@ function App() {
           {activeTab === 'inventory' && (
             <InventoryPanel
               items={inventory}
+              vehicleLocations={vehicleLocations}
               canManageInventory={canManageInventory(userRole)}
               canHoldVehicle={canHoldVehicle(userRole)}
               currentUsername={currentUsername}

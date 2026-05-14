@@ -8,6 +8,7 @@ import {
   InventoryItem,
   CarActivityRow,
   SalesPolicyRow,
+  VehicleLocationRow,
   UpdateOrderInput
 } from '../types';
 import { defaultSalesPolicies } from '../constants';
@@ -90,6 +91,19 @@ export function mapKhoxeRows(rows: KhoxeRow[]): InventoryItem[] {
     extensionEvidenceUrl: row.extension_evidence_url ?? '',
     extensionCount: row.extension_count || 0
   }));
+}
+
+export function mapVehicleLocationRows(rows: VehicleLocationRow[]) {
+  return rows
+    .map((row) => ({
+      vin: row.vin,
+      location: row.vi_tri ?? '',
+      latitude: row.latitude ?? null,
+      longitude: row.longitude ?? null,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }))
+    .filter((row) => row.latitude !== null && row.longitude !== null);
 }
 
 type VehicleMatchInput = {
@@ -269,6 +283,14 @@ export const getInventory = async () => {
     .from('khoxe')
     .select('*')
     .order('ngay_nhap', { ascending: false });
+};
+
+export const getVehicleLocations = async () => {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  return await supabase
+    .from('vehicle_locations')
+    .select('*')
+    .order('updated_at', { ascending: false });
 };
 
 export const expireHoldVehicles = async () => {
@@ -626,9 +648,10 @@ export const bulkUpsertVehicles = async (
   }>
 ) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const syncedAt = new Date().toISOString();
 
   const rows = vehicles.map((item) => ({
-    vin: item.vin.trim(),
+    vin: item.vin.trim().toUpperCase(),
     dong_xe: item.dong_xe.trim(),
     phien_ban: (item.phien_ban || '').trim(),
     ngoai_that: (item.ngoai_that || '').trim(),
@@ -638,13 +661,40 @@ export const bulkUpsertVehicles = async (
     longitude: item.longitude ?? null,
     ngay_nhap: item.ngay_nhap || null,
     trang_thai: 'Chưa ghép',
-    updated_at: new Date().toISOString()
+    updated_at: syncedAt
   }));
 
-  return await supabase
+  const vehicleResult = await supabase
     .from('khoxe')
     .upsert(rows, { onConflict: 'vin' })
     .select('vin');
+
+  if (vehicleResult.error) {
+    return vehicleResult;
+  }
+
+  const locationRows = rows
+    .filter((item) => item.vi_tri || item.latitude !== null || item.longitude !== null)
+    .map((item) => ({
+      vin: item.vin,
+      vi_tri: item.vi_tri,
+      latitude: item.latitude,
+      longitude: item.longitude,
+      updated_at: syncedAt
+    }));
+
+  if (locationRows.length > 0) {
+    const locationResult = await supabase
+      .from('vehicle_locations')
+      .upsert(locationRows, { onConflict: 'vin' })
+      .select('vin');
+
+    if (locationResult.error) {
+      return locationResult;
+    }
+  }
+
+  return vehicleResult;
 };
 
 export const updateVehicleLocation = async (
@@ -656,18 +706,42 @@ export const updateVehicleLocation = async (
   }
 ) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const syncedAt = new Date().toISOString();
 
-  return await supabase
+  const vehicleResult = await supabase
     .from('khoxe')
     .update({
       vi_tri: location.vi_tri.trim() || null,
       latitude: location.latitude,
       longitude: location.longitude,
-      updated_at: new Date().toISOString()
+      updated_at: syncedAt
     })
-    .eq('vin', vin.trim())
+    .eq('vin', vin.trim().toUpperCase())
     .select('vin')
     .maybeSingle();
+
+  if (vehicleResult.error) {
+    return vehicleResult;
+  }
+
+  const locationResult = await supabase
+    .from('vehicle_locations')
+    .upsert(
+      [
+        {
+          vin: vin.trim().toUpperCase(),
+          vi_tri: location.vi_tri.trim() || null,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          updated_at: syncedAt
+        }
+      ],
+      { onConflict: 'vin' }
+    )
+    .select('vin')
+    .maybeSingle();
+
+  return locationResult.error ? locationResult : vehicleResult;
 };
 
 // --- 2-Stage Invoicing ---

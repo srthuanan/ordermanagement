@@ -128,6 +128,15 @@ export interface KhoxeRow {
   extension_count: number;
 }
 
+export interface VehicleLocationRow {
+  vin: string;
+  vi_tri: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface YeucauxhdRow {
   id: string;
   so_don_hang: string;
