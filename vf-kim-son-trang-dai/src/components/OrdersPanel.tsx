@@ -1,9 +1,27 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, Filter, Download, Eye, PackageCheck, X, FileCheck, Ban, Pencil, ScrollText, User, Car, CreditCard, ArrowLeft } from 'lucide-react';
+import moment from 'moment';
+import 'moment/locale/vi';
+import { Search, Filter, Eye, PackageCheck, X, FileCheck, Ban, Pencil, ScrollText, User, Car, CreditCard, ArrowLeft } from 'lucide-react';
 import { Order, OrderStatus, InventoryItem } from '../types';
 import { statusTone } from '../constants';
 import { matchesVehicleConfig, canUseVehicleForPair } from '../utils/matching';
 import { copyToClipboard } from '../utils/clipboard';
+
+moment.locale('vi');
+
+const formatDetailDate = (value?: string) => {
+  if (!value) return '—';
+  const formats = [
+    moment.ISO_8601,
+    'DD/MM/YYYY HH:mm:ss',
+    'D/M/YYYY H:m:s',
+    'YYYY-MM-DD HH:mm:ss',
+    'DD/MM/YYYY',
+    'D/M/YYYY'
+  ];
+  const parsed = moment(value, formats, 'vi', true);
+  return parsed.isValid() ? parsed.format('DD/MM/YYYY HH:mm') : value;
+};
 
 interface OrdersPanelProps {
   orders: Order[];
@@ -189,28 +207,6 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
               </select>
             </label>
 
-            <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 4px' }} />
-
-            {/* Nút phụ tải Excel */}
-            <button
-              type="button"
-              className="ghost-button"
-              onClick={() => alert('Tính năng xuất Excel đang được xây dựng')}
-              style={{ 
-                height: '34px', 
-                padding: '0 12px', 
-                borderRadius: '8px', 
-                fontSize: '12px', 
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                marginLeft: 'auto'
-              }}
-            >
-              <Download size={14} />
-              <span>Xuất Excel</span>
-            </button>
           </div>
 
           {/* 3. Bảng dữ liệu DATA TABLE chuyên nghiệp */}
@@ -235,46 +231,24 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         }}
                       >
                         <div className="orders-mobile-card-header">
-                          <div>
-                            <strong className="orders-mobile-card-title">{order.id}</strong>
-                            <p className="orders-mobile-card-subtitle">{order.customer}</p>
+                          <div className="orders-mobile-card-headings">
+                            <p className="orders-mobile-card-title">{order.customer}</p>
+                            <p className="orders-mobile-card-subtitle">{order.id}</p>
                           </div>
                           <span className={statusTone[order.status]} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 8px', borderRadius: '999px', fontSize: '11px', fontWeight: 700 }}>
                             {order.status}
                           </span>
                         </div>
 
-                        <div className="orders-mobile-card-grid">
-                          <div>
-                            <span>Điện thoại</span>
-                            <strong>{order.phone || 'Chưa có SĐT'}</strong>
-                          </div>
-                          <div>
-                            <span>VIN</span>
-                            <strong>{order.vin || 'Chưa ghép'}</strong>
-                          </div>
-                          <div>
+                        <div className="orders-mobile-card-divider" />
+
+                        <div className="orders-mobile-card-bottom">
+                          <div className="orders-mobile-card-meta">
                             <span>Dòng xe</span>
                             <strong>{order.line}</strong>
                           </div>
-                          <div>
-                            <span>Phiên bản</span>
-                            <strong>{order.version}</strong>
-                          </div>
-                          <div className="orders-mobile-card-wide">
-                            <span>Ngoại / nội thất</span>
-                            <strong>{order.exterior} · {order.interior}</strong>
-                          </div>
-                          <div>
-                            <span>Ngày cọc</span>
-                            <strong>{order.depositDate || 'Chưa có'}</strong>
-                          </div>
-                          <div>
-                            <span>Ngày cần xe</span>
-                            <strong>{order.needDate || 'N/A'}</strong>
-                          </div>
-                          <div className="orders-mobile-card-wide">
-                            <span>TVBH</span>
+                          <div className="orders-mobile-card-meta orders-mobile-card-meta-right">
+                            <span>Tư vấn bán hàng</span>
                             <strong>{order.staff}</strong>
                           </div>
                         </div>
@@ -365,6 +339,230 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
               (() => {
                 const selectedVehicleSummary = `${selectedOrder.line} / ${selectedOrder.version}`;
                 const selectedFinishSummary = `${selectedOrder.exterior} · ${selectedOrder.interior}`;
+
+                if (isMobile) {
+                  return (
+                    <div className="orders-mobile-detail-view" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <button
+                        type="button"
+                        className="ghost-button orders-mobile-back"
+                        onClick={() => setMobileView('list')}
+                        style={{ alignSelf: 'flex-start', height: '32px', padding: '0 10px', fontSize: '12px' }}
+                      >
+                        <ArrowLeft size={14} />
+                        <span>Danh sách</span>
+                      </button>
+
+                      <div className="orders-mobile-detail-shell" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '20px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                          <div className="clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedOrder.id, 'Mã đơn')} style={{ minWidth: 0 }}>
+                            <p style={{ margin: 0, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', fontWeight: 700 }}>CHI TIẾT ĐƠN HÀNG</p>
+                            <h3 style={{ margin: '2px 0 0', fontSize: '18px', lineHeight: 1.15, fontWeight: 700, color: '#0f172a' }}>{selectedOrder.id}</h3>
+                            <p style={{ margin: '2px 0 0', fontSize: '12px', fontWeight: 500, color: '#475569' }}>{selectedOrder.customer}</p>
+                          </div>
+                          <span className={statusTone[selectedOrder.status]} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                            {selectedOrder.status}
+                          </span>
+                        </div>
+
+                        <div style={{ height: '1px', width: '100%', background: '#f1f5f9' }} />
+
+                        <div className="orders-mobile-detail-section" style={{ background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '18px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '8px', borderBottom: '1px dashed #e2e8f0', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', letterSpacing: '0.04em' }}>
+                            <User size={14} />
+                            <span>Nhân sự & Lịch hẹn</span>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
+                            <div className="clickable-copy-field" title="Click để copy tên khách" onClick={() => copyToClipboard(selectedOrder.customer, 'Tên khách')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Khách hàng</span>
+                              <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedOrder.customer}</strong>
+                            </div>
+
+                            <div className="clickable-copy-field" title="Click để copy tên TVBH" onClick={() => copyToClipboard(selectedOrder.staff, 'Tên TVBH')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, textAlign: 'right', alignItems: 'flex-end' }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tư vấn bán hàng</span>
+                              <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedOrder.staff}</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Ngày cọc</span>
+                              <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{formatDetailDate(selectedOrder.depositDate)}</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Thời điểm tạo</span>
+                              <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{formatDetailDate(selectedOrder.createdAt)}</strong>
+                            </div>
+                          </div>
+
+                          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tiến độ</span>
+                                <strong style={{ fontSize: '12.5px', color: '#0f172a', fontWeight: 600 }}>Tạo đơn</strong>
+                                <small style={{ fontSize: '11px', color: '#64748b' }}>{formatDetailDate(selectedOrder.createdAt)}</small>
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
+                                <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Đặt cọc</span>
+                                <strong style={{ fontSize: '12.5px', color: '#0f172a', fontWeight: 600 }}>{selectedOrder.depositDate || '—'}</strong>
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Ghép VIN</span>
+                                <strong style={{ fontSize: '12.5px', color: '#0f172a', fontWeight: 600 }}>{selectedOrder.pairedAt || 'Chưa ghép'}</strong>
+                              </div>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
+                                <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cần xe</span>
+                                <strong style={{ fontSize: '12.5px', color: '#0f172a', fontWeight: 600 }}>{selectedOrder.needDate || 'N/A'}</strong>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="orders-mobile-detail-section" style={{ background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '18px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '8px', borderBottom: '1px dashed #e2e8f0', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', letterSpacing: '0.04em' }}>
+                            <Car size={14} />
+                            <span>Thông tin xe</span>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', gridColumn: 'span 2' }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Dòng xe</span>
+                              <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35 }}>{selectedVehicleSummary}</strong>
+                              <small style={{ fontSize: '11px', color: '#64748b' }}>{selectedFinishSummary}</small>
+                            </div>
+
+                            <div className={selectedOrder.vin ? 'clickable-copy-field' : ''} title={selectedOrder.vin ? 'Click để copy số VIN' : ''} onClick={() => selectedOrder.vin && copyToClipboard(selectedOrder.vin, 'Số VIN')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Số VIN</span>
+                              <strong style={{ fontSize: '13px', color: selectedOrder.vin ? '#0f766e' : '#475569', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedOrder.vin || 'Chưa ghép'}</strong>
+                            </div>
+
+                            <div className={selectedOrder.engineNo ? 'clickable-copy-field' : ''} title={selectedOrder.engineNo ? 'Click để copy số máy' : ''} onClick={() => selectedOrder.engineNo && copyToClipboard(selectedOrder.engineNo, 'Số máy')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, textAlign: 'right', alignItems: 'flex-end' }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Số máy</span>
+                              <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedOrder.engineNo || 'Trống'}</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cấu hình</span>
+                              <strong style={{ fontSize: '12.5px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedOrder.version || 'N/A'}</strong>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="orders-mobile-detail-section" style={{ background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '18px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '8px', borderBottom: '1px dashed #e2e8f0', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', letterSpacing: '0.04em' }}>
+                            <CreditCard size={14} />
+                            <span>Tài chính & Hồ sơ</span>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tiền đã cọc</span>
+                              <strong style={{ fontSize: '13px', color: '#0f766e', fontWeight: 600, lineHeight: 1.35 }}>
+                                {selectedOrder.depositAmount ? new Intl.NumberFormat('vi-VN').format(selectedOrder.depositAmount) + ' ₫' : 'N/A'}
+                              </strong>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hình thức TT</span>
+                              <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedOrder.paymentMethod || 'Tiền mặt'}</strong>
+                            </div>
+
+                            <div className={selectedOrder.contractCode ? 'clickable-copy-field' : ''} title={selectedOrder.contractCode ? 'Click để copy mã HĐ' : ''} onClick={() => selectedOrder.contractCode && copyToClipboard(selectedOrder.contractCode, 'Mã HĐ')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Mã hợp đồng</span>
+                              <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedOrder.contractCode || 'Chưa tạo'}</strong>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Trạng thái</span>
+                              <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedOrder.status}</strong>
+                            </div>
+
+                            <div className="clickable-copy-field" title="Click để copy địa chỉ XHD" onClick={() => copyToClipboard(selectedOrder.invoiceAddress || '', 'Địa chỉ XHD')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', gridColumn: 'span 2' }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Địa chỉ xuất hóa đơn</span>
+                              <strong style={{ fontSize: '12.5px', color: '#1e293b', fontWeight: 600, lineHeight: 1.4, wordBreak: 'break-word' }}>{selectedOrder.invoiceAddress || 'Chưa khai báo địa chỉ'}</strong>
+                            </div>
+
+                            {selectedOrder.status === 'Đã hủy' && selectedOrder.cancelNote ? (
+                              <div style={{ gridColumn: 'span 2', background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: '12px', padding: '10px 12px' }}>
+                                <span style={{ fontSize: '10px', color: '#be123c', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Lý do hủy đơn</span>
+                                <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#9f1239', fontStyle: 'italic', lineHeight: 1.4 }}>{selectedOrder.cancelNote}</p>
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          <button
+                            className="primary-button"
+                            disabled={!selectedCanPair}
+                            title={
+                              selectedCanPair
+                                ? `Có ${selectedCandidates.length} xe phù hợp trong kho`
+                                : selectedOrder.status !== 'Chưa ghép'
+                                  ? 'Đơn đã ghép hoặc đã hoàn tất'
+                                  : 'Không có xe rảnh tương ứng trong kho'
+                            }
+                            onClick={() => onPairOrder(selectedOrder)}
+                            style={{ height: '34px', fontSize: '11.5px' }}
+                          >
+                            <PackageCheck size={14} />
+                            <span>Ghép xe</span>
+                          </button>
+                          <button
+                            className="ghost-button"
+                            disabled={!selectedCanInvoice}
+                            title={selectedCanInvoice ? 'Cập nhật hồ sơ bàn giao xe & xuất hóa đơn GTGT' : 'Chỉ đơn đã ghép mới được chốt xuất hóa đơn'}
+                            onClick={() => onInvoiceOrder(selectedOrder)}
+                            style={{ height: '34px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
+                          >
+                            <FileCheck size={14} />
+                            <span>Xuất HĐ</span>
+                          </button>
+                          <button
+                            className="ghost-button"
+                            disabled={!selectedCanUnpair || isUnpairingOrderId === selectedOrder.id}
+                            title={selectedCanUnpair ? 'Hủy ghép và trả xe về trạng thái trống' : 'Chỉ đơn đã ghép mới hủy ghép được'}
+                            onClick={() => onUnpairOrder(selectedOrder.id)}
+                            style={{ height: '34px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
+                          >
+                            <X size={14} />
+                            <span>{isUnpairingOrderId === selectedOrder.id ? 'Đang...' : 'Hủy ghép'}</span>
+                          </button>
+                          <button
+                            className="ghost-button"
+                            disabled={!selectedCanEdit}
+                            title={selectedCanEdit ? 'Sửa thông tin đơn hàng' : 'Không cho sửa đơn đã hoàn tất'}
+                            onClick={() => onEditOrder(selectedOrder)}
+                            style={{ height: '34px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
+                          >
+                            <Pencil size={14} />
+                            <span>Sửa</span>
+                          </button>
+                          <button
+                            className="ghost-button"
+                            disabled={!selectedCanPolicy || isUpdatingPolicy}
+                            title={selectedCanPolicy ? 'Chọn chính sách áp dụng cho đơn hàng' : 'Đơn đã hủy'}
+                            onClick={() => onSelectPolicy(selectedOrder)}
+                            style={{ height: '34px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
+                          >
+                            <ScrollText size={14} />
+                            <span>CS</span>
+                          </button>
+                          <button
+                            className="ghost-button order-card__danger"
+                            disabled={!selectedCanCancel}
+                            title={selectedCanCancel ? 'Hủy đơn hàng và hoàn cọc' : 'Không cho phép hủy đơn đã hoàn tất hoặc đã hủy'}
+                            onClick={() => onCancelOrder(selectedOrder)}
+                            style={{ height: '34px', fontSize: '11.5px', border: '1px solid #fecdd3', color: '#be123c', background: '#fff1f2' }}
+                          >
+                            <Ban size={14} />
+                            <span>Hủy</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
 
                 return (
                   <>
