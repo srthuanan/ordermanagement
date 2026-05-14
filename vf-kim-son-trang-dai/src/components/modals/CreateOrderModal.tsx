@@ -15,6 +15,8 @@ interface CreateOrderModalProps {
   error: string;
   isCreating: boolean;
   initialVehicle?: InventoryItem | null;
+  defaultStaffName?: string;
+  lockStaffName?: boolean;
   onClose: () => void;
   onSubmit: (input: NewOrderInput) => void;
 }
@@ -23,6 +25,8 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   error,
   isCreating,
   initialVehicle,
+  defaultStaffName,
+  lockStaffName = false,
   onClose,
   onSubmit
 }) => {
@@ -33,7 +37,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     version: initialVehicle?.version || versionsMap[vehicleLines[0]]?.[0] || '',
     exterior: initialVehicle?.exterior || defaultExteriors[0],
     interior: initialVehicle?.interior || defaultInteriors[0],
-    staff: staffNames[0],
+    staff: defaultStaffName || staffNames[0],
     depositDate: '',
     needDate: new Date().toISOString().slice(0, 10),
     pairedVin: initialVehicle?.vin,
@@ -78,6 +82,13 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interiorOptions]);
+
+  React.useEffect(() => {
+    if (lockStaffName && defaultStaffName) {
+      updateField('staff', defaultStaffName);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultStaffName, lockStaffName]);
 
   function updateField<K extends keyof NewOrderInput>(key: K, value: NewOrderInput[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -198,11 +209,15 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
           </label>
           <label>
             <span>Tư vấn bán hàng *</span>
-            <select value={form.staff} onChange={(event) => updateField('staff', event.target.value)}>
-              {staffNames.map((staff) => (
-                <option key={staff} value={staff}>{staff}</option>
-              ))}
-            </select>
+            {lockStaffName ? (
+              <input value={form.staff} readOnly />
+            ) : (
+              <select value={form.staff} onChange={(event) => updateField('staff', event.target.value)}>
+                {staffNames.map((staff) => (
+                  <option key={staff} value={staff}>{staff}</option>
+                ))}
+              </select>
+            )}
           </label>
           <label>
             <span>Ảnh UNC / chứng từ cọc *</span>

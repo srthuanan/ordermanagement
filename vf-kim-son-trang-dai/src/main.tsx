@@ -354,6 +354,8 @@ function App() {
           error={createError}
           isCreating={isCreating}
           initialVehicle={createFromVehicle}
+          defaultStaffName={userRole === 'sales' ? currentFullName : undefined}
+          lockStaffName={userRole === 'sales'}
           onClose={() => {
             if (!isCreating) {
               setCreateOpen(false);
