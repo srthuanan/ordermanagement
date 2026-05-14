@@ -1757,29 +1757,13 @@ small {
   min-height: 0;
   overflow-y: scroll;
   overflow-x: hidden;
-  padding-right: 4px;
-  scrollbar-gutter: stable both-edges;
-  scrollbar-width: thin;
-  scrollbar-color: #8da89c #eef3ef;
+  padding-right: 2px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .orders-list::-webkit-scrollbar {
-  width: 10px;
-}
-
-.orders-list::-webkit-scrollbar-track {
-  border-radius: 999px;
-  background: #eef3ef;
-}
-
-.orders-list::-webkit-scrollbar-thumb {
-  border: 2px solid #eef3ef;
-  border-radius: 999px;
-  background: #8da89c;
-}
-
-.orders-list::-webkit-scrollbar-thumb:hover {
-  background: #6f8b7f;
+  display: none;
 }
 
 .order-list-item {
