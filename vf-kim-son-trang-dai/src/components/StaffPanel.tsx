@@ -1,5 +1,17 @@
 import React from 'react';
-import { BadgePlus, Mail, RefreshCw, ShieldCheck, Trash2, RotateCw, Users } from 'lucide-react';
+import {
+  BadgePlus,
+  Mail,
+  RefreshCw,
+  ShieldCheck,
+  Trash2,
+  RotateCw,
+  Users,
+  Search,
+  MailCheck,
+  UserRound,
+  Clock3
+} from 'lucide-react';
 import { ProfileRow } from '../types';
 import { cancelStaffInvite, inviteStaffMember, resendStaffInvite } from '../services/apiService';
 import { roleLabels } from '../constants';
@@ -12,13 +24,13 @@ type StaffPanelProps = {
 export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
   const [email, setEmail] = React.useState('');
   const [fullName, setFullName] = React.useState('');
+  const [query, setQuery] = React.useState('');
+  const [selectedEmail, setSelectedEmail] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [rowAction, setRowAction] = React.useState<{ email: string; action: 'resend' | 'cancel' } | null>(null);
   const [success, setSuccess] = React.useState('');
   const [error, setError] = React.useState('');
 
-  const totalStaff = staff.length;
-  const adminCount = staff.filter((item) => item.role === 'admin').length;
   const getStatusLabel = (item: ProfileRow) => {
     if (item.invite_status === 'active') return 'Đã kích hoạt';
     if (item.invite_status === 'recovery_sent') return 'Đã gửi link đặt mật khẩu';
@@ -28,6 +40,41 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
   };
 
   const getRowEmail = (item: ProfileRow) => item.email?.trim().toLowerCase() || item.id;
+
+  const filteredStaff = React.useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return staff;
+    return staff.filter((item) => {
+      const email = item.email?.toLowerCase() || item.id.toLowerCase();
+      return (
+        item.full_name.toLowerCase().includes(normalized) ||
+        email.includes(normalized) ||
+        roleLabels[item.role].toLowerCase().includes(normalized) ||
+        getStatusLabel(item).toLowerCase().includes(normalized)
+      );
+    });
+  }, [query, staff]);
+
+  const selectedStaff = React.useMemo(
+    () => filteredStaff.find((item) => getRowEmail(item) === selectedEmail) || filteredStaff[0] || null,
+    [filteredStaff, selectedEmail]
+  );
+
+  React.useEffect(() => {
+    if (!filteredStaff.length) {
+      setSelectedEmail('');
+      return;
+    }
+    if (!selectedEmail || !filteredStaff.some((item) => getRowEmail(item) === selectedEmail)) {
+      setSelectedEmail(getRowEmail(filteredStaff[0]));
+    }
+  }, [filteredStaff, selectedEmail]);
+
+  const totalStaff = staff.length;
+  const adminCount = staff.filter((item) => item.role === 'admin').length;
+  const salesCount = staff.filter((item) => item.role === 'sales').length;
+  const pendingCount = staff.filter((item) => item.invite_status !== 'active').length;
+  const inactiveCount = staff.filter((item) => item.invite_status === 'canceled').length;
 
   const runStaffAction = async (
     action: 'resend' | 'cancel',
@@ -95,20 +142,26 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
   };
 
   return (
-    <section className="panel">
-      <div className="panel-heading">
-        <div>
+    <section className="panel staff-panel">
+      <div className="panel-heading section-heading staff-panel-heading">
+        <div className="staff-panel-title">
           <p className="eyebrow">QUẢN LÝ NHÂN SỰ</p>
-          <h2>Admin tạo tài khoản, TVBH không tự đăng ký</h2>
+          <h2>Admin mời, TVBH kích hoạt qua email</h2>
+          <p className="staff-panel-lead">
+            Khung mới tách rõ phần mời nhân sự, lọc danh sách, và xem nhanh trạng thái từng tài khoản.
+          </p>
         </div>
         <div className="staff-metrics">
           <span><Users size={14} /> {totalStaff} người</span>
           <span><ShieldCheck size={14} /> {adminCount} admin</span>
+          <span><UserRound size={14} /> {salesCount} TVBH</span>
+          <span><Clock3 size={14} /> {pendingCount} chờ kích hoạt</span>
+          <span><MailCheck size={14} /> {inactiveCount} tạm ngưng</span>
         </div>
       </div>
 
-      <div className="staff-grid">
-        <section className="staff-card">
+      <div className="staff-workspace">
+        <section className="staff-card staff-invite-card">
           <div className="staff-card-title">
             <BadgePlus size={18} />
             <strong>Mời nhân sự mới</strong>
@@ -135,48 +188,124 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
           </form>
         </section>
 
-        <section className="staff-card staff-card-wide">
-          <div className="staff-card-title">
-            <RefreshCw size={18} />
-            <strong>Danh sách nhân sự</strong>
+        <section className="staff-card staff-directory-card">
+          <div className="staff-directory-toolbar">
+            <div className="staff-card-title">
+              <RefreshCw size={18} />
+              <strong>Danh sách nhân sự</strong>
+            </div>
+            <label className="staff-search">
+              <Search size={16} />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Tìm tên, email, trạng thái..."
+              />
+            </label>
           </div>
-          <div className="staff-list">
-            {staff.map((item) => (
-              <div key={item.id} className="staff-row">
-                <div>
-                  <strong>{item.full_name}</strong>
-                  <p>{getRowEmail(item)}</p>
-                </div>
-                <div className="staff-row-meta">
-                  <span className={`staff-role role-${item.role}`}>{roleLabels[item.role]}</span>
-                  <span className="staff-status">{getStatusLabel(item)}</span>
-                  {item.invite_status !== 'active' ? (
-                    <div className="staff-actions">
+
+          <div className="staff-directory">
+            <div className="staff-list-pane">
+              <div className="staff-list">
+                {filteredStaff.length === 0 ? (
+                  <div className="staff-empty">
+                    <strong>Không tìm thấy nhân sự phù hợp.</strong>
+                    <p>Thử đổi từ khóa hoặc xóa bộ lọc để xem lại toàn bộ danh sách.</p>
+                  </div>
+                ) : (
+                  filteredStaff.map((item) => {
+                    const emailValue = getRowEmail(item);
+                    return (
                       <button
+                        key={item.id}
                         type="button"
-                        className="staff-action-button"
-                        onClick={() => runStaffAction('resend', item, resendStaffInvite)}
-                        disabled={rowAction?.email === getRowEmail(item) && rowAction.action === 'resend'}
+                        className={`staff-row staff-row-button ${selectedStaff?.id === item.id ? 'active' : ''}`}
+                        onClick={() => setSelectedEmail(emailValue)}
                       >
-                        <RotateCw size={14} />
-                        <span>{rowAction?.email === getRowEmail(item) && rowAction.action === 'resend' ? 'Đang gửi...' : 'Gửi lại email'}</span>
+                        <div className="staff-row-main">
+                          <strong>{item.full_name}</strong>
+                          <p>{emailValue}</p>
+                        </div>
+                        <div className="staff-row-meta">
+                          <span className={`staff-role role-${item.role}`}>{roleLabels[item.role]}</span>
+                          <span className="staff-status">{getStatusLabel(item)}</span>
+                        </div>
                       </button>
-                      {item.invite_status !== 'canceled' ? (
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            <aside className="staff-detail-card">
+              {selectedStaff ? (
+                <>
+                  <div className="staff-detail-header">
+                    <div>
+                      <p className="staff-card-label">Nhân sự đang chọn</p>
+                      <h3>{selectedStaff.full_name}</h3>
+                      <p>{getRowEmail(selectedStaff)}</p>
+                    </div>
+                    <span className={`staff-role role-${selectedStaff.role}`}>{roleLabels[selectedStaff.role]}</span>
+                  </div>
+
+                  <div className="staff-detail-grid">
+                    <div>
+                      <span>Vai trò</span>
+                      <strong>{roleLabels[selectedStaff.role]}</strong>
+                    </div>
+                    <div>
+                      <span>Trạng thái</span>
+                      <strong>{getStatusLabel(selectedStaff)}</strong>
+                    </div>
+                    <div>
+                      <span>Kích hoạt</span>
+                      <strong>{selectedStaff.activated_at || 'Chưa có'}</strong>
+                    </div>
+                    <div>
+                      <span>Mời lúc</span>
+                      <strong>{selectedStaff.invited_at || 'Chưa có'}</strong>
+                    </div>
+                  </div>
+
+                  <div className="staff-detail-actions">
+                    {selectedStaff.invite_status !== 'active' ? (
+                      <>
                         <button
                           type="button"
-                          className="staff-action-button staff-action-danger"
-                          onClick={() => runStaffAction('cancel', item, cancelStaffInvite)}
-                          disabled={rowAction?.email === getRowEmail(item) && rowAction.action === 'cancel'}
+                          className="staff-action-button"
+                          onClick={() => runStaffAction('resend', selectedStaff, resendStaffInvite)}
+                          disabled={rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'resend'}
                         >
-                          <Trash2 size={14} />
-                          <span>{rowAction?.email === getRowEmail(item) && rowAction.action === 'cancel' ? 'Đang hủy...' : 'Hủy mời'}</span>
+                          <RotateCw size={14} />
+                          <span>{rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'resend' ? 'Đang gửi...' : 'Gửi lại email'}</span>
                         </button>
-                      ) : null}
-                    </div>
-                  ) : null}
+                        {selectedStaff.invite_status !== 'canceled' ? (
+                          <button
+                            type="button"
+                            className="staff-action-button staff-action-danger"
+                            onClick={() => runStaffAction('cancel', selectedStaff, cancelStaffInvite)}
+                            disabled={rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'cancel'}
+                          >
+                            <Trash2 size={14} />
+                            <span>{rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'cancel' ? 'Đang hủy...' : 'Hủy mời'}</span>
+                          </button>
+                        ) : null}
+                      </>
+                    ) : (
+                      <div className="staff-active-note">
+                        Tài khoản này đã kích hoạt và đăng nhập bình thường.
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="staff-empty">
+                  <strong>Chọn một nhân sự để xem chi tiết.</strong>
+                  <p>Danh sách bên trái sẽ cho phép mở nhanh trạng thái, thời gian mời và hành động gửi lại/hủy mời.</p>
                 </div>
-              </div>
-            ))}
+              )}
+            </aside>
           </div>
         </section>
       </div>
