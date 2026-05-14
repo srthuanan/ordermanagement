@@ -151,7 +151,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                   <h2>Danh sách xe trong kho</h2>
                   <p>{visibleItems.length} / {items.length} xe</p>
                 </div>
-                {canManageInventory ? (
+                {mobileView === 'list' && canManageInventory ? (
                   <button
                     className="icon-button inventory-mobile-import-button"
                     onClick={onOpenImport}

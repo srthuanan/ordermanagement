@@ -3937,6 +3937,10 @@ td small {
     display: flex;
   }
 
+  .inventory-dashboard.inventory-mobile-detail .inventory-mobile-import-button {
+    display: none;
+  }
+
   .inventory-mobile-shell {
     display: flex;
     flex-direction: column;
