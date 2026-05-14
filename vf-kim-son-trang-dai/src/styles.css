@@ -14,6 +14,8 @@ html,
 body,
 #root {
   height: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 * {
@@ -59,6 +61,8 @@ button:disabled {
   display: flex;
   width: 100%;
   height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden;
   background:
     linear-gradient(120deg, rgba(15, 118, 110, 0.08), transparent 36%),
     linear-gradient(240deg, rgba(190, 106, 64, 0.08), transparent 34%),
@@ -249,21 +253,27 @@ small {
   height: 100vh;
   padding: 0;
   overflow: hidden;
+  max-width: 100vw;
 }
 
 .main-content {
   flex: 1;
   min-height: 0;
   overflow: auto;
+  overflow-x: hidden;
   padding: 8px;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
 }
 
 .main-content > .panel {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .topbar {
@@ -3695,7 +3705,9 @@ td small {
     display: flex;
     flex-direction: column;
     width: 100%;
-    height: 100vh;
+    height: 100dvh;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 
   .sidebar {
@@ -3716,21 +3728,26 @@ td small {
 
   .main {
     padding: 0;
-    height: 100vh;
+    height: 100dvh;
+    max-width: 100vw;
   }
 
   .main-content {
     flex: 1;
     min-height: 0;
     overflow: auto;
+    overflow-x: hidden;
     padding: 16px;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: 100%;
   }
 
   .topbar {
     padding: 10px 16px;
     align-items: center;
+    max-width: 100vw;
   }
 
   .mobile-tab-strip {
@@ -3738,6 +3755,8 @@ td small {
     gap: 8px;
     padding: 0 16px 12px;
     overflow-x: auto;
+    width: 100%;
+    max-width: 100vw;
     scrollbar-width: none;
     -ms-overflow-style: none;
     background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(248, 250, 252, 0.75));
@@ -4209,6 +4228,52 @@ td small {
 
   .order-detail-widget-container > div:first-child {
     gap: 8px;
+  }
+
+  .orders-mobile-detail-view {
+    gap: 6px !important;
+  }
+
+  .orders-mobile-toolbar {
+    gap: 6px !important;
+  }
+
+  .orders-mobile-back {
+    height: 28px !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+  }
+
+  .orders-mobile-actions-top {
+    gap: 4px !important;
+    padding-bottom: 0 !important;
+  }
+
+  .orders-mobile-actions-top .primary-button,
+  .orders-mobile-actions-top .ghost-button {
+    height: 28px !important;
+    padding: 0 8px !important;
+    font-size: 10px !important;
+  }
+
+  .orders-mobile-detail-shell {
+    padding: 8px !important;
+    border-radius: 14px !important;
+    gap: 6px !important;
+  }
+
+  .orders-mobile-detail-shell > div:first-child {
+    gap: 8px !important;
+  }
+
+  .orders-mobile-detail-section {
+    padding-top: 6px !important;
+    gap: 6px !important;
+  }
+
+  .orders-mobile-detail-section > div:first-child {
+    gap: 6px !important;
+    font-size: 11px !important;
   }
 
   .orders-mobile-detail-view,
