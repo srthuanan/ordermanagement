@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Filter, Download, Eye, PackageCheck, X, FileCheck, Ban, Pencil, ScrollText } from 'lucide-react';
 import { Order, OrderStatus, InventoryItem } from '../types';
 import { statusTone } from '../constants';
@@ -48,11 +48,56 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
   onSelectPolicy
 }) => {
   const reviewStatuses: OrderStatus[] = ['Chờ phê duyệt', 'Đã phê duyệt', 'Yêu cầu bổ sung', 'Đã bổ sung', 'Chờ ký hóa đơn'];
+  const [selectedOrderId, setSelectedOrderId] = useState<string>('');
+  const selectedOrder = useMemo(
+    () => orders.find((order) => order.id === selectedOrderId) ?? orders[0] ?? null,
+    [orders, selectedOrderId]
+  );
+
+  useEffect(() => {
+    if (!orders.length) {
+      if (selectedOrderId) {
+        setSelectedOrderId('');
+      }
+      return;
+    }
+
+    if (!selectedOrderId || !orders.some((order) => order.id === selectedOrderId)) {
+      setSelectedOrderId(orders[0].id);
+    }
+  }, [orders, selectedOrderId]);
+
   const totalOrders = orders.length;
   const unpairedOrders = orders.filter((order) => order.status === 'Chưa ghép').length;
   const reviewOrders = orders.filter((order) => reviewStatuses.includes(order.status)).length;
   const issuedOrders = orders.filter((order) => order.status === 'Đã xuất hóa đơn').length;
   const canceledOrders = orders.filter((order) => order.status === 'Đã hủy').length;
+
+  const selectedCandidates = selectedOrder
+    ? inventory.filter(
+        (item) =>
+          matchesVehicleConfig(selectedOrder, item) &&
+          canUseVehicleForPair(item, currentUsername, canOverrideHeldVehicle)
+      )
+    : [];
+
+  const selectedCanPair =
+    Boolean(selectedOrder) &&
+    canPairOrder &&
+    selectedOrder.status === 'Chưa ghép' &&
+    selectedCandidates.length > 0;
+  const selectedCanUnpair = Boolean(selectedOrder) && canManageInventory && selectedOrder.status === 'Đã ghép';
+  const selectedCanInvoice = Boolean(selectedOrder) && canManageInventory && selectedOrder.status === 'Đã ghép';
+  const selectedCanCancel =
+    Boolean(selectedOrder) &&
+    canManageInventory &&
+    selectedOrder.status !== 'Đã hủy' &&
+    selectedOrder.status !== 'Đã xuất hóa đơn';
+  const selectedCanEdit =
+    Boolean(selectedOrder) &&
+    canManageInventory &&
+    !['Đã xuất hóa đơn', 'Đã hủy', 'Chờ ký hóa đơn'].includes(selectedOrder.status);
+  const selectedCanPolicy = Boolean(selectedOrder) && canManageInventory && selectedOrder.status !== 'Đã hủy';
 
   return (
     <section className="panel orders-panel">
@@ -128,156 +173,204 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
           </div>
         </div>
 
-        <div className="orders-grid">
-          {orders.length === 0 ? (
-            <div className="orders-empty">
-              <div className="empty-state">Không tìm thấy đơn hàng phù hợp.</div>
+        <div className="orders-master-detail">
+          <aside className="orders-list-pane">
+            <div className="orders-list-pane__header">
+              <div>
+                <p className="orders-panel-subtitle">Danh sách đơn</p>
+                <h3>{orders.length} đơn đang lọc</h3>
+              </div>
+              <span className="tag">Click để xem chi tiết</span>
             </div>
-          ) : (
-            orders.map((order) => {
-              const candidates = inventory.filter(
-                (item) =>
-                  matchesVehicleConfig(order, item) &&
-                  canUseVehicleForPair(item, currentUsername, canOverrideHeldVehicle)
-              );
-              const canPair = canPairOrder && order.status === 'Chưa ghép' && candidates.length > 0;
-              const canUnpair = canManageInventory && order.status === 'Đã ghép';
-              const canInvoice = canManageInventory && order.status === 'Đã ghép';
-              const canCancel = canManageInventory && order.status !== 'Đã hủy' && order.status !== 'Đã xuất hóa đơn';
-              const canEdit = canManageInventory && !['Đã xuất hóa đơn', 'Đã hủy', 'Chờ ký hóa đơn'].includes(order.status);
-              const canPolicy = canManageInventory && order.status !== 'Đã hủy';
-              const vehicleSummary = `${order.line} / ${order.version}`;
-              const finishSummary = `${order.exterior} · ${order.interior}`;
 
-              return (
-                <article key={order.id} className="order-card">
-                  <div className="order-card__header">
-                    <div className="order-card__identity">
-                      <p className="order-card__eyebrow">Mã đơn</p>
-                      <div className="order-card__title-row">
-                        <h3>{order.id}</h3>
-                        <span className={statusTone[order.status]}>{order.status}</span>
+            <div className="orders-list">
+              {orders.length === 0 ? (
+                <div className="orders-empty">
+                  <div className="empty-state">Không tìm thấy đơn hàng phù hợp.</div>
+                </div>
+              ) : (
+                orders.map((order) => (
+                  <button
+                    key={order.id}
+                    type="button"
+                    className={`order-list-item ${selectedOrder?.id === order.id ? 'active' : ''}`}
+                    onClick={() => setSelectedOrderId(order.id)}
+                  >
+                    <div className="order-list-item__top">
+                      <div>
+                        <p className="order-list-item__id">{order.id}</p>
+                        <strong>{order.customer}</strong>
                       </div>
-                      <p className="order-card__headline">{order.customer}</p>
+                      <span className={statusTone[order.status]}>{order.status}</span>
                     </div>
-                    <button
-                      className="icon-button"
-                      title="Xem chi tiết"
-                      onClick={() => onViewOrder(order)}
-                    >
-                      <Eye size={18} />
-                    </button>
-                  </div>
 
-                  <div className="order-card__content">
-                    <div className="order-card__summary">
+                    <div className="order-list-item__meta">
+                      <span>{order.line} / {order.version}</span>
+                      <span>{order.vin || 'Chưa ghép VIN'}</span>
+                    </div>
+
+                    <div className="order-list-item__footer">
+                      <span>{order.staff}</span>
+                      <span>{order.createdAt}</span>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          </aside>
+
+          <section className="orders-detail-pane">
+            {selectedOrder ? (
+              (() => {
+                const selectedVehicleSummary = `${selectedOrder.line} / ${selectedOrder.version}`;
+                const selectedFinishSummary = `${selectedOrder.exterior} · ${selectedOrder.interior}`;
+
+                return (
+                  <>
+                    <div className="orders-detail-pane__header">
+                      <div>
+                        <p className="orders-panel-subtitle">Chi tiết đơn</p>
+                        <h3>{selectedOrder.id}</h3>
+                      </div>
+                      <button
+                        className="icon-button"
+                        title="Xem chi tiết đầy đủ"
+                        onClick={() => onViewOrder(selectedOrder)}
+                      >
+                        <Eye size={18} />
+                      </button>
+                    </div>
+
+                    <div className="orders-detail-hero">
                       <div>
                         <span>Khách hàng</span>
-                        <strong>{order.customer}</strong>
-                        <small>{order.phone}</small>
+                        <strong>{selectedOrder.customer}</strong>
+                        <small>{selectedOrder.phone}</small>
                       </div>
                       <div>
+                        <span>Trạng thái</span>
+                        <strong className={statusTone[selectedOrder.status]}>{selectedOrder.status}</strong>
+                        <small>{selectedOrder.vin || 'Chưa ghép xe'}</small>
+                      </div>
+                    </div>
+
+                    <div className="orders-detail-grid">
+                      <article>
                         <span>Tư vấn bán hàng</span>
-                        <strong>{order.staff}</strong>
-                        <small>{order.area || 'Khu vực chưa cập nhật'}</small>
-                      </div>
-                      <div>
+                        <strong>{selectedOrder.staff}</strong>
+                        <small>{selectedOrder.area || 'Khu vực chưa cập nhật'}</small>
+                      </article>
+                      <article>
                         <span>Tiến độ</span>
-                        <strong>{order.createdAt}</strong>
-                        <small>Cọc {order.depositDate} · Cần xe {order.needDate}</small>
-                      </div>
-                      <div>
-                        <span>Trạng thái xe</span>
-                        <strong>{order.vin || 'Chưa ghép'}</strong>
-                        <small>{order.pairedAt || 'Chưa có thời gian ghép'}</small>
-                      </div>
-                    </div>
-
-                    <div className="order-card__vehicle">
-                      <div>
+                        <strong>{selectedOrder.createdAt}</strong>
+                        <small>Cọc {selectedOrder.depositDate} · Cần xe {selectedOrder.needDate}</small>
+                      </article>
+                      <article>
                         <span>Dòng xe</span>
-                        <strong>{vehicleSummary}</strong>
-                      </div>
-                      <div>
-                        <span>Màu xe</span>
-                        <strong>{finishSummary}</strong>
-                      </div>
+                        <strong>{selectedVehicleSummary}</strong>
+                        <small>{selectedFinishSummary}</small>
+                      </article>
+                      <article>
+                        <span>Xe ghép</span>
+                        <strong>{selectedOrder.vin || 'Trống'}</strong>
+                        <small>{selectedOrder.pairedAt || 'Chưa có thời gian ghép'}</small>
+                      </article>
                     </div>
 
-                    <div className="order-card__meta">
-                      <span className="tag">VIN: {order.vin || 'Trống'}</span>
-                      <span className="tag">Chính sách: {order.policy || 'Chưa chọn'}</span>
-                      <span className="tag">DMS: {order.dmsCode || 'Trống'}</span>
-                      <span className="tag">Số máy: {order.engineNo || 'Trống'}</span>
+                    <div className="orders-detail-tags">
+                      <span className="tag">Chính sách: {selectedOrder.policy || 'Chưa chọn'}</span>
+                      <span className="tag">DMS: {selectedOrder.dmsCode || 'Trống'}</span>
+                      <span className="tag">Số máy: {selectedOrder.engineNo || 'Trống'}</span>
                     </div>
-                  </div>
 
-                  <div className="order-card__actions">
-                    <button
-                      className="ghost-button row-action-button"
-                      disabled={!canPair}
-                      title={
-                        canPair
-                          ? `Có ${candidates.length} xe phù hợp trong kho`
-                          : order.status !== 'Chưa ghép'
-                            ? 'Đơn đã ghép hoặc đã hoàn tất'
-                            : 'Không có xe rảnh tương ứng trong kho'
-                      }
-                      onClick={() => onPairOrder(order)}
-                    >
-                      <PackageCheck size={16} />
-                      <span>Ghép xe</span>
-                    </button>
-                    <button
-                      className="ghost-button row-action-button"
-                      disabled={!canInvoice}
-                      title={canInvoice ? 'Cập nhật hồ sơ bàn giao xe & xuất hóa đơn GTGT' : 'Chỉ đơn đã ghép mới được chốt xuất hóa đơn'}
-                      onClick={() => onInvoiceOrder(order)}
-                    >
-                      <FileCheck size={16} />
-                      <span>Xuất HĐ</span>
-                    </button>
-                    <button
-                      className="ghost-button row-action-button"
-                      disabled={!canUnpair || isUnpairingOrderId === order.id}
-                      title={canUnpair ? 'Hủy ghép và trả xe về trạng thái trống' : 'Chỉ đơn đã ghép mới hủy ghép được'}
-                      onClick={() => onUnpairOrder(order.id)}
-                    >
-                      <X size={16} />
-                      <span>{isUnpairingOrderId === order.id ? 'Đang hủy...' : 'Hủy ghép'}</span>
-                    </button>
-                    <button
-                      className="ghost-button row-action-button"
-                      disabled={!canEdit}
-                      title={canEdit ? 'Sửa thông tin đơn hàng' : 'Không cho sửa đơn đã hoàn tất'}
-                      onClick={() => onEditOrder(order)}
-                    >
-                      <Pencil size={16} />
-                      <span>Sửa</span>
-                    </button>
-                    <button
-                      className="ghost-button row-action-button"
-                      disabled={!canPolicy || isUpdatingPolicy}
-                      title={canPolicy ? 'Chọn chính sách áp dụng cho đơn hàng' : 'Đơn đã hủy'}
-                      onClick={() => onSelectPolicy(order)}
-                    >
-                      <ScrollText size={16} />
-                      <span>{isUpdatingPolicy ? 'Đang lưu...' : 'Chọn CS'}</span>
-                    </button>
-                    <button
-                      className="ghost-button row-action-button order-card__danger"
-                      disabled={!canCancel}
-                      title={canCancel ? 'Hủy đơn hàng và hoàn cọc' : 'Không cho phép hủy đơn đã hoàn tất hoặc đã hủy'}
-                      onClick={() => onCancelOrder(order)}
-                    >
-                      <Ban size={16} />
-                      <span>Hủy đơn</span>
-                    </button>
-                  </div>
-                </article>
-              );
-            })
-          )}
+                    <div className="orders-detail-matching">
+                      <div className="orders-detail-matching__header">
+                        <div>
+                          <p className="orders-panel-subtitle">Ghép xe</p>
+                          <h4>{selectedCandidates.length} xe phù hợp</h4>
+                        </div>
+                        <span className="tag">
+                          {selectedOrder.status === 'Chưa ghép' ? 'Sẵn sàng ghép' : 'Theo đơn hiện tại'}
+                        </span>
+                      </div>
+                      <p className="orders-detail-matching__note">
+                        {selectedCandidates.length > 0
+                          ? 'Hệ thống đã lọc sẵn các xe phù hợp theo cấu hình và quyền của người đang đăng nhập.'
+                          : 'Chưa có xe phù hợp trong kho hoặc xe đang bị giữ bởi người khác.'}
+                      </p>
+                    </div>
+
+                    <div className="orders-detail-actions">
+                      <button
+                        className="primary-button"
+                        disabled={!selectedCanPair}
+                        title={
+                          selectedCanPair
+                            ? `Có ${selectedCandidates.length} xe phù hợp trong kho`
+                            : selectedOrder.status !== 'Chưa ghép'
+                              ? 'Đơn đã ghép hoặc đã hoàn tất'
+                              : 'Không có xe rảnh tương ứng trong kho'
+                        }
+                        onClick={() => onPairOrder(selectedOrder)}
+                      >
+                        <PackageCheck size={16} />
+                        <span>Ghép xe</span>
+                      </button>
+                      <button
+                        className="ghost-button"
+                        disabled={!selectedCanInvoice}
+                        title={selectedCanInvoice ? 'Cập nhật hồ sơ bàn giao xe & xuất hóa đơn GTGT' : 'Chỉ đơn đã ghép mới được chốt xuất hóa đơn'}
+                        onClick={() => onInvoiceOrder(selectedOrder)}
+                      >
+                        <FileCheck size={16} />
+                        <span>Xuất HĐ</span>
+                      </button>
+                      <button
+                        className="ghost-button"
+                        disabled={!selectedCanUnpair || isUnpairingOrderId === selectedOrder.id}
+                        title={selectedCanUnpair ? 'Hủy ghép và trả xe về trạng thái trống' : 'Chỉ đơn đã ghép mới hủy ghép được'}
+                        onClick={() => onUnpairOrder(selectedOrder.id)}
+                      >
+                        <X size={16} />
+                        <span>{isUnpairingOrderId === selectedOrder.id ? 'Đang hủy...' : 'Hủy ghép'}</span>
+                      </button>
+                      <button
+                        className="ghost-button"
+                        disabled={!selectedCanEdit}
+                        title={selectedCanEdit ? 'Sửa thông tin đơn hàng' : 'Không cho sửa đơn đã hoàn tất'}
+                        onClick={() => onEditOrder(selectedOrder)}
+                      >
+                        <Pencil size={16} />
+                        <span>Sửa</span>
+                      </button>
+                      <button
+                        className="ghost-button"
+                        disabled={!selectedCanPolicy || isUpdatingPolicy}
+                        title={selectedCanPolicy ? 'Chọn chính sách áp dụng cho đơn hàng' : 'Đơn đã hủy'}
+                        onClick={() => onSelectPolicy(selectedOrder)}
+                      >
+                        <ScrollText size={16} />
+                        <span>{isUpdatingPolicy ? 'Đang lưu...' : 'Chọn CS'}</span>
+                      </button>
+                      <button
+                        className="ghost-button order-card__danger"
+                        disabled={!selectedCanCancel}
+                        title={selectedCanCancel ? 'Hủy đơn hàng và hoàn cọc' : 'Không cho phép hủy đơn đã hoàn tất hoặc đã hủy'}
+                        onClick={() => onCancelOrder(selectedOrder)}
+                      >
+                        <Ban size={16} />
+                        <span>Hủy đơn</span>
+                      </button>
+                    </div>
+                  </>
+                );
+              })()
+            ) : (
+              <div className="orders-detail-empty">
+                <div className="empty-state">Chọn một đơn ở bên trái để xem chi tiết.</div>
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </section>
