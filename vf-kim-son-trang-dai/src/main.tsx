@@ -264,6 +264,27 @@ function App() {
           activeTabIcon={activeTabObj?.icon}
         />
 
+        <nav className="mobile-tab-strip" aria-label="Điều hướng nhanh trên di động">
+          {visibleTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                className={isActive ? 'mobile-tab-chip active' : 'mobile-tab-chip'}
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  setSidebarOpen(false);
+                }}
+              >
+                <Icon size={16} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
         {sidebarOpen && (
           <button className="backdrop" onClick={() => setSidebarOpen(false)} aria-label="Đóng menu">
             <X size={20} />

@@ -2716,6 +2716,33 @@ td small {
   display: none;
 }
 
+.mobile-tab-strip {
+  display: none;
+}
+
+.mobile-tab-chip {
+  appearance: none;
+  border: 1px solid #dbe4ee;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 999px;
+  min-height: 34px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.mobile-tab-chip.active {
+  background: #0f766e;
+  color: #ffffff;
+  border-color: #0f766e;
+}
+
 .modal-layer {
   position: fixed;
   z-index: 9999;
@@ -3707,6 +3734,25 @@ td small {
     align-items: center;
   }
 
+  .mobile-tab-strip {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(248, 250, 252, 0.75));
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-tab-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-tab-chip {
+    flex: 0 0 auto;
+  }
+
   .top-actions {
     gap: 8px;
   }
@@ -3821,6 +3867,77 @@ td small {
   .pricing-hero-actions .ghost-button {
     width: 100%;
     justify-content: center;
+  }
+
+  .orders-modular-workspace,
+  .inventory-modular-workspace {
+    gap: 12px;
+  }
+
+  .orders-data-side,
+  .orders-visual-side,
+  .inventory-data-side,
+  .inventory-visual-side {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .orders-data-side,
+  .inventory-data-side {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .orders-data-side > div:first-child,
+  .inventory-data-side > div:first-child {
+    gap: 8px;
+  }
+
+  .orders-data-side .search-box,
+  .orders-data-side .select-box,
+  .inventory-data-side .search-box,
+  .inventory-data-side .select-box {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  .orders-data-side .ghost-button,
+  .orders-data-side .primary-button,
+  .inventory-data-side .ghost-button,
+  .inventory-data-side .primary-button {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0 !important;
+  }
+
+  .orders-data-side .table-wrap,
+  .inventory-data-side .table-wrap {
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .orders-data-side table,
+  .inventory-data-side table {
+    min-width: 760px !important;
+  }
+
+  .orders-visual-side,
+  .inventory-visual-side {
+    overflow: visible;
+  }
+
+  .order-detail-widget-container {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .order-detail-widget-container > div:first-child {
+    gap: 8px;
+  }
+
+  .order-detail-card-module > div:first-child {
+    align-items: flex-start;
   }
 
   .pricing-quote-sheet {
