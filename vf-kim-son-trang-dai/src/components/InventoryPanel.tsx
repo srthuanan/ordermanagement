@@ -279,51 +279,53 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
 
           {/* Mobile list view */}
           {isMobile && mobileView === 'list' ? (
-            <div className="inventory-mobile-card-list">
-              {visibleItems.length === 0 ? (
-                <div className="empty-state" style={{ padding: '24px 16px', textAlign: 'center' }}>
-                  Không có dữ liệu kho xe phù hợp với bộ lọc hiện tại.
-                </div>
-              ) : (
-                visibleItems.map((item) => {
-                  const isActive = selectedItem?.vin === item.vin;
-                  return (
-                    <button
-                      key={item.vin}
-                      type="button"
-                      className={isActive ? 'inventory-mobile-card active' : 'inventory-mobile-card'}
-                      onClick={() => {
-                        setSelectedVin(item.vin);
-                        setMobileView('detail');
-                        if (item.latitude !== null && item.longitude !== null) {
-                          setHighlightedVin(item.vin);
-                        }
-                      }}
-                    >
-                      <div className="inventory-mobile-card-header">
-                        <div className="inventory-mobile-card-headings">
-                          <p className="inventory-mobile-card-title">{item.vin}</p>
-                          <p className="inventory-mobile-card-subtitle">{item.line} · {item.version}</p>
-                        </div>
-                        <span className={stockTone[item.status]}>{item.status}</span>
-                      </div>
-                      <div className="inventory-mobile-card-divider" />
-                      <div className="inventory-mobile-card-body">
-                        <div className="inventory-mobile-card-grid">
-                          <div>
-                            <span>Ngoại thất</span>
-                            <strong>{item.exterior || '---'}</strong>
+            <div className="inventory-mobile-list-shell">
+              <div className="inventory-mobile-card-list">
+                {visibleItems.length === 0 ? (
+                  <div className="empty-state" style={{ padding: '24px 16px', textAlign: 'center' }}>
+                    Không có dữ liệu kho xe phù hợp với bộ lọc hiện tại.
+                  </div>
+                ) : (
+                  visibleItems.map((item) => {
+                    const isActive = selectedItem?.vin === item.vin;
+                    return (
+                      <button
+                        key={item.vin}
+                        type="button"
+                        className={isActive ? 'inventory-mobile-card active' : 'inventory-mobile-card'}
+                        onClick={() => {
+                          setSelectedVin(item.vin);
+                          setMobileView('detail');
+                          if (item.latitude !== null && item.longitude !== null) {
+                            setHighlightedVin(item.vin);
+                          }
+                        }}
+                      >
+                        <div className="inventory-mobile-card-header">
+                          <div className="inventory-mobile-card-headings">
+                            <p className="inventory-mobile-card-title">{item.vin}</p>
+                            <p className="inventory-mobile-card-subtitle">{item.line} · {item.version}</p>
                           </div>
-                          <div>
-                            <span>Nội thất</span>
-                            <strong>{item.interior || '---'}</strong>
+                          <span className={stockTone[item.status]}>{item.status}</span>
+                        </div>
+                        <div className="inventory-mobile-card-divider" />
+                        <div className="inventory-mobile-card-body">
+                          <div className="inventory-mobile-card-grid">
+                            <div>
+                              <span>Ngoại thất</span>
+                              <strong>{item.exterior || '---'}</strong>
+                            </div>
+                            <div>
+                              <span>Nội thất</span>
+                              <strong>{item.interior || '---'}</strong>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </button>
-                  );
-                })
-              )}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             </div>
           ) : null}
 
