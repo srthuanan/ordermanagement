@@ -461,8 +461,10 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                   </div>
                 ) : null}
 
-                {/* Header Widget */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '10px' }}>
+                {!isMobile ? (
+                  <>
+                    {/* Header Widget */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '10px' }}>
                   <div>
                     <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chi tiết yêu cầu HĐ</span>
                     <h3 className="clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedRequest.so_don_hang, 'Mã đơn')} style={{ margin: '2px 0 0 0', fontSize: '18px', fontWeight: 800, color: '#0f766e', letterSpacing: '-0.02em' }}>
@@ -591,8 +593,8 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                   </div>
                 </div>
 
-                {/* BẢNG HÀNH ĐỘNG (Được đưa từ row xuống widget tuyệt đẹp) */}
-                <div className="orders-detail-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
+                    {/* BẢNG HÀNH ĐỘNG (Được đưa từ row xuống widget tuyệt đẹp) */}
+                    <div className="orders-detail-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
                   {canApprove && ['Chờ phê duyệt', 'Đã bổ sung'].includes(workflowStatus) && (
                     <>
                       <button
@@ -657,7 +659,9 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                       <span>Yêu cầu này đã hoàn tất quy trình</span>
                     </div>
                   )}
-                </div>
+                    </div>
+                  </>
+                ) : null}
               </>
             ) : (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#94a3b8', textAlign: 'center', gap: '12px' }}>
