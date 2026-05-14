@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, CheckCircle2, XCircle, Clock, ExternalLink, CheckSquare, FilePlus2, User, Car, CreditCard, FileText, HelpCircle, ArrowLeft } from 'lucide-react';
+import { Search, CheckCircle2, XCircle, Clock, ExternalLink, CheckSquare, FilePlus2, User, Car, CreditCard, FileText, HelpCircle } from 'lucide-react';
 import { YeucauxhdRow } from '../types';
 import { copyToClipboard } from '../utils/clipboard';
 
@@ -27,7 +27,6 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
-  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState<boolean>(false);
 
   const getWorkflowStatus = (r: YeucauxhdRow) => r.trang_thai_xu_ly || (
     r.status === 'approved' ? 'Đã phê duyệt' : r.status === 'rejected' ? 'Từ chối' : 'Chờ phê duyệt'
@@ -61,14 +60,6 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
 
   const workflowStatus = selectedRequest ? getWorkflowStatus(selectedRequest) : '';
 
-  // Tính toán chỉ số tổng hợp cho đồng bộ với Tab Đơn hàng
-  const totalReqs = requests.length;
-  const pendingApproval = requests.filter(r => getWorkflowStatus(r) === 'Chờ phê duyệt').length;
-  const approvedReqs = requests.filter(r => ['Đã phê duyệt', 'Đã bổ sung'].includes(getWorkflowStatus(r))).length;
-  const pendingSign = requests.filter(r => getWorkflowStatus(r) === 'Chờ ký hóa đơn').length;
-  const completed = requests.filter(r => getWorkflowStatus(r) === 'Đã xuất hóa đơn').length;
-  const supp = requests.filter(r => getWorkflowStatus(r) === 'Yêu cầu bổ sung').length;
-
   const statusColors: Record<string, string> = {
     'Đã xuất hóa đơn': 'status-live',
     'Từ chối': 'status-error',
@@ -93,114 +84,45 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
   };
 
   return (
-    <section className="panel invoice-panel">
-      <div className={`orders-modular-workspace ${isMobileDetailOpen ? 'mobile-detail-active' : ''}`}>
+    <section className="panel">
+      <div className="orders-modular-workspace">
         
         {/* CÁNH TRÁI: BẢNG DỮ LIỆU YÊU CẦU HÓA ĐƠN */}
-        <div className="orders-data-side invoice-data-side">
-          {/* 1. Chỉ số tóm tắt nhanh (Story bar) - Đồng bộ 100% với Tab Đơn hàng */}
-          <div className="no-scrollbar invoice-summary-strip" style={{ display: 'flex', gap: '6px', overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: '6px', borderBottom: '1px dashed #e2e8f0', marginBottom: '2px', width: '100%', boxSizing: 'border-box', flexShrink: 0 }}>
-            <span className="tag" style={{ fontSize: '10.5px', padding: '3px 8px', background: '#f1f5f9', color: '#475569', borderRadius: '6px', border: '1px solid #cbd5e1', fontWeight: 600 }}>
-              Tổng yêu cầu: <strong>{totalReqs}</strong>
-            </span>
-            <span className="tag" style={{ fontSize: '10.5px', padding: '3px 8px', background: '#fef9c3', color: '#a16207', borderRadius: '6px', border: '1px solid #fef08a', fontWeight: 600 }}>
-              Chờ phê duyệt: <strong>{pendingApproval}</strong>
-            </span>
-            <span className="tag" style={{ fontSize: '10.5px', padding: '3px 8px', background: '#e0f2fe', color: '#0369a1', borderRadius: '6px', border: '1px solid #bae6fd', fontWeight: 600 }}>
-              Đã phê duyệt: <strong>{approvedReqs}</strong>
-            </span>
-            <span className="tag" style={{ fontSize: '10.5px', padding: '3px 8px', background: '#f5f3ff', color: '#6d28d9', borderRadius: '6px', border: '1px solid #ddd6fe', fontWeight: 600 }}>
-              Chờ ký HĐ: <strong>{pendingSign}</strong>
-            </span>
-            <span className="tag" style={{ fontSize: '10.5px', padding: '3px 8px', background: '#f0fdf4', color: '#16a34a', borderRadius: '6px', border: '1px solid #bbf7d0', fontWeight: 600 }}>
-              Đã xuất HĐ: <strong>{completed}</strong>
-            </span>
-            <span className="tag" style={{ fontSize: '10.5px', padding: '3px 8px', background: '#fff1f2', color: '#be123c', borderRadius: '6px', border: '1px solid #fecdd3', fontWeight: 600 }}>
-              Cần bổ sung: <strong>{supp}</strong>
-            </span>
+        <div className="orders-data-side">
+          <div style={{ 
+            padding: '4px 0', 
+            background: '#ffffff', 
+            display: 'flex', 
+            flexWrap: 'wrap', 
+            alignItems: 'center', 
+            gap: '8px' 
+          }}>
+            <label className="search-box" style={{ flex: '1 1 220px', minHeight: '34px', height: '34px', padding: '0 10px', border: '1px solid #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Search size={14} style={{ color: '#64748b' }} />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Tìm số đơn, KH, VIN..."
+                style={{ fontSize: '12.5px', border: 'none', outline: 'none', width: '100%', color: '#1e293b' }}
+              />
+            </label>
+            
+            <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px', flex: '2 1 auto' }} className="no-scrollbar">
+              {['all', 'Chờ phê duyệt', 'Đã phê duyệt', 'Yêu cầu bổ sung', 'Chờ ký hóa đơn', 'Đã xuất hóa đơn'].map((status) => (
+                <button
+                  key={status}
+                  className={statusFilter === status ? 'primary-button' : 'ghost-button'}
+                  style={{ fontSize: '11.5px', height: '34px', padding: '0 10px', borderRadius: '8px', whiteSpace: 'nowrap', fontWeight: 600 }}
+                  onClick={() => setStatusFilter(status)}
+                >
+                  {status === 'all' ? 'Tất cả' : status}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <label className="search-box invoice-search-box" style={{ flex: 'none', minHeight: '34px', height: '34px', padding: '0 10px', border: '1px solid #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', width: '100%', boxSizing: 'border-box' }}>
-            <Search size={14} style={{ color: '#64748b' }} />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Tìm số đơn, KH, VIN..."
-              style={{ fontSize: '12.5px', border: 'none', outline: 'none', width: '100%', color: '#1e293b' }}
-            />
-          </label>
-          
-          <div className="no-scrollbar invoice-status-bar" style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px', width: '100%', boxSizing: 'border-box', flexShrink: 0 }}>
-            {['all', 'Chờ phê duyệt', 'Đã phê duyệt', 'Yêu cầu bổ sung', 'Chờ ký hóa đơn', 'Đã xuất hóa đơn'].map((status) => (
-              <button
-                key={status}
-                className={statusFilter === status ? 'primary-button' : 'ghost-button'}
-                style={{ fontSize: '11.5px', height: '34px', padding: '0 10px', borderRadius: '8px', whiteSpace: 'nowrap', fontWeight: 600 }}
-                onClick={() => setStatusFilter(status)}
-              >
-                {status === 'all' ? 'Tất cả' : status}
-              </button>
-            ))}
-          </div>
-
-          {/* HIỂN THỊ DI ĐỘNG: Danh sách Card */}
-          <div className="mobile-only no-scrollbar invoice-mobile-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px', overflowY: 'auto', maxHeight: 'calc(100vh - 210px)', paddingBottom: '20px' }}>
-            {filtered.length === 0 ? (
-              <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', fontStyle: 'italic', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
-                Không tìm thấy yêu cầu hóa đơn nào.
-              </div>
-            ) : (
-              filtered.map((r) => {
-                const isActive = selectedRequest?.id === r.id;
-                const currentStatus = getWorkflowStatus(r);
-                return (
-                  <div
-                    className="invoice-mobile-card"
-                    key={r.id}
-                    onClick={() => { setSelectedRequestId(r.id); setIsMobileDetailOpen(true); }}
-                    style={{
-                      background: '#ffffff',
-                      border: `1.5px solid ${isActive ? '#0f766e' : '#cbd5e1'}`,
-                      borderRadius: '14px',
-                      padding: '12px 14px',
-                      boxShadow: isActive ? '0 4px 12px rgba(15, 118, 110, 0.08)' : '0 1px 3px rgba(0,0,0,0.02)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed #e2e8f0', paddingBottom: '6px' }}>
-                      <strong style={{ fontSize: '12.5px', color: '#0f766e', letterSpacing: '0.01em' }}>{r.so_don_hang}</strong>
-                      {renderTableStatus(currentStatus)}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '13.5px' }}>{r.ten_khach_hang}</div>
-                        <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '1px' }}>👨‍💼 {r.tvbh || r.requested_by_name || 'Hệ thống'}</div>
-                      </div>
-                      <div style={{ textAlign: 'right', fontSize: '11px', color: '#64748b' }}>
-                        <div>📅 {r.ngay_yeu_cau || r.created_at ? new Date(r.ngay_yeu_cau || r.created_at).toLocaleDateString('vi-VN') : 'N/A'}</div>
-                      </div>
-                    </div>
-                    <div style={{ background: '#fafafb', border: '1px solid #f1f5f9', borderRadius: '8px', padding: '6px 10px', fontSize: '11.5px' }}>
-                      <div style={{ fontWeight: 600, color: '#475569' }}>🚗 {r.dong_xe || ''} {r.phien_ban || ''}</div>
-                      <div style={{ color: '#64748b', fontSize: '11px', marginTop: '1px' }}>🎨 {r.ngoai_that || '---'} · {r.noi_that || '---'}</div>
-                    </div>
-                    {r.vin && (
-                      <div style={{ fontSize: '11px', color: '#0369a1', fontWeight: 700, background: '#e0f2fe', padding: '3px 8px', borderRadius: '6px', display: 'inline-block', alignSelf: 'flex-start' }}>
-                        🔑 VIN: {r.vin}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* HIỂN THỊ MÁY TÍNH: Bảng dữ liệu */}
-          <div className="table-wrap desktop-only" style={{ marginTop: '4px' }}>
+          <div className="table-wrap" style={{ marginTop: '4px' }}>
             <table>
               <thead>
                 <tr>
@@ -223,7 +145,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                     return (
                       <tr 
                         key={r.id}
-                        onClick={() => { setSelectedRequestId(r.id); setIsMobileDetailOpen(true); }}
+                        onClick={() => setSelectedRequestId(r.id)}
                         className={isActive ? 'active-row' : ''}
                         style={{ cursor: 'pointer', transition: 'background 0.15s' }}
                       >
@@ -248,8 +170,8 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
         </div>
 
         {/* CÁNH PHẢI: CHI TIẾT YÊU CẦU HÓA ĐƠN WIDGET */}
-        <div className="orders-visual-side invoice-visual-side">
-          <div className="order-detail-widget-container invoice-detail-container" style={{ 
+        <div className="orders-visual-side">
+          <div className="order-detail-widget-container" style={{ 
             flex: 1, 
             display: 'flex', 
             flexDirection: 'column', 
@@ -264,18 +186,6 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
           }}>
             {selectedRequest ? (
               <>
-                {/* Nút quay lại cho giao diện Mobile */}
-                <div className="mobile-only" style={{ paddingBottom: '8px', borderBottom: '1px solid #e2e8f0', marginBottom: '12px' }}>
-                  <button 
-                    type="button"
-                    className="ghost-button" 
-                    onClick={() => setIsMobileDetailOpen(false)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#0f766e', padding: '10px 14px', background: '#f0fdfa', border: '1px solid #5eead4', borderRadius: '10px', width: '100%', justifyContent: 'center', fontSize: '13.5px', cursor: 'pointer' }}
-                  >
-                    <ArrowLeft size={16} strokeWidth={2.5} />
-                    <span>Quay lại danh sách yêu cầu</span>
-                  </button>
-                </div>
                 {/* Header Widget */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '10px' }}>
                   <div>
@@ -293,7 +203,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                     <User size={14} />
                     <span>Nhân sự & Thời gian</span>
                   </div>
-                  <div className="dynamic-two-column-grid" style={{ gap: '8px 12px', flex: 1, alignContent: 'center' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
                     <div className="clickable-copy-field" title="Click để copy tên khách" onClick={() => copyToClipboard(selectedRequest.ten_khach_hang, 'Tên khách')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
                       <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Khách hàng</span>
                       <strong style={{ fontSize: '14px', color: '#0f172a', fontWeight: 700 }}>{selectedRequest.ten_khach_hang}</strong>
@@ -319,7 +229,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                     <Car size={14} />
                     <span>Xe & Hệ thống</span>
                   </div>
-                  <div className="dynamic-two-column-grid" style={{ gap: '8px 12px', flex: 1, alignContent: 'center' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
                       <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Cấu hình đặt cọc</span>
                       <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{selectedRequest.dong_xe || '---'} {selectedRequest.phien_ban || ''}</strong>
@@ -357,7 +267,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                     <CreditCard size={14} />
                     <span>Tài chính & Hồ sơ</span>
                   </div>
-                  <div className="dynamic-two-column-grid" style={{ gap: '8px 12px', flex: 1, alignContent: 'center' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
                       <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Hoa hồng ứng</span>
                       <strong style={{ fontSize: '14px', color: '#0f766e', fontWeight: 700 }}>{selectedRequest.hoa_hong_ung || '---'}</strong>
@@ -407,7 +317,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                 </div>
 
                 {/* BẢNG HÀNH ĐỘNG (Được đưa từ row xuống widget tuyệt đẹp) */}
-                <div className="orders-detail-actions dynamic-two-column-grid" style={{ gap: '6px', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
+                <div className="orders-detail-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
                   {canApprove && ['Chờ phê duyệt', 'Đã bổ sung'].includes(workflowStatus) && (
                     <>
                       <button

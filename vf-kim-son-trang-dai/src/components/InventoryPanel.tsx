@@ -108,12 +108,11 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
         
         {/* Left Area (Data & Filters) */}
         <div className="inventory-data-side">
-          <div className="no-scrollbar" style={{ 
+          <div style={{ 
             padding: '4px 0 8px 0', 
             background: '#ffffff', 
             display: 'flex', 
-            overflowX: 'auto',
-            whiteSpace: 'nowrap',
+            flexWrap: 'wrap', 
             alignItems: 'center', 
             gap: '8px' 
           }}>
@@ -222,133 +221,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
           </div>
 
           {/* Table Block */}
-          {/* HIỂN THỊ DI ĐỘNG: Danh sách Xe dạng Card trực quan */}
-          <div className="mobile-only no-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px', overflowY: 'auto', maxHeight: 'calc(100vh - 240px)', paddingBottom: '20px' }}>
-            {visibleItems.length === 0 ? (
-              <div className="empty-state" style={{ padding: '30px', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
-                Không có dữ liệu kho xe phù hợp với bộ lọc.
-              </div>
-            ) : (
-              visibleItems.map((item) => (
-                <div 
-                  key={item.vin}
-                  style={{
-                    background: '#ffffff',
-                    border: '1.5px solid #e2e8f0',
-                    borderRadius: '14px',
-                    padding: '12px 14px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '8px',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.01)'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed #e2e8f0', paddingBottom: '6px' }}>
-                    <strong 
-                      onClick={() => {
-                        if (item.latitude !== null && item.longitude !== null) {
-                          setHighlightedVin(null);
-                          setTimeout(() => setHighlightedVin(item.vin), 50);
-                        }
-                      }}
-                      style={{ 
-                        fontSize: '12.5px', 
-                        color: (item.latitude !== null) ? '#2563eb' : '#0f172a',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        cursor: (item.latitude !== null) ? 'pointer' : 'default'
-                      }}
-                    >
-                      {item.vin}
-                      {item.latitude !== null && <LocateFixed size={13} style={{ color: '#10b981' }} />}
-                    </strong>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                      <span className={stockTone[item.status]} style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 700 }}>
-                        {item.status}
-                      </span>
-                      {item.holdExpiry && <small style={{ fontSize: '9.5px', color: '#be123c', marginTop: '1px', fontWeight: 600 }}>Hạn: {item.holdExpiry}</small>}
-                    </div>
-                  </div>
-
-                  <div style={{ background: '#fafafb', border: '1px solid #f1f5f9', borderRadius: '8px', padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 700, color: '#334155', fontSize: '12px' }}>🚗 {item.line}</div>
-                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '1px' }}>{item.version}</div>
-                    </div>
-                    <div style={{ textAlign: 'right', fontSize: '11px', color: '#64748b' }}>
-                      <div>🎨 Ext: <strong style={{ color: '#334155' }}>{item.exterior}</strong></div>
-                      <div>💺 Int: <strong style={{ color: '#334155' }}>{item.interior}</strong></div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', borderTop: '1px dashed #f1f5f9', paddingTop: '6px' }}>
-                    {item.status === 'Đang giữ' && item.holderUsername !== currentUsername && (
-                      queuedVins.some((vin) => vin.toUpperCase() === item.vin.toUpperCase()) ? (
-                        <button
-                          className="row-action-button action-btn-release"
-                          disabled={isQueueingVin === item.vin}
-                          onClick={() => onLeaveQueue(item.vin)}
-                          style={{ padding: '5px 10px', borderRadius: '6px', fontSize: '11px', flex: 1, justifyContent: 'center', height: '30px' }}
-                        >
-                          <X size={13} />
-                          <span>{isQueueingVin === item.vin ? '...' : 'Hủy chờ'}</span>
-                        </button>
-                      ) : (
-                        <button
-                          className="row-action-button action-btn-queue"
-                          disabled={isQueueingVin === item.vin}
-                          onClick={() => onJoinQueue(item.vin)}
-                          style={{ padding: '5px 10px', borderRadius: '6px', fontSize: '11px', flex: 1, justifyContent: 'center', height: '30px' }}
-                        >
-                          <Clock size={13} />
-                          <span>{isQueueingVin === item.vin ? '...' : 'Chờ xe'}</span>
-                        </button>
-                      )
-                    )}
-
-                    {item.status === 'Chưa ghép' && (
-                      <button
-                        className="row-action-button action-btn-hold"
-                        disabled={!canHoldVehicle || isHoldingVin === item.vin}
-                        onClick={() => onHoldItem(item)}
-                        style={{ padding: '5px 10px', borderRadius: '6px', fontSize: '11px', flex: 1, justifyContent: 'center', height: '30px' }}
-                      >
-                        <PackageCheck size={13} />
-                        <span>{isHoldingVin === item.vin ? '...' : 'Giữ xe'}</span>
-                      </button>
-                    )}
-
-                    {(canOverrideHeldVehicle || item.holderUsername === currentUsername) && item.status === 'Đang giữ' && (
-                       <button
-                         className="row-action-button action-btn-create"
-                         onClick={() => onCreateOrderFromItem(item)}
-                         style={{ padding: '5px 10px', borderRadius: '6px', fontSize: '11px', flex: 1, justifyContent: 'center', height: '30px' }}
-                       >
-                         <FilePlus2 size={13} />
-                         <span>Tạo đơn</span>
-                       </button>
-                    )}
-
-                    {(canOverrideHeldVehicle || item.holderUsername === currentUsername) && item.status === 'Đang giữ' && (
-                      <button
-                        className="row-action-button action-btn-release"
-                        disabled={isReleasingVin === item.vin}
-                        onClick={() => onReleaseItem(item.vin)}
-                        style={{ padding: '5px 10px', borderRadius: '6px', fontSize: '11px', flex: 1, justifyContent: 'center', height: '30px' }}
-                      >
-                        <X size={13} />
-                        <span>{isReleasingVin === item.vin ? '...' : 'Bỏ giữ'}</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* HIỂN THỊ MÁY TÍNH: Bảng dữ liệu chuyên nghiệp */}
-          <div className="table-wrap desktop-only" style={{ marginTop: '8px' }}>
+          <div className="table-wrap" style={{ marginTop: '8px' }}>
             <table>
               <thead>
                 <tr>
@@ -402,6 +275,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                       </td>
                       <td>
                         <div className="row-actions">
+
                           {item.status === 'Đang giữ' && item.holderUsername !== currentUsername && (
                             queuedVins.some((vin) => vin.toUpperCase() === item.vin.toUpperCase()) ? (
                               <button
@@ -425,6 +299,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                               </button>
                             )
                           )}
+
                           {item.status === 'Chưa ghép' && (
                             <button
                               className="row-action-button action-btn-hold"
@@ -436,6 +311,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                               <span>{isHoldingVin === item.vin ? 'Đang giữ...' : 'Giữ xe'}</span>
                             </button>
                           )}
+
                           {(canOverrideHeldVehicle || item.holderUsername === currentUsername) && item.status === 'Đang giữ' && (
                              <button
                                className="row-action-button action-btn-create"
@@ -446,6 +322,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                                <span>Tạo đơn</span>
                              </button>
                           )}
+
                           {(canOverrideHeldVehicle || item.holderUsername === currentUsername) && item.status === 'Đang giữ' && (
                             <button
                               className="row-action-button action-btn-release"

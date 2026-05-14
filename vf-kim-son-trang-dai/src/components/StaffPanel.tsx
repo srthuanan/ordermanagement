@@ -15,8 +15,7 @@ import {
   X,
   Send,
   ExternalLink,
-  Copy,
-  ArrowLeft
+  Copy
 } from 'lucide-react';
 import { ProfileRow } from '../types';
 import { cancelStaffInvite, inviteStaffMember, resendStaffInvite } from '../services/apiService';
@@ -37,7 +36,6 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
   const [success, setSuccess] = React.useState('');
   const [error, setError] = React.useState('');
   const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [isMobileDetailOpen, setIsMobileDetailOpen] = React.useState(false);
 
   const getStatusLabel = (item: ProfileRow) => {
     if (item.invite_status === 'active') return 'Đã kích hoạt';
@@ -172,7 +170,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
       )}
 
       {/* Primary Modular Dual Pane Workspace */}
-      <div className={`orders-modular-workspace ${isMobileDetailOpen ? 'mobile-detail-active' : ''}`}>
+      <div className="orders-modular-workspace">
         
         {/* LEFT PANEL: Data Grid */}
         <div className="orders-data-side" style={{ display: 'flex', flexDirection: 'column', background: '#ffffff', borderRadius: '20px', border: '1px solid #cbd5e1', boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.02)', overflow: 'hidden' }}>
@@ -199,123 +197,68 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
           </div>
 
           {/* Data Table */}
-          {/* Data Table & Mobile List Hybrid */}
-          <div className="orders-table-scroller no-scrollbar" style={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 230px)' }}>
+          <div className="orders-table-scroller" style={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 260px)' }}>
             {filteredStaff.length === 0 ? (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
                 <Users size={36} style={{ color: '#cbd5e1', marginBottom: '10px' }} />
                 <p style={{ fontWeight: 600, margin: 0 }}>Không có dữ liệu trùng khớp</p>
               </div>
             ) : (
-              <>
-                {/* HIỂN THỊ DI ĐỘNG: Dạng thẻ gọn gàng */}
-                <div className="mobile-only" style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', paddingBottom: '24px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                    <th style={{ padding: '12px 20px', fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Họ & Tên</th>
+                    <th style={{ padding: '12px 20px', fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Quyền hạn</th>
+                    <th style={{ padding: '12px 20px', fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
                   {filteredStaff.map((item) => {
                     const emailVal = getRowEmail(item);
                     const isActive = selectedStaff?.id === item.id;
                     return (
-                      <div 
+                      <tr 
                         key={item.id}
-                        onClick={() => { setSelectedEmail(emailVal); setIsMobileDetailOpen(true); }}
-                        style={{
-                          background: '#ffffff',
-                          border: `1.5px solid ${isActive ? '#0f766e' : '#cbd5e1'}`,
-                          borderRadius: '14px',
-                          padding: '12px 14px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '8px',
-                          cursor: 'pointer',
-                          boxShadow: isActive ? '0 4px 12px rgba(15, 118, 110, 0.06)' : '0 1px 2px rgba(0,0,0,0.01)'
-                        }}
+                        onClick={() => setSelectedEmail(emailVal)}
+                        style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer', background: isActive ? 'rgba(15, 118, 110, 0.03)' : '#fff', transition: 'background 0.15s ease' }}
+                        className="hover-row"
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <td style={{ padding: '12px 20px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{item.full_name}</strong>
-                            <span style={{ fontSize: '11.5px', color: '#64748b', marginTop: '1px' }}>{emailVal}</span>
+                            <strong style={{ fontSize: '13.5px', color: isActive ? '#0f766e' : '#0f172a', fontWeight: 700 }}>{item.full_name}</strong>
+                            <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{emailVal}</span>
                           </div>
+                        </td>
+                        <td style={{ padding: '12px 20px' }}>
                           <span style={{
-                            fontSize: '10.5px',
+                            fontSize: '12px',
                             fontWeight: 700,
-                            padding: '2px 6px',
+                            padding: '3px 8px',
                             borderRadius: '6px',
                             background: item.role === 'admin' ? '#eff6ff' : '#f1f5f9',
                             color: item.role === 'admin' ? '#1d4ed8' : '#475569',
                             border: '1px solid',
                             borderColor: item.role === 'admin' ? '#bfdbfe' : '#e2e8f0'
-                          }}>{roleLabels[item.role]}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', borderTop: '1px dashed #f1f5f9', paddingTop: '6px' }}>
-                          <span style={{
-                            width: '6px',
-                            height: '6px',
-                            borderRadius: '50%',
-                            background: item.invite_status === 'active' ? '#10b981' : item.invite_status === 'canceled' ? '#ef4444' : '#f59e0b'
-                          }} />
-                          <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#64748b' }}>{getStatusLabel(item)}</span>
-                        </div>
-                      </div>
+                          }}>
+                            {roleLabels[item.role]}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 20px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <span style={{
+                              width: '6px',
+                              height: '6px',
+                              borderRadius: '50%',
+                              background: item.invite_status === 'active' ? '#10b981' : item.invite_status === 'canceled' ? '#ef4444' : '#f59e0b'
+                            }} />
+                            <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#334155' }}>{getStatusLabel(item)}</span>
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })}
-                </div>
-
-                {/* HIỂN THỊ MÁY TÍNH: Bảng dữ liệu chi tiết */}
-                <table className="desktop-only" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                      <th style={{ padding: '12px 20px', fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Họ & Tên</th>
-                      <th style={{ padding: '12px 20px', fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Quyền hạn</th>
-                      <th style={{ padding: '12px 20px', fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Trạng thái</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredStaff.map((item) => {
-                      const emailVal = getRowEmail(item);
-                      const isActive = selectedStaff?.id === item.id;
-                      return (
-                        <tr 
-                          key={item.id}
-                          onClick={() => { setSelectedEmail(emailVal); setIsMobileDetailOpen(true); }}
-                          style={{ borderBottom: '1px solid #f1f5f9', cursor: 'pointer', background: isActive ? 'rgba(15, 118, 110, 0.03)' : '#fff', transition: 'background 0.15s ease' }}
-                          className="hover-row"
-                        >
-                          <td style={{ padding: '12px 20px' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <strong style={{ fontSize: '13.5px', color: isActive ? '#0f766e' : '#0f172a', fontWeight: 700 }}>{item.full_name}</strong>
-                              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{emailVal}</span>
-                            </div>
-                          </td>
-                          <td style={{ padding: '12px 20px' }}>
-                            <span style={{
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              padding: '3px 8px',
-                              borderRadius: '6px',
-                              background: item.role === 'admin' ? '#eff6ff' : '#f1f5f9',
-                              color: item.role === 'admin' ? '#1d4ed8' : '#475569',
-                              border: '1px solid',
-                              borderColor: item.role === 'admin' ? '#bfdbfe' : '#e2e8f0'
-                            }}>
-                              {roleLabels[item.role]}
-                            </span>
-                          </td>
-                          <td style={{ padding: '12px 20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                              <span style={{
-                                width: '6px',
-                                height: '6px',
-                                borderRadius: '50%',
-                                background: item.invite_status === 'active' ? '#10b981' : item.invite_status === 'canceled' ? '#ef4444' : '#f59e0b'
-                              }} />
-                              <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#334155' }}>{getStatusLabel(item)}</span>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </>
+                </tbody>
+              </table>
             )}
           </div>
         </div>
@@ -324,18 +267,6 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
         <div className="orders-visual-side" style={{ position: 'sticky', top: '70px', alignSelf: 'start' }}>
           {selectedStaff ? (
             <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '20px', boxShadow: '0 4px 20px -5px rgba(0, 0, 0, 0.03)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}>
-              {/* Nút quay lại cho giao diện Mobile */}
-              <div className="mobile-only" style={{ padding: '12px 16px', borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
-                <button 
-                  type="button"
-                  className="ghost-button" 
-                  onClick={() => setIsMobileDetailOpen(false)}
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#0f766e', padding: '10px 14px', background: '#f0fdfa', border: '1px solid #5eead4', borderRadius: '10px', width: '100%', justifyContent: 'center', fontSize: '13.5px', cursor: 'pointer' }}
-                >
-                  <ArrowLeft size={16} strokeWidth={2.5} />
-                  <span>Quay lại danh sách nhân sự</span>
-                </button>
-              </div>
               
               {/* Card Header Banner */}
               <div style={{ background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)', padding: '20px', borderBottom: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
@@ -372,7 +303,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
               <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
                 
                 {/* Standard Attributes Grid */}
-                <div className="dynamic-two-column-grid" style={{ gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Trạng thái</span>
                     <strong style={{ display: 'block', marginTop: '2px', color: '#0f172a', fontSize: '13px', fontWeight: 700 }}>{getStatusLabel(selectedStaff)}</strong>
@@ -505,7 +436,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
               </div>
 
               {/* Action buttons for form */}
-              <div className="dynamic-two-column-grid" style={{ marginTop: 'auto', gap: '12px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
+              <div style={{ marginTop: 'auto', display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '12px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
                 <button 
                   type="button" 
                   onClick={() => setDrawerOpen(false)}

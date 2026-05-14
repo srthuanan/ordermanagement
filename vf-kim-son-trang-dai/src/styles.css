@@ -4472,12 +4472,6 @@ td small {
 }
 
 @media (max-width: 1200px) {
-  .desktop-only {
-    display: none !important;
-  }
-  .mobile-only {
-    display: block;
-  }
   .main-content:has(.orders-panel),
   .main-content:has(.invoice-panel),
   .main-content:has(.pricing-shell) {
@@ -4487,127 +4481,25 @@ td small {
     height: auto !important;
     overflow: visible !important;
   }
-  
   .orders-modular-workspace {
     grid-template-columns: 1fr !important;
     overflow: visible !important;
     height: auto !important;
   }
-
-  .invoice-panel .orders-modular-workspace {
-    gap: 12px !important;
-  }
-
-  /* ------------------------------------------------- */
-  /* DRILL-DOWN NAVIGATION SYSTEM FOR MOBILE WORKSPACES */
-  /* ------------------------------------------------- */
-  
-  /* Initially, hide the detail view on mobile so user only sees the list! */
-  .orders-modular-workspace .orders-visual-side {
-    display: none !important;
-  }
-
-  .invoice-panel .orders-modular-workspace .orders-visual-side {
-    display: none !important;
-  }
-
-  /* When an item is tapped, make details a full screen overlay with slide animation */
-  .orders-modular-workspace.mobile-detail-active .orders-visual-side {
-    display: flex !important;
-    position: fixed !important;
-    top: 54px !important; /* Below top bar height */
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100vw !important;
-    height: calc(100vh - 54px) !important;
-    background: #f8fafc !important; /* Solid slate-50 base */
-    z-index: 1500 !important; /* Sits cleanly between navbar and modals */
-    padding: 12px !important;
-    margin: 0 !important;
-    overflow-y: auto !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    box-sizing: border-box !important;
-    animation: mobileSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-
-  .invoice-panel .orders-modular-workspace.mobile-detail-active .orders-visual-side {
-    display: flex !important;
-    position: fixed !important;
-    top: 54px !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100vw !important;
-    height: calc(100vh - 54px) !important;
-    background: #f8fafc !important;
-    z-index: 1500 !important;
-    padding: 12px !important;
-    margin: 0 !important;
-    overflow-y: auto !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    box-sizing: border-box !important;
-    animation: mobileSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-  
-  /* Ensure the inner widget card expands nicely on mobile overlay */
-  .orders-modular-workspace.mobile-detail-active .orders-visual-side > div {
-    border-radius: 12px !important; /* Slightly round for card effect on mobile base */
-    min-height: min-content !important;
-    border: 1px solid #cbd5e1 !important;
-  }
-
-  /* Hide the table list when viewing the detail slide */
-  .orders-modular-workspace.mobile-detail-active .orders-data-side {
-    display: none !important;
-  }
-
-  .invoice-panel .orders-modular-workspace.mobile-detail-active .orders-data-side {
-    display: none !important;
-  }
-
-  /* Normal data side height */
-  .orders-data-side {
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  .invoice-panel .orders-data-side {
+  .orders-data-side, .orders-visual-side {
     height: auto !important;
     overflow: visible !important;
   }
   
-  /* Table columns safety & smoothness */
+  /* Fix Table columns overlapping horizontally on Mobile */
   .orders-data-side .table-wrap {
     overflow-x: auto !important;
     overflow-y: visible !important;
     width: 100% !important;
-    -webkit-overflow-scrolling: touch; 
+    -webkit-overflow-scrolling: touch; /* iOS Smooth scroll */
   }
   .orders-data-side table {
-    min-width: 760px !important; 
-  }
-
-  .invoice-panel .invoice-mobile-list {
-    max-height: calc(100vh - 210px) !important;
-  }
-
-  .invoice-panel .invoice-mobile-card {
-    border-radius: 14px !important;
-    border-color: #cbd5e1 !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
-  }
-
-  .invoice-panel .invoice-mobile-card:active {
-    transform: translateY(0) !important;
-  }
-
-  .invoice-panel .invoice-detail-container {
-    background: #f8fafc !important;
-    border-radius: 20px !important;
-    border: 1px solid #cbd5e1 !important;
+    min-width: 760px !important; /* Prevents crushing columns! */
   }
 
   .order-detail-widget-container {
@@ -4615,32 +4507,10 @@ td small {
     height: auto !important;
   }
   
+  /* PREVENT INTERNAL MODULE FIELDS FROM SQUEEZING & OVERLAPPING */
   .order-detail-card-module {
     flex: none !important;
     height: auto !important;
     min-height: 0 !important;
-  }
-}
-
-/* High-performance GPU-accelerated slide animation */
-@keyframes mobileSlideIn {
-  from {
-    transform: translate3d(100%, 0, 0);
-    opacity: 0.95;
-  }
-  to {
-    transform: translate3d(0, 0, 0);
-    opacity: 1;
-  }
-}
-
-/* Dynamic responsive layout classes for components */
-.dynamic-two-column-grid {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-}
-@media (max-width: 768px) {
-  .dynamic-two-column-grid {
-    grid-template-columns: 1fr !important;
   }
 }

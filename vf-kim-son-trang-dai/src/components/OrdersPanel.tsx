@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, Filter, Download, Eye, PackageCheck, X, FileCheck, Ban, Pencil, ScrollText, User, Car, CreditCard, ArrowLeft } from 'lucide-react';
+import { Search, Filter, Download, Eye, PackageCheck, X, FileCheck, Ban, Pencil, ScrollText, User, Car, CreditCard } from 'lucide-react';
 import { Order, OrderStatus, InventoryItem } from '../types';
 import { statusTone } from '../constants';
 import { matchesVehicleConfig, canUseVehicleForPair } from '../utils/matching';
@@ -50,7 +50,6 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
 }) => {
   const reviewStatuses: OrderStatus[] = ['Chờ phê duyệt', 'Đã phê duyệt', 'Yêu cầu bổ sung', 'Đã bổ sung', 'Chờ ký hóa đơn'];
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
-  const [isMobileDetailOpen, setIsMobileDetailOpen] = useState<boolean>(false);
   const selectedOrder = useMemo(
     () => orders.find((order) => order.id === selectedOrderId) ?? orders[0] ?? null,
     [orders, selectedOrderId]
@@ -103,11 +102,11 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
 
   return (
     <section className="panel orders-panel">
-      <div className={`orders-modular-workspace ${isMobileDetailOpen ? 'mobile-detail-active' : ''}`}>
+      <div className="orders-modular-workspace">
         {/* Cánh trái: Bảng dữ liệu đơn hàng & Bộ lọc */}
         <div className="orders-data-side">
           {/* 1. Hàng Metrics rút gọn siêu gọn */}
-          <div className="no-scrollbar" style={{ display: 'flex', gap: '6px', overflowX: 'auto', whiteSpace: 'nowrap', paddingBottom: '2px', width: '100%', boxSizing: 'border-box', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             <span className="tag" style={{ fontSize: '10.5px', padding: '3px 8px', background: '#f1f5f9', color: '#334155', borderRadius: '6px', border: '1px solid #e2e8f0', fontWeight: 600 }}>
               Tổng: <strong>{totalOrders}</strong>
             </span>
@@ -171,87 +170,26 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
             <button
               type="button"
               className="ghost-button"
-              title="Xuất Excel"
               onClick={() => alert('Tính năng xuất Excel đang được xây dựng')}
               style={{ 
                 height: '34px', 
-                padding: '0 10px', 
+                padding: '0 12px', 
                 borderRadius: '8px', 
                 fontSize: '12px', 
                 fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                minWidth: '34px',
-                justifyContent: 'center'
+                marginLeft: 'auto'
               }}
             >
-              <Download size={15} />
-              <span className="desktop-only">Xuất Excel</span>
+              <Download size={14} />
+              <span>Xuất Excel</span>
             </button>
           </div>
 
           {/* 3. Bảng dữ liệu DATA TABLE chuyên nghiệp */}
-          {/* 3. HIỂN THỊ DI ĐỘNG: Danh sách dạng Card trực quan */}
-          <div className="mobile-only no-scrollbar" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px', overflowY: 'auto', maxHeight: 'calc(100vh - 210px)', paddingBottom: '20px' }}>
-            {orders.length === 0 ? (
-              <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', fontStyle: 'italic', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
-                Không tìm thấy đơn hàng phù hợp.
-              </div>
-            ) : (
-              orders.map((order) => {
-                const isActive = selectedOrder?.id === order.id;
-                return (
-                  <div
-                    key={order.id}
-                    onClick={() => { setSelectedOrderId(order.id); setIsMobileDetailOpen(true); }}
-                    style={{
-                      background: '#ffffff',
-                      border: `1.5px solid ${isActive ? '#0f766e' : '#cbd5e1'}`,
-                      borderRadius: '14px',
-                      padding: '12px 14px',
-                      boxShadow: isActive ? '0 4px 12px rgba(15, 118, 110, 0.08)' : '0 1px 3px rgba(0,0,0,0.02)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '8px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed #e2e8f0', paddingBottom: '6px' }}>
-                      <strong style={{ fontSize: '12.5px', color: '#0f766e', letterSpacing: '0.01em' }}>{order.id}</strong>
-                      <span 
-                        className={statusTone[order.status]} 
-                        style={{ padding: '2px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 700 }}
-                      >
-                        {order.status}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div>
-                        <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '13.5px' }}>{order.customer}</div>
-                        <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '1px' }}>📞 {order.phone || 'Không có SĐT'}</div>
-                      </div>
-                      <div style={{ textAlign: 'right', fontSize: '11px', color: '#64748b' }}>
-                        <div>📍 {order.area || 'N/A'}</div>
-                      </div>
-                    </div>
-                    <div style={{ background: '#fafafb', border: '1px solid #f1f5f9', borderRadius: '8px', padding: '6px 10px', fontSize: '11.5px' }}>
-                      <div style={{ fontWeight: 600, color: '#475569' }}>🚗 {order.line} {order.version}</div>
-                      <div style={{ color: '#64748b', fontSize: '11px', marginTop: '1px' }}>🎨 {order.exterior} · {order.interior}</div>
-                    </div>
-                    {order.vin && (
-                      <div style={{ fontSize: '11px', color: '#0369a1', fontWeight: 700, background: '#e0f2fe', padding: '3px 8px', borderRadius: '6px', display: 'inline-block', alignSelf: 'flex-start' }}>
-                        🔑 VIN: {order.vin}
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            )}
-          </div>
-
-          {/* 4. HIỂN THỊ MÁY TÍNH: Bảng dữ liệu chuyên nghiệp */}
-          <div className="table-wrap desktop-only" style={{ marginTop: '4px' }}>
+          <div className="table-wrap" style={{ marginTop: '4px' }}>
             <table>
               <thead>
                 <tr>
@@ -275,7 +213,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                     return (
                       <tr
                         key={order.id}
-                        onClick={() => { setSelectedOrderId(order.id); setIsMobileDetailOpen(true); }}
+                        onClick={() => setSelectedOrderId(order.id)}
                         className={isActive ? 'active-row' : ''}
                         style={{ cursor: 'pointer', transition: 'background 0.15s' }}
                       >
@@ -330,18 +268,6 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
 
                 return (
                   <>
-                    {/* Nút quay lại cho giao diện Mobile */}
-                    <div className="mobile-only" style={{ paddingBottom: '8px', borderBottom: '1px solid #e2e8f0', marginBottom: '12px' }}>
-                      <button 
-                        type="button"
-                        className="ghost-button" 
-                        onClick={() => setIsMobileDetailOpen(false)}
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#0f766e', padding: '10px 14px', background: '#f0fdfa', border: '1px solid #5eead4', borderRadius: '10px', width: '100%', justifyContent: 'center', fontSize: '13.5px', cursor: 'pointer' }}
-                      >
-                        <ArrowLeft size={16} strokeWidth={2.5} />
-                        <span>Quay lại danh sách đơn</span>
-                      </button>
-                    </div>
                     <div className="orders-detail-pane__header clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedOrder.id, 'Mã đơn')} style={{ paddingBottom: '6px', borderBottom: '1px dashed #e2e8f0', borderRadius: '4px', padding: '4px' }}>
                       <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', fontWeight: 700, margin: 0 }}>CHI TIẾT ĐƠN</p>
                       <h3 style={{ fontSize: '16px', margin: 0, fontWeight: 800, color: '#0f766e' }}>{selectedOrder.id}</h3>
@@ -353,7 +279,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         <User size={14} />
                         <span>Nhân sự & Lịch hẹn</span>
                       </div>
-                      <div className="dynamic-two-column-grid" style={{ gap: '8px 12px', flex: 1, alignContent: 'center' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
                         <div className="clickable-copy-field" title="Click để copy tên khách" onClick={() => copyToClipboard(selectedOrder.customer, 'Tên khách')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
                           <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, marginBottom: '1px' }}>Khách hàng</span>
                           <strong style={{ fontSize: '14px', color: '#0f172a', display: 'block', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedOrder.customer}</strong>
@@ -384,7 +310,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         <Car size={14} />
                         <span>Cấu hình xe & Hệ thống</span>
                       </div>
-                      <div className="dynamic-two-column-grid" style={{ gap: '8px 12px', flex: 1, alignContent: 'center' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
                           <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Cấu hình đặt cọc</span>
                           <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{selectedVehicleSummary}</strong>
@@ -424,7 +350,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         <CreditCard size={14} />
                         <span>Tài chính & Hồ sơ</span>
                       </div>
-                      <div className="dynamic-two-column-grid" style={{ gap: '8px 12px', flex: 1, alignContent: 'center' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
                         <div className="clickable-copy-field" title="Click để copy số tiền cọc" onClick={() => copyToClipboard(selectedOrder.depositAmount ? selectedOrder.depositAmount.toString() : '', 'Số tiền cọc')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
                           <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Tiền đã cọc</span>
                           <strong style={{ fontSize: '14px', color: '#0f766e', fontWeight: 700 }}>
@@ -456,7 +382,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                       </div>
                     </div>
 
-                    <div className="orders-detail-actions dynamic-two-column-grid" style={{ gap: '6px', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
+                    <div className="orders-detail-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
                       <button
                         className="primary-button"
                         disabled={!selectedCanPair}
