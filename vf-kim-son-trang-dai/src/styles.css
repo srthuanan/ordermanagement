@@ -1616,6 +1616,12 @@ small {
   align-items: flex-start;
 }
 
+.orders-panel-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .orders-summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

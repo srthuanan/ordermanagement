@@ -106,35 +106,19 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
           <p className="eyebrow">Quản lý bán hàng</p>
           <h2>Đơn hàng</h2>
           <p className="orders-panel-lead">
-            Bố cục mới: lọc nhanh ở trên, tóm tắt trạng thái ở giữa, thao tác theo từng thẻ ở dưới.
+            Bố cục mới: danh sách bên trái, chi tiết và thao tác bên phải.
           </p>
+          <div className="orders-panel-metrics">
+            <span className="tag">Tổng {totalOrders}</span>
+            <span className="tag">Chưa ghép {unpairedOrders}</span>
+            <span className="tag">Chờ xử lý {reviewOrders}</span>
+            <span className="tag">Đã xuất HĐ {issuedOrders}</span>
+            <span className="tag">Đã hủy {canceledOrders}</span>
+          </div>
         </div>
         <div className="orders-panel-badge">
           <span className="tag">Đang hiển thị {totalOrders} đơn</span>
         </div>
-      </div>
-
-      <div className="orders-summary-grid">
-        <article className="orders-summary-card">
-          <span>Tổng đơn</span>
-          <strong>{totalOrders}</strong>
-          <small>Toàn bộ đơn đang lọc theo tab hiện tại</small>
-        </article>
-        <article className="orders-summary-card">
-          <span>Chưa ghép</span>
-          <strong>{unpairedOrders}</strong>
-          <small>Cần ghép xe từ kho phù hợp</small>
-        </article>
-        <article className="orders-summary-card">
-          <span>Chờ xử lý</span>
-          <strong>{reviewOrders}</strong>
-          <small>Đang chờ duyệt, bổ sung hoặc ký HĐ</small>
-        </article>
-        <article className="orders-summary-card">
-          <span>Đã xuất HĐ</span>
-          <strong>{issuedOrders}</strong>
-          <small>{canceledOrders} đơn đã hủy trong danh sách</small>
-        </article>
       </div>
 
       <div className="orders-workspace">
