@@ -14,6 +14,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { SyncBanner } from './components/layout/SyncBanner';
 import { AuthScreen } from './components/AuthScreen';
+import { SetPasswordScreen } from './components/SetPasswordScreen';
 
 // Lớp Giao diện Từng Tab Chức năng
 import { Dashboard } from './components/Dashboard';
@@ -143,6 +144,7 @@ function App() {
   const [requestingSupplement, setRequestingSupplement] = useState<YeucauxhdRow | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [selectingPolicyOrder, setSelectingPolicyOrder] = useState<Order | null>(null);
+  const isSetPasswordRoute = window.location.pathname === '/set-password';
   
   // Thực thi Filter trên danh sách orders
   const filteredOrders = useMemo(() => {
@@ -198,7 +200,14 @@ function App() {
 
   // Yêu cầu Login qua Supabase Auth nếu chưa có session
   if (!session) {
+    if (isSetPasswordRoute) {
+      return <SetPasswordScreen />;
+    }
     return <AuthScreen />;
+  }
+
+  if (isSetPasswordRoute) {
+    return <SetPasswordScreen />;
   }
 
   if (session && !profile && syncState === 'error') {

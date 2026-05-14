@@ -24,6 +24,9 @@ site_url = "https://ordermanagement-three.vercel.app/"
 additional_redirect_urls = [
   "https://ordermanagement-three.vercel.app",
   "https://ordermanagement-three.vercel.app/login",
+  "https://ordermanagement-three.vercel.app/set-password",
   "http://127.0.0.1:3000",
-  "http://localhost:3000"
+  "http://localhost:3000",
+  "http://127.0.0.1:3000/set-password",
+  "http://localhost:3000/set-password"
 ]

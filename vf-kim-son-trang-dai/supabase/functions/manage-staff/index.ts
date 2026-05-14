@@ -51,7 +51,7 @@ async function sendInviteOrRecovery(
   role: 'sales'
 ) {
     const appUrl = Deno.env.get('SITE_URL') || 'https://ordermanagement-three.vercel.app';
-    const redirectTo = `${appUrl.replace(/\/$/, '')}/login`;
+    const redirectTo = `${appUrl.replace(/\/$/, '')}/set-password`;
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
     data: {
       full_name: fullName,
