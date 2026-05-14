@@ -1589,6 +1589,228 @@ small {
   margin-bottom: 16px;
 }
 
+.orders-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.orders-panel-heading {
+  align-items: flex-start;
+}
+
+.orders-panel-title {
+  display: grid;
+  gap: 6px;
+}
+
+.orders-panel-lead {
+  margin: 0;
+  max-width: 62ch;
+  color: #52625b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.orders-panel-badge {
+  display: flex;
+  align-items: flex-start;
+}
+
+.orders-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.orders-summary-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #d9ded5;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fff, #fafcf9);
+  box-shadow: 0 10px 28px rgba(45, 58, 50, 0.05);
+}
+
+.orders-summary-card span {
+  color: #61726a;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.orders-summary-card strong {
+  color: #17211d;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.orders-summary-card small {
+  color: #52625b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.orders-workspace {
+  display: grid;
+  gap: 14px;
+}
+
+.orders-toolbar-shell {
+  padding: 12px;
+  border: 1px solid #d9ded5;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 42px rgba(45, 58, 50, 0.06);
+}
+
+.orders-toolbar {
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.orders-toolbar .search-box {
+  flex: 1 1 340px;
+}
+
+.orders-toolbar .select-box {
+  flex: 0 1 220px;
+}
+
+.orders-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.order-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #d9ded5;
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(15, 118, 110, 0.03), transparent 28%),
+    rgba(255, 255, 255, 0.94);
+  box-shadow: 0 18px 48px rgba(45, 58, 50, 0.08);
+}
+
+.order-card__header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.order-card__identity {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.order-card__eyebrow {
+  margin: 0;
+  color: #61726a;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.order-card__title-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.order-card__title-row h3 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.order-card__headline {
+  margin: 0;
+  color: #40534b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.order-card__content {
+  display: grid;
+  gap: 14px;
+}
+
+.order-card__summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.order-card__summary > div,
+.order-card__vehicle > div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid #e1e6dd;
+  border-radius: 12px;
+  background: #fbfcfa;
+}
+
+.order-card__summary span,
+.order-card__vehicle span {
+  color: #61726a;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.order-card__summary strong,
+.order-card__vehicle strong {
+  color: #17211d;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.order-card__summary small {
+  color: #52625b;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.order-card__vehicle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.order-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.order-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.order-card__actions .row-action-button {
+  flex: 0 0 auto;
+}
+
+.order-card__danger {
+  color: #b42318;
+}
+
+.orders-empty {
+  padding: 6px 0 2px;
+}
+
 .two-column,
 .security-layout {
   display: grid;
@@ -2214,6 +2436,11 @@ td small {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .orders-summary-grid,
+  .order-card__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .two-column,
   .security-layout {
     grid-template-columns: 1fr;
@@ -2282,9 +2509,19 @@ td small {
   .pricing-form-grid,
   .pricing-stat-grid,
   .feature-grid,
+  .orders-summary-grid,
   .stat-list,
   .pipeline {
     grid-template-columns: 1fr;
+  }
+
+  .order-card__summary,
+  .order-card__vehicle {
+    grid-template-columns: 1fr;
+  }
+
+  .order-card__header {
+    gap: 10px;
   }
 
   .customer-row {
