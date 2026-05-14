@@ -28,6 +28,7 @@ export function useOrderOperations({
   const [isQueueingVin, setIsQueueingVin] = useState('');
   const [isImportingStock, setIsImportingStock] = useState(false);
   const [importStockError, setImportStockError] = useState('');
+  const [isUpdatingVehicleLocation, setIsUpdatingVehicleLocation] = useState('');
   
   const [isPairing, setIsPairing] = useState(false);
   const [pairError, setPairError] = useState('');
@@ -233,10 +234,13 @@ export function useOrderOperations({
         if (cols.length < 5) {
           throw new Error(`Dòng ${idx + 1}: cần tối thiểu 5 cột (vin,dong_xe,phien_ban,ngoai_that,noi_that).`);
         }
-        const [vin, dong_xe, phien_ban, ngoai_that, noi_that, vi_tri, ngay_nhap] = cols;
+        const [vin, dong_xe, phien_ban, ngoai_that, noi_that, vi_tri, latitude, longitude, ngay_nhap] = cols;
         if (!vin || !dong_xe) {
           throw new Error(`Dòng ${idx + 1}: VIN hoặc dòng xe đang trống.`);
         }
+
+        const parsedLatitude = latitude ? Number(latitude) : null;
+        const parsedLongitude = longitude ? Number(longitude) : null;
 
         return {
           vin,
@@ -245,6 +249,8 @@ export function useOrderOperations({
           ngoai_that,
           noi_that,
           vi_tri,
+          latitude: parsedLatitude !== null && Number.isFinite(parsedLatitude) ? parsedLatitude : null,
+          longitude: parsedLongitude !== null && Number.isFinite(parsedLongitude) ? parsedLongitude : null,
           ngay_nhap: ngay_nhap || null
         };
       });
@@ -263,6 +269,34 @@ export function useOrderOperations({
       setImportStockError(err.message || 'Import kho thất bại');
       setIsImportingStock(false);
       return false;
+    }
+  }
+
+  async function handleUpdateVehicleLocation(
+    vin: string,
+    location: {
+      vi_tri: string;
+      latitude: number | null;
+      longitude: number | null;
+    }
+  ) {
+    setIsUpdatingVehicleLocation(vin);
+    try {
+      const { error } = await apiService.updateVehicleLocation(vin, location);
+      if (error) {
+        setSyncState('error');
+        setSyncMessage(`Không thể cập nhật GPS cho xe ${vin}: ${error.message}`);
+        return false;
+      }
+
+      await loadWorkspace({ showLoading: false });
+      return true;
+    } catch (err: any) {
+      setSyncState('error');
+      setSyncMessage(`Không thể cập nhật GPS cho xe ${vin}: ${err.message || 'Lỗi không xác định'}`);
+      return false;
+    } finally {
+      setIsUpdatingVehicleLocation('');
     }
   }
 
@@ -547,6 +581,8 @@ export function useOrderOperations({
     importStockError,
     setImportStockError,
     handleImportStock,
+    isUpdatingVehicleLocation,
+    handleUpdateVehicleLocation,
     isPairing,
     pairError,
     setPairError,

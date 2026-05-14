@@ -47,6 +47,17 @@ export const HoldVehicleModal: React.FC<HoldVehicleModalProps> = ({
             <span>Vị trí bãi xe</span>
             <input value={item.location || 'Chưa khai báo'} readOnly />
           </label>
+          <label className="full-span">
+            <span>GPS xe</span>
+            <input
+              value={
+                item.latitude !== null && item.longitude !== null
+                  ? `${item.latitude.toFixed(6)}, ${item.longitude.toFixed(6)}`
+                  : 'Chưa quét GPS'
+              }
+              readOnly
+            />
+          </label>
           <div className="full-span" style={{ background: 'var(--bg-muted)', padding: '0.75rem', borderRadius: '8px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
             Thời gian giữ xe do hệ thống tự động tính theo quy định hiện hành.
           </div>

@@ -28,6 +28,7 @@ import { CreateOrderModal } from './components/modals/CreateOrderModal';
 import { OrderDetailModal } from './components/modals/OrderDetailModal';
 import { PairVehicleModal } from './components/modals/PairVehicleModal';
 import { HoldVehicleModal } from './components/modals/HoldVehicleModal';
+import { VehicleGpsModal } from './components/modals/VehicleGpsModal';
 import { CancelOrderModal } from './components/modals/CancelOrderModal';
 import { InvoiceRequestModal } from './components/modals/InvoiceModal';
 import { FinalizeInvoiceModal } from './components/modals/FinalizeInvoiceModal';
@@ -93,6 +94,8 @@ function App() {
     importStockError,
     setImportStockError,
     handleImportStock,
+    isUpdatingVehicleLocation,
+    handleUpdateVehicleLocation,
     isPairing,
     pairError,
     setPairError,
@@ -138,6 +141,7 @@ function App() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [pairingOrder, setPairingOrder] = useState<Order | null>(null);
   const [holdingItem, setHoldingItem] = useState<InventoryItem | null>(null);
+  const [gpsItem, setGpsItem] = useState<InventoryItem | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [cancelingOrder, setCancelingOrder] = useState<Order | null>(null);
   const [invoicingOrder, setInvoicingOrder] = useState<Order | null>(null);
@@ -304,6 +308,7 @@ function App() {
               canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
               isReleasingVin={isReleasingVin}
               isQueueingVin={isQueueingVin}
+              isUpdatingVehicleLocation={isUpdatingVehicleLocation}
               queuedVins={queuedVins}
               onOpenImport={() => {
                 setImportStockError('');
@@ -321,6 +326,11 @@ function App() {
               onReleaseItem={handleReleaseVehicle}
               onJoinQueue={handleJoinQueue}
               onLeaveQueue={handleLeaveQueue}
+              onUpdateVehicleLocation={(item) => {
+                setSyncState('idle');
+                setSyncMessage('');
+                setGpsItem(item);
+              }}
             />
           )}
 
@@ -424,6 +434,26 @@ function App() {
             if (success) {
               setHoldingItem(null);
             }
+          }}
+        />
+      )}
+
+      {gpsItem && (
+        <VehicleGpsModal
+          item={gpsItem}
+          isSaving={isUpdatingVehicleLocation === gpsItem.vin}
+          error={syncState === 'error' ? syncMessage : ''}
+          onClose={() => {
+            if (isUpdatingVehicleLocation !== gpsItem.vin) {
+              setGpsItem(null);
+            }
+          }}
+          onSubmit={async (input) => {
+            const success = await handleUpdateVehicleLocation(gpsItem.vin, input);
+            if (success) {
+              setGpsItem(null);
+            }
+            return success;
           }}
         />
       )}

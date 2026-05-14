@@ -1,5 +1,5 @@
 import React from 'react';
-import { PackageCheck, X, Clock, FilePlus2 } from 'lucide-react';
+import { PackageCheck, X, Clock, FilePlus2, LocateFixed } from 'lucide-react';
 import { InventoryItem } from '../types';
 import { stockTone } from '../constants';
 
@@ -11,6 +11,7 @@ interface InventoryPanelProps {
   canOverrideHeldVehicle: boolean;
   isReleasingVin: string;
   isQueueingVin: string;
+  isUpdatingVehicleLocation: string;
   queuedVins: string[];
   onOpenImport: () => void;
   onHoldItem: (item: InventoryItem) => void;
@@ -18,6 +19,7 @@ interface InventoryPanelProps {
   onReleaseItem: (vin: string) => void;
   onJoinQueue: (vin: string) => void;
   onLeaveQueue: (vin: string) => void;
+  onUpdateVehicleLocation: (item: InventoryItem) => void;
 }
 
 export const InventoryPanel: React.FC<InventoryPanelProps> = ({
@@ -28,13 +30,15 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
   canOverrideHeldVehicle,
   isReleasingVin,
   isQueueingVin,
+  isUpdatingVehicleLocation,
   queuedVins,
   onOpenImport,
   onHoldItem,
   onCreateOrderFromItem,
   onReleaseItem,
   onJoinQueue,
-  onLeaveQueue
+  onLeaveQueue,
+  onUpdateVehicleLocation
 }) => {
   return (
     <section className="panel">
@@ -81,6 +85,10 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                   <td>
                     <strong>{item.vin}</strong>
                     <small>{item.dmsCode || item.engineNo || 'Chưa có mã'}</small>
+                    <small>{item.location || 'Chưa khai báo vị trí'}</small>
+                    {item.latitude !== null && item.longitude !== null ? (
+                      <small>GPS: {item.latitude.toFixed(5)}, {item.longitude.toFixed(5)}</small>
+                    ) : null}
                   </td>
                   <td>{item.line}</td>
                   <td>{item.version}</td>
@@ -94,6 +102,18 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                   <td>{item.holder || 'Trống'}</td>
                   <td>
                     <div className="row-actions">
+                      {canManageInventory && (
+                        <button
+                          className="ghost-button row-action-button"
+                          onClick={() => onUpdateVehicleLocation(item)}
+                          title="Quét/cập nhật vị trí GPS của xe"
+                          disabled={isUpdatingVehicleLocation === item.vin}
+                        >
+                          <LocateFixed size={16} />
+                          <span>{isUpdatingVehicleLocation === item.vin ? 'Đang quét...' : 'GPS'}</span>
+                        </button>
+                      )}
+
                       {item.status === 'Đang giữ' && item.holderUsername !== currentUsername && (
                         queuedVins.some((vin) => vin.toUpperCase() === item.vin.toUpperCase()) ? (
                           <button

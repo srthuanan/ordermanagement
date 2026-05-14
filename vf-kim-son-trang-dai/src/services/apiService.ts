@@ -83,6 +83,8 @@ export function mapKhoxeRows(rows: KhoxeRow[]): InventoryItem[] {
     importedAt: row.ngay_nhap ? formatLocalDateTime(new Date(row.ngay_nhap)) : '',
     dmsCode: row.ma_dms ?? '',
     engineNo: row.so_may ?? '',
+    latitude: row.latitude ?? null,
+    longitude: row.longitude ?? null,
     isExtensionRequested: row.is_extension_requested || false,
     extensionReason: row.extension_reason ?? '',
     extensionEvidenceUrl: row.extension_evidence_url ?? '',
@@ -618,6 +620,8 @@ export const bulkUpsertVehicles = async (
     ngoai_that?: string;
     noi_that?: string;
     vi_tri?: string;
+    latitude?: number | null;
+    longitude?: number | null;
     ngay_nhap?: string | null;
   }>
 ) => {
@@ -630,6 +634,8 @@ export const bulkUpsertVehicles = async (
     ngoai_that: (item.ngoai_that || '').trim(),
     noi_that: (item.noi_that || '').trim(),
     vi_tri: item.vi_tri?.trim() || null,
+    latitude: item.latitude ?? null,
+    longitude: item.longitude ?? null,
     ngay_nhap: item.ngay_nhap || null,
     trang_thai: 'Chưa ghép',
     updated_at: new Date().toISOString()
@@ -639,6 +645,29 @@ export const bulkUpsertVehicles = async (
     .from('khoxe')
     .upsert(rows, { onConflict: 'vin' })
     .select('vin');
+};
+
+export const updateVehicleLocation = async (
+  vin: string,
+  location: {
+    vi_tri: string;
+    latitude: number | null;
+    longitude: number | null;
+  }
+) => {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+
+  return await supabase
+    .from('khoxe')
+    .update({
+      vi_tri: location.vi_tri.trim() || null,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      updated_at: new Date().toISOString()
+    })
+    .eq('vin', vin.trim())
+    .select('vin')
+    .maybeSingle();
 };
 
 // --- 2-Stage Invoicing ---

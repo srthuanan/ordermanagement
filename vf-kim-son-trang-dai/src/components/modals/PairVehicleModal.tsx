@@ -78,7 +78,9 @@ export const PairVehicleModal: React.FC<PairVehicleModalProps> = ({
               {candidates.length === 0 ? <option value="">Không tìm thấy xe trống phù hợp cấu hình</option> : null}
               {candidates.map((item) => (
                 <option key={item.vin} value={item.vin}>
-                  {item.vin} · Vị trí: {item.location || 'Chưa có'} · Trạng thái: {item.status}
+                  {item.vin} · Vị trí: {item.location || 'Chưa có'}
+                  {item.latitude !== null && item.longitude !== null ? ` · GPS: ${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}` : ''}
+                  · Trạng thái: {item.status}
                   {item.holder ? ` · Giữ bởi ${item.holder}` : ''}
                 </option>
               ))}

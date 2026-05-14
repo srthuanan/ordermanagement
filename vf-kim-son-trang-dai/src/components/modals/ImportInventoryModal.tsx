@@ -9,8 +9,8 @@ interface ImportInventoryModalProps {
 }
 
 const sampleTemplate =
-  'vin,dong_xe,phien_ban,ngoai_that,noi_that,vi_tri,ngay_nhap\n' +
-  'RLV12345678900001,VF 5,VF 5 Plus,Trắng,Đen,Kho A,2026-05-13T08:00:00+07:00';
+  'vin,dong_xe,phien_ban,ngoai_that,noi_that,vi_tri,latitude,longitude,ngay_nhap\n' +
+  'RLV12345678900001,VF 5,VF 5 Plus,Trắng,Đen,Kho A,10.762622,106.660172,2026-05-13T08:00:00+07:00';
 
 export const ImportInventoryModal: React.FC<ImportInventoryModalProps> = ({
   isSubmitting,

@@ -2956,6 +2956,45 @@ td small {
   color: #b42318;
 }
 
+.gps-scan-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e0e5dd;
+  border-radius: 8px;
+  background: #fbfcfa;
+}
+
+.gps-scan-card span {
+  display: block;
+  color: #61726a;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gps-scan-card strong {
+  display: block;
+  margin-top: 4px;
+  color: #17211d;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.gps-scan-card a {
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.gps-scan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .modal-actions {
   display: flex;
   grid-column: 1 / -1;

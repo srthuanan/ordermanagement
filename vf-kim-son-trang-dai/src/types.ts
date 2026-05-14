@@ -51,6 +51,8 @@ export interface InventoryItem {
   importedAt: string;
   dmsCode: string;
   engineNo: string;
+  latitude: number | null;
+  longitude: number | null;
   isExtensionRequested: boolean;
   extensionReason: string;
   extensionEvidenceUrl: string;
@@ -118,6 +120,8 @@ export interface KhoxeRow {
   ngay_van_tai: string | null;
   so_may: string | null;
   ma_dms: string | null;
+  latitude: number | null;
+  longitude: number | null;
   is_extension_requested: boolean;
   extension_reason: string | null;
   extension_evidence_url: string | null;
