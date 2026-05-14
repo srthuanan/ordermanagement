@@ -3941,6 +3941,14 @@ td small {
     overflow: visible;
   }
 
+  .inventory-dashboard.inventory-mobile-list .inventory-mobile-shell {
+    max-height: calc(100dvh - 186px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
   .inventory-dashboard.inventory-mobile-detail .inventory-mobile-import-button {
     display: none;
   }
@@ -3949,28 +3957,12 @@ td small {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 4px 0 0;
+    padding: 12px;
+    background: #ffffff;
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
     min-height: 0;
-  }
-
-  .inventory-mobile-list-shell {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-    min-height: 0;
-    max-height: none;
-    overflow: visible;
   }
 
   .inventory-mobile-hero,
@@ -3988,14 +3980,17 @@ td small {
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
-    padding: 0;
+    padding: 6px 0 10px;
     border: 0;
     border-radius: 0;
-    background: transparent;
+    background: #ffffff;
     box-shadow: none;
+    position: sticky;
+    top: 0;
+    z-index: 3;
   }
 
-  .inventory-mobile-hero-copy {
+  .inventory-mobile-hero > div:first-child {
     min-width: 0;
     display: flex;
     flex-direction: column;
@@ -4011,23 +4006,18 @@ td small {
     letter-spacing: 0.08em;
   }
 
-  .inventory-mobile-hero-copy h2 {
+  .inventory-mobile-hero > div:first-child h2 {
     margin: 0;
     font-size: 18px;
     line-height: 1.15;
     color: #0f172a;
   }
 
-  .inventory-mobile-hero-copy p {
+  .inventory-mobile-hero-count {
     margin: 0;
     color: #475569;
     font-size: 12px;
     line-height: 1.4;
-  }
-
-  .inventory-mobile-hero-action {
-    width: auto;
-    flex: 0 0 auto;
   }
 
   .inventory-mobile-import-button {
@@ -4257,35 +4247,32 @@ td small {
     word-break: break-word;
   }
 
-  .inventory-mobile-card-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-    min-width: 0;
-    padding-right: 2px;
-  }
-
   .inventory-mobile-card {
     appearance: none;
     text-align: left;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    border-radius: 22px;
-    padding: 14px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 12px 0;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    border-bottom: 1px solid #e2e8f0;
+    transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
   }
 
   .inventory-mobile-card.active {
-    border-color: #e2e8f0;
-    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.12), 0 10px 20px rgba(15, 23, 42, 0.06);
+    background: rgba(14, 165, 233, 0.05);
     transform: translateY(-1px);
+  }
+
+  .inventory-mobile-card-divider {
+    width: 100%;
+    height: 1px;
+    background: #f1f5f9;
   }
 
   .inventory-mobile-card-header {
@@ -4319,18 +4306,6 @@ td small {
     line-height: 1.35;
   }
 
-  .inventory-mobile-card-divider {
-    width: 100%;
-    height: 1px;
-    background: #f1f5f9;
-  }
-
-  .inventory-mobile-card-body {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
   .inventory-mobile-card-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -4360,23 +4335,15 @@ td small {
     word-break: break-word;
   }
 
-  .inventory-mobile-card-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    font-size: 11px;
-    color: #64748b;
-    font-weight: 600;
-    padding-top: 2px;
-  }
-
   .inventory-mobile-detail-shell {
     display: flex;
     flex-direction: column;
     gap: 10px;
     padding: 14px;
-    border-radius: 22px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   .inventory-mobile-detail-stack {
@@ -4389,10 +4356,10 @@ td small {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 14px;
-    border-radius: 18px;
-    border: 1px solid #f1f5f9;
-    background: #ffffff;
+    padding: 0;
+    border-radius: 0;
+    border: 0;
+    background: transparent;
   }
 
   .inventory-mobile-actions {

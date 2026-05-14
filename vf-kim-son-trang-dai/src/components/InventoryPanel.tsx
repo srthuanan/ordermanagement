@@ -146,10 +146,10 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
           {isMobile ? (
             <div className="inventory-mobile-shell">
               <div className="inventory-mobile-hero">
-                <div className="inventory-mobile-hero-copy">
+                <div>
                   <p className="inventory-mobile-eyebrow">Kho xe</p>
                   <h2>Danh sách xe trong kho</h2>
-                  <p>{visibleItems.length} / {items.length} xe</p>
+                  <p className="inventory-mobile-hero-count">{visibleItems.length} / {items.length} xe</p>
                 </div>
                 {mobileView === 'list' && canManageInventory ? (
                   <button
@@ -162,6 +162,52 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                   </button>
                 ) : null}
               </div>
+              {mobileView === 'list' ? (
+                <>
+                  {visibleItems.length === 0 ? (
+                    <div className="empty-state" style={{ padding: '24px 16px', textAlign: 'center' }}>
+                      Không có dữ liệu kho xe phù hợp với bộ lọc hiện tại.
+                    </div>
+                  ) : (
+                    visibleItems.map((item) => {
+                      const isActive = selectedItem?.vin === item.vin;
+                      return (
+                        <button
+                          key={item.vin}
+                          type="button"
+                          className={isActive ? 'inventory-mobile-card active' : 'inventory-mobile-card'}
+                          onClick={() => {
+                            setSelectedVin(item.vin);
+                            setMobileView('detail');
+                            if (item.latitude !== null && item.longitude !== null) {
+                              setHighlightedVin(item.vin);
+                            }
+                          }}
+                        >
+                          <div className="inventory-mobile-card-header">
+                            <div className="inventory-mobile-card-headings">
+                              <p className="inventory-mobile-card-title">{item.vin}</p>
+                              <p className="inventory-mobile-card-subtitle">{item.line} · {item.version}</p>
+                            </div>
+                            <span className={stockTone[item.status]}>{item.status}</span>
+                          </div>
+                          <div className="inventory-mobile-card-divider" />
+                          <div className="inventory-mobile-card-grid">
+                            <div>
+                              <span>Ngoại thất</span>
+                              <strong>{item.exterior || '---'}</strong>
+                            </div>
+                            <div>
+                              <span>Nội thất</span>
+                              <strong>{item.interior || '---'}</strong>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </>
+              ) : null}
             </div>
           ) : (
             <div style={{ 
@@ -276,58 +322,6 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
               ) : null}
             </div>
           )}
-
-          {/* Mobile list view */}
-          {isMobile && mobileView === 'list' ? (
-            <div className="inventory-mobile-list-shell">
-              <div className="inventory-mobile-card-list">
-                {visibleItems.length === 0 ? (
-                  <div className="empty-state" style={{ padding: '24px 16px', textAlign: 'center' }}>
-                    Không có dữ liệu kho xe phù hợp với bộ lọc hiện tại.
-                  </div>
-                ) : (
-                  visibleItems.map((item) => {
-                    const isActive = selectedItem?.vin === item.vin;
-                    return (
-                      <button
-                        key={item.vin}
-                        type="button"
-                        className={isActive ? 'inventory-mobile-card active' : 'inventory-mobile-card'}
-                        onClick={() => {
-                          setSelectedVin(item.vin);
-                          setMobileView('detail');
-                          if (item.latitude !== null && item.longitude !== null) {
-                            setHighlightedVin(item.vin);
-                          }
-                        }}
-                      >
-                        <div className="inventory-mobile-card-header">
-                          <div className="inventory-mobile-card-headings">
-                            <p className="inventory-mobile-card-title">{item.vin}</p>
-                            <p className="inventory-mobile-card-subtitle">{item.line} · {item.version}</p>
-                          </div>
-                          <span className={stockTone[item.status]}>{item.status}</span>
-                        </div>
-                        <div className="inventory-mobile-card-divider" />
-                        <div className="inventory-mobile-card-body">
-                          <div className="inventory-mobile-card-grid">
-                            <div>
-                              <span>Ngoại thất</span>
-                              <strong>{item.exterior || '---'}</strong>
-                            </div>
-                            <div>
-                              <span>Nội thất</span>
-                              <strong>{item.interior || '---'}</strong>
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          ) : null}
 
           {/* Table Block */}
           <div className="table-wrap" style={{ marginTop: '8px' }}>
@@ -467,21 +461,21 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                   <span>Danh sách</span>
                 </button>
 
-                <div className="inventory-mobile-detail-shell">
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                    <div className="clickable-copy-field" title="Click để copy VIN" onClick={() => setHighlightedVin(selectedItem.vin)} style={{ minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', fontWeight: 700 }}>Chi tiết kho xe</p>
-                      <h3 style={{ margin: '2px 0 0', fontSize: '18px', lineHeight: 1.15, fontWeight: 700, color: '#0f172a' }}>{selectedItem.vin}</h3>
-                      <p style={{ margin: '2px 0 0', fontSize: '12px', fontWeight: 500, color: '#475569' }}>{selectedItem.line} · {selectedItem.version}</p>
+                  <div className="inventory-mobile-detail-shell">
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                      <div className="clickable-copy-field" title="Click để copy VIN" onClick={() => setHighlightedVin(selectedItem.vin)} style={{ minWidth: 0 }}>
+                        <p style={{ margin: 0, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', fontWeight: 700 }}>Chi tiết kho xe</p>
+                        <h3 style={{ margin: '2px 0 0', fontSize: '18px', lineHeight: 1.15, fontWeight: 700, color: '#0f172a' }}>{selectedItem.vin}</h3>
+                        <p style={{ margin: '2px 0 0', fontSize: '12px', fontWeight: 500, color: '#475569' }}>{selectedItem.line} · {selectedItem.version}</p>
+                      </div>
+                      <span className={stockTone[selectedItem.status]} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                        {selectedItem.status}
+                      </span>
                     </div>
-                    <span className={stockTone[selectedItem.status]} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                      {selectedItem.status}
-                    </span>
-                  </div>
 
-                  <div className="inventory-mobile-card-divider" />
+                    <div className="inventory-mobile-card-divider" />
 
-                  <div className="inventory-mobile-detail-section">
+                    <div className="inventory-mobile-detail-section">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#0f766e', letterSpacing: '0.04em' }}>
                       <LocateFixed size={14} />
                       <span>Thông tin kho xe</span>
