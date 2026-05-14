@@ -51,8 +51,6 @@ export interface InventoryItem {
   holderUsername: string;
   holdExpiry: string;
   location: string;
-  transportDate: string;
-  importedAt: string;
   dmsCode: string;
   engineNo: string;
   latitude: number | null;

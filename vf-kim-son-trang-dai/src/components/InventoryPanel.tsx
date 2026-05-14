@@ -311,14 +311,6 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                       <div className="inventory-mobile-card-body">
                         <div className="inventory-mobile-card-grid">
                           <div>
-                            <span>Bãi xe</span>
-                            <strong>{item.location || '---'}</strong>
-                          </div>
-                          <div>
-                            <span>Người giữ</span>
-                            <strong>{item.holder || '---'}</strong>
-                          </div>
-                          <div>
                             <span>Ngoại thất</span>
                             <strong>{item.exterior || '---'}</strong>
                           </div>
@@ -327,10 +319,6 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                             <strong>{item.interior || '---'}</strong>
                           </div>
                         </div>
-                      </div>
-                      <div className="inventory-mobile-card-footer">
-                        <span>{item.holdExpiry ? `Hạn giữ: ${item.holdExpiry}` : 'Chưa có hạn giữ'}</span>
-                        <span>{item.latitude !== null && item.longitude !== null ? 'GPS Live' : 'Không GPS'}</span>
                       </div>
                     </button>
                   );
@@ -513,14 +501,6 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
                         <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Hạn giữ</span>
                         <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedItem.holdExpiry || '---'}</strong>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Ngày nhập</span>
-                        <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedItem.importedAt || '---'}</strong>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
-                        <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Vận tải</span>
-                        <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedItem.transportDate || '---'}</strong>
                       </div>
                     </div>
                   </div>

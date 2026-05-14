@@ -84,8 +84,6 @@ export function mapKhoxeRows(rows: KhoxeRow[]): InventoryItem[] {
     holderUsername: row.username_giu_xe ?? '',
     holdExpiry: row.thoi_gian_het_han_giu ?? '',
     location: row.vi_tri ?? '',
-    transportDate: row.ngay_van_tai ? new Intl.DateTimeFormat('vi-VN').format(new Date(row.ngay_van_tai)) : '',
-    importedAt: row.ngay_nhap ? formatLocalDateTime(new Date(row.ngay_nhap)) : '',
     dmsCode: row.ma_dms ?? '',
     engineNo: row.so_may ?? '',
     latitude: row.latitude ?? null,
