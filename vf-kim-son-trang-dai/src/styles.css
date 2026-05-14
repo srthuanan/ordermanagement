@@ -3902,8 +3902,11 @@ td small {
 
   .orders-data-side,
   .inventory-data-side {
-    padding: 12px;
-    border-radius: 16px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   .orders-panel.orders-mobile-list .orders-visual-side {
@@ -3922,10 +3925,6 @@ td small {
     display: none;
   }
 
-  .inventory-dashboard.inventory-mobile-list .inventory-data-side > div:first-child {
-    display: none;
-  }
-
   .inventory-dashboard.inventory-mobile-list .inventory-data-side .table-wrap {
     display: none;
   }
@@ -3938,12 +3937,132 @@ td small {
     display: flex;
   }
 
-  .inventory-mobile-summary {
+  .inventory-mobile-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 4px 0 0;
+  }
+
+  .inventory-mobile-hero,
+  .inventory-mobile-filter-card,
+  .inventory-mobile-detail-shell,
+  .inventory-mobile-card {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .inventory-mobile-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .inventory-mobile-hero-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .inventory-mobile-eyebrow {
+    margin: 0;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .inventory-mobile-hero-copy h2 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.15;
+    color: #0f172a;
+  }
+
+  .inventory-mobile-hero-copy p {
+    margin: 0;
+    color: #475569;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .inventory-mobile-hero-action {
+    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 0 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .inventory-mobile-segment {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .inventory-mobile-segment-button {
+    min-height: 36px;
+    border: 1px solid #dbe3ea;
+    border-radius: 999px;
+    background: #fff;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .inventory-mobile-segment-button.active {
+    border-color: #0f766e;
+    background: #e9f7f2;
+    color: #0f766e;
+    box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.08);
+  }
+
+  .inventory-mobile-filter-card {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 22px;
+  }
+
+  .inventory-mobile-search,
+  .inventory-mobile-select {
+    min-height: 38px !important;
+    height: 38px !important;
+    border-radius: 12px !important;
+    padding: 0 10px !important;
+  }
+
+  .inventory-mobile-search input,
+  .inventory-mobile-select select {
+    font-size: 12px !important;
+  }
+
+  .inventory-mobile-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .inventory-mobile-filter-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    padding: 4px 0 8px;
+  }
+
+  .inventory-mobile-clear {
+    min-height: 32px;
+    padding: 0 10px;
+    border-radius: 10px;
+    font-size: 11.5px;
+    font-weight: 700;
   }
 
   .inventory-mobile-summary-count {
@@ -4113,12 +4232,11 @@ td small {
     width: 100%;
     border: 1px solid #e2e8f0;
     background: #ffffff;
-    border-radius: 20px;
-    padding: 16px;
+    border-radius: 22px;
+    padding: 14px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    gap: 10px;
     transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
   }
 
@@ -4145,7 +4263,7 @@ td small {
   .inventory-mobile-card-title {
     margin: 0;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 700;
     color: #0f172a;
     line-height: 1.2;
     word-break: break-word;
@@ -4165,9 +4283,15 @@ td small {
     background: #f1f5f9;
   }
 
+  .inventory-mobile-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
   .inventory-mobile-card-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr 1fr;
     gap: 8px 10px;
   }
 
@@ -4194,10 +4318,77 @@ td small {
     word-break: break-word;
   }
 
+  .inventory-mobile-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+    padding-top: 2px;
+  }
+
   .inventory-mobile-detail-shell {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    padding: 14px;
+    border-radius: 22px;
+  }
+
+  .inventory-mobile-detail-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .inventory-mobile-detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid #f1f5f9;
+    background: #ffffff;
+  }
+
+  .inventory-mobile-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .inventory-mobile-actions .ghost-button,
+  .inventory-mobile-actions .primary-button {
+    min-height: 36px;
+    padding: 0 10px;
+    border-radius: 12px;
+    font-size: 11.5px;
+  }
+
+  .inventory-mobile-gps-chip {
+    grid-column: span 2;
+    min-height: 36px;
+    border: 1px solid #10b981;
+    background: #ecfdf5;
+    color: #0f766e;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+  }
+
+  .inventory-mobile-back {
+    align-self: flex-start;
+    min-height: 32px;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+    border-radius: 10px;
   }
 
   .invoice-mobile-card-list {

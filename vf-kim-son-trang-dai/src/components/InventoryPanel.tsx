@@ -144,21 +144,123 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
         {/* Left Area (Data & Filters) */}
         <div className="inventory-data-side">
           {isMobile ? (
-            <div className="inventory-mobile-summary">
-              <div className="inventory-mobile-summary-count">
-                <span>{visibleItems.length}</span>
-                <small>/ {items.length} xe</small>
+            <div className="inventory-mobile-shell">
+              <div className="inventory-mobile-hero">
+                <div className="inventory-mobile-hero-copy">
+                  <p className="inventory-mobile-eyebrow">Kho xe</p>
+                  <h2>Danh sách xe trong kho</h2>
+                  <p>{visibleItems.length} / {items.length} xe đang hiển thị</p>
+                </div>
+                {canManageInventory ? (
+                  <button
+                    className="primary-button inventory-mobile-hero-action"
+                    onClick={onOpenImport}
+                  >
+                    <PackageCheck size={14} />
+                    <span>Nhập kho</span>
+                  </button>
+                ) : null}
               </div>
-              {canManageInventory ? (
+
+              <div className="inventory-mobile-segment">
                 <button
-                  className="primary-button"
-                  onClick={onOpenImport}
-                  style={{ height: '32px', padding: '0 10px', borderRadius: '10px', fontSize: '11.5px', fontWeight: 600, gap: '6px' }}
+                  type="button"
+                  className={mobileView === 'list' ? 'inventory-mobile-segment-button active' : 'inventory-mobile-segment-button'}
+                  onClick={() => setMobileView('list')}
                 >
-                  <PackageCheck size={14} />
-                  <span>Nhập kho</span>
+                  Danh sách
                 </button>
-              ) : null}
+                <button
+                  type="button"
+                  className={mobileView === 'detail' ? 'inventory-mobile-segment-button active' : 'inventory-mobile-segment-button'}
+                  onClick={() => {
+                    if (selectedItem) setMobileView('detail');
+                  }}
+                  disabled={!selectedItem}
+                >
+                  Chi tiết
+                </button>
+              </div>
+
+              <div className="inventory-mobile-filter-card">
+                <label className="search-box inventory-mobile-search">
+                  <Search size={14} style={{ color: '#64748b' }} />
+                  <input
+                    type="text"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    placeholder="Tìm VIN, bãi xe, người giữ..."
+                  />
+                </label>
+
+                <div className="inventory-mobile-filter-grid">
+                  <label className="select-box inventory-mobile-select">
+                    <Filter size={12} style={{ color: '#64748b' }} />
+                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}>
+                      <option value="all">Tất cả TT</option>
+                      <option value="Chưa ghép">Chưa ghép</option>
+                      <option value="Đang giữ">Đang giữ</option>
+                      <option value="Đã ghép">Đã ghép</option>
+                    </select>
+                  </label>
+                  <label className="select-box inventory-mobile-select">
+                    <Filter size={12} style={{ color: '#64748b' }} />
+                    <select value={lineFilter} onChange={(e) => setLineFilter(e.target.value)}>
+                      <option value="all">Mọi dòng xe</option>
+                      {lineOptions.map((line) => (
+                        <option key={line} value={line}>
+                          {line}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="select-box inventory-mobile-select">
+                    <Filter size={12} style={{ color: '#64748b' }} />
+                    <select value={versionFilter} onChange={(e) => setVersionFilter(e.target.value)}>
+                      <option value="all">Mọi phiên bản</option>
+                      {versionOptions.map((version) => (
+                        <option key={version} value={version}>
+                          {version}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="select-box inventory-mobile-select">
+                    <Filter size={12} style={{ color: '#64748b' }} />
+                    <select value={exteriorFilter} onChange={(e) => setExteriorFilter(e.target.value)}>
+                      <option value="all">Mọi màu sắc</option>
+                      {exteriorOptions.map((ext) => (
+                        <option key={ext} value={ext}>
+                          {ext}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <div className="inventory-mobile-filter-footer">
+                  <div className="inventory-mobile-summary-count">
+                    <span>{visibleItems.length}</span>
+                    <small>/ {items.length} xe</small>
+                  </div>
+                  {(searchText || statusFilter !== 'all' || lineFilter !== 'all' || versionFilter !== 'all' || exteriorFilter !== 'all') && (
+                    <button
+                      type="button"
+                      className="ghost-button inventory-mobile-clear"
+                      onClick={() => {
+                        setSearchText('');
+                        setStatusFilter('all');
+                        setLineFilter('all');
+                        setVersionFilter('all');
+                        setExteriorFilter('all');
+                      }}
+                    >
+                      <RotateCcw size={12} />
+                      Xóa lọc
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           ) : (
             <div style={{ 
@@ -305,23 +407,29 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                         <span className={stockTone[item.status]}>{item.status}</span>
                       </div>
                       <div className="inventory-mobile-card-divider" />
-                      <div className="inventory-mobile-card-grid">
-                        <div>
-                          <span>Bãi xe</span>
-                          <strong>{item.location || '---'}</strong>
+                      <div className="inventory-mobile-card-body">
+                        <div className="inventory-mobile-card-grid">
+                          <div>
+                            <span>Bãi xe</span>
+                            <strong>{item.location || '---'}</strong>
+                          </div>
+                          <div>
+                            <span>Người giữ</span>
+                            <strong>{item.holder || '---'}</strong>
+                          </div>
+                          <div>
+                            <span>Ngoại thất</span>
+                            <strong>{item.exterior || '---'}</strong>
+                          </div>
+                          <div>
+                            <span>Nội thất</span>
+                            <strong>{item.interior || '---'}</strong>
+                          </div>
                         </div>
-                        <div>
-                          <span>Người giữ</span>
-                          <strong>{item.holder || '---'}</strong>
-                        </div>
-                        <div>
-                          <span>Ngoại thất</span>
-                          <strong>{item.exterior || '---'}</strong>
-                        </div>
-                        <div>
-                          <span>Nội thất</span>
-                          <strong>{item.interior || '---'}</strong>
-                        </div>
+                      </div>
+                      <div className="inventory-mobile-card-footer">
+                        <span>{item.holdExpiry ? `Hạn giữ: ${item.holdExpiry}` : 'Chưa có hạn giữ'}</span>
+                        <span>{item.latitude !== null && item.longitude !== null ? 'GPS Live' : 'Không GPS'}</span>
                       </div>
                     </button>
                   );
@@ -456,23 +564,22 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
 
         {/* Mobile detail view */}
         {isMobile ? (
-          <div className="inventory-mobile-detail-shell">
+          <div className="inventory-mobile-detail-stack">
             {selectedItem ? (
               <div className="inventory-mobile-detail-view" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <button
                   type="button"
-                  className="ghost-button orders-mobile-back"
+                  className="ghost-button inventory-mobile-back"
                   onClick={() => setMobileView('list')}
-                  style={{ alignSelf: 'flex-start', height: '32px', padding: '0 10px', fontSize: '12px' }}
                 >
                   <ArrowLeft size={14} />
                   <span>Danh sách</span>
                 </button>
 
-                <div className="orders-mobile-detail-shell" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '20px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)' }}>
+                <div className="inventory-mobile-detail-shell">
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
                     <div className="clickable-copy-field" title="Click để copy VIN" onClick={() => setHighlightedVin(selectedItem.vin)} style={{ minWidth: 0 }}>
-                      <p style={{ margin: 0, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', fontWeight: 700 }}>CHI TIẾT KHO XE</p>
+                      <p style={{ margin: 0, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', fontWeight: 700 }}>Chi tiết kho xe</p>
                       <h3 style={{ margin: '2px 0 0', fontSize: '18px', lineHeight: 1.15, fontWeight: 700, color: '#0f172a' }}>{selectedItem.vin}</h3>
                       <p style={{ margin: '2px 0 0', fontSize: '12px', fontWeight: 500, color: '#475569' }}>{selectedItem.line} · {selectedItem.version}</p>
                     </div>
@@ -481,9 +588,9 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                     </span>
                   </div>
 
-                  <div style={{ height: '1px', width: '100%', background: '#f1f5f9' }} />
+                  <div className="inventory-mobile-card-divider" />
 
-                  <div className="orders-mobile-detail-section" style={{ background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '18px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div className="inventory-mobile-detail-section">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#0f766e', letterSpacing: '0.04em' }}>
                       <LocateFixed size={14} />
                       <span>Thông tin kho xe</span>
@@ -517,13 +624,12 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div className="inventory-mobile-actions">
                     {selectedItem.status === 'Chưa ghép' && (
                       <button
                         className="primary-button"
                         disabled={!canHoldVehicle || isHoldingVin === selectedItem.vin}
                         onClick={() => onHoldItem(selectedItem)}
-                        style={{ height: '34px', fontSize: '11.5px' }}
                       >
                         <PackageCheck size={14} />
                         <span>{isHoldingVin === selectedItem.vin ? 'Đang giữ...' : 'Giữ xe'}</span>
@@ -534,7 +640,6 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                       <button
                         className="ghost-button"
                         onClick={() => onCreateOrderFromItem(selectedItem)}
-                        style={{ height: '34px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
                       >
                         <FilePlus2 size={14} />
                         <span>Tạo đơn</span>
@@ -546,7 +651,6 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                         className="ghost-button"
                         disabled={isReleasingVin === selectedItem.vin}
                         onClick={() => onReleaseItem(selectedItem.vin)}
-                        style={{ height: '34px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
                       >
                         <X size={14} />
                         <span>{isReleasingVin === selectedItem.vin ? 'Đang nhả...' : 'Bỏ giữ'}</span>
@@ -559,7 +663,6 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                           className="ghost-button"
                           disabled={isQueueingVin === selectedItem.vin}
                           onClick={() => onLeaveQueue(selectedItem.vin)}
-                          style={{ height: '34px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
                         >
                           <X size={14} />
                           <span>{isQueueingVin === selectedItem.vin ? 'Đang hủy...' : 'Hủy chờ'}</span>
@@ -569,7 +672,6 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                           className="ghost-button"
                           disabled={isQueueingVin === selectedItem.vin}
                           onClick={() => onJoinQueue(selectedItem.vin)}
-                          style={{ height: '34px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
                         >
                           <Clock size={14} />
                           <span>{isQueueingVin === selectedItem.vin ? 'Đang đăng ký...' : 'Chờ xe'}</span>
@@ -578,7 +680,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                     )}
 
                     {selectedItem.latitude !== null && selectedItem.longitude !== null ? (
-                      <div className="ghost-button" style={{ gridColumn: 'span 2', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', border: '1px solid #10b981', color: '#0f766e', background: '#ecfdf5', fontSize: '11.5px' }}>
+                      <div className="inventory-mobile-gps-chip">
                         <LocateFixed size={14} />
                         <span>GPS Live</span>
                       </div>
