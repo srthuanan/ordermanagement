@@ -3938,6 +3938,33 @@ td small {
     display: flex;
   }
 
+  .inventory-mobile-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 4px 0 8px;
+  }
+
+  .inventory-mobile-summary-count {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-weight: 700;
+    color: #334155;
+  }
+
+  .inventory-mobile-summary-count span {
+    font-size: 13px;
+    color: #2563eb;
+  }
+
+  .inventory-mobile-summary-count small {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
+  }
+
   .invoice-panel.invoice-mobile-list .orders-visual-side {
     display: none;
   }

@@ -143,117 +143,136 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
         
         {/* Left Area (Data & Filters) */}
         <div className="inventory-data-side">
-          <div style={{ 
-            padding: '4px 0 8px 0', 
-            background: '#ffffff', 
-            display: 'flex', 
-            flexWrap: 'wrap', 
-            alignItems: 'center', 
-            gap: '8px' 
-          }}>
-            <label className="search-box" style={{ flex: '2 1 240px', minHeight: '34px', height: '34px', padding: '0 10px', border: '1px solid #cbd5e1', borderRadius: '8px', transition: 'all 0.2s' }}>
-              <Search size={14} style={{ color: '#64748b' }} />
-              <input
-                type="text"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                placeholder="Tìm nhanh VIN, bãi xe, người giữ..."
-                style={{ fontSize: '12.5px' }}
-              />
-            </label>
-            <label className="select-box" style={{ flex: '1 1 110px', minHeight: '34px', height: '34px', padding: '0 8px', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
-              <Filter size={12} style={{ color: '#64748b' }} />
-              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)} style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
-                <option value="all">Tất cả TT</option>
-                <option value="Chưa ghép">Chưa ghép</option>
-                <option value="Đang giữ">Đang giữ</option>
-                <option value="Đã ghép">Đã ghép</option>
-              </select>
-            </label>
-            <label className="select-box" style={{ flex: '1 1 110px', minHeight: '34px', height: '34px', padding: '0 8px', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
-              <Filter size={12} style={{ color: '#64748b' }} />
-              <select value={lineFilter} onChange={(e) => setLineFilter(e.target.value)} style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
-                <option value="all">Mọi dòng xe</option>
-                {lineOptions.map((line) => (
-                  <option key={line} value={line}>
-                    {line}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="select-box" style={{ flex: '1 1 110px', minHeight: '34px', height: '34px', padding: '0 8px', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
-              <Filter size={12} style={{ color: '#64748b' }} />
-              <select value={versionFilter} onChange={(e) => setVersionFilter(e.target.value)} style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
-                <option value="all">Mọi phiên bản</option>
-                {versionOptions.map((version) => (
-                  <option key={version} value={version}>
-                    {version}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="select-box" style={{ flex: '1 1 110px', minHeight: '34px', height: '34px', padding: '0 8px', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
-              <Filter size={12} style={{ color: '#64748b' }} />
-              <select value={exteriorFilter} onChange={(e) => setExteriorFilter(e.target.value)} style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
-                <option value="all">Mọi màu sắc</option>
-                {exteriorOptions.map((ext) => (
-                  <option key={ext} value={ext}>
-                    {ext}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 4px' }} />
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', fontSize: '12px', fontWeight: 600, color: '#475569', background: '#f1f5f9', padding: '4px 10px', borderRadius: '20px' }}>
-              <span style={{ color: '#2563eb' }}>{visibleItems.length}</span>
-              <span style={{ color: '#94a3b8' }}>/</span>
-              <span>{items.length} xe</span>
+          {isMobile ? (
+            <div className="inventory-mobile-summary">
+              <div className="inventory-mobile-summary-count">
+                <span>{visibleItems.length}</span>
+                <small>/ {items.length} xe</small>
+              </div>
+              {canManageInventory ? (
+                <button
+                  className="primary-button"
+                  onClick={onOpenImport}
+                  style={{ height: '32px', padding: '0 10px', borderRadius: '10px', fontSize: '11.5px', fontWeight: 600, gap: '6px' }}
+                >
+                  <PackageCheck size={14} />
+                  <span>Nhập kho</span>
+                </button>
+              ) : null}
             </div>
-            
-            {(searchText || statusFilter !== 'all' || lineFilter !== 'all' || versionFilter !== 'all' || exteriorFilter !== 'all') && (
-              <button
-                type="button"
-                className="ghost-button"
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  gap: '4px', 
-                  color: '#dc2626', 
-                  borderColor: '#fca5a5', 
-                  padding: '4px 10px', 
-                  height: '28px',
-                  borderRadius: '8px', 
-                  fontSize: '11.5px', 
-                  fontWeight: 600,
-                  background: '#fef2f2'
-                }}
-                onClick={() => {
-                  setSearchText('');
-                  setStatusFilter('all');
-                  setLineFilter('all');
-                  setVersionFilter('all');
-                  setExteriorFilter('all');
-                }}
-                title="Hủy toàn bộ lọc"
-              >
-                <RotateCcw size={12} />
-                Xóa
-              </button>
-            )}
-            {canManageInventory ? (
-              <button
-                className="primary-button"
-                onClick={onOpenImport}
-                style={{ height: '34px', padding: '0 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, gap: '6px', marginLeft: 'auto' }}
-              >
-                <PackageCheck size={15} />
-                <span>Nhập kho</span>
-              </button>
-            ) : null}
-          </div>
+          ) : (
+            <div style={{ 
+              padding: '4px 0 8px 0', 
+              background: '#ffffff', 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              alignItems: 'center', 
+              gap: '8px' 
+            }}>
+              <label className="search-box" style={{ flex: '2 1 240px', minHeight: '34px', height: '34px', padding: '0 10px', border: '1px solid #cbd5e1', borderRadius: '8px', transition: 'all 0.2s' }}>
+                <Search size={14} style={{ color: '#64748b' }} />
+                <input
+                  type="text"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  placeholder="Tìm nhanh VIN, bãi xe, người giữ..."
+                  style={{ fontSize: '12.5px' }}
+                />
+              </label>
+              <label className="select-box" style={{ flex: '1 1 110px', minHeight: '34px', height: '34px', padding: '0 8px', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
+                <Filter size={12} style={{ color: '#64748b' }} />
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)} style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
+                  <option value="all">Tất cả TT</option>
+                  <option value="Chưa ghép">Chưa ghép</option>
+                  <option value="Đang giữ">Đang giữ</option>
+                  <option value="Đã ghép">Đã ghép</option>
+                </select>
+              </label>
+              <label className="select-box" style={{ flex: '1 1 110px', minHeight: '34px', height: '34px', padding: '0 8px', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
+                <Filter size={12} style={{ color: '#64748b' }} />
+                <select value={lineFilter} onChange={(e) => setLineFilter(e.target.value)} style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
+                  <option value="all">Mọi dòng xe</option>
+                  {lineOptions.map((line) => (
+                    <option key={line} value={line}>
+                      {line}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="select-box" style={{ flex: '1 1 110px', minHeight: '34px', height: '34px', padding: '0 8px', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
+                <Filter size={12} style={{ color: '#64748b' }} />
+                <select value={versionFilter} onChange={(e) => setVersionFilter(e.target.value)} style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
+                  <option value="all">Mọi phiên bản</option>
+                  {versionOptions.map((version) => (
+                    <option key={version} value={version}>
+                      {version}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="select-box" style={{ flex: '1 1 110px', minHeight: '34px', height: '34px', padding: '0 8px', border: '1px solid #cbd5e1', borderRadius: '8px' }}>
+                <Filter size={12} style={{ color: '#64748b' }} />
+                <select value={exteriorFilter} onChange={(e) => setExteriorFilter(e.target.value)} style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
+                  <option value="all">Mọi màu sắc</option>
+                  {exteriorOptions.map((ext) => (
+                    <option key={ext} value={ext}>
+                      {ext}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 4px' }} />
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', fontSize: '12px', fontWeight: 600, color: '#475569', background: '#f1f5f9', padding: '4px 10px', borderRadius: '20px' }}>
+                <span style={{ color: '#2563eb' }}>{visibleItems.length}</span>
+                <span style={{ color: '#94a3b8' }}>/</span>
+                <span>{items.length} xe</span>
+              </div>
+              
+              {(searchText || statusFilter !== 'all' || lineFilter !== 'all' || versionFilter !== 'all' || exteriorFilter !== 'all') && (
+                <button
+                  type="button"
+                  className="ghost-button"
+                  style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    gap: '4px', 
+                    color: '#dc2626', 
+                    borderColor: '#fca5a5', 
+                    padding: '4px 10px', 
+                    height: '28px',
+                    borderRadius: '8px', 
+                    fontSize: '11.5px', 
+                    fontWeight: 600,
+                    background: '#fef2f2'
+                  }}
+                  onClick={() => {
+                    setSearchText('');
+                    setStatusFilter('all');
+                    setLineFilter('all');
+                    setVersionFilter('all');
+                    setExteriorFilter('all');
+                  }}
+                  title="Hủy toàn bộ lọc"
+                >
+                  <RotateCcw size={12} />
+                  Xóa
+                </button>
+              )}
+              {canManageInventory ? (
+                <button
+                  className="primary-button"
+                  onClick={onOpenImport}
+                  style={{ height: '34px', padding: '0 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, gap: '6px', marginLeft: 'auto' }}
+                >
+                  <PackageCheck size={15} />
+                  <span>Nhập kho</span>
+                </button>
+              ) : null}
+            </div>
+          )}
 
           {/* Mobile list view */}
           {isMobile ? (
