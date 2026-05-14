@@ -1592,6 +1592,9 @@ small {
 .orders-panel {
   display: grid;
   gap: 10px;
+  height: calc(100dvh - 176px);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .orders-panel-heading {
@@ -1661,12 +1664,15 @@ small {
 .orders-workspace {
   display: grid;
   gap: 10px;
+  flex: 1;
+  min-height: 0;
 }
 
 .orders-master-detail {
   display: grid;
   grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
   gap: 10px;
+  min-height: 0;
 }
 
 .orders-toolbar-shell {
@@ -1710,6 +1716,7 @@ small {
   display: grid;
   gap: 8px;
   min-width: 0;
+  min-height: 0;
 }
 
 .orders-list-pane {
@@ -1718,6 +1725,8 @@ small {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 18px 48px rgba(45, 58, 50, 0.08);
+  overflow: hidden;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .orders-list-pane__header,
@@ -1740,6 +1749,9 @@ small {
 .orders-list {
   display: grid;
   gap: 10px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 2px;
 }
 
 .order-list-item {
@@ -1819,6 +1831,8 @@ small {
     linear-gradient(180deg, rgba(15, 118, 110, 0.03), transparent 28%),
     rgba(255, 255, 255, 0.96);
   box-shadow: 0 20px 52px rgba(45, 58, 50, 0.08);
+  overflow: auto;
+  grid-template-rows: auto auto auto auto auto auto;
 }
 
 .orders-detail-hero {
@@ -1900,8 +1914,8 @@ small {
 .orders-detail-empty {
   display: grid;
   align-content: start;
-  min-height: 340px;
-  padding: 14px;
+  min-height: 0;
+  padding: 12px;
   border: 1px dashed #d0d8d1;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.72);
@@ -2676,6 +2690,11 @@ td small {
     min-height: 260px;
   }
 
+  .orders-panel {
+    height: auto;
+    overflow: visible;
+  }
+
   .two-column,
   .security-layout {
     grid-template-columns: 1fr;
@@ -2758,6 +2777,11 @@ td small {
   .orders-detail-hero,
   .orders-detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .orders-detail-pane,
+  .orders-list-pane {
+    overflow: visible;
   }
 
   .order-card__header {
