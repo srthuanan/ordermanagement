@@ -9,6 +9,12 @@
   -webkit-font-smoothing: antialiased;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -16,7 +22,8 @@
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
+  min-height: 100%;
+  overflow: hidden;
 }
 
 button,
@@ -37,6 +44,7 @@ button:disabled {
 .app-shell {
   display: flex;
   min-height: 100vh;
+  height: 100%;
   background:
     linear-gradient(120deg, rgba(15, 118, 110, 0.08), transparent 36%),
     linear-gradient(240deg, rgba(190, 106, 64, 0.08), transparent 34%),
@@ -220,15 +228,34 @@ small {
 .main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
   padding: 24px;
 }
 
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
   gap: 16px;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid #d9ded5;
+  padding: 12px 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  min-height: 64px;
 }
 
 .topbar h1,
@@ -2720,7 +2747,9 @@ td small {
 
 @media (max-width: 760px) {
   .app-shell {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
 
   .sidebar {
@@ -2754,12 +2783,19 @@ td small {
   }
 
   .main {
+    padding: 0;
+  }
+
+  .main-content {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
     padding: 16px;
   }
 
   .topbar {
-    align-items: flex-start;
-    margin-bottom: 10px;
+    padding: 10px 16px;
+    align-items: center;
   }
 
   .top-actions {
