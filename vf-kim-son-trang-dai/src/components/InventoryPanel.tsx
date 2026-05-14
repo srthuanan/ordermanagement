@@ -149,7 +149,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                 <div className="inventory-mobile-hero-copy">
                   <p className="inventory-mobile-eyebrow">Kho xe</p>
                   <h2>Danh sách xe trong kho</h2>
-                  <p>{visibleItems.length} / {items.length} xe đang hiển thị</p>
+                  <p>{visibleItems.length} / {items.length} xe</p>
                 </div>
                 {canManageInventory ? (
                   <button
@@ -157,109 +157,9 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                     onClick={onOpenImport}
                   >
                     <PackageCheck size={14} />
-                    <span>Nhập kho</span>
-                  </button>
-                ) : null}
-              </div>
-
-              <div className="inventory-mobile-segment">
-                <button
-                  type="button"
-                  className={mobileView === 'list' ? 'inventory-mobile-segment-button active' : 'inventory-mobile-segment-button'}
-                  onClick={() => setMobileView('list')}
-                >
-                  Danh sách
+                  <span>Nhập kho</span>
                 </button>
-                <button
-                  type="button"
-                  className={mobileView === 'detail' ? 'inventory-mobile-segment-button active' : 'inventory-mobile-segment-button'}
-                  onClick={() => {
-                    if (selectedItem) setMobileView('detail');
-                  }}
-                  disabled={!selectedItem}
-                >
-                  Chi tiết
-                </button>
-              </div>
-
-              <div className="inventory-mobile-filter-card">
-                <label className="search-box inventory-mobile-search">
-                  <Search size={14} style={{ color: '#64748b' }} />
-                  <input
-                    type="text"
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    placeholder="Tìm VIN, bãi xe, người giữ..."
-                  />
-                </label>
-
-                <div className="inventory-mobile-filter-grid">
-                  <label className="select-box inventory-mobile-select">
-                    <Filter size={12} style={{ color: '#64748b' }} />
-                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}>
-                      <option value="all">Tất cả TT</option>
-                      <option value="Chưa ghép">Chưa ghép</option>
-                      <option value="Đang giữ">Đang giữ</option>
-                      <option value="Đã ghép">Đã ghép</option>
-                    </select>
-                  </label>
-                  <label className="select-box inventory-mobile-select">
-                    <Filter size={12} style={{ color: '#64748b' }} />
-                    <select value={lineFilter} onChange={(e) => setLineFilter(e.target.value)}>
-                      <option value="all">Mọi dòng xe</option>
-                      {lineOptions.map((line) => (
-                        <option key={line} value={line}>
-                          {line}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="select-box inventory-mobile-select">
-                    <Filter size={12} style={{ color: '#64748b' }} />
-                    <select value={versionFilter} onChange={(e) => setVersionFilter(e.target.value)}>
-                      <option value="all">Mọi phiên bản</option>
-                      {versionOptions.map((version) => (
-                        <option key={version} value={version}>
-                          {version}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="select-box inventory-mobile-select">
-                    <Filter size={12} style={{ color: '#64748b' }} />
-                    <select value={exteriorFilter} onChange={(e) => setExteriorFilter(e.target.value)}>
-                      <option value="all">Mọi màu sắc</option>
-                      {exteriorOptions.map((ext) => (
-                        <option key={ext} value={ext}>
-                          {ext}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-
-                <div className="inventory-mobile-filter-footer">
-                  <div className="inventory-mobile-summary-count">
-                    <span>{visibleItems.length}</span>
-                    <small>/ {items.length} xe</small>
-                  </div>
-                  {(searchText || statusFilter !== 'all' || lineFilter !== 'all' || versionFilter !== 'all' || exteriorFilter !== 'all') && (
-                    <button
-                      type="button"
-                      className="ghost-button inventory-mobile-clear"
-                      onClick={() => {
-                        setSearchText('');
-                        setStatusFilter('all');
-                        setLineFilter('all');
-                        setVersionFilter('all');
-                        setExteriorFilter('all');
-                      }}
-                    >
-                      <RotateCcw size={12} />
-                      Xóa lọc
-                    </button>
-                  )}
-                </div>
+              ) : null}
               </div>
             </div>
           ) : (
