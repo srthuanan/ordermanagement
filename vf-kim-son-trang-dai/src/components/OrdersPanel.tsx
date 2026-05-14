@@ -9,6 +9,7 @@ interface OrdersPanelProps {
   inventory: InventoryItem[];
   currentUsername: string;
   canOverrideHeldVehicle: boolean;
+  canPairOrder: boolean;
   canManageInventory: boolean;
   isUnpairingOrderId: string;
   isUpdatingPolicy: boolean;
@@ -30,6 +31,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
   inventory,
   currentUsername,
   canOverrideHeldVehicle,
+  canPairOrder,
   canManageInventory,
   isUnpairingOrderId,
   isUpdatingPolicy,
@@ -115,7 +117,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                     matchesVehicleConfig(order, item) &&
                     canUseVehicleForPair(item, currentUsername, canOverrideHeldVehicle)
                 );
-                const canPair = canManageInventory && order.status === 'Chưa ghép' && candidates.length > 0;
+                const canPair = canPairOrder && order.status === 'Chưa ghép' && candidates.length > 0;
                 const canUnpair = canManageInventory && order.status === 'Đã ghép';
                 const canInvoice = canManageInventory && order.status === 'Đã ghép';
                 const canCancel = canManageInventory && order.status !== 'Đã hủy' && order.status !== 'Đã xuất hóa đơn';

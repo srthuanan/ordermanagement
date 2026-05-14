@@ -6,6 +6,7 @@ export function useOrderOperations({
   session,
   currentUsername,
   currentFullName,
+  canOverrideHeldVehicle,
   loadWorkspace,
   setSyncState,
   setSyncMessage
@@ -13,6 +14,7 @@ export function useOrderOperations({
   session: any;
   currentUsername: string;
   currentFullName: string;
+  canOverrideHeldVehicle: boolean;
   loadWorkspace: (options?: { showLoading?: boolean }) => Promise<boolean>;
   setSyncState: any;
   setSyncMessage: any;
@@ -79,6 +81,27 @@ export function useOrderOperations({
             setIsCreating(false);
             await loadWorkspace({ showLoading: false });
             return false;
+          }
+        } else {
+          const autoMatch = await apiService.findAutoPairVehicle(
+            {
+              line: input.line,
+              version: input.version,
+              exterior: input.exterior,
+              interior: input.interior
+            },
+            currentUsername,
+            canOverrideHeldVehicle
+          );
+
+          if (!autoMatch.error && autoMatch.data?.vin) {
+            const pairRes = await apiService.pairVehicle(orderId, autoMatch.data.vin);
+            if (pairRes.error) {
+              setCreateError(`Đã tạo đơn ${orderId} nhưng chưa tự ghép được VIN ${autoMatch.data.vin}: ${pairRes.error.message}`);
+              setIsCreating(false);
+              await loadWorkspace({ showLoading: false });
+              return false;
+            }
           }
         }
 
@@ -312,7 +335,7 @@ export function useOrderOperations({
   async function handleUpdateOrder(input: UpdateOrderInput) {
     setIsUpdatingOrder(true);
     try {
-      const { data, error } = await apiService.updateOrderDetails(input);
+      const { data, error } = await apiService.updateOrderDetails(input, currentUsername, canOverrideHeldVehicle);
       if (error) {
         setSyncState('error');
         setSyncMessage(`Không thể cập nhật đơn ${input.orderId}: ${error.message}`);

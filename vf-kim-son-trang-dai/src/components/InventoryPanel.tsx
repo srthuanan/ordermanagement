@@ -6,6 +6,7 @@ import { stockTone } from '../constants';
 interface InventoryPanelProps {
   items: InventoryItem[];
   canManageInventory: boolean;
+  canHoldVehicle: boolean;
   currentUsername: string;
   canOverrideHeldVehicle: boolean;
   isReleasingVin: string;
@@ -22,6 +23,7 @@ interface InventoryPanelProps {
 export const InventoryPanel: React.FC<InventoryPanelProps> = ({
   items,
   canManageInventory,
+  canHoldVehicle,
   currentUsername,
   canOverrideHeldVehicle,
   isReleasingVin,
@@ -120,7 +122,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                       {item.status === 'Chưa ghép' && (
                         <button
                           className="ghost-button row-action-button"
-                          disabled={!canManageInventory}
+                          disabled={!canHoldVehicle}
                           onClick={() => onHoldItem(item)}
                           title="Giữ xe tạm thời trong 24h."
                         >

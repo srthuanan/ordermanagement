@@ -90,6 +90,65 @@ export function mapKhoxeRows(rows: KhoxeRow[]): InventoryItem[] {
   }));
 }
 
+type VehicleMatchInput = {
+  line: string;
+  version: string;
+  exterior: string;
+  interior: string;
+};
+
+type VehicleMatchRow = {
+  vin: string;
+  dong_xe: string;
+  phien_ban: string | null;
+  ngoai_that: string | null;
+  noi_that: string | null;
+  trang_thai: string;
+  nguoi_giu_xe: string | null;
+  username_giu_xe: string | null;
+  ngay_nhap: string | null;
+};
+
+function canUseVehicleForPairRow(
+  item: VehicleMatchRow,
+  currentUsername: string,
+  canOverrideHeldVehicle: boolean
+) {
+  if (item.trang_thai === 'Đã ghép') {
+    return false;
+  }
+
+  if (item.trang_thai === 'Chưa ghép') {
+    return true;
+  }
+
+  return canOverrideHeldVehicle || item.username_giu_xe === currentUsername;
+}
+
+async function findBestMatchingVehicle(
+  config: VehicleMatchInput,
+  currentUsername: string,
+  canOverrideHeldVehicle: boolean
+) {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+
+  const { data, error } = await supabase
+    .from('khoxe')
+    .select('vin,dong_xe,phien_ban,ngoai_that,noi_that,trang_thai,nguoi_giu_xe,username_giu_xe,ngay_nhap')
+    .eq('dong_xe', config.line)
+    .eq('phien_ban', config.version)
+    .eq('ngoai_that', config.exterior)
+    .eq('noi_that', config.interior)
+    .order('ngay_nhap', { ascending: true });
+
+  if (error) {
+    return { data: null, error };
+  }
+
+  const match = (data || []).find((item: VehicleMatchRow) => canUseVehicleForPairRow(item, currentUsername, canOverrideHeldVehicle));
+  return { data: match ? { vin: match.vin } : null, error: null };
+}
+
 // --- Authentication & Profiles ---
 export const getProfile = async (userId: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
@@ -302,7 +361,19 @@ export const updateOrderPolicy = async (orderId: string, policy: string) => {
   return { data: { status: 'SUCCESS' }, error: null };
 };
 
-export const updateOrderDetails = async (input: UpdateOrderInput) => {
+export const findAutoPairVehicle = async (
+  config: VehicleMatchInput,
+  currentUsername: string,
+  canOverrideHeldVehicle: boolean
+) => {
+  return await findBestMatchingVehicle(config, currentUsername, canOverrideHeldVehicle);
+};
+
+export const updateOrderDetails = async (
+  input: UpdateOrderInput,
+  currentUsername: string,
+  canOverrideHeldVehicle: boolean
+) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
 
   const { data: currentOrder, error: orderFetchError } = await supabase
@@ -375,19 +446,19 @@ export const updateOrderDetails = async (input: UpdateOrderInput) => {
   // Tự ghép lại theo FIFO nếu đổi cấu hình
   let autoMatchedVin = '';
   if (criticalChanged) {
-    const { data: candidateCars } = await supabase
-      .from('khoxe')
-      .select('vin')
-      .eq('trang_thai', 'Chưa ghép')
-      .eq('dong_xe', input.line)
-      .eq('phien_ban', input.version)
-      .eq('ngoai_that', input.exterior)
-      .eq('noi_that', input.interior)
-      .order('ngay_nhap', { ascending: true })
-      .limit(1);
+    const { data: candidateCar } = await findBestMatchingVehicle(
+      {
+        line: input.line,
+        version: input.version,
+        exterior: input.exterior,
+        interior: input.interior
+      },
+      currentUsername,
+      canOverrideHeldVehicle
+    );
 
-    if (candidateCars && candidateCars.length > 0) {
-      autoMatchedVin = candidateCars[0].vin;
+    if (candidateCar?.vin) {
+      autoMatchedVin = candidateCar.vin;
 
       await supabase
         .from('donhang')

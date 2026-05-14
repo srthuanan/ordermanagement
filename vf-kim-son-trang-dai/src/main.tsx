@@ -40,9 +40,11 @@ import { SelectPolicyModal } from './components/modals/SelectPolicyModal';
 import {
   canApproveInvoice,
   canCreateOrder,
+  canHoldVehicle,
   canManageInventory,
   canManagePricingConfig,
   canOverrideHeldVehicle,
+  canPairOrder,
   canAccessTab,
   getVisibleTabs,
   roleLabels
@@ -119,6 +121,7 @@ function App() {
     session,
     currentUsername,
     currentFullName,
+    canOverrideHeldVehicle: canOverrideHeldVehicle(userRole),
     loadWorkspace,
     setSyncState,
     setSyncMessage
@@ -275,6 +278,7 @@ function App() {
             inventory={inventory}
             currentUsername={currentUsername}
             canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
+            canPairOrder={canPairOrder(userRole)}
             canManageInventory={canManageInventory(userRole)}
             isUnpairingOrderId={isUnpairingOrderId}
             isUpdatingPolicy={isUpdatingPolicy}
@@ -299,6 +303,7 @@ function App() {
           <InventoryPanel
             items={inventory}
             canManageInventory={canManageInventory(userRole)}
+            canHoldVehicle={canHoldVehicle(userRole)}
             currentUsername={currentUsername}
             canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
             isReleasingVin={isReleasingVin}
