@@ -1753,6 +1753,28 @@ small {
   min-height: 0;
   overflow: auto;
   padding-right: 2px;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #8da89c #eef3ef;
+}
+
+.orders-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.orders-list::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: #eef3ef;
+}
+
+.orders-list::-webkit-scrollbar-thumb {
+  border: 2px solid #eef3ef;
+  border-radius: 999px;
+  background: #8da89c;
+}
+
+.orders-list::-webkit-scrollbar-thumb:hover {
+  background: #6f8b7f;
 }
 
 .order-list-item {
