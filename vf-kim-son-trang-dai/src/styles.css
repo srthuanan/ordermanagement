@@ -3955,9 +3955,9 @@ td small {
 
   .inventory-mobile-hero {
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: 12px;
     padding: 16px;
     border-radius: 22px;
@@ -3994,13 +3994,17 @@ td small {
   }
 
   .inventory-mobile-hero-action {
-    width: 100%;
+    width: auto;
     flex: 0 0 auto;
+  }
+
+  .inventory-mobile-import-button {
+    width: 36px;
+    height: 36px;
     min-height: 36px;
-    padding: 0 12px;
+    padding: 0;
     border-radius: 12px;
-    font-size: 12px;
-    font-weight: 700;
+    margin-top: 2px;
   }
 
   .inventory-mobile-segment {

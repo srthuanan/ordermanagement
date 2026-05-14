@@ -153,13 +153,14 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                 </div>
                 {canManageInventory ? (
                   <button
-                    className="primary-button inventory-mobile-hero-action"
+                    className="icon-button inventory-mobile-import-button"
                     onClick={onOpenImport}
+                    title="Nhập kho"
+                    aria-label="Nhập kho"
                   >
                     <PackageCheck size={14} />
-                  <span>Nhập kho</span>
-                </button>
-              ) : null}
+                  </button>
+                ) : null}
               </div>
             </div>
           ) : (
