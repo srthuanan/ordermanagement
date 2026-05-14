@@ -3,10 +3,8 @@ import { LockKeyhole, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 export const AuthScreen: React.FC = () => {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,32 +18,13 @@ export const AuthScreen: React.FC = () => {
     setMessage('');
 
     try {
-      if (mode === 'signin') {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password
-        });
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password
+      });
 
-        if (signInError) {
-          setError('Đăng nhập thất bại. Vui lòng kiểm tra email, mật khẩu hoặc xác nhận email.');
-        }
-      } else {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          options: {
-            data: {
-              full_name: fullName.trim() || email.trim()
-            }
-          }
-        });
-
-        if (signUpError) {
-          setError('Không tạo được tài khoản. Đảm bảo mật khẩu đủ mạnh và email chưa được dùng.');
-        } else if (!data.session) {
-          setMessage('Đăng ký thành công! Hãy kiểm tra hòm thư để xác thực email.');
-          setMode('signin');
-        }
+      if (signInError) {
+        setError('Đăng nhập thất bại. Tài khoản phải do admin tạo và cấp quyền.');
       }
     } catch (err: any) {
       setError(err.message || 'Lỗi hệ thống không mong muốn.');
@@ -67,21 +46,11 @@ export const AuthScreen: React.FC = () => {
 
         <div>
           <p className="eyebrow">ĐĂNG NHẬP CỔNG NỘI BỘ</p>
-          <h1>{mode === 'signin' ? 'Hệ thống quản lý' : 'Đăng ký tài khoản'}</h1>
+          <h1>Hệ thống quản lý</h1>
+          <p className="auth-note">Tài khoản do admin tạo. Nhân sự không tự đăng ký.</p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
-          {mode === 'signup' ? (
-            <label>
-              <span>Họ và tên *</span>
-              <input
-                value={fullName}
-                placeholder="Nguyễn Văn A"
-                onChange={(event) => setFullName(event.target.value)}
-                required
-              />
-            </label>
-          ) : null}
           <label>
             <span>Email công việc *</span>
             <input
@@ -120,20 +89,9 @@ export const AuthScreen: React.FC = () => {
 
           <button className="primary-button auth-submit" type="submit" disabled={loading}>
             <LockKeyhole size={18} />
-            <span>{loading ? 'Đang xử lý...' : mode === 'signin' ? 'Đăng nhập ngay' : 'Tạo tài khoản'}</span>
+            <span>{loading ? 'Đang xử lý...' : 'Đăng nhập ngay'}</span>
           </button>
         </form>
-
-        <button
-          className="ghost-button auth-switch"
-          onClick={() => {
-            setMode((current) => (current === 'signin' ? 'signup' : 'signin'));
-            setError('');
-            setMessage('');
-          }}
-        >
-          {mode === 'signin' ? 'Chưa có tài khoản? Đăng ký' : 'Đã có tài khoản? Đăng nhập'}
-        </button>
       </section>
     </main>
   );

@@ -96,12 +96,94 @@ export const getProfile = async (userId: string) => {
   return await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
 };
 
-export const bootstrapProfile = async (id: string, fullName: string) => {
+export const getProfiles = async () => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.from('profiles').insert({
-    id,
-    full_name: fullName,
-    role: 'staff'
+  return await supabase.rpc('get_staff_directory');
+};
+
+const invokeStaffFunction = async (body: Record<string, unknown>) => {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+
+  if (!accessToken) {
+    throw new Error('Phiên đăng nhập không hợp lệ.');
+  }
+
+  if (!supabaseUrl) {
+    throw new Error('Thiếu cấu hình Supabase URL.');
+  }
+
+  if (!supabasePublishableKey) {
+    throw new Error('Thiếu cấu hình Supabase key.');
+  }
+
+  const functionBaseUrl = new URL(supabaseUrl);
+  functionBaseUrl.hostname = functionBaseUrl.hostname.replace('.supabase.co', '.functions.supabase.co');
+  functionBaseUrl.pathname = '/manage-staff';
+  functionBaseUrl.search = '';
+  functionBaseUrl.hash = '';
+  const functionUrl = functionBaseUrl.toString();
+  const response = await fetch(functionUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      apikey: supabasePublishableKey,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+
+  const rawBody = await response.text();
+  let parsedBody: any = null;
+
+  if (rawBody) {
+    try {
+      parsedBody = JSON.parse(rawBody);
+    } catch {
+      parsedBody = rawBody;
+    }
+  }
+
+  if (!response.ok) {
+    const message =
+      typeof parsedBody === 'object' && parsedBody?.error
+        ? parsedBody.error
+        : typeof parsedBody === 'string' && parsedBody.trim()
+          ? parsedBody.trim()
+          : `Edge Function returned ${response.status}`;
+    throw new Error(message);
+  }
+
+  return { data: parsedBody, error: null };
+};
+
+export const inviteStaffMember = async (input: { email: string; fullName: string; role: ProfileRow['role'] }) => {
+  return await invokeStaffFunction({
+    action: 'invite',
+    email: input.email,
+    fullName: input.fullName,
+    role: input.role
+  });
+};
+
+export const resendStaffInvite = async (input: { email: string; fullName: string; role: ProfileRow['role'] }) => {
+  return await invokeStaffFunction({
+    action: 'resend',
+    email: input.email,
+    fullName: input.fullName,
+    role: input.role
+  });
+};
+
+export const cancelStaffInvite = async (input: { email: string; fullName: string; role: ProfileRow['role'] }) => {
+  return await invokeStaffFunction({
+    action: 'cancel',
+    email: input.email,
+    fullName: input.fullName,
+    role: input.role
   });
 };
 

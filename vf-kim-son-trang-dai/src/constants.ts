@@ -2,7 +2,9 @@ import {
   LayoutDashboard,
   ShoppingBag,
   Boxes,
-  ClipboardList
+  ClipboardList,
+  Calculator,
+  Users
 } from 'lucide-react';
 import { OrderStatus, StockStatus, ProfileRow } from './types';
 
@@ -10,10 +12,54 @@ export const tabs = [
   { key: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
   { key: 'orders', label: 'Đơn hàng', icon: ShoppingBag },
   { key: 'inventory', label: 'Kho xe', icon: Boxes },
-  { key: 'invoices', label: 'Yêu cầu HĐ', icon: ClipboardList }
+  { key: 'invoices', label: 'Yêu cầu HĐ', icon: ClipboardList },
+  { key: 'pricing', label: 'Tính giá', icon: Calculator },
+  { key: 'staff', label: 'Nhân sự', icon: Users }
 ] as const;
 
 export type TabKey = (typeof tabs)[number]['key'];
+export type AppRole = ProfileRow['role'];
+
+const roleTabAccess: Record<TabKey, AppRole[]> = {
+  dashboard: ['admin', 'sales'],
+  orders: ['admin', 'sales'],
+  inventory: ['admin', 'sales'],
+  invoices: ['admin'],
+  pricing: ['admin', 'sales'],
+  staff: ['admin']
+};
+
+export function canAccessTab(role: AppRole, tabKey: TabKey) {
+  return roleTabAccess[tabKey].includes(role);
+}
+
+export function getVisibleTabs(role: AppRole) {
+  return tabs.filter((tab) => canAccessTab(role, tab.key as TabKey));
+}
+
+export function canCreateOrder(role: AppRole) {
+  return ['admin', 'sales'].includes(role);
+}
+
+export function canManageInventory(role: AppRole) {
+  return role === 'admin';
+}
+
+export function canOverrideHeldVehicle(role: AppRole) {
+  return role === 'admin';
+}
+
+export function canApproveInvoice(role: AppRole) {
+  return role === 'admin';
+}
+
+export function canManagePricingConfig(role: AppRole) {
+  return role === 'admin';
+}
+
+export function canManageStaff(role: AppRole) {
+  return role === 'admin';
+}
 
 export const versionsMap: Record<string, string[]> = {
   'VF 3': ['Base', 'Base Tiêu chuẩn 2', 'Plus'],
@@ -76,11 +122,7 @@ export const staffNames = ['Kim Anh', 'Hải Đăng', 'Thanh Phúc', 'Quản lý
 
 export const roleLabels: Record<ProfileRow['role'], string> = {
   admin: 'Admin',
-  manager: 'Quản lý',
-  sales: 'Tư vấn bán hàng',
-  warehouse: 'Kho',
-  delivery: 'Giao xe',
-  staff: 'Nhân viên'
+  sales: 'TVBH',
 };
 
 export const statusTone: Record<OrderStatus, string> = {

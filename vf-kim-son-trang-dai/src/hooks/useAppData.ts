@@ -15,6 +15,7 @@ import {
 export function useAppData() {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [queuedVins, setQueuedVins] = useState<string[]>([]);
@@ -40,6 +41,7 @@ export function useAppData() {
       setSession(nextSession);
       if (!nextSession) {
         setProfile(null);
+        setProfiles([]);
         setOrders([]);
         setInventory([]);
         setQueuedVins([]);
@@ -71,24 +73,16 @@ export function useAppData() {
     }
 
     try {
-      // 1. Tải & Bootstrap Profile người dùng
+      // 1. Tải Profile người dùng
       const profileResult = await apiService.getProfile(session.user.id);
       let profileData = profileResult.data as ProfileRow | null;
-      let profileBootstrapFailure = '';
 
       if (!profileData) {
-        const fallbackName = String(session.user.user_metadata?.full_name || '').trim() || session.user.email || 'Nhân viên mới';
-        const bootstrapResult = await apiService.bootstrapProfile(session.user.id, fallbackName);
-        if (bootstrapResult.error) {
-          profileBootstrapFailure = bootstrapResult.error.message;
-        } else {
-          profileData = {
-            id: session.user.id,
-            full_name: fallbackName,
-            role: 'staff',
-            created_at: new Date().toISOString()
-          };
-        }
+        setProfile(null);
+        setProfiles([]);
+        setSyncState('error');
+        setSyncMessage('Tài khoản này chưa được admin cấp quyền.');
+        return false;
       }
       setProfile(profileData);
 
@@ -96,13 +90,14 @@ export function useAppData() {
       await apiService.expireHoldVehicles();
 
       // 2. Tải song song dữ liệu Donhang, Khoxe, Khachhang, Audit
-      const [customersResult, ordersResult, inventoryResult, logsResult, invoicesResult, queueResult] = await Promise.all([
+      const [customersResult, ordersResult, inventoryResult, logsResult, invoicesResult, queueResult, profilesResult] = await Promise.all([
         apiService.getCustomers(),
         apiService.getOrders(),
         apiService.getInventory(),
         apiService.getCarHoldActivities(),
         apiService.getYeucauxhd(),
-        apiService.getMyQueuedVins(session.user.email || '')
+        apiService.getMyQueuedVins(session.user.email || ''),
+        apiService.getProfiles()
       ]);
 
       if (customersResult.error || !customersResult.data ||
@@ -122,13 +117,10 @@ export function useAppData() {
       setAuditLogs(logsResult.data || []);
       setInvoiceRequests(invoicesResult.data || []);
       setQueuedVins(queueResult.data || []);
+      setProfiles((profilesResult.data || []) as ProfileRow[]);
 
       setSyncState('live');
-      setSyncMessage(
-        profileBootstrapFailure
-          ? `Đồng bộ thành công nhưng lỗi profile: ${profileBootstrapFailure}`
-          : `Đã tải ${ordersResult.data.length} đơn và ${inventoryResult.data.length} xe.`
-      );
+      setSyncMessage(`Đã tải ${ordersResult.data.length} đơn và ${inventoryResult.data.length} xe.`);
       return true;
     } catch (err: any) {
       setSyncState('error');
@@ -178,6 +170,13 @@ export function useAppData() {
           loadWorkspace({ showLoading: false });
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          loadWorkspace({ showLoading: false });
+        }
+      )
       .subscribe();
 
     return () => {
@@ -191,6 +190,7 @@ export function useAppData() {
     orders,
     inventory,
     queuedVins,
+    profiles,
     auditLogs,
     invoiceRequests,
     authReady,

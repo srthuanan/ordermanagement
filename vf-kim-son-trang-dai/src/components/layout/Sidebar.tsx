@@ -1,6 +1,6 @@
 import React from 'react';
 import { UserRound, LogOut } from 'lucide-react';
-import { tabs, TabKey, roleLabels } from '../../constants';
+import { TabKey, getVisibleTabs, roleLabels } from '../../constants';
 import { ProfileRow } from '../../types';
 
 interface SidebarProps {
@@ -9,6 +9,7 @@ interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (val: boolean) => void;
   profile: ProfileRow | null;
+  visibleTabs: { key: TabKey; label: string; icon: React.ComponentType<{ size?: number }> }[];
   userEmail?: string;
   onSignOut: () => void;
 }
@@ -19,9 +20,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   sidebarOpen,
   setSidebarOpen,
   profile,
+  visibleTabs,
   userEmail,
   onSignOut
 }) => {
+  const tabs = visibleTabs.length ? visibleTabs : getVisibleTabs(profile?.role ?? 'sales');
+
   return (
     <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
       <div className="brand">

@@ -1,0 +1,2048 @@
+{
+  "models": [
+    "VF 3",
+    "VF 5",
+    "VF 6",
+    "VF 7",
+    "VF 8",
+    "VF 9",
+    "ECVan",
+    "VF MPV 7",
+    "Minio Green",
+    "Herio Green",
+    "Limo Green"
+  ],
+  "versions": [
+    "ECVan-NangCao-CoCua: 325,000,000 VND",
+    "ECVan-NangCao-KhongCua: 305,000,000 VND",
+    "ECVan-TieuChuan: 285,000,000 VND",
+    "Herio: 499,000,000 VND",
+    "Limo-VIN2026: 749,000,000 VND",
+    "Minio-CoBan: 269,000,000 VND",
+    "VF3-Eco: 302,000,000 VND",
+    "VF3-Plus: 315,000,000 VND",
+    "VF5: 529,000,000 VND",
+    "VF6-Eco: 689,000,000 VND",
+    "VF6-Plus: 745,000,000 VND",
+    "VF7-Eco: 789,000,000 VND",
+    "VF7-Eco-HUD: 799,000,000 VND",
+    "VF7-Plus-1: 889,000,000 VND",
+    "VF7-Plus-1-TranKinh: 909,000,000 VND",
+    "VF7-Plus-2: 939,000,000 VND",
+    "VF7-Plus-2-TranKinh: 959,000,000 VND",
+    "VF8-Eco-1: 1,019,000,000 VND",
+    "VF8-Eco-2: 1,069,000,000 VND",
+    "VF8-Plus: 1,199,000,000 VND",
+    "VF9-Eco: 1,499,000,000 VND",
+    "VF9-Plus: 1,699,000,000 VND",
+    "VF9-Plus-Cap: 1,731,000,000 VND",
+    "VFMPV7: 819,000,000 VND"
+  ],
+  "fees": [
+    {
+      "id": "f3",
+      "name": "Bảo hiểm trách nhiệm dân sự (1 năm)",
+      "amountHnHcm": 480700,
+      "amountOther": 480700
+    },
+    {
+      "id": "f2",
+      "name": "Phí bảo trì đường bộ (1 năm)",
+      "amountHnHcm": 1560000,
+      "amountOther": 1560000
+    },
+    {
+      "id": "f1",
+      "name": "Phí trước bạ",
+      "amountHnHcm": 0,
+      "amountOther": 0
+    },
+    {
+      "id": "f5",
+      "name": "Phí đăng kiểm",
+      "amountHnHcm": 340000,
+      "amountOther": 100000
+    },
+    {
+      "id": "f4",
+      "name": "Phí đăng ký biển số",
+      "amountHnHcm": 14000000,
+      "amountOther": 140000
+    }
+  ],
+  "promotions": [
+    "Công an quân đội 5% (5%)",
+    "Mãnh liệt vì tương lai xanh 10% (10%)",
+    "Mãnh liệt vì tương lai xanh 6% (6%)",
+    "Thu xăng đổi điện 3% (3%)",
+    "Tặng 2 năm bảo hiểm vật chất hoặc quy đổi 15 triệu (15,000,000 VND)",
+    "Tặng Bảo Hiểm Thân Vỏ 1 năm tương đương 1% (0 VND)",
+    "Ưu đãi 1% KH Công an/Quân đội mua qua O2O (1%)",
+    "Ưu đãi 2% KH đối tác mua qua O2O (2%)",
+    "Ưu đãi khác (0 VND)"
+  ]
+}
+Dữ liệu thô đầy đủ (JSON):
+{
+  "models": [
+    {
+      "id": "VF3",
+      "name": "VF 3",
+      "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw3a19c1c4/images/VF3/TI1CV/CE18.png",
+      "brochure_url": "https://storage.googleapis.com/vinfast-data-01/brochure/VF%203_Brochure_Final_280126%20(18PM).pdf"
+    },
+    {
+      "id": "VF5",
+      "name": "VF 5",
+      "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa56f6ef3/images/VF5/GA12V/CE18.png",
+      "brochure_url": "https://storage.googleapis.com/vinfast-data-01/brochure/VF%205_Brochure_Final_290126%20(13PM).pdf"
+    },
+    {
+      "id": "VF6",
+      "name": "VF 6",
+      "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwed426ed5/images/VF6/JB12V/CE18.png",
+      "brochure_url": "https://storage.googleapis.com/vinfast-data-01/brochure/VF%206_Brochure_Final_090226%20(10AM).pdf"
+    },
+    {
+      "id": "VF7",
+      "name": "VF 7",
+      "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwb41bf69b/images/VF7/GC12V/CE18.png",
+      "brochure_url": "https://storage.googleapis.com/vinfast-data-01/brochure/14012026/VF7_BROCHURE%20100125.pdf"
+    },
+    {
+      "id": "VF8",
+      "name": "VF 8",
+      "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/CE18.png",
+      "brochure_url": "https://storage.googleapis.com/vinfast-data-01/brochure/VF8_Brochure_03022026.pdf"
+    },
+    {
+      "id": "VF9",
+      "name": "VF 9",
+      "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe861d018/images/VF9/NE3NV/CE18.png",
+      "brochure_url": "https://storage.googleapis.com/vinfast-data-01/brochure/VF%209_%20Brochure.pdf"
+    },
+    {
+      "id": "ECVan",
+      "name": "ECVan",
+      "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe2a7e078/images/ECVAN/TG10V/CE18.png",
+      "brochure_url": "https://storage.googleapis.com/vinfast-data-01/brochure/10012026/Brochure%20EC%20Van%20090126.pdf"
+    },
+    {
+      "id": "VFMPV7",
+      "name": "VF MPV 7",
+      "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwc07e37d2/images/VFMPV7/SL1WV/CE18.png",
+      "brochure_url": "https://storage.googleapis.com/vinfast-data-01/brochure/VF_MPV%207_Brochure_2026.02.03.pdf"
+    },
+    {
+      "id": "MinioGreen",
+      "name": "Minio Green",
+      "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwf5c66334/images/MinioGreen/TH12V/CE18.webp",
+      "brochure_url": "https://storage.googleapis.com/vinfast-data-01/brochure/10012026/Brochure%20Minio%20Green%20090126.pdf"
+    },
+    {
+      "id": "HerioGreen",
+      "name": "Herio Green",
+      "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw7e0d8431/images/HerioGreen/GA1QV/CE18.webp",
+      "brochure_url": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw6b102dbd/Document/250422_Brochure_Herio_Green_VN.pdf"
+    },
+    {
+      "id": "LimoGreen",
+      "name": "Limo Green",
+      "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw03f37450/images/LimoGreen/SL1VV/CE18.webp",
+      "brochure_url": "https://storage.googleapis.com/vinfast-data-01/brochure/Brochure%20Limo%20050126.pdf"
+    }
+  ],
+  "versions": [
+    {
+      "id": "ECVan-NangCao-CoCua",
+      "modelId": "ECVan",
+      "name": "Nâng cao - có cửa trượt (TG12V)",
+      "basePrice": 325000000,
+      "specificPromotions": {
+        "deposit-voucher": 5000000
+      },
+      "advancedColorPrice": 0,
+      "depositDiscount": 5000000,
+      "bodyInsuranceAmount": 5000000,
+      "depositAmount": 0,
+      "colors": [
+        {
+          "id": "vc_ecvan_cc_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwddcf5d86/images/ECVAN/TG12V/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_ecvan_cc_ce1u",
+          "name": "Yellow",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw269064cd/images/ECVAN/TG12V/CE1U.png",
+          "color_code": "CE1U",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_ecvan_cc_ce1w",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwaf408f05/images/ECVAN/TG12V/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_ecvan_cc_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa4f41267/images/ECVAN/TG12V/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "ECVan-NangCao-KhongCua",
+      "modelId": "ECVan",
+      "name": "Nâng cao - không cửa (TG11V)",
+      "basePrice": 305000000,
+      "specificPromotions": {
+        "deposit-voucher": 5000000
+      },
+      "advancedColorPrice": 0,
+      "depositDiscount": 5000000,
+      "bodyInsuranceAmount": 4000000,
+      "depositAmount": 0,
+      "colors": [
+        {
+          "id": "vc_ecvan_nc_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwcb4bbbaa/images/ECVAN/TG11V/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_ecvan_nc_ce1w",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa285abf1/images/ECVAN/TG11V/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_ecvan_nc_ce1u",
+          "name": "Yellow",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw4cd5306d/images/ECVAN/TG11V/CE1U.png",
+          "color_code": "CE1U",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_ecvan_nc_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwcb4bbbaa/images/ECVAN/TG11V/CE18.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "ECVan-TieuChuan",
+      "modelId": "ECVan",
+      "name": "Tiêu chuẩn - không điều hòa (TG10V)",
+      "basePrice": 285000000,
+      "specificPromotions": {
+        "deposit-voucher": 5000000
+      },
+      "advancedColorPrice": 0,
+      "depositDiscount": 5000000,
+      "bodyInsuranceAmount": 4000000,
+      "depositAmount": 0,
+      "colors": [
+        {
+          "id": "vc_ecvan_tc_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe2a7e078/images/ECVAN/TG10V/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_ecvan_tc_ce1w",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa3b049ee/images/ECVAN/TG10V/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_ecvan_tc_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw11678742/images/ECVAN/TG10V/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_ecvan_tc_ce1u",
+          "name": "Yellow",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw38888116/images/ECVAN/TG10V/CE1U.png",
+          "color_code": "CE1U",
+          "is_advanced": false
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "Herio",
+      "modelId": "HerioGreen",
+      "name": "Tiêu chuẩn (GA1QV)",
+      "basePrice": 499000000,
+      "specificPromotions": {},
+      "advancedColorPrice": null,
+      "depositDiscount": null,
+      "bodyInsuranceAmount": null,
+      "depositAmount": 0,
+      "colors": [
+        {
+          "id": "vc_herio_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw7e0d8431/images/HerioGreen/GA1QV/CE18.webp",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_herio_ce11",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw315a6865/images/HerioGreen/GA1QV/CE11.png",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_herio_ce17",
+          "name": "Desat Silver",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe6b7b6fe/images/HerioGreen/GA1QV/CE17.png",
+          "color_code": "CE17",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_herio_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw0efc30f8/images/HerioGreen/GA1QV/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "Limo-VIN2026",
+      "modelId": "LimoGreen",
+      "name": "VIN 2026 (SL1VV)",
+      "basePrice": 749000000,
+      "specificPromotions": {
+        "deposit-voucher": 10000000
+      },
+      "advancedColorPrice": 0,
+      "depositDiscount": 10000000,
+      "bodyInsuranceAmount": 6000000,
+      "depositAmount": 30000000,
+      "colors": [
+        {
+          "id": "vc_limo_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw03f37450/images/LimoGreen/SL1VV/CE18.webp",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_limo_ce17",
+          "name": "Desat Silver",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd414e9c8/images/LimoGreen/SL1VV/CE17.png",
+          "color_code": "CE17",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_limo_ce11",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwac981cbc/images/LimoGreen/SL1VV/CE11.png",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_limo_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwdccfd85f/images/LimoGreen/SL1VV/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "Minio-CoBan",
+      "modelId": "MinioGreen",
+      "name": "Minio",
+      "basePrice": 269000000,
+      "specificPromotions": {
+        "deposit-voucher": 5000000
+      },
+      "advancedColorPrice": 8000000,
+      "depositDiscount": 5000000,
+      "bodyInsuranceAmount": 5000000,
+      "depositAmount": 0,
+      "colors": [
+        {
+          "id": "vc_miniocb_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwf5c66334/images/MinioGreen/TH12V/CE18.webp",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_miniocb_ce2k",
+          "name": "Rose Metallic",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw4c4df6a3/images/MinioGreen/TH12V/CE2K.png",
+          "color_code": "CE2K",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_miniocb_ce17",
+          "name": "Desat Silver",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd04ff62a/images/MinioGreen/TH12V/CE17.png",
+          "color_code": "CE17",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_miniocb_ce11",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw378f8fa3/images/MinioGreen/TH12V/CE11.png",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_miniocb_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe6d79257/images/MinioGreen/TH12V/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_miniocb_ce2i",
+          "name": "Tropical Jade",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw1e0e3a97/images/MinioGreen/TH12V/CE2I.png",
+          "color_code": "CE2I",
+          "is_advanced": false
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF3-Eco",
+      "modelId": "VF3",
+      "name": "Eco",
+      "basePrice": 302000000,
+      "specificPromotions": {
+        "deposit-voucher": 5000000
+      },
+      "advancedColorPrice": 8000000,
+      "depositDiscount": 5000000,
+      "bodyInsuranceAmount": 6000000,
+      "depositAmount": 0,
+      "colors": [
+        {
+          "id": "vc_vf3eco_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw3a19c1c4/images/VF3/TI1CV/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf3eco_ce1v",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw4d9f9a2f/images/VF3/TI1CV/CE1V.png",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf3eco_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw303e0698/images/VF3/TI1CV/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf3eco_ce1w",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw8f3fc29c/images/VF3/TI1CV/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": true
+        },
+        {
+          "id": "vc_vf3eco_181y",
+          "name": "Sky Blue - Infinity Blanc Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw3ead61ed/images/VF3/TI1CV/181Y.png",
+          "color_code": "181Y",
+          "is_advanced": true
+        },
+        {
+          "id": "vc_vf3eco_181u",
+          "name": "Summer Yellow Body - Infinity Blanc Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa42e2716/images/VF3/TI1CV/181U.png",
+          "color_code": "181U",
+          "is_advanced": true
+        },
+        {
+          "id": "vc_vf3eco_1821",
+          "name": "Rose Pink Body - Infinity Blanc Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwf1a2d6d0/images/VF3/TI1CV/1821.png",
+          "color_code": "1821",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF3-Plus",
+      "modelId": "VF3",
+      "name": "Plus",
+      "basePrice": 315000000,
+      "specificPromotions": {
+        "deposit-voucher": 5000000
+      },
+      "advancedColorPrice": 8000000,
+      "depositDiscount": 5000000,
+      "bodyInsuranceAmount": 6000000,
+      "depositAmount": 0,
+      "colors": [
+        {
+          "id": "vc_vf3plus_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw6d3a366b/images/VF3/TI1BV/CE18.webp",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf3plus_ce1v",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw0c0756e9/images/VF3/TI1BV/CE1V.webp",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf3plus_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw21828d23/images/VF3/TI1BV/CE2Q.webp",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf3plus_181u",
+          "name": "Summer Yellow Body - Infinity Blanc Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw6f9e51df/images/VF3/TI1BV/181U.webp",
+          "color_code": "181U",
+          "is_advanced": true
+        },
+        {
+          "id": "vc_vf3plus_181y",
+          "name": "Sky Blue - Infinity Blanc Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw351a2879/images/VF3/TI1BV/181Y.webp",
+          "color_code": "181Y",
+          "is_advanced": true
+        },
+        {
+          "id": "vc_vf3plus_1821",
+          "name": "Rose Pink Body - Infinity Blanc Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwb8b9cf2c/images/VF3/TI1BV/1821.webp",
+          "color_code": "1821",
+          "is_advanced": true
+        },
+        {
+          "id": "vc_vf3plus_ce1w",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw4344702c/images/VF3/TI1BV/CE1W.webp",
+          "color_code": "CE1W",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF5",
+      "modelId": "VF5",
+      "name": "Plus",
+      "basePrice": 529000000,
+      "specificPromotions": {
+        "deposit-voucher": 7000000
+      },
+      "advancedColorPrice": 8000000,
+      "depositDiscount": 7000000,
+      "bodyInsuranceAmount": 7000000,
+      "depositAmount": 0,
+      "colors": [
+        {
+          "id": "vc_vf5_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa56f6ef3/images/VF5/GA12V/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf5_ce1v",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw99cec5c0/images/VF5/GA12V/CE1V.png",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf5_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe1fd1d5e/images/VF5/GA12V/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf5_111u",
+          "name": "Summer Yellow Body - Jet Black Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe77f7665/images/VF5/GA12V/111U.png",
+          "color_code": "111U",
+          "is_advanced": true
+        },
+        {
+          "id": "vc_vf5_ce1w",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwc759397a/images/VF5/GA12V/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": true
+        },
+        {
+          "id": "vc_vf5_181y",
+          "name": "Sky Blue - Infinity Blanc Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw699981ee/images/VF5/GA12V/181Y.png",
+          "color_code": "181Y",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF6-Eco",
+      "modelId": "VF6",
+      "name": "Eco",
+      "basePrice": 689000000,
+      "specificPromotions": {
+        "deposit-voucher": 10000000
+      },
+      "advancedColorPrice": 8000000,
+      "depositDiscount": 10000000,
+      "bodyInsuranceAmount": 7000000,
+      "depositAmount": 0,
+      "colors": [
+        {
+          "id": "vc_vf6eco_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwf521cc67/images/VF6/JB10V/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf6eco_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw8dee3202/images/VF6/JB10V/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf6eco_ce1v",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw5da2ef7c/images/VF6/JB10V/CE1V.png",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf6eco_ce11",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw49928dd4/images/VF6/JB10V/CE11.png",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf6eco_ce1w",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe6f544eb/images/VF6/JB10V/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF6-Plus",
+      "modelId": "VF6",
+      "name": "Plus",
+      "basePrice": 745000000,
+      "specificPromotions": {
+        "deposit-voucher": 10000000
+      },
+      "advancedColorPrice": 8000000,
+      "depositDiscount": 10000000,
+      "bodyInsuranceAmount": 7000000,
+      "depositAmount": 0,
+      "colors": [
+        {
+          "id": "vc_vf6plus_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwed426ed5/images/VF6/JB12V/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf6plus_ce11",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw759ca288/images/VF6/JB12V/CE11.png",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf6plus_ce1v",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw08623347/images/VF6/JB12V/CE1V.png",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf6plus_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwb0021530/images/VF6/JB12V/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf6plus_ce1w",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw26f526a3/images/VF6/JB12V/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF7-Eco",
+      "modelId": "VF7",
+      "name": "Eco",
+      "basePrice": 789000000,
+      "specificPromotions": {
+        "deposit-voucher": 15000000
+      },
+      "advancedColorPrice": 12000000,
+      "depositDiscount": 15000000,
+      "bodyInsuranceAmount": 8000000,
+      "depositAmount": 50000000,
+      "colors": [
+        {
+          "id": "vc_vf7eco_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwdafc2bb7/images/VF7/GC15V/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf7eco_ce1v",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw38b16d7a/images/VF7/GC15V/CE1V.png",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf7eco_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd5e75327/images/VF7/GC15V/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf7eco_ce11",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw7fd70968/images/VF7/GC15V/CE11.webp",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf7eco_ce1w",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe7e3a128/images/VF7/GC15V/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF7-Eco-HUD",
+      "modelId": "VF7",
+      "name": "Eco (HUD)",
+      "basePrice": 799000000,
+      "specificPromotions": {
+        "deposit-voucher": 15000000
+      },
+      "advancedColorPrice": 12000000,
+      "depositDiscount": 15000000,
+      "bodyInsuranceAmount": 8000000,
+      "depositAmount": 50000000,
+      "colors": [
+        {
+          "id": "color_1773130159554_g3gg6b",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwdafc2bb7/images/VF7/GC15V/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773130160400_7vyzng",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw38b16d7a/images/VF7/GC15V/CE1V.png",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773130159961_zxvlnp",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd5e75327/images/VF7/GC15V/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773130160224_ebv2x3",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw7fd70968/images/VF7/GC15V/CE11.webp",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773130159785_90sh83",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe7e3a128/images/VF7/GC15V/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF7-Plus-1",
+      "modelId": "VF7",
+      "name": "Plus TC 2 (1 cầu)",
+      "basePrice": 889000000,
+      "specificPromotions": {
+        "deposit-voucher": 15000000
+      },
+      "advancedColorPrice": 12000000,
+      "depositDiscount": 15000000,
+      "bodyInsuranceAmount": 8000000,
+      "depositAmount": 50000000,
+      "colors": [
+        {
+          "id": "color_1773130184098_b4w4vw",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwdafc2bb7/images/VF7/GC15V/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773130184893_zjs59i",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw38b16d7a/images/VF7/GC15V/CE1V.png",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773130184542_lg6psd",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd5e75327/images/VF7/GC15V/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773130184718_fp1j7y",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw7fd70968/images/VF7/GC15V/CE11.webp",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773130184369_khrbp6",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe7e3a128/images/VF7/GC15V/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF7-Plus-1-TranKinh",
+      "modelId": "VF7",
+      "name": "Plus TC 2 (1 cầu) Trần kính toàn cảnh",
+      "basePrice": 909000000,
+      "specificPromotions": {
+        "deposit-voucher": 15000000
+      },
+      "advancedColorPrice": 12000000,
+      "depositDiscount": 15000000,
+      "bodyInsuranceAmount": 10000000,
+      "depositAmount": 50000000,
+      "colors": [],
+      "promoFlags": {
+        "p4": true,
+        "p2": false,
+        "p1": true,
+        "p5": true,
+        "tang-2-nam-bao-hiem": false,
+        "p6": true,
+        "p3-caqd": true,
+        "p3": true,
+        "p-vf8-eco": false
+      }
+    },
+    {
+      "id": "VF7-Plus-2",
+      "modelId": "VF7",
+      "name": "Plus TC 2 (2 cầu)",
+      "basePrice": 939000000,
+      "specificPromotions": {
+        "deposit-voucher": 15000000
+      },
+      "advancedColorPrice": 12000000,
+      "depositDiscount": 15000000,
+      "bodyInsuranceAmount": 8000000,
+      "depositAmount": 50000000,
+      "colors": [
+        {
+          "id": "color_1773130194762_6w2dhe",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwdafc2bb7/images/VF7/GC15V/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773130195551_f0jf3w",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw38b16d7a/images/VF7/GC15V/CE1V.png",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773130195182_eimy8p",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd5e75327/images/VF7/GC15V/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773130195360_re3bam",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw7fd70968/images/VF7/GC15V/CE11.webp",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773130194996_5kfaz8",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe7e3a128/images/VF7/GC15V/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF7-Plus-2-TranKinh",
+      "modelId": "VF7",
+      "name": "Plus TC 2 (2 cầu) Trần kính toàn cảnh",
+      "basePrice": 959000000,
+      "specificPromotions": {
+        "deposit-voucher": 15000000
+      },
+      "advancedColorPrice": 12000000,
+      "depositDiscount": 15000000,
+      "bodyInsuranceAmount": 9000000,
+      "depositAmount": 50000000,
+      "colors": [],
+      "promoFlags": {
+        "p4": true,
+        "p2": false,
+        "p1": true,
+        "p5": true,
+        "tang-2-nam-bao-hiem": false,
+        "p6": true,
+        "p3-caqd": true,
+        "p3": true,
+        "p-vf8-eco": false
+      }
+    },
+    {
+      "id": "VF8-Eco-1",
+      "modelId": "VF8",
+      "name": "Eco (VN 1 cầu)",
+      "basePrice": 1019000000,
+      "specificPromotions": {
+        "p-vf8-eco": 20000000,
+        "deposit-voucher": 15000000
+      },
+      "advancedColorPrice": 15000000,
+      "depositDiscount": 15000000,
+      "bodyInsuranceAmount": 8500000,
+      "depositAmount": 50000000,
+      "colors": [
+        {
+          "id": "color_1773139649853_gvqwmi",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwafc3ac80/images/VF8/ND31V/CE18.webp",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773139680265_ksj41b",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw19321e63/images/VF8/ND31V/CE11.webp ",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773139721595_awmw5o",
+          "name": "Crimson Red",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw65f5fd6d/images/VF8/ND31V/CE1M.webp",
+          "color_code": "CE1M",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773139745417_jz1ji0",
+          "name": "Ivy Green",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw5aa8e062/images/VF8/ND31V/CE22.webp ",
+          "color_code": "CE22",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773139840957_scrtj3",
+          "name": "Zenith Grey - Desat Silver Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwa349f493/images/VF8/ND31V/171V.webp ",
+          "color_code": "171V",
+          "is_advanced": true
+        },
+        {
+          "id": "color_1773139874886_ah8xtg",
+          "name": "Infinity Blanc - Zenith Grey Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwf71b68ce/images/VF8/ND31V/1V18.webp ",
+          "color_code": "1V18",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF8-Eco-2",
+      "modelId": "VF8",
+      "name": "Eco (VN 2 cầu)",
+      "basePrice": 1069000000,
+      "specificPromotions": {
+        "p-vf8-eco": 50000000,
+        "deposit-voucher": 15000000
+      },
+      "advancedColorPrice": 15000000,
+      "depositDiscount": 15000000,
+      "bodyInsuranceAmount": 8500000,
+      "depositAmount": 50000000,
+      "colors": [
+        {
+          "id": "color_1773139916453_i5eb59",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwafc3ac80/images/VF8/ND31V/CE18.webp",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773139916649_3w3ufi",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw19321e63/images/VF8/ND31V/CE11.webp ",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773139916827_eyjr1s",
+          "name": "Crimson Red",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw65f5fd6d/images/VF8/ND31V/CE1M.webp",
+          "color_code": "CE1M",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773139916992_etkcj8",
+          "name": "Ivy Green",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw5aa8e062/images/VF8/ND31V/CE22.webp ",
+          "color_code": "CE22",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773139917338_77xgox",
+          "name": "Zenith Grey - Desat Silver Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwa349f493/images/VF8/ND31V/171V.webp ",
+          "color_code": "171V",
+          "is_advanced": true
+        },
+        {
+          "id": "color_1773139917534_iw1dg3",
+          "name": "Infinity Blanc - Zenith Grey Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwf71b68ce/images/VF8/ND31V/1V18.webp ",
+          "color_code": "1V18",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF8-Plus",
+      "modelId": "VF8",
+      "name": "Plus",
+      "basePrice": 1199000000,
+      "specificPromotions": {
+        "deposit-voucher": 15000000
+      },
+      "advancedColorPrice": 15000000,
+      "depositDiscount": 15000000,
+      "bodyInsuranceAmount": 8500000,
+      "depositAmount": 50000000,
+      "colors": [
+        {
+          "id": "color_1773139931143_xrg4jl",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw3aa598fc/images/VF8/ND32V/CE18.webp ",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773139931336_j1nrqy",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwe99399ba/images/VF8/ND32V/CE11.webp ",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773139931546_cq99am",
+          "name": "Crimson Red",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw7ee45c93/images/VF8/ND32V/CE1M.webp ",
+          "color_code": "CE1M",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773139931717_xcdsgc",
+          "name": "Ivy Green",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw90acd258/images/VF8/ND32V/CE22.webp ",
+          "color_code": "CE22",
+          "is_advanced": false
+        },
+        {
+          "id": "color_1773139932102_405fht",
+          "name": "Zenith Grey - Desat Silver Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw2ab390ed/images/VF8/ND32V/171V.webp ",
+          "color_code": "171V",
+          "is_advanced": true
+        },
+        {
+          "id": "color_1773139932272_c64m38",
+          "name": "Infinity Blanc - Zenith Grey Roof",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwb82fddcc/images/VF8/ND32V/1V18.webp ",
+          "color_code": "1V18",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF9-Eco",
+      "modelId": "VF9",
+      "name": "Eco (NE3LV)",
+      "basePrice": 1499000000,
+      "specificPromotions": {
+        "deposit-voucher": 20000000
+      },
+      "advancedColorPrice": 12000000,
+      "depositDiscount": 20000000,
+      "bodyInsuranceAmount": 10000000,
+      "depositAmount": 50000000,
+      "colors": [
+        {
+          "id": "vc_vf9eco_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw359f3d29/images/VF9/NE3LV/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9eco_ce1m",
+          "name": "Crimson Red",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw13165e38/images/VF9/NE3LV/CE1M.png",
+          "color_code": "CE1M",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9eco_ce11",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwf7b9f784/images/VF9/NE3LV/CE11.png",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9eco_ce22",
+          "name": "Ivy Green",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa8631ed5/images/VF9/NE3LV/CE22.png",
+          "color_code": "CE22",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9eco_ce1v",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw0c7ae75d/images/VF9/NE3LV/CE1V.png",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9eco_ce17",
+          "name": "Desat Silver",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw08e2a618/images/VF9/NE3LV/CE17.png",
+          "color_code": "CE17",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9eco_ce1w",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwed816812/images/VF9/NE3LV/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": false
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF9-Plus",
+      "modelId": "VF9",
+      "name": "Plus 7 chỗ (NE3MV)",
+      "basePrice": 1699000000,
+      "specificPromotions": {
+        "deposit-voucher": 20000000
+      },
+      "advancedColorPrice": 12000000,
+      "depositDiscount": 20000000,
+      "bodyInsuranceAmount": 12000000,
+      "depositAmount": 50000000,
+      "colors": [
+        {
+          "id": "vc_vf9plus_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw16ca8e24/images/VF9/NE3MV/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9plus_ce1m",
+          "name": "Crimson Red",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw8c8b0b0c/images/VF9/NE3MV/CE1M.png",
+          "color_code": "CE1M",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9plus_ce11",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw15bf4548/images/VF9/NE3MV/CE11.png",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9plus_ce22",
+          "name": "Ivy Green",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw3c986628/images/VF9/NE3MV/CE22.png",
+          "color_code": "CE22",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9plus_ce1v",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw140c09f3/images/VF9/NE3MV/CE1V.png",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9plus_ce17",
+          "name": "Desat Silver",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw5e3e1d10/images/VF9/NE3MV/CE17.png",
+          "color_code": "CE17",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9plus_ce1w",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwf72707f0/images/VF9/NE3MV/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": false
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VF9-Plus-Cap",
+      "modelId": "VF9",
+      "name": "Plus ghế cơ trưởng (NE3NV)",
+      "basePrice": 1731000000,
+      "specificPromotions": {
+        "deposit-voucher": 20000000
+      },
+      "advancedColorPrice": 12000000,
+      "depositDiscount": 20000000,
+      "bodyInsuranceAmount": 12000000,
+      "depositAmount": 50000000,
+      "colors": [
+        {
+          "id": "vc_vf9cap_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe861d018/images/VF9/NE3NV/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9cap_ce1m",
+          "name": "Crimson Red",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwb97545ea/images/VF9/NE3NV/CE1M.png",
+          "color_code": "CE1M",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9cap_ce11",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa0d506d6/images/VF9/NE3NV/CE11.png",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9cap_ce22",
+          "name": "Ivy Green",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw19ebd8dd/images/VF9/NE3NV/CE22.png",
+          "color_code": "CE22",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9cap_ce1v",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw72fbcd05/images/VF9/NE3NV/CE1V.png",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9cap_ce17",
+          "name": "Desat Silver",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwcaee8de4/images/VF9/NE3NV/CE17.png",
+          "color_code": "CE17",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_vf9cap_ce1w",
+          "name": "Urban Mint",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29074c9e/images/VF9/NE3NV/CE1W.png",
+          "color_code": "CE1W",
+          "is_advanced": false
+        }
+      ],
+      "promoFlags": {}
+    },
+    {
+      "id": "VFMPV7",
+      "modelId": "VFMPV7",
+      "name": "Tiêu chuẩn",
+      "basePrice": 819000000,
+      "specificPromotions": {
+        "deposit-voucher": 10000000
+      },
+      "advancedColorPrice": 0,
+      "depositDiscount": 10000000,
+      "bodyInsuranceAmount": 7000000,
+      "depositAmount": 30000000,
+      "colors": [
+        {
+          "id": "vc_mpv7_ce18",
+          "name": "Infinity Blanc",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwc07e37d2/images/VFMPV7/SL1WV/CE18.png",
+          "color_code": "CE18",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_mpv7_ce1v",
+          "name": "Zenith Grey",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwaa49bf74/images/VFMPV7/SL1WV/CE1V.png",
+          "color_code": "CE1V",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_mpv7_ce11",
+          "name": "Jet Black",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw4455dc5c/images/VFMPV7/SL1WV/CE11.png",
+          "color_code": "CE11",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_mpv7_ce2q",
+          "name": "Solar Ruby",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw0e4bf426/images/VFMPV7/SL1WV/CE2Q.png",
+          "color_code": "CE2Q",
+          "is_advanced": false
+        },
+        {
+          "id": "vc_mpv7_ce2n",
+          "name": "Introspective Brown",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw30cd00e9/images/VFMPV7/SL1WV/CE2N.png",
+          "color_code": "CE2N",
+          "is_advanced": true
+        },
+        {
+          "id": "vc_mpv7_ce2j",
+          "name": "Moonlit Ocean",
+          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw387ee762/images/VFMPV7/SL1WV/CE2J.png",
+          "color_code": "CE2J",
+          "is_advanced": true
+        }
+      ],
+      "promoFlags": {}
+    }
+  ],
+  "promotions": [
+    {
+      "id": "p4",
+      "name": "Công an quân đội 5%",
+      "type": "percentage",
+      "value": 5,
+      "useSpecificValue": false,
+      "incompatibleWith": [
+        "vinclub",
+        "__body_insurance__",
+        "__deposit__"
+      ],
+      "applicableTo": [],
+      "calculationBase": "list_price",
+      "isFuelSwap": false,
+      "versionOverrides": {}
+    },
+    {
+      "id": "p2",
+      "name": "Mãnh liệt vì tương lai xanh 10%",
+      "type": "percentage",
+      "value": 10,
+      "useSpecificValue": false,
+      "incompatibleWith": [],
+      "applicableTo": [
+        "VF8-Eco-1",
+        "VF8-Eco-2",
+        "VF8-Plus",
+        "VF9-Eco",
+        "VF9-Plus",
+        "VF9-Plus-Cap"
+      ],
+      "calculationBase": "list_price",
+      "isFuelSwap": false,
+      "versionOverrides": {}
+    },
+    {
+      "id": "p1",
+      "name": "Mãnh liệt vì tương lai xanh 6%",
+      "type": "percentage",
+      "value": 6,
+      "useSpecificValue": false,
+      "incompatibleWith": "[]",
+      "applicableTo": [
+        "[",
+        "\"",
+        "V",
+        "F",
+        "3",
+        "-",
+        "E",
+        "c",
+        "o",
+        "\"",
+        ",",
+        "\"",
+        "V",
+        "F",
+        "3",
+        "-",
+        "P",
+        "l",
+        "u",
+        "s",
+        "\"",
+        ",",
+        "\"",
+        "V",
+        "F",
+        "5",
+        "\"",
+        ",",
+        "\"",
+        "V",
+        "F",
+        "6",
+        "-",
+        "E",
+        "c",
+        "o",
+        "\"",
+        ",",
+        "\"",
+        "V",
+        "F",
+        "6",
+        "-",
+        "P",
+        "l",
+        "u",
+        "s",
+        "\"",
+        ",",
+        "\"",
+        "V",
+        "F",
+        "7",
+        "-",
+        "E",
+        "c",
+        "o",
+        "\"",
+        ",",
+        "\"",
+        "V",
+        "F",
+        "7",
+        "-",
+        "E",
+        "c",
+        "o",
+        "-",
+        "H",
+        "U",
+        "D",
+        "\"",
+        ",",
+        "\"",
+        "V",
+        "F",
+        "7",
+        "-",
+        "P",
+        "l",
+        "u",
+        "s",
+        "-",
+        "1",
+        "\"",
+        ",",
+        "\"",
+        "V",
+        "F",
+        "7",
+        "-",
+        "P",
+        "l",
+        "u",
+        "s",
+        "-",
+        "2",
+        "\"",
+        ",",
+        "\"",
+        "V",
+        "F",
+        "M",
+        "P",
+        "V",
+        "7",
+        "\"",
+        ",",
+        "\"",
+        "M",
+        "i",
+        "n",
+        "i",
+        "o",
+        "-",
+        "C",
+        "o",
+        "B",
+        "a",
+        "n",
+        "\"",
+        ",",
+        "\"",
+        "M",
+        "i",
+        "n",
+        "i",
+        "o",
+        "-",
+        "N",
+        "a",
+        "n",
+        "g",
+        "C",
+        "a",
+        "o",
+        "\"",
+        ",",
+        "\"",
+        "H",
+        "e",
+        "r",
+        "i",
+        "o",
+        "\"",
+        ",",
+        "\"",
+        "L",
+        "i",
+        "m",
+        "o",
+        "-",
+        "V",
+        "I",
+        "N",
+        "2",
+        "0",
+        "2",
+        "6",
+        "\"",
+        ",",
+        "\"",
+        "E",
+        "C",
+        "V",
+        "a",
+        "n",
+        "-",
+        "T",
+        "i",
+        "e",
+        "u",
+        "C",
+        "h",
+        "u",
+        "a",
+        "n",
+        "\"",
+        ",",
+        "\"",
+        "E",
+        "C",
+        "V",
+        "a",
+        "n",
+        "-",
+        "N",
+        "a",
+        "n",
+        "g",
+        "C",
+        "a",
+        "o",
+        "-",
+        "K",
+        "h",
+        "o",
+        "n",
+        "g",
+        "C",
+        "u",
+        "a",
+        "\"",
+        ",",
+        "\"",
+        "E",
+        "C",
+        "V",
+        "a",
+        "n",
+        "-",
+        "N",
+        "a",
+        "n",
+        "g",
+        "C",
+        "a",
+        "o",
+        "-",
+        "C",
+        "o",
+        "C",
+        "u",
+        "a",
+        "\"",
+        "]",
+        "VF7-Plus-1-TranKinh",
+        "ECVan-NangCao-CoCua",
+        "ECVan-NangCao-KhongCua",
+        "ECVan-TieuChuan",
+        "Herio",
+        "Limo-VIN2026",
+        "Minio-CoBan",
+        "Minio-NangCao",
+        "VF3-Eco",
+        "VF3-Plus",
+        "VF5",
+        "VF6-Eco",
+        "VF6-Plus",
+        "VF7-Eco",
+        "VF7-Eco-HUD",
+        "VF7-Plus-1",
+        "VF7-Plus-2",
+        "VF7-Plus-2-TranKinh",
+        "VFMPV7"
+      ],
+      "calculationBase": "list_price",
+      "isFuelSwap": false,
+      "versionOverrides": {}
+    },
+    {
+      "id": "p5",
+      "name": "Thu xăng đổi điện 3%",
+      "type": "percentage",
+      "value": 3,
+      "useSpecificValue": false,
+      "incompatibleWith": "\"\\\"[]\\\"\"",
+      "applicableTo": [],
+      "calculationBase": "list_price",
+      "isFuelSwap": true,
+      "versionOverrides": {}
+    },
+    {
+      "id": "tang-2-nam-bao-hiem",
+      "name": "Tặng 2 năm bảo hiểm vật chất hoặc quy đổi 15 triệu",
+      "type": "fixed",
+      "value": 15000000,
+      "useSpecificValue": false,
+      "incompatibleWith": [],
+      "applicableTo": [
+        "VFMPV7"
+      ],
+      "calculationBase": "list_price",
+      "isFuelSwap": false,
+      "versionOverrides": {}
+    },
+    {
+      "id": "p6",
+      "name": "Tặng Bảo Hiểm Thân Vỏ 1 năm tương đương 1%",
+      "type": "fixed",
+      "value": 0,
+      "useSpecificValue": false,
+      "incompatibleWith": [],
+      "applicableTo": [],
+      "calculationBase": "list_price",
+      "isFuelSwap": false,
+      "versionOverrides": {}
+    },
+    {
+      "id": "p3-caqd",
+      "name": "Ưu đãi 1% KH Công an/Quân đội mua qua O2O",
+      "type": "percentage",
+      "value": 1,
+      "useSpecificValue": false,
+      "incompatibleWith": "\"[]\"",
+      "applicableTo": [
+        "\"",
+        "[",
+        "]",
+        "\"",
+        "ECVan-NangCao-CoCua",
+        "ECVan-NangCao-KhongCua",
+        "ECVan-TieuChuan",
+        "Herio",
+        "Limo-VIN2026",
+        "Minio-CoBan",
+        "Minio-NangCao",
+        "VF3-Eco",
+        "VF3-Plus",
+        "VF5",
+        "VF6-Eco",
+        "VF6-Plus",
+        "VF7-Eco",
+        "VF7-Eco-HUD",
+        "VF7-Plus-1",
+        "VF7-Plus-1-TranKinh",
+        "VF7-Plus-2",
+        "VF7-Plus-2-TranKinh",
+        "VF8-Eco-1",
+        "VF8-Eco-2",
+        "VF8-Plus",
+        "VF9-Eco",
+        "VF9-Plus",
+        "VF9-Plus-Cap",
+        "VFMPV7"
+      ],
+      "calculationBase": "list_price",
+      "isFuelSwap": false,
+      "versionOverrides": {}
+    },
+    {
+      "id": "p3",
+      "name": "Ưu đãi 2% KH đối tác mua qua O2O",
+      "type": "percentage",
+      "value": 2,
+      "useSpecificValue": false,
+      "incompatibleWith": [
+        "p4"
+      ],
+      "applicableTo": [],
+      "calculationBase": "discounted_price",
+      "isFuelSwap": false,
+      "versionOverrides": {}
+    },
+    {
+      "id": "p-vf8-eco",
+      "name": "Ưu đãi khác",
+      "type": "fixed",
+      "value": 0,
+      "useSpecificValue": true,
+      "incompatibleWith": [],
+      "applicableTo": [
+        "VF8-Eco-1",
+        "VF8-Eco-2"
+      ],
+      "calculationBase": "list_price",
+      "isFuelSwap": false,
+      "versionOverrides": {
+        "VF8-Eco-1": 20000000,
+        "VF8-Eco-2": 50000000
+      }
+    }
+  ],
+  "fees": [
+    {
+      "id": "f3",
+      "name": "Bảo hiểm trách nhiệm dân sự (1 năm)",
+      "amountHnHcm": 480700,
+      "amountOther": 480700
+    },
+    {
+      "id": "f2",
+      "name": "Phí bảo trì đường bộ (1 năm)",
+      "amountHnHcm": 1560000,
+      "amountOther": 1560000
+    },
+    {
+      "id": "f1",
+      "name": "Phí trước bạ",
+      "amountHnHcm": 0,
+      "amountOther": 0
+    },
+    {
+      "id": "f5",
+      "name": "Phí đăng kiểm",
+      "amountHnHcm": 340000,
+      "amountOther": 100000
+    },
+    {
+      "id": "f4",
+      "name": "Phí đăng ký biển số",
+      "amountHnHcm": 14000000,
+      "amountOther": 140000
+    }
+  ],
+  "vinClubTiers": [
+    {
+      "id": "vc-gold",
+      "name": "Gold",
+      "discountPercentage": 0.5
+    },
+    {
+      "id": "vc-platinum",
+      "name": "Platinum",
+      "discountPercentage": 1
+    },
+    {
+      "id": "vc-diamond",
+      "name": "Diamond",
+      "discountPercentage": 1.5
+    }
+  ],
+  "savedQuotations": [],
+  "customerInfo": {
+    "name": "",
+    "phone": "",
+    "email": ""
+  },
+  "comparisonList": [],
+  "optionalFees": [
+    {
+      "id": "of-license-plate",
+      "name": "Phí làm biển số qua dịch vụ",
+      "defaultAmount": 3000000
+    }
+  ],
+  "selectedOptionalFees": [],
+  "isLoading": false,
+  "error": null,
+  "useApi": true,
+  "pdfExportEnabled": true,
+  "depositPromoEnabled": true,
+  "appliedCustomerType": null,
+  "withFuelSwap": false,
+  "depositLink": "https://shop.vinfastauto.com/vn_vi/dat-coc-o-to-dien-vinfast.html?refCodeCTV=BACHHUYNH",
+  "depositPopupContent": {
+    "title": "Thông tin đặt cọc xe VinFast",
+    "body": "Để đặt cọc xe VinFast, bạn có thể:\n• Đặt cọc thông qua nhóm: https://zalo.me/g/zmrubr613\n• Liên hệ trực tiếp với cộng tác viên Zalo: 0969034204",
+    "buttons": [
+      {
+        "label": "Liên hệ tư vấn",
+        "url": "https://zalo.me/g/zmrubr613"
+      }
+    ]
+  },
+  "collabEnabled": true,
+  "collabName": "Nhóm tư vấn về xe O2O",
+  "collabPhone": "",
+  "collabTitle": "CTV",
+  "collabQrData": "https://zalo.me/g/zmrubr613",
+  "collabUrl": "https://zalo.me/g/zmrubr613",
+  "guideEnabled": true,
+  "guideContent": "Khách hàng Công an, quân đội (hoặc tứ thân phụ mẫu, con): \n- Chọn Công An Quân Đội.\n- Chọn giảm Mãnh liệt vì tương lai xanh 6%/10%.\n- Chọn giảm mua qua kênh O2O 1%\n- Bỏ chọn voucher cọc.\n- Bỏ chọn hạng Vinclub.\n- Bỏ chọn bảo hiểm xe.\n\nKhách hàng cơ quan nhà nước, đối tác ngân hàng, doanh nghiệp Viettel, FPT : áp dụng cho khách hàng hoặc người thân ( vợ chồng, con cái, tứ thân phụ mẫu, anh chị em ruột) - Không quy đổi vào giá xe\n- Chọn giảm Mãnh liệt vì tương lai xanh 6%/10%.\n- Chọn giảm mua qua kênh O2O 2%.\n- Chọn giảm giá đặt cọc nếu có xuất hiện.\n- Chọn hạng Vinclub tương ứng nếu có.\n- Chọn tặng bảo hiểm xe.\n\nKhách hàng còn lại:\n- Chọn giảm Mãnh liệt vì tương lai xanh 6%/10%.\n- Chọn giảm mua qua kênh O2O 2%.\n- Chọn giảm giá đặt cọc nếu có xuất hiện.\n- Chọn hạng Vinclub tương ứng nếu có.\n\nKhách hàng có xăng đổi điện:\n- Là những khách hàng trên thì chọn thêm Thu xăng-đổi điện 3%\n\n\n1.Công an quân đội giảm thêm 5%: áp dụng cho khách hàng hoặc người thân ( vợ chồng, con cái, tứ thân phụ mẫu) của khách hàng đang công tác trong lực lượng vũ trang\n- Điều kiện:\n🚩 Bản sao công chứng thẻ ngành, chứng minh quân nhân\n🚩 Bản sao Giấy xác nhận quan hệ (đăng ký kết hôn, giấy khai sinh, sổ hộ khẩu) nếu để người thân đứng tên xe.\n\n2. Tặng bảo hiểm thân vỏ 1 năm trị giá 1% giá xe cho khách hàng cơ quan nhà nước, đối tác ngân hàng, doanh nghiệp Viettel, FPT : áp dụng cho khách hàng hoặc người thân ( vợ chồng, con cái, tứ thân phụ mẫu, anh chị em ruột) - Không quy đổi vào giá xe\n- Điều kiện:\n🚩 Giấy xác nhận đơn vị công tác (có dấu xác nhận của cơ quan)\n🚩 Bản sao Giấy xác nhận quan hệ (đăng ký kết hôn, giấy khai sinh, sổ hộ khẩu) nếu để người thân đứng tên xe.\n\n3. Chú ý về chương trình Thu Xăng - Đổi Điện:\n✅ Đối tượng: Áp dụng cho Khách hàng hoặc vợ chồng/con cái/tứ thân phụ mẫu/công ty do họ sở hữu số cổ phần/phần góp lớn nhất sở hữu xe xăng\n\n✅ Điều kiện:\n- Sở hữu xe xăng từ 06 tháng trở lên (tính theo ngày thể hiện trên Chứng nhận đăng ký xe) có nhu cầu đổi từ xe xăng sang xe điện ô tô Vinfast\n- Xuất hóa đơn xe điện trước 31/3/2026\n\n✅ Hồ sơ xăng đổi điện:\n- Bản sao công chứng hợp đồng bán xe xăng\n- Bảo sao công chứng đăng ký xe xăng\n- Giấy thu hồi biển số\n- Bản sao công chứng giấy tờ xác minh quan hệ nhân thân (nếu chủ xe xăng không đứng tên xe điện)\n",
+  "bannerEnabled": true,
+  "bannerContent": "Ưu đãi xăng sang điện được gia hạn tới 30/4/2026!",
+  "bannerLink": "",
+  "qrStyle": {
+    "borderEnabled": true,
+    "borderColor": "#1e3a5f",
+    "borderWidth": 5,
+    "borderRadius": 12,
+    "text": "Quét để xem giá xe!",
+    "textColor": "#1e3a5f",
+    "textSize": 14
+  },
+  "ads": [
+    {
+      "id": "ad-005",
+      "title": "Bao da chìa khoá Vinfast VF6 VF7 VF8 VF9",
+      "url": "https://s.shopee.vn/9fGINDJysa",
+      "image_url": "https://down-vn.img.susercontent.com/file/vn-11134207-7r98o-lz8me6522co14b@resize_w900_nl.webp"
+    },
+    {
+      "id": "ad-004",
+      "title": "Thiết bị đuổi chuột rất hiệu quả (ad đang xài)",
+      "url": "https://s.shopee.vn/7poeBYplH6",
+      "image_url": "https://down-vn.img.susercontent.com/file/14afce982c3a8ba1a20e8ec3b8cabc6e@resize_w900_nl.webp"
+    },
+    {
+      "id": "ad-003",
+      "title": "Rèm che nắng nam châm",
+      "url": "https://s.shopee.vn/50USoPWXXl",
+      "image_url": "https://down-vn.img.susercontent.com/file/sg-11134201-7qvd2-lijpsmxtfsp91f@resize_w900_nl.webp"
+    },
+    {
+      "id": "ad-002",
+      "title": "Camera hành trình 70MAI 2.5k M410 Trước + sau RC21",
+      "url": "https://s.shopee.vn/qetqmrZiz",
+      "image_url": "https://down-vn.img.susercontent.com/file/vn-11134207-820l4-mh23kxq9rls834.webp"
+    },
+    {
+      "id": "ad-001",
+      "title": "Thảm sàn đúc cần có cho xe",
+      "url": "https://s.shopee.vn/W23SDEJGv",
+      "image_url": "https://down-vn.img.susercontent.com/file/vn-11134207-820l4-mhaqkjpbyy30a2@resize_w900_nl.webp"
+    }
+  ],
+  "adsConfig": {
+    "userPage": false,
+    "sharePage": true,
+    "historyPage": true,
+    "comparePage": true,
+    "knowPage": true,
+    "gateShare": true,
+    "gatePdf": true,
+    "gateSave": true,
+    "gateIncomingShare": true
+  },
+  "notifications": [],
+  "bankRates": [
+    {
+      "id": "shinhan",
+      "name": "Shinhan",
+      "fixed_rate": 9.5,
+      "fixed_months": 24,
+      "floating_rate": 3.6,
+      "display_order": 0,
+      "enabled": 1,
+      "created_at": "2026-04-06 03:43:41",
+      "updated_at": "2026-04-06 03:43:41"
+    },
+    {
+      "id": "tpbank",
+      "name": "TPBank",
+      "fixed_rate": 9.5,
+      "fixed_months": 24,
+      "floating_rate": 3.6,
+      "display_order": 1,
+      "enabled": 1,
+      "created_at": "2026-04-06 03:44:15",
+      "updated_at": "2026-04-06 03:44:15"
+    },
+    {
+      "id": "vpbank",
+      "name": "VPBank",
+      "fixed_rate": 10.1,
+      "fixed_months": 12,
+      "floating_rate": 3.6,
+      "display_order": 2,
+      "enabled": 1,
+      "created_at": "2026-04-06 03:44:36",
+      "updated_at": "2026-04-06 03:44:36"
+    }
+  ],
+  "customerTypePromos": {
+    "1": [
+      "p4",
+      "p2",
+      "p1",
+      "p-vf8-eco",
+      "p3-caqd",
+      "tang-2-nam-bao-hiem"
+    ],
+    "2": [
+      "p2",
+      "p1",
+      "p6",
+      "p-vf8-eco",
+      "p3",
+      "tang-2-nam-bao-hiem",
+      "deposit-voucher"
+    ],
+    "3": [
+      "p2",
+      "p1",
+      "p-vf8-eco",
+      "p3",
+      "tang-2-nam-bao-hiem",
+      "deposit-voucher"
+    ]
+  },
+  "fuelSwapPromos": [],
+  "customerTypes": [
+    {
+      "id": "1",
+      "name": "Công an / Quân đội",
+      "emoji": "🛡️",
+      "description": "Hoặc tứ thân phụ mẫu, con của cán bộ công an / quân đội",
+      "allowsDeposit": false,
+      "allowsVinclub": false
+    },
+    {
+      "id": "2",
+      "name": "Cơ quan / Đối tác ưu tiên",
+      "emoji": "🏢",
+      "description": "Ngân hàng, Viettel, FPT và người thân",
+      "allowsDeposit": true,
+      "allowsVinclub": true
+    },
+    {
+      "id": "3",
+      "name": "Khách hàng thông thường",
+      "emoji": "👤",
+      "description": "Khách hàng cá nhân, không thuộc đối tượng ưu đãi đặc biệt",
+      "allowsDeposit": true,
+      "allowsVinclub": true
+    }
+  ]
+}

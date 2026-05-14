@@ -12,10 +12,10 @@ import {
 
 export const SecurityPanel: React.FC = () => {
   const features = [
-    ['Phân quyền vai trò', 'Admin, Quản lý, Tư vấn bán hàng, Thủ kho và Giao vận.', ShieldCheck],
+    ['Phân quyền vai trò', 'Chỉ còn Admin và TVBH để vận hành gọn hơn.', ShieldCheck],
     ['Audit Log tự động', 'Tự động lưu lại actor, timestamp, bảng dữ liệu thay đổi.', History],
     ['Hủy bỏ linh hoạt', 'Đánh dấu xóa mềm, bảo toàn lịch sử giao dịch.', Archive],
-    ['Bảo vệ xuất dữ liệu', 'Chỉ Admin/Manager mới được quyền chiết xuất file Excel thông tin KH.', Download],
+    ['Bảo vệ xuất dữ liệu', 'Chỉ Admin mới được quyền chiết xuất file Excel thông tin KH.', Download],
     ['Bảo mật luồng chốt', 'Đơn đã ghép và xuất hóa đơn được khóa cứng, hạn chế chỉnh sửa.', LockKeyhole],
     ['Hiệu năng cao', 'Kết nối WebSocket truyền dữ liệu chênh lệch, tối ưu băng thông.', Gauge]
   ] as const;

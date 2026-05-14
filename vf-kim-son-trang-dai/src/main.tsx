@@ -20,6 +20,8 @@ import { Dashboard } from './components/Dashboard';
 import { OrdersPanel } from './components/OrdersPanel';
 import { InventoryPanel } from './components/InventoryPanel';
 import { InvoiceRequestsPanel } from './components/InvoiceRequestsPanel';
+import { PricingPanel } from './components/PricingPanel';
+import { StaffPanel } from './components/StaffPanel';
 
 // Lớp Popup Modal
 import { CreateOrderModal } from './components/modals/CreateOrderModal';
@@ -34,6 +36,16 @@ import { RequestSupplementModal } from './components/modals/RequestSupplementMod
 import { ImportInventoryModal } from './components/modals/ImportInventoryModal';
 import { EditOrderModal } from './components/modals/EditOrderModal';
 import { SelectPolicyModal } from './components/modals/SelectPolicyModal';
+import {
+  canApproveInvoice,
+  canCreateOrder,
+  canManageInventory,
+  canManagePricingConfig,
+  canOverrideHeldVehicle,
+  canAccessTab,
+  getVisibleTabs,
+  roleLabels
+} from './constants';
 
 import './styles.css';
 
@@ -41,6 +53,7 @@ function App() {
   const {
     session,
     profile,
+    profiles,
     orders,
     inventory,
     queuedVins,
@@ -57,7 +70,8 @@ function App() {
   // Derivations
   const currentUsername = session?.user.email ?? '';
   const currentFullName = profile?.full_name || currentUsername || 'Nhân viên';
-  const userRole = profile?.role ?? 'staff';
+  const userRole = profile?.role ?? 'sales';
+  const visibleTabs = getVisibleTabs(userRole);
 
   const {
     isCreating,
@@ -130,11 +144,6 @@ function App() {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [selectingPolicyOrder, setSelectingPolicyOrder] = useState<Order | null>(null);
   
-  // Phân quyền cơ bản (Roles)
-  const canManageInventory = ['admin', 'manager', 'warehouse', 'sales'].includes(userRole);
-  const canOverrideHeldVehicle = ['admin', 'manager', 'warehouse'].includes(userRole);
-  const canCreateOrder = ['admin', 'manager', 'sales'].includes(userRole);
-
   // Thực thi Filter trên danh sách orders
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
@@ -170,6 +179,12 @@ function App() {
     }
   };
 
+  React.useEffect(() => {
+    if (!canAccessTab(userRole, activeTab)) {
+      setActiveTab(visibleTabs[0]?.key ?? 'dashboard');
+    }
+  }, [activeTab, userRole, visibleTabs]);
+
   // Màn hình Loading cấu hình
   if (!authReady) {
     return (
@@ -186,6 +201,23 @@ function App() {
     return <AuthScreen />;
   }
 
+  if (session && !profile && syncState === 'error') {
+    return (
+      <main className="auth-shell">
+        <section className="auth-card">
+          <div>
+            <p className="eyebrow">TRUY CẬP BỊ TỪ CHỐI</p>
+            <h1>Tài khoản chưa được admin cấp quyền</h1>
+            <p className="auth-note">{syncMessage}</p>
+          </div>
+          <button className="primary-button" type="button" onClick={handleSignOut}>
+            Đăng xuất
+          </button>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <div className="app-shell">
       <Sidebar
@@ -194,6 +226,7 @@ function App() {
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         profile={profile}
+        visibleTabs={visibleTabs}
         userEmail={session.user.email}
         onSignOut={handleSignOut}
       />
@@ -201,7 +234,8 @@ function App() {
       <main className="main">
         <Header
           activeTab={activeTab}
-          canCreateOrder={canCreateOrder}
+          canCreateOrder={canCreateOrder(userRole)}
+          roleLabel={profile ? roleLabels[profile.role] : undefined}
           setSidebarOpen={setSidebarOpen}
           setCreateOpen={(open) => {
             if (open) setCreateFromVehicle(null);
@@ -231,8 +265,8 @@ function App() {
             orders={filteredOrders}
             inventory={inventory}
             currentUsername={currentUsername}
-            canOverrideHeldVehicle={canOverrideHeldVehicle}
-            canManageInventory={canManageInventory}
+            canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
+            canManageInventory={canManageInventory(userRole)}
             isUnpairingOrderId={isUnpairingOrderId}
             isUpdatingPolicy={isUpdatingPolicy}
             query={query}
@@ -255,9 +289,9 @@ function App() {
         {activeTab === 'inventory' && (
           <InventoryPanel
             items={inventory}
-            canManageInventory={canManageInventory}
+            canManageInventory={canManageInventory(userRole)}
             currentUsername={currentUsername}
-            canOverrideHeldVehicle={canOverrideHeldVehicle}
+            canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
             isReleasingVin={isReleasingVin}
             isQueueingVin={isQueueingVin}
             queuedVins={queuedVins}
@@ -283,7 +317,7 @@ function App() {
         {activeTab === 'invoices' && (
           <InvoiceRequestsPanel
             requests={invoiceRequests}
-            canApprove={['admin', 'manager'].includes(userRole)}
+            canApprove={canApproveInvoice(userRole)}
             isProcessing={isAdvancingInvoice}
             onApprove={(request) => handleApproveInvoiceRequest(request.id)}
             onRequestSupplement={setRequestingSupplement}
@@ -292,6 +326,10 @@ function App() {
             onSupplement={setSupplementingRequest}
           />
         )}
+
+        {activeTab === 'pricing' && <PricingPanel isAdmin={canManagePricingConfig(userRole)} />}
+
+        {activeTab === 'staff' && <StaffPanel staff={profiles} onReload={loadWorkspace} />}
 
       </main>
 
@@ -322,9 +360,9 @@ function App() {
       {selectedOrder && (
         <OrderDetailModal
           order={selectedOrder}
-          canUnpair={canManageInventory && selectedOrder.status === 'Đã ghép'}
-          canEdit={canManageInventory && selectedOrder.status !== 'Đã xuất hóa đơn' && selectedOrder.status !== 'Đã hủy'}
-          canPolicy={canManageInventory && selectedOrder.status !== 'Đã hủy'}
+          canUnpair={canManageInventory(userRole) && selectedOrder.status === 'Đã ghép'}
+          canEdit={canManageInventory(userRole) && selectedOrder.status !== 'Đã xuất hóa đơn' && selectedOrder.status !== 'Đã hủy'}
+          canPolicy={canManageInventory(userRole) && selectedOrder.status !== 'Đã hủy'}
           isUnpairing={isUnpairingOrderId === selectedOrder.id}
           isUpdatingPolicy={isUpdatingPolicy}
           onClose={() => setSelectedOrder(null)}
@@ -338,7 +376,7 @@ function App() {
         <PairVehicleModal
           order={pairingOrder}
           currentUsername={currentUsername}
-          canOverrideHeldVehicle={canOverrideHeldVehicle}
+          canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
           error={pairError}
           inventory={inventory}
           isPairing={isPairing}

@@ -5,6 +5,7 @@ import { tabs, TabKey } from '../../constants';
 interface HeaderProps {
   activeTab: TabKey;
   canCreateOrder: boolean;
+  roleLabel?: string;
   setSidebarOpen: (val: boolean) => void;
   setCreateOpen: (val: boolean) => void;
 }
@@ -12,6 +13,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   activeTab,
   canCreateOrder,
+  roleLabel,
   setSidebarOpen,
   setCreateOpen
 }) => {
@@ -25,6 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div>
         <p className="eyebrow">Hệ thống quản lý đơn hàng</p>
         <h1>{currentLabel}</h1>
+        {roleLabel ? <small>Quyền hiện tại: {roleLabel}</small> : null}
       </div>
       <div className="top-actions">
         <button className="icon-button" title="Thông báo">
@@ -34,7 +37,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="primary-button"
           onClick={() => setCreateOpen(true)}
           disabled={!canCreateOrder}
-          title={canCreateOrder ? 'Tạo đơn' : 'Cần role admin, manager hoặc sales'}
+          title={canCreateOrder ? 'Tạo đơn' : 'Cần quyền Admin hoặc TVBH'}
         >
           <Plus size={18} />
           <span>Tạo đơn</span>
