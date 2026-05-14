@@ -1726,6 +1726,7 @@ small {
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 18px 48px rgba(45, 58, 50, 0.08);
+  height: 100%;
   overflow: hidden;
   grid-template-rows: auto minmax(0, 1fr);
 }
@@ -1751,9 +1752,10 @@ small {
   display: grid;
   gap: 10px;
   min-height: 0;
-  overflow: auto;
-  padding-right: 2px;
-  scrollbar-gutter: stable;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  padding-right: 4px;
+  scrollbar-gutter: stable both-edges;
   scrollbar-width: thin;
   scrollbar-color: #8da89c #eef3ef;
 }
