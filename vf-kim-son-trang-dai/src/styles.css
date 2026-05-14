@@ -4198,6 +4198,49 @@ td small {
     gap: 8px;
   }
 
+  .orders-mobile-detail-view,
+  .orders-mobile-detail-shell,
+  .orders-mobile-detail-section,
+  .orders-mobile-detail-view * ,
+  .orders-mobile-detail-shell * ,
+  .orders-mobile-detail-section * {
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .orders-mobile-detail-view,
+  .orders-mobile-detail-shell,
+  .orders-mobile-detail-section {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .orders-mobile-detail-shell > div,
+  .orders-mobile-detail-section > div {
+    max-width: 100%;
+  }
+
+  .orders-mobile-detail-shell [style*="grid-template-columns"],
+  .orders-mobile-detail-section [style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
+
+  .orders-mobile-detail-shell [style*="grid-column: span 2"],
+  .orders-mobile-detail-section [style*="grid-column: span 2"] {
+    min-width: 0;
+  }
+
+  .orders-mobile-detail-shell strong,
+  .orders-mobile-detail-shell small,
+  .orders-mobile-detail-shell p,
+  .orders-mobile-detail-section strong,
+  .orders-mobile-detail-section small,
+  .orders-mobile-detail-section p {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   .order-detail-card-module > div:first-child {
     align-items: flex-start;
   }
