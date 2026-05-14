@@ -3072,6 +3072,45 @@ td small {
   color: var(--primary-color);
 }
 
+.gps-bookmarklet-card {
+  display: grid;
+  gap: 10px;
+  margin-top: 1rem;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: #f8faf8;
+}
+
+.gps-bookmarklet-card span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.gps-bookmarklet-card strong {
+  display: block;
+  color: var(--text-color);
+  font-size: 0.95rem;
+}
+
+.gps-bookmarklet-card textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text-muted);
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+
 .modal-actions {
   display: flex;
   grid-column: 1 / -1;

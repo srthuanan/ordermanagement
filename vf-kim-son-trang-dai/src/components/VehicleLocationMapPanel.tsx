@@ -1,6 +1,7 @@
 import React from 'react';
-import { ExternalLink, MapPinned } from 'lucide-react';
+import { Copy, ExternalLink, MapPinned } from 'lucide-react';
 import { VehicleLocationRow } from '../types';
+import { vehicleGpsBookmarklet } from '../data/vehicleGpsBookmarklet';
 
 type VehicleLocationMapPanelProps = {
   locations: VehicleLocationRow[];
@@ -20,6 +21,7 @@ function buildStaticMapUrl(locations: VehicleLocationRow[]) {
 
 export const VehicleLocationMapPanel: React.FC<VehicleLocationMapPanelProps> = ({ locations }) => {
   const [imageError, setImageError] = React.useState(false);
+  const [copyState, setCopyState] = React.useState<'idle' | 'copied' | 'failed'>('idle');
   const validLocations = locations.filter(
     (location) => location.latitude !== null && location.longitude !== null
   );
@@ -35,6 +37,16 @@ export const VehicleLocationMapPanel: React.FC<VehicleLocationMapPanelProps> = (
   React.useEffect(() => {
     setImageError(false);
   }, [mapUrl]);
+
+  async function handleCopyBookmarklet() {
+    try {
+      await navigator.clipboard.writeText(vehicleGpsBookmarklet);
+      setCopyState('copied');
+      setTimeout(() => setCopyState('idle'), 1800);
+    } catch {
+      setCopyState('failed');
+    }
+  }
 
   return (
     <section className="panel inventory-map-panel">
@@ -87,6 +99,18 @@ export const VehicleLocationMapPanel: React.FC<VehicleLocationMapPanelProps> = (
           })}
         </div>
       ) : null}
+
+      <div className="gps-bookmarklet-card">
+        <div>
+          <span>Bookmarklet DMS</span>
+          <strong>Dán vào thanh dấu trang của trình duyệt</strong>
+        </div>
+        <button type="button" className="ghost-button" onClick={handleCopyBookmarklet}>
+          <Copy size={16} />
+          <span>{copyState === 'copied' ? 'Đã copy' : copyState === 'failed' ? 'Không copy được' : 'Copy bookmarklet'}</span>
+        </button>
+        <textarea readOnly value={vehicleGpsBookmarklet} rows={6} />
+      </div>
     </section>
   );
 };
