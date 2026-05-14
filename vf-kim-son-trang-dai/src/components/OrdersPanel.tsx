@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, Filter, Download, Eye, PackageCheck, X, FileCheck, Ban, Pencil, ScrollText, User, Car, CreditCard } from 'lucide-react';
+import { Search, Filter, Download, Eye, PackageCheck, X, FileCheck, Ban, Pencil, ScrollText, User, Car, CreditCard, ArrowLeft } from 'lucide-react';
 import { Order, OrderStatus, InventoryItem } from '../types';
 import { statusTone } from '../constants';
 import { matchesVehicleConfig, canUseVehicleForPair } from '../utils/matching';
@@ -50,16 +50,33 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
 }) => {
   const reviewStatuses: OrderStatus[] = ['Chờ phê duyệt', 'Đã phê duyệt', 'Yêu cầu bổ sung', 'Đã bổ sung', 'Chờ ký hóa đơn'];
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
+  const [isMobile, setIsMobile] = useState(false);
   const selectedOrder = useMemo(
     () => orders.find((order) => order.id === selectedOrderId) ?? orders[0] ?? null,
     [orders, selectedOrderId]
   );
 
   useEffect(() => {
+    const media = window.matchMedia('(max-width: 760px)');
+    const update = () => setIsMobile(media.matches);
+    update();
+
+    if (media.addEventListener) {
+      media.addEventListener('change', update);
+      return () => media.removeEventListener('change', update);
+    }
+
+    media.addListener(update);
+    return () => media.removeListener(update);
+  }, []);
+
+  useEffect(() => {
     if (!orders.length) {
       if (selectedOrderId) {
         setSelectedOrderId('');
       }
+      setMobileView('list');
       return;
     }
 
@@ -100,8 +117,16 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
     !['Đã xuất hóa đơn', 'Đã hủy', 'Chờ ký hóa đơn'].includes(selectedOrder.status);
   const selectedCanPolicy = Boolean(selectedOrder) && canManageInventory && selectedOrder.status !== 'Đã hủy';
 
+  useEffect(() => {
+    if (!isMobile) {
+      setMobileView('list');
+    }
+  }, [isMobile]);
+
   return (
-    <section className="panel orders-panel">
+    <section
+      className={isMobile ? `panel orders-panel ${mobileView === 'detail' ? 'orders-mobile-detail' : 'orders-mobile-list'}` : 'panel orders-panel'}
+    >
       <div className="orders-modular-workspace">
         {/* Cánh trái: Bảng dữ liệu đơn hàng & Bộ lọc */}
         <div className="orders-data-side">
@@ -213,7 +238,12 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                     return (
                       <tr
                         key={order.id}
-                        onClick={() => setSelectedOrderId(order.id)}
+                        onClick={() => {
+                          setSelectedOrderId(order.id);
+                          if (isMobile) {
+                            setMobileView('detail');
+                          }
+                        }}
                         className={isActive ? 'active-row' : ''}
                         style={{ cursor: 'pointer', transition: 'background 0.15s' }}
                       >
@@ -268,6 +298,17 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
 
                 return (
                   <>
+                    {isMobile ? (
+                      <button
+                        type="button"
+                        className="ghost-button orders-mobile-back"
+                        onClick={() => setMobileView('list')}
+                        style={{ alignSelf: 'flex-start', height: '32px', padding: '0 10px', fontSize: '12px' }}
+                      >
+                        <ArrowLeft size={14} />
+                        <span>Danh sách</span>
+                      </button>
+                    ) : null}
                     <div className="orders-detail-pane__header clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedOrder.id, 'Mã đơn')} style={{ paddingBottom: '6px', borderBottom: '1px dashed #e2e8f0', borderRadius: '4px', padding: '4px' }}>
                       <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', fontWeight: 700, margin: 0 }}>CHI TIẾT ĐƠN</p>
                       <h3 style={{ fontSize: '16px', margin: 0, fontWeight: 800, color: '#0f766e' }}>{selectedOrder.id}</h3>
@@ -465,4 +506,3 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
     </section>
   );
 };
-

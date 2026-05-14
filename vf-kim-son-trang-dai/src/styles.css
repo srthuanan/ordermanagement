@@ -3686,16 +3686,7 @@ td small {
   }
 
   .sidebar {
-    position: fixed;
-    z-index: 20;
-    inset: 0 auto 0 0;
-    width: min(86vw, 320px);
-    transform: translateX(-105%);
-    transition: transform 180ms ease;
-  }
-
-  .sidebar-open {
-    transform: translateX(0);
+    display: none;
   }
 
   .mobile-only {
@@ -3703,16 +3694,11 @@ td small {
   }
 
   .backdrop {
-    position: fixed;
-    z-index: 10;
-    inset: 0;
-    display: flex;
-    align-items: flex-start;
-    justify-content: flex-end;
-    padding: 18px;
-    border: 0;
-    background: rgba(23, 33, 29, 0.36);
-    color: #fff;
+    display: none;
+  }
+
+  .topbar .icon-button.mobile-only {
+    display: none;
   }
 
   .main {
@@ -3888,6 +3874,18 @@ td small {
     border-radius: 16px;
   }
 
+  .orders-panel.orders-mobile-list .orders-visual-side {
+    display: none;
+  }
+
+  .orders-panel.orders-mobile-detail .orders-data-side {
+    display: none;
+  }
+
+  .orders-panel.orders-mobile-detail .orders-visual-side {
+    display: flex;
+  }
+
   .orders-data-side > div:first-child,
   .inventory-data-side > div:first-child {
     gap: 8px;
@@ -3930,6 +3928,10 @@ td small {
   .order-detail-widget-container {
     padding: 12px;
     border-radius: 16px;
+  }
+
+  .orders-mobile-back {
+    margin-bottom: 4px;
   }
 
   .order-detail-widget-container > div:first-child {
