@@ -365,7 +365,7 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
   return (
     <div className="pricing-shell">
       {isAdmin ? (
-        <details className="pricing-admin-panel" open>
+        <details className="pricing-admin-panel">
           <summary>
             <Settings2 size={16} />
             <span>Cấu hình giá cho admin</span>
