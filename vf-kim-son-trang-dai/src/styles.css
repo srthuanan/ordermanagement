@@ -1590,7 +1590,8 @@ small {
 }
 
 .orders-panel {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   height: calc(100dvh - 176px);
   min-height: 0;
@@ -1662,7 +1663,8 @@ small {
 }
 
 .orders-workspace {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   flex: 1;
   min-height: 0;
@@ -1672,8 +1674,9 @@ small {
   display: grid;
   grid-template-columns: minmax(280px, 0.78fr) minmax(0, 1.22fr);
   gap: 10px;
+  flex: 1;
   min-height: 0;
-  align-items: start;
+  align-items: stretch;
 }
 
 .orders-toolbar-shell {
@@ -1857,7 +1860,7 @@ small {
     rgba(255, 255, 255, 0.96);
   box-shadow: 0 20px 52px rgba(45, 58, 50, 0.08);
   overflow: hidden;
-  align-self: start;
+  height: 100%;
   grid-template-rows: auto auto auto auto auto auto;
 }
 
