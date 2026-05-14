@@ -521,7 +521,7 @@ export const updateInvoiceInfo = async (
 export const holdVehicle = async (vin: string, username: string, fullName: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   return await supabase.rpc('rpc_hold_car', {
-    p_vin: vin,
+    p_vin: vin.trim(),
     p_username: username,
     p_full_name: fullName
   });
@@ -530,7 +530,7 @@ export const holdVehicle = async (vin: string, username: string, fullName: strin
 export const releaseVehicle = async (vin: string, outcome: 'released' | 'expired' | 'matched' = 'released') => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   return await supabase.rpc('rpc_release_car', {
-    p_vin: vin,
+    p_vin: vin.trim(),
     p_outcome: outcome
   });
 };
@@ -538,7 +538,7 @@ export const releaseVehicle = async (vin: string, outcome: 'released' | 'expired
 export const joinHoldQueue = async (vin: string, username: string, fullName: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   return await supabase.rpc('rpc_join_hold_queue', {
-    p_vin: vin,
+    p_vin: vin.trim(),
     p_username: username,
     p_full_name: fullName
   });
@@ -547,7 +547,7 @@ export const joinHoldQueue = async (vin: string, username: string, fullName: str
 export const leaveHoldQueue = async (vin: string, username: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   return await supabase.rpc('rpc_leave_hold_queue', {
-    p_vin: vin,
+    p_vin: vin.trim(),
     p_username: username
   });
 };
@@ -569,7 +569,7 @@ export const pairVehicle = async (orderId: string, vin: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   const [{ data: order, error: orderError }, { data: vehicle, error: vehicleError }] = await Promise.all([
     supabase.from('donhang').select('updated_at').eq('so_don_hang', orderId).single(),
-    supabase.from('khoxe').select('updated_at').eq('vin', vin).single()
+    supabase.from('khoxe').select('updated_at').eq('vin', vin.trim()).single()
   ]);
 
   if (orderError) {
@@ -581,7 +581,7 @@ export const pairVehicle = async (orderId: string, vin: string) => {
 
   return await supabase.rpc('pair_donhang_with_khoxe_safe', {
     p_order_id: orderId,
-    p_vin: vin,
+    p_vin: vin.trim(),
     p_order_updated_at: order?.updated_at ?? null,
     p_vehicle_updated_at: vehicle?.updated_at ?? null
   });
