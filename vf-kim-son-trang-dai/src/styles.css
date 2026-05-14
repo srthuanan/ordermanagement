@@ -3886,6 +3886,18 @@ td small {
     display: flex;
   }
 
+  .invoice-panel.invoice-mobile-list .orders-visual-side {
+    display: none;
+  }
+
+  .invoice-panel.invoice-mobile-detail .orders-data-side {
+    display: none;
+  }
+
+  .invoice-panel.invoice-mobile-detail .orders-visual-side {
+    display: flex;
+  }
+
   .orders-data-side > div:first-child,
   .inventory-data-side > div:first-child {
     gap: 8px;
@@ -4007,6 +4019,120 @@ td small {
     font-weight: 600;
     line-height: 1.35;
     word-break: break-word;
+  }
+
+  .invoice-mobile-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .invoice-mobile-card {
+    appearance: none;
+    text-align: left;
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  }
+
+  .invoice-mobile-card.active {
+    border-color: #e2e8f0;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.12), 0 10px 20px rgba(15, 23, 42, 0.06);
+    transform: translateY(-1px);
+  }
+
+  .invoice-mobile-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .invoice-mobile-card-headings {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .invoice-mobile-card-title {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  .invoice-mobile-card-subtitle {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .invoice-mobile-card-divider {
+    width: 100%;
+    height: 1px;
+    background: #f1f5f9;
+  }
+
+  .invoice-mobile-card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12px;
+  }
+
+  .invoice-mobile-card-meta {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .invoice-mobile-card-meta-right {
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  .invoice-mobile-card-meta span,
+  .invoice-mobile-card-footer span {
+    font-size: 10px;
+    color: #94a3b8;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .invoice-mobile-card-meta strong,
+  .invoice-mobile-card-footer strong {
+    font-size: 12px;
+    color: #334155;
+    font-weight: 600;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .invoice-mobile-card-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 2px;
+  }
+
+  .invoice-mobile-card-footer strong {
+    text-align: right;
   }
 
   .orders-mobile-card-grid {
