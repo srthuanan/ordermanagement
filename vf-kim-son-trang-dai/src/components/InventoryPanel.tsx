@@ -1,5 +1,5 @@
 import React from 'react';
-import { PackageCheck, X, Clock, FilePlus2, LocateFixed, Search, Filter, RotateCcw } from 'lucide-react';
+import { PackageCheck, X, Clock, FilePlus2, LocateFixed, Search, Filter, RotateCcw, ArrowLeft } from 'lucide-react';
 import { InventoryItem, VehicleLocationRow } from '../types';
 import { stockTone } from '../constants';
 import { VehicleLocationMapPanel } from './VehicleLocationMapPanel';
@@ -46,11 +46,14 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
   onUpdateVehicleLocation
 }) => {
   const [highlightedVin, setHighlightedVin] = React.useState<string | null>(null);
+  const [selectedVin, setSelectedVin] = React.useState<string | null>(null);
   const [searchText, setSearchText] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<'all' | InventoryItem['status']>('all');
   const [lineFilter, setLineFilter] = React.useState('all');
   const [versionFilter, setVersionFilter] = React.useState('all');
   const [exteriorFilter, setExteriorFilter] = React.useState('all');
+  const [mobileView, setMobileView] = React.useState<'list' | 'detail'>('list');
+  const [isMobile, setIsMobile] = React.useState(false);
 
   const lineOptions = React.useMemo(
     () => Array.from(new Set(items.map((item) => item.line).filter(Boolean))).sort(),
@@ -95,10 +98,42 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
     return vehicleLocations.filter((location) => visibleVinSet.has(location.vin.trim().toUpperCase()));
   }, [vehicleLocations, visibleItems]);
 
+  const selectedItem = React.useMemo(
+    () => visibleItems.find((item) => item.vin === selectedVin) ?? visibleItems[0] ?? null,
+    [visibleItems, selectedVin]
+  );
+
+  React.useEffect(() => {
+    const media = window.matchMedia('(max-width: 760px)');
+    const update = () => setIsMobile(media.matches);
+    update();
+    if (media.addEventListener) {
+      media.addEventListener('change', update);
+      return () => media.removeEventListener('change', update);
+    }
+    media.addListener(update);
+    return () => media.removeListener(update);
+  }, []);
+
+  React.useEffect(() => {
+    if (!visibleItems.length) {
+      setSelectedVin(null);
+      setMobileView('list');
+      return;
+    }
+    if (!selectedVin || !visibleItems.some((item) => item.vin === selectedVin)) {
+      setSelectedVin(visibleItems[0].vin);
+    }
+  }, [visibleItems, selectedVin]);
+
+  React.useEffect(() => {
+    if (!isMobile) setMobileView('list');
+  }, [isMobile]);
+
 
 
   return (
-    <section className="panel inventory-dashboard">
+    <section className={isMobile ? `panel inventory-dashboard ${mobileView === 'detail' ? 'inventory-mobile-detail' : 'inventory-mobile-list'}` : 'panel inventory-dashboard'}>
 
 
 
@@ -219,6 +254,62 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
               </button>
             ) : null}
           </div>
+
+          {/* Mobile list view */}
+          {isMobile ? (
+            <div className="inventory-mobile-card-list">
+              {visibleItems.length === 0 ? (
+                <div className="empty-state" style={{ padding: '24px 16px', textAlign: 'center' }}>
+                  Không có dữ liệu kho xe phù hợp với bộ lọc hiện tại.
+                </div>
+              ) : (
+                visibleItems.map((item) => {
+                  const isActive = selectedItem?.vin === item.vin;
+                  return (
+                    <button
+                      key={item.vin}
+                      type="button"
+                      className={isActive ? 'inventory-mobile-card active' : 'inventory-mobile-card'}
+                      onClick={() => {
+                        setSelectedVin(item.vin);
+                        setMobileView('detail');
+                        if (item.latitude !== null && item.longitude !== null) {
+                          setHighlightedVin(item.vin);
+                        }
+                      }}
+                    >
+                      <div className="inventory-mobile-card-header">
+                        <div className="inventory-mobile-card-headings">
+                          <p className="inventory-mobile-card-title">{item.vin}</p>
+                          <p className="inventory-mobile-card-subtitle">{item.line} · {item.version}</p>
+                        </div>
+                        <span className={stockTone[item.status]}>{item.status}</span>
+                      </div>
+                      <div className="inventory-mobile-card-divider" />
+                      <div className="inventory-mobile-card-grid">
+                        <div>
+                          <span>Bãi xe</span>
+                          <strong>{item.location || '---'}</strong>
+                        </div>
+                        <div>
+                          <span>Người giữ</span>
+                          <strong>{item.holder || '---'}</strong>
+                        </div>
+                        <div>
+                          <span>Ngoại thất</span>
+                          <strong>{item.exterior || '---'}</strong>
+                        </div>
+                        <div>
+                          <span>Nội thất</span>
+                          <strong>{item.interior || '---'}</strong>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          ) : null}
 
           {/* Table Block */}
           <div className="table-wrap" style={{ marginTop: '8px' }}>
@@ -343,6 +434,146 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
             </table>
           </div>
         </div>
+
+        {/* Mobile detail view */}
+        {isMobile ? (
+          <div className="inventory-mobile-detail-shell">
+            {selectedItem ? (
+              <div className="inventory-mobile-detail-view" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button
+                  type="button"
+                  className="ghost-button orders-mobile-back"
+                  onClick={() => setMobileView('list')}
+                  style={{ alignSelf: 'flex-start', height: '32px', padding: '0 10px', fontSize: '12px' }}
+                >
+                  <ArrowLeft size={14} />
+                  <span>Danh sách</span>
+                </button>
+
+                <div className="orders-mobile-detail-shell" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '20px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+                    <div className="clickable-copy-field" title="Click để copy VIN" onClick={() => setHighlightedVin(selectedItem.vin)} style={{ minWidth: 0 }}>
+                      <p style={{ margin: 0, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', fontWeight: 700 }}>CHI TIẾT KHO XE</p>
+                      <h3 style={{ margin: '2px 0 0', fontSize: '18px', lineHeight: 1.15, fontWeight: 700, color: '#0f172a' }}>{selectedItem.vin}</h3>
+                      <p style={{ margin: '2px 0 0', fontSize: '12px', fontWeight: 500, color: '#475569' }}>{selectedItem.line} · {selectedItem.version}</p>
+                    </div>
+                    <span className={stockTone[selectedItem.status]} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                      {selectedItem.status}
+                    </span>
+                  </div>
+
+                  <div style={{ height: '1px', width: '100%', background: '#f1f5f9' }} />
+
+                  <div className="orders-mobile-detail-section" style={{ background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '18px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#0f766e', letterSpacing: '0.04em' }}>
+                      <LocateFixed size={14} />
+                      <span>Thông tin kho xe</span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Bãi xe</span>
+                        <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35 }}>{selectedItem.location || '---'}</strong>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
+                        <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Người giữ</span>
+                        <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35 }}>{selectedItem.holder || '---'}</strong>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Số máy</span>
+                        <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedItem.engineNo || 'Trống'}</strong>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
+                        <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Hạn giữ</span>
+                        <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedItem.holdExpiry || '---'}</strong>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Ngày nhập</span>
+                        <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedItem.importedAt || '---'}</strong>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
+                        <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Vận tải</span>
+                        <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedItem.transportDate || '---'}</strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    {selectedItem.status === 'Chưa ghép' && (
+                      <button
+                        className="primary-button"
+                        disabled={!canHoldVehicle || isHoldingVin === selectedItem.vin}
+                        onClick={() => onHoldItem(selectedItem)}
+                        style={{ height: '34px', fontSize: '11.5px' }}
+                      >
+                        <PackageCheck size={14} />
+                        <span>{isHoldingVin === selectedItem.vin ? 'Đang giữ...' : 'Giữ xe'}</span>
+                      </button>
+                    )}
+
+                    {(canOverrideHeldVehicle || selectedItem.holderUsername === currentUsername) && selectedItem.status === 'Đang giữ' && (
+                      <button
+                        className="ghost-button"
+                        onClick={() => onCreateOrderFromItem(selectedItem)}
+                        style={{ height: '34px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
+                      >
+                        <FilePlus2 size={14} />
+                        <span>Tạo đơn</span>
+                      </button>
+                    )}
+
+                    {(canOverrideHeldVehicle || selectedItem.holderUsername === currentUsername) && selectedItem.status === 'Đang giữ' && (
+                      <button
+                        className="ghost-button"
+                        disabled={isReleasingVin === selectedItem.vin}
+                        onClick={() => onReleaseItem(selectedItem.vin)}
+                        style={{ height: '34px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
+                      >
+                        <X size={14} />
+                        <span>{isReleasingVin === selectedItem.vin ? 'Đang nhả...' : 'Bỏ giữ'}</span>
+                      </button>
+                    )}
+
+                    {selectedItem.status === 'Đang giữ' && selectedItem.holderUsername !== currentUsername && (
+                      queuedVins.some((vin) => vin.toUpperCase() === selectedItem.vin.toUpperCase()) ? (
+                        <button
+                          className="ghost-button"
+                          disabled={isQueueingVin === selectedItem.vin}
+                          onClick={() => onLeaveQueue(selectedItem.vin)}
+                          style={{ height: '34px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
+                        >
+                          <X size={14} />
+                          <span>{isQueueingVin === selectedItem.vin ? 'Đang hủy...' : 'Hủy chờ'}</span>
+                        </button>
+                      ) : (
+                        <button
+                          className="ghost-button"
+                          disabled={isQueueingVin === selectedItem.vin}
+                          onClick={() => onJoinQueue(selectedItem.vin)}
+                          style={{ height: '34px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
+                        >
+                          <Clock size={14} />
+                          <span>{isQueueingVin === selectedItem.vin ? 'Đang đăng ký...' : 'Chờ xe'}</span>
+                        </button>
+                      )
+                    )}
+
+                    {selectedItem.latitude !== null && selectedItem.longitude !== null ? (
+                      <div className="ghost-button" style={{ gridColumn: 'span 2', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', border: '1px solid #10b981', color: '#0f766e', background: '#ecfdf5', fontSize: '11.5px' }}>
+                        <LocateFixed size={14} />
+                        <span>GPS Live</span>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="empty-state" style={{ padding: '24px 16px', textAlign: 'center' }}>
+                Chưa chọn xe kho nào.
+              </div>
+            )}
+          </div>
+        ) : null}
 
         {/* Right Area (Visual & GPS Widget) */}
         <div className="inventory-visual-side">
