@@ -12,7 +12,6 @@ import { Order, InventoryItem, OrderStatus, YeucauxhdRow } from './types';
 // Giao diện Layout
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
-import { SyncBanner } from './components/layout/SyncBanner';
 import { AuthScreen } from './components/AuthScreen';
 import { SetPasswordScreen } from './components/SetPasswordScreen';
 
@@ -245,9 +244,7 @@ function App() {
 
       <main className="main">
         <Header
-          activeTab={activeTab}
           canCreateOrder={canCreateOrder(userRole)}
-          roleLabel={profile ? roleLabels[profile.role] : undefined}
           setSidebarOpen={setSidebarOpen}
           setCreateOpen={(open) => {
             if (open) setCreateFromVehicle(null);
@@ -261,89 +258,89 @@ function App() {
           </button>
         )}
 
-        <SyncBanner state={syncState} message={syncMessage} />
+        <div className="main-content">
+          {/* Render Tab Component */}
+          {activeTab === 'dashboard' && (
+            <Dashboard
+              orders={orders}
+              availableStock={availableStock}
+              auditLogs={auditLogs}
+            />
+          )}
 
-        {/* Render Tab Component */}
-        {activeTab === 'dashboard' && (
-          <Dashboard
-            orders={orders}
-            availableStock={availableStock}
-            auditLogs={auditLogs}
-          />
-        )}
+          {activeTab === 'orders' && (
+            <OrdersPanel
+              orders={filteredOrders}
+              inventory={inventory}
+              currentUsername={currentUsername}
+              canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
+              canPairOrder={canPairOrder(userRole)}
+              canManageInventory={canManageInventory(userRole)}
+              isUnpairingOrderId={isUnpairingOrderId}
+              isUpdatingPolicy={isUpdatingPolicy}
+              query={query}
+              status={status}
+              onQueryChange={setQuery}
+              onStatusChange={setStatus}
+              onViewOrder={setSelectedOrder}
+              onPairOrder={(order) => {
+                setPairError('');
+                setPairingOrder(order);
+              }}
+              onUnpairOrder={handleUnpairVehicle}
+              onInvoiceOrder={setInvoicingOrder}
+              onCancelOrder={setCancelingOrder}
+              onEditOrder={setEditingOrder}
+              onSelectPolicy={setSelectingPolicyOrder}
+            />
+          )}
 
-        {activeTab === 'orders' && (
-          <OrdersPanel
-            orders={filteredOrders}
-            inventory={inventory}
-            currentUsername={currentUsername}
-            canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
-            canPairOrder={canPairOrder(userRole)}
-            canManageInventory={canManageInventory(userRole)}
-            isUnpairingOrderId={isUnpairingOrderId}
-            isUpdatingPolicy={isUpdatingPolicy}
-            query={query}
-            status={status}
-            onQueryChange={setQuery}
-            onStatusChange={setStatus}
-            onViewOrder={setSelectedOrder}
-            onPairOrder={(order) => {
-              setPairError('');
-              setPairingOrder(order);
-            }}
-            onUnpairOrder={handleUnpairVehicle}
-            onInvoiceOrder={setInvoicingOrder}
-            onCancelOrder={setCancelingOrder}
-            onEditOrder={setEditingOrder}
-            onSelectPolicy={setSelectingPolicyOrder}
-          />
-        )}
+          {activeTab === 'inventory' && (
+            <InventoryPanel
+              items={inventory}
+              canManageInventory={canManageInventory(userRole)}
+              canHoldVehicle={canHoldVehicle(userRole)}
+              currentUsername={currentUsername}
+              canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
+              isReleasingVin={isReleasingVin}
+              isQueueingVin={isQueueingVin}
+              queuedVins={queuedVins}
+              onOpenImport={() => {
+                setImportStockError('');
+                setImportOpen(true);
+              }}
+              onHoldItem={(item) => {
+                setHoldError('');
+                setHoldingItem(item);
+              }}
+              onCreateOrderFromItem={(item) => {
+                setCreateError('');
+                setCreateFromVehicle(item);
+                setCreateOpen(true);
+              }}
+              onReleaseItem={handleReleaseVehicle}
+              onJoinQueue={handleJoinQueue}
+              onLeaveQueue={handleLeaveQueue}
+            />
+          )}
 
-        {activeTab === 'inventory' && (
-          <InventoryPanel
-            items={inventory}
-            canManageInventory={canManageInventory(userRole)}
-            canHoldVehicle={canHoldVehicle(userRole)}
-            currentUsername={currentUsername}
-            canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
-            isReleasingVin={isReleasingVin}
-            isQueueingVin={isQueueingVin}
-            queuedVins={queuedVins}
-            onOpenImport={() => {
-              setImportStockError('');
-              setImportOpen(true);
-            }}
-            onHoldItem={(item) => {
-              setHoldError('');
-              setHoldingItem(item);
-            }}
-            onCreateOrderFromItem={(item) => {
-              setCreateError('');
-              setCreateFromVehicle(item);
-              setCreateOpen(true);
-            }}
-            onReleaseItem={handleReleaseVehicle}
-            onJoinQueue={handleJoinQueue}
-            onLeaveQueue={handleLeaveQueue}
-          />
-        )}
+          {activeTab === 'invoices' && (
+            <InvoiceRequestsPanel
+              requests={invoiceRequests}
+              canApprove={canApproveInvoice(userRole)}
+              isProcessing={isAdvancingInvoice}
+              onApprove={(request) => handleApproveInvoiceRequest(request.id)}
+              onRequestSupplement={setRequestingSupplement}
+              onPendingSignature={(request) => handleMarkInvoicePendingSignature(request.id)}
+              onUploadInvoice={setFinalizingRequest}
+              onSupplement={setSupplementingRequest}
+            />
+          )}
 
-        {activeTab === 'invoices' && (
-          <InvoiceRequestsPanel
-            requests={invoiceRequests}
-            canApprove={canApproveInvoice(userRole)}
-            isProcessing={isAdvancingInvoice}
-            onApprove={(request) => handleApproveInvoiceRequest(request.id)}
-            onRequestSupplement={setRequestingSupplement}
-            onPendingSignature={(request) => handleMarkInvoicePendingSignature(request.id)}
-            onUploadInvoice={setFinalizingRequest}
-            onSupplement={setSupplementingRequest}
-          />
-        )}
+          {activeTab === 'pricing' && <PricingPanel isAdmin={canManagePricingConfig(userRole)} />}
 
-        {activeTab === 'pricing' && <PricingPanel isAdmin={canManagePricingConfig(userRole)} />}
-
-        {activeTab === 'staff' && <StaffPanel staff={profiles} onReload={loadWorkspace} />}
+          {activeTab === 'staff' && <StaffPanel staff={profiles} onReload={loadWorkspace} />}
+        </div>
 
       </main>
 

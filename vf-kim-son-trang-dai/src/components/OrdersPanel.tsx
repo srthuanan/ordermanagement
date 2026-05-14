@@ -267,22 +267,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                       <span className="tag">Số máy: {selectedOrder.engineNo || 'Trống'}</span>
                     </div>
 
-                    <div className="orders-detail-matching">
-                      <div className="orders-detail-matching__header">
-                        <div>
-                          <p className="orders-panel-subtitle">Ghép xe</p>
-                          <h4>{selectedCandidates.length} xe phù hợp</h4>
-                        </div>
-                        <span className="tag">
-                          {selectedOrder.status === 'Chưa ghép' ? 'Sẵn sàng ghép' : 'Theo đơn hiện tại'}
-                        </span>
-                      </div>
-                      <p className="orders-detail-matching__note">
-                        {selectedCandidates.length > 0
-                          ? 'Hệ thống đã lọc sẵn các xe phù hợp theo cấu hình và quyền của người đang đăng nhập.'
-                          : 'Chưa có xe phù hợp trong kho hoặc xe đang bị giữ bởi người khác.'}
-                      </p>
-                    </div>
+
 
                     <div className="orders-detail-actions">
                       <button
