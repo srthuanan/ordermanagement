@@ -377,7 +377,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
           )}
 
           {/* Mobile list view */}
-          {isMobile ? (
+          {isMobile && mobileView === 'list' ? (
             <div className="inventory-mobile-card-list">
               {visibleItems.length === 0 ? (
                 <div className="empty-state" style={{ padding: '24px 16px', textAlign: 'center' }}>
@@ -563,7 +563,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
         </div>
 
         {/* Mobile detail view */}
-        {isMobile ? (
+        {isMobile && mobileView === 'detail' ? (
           <div className="inventory-mobile-detail-stack">
             {selectedItem ? (
               <div className="inventory-mobile-detail-view" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
