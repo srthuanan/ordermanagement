@@ -215,76 +215,146 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
 
           {/* 3. Bảng dữ liệu DATA TABLE chuyên nghiệp */}
           <div className="table-wrap" style={{ marginTop: '4px' }}>
-            <table>
-              <thead>
-                <tr>
-                  <th>Mã đơn</th>
-                  <th>Khách hàng</th>
-                  <th>Cấu hình xe</th>
-                  <th>VIN ghép</th>
-                  <th>Trạng thái</th>
-                </tr>
-              </thead>
-              <tbody>
+            {isMobile ? (
+              <div className="orders-mobile-card-list">
                 {orders.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', padding: '30px', color: '#64748b', fontStyle: 'italic' }}>
-                      Không tìm thấy đơn hàng phù hợp.
-                    </td>
-                  </tr>
+                  <div className="empty-state" style={{ padding: '24px 16px', textAlign: 'center' }}>
+                    Không tìm thấy đơn hàng phù hợp.
+                  </div>
                 ) : (
                   orders.map((order) => {
                     const isActive = selectedOrder?.id === order.id;
                     return (
-                      <tr
+                      <button
                         key={order.id}
+                        type="button"
+                        className={isActive ? 'orders-mobile-card active' : 'orders-mobile-card'}
                         onClick={() => {
                           setSelectedOrderId(order.id);
-                          if (isMobile) {
-                            setMobileView('detail');
-                          }
+                          setMobileView('detail');
                         }}
-                        className={isActive ? 'active-row' : ''}
-                        style={{ cursor: 'pointer', transition: 'background 0.15s' }}
                       >
-                        <td style={{ fontWeight: 700, color: '#0f766e' }}>
-                          {order.id}
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: 600, color: '#1e293b' }}>{order.customer}</div>
-                          <div style={{ fontSize: '11px', color: '#64748b' }}>{order.phone}</div>
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: 600, color: '#334155' }}>{order.line} {order.version}</div>
-                          <div style={{ fontSize: '11px', color: '#64748b' }}>{order.exterior} · {order.interior}</div>
-                        </td>
-                        <td>
-                          {order.vin ? (
-                            <strong style={{ color: '#0284c7', fontSize: '12.5px', letterSpacing: '0.02em' }}>{order.vin}</strong>
-                          ) : (
-                            <span style={{ color: '#94a3b8', fontSize: '11.5px', fontStyle: 'italic' }}>Chưa ghép</span>
-                          )}
-                        </td>
-                        <td>
-                          <span 
-                            className={statusTone[order.status]} 
-                            style={{ 
-                              display: 'inline-block', 
-                              padding: '3px 8px', 
-                              borderRadius: '12px', 
-                              fontSize: '11px', 
-                              fontWeight: 700 
-                            }}
-                          >
+                        <div className="orders-mobile-card-header">
+                          <div>
+                            <strong className="orders-mobile-card-title">{order.id}</strong>
+                            <p className="orders-mobile-card-subtitle">{order.customer}</p>
+                          </div>
+                          <span className={statusTone[order.status]} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 8px', borderRadius: '999px', fontSize: '11px', fontWeight: 700 }}>
                             {order.status}
                           </span>
-                        </td>
-                      </tr>
+                        </div>
+
+                        <div className="orders-mobile-card-grid">
+                          <div>
+                            <span>Điện thoại</span>
+                            <strong>{order.phone || 'Chưa có SĐT'}</strong>
+                          </div>
+                          <div>
+                            <span>VIN</span>
+                            <strong>{order.vin || 'Chưa ghép'}</strong>
+                          </div>
+                          <div>
+                            <span>Dòng xe</span>
+                            <strong>{order.line}</strong>
+                          </div>
+                          <div>
+                            <span>Phiên bản</span>
+                            <strong>{order.version}</strong>
+                          </div>
+                          <div className="orders-mobile-card-wide">
+                            <span>Ngoại / nội thất</span>
+                            <strong>{order.exterior} · {order.interior}</strong>
+                          </div>
+                          <div>
+                            <span>Ngày cọc</span>
+                            <strong>{order.depositDate || 'Chưa có'}</strong>
+                          </div>
+                          <div>
+                            <span>Ngày cần xe</span>
+                            <strong>{order.needDate || 'N/A'}</strong>
+                          </div>
+                          <div className="orders-mobile-card-wide">
+                            <span>TVBH</span>
+                            <strong>{order.staff}</strong>
+                          </div>
+                        </div>
+                      </button>
                     );
                   })
                 )}
-              </tbody>
-            </table>
+              </div>
+            ) : (
+              <table>
+                <thead>
+                  <tr>
+                    <th>Mã đơn</th>
+                    <th>Khách hàng</th>
+                    <th>Cấu hình xe</th>
+                    <th>VIN ghép</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ textAlign: 'center', padding: '30px', color: '#64748b', fontStyle: 'italic' }}>
+                        Không tìm thấy đơn hàng phù hợp.
+                      </td>
+                    </tr>
+                  ) : (
+                    orders.map((order) => {
+                      const isActive = selectedOrder?.id === order.id;
+                      return (
+                        <tr
+                          key={order.id}
+                          onClick={() => {
+                            setSelectedOrderId(order.id);
+                            if (isMobile) {
+                              setMobileView('detail');
+                            }
+                          }}
+                          className={isActive ? 'active-row' : ''}
+                          style={{ cursor: 'pointer', transition: 'background 0.15s' }}
+                        >
+                          <td style={{ fontWeight: 700, color: '#0f766e' }}>
+                            {order.id}
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: 600, color: '#1e293b' }}>{order.customer}</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>{order.phone}</div>
+                          </td>
+                          <td>
+                            <div style={{ fontWeight: 600, color: '#334155' }}>{order.line} {order.version}</div>
+                            <div style={{ fontSize: '11px', color: '#64748b' }}>{order.exterior} · {order.interior}</div>
+                          </td>
+                          <td>
+                            {order.vin ? (
+                              <strong style={{ color: '#0284c7', fontSize: '12.5px', letterSpacing: '0.02em' }}>{order.vin}</strong>
+                            ) : (
+                              <span style={{ color: '#94a3b8', fontSize: '11.5px', fontStyle: 'italic' }}>Chưa ghép</span>
+                            )}
+                          </td>
+                          <td>
+                            <span 
+                              className={statusTone[order.status]} 
+                              style={{ 
+                                display: 'inline-block', 
+                                padding: '3px 8px', 
+                                borderRadius: '12px', 
+                                fontSize: '11px', 
+                                fontWeight: 700 
+                              }}
+                            >
+                              {order.status}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 

@@ -3908,6 +3908,88 @@ td small {
     margin-left: 0 !important;
   }
 
+  .orders-mobile-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .orders-mobile-card {
+    appearance: none;
+    text-align: left;
+    width: 100%;
+    border: 1px solid #dbe4ee;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .orders-mobile-card.active {
+    border-color: #0f766e;
+    box-shadow: 0 0 0 1px rgba(15, 118, 110, 0.14), 0 6px 16px rgba(15, 118, 110, 0.08);
+  }
+
+  .orders-mobile-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .orders-mobile-card-title {
+    display: block;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f766e;
+    line-height: 1.2;
+  }
+
+  .orders-mobile-card-subtitle {
+    margin: 2px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.35;
+  }
+
+  .orders-mobile-card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+  }
+
+  .orders-mobile-card-grid > div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .orders-mobile-card-grid > div span {
+    font-size: 10.5px;
+    color: #64748b;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .orders-mobile-card-grid > div strong {
+    font-size: 12.5px;
+    color: #0f172a;
+    font-weight: 700;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .orders-mobile-card-wide {
+    grid-column: span 2;
+  }
+
   .orders-data-side .table-wrap,
   .inventory-data-side .table-wrap {
     overflow-x: auto !important;
