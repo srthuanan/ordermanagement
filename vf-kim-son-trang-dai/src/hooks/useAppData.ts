@@ -27,6 +27,16 @@ export function useAppData() {
     isSupabaseConfigured ? 'Đang kết nối Supabase...' : 'Chưa cấu hình Supabase'
   );
 
+  const normalizeIdentity = (value: string) => value.trim().toLowerCase();
+  const matchesCurrentUser = (value: string | null | undefined, currentFullName: string, currentEmail: string) => {
+    const normalizedValue = normalizeIdentity(value || '');
+    if (!normalizedValue) return false;
+    return (
+      normalizedValue === normalizeIdentity(currentFullName) ||
+      normalizedValue === normalizeIdentity(currentEmail)
+    );
+  };
+
   useEffect(() => {
     let active = true;
     if (!supabase) return;
@@ -112,11 +122,38 @@ export function useAppData() {
         customersResult.data.map((row) => [row.full_name.toLowerCase(), row as CustomerRow])
       );
 
-      setOrders(ordersResult.data.map((row) => apiService.mapOrderRow(row, customerMap)));
+      const currentFullName = profileData.full_name || session.user.email || '';
+      const currentEmail = session.user.email || '';
+      const isSalesUser = profileData.role === 'sales';
+
+      const mappedOrders = ordersResult.data.map((row) => apiService.mapOrderRow(row, customerMap));
+      const visibleOrders = isSalesUser
+        ? mappedOrders.filter((order) => matchesCurrentUser(order.staff, currentFullName, currentEmail))
+        : mappedOrders;
+
+      const visibleLogs = isSalesUser
+        ? (logsResult.data || []).filter((log) => matchesCurrentUser(log.actor_name, currentFullName, currentEmail))
+        : (logsResult.data || []);
+
+      const visibleInvoices = isSalesUser
+        ? (invoicesResult.data || []).filter(
+            (row) =>
+              matchesCurrentUser(row.requested_by_name, currentFullName, currentEmail) ||
+              matchesCurrentUser(row.tvbh, currentFullName, currentEmail)
+          )
+        : (invoicesResult.data || []);
+
+      const visibleQueue = isSalesUser
+        ? (queueResult.data || []).filter((vin) =>
+            typeof vin === 'string' ? true : Boolean(vin)
+          )
+        : (queueResult.data || []);
+
+      setOrders(visibleOrders);
       setInventory(apiService.mapKhoxeRows(inventoryResult.data));
-      setAuditLogs(logsResult.data || []);
-      setInvoiceRequests(invoicesResult.data || []);
-      setQueuedVins(queueResult.data || []);
+      setAuditLogs(visibleLogs);
+      setInvoiceRequests(visibleInvoices);
+      setQueuedVins(visibleQueue);
       setProfiles((profilesResult.data || []) as ProfileRow[]);
 
       setSyncState('live');

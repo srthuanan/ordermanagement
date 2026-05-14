@@ -21,7 +21,7 @@ export type TabKey = (typeof tabs)[number]['key'];
 export type AppRole = ProfileRow['role'];
 
 const roleTabAccess: Record<TabKey, AppRole[]> = {
-  dashboard: ['admin', 'sales'],
+  dashboard: ['admin'],
   orders: ['admin', 'sales'],
   inventory: ['admin', 'sales'],
   invoices: ['admin'],
