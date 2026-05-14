@@ -1,12 +1,12 @@
 import React from 'react';
-import { Menu, Bell, Plus, ChevronRight } from 'lucide-react';
+import { Menu, Bell, Plus, ChevronRight, type LucideIcon } from 'lucide-react';
 
 interface HeaderProps {
   canCreateOrder: boolean;
   setSidebarOpen: (val: boolean) => void;
   setCreateOpen: (val: boolean) => void;
   activeTabLabel?: string;
-  activeTabIcon?: React.ComponentType<{ size?: number; className?: string }>;
+  activeTabIcon?: LucideIcon;
 }
 
 export const Header: React.FC<HeaderProps> = ({

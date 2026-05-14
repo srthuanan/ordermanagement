@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserRound, LogOut } from 'lucide-react';
+import { UserRound, LogOut, type LucideIcon } from 'lucide-react';
 import { TabKey, getVisibleTabs, roleLabels } from '../../constants';
 import { ProfileRow } from '../../types';
 
@@ -9,7 +9,7 @@ interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (val: boolean) => void;
   profile: ProfileRow | null;
-  visibleTabs: { key: TabKey; label: string; icon: React.ComponentType<{ size?: number }> }[];
+  visibleTabs: { key: TabKey; label: string; icon: LucideIcon }[];
   userEmail?: string;
   onSignOut: () => void;
 }

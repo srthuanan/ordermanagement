@@ -37,8 +37,8 @@ export const VehicleLocationMapPanel: React.FC<VehicleLocationMapPanelProps> = (
         vin: loc.vin,
         lat: loc.latitude as number,
         lng: loc.longitude as number,
-        vi_tri: loc.vi_tri || inv?.location || 'Không rõ bãi',
-        updatedAt: loc.updated_at,
+        vi_tri: loc.location || inv?.location || 'Không rõ bãi',
+        updatedAt: loc.updatedAt,
         dong_xe: inv?.line || 'Không xác định',
         phien_ban: inv?.version || '',
         ngoai_that: inv?.exterior || '',
@@ -51,7 +51,7 @@ export const VehicleLocationMapPanel: React.FC<VehicleLocationMapPanelProps> = (
 
   const latestUpdatedAt = React.useMemo(() => {
     return validLocations.reduce((latest, location) => {
-      const value = new Date(location.updated_at).getTime();
+      const value = new Date(location.updatedAt).getTime();
       return value > latest ? value : latest;
     }, 0);
   }, [validLocations]);
@@ -190,7 +190,7 @@ export const VehicleLocationMapPanel: React.FC<VehicleLocationMapPanelProps> = (
       if (bounds.length === 1) {
         map.setView(bounds[0], 16);
       } else {
-        map.fitBounds(bounds, { padding: [40, 40], maxZoom: 17 });
+        map.fitBounds(bounds as L.LatLngBoundsExpression, { padding: [40, 40], maxZoom: 17 });
       }
     }
   }, [carsWithGPS]);

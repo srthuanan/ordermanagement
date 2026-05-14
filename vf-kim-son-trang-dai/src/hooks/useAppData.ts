@@ -148,22 +148,27 @@ export function useAppData() {
           )
         : (invoicesResult.data || []);
 
-      const visibleQueue = isSalesUser
-        ? (queueResult.data || []).filter((vin) =>
-            typeof vin === 'string' ? true : Boolean(vin)
-          )
-        : (queueResult.data || []);
-
       setOrders(visibleOrders);
       setInventory(apiService.mapKhoxeRows(inventoryResult.data));
       setVehicleLocations(
         locationsResult.error || !locationsResult.data
           ? []
-          : apiService.mapVehicleLocationRows(locationsResult.data as VehicleLocationRow[])
+          : apiService.mapVehicleLocationRows(locationsResult.data as Array<{
+              vin: string;
+              vi_tri: string | null;
+              latitude: number | null;
+              longitude: number | null;
+              created_at: string;
+              updated_at: string;
+            }>)
       );
       setAuditLogs(visibleLogs);
       setInvoiceRequests(visibleInvoices);
-      setQueuedVins(visibleQueue);
+      setQueuedVins(
+        ((queueResult.data || []) as Array<{ vin?: string } | string>)
+          .map((row) => (typeof row === 'string' ? row : String(row?.vin || '').trim()))
+          .filter(Boolean)
+      );
       setProfiles((profilesResult.data || []) as ProfileRow[]);
 
       setSyncState('live');

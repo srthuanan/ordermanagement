@@ -46,7 +46,7 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
   const [customerName, setCustomerName] = React.useState('');
   const [customerPhone, setCustomerPhone] = React.useState('');
   const [consultantName, setConsultantName] = React.useState('');
-  const quoteNo = React.useState(() => `BG-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${Math.floor(Math.random() * 9000) + 1000}`)[0];
+  const quoteNo = React.useState(() => `BG-${new Date().toISOString().slice(0, 10).split('-').join('')}-${Math.floor(Math.random() * 9000) + 1000}`)[0];
   const quoteDate = React.useState(() =>
     new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date())
   )[0];

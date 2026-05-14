@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { Suspense, lazy, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { X } from 'lucide-react';
 
@@ -16,26 +16,25 @@ import { AuthScreen } from './components/AuthScreen';
 import { SetPasswordScreen } from './components/SetPasswordScreen';
 
 // Lớp Giao diện Từng Tab Chức năng
-import { Dashboard } from './components/Dashboard';
-import { OrdersPanel } from './components/OrdersPanel';
-import { InventoryPanel } from './components/InventoryPanel';
-import { InvoiceRequestsPanel } from './components/InvoiceRequestsPanel';
-import { PricingPanel } from './components/PricingPanel';
-import { StaffPanel } from './components/StaffPanel';
+const Dashboard = lazy(() => import('./components/Dashboard').then((module) => ({ default: module.Dashboard })));
+const OrdersPanel = lazy(() => import('./components/OrdersPanel').then((module) => ({ default: module.OrdersPanel })));
+const InventoryPanel = lazy(() => import('./components/InventoryPanel').then((module) => ({ default: module.InventoryPanel })));
+const InvoiceRequestsPanel = lazy(() => import('./components/InvoiceRequestsPanel').then((module) => ({ default: module.InvoiceRequestsPanel })));
+const PricingPanel = lazy(() => import('./components/PricingPanel').then((module) => ({ default: module.PricingPanel })));
+const StaffPanel = lazy(() => import('./components/StaffPanel').then((module) => ({ default: module.StaffPanel })));
 
 // Lớp Popup Modal
-import { CreateOrderModal } from './components/modals/CreateOrderModal';
-import { PairVehicleModal } from './components/modals/PairVehicleModal';
-import { HoldVehicleModal } from './components/modals/HoldVehicleModal';
-import { VehicleGpsModal } from './components/modals/VehicleGpsModal';
-import { CancelOrderModal } from './components/modals/CancelOrderModal';
-import { InvoiceRequestModal } from './components/modals/InvoiceModal';
-import { FinalizeInvoiceModal } from './components/modals/FinalizeInvoiceModal';
-import { SupplementaryInvoiceModal } from './components/modals/SupplementaryInvoiceModal';
-import { RequestSupplementModal } from './components/modals/RequestSupplementModal';
-import { ImportInventoryModal } from './components/modals/ImportInventoryModal';
-import { EditOrderModal } from './components/modals/EditOrderModal';
-import { SelectPolicyModal } from './components/modals/SelectPolicyModal';
+const CreateOrderModal = lazy(() => import('./components/modals/CreateOrderModal').then((module) => ({ default: module.CreateOrderModal })));
+const PairVehicleModal = lazy(() => import('./components/modals/PairVehicleModal').then((module) => ({ default: module.PairVehicleModal })));
+const VehicleGpsModal = lazy(() => import('./components/modals/VehicleGpsModal').then((module) => ({ default: module.VehicleGpsModal })));
+const CancelOrderModal = lazy(() => import('./components/modals/CancelOrderModal').then((module) => ({ default: module.CancelOrderModal })));
+const InvoiceRequestModal = lazy(() => import('./components/modals/InvoiceModal').then((module) => ({ default: module.InvoiceRequestModal })));
+const FinalizeInvoiceModal = lazy(() => import('./components/modals/FinalizeInvoiceModal').then((module) => ({ default: module.FinalizeInvoiceModal })));
+const SupplementaryInvoiceModal = lazy(() => import('./components/modals/SupplementaryInvoiceModal').then((module) => ({ default: module.SupplementaryInvoiceModal })));
+const RequestSupplementModal = lazy(() => import('./components/modals/RequestSupplementModal').then((module) => ({ default: module.RequestSupplementModal })));
+const ImportInventoryModal = lazy(() => import('./components/modals/ImportInventoryModal').then((module) => ({ default: module.ImportInventoryModal })));
+const EditOrderModal = lazy(() => import('./components/modals/EditOrderModal').then((module) => ({ default: module.EditOrderModal })));
+const SelectPolicyModal = lazy(() => import('./components/modals/SelectPolicyModal').then((module) => ({ default: module.SelectPolicyModal })));
 import {
   canApproveInvoice,
   canCreateOrder,
@@ -234,6 +233,11 @@ function App() {
   }
 
   const activeTabObj = visibleTabs.find((t) => t.key === activeTab);
+  const panelFallback = (
+    <div className="panel" style={{ minHeight: '20rem', display: 'grid', placeItems: 'center' }}>
+      <p>Đang tải giao diện...</p>
+    </div>
+  );
 
   return (
     <div className="app-shell">
@@ -267,251 +271,252 @@ function App() {
         )}
 
         <div className="main-content">
-          {/* Render Tab Component */}
-          {activeTab === 'dashboard' && (
-            <Dashboard
-              orders={orders}
-              availableStock={availableStock}
-              auditLogs={auditLogs}
-            />
-          )}
+          <Suspense fallback={panelFallback}>
+            {/* Render Tab Component */}
+            {activeTab === 'dashboard' && (
+              <Dashboard
+                orders={orders}
+                availableStock={availableStock}
+                auditLogs={auditLogs}
+              />
+            )}
 
-          {activeTab === 'orders' && (
-            <OrdersPanel
-              orders={filteredOrders}
-              inventory={inventory}
-              currentUsername={currentUsername}
-              canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
-              canPairOrder={canPairOrder(userRole)}
-              canManageInventory={canManageInventory(userRole)}
-              isUnpairingOrderId={isUnpairingOrderId}
-              isUpdatingPolicy={isUpdatingPolicy}
-              query={query}
-              status={status}
-              onQueryChange={setQuery}
-              onStatusChange={setStatus}
-              onViewOrder={setSelectedOrder}
-              onPairOrder={(order) => {
-                setPairError('');
-                setPairingOrder(order);
-              }}
-              onUnpairOrder={handleUnpairVehicle}
-              onInvoiceOrder={setInvoicingOrder}
-              onCancelOrder={setCancelingOrder}
-              onEditOrder={setEditingOrder}
-              onSelectPolicy={setSelectingPolicyOrder}
-            />
-          )}
+            {activeTab === 'orders' && (
+              <OrdersPanel
+                orders={filteredOrders}
+                inventory={inventory}
+                currentUsername={currentUsername}
+                canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
+                canPairOrder={canPairOrder(userRole)}
+                canManageInventory={canManageInventory(userRole)}
+                isUnpairingOrderId={isUnpairingOrderId}
+                isUpdatingPolicy={isUpdatingPolicy}
+                query={query}
+                status={status}
+                onQueryChange={setQuery}
+                onStatusChange={setStatus}
+                onViewOrder={setSelectedOrder}
+                onPairOrder={(order) => {
+                  setPairError('');
+                  setPairingOrder(order);
+                }}
+                onUnpairOrder={handleUnpairVehicle}
+                onInvoiceOrder={setInvoicingOrder}
+                onCancelOrder={setCancelingOrder}
+                onEditOrder={setEditingOrder}
+                onSelectPolicy={setSelectingPolicyOrder}
+              />
+            )}
 
-          {activeTab === 'inventory' && (
-            <InventoryPanel
-              items={inventory}
-              vehicleLocations={vehicleLocations}
-              canManageInventory={canManageInventory(userRole)}
-              canHoldVehicle={canHoldVehicle(userRole)}
-              currentUsername={currentUsername}
-              canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
-              isReleasingVin={isReleasingVin}
-              isHoldingVin={isHoldingVin}
-              isQueueingVin={isQueueingVin}
-              isUpdatingVehicleLocation={isUpdatingVehicleLocation}
-              queuedVins={queuedVins}
-              onOpenImport={() => {
-                setImportStockError('');
-                setImportOpen(true);
-              }}
-              onHoldItem={(item) => {
-                handleHoldVehicle(item.vin);
-              }}
-              onCreateOrderFromItem={(item) => {
-                setCreateError('');
-                setCreateFromVehicle(item);
-                setCreateOpen(true);
-              }}
-              onReleaseItem={handleReleaseVehicle}
-              onJoinQueue={handleJoinQueue}
-              onLeaveQueue={handleLeaveQueue}
-              onUpdateVehicleLocation={(item) => {
-                setSyncState('idle');
-                setSyncMessage('');
-                setGpsItem(item);
-              }}
-            />
-          )}
+            {activeTab === 'inventory' && (
+              <InventoryPanel
+                items={inventory}
+                vehicleLocations={vehicleLocations}
+                canManageInventory={canManageInventory(userRole)}
+                canHoldVehicle={canHoldVehicle(userRole)}
+                currentUsername={currentUsername}
+                canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
+                isReleasingVin={isReleasingVin}
+                isHoldingVin={isHoldingVin}
+                isQueueingVin={isQueueingVin}
+                isUpdatingVehicleLocation={isUpdatingVehicleLocation}
+                queuedVins={queuedVins}
+                onOpenImport={() => {
+                  setImportStockError('');
+                  setImportOpen(true);
+                }}
+                onHoldItem={(item) => {
+                  handleHoldVehicle(item.vin);
+                }}
+                onCreateOrderFromItem={(item) => {
+                  setCreateError('');
+                  setCreateFromVehicle(item);
+                  setCreateOpen(true);
+                }}
+                onReleaseItem={handleReleaseVehicle}
+                onJoinQueue={handleJoinQueue}
+                onLeaveQueue={handleLeaveQueue}
+                onUpdateVehicleLocation={(item) => {
+                  setSyncState('idle');
+                  setSyncMessage('');
+                  setGpsItem(item);
+                }}
+              />
+            )}
 
-          {activeTab === 'invoices' && (
-            <InvoiceRequestsPanel
-              requests={invoiceRequests}
-              canApprove={canApproveInvoice(userRole)}
-              isProcessing={isAdvancingInvoice}
-              onApprove={(request) => handleApproveInvoiceRequest(request.id)}
-              onRequestSupplement={setRequestingSupplement}
-              onPendingSignature={(request) => handleMarkInvoicePendingSignature(request.id)}
-              onUploadInvoice={setFinalizingRequest}
-              onSupplement={setSupplementingRequest}
-            />
-          )}
+            {activeTab === 'invoices' && (
+              <InvoiceRequestsPanel
+                requests={invoiceRequests}
+                canApprove={canApproveInvoice(userRole)}
+                isProcessing={isAdvancingInvoice}
+                onApprove={(request) => handleApproveInvoiceRequest(request.id)}
+                onRequestSupplement={setRequestingSupplement}
+                onPendingSignature={(request) => handleMarkInvoicePendingSignature(request.id)}
+                onUploadInvoice={setFinalizingRequest}
+                onSupplement={setSupplementingRequest}
+              />
+            )}
 
-          {activeTab === 'pricing' && <PricingPanel isAdmin={canManagePricingConfig(userRole)} />}
+            {activeTab === 'pricing' && <PricingPanel isAdmin={canManagePricingConfig(userRole)} />}
 
-          {activeTab === 'staff' && <StaffPanel staff={profiles} onReload={loadWorkspace} />}
+            {activeTab === 'staff' && <StaffPanel staff={profiles} onReload={loadWorkspace} />}
+          </Suspense>
         </div>
 
       </main>
 
       {/* === Render Modals === */}
 
-      {createOpen && (
-        <CreateOrderModal
-          error={createError}
-          isCreating={isCreating}
-          initialVehicle={createFromVehicle}
-          defaultStaffName={userRole === 'sales' ? currentFullName : undefined}
-          lockStaffName={userRole === 'sales'}
-          onClose={() => {
-            if (!isCreating) {
-              setCreateOpen(false);
-              setCreateFromVehicle(null);
-              setCreateError('');
-            }
-          }}
-          onSubmit={async (input) => {
-            const success = await handleCreateOrder(input);
-            if (success) {
-              setCreateOpen(false);
-              setCreateFromVehicle(null);
-            }
-          }}
-        />
-      )}
+      <Suspense fallback={null}>
+        {createOpen && (
+          <CreateOrderModal
+            error={createError}
+            isCreating={isCreating}
+            initialVehicle={createFromVehicle}
+            defaultStaffName={userRole === 'sales' ? currentFullName : undefined}
+            lockStaffName={userRole === 'sales'}
+            onClose={() => {
+              if (!isCreating) {
+                setCreateOpen(false);
+                setCreateFromVehicle(null);
+                setCreateError('');
+              }
+            }}
+            onSubmit={async (input) => {
+              const success = await handleCreateOrder(input);
+              if (success) {
+                setCreateOpen(false);
+                setCreateFromVehicle(null);
+              }
+            }}
+          />
+        )}
 
+        {pairingOrder && (
+          <PairVehicleModal
+            order={pairingOrder}
+            currentUsername={currentUsername}
+            canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
+            error={pairError}
+            inventory={inventory}
+            isPairing={isPairing}
+            onClose={() => {
+              if (!isPairing) {
+                setPairingOrder(null);
+                setPairError('');
+              }
+            }}
+            onSubmit={async (orderId, vin) => {
+              const success = await handlePairVehicle(orderId, vin);
+              if (success) {
+                setPairingOrder(null);
+              }
+            }}
+          />
+        )}
 
-      {pairingOrder && (
-        <PairVehicleModal
-          order={pairingOrder}
-          currentUsername={currentUsername}
-          canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
-          error={pairError}
-          inventory={inventory}
-          isPairing={isPairing}
-          onClose={() => {
-            if (!isPairing) {
-              setPairingOrder(null);
-              setPairError('');
-            }
-          }}
-          onSubmit={async (orderId, vin) => {
-            const success = await handlePairVehicle(orderId, vin);
-            if (success) {
-              setPairingOrder(null);
-            }
-          }}
-        />
-      )}
+        {gpsItem && (
+          <VehicleGpsModal
+            item={gpsItem}
+            isSaving={isUpdatingVehicleLocation === gpsItem.vin}
+            error={syncState === 'error' ? syncMessage : ''}
+            onClose={() => {
+              if (isUpdatingVehicleLocation !== gpsItem.vin) {
+                setGpsItem(null);
+              }
+            }}
+            onSubmit={async (input) => {
+              const success = await handleUpdateVehicleLocation(gpsItem.vin, input);
+              if (success) {
+                setGpsItem(null);
+              }
+              return success;
+            }}
+          />
+        )}
 
+        {importOpen && (
+          <ImportInventoryModal
+            error={importStockError}
+            isSubmitting={isImportingStock}
+            onClose={() => {
+              if (!isImportingStock) {
+                setImportOpen(false);
+                setImportStockError('');
+              }
+            }}
+            onSubmit={handleImportStock}
+          />
+        )}
 
+        {cancelingOrder && (
+          <CancelOrderModal
+            orderId={cancelingOrder.id}
+            currentNeedDate={cancelingOrder.needDateIso ? cancelingOrder.needDateIso.slice(0, 10) : ''}
+            isCanceling={isCanceling}
+            onClose={() => setCancelingOrder(null)}
+            onSubmit={handleCancelOrder}
+          />
+        )}
 
-      {gpsItem && (
-        <VehicleGpsModal
-          item={gpsItem}
-          isSaving={isUpdatingVehicleLocation === gpsItem.vin}
-          error={syncState === 'error' ? syncMessage : ''}
-          onClose={() => {
-            if (isUpdatingVehicleLocation !== gpsItem.vin) {
-              setGpsItem(null);
-            }
-          }}
-          onSubmit={async (input) => {
-            const success = await handleUpdateVehicleLocation(gpsItem.vin, input);
-            if (success) {
-              setGpsItem(null);
-            }
-            return success;
-          }}
-        />
-      )}
+        {invoicingOrder && (
+          <InvoiceRequestModal
+            order={invoicingOrder}
+            isSubmitting={isRequestingInvoice}
+            onClose={() => setInvoicingOrder(null)}
+            onSubmit={handleRequestInvoice}
+          />
+        )}
 
-      {importOpen && (
-        <ImportInventoryModal
-          error={importStockError}
-          isSubmitting={isImportingStock}
-          onClose={() => {
-            if (!isImportingStock) {
-              setImportOpen(false);
-              setImportStockError('');
-            }
-          }}
-          onSubmit={handleImportStock}
-        />
-      )}
+        {finalizingRequest && (
+          <FinalizeInvoiceModal
+            requestId={finalizingRequest.id}
+            orderId={finalizingRequest.so_don_hang}
+            customerName={finalizingRequest.ten_khach_hang}
+            isSubmitting={isFinalizingInvoice}
+            onClose={() => setFinalizingRequest(null)}
+            onSubmit={handleUploadIssuedInvoice}
+          />
+        )}
 
-      {cancelingOrder && (
-        <CancelOrderModal
-          orderId={cancelingOrder.id}
-          currentNeedDate={cancelingOrder.needDateIso ? cancelingOrder.needDateIso.slice(0, 10) : ''}
-          isCanceling={isCanceling}
-          onClose={() => setCancelingOrder(null)}
-          onSubmit={handleCancelOrder}
-        />
-      )}
+        {requestingSupplement && (
+          <RequestSupplementModal
+            request={requestingSupplement}
+            isSubmitting={isAdvancingInvoice}
+            onClose={() => setRequestingSupplement(null)}
+            onSubmit={handleRequestInvoiceSupplement}
+          />
+        )}
 
-      {invoicingOrder && (
-        <InvoiceRequestModal
-          order={invoicingOrder}
-          isSubmitting={isRequestingInvoice}
-          onClose={() => setInvoicingOrder(null)}
-          onSubmit={handleRequestInvoice}
-        />
-      )}
+        {supplementingRequest && (
+          <SupplementaryInvoiceModal
+            request={supplementingRequest}
+            isSubmitting={isSupplementingInvoice}
+            onClose={() => setSupplementingRequest(null)}
+            onSubmit={handleSupplementInvoice}
+          />
+        )}
 
-      {finalizingRequest && (
-        <FinalizeInvoiceModal
-          requestId={finalizingRequest.id}
-          orderId={finalizingRequest.so_don_hang}
-          customerName={finalizingRequest.ten_khach_hang}
-          isSubmitting={isFinalizingInvoice}
-          onClose={() => setFinalizingRequest(null)}
-          onSubmit={handleUploadIssuedInvoice}
-        />
-      )}
+        {editingOrder && (
+          <EditOrderModal
+            order={editingOrder}
+            isSubmitting={isUpdatingOrder}
+            onClose={() => setEditingOrder(null)}
+            onSubmit={handleUpdateOrder}
+          />
+        )}
 
-      {requestingSupplement && (
-        <RequestSupplementModal
-          request={requestingSupplement}
-          isSubmitting={isAdvancingInvoice}
-          onClose={() => setRequestingSupplement(null)}
-          onSubmit={handleRequestInvoiceSupplement}
-        />
-      )}
-
-      {supplementingRequest && (
-        <SupplementaryInvoiceModal
-          request={supplementingRequest}
-          isSubmitting={isSupplementingInvoice}
-          onClose={() => setSupplementingRequest(null)}
-          onSubmit={handleSupplementInvoice}
-        />
-      )}
-
-      {editingOrder && (
-        <EditOrderModal
-          order={editingOrder}
-          isSubmitting={isUpdatingOrder}
-          onClose={() => setEditingOrder(null)}
-          onSubmit={handleUpdateOrder}
-        />
-      )}
-
-      {selectingPolicyOrder && (
-        <SelectPolicyModal
-          orderId={selectingPolicyOrder.id}
-          orderLine={selectingPolicyOrder.line}
-          currentPolicy={selectingPolicyOrder.policy}
-          isSubmitting={isUpdatingPolicy}
-          onClose={() => setSelectingPolicyOrder(null)}
-          onSubmit={handleUpdatePolicy}
-        />
-      )}
+        {selectingPolicyOrder && (
+          <SelectPolicyModal
+            orderId={selectingPolicyOrder.id}
+            orderLine={selectingPolicyOrder.line}
+            currentPolicy={selectingPolicyOrder.policy}
+            isSubmitting={isUpdatingPolicy}
+            onClose={() => setSelectingPolicyOrder(null)}
+            onSubmit={handleUpdatePolicy}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }

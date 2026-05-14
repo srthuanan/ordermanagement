@@ -11,7 +11,7 @@ export type OrderStatus =
   | 'Đã xuất hóa đơn'
   | 'Đã hủy';
 export type StockStatus = 'Chưa ghép' | 'Đang giữ' | 'Đã ghép';
-export type SyncState = 'loading' | 'live' | 'sample' | 'error';
+export type SyncState = 'loading' | 'live' | 'sample' | 'error' | 'success' | 'idle';
 
 export interface Order {
   id: string;
@@ -142,11 +142,11 @@ export interface KhoxeRow {
 
 export interface VehicleLocationRow {
   vin: string;
-  vi_tri: string | null;
+  location: string;
   latitude: number | null;
   longitude: number | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface YeucauxhdRow {

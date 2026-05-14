@@ -408,7 +408,7 @@ function getPromotionAmount(
     return overrideAmount;
   }
 
-  if (promotion.synthetic) {
+  if ('synthetic' in promotion && promotion.synthetic) {
     return promotion.value;
   }
 

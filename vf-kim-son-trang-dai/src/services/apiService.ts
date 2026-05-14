@@ -97,7 +97,16 @@ export function mapKhoxeRows(rows: KhoxeRow[]): InventoryItem[] {
   }));
 }
 
-export function mapVehicleLocationRows(rows: VehicleLocationRow[]) {
+type VehicleLocationDbRow = {
+  vin: string;
+  vi_tri: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export function mapVehicleLocationRows(rows: VehicleLocationDbRow[]): VehicleLocationRow[] {
   return rows
     .map((row) => ({
       vin: row.vin,
