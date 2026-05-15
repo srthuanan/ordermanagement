@@ -1,26 +1,81 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import moment from 'moment';
-import 'moment/locale/vi';
 import { Search, Filter, Eye, PackageCheck, X, FileCheck, Ban, Pencil, ScrollText, User, Car, CreditCard, ArrowLeft } from 'lucide-react';
 import { Order, OrderStatus, InventoryItem } from '../types';
 import { statusTone } from '../constants';
 import { matchesVehicleConfig, canUseVehicleForPair } from '../utils/matching';
 import { copyToClipboard } from '../utils/clipboard';
 
-moment.locale('vi');
+const viDateTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false
+});
+
+function parseDetailDate(value?: string) {
+  if (!value) return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const isoCandidate = new Date(trimmed);
+  if (!Number.isNaN(isoCandidate.getTime()) && /\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+    return isoCandidate;
+  }
+
+  const parseWithPattern = (
+    pattern: RegExp,
+    map: (matches: RegExpExecArray) => { year: number; month: number; day: number; hour?: number; minute?: number; second?: number }
+  ) => {
+    const matches = pattern.exec(trimmed);
+    if (!matches) return null;
+
+    const parts = map(matches);
+    const parsed = new Date(
+      parts.year,
+      parts.month - 1,
+      parts.day,
+      parts.hour ?? 0,
+      parts.minute ?? 0,
+      parts.second ?? 0
+    );
+
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  return (
+    parseWithPattern(
+      /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/,
+      (matches) => ({
+        day: Number(matches[1]),
+        month: Number(matches[2]),
+        year: Number(matches[3]),
+        hour: matches[4] ? Number(matches[4]) : 0,
+        minute: matches[5] ? Number(matches[5]) : 0,
+        second: matches[6] ? Number(matches[6]) : 0
+      })
+    ) ||
+    parseWithPattern(
+      /^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/,
+      (matches) => ({
+        year: Number(matches[1]),
+        month: Number(matches[2]),
+        day: Number(matches[3]),
+        hour: matches[4] ? Number(matches[4]) : 0,
+        minute: matches[5] ? Number(matches[5]) : 0,
+        second: matches[6] ? Number(matches[6]) : 0
+      })
+    ) ||
+    null
+  );
+}
 
 const formatDetailDate = (value?: string) => {
-  if (!value) return '—';
-  const formats = [
-    moment.ISO_8601,
-    'DD/MM/YYYY HH:mm:ss',
-    'D/M/YYYY H:m:s',
-    'YYYY-MM-DD HH:mm:ss',
-    'DD/MM/YYYY',
-    'D/M/YYYY'
-  ];
-  const parsed = moment(value, formats, 'vi', true);
-  return parsed.isValid() ? parsed.format('DD/MM/YYYY HH:mm') : value;
+  const parsed = parseDetailDate(value);
+  if (!parsed) return value || '—';
+  return viDateTimeFormatter.format(parsed);
 };
 
 interface OrdersPanelProps {
