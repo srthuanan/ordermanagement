@@ -1,37 +1,33 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, CheckCircle2, Clock3, AlertTriangle, Info, type LucideIcon } from 'lucide-react';
-import type { AppNotification, NotificationTone } from '../../types';
+import { Bell, CheckCircle2, Clock3, AlertTriangle, Info } from 'lucide-react';
+import type { AppNotification } from '../../types';
 
 interface NotificationCenterProps {
   notifications: AppNotification[];
 }
 
-const toneConfig: Record<NotificationTone, { icon: LucideIcon; border: string; background: string; color: string }> = {
+const toneMeta = {
   info: {
     icon: Info,
-    border: '#bfdbfe',
-    background: '#eff6ff',
-    color: '#1d4ed8'
+    accent: '#2563eb',
+    background: '#eff6ff'
   },
   success: {
     icon: CheckCircle2,
-    border: '#b7ebcc',
-    background: '#ecfdf5',
-    color: '#047857'
+    accent: '#0f766e',
+    background: '#e9f7f2'
   },
   warning: {
     icon: Clock3,
-    border: '#fde68a',
-    background: '#fffbeb',
-    color: '#b45309'
+    accent: '#a15c18',
+    background: '#fff8ec'
   },
   danger: {
     icon: AlertTriangle,
-    border: '#fecdd3',
-    background: '#fff1f2',
-    color: '#be123c'
+    accent: '#b42318',
+    background: '#fff8f6'
   }
-};
+} as const;
 
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({ notifications }) => {
   const [open, setOpen] = useState(false);
@@ -120,112 +116,82 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ notifica
             position: 'absolute',
             right: 0,
             top: 'calc(100% + 12px)',
-            width: '380px',
+            width: '360px',
             maxWidth: 'calc(100vw - 24px)',
-            background: 'white',
-            border: '1px solid #dbe3ea',
-            borderRadius: '16px',
-            boxShadow: '0 18px 40px rgba(15, 23, 42, 0.16)',
-            overflow: 'hidden',
             zIndex: 60
           }}
         >
-          <div
-            style={{
-              padding: '14px 16px',
-              borderBottom: '1px solid #e2e8f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '12px',
-              background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)'
-            }}
-          >
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>Trung tâm thông báo</div>
-              <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }}>
-                Dữ liệu được tổng hợp từ trạng thái hệ thống và nghiệp vụ hiện tại.
-              </div>
-            </div>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: '28px',
-                height: '28px',
-                padding: '0 8px',
-                borderRadius: '999px',
-                background: '#eff6ff',
-                color: '#1d4ed8',
-                fontSize: '12px',
-                fontWeight: 800
-              }}
-            >
-              {unreadCount}
+          <div className={`sync-banner sync-${unreadCount > 0 ? 'live' : 'idle'}`} style={{ marginBottom: '10px' }}>
+            <span style={{ display: 'inline-flex', width: '18px', justifyContent: 'center' }}>
+              <Bell size={16} />
             </span>
+            <span>Trung tâm thông báo</span>
+            <span style={{ marginLeft: 'auto', fontWeight: 800 }}>{unreadCount}</span>
           </div>
 
-          <div style={{ maxHeight: '60vh', overflowY: 'auto', padding: '10px' }}>
-            {visibleNotifications.length === 0 ? (
-              <div
-                style={{
-                  padding: '18px 14px',
-                  border: '1px dashed #dbe3ea',
-                  borderRadius: '12px',
-                  color: '#64748b',
-                  fontSize: '13px',
-                  textAlign: 'center'
-                }}
-              >
-                Chưa có thông báo mới.
+          <div
+            style={{
+              border: '1px solid #d9ded5',
+              borderRadius: '8px',
+              background: 'rgba(255, 255, 255, 0.96)',
+              boxShadow: '0 18px 48px rgba(45, 58, 50, 0.08)',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{ padding: '12px 14px', borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
+              <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>Thông báo mới nhất</div>
+              <div style={{ marginTop: '3px', fontSize: '11.5px', color: '#64748b' }}>
+                Theo đúng giao diện đậm chất hệ thống của dự án.
               </div>
-            ) : (
-              <div style={{ display: 'grid', gap: '10px' }}>
-                {visibleNotifications.map((item) => {
-                  const config = toneConfig[item.tone];
-                  const Icon = config.icon;
+            </div>
 
-                  return (
-                    <div
-                      key={item.id}
-                      style={{
-                        padding: '12px',
-                        borderRadius: '12px',
-                        border: `1px solid ${config.border}`,
-                        background: config.background,
-                        color: config.color,
-                        display: 'flex',
-                        gap: '10px',
-                        alignItems: 'flex-start'
-                      }}
-                    >
+            <div style={{ padding: '12px' }}>
+              {visibleNotifications.length === 0 ? (
+                <div className="alert-item" style={{ justifyContent: 'center', color: '#64748b' }}>
+                  Chưa có thông báo mới.
+                </div>
+              ) : (
+                <div className="alert-list" style={{ marginTop: 0 }}>
+                  {visibleNotifications.map((item) => {
+                    const meta = toneMeta[item.tone];
+                    const Icon = meta.icon;
+
+                    return (
                       <div
+                        key={item.id}
+                        className="alert-item"
                         style={{
-                          width: '30px',
-                          height: '30px',
-                          borderRadius: '10px',
-                          background: 'rgba(255,255,255,0.75)',
-                          display: 'grid',
-                          placeItems: 'center',
-                          flex: '0 0 auto'
+                          background: meta.background,
+                          alignItems: 'flex-start',
+                          border: '1px solid rgba(217, 222, 213, 0.7)'
                         }}
                       >
-                        <Icon size={16} />
-                      </div>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', lineHeight: 1.35 }}>
-                          {item.title}
+                        <div
+                          style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '8px',
+                            display: 'grid',
+                            placeItems: 'center',
+                            background: '#fff',
+                            flex: '0 0 auto',
+                            border: `1px solid ${meta.accent}22`
+                          }}
+                        >
+                          <Icon size={15} style={{ color: meta.accent }} />
                         </div>
-                        <div style={{ marginTop: '3px', fontSize: '12px', color: '#475569', lineHeight: 1.45 }}>
-                          {item.message}
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', lineHeight: 1.35 }}>
+                            {item.title}
+                          </div>
+                          <p>{item.message}</p>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
