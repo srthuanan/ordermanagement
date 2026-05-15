@@ -48,10 +48,11 @@ async function sendInviteOrRecovery(
   userId: string,
   email: string,
   fullName: string,
-  role: 'sales'
+  role: 'sales',
+  action: 'invite' | 'resend'
 ) {
-    const appUrl = Deno.env.get('SITE_URL') || 'https://ordermanagement-three.vercel.app';
-    const redirectTo = `${appUrl.replace(/\/$/, '')}/set-password`;
+  const appUrl = Deno.env.get('SITE_URL') || 'https://ordermanagement-three.vercel.app';
+  const redirectTo = `${appUrl.replace(/\/$/, '')}/set-password`;
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
     data: {
       full_name: fullName,
@@ -76,6 +77,10 @@ async function sendInviteOrRecovery(
     }
 
     return { delivery: 'invite' as const };
+  }
+
+  if (action === 'invite') {
+    return { error: inviteError, step: 'invite_user' as const };
   }
 
   const message = inviteError.message.toLowerCase();
@@ -192,7 +197,7 @@ Deno.serve(async (req) => {
       return jsonResponse(cancelResponse);
     }
 
-    const result = await sendInviteOrRecovery(adminClient, supabaseUrl, userResult.user.id, email, fullName, role);
+    const result = await sendInviteOrRecovery(adminClient, supabaseUrl, userResult.user.id, email, fullName, role, body.action);
 
     if ('error' in result) {
       return jsonResponse({ error: result.error.message, step: result.step }, 400);

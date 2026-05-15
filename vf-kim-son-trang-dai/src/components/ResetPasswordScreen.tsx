@@ -61,73 +61,100 @@ export const ResetPasswordScreen: React.FC = () => {
   return (
     <main className="auth-shell">
       <section className="auth-card">
-        <div className="brand auth-brand">
-          <div className="brand-mark">VF</div>
-          <div>
-            <strong>VF KIM SƠN</strong>
-            <span>TRẢNG DÀI</span>
+        <div style={{ textAlign: 'center', display: 'grid', gap: '16px' }}>
+          <div className="brand auth-brand" style={{ justifyContent: 'center' }}>
+            <div className="brand-mark" style={{ width: '56px', height: '56px', fontSize: '20px', borderRadius: '16px', background: 'linear-gradient(135deg, #0d9488, #14b8a6)' }}>VF</div>
+            <div style={{ textAlign: 'left' }}>
+              <strong style={{ fontSize: '18px', letterSpacing: '0.05em' }}>VF KIM SƠN</strong>
+              <span style={{ fontSize: '13px', color: '#64748b' }}>TRẢNG DÀI</span>
+            </div>
           </div>
-        </div>
 
-        <div>
-          <p className="eyebrow">KHÔI PHỤC MẬT KHẨU</p>
-          <h1>Đặt mật khẩu mới</h1>
-          <p className="auth-note">
-            Mở link trong email đặt lại mật khẩu, rồi nhập mật khẩu mới để tiếp tục sử dụng tài khoản.
-          </p>
+          <div style={{ marginTop: '8px' }}>
+            <p className="eyebrow" style={{ color: '#0d9488', fontSize: '11px', letterSpacing: '0.15em' }}>KHÔI PHỤC MẬT KHẨU</p>
+            <h1>Đặt mật khẩu mới</h1>
+            <p className="auth-note">
+              Nhập mật khẩu mới bên dưới để hoàn tất việc khôi phục tài khoản.
+            </p>
+          </div>
         </div>
 
         {!hasSession ? (
-          <div className="form-error">
-            <AlertTriangle size={17} />
-            <span>Bạn cần mở trang này từ link đặt lại mật khẩu trong email.</span>
+          <div className="form-error" style={{ background: '#fff1f2', color: '#e11d48', padding: '16px', borderRadius: '12px', display: 'flex', gap: '12px', alignItems: 'center', fontSize: '13px', fontWeight: 600 }}>
+            <AlertTriangle size={20} />
+            <span>Bạn cần mở trang này từ liên kết trong email khôi phục.</span>
           </div>
-        ) : null}
+        ) : (
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div style={{ display: 'grid', gap: '20px' }}>
+              <label>
+                <span>Mật khẩu mới</span>
+                <div style={{ position: 'relative' }}>
+                  <LockKeyhole size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                  <input
+                    type="password"
+                    value={password}
+                    placeholder="Tối thiểu 8 ký tự"
+                    onChange={(event) => setPassword(event.target.value)}
+                    style={{ paddingLeft: '48px' }}
+                    minLength={8}
+                    required
+                  />
+                </div>
+              </label>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <label>
-            <span>Mật khẩu mới *</span>
-            <input
-              type="password"
-              value={password}
-              placeholder="Tối thiểu 8 ký tự"
-              onChange={(event) => setPassword(event.target.value)}
-              minLength={8}
-              required
-            />
-          </label>
-
-          <label>
-            <span>Xác nhận mật khẩu *</span>
-            <input
-              type="password"
-              value={confirmPassword}
-              placeholder="Nhập lại mật khẩu"
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              minLength={8}
-              required
-            />
-          </label>
-
-          {error ? (
-            <div className="form-error">
-              <AlertTriangle size={17} />
-              <span>{error}</span>
+              <label>
+                <span>Xác nhận mật khẩu</span>
+                <div style={{ position: 'relative' }}>
+                  <CheckCircle2 size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    placeholder="Nhập lại mật khẩu"
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    style={{ paddingLeft: '48px' }}
+                    minLength={8}
+                    required
+                  />
+                </div>
+              </label>
             </div>
-          ) : null}
 
-          {message ? (
-            <div className="form-success">
-              <CheckCircle2 size={17} />
-              <span>{message}</span>
-            </div>
-          ) : null}
+            {error ? (
+              <div className="form-error" style={{ background: '#fff1f2', color: '#e11d48', padding: '12px', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'center', fontSize: '13px', fontWeight: 600 }}>
+                <AlertTriangle size={18} />
+                <span>{error}</span>
+              </div>
+            ) : null}
 
-          <button className="primary-button auth-submit" type="submit" disabled={loading}>
-            <LockKeyhole size={18} />
-            <span>{loading ? 'Đang lưu...' : 'Lưu mật khẩu mới'}</span>
-          </button>
-        </form>
+            {message ? (
+              <div className="form-success" style={{ background: '#f0fdf4', color: '#16a34a', padding: '12px', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'center', fontSize: '13px', fontWeight: 600 }}>
+                <CheckCircle2 size={18} />
+                <span>{message}</span>
+              </div>
+            ) : null}
+
+            <button className="primary-button auth-submit" type="submit" disabled={loading} style={{ background: '#0f172a', color: '#fff', marginTop: '8px' }}>
+              {loading ? (
+                 <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                   <div style={{ width: '16px', height: '16px', border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+                   Đang lưu...
+                 </span>
+              ) : (
+                <>
+                  <LockKeyhole size={18} />
+                  <span>Cập nhật mật khẩu</span>
+                </>
+              )}
+            </button>
+          </form>
+        )}
+
+        <div style={{ textAlign: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '24px' }}>
+           <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
+             © 2026 Kim Sơn Trảng Dài &middot; VinFast
+           </p>
+        </div>
       </section>
     </main>
   );

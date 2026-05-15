@@ -74,28 +74,33 @@ button:disabled {
   width: 100%;
   min-height: 100vh;
   place-items: center;
-  padding: 20px;
-  background:
-    linear-gradient(120deg, rgba(15, 118, 110, 0.1), transparent 38%),
-    linear-gradient(240deg, rgba(190, 106, 64, 0.09), transparent 34%),
-    #f6f7f4;
+  padding: 24px;
+  background: 
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.12), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(20, 184, 166, 0.08), transparent 40%),
+    #f8fafc;
 }
 
 .auth-card {
   display: grid;
-  width: min(440px, 100%);
-  gap: 22px;
-  padding: 24px;
-  border: 1px solid #d9ded5;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 24px 80px rgba(23, 33, 29, 0.14);
+  width: 100%;
+  max-width: 460px;
+  gap: 32px;
+  padding: 48px;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 20px 40px -8px rgba(15, 118, 110, 0.12);
+  border: 1px solid rgba(15, 118, 110, 0.08);
 }
 
 .auth-card h1 {
-  margin: 0;
-  font-size: clamp(28px, 7vw, 38px);
-  line-height: 1.08;
+  margin: 8px 0 0;
+  font-size: 32px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.03em;
 }
 
 .auth-brand {
@@ -104,45 +109,56 @@ button:disabled {
 
 .auth-form {
   display: grid;
-  gap: 13px;
+  gap: 20px;
 }
 
 .auth-form label {
   display: grid;
-  gap: 7px;
+  gap: 8px;
 }
 
 .auth-form label span {
-  color: #40534b;
+  color: #475569;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .auth-form input {
-  min-height: 43px;
+  min-height: 48px;
   width: 100%;
-  border: 1px solid #d7ddd5;
-  border-radius: 8px;
-  background: #fff;
-  color: #17211d;
-  padding: 0 11px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  padding: 0 16px;
+  font-size: 15px;
+  font-weight: 500;
   outline: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .auth-form input:focus {
-  border-color: #0f766e;
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+  border-color: #0d9488;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
 }
 
 .auth-note {
-  margin: 0;
-  color: #5b6a63;
-  font-size: 13px;
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .auth-submit,
 .auth-switch {
   width: 100%;
+  border-radius: 12px;
+  min-height: 48px;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .sidebar {
