@@ -1,11 +1,8 @@
 import React from 'react';
 import { Menu, Plus, ChevronRight, type LucideIcon } from 'lucide-react';
-import { NotificationCenter } from './NotificationCenter';
-import type { AppNotification } from '../../types';
 
 interface HeaderProps {
   canCreateOrder: boolean;
-  notifications: AppNotification[];
   setSidebarOpen: (val: boolean) => void;
   setCreateOpen: (val: boolean) => void;
   activeTabLabel?: string;
@@ -14,7 +11,6 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   canCreateOrder,
-  notifications,
   setSidebarOpen,
   setCreateOpen,
   activeTabLabel,
@@ -56,8 +52,6 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Compact Global Actions */}
       <div className="top-actions" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <NotificationCenter notifications={notifications} />
-        
         <button
           className="primary-button"
           onClick={() => setCreateOpen(true)}

@@ -12,7 +12,6 @@ export type OrderStatus =
   | 'Đã hủy';
 export type StockStatus = 'Chưa ghép' | 'Đang giữ' | 'Đã ghép';
 export type SyncState = 'loading' | 'live' | 'sample' | 'error' | 'success' | 'idle';
-export type NotificationTone = 'info' | 'success' | 'warning' | 'danger';
 
 export interface Order {
   id: string;
@@ -206,13 +205,6 @@ export interface TabConfig {
   key: string;
   label: string;
   icon: LucideIcon;
-}
-
-export interface AppNotification {
-  id: string;
-  title: string;
-  message: string;
-  tone: NotificationTone;
 }
 
 export interface CarActivityRow {
