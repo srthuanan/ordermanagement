@@ -7,7 +7,7 @@ import { supabase } from './services/supabaseClient';
 import { useAppData } from './hooks/useAppData';
 import { useOrderOperations } from './hooks/useOrderOperations';
 import { TabKey } from './constants';
-import { InventoryItem, Order, OrderStatus, YeucauxhdRow } from './types';
+import { AppNotification, InventoryItem, Order, OrderStatus, YeucauxhdRow } from './types';
 
 // Giao diện Layout
 import { Sidebar } from './components/layout/Sidebar';
@@ -179,6 +179,84 @@ function App() {
     [inventory]
   );
 
+  const notifications = useMemo(() => {
+    const next: AppNotification[] = [];
+
+    if (syncState === 'error') {
+      next.push({
+        id: 'sync-error',
+        title: 'Đồng bộ bị lỗi',
+        message: syncMessage,
+        tone: 'danger'
+      });
+    } else if (syncState === 'loading') {
+      next.push({
+        id: 'sync-loading',
+        title: 'Đang tải dữ liệu',
+        message: syncMessage,
+        tone: 'info'
+      });
+    } else {
+      next.push({
+        id: `sync-${syncState}`,
+        title: syncState === 'live' ? 'Đồng bộ trực tiếp' : 'Trạng thái hệ thống',
+        message: syncMessage,
+        tone: syncState === 'live' || syncState === 'success' ? 'success' : 'info'
+      });
+    }
+
+    const pendingOrders = orders.filter((order) => order.status === 'Chưa ghép').length;
+    if (pendingOrders > 0) {
+      next.push({
+        id: 'pending-orders',
+        title: `${pendingOrders} đơn chờ ghép xe`,
+        message: 'Cần xử lý ở tab Đơn hàng hoặc ghép xe từ kho.',
+        tone: 'warning'
+      });
+    }
+
+    const heldVehicles = inventory.filter((item) => item.status === 'Đang giữ').length;
+    if (heldVehicles > 0) {
+      next.push({
+        id: 'held-vehicles',
+        title: `${heldVehicles} xe đang giữ`,
+        message: 'Kiểm tra thời gian giữ hoặc người đang giữ xe trong tab Kho xe.',
+        tone: 'warning'
+      });
+    }
+
+    const invoiceCount = invoiceRequests.length;
+    if (invoiceCount > 0) {
+      next.push({
+        id: 'invoice-requests',
+        title: `${invoiceCount} yêu cầu hóa đơn`,
+        message: 'Có yêu cầu hóa đơn đang chờ xử lý trong tab Yêu cầu hóa đơn.',
+        tone: 'info'
+      });
+    }
+
+    const queuedCount = queuedVins.length;
+    if (queuedCount > 0) {
+      next.push({
+        id: 'queued-vins',
+        title: `${queuedCount} VIN trong hàng chờ`,
+        message: 'Có xe đang chờ giữ trong luồng kho xe.',
+        tone: 'info'
+      });
+    }
+
+    if (auditLogs.length > 0) {
+      next.push({
+        id: 'audit-log',
+        title: 'Có hoạt động mới',
+        message: `Bản ghi gần nhất: ${auditLogs[0].action}`,
+        tone: 'success'
+      });
+    }
+
+    return next.slice(0, 8);
+  }, [auditLogs, inventory, invoiceRequests.length, queuedVins.length, orders, syncMessage, syncState]);
+
   // Đăng xuất
   const handleSignOut = async () => {
     if (supabase) {
@@ -255,6 +333,7 @@ function App() {
       <main className="main">
         <Header
           canCreateOrder={canCreateOrder(userRole)}
+          notifications={notifications}
           setSidebarOpen={setSidebarOpen}
           setCreateOpen={(open) => {
             if (open) setCreateFromVehicle(null);
