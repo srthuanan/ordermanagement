@@ -1,7 +1,6 @@
 import React from 'react';
-import { X, Plus, AlertTriangle, UploadCloud, CheckCircle2 } from 'lucide-react';
+import { X, Plus, AlertTriangle } from 'lucide-react';
 import { InventoryItem, NewOrderInput } from '../../types';
-import { extractDepositDateFromImage } from '../../services/ocrService';
 import {
   defaultExteriors,
   defaultInteriors,
@@ -41,16 +40,11 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     depositDate: '',
     needDate: new Date().toISOString().slice(0, 10),
     pairedVin: initialVehicle?.vin,
-    pairedDmsCode: initialVehicle?.dmsCode,
     depositAmount: null,
     invoiceAddress: '',
     contractCode: '',
     paymentMethod: 'Tiền mặt'
   });
-  const [depositFile, setDepositFile] = React.useState<File | null>(null);
-  const [depositPreview, setDepositPreview] = React.useState('');
-  const [isScanningDeposit, setIsScanningDeposit] = React.useState(false);
-  const [ocrStatus, setOcrStatus] = React.useState('');
   const isVehicleLocked = !!initialVehicle;
 
   const versionOptions = React.useMemo(
@@ -93,41 +87,9 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     setForm((current) => ({ ...current, [key]: value }));
   }
 
-  async function handleDepositFile(file: File | null) {
-    setDepositFile(file);
-    setDepositPreview('');
-    updateField('depositDate', '');
-    setOcrStatus('');
-
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setOcrStatus('Vui lòng chọn file ảnh UNC.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => setDepositPreview(String(reader.result || ''));
-    reader.readAsDataURL(file);
-
-    setIsScanningDeposit(true);
-    try {
-      const date = await extractDepositDateFromImage(file, setOcrStatus);
-      if (!date) {
-        setOcrStatus('Không nhận diện được ngày cọc. Vui lòng chụp rõ phần ngày giao dịch.');
-        return;
-      }
-      updateField('depositDate', date);
-      setOcrStatus(`Đã nhận diện ngày cọc: ${new Intl.DateTimeFormat('vi-VN').format(new Date(date))}`);
-    } catch (err: any) {
-      setOcrStatus(err.message || 'Quét ảnh UNC thất bại.');
-    } finally {
-      setIsScanningDeposit(false);
-    }
-  }
-
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!depositFile || !form.depositDate) return;
+    if (!form.depositDate) return;
     onSubmit(form);
   }
 
@@ -238,37 +200,13 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
           </label>
 
           <label>
-            <span>Ảnh UNC / chứng từ cọc *</span>
-            <div className="file-drop">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(event) => handleDepositFile(event.target.files?.[0] || null)}
-                required
-              />
-              {depositPreview ? (
-                <img src={depositPreview} alt="UNC" />
-              ) : (
-                <div>
-                  <UploadCloud size={20} />
-                  <strong>Chọn ảnh UNC</strong>
-                  <small>Hệ thống tự quét ngày cọc</small>
-                </div>
-              )}
-            </div>
-          </label>
-          <label>
-            <span>Ngày cọc nhận diện</span>
+            <span>Ngày cọc *</span>
             <input
-              value={form.depositDate ? new Intl.DateTimeFormat('vi-VN').format(new Date(form.depositDate)) : 'Chưa nhận diện'}
-              readOnly
+              type="date"
+              value={form.depositDate}
+              onChange={(event) => updateField('depositDate', event.target.value)}
+              required
             />
-            {ocrStatus ? (
-              <small className={form.depositDate ? 'scan-success' : 'scan-warning'}>
-                {form.depositDate ? <CheckCircle2 size={13} /> : null}
-                {ocrStatus}
-              </small>
-            ) : null}
           </label>
           <label>
             <span>Ngày cần xe *</span>
@@ -291,9 +229,9 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             <button type="button" className="ghost-button" onClick={onClose} disabled={isCreating}>
               Hủy
             </button>
-            <button type="submit" className="primary-button" disabled={isCreating || isScanningDeposit || !form.depositDate}>
+            <button type="submit" className="primary-button" disabled={isCreating || !form.depositDate}>
               <Plus size={18} />
-              <span>{isCreating ? 'Đang tạo...' : isScanningDeposit ? 'Đang quét ảnh...' : initialVehicle ? 'Tạo đơn & ghép xe' : 'Tạo đơn'}</span>
+              <span>{isCreating ? 'Đang tạo...' : initialVehicle ? 'Tạo đơn & ghép xe' : 'Tạo đơn'}</span>
             </button>
           </div>
         </form>

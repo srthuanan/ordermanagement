@@ -55,7 +55,6 @@ alter table public.yeucauxhd
   add column if not exists url_de_nghi_xhd text,
   add column if not exists url_hoa_don_da_xuat text,
   add column if not exists so_may text,
-  add column if not exists ma_dms text,
   add column if not exists ngay_xuat_hoa_don date,
   add column if not exists ket_qua_gui_mail text,
   add column if not exists ghi_chu_ai text,

@@ -22,16 +22,15 @@ insert into public.khoxe (
   vi_tri,
   ngay_nhap,
   ngay_van_tai,
-  so_may,
-  ma_dms
+  so_may
 )
 values
-  ('RLLVFAAA001', 'VF 5', 'VF 5 Plus', 'Xanh Neptune', 'Đen', 'Đã ghép', 'Kim Anh', 'kim.anh', 'Vô thời hạn', 'Bãi A1', '2026-05-01 08:00:00+07', '2026-05-03', 'SM001', 'DMS001'),
-  ('RLLVFAAA002', 'VF 6', 'VF 6 Eco', 'Trắng Brahminy', 'Đen', 'Đang giữ', 'Hải Đăng', 'hai.dang', '14/05/2026 18:00:00', 'Bãi A2', '2026-05-04 09:30:00+07', '2026-05-05', 'SM002', 'DMS002'),
-  ('RLLVFAAA003', 'VF 6', 'VF 6 Eco', 'Trắng Brahminy', 'Đen', 'Chưa ghép', null, null, null, 'Bãi A3', '2026-05-06 10:10:00+07', '2026-05-06', 'SM003', 'DMS003'),
-  ('RLLVFAAA004', 'VF 7', 'VF 7 Plus', 'Đỏ Crimson', 'Đen', 'Chưa ghép', null, null, null, 'Bãi B1', '2026-05-07 11:00:00+07', '2026-05-08', 'SM004', 'DMS004'),
-  ('RLLVFAAA005', 'VF 3', 'VF 3', 'Vàng Summer', 'Đen', 'Đã ghép', 'Thanh Phúc', 'thanh.phuc', 'Vô thời hạn', 'Bãi C1', '2026-05-02 13:20:00+07', '2026-05-02', 'SM005', 'DMS005'),
-  ('RLLVFAAA006', 'VF 8', 'VF 8 Lux', 'Đen Jet', 'Nâu', 'Chưa ghép', null, null, null, 'Bãi D1', '2026-05-03 15:00:00+07', '2026-05-04', 'SM006', 'DMS006')
+  ('RLLVFAAA001', 'VF 5', 'VF 5 Plus', 'Xanh Neptune', 'Đen', 'Đã ghép', 'Kim Anh', 'kim.anh', 'Vô thời hạn', 'Bãi A1', '2026-05-01 08:00:00+07', '2026-05-03', 'SM001'),
+  ('RLLVFAAA002', 'VF 6', 'VF 6 Eco', 'Trắng Brahminy', 'Đen', 'Đang giữ', 'Hải Đăng', 'hai.dang', '14/05/2026 18:00:00', 'Bãi A2', '2026-05-04 09:30:00+07', '2026-05-05', 'SM002'),
+  ('RLLVFAAA003', 'VF 6', 'VF 6 Eco', 'Trắng Brahminy', 'Đen', 'Chưa ghép', null, null, null, 'Bãi A3', '2026-05-06 10:10:00+07', '2026-05-06', 'SM003'),
+  ('RLLVFAAA004', 'VF 7', 'VF 7 Plus', 'Đỏ Crimson', 'Đen', 'Chưa ghép', null, null, null, 'Bãi B1', '2026-05-07 11:00:00+07', '2026-05-08', 'SM004'),
+  ('RLLVFAAA005', 'VF 3', 'VF 3', 'Vàng Summer', 'Đen', 'Đã ghép', 'Thanh Phúc', 'thanh.phuc', 'Vô thời hạn', 'Bãi C1', '2026-05-02 13:20:00+07', '2026-05-02', 'SM005'),
+  ('RLLVFAAA006', 'VF 8', 'VF 8 Lux', 'Đen Jet', 'Nâu', 'Chưa ghép', null, null, null, 'Bãi D1', '2026-05-03 15:00:00+07', '2026-05-04', 'SM006')
 on conflict (vin) do update
 set dong_xe = excluded.dong_xe,
     phien_ban = excluded.phien_ban,
@@ -45,7 +44,6 @@ set dong_xe = excluded.dong_xe,
     ngay_nhap = excluded.ngay_nhap,
     ngay_van_tai = excluded.ngay_van_tai,
     so_may = excluded.so_may,
-    ma_dms = excluded.ma_dms,
     updated_at = now();
 
 insert into public.donhang (

@@ -1707,7 +1707,7 @@ small {
 }
 
 .mini-stat-blue svg {
-  color: #2563eb;
+  color: #0f766e;
 }
 
 .mini-stat-amber svg {
@@ -1884,7 +1884,7 @@ small {
 }
 
 .sync-loading {
-  color: #2563eb;
+  color: #0f766e;
 }
 
 .sync-error {
@@ -1942,7 +1942,7 @@ small {
 }
 
 .metric-blue svg {
-  color: #2563eb;
+  color: #0f766e;
 }
 
 .panel {
@@ -2468,7 +2468,7 @@ small {
 .dot.preparing,
 .status.preparing {
   background: #e8eefc;
-  color: #1d4ed8;
+  color: #115e59;
 }
 
 .dot.shipping,
@@ -2841,7 +2841,7 @@ td small {
   top: 0;
   left: 0;
   height: 100%;
-  background: #2563eb;
+  background: #0f766e;
   transition: width 0.3s ease;
 }
 
@@ -2870,11 +2870,11 @@ td small {
 }
 
 .step-item.active .step-circle {
-  border-color: #2563eb;
+  border-color: #0f766e;
   background: #ffffff;
-  color: #2563eb;
+  color: #0f766e;
   transform: scale(1.1);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1);
 }
 
 .step-item.completed .step-circle {
@@ -2892,7 +2892,7 @@ td small {
 }
 
 .step-item.active .step-label {
-  color: #2563eb;
+  color: #0f766e;
 }
 
 .step-item.completed .step-label {
@@ -2927,9 +2927,9 @@ td small {
 }
 
 .policy-tag.selected {
-  background: #eff6ff;
-  border-color: #2563eb;
-  color: #1d4ed8;
+  background: #f0fdfa;
+  border-color: #0f766e;
+  color: #115e59;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
@@ -3003,8 +3003,8 @@ td small {
 }
 
 .file-uploader-card:hover {
-  border-color: #2563eb;
-  background: #eff6ff;
+  border-color: #0f766e;
+  background: #f0fdfa;
 }
 
 .file-uploader-card svg {
@@ -3013,7 +3013,7 @@ td small {
 }
 
 .file-uploader-card:hover svg {
-  color: #2563eb;
+  color: #0f766e;
 }
 
 .file-uploader-card strong {
@@ -3072,16 +3072,16 @@ td small {
   align-items: center;
   gap: 14px;
   padding: 16px;
-  background: rgba(37, 99, 235, 0.04);
-  border: 2px solid rgba(37, 99, 235, 0.08);
+  background: rgba(15, 118, 110, 0.04);
+  border: 2px solid rgba(15, 118, 110, 0.08);
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .vinclub-banner:hover {
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.2);
+  background: rgba(15, 118, 110, 0.08);
+  border-color: rgba(15, 118, 110, 0.2);
 }
 
 .vinclub-checkbox {
@@ -3098,13 +3098,13 @@ td small {
 }
 
 .vinclub-banner.confirmed {
-  background: rgba(37, 99, 235, 0.08);
-  border-color: rgba(37, 99, 235, 0.3);
+  background: rgba(15, 118, 110, 0.08);
+  border-color: rgba(15, 118, 110, 0.3);
 }
 
 .vinclub-banner.confirmed .vinclub-checkbox {
-  border-color: #2563eb;
-  background: #2563eb;
+  border-color: #0f766e;
+  background: #0f766e;
   color: #ffffff;
 }
 
@@ -3116,7 +3116,7 @@ td small {
 
 .vinclub-text-desc {
   font-size: 11px;
-  color: #2563eb;
+  color: #0f766e;
   font-weight: 600;
 }
 
@@ -3165,7 +3165,7 @@ td small {
   height: 60px;
   border-radius: 50%;
   border: 4px solid #f1f5f9;
-  border-top-color: #2563eb;
+  border-top-color: #0f766e;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3205,9 +3205,9 @@ td small {
 }
 
 .stage-item.active {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #2563eb;
+  background: #f0fdfa;
+  border-color: #ccfbf1;
+  color: #0f766e;
 }
 
 .stage-item.completed {
@@ -3418,8 +3418,8 @@ td small {
 .order-form input:focus,
 .order-form select:focus {
   background: #ffffff;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+  border-color: #0f766e;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.15);
 }
 
 .priority-group {
@@ -4103,7 +4103,7 @@ td small {
 
   .inventory-mobile-summary-count span {
     font-size: 13px;
-    color: #2563eb;
+    color: #0f766e;
   }
 
   .inventory-mobile-summary-count small {
@@ -5119,14 +5119,14 @@ td small {
 
 /* 2. Tạo đơn - Bảng màu Indigo hoàng gia */
 .inventory-data-side .action-btn-create {
-  background: #eff6ff !important;
-  color: #1d4ed8 !important;
-  border-color: #bfdbfe !important;
+  background: #f0fdfa !important;
+  color: #115e59 !important;
+  border-color: #ccfbf1 !important;
 }
 .inventory-data-side .action-btn-create:hover:not(:disabled) {
-  background: #1d4ed8 !important;
+  background: #115e59 !important;
   color: #ffffff !important;
-  border-color: #1d4ed8 !important;
+  border-color: #115e59 !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 4px 10px -2px rgba(29, 78, 216, 0.35) !important;
 }
@@ -5314,4 +5314,161 @@ td small {
     height: auto !important;
     min-height: 0 !important;
   }
+}
+
+/* PREMIUM INVOICE MODAL ENHANCEMENTS */
+.invoice-modal-large {
+  background: #f8fafc;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Make the form fill remaining vertical space */
+.invoice-modal-large > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Make order-form grid stretch to fill form height */
+.invoice-modal-large .order-form {
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch !important;
+  gap: 12px;
+}
+
+/* Make cards stretch fully */
+.invoice-modal-large .invoice-form-flex {
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Let the field grid inside the right card grow */
+.invoice-modal-large .invoice-form-flex > div[style] {
+  flex: 1;
+  align-content: start;
+}
+
+.invoice-modal-large input[type="text"],
+.invoice-modal-large input[type="number"],
+.invoice-modal-large input[type="date"],
+.invoice-modal-large input:not([type]),
+.invoice-modal-large select,
+.invoice-modal-large textarea {
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #1e293b;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02) inset;
+}
+
+.invoice-modal-large input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #0f766e;
+  cursor: pointer;
+  margin: 0;
+}
+
+.invoice-modal-large input[type="text"]:hover,
+.invoice-modal-large input[type="number"]:hover,
+.invoice-modal-large input[type="date"]:hover,
+.invoice-modal-large input:not([type]):hover,
+.invoice-modal-large select:hover,
+.invoice-modal-large textarea:hover {
+  background-color: #ffffff;
+  border-color: #94a3b8;
+}
+
+.invoice-modal-large input[type="text"]:focus,
+.invoice-modal-large input[type="number"]:focus,
+.invoice-modal-large input[type="date"]:focus,
+.invoice-modal-large input:not([type]):focus,
+.invoice-modal-large select:focus,
+.invoice-modal-large textarea:focus {
+  background-color: #ffffff;
+  border-color: #0f766e;
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.1);
+}
+
+.invoice-modal-large label span {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.invoice-form-flex {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+}
+
+.invoice-form-flex > .field-label-alt {
+  font-size: 13px;
+  color: #0f766e;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.invoice-form-flex > .field-label-alt::before {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 16px;
+  background: #0f766e;
+  border-radius: 4px;
+}
+
+.policy-tag-grid {
+  background: transparent;
+  border: none;
+  padding: 0;
+  gap: 12px;
+}
+
+.policy-tag {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #334155;
+  border-radius: 10px;
+}
+
+.policy-tag:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.policy-tag.selected {
+  background: #f0fdf4;
+  border-color: #0f766e;
+  color: #0f766e;
+  box-shadow: 0 2px 4px rgba(15, 118, 110, 0.05);
+}
+
+.policy-tag.selected svg {
+  color: #0f766e;
 }

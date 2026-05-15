@@ -32,7 +32,6 @@ create table if not exists public.khoxe (
   ngay_nhap timestamptz,
   ngay_van_tai date,
   so_may text,
-  ma_dms text,
   latitude numeric,
   longitude numeric,
   is_extension_requested boolean not null default false,

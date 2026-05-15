@@ -372,13 +372,33 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hoa hồng ứng</span>
-                            <strong style={{ fontSize: '13px', color: '#0f766e', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.hoa_hong_ung || '---'}</strong>
+                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Số tiền khách đã đóng</span>
+                            <strong style={{ fontSize: '13px', color: '#0f766e', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.so_tien_khach_da_dong ? new Intl.NumberFormat('vi-VN').format(selectedRequest.so_tien_khach_da_dong) + ' ₫' : '---'}</strong>
                           </div>
 
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>VPoint</span>
-                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.vpoint || '---'}</strong>
+                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hình thức TT</span>
+                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.hinh_thuc_tt || '---'}</strong>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nguồn khách</span>
+                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.nguon_khach || '---'}</strong>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
+                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Mã VSO</span>
+                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.ma_vso || '---'}</strong>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Số hợp đồng</span>
+                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.so_hop_dong || '---'}</strong>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
+                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Ngày ký HĐ</span>
+                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{formatMobileDate(selectedRequest.ngay_ky_hop_dong)}</strong>
                           </div>
 
                           <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -406,10 +426,10 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                             </div>
                           </div>
 
-                          {selectedRequest.ghi_chu_ai ? (
+                          {selectedRequest.ghi_chu || selectedRequest.ghi_chu_ai ? (
                             <div style={{ gridColumn: 'span 2', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '10px 12px' }}>
                               <span style={{ fontSize: '10px', color: '#1d4ed8', display: 'block', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Thông tin hỗ trợ / Ghi chú</span>
-                              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#1e40af', fontStyle: 'italic', lineHeight: 1.4, fontWeight: 500 }}>{selectedRequest.ghi_chu_ai}</p>
+                              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#1e40af', fontStyle: 'italic', lineHeight: 1.4, fontWeight: 500 }}>{selectedRequest.ghi_chu || selectedRequest.ghi_chu_ai}</p>
                             </div>
                           ) : null}
                         </div>
@@ -497,6 +517,14 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                         {selectedRequest.ngay_yeu_cau || selectedRequest.created_at ? new Date(selectedRequest.ngay_yeu_cau || selectedRequest.created_at).toLocaleDateString('vi-VN') : 'N/A'}
                       </strong>
                     </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Nguồn khách</span>
+                      <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 700 }}>{selectedRequest.nguon_khach || '---'}</strong>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Mã VSO</span>
+                      <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 700 }}>{selectedRequest.ma_vso || '---'}</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -535,6 +563,38 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                         <strong style={{ fontSize: '13.5px', color: '#0284c7', fontWeight: 700 }}>{selectedRequest.xe_xang_vin}</strong>
                       </div>
                     ) : null}
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Số tiền khách đã đóng</span>
+                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>
+                        {selectedRequest.so_tien_khach_da_dong ? new Intl.NumberFormat('vi-VN').format(selectedRequest.so_tien_khach_da_dong) + ' ₫' : '---'}
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Hình thức TT</span>
+                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{selectedRequest.hinh_thuc_tt || '---'}</strong>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Địa chỉ</span>
+                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700, wordBreak: 'break-word' }}>{selectedRequest.dia_chi || '---'}</strong>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Số hợp đồng</span>
+                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{selectedRequest.so_hop_dong || '---'}</strong>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Ngày ký HĐ</span>
+                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{formatMobileDate(selectedRequest.ngay_ky_hop_dong)}</strong>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Giá công bố</span>
+                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>
+                        {selectedRequest.gia_cong_bo ? new Intl.NumberFormat('vi-VN').format(selectedRequest.gia_cong_bo) + ' ₫' : '---'}
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Ghi chú</span>
+                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{selectedRequest.ghi_chu || selectedRequest.ghi_chu_ai || '---'}</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -546,13 +606,17 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Hoa hồng ứng</span>
-                      <strong style={{ fontSize: '14px', color: '#0f766e', fontWeight: 700 }}>{selectedRequest.hoa_hong_ung || '---'}</strong>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Số tiền khách đã đóng</span>
+                      <strong style={{ fontSize: '14px', color: '#0f766e', fontWeight: 700 }}>
+                        {selectedRequest.so_tien_khach_da_dong ? new Intl.NumberFormat('vi-VN').format(selectedRequest.so_tien_khach_da_dong) + ' ₫' : '---'}
+                      </strong>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>VPoint tích lũy</span>
-                      <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 700 }}>{selectedRequest.vpoint || '---'}</strong>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Giá công bố</span>
+                      <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 700 }}>
+                        {selectedRequest.gia_cong_bo ? new Intl.NumberFormat('vi-VN').format(selectedRequest.gia_cong_bo) + ' ₫' : '---'}
+                      </strong>
                     </div>
 
                     {/* Hồ sơ tài liệu */}
@@ -582,11 +646,11 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                     </div>
 
                     {/* Ghi chú AI */}
-                    {selectedRequest.ghi_chu_ai ? (
+                    {selectedRequest.ghi_chu || selectedRequest.ghi_chu_ai ? (
                       <div style={{ gridColumn: 'span 2', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '8px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                         <span style={{ fontSize: '10px', color: '#1d4ed8', display: 'block', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Thông tin hỗ trợ / Ghi chú</span>
                         <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#1e40af', fontStyle: 'italic', lineHeight: 1.4, fontWeight: 500 }}>
-                          {selectedRequest.ghi_chu_ai}
+                          {selectedRequest.ghi_chu || selectedRequest.ghi_chu_ai}
                         </p>
                       </div>
                     ) : null}

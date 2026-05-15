@@ -1,6 +1,5 @@
 alter table if exists public.donhang
   add column if not exists so_may text,
-  add column if not exists ma_dms text,
   add column if not exists so_ngay_ghep integer,
   add column if not exists ngay_xuat_hoa_don date;
 
@@ -47,7 +46,6 @@ declare
 begin
   if coalesce(new.vin, '') = '' then
     new.so_may := null;
-    new.ma_dms := null;
     return new;
   end if;
 
@@ -58,7 +56,6 @@ begin
 
   if found then
     new.so_may := vehicle_row.so_may;
-    new.ma_dms := vehicle_row.ma_dms;
   end if;
 
   return new;
@@ -72,8 +69,7 @@ for each row
 execute function public.sync_donhang_vehicle_meta();
 
 update public.donhang d
-set so_may = k.so_may,
-    ma_dms = k.ma_dms
+set so_may = k.so_may
 from public.khoxe k
 where d.vin = k.vin;
 
@@ -147,7 +143,6 @@ begin
       thoi_gian_huy = now(),
       vin = null,
       so_may = null,
-      ma_dms = null,
       thoi_gian_ghep = null,
       thoi_gian_can_xe = case
         when wait_mode then coalesce(p_thoi_gian_can_xe, thoi_gian_can_xe)

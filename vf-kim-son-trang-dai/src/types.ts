@@ -32,7 +32,6 @@ export interface Order {
   policy: string;
   cancelNote: string;
   engineNo: string;
-  dmsCode: string;
   needDateIso: string | null;
   depositAmount?: number | null;
   invoiceAddress?: string | null;
@@ -51,7 +50,6 @@ export interface InventoryItem {
   holderUsername: string;
   holdExpiry: string;
   location: string;
-  dmsCode: string;
   engineNo: string;
   latitude: number | null;
   longitude: number | null;
@@ -72,7 +70,6 @@ export interface NewOrderInput {
   depositDate: string;
   needDate: string;
   pairedVin?: string;
-  pairedDmsCode?: string;
   depositAmount?: number | null;
   invoiceAddress?: string | null;
   contractCode?: string | null;
@@ -101,7 +98,6 @@ export interface DonhangRow {
   trang_thai_gui_mail: string | null;
   vin: string | null;
   so_may: string | null;
-  ma_dms: string | null;
   thoi_gian_ghep: string | null;
   so_ngay_ghep: number | null;
   ngay_xuat_hoa_don: string | null;
@@ -129,7 +125,6 @@ export interface KhoxeRow {
   ngay_nhap: string | null;
   ngay_van_tai: string | null;
   so_may: string | null;
-  ma_dms: string | null;
   latitude: number | null;
   longitude: number | null;
   is_extension_requested: boolean;
@@ -159,13 +154,22 @@ export interface YeucauxhdRow {
   noi_that: string | null;
   ngay_coc: string | null;
   ngay_yeu_cau: string | null;
-  hoa_hong_ung: string | null;
-  vpoint: string | null;
+  so_tien_khach_da_dong: number | null;
+  dia_chi: string | null;
+  so_hop_dong: string | null;
+  ngay_ky_hop_dong: string | null;
+  hinh_thuc_tt: string | null;
+  nguon_khach: string | null;
+  ma_vso: string | null;
+  mua_bao_hiem: boolean | null;
+  dang_ky_xe: boolean | null;
+  gia_cong_bo: number | null;
+  ghi_chu: string | null;
+  coc: boolean | null;
   url_hop_dong: string | null;
   url_de_nghi_xhd: string | null;
   url_hoa_don_da_xuat: string | null;
   so_may: string | null;
-  ma_dms: string | null;
   ngay_xuat_hoa_don: string | null;
   ket_qua_gui_mail: string | null;
   ghi_chu_ai: string | null;

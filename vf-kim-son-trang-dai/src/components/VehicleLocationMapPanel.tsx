@@ -332,7 +332,7 @@ export const VehicleLocationMapPanel: React.FC<VehicleLocationMapPanelProps> = (
             }}
           >
             <MapPinned size={36} strokeWidth={1.5} />
-            <p>Chưa có dữ liệu GPS. Dùng Bookmarklet trên DMS để quét tọa độ.</p>
+            <p>Chưa có dữ liệu GPS. Dùng Bookmarklet trên trang nguồn dữ liệu để quét tọa độ.</p>
           </div>
         ) : (
           <div ref={mapRef} style={{ height: '100%', width: '100%', zIndex: 1 }} />

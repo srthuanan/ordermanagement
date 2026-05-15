@@ -14,7 +14,6 @@ import {
   Cog,
   Info,
   Tag,
-  Banknote
 } from 'lucide-react';
 import * as apiService from '../../services/apiService';
 import { supabase } from '../../services/supabaseClient';
@@ -25,641 +24,372 @@ interface InvoiceRequestModalProps {
   order: Order;
   isSubmitting: boolean;
   onClose: () => void;
-  onSubmit: (input: {
+    onSubmit: (input: {
     order: Order;
     contractFile: File;
     proposalFile: File;
     policy: string;
-    commission: string;
-    vpoint: string;
+    diaChi?: string;
     aiNote?: string;
     xeXangVin?: string;
     xeXangHang?: string;
     xeXangModel?: string;
+    nguonKhach?: string;
+    maVso?: string;
+    ngayKyHopDong?: string;
+    muaBaoHiem?: boolean;
+    dangKyXe?: boolean;
+    giaCongBo?: string;
+    ghiChu?: string;
   }) => Promise<boolean>;
 }
 
-const Stepper: React.FC<{ currentStep: number }> = ({ currentStep }) => {
-  const steps = ['Thông tin', 'Chứng từ', 'Xác nhận'];
-  const progressWidth = `${((currentStep - 1) / 2) * 100}%`;
-
-  return (
-    <div className="stepper-container">
-      <div className="stepper-track">
-        <div className="stepper-progress" style={{ width: progressWidth }} />
-      </div>
-      {steps.map((label, index) => {
-        const stepNumber = index + 1;
-        const isActive = stepNumber === currentStep;
-        const isCompleted = stepNumber < currentStep;
-
-        return (
-          <div
-            key={stepNumber}
-            className={`step-item ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
-          >
-            <div className="step-circle">
-              {isCompleted ? <Check size={13} strokeWidth={3} /> : stepNumber}
-            </div>
-            <span className="step-label">{label}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({
-  order,
-  isSubmitting,
-  onClose,
-  onSubmit
-}) => {
+export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order, isSubmitting, onClose, onSubmit }) => {
   const [step, setStep] = useState(1);
-  const [contractFile, setContractFile] = useState<File | null>(null);
-  const [proposalFile, setProposalFile] = useState<File | null>(null);
-  const [vinClubConfirmed, setVinClubConfirmed] = useState(false);
-
   const [policy, setPolicy] = useState<string[]>([]);
-  const [policyOptions, setPolicyOptions] = useState<string[]>(defaultSalesPolicies);
-  const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
-
-  const [commission, setCommission] = useState('');
-  const [vpoint, setVpoint] = useState('');
-  const [aiNote, setAiNote] = useState('');
-
+  const [soTienKhachDaDong, setSoTienKhachDaDong] = useState('');
+  const [ngayKyHopDong, setNgayKyHopDong] = useState(() => new Date().toISOString().split('T')[0]);
+  const [diaChi, setDiaChi] = useState('');
+  const [soHopDong, setSoHopDong] = useState(order.id || '');
+  const [hinhThucTT, setHinhThucTT] = useState('Tiền mặt');
+  const [nguonKhach, setNguonKhach] = useState('');
+  const [giaCongBo, setGiaCongBo] = useState('');
+  const [muaBaoHiem, setMuaBaoHiem] = useState(false);
+  const [dangKyXe, setDangKyXe] = useState(false);
+  const [ghiChu, setGhiChu] = useState('');
   const [xeXangVin, setXeXangVin] = useState('');
   const [xeXangHang, setXeXangHang] = useState('');
   const [xeXangModel, setXeXangModel] = useState('');
-
-  const [vinCheckError, setVinCheckError] = useState('');
-  const [isCheckingVin, setIsCheckingVin] = useState(false);
+  const [contractFile, setContractFile] = useState<File | null>(null);
+  const [proposalFile, setProposalFile] = useState<File | null>(null);
+  const [aiNote, setAiNote] = useState('');
+  const [vinClubConfirmed, setVinClubConfirmed] = useState(false);
   const [error, setError] = useState('');
-
   const [processingStage, setProcessingStage] = useState(0);
-  const submittingRef = useRef(false);
+  const [isCheckingVin, setIsCheckingVin] = useState(false);
+  const [vinCheckError, setVinCheckError] = useState('');
+  const [isLoadingPolicies, setIsLoadingPolicies] = useState(true);
+  const [availablePolicies, setAvailablePolicies] = useState<string[]>([]);
 
-  // File Input Refs
   const contractRef = useRef<HTMLInputElement>(null);
   const proposalRef = useRef<HTMLInputElement>(null);
 
-  // Fetch Policies
   useEffect(() => {
-    let active = true;
-    const fetchPolicies = async () => {
+    const load = async () => {
       try {
-        setIsLoadingPolicies(true);
         const { data } = await apiService.getSalesPolicies();
-        if (!active) return;
-        const options = Array.from(new Set((data || []).map((item) => item.ten_chinh_sach).filter(Boolean)));
-        if (options.length > 0) {
-          setPolicyOptions(options);
-        }
-      } catch (err) {
-        console.error('Lỗi tải chính sách:', err);
+        setAvailablePolicies(data?.map((r) => r.ten_chinh_sach) ?? defaultSalesPolicies);
+      } catch {
+        setAvailablePolicies(defaultSalesPolicies);
       } finally {
-        if (active) setIsLoadingPolicies(false);
+        setIsLoadingPolicies(false);
       }
     };
-    fetchPolicies();
-    return () => {
-      active = false;
-    };
+    load();
   }, []);
 
-  // Auto filter policy based on Order's Line
   const filteredPolicies = useMemo(() => {
-    if (!order.line || policyOptions.length === 0) return policyOptions.sort();
-    const currentCarModel = order.line.replace(/\s+/g, '').toLowerCase();
-    const specificPolicies = policyOptions.filter((p) => {
-      const pLower = p.toLowerCase().replace(/\s+/g, '');
-      return pLower.includes(currentCarModel) || currentCarModel.includes(pLower);
+    const model = order.line?.toLowerCase() ?? '';
+    return availablePolicies.filter(p => {
+      const pl = p.toLowerCase();
+      if (pl.includes('thu cũ') && !model.includes('vf3') && !model.includes('vf5') && !model.includes('vf6') && !model.includes('vf7') && !model.includes('vf8') && !model.includes('vf9')) return true;
+      return true;
     });
-    return specificPolicies.length > 0 ? specificPolicies.sort() : policyOptions.sort();
-  }, [order.line, policyOptions]);
+  }, [availablePolicies, order.line]);
 
-  // Format numbers
-  const formatNumber = (value: string) => {
-    const cleanValue = value.replace(/\D/g, '');
-    return cleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  };
+  const isGasToElectricPolicy = policy.some(p => p.toLowerCase().includes('thu cũ'));
 
-  const handleNumberChange = (setter: (value: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setter(formatNumber(e.target.value));
-  };
-
-  const getRawValue = (value: string) => value.replace(/\./g, '');
-
-  // Check Policy Condition
-  const isGasToElectricPolicy = useMemo(() => {
-    return policy.some((p) => {
-      const low = p.toLowerCase();
-      return (low.includes('xăng') && low.includes('điện')) || low.includes('thu cũ đổi mới');
-    });
-  }, [policy]);
-
-  // VIN Checker Live Effect
   useEffect(() => {
-    if (!isGasToElectricPolicy || !xeXangVin.trim()) {
-      setVinCheckError('');
-      return;
-    }
+    if (!isGasToElectricPolicy) { setXeXangVin(''); setXeXangHang(''); setXeXangModel(''); setVinCheckError(''); }
+  }, [isGasToElectricPolicy]);
 
-    const timeoutId = setTimeout(async () => {
+  useEffect(() => {
+    if (!xeXangVin || xeXangVin.length < 5) { setVinCheckError(''); return; }
+    const timer = setTimeout(async () => {
+      setIsCheckingVin(true);
       try {
-        setIsCheckingVin(true);
-        setVinCheckError('');
-        const cleanGasVin = xeXangVin.trim().toUpperCase();
+        const { data } = await supabase!.from('donhang').select('so_don_hang').eq('vin', xeXangVin).limit(1);
+        if (data && data.length > 0) setVinCheckError('VIN này đã tồn tại trong hệ thống.');
+        else setVinCheckError('');
+      } catch { setVinCheckError(''); }
+      finally { setIsCheckingVin(false); }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [xeXangVin]);
 
-        if (!supabase) return;
-        const { data: existingGasCar } = await supabase
-          .from('yeucauxhd')
-          .select('xe_xang_vin, so_don_hang')
-          .ilike('xe_xang_vin', cleanGasVin)
-          .limit(1);
-
-        if (existingGasCar && existingGasCar.length > 0) {
-          setVinCheckError(`VIN xe xăng ${cleanGasVin} đã được khai báo tại yêu cầu ${existingGasCar[0].so_don_hang}.`);
-        }
-      } catch (err) {
-        console.error('Lỗi kiểm tra số VIN xe xăng:', err);
-      } finally {
-        setIsCheckingVin(false);
-      }
-    }, 400);
-
-    return () => clearTimeout(timeoutId);
-  }, [xeXangVin, isGasToElectricPolicy]);
-
-  // Session Draft Loading
-  useEffect(() => {
-    const savedData = sessionStorage.getItem(`invoice_draft_${order.id}`);
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        if (parsed.policy) setPolicy(parsed.policy);
-        if (parsed.commission) setCommission(parsed.commission);
-        if (parsed.vpoint) setVpoint(parsed.vpoint);
-      } catch (e) {
-        console.error('Draft restore failed:', e);
-      }
-    }
-  }, [order.id]);
-
-  // Session Draft Saving
-  useEffect(() => {
-    if (policy.length > 0 || commission || vpoint) {
-      const dataToSave = { policy, commission, vpoint };
-      sessionStorage.setItem(`invoice_draft_${order.id}`, JSON.stringify(dataToSave));
-    }
-  }, [policy, commission, vpoint, order.id]);
-
-  // Toggle policy
   const handleTogglePolicy = (opt: string) => {
-    setPolicy((prev) => (prev.includes(opt) ? prev.filter((p) => p !== opt) : [...prev, opt]));
+    setPolicy(prev => prev.includes(opt) ? prev.filter(p => p !== opt) : [...prev, opt]);
   };
 
-  // Validations
-  const isStep1Valid =
-    policy.length > 0 &&
-    commission.trim() !== '' &&
-    vpoint.trim() !== '' &&
-    (!isGasToElectricPolicy ||
-      (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError));
-  const isStep2Valid = !!contractFile && !!proposalFile;
-  const isStep3Valid = vinClubConfirmed;
-  const isFormValid = isStep1Valid && isStep2Valid && isStep3Valid;
+  const handleNumberChange = (setter: (v: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/[^0-9]/g, '');
+    setter(raw ? Number(raw).toLocaleString('vi-VN') : '');
+  };
 
-  // Nav Handlers
-  const handleNext = () => setStep((prev) => Math.min(prev + 1, 3));
-  const handleBack = () => setStep((prev) => Math.max(prev - 1, 1));
+  const isStep1Valid = policy.length > 0 && soTienKhachDaDong && ngayKyHopDong && diaChi && soHopDong && hinhThucTT && nguonKhach && giaCongBo && (!isGasToElectricPolicy || (xeXangVin && xeXangHang && xeXangModel && !vinCheckError));
+  const isStep2Valid = contractFile !== null && proposalFile !== null;
+  const isFormValid = isStep1Valid && isStep2Valid && vinClubConfirmed;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (submittingRef.current || !isFormValid || !contractFile || !proposalFile) return;
-
-    submittingRef.current = true;
+  const handleNext = () => {
+    if (step === 1 && !isStep1Valid) { setError('Vui lòng điền đầy đủ thông tin bắt buộc.'); return; }
+    if (step === 2 && !isStep2Valid) { setError('Vui lòng tải lên đầy đủ chứng từ.'); return; }
     setError('');
+    setStep(s => s + 1);
+  };
 
-    try {
-      // Trigger Staging Animation for 100% Parity
-      setProcessingStage(1);
-      await new Promise((r) => setTimeout(r, 650));
-      setProcessingStage(2);
-      await new Promise((r) => setTimeout(r, 650));
-      setProcessingStage(3);
+  const handleBack = () => { setError(''); setStep(s => s - 1); };
 
-      const success = await onSubmit({
-        order,
-        contractFile,
-        proposalFile,
-        policy: policy.join('; '),
-        commission: getRawValue(commission),
-        vpoint: getRawValue(vpoint),
-        aiNote,
-        xeXangVin: isGasToElectricPolicy ? xeXangVin.trim().toUpperCase() : '',
-        xeXangHang: isGasToElectricPolicy ? xeXangHang.trim() : '',
-        xeXangModel: isGasToElectricPolicy ? xeXangModel.trim() : ''
-      });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isFormValid || !contractFile || !proposalFile) return;
+    setError('');
+    setProcessingStage(1);
+    setTimeout(() => setProcessingStage(2), 1200);
+    setTimeout(() => setProcessingStage(3), 2400);
+    const raw = (s: string) => s.replace(/[^0-9]/g, '');
+    const ok = await onSubmit({
+      order, contractFile, proposalFile,
+      policy: policy.join(', '),
+      diaChi, aiNote,
+      xeXangVin: isGasToElectricPolicy ? xeXangVin : undefined,
+      xeXangHang: isGasToElectricPolicy ? xeXangHang : undefined,
+      xeXangModel: isGasToElectricPolicy ? xeXangModel : undefined,
+      nguonKhach, maVso: order.id,
+      ngayKyHopDong, muaBaoHiem, dangKyXe,
+      giaCongBo: raw(giaCongBo),
+      ghiChu,
+    });
+    if (ok) { setProcessingStage(4); setTimeout(onClose, 1800); }
+    else { setProcessingStage(0); setError('Có lỗi xảy ra. Vui lòng thử lại.'); }
+  };
 
-      if (success) {
-        sessionStorage.removeItem(`invoice_draft_${order.id}`);
-        setProcessingStage(4);
-        await new Promise((r) => setTimeout(r, 1000));
-        onClose();
-      } else {
-        submittingRef.current = false;
-        setProcessingStage(0);
-        setError('Không thể hoàn tất yêu cầu. Vui lòng kiểm tra lại đường truyền hoặc thử lại.');
-      }
-    } catch (err) {
-      submittingRef.current = false;
-      setProcessingStage(0);
-      setError('Có lỗi xảy ra trong quá trình xử lý hồ sơ.');
-    }
-  }
-
+  const iS = { display:'flex', flexDirection:'column' as const, gap:'4px' };
+  const lS: React.CSSProperties = { fontSize:'12px', fontWeight:600, color:'#64748b', marginBottom:'4px' };
+  const inputS: React.CSSProperties = { width:'100%', border:'1px solid #e2e8f0', borderRadius:'10px', padding:'12px 14px', fontSize:'14px', color:'#1e293b', background:'#f8fafc', outline:'none', transition:'all 0.2s', boxSizing:'border-box' };
+  
   return (
     <div className="modal-layer" role="presentation">
-      <section className="order-modal detail-modal invoice-modal-large" role="dialog" aria-modal="true" style={{ position: 'relative' }}>
+      <section role="dialog" aria-modal="true" style={{ position:'relative', display:'flex', flexDirection:'column', width:'940px', height:'100vh', background:'#fff', boxShadow:'-20px 0 60px rgba(0,0,0,0.1)', overflow:'hidden', fontFamily:'inherit', marginLeft:'auto' }}>
         
-        {/* Processing Animations Overlay */}
         {(isSubmitting || processingStage > 0) && (
-          <div className="processing-overlay">
-            <div className="processing-card">
-              <div className={`processing-spinner-wrap ${processingStage === 4 ? 'completed' : ''}`}>
-                {processingStage === 4 ? <Check size={32} strokeWidth={3} /> : <Loader2 size={30} />}
+          <div className="processing-overlay" style={{ background:'rgba(255,255,255,0.9)', backdropFilter:'blur(8px)' }}>
+            <div className="processing-card" style={{ border:'none', boxShadow:'0 25px 50px -12px rgba(0,0,0,0.1)' }}>
+              <div className={processingStage === 4 ? 'processing-spinner-wrap completed' : 'processing-spinner-wrap'}>
+                {processingStage === 4 ? <Check size={40} strokeWidth={3} /> : <Loader2 size={38} />}
               </div>
-              <h3>{processingStage === 4 ? 'Thành công!' : 'Đang xử lý hồ sơ'}</h3>
-              <p>{processingStage === 4 ? 'Hệ thống đã ghi nhận yêu cầu.' : 'Vui lòng không tắt trình duyệt...'}</p>
-              
-              <div className="stage-list">
-                <div className={`stage-item ${processingStage > 1 ? 'completed' : processingStage === 1 ? 'active' : ''}`}>
-                  {processingStage > 1 ? <Check size={16} /> : <Loader2 size={16} />}
-                  <span>Xử lý Hợp đồng mua bán</span>
+              <h3 style={{ fontSize:'20px', fontWeight:800 }}>{processingStage === 4 ? 'Thành công!' : 'Đang xử lý hồ sơ'}</h3>
+              <p style={{ color:'#64748b' }}>{processingStage === 4 ? 'Yêu cầu của bạn đã được ghi nhận.' : 'Vui lòng giữ kết nối Internet...'}</p>
+              <div className="stage-list" style={{ marginTop:'20px' }}>
+                <div className={processingStage > 1 ? 'stage-item completed' : processingStage === 1 ? 'stage-item active' : 'stage-item'} style={{ padding:'10px' }}>
+                  {processingStage > 1 ? <Check size={18} /> : <Loader2 size={18} />}
+                  <span style={{ fontSize:'14px' }}>Tạo Hợp đồng mua bán</span>
                 </div>
-                <div className={`stage-item ${processingStage > 2 ? 'completed' : processingStage === 2 ? 'active' : ''}`}>
-                  {processingStage > 2 ? <Check size={16} /> : <Loader2 size={16} />}
-                  <span>Xử lý Đề nghị xuất hóa đơn</span>
+                <div className={processingStage > 2 ? 'stage-item completed' : processingStage === 2 ? 'stage-item active' : 'stage-item'} style={{ padding:'10px' }}>
+                  {processingStage > 2 ? <Check size={18} /> : <Loader2 size={18} />}
+                  <span style={{ fontSize:'14px' }}>Lập Đề nghị xuất hóa đơn</span>
                 </div>
-                <div className={`stage-item ${processingStage > 3 ? 'completed' : processingStage === 3 ? 'active' : ''}`}>
-                  {processingStage > 3 ? <Check size={16} /> : <Loader2 size={16} />}
-                  <span>Đang truyền gửi dữ liệu...</span>
+                <div className={processingStage > 3 ? 'stage-item completed' : processingStage === 3 ? 'stage-item active' : 'stage-item'} style={{ padding:'10px' }}>
+                  {processingStage > 3 ? <Check size={18} /> : <Loader2 size={18} />}
+                  <span style={{ fontSize:'14px' }}>Đồng bộ dữ liệu hệ thống...</span>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">Phân hệ xuất hóa đơn</p>
-            <h2>Yêu Cầu Xuất Hóa Đơn ({order.id})</h2>
+        {/* HEADER AREA - SIMPLIFIED */}
+        <div style={{ padding:'16px 32px', background:'#fff', borderBottom:'1px solid #f1f5f9', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
+            <div style={{ width:'4px', height:'20px', background:'#0d9488', borderRadius:'2px' }} />
+            <h1 style={{ fontSize:'16px', fontWeight:800, color:'#0f172a', margin:0, letterSpacing:'-0.01em' }}>YÊU CẦU XUẤT HÓA ĐƠN</h1>
           </div>
-          <button className="icon-button" onClick={onClose} title="Đóng" disabled={isSubmitting}>
-            <X size={18} />
+          <button type="button" onClick={onClose} style={{ width:'28px', height:'28px', borderRadius:'6px', border:'none', background:'#f1f5f9', color:'#64748b', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <X size={16} />
           </button>
         </div>
 
-        <div className="detail-body" style={{ gap: '16px', paddingBottom: '10px' }}>
-          {/* Dynamic Stepper */}
-          <Stepper currentStep={step} />
-
-          {/* Mini Order Reference Banner */}
-          <div className="detail-summary" style={{ padding: '14px 20px', gridTemplateColumns: 'repeat(4, 1fr)' }}>
-            <div>
-              <span style={{ fontSize: '9px', letterSpacing: '0.1em' }}>Số đơn hàng</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                <Barcode size={13} color="#2563eb" />
-                <strong style={{ fontSize: '13px' }}>{order.id}</strong>
-              </div>
-            </div>
-            <div>
-              <span style={{ fontSize: '9px', letterSpacing: '0.1em' }}>Khách hàng</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                <User size={13} color="#2563eb" />
-                <strong style={{ fontSize: '13px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {order.customer}
-                </strong>
-              </div>
-            </div>
-            <div>
-              <span style={{ fontSize: '9px', letterSpacing: '0.1em' }}>Số VIN</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                <Tag size={13} color="#2563eb" />
-                <strong style={{ fontSize: '13px' }}>{order.vin || '---'}</strong>
-              </div>
-            </div>
-            <div>
-              <span style={{ fontSize: '9px', letterSpacing: '0.1em' }}>Số máy</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                <Cog size={13} color="#2563eb" />
-                <strong style={{ fontSize: '13px' }}>{order.engineNo || '---'}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-          
-          {/* STEP 1: INFORMATION */}
-          {step === 1 && (
-            <div className="order-form" style={{ paddingBottom: '24px', gridTemplateColumns: '1.3fr 1fr' }}>
+        {/* CONTENT */}
+        <form onSubmit={handleSubmit} style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+          <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
+            
+            {/* LEFT: MAIN FORM (70%) */}
+            <div style={{ flex:1, overflowY:'auto', padding:'24px 32px', display:'flex', flexDirection:'column', gap:'32px' }}>
               
-              {/* Left Column: Policy */}
-              <div className="invoice-form-flex" style={{ height: '100%' }}>
-                <span className="field-label-alt">Chính sách bán hàng áp dụng *</span>
-                <div className="policy-tag-grid" style={{ flex: 1, maxHeight: 'none', minHeight: '200px' }}>
-                  {isLoadingPolicies ? (
-                    <div style={{ padding: '12px', fontSize: '12px', color: '#64748b', display: 'flex', gap: '8px' }}>
-                      <Loader2 size={14} className="vin-spinner-wrap" style={{ position: 'static', transform: 'none' }} />
-                      Đang tải danh sách...
+              {step === 1 && (
+                <>
+                  {/* NEW SUMMARY SECTION */}
+                  <section style={{ background:'#f8fafc', borderRadius:'16px', padding:'20px', border:'1px solid #e2e8f0', display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'20px' }}>
+                    <div style={iS}><label style={{...lS, fontSize:'10px'}}>Khách hàng</label><div style={{ fontSize:'14px', fontWeight:700, color:'#0f172a' }}>{order.customer}</div></div>
+                    <div style={iS}><label style={{...lS, fontSize:'10px'}}>Mã đơn hàng</label><div style={{ fontSize:'14px', fontWeight:700, color:'#0d9488' }}>{order.id}</div></div>
+                    <div style={iS}><label style={{...lS, fontSize:'10px'}}>Số VIN</label><div style={{ fontSize:'14px', fontWeight:700, color:'#0f172a' }}>{order.vin || '---'}</div></div>
+                    <div style={iS}><label style={{...lS, fontSize:'10px'}}>Số Máy</label><div style={{ fontSize:'14px', fontWeight:700, color:'#0f172a' }}>{order.engineNo || '---'}</div></div>
+                  </section>
+                  <section>
+                    <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'20px' }}>
+                       <span style={{ width:'24px', height:'24px', borderRadius:'50%', background:'#0d9488', color:'#fff', fontSize:'12px', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' }}>1</span>
+                       <h2 style={{ fontSize:'16px', fontWeight:700, color:'#0f172a', margin:0 }}>Thông tin khách hàng & Tài chính</h2>
                     </div>
-                  ) : filteredPolicies.length > 0 ? (
-                    filteredPolicies.map((opt) => (
-                      <div
-                        key={opt}
-                        className={`policy-tag ${policy.includes(opt) ? 'selected' : ''}`}
-                        onClick={() => handleTogglePolicy(opt)}
-                      >
-                        <Check size={12} strokeWidth={policy.includes(opt) ? 3 : 1} style={{ opacity: policy.includes(opt) ? 1 : 0.2 }} />
-                        {opt}
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px' }}>
+                      <div style={iS}><label style={lS}>Số tiền khách đã đóng *</label>
+                        <div style={{ position:'relative' }}>
+                          <input value={soTienKhachDaDong} onChange={handleNumberChange(setSoTienKhachDaDong)} placeholder="0" required style={{ ...inputS, border:'2px solid #0d9488', fontSize:'18px', fontWeight:800, color:'#0d9488' }} />
+                          <span style={{ position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', fontWeight:700, color:'#94a3b8' }}>VNĐ</span>
+                        </div>
                       </div>
-                    ))
-                  ) : (
-                    <div style={{ padding: '12px', fontSize: '12px', color: '#64748b' }}>Không có chính sách tương ứng.</div>
-                  )}
+                      <div style={iS}><label style={lS}>Giá công bố *</label>
+                        <div style={{ position:'relative' }}>
+                          <input value={giaCongBo} onChange={handleNumberChange(setGiaCongBo)} placeholder="0" required style={inputS} />
+                          <span style={{ position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', fontWeight:600, color:'#94a3b8' }}>VNĐ</span>
+                        </div>
+                      </div>
+                      <div style={iS}><label style={lS}>Ngày ký hợp đồng *</label><input type="date" value={ngayKyHopDong} onChange={e=>setNgayKyHopDong(e.target.value)} required style={inputS} /></div>
+                      <div style={iS}><label style={lS}>Số hợp đồng *</label><input value={soHopDong} onChange={e=>setSoHopDong(e.target.value)} required style={inputS} /></div>
+                      <div style={{...iS, gridColumn:'1/-1'}}><label style={lS}>Địa chỉ xuất hóa đơn *</label><input value={diaChi} onChange={e=>setDiaChi(e.target.value)} placeholder="Theo CCCD hoặc Giấy phép kinh doanh" required style={inputS} /></div>
+                    </div>
+                  </section>
+
+                  <section>
+                    <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'20px' }}>
+                       <span style={{ width:'24px', height:'24px', borderRadius:'50%', background:'#0d9488', color:'#fff', fontSize:'12px', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' }}>2</span>
+                       <h2 style={{ fontSize:'16px', fontWeight:700, color:'#0f172a', margin:0 }}>Hình thức & Nguồn khách</h2>
+                    </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px' }}>
+                      <div style={iS}>
+                        <label style={lS}>Hình thức thanh toán *</label>
+                        <select value={hinhThucTT} onChange={e=>setHinhThucTT(e.target.value)} required style={{...inputS, appearance:'none'}}>
+                          <option value="Tiền mặt">Tiền mặt</option>
+                          <option value="Vay ngân hàng">Vay ngân hàng</option>
+                          <option value="Chuyển khoản">Chuyển khoản</option>
+                        </select>
+                      </div>
+                      <div style={iS}><label style={lS}>Nguồn khách *</label><input value={nguonKhach} onChange={e=>setNguonKhach(e.target.value)} placeholder="Giới thiệu, Marketing..." required style={inputS} /></div>
+                    </div>
+                  </section>
+
+                  <section>
+                    <div style={{ display:'flex', gap:'16px' }}>
+                      {[{l:'Mua bảo hiểm',v:muaBaoHiem,s:setMuaBaoHiem},{l:'Làm đăng ký xe',v:dangKyXe,s:setDangKyXe}].map(x => (
+                        <div key={x.l} onClick={()=>x.s(!x.v)} style={{ flex:1, padding:'18px', borderRadius:'16px', border: x.v ? '2px solid #0d9488' : '1px solid #e2e8f0', background: x.v ? '#f0fdfa' : '#fff', cursor:'pointer', display:'flex', alignItems:'center', gap:'12px', transition:'0.2s' }}>
+                          <div style={{ width:'20px', height:'20px', borderRadius:'6px', border: x.v ? 'none' : '2px solid #cbd5e1', background: x.v ? '#0d9488' : '#fff', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                            {x.v && <Check size={14} color="#fff" strokeWidth={4} />}
+                          </div>
+                          <span style={{ fontSize:'14px', fontWeight:700, color: x.v ? '#0d9488' : '#475569' }}>{x.l}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </>
+              )}
+
+              {step === 2 && (
+                <div style={{ display:'flex', flexDirection:'column', gap:'32px' }}>
+                   <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                       <span style={{ width:'24px', height:'24px', borderRadius:'50%', background:'#0d9488', color:'#fff', fontSize:'12px', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' }}>3</span>
+                       <h2 style={{ fontSize:'16px', fontWeight:700, color:'#0f172a', margin:0 }}>Tải lên chứng từ gốc</h2>
+                   </div>
+                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px' }}>
+                      {[ {r:contractRef, f:contractFile, sf:setContractFile, t:'Hợp đồng mua bán'}, {r:proposalRef, f:proposalFile, sf:setProposalFile, t:'Đề nghị xuất hóa đơn'} ].map((x,i) => (
+                        <div key={i} onClick={()=>!x.f && x.r.current?.click()} style={{ height:'280px', background:'#f8fafc', borderRadius:'24px', border:'2px dashed #cbd5e1', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px', cursor:'pointer', transition:'all 0.3s' }}>
+                          <input type="file" accept=".pdf,image/*" ref={x.r} style={{ display:'none' }} onChange={e=>x.sf(e.target.files?.[0]||null)} />
+                          {x.f ? (
+                            <>
+                              <div style={{ width:'72px', height:'72px', borderRadius:'20px', background:'#fff', boxShadow:'0 10px 25px rgba(0,0,0,0.05)', display:'flex', alignItems:'center', justifyContent:'center', color:'#0d9488', marginBottom:'20px' }}><FileText size={40} /></div>
+                              <div style={{ fontSize:'15px', fontWeight:700, textAlign:'center', color:'#0f172a', maxWidth:'220px', overflow:'hidden', textOverflow:'ellipsis' }}>{x.f.name}</div>
+                              <button type="button" onClick={(e)=>{e.stopPropagation(); x.sf(null);}} style={{ marginTop:'16px', border:'none', background:'#fff', color:'#e11d48', fontSize:'13px', fontWeight:700, padding:'8px 16px', borderRadius:'10px', boxShadow:'0 2px 4px rgba(0,0,0,0.05)' }}>Xóa file</button>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ width:'72px', height:'72px', background:'#fff', borderRadius:'20px', display:'flex', alignItems:'center', justifyContent:'center', color:'#94a3b8', marginBottom:'20px', boxShadow:'0 4px 6px rgba(0,0,0,0.02)' }}><UploadCloud size={40} /></div>
+                              <div style={{ fontSize:'16px', fontWeight:700, color:'#1e293b' }}>{x.t}</div>
+                              <div style={{ fontSize:'13px', color:'#64748b', marginTop:'6px' }}>Hỗ trợ PDF hoặc Ảnh (JPG, PNG)</div>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Right Column: Financial Inputs */}
-              <div className="invoice-form-flex">
-                <span className="field-label-alt">Chi tiết hoa hồng & điểm</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <label>
-                    <span>Hoa hồng ứng trước *</span>
-                    <div className="input-suffix-wrap">
-                      <input
-                        value={commission}
-                        onChange={handleNumberChange(setCommission)}
-                        placeholder="VD: 5.000.000"
-                        required
-                        style={{ paddingRight: '46px' }}
-                      />
-                      <span className="suffix-badge">VNĐ</span>
-                    </div>
-                  </label>
-
-                  <label>
-                    <span>Số điểm VPoint sử dụng *</span>
-                    <div className="input-suffix-wrap">
-                      <input
-                        value={vpoint}
-                        onChange={handleNumberChange(setVpoint)}
-                        placeholder="VD: 10.000"
-                        required
-                        style={{ paddingRight: '56px' }}
-                      />
-                      <span className="suffix-badge">ĐIỂM</span>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              {/* Full Width Row for Gas to Electric */}
-              {isGasToElectricPolicy && (
-                <div className="full-span" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '12px', padding: '20px', border: '1px solid #fed7aa', background: '#fff7ed', borderRadius: '20px', animation: 'modalSpringEnter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
-                  <div className="full-span" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '-4px' }}>
-                    <AlertTriangle size={15} color="#ea580c" />
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#9a3412', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Khai báo thông tin xe xăng trao đổi</span>
-                  </div>
-
-                  <label className="vin-input-wrapper">
-                    <span>Số VIN xe xăng *</span>
-                    <input
-                      value={xeXangVin}
-                      onChange={(e) => setXeXangVin(e.target.value.toUpperCase())}
-                      placeholder="VIN123..."
-                      required
-                      style={{ border: vinCheckError ? '1.5px solid #dc2626' : undefined }}
-                    />
-                    {isCheckingVin && (
-                      <div className="vin-spinner-wrap">
-                        <Loader2 size={14} />
+              {step === 3 && (
+                <div style={{ display:'flex', flexDirection:'column', gap:'32px' }}>
+                   <div style={{ background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:'20px', padding:'32px' }}>
+                      <h2 style={{ fontSize:'16px', fontWeight:800, color:'#166534', marginBottom:'20px', letterSpacing:'0.05em' }}>XÁC NHẬN YÊU CẦU</h2>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px 48px' }}>
+                         {([['Họ tên', order.customer],['Mã đơn', order.id],['Số tiền đóng', soTienKhachDaDong+' VNĐ'],['Hình thức', hinhThucTT],['Ngày ký', ngayKyHopDong],['Địa chỉ XHĐ', diaChi]] as [string,string][]).map(([k,v])=>(
+                           <div key={k} style={{ display:'flex', justifyContent:'space-between', padding:'12px 0', borderBottom:'1px solid rgba(22,101,52,0.1)' }}>
+                             <span style={{ fontSize:'14px', color:'#166534', opacity:0.8 }}>{k}</span>
+                             <span style={{ fontSize:'14px', fontWeight:700, color:'#166534' }}>{v}</span>
+                           </div>
+                         ))}
                       </div>
-                    )}
-                    {vinCheckError && (
-                      <div className="vin-error-text">
-                        <AlertTriangle size={12} />
-                        {vinCheckError}
-                      </div>
-                    )}
-                  </label>
-
-                  <label>
-                    <span>Hãng xe xăng *</span>
-                    <input
-                      value={xeXangHang}
-                      onChange={(e) => setXeXangHang(e.target.value)}
-                      placeholder="VD: Toyota"
-                      required
-                    />
-                  </label>
-
-                  <label>
-                    <span>Model xe xăng *</span>
-                    <input
-                      value={xeXangModel}
-                      onChange={(e) => setXeXangModel(e.target.value)}
-                      placeholder="VD: Camry"
-                      required
-                    />
-                  </label>
+                   </div>
+                   <div style={iS}>
+                     <label style={lS}>Ghi chú cho bộ phận kế toán</label>
+                     <textarea value={aiNote} onChange={e=>setAiNote(e.target.value)} placeholder="Nhập thêm lưu ý nếu có..." style={{ ...inputS, height:'140px', resize:'none', background:'#fff' }} />
+                   </div>
                 </div>
               )}
             </div>
-          )}
 
-          {/* STEP 2: DOCUMENTS */}
-          {step === 2 && (
-            <div className="order-form" style={{ paddingBottom: '24px' }}>
-              <div className="full-span file-uploader-grid">
-                {/* Hợp đồng mua bán */}
-                <input
-                  type="file"
-                  accept=".pdf,image/*"
-                  ref={contractRef}
-                  style={{ display: 'none' }}
-                  onChange={(e) => setContractFile(e.target.files?.[0] || null)}
-                />
-                {!contractFile ? (
-                  <div className="file-uploader-card" onClick={() => contractRef.current?.click()}>
-                    <UploadCloud size={32} strokeWidth={1.5} />
-                    <strong>Hợp đồng mua bán *</strong>
-                    <p>Hỗ trợ file Ảnh hoặc PDF</p>
-                  </div>
-                ) : (
-                  <div className="file-uploaded-state">
-                    <div className="file-info-left">
-                      <FileText size={24} />
-                      <div>
-                        <div className="file-title" title={contractFile.name}>{contractFile.name}</div>
-                        <div className="file-size">{(contractFile.size / 1024).toFixed(1)} KB</div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="icon-button"
-                      style={{ background: '#fee2e2', color: '#ef4444', width: '28px', height: '28px' }}
-                      onClick={() => setContractFile(null)}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                )}
-
-                {/* Đề nghị xuất hóa đơn */}
-                <input
-                  type="file"
-                  accept=".pdf,image/*"
-                  ref={proposalRef}
-                  style={{ display: 'none' }}
-                  onChange={(e) => setProposalFile(e.target.files?.[0] || null)}
-                />
-                {!proposalFile ? (
-                  <div className="file-uploader-card" onClick={() => proposalRef.current?.click()}>
-                    <UploadCloud size={32} strokeWidth={1.5} />
-                    <strong>Đề nghị xuất hóa đơn *</strong>
-                    <p>Hỗ trợ file Ảnh hoặc PDF</p>
-                  </div>
-                ) : (
-                  <div className="file-uploaded-state">
-                    <div className="file-info-left">
-                      <FileText size={24} />
-                      <div>
-                        <div className="file-title" title={proposalFile.name}>{proposalFile.name}</div>
-                        <div className="file-size">{(proposalFile.size / 1024).toFixed(1)} KB</div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="icon-button"
-                      style={{ background: '#fee2e2', color: '#ef4444', width: '28px', height: '28px' }}
-                      onClick={() => setProposalFile(null)}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              <div className="full-span" style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#eff6ff', padding: '16px', borderRadius: '12px', color: '#1e40af', border: '1px solid #bfdbfe', fontSize: '13px', fontWeight: 500, marginTop: '12px' }}>
-                <Info size={18} strokeWidth={2.5} style={{ flexShrink: 0 }} />
-                <span>Anh/Chị vui lòng tải bản scan hoặc ảnh chụp đầy đủ 4 góc, sắc nét của HĐMB và Đề nghị xuất hóa đơn.</span>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: CONFIRMATION */}
-          {step === 3 && (
-            <div className="order-form" style={{ paddingBottom: '24px', gap: '16px' }}>
-              <div className="full-span" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                {/* Financials Summary */}
-                <div className="detail-summary" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '12px', height: '100%', background: '#f8fafc' }}>
-                  <span style={{ borderBottom: '1px dashed #cbd5e1', paddingBottom: '6px', marginBottom: '2px' }}>Chi tiết tài chính</span>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ textTransform: 'none', fontWeight: 500 }}>Hoa hồng ứng:</span>
-                    <strong style={{ fontSize: '14px', color: '#1e293b' }}>{commission ? `${commission} đ` : '0 đ'}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ textTransform: 'none', fontWeight: 500 }}>Điểm VPoint:</span>
-                    <strong style={{ fontSize: '14px', color: '#7c3aed' }}>{vpoint ? `${vpoint} điểm` : '0'}</strong>
-                  </div>
+            {/* RIGHT: SIDEBAR (30%) */}
+            <div style={{ width:'320px', background:'#f8fafc', borderLeft:'1px solid #f1f5f9', display:'flex', flexDirection:'column' }}>
+               <div style={{ flex:1, padding:'32px 24px', display:'flex', flexDirection:'column', gap:'24px', overflowY:'auto' }}>
                   
-                  <span style={{ borderBottom: '1px dashed #cbd5e1', paddingBottom: '6px', marginTop: '6px', marginBottom: '2px' }}>Chứng từ đính kèm</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#059669', fontWeight: 600 }}>
-                    <Check size={14} /> {contractFile?.name}
+                  <div>
+                    <h3 style={{ fontSize:'11px', fontWeight:800, color:'#64748b', letterSpacing:'0.1em', marginBottom:'16px' }}>CHÍNH SÁCH BÁN HÀNG</h3>
+                    <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+                      {isLoadingPolicies ? <Loader2 size={24} className="vin-spinner-wrap" /> : filteredPolicies.map(opt => {
+                        const sel = policy.includes(opt);
+                        return (
+                          <div key={opt} onClick={()=>handleTogglePolicy(opt)} style={{ padding:'14px', borderRadius:'14px', background: sel ? '#0d9488' : '#fff', border: sel ? 'none' : '1px solid #e2e8f0', color: sel ? '#fff' : '#475569', cursor:'pointer', transition:'0.2s', boxShadow: sel ? '0 4px 15px rgba(13,148,136,0.2)' : 'none' }}>
+                            <div style={{ fontSize:'13.5px', fontWeight: sel ? 700 : 500, lineHeight:1.4 }}>{opt}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#059669', fontWeight: 600 }}>
-                    <Check size={14} /> {proposalFile?.name}
-                  </div>
-                </div>
 
-                {/* Applied Policies Summary */}
-                <div className="detail-summary" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '12px', height: '100%', background: 'linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%)', borderColor: '#dbeafe' }}>
-                  <span style={{ color: '#2563eb', borderBottom: '1px dashed #bfdbfe', paddingBottom: '6px', marginBottom: '4px' }}>Chính sách được chọn</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '130px' }}>
-                    {policy.map((p, i) => (
-                      <div key={i} style={{ display: 'flex', gap: '8px', padding: '8px 12px', background: '#ffffff', border: '1px solid #e0f2fe', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: '#1e3a8a' }}>
-                        <span style={{ color: '#3b82f6' }}>#{i+1}</span>
-                        {p}
+                  {isGasToElectricPolicy && (
+                    <div style={{ background:'#fff7ed', borderRadius:'20px', border:'1.5px solid #fed7aa', padding:'20px' }}>
+                      <div style={{ fontSize:'11px', fontWeight:800, color:'#9a3412', marginBottom:'16px' }}>THU CŨ ĐỔI MỚI</div>
+                      <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
+                        <div style={iS}><label style={{...lS, fontSize:'10px'}}>Số VIN xe xăng</label><input value={xeXangVin} onChange={e=>setXeXangVin(e.target.value.toUpperCase())} style={{...inputS, padding:'10px', fontSize:'13px'}} /></div>
+                        <div style={iS}><label style={{...lS, fontSize:'10px'}}>Hãng / Model</label><input value={xeXangHang+' '+xeXangModel} readOnly style={{...inputS, padding:'10px', fontSize:'13px', background:'#fff'}} /></div>
                       </div>
-                    ))}
+                    </div>
+                  )}
+
+                  <div style={{ marginTop:'auto' }}>
+                    <div onClick={()=>setVinClubConfirmed(!vinClubConfirmed)} style={{ padding:'20px', borderRadius:'20px', background: vinClubConfirmed ? '#0d9488' : '#fff', border: vinClubConfirmed ? 'none' : '1px solid #e2e8f0', color: vinClubConfirmed ? '#fff' : '#475569', cursor:'pointer', display:'flex', gap:'16px', alignItems:'center', transition:'0.2s', boxShadow: vinClubConfirmed ? '0 12px 25px rgba(13,148,136,0.2)' : 'none' }}>
+                       <div style={{ width:'24px', height:'24px', borderRadius:'8px', background: vinClubConfirmed ? 'rgba(255,255,255,0.2)' : '#f1f5f9', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                         {vinClubConfirmed && <Check size={16} strokeWidth={4} />}
+                       </div>
+                       <div style={{ fontSize:'14px', fontWeight:700 }}>Xác nhận VinClub</div>
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              <label className="full-span">
-                <span>Ghi chú AI / Ghi chú hồ sơ</span>
-                <textarea value={aiNote} onChange={(e) => setAiNote(e.target.value)} placeholder="Nhập lưu ý thêm nếu có..." rows={2} />
-              </label>
-
-              {/* VinClub Agreement Check */}
-              <div
-                className={`full-span vinclub-banner ${vinClubConfirmed ? 'confirmed' : ''}`}
-                onClick={() => setVinClubConfirmed(!vinClubConfirmed)}
-              >
-                <div className="vinclub-checkbox">
-                  {vinClubConfirmed && <Check size={12} strokeWidth={3} />}
-                </div>
-                <div>
-                  <div className="vinclub-text-title">Tôi xác nhận khách hàng đã tạo tài khoản VinClub.</div>
-                  <div className="vinclub-text-desc">Điều kiện bắt buộc trước khi đẩy duyệt hóa đơn.</div>
-                </div>
-              </div>
+               </div>
             </div>
-          )}
+          </div>
 
-          {error && (
-            <div className="form-error" style={{ margin: '0 24px 12px' }}>
-              <AlertTriangle size={17} />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <div className="modal-actions" style={{ borderTop: '1px solid #f1f5f9', padding: '16px 24px', background: '#f8fafc' }}>
-            {step > 1 ? (
-              <button type="button" className="ghost-button" onClick={handleBack} disabled={isSubmitting}>
-                <ArrowLeft size={16} />
-                Quay lại
-              </button>
-            ) : (
-              <button type="button" className="ghost-button" onClick={onClose} disabled={isSubmitting}>
-                Hủy bỏ
-              </button>
-            )}
-
-            {step < 3 ? (
-              <button
-                type="button"
-                className="primary-button"
-                onClick={handleNext}
-                disabled={(step === 1 && !isStep1Valid) || (step === 2 && !isStep2Valid)}
-              >
-                <span>Tiếp theo</span>
-                <ArrowRight size={16} />
-              </button>
-            ) : (
-              <button
-                type="submit"
-                className="primary-button"
-                disabled={!isFormValid || isSubmitting}
-                style={{ background: '#10b981', border: 'none' }}
-              >
-                {isSubmitting ? <Loader2 size={16} className="vin-spinner-wrap" style={{ position: 'static', transform: 'none', color: '#fff' }} /> : <Send size={16} />}
-                <span>{isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu kế toán'}</span>
-              </button>
-            )}
+          {/* FOOTER */}
+          <div style={{ padding:'24px 40px', background:'#fff', borderTop:'1px solid #f1f5f9', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+             <div style={{ display:'flex', gap:'10px' }}>
+               {[1,2,3].map(n => (
+                 <div key={n} style={{ width:'12px', height:'12px', borderRadius:'50%', background: step === n ? '#0d9488' : '#e2e8f0', transition:'0.3s' }} />
+               ))}
+             </div>
+             <div style={{ display:'flex', gap:'16px' }}>
+               {step > 1 && <button type="button" onClick={handleBack} style={{ padding:'14px 28px', borderRadius:'14px', border:'1px solid #e2e8f0', background:'#fff', color:'#64748b', fontSize:'15px', fontWeight:700, cursor:'pointer' }}>Quay lại</button>}
+               {step < 3 ? (
+                 <button type="button" onClick={handleNext} disabled={ (step===1 && !isStep1Valid) || (step===2 && !isStep2Valid) } style={{ padding:'14px 40px', borderRadius:'14px', border:'none', background:'#0f172a', color:'#fff', fontSize:'15px', fontWeight:800, cursor:'pointer', boxShadow:'0 10px 25px rgba(15,23,42,0.2)' }}>
+                   Tiếp theo
+                 </button>
+               ) : (
+                 <button type="submit" disabled={!isFormValid || isSubmitting} style={{ padding:'14px 48px', borderRadius:'14px', border:'none', background:'#10b981', color:'#fff', fontSize:'15px', fontWeight:800, cursor:'pointer', boxShadow:'0 10px 25px rgba(16,185,129,0.2)' }}>
+                   {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu ngay'}
+                 </button>
+               )}
+             </div>
           </div>
         </form>
       </section>

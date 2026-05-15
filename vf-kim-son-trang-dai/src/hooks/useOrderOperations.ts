@@ -44,12 +44,6 @@ export function useOrderOperations({
       return false;
     }
 
-    const dmsCode = input.pairedDmsCode?.trim().toUpperCase() || '';
-    if (dmsCode && orderId.slice(0, 6) !== dmsCode) {
-      setCreateError(`Mã DMS (${dmsCode}) không khớp với 6 ký tự đầu số đơn hàng (${orderId.slice(0, 6)}).`);
-      return false;
-    }
-
     setIsCreating(true);
     setCreateError('');
 
@@ -438,12 +432,17 @@ export function useOrderOperations({
     contractFile: File;
     proposalFile: File;
     policy: string;
-    commission: string;
-    vpoint: string;
     aiNote?: string;
     xeXangVin?: string;
     xeXangHang?: string;
     xeXangModel?: string;
+    nguonKhach?: string;
+    ngayKyHopDong?: string;
+    muaBaoHiem?: boolean;
+    dangKyXe?: boolean;
+    giaCongBo?: string;
+    ghiChu?: string;
+    diaChi?: string;
   }) {
     setIsRequestingInvoice(true);
     try {
