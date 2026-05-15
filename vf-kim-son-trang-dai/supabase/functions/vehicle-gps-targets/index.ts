@@ -62,35 +62,15 @@ Deno.serve(async (req) => {
       }
     });
 
-    const [khoxeResult, masterResult] = await Promise.all([
-      adminClient
+    const { data, error } = await adminClient
       .from('khoxe')
       .select('vin,dong_xe,phien_ban,ngoai_that,noi_that,trang_thai,nguoi_giu_xe,username_giu_xe,vi_tri,latitude,longitude,ngay_nhap')
-      .order('ngay_nhap', { ascending: true }),
-      adminClient
-        .from('thongtinxe')
-        .select('vin,mo_ta,phien_ban,khu_vuc,ngoai_that,noi_that,so_may')
-    ]);
+      .order('ngay_nhap', { ascending: true });
 
-    if (khoxeResult.error) {
-      return jsonResponse({ error: khoxeResult.error.message, step: 'load_khoxe' }, 400);
+    if (error) {
+      return jsonResponse({ error: error.message, step: 'load_khoxe' }, 400);
     }
-
-    const masterMap = new Map(
-      (masterResult.data || []).map((row) => [normalizeVin(String(row.vin || '')), row])
-    );
-    const vehicles = (khoxeResult.data || []).map((row) => {
-      const master = masterMap.get(normalizeVin(String(row.vin || '')));
-      return {
-        ...row,
-        dong_xe: master?.mo_ta?.trim() || row.dong_xe,
-        phien_ban: master?.phien_ban?.trim() || row.phien_ban,
-        ngoai_that: master?.ngoai_that?.trim() || row.ngoai_that,
-        noi_that: master?.noi_that?.trim() || row.noi_that,
-        so_may: master?.so_may?.trim() || row.so_may,
-        ma_dms: master?.khu_vuc?.trim() || row.ma_dms
-      };
-    });
+    const vehicles = data || [];
 
     return jsonResponse({
       success: true,

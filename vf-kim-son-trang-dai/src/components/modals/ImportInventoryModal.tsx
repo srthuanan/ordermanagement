@@ -43,7 +43,7 @@ export const ImportInventoryModal: React.FC<ImportInventoryModalProps> = ({
 
         <form className="order-form" onSubmit={handleSubmit}>
           <label className="full-span">
-            <span>Dán dữ liệu CSV (VIN bắt buộc; dòng xe / phiên bản / ngoại thất / nội thất sẽ tự lấy từ thongtinxe)</span>
+            <span>Dán dữ liệu CSV (VIN bắt buộc; các cột khác sẽ dùng trực tiếp từ CSV hoặc để trống nếu không có)</span>
             <textarea
               value={csvText}
               onChange={(e) => setCsvText(e.target.value)}

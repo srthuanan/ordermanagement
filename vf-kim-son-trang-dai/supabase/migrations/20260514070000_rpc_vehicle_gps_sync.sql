@@ -21,17 +21,10 @@ BEGIN
     FROM (
         SELECT
             k.vin,
-            COALESCE(NULLIF(TRIM(ttx.mo_ta), ''), k.dong_xe) AS dong_xe,
-            COALESCE(NULLIF(TRIM(ttx.phien_ban), ''), k.phien_ban) AS phien_ban,
-            COALESCE(NULLIF(TRIM(ttx.ngoai_that), ''), k.ngoai_that) AS ngoai_that,
-            COALESCE(NULLIF(TRIM(ttx.noi_that), ''), k.noi_that) AS noi_that,
-            COALESCE(NULLIF(TRIM(ttx.so_may), ''), k.so_may) AS so_may,
-            COALESCE(NULLIF(TRIM(ttx.khu_vuc), ''), k.ma_dms) AS ma_dms,
             k.trang_thai,
             k.nguoi_giu_xe,
             k.vi_tri
         FROM public.khoxe k
-        LEFT JOIN public.thongtinxe ttx ON ttx.vin = k.vin
         ORDER BY k.ngay_nhap ASC
     ) t;
     
