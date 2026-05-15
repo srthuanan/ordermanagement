@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserRound, LogOut, type LucideIcon } from 'lucide-react';
+import { UserRound, LogOut, LockKeyhole, type LucideIcon } from 'lucide-react';
 import { TabKey, getVisibleTabs, roleLabels } from '../../constants';
 import { ProfileRow } from '../../types';
 
@@ -12,6 +12,7 @@ interface SidebarProps {
   visibleTabs: { key: TabKey; label: string; icon: LucideIcon }[];
   userEmail?: string;
   onSignOut: () => void;
+  onChangePassword: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -22,7 +23,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   profile,
   visibleTabs,
   userEmail,
-  onSignOut
+  onSignOut,
+  onChangePassword
 }) => {
   const tabs = visibleTabs.length ? visibleTabs : getVisibleTabs(profile?.role ?? 'sales');
 
@@ -64,6 +66,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>Vai trò: {profile ? roleLabels[profile.role] : 'Chưa có profile'}</span>
           </div>
         </div>
+        <button className="ghost-button" title="Đổi mật khẩu" onClick={onChangePassword}>
+          <LockKeyhole size={17} />
+          <span>Đổi mật khẩu</span>
+        </button>
         <button className="ghost-button" title="Đăng xuất" onClick={onSignOut}>
           <LogOut size={17} />
           <span>Đăng xuất</span>

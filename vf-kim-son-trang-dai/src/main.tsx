@@ -14,6 +14,7 @@ import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
 import { AuthScreen } from './components/AuthScreen';
 import { SetPasswordScreen } from './components/SetPasswordScreen';
+import { ResetPasswordScreen } from './components/ResetPasswordScreen';
 
 // Lớp Giao diện Từng Tab Chức năng
 const Dashboard = lazy(() => import('./components/Dashboard').then((module) => ({ default: module.Dashboard })));
@@ -29,6 +30,7 @@ const PairVehicleModal = lazy(() => import('./components/modals/PairVehicleModal
 const VehicleGpsModal = lazy(() => import('./components/modals/VehicleGpsModal').then((module) => ({ default: module.VehicleGpsModal })));
 const CancelOrderModal = lazy(() => import('./components/modals/CancelOrderModal').then((module) => ({ default: module.CancelOrderModal })));
 const InvoiceRequestModal = lazy(() => import('./components/modals/InvoiceModal').then((module) => ({ default: module.InvoiceRequestModal })));
+const ChangePasswordModal = lazy(() => import('./components/modals/ChangePasswordModal').then((module) => ({ default: module.ChangePasswordModal })));
 const FinalizeInvoiceModal = lazy(() => import('./components/modals/FinalizeInvoiceModal').then((module) => ({ default: module.FinalizeInvoiceModal })));
 const SupplementaryInvoiceModal = lazy(() => import('./components/modals/SupplementaryInvoiceModal').then((module) => ({ default: module.SupplementaryInvoiceModal })));
 const RequestSupplementModal = lazy(() => import('./components/modals/RequestSupplementModal').then((module) => ({ default: module.RequestSupplementModal })));
@@ -144,12 +146,14 @@ function App() {
   const [importOpen, setImportOpen] = useState(false);
   const [cancelingOrder, setCancelingOrder] = useState<Order | null>(null);
   const [invoicingOrder, setInvoicingOrder] = useState<Order | null>(null);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [finalizingRequest, setFinalizingRequest] = useState<YeucauxhdRow | null>(null);
   const [supplementingRequest, setSupplementingRequest] = useState<YeucauxhdRow | null>(null);
   const [requestingSupplement, setRequestingSupplement] = useState<YeucauxhdRow | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [selectingPolicyOrder, setSelectingPolicyOrder] = useState<Order | null>(null);
   const isSetPasswordRoute = window.location.pathname === '/set-password';
+  const isResetPasswordRoute = window.location.pathname === '/reset-password';
   
   // Thực thi Filter trên danh sách orders
   const filteredOrders = useMemo(() => {
@@ -208,11 +212,18 @@ function App() {
     if (isSetPasswordRoute) {
       return <SetPasswordScreen />;
     }
+    if (isResetPasswordRoute) {
+      return <ResetPasswordScreen />;
+    }
     return <AuthScreen />;
   }
 
   if (isSetPasswordRoute) {
     return <SetPasswordScreen />;
+  }
+
+  if (isResetPasswordRoute) {
+    return <ResetPasswordScreen />;
   }
 
   if (session && !profile && syncState === 'error') {
@@ -250,6 +261,7 @@ function App() {
         visibleTabs={visibleTabs}
         userEmail={session.user.email}
         onSignOut={handleSignOut}
+        onChangePassword={() => setChangePasswordOpen(true)}
       />
 
       <main className="main">
@@ -486,6 +498,14 @@ function App() {
             isSubmitting={isRequestingInvoice}
             onClose={() => setInvoicingOrder(null)}
             onSubmit={handleRequestInvoice}
+          />
+        )}
+
+        {changePasswordOpen && (
+          <ChangePasswordModal
+            onClose={() => {
+              setChangePasswordOpen(false);
+            }}
           />
         )}
 

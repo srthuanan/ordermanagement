@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LockKeyhole, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { LockKeyhole, AlertTriangle, CheckCircle2, Mail, ArrowLeft } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 export const AuthScreen: React.FC = () => {
@@ -8,6 +8,7 @@ export const AuthScreen: React.FC = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -18,6 +19,26 @@ export const AuthScreen: React.FC = () => {
     setMessage('');
 
     try {
+      if (forgotMode) {
+        if (!email.trim()) {
+          setError('Vui lòng nhập email công việc để nhận link đặt lại mật khẩu.');
+          return;
+        }
+
+        const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+        const redirectTo = new URL('/reset-password', appUrl).toString();
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo
+        });
+
+        if (resetError) {
+          throw resetError;
+        }
+
+        setMessage('Đã gửi link đặt lại mật khẩu vào email của bạn.');
+        return;
+      }
+
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password
@@ -47,7 +68,10 @@ export const AuthScreen: React.FC = () => {
         <div>
           <p className="eyebrow">ĐĂNG NHẬP CỔNG NỘI BỘ</p>
           <h1>Hệ thống quản lý</h1>
-          <p className="auth-note">Tài khoản do admin tạo. Nhân sự không tự đăng ký.</p>
+          <p className="auth-note">
+            Tài khoản do admin tạo. Nhân sự không tự đăng ký.
+            {!forgotMode ? ' Nếu quên mật khẩu, bạn có thể gửi link đặt lại.' : ''}
+          </p>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
@@ -61,17 +85,20 @@ export const AuthScreen: React.FC = () => {
               required
             />
           </label>
-          <label>
-            <span>Mật khẩu *</span>
-            <input
-              type="password"
-              value={password}
-              placeholder="••••••••"
-              onChange={(event) => setPassword(event.target.value)}
-              minLength={6}
-              required
-            />
-          </label>
+
+          {!forgotMode ? (
+            <label>
+              <span>Mật khẩu *</span>
+              <input
+                type="password"
+                value={password}
+                placeholder="••••••••"
+                onChange={(event) => setPassword(event.target.value)}
+                minLength={6}
+                required
+              />
+            </label>
+          ) : null}
 
           {error ? (
             <div className="form-error">
@@ -88,8 +115,22 @@ export const AuthScreen: React.FC = () => {
           ) : null}
 
           <button className="primary-button auth-submit" type="submit" disabled={loading}>
-            <LockKeyhole size={18} />
-            <span>{loading ? 'Đang xử lý...' : 'Đăng nhập ngay'}</span>
+            {forgotMode ? <Mail size={18} /> : <LockKeyhole size={18} />}
+            <span>{loading ? 'Đang xử lý...' : forgotMode ? 'Gửi link đặt lại mật khẩu' : 'Đăng nhập ngay'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="ghost-button auth-switch"
+            onClick={() => {
+              setError('');
+              setMessage('');
+              setForgotMode((value) => !value);
+            }}
+            disabled={loading}
+          >
+            <ArrowLeft size={16} />
+            <span>{forgotMode ? 'Quay lại đăng nhập' : 'Quên mật khẩu?'}</span>
           </button>
         </form>
       </section>
