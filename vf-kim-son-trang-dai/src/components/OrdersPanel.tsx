@@ -424,7 +424,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                       </div>
                       </div>
 
-                      <div className="orders-mobile-detail-shell" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '20px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)' }}>
+                      <div className="orders-mobile-detail-shell" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '18px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)' }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
                           <div className="clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedOrder.id, 'Mã đơn')} style={{ minWidth: 0 }}>
                             <p style={{ margin: 0, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', fontWeight: 700 }}>CHI TIẾT ĐƠN HÀNG</p>
@@ -438,8 +438,8 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
 
                         <div style={{ height: '1px', width: '100%', background: '#f1f5f9' }} />
 
-                        <div className="orders-mobile-detail-section" style={{ background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '18px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '8px', borderBottom: '1px dashed #e2e8f0', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', letterSpacing: '0.04em' }}>
+                        <div className="orders-mobile-detail-section" style={{ paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', letterSpacing: '0.04em' }}>
                             <User size={14} />
                             <span>Nhân sự & Lịch hẹn</span>
                           </div>
@@ -466,7 +466,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                             </div>
                           </div>
 
-                          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '10px' }}>
+                          <div style={{ paddingTop: '4px' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                 <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tiến độ</span>
@@ -489,8 +489,8 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           </div>
                         </div>
 
-                        <div className="orders-mobile-detail-section" style={{ background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '18px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '8px', borderBottom: '1px dashed #e2e8f0', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', letterSpacing: '0.04em' }}>
+                        <div className="orders-mobile-detail-section" style={{ paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', letterSpacing: '0.04em' }}>
                             <Car size={14} />
                             <span>Thông tin xe</span>
                           </div>
@@ -512,15 +512,11 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                               <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedOrder.engineNo || 'Trống'}</strong>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cấu hình</span>
-                              <strong style={{ fontSize: '12.5px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedOrder.version || 'N/A'}</strong>
-                            </div>
                           </div>
                         </div>
 
-                        <div className="orders-mobile-detail-section" style={{ background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '18px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '8px', borderBottom: '1px dashed #e2e8f0', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', letterSpacing: '0.04em' }}>
+                        <div className="orders-mobile-detail-section" style={{ paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', letterSpacing: '0.04em' }}>
                             <CreditCard size={14} />
                             <span>Tài chính & Hồ sơ</span>
                           </div>
