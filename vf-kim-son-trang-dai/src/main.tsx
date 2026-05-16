@@ -497,7 +497,13 @@ function App() {
             order={invoicingOrder}
             isSubmitting={isRequestingInvoice}
             onClose={() => setInvoicingOrder(null)}
-            onSubmit={handleRequestInvoice}
+            onSubmit={async (input) => {
+              const success = await handleRequestInvoice(input);
+              if (success) {
+                setInvoicingOrder(null);
+              }
+              return success;
+            }}
           />
         )}
 
