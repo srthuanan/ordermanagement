@@ -34,9 +34,19 @@ export interface Order {
   engineNo: string;
   needDateIso: string | null;
   depositAmount?: number | null;
+  soTienKhachDaDong?: number | null;
+  ngayKyHopDong?: string | null;
   invoiceAddress?: string | null;
   contractCode?: string | null;
   paymentMethod?: string | null;
+  nguonKhach?: string | null;
+  muaBaoHiem?: boolean | null;
+  dangKyXe?: boolean | null;
+  xeXangVin?: string | null;
+  xeXangHang?: string | null;
+  xeXangModel?: string | null;
+  giaCongBo?: number | null;
+  ghiChu?: string | null;
 }
 
 export interface InventoryItem {
@@ -72,9 +82,19 @@ export interface NewOrderInput {
   needDate: string;
   pairedVin?: string;
   depositAmount?: number | null;
+  soTienKhachDaDong?: number | null;
+  ngayKyHopDong?: string | null;
   invoiceAddress?: string | null;
   contractCode?: string | null;
   paymentMethod?: string | null;
+  nguonKhach?: string | null;
+  muaBaoHiem?: boolean | null;
+  dangKyXe?: boolean | null;
+  xeXangVin?: string | null;
+  xeXangHang?: string | null;
+  xeXangModel?: string | null;
+  giaCongBo?: number | null;
+  ghiChu?: string | null;
 }
 
 // Bảng Supabase (Database Rows)
@@ -107,6 +127,19 @@ export interface DonhangRow {
   created_at: string;
   updated_at: string;
   so_tien_coc: number | null;
+  so_tien_khach_da_dong: number | null;
+  dia_chi: string | null;
+  so_hop_dong: string | null;
+  ngay_ky_hop_dong: string | null;
+  hinh_thuc_tt: string | null;
+  nguon_khach: string | null;
+  mua_bao_hiem: boolean | null;
+  dang_ky_xe: boolean | null;
+  xe_xang_vin: string | null;
+  xe_xang_hang: string | null;
+  xe_xang_model: string | null;
+  gia_cong_bo: number | null;
+  ghi_chu: string | null;
   dia_chi_xhd: string | null;
   ma_hop_dong: string | null;
   tm_vay: string | null;
@@ -250,7 +283,17 @@ export interface UpdateOrderInput {
   depositDate: string;
   needDate: string;
   depositAmount?: number | null;
+  soTienKhachDaDong?: number | null;
+  ngayKyHopDong?: string | null;
   invoiceAddress?: string | null;
   contractCode?: string | null;
   paymentMethod?: string | null;
+  nguonKhach?: string | null;
+  muaBaoHiem?: boolean | null;
+  dangKyXe?: boolean | null;
+  xeXangVin?: string | null;
+  xeXangHang?: string | null;
+  xeXangModel?: string | null;
+  giaCongBo?: number | null;
+  ghiChu?: string | null;
 }

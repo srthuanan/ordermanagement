@@ -64,9 +64,22 @@ export function useOrderOperations({
           ket_qua: 'Chưa ghép',
           chinh_sach: input.policy.join('; '),
           so_tien_coc: input.depositAmount || null,
+          so_tien_khach_da_dong: input.soTienKhachDaDong ?? input.depositAmount ?? null,
+          ngay_ky_hop_dong: input.ngayKyHopDong || null,
           dia_chi_xhd: input.invoiceAddress || null,
+          dia_chi: input.invoiceAddress || null,
           ma_hop_dong: input.contractCode || null,
-          tm_vay: input.paymentMethod || null
+          so_hop_dong: input.contractCode || null,
+          tm_vay: input.paymentMethod || null,
+          hinh_thuc_tt: input.paymentMethod || null,
+          nguon_khach: input.nguonKhach?.trim() || null,
+          mua_bao_hiem: input.muaBaoHiem ?? null,
+          dang_ky_xe: input.dangKyXe ?? null,
+          xe_xang_vin: input.xeXangVin?.trim() || null,
+          xe_xang_hang: input.xeXangHang?.trim() || null,
+          xe_xang_model: input.xeXangModel?.trim() || null,
+          gia_cong_bo: input.giaCongBo ?? null,
+          ghi_chu: input.ghiChu?.trim() || null
         });
 
         if (orderRes.error) {
@@ -433,21 +446,24 @@ export function useOrderOperations({
     contractFile: File;
     proposalFile: File;
     policy: string;
+    soTienKhachDaDong?: number | null;
     aiNote?: string;
     xeXangVin?: string;
     xeXangHang?: string;
     xeXangModel?: string;
     nguonKhach?: string;
     ngayKyHopDong?: string;
+    soHopDong?: string;
+    hinhThucTT?: string;
     muaBaoHiem?: boolean;
     dangKyXe?: boolean;
-    giaCongBo?: string;
+    giaCongBo?: string | number | null;
     ghiChu?: string;
     diaChi?: string;
   }) {
     setIsRequestingInvoice(true);
     try {
-      const { error } = await apiService.requestInvoiceDonhang({
+    const { error } = await apiService.requestInvoiceDonhang({
         ...input,
         requesterName: currentFullName,
         requesterUsername: currentUsername

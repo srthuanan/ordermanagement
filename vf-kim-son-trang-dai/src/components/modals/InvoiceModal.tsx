@@ -23,12 +23,16 @@ import { Order } from '../../types';
 interface InvoiceRequestModalProps {
   order: Order;
   isSubmitting: boolean;
-  onClose: () => void;
+    onClose: () => void;
     onSubmit: (input: {
     order: Order;
     contractFile: File;
     proposalFile: File;
     policy: string;
+    soTienKhachDaDong?: number | null;
+    ngayKyHopDong?: string;
+    soHopDong?: string;
+    hinhThucTT?: string;
     diaChi?: string;
     aiNote?: string;
     xeXangVin?: string;
@@ -36,7 +40,6 @@ interface InvoiceRequestModalProps {
     xeXangModel?: string;
     nguonKhach?: string;
     maVso?: string;
-    ngayKyHopDong?: string;
     muaBaoHiem?: boolean;
     dangKyXe?: boolean;
     giaCongBo?: string;
@@ -45,21 +48,27 @@ interface InvoiceRequestModalProps {
 }
 
 export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order, isSubmitting, onClose, onSubmit }) => {
+  const splitPolicies = (value: string) =>
+    value
+      .split(/[;,]/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+
   const [step, setStep] = useState(1);
-  const [policy, setPolicy] = useState<string[]>([]);
-  const [soTienKhachDaDong, setSoTienKhachDaDong] = useState('');
-  const [ngayKyHopDong, setNgayKyHopDong] = useState(() => new Date().toISOString().split('T')[0]);
-  const [diaChi, setDiaChi] = useState('');
-  const [soHopDong, setSoHopDong] = useState(order.id || '');
-  const [hinhThucTT, setHinhThucTT] = useState('Tiền mặt');
-  const [nguonKhach, setNguonKhach] = useState('');
-  const [giaCongBo, setGiaCongBo] = useState('');
-  const [muaBaoHiem, setMuaBaoHiem] = useState(false);
-  const [dangKyXe, setDangKyXe] = useState(false);
-  const [ghiChu, setGhiChu] = useState('');
-  const [xeXangVin, setXeXangVin] = useState('');
-  const [xeXangHang, setXeXangHang] = useState('');
-  const [xeXangModel, setXeXangModel] = useState('');
+  const [policy, setPolicy] = useState<string[]>(() => splitPolicies(order.policy));
+  const [soTienKhachDaDong, setSoTienKhachDaDong] = useState(() => (order.soTienKhachDaDong ?? order.depositAmount ?? '').toString());
+  const [ngayKyHopDong, setNgayKyHopDong] = useState(() => order.ngayKyHopDong || order.needDateIso || order.depositDate || new Date().toISOString().split('T')[0]);
+  const [diaChi, setDiaChi] = useState(() => order.invoiceAddress || '');
+  const [soHopDong, setSoHopDong] = useState(() => order.contractCode || order.id || '');
+  const [hinhThucTT, setHinhThucTT] = useState(() => order.paymentMethod || 'Tiền mặt');
+  const [nguonKhach, setNguonKhach] = useState(() => order.nguonKhach || '');
+  const [giaCongBo, setGiaCongBo] = useState(() => (order.giaCongBo ?? '').toString());
+  const [muaBaoHiem, setMuaBaoHiem] = useState(() => Boolean(order.muaBaoHiem));
+  const [dangKyXe, setDangKyXe] = useState(() => Boolean(order.dangKyXe));
+  const [ghiChu, setGhiChu] = useState(() => order.ghiChu || '');
+  const [xeXangVin, setXeXangVin] = useState(() => order.xeXangVin || '');
+  const [xeXangHang, setXeXangHang] = useState(() => order.xeXangHang || '');
+  const [xeXangModel, setXeXangModel] = useState(() => order.xeXangModel || '');
   const [contractFile, setContractFile] = useState<File | null>(null);
   const [proposalFile, setProposalFile] = useState<File | null>(null);
   const [aiNote, setAiNote] = useState('');
@@ -150,12 +159,16 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
     const ok = await onSubmit({
       order, contractFile, proposalFile,
       policy: policy.join(', '),
+      soTienKhachDaDong: soTienKhachDaDong ? Number(raw(soTienKhachDaDong)) : null,
+      ngayKyHopDong,
+      soHopDong,
+      hinhThucTT,
       diaChi, aiNote,
       xeXangVin: isGasToElectricPolicy ? xeXangVin : undefined,
       xeXangHang: isGasToElectricPolicy ? xeXangHang : undefined,
       xeXangModel: isGasToElectricPolicy ? xeXangModel : undefined,
       nguonKhach, maVso: order.id,
-      ngayKyHopDong, muaBaoHiem, dangKyXe,
+      muaBaoHiem, dangKyXe,
       giaCongBo: raw(giaCongBo),
       ghiChu,
     });

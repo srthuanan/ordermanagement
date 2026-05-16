@@ -98,6 +98,55 @@ button:disabled {
 .auth-card h1 {
   margin: 8px 0 0;
   font-size: 32px;
+  font-weight: 900;
+  color: #1e293b;
+  letter-spacing: -0.02em;
+}
+
+/* Redesigned Invoice Layout Utilities */
+.hidden-mobile {
+  display: flex !important;
+}
+
+.mobile-only {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .hidden-mobile {
+    display: none !important;
+  }
+  .mobile-only {
+    display: flex !important;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  display: block;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+.hover-bg-slate:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.folder-item:hover {
+  background-color: #f8fafc !important;
+}
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.03em;
@@ -3670,11 +3719,75 @@ td small {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.order-form textarea {
+  width: 100%;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #0f172a;
+  padding: 12px 14px;
+  outline: 0;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 96px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
 .order-form input:focus,
-.order-form select:focus {
+.order-form select:focus,
+.order-form textarea:focus {
   background: #ffffff;
   border-color: #0f766e;
   box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.15);
+}
+
+.order-extra-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #d9e2ec;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+}
+
+.order-extra-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.order-extra-title span {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.order-extra-title small {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.order-extra-title--sub {
+  margin-top: 4px;
+}
+
+.order-extra-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.order-extra-grid--compact {
+  gap: 12px;
+}
+
+.order-extra-gas {
+  display: grid;
+  gap: 12px;
+  padding-top: 6px;
 }
 
 .priority-group {
@@ -5452,6 +5565,10 @@ td small {
   overflow: hidden;
 }
 
+.invoice-panel .orders-modular-workspace {
+  grid-template-columns: 0.72fr 1.28fr;
+}
+
 .orders-data-side {
   flex: 1;
   display: flex;
@@ -5491,6 +5608,27 @@ td small {
   font-size: 12px;
 }
 
+.invoice-panel .orders-data-side th,
+.invoice-panel .orders-data-side td {
+  padding: 10px 6px;
+  font-size: 11.5px;
+}
+
+.invoice-panel .orders-data-side {
+  padding: 16px;
+  border-radius: 18px;
+}
+
+.invoice-panel .orders-data-side .search-box,
+.invoice-panel .orders-data-side .ghost-button {
+  height: 32px !important;
+  min-height: 32px !important;
+}
+
+.invoice-panel .orders-data-side .table-wrap {
+  margin-top: 2px;
+}
+
 .orders-data-side tr.active-row {
   background-color: #f0f9ff !important;
 }
@@ -5522,6 +5660,45 @@ td small {
   scrollbar-width: none;
   -ms-overflow-style: none;
   -ms-overflow-style: none;
+}
+.invoice-panel .order-detail-widget-container {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-color: #dbe4ee;
+  border-radius: 24px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  padding: 18px 18px 20px;
+  gap: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  overflow: hidden;
+}
+
+.invoice-panel .order-detail-card-module {
+  border-radius: 14px;
+  border-color: #d7e0ea;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+}
+
+.invoice-panel .order-detail-widget-container > div:first-child,
+.invoice-panel .orders-detail-actions {
+  grid-column: 1 / -1;
+}
+
+.invoice-panel .order-detail-card-module:nth-of-type(4) {
+  grid-column: 1 / -1;
+}
+
+.invoice-panel .order-detail-card-module > div:first-child {
+  color: #0f766e;
+}
+
+.invoice-panel .orders-visual-side {
+  overflow: hidden;
+}
+
+.invoice-panel .orders-visual-side > .order-detail-widget-container {
+  overflow: hidden;
 }
 .order-detail-widget-container::-webkit-scrollbar {
   display: none;

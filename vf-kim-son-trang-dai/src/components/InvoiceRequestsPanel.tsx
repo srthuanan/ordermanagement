@@ -1,13 +1,29 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Search, CheckCircle2, XCircle, Clock, ExternalLink, CheckSquare, FilePlus2, User, Car, CreditCard, FileText, HelpCircle, ArrowLeft } from 'lucide-react';
-import { YeucauxhdRow } from '../types';
+import { Search, CheckCircle2, XCircle, Clock, ExternalLink, CheckSquare, FilePlus2, User, Car, CreditCard, FileText, HelpCircle, ArrowLeft, Eye, ShieldCheck, ClipboardCheck, Info, Mail, RefreshCw } from 'lucide-react';
+import { YeucauxhdRow, Order } from '../types';
 import { copyToClipboard } from '../utils/clipboard';
+import * as apiService from '../services/apiService';
+import { supabase } from '../services/supabaseClient';
+
+const toEmbeddableUrl = (url: string) => {
+  if (!url) return '';
+  if (url.includes('drive.google.com')) {
+    const fileId = url.match(/\/d\/([^/]+)/)?.[1] || url.match(/id=([^&]+)/)?.[1];
+    if (fileId) return `https://drive.google.com/file/d/${fileId}/preview`;
+  }
+  return url;
+};
 
 const formatMobileDate = (value?: string | null) => {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+const formatCurrency = (value?: number | null) => {
+  if (value === undefined || value === null) return '—';
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 };
 
 interface InvoiceRequestsPanelProps {
@@ -19,6 +35,7 @@ interface InvoiceRequestsPanelProps {
   onPendingSignature: (req: YeucauxhdRow) => void;
   onUploadInvoice: (req: YeucauxhdRow) => void;
   onSupplement: (req: YeucauxhdRow) => void;
+  onReload?: () => void;
 }
 
 export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
@@ -29,22 +46,109 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
   onRequestSupplement,
   onPendingSignature,
   onUploadInvoice,
-  onSupplement
+  onSupplement,
+  onReload
 }) => {
+  const [selectedFolder, setSelectedFolder] = useState('pending_approval');
   const [query, setQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [isSplitView, setIsSplitView] = useState(true);
+  const [activeDocKey, setActiveDocKey] = useState<'url_de_nghi_xhd' | 'url_hop_dong' | 'url_hoa_don_da_xuat'>('url_de_nghi_xhd');
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
-  const [isMobile, setIsMobile] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSyncFromOrder = async (req: YeucauxhdRow) => {
+    if (!supabase) return;
+    setIsSyncing(true);
+    try {
+      const { data: order, error: orderError } = await apiService.getOrderRow(req.so_don_hang);
+      if (orderError || !order) {
+        alert('Không tìm thấy thông tin đơn hàng tương ứng.');
+        return;
+      }
+
+      const updateData = {
+        tvbh: order.ten_tu_van_ban_hang,
+        dong_xe: order.dong_xe,
+        phien_ban: order.phien_ban,
+        ngoai_that: order.ngoai_that,
+        noi_that: order.noi_that,
+        ngay_coc: order.ngay_coc,
+        so_may: order.so_may,
+        chinh_sach: order.chinh_sach,
+        dia_chi: order.dia_chi_xhd,
+        so_hop_dong: order.ma_hop_dong,
+        so_tien_khach_da_dong: order.so_tien_coc,
+        hinh_thuc_tt: order.tm_vay
+      };
+
+      const { error: updateError } = await supabase
+        .from('yeucauxhd')
+        .update(updateData)
+        .eq('id', req.id);
+
+      if (updateError) {
+        alert('Lỗi cập nhật: ' + updateError.message);
+      } else {
+        if (onReload) onReload();
+      }
+    } catch (err: any) {
+      alert('Lỗi hệ thống: ' + err.message);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const getWorkflowStatus = (r: YeucauxhdRow) => r.trang_thai_xu_ly || (
     r.status === 'approved' ? 'Đã phê duyệt' : r.status === 'rejected' ? 'Từ chối' : 'Chờ phê duyệt'
   );
 
+  const counts = useMemo(() => {
+    const c: Record<string, number> = {
+      pending_approval: 0,
+      approved: 0,
+      request_supplement: 0,
+      supplemented: 0,
+      pending_signature: 0,
+      completed: 0,
+      all: requests.length
+    };
+
+    requests.forEach(r => {
+      const s = getWorkflowStatus(r).toLowerCase();
+      if (s === 'chờ phê duyệt') c.pending_approval++;
+      else if (s === 'đã phê duyệt') c.approved++;
+      else if (s === 'yêu cầu bổ sung') c.request_supplement++;
+      else if (s === 'đã bổ sung') c.supplemented++;
+      else if (s === 'chờ ký hóa đơn') c.pending_signature++;
+      else if (s === 'đã xuất hóa đơn') c.completed++;
+    });
+
+    return c;
+  }, [requests]);
+
+  const folders = [
+    { id: 'pending_approval', label: 'Chờ Duyệt', icon: Clock, count: counts.pending_approval, color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
+    { id: 'approved', label: 'Đã Duyệt', icon: CheckSquare, count: counts.approved, color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
+    { id: 'request_supplement', label: 'Cần Bổ Sung', icon: XCircle, count: counts.request_supplement, color: '#ef4444', bg: '#fef2f2', border: '#fecdd3' },
+    { id: 'supplemented', label: 'Đã Bổ Sung', icon: FilePlus2, count: counts.supplemented, color: '#8b5cf6', bg: '#f5f3ff', border: '#ddd6fe' },
+    { id: 'pending_signature', label: 'Chờ Ký', icon: CheckCircle2, count: counts.pending_signature, color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
+    { id: 'completed', label: 'Đã Hoàn Tất', icon: CheckCircle2, count: counts.completed, color: '#059669', bg: '#ecfdf5', border: '#a7f3d0' },
+    { id: 'all', label: 'Tất Cả', icon: Search, count: counts.all, color: '#64748b', bg: '#f1f5f9', border: '#e2e8f0' },
+  ];
+
   const filtered = useMemo(() => {
-    return requests.filter((r) => {
-      const matchesStatus = statusFilter === 'all' || getWorkflowStatus(r) === statusFilter;
-      if (!matchesStatus) return false;
+    return requests.filter(r => {
+      const s = getWorkflowStatus(r).toLowerCase();
+      const folderMatches = selectedFolder === 'all' || 
+        (selectedFolder === 'pending_approval' && s === 'chờ phê duyệt') ||
+        (selectedFolder === 'approved' && s === 'đã phê duyệt') ||
+        (selectedFolder === 'request_supplement' && s === 'yêu cầu bổ sung') ||
+        (selectedFolder === 'supplemented' && s === 'đã bổ sung') ||
+        (selectedFolder === 'pending_signature' && s === 'chờ ký hóa đơn') ||
+        (selectedFolder === 'completed' && s === 'đã xuất hóa đơn');
+      
+      if (!folderMatches) return false;
 
       const norm = query.toLowerCase().trim();
       if (!norm) return true;
@@ -53,693 +157,377 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
         r.so_don_hang.toLowerCase().includes(norm) ||
         r.ten_khach_hang.toLowerCase().includes(norm) ||
         (r.vin || '').toLowerCase().includes(norm) ||
-        (r.so_may || '').toLowerCase().includes(norm) ||
-        (r.xe_xang_vin || '').toLowerCase().includes(norm) ||
-        (r.requested_by_name || '').toLowerCase().includes(norm)
+        (r.tvbh || '').toLowerCase().includes(norm)
       );
     });
-  }, [requests, query, statusFilter]);
+  }, [requests, selectedFolder, query]);
 
-  // Hàng được chọn
   const selectedRequest = useMemo(() => {
-    if (filtered.length === 0) return null;
-    const found = filtered.find(r => r.id === selectedRequestId);
-    return found || filtered[0];
+    return filtered.find(r => r.id === selectedRequestId) || filtered[0] || null;
   }, [filtered, selectedRequestId]);
 
   useEffect(() => {
-    const media = window.matchMedia('(max-width: 760px)');
-    const update = () => setIsMobile(media.matches);
-    update();
-    if (media.addEventListener) {
-      media.addEventListener('change', update);
-      return () => media.removeEventListener('change', update);
-    }
-    media.addListener(update);
-    return () => media.removeListener(update);
-  }, []);
-
-  useEffect(() => {
-    if (!filtered.length) {
-      if (selectedRequestId) setSelectedRequestId(null);
-      setMobileView('list');
-      return;
-    }
-    if (!selectedRequestId || !filtered.some((r) => r.id === selectedRequestId)) {
+    if (filtered.length > 0 && (!selectedRequestId || !filtered.some(r => r.id === selectedRequestId))) {
       setSelectedRequestId(filtered[0].id);
     }
-  }, [filtered, selectedRequestId]);
-
-  useEffect(() => {
-    if (!isMobile) setMobileView('list');
-  }, [isMobile]);
-
-  const workflowStatus = selectedRequest ? getWorkflowStatus(selectedRequest) : '';
+  }, [filtered, selectedFolder]);
 
   const statusColors: Record<string, string> = {
-    'Đã xuất hóa đơn': 'status-live',
-    'Từ chối': 'status-error',
-    'Yêu cầu bổ sung': 'status-error',
-    'Đã phê duyệt': 'status-loading',
-    'Chờ ký hóa đơn': 'status-loading',
-    'Đã bổ sung': 'status-loading',
-    'Chờ phê duyệt': 'status-loading',
+    'Chờ phê duyệt': '#f59e0b',
+    'Đã phê duyệt': '#3b82f6',
+    'Yêu cầu bổ sung': '#ef4444',
+    'Đã bổ sung': '#8b5cf6',
+    'Chờ ký hóa đơn': '#10b981',
+    'Đã xuất hóa đơn': '#059669',
   };
 
-  const renderTableStatus = (status: string) => {
-    const baseClass = statusColors[status] || 'status-loading';
-    let icon = <Clock size={12} />;
-    if (status === 'Đã xuất hóa đơn') icon = <CheckCircle2 size={12} />;
-    if (status === 'Từ chối' || status === 'Yêu cầu bổ sung') icon = <XCircle size={12} />;
-
+  const renderStatusBadge = (status: string) => {
+    const color = statusColors[status] || '#64748b';
     return (
-      <span className={`status-tag ${baseClass}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', padding: '2px 8px', fontWeight: 700 }}>
-        {icon} {status}
+      <span style={{ 
+        display: 'inline-flex', 
+        alignItems: 'center', 
+        gap: '4px', 
+        padding: '2px 8px', 
+        borderRadius: '6px', 
+        fontSize: '10px', 
+        fontWeight: 800, 
+        background: `${color}15`, 
+        color: color,
+        border: `1px solid ${color}30`,
+        textTransform: 'uppercase'
+      }}>
+        {status}
       </span>
     );
   };
 
   return (
-    <section className={isMobile ? `panel invoice-panel ${mobileView === 'detail' ? 'invoice-mobile-detail' : 'invoice-mobile-list'}` : 'panel invoice-panel'}>
-      <div className="orders-modular-workspace">
+    <div className="invoice-modular-workspace" style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      
+      {/* 1. TOP SECTION: METRICS BAR */}
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', padding: '16px 20px', background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        {folders.map(folder => (
+          <button
+            key={folder.id}
+            onClick={() => setSelectedFolder(folder.id)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '6px 14px',
+              borderRadius: '10px',
+              border: selectedFolder === folder.id ? `1.5px solid ${folder.color}` : `1px solid ${folder.border}`,
+              background: selectedFolder === folder.id ? folder.color : folder.bg,
+              color: selectedFolder === folder.id ? '#fff' : folder.color,
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: '0.2s',
+              boxShadow: selectedFolder === folder.id ? `0 4px 12px ${folder.color}30` : 'none'
+            }}
+          >
+            <folder.icon size={14} />
+            <span>{folder.label}:</span>
+            <strong style={{ opacity: 0.9 }}>{folder.count}</strong>
+          </button>
+        ))}
+      </div>
+
+      {/* 2. BOTTOM SECTION */}
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: isSplitView ? '0.35fr 1.65fr' : '1fr 0fr', gap: '12px', minHeight: 0 }}>
         
-        {/* CÁNH TRÁI: BẢNG DỮ LIỆU YÊU CẦU HÓA ĐƠN */}
-        <div className="orders-data-side">
-          <div style={{ 
-            padding: '4px 0', 
-            background: '#ffffff', 
-            display: 'flex', 
-            flexWrap: 'wrap', 
-            alignItems: 'center', 
-            gap: '8px' 
-          }}>
-            <label className="search-box" style={{ flex: '1 1 220px', minHeight: '34px', height: '34px', padding: '0 10px', border: '1px solid #cbd5e1', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Search size={14} style={{ color: '#64748b' }} />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Tìm số đơn, KH, VIN..."
-                style={{ fontSize: '12.5px', border: 'none', outline: 'none', width: '100%', color: '#1e293b' }}
-              />
-            </label>
-            
-            <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px', flex: '2 1 auto' }} className="no-scrollbar">
-              {['all', 'Chờ phê duyệt', 'Đã phê duyệt', 'Yêu cầu bổ sung', 'Chờ ký hóa đơn', 'Đã xuất hóa đơn'].map((status) => (
-                <button
-                  key={status}
-                  className={statusFilter === status ? 'primary-button' : 'ghost-button'}
-                  style={{ fontSize: '11.5px', height: '34px', padding: '0 10px', borderRadius: '8px', whiteSpace: 'nowrap', fontWeight: 600 }}
-                  onClick={() => setStatusFilter(status)}
-                >
-                  {status === 'all' ? 'Tất cả' : status}
-                </button>
-              ))}
-            </div>
+        {/* COLUMN 2: DATA LIST (Ultra Mini) */}
+        <div className={`orders-data-side ${mobileView === 'detail' ? 'hidden-mobile' : ''}`} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', minHeight: 0 }}>
+          <div style={{ position: 'relative' }}>
+            <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+            <input 
+              type="text" 
+              placeholder="Tìm kiếm..." 
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              style={{ width: '100%', padding: '8px 12px 8px 36px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '12px', background: '#f8fafc', outline: 'none' }}
+            />
           </div>
 
-          <div className="table-wrap" style={{ marginTop: '4px' }}>
-            {isMobile ? (
-              <div className="invoice-mobile-card-list">
+          <div className="table-wrap custom-scrollbar" style={{ flex: 1, overflowY: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
+              <tbody>
                 {filtered.length === 0 ? (
-                  <div className="empty-state" style={{ padding: '24px 16px', textAlign: 'center' }}>
-                    Không tìm thấy yêu cầu hóa đơn nào.
-                  </div>
-                ) : (
-                  filtered.map((r) => {
-                    const isActive = selectedRequest?.id === r.id;
-                    const currentStatus = getWorkflowStatus(r);
-                    return (
-                      <button
-                        key={r.id}
-                        type="button"
-                        className={isActive ? 'invoice-mobile-card active' : 'invoice-mobile-card'}
-                        onClick={() => {
-                          setSelectedRequestId(r.id);
-                          setMobileView('detail');
-                        }}
-                      >
-                        <div className="invoice-mobile-card-header">
-                          <div className="invoice-mobile-card-headings">
-                            <p className="invoice-mobile-card-title">{r.so_don_hang}</p>
-                            <p className="invoice-mobile-card-subtitle">{r.ten_khach_hang}</p>
-                          </div>
-                          {renderTableStatus(currentStatus)}
-                        </div>
-
-                        <div className="invoice-mobile-card-divider" />
-
-                        <div className="invoice-mobile-card-bottom">
-                          <div className="invoice-mobile-card-meta">
-                            <span>VIN</span>
-                            <strong>{r.vin || '---'}</strong>
-                          </div>
-                          <div className="invoice-mobile-card-meta invoice-mobile-card-meta-right">
-                            <span>Tư vấn bán hàng</span>
-                            <strong>{r.tvbh || r.requested_by_name || 'Hệ thống'}</strong>
-                          </div>
-                        </div>
-
-                        <div className="invoice-mobile-card-footer">
-                          <span>{r.dong_xe || '---'}</span>
-                          <strong>{r.phien_ban || '---'}</strong>
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            ) : (
-              <table>
-                <thead>
                   <tr>
-                    <th>Số đơn & Khách hàng</th>
-                    <th>VIN / Dòng xe</th>
-                    <th>Trạng thái</th>
+                    <td style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '12px' }}>Trống</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filtered.length === 0 ? (
-                    <tr>
-                      <td colSpan={3} style={{ textAlign: 'center', padding: '30px', color: '#64748b', fontStyle: 'italic' }}>
-                        Không tìm thấy yêu cầu hóa đơn nào.
+                ) : (
+                  filtered.map(r => (
+                    <tr 
+                      key={r.id}
+                      onClick={() => {
+                        setSelectedRequestId(r.id);
+                        setMobileView('detail');
+                      }}
+                      style={{
+                        cursor: 'pointer',
+                        background: selectedRequestId === r.id ? '#f0f9ff' : 'transparent',
+                        transition: '0.1s'
+                      }}
+                    >
+                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 800, color: '#0284c7', fontFamily: 'monospace' }}>{r.so_don_hang}</div>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.ten_khach_hang}</div>
                       </td>
                     </tr>
-                  ) : (
-                    filtered.map((r) => {
-                      const isActive = selectedRequest?.id === r.id;
-                      const currentStatus = getWorkflowStatus(r);
-                      return (
-                        <tr 
-                          key={r.id}
-                          onClick={() => setSelectedRequestId(r.id)}
-                          className={isActive ? 'active-row' : ''}
-                          style={{ cursor: 'pointer', transition: 'background 0.15s' }}
-                        >
-                          <td>
-                            <div style={{ fontWeight: 700, color: '#0f766e', fontSize: '12.5px' }}>{r.so_don_hang}</div>
-                            <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '12px', marginTop: '1px' }}>{r.ten_khach_hang}</div>
-                          </td>
-                          <td>
-                            <div style={{ fontWeight: 600, color: '#334155', fontSize: '12px' }}>{r.vin || '---'}</div>
-                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '1px' }}>{r.dong_xe || ''} {r.phien_ban || ''}</div>
-                          </td>
-                          <td>
-                            {renderTableStatus(currentStatus)}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            )}
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* CÁNH PHẢI: CHI TIẾT YÊU CẦU HÓA ĐƠN WIDGET */}
-        <div className="orders-visual-side">
-          <div className="order-detail-widget-container" style={{ 
-            flex: 1, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            background: '#f8fafc', 
-            borderRadius: '20px', 
-            border: '1px solid #cbd5e1', 
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', 
-            padding: '16px', 
-            gap: '12px', 
-            minHeight: 0,
-            overflowY: 'auto'
-          }}>
-            {selectedRequest ? (
-              <>
-                {isMobile ? (
-                  <div className="invoice-mobile-detail-view" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <button
-                      type="button"
-                      className="ghost-button orders-mobile-back"
-                      onClick={() => setMobileView('list')}
-                      style={{ alignSelf: 'flex-start', height: '32px', padding: '0 10px', fontSize: '12px' }}
-                    >
-                      <ArrowLeft size={14} />
-                      <span>Danh sách</span>
-                    </button>
-
-                    <div className="invoice-mobile-detail-shell" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '20px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
-                        <div className="clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedRequest.so_don_hang, 'Mã đơn')} style={{ minWidth: 0 }}>
-                          <p style={{ margin: 0, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', fontWeight: 700 }}>CHI TIẾT YÊU CẦU HĐ</p>
-                          <h3 style={{ margin: '2px 0 0', fontSize: '18px', lineHeight: 1.15, fontWeight: 700, color: '#0f172a' }}>{selectedRequest.so_don_hang}</h3>
-                          <p style={{ margin: '2px 0 0', fontSize: '12px', fontWeight: 500, color: '#475569' }}>{selectedRequest.ten_khach_hang}</p>
-                        </div>
-                        {renderTableStatus(workflowStatus)}
-                      </div>
-
-                      <div style={{ height: '1px', width: '100%', background: '#f1f5f9' }} />
-
-                      <div className="invoice-mobile-section" style={{ background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '18px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '8px', borderBottom: '1px dashed #e2e8f0', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', letterSpacing: '0.04em' }}>
-                          <User size={14} />
-                          <span>Nhân sự & Thời gian</span>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
-                          <div className="clickable-copy-field" title="Click để copy tên khách" onClick={() => copyToClipboard(selectedRequest.ten_khach_hang, 'Tên khách')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Khách hàng</span>
-                            <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedRequest.ten_khach_hang}</strong>
-                          </div>
-
-                          <div className="clickable-copy-field" title="Click để copy tên TVBH" onClick={() => copyToClipboard(selectedRequest.tvbh || selectedRequest.requested_by_name || '', 'Tên TVBH')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, textAlign: 'right', alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tư vấn bán hàng</span>
-                            <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedRequest.tvbh || selectedRequest.requested_by_name || 'Hệ thống'}</strong>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Ngày gửi yêu cầu</span>
-                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{formatMobileDate(selectedRequest.ngay_yeu_cau || selectedRequest.created_at)}</strong>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Trạng thái</span>
-                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{workflowStatus}</strong>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="invoice-mobile-section" style={{ background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '18px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '8px', borderBottom: '1px dashed #e2e8f0', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', letterSpacing: '0.04em' }}>
-                          <Car size={14} />
-                          <span>Xe & Hệ thống</span>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', gridColumn: 'span 2' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cấu hình đặt cọc</span>
-                            <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.dong_xe || '---'} {selectedRequest.phien_ban || ''}</strong>
-                            <small style={{ fontSize: '11px', color: '#64748b' }}>🎨 {selectedRequest.ngoai_that || '---'} / {selectedRequest.noi_that || '---'}</small>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Chính sách</span>
-                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.chinh_sach || 'Mặc định'}</strong>
-                          </div>
-
-                          <div className={selectedRequest.vin ? 'clickable-copy-field' : ''} title={selectedRequest.vin ? 'Click để copy số VIN' : ''} onClick={() => selectedRequest.vin && copyToClipboard(selectedRequest.vin, 'Số VIN')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Số VIN</span>
-                            <strong style={{ fontSize: '13px', color: selectedRequest.vin ? '#0f766e' : '#475569', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedRequest.vin || 'Chưa ghép'}</strong>
-                          </div>
-
-                          <div className={selectedRequest.so_may ? 'clickable-copy-field' : ''} title={selectedRequest.so_may ? 'Click để copy số máy' : ''} onClick={() => selectedRequest.so_may && copyToClipboard(selectedRequest.so_may, 'Số máy')} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Số máy</span>
-                            <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedRequest.so_may || 'Trống'}</strong>
-                          </div>
-
-                          {selectedRequest.xe_xang_vin ? (
-                            <div className="clickable-copy-field" title="Click để copy VIN xe xăng" onClick={() => copyToClipboard(selectedRequest.xe_xang_vin || '', 'VIN xe xăng')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', gridColumn: 'span 2' }}>
-                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Xe xăng cũ đổi mới</span>
-                              <strong style={{ fontSize: '13px', color: '#0284c7', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedRequest.xe_xang_vin}</strong>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div className="invoice-mobile-section" style={{ background: '#ffffff', border: '1px solid #f1f5f9', borderRadius: '18px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '8px', borderBottom: '1px dashed #e2e8f0', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#b45309', letterSpacing: '0.04em' }}>
-                          <CreditCard size={14} />
-                          <span>Tài chính & Hồ sơ</span>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Số tiền khách đã đóng</span>
-                            <strong style={{ fontSize: '13px', color: '#0f766e', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.so_tien_khach_da_dong ? new Intl.NumberFormat('vi-VN').format(selectedRequest.so_tien_khach_da_dong) + ' ₫' : '---'}</strong>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hình thức TT</span>
-                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.hinh_thuc_tt || '---'}</strong>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Nguồn khách</span>
-                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.nguon_khach || '---'}</strong>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Mã VSO</span>
-                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.ma_vso || '---'}</strong>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Số hợp đồng</span>
-                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedRequest.so_hop_dong || '---'}</strong>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Ngày ký HĐ</span>
-                            <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{formatMobileDate(selectedRequest.ngay_ky_hop_dong)}</strong>
-                          </div>
-
-                          <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tài liệu đính kèm</span>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                              {selectedRequest.url_hop_dong ? (
-                                <a href={selectedRequest.url_hop_dong} target="_blank" rel="noreferrer" className="ghost-button row-action-button" style={{ height: '30px', padding: '0 10px', borderRadius: '6px', fontSize: '11.5px' }}>
-                                  <ExternalLink size={13} /> <span>HĐMB</span>
-                                </a>
-                              ) : (
-                                <span style={{ fontSize: '11px', color: '#94a3b8', padding: '4px 8px', border: '1px dashed #e2e8f0', borderRadius: '6px' }}>Chưa có HĐMB</span>
-                              )}
-
-                              {(selectedRequest.url_de_nghi_xhd || selectedRequest.link_de_nghi_xhd) ? (
-                                <a href={selectedRequest.url_de_nghi_xhd || selectedRequest.link_de_nghi_xhd || '#'} target="_blank" rel="noreferrer" className="ghost-button row-action-button" style={{ height: '30px', padding: '0 10px', borderRadius: '6px', fontSize: '11.5px' }}>
-                                  <ExternalLink size={13} /> <span>Đề nghị XHĐ</span>
-                                </a>
-                              ) : null}
-
-                              {selectedRequest.url_hoa_don_da_xuat ? (
-                                <a href={selectedRequest.url_hoa_don_da_xuat} target="_blank" rel="noreferrer" className="ghost-button row-action-button" style={{ height: '30px', padding: '0 10px', borderRadius: '6px', fontSize: '11.5px', borderColor: '#059669', color: '#059669' }}>
-                                  <FileText size={13} /> <span>Hóa đơn gốc</span>
-                                </a>
-                              ) : null}
-                            </div>
-                          </div>
-
-                          {selectedRequest.ghi_chu || selectedRequest.ghi_chu_ai ? (
-                            <div style={{ gridColumn: 'span 2', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '10px 12px' }}>
-                              <span style={{ fontSize: '10px', color: '#1d4ed8', display: 'block', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Thông tin hỗ trợ / Ghi chú</span>
-                              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#1e40af', fontStyle: 'italic', lineHeight: 1.4, fontWeight: 500 }}>{selectedRequest.ghi_chu || selectedRequest.ghi_chu_ai}</p>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div className="invoice-mobile-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                        {canApprove && ['Chờ phê duyệt', 'Đã bổ sung'].includes(workflowStatus) && (
-                          <>
-                            <button className="primary-button" style={{ background: '#059669', color: '#ffffff', height: '34px', fontSize: '11.5px' }} disabled={isProcessing} onClick={() => onApprove(selectedRequest)}>
-                              <CheckSquare size={16} />
-                              <span>Phê duyệt HĐ</span>
-                            </button>
-                            <button className="ghost-button" style={{ color: '#dc2626', borderColor: '#fca5a5', height: '34px', fontSize: '11.5px' }} disabled={isProcessing} onClick={() => onRequestSupplement(selectedRequest)}>
-                              <XCircle size={16} />
-                              <span>Y/C Bổ sung</span>
-                            </button>
-                          </>
-                        )}
-
-                        {canApprove && workflowStatus === 'Đã phê duyệt' && (
-                          <button className="primary-button" style={{ gridColumn: 'span 2', height: '34px', fontSize: '11.5px' }} disabled={isProcessing} onClick={() => onPendingSignature(selectedRequest)}>
-                            <CheckSquare size={16} />
-                            <span>Chuyển trạng thái: Chờ ký HĐ</span>
-                          </button>
-                        )}
-
-                        {canApprove && workflowStatus === 'Chờ ký hóa đơn' && (
-                          <button className="primary-button" style={{ gridColumn: 'span 2', background: '#0f766e', height: '34px', fontSize: '11.5px' }} disabled={isProcessing} onClick={() => onUploadInvoice(selectedRequest)}>
-                            <FilePlus2 size={16} />
-                            <span>Tải Hóa Đơn Lên Hệ Thống</span>
-                          </button>
-                        )}
-
-                        {workflowStatus === 'Yêu cầu bổ sung' && (
-                          <button className="primary-button" style={{ gridColumn: 'span 2', background: '#d97706', height: '34px', fontSize: '11.5px' }} onClick={() => onSupplement(selectedRequest)}>
-                            <FilePlus2 size={16} />
-                            <span>Thực hiện bổ sung hồ sơ</span>
-                          </button>
-                        )}
-
-                        {workflowStatus === 'Đã xuất hóa đơn' && (
-                          <div style={{ gridColumn: 'span 2', padding: '10px', textAlign: 'center', background: '#ecfdf5', color: '#047857', borderRadius: '12px', border: '1px solid #a7f3d0', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                            <CheckCircle2 size={16} />
-                            <span>Yêu cầu này đã hoàn tất quy trình</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-
-                {!isMobile ? (
-                  <>
-                    {/* Header Widget */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '10px' }}>
+        {/* COLUMN 3: DETAIL VIEW (FULL INFO) */}
+        <div className={`orders-visual-side ${mobileView !== 'detail' ? 'hidden-mobile' : ''}`} style={{ display: 'flex', flexDirection: 'column', minWidth: 0, background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          {selectedRequest ? (
+            <>
+              {/* PREMIUM HEADER */}
+              <div style={{ 
+                background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)', 
+                padding: '20px 32px', 
+                color: '#fff', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                flexShrink: 0
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                  <button onClick={() => setMobileView('list')} className="mobile-only" style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', padding: '8px', borderRadius: '10px' }}><ArrowLeft size={18} /></button>
+                  <div style={{ width: '50px', height: '50px', background: 'rgba(255,255,255,0.1)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: 900 }}>{selectedRequest.ten_khach_hang.charAt(0)}</div>
                   <div>
-                    <span style={{ fontSize: '10.5px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chi tiết yêu cầu HĐ</span>
-                    <h3 className="clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedRequest.so_don_hang, 'Mã đơn')} style={{ margin: '2px 0 0 0', fontSize: '18px', fontWeight: 800, color: '#0f766e', letterSpacing: '-0.02em' }}>
-                      {selectedRequest.so_don_hang}
-                    </h3>
-                  </div>
-                  {renderTableStatus(workflowStatus)}
-                </div>
-
-                {/* Modul 1: Nhân sự & Thời gian */}
-                <div className="order-detail-card-module" style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minHeight: 0, boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '6px', borderBottom: '1px dashed #cbd5e1', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#0f766e', letterSpacing: '0.04em' }}>
-                    <User size={14} />
-                    <span>Nhân sự & Thời gian</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
-                    <div className="clickable-copy-field" title="Click để copy tên khách" onClick={() => copyToClipboard(selectedRequest.ten_khach_hang, 'Tên khách')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Khách hàng</span>
-                      <strong style={{ fontSize: '14px', color: '#0f172a', fontWeight: 700 }}>{selectedRequest.ten_khach_hang}</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '2px' }}>
+                      <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>{selectedRequest.ten_khach_hang}</h2>
+                      {renderStatusBadge(getWorkflowStatus(selectedRequest))}
                     </div>
-
-                    <div className="clickable-copy-field" title="Click để copy tên TVBH" onClick={() => copyToClipboard(selectedRequest.tvbh || selectedRequest.requested_by_name || '', 'Tên TVBH')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Tư vấn bán hàng</span>
-                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{selectedRequest.tvbh || selectedRequest.requested_by_name || 'Hệ thống'}</strong>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Ngày gửi yêu cầu</span>
-                      <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 600 }}>
-                        {selectedRequest.ngay_yeu_cau || selectedRequest.created_at ? new Date(selectedRequest.ngay_yeu_cau || selectedRequest.created_at).toLocaleDateString('vi-VN') : 'N/A'}
-                      </strong>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Nguồn khách</span>
-                      <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 700 }}>{selectedRequest.nguon_khach || '---'}</strong>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Mã VSO</span>
-                      <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 700 }}>{selectedRequest.ma_vso || '---'}</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', opacity: 0.8, fontSize: '12px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><FileText size={13} /> {selectedRequest.so_don_hang}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><User size={13} /> TVBH: {selectedRequest.tvbh || selectedRequest.requested_by_name}</span>
                     </div>
                   </div>
                 </div>
-
-                {/* Modul 2: Xe & Hệ thống */}
-                <div className="order-detail-card-module" style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1.5, minHeight: 0, boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '6px', borderBottom: '1px dashed #cbd5e1', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#0f766e', letterSpacing: '0.04em' }}>
-                    <Car size={14} />
-                    <span>Xe & Hệ thống</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Cấu hình đặt cọc</span>
-                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{selectedRequest.dong_xe || '---'} {selectedRequest.phien_ban || ''}</strong>
-                      <small style={{ fontSize: '11px', color: '#64748b', fontWeight: 500 }}>🎨 {selectedRequest.ngoai_that || '---'} / {selectedRequest.noi_that || '---'}</small>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Chính sách</span>
-                      <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 700, lineHeight: 1.3 }}>{selectedRequest.chinh_sach || 'Mặc định'}</strong>
-                    </div>
-
-                    <div className={selectedRequest.vin ? "clickable-copy-field" : ""} title={selectedRequest.vin ? "Click để copy số VIN" : ""} onClick={() => selectedRequest.vin && copyToClipboard(selectedRequest.vin, 'Số VIN')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Số VIN ghép</span>
-                      <strong style={{ fontSize: '13.5px', color: selectedRequest.vin ? '#0f766e' : '#475569', fontWeight: 700 }}>{selectedRequest.vin || 'Chưa ghép'}</strong>
-                    </div>
-
-                    <div className={selectedRequest.so_may ? "clickable-copy-field" : ""} title={selectedRequest.so_may ? "Click để copy số máy" : ""} onClick={() => selectedRequest.so_may && copyToClipboard(selectedRequest.so_may, 'Số máy')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Số máy</span>
-                      <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 700 }}>{selectedRequest.so_may || 'Trống'}</strong>
-                    </div>
-
-
-                    {selectedRequest.xe_xang_vin ? (
-                      <div className="clickable-copy-field" title="Click để copy VIN xe xăng" onClick={() => copyToClipboard(selectedRequest.xe_xang_vin || '', 'VIN xe xăng')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
-                        <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Xe xăng cũ đổi mới</span>
-                        <strong style={{ fontSize: '13.5px', color: '#0284c7', fontWeight: 700 }}>{selectedRequest.xe_xang_vin}</strong>
-                      </div>
-                    ) : null}
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Số tiền khách đã đóng</span>
-                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>
-                        {selectedRequest.so_tien_khach_da_dong ? new Intl.NumberFormat('vi-VN').format(selectedRequest.so_tien_khach_da_dong) + ' ₫' : '---'}
-                      </strong>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Hình thức TT</span>
-                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{selectedRequest.hinh_thuc_tt || '---'}</strong>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Địa chỉ</span>
-                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700, wordBreak: 'break-word' }}>{selectedRequest.dia_chi || '---'}</strong>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Số hợp đồng</span>
-                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{selectedRequest.so_hop_dong || '---'}</strong>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Ngày ký HĐ</span>
-                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{formatMobileDate(selectedRequest.ngay_ky_hop_dong)}</strong>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Giá công bố</span>
-                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>
-                        {selectedRequest.gia_cong_bo ? new Intl.NumberFormat('vi-VN').format(selectedRequest.gia_cong_bo) + ' ₫' : '---'}
-                      </strong>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Ghi chú</span>
-                      <strong style={{ fontSize: '13.5px', color: '#0f172a', fontWeight: 700 }}>{selectedRequest.ghi_chu || selectedRequest.ghi_chu_ai || '---'}</strong>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Modul 3: Tài chính & Tài liệu hồ sơ */}
-                <div className="order-detail-card-module" style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1.2, minHeight: 0, boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '6px', borderBottom: '1px dashed #cbd5e1', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#0f766e', letterSpacing: '0.04em' }}>
-                    <CreditCard size={14} />
-                    <span>Tài chính & Hồ sơ</span>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Số tiền khách đã đóng</span>
-                      <strong style={{ fontSize: '14px', color: '#0f766e', fontWeight: 700 }}>
-                        {selectedRequest.so_tien_khach_da_dong ? new Intl.NumberFormat('vi-VN').format(selectedRequest.so_tien_khach_da_dong) + ' ₫' : '---'}
-                      </strong>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Giá công bố</span>
-                      <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 700 }}>
-                        {selectedRequest.gia_cong_bo ? new Intl.NumberFormat('vi-VN').format(selectedRequest.gia_cong_bo) + ' ₫' : '---'}
-                      </strong>
-                    </div>
-
-                    {/* Hồ sơ tài liệu */}
-                    <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Tài liệu đính kèm</span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        {selectedRequest.url_hop_dong ? (
-                          <a href={selectedRequest.url_hop_dong} target="_blank" rel="noreferrer" className="ghost-button row-action-button" style={{ height: '30px', padding: '0 10px', borderRadius: '6px', fontSize: '11.5px' }}>
-                            <ExternalLink size={13} /> <span>HĐMB</span>
-                          </a>
-                        ) : (
-                          <span style={{ fontSize: '11px', color: '#94a3b8', padding: '4px 8px', border: '1px dashed #e2e8f0', borderRadius: '6px' }}>Chưa có HĐMB</span>
-                        )}
-                        
-                        {(selectedRequest.url_de_nghi_xhd || selectedRequest.link_de_nghi_xhd) ? (
-                          <a href={selectedRequest.url_de_nghi_xhd || selectedRequest.link_de_nghi_xhd || '#'} target="_blank" rel="noreferrer" className="ghost-button row-action-button" style={{ height: '30px', padding: '0 10px', borderRadius: '6px', fontSize: '11.5px' }}>
-                            <ExternalLink size={13} /> <span>Đề nghị XHĐ</span>
-                          </a>
-                        ) : null}
-
-                        {selectedRequest.url_hoa_don_da_xuat ? (
-                          <a href={selectedRequest.url_hoa_don_da_xuat} target="_blank" rel="noreferrer" className="ghost-button row-action-button" style={{ height: '30px', padding: '0 10px', borderRadius: '6px', fontSize: '11.5px', borderColor: '#059669', color: '#059669' }}>
-                            <FileText size={13} /> <span>Hóa đơn gốc</span>
-                          </a>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {/* Ghi chú AI */}
-                    {selectedRequest.ghi_chu || selectedRequest.ghi_chu_ai ? (
-                      <div style={{ gridColumn: 'span 2', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '8px 12px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '10px', color: '#1d4ed8', display: 'block', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.02em' }}>Thông tin hỗ trợ / Ghi chú</span>
-                        <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#1e40af', fontStyle: 'italic', lineHeight: 1.4, fontWeight: 500 }}>
-                          {selectedRequest.ghi_chu || selectedRequest.ghi_chu_ai}
-                        </p>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                    {/* BẢNG HÀNH ĐỘNG (Được đưa từ row xuống widget tuyệt đẹp) */}
-                    <div className="orders-detail-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
-                  {canApprove && ['Chờ phê duyệt', 'Đã bổ sung'].includes(workflowStatus) && (
-                    <>
-                      <button
-                        className="primary-button"
-                        style={{ background: '#059669', color: '#ffffff' }}
-                        disabled={isProcessing}
-                        onClick={() => onApprove(selectedRequest)}
-                      >
-                        <CheckSquare size={16} />
-                        <span>Phê duyệt HĐ</span>
-                      </button>
-                      <button 
-                        className="ghost-button" 
-                        style={{ color: '#dc2626', borderColor: '#fca5a5' }}
-                        disabled={isProcessing} 
-                        onClick={() => onRequestSupplement(selectedRequest)}
-                      >
-                        <XCircle size={16} />
-                        <span>Y/C Bổ sung</span>
-                      </button>
-                    </>
-                  )}
-                  
-                  {canApprove && workflowStatus === 'Đã phê duyệt' && (
-                    <button 
-                      className="primary-button" 
-                      style={{ gridColumn: 'span 2' }}
-                      disabled={isProcessing} 
-                      onClick={() => onPendingSignature(selectedRequest)}
-                    >
-                      <CheckSquare size={16} />
-                      <span>Chuyển trạng thái: Chờ ký HĐ</span>
-                    </button>
-                  )}
-
-                  {canApprove && workflowStatus === 'Chờ ký hóa đơn' && (
-                    <button 
-                      className="primary-button" 
-                      style={{ gridColumn: 'span 2', background: '#0f766e' }}
-                      disabled={isProcessing} 
-                      onClick={() => onUploadInvoice(selectedRequest)}
-                    >
-                      <FilePlus2 size={16} />
-                      <span>Tải Hóa Đơn Lên Hệ Thống</span>
-                    </button>
-                  )}
-
-                  {workflowStatus === 'Yêu cầu bổ sung' && (
-                    <button
-                      className="primary-button"
-                      style={{ gridColumn: 'span 2', background: '#d97706' }}
-                      onClick={() => onSupplement(selectedRequest)}
-                    >
-                      <FilePlus2 size={16} />
-                      <span>Thực hiện bổ sung hồ sơ</span>
-                    </button>
-                  )}
-
-                  {workflowStatus === 'Đã xuất hóa đơn' && (
-                    <div style={{ gridColumn: 'span 2', padding: '10px', textAlign: 'center', background: '#ecfdf5', color: '#047857', borderRadius: '8px', border: '1px solid #a7f3d0', fontSize: '13px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                      <CheckCircle2 size={16} />
-                      <span>Yêu cầu này đã hoàn tất quy trình</span>
-                    </div>
-                  )}
-                    </div>
-                  </>
-                ) : null}
-              </>
-            ) : (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#94a3b8', textAlign: 'center', gap: '12px' }}>
-                <HelpCircle size={48} strokeWidth={1.5} />
-                <div>
-                  <p style={{ fontWeight: 600, fontSize: '14px', color: '#64748b', margin: 0 }}>Chưa chọn yêu cầu hóa đơn</p>
-                  <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '4px', lineHeight: 1.5 }}>Hãy chọn một dòng ở bảng bên trái để xem đầy đủ thông tin hồ sơ, chứng từ và phê duyệt.</p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    onClick={() => handleSyncFromOrder(selectedRequest)}
+                    disabled={isSyncing}
+                    style={{ 
+                      display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.2)', 
+                      background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
+                      opacity: isSyncing ? 0.5 : 1
+                    }}
+                  >
+                    <RefreshCw size={14} className={isSyncing ? 'spin' : ''} /> {isSyncing ? 'Đang bộ...' : 'Đồng bộ'}
+                  </button>
+                  <button 
+                    onClick={() => setIsSplitView(!isSplitView)}
+                    style={{ 
+                      display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.2)', 
+                      background: isSplitView ? '#0284c7' : 'rgba(255,255,255,0.1)', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer'
+                    }}
+                  >
+                    <Eye size={14} /> {isSplitView ? 'Đóng Xem File' : 'Mở Xem File'}
+                  </button>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
 
+              {/* CONTENT AREA */}
+              <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+                <div className="custom-scrollbar" style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  
+                  {/* GRID: 4 COLUMNS FOR DENSE INFO */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
+                    
+                    {/* SECTION: KHÁCH HÀNG & NHÂN SỰ */}
+                    <SectionBox title="Khách hàng & Nhân sự" icon={User}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <DetailItem label="Tên khách hàng" value={selectedRequest.ten_khach_hang} copyable />
+                        <DetailItem label="Tư vấn bán hàng" value={selectedRequest.tvbh || selectedRequest.requested_by_name || 'N/A'} copyable />
+                        <DetailItem label="Nguồn khách" value={selectedRequest.nguon_khach || 'Trực tiếp'} />
+                        <DetailItem label="Mã VSO" value={selectedRequest.ma_vso || 'N/A'} copyable />
+                        <DetailItem label="Người yêu cầu" value={selectedRequest.requested_by_name || 'N/A'} />
+                        <DetailItem label="Ngày yêu cầu" value={formatMobileDate(selectedRequest.ngay_yeu_cau || selectedRequest.created_at)} />
+                      </div>
+                    </SectionBox>
+
+                    {/* SECTION: THÔNG TIN XE */}
+                    <SectionBox title="Thông tin xe" icon={Car}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <DetailItem label="Dòng xe" value={selectedRequest.dong_xe} />
+                        <DetailItem label="Phiên bản" value={selectedRequest.phien_ban} />
+                        <DetailItem label="Ngoại thất" value={selectedRequest.ngoai_that} />
+                        <DetailItem label="Nội thất" value={selectedRequest.noi_that} />
+                        <DetailItem label="Số VIN" value={selectedRequest.vin || 'Chưa ghép'} copyable color="#0284c7" />
+                        <DetailItem label="Số máy" value={selectedRequest.so_may || 'N/A'} copyable />
+                        <DetailItem label="Giá công bố" value={formatCurrency(selectedRequest.gia_cong_bo)} color="#b45309" />
+                        <DetailItem label="Ngày cọc" value={formatMobileDate(selectedRequest.ngay_coc)} />
+                      </div>
+                    </SectionBox>
+
+                    {/* SECTION: TÀI CHÍNH & HỢP ĐỒNG */}
+                    <SectionBox title="Tài chính & Hợp đồng" icon={CreditCard}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <DetailItem label="Số tiền đã đóng" value={formatCurrency(selectedRequest.so_tien_khach_da_dong)} color="#059669" />
+                        <DetailItem label="Hình thức TT" value={selectedRequest.hinh_thuc_tt || 'Tiền mặt'} />
+                        <DetailItem label="Số Hợp đồng" value={selectedRequest.so_hop_dong || 'N/A'} copyable />
+                        <DetailItem label="Ngày ký HĐ" value={formatMobileDate(selectedRequest.ngay_ky_hop_dong)} />
+                        <DetailItem label="Chính sách" value={selectedRequest.chinh_sach || 'Mặc định'} isFullWidth />
+                        <DetailItem label="Địa chỉ xuất HĐ" value={selectedRequest.dia_chi || 'N/A'} isFullWidth />
+                      </div>
+                    </SectionBox>
+
+                    {/* SECTION: DỊCH VỤ & THU CŨ */}
+                    <SectionBox title="Dịch vụ & Thu cũ" icon={ShieldCheck}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        <DetailItem label="Mua bảo hiểm" value={selectedRequest.mua_bao_hiem ? '✅ Có' : '❌ Không'} />
+                        <DetailItem label="Đăng ký xe" value={selectedRequest.dang_ky_xe ? '✅ Có' : '❌ Không'} />
+                        <DetailItem label="Xe cũ (Đổi mới)" value={selectedRequest.xe_xang_vin || '❌ Không'} copyable={!!selectedRequest.xe_xang_vin} />
+                        <DetailItem label="Hãng xe cũ" value={selectedRequest.xe_xang_hang || '—'} />
+                        <DetailItem label="Model xe cũ" value={selectedRequest.xe_xang_model || '—'} isFullWidth />
+                      </div>
+                    </SectionBox>
+                  </div>
+
+                  {/* SECTION: HỒ SƠ CHỨNG TỪ */}
+                  <SectionBox title="Hồ sơ chứng từ" icon={ClipboardCheck}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                      <FileDocLink label="Hợp đồng MB" url={selectedRequest.url_hop_dong} onClick={() => { setActiveDocKey('url_hop_dong'); setIsSplitView(true); }} />
+                      <FileDocLink label="Đề nghị XHĐ" url={selectedRequest.url_de_nghi_xhd || selectedRequest.link_de_nghi_xhd} onClick={() => { setActiveDocKey('url_de_nghi_xhd'); setIsSplitView(true); }} />
+                      <FileDocLink label="Hóa đơn điện tử" url={selectedRequest.url_hoa_don_da_xuat} isSuccess onClick={() => { setActiveDocKey('url_hoa_don_da_xuat'); setIsSplitView(true); }} />
+                      {selectedRequest.ngay_xuat_hoa_don && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#059669', background: '#ecfdf5', padding: '6px 12px', borderRadius: '10px', border: '1px solid #a7f3d0' }}>
+                          <Clock size={12} /> Xuất ngày: {formatMobileDate(selectedRequest.ngay_xuat_hoa_don)}
+                        </div>
+                      )}
+                    </div>
+                  </SectionBox>
+
+                  {/* SECTION: GHI CHÚ */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+                    <SectionBox title="Ghi chú từ Tư vấn bán hàng" icon={Info}>
+                      <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: 1.6 }}>{selectedRequest.ghi_chu || 'Không có ghi chú từ TVBH'}</p>
+                    </SectionBox>
+                  </div>
+
+                  {/* STICKY ACTION FOOTER */}
+                  <div style={{ marginTop: '20px', padding: '20px', background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'center', gap: '12px', position: 'sticky', bottom: '0', boxShadow: '0 -4px 15px rgba(0,0,0,0.05)' }}>
+                    {canApprove && ['Chờ phê duyệt', 'Đã bổ sung'].includes(getWorkflowStatus(selectedRequest)) && (
+                      <>
+                        <ActionButton label="Phê duyệt yêu cầu" icon={CheckSquare} color="#059669" onClick={() => onApprove(selectedRequest)} loading={isProcessing} />
+                        <ActionButton label="Yêu cầu bổ sung hồ sơ" icon={XCircle} color="#dc2626" onClick={() => onRequestSupplement(selectedRequest)} loading={isProcessing} />
+                      </>
+                    )}
+                    {canApprove && getWorkflowStatus(selectedRequest) === 'Đã phê duyệt' && <ActionButton label="Chuyển sang trạng thái Chờ ký" icon={CheckSquare} color="#3b82f6" onClick={() => onPendingSignature(selectedRequest)} loading={isProcessing} isFullWidth />}
+                    {canApprove && getWorkflowStatus(selectedRequest) === 'Chờ ký hóa đơn' && <ActionButton label="Tải Hóa Đơn Lên & Hoàn tất" icon={FilePlus2} color="#0f766e" onClick={() => onUploadInvoice(selectedRequest)} loading={isProcessing} isFullWidth />}
+                    {getWorkflowStatus(selectedRequest) === 'Yêu cầu bổ sung' && <ActionButton label="Thực hiện bổ sung hồ sơ ngay" icon={FilePlus2} color="#d97706" onClick={() => onSupplement(selectedRequest)} isFullWidth />}
+                  </div>
+                </div>
+
+                {/* SPLIT PREVIEW */}
+                {isSplitView && (
+                  <div style={{ flex: '1.4', background: '#fff', borderLeft: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '8px', background: '#fff' }}>
+                      <TabButton label="Đề nghị XHĐ" active={activeDocKey === 'url_de_nghi_xhd'} onClick={() => setActiveDocKey('url_de_nghi_xhd')} />
+                      <TabButton label="Hợp đồng MB" active={activeDocKey === 'url_hop_dong'} onClick={() => setActiveDocKey('url_hop_dong')} />
+                      <TabButton label="Hóa đơn" active={activeDocKey === 'url_hoa_don_da_xuat'} onClick={() => setActiveDocKey('url_hoa_don_da_xuat')} />
+                    </div>
+                    <div style={{ flex: 1, background: '#f1f5f9' }}>
+                      {(() => {
+                        let docUrl = selectedRequest[activeDocKey];
+                        // Fallback logic for Đề nghị XHĐ which has two possible fields
+                        if (activeDocKey === 'url_de_nghi_xhd' && !docUrl) {
+                          docUrl = selectedRequest.link_de_nghi_xhd;
+                        }
+
+                        if (docUrl) {
+                          return <iframe src={toEmbeddableUrl(docUrl)} style={{ width: '100%', height: '100%', border: 'none' }} title="Doc" />;
+                        }
+
+                        return (
+                          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
+                            <FileText size={48} style={{ opacity: 0.1, marginBottom: '16px' }} />
+                            <span style={{ fontSize: '13px' }}>Chưa có file chứng từ này</span>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>Chọn một yêu cầu để xem chi tiết</div>
+          )}
+        </div>
       </div>
-    </section>
+    </div>
   );
 };
+
+// COMPONENT HELPERS
+const SectionBox = ({ title, icon: Icon, children }: any) => (
+  <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'hidden', height: '100%' }}>
+    <div style={{ padding: '10px 16px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <Icon size={13} color="#0284c7" strokeWidth={3} />
+      <span style={{ fontSize: '11px', fontWeight: 900, textTransform: 'uppercase', color: '#475569', letterSpacing: '0.02em' }}>{title}</span>
+    </div>
+    <div style={{ padding: '16px' }}>{children}</div>
+  </div>
+);
+
+const DetailItem = ({ label, value, copyable, color = '#1e293b', isFullWidth = false }: any) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', gridColumn: isFullWidth ? '1 / -1' : 'auto' }}>
+    <span style={{ fontSize: '9px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>{label}</span>
+    <div 
+      onClick={() => copyable && value && copyToClipboard(value, label)}
+      style={{ fontSize: '13px', fontWeight: 700, color: color, cursor: copyable ? 'pointer' : 'default', lineHeight: 1.35 }}
+      className={copyable ? 'hover-bg-slate' : ''}
+    >
+      {value || '—'}
+    </div>
+  </div>
+);
+
+const FileDocLink = ({ label, url, isSuccess, onClick }: any) => (
+  <button
+    onClick={onClick}
+    disabled={!url}
+    style={{
+      display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '12px', border: '1px solid #e2e8f0',
+      background: isSuccess ? '#ecfdf5' : '#fff', color: isSuccess ? '#059669' : '#1e293b', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
+      opacity: !url ? 0.3 : 1, transition: '0.2s'
+    }}
+  >
+    <ExternalLink size={14} /> {label} {!url && '(N/A)'}
+  </button>
+);
+
+const ActionButton = ({ label, icon: Icon, color, onClick, loading, isFullWidth }: any) => (
+  <button
+    disabled={loading}
+    onClick={onClick}
+    style={{
+      flex: isFullWidth ? 1 : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '12px 24px',
+      borderRadius: '14px', background: color, color: '#fff', border: 'none', fontSize: '13px', fontWeight: 800, cursor: 'pointer', opacity: loading ? 0.7 : 1,
+      boxShadow: `0 4px 12px ${color}40`
+    }}
+  >
+    {loading ? 'Đang xử lý...' : <><Icon size={18} /> {label}</>}
+  </button>
+);
+
+const TabButton = ({ label, active, onClick }: any) => (
+  <button
+    onClick={onClick}
+    style={{
+      padding: '6px 12px', borderRadius: '8px', border: '1px solid', borderColor: active ? '#0284c7' : '#e2e8f0',
+      background: active ? '#0284c715' : '#fff', color: active ? '#0284c7' : '#64748b', fontSize: '11px', fontWeight: 800, cursor: 'pointer'
+    }}
+  >
+    {label}
+  </button>
+);

@@ -64,10 +64,20 @@ export function mapOrderRow(row: DonhangRow, customerMap: Map<string, CustomerRo
     policy: row.chinh_sach ?? '',
     cancelNote: row.ghi_chu_huy ?? '',
     engineNo: row.so_may ?? '',
-    depositAmount: row.so_tien_coc ?? null,
-    invoiceAddress: row.dia_chi_xhd ?? '',
-    contractCode: row.ma_hop_dong ?? '',
-    paymentMethod: row.tm_vay ?? ''
+    depositAmount: row.so_tien_coc ?? row.so_tien_khach_da_dong ?? null,
+    soTienKhachDaDong: row.so_tien_khach_da_dong ?? row.so_tien_coc ?? null,
+    ngayKyHopDong: row.ngay_ky_hop_dong ?? null,
+    invoiceAddress: row.dia_chi_xhd ?? row.dia_chi ?? '',
+    contractCode: row.ma_hop_dong ?? row.so_hop_dong ?? '',
+    paymentMethod: row.tm_vay ?? row.hinh_thuc_tt ?? '',
+    nguonKhach: row.nguon_khach ?? '',
+    muaBaoHiem: row.mua_bao_hiem ?? null,
+    dangKyXe: row.dang_ky_xe ?? null,
+    xeXangVin: row.xe_xang_vin ?? '',
+    xeXangHang: row.xe_xang_hang ?? '',
+    xeXangModel: row.xe_xang_model ?? '',
+    giaCongBo: row.gia_cong_bo ?? null,
+    ghiChu: row.ghi_chu ?? ''
   };
 }
 
@@ -461,9 +471,22 @@ export const updateOrderDetails = async (
     thoi_gian_can_xe: input.needDate || null,
     updated_at: new Date().toISOString(),
     so_tien_coc: input.depositAmount || null,
+    so_tien_khach_da_dong: input.soTienKhachDaDong ?? input.depositAmount ?? null,
+    ngay_ky_hop_dong: input.ngayKyHopDong || null,
     dia_chi_xhd: input.invoiceAddress || null,
+    dia_chi: input.invoiceAddress || null,
     ma_hop_dong: input.contractCode || null,
-    tm_vay: input.paymentMethod || null
+    so_hop_dong: input.contractCode || null,
+    tm_vay: input.paymentMethod || null,
+    hinh_thuc_tt: input.paymentMethod || null,
+    nguon_khach: input.nguonKhach?.trim() || null,
+    mua_bao_hiem: input.muaBaoHiem ?? null,
+    dang_ky_xe: input.dangKyXe ?? null,
+    xe_xang_vin: input.xeXangVin?.trim() || null,
+    xe_xang_hang: input.xeXangHang?.trim() || null,
+    xe_xang_model: input.xeXangModel?.trim() || null,
+    gia_cong_bo: input.giaCongBo ?? null,
+    ghi_chu: input.ghiChu?.trim() || null
   };
 
   if (criticalChanged) {
@@ -486,6 +509,19 @@ export const updateOrderDetails = async (
     .from('yeucauxhd')
     .update({
       ten_khach_hang: input.customer,
+      so_tien_khach_da_dong: input.soTienKhachDaDong ?? input.depositAmount ?? null,
+      ngay_ky_hop_dong: input.ngayKyHopDong || null,
+      dia_chi: input.invoiceAddress || null,
+      so_hop_dong: input.contractCode || null,
+      hinh_thuc_tt: input.paymentMethod || null,
+      nguon_khach: input.nguonKhach?.trim() || null,
+      mua_bao_hiem: input.muaBaoHiem ?? null,
+      dang_ky_xe: input.dangKyXe ?? null,
+      xe_xang_vin: input.xeXangVin?.trim() || null,
+      xe_xang_hang: input.xeXangHang?.trim() || null,
+      xe_xang_model: input.xeXangModel?.trim() || null,
+      gia_cong_bo: input.giaCongBo ?? null,
+      ghi_chu: input.ghiChu?.trim() || null,
       updated_at: new Date().toISOString()
     })
     .eq('so_don_hang', input.orderId);
@@ -773,6 +809,7 @@ type RequestInvoiceInput = {
   contractFile: File;
   proposalFile: File;
   policy: string;
+  soTienKhachDaDong?: number | null;
   diaChi?: string;
   aiNote?: string;
   xeXangVin?: string;
@@ -780,9 +817,11 @@ type RequestInvoiceInput = {
   xeXangModel?: string;
   nguonKhach?: string;
   ngayKyHopDong?: string;
+  soHopDong?: string;
+  hinhThucTT?: string;
   muaBaoHiem?: boolean;
   dangKyXe?: boolean;
-  giaCongBo?: string;
+  giaCongBo?: string | number | null;
   ghiChu?: string;
   requesterName: string;
   requesterUsername: string;
@@ -833,7 +872,7 @@ async function uploadInvoiceFile(orderId: string, kind: 'hop_dong' | 'de_nghi_xh
   return { url: data.publicUrl, error: null };
 }
 
-async function getOrderRow(orderId: string) {
+export async function getOrderRow(orderId: string) {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   return await supabase
     .from('donhang')
@@ -891,17 +930,17 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
     return serviceError('Đơn hàng này đang có yêu cầu xuất hóa đơn chờ duyệt.');
   }
 
-  const xeXangVin = input.xeXangVin?.trim() || '';
-  if (xeXangVin) {
+  const requestedGasVin = input.xeXangVin?.trim() || '';
+  if (requestedGasVin) {
     const { data: duplicateGasVin, error: duplicateError } = await supabase
       .from('yeucauxhd')
       .select('so_don_hang')
-      .eq('xe_xang_vin', xeXangVin)
+      .eq('xe_xang_vin', requestedGasVin)
       .limit(1);
 
     if (duplicateError) return { data: null, error: duplicateError };
     if (duplicateGasVin && duplicateGasVin.length > 0) {
-      return serviceError(`VIN xe xăng ${xeXangVin} đã được khai báo ở đơn ${duplicateGasVin[0].so_don_hang}.`);
+      return serviceError(`VIN xe xăng ${requestedGasVin} đã được khai báo ở đơn ${duplicateGasVin[0].so_don_hang}.`);
     }
   }
 
@@ -917,32 +956,56 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
   const vehicleMeta = await getVehicleMetadata(vin);
   const { data: userData } = await supabase.auth.getUser();
   const requestedBy = userData.user?.id ?? null;
-  const depositAmount = orderRow.so_tien_coc ?? input.order.depositAmount ?? null;
   const invoiceAddress = input.diaChi?.trim() || orderRow.dia_chi_xhd || input.order.invoiceAddress || null;
   const contractCode = orderRow.ma_hop_dong || input.order.contractCode || null;
   const paymentMethod = orderRow.tm_vay || input.order.paymentMethod || null;
   const ngayKyHopDong = maybeDate(input.ngayKyHopDong) || maybeDate(input.order.needDateIso) || maybeDate(input.order.depositDate);
+  const soTienKhachDaDong = maybeNumber(input.soTienKhachDaDong) ?? orderRow.so_tien_khach_da_dong ?? input.order.soTienKhachDaDong ?? input.order.depositAmount ?? null;
+  const diaChi = invoiceAddress || orderRow.dia_chi || null;
+  const soHopDong = input.soHopDong?.trim() || orderRow.so_hop_dong || contractCode || null;
+  const hinhThucTT = input.hinhThucTT?.trim() || orderRow.hinh_thuc_tt || paymentMethod || null;
+  const nguonKhach = input.nguonKhach?.trim() || orderRow.nguon_khach || input.order.nguonKhach || null;
+  const muaBaoHiem = input.muaBaoHiem ?? orderRow.mua_bao_hiem ?? input.order.muaBaoHiem ?? null;
+  const dangKyXe = input.dangKyXe ?? orderRow.dang_ky_xe ?? input.order.dangKyXe ?? null;
+  const xeXangVin = input.xeXangVin?.trim() || orderRow.xe_xang_vin || input.order.xeXangVin || null;
+  const xeXangHang = input.xeXangHang?.trim() || orderRow.xe_xang_hang || input.order.xeXangHang || null;
+  const xeXangModel = input.xeXangModel?.trim() || orderRow.xe_xang_model || input.order.xeXangModel || null;
+  const giaCongBo = maybeNumber(input.giaCongBo) ?? orderRow.gia_cong_bo ?? input.order.giaCongBo ?? null;
+  const ghiChu = input.ghiChu?.trim() || orderRow.ghi_chu || input.order.ghiChu || input.aiNote?.trim() || null;
 
   const invoiceRow = {
     so_don_hang: orderId,
     ten_khach_hang: orderRow.ten_khach_hang || input.order.customer,
     vin,
+    tvbh: orderRow.ten_tu_van_ban_hang || input.order.staff || null,
+    dong_xe: orderRow.dong_xe || input.order.line || null,
+    phien_ban: orderRow.phien_ban || input.order.version || null,
+    ngoai_that: orderRow.ngoai_that || input.order.exterior || null,
+    noi_that: orderRow.noi_that || input.order.interior || null,
+    ngay_coc: orderRow.ngay_coc || input.order.depositDate || null,
+    so_may: vehicleMeta.so_may || orderRow.so_may || input.order.engineNo || null,
     requested_by: requestedBy,
     requested_by_name: input.requesterName,
     requested_by_username: input.requesterUsername,
+    url_hop_dong: contractUpload.url,
+    url_de_nghi_xhd: proposalUpload.url,
     link_de_nghi_xhd: proposalUpload.url,
-    chinh_sach: input.policy,
-    so_tien_khach_da_dong: depositAmount,
-    dia_chi: invoiceAddress,
-    so_hop_dong: contractCode,
+    chinh_sach: input.policy || orderRow.chinh_sach || input.order.policy,
+    so_tien_khach_da_dong: soTienKhachDaDong,
+    dia_chi: diaChi,
+    so_hop_dong: soHopDong,
     ngay_ky_hop_dong: ngayKyHopDong,
-    hinh_thuc_tt: paymentMethod,
-    nguon_khach: input.nguonKhach?.trim() || null,
-    mua_bao_hiem: input.muaBaoHiem ?? null,
-    dang_ky_xe: input.dangKyXe ?? null,
-    gia_cong_bo: maybeNumber(input.giaCongBo),
-    ghi_chu: input.ghiChu?.trim() || input.aiNote?.trim() || null,
-    coc: depositAmount !== null || Boolean(orderRow.ngay_coc || input.order.depositDate),
+    hinh_thuc_tt: hinhThucTT,
+    nguon_khach: nguonKhach,
+    ma_vso: input.order.id || null, // Sử dụng ID đơn hàng làm mã VSO nếu không có trường riêng
+    mua_bao_hiem: muaBaoHiem,
+    dang_ky_xe: dangKyXe,
+    xe_xang_vin: xeXangVin,
+    xe_xang_hang: xeXangHang,
+    xe_xang_model: xeXangModel,
+    gia_cong_bo: giaCongBo,
+    ghi_chu: ghiChu,
+    coc: soTienKhachDaDong !== null || Boolean(orderRow.ngay_coc || input.order.depositDate),
     status: 'pending',
     note: 'Chờ phê duyệt xuất hóa đơn'
   };
@@ -956,9 +1019,23 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
       ket_qua: 'Chờ phê duyệt',
       chinh_sach: input.policy,
       dia_chi_xhd: invoiceAddress,
+      dia_chi: diaChi,
       link_hop_dong: contractUpload.url,
       link_de_nghi_xhd: proposalUpload.url,
       so_may: invoiceRow.so_may,
+      so_tien_coc: input.order.depositAmount ?? orderRow.so_tien_coc ?? null,
+      so_tien_khach_da_dong: soTienKhachDaDong,
+      so_hop_dong: soHopDong,
+      ngay_ky_hop_dong: ngayKyHopDong,
+      hinh_thuc_tt: hinhThucTT,
+      nguon_khach: nguonKhach,
+      mua_bao_hiem: muaBaoHiem,
+      dang_ky_xe: dangKyXe,
+      xe_xang_vin: xeXangVin,
+      xe_xang_hang: xeXangHang,
+      xe_xang_model: xeXangModel,
+      gia_cong_bo: giaCongBo,
+      ghi_chu: ghiChu,
       updated_at: new Date().toISOString()
     })
     .eq('so_don_hang', orderId);

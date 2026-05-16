@@ -42,9 +42,18 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     needDate: new Date().toISOString().slice(0, 10),
     pairedVin: initialVehicle?.vin,
     depositAmount: null,
+    ngayKyHopDong: '',
     invoiceAddress: '',
     contractCode: '',
-    paymentMethod: 'Tiền mặt'
+    paymentMethod: 'Tiền mặt',
+    nguonKhach: '',
+    muaBaoHiem: null,
+    dangKyXe: null,
+    xeXangVin: '',
+    xeXangHang: '',
+    xeXangModel: '',
+    giaCongBo: null,
+    ghiChu: ''
   });
   const [policyRows, setPolicyRows] = React.useState<SalesPolicyRow[]>([]);
   const [policyLoading, setPolicyLoading] = React.useState(true);
@@ -129,6 +138,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
   const selectedPolicyCount = form.policy.length;
   const selectedPolicyPreview = form.policy[0] || '';
+  const isGasToElectricPolicy = form.policy.some((name) => name.toLowerCase().includes('thu cũ'));
   const isFormValid = Boolean(
     form.orderId.trim() &&
     form.customer.trim() &&
@@ -277,6 +287,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             <select value={form.paymentMethod || 'Tiền mặt'} onChange={(event) => updateField('paymentMethod', event.target.value)} required>
               <option value="Tiền mặt">Tiền mặt</option>
               <option value="Vay ngân hàng">Vay ngân hàng</option>
+              <option value="Chuyển khoản">Chuyển khoản</option>
             </select>
           </label>
           <div className="full-span policy-picker">
@@ -340,6 +351,105 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             />
           </label>
 
+          <div className="full-span order-extra-card">
+            <div className="order-extra-title">
+              <span>Thông tin XHĐ</span>
+              <small>Đồng bộ với form yêu cầu hóa đơn</small>
+            </div>
+            <div className="order-extra-grid">
+              <label>
+                <span>Ngày ký hợp đồng</span>
+                <input
+                  type="date"
+                  value={form.ngayKyHopDong || ''}
+                  onChange={(event) => updateField('ngayKyHopDong', event.target.value)}
+                />
+              </label>
+              <label>
+                <span>Nguồn khách</span>
+                <input
+                  value={form.nguonKhach || ''}
+                  placeholder="Giới thiệu, Marketing..."
+                  onChange={(event) => updateField('nguonKhach', event.target.value)}
+                />
+              </label>
+              <label>
+                <span>Giá công bố (VNĐ)</span>
+                <input
+                  type="number"
+                  value={form.giaCongBo !== null && form.giaCongBo !== undefined ? form.giaCongBo : ''}
+                  placeholder="VD: 599000000"
+                  onChange={(event) => updateField('giaCongBo', event.target.value ? Number(event.target.value) : null)}
+                />
+              </label>
+              <label>
+                <span>Mua bảo hiểm</span>
+                <select
+                  value={form.muaBaoHiem === null ? '' : form.muaBaoHiem ? 'true' : 'false'}
+                  onChange={(event) => updateField('muaBaoHiem', event.target.value === '' ? null : event.target.value === 'true')}
+                >
+                  <option value="">Chưa chọn</option>
+                  <option value="true">Có</option>
+                  <option value="false">Không</option>
+                </select>
+              </label>
+              <label>
+                <span>Đăng ký xe</span>
+                <select
+                  value={form.dangKyXe === null ? '' : form.dangKyXe ? 'true' : 'false'}
+                  onChange={(event) => updateField('dangKyXe', event.target.value === '' ? null : event.target.value === 'true')}
+                >
+                  <option value="">Chưa chọn</option>
+                  <option value="true">Có</option>
+                  <option value="false">Không</option>
+                </select>
+              </label>
+              <label className="full-span">
+                <span>Ghi chú</span>
+                <textarea
+                  value={form.ghiChu || ''}
+                  placeholder="Ghi chú cho bộ phận xuất hóa đơn..."
+                  onChange={(event) => updateField('ghiChu', event.target.value)}
+                  rows={3}
+                />
+              </label>
+            </div>
+            {isGasToElectricPolicy ? (
+              <div className="order-extra-gas">
+                <div className="order-extra-title order-extra-title--sub">
+                  <span>Thông tin xe xăng</span>
+                  <small>Áp dụng cho chính sách thu cũ đổi mới</small>
+                </div>
+                <div className="order-extra-grid order-extra-grid--compact">
+                  <label>
+                    <span>VIN xe xăng</span>
+                    <input
+                      value={form.xeXangVin || ''}
+                      placeholder="Nhập VIN xe xăng..."
+                      onChange={(event) => updateField('xeXangVin', event.target.value.toUpperCase())}
+                    />
+                  </label>
+                  <label>
+                    <span>Hãng xe</span>
+                    <input
+                      value={form.xeXangHang || ''}
+                      placeholder="VD: Toyota"
+                      onChange={(event) => updateField('xeXangHang', event.target.value)}
+                    />
+                  </label>
+                  <label className="full-span">
+                    <span>Model xe</span>
+                    <input
+                      value={form.xeXangModel || ''}
+                      placeholder="VD: Vios 1.5G"
+                      onChange={(event) => updateField('xeXangModel', event.target.value)}
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
           <label>
             <span>Ngày cọc *</span>
             <input
@@ -347,8 +457,8 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
               value={form.depositDate}
               onChange={(event) => updateField('depositDate', event.target.value)}
               required
-            />
-          </label>
+              />
+            </label>
           <label>
             <span>Ngày cần xe *</span>
             <input
