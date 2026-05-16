@@ -14,6 +14,20 @@ const toEmbeddableUrl = (url: string) => {
   return url;
 };
 
+const getRequestDocUrl = (request: YeucauxhdRow | null, docKey: 'url_hop_dong' | 'url_de_nghi_xhd' | 'url_hoa_don_da_xuat') => {
+  if (!request) return '';
+
+  if (docKey === 'url_hop_dong') {
+    return request.url_hop_dong || request.link_hop_dong || '';
+  }
+
+  if (docKey === 'url_de_nghi_xhd') {
+    return request.url_de_nghi_xhd || request.link_de_nghi_xhd || '';
+  }
+
+  return request.url_hoa_don_da_xuat || request.link_hoa_don_da_xuat || '';
+};
+
 const formatMobileDate = (value?: string | null) => {
   if (!value) return '—';
   const date = new Date(value);
@@ -67,7 +81,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
         return;
       }
 
-      const updateData = {
+      const updateData: any = {
         tvbh: order.ten_tu_van_ban_hang,
         dong_xe: order.dong_xe,
         phien_ban: order.phien_ban,
@@ -81,6 +95,25 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
         so_tien_khach_da_dong: order.so_tien_coc,
         hinh_thuc_tt: order.tm_vay
       };
+
+      if (!req.url_hop_dong && order.link_hop_dong) {
+        updateData.url_hop_dong = order.link_hop_dong;
+      }
+      if (!req.link_hop_dong && order.link_hop_dong) {
+        updateData.link_hop_dong = order.link_hop_dong;
+      }
+      if (!req.url_de_nghi_xhd && order.link_de_nghi_xhd) {
+        updateData.url_de_nghi_xhd = order.link_de_nghi_xhd;
+      }
+      if (!req.link_de_nghi_xhd && order.link_de_nghi_xhd) {
+        updateData.link_de_nghi_xhd = order.link_de_nghi_xhd;
+      }
+      if (!req.url_hoa_don_da_xuat && order.link_hoa_don_da_xuat) {
+        updateData.url_hoa_don_da_xuat = order.link_hoa_don_da_xuat;
+      }
+      if (!req.link_hoa_don_da_xuat && order.link_hoa_don_da_xuat) {
+        updateData.link_hoa_don_da_xuat = order.link_hoa_don_da_xuat;
+      }
 
       const { error: updateError } = await supabase
         .from('yeucauxhd')
@@ -165,6 +198,19 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
   const selectedRequest = useMemo(() => {
     return filtered.find(r => r.id === selectedRequestId) || filtered[0] || null;
   }, [filtered, selectedRequestId]);
+
+  useEffect(() => {
+    if (!selectedRequest) return;
+    const currentDocUrl = getRequestDocUrl(selectedRequest, activeDocKey);
+    if (currentDocUrl) return;
+
+    const nextDocKey = (['url_de_nghi_xhd', 'url_hop_dong', 'url_hoa_don_da_xuat'] as const)
+      .find((key) => Boolean(getRequestDocUrl(selectedRequest, key)));
+
+    if (nextDocKey) {
+      setActiveDocKey(nextDocKey);
+    }
+  }, [activeDocKey, selectedRequest]);
 
   useEffect(() => {
     if (filtered.length > 0 && (!selectedRequestId || !filtered.some(r => r.id === selectedRequestId))) {
@@ -311,28 +357,6 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                     </div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button 
-                    onClick={() => handleSyncFromOrder(selectedRequest)}
-                    disabled={isSyncing}
-                    style={{ 
-                      display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.2)', 
-                      background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer',
-                      opacity: isSyncing ? 0.5 : 1
-                    }}
-                  >
-                    <RefreshCw size={14} className={isSyncing ? 'spin' : ''} /> {isSyncing ? 'Đang bộ...' : 'Đồng bộ'}
-                  </button>
-                  <button 
-                    onClick={() => setIsSplitView(!isSplitView)}
-                    style={{ 
-                      display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.2)', 
-                      background: isSplitView ? '#0284c7' : 'rgba(255,255,255,0.1)', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer'
-                    }}
-                  >
-                    <Eye size={14} /> {isSplitView ? 'Đóng Xem File' : 'Mở Xem File'}
-                  </button>
-                </div>
               </div>
 
               {/* CONTENT AREA */}
@@ -361,8 +385,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                         <DetailItem label="Phiên bản" value={selectedRequest.phien_ban} />
                         <DetailItem label="Ngoại thất" value={selectedRequest.ngoai_that} />
                         <DetailItem label="Nội thất" value={selectedRequest.noi_that} />
-                        <DetailItem label="Số VIN" value={selectedRequest.vin || 'Chưa ghép'} copyable color="#0284c7" />
-                        <DetailItem label="Số máy" value={selectedRequest.so_may || 'N/A'} copyable />
+                        <DetailItem label="Số VIN" value={selectedRequest.vin || 'Chưa ghép'} copyable color="#0284c7" isFullWidth />
                         <DetailItem label="Giá công bố" value={formatCurrency(selectedRequest.gia_cong_bo)} color="#b45309" />
                         <DetailItem label="Ngày cọc" value={formatMobileDate(selectedRequest.ngay_coc)} />
                       </div>
@@ -395,9 +418,9 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                   {/* SECTION: HỒ SƠ CHỨNG TỪ */}
                   <SectionBox title="Hồ sơ chứng từ" icon={ClipboardCheck}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                      <FileDocLink label="Hợp đồng MB" url={selectedRequest.url_hop_dong} onClick={() => { setActiveDocKey('url_hop_dong'); setIsSplitView(true); }} />
-                      <FileDocLink label="Đề nghị XHĐ" url={selectedRequest.url_de_nghi_xhd || selectedRequest.link_de_nghi_xhd} onClick={() => { setActiveDocKey('url_de_nghi_xhd'); setIsSplitView(true); }} />
-                      <FileDocLink label="Hóa đơn điện tử" url={selectedRequest.url_hoa_don_da_xuat} isSuccess onClick={() => { setActiveDocKey('url_hoa_don_da_xuat'); setIsSplitView(true); }} />
+                      <FileDocLink label="Hợp đồng MB" url={getRequestDocUrl(selectedRequest, 'url_hop_dong')} onClick={() => { setActiveDocKey('url_hop_dong'); setIsSplitView(true); }} />
+                      <FileDocLink label="Đề nghị XHĐ" url={getRequestDocUrl(selectedRequest, 'url_de_nghi_xhd')} onClick={() => { setActiveDocKey('url_de_nghi_xhd'); setIsSplitView(true); }} />
+                      <FileDocLink label="Hóa đơn điện tử" url={getRequestDocUrl(selectedRequest, 'url_hoa_don_da_xuat')} isSuccess onClick={() => { setActiveDocKey('url_hoa_don_da_xuat'); setIsSplitView(true); }} />
                       {selectedRequest.ngay_xuat_hoa_don && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#059669', background: '#ecfdf5', padding: '6px 12px', borderRadius: '10px', border: '1px solid #a7f3d0' }}>
                           <Clock size={12} /> Xuất ngày: {formatMobileDate(selectedRequest.ngay_xuat_hoa_don)}
@@ -437,14 +460,10 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                     </div>
                     <div style={{ flex: 1, background: '#f1f5f9' }}>
                       {(() => {
-                        let docUrl = selectedRequest[activeDocKey];
-                        // Fallback logic for Đề nghị XHĐ which has two possible fields
-                        if (activeDocKey === 'url_de_nghi_xhd' && !docUrl) {
-                          docUrl = selectedRequest.link_de_nghi_xhd;
-                        }
+                        const docUrl = getRequestDocUrl(selectedRequest, activeDocKey);
 
                         if (docUrl) {
-                          return <iframe src={toEmbeddableUrl(docUrl)} style={{ width: '100%', height: '100%', border: 'none' }} title="Doc" />;
+                          return <iframe key={docUrl} src={toEmbeddableUrl(docUrl)} style={{ width: '100%', height: '100%', border: 'none' }} title="Doc" />;
                         }
 
                         return (

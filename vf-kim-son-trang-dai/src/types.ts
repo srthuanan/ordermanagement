@@ -39,6 +39,9 @@ export interface Order {
   invoiceAddress?: string | null;
   contractCode?: string | null;
   paymentMethod?: string | null;
+  linkHopDong?: string | null;
+  linkDeNghiXhd?: string | null;
+  linkHoaDonDaXuat?: string | null;
   nguonKhach?: string | null;
   muaBaoHiem?: boolean | null;
   dangKyXe?: boolean | null;
@@ -122,6 +125,9 @@ export interface DonhangRow {
   thoi_gian_ghep: string | null;
   so_ngay_ghep: number | null;
   ngay_xuat_hoa_don: string | null;
+  link_hoa_don_da_xuat: string | null;
+  link_hop_dong: string | null;
+  link_de_nghi_xhd: string | null;
   chinh_sach: string | null;
   ghi_chu_huy: string | null;
   created_at: string;
@@ -203,6 +209,7 @@ export interface YeucauxhdRow {
   url_hop_dong: string | null;
   url_de_nghi_xhd: string | null;
   url_hoa_don_da_xuat: string | null;
+  link_hop_dong: string | null;
   so_may: string | null;
   ngay_xuat_hoa_don: string | null;
   ket_qua_gui_mail: string | null;
@@ -216,6 +223,7 @@ export interface YeucauxhdRow {
   requested_by_name: string | null;
   requested_by_username: string | null;
   link_de_nghi_xhd: string | null;
+  link_hoa_don_da_xuat: string | null;
   chinh_sach: string | null;
   status: 'pending' | 'approved' | 'rejected';
   approved_by: string | null;

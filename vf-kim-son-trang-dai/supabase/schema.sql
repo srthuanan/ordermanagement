@@ -482,7 +482,9 @@ create table if not exists public.yeucauxhd (
   requested_by uuid references auth.users (id),
   requested_by_name text,
   requested_by_username text,
+  link_hop_dong text,
   link_de_nghi_xhd text,
+  link_hoa_don_da_xuat text,
   chinh_sach text,
   so_tien_khach_da_dong numeric,
   dia_chi text,
@@ -904,7 +906,9 @@ begin
     requested_by,
     requested_by_name,
     requested_by_username,
+    link_hop_dong,
     link_de_nghi_xhd,
+    link_hoa_don_da_xuat,
     chinh_sach,
     status
   )
@@ -915,7 +919,9 @@ begin
     actor_id,
     actor_name,
     actor_username,
+    nullif(order_row.link_hop_dong, ''),
     nullif(p_link_de_nghi_xhd, ''),
+    null,
     coalesce(nullif(p_chinh_sach, ''), order_row.chinh_sach),
     'pending'
   )
