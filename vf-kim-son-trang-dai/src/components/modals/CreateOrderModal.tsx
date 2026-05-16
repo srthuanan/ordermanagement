@@ -8,7 +8,6 @@ import {
   interiorColorRules,
   vehicleLines,
   versionsMap,
-  staffNames,
   defaultSalesPolicies
 } from '../../constants';
 
@@ -16,8 +15,7 @@ interface CreateOrderModalProps {
   error: string;
   isCreating: boolean;
   initialVehicle?: InventoryItem | null;
-  defaultStaffName?: string;
-  lockStaffName?: boolean;
+  currentStaffName: string;
   onClose: () => void;
   onSubmit: (input: NewOrderInput) => void;
 }
@@ -26,11 +24,11 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   error,
   isCreating,
   initialVehicle,
-  defaultStaffName,
-  lockStaffName = false,
+  currentStaffName,
   onClose,
   onSubmit
 }) => {
+  const resolvedStaffName = currentStaffName.trim() || 'Nhân viên';
   const [form, setForm] = React.useState<NewOrderInput>({
     orderId: '',
     customer: '',
@@ -38,7 +36,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     version: initialVehicle?.version || versionsMap[vehicleLines[0]]?.[0] || '',
     exterior: initialVehicle?.exterior || defaultExteriors[0],
     interior: initialVehicle?.interior || defaultInteriors[0],
-    staff: defaultStaffName || staffNames[0],
+    staff: resolvedStaffName,
     policy: [],
     depositDate: '',
     needDate: new Date().toISOString().slice(0, 10),
@@ -85,11 +83,9 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   }, [interiorOptions]);
 
   React.useEffect(() => {
-    if (lockStaffName && defaultStaffName) {
-      updateField('staff', defaultStaffName);
-    }
+    updateField('staff', resolvedStaffName);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultStaffName, lockStaffName]);
+  }, [resolvedStaffName]);
 
   React.useEffect(() => {
     let active = true;
@@ -233,21 +229,6 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
               onChange={(event) => updateField('customer', event.target.value)}
               required
             />
-          </label>
-          <label>
-            <span>TVBH *</span>
-            <select
-              value={form.staff}
-              onChange={(event) => updateField('staff', event.target.value)}
-              required
-              disabled={lockStaffName}
-            >
-              {staffNames.map((staff) => (
-                <option key={staff} value={staff}>
-                  {staff}
-                </option>
-              ))}
-            </select>
           </label>
           <label>
             <span>Dòng xe *</span>
