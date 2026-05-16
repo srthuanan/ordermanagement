@@ -67,6 +67,7 @@ export interface NewOrderInput {
   exterior: string;
   interior: string;
   staff: string;
+  policy: string[];
   depositDate: string;
   needDate: string;
   pairedVin?: string;

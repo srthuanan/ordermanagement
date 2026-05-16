@@ -152,9 +152,44 @@ export const VALID_IMAGES_BY_MODEL: Record<string, string[]> = {
 };
 
 export const defaultSalesPolicies = [
-  'Ưu đãi giao xe tháng hiện hành',
-  'Hỗ trợ lãi suất ngân hàng',
-  'Thu cũ đổi mới xe điện'
+  'Chương trình Mãnh liệt vì tương lai xanh - Hỗ trợ lãi suất (7%)',
+  'VinClub hạng Gold 0,5%',
+  'Chính sách ưu đãi cho VF 9 VIN 2025',
+  'Chính sách ưu đãi cho VF 7 VIN 2025',
+  'Chính sách ưu đãi [Eco 1 cầu (bản Việt Nam)] - 20Tr',
+  'Quy đổi 1 năm BHVC cho VF 5 (Trả góp)',
+  'Chính sách ưu đãi cho Nerio Green VIN 2025',
+  'Chính sách ưu đãi [Eco 2 cầu (bản Việt Nam)] - 50Tr',
+  'Giảm 10% (MLTTVN)',
+  'Chương trình tặng Voucher giờ Trái Đất - 7Tr',
+  'Ưu đãi [Eco/Plus] - Miễn phí màu nâng cao',
+  'Tặng 1 năm BHVC cho VF 5',
+  'Chương trình tặng Voucher giờ Trái Đất - 10Tr',
+  'Giảm 6% (MLTTVN)',
+  'Chính sách ưu đãi Tiên phong VF LIMO - 15Tr',
+  'Quy đổi 1 năm BHVC cho VF 5 (Trả thẳng)',
+  'Chương trình tặng Voucher giờ Trái Đất - 15Tr',
+  'Chính sách ưu đãi [Plus - Tiêu chuẩn 1 (2 cầu)] - 50Tr',
+  'Tặng 2 năm BHVC cho các xe VF 6 Eco và Limo Green Vin 2025',
+  'Chương trình Mãnh liệt vì tương lai xanh - Hỗ trợ lãi suất (5%)',
+  'Chính sách ưu đãi cho VF 8 VIN 2025',
+  'Chính sách ưu đãi [Eco – Tiêu chuẩn 1] - 3Tr',
+  'VinClub hạng Platinum 1%',
+  'Chương trình tặng Voucher giờ Trái Đất - 5Tr',
+  'Chính sách ưu đãi [VF7 Plus Nâng cấp] - 50Tr',
+  'Chính sách ưu đãi cho VF 5 VIN 2025',
+  'Chương trình thu xăng đổi điện',
+  'Chính sách Mua xe 0 đồng',
+  'Chính sách ưu đãi cho VF 6 Plus VIN 2025',
+  'Chính sách ưu đãi xe công vụ',
+  'VinClub hạng Diamond 1,5%',
+  'Chương trình tặng Voucher giờ Trái Đất - 20Tr',
+  'Quy đổi 2 năm BHVC cho các xe VF 6 Eco và Limo Green Vin 2025',
+  'Tặng 2 năm BHVC cho xe VF LIMO',
+  'Chính sách ưu đãi cho VF 3 VIN 2025',
+  'Chính sách ưu đãi cho Herio Green VIN 2025',
+  'Chính sách ưu đãi [Plus - Tiêu chuẩn 1 (1 cầu)] - 50Tr',
+  'Chính sách ưu đãi khách hàng ngành Công an và Quân đội'
 ];
 
 export const vehicleLines = Object.keys(versionsMap);

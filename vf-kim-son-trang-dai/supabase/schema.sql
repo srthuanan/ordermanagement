@@ -78,6 +78,39 @@ create table if not exists public.audit_logs (
   created_at timestamptz not null default now()
 );
 
+create or replace function public.sync_donhang_vehicle_meta()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+declare
+  vehicle_row public.khoxe;
+begin
+  if coalesce(new.vin, '') = '' then
+    new.so_may := null;
+    return new;
+  end if;
+
+  select * into vehicle_row
+  from public.khoxe
+  where vin = new.vin
+  limit 1;
+
+  if found then
+    new.so_may := vehicle_row.so_may;
+  end if;
+
+  return new;
+end;
+$function$;
+
+drop trigger if exists trg_sync_donhang_vehicle_meta on public.donhang;
+create trigger trg_sync_donhang_vehicle_meta
+before insert or update of vin on public.donhang
+for each row
+execute function public.sync_donhang_vehicle_meta();
+
 alter table public.profiles enable row level security;
 alter table public.customers enable row level security;
 alter table public.khoxe enable row level security;

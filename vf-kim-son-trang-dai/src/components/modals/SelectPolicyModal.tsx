@@ -90,11 +90,14 @@ export const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({
             <h2>Chọn chính sách cho {orderId}</h2>
           </div>
           <button className="icon-button" onClick={onClose} title="Đóng" disabled={isSubmitting}>
-            <X size={18} />
+            <X size={20} />
           </button>
         </div>
 
         <div className="order-form">
+          <label className="field-label">
+            Tìm kiếm chính sách
+          </label>
           <label className="full-span search-box">
             <Search size={18} />
             <input
@@ -104,36 +107,26 @@ export const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({
             />
           </label>
 
-          <div className="full-span" style={{ maxHeight: 280, overflow: 'auto', border: '1px solid var(--border-color)', borderRadius: 8 }}>
+          <div className="full-span dropdown-list" style={{ display: 'block', position: 'static', maxHeight: 320, border: '1px solid #d7e0ea', boxShadow: 'none' }}>
             {loading ? (
-              <div style={{ padding: '1rem', color: 'var(--text-muted)' }}>Đang tải danh sách chính sách...</div>
+              <div style={{ padding: '1rem', color: '#64748b', textAlign: 'center', fontSize: '13px' }}>Đang tải danh sách chính sách...</div>
             ) : filteredRows.length === 0 ? (
-              <div style={{ padding: '1rem', color: 'var(--text-muted)' }}>Không có chính sách phù hợp.</div>
+              <div style={{ padding: '1rem', color: '#64748b', textAlign: 'center', fontSize: '13px' }}>Không có chính sách phù hợp.</div>
             ) : (
               filteredRows.map((item) => {
                 const checked = selected.includes(item.ten_chinh_sach);
                 return (
-                  <label
-                    key={item.ten_chinh_sach}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.6rem',
-                      padding: '0.7rem 0.8rem',
-                      borderBottom: '1px solid var(--border-color)',
-                      cursor: 'pointer'
-                    }}
-                  >
+                  <label key={item.ten_chinh_sach}>
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => togglePolicy(item.ten_chinh_sach)}
                     />
-                    <div style={{ minWidth: 0 }}>
-                      <strong style={{ display: 'block' }}>{item.ten_chinh_sach}</strong>
-                      <small style={{ color: 'var(--text-muted)' }}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <strong style={{ display: 'block', fontSize: '13px', color: '#111827' }}>{item.ten_chinh_sach}</strong>
+                      <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
                         Áp dụng: {item.dong_xe || 'Tất cả'}
-                      </small>
+                      </div>
                     </div>
                   </label>
                 );

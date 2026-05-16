@@ -39,7 +39,7 @@ export function useOrderOperations({
     const orderId = input.orderId.trim().toUpperCase();
     const customer = input.customer.trim();
 
-    if (!orderId || !customer || !input.line || !input.version || !input.exterior || !input.depositDate) {
+    if (!orderId || !customer || !input.line || !input.version || !input.exterior || !input.depositDate || !input.policy?.length) {
       setCreateError('Vui lòng nhập đầy đủ thông tin bắt buộc.');
       return false;
     }
@@ -62,6 +62,7 @@ export function useOrderOperations({
           thoi_gian_can_xe: input.needDate || null,
           thoi_gian_nhap: new Date().toISOString(),
           ket_qua: 'Chưa ghép',
+          chinh_sach: input.policy.join('; '),
           so_tien_coc: input.depositAmount || null,
           dia_chi_xhd: input.invoiceAddress || null,
           ma_hop_dong: input.contractCode || null,
