@@ -393,7 +393,7 @@ function App() {
 
             {activeTab === 'pricing' && <PricingPanel isAdmin={canManagePricingConfig(userRole)} />}
 
-            {activeTab === 'staff' && <StaffPanel staff={profiles} onReload={loadWorkspace} />}
+            {activeTab === 'staff' && <StaffPanel staff={profiles} currentProfile={profile} onReload={loadWorkspace} />}
           </Suspense>
         </div>
 

@@ -26,12 +26,12 @@ export type TabKey = (typeof tabs)[number]['key'];
 export type AppRole = ProfileRow['role'];
 
 const roleTabAccess: Record<TabKey, AppRole[]> = {
-  dashboard: ['admin'],
-  orders: ['admin', 'sales'],
+  dashboard: ['admin', 'manager'],
+  orders: ['admin', 'sales', 'manager'],
   inventory: ['admin', 'sales'],
   invoices: ['admin'],
   pricing: ['admin', 'sales'],
-  staff: ['admin']
+  staff: ['admin', 'manager']
 };
 
 export function canAccessTab(role: AppRole, tabKey: TabKey) {
@@ -204,7 +204,11 @@ export const staffNames = ['Kim Anh', 'Hải Đăng', 'Thanh Phúc', 'Quản lý
 
 export const roleLabels: Record<ProfileRow['role'], string> = {
   admin: 'Admin',
+  manager: 'TPKD',
   sales: 'TVBH',
+  warehouse: 'Kho xe',
+  delivery: 'Giao xe',
+  staff: 'Nhân sự'
 };
 
 export const statusTone: Record<OrderStatus, string> = {

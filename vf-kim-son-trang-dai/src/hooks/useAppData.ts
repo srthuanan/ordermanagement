@@ -129,16 +129,42 @@ export function useAppData() {
 
       const currentFullName = profileData.full_name || session.user.email || '';
       const currentEmail = session.user.email || '';
+      const currentDepartment = profileData.department?.trim().toLowerCase() || '';
       const isSalesUser = profileData.role === 'sales';
+      const isManagerUser = profileData.role === 'manager';
+
+      const staffDirectory = (profilesResult.data || []) as ProfileRow[];
+      const staffLookup = new Map<string, ProfileRow>();
+      staffDirectory.forEach((item) => {
+        const normalizedName = normalizeIdentity(item.full_name);
+        const normalizedEmail = normalizeIdentity(item.email || '');
+        if (normalizedName) staffLookup.set(normalizedName, item);
+        if (normalizedEmail) staffLookup.set(normalizedEmail, item);
+      });
+
+      const getStaffDepartment = (nameOrEmail: string | null | undefined) => {
+        const profile = staffLookup.get(normalizeIdentity(nameOrEmail || ''));
+        return profile?.department?.trim().toLowerCase() || '';
+      };
 
       const mappedOrders = ordersResult.data.map((row) => apiService.mapOrderRow(row, customerMap));
       const visibleOrders = isSalesUser
         ? mappedOrders.filter((order) => matchesCurrentUser(order.staff, currentFullName, currentEmail))
-        : mappedOrders;
+        : isManagerUser
+          ? mappedOrders.filter((order) => {
+              if (!currentDepartment) return true;
+              return getStaffDepartment(order.staff) === currentDepartment;
+            })
+          : mappedOrders;
 
       const visibleLogs = isSalesUser
         ? (logsResult.data || []).filter((log) => matchesCurrentUser(log.actor_name, currentFullName, currentEmail))
-        : (logsResult.data || []);
+        : isManagerUser
+          ? (logsResult.data || []).filter((log) => {
+              if (!currentDepartment) return true;
+              return getStaffDepartment(log.actor_name) === currentDepartment;
+            })
+          : (logsResult.data || []);
 
       const visibleInvoices = isSalesUser
         ? (invoicesResult.data || []).filter(
@@ -146,7 +172,12 @@ export function useAppData() {
               matchesCurrentUser(row.requested_by_name, currentFullName, currentEmail) ||
               matchesCurrentUser(row.tvbh, currentFullName, currentEmail)
           )
-        : (invoicesResult.data || []);
+        : isManagerUser
+          ? (invoicesResult.data || []).filter((row) => {
+              if (!currentDepartment) return true;
+              return getStaffDepartment(row.tvbh || row.requested_by_name) === currentDepartment;
+            })
+          : (invoicesResult.data || []);
 
       setOrders(visibleOrders);
       setInventory(apiService.mapKhoxeRows(inventoryResult.data));
@@ -169,7 +200,7 @@ export function useAppData() {
           .map((row) => (typeof row === 'string' ? row : String(row?.vin || '').trim()))
           .filter(Boolean)
       );
-      setProfiles((profilesResult.data || []) as ProfileRow[]);
+      setProfiles(staffDirectory);
 
       setSyncState('live');
       setSyncMessage(`Đã tải ${ordersResult.data.length} đơn và ${inventoryResult.data.length} xe.`);

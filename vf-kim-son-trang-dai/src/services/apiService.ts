@@ -261,30 +261,33 @@ const invokeStaffFunction = async (body: Record<string, unknown>) => {
   return { data: parsedBody, error: null };
 };
 
-export const inviteStaffMember = async (input: { email: string; fullName: string; role: ProfileRow['role'] }) => {
+export const inviteStaffMember = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null }) => {
   return await invokeStaffFunction({
     action: 'invite',
     email: input.email,
     fullName: input.fullName,
-    role: input.role
+    role: input.role,
+    department: input.department ?? null
   });
 };
 
-export const resendStaffInvite = async (input: { email: string; fullName: string; role: ProfileRow['role'] }) => {
+export const resendStaffInvite = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null }) => {
   return await invokeStaffFunction({
     action: 'resend',
     email: input.email,
     fullName: input.fullName,
-    role: input.role
+    role: input.role,
+    department: input.department ?? null
   });
 };
 
-export const cancelStaffInvite = async (input: { email: string; fullName: string; role: ProfileRow['role'] }) => {
+export const cancelStaffInvite = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null }) => {
   return await invokeStaffFunction({
     action: 'cancel',
     email: input.email,
     fullName: input.fullName,
-    role: input.role
+    role: input.role,
+    department: input.department ?? null
   });
 };
 

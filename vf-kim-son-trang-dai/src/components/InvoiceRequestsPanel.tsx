@@ -249,10 +249,10 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
   };
 
   return (
-    <div className="invoice-modular-workspace" style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="invoice-modular-workspace" style={{ height: '100%', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
       
       {/* 1. TOP SECTION: METRICS BAR */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', padding: '16px 20px', background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', padding: '10px 16px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
         {folders.map(folder => (
           <button
             key={folder.id}
@@ -260,28 +260,28 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '6px 14px',
-              borderRadius: '10px',
-              border: selectedFolder === folder.id ? `1.5px solid ${folder.color}` : `1px solid ${folder.border}`,
+              gap: '6px',
+              padding: '4px 12px',
+              borderRadius: '8px',
+              border: selectedFolder === folder.id ? `1px solid ${folder.color}` : `1px solid ${folder.border}`,
               background: selectedFolder === folder.id ? folder.color : folder.bg,
               color: selectedFolder === folder.id ? '#fff' : folder.color,
-              fontSize: '12px',
-              fontWeight: 700,
+              fontSize: '11px',
+              fontWeight: 600,
               cursor: 'pointer',
               transition: '0.2s',
-              boxShadow: selectedFolder === folder.id ? `0 4px 12px ${folder.color}30` : 'none'
+              boxShadow: selectedFolder === folder.id ? `0 2px 6px ${folder.color}30` : 'none'
             }}
           >
-            <folder.icon size={14} />
-            <span>{folder.label}:</span>
+            <folder.icon size={12} />
+            <span>{folder.label}</span>
             <strong style={{ opacity: 0.9 }}>{folder.count}</strong>
           </button>
         ))}
       </div>
 
       {/* 2. BOTTOM SECTION */}
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: isSplitView ? '0.35fr 1.65fr' : '1fr 0fr', gap: '12px', minHeight: 0 }}>
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: isSplitView ? '0.35fr 1.65fr' : '1fr 0fr', gap: '8px', minHeight: 0 }}>
         
         {/* COLUMN 2: DATA LIST (Ultra Mini) */}
         <div className={`orders-data-side ${mobileView === 'detail' ? 'hidden-mobile' : ''}`} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', minHeight: 0 }}>
@@ -333,35 +333,62 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
         <div className={`orders-visual-side ${mobileView !== 'detail' ? 'hidden-mobile' : ''}`} style={{ display: 'flex', flexDirection: 'column', minWidth: 0, background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
           {selectedRequest ? (
             <>
-              {/* PREMIUM HEADER */}
+              {/* COMPACT HEADER WITH ACTIONS */}
               <div style={{ 
-                background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)', 
-                padding: '20px 32px', 
-                color: '#fff', 
+                background: '#fff', 
+                padding: '0 16px', 
+                borderBottom: '1px solid #e2e8f0',
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center',
-                flexShrink: 0
+                flexShrink: 0,
+                height: '44px'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                  <button onClick={() => setMobileView('list')} className="mobile-only" style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', padding: '8px', borderRadius: '10px' }}><ArrowLeft size={18} /></button>
-                  <div style={{ width: '50px', height: '50px', background: 'rgba(255,255,255,0.1)', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: 900 }}>{selectedRequest.ten_khach_hang.charAt(0)}</div>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '2px' }}>
-                      <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 900 }}>{selectedRequest.ten_khach_hang}</h2>
-                      {renderStatusBadge(getWorkflowStatus(selectedRequest))}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', opacity: 0.8, fontSize: '12px' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><FileText size={13} /> {selectedRequest.so_don_hang}</span>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><User size={13} /> TVBH: {selectedRequest.tvbh || selectedRequest.requested_by_name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button onClick={() => setMobileView('list')} className="mobile-only" style={{ background: '#f1f5f9', border: 'none', color: '#475569', padding: '4px', borderRadius: '6px' }}><ArrowLeft size={16} /></button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <h2 style={{ margin: 0, fontSize: '14px', fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap' }}>{selectedRequest.ten_khach_hang}</h2>
+                    {renderStatusBadge(getWorkflowStatus(selectedRequest))}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#64748b', fontSize: '11px', fontWeight: 500, marginLeft: '8px', borderLeft: '1px solid #e2e8f0', paddingLeft: '12px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}><FileText size={12} /> {selectedRequest.so_don_hang}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap' }}><User size={12} /> {selectedRequest.tvbh || selectedRequest.requested_by_name}</span>
                     </div>
                   </div>
+                </div>
+
+                {/* ACTION BUTTONS IN HEADER */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {canApprove && ['Chờ phê duyệt', 'Đã bổ sung'].includes(getWorkflowStatus(selectedRequest)) && (
+                      <>
+                        <button onClick={() => onRequestSupplement(selectedRequest)} disabled={isProcessing} className="ghost-button" style={{ height: '26px', padding: '0 8px', fontSize: '11px', borderRadius: '4px', color: '#dc2626', borderColor: '#fca5a5' }}>
+                          {isProcessing ? <RefreshCw size={12} className="spin" style={{ marginRight: '4px' }} /> : <XCircle size={12} style={{ marginRight: '4px' }} />} Yêu cầu BS
+                        </button>
+                        <button onClick={() => onApprove(selectedRequest)} disabled={isProcessing} className="primary-button" style={{ height: '26px', padding: '0 8px', fontSize: '11px', borderRadius: '4px', background: '#059669', borderColor: '#059669' }}>
+                          {isProcessing ? <RefreshCw size={12} className="spin" style={{ marginRight: '4px' }} /> : <CheckSquare size={12} style={{ marginRight: '4px' }} />} Phê duyệt
+                        </button>
+                      </>
+                    )}
+                    {canApprove && getWorkflowStatus(selectedRequest) === 'Đã phê duyệt' && (
+                      <button onClick={() => onPendingSignature(selectedRequest)} disabled={isProcessing} className="primary-button" style={{ height: '26px', padding: '0 8px', fontSize: '11px', borderRadius: '4px', background: '#3b82f6', borderColor: '#3b82f6' }}>
+                        {isProcessing ? <RefreshCw size={12} className="spin" style={{ marginRight: '4px' }} /> : <CheckSquare size={12} style={{ marginRight: '4px' }} />} Chuyển Chờ Ký
+                      </button>
+                    )}
+                    {canApprove && getWorkflowStatus(selectedRequest) === 'Chờ ký hóa đơn' && (
+                      <button onClick={() => onUploadInvoice(selectedRequest)} disabled={isProcessing} className="primary-button" style={{ height: '26px', padding: '0 8px', fontSize: '11px', borderRadius: '4px', background: '#0f766e', borderColor: '#0f766e' }}>
+                        {isProcessing ? <RefreshCw size={12} className="spin" style={{ marginRight: '4px' }} /> : <FilePlus2 size={12} style={{ marginRight: '4px' }} />} Tải HĐ & Hoàn tất
+                      </button>
+                    )}
+                    {getWorkflowStatus(selectedRequest) === 'Yêu cầu bổ sung' && (
+                      <button onClick={() => onSupplement(selectedRequest)} disabled={isProcessing} className="primary-button" style={{ height: '26px', padding: '0 8px', fontSize: '11px', borderRadius: '4px', background: '#d97706', borderColor: '#d97706' }}>
+                        {isProcessing ? <RefreshCw size={12} className="spin" style={{ marginRight: '4px' }} /> : <FilePlus2 size={12} style={{ marginRight: '4px' }} />} Bổ sung ngay
+                      </button>
+                    )}
                 </div>
               </div>
 
               {/* CONTENT AREA */}
               <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-                <div className="custom-scrollbar" style={{ flex: 1, padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="custom-scrollbar" style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   
                   {/* GRID: 4 COLUMNS FOR DENSE INFO */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
@@ -415,19 +442,6 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                     </SectionBox>
                   </div>
 
-                  {/* SECTION: HỒ SƠ CHỨNG TỪ */}
-                  <SectionBox title="Hồ sơ chứng từ" icon={ClipboardCheck}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                      <FileDocLink label="Hợp đồng MB" url={getRequestDocUrl(selectedRequest, 'url_hop_dong')} onClick={() => { setActiveDocKey('url_hop_dong'); setIsSplitView(true); }} />
-                      <FileDocLink label="Đề nghị XHĐ" url={getRequestDocUrl(selectedRequest, 'url_de_nghi_xhd')} onClick={() => { setActiveDocKey('url_de_nghi_xhd'); setIsSplitView(true); }} />
-                      <FileDocLink label="Hóa đơn điện tử" url={getRequestDocUrl(selectedRequest, 'url_hoa_don_da_xuat')} isSuccess onClick={() => { setActiveDocKey('url_hoa_don_da_xuat'); setIsSplitView(true); }} />
-                      {selectedRequest.ngay_xuat_hoa_don && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#059669', background: '#ecfdf5', padding: '6px 12px', borderRadius: '10px', border: '1px solid #a7f3d0' }}>
-                          <Clock size={12} /> Xuất ngày: {formatMobileDate(selectedRequest.ngay_xuat_hoa_don)}
-                        </div>
-                      )}
-                    </div>
-                  </SectionBox>
 
                   {/* SECTION: GHI CHÚ */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
@@ -436,24 +450,13 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                     </SectionBox>
                   </div>
 
-                  {/* STICKY ACTION FOOTER */}
-                  <div style={{ marginTop: '20px', padding: '20px', background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'center', gap: '12px', position: 'sticky', bottom: '0', boxShadow: '0 -4px 15px rgba(0,0,0,0.05)' }}>
-                    {canApprove && ['Chờ phê duyệt', 'Đã bổ sung'].includes(getWorkflowStatus(selectedRequest)) && (
-                      <>
-                        <ActionButton label="Phê duyệt yêu cầu" icon={CheckSquare} color="#059669" onClick={() => onApprove(selectedRequest)} loading={isProcessing} />
-                        <ActionButton label="Yêu cầu bổ sung hồ sơ" icon={XCircle} color="#dc2626" onClick={() => onRequestSupplement(selectedRequest)} loading={isProcessing} />
-                      </>
-                    )}
-                    {canApprove && getWorkflowStatus(selectedRequest) === 'Đã phê duyệt' && <ActionButton label="Chuyển sang trạng thái Chờ ký" icon={CheckSquare} color="#3b82f6" onClick={() => onPendingSignature(selectedRequest)} loading={isProcessing} isFullWidth />}
-                    {canApprove && getWorkflowStatus(selectedRequest) === 'Chờ ký hóa đơn' && <ActionButton label="Tải Hóa Đơn Lên & Hoàn tất" icon={FilePlus2} color="#0f766e" onClick={() => onUploadInvoice(selectedRequest)} loading={isProcessing} isFullWidth />}
-                    {getWorkflowStatus(selectedRequest) === 'Yêu cầu bổ sung' && <ActionButton label="Thực hiện bổ sung hồ sơ ngay" icon={FilePlus2} color="#d97706" onClick={() => onSupplement(selectedRequest)} isFullWidth />}
-                  </div>
+                  {/* STICKY ACTION FOOTER REMOVED (Actions moved to header) */}
                 </div>
 
                 {/* SPLIT PREVIEW */}
                 {isSplitView && (
                   <div style={{ flex: '1.4', background: '#fff', borderLeft: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ padding: '12px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', gap: '8px', background: '#fff' }}>
+                    <div style={{ height: '44px', padding: '0 12px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '8px', background: '#fff' }}>
                       <TabButton label="Đề nghị XHĐ" active={activeDocKey === 'url_de_nghi_xhd'} onClick={() => setActiveDocKey('url_de_nghi_xhd')} />
                       <TabButton label="Hợp đồng MB" active={activeDocKey === 'url_hop_dong'} onClick={() => setActiveDocKey('url_hop_dong')} />
                       <TabButton label="Hóa đơn" active={activeDocKey === 'url_hoa_don_da_xuat'} onClick={() => setActiveDocKey('url_hoa_don_da_xuat')} />
@@ -543,7 +546,7 @@ const TabButton = ({ label, active, onClick }: any) => (
   <button
     onClick={onClick}
     style={{
-      padding: '6px 12px', borderRadius: '8px', border: '1px solid', borderColor: active ? '#0284c7' : '#e2e8f0',
+      padding: '4px 10px', borderRadius: '6px', border: '1px solid', borderColor: active ? '#0284c7' : '#e2e8f0',
       background: active ? '#0284c715' : '#fff', color: active ? '#0284c7' : '#64748b', fontSize: '11px', fontWeight: 800, cursor: 'pointer'
     }}
   >

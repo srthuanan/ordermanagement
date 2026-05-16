@@ -4,14 +4,15 @@ type InvitePayload = {
   action?: 'invite' | 'resend' | 'cancel';
   email?: string;
   fullName?: string;
-  role?: 'sales';
+  role?: 'sales' | 'manager';
+  department?: string;
 };
 
 type InviteResponse = {
   success: true;
   email: string;
   fullName: string;
-  role: 'sales';
+  role: 'sales' | 'manager';
   delivery?: 'invite' | 'recovery';
   status?: 'canceled';
 };
@@ -48,7 +49,8 @@ async function sendInviteOrRecovery(
   userId: string,
   email: string,
   fullName: string,
-  role: 'sales',
+  role: 'sales' | 'manager',
+  department: string,
   action: 'invite' | 'resend'
 ) {
   const appUrl = Deno.env.get('SITE_URL') || 'https://ordermanagement-three.vercel.app';
@@ -57,7 +59,8 @@ async function sendInviteOrRecovery(
     data: {
       full_name: fullName,
       invited_by_admin: true,
-      role
+      role,
+      department
     },
     redirectTo
   });
@@ -67,6 +70,7 @@ async function sendInviteOrRecovery(
       p_email: email,
       p_full_name: fullName,
       p_role: role,
+      p_department: department,
       p_invite_status: 'invite_sent',
       p_message: 'Đã gửi email kích hoạt tài khoản TVBH.',
       p_invited_by: userId
@@ -102,6 +106,7 @@ async function sendInviteOrRecovery(
     p_email: email,
     p_full_name: fullName,
     p_role: role,
+    p_department: department,
     p_invite_status: 'recovery_sent',
     p_message: 'Email đã tồn tại, đã gửi link đặt mật khẩu.',
     p_invited_by: userId
@@ -166,7 +171,8 @@ Deno.serve(async (req) => {
 
     const email = String(body.email ?? '').trim().toLowerCase();
     const fullName = String(body.fullName ?? '').trim();
-    const role = body.role === 'sales' ? body.role : 'sales';
+    const role = body.role === 'manager' ? body.role : 'sales';
+    const department = String(body.department ?? '').trim() || 'Kinh doanh';
 
     if (!email || !fullName) {
       return jsonResponse({ error: 'Thiếu email hoặc tên nhân sự' }, 400);
@@ -177,6 +183,7 @@ Deno.serve(async (req) => {
         p_email: email,
         p_full_name: fullName,
         p_role: role,
+        p_department: department,
         p_invite_status: 'canceled',
         p_message: 'Lời mời đã bị hủy.',
         p_invited_by: userResult.user.id
@@ -197,7 +204,7 @@ Deno.serve(async (req) => {
       return jsonResponse(cancelResponse);
     }
 
-    const result = await sendInviteOrRecovery(adminClient, supabaseUrl, userResult.user.id, email, fullName, role, body.action);
+    const result = await sendInviteOrRecovery(adminClient, supabaseUrl, userResult.user.id, email, fullName, role, department, body.action);
 
     if ('error' in result) {
       return jsonResponse({ error: result.error.message, step: result.step }, 400);

@@ -237,7 +237,8 @@ export interface YeucauxhdRow {
 export interface ProfileRow {
   id: string;
   full_name: string;
-  role: 'admin' | 'sales';
+  role: 'admin' | 'manager' | 'sales' | 'warehouse' | 'delivery' | 'staff';
+  department: string | null;
   email?: string | null;
   invite_status?: 'invite_sent' | 'recovery_sent' | 'active' | 'canceled' | null;
   invited_at?: string | null;

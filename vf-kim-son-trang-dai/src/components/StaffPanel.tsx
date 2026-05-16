@@ -23,12 +23,15 @@ import { roleLabels } from '../constants';
 
 type StaffPanelProps = {
   staff: ProfileRow[];
+  currentProfile: ProfileRow | null;
   onReload: () => Promise<boolean>;
 };
 
-export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
+export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, onReload }) => {
   const [email, setEmail] = React.useState('');
   const [fullName, setFullName] = React.useState('');
+  const [role, setRole] = React.useState<'sales' | 'manager'>('sales');
+  const [department, setDepartment] = React.useState('Kinh doanh');
   const [query, setQuery] = React.useState('');
   const [selectedEmail, setSelectedEmail] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -47,19 +50,30 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
 
   const getRowEmail = (item: ProfileRow) => item.email?.trim().toLowerCase() || item.id;
 
+  const currentDepartment = currentProfile?.department?.trim().toLowerCase() || '';
+  const isAdmin = currentProfile?.role === 'admin';
+  const isManager = currentProfile?.role === 'manager';
+  const visibleStaff = React.useMemo(() => {
+    if (isManager && currentDepartment) {
+      return staff.filter((item) => item.department?.trim().toLowerCase() === currentDepartment);
+    }
+    return staff;
+  }, [currentDepartment, isManager, staff]);
+
   const filteredStaff = React.useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return staff;
-    return staff.filter((item) => {
+    if (!normalized) return visibleStaff;
+    return visibleStaff.filter((item) => {
       const email = item.email?.toLowerCase() || item.id.toLowerCase();
       return (
         item.full_name.toLowerCase().includes(normalized) ||
+        (item.department || '').toLowerCase().includes(normalized) ||
         email.includes(normalized) ||
         roleLabels[item.role].toLowerCase().includes(normalized) ||
         getStatusLabel(item).toLowerCase().includes(normalized)
       );
     });
-  }, [query, staff]);
+  }, [query, visibleStaff]);
 
   const selectedStaff = React.useMemo(
     () => filteredStaff.find((item) => getRowEmail(item) === selectedEmail) || filteredStaff[0] || null,
@@ -76,11 +90,12 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
     }
   }, [filteredStaff, selectedEmail]);
 
-  const totalStaff = staff.length;
-  const adminCount = staff.filter((item) => item.role === 'admin').length;
-  const salesCount = staff.filter((item) => item.role === 'sales').length;
-  const pendingCount = staff.filter((item) => item.invite_status !== 'active' && item.invite_status !== 'canceled').length;
-  const inactiveCount = staff.filter((item) => item.invite_status === 'canceled').length;
+  const totalStaff = visibleStaff.length;
+  const adminCount = visibleStaff.filter((item) => item.role === 'admin').length;
+  const managerCount = visibleStaff.filter((item) => item.role === 'manager').length;
+  const salesCount = visibleStaff.filter((item) => item.role === 'sales').length;
+  const pendingCount = visibleStaff.filter((item) => item.invite_status !== 'active' && item.invite_status !== 'canceled').length;
+  const inactiveCount = visibleStaff.filter((item) => item.invite_status === 'canceled').length;
 
   const runStaffAction = async (
     action: 'resend' | 'cancel',
@@ -96,7 +111,8 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
       const { data, error: actionError } = await handler({
         email,
         fullName: item.full_name,
-        role: item.role
+        role: item.role === 'manager' ? 'manager' : 'sales',
+        department: item.department || 'Kinh doanh'
       });
 
       if (actionError) {
@@ -128,7 +144,8 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
       const { data, error: inviteError } = await inviteStaffMember({
         email: email.trim(),
         fullName: fullName.trim(),
-        role: 'sales'
+        role,
+        department: department.trim() || 'Kinh doanh'
       });
 
       if (inviteError) {
@@ -169,6 +186,39 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
         </div>
       )}
 
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
+        <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
+          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Tổng nhân sự</div>
+          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{totalStaff}</div>
+        </div>
+        <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
+          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Admin</div>
+          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{adminCount}</div>
+        </div>
+        <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
+          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>TVBH</div>
+          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{salesCount}</div>
+        </div>
+        <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
+          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>TPKD</div>
+          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{managerCount}</div>
+        </div>
+        <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
+          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Chờ kích hoạt</div>
+          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{pendingCount}</div>
+        </div>
+        <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
+          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Đã hủy</div>
+          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{inactiveCount}</div>
+        </div>
+        {isManager && currentProfile?.department ? (
+          <div style={{ padding: '10px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', minWidth: '180px' }}>
+            <div style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 700, textTransform: 'uppercase' }}>Phòng đang xem</div>
+            <div style={{ fontSize: '15px', fontWeight: 900, color: '#1d4ed8' }}>{currentProfile.department}</div>
+          </div>
+        ) : null}
+      </div>
+
       {/* Primary Modular Dual Pane Workspace */}
       <div className="orders-modular-workspace">
         
@@ -187,13 +237,15 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
               />
             </div>
             
-            <button 
-              onClick={() => setDrawerOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#0f766e', color: '#ffffff', border: '0', borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(15, 118, 110, 0.2)' }}
-            >
-              <Plus size={15} strokeWidth={3} />
-              Mời nhân sự
-            </button>
+            {isAdmin && (
+              <button 
+                onClick={() => setDrawerOpen(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#0f766e', color: '#ffffff', border: '0', borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 4px rgba(15, 118, 110, 0.2)' }}
+              >
+                <Plus size={15} strokeWidth={3} />
+                Mời nhân sự
+              </button>
+            )}
           </div>
 
           {/* Data Table */}
@@ -208,6 +260,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
                 <thead>
                   <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
                     <th style={{ padding: '12px 20px', fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Họ & Tên</th>
+                    <th style={{ padding: '12px 20px', fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Phòng ban</th>
                     <th style={{ padding: '12px 20px', fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Quyền hạn</th>
                     <th style={{ padding: '12px 20px', fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Trạng thái</th>
                   </tr>
@@ -228,6 +281,19 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
                             <strong style={{ fontSize: '13.5px', color: isActive ? '#0f766e' : '#0f172a', fontWeight: 700 }}>{item.full_name}</strong>
                             <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{emailVal}</span>
                           </div>
+                        </td>
+                        <td style={{ padding: '12px 20px' }}>
+                          <span style={{
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            background: '#f8fafc',
+                            color: '#0f172a',
+                            border: '1px solid #e2e8f0'
+                          }}>
+                            {item.department || 'Kinh doanh'}
+                          </span>
                         </td>
                         <td style={{ padding: '12px 20px' }}>
                           <span style={{
@@ -297,6 +363,17 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
                 }}>
                   🚀 {roleLabels[selectedStaff.role]}
                 </span>
+                <span style={{
+                  background: '#f8fafc',
+                  color: '#0f172a',
+                  padding: '3px 10px',
+                  borderRadius: '20px',
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  border: '1px solid #e2e8f0'
+                }}>
+                  {selectedStaff.department || 'Kinh doanh'}
+                </span>
               </div>
 
               {/* Content Block */}
@@ -304,6 +381,12 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
                 
                 {/* Standard Attributes Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0', gridColumn: 'span 2' }}>
+                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Phòng ban</span>
+                    <strong style={{ display: 'block', marginTop: '2px', color: '#0f172a', fontSize: '13px', fontWeight: 700 }}>
+                      {selectedStaff.department || 'Kinh doanh'}
+                    </strong>
+                  </div>
                   <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Trạng thái</span>
                     <strong style={{ display: 'block', marginTop: '2px', color: '#0f172a', fontSize: '13px', fontWeight: 700 }}>{getStatusLabel(selectedStaff)}</strong>
@@ -324,7 +407,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
 
                 {/* Action Area */}
                 <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {selectedStaff.invite_status !== 'active' ? (
+                  {isAdmin && selectedStaff.invite_status !== 'active' ? (
                     <>
                       <button
                         type="button"
@@ -348,11 +431,18 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
                         </button>
                       )}
                     </>
-                  ) : (
+                  ) : isAdmin ? (
                     <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '12px', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                       <ShieldCheck size={18} style={{ color: '#16a34a', marginTop: '1px', flexShrink: 0 }} />
                       <span style={{ fontSize: '12.5px', color: '#15803d', fontWeight: 600, lineHeight: '1.4' }}>
                         Tài khoản TVBH này đã kích hoạt thành công. Hiện có toàn quyền truy cập các báo cáo, đặt cọc, ghép xe và yêu cầu hóa đơn.
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '12px', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                      <ShieldCheck size={18} style={{ color: '#1d4ed8', marginTop: '1px', flexShrink: 0 }} />
+                      <span style={{ fontSize: '12.5px', color: '#1d4ed8', fontWeight: 600, lineHeight: '1.4' }}>
+                        TPKD chỉ xem được nhân sự và đơn hàng thuộc phòng ban của mình.
                       </span>
                     </div>
                   )}
@@ -372,7 +462,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
       </div>
 
       {/* ================= RIGHT SLIDING DRAWER: Mời nhân sự ================= */}
-      {drawerOpen && (
+      {drawerOpen && isAdmin && (
         <>
           {/* Backdrop Overlay */}
           <div 
@@ -431,8 +521,33 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, onReload }) => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
                 <ShieldCheck size={16} style={{ color: '#0f766e' }} />
                 <span style={{ fontSize: '13px', color: '#475569', fontWeight: 600 }}>
-                  Vai trò mặc định: <strong style={{ color: '#0f766e' }}>Tư vấn bán hàng (TVBH)</strong>
+                  Có thể chọn vai trò <strong style={{ color: '#0f766e' }}>TVBH</strong> hoặc <strong style={{ color: '#0f766e' }}>TPKD</strong>
                 </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '12px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>Vai trò</label>
+                  <select
+                    value={role}
+                    onChange={(event) => setRole(event.target.value as 'sales' | 'manager')}
+                    disabled={loading}
+                    style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '14px', fontWeight: 600, background: '#fff' }}
+                  >
+                    <option value="sales">TVBH</option>
+                    <option value="manager">TPKD</option>
+                  </select>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '12px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>Phòng ban</label>
+                  <input
+                    value={department}
+                    onChange={(event) => setDepartment(event.target.value)}
+                    placeholder="Kinh doanh"
+                    disabled={loading}
+                    style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '14px', fontWeight: 600 }}
+                  />
+                </div>
               </div>
 
               {/* Action buttons for form */}
