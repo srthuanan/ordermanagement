@@ -18,7 +18,7 @@ import {
   Copy
 } from 'lucide-react';
 import { ProfileRow } from '../types';
-import { cancelStaffInvite, inviteStaffMember, resendStaffInvite } from '../services/apiService';
+import { cancelStaffInvite, inviteStaffMember, resendStaffInvite, updateStaffPermission } from '../services/apiService';
 import { roleLabels } from '../constants';
 
 type StaffPanelProps = {
@@ -30,8 +30,11 @@ type StaffPanelProps = {
 export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, onReload }) => {
   const [email, setEmail] = React.useState('');
   const [fullName, setFullName] = React.useState('');
-  const [role, setRole] = React.useState<'sales' | 'manager'>('sales');
+  const [inviteRole, setInviteRole] = React.useState<'sales' | 'manager'>('sales');
   const [department, setDepartment] = React.useState('Kinh doanh');
+  const [permissionRole, setPermissionRole] = React.useState<'sales' | 'manager'>('sales');
+  const [permissionDepartment, setPermissionDepartment] = React.useState('Kinh doanh');
+  const [permissionLoading, setPermissionLoading] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [selectedEmail, setSelectedEmail] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -79,6 +82,12 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
     () => filteredStaff.find((item) => getRowEmail(item) === selectedEmail) || filteredStaff[0] || null,
     [filteredStaff, selectedEmail]
   );
+
+  React.useEffect(() => {
+    if (!selectedStaff) return;
+    setPermissionRole(selectedStaff.role === 'manager' ? 'manager' : 'sales');
+    setPermissionDepartment(selectedStaff.department || 'Kinh doanh');
+  }, [selectedStaff]);
 
   React.useEffect(() => {
     if (!filteredStaff.length) {
@@ -144,7 +153,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
       const { data, error: inviteError } = await inviteStaffMember({
         email: email.trim(),
         fullName: fullName.trim(),
-        role,
+        role: inviteRole,
         department: department.trim() || 'Kinh doanh'
       });
 
@@ -167,6 +176,35 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+  const handleSavePermission = async () => {
+    if (!selectedStaff || selectedStaff.role === 'admin') return;
+
+    setPermissionLoading(true);
+    setSuccess('');
+    setError('');
+
+    try {
+      const { error: updateError } = await updateStaffPermission({
+        staffId: selectedStaff.id,
+        email: selectedStaff.email || getRowEmail(selectedStaff),
+        fullName: selectedStaff.full_name.trim(),
+        role: permissionRole,
+        department: permissionDepartment.trim() || 'Kinh doanh'
+      });
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      setSuccess(`Đã cập nhật phân quyền cho ${selectedStaff.full_name}.`);
+      await onReload();
+    } catch (err: any) {
+      setError(err?.message || 'Không thể cập nhật phân quyền.');
+    } finally {
+      setPermissionLoading(false);
+    }
   };
 
   return (
@@ -399,6 +437,57 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                       <strong style={{ color: '#0f172a', fontSize: '13px', fontWeight: 700 }}>{getStatusLabel(selectedStaff)}</strong>
                     </div>
                   </div>
+
+                  {isAdmin && selectedStaff.role !== 'admin' ? (
+                    <div style={{ background: '#ffffff', padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                        <div>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Sửa phân quyền</span>
+                          <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#475569', fontWeight: 600 }}>Chỉnh vai trò và phòng ban cho nhân sự này.</p>
+                        </div>
+                        <ShieldCheck size={16} style={{ color: '#0f766e' }} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '11px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>Vai trò</label>
+                          <select
+                            value={permissionRole}
+                            onChange={(event) => setPermissionRole(event.target.value as 'sales' | 'manager')}
+                            disabled={permissionLoading}
+                            style={{ padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13px', fontWeight: 600, background: '#fff' }}
+                          >
+                            <option value="sales">TVBH</option>
+                            <option value="manager">TPKD</option>
+                          </select>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <label style={{ fontSize: '11px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>Phòng ban</label>
+                          <input
+                            value={permissionDepartment}
+                            onChange={(event) => setPermissionDepartment(event.target.value)}
+                            disabled={permissionLoading}
+                            style={{ padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13px', fontWeight: 600 }}
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSavePermission}
+                        disabled={permissionLoading || (selectedStaff.role === permissionRole && (selectedStaff.department || 'Kinh doanh') === permissionDepartment.trim())}
+                        style={{ width: '100%', border: 0, background: '#0f766e', color: '#fff', padding: '10px 12px', borderRadius: '10px', fontWeight: 800, fontSize: '13px', cursor: 'pointer' }}
+                      >
+                        {permissionLoading ? 'Đang lưu...' : 'Lưu phân quyền'}
+                      </button>
+                    </div>
+                  ) : isAdmin ? (
+                    <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '12px', borderRadius: '12px', gridColumn: 'span 2', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                      <ShieldCheck size={18} style={{ color: '#1d4ed8', marginTop: '1px', flexShrink: 0 }} />
+                      <span style={{ fontSize: '12.5px', color: '#1d4ed8', fontWeight: 600, lineHeight: '1.4' }}>
+                        Tài khoản Admin không chỉnh phân quyền tại đây.
+                      </span>
+                    </div>
+                  ) : null}
+
                   <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Lần mời lúc</span>
                     <strong style={{ display: 'block', marginTop: '2px', color: '#0f172a', fontSize: '13px', fontWeight: 700 }}>
@@ -537,8 +626,8 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label style={{ fontSize: '12px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>Vai trò</label>
                   <select
-                    value={role}
-                    onChange={(event) => setRole(event.target.value as 'sales' | 'manager')}
+                    value={inviteRole}
+                    onChange={(event) => setInviteRole(event.target.value as 'sales' | 'manager')}
                     disabled={loading}
                     style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '14px', fontWeight: 600, background: '#fff' }}
                   >

@@ -1,11 +1,12 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.99.2';
 
 type InvitePayload = {
-  action?: 'invite' | 'resend' | 'cancel';
+  action?: 'invite' | 'resend' | 'cancel' | 'update';
   email?: string;
   fullName?: string;
   role?: 'sales' | 'manager';
   department?: string;
+  staffId?: string;
 };
 
 type InviteResponse = {
@@ -119,6 +120,71 @@ async function sendInviteOrRecovery(
   return { delivery: 'recovery' as const };
 }
 
+async function updateStaffPermission(
+  adminClient: ReturnType<typeof createClient>,
+  staffId: string,
+  email: string,
+  fullName: string,
+  role: 'sales' | 'manager',
+  department: string
+) {
+  const { error: profileUpdateError } = await adminClient
+    .from('profiles')
+    .update({
+      full_name: fullName,
+      role,
+      department
+    })
+    .eq('id', staffId);
+
+  if (profileUpdateError) {
+    return { error: profileUpdateError, step: 'update_profile' as const };
+  }
+
+  const { error: inviteUpdateError } = await adminClient
+    .schema('app_private')
+    .from('staff_invites')
+    .update({
+      full_name: fullName,
+      role,
+      department,
+      updated_at: new Date().toISOString()
+    })
+    .eq('email', email);
+
+  if (inviteUpdateError) {
+    return { error: inviteUpdateError, step: 'update_invite' as const };
+  }
+
+  const { error: authFetchError, data: authUserResult } = await adminClient.auth.admin.getUserById(staffId);
+  if (authFetchError || !authUserResult.user) {
+    return { error: authFetchError ?? new Error('Không tìm thấy tài khoản auth'), step: 'update_auth_fetch' as const };
+  }
+
+  const { error: authUpdateError } = await adminClient.auth.admin.updateUserById(staffId, {
+    user_metadata: {
+      ...(authUserResult.user.user_metadata || {}),
+      full_name: fullName,
+      invited_by_admin: true,
+      role,
+      department
+    },
+    app_metadata: {
+      ...(authUserResult.user.app_metadata || {}),
+      full_name: fullName,
+      invited_by_admin: true,
+      role,
+      department
+    }
+  });
+
+  if (authUpdateError) {
+    return { error: authUpdateError, step: 'update_auth' as const };
+  }
+
+  return { delivery: 'invite' as const };
+}
+
 Deno.serve(async (req) => {
   try {
     if (req.method === 'OPTIONS') {
@@ -165,7 +231,7 @@ Deno.serve(async (req) => {
     }
 
     const body = (await req.json()) as InvitePayload;
-    if (!body.action || !['invite', 'resend', 'cancel'].includes(body.action)) {
+    if (!body.action || !['invite', 'resend', 'cancel', 'update'].includes(body.action)) {
       return jsonResponse({ error: 'Hành động không hợp lệ' }, 400);
     }
 
@@ -173,9 +239,29 @@ Deno.serve(async (req) => {
     const fullName = String(body.fullName ?? '').trim();
     const role = body.role === 'manager' ? body.role : 'sales';
     const department = String(body.department ?? '').trim() || 'Kinh doanh';
+    const staffId = String(body.staffId ?? '').trim();
 
     if (!email || !fullName) {
       return jsonResponse({ error: 'Thiếu email hoặc tên nhân sự' }, 400);
+    }
+
+    if (body.action === 'update') {
+      if (!staffId) {
+        return jsonResponse({ error: 'Thiếu mã nhân sự để cập nhật' }, 400);
+      }
+
+      const result = await updateStaffPermission(adminClient, staffId, email, fullName, role, department);
+      if ('error' in result) {
+        return jsonResponse({ error: result.error.message, step: result.step }, 400);
+      }
+
+      return jsonResponse({
+        success: true,
+        email,
+        fullName,
+        role,
+        delivery: 'invite'
+      });
     }
 
     if (body.action === 'cancel') {

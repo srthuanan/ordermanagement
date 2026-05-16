@@ -291,6 +291,23 @@ export const cancelStaffInvite = async (input: { email: string; fullName: string
   });
 };
 
+export const updateStaffPermission = async (input: {
+  staffId: string;
+  email?: string | null;
+  fullName: string;
+  role: 'sales' | 'manager';
+  department?: string | null;
+}) => {
+  return await invokeStaffFunction({
+    action: 'update',
+    staffId: input.staffId,
+    email: input.email ?? null,
+    fullName: input.fullName,
+    role: input.role,
+    department: input.department ?? null
+  });
+};
+
 // --- Queries ---
 export const getCustomers = async () => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
