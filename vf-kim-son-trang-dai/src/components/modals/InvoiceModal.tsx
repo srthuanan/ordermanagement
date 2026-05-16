@@ -128,7 +128,7 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
 
   const isStep1Valid = policy.length > 0 && soTienKhachDaDong && ngayKyHopDong && diaChi && soHopDong && hinhThucTT && nguonKhach && giaCongBo && (!isGasToElectricPolicy || (xeXangVin && xeXangHang && xeXangModel && !vinCheckError));
   const isStep2Valid = contractFile !== null && proposalFile !== null;
-  const isFormValid = isStep1Valid && isStep2Valid && vinClubConfirmed;
+  const isFormValid = isStep1Valid && isStep2Valid;
 
   const handleNext = () => {
     if (step === 1 && !isStep1Valid) { setError('Vui lòng điền đầy đủ thông tin bắt buộc.'); return; }
