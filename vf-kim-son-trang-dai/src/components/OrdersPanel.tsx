@@ -84,7 +84,7 @@ interface OrdersPanelProps {
   currentUsername: string;
   canOverrideHeldVehicle: boolean;
   canPairOrder: boolean;
-  canManageInventory: boolean;
+  canManageOrderActions: boolean;
   isUnpairingOrderId: string;
   isUpdatingPolicy: boolean;
   query: string;
@@ -106,7 +106,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
   currentUsername,
   canOverrideHeldVehicle,
   canPairOrder,
-  canManageInventory,
+  canManageOrderActions,
   isUnpairingOrderId,
   isUpdatingPolicy,
   query,
@@ -177,18 +177,18 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
     canPairOrder &&
     selectedOrder.status === 'Chưa ghép' &&
     selectedCandidates.length > 0;
-  const selectedCanUnpair = Boolean(selectedOrder) && canManageInventory && selectedOrder.status === 'Đã ghép';
-  const selectedCanInvoice = Boolean(selectedOrder) && canManageInventory && selectedOrder.status === 'Đã ghép';
+  const selectedCanUnpair = Boolean(selectedOrder) && canManageOrderActions && selectedOrder.status === 'Đã ghép';
+  const selectedCanInvoice = Boolean(selectedOrder) && canManageOrderActions && selectedOrder.status === 'Đã ghép';
   const selectedCanCancel =
     Boolean(selectedOrder) &&
-    canManageInventory &&
+    canManageOrderActions &&
     selectedOrder.status !== 'Đã hủy' &&
     selectedOrder.status !== 'Đã xuất hóa đơn';
   const selectedCanEdit =
     Boolean(selectedOrder) &&
-    canManageInventory &&
+    canManageOrderActions &&
     !['Đã xuất hóa đơn', 'Đã hủy', 'Chờ ký hóa đơn'].includes(selectedOrder.status);
-  const selectedCanPolicy = Boolean(selectedOrder) && canManageInventory && selectedOrder.status !== 'Đã hủy';
+  const selectedCanPolicy = Boolean(selectedOrder) && canManageOrderActions && selectedOrder.status !== 'Đã hủy';
 
   useEffect(() => {
     if (!isMobile) {

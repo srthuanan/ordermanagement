@@ -42,6 +42,7 @@ import {
   canCreateOrder,
   canHoldVehicle,
   canManageInventory,
+  canManageOrderActions,
   canManagePricingConfig,
   canOverrideHeldVehicle,
   canPairOrder,
@@ -321,7 +322,7 @@ function App() {
                 currentUsername={currentUsername}
                 canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
                 canPairOrder={canPairOrder(userRole)}
-                canManageInventory={canManageInventory(userRole)}
+                canManageOrderActions={canManageOrderActions(userRole)}
                 isUnpairingOrderId={isUnpairingOrderId}
                 isUpdatingPolicy={isUpdatingPolicy}
                 query={query}

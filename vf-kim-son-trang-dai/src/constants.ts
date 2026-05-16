@@ -51,6 +51,10 @@ export function canHoldVehicle(role: AppRole) {
 }
 
 export function canPairOrder(role: AppRole) {
+  return role === 'admin';
+}
+
+export function canManageOrderActions(role: AppRole) {
   return ['admin', 'sales'].includes(role);
 }
 
