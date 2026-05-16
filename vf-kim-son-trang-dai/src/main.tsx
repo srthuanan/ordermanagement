@@ -312,6 +312,8 @@ function App() {
                 orders={orders}
                 availableStock={availableStock}
                 auditLogs={auditLogs}
+                currentProfile={profile}
+                staffProfiles={profiles}
               />
             )}
 

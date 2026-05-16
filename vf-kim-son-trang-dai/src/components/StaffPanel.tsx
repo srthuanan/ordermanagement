@@ -41,11 +41,11 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
   const [drawerOpen, setDrawerOpen] = React.useState(false);
 
   const getStatusLabel = (item: ProfileRow) => {
-    if (item.invite_status === 'active') return 'Đã kích hoạt';
+    if (item.activated_at || item.invite_status === 'active') return 'Đã kích hoạt';
     if (item.invite_status === 'recovery_sent') return 'Đã gửi link';
     if (item.invite_status === 'invite_sent') return 'Đã gửi lời mời';
     if (item.invite_status === 'canceled') return 'Đã hủy mời';
-    return item.activated_at ? 'Đã kích hoạt' : 'Chưa kích hoạt';
+    return 'Chưa kích hoạt';
   };
 
   const getRowEmail = (item: ProfileRow) => item.email?.trim().toLowerCase() || item.id;
@@ -315,7 +315,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                               width: '6px',
                               height: '6px',
                               borderRadius: '50%',
-                              background: item.invite_status === 'active' ? '#10b981' : item.invite_status === 'canceled' ? '#ef4444' : '#f59e0b'
+                              background: (item.activated_at || item.invite_status === 'active') ? '#10b981' : item.invite_status === 'canceled' ? '#ef4444' : '#f59e0b'
                             }} />
                             <span style={{ fontSize: '12.5px', fontWeight: 600, color: '#334155' }}>{getStatusLabel(item)}</span>
                           </div>
@@ -389,7 +389,15 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                   </div>
                   <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Trạng thái</span>
-                    <strong style={{ display: 'block', marginTop: '2px', color: '#0f172a', fontSize: '13px', fontWeight: 700 }}>{getStatusLabel(selectedStaff)}</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                      <span style={{
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        background: (selectedStaff.activated_at || selectedStaff.invite_status === 'active') ? '#10b981' : selectedStaff.invite_status === 'canceled' ? '#ef4444' : '#f59e0b'
+                      }} />
+                      <strong style={{ color: '#0f172a', fontSize: '13px', fontWeight: 700 }}>{getStatusLabel(selectedStaff)}</strong>
+                    </div>
                   </div>
                   <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Lần mời lúc</span>

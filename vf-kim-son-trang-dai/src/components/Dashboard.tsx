@@ -10,14 +10,17 @@ import {
   FileText,
   History,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  User
 } from 'lucide-react';
-import { Order, CarActivityRow } from '../types';
+import { Order, CarActivityRow, ProfileRow } from '../types';
 
 interface DashboardProps {
   orders: Order[];
   availableStock: number;
   auditLogs: CarActivityRow[];
+  currentProfile: ProfileRow | null;
+  staffProfiles: ProfileRow[];
 }
 
 function formatActivityAction(log: CarActivityRow) {
@@ -56,7 +59,9 @@ function formatActivityAction(log: CarActivityRow) {
 export const Dashboard: React.FC<DashboardProps> = ({
   orders,
   availableStock,
-  auditLogs
+  auditLogs,
+  currentProfile,
+  staffProfiles
 }) => {
   const totalOrders = orders.length;
   const pendingOrders = orders.filter((o) => o.status === 'Chưa ghép').length;
@@ -67,6 +72,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const pairingRate = totalOrders > 0 ? Math.round((pairedOrders / totalOrders) * 100) : 0;
   const pipelineFill = totalOrders > 0 ? Math.round(((pairedOrders + invoicedOrders) / totalOrders) * 100) : 0;
   const recentLogs = auditLogs.slice(0, 6);
+  const currentDepartment = currentProfile?.department?.trim() || '';
+  const isManagerView = currentProfile?.role === 'manager';
+  const departmentSalesCount = isManagerView
+    ? staffProfiles.filter(
+        (staff) =>
+          staff.role === 'sales' &&
+          staff.department?.trim().toLowerCase() === currentDepartment.toLowerCase()
+      ).length
+    : 0;
 
   return (
     <div className="dashboard-shell">
@@ -78,6 +92,34 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <MiniStat label="Xe trống" value={availableStock} icon={Boxes} tone="amber" />
         </div>
       </section>
+
+      {isManagerView && (
+        <section className="dashboard-band">
+          <div className="dashboard-band-card dashboard-band-card-soft" style={{ gridColumn: '1 / -1' }}>
+            <div className="dashboard-band-header">
+              <div>
+                <p className="eyebrow">Phòng ban hiện tại</p>
+                <h3>{currentDepartment || 'Chưa xác định'}</h3>
+              </div>
+              <div className="hero-pill" style={{ background: '#eff6ff', color: '#1d4ed8', borderColor: '#bfdbfe' }}>
+                TPKD
+              </div>
+            </div>
+
+            <div className="hero-mini-grid hero-mini-grid-compact" style={{ marginTop: 0 }}>
+              <MiniStat label="Tổng đơn trong phòng" value={totalOrders} icon={Archive} tone="blue" />
+              <MiniStat label="TVBH cùng phòng" value={departmentSalesCount} icon={User} tone="teal" />
+              <MiniStat label="Chưa ghép" value={pendingOrders} icon={Clock3} tone="amber" />
+              <MiniStat label="Đã xuất hóa đơn" value={invoicedOrders} icon={FileText} tone="blue" />
+            </div>
+
+            <div className="dashboard-footnote" style={{ marginTop: '0.9rem' }}>
+              <TrendingUp size={16} />
+              <span>Dữ liệu trong dashboard đang được lọc theo phòng ban của bạn.</span>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="dashboard-band">
         <div className="dashboard-band-card">
