@@ -5,6 +5,7 @@ create table if not exists public.profiles (
   full_name text not null,
   role text not null default 'staff' check (role in ('admin', 'manager', 'sales', 'warehouse', 'delivery', 'staff')),
   department text,
+  manager_id uuid references public.profiles (id) on delete set null,
   created_at timestamptz not null default now()
 );
 

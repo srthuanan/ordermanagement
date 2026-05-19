@@ -31,9 +31,11 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
   const [email, setEmail] = React.useState('');
   const [fullName, setFullName] = React.useState('');
   const [inviteRole, setInviteRole] = React.useState<'sales' | 'manager'>('sales');
-  const [department, setDepartment] = React.useState('Kinh doanh');
+  const [department, setDepartment] = React.useState('');
+  const [inviteManagerId, setInviteManagerId] = React.useState('');
   const [permissionRole, setPermissionRole] = React.useState<'sales' | 'manager'>('sales');
-  const [permissionDepartment, setPermissionDepartment] = React.useState('Kinh doanh');
+  const [permissionDepartment, setPermissionDepartment] = React.useState('');
+  const [permissionManagerId, setPermissionManagerId] = React.useState('');
   const [permissionLoading, setPermissionLoading] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [selectedEmail, setSelectedEmail] = React.useState('');
@@ -53,15 +55,50 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
 
   const getRowEmail = (item: ProfileRow) => item.email?.trim().toLowerCase() || item.id;
 
-  const currentDepartment = currentProfile?.department?.trim().toLowerCase() || '';
   const isAdmin = currentProfile?.role === 'admin';
   const isManager = currentProfile?.role === 'manager';
+  const isSales = currentProfile?.role === 'sales';
+  const isPersonalView = isSales;
+  const managerOptions = React.useMemo(() => {
+    const seen = new Set<string>();
+    return staff
+      .filter((item) => item.role === 'manager' && item.department?.trim())
+      .map((item) => ({
+        id: item.id,
+        department: item.department!.trim(),
+        label: `${item.full_name} · ${item.department!.trim()}`
+      }))
+      .filter((item) => {
+        const key = item.id;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+  }, [staff]);
+
+  const getManagerLabel = (managerId?: string | null) => {
+    if (!managerId) return '';
+    return managerOptions.find((item) => item.id === managerId)?.label || '';
+  };
   const visibleStaff = React.useMemo(() => {
-    if (isManager && currentDepartment) {
-      return staff.filter((item) => item.department?.trim().toLowerCase() === currentDepartment);
+    if (isAdmin) {
+      return staff;
     }
-    return staff;
-  }, [currentDepartment, isManager, staff]);
+
+    if (isManager && currentProfile) {
+      return staff.filter(
+        (item) =>
+          item.role === 'sales' &&
+          item.manager_id === currentProfile.id
+      );
+    }
+
+    if (isSales && currentProfile) {
+      return staff.filter((item) => item.id === currentProfile.id);
+    }
+
+    return [];
+  }, [currentProfile, isAdmin, isManager, isSales, staff]);
 
   const filteredStaff = React.useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -86,8 +123,17 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
   React.useEffect(() => {
     if (!selectedStaff) return;
     setPermissionRole(selectedStaff.role === 'manager' ? 'manager' : 'sales');
-    setPermissionDepartment(selectedStaff.department || 'Kinh doanh');
+    setPermissionDepartment(selectedStaff.department || '');
+    setPermissionManagerId(selectedStaff.manager_id || '');
   }, [selectedStaff]);
+
+  React.useEffect(() => {
+    if (inviteRole === 'sales') {
+      setDepartment('');
+    } else {
+      setInviteManagerId('');
+    }
+  }, [inviteRole]);
 
   React.useEffect(() => {
     if (!filteredStaff.length) {
@@ -121,7 +167,8 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
         email,
         fullName: item.full_name,
         role: item.role === 'manager' ? 'manager' : 'sales',
-        department: item.department || 'Kinh doanh'
+        department: item.role === 'manager' ? item.department || null : null,
+        managerId: item.role === 'sales' ? item.manager_id || null : null
       });
 
       if (actionError) {
@@ -154,7 +201,8 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
         email: email.trim(),
         fullName: fullName.trim(),
         role: inviteRole,
-        department: department.trim() || 'Kinh doanh'
+        department: inviteRole === 'manager' ? department.trim() || null : null,
+        managerId: inviteRole === 'sales' ? inviteManagerId || null : null
       });
 
       if (inviteError) {
@@ -163,8 +211,16 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
 
       setEmail('');
       setFullName('');
+      setInviteManagerId('');
+      setDepartment('');
       const delivery = (data as any)?.delivery;
-      setSuccess(delivery === 'recovery' ? 'Email đã tồn tại, mình đã gửi link đặt mật khẩu.' : 'Đã gửi email kích hoạt tài khoản TVBH.');
+      setSuccess(
+        delivery === 'recovery'
+          ? 'Email đã tồn tại, mình đã gửi link đặt mật khẩu.'
+          : inviteRole === 'manager'
+            ? 'Đã gửi email kích hoạt tài khoản TPKD.'
+            : 'Đã gửi email kích hoạt tài khoản TVBH.'
+      );
       setDrawerOpen(false); // Đóng drawer sau khi mời thành công
       await onReload();
     } catch (err: any) {
@@ -191,7 +247,8 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
         email: selectedStaff.email || getRowEmail(selectedStaff),
         fullName: selectedStaff.full_name.trim(),
         role: permissionRole,
-        department: permissionDepartment.trim() || 'Kinh doanh'
+        department: permissionRole === 'manager' ? permissionDepartment.trim() || null : null,
+        managerId: permissionRole === 'sales' ? permissionManagerId || null : null
       });
 
       if (updateError) {
@@ -225,40 +282,94 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
       )}
 
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
-        <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
-          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Tổng nhân sự</div>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{totalStaff}</div>
-        </div>
-        <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
-          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Admin</div>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{adminCount}</div>
-        </div>
-        <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
-          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>TVBH</div>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{salesCount}</div>
-        </div>
-        <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
-          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>TPKD</div>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{managerCount}</div>
-        </div>
-        <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
-          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Chờ kích hoạt</div>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{pendingCount}</div>
-        </div>
-        <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
-          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Đã hủy</div>
-          <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{inactiveCount}</div>
-        </div>
-        {isManager && currentProfile?.department ? (
-          <div style={{ padding: '10px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', minWidth: '180px' }}>
-            <div style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 700, textTransform: 'uppercase' }}>Phòng đang xem</div>
-            <div style={{ fontSize: '15px', fontWeight: 900, color: '#1d4ed8' }}>{currentProfile.department}</div>
-          </div>
-        ) : null}
+        {isPersonalView ? (
+          <>
+            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '140px' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Hồ sơ cá nhân</div>
+              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{currentProfile?.full_name || 'TVBH'}</div>
+            </div>
+            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '140px' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Phòng ban</div>
+              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{currentProfile?.department || 'Chưa gán'}</div>
+            </div>
+            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '140px' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Trạng thái</div>
+              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{currentProfile ? getStatusLabel(currentProfile) : '---'}</div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>TVBH trong phòng</div>
+              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{salesCount}</div>
+            </div>
+            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Đã kích hoạt</div>
+              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{visibleStaff.filter((item) => item.activated_at || item.invite_status === 'active').length}</div>
+            </div>
+            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Chờ kích hoạt</div>
+              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{pendingCount}</div>
+            </div>
+            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Đã hủy</div>
+              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{inactiveCount}</div>
+            </div>
+            {isManager && currentProfile?.department ? (
+              <div style={{ padding: '10px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', minWidth: '180px' }}>
+                <div style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 700, textTransform: 'uppercase' }}>Phòng đang xem</div>
+                <div style={{ fontSize: '15px', fontWeight: 900, color: '#1d4ed8' }}>{currentProfile.department}</div>
+              </div>
+            ) : null}
+          </>
+        )}
       </div>
 
       {/* Primary Modular Dual Pane Workspace */}
-      <div className="orders-modular-workspace">
+      {isPersonalView ? (
+        <div className="orders-modular-workspace" style={{ gridTemplateColumns: '1fr' }}>
+          <div className="orders-data-side" style={{ display: 'flex', flexDirection: 'column', background: '#ffffff', borderRadius: '20px', border: '1px solid #cbd5e1', boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.02)', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #e2e8f0', background: '#fafafb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Mục cá nhân</div>
+                <div style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>{currentProfile?.full_name || 'TVBH'}</div>
+              </div>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '6px 10px', borderRadius: '999px' }}>
+                Chỉ bạn xem
+              </span>
+            </div>
+            <div style={{ padding: '20px', display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Họ & tên</span>
+                <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile?.full_name || '---'}</strong>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Email</span>
+                <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile?.email || '---'}</strong>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Phòng ban</span>
+                <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile?.department || 'Chưa gán'}</strong>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Quyền hạn</span>
+                <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile ? roleLabels[currentProfile.role] : 'TVBH'}</strong>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Trạng thái</span>
+                <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile ? getStatusLabel(currentProfile) : '---'}</strong>
+              </div>
+              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Kích hoạt hoàn tất</span>
+                <strong style={{ display: 'block', marginTop: '4px', color: currentProfile?.activated_at ? '#059669' : '#64748b', fontSize: '14px' }}>
+                  {currentProfile?.activated_at ? `✅ ${new Date(currentProfile.activated_at).toLocaleString('vi-VN')}` : '⌛ Đang chờ kích hoạt'}
+                </strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="orders-modular-workspace">
         
         {/* LEFT PANEL: Data Grid */}
         <div className="orders-data-side" style={{ display: 'flex', flexDirection: 'column', background: '#ffffff', borderRadius: '20px', border: '1px solid #cbd5e1', boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.02)', overflow: 'hidden' }}>
@@ -330,7 +441,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                             color: '#0f172a',
                             border: '1px solid #e2e8f0'
                           }}>
-                            {item.department || 'Kinh doanh'}
+                            {item.department || 'Chưa gán'}
                           </span>
                         </td>
                         <td style={{ padding: '12px 20px' }}>
@@ -410,8 +521,21 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                   fontWeight: 700,
                   border: '1px solid #e2e8f0'
                 }}>
-                  {selectedStaff.department || 'Kinh doanh'}
+                  {selectedStaff.department || 'Chưa gán'}
                 </span>
+                {selectedStaff.role === 'sales' ? (
+                  <span style={{
+                    background: '#eff6ff',
+                    color: '#1d4ed8',
+                    padding: '3px 10px',
+                    borderRadius: '20px',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    border: '1px solid #bfdbfe'
+                  }}>
+                    {getManagerLabel(selectedStaff.manager_id) || 'Chưa gắn TPKD'}
+                  </span>
+                ) : null}
               </div>
 
               {/* Content Block */}
@@ -422,9 +546,17 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                   <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0', gridColumn: 'span 2' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Phòng ban</span>
                     <strong style={{ display: 'block', marginTop: '2px', color: '#0f172a', fontSize: '13px', fontWeight: 700 }}>
-                      {selectedStaff.department || 'Kinh doanh'}
+                      {selectedStaff.department || 'Chưa gán'}
                     </strong>
                   </div>
+                  {selectedStaff.role === 'sales' ? (
+                    <div style={{ background: '#eff6ff', padding: '10px 12px', borderRadius: '12px', border: '1px solid #bfdbfe', gridColumn: 'span 2' }}>
+                      <span style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 600 }}>Thuộc TPKD</span>
+                      <strong style={{ display: 'block', marginTop: '2px', color: '#1d4ed8', fontSize: '13px', fontWeight: 700 }}>
+                        {getManagerLabel(selectedStaff.manager_id) || 'Chưa gán TPKD'}
+                      </strong>
+                    </div>
+                  ) : null}
                   <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                     <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Trạng thái</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
@@ -443,7 +575,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                         <div>
                           <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Sửa phân quyền</span>
-                          <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#475569', fontWeight: 600 }}>Chỉnh vai trò và phòng ban cho nhân sự này.</p>
+                          <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#475569', fontWeight: 600 }}>Chỉnh vai trò và TPKD phụ trách cho nhân sự này.</p>
                         </div>
                         <ShieldCheck size={16} style={{ color: '#0f766e' }} />
                       </div>
@@ -452,7 +584,14 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                           <label style={{ fontSize: '11px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>Vai trò</label>
                           <select
                             value={permissionRole}
-                            onChange={(event) => setPermissionRole(event.target.value as 'sales' | 'manager')}
+                            onChange={(event) => {
+                              const nextRole = event.target.value as 'sales' | 'manager';
+                              setPermissionRole(nextRole);
+                              if (nextRole === 'sales') {
+                                setPermissionDepartment('');
+                                setPermissionManagerId('');
+                              }
+                            }}
                             disabled={permissionLoading}
                             style={{ padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13px', fontWeight: 600, background: '#fff' }}
                           >
@@ -461,19 +600,52 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                           </select>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <label style={{ fontSize: '11px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>Phòng ban</label>
-                          <input
-                            value={permissionDepartment}
-                            onChange={(event) => setPermissionDepartment(event.target.value)}
-                            disabled={permissionLoading}
-                            style={{ padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13px', fontWeight: 600 }}
-                          />
+                          <label style={{ fontSize: '11px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>
+                            {permissionRole === 'sales' ? 'TPKD phụ trách' : 'Phòng ban'}
+                          </label>
+                          {permissionRole === 'sales' ? (
+                            <select
+                              value={permissionManagerId}
+                              onChange={(event) => {
+                                const nextManagerId = event.target.value;
+                                setPermissionManagerId(nextManagerId);
+                                const nextManager = managerOptions.find((item) => item.id === nextManagerId);
+                                setPermissionDepartment(nextManager?.department || '');
+                              }}
+                              disabled={permissionLoading}
+                              style={{ padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13px', fontWeight: 600, background: '#fff' }}
+                            >
+                              <option value="">Chọn TPKD</option>
+                              {managerOptions.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                  {item.label}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              value={permissionDepartment}
+                              onChange={(event) => setPermissionDepartment(event.target.value)}
+                              disabled={permissionLoading}
+                              style={{ padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13px', fontWeight: 600 }}
+                            />
+                          )}
                         </div>
                       </div>
+                      {permissionRole === 'sales' ? (
+                        <div style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: 600 }}>
+                          TVBH sẽ được gán cho <strong>{getManagerLabel(permissionManagerId) || 'chưa chọn TPKD'}</strong>.
+                        </div>
+                      ) : null}
                       <button
                         type="button"
                         onClick={handleSavePermission}
-                        disabled={permissionLoading || (selectedStaff.role === permissionRole && (selectedStaff.department || 'Kinh doanh') === permissionDepartment.trim())}
+                        disabled={
+                          permissionLoading ||
+                          (selectedStaff.role === permissionRole &&
+                            ((permissionRole === 'sales' && selectedStaff.manager_id === permissionManagerId) ||
+                              (permissionRole === 'manager' && (selectedStaff.department || '') === permissionDepartment.trim())))
+                        }
                         style={{ width: '100%', border: 0, background: '#0f766e', color: '#fff', padding: '10px 12px', borderRadius: '10px', fontWeight: 800, fontSize: '13px', cursor: 'pointer' }}
                       >
                         {permissionLoading ? 'Đang lưu...' : 'Lưu phân quyền'}
@@ -556,7 +728,8 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
           )}
         </div>
 
-      </div>
+        </div>
+      )}
 
       {/* ================= RIGHT SLIDING DRAWER: Mời nhân sự ================= */}
       {drawerOpen && isAdmin && (
@@ -627,7 +800,14 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                   <label style={{ fontSize: '12px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>Vai trò</label>
                   <select
                     value={inviteRole}
-                    onChange={(event) => setInviteRole(event.target.value as 'sales' | 'manager')}
+                    onChange={(event) => {
+                      const nextRole = event.target.value as 'sales' | 'manager';
+                      setInviteRole(nextRole);
+                      if (nextRole === 'sales') {
+                        setDepartment('');
+                        setInviteManagerId('');
+                      }
+                    }}
                     disabled={loading}
                     style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '14px', fontWeight: 600, background: '#fff' }}
                   >
@@ -636,16 +816,44 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                   </select>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '12px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>Phòng ban</label>
-                  <input
-                    value={department}
-                    onChange={(event) => setDepartment(event.target.value)}
-                    placeholder="Kinh doanh"
-                    disabled={loading}
-                    style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '14px', fontWeight: 600 }}
-                  />
+                  <label style={{ fontSize: '12px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>
+                    {inviteRole === 'sales' ? 'TPKD phụ trách' : 'Phòng ban'}
+                  </label>
+                  {inviteRole === 'sales' ? (
+                    <select
+                      value={inviteManagerId}
+                      onChange={(event) => {
+                        const nextManagerId = event.target.value;
+                        setInviteManagerId(nextManagerId);
+                        const nextManager = managerOptions.find((item) => item.id === nextManagerId);
+                        setDepartment(nextManager?.department || '');
+                      }}
+                      disabled={loading}
+                      style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '14px', fontWeight: 600, background: '#fff' }}
+                    >
+                      <option value="">Chọn TPKD</option>
+                      {managerOptions.map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      value={department}
+                      onChange={(event) => setDepartment(event.target.value)}
+                      placeholder="Ví dụ: Kinh doanh 1"
+                      disabled={loading}
+                      style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '14px', fontWeight: 600 }}
+                    />
+                  )}
                 </div>
               </div>
+              {inviteRole === 'sales' ? (
+                <div style={{ padding: '12px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '10px', color: '#1d4ed8', fontWeight: 600, fontSize: '12.5px' }}>
+                  TVBH mới sẽ được gán cho <strong>{getManagerLabel(inviteManagerId) || 'chưa chọn TPKD'}</strong>.
+                </div>
+              ) : null}
 
               {/* Action buttons for form */}
               <div style={{ marginTop: 'auto', display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: '12px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>

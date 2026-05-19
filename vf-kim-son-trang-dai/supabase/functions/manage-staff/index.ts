@@ -6,6 +6,7 @@ type InvitePayload = {
   fullName?: string;
   role?: 'sales' | 'manager';
   department?: string;
+  managerId?: string;
   staffId?: string;
 };
 
@@ -52,19 +53,21 @@ async function sendInviteOrRecovery(
   fullName: string,
   role: 'sales' | 'manager',
   department: string,
+  managerId: string | null,
   action: 'invite' | 'resend'
 ) {
   const appUrl = Deno.env.get('SITE_URL') || 'https://ordermanagement-three.vercel.app';
   const redirectTo = `${appUrl.replace(/\/$/, '')}/set-password`;
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    data: {
-      full_name: fullName,
-      invited_by_admin: true,
-      role,
-      department
-    },
-    redirectTo
-  });
+      data: {
+        full_name: fullName,
+        invited_by_admin: true,
+        role,
+        department,
+        manager_id: managerId
+      },
+      redirectTo
+    });
 
   if (!inviteError) {
     const { error: recordInviteError } = await adminClient.rpc('record_staff_invite', {
@@ -72,6 +75,7 @@ async function sendInviteOrRecovery(
       p_full_name: fullName,
       p_role: role,
       p_department: department,
+      p_manager_id: managerId,
       p_invite_status: 'invite_sent',
       p_message: 'Đã gửi email kích hoạt tài khoản TVBH.',
       p_invited_by: userId
@@ -108,6 +112,7 @@ async function sendInviteOrRecovery(
     p_full_name: fullName,
     p_role: role,
     p_department: department,
+    p_manager_id: managerId,
     p_invite_status: 'recovery_sent',
     p_message: 'Email đã tồn tại, đã gửi link đặt mật khẩu.',
     p_invited_by: userId
@@ -122,18 +127,48 @@ async function sendInviteOrRecovery(
 
 async function updateStaffPermission(
   adminClient: ReturnType<typeof createClient>,
+  userId: string,
   staffId: string,
   email: string,
   fullName: string,
   role: 'sales' | 'manager',
-  department: string
+  department: string,
+  managerId: string | null
 ) {
+  let resolvedDepartment = department;
+  let resolvedManagerId = managerId;
+
+  if (role === 'sales') {
+    if (!managerId) {
+      resolvedDepartment = '';
+      resolvedManagerId = null;
+    } else {
+      const { data: managerProfile, error: managerError } = await adminClient
+        .from('profiles')
+        .select('id, full_name, department, role')
+        .eq('id', managerId)
+        .maybeSingle();
+
+      if (managerError) {
+        return { error: managerError, step: 'resolve_manager' as const };
+      }
+
+      if (!managerProfile || managerProfile.role !== 'manager') {
+        return { error: new Error('TPKD được chọn không hợp lệ'), step: 'resolve_manager' as const };
+      }
+
+      resolvedDepartment = managerProfile.department || '';
+      resolvedManagerId = managerProfile.id;
+    }
+  }
+
   const { error: profileUpdateError } = await adminClient
     .from('profiles')
     .update({
       full_name: fullName,
       role,
-      department
+      department: role === 'sales' ? (resolvedDepartment || null) : department,
+      manager_id: role === 'sales' ? resolvedManagerId : null
     })
     .eq('id', staffId);
 
@@ -141,19 +176,19 @@ async function updateStaffPermission(
     return { error: profileUpdateError, step: 'update_profile' as const };
   }
 
-  const { error: inviteUpdateError } = await adminClient
-    .schema('app_private')
-    .from('staff_invites')
-    .update({
-      full_name: fullName,
-      role,
-      department,
-      updated_at: new Date().toISOString()
-    })
-    .eq('email', email);
+  const { error: inviteRecordError } = await adminClient.rpc('record_staff_invite', {
+    p_email: email,
+    p_full_name: fullName,
+    p_role: role,
+    p_department: role === 'sales' ? (resolvedDepartment || null) : department,
+    p_manager_id: role === 'sales' ? resolvedManagerId : null,
+    p_invite_status: 'active',
+    p_message: 'Đã cập nhật quyền và phòng ban nhân sự.',
+    p_invited_by: userId
+  });
 
-  if (inviteUpdateError) {
-    return { error: inviteUpdateError, step: 'update_invite' as const };
+  if (inviteRecordError) {
+    return { error: inviteRecordError, step: 'update_invite_record' as const };
   }
 
   const { error: authFetchError, data: authUserResult } = await adminClient.auth.admin.getUserById(staffId);
@@ -162,20 +197,22 @@ async function updateStaffPermission(
   }
 
   const { error: authUpdateError } = await adminClient.auth.admin.updateUserById(staffId, {
-    user_metadata: {
-      ...(authUserResult.user.user_metadata || {}),
-      full_name: fullName,
-      invited_by_admin: true,
-      role,
-      department
-    },
-    app_metadata: {
-      ...(authUserResult.user.app_metadata || {}),
-      full_name: fullName,
-      invited_by_admin: true,
-      role,
-      department
-    }
+      user_metadata: {
+        ...(authUserResult.user.user_metadata || {}),
+        full_name: fullName,
+        invited_by_admin: true,
+        role,
+        department: role === 'sales' ? (resolvedDepartment || null) : department,
+        manager_id: role === 'sales' ? resolvedManagerId : null
+      },
+      app_metadata: {
+        ...(authUserResult.user.app_metadata || {}),
+        full_name: fullName,
+        invited_by_admin: true,
+        role,
+        department: role === 'sales' ? (resolvedDepartment || null) : department,
+        manager_id: role === 'sales' ? resolvedManagerId : null
+      }
   });
 
   if (authUpdateError) {
@@ -238,7 +275,8 @@ Deno.serve(async (req) => {
     const email = String(body.email ?? '').trim().toLowerCase();
     const fullName = String(body.fullName ?? '').trim();
     const role = body.role === 'manager' ? body.role : 'sales';
-    const department = String(body.department ?? '').trim() || 'Kinh doanh';
+    const department = String(body.department ?? '').trim();
+    const managerId = String(body.managerId ?? '').trim() || null;
     const staffId = String(body.staffId ?? '').trim();
 
     if (!email || !fullName) {
@@ -250,7 +288,7 @@ Deno.serve(async (req) => {
         return jsonResponse({ error: 'Thiếu mã nhân sự để cập nhật' }, 400);
       }
 
-      const result = await updateStaffPermission(adminClient, staffId, email, fullName, role, department);
+      const result = await updateStaffPermission(adminClient, userResult.user.id, staffId, email, fullName, role, department, managerId);
       if ('error' in result) {
         return jsonResponse({ error: result.error.message, step: result.step }, 400);
       }
@@ -270,6 +308,7 @@ Deno.serve(async (req) => {
         p_full_name: fullName,
         p_role: role,
         p_department: department,
+        p_manager_id: managerId,
         p_invite_status: 'canceled',
         p_message: 'Lời mời đã bị hủy.',
         p_invited_by: userResult.user.id
@@ -290,7 +329,7 @@ Deno.serve(async (req) => {
       return jsonResponse(cancelResponse);
     }
 
-    const result = await sendInviteOrRecovery(adminClient, supabaseUrl, userResult.user.id, email, fullName, role, department, body.action);
+    const result = await sendInviteOrRecovery(adminClient, supabaseUrl, userResult.user.id, email, fullName, role, department, managerId, body.action);
 
     if ('error' in result) {
       return jsonResponse({ error: result.error.message, step: result.step }, 400);

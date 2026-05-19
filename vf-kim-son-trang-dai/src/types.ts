@@ -239,6 +239,7 @@ export interface ProfileRow {
   full_name: string;
   role: 'admin' | 'manager' | 'sales' | 'warehouse' | 'delivery' | 'staff';
   department: string | null;
+  manager_id?: string | null;
   email?: string | null;
   invite_status?: 'invite_sent' | 'recovery_sent' | 'active' | 'canceled' | null;
   invited_at?: string | null;

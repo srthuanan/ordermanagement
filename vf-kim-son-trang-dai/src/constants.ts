@@ -28,10 +28,10 @@ export type AppRole = ProfileRow['role'];
 const roleTabAccess: Record<TabKey, AppRole[]> = {
   dashboard: ['admin', 'manager'],
   orders: ['admin', 'sales', 'manager'],
-  inventory: ['admin', 'sales'],
+  inventory: ['admin', 'sales', 'manager'],
   invoices: ['admin'],
-  pricing: ['admin', 'sales'],
-  staff: ['admin', 'manager']
+  pricing: ['admin', 'sales', 'manager'],
+  staff: ['admin', 'manager', 'sales']
 };
 
 export function canAccessTab(role: AppRole, tabKey: TabKey) {
@@ -39,15 +39,17 @@ export function canAccessTab(role: AppRole, tabKey: TabKey) {
 }
 
 export function getVisibleTabs(role: AppRole) {
-  return tabs.filter((tab) => canAccessTab(role, tab.key as TabKey));
+  return tabs
+    .filter((tab) => canAccessTab(role, tab.key as TabKey))
+    .map((tab) => (role === 'sales' && tab.key === 'staff' ? { ...tab, label: 'Cá nhân' } : tab));
 }
 
 export function canCreateOrder(role: AppRole) {
-  return ['admin', 'sales'].includes(role);
+  return ['admin', 'sales', 'manager'].includes(role);
 }
 
 export function canHoldVehicle(role: AppRole) {
-  return ['admin', 'sales'].includes(role);
+  return ['admin', 'sales', 'manager'].includes(role);
 }
 
 export function canPairOrder(role: AppRole) {
@@ -55,7 +57,7 @@ export function canPairOrder(role: AppRole) {
 }
 
 export function canManageOrderActions(role: AppRole) {
-  return ['admin', 'sales'].includes(role);
+  return ['admin', 'sales', 'manager'].includes(role);
 }
 
 export function canManageInventory(role: AppRole) {

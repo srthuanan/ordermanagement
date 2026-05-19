@@ -261,33 +261,36 @@ const invokeStaffFunction = async (body: Record<string, unknown>) => {
   return { data: parsedBody, error: null };
 };
 
-export const inviteStaffMember = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null }) => {
+export const inviteStaffMember = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null; managerId?: string | null }) => {
   return await invokeStaffFunction({
     action: 'invite',
     email: input.email,
     fullName: input.fullName,
     role: input.role,
-    department: input.department ?? null
+    department: input.department ?? null,
+    managerId: input.managerId ?? null
   });
 };
 
-export const resendStaffInvite = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null }) => {
+export const resendStaffInvite = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null; managerId?: string | null }) => {
   return await invokeStaffFunction({
     action: 'resend',
     email: input.email,
     fullName: input.fullName,
     role: input.role,
-    department: input.department ?? null
+    department: input.department ?? null,
+    managerId: input.managerId ?? null
   });
 };
 
-export const cancelStaffInvite = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null }) => {
+export const cancelStaffInvite = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null; managerId?: string | null }) => {
   return await invokeStaffFunction({
     action: 'cancel',
     email: input.email,
     fullName: input.fullName,
     role: input.role,
-    department: input.department ?? null
+    department: input.department ?? null,
+    managerId: input.managerId ?? null
   });
 };
 
@@ -297,6 +300,7 @@ export const updateStaffPermission = async (input: {
   fullName: string;
   role: 'sales' | 'manager';
   department?: string | null;
+  managerId?: string | null;
 }) => {
   return await invokeStaffFunction({
     action: 'update',
@@ -304,7 +308,8 @@ export const updateStaffPermission = async (input: {
     email: input.email ?? null,
     fullName: input.fullName,
     role: input.role,
-    department: input.department ?? null
+    department: input.department ?? null,
+    managerId: input.managerId ?? null
   });
 };
 

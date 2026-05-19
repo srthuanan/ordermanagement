@@ -78,7 +78,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     ? staffProfiles.filter(
         (staff) =>
           staff.role === 'sales' &&
-          staff.department?.trim().toLowerCase() === currentDepartment.toLowerCase()
+          staff.manager_id === currentProfile.id
       ).length
     : 0;
 
