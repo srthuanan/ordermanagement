@@ -109,7 +109,7 @@ export const ImportInventoryModal: React.FC<ImportInventoryModalProps> = ({
           </button>
         </div>
 
-        <div className="order-form" style={{ paddingBottom: '0' }}>
+        <div className="order-form" style={{ paddingBottom: '0', display: 'flex', flexDirection: 'column' }}>
           
           <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', background: '#f1f5f9', padding: '4px', borderRadius: '8px' }}>
             <button
@@ -162,7 +162,7 @@ export const ImportInventoryModal: React.FC<ImportInventoryModalProps> = ({
             </button>
           </div>
 
-          <form id="import-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '24px' }}>
+          <form id="import-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '8px' }}>
             {mode === 'single' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <label className="full-span">
@@ -272,7 +272,7 @@ export const ImportInventoryModal: React.FC<ImportInventoryModalProps> = ({
           </form>
         </div>
 
-        <div className="order-form" style={{ paddingTop: '0' }}>
+        <div className="order-form" style={{ paddingTop: '0', display: 'flex', flexDirection: 'column' }}>
           {(error || localError) && (
             <div className="form-error">
               <AlertTriangle size={17} />
@@ -286,7 +286,7 @@ export const ImportInventoryModal: React.FC<ImportInventoryModalProps> = ({
             </button>
             <button type="submit" form="import-form" className="primary-button" disabled={isSubmitting || (mode === 'excel' && !fileSelected)}>
               <Upload size={18} />
-              <span>{isSubmitting ? 'Đang thêm...' : (mode === 'single' ? 'Thêm xe này' : 'Import vào kho')}</span>
+              <span>{isSubmitting ? 'Đang xử lý...' : (mode === 'single' ? 'Thêm xe này' : 'Import vào kho')}</span>
             </button>
           </div>
         </div>
