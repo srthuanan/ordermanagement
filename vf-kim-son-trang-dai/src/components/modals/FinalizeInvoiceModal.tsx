@@ -41,7 +41,7 @@ export const FinalizeInvoiceModal: React.FC<FinalizeInvoiceModalProps> = ({
       <section className="order-modal" role="dialog" aria-modal="true">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow" style={{ color: 'var(--success-color)' }}>Phê duyệt hồ sơ - Bước 2</p>
+            <p className="eyebrow" style={{ color: '#10b981' }}>Phê duyệt hồ sơ - Bước 2</p>
             <h2>Tải Lên Hóa Đơn Đã Xuất ({orderId})</h2>
           </div>
           <button className="icon-button" onClick={onClose} title="Đóng" disabled={isSubmitting}>
@@ -66,7 +66,7 @@ export const FinalizeInvoiceModal: React.FC<FinalizeInvoiceModalProps> = ({
             <button type="button" className="ghost-button" onClick={onClose} disabled={isSubmitting}>
               Hủy bỏ
             </button>
-            <button type="submit" className="primary-button" style={{ background: 'var(--success-color)' }} disabled={isSubmitting}>
+            <button type="submit" className="primary-button" style={{ background: '#10b981' }} disabled={isSubmitting}>
               {isSubmitting ? <UploadCloud size={18} /> : <FileCheck size={18} />}
               <span>{isSubmitting ? 'Đang tải hóa đơn...' : 'Hoàn tất xuất HĐ'}</span>
             </button>
