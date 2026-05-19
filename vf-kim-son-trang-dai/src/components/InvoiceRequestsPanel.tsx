@@ -396,7 +396,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                     {/* SECTION: KHÁCH HÀNG & NHÂN SỰ */}
                     <SectionBox title="Khách hàng & Nhân sự" icon={User}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <DetailItem label="Tên khách hàng" value={selectedRequest.ten_khach_hang} copyable />
+                        <DetailItem label="Tên khách hàng" value={selectedRequest.ten_khach_hang} copyable boldValue />
                         <DetailItem label="Tư vấn bán hàng" value={selectedRequest.tvbh || selectedRequest.requested_by_name || 'N/A'} copyable />
                         <DetailItem label="Nguồn khách" value={selectedRequest.nguon_khach || 'Trực tiếp'} />
                         <DetailItem label="Mã VSO" value={selectedRequest.ma_vso || 'N/A'} copyable />
@@ -412,8 +412,8 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                         <DetailItem label="Phiên bản" value={selectedRequest.phien_ban} />
                         <DetailItem label="Ngoại thất" value={selectedRequest.ngoai_that} />
                         <DetailItem label="Nội thất" value={selectedRequest.noi_that} />
-                        <DetailItem label="Số VIN" value={selectedRequest.vin || 'Chưa ghép'} copyable color="#0284c7" isFullWidth />
-                        <DetailItem label="Giá công bố" value={formatCurrency(selectedRequest.gia_cong_bo)} color="#b45309" />
+                        <DetailItem label="Số VIN" value={selectedRequest.vin || 'Chưa ghép'} copyable color="#0284c7" isFullWidth boldValue />
+                        <DetailItem label="Giá công bố" value={formatCurrency(selectedRequest.gia_cong_bo)} color="#b45309" boldValue />
                         <DetailItem label="Ngày cọc" value={formatMobileDate(selectedRequest.ngay_coc)} />
                       </div>
                     </SectionBox>
@@ -421,9 +421,9 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                     {/* SECTION: TÀI CHÍNH & HỢP ĐỒNG */}
                     <SectionBox title="Tài chính & Hợp đồng" icon={CreditCard}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <DetailItem label="Số tiền đã đóng" value={formatCurrency(selectedRequest.so_tien_khach_da_dong)} color="#059669" />
+                        <DetailItem label="Số tiền đã đóng" value={formatCurrency(selectedRequest.so_tien_khach_da_dong)} color="#059669" boldValue />
                         <DetailItem label="Hình thức TT" value={selectedRequest.hinh_thuc_tt || 'Tiền mặt'} />
-                        <DetailItem label="Số Hợp đồng" value={selectedRequest.so_hop_dong || 'N/A'} copyable />
+                        <DetailItem label="Số Hợp đồng" value={selectedRequest.so_hop_dong || 'N/A'} copyable boldValue />
                         <DetailItem label="Ngày ký HĐ" value={formatMobileDate(selectedRequest.ngay_ky_hop_dong)} />
                         <DetailItem label="Chính sách" value={selectedRequest.chinh_sach || 'Mặc định'} isFullWidth />
                         <DetailItem label="Địa chỉ xuất HĐ" value={selectedRequest.dia_chi || 'N/A'} isFullWidth />
@@ -501,12 +501,12 @@ const SectionBox = ({ title, icon: Icon, children }: any) => (
   </div>
 );
 
-const DetailItem = ({ label, value, copyable, color = '#1e293b', isFullWidth = false }: any) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', gridColumn: isFullWidth ? '1 / -1' : 'auto' }}>
-    <span style={{ fontSize: '9px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>{label}</span>
+const DetailItem = ({ label, value, copyable, color = '#1e293b', isFullWidth = false, boldValue = false }: any) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: isFullWidth ? '1 / -1' : 'auto' }}>
+    <span style={{ fontSize: '10px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>{label}</span>
     <div 
       onClick={() => copyable && value && copyToClipboard(value, label)}
-      style={{ fontSize: '13px', fontWeight: 700, color: color, cursor: copyable ? 'pointer' : 'default', lineHeight: 1.35 }}
+      style={{ fontSize: '13px', fontWeight: boldValue ? 700 : 500, color: color, cursor: copyable ? 'pointer' : 'default', lineHeight: 1.35 }}
       className={copyable ? 'hover-bg-slate' : ''}
     >
       {value || '—'}
