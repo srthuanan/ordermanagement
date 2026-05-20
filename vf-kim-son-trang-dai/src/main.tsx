@@ -381,16 +381,18 @@ function App() {
             )}
 
             {activeTab === 'invoices' && (
-              <InvoiceRequestsPanel
-                requests={invoiceRequests}
-                canApprove={canApproveInvoice(userRole)}
-                isProcessing={isAdvancingInvoice}
-                onApprove={(request) => handleApproveInvoiceRequest(request.id)}
-                onRequestSupplement={setRequestingSupplement}
-                onPendingSignature={(request) => handleMarkInvoicePendingSignature(request.id)}
-                onUploadInvoice={setFinalizingRequest}
-                onSupplement={setSupplementingRequest}
-              />
+              <div className="invoice-panel" style={{ height: '100%', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                <InvoiceRequestsPanel
+                  requests={invoiceRequests}
+                  canApprove={canApproveInvoice(userRole)}
+                  isProcessing={isAdvancingInvoice}
+                  onApprove={(request) => handleApproveInvoiceRequest(request.id)}
+                  onRequestSupplement={setRequestingSupplement}
+                  onPendingSignature={(request) => handleMarkInvoicePendingSignature(request.id)}
+                  onUploadInvoice={setFinalizingRequest}
+                  onSupplement={setSupplementingRequest}
+                />
+              </div>
             )}
 
             {activeTab === 'pricing' && <PricingPanel isAdmin={canManagePricingConfig(userRole)} />}

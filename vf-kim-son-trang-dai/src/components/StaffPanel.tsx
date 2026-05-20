@@ -456,28 +456,54 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                     <Copy size={12} />
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '4px' }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '6px' }}>
                   <span style={{
-                    background: 'rgba(255, 255, 255, 0.2)',
+                    background: (selectedStaff.activated_at || selectedStaff.invite_status === 'active') 
+                      ? 'rgba(16, 185, 129, 0.2)' 
+                      : selectedStaff.invite_status === 'canceled' 
+                        ? 'rgba(239, 68, 68, 0.2)' 
+                        : 'rgba(245, 158, 11, 0.2)',
                     color: '#fff',
-                    padding: '3px 12px',
+                    padding: '3px 10px',
                     borderRadius: '20px',
                     fontSize: '11px',
                     fontWeight: 700,
                     backdropFilter: 'blur(4px)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)'
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <span style={{
+                      width: '6px',
+                      height: '6px',
+                      borderRadius: '50%',
+                      background: (selectedStaff.activated_at || selectedStaff.invite_status === 'active') ? '#10b981' : selectedStaff.invite_status === 'canceled' ? '#ef4444' : '#f59e0b',
+                      display: 'inline-block'
+                    }} />
+                    {getStatusLabel(selectedStaff)}
+                  </span>
+                  <span style={{
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    color: '#fff',
+                    padding: '3px 10px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    backdropFilter: 'blur(4px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)'
                   }}>
                     🚀 {roleLabels[selectedStaff.role]}
                   </span>
                   <span style={{
                     background: 'rgba(255, 255, 255, 0.2)',
                     color: '#fff',
-                    padding: '3px 12px',
+                    padding: '3px 10px',
                     borderRadius: '20px',
                     fontSize: '11px',
                     fontWeight: 700,
                     backdropFilter: 'blur(4px)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)'
+                    border: '1px solid rgba(255, 255, 255, 0.2)'
                   }}>
                     {selectedStaff.department || 'Chưa gán'}
                   </span>
@@ -485,164 +511,135 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                     <span style={{
                       background: 'rgba(255, 255, 255, 0.2)',
                       color: '#fff',
-                      padding: '3px 12px',
+                      padding: '3px 10px',
                       borderRadius: '20px',
                       fontSize: '11px',
                       fontWeight: 700,
                       backdropFilter: 'blur(4px)',
-                      border: '1px solid rgba(255, 255, 255, 0.3)'
+                      border: '1px solid rgba(255, 255, 255, 0.2)'
                     }}>
-                      {getManagerLabel(selectedStaff.manager_id) || 'Chưa gắn TPKD'}
+                      {getManagerLabel(selectedStaff.manager_id).split(' · ')[0] || 'Chưa gắn TPKD'}
                     </span>
                   ) : null}
                 </div>
               </div>
 
               {/* Content Block */}
-              <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1 }}>
+              <div className="staff-detail-body custom-scrollbar" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
                 
-                {/* Standard Attributes Grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0', gridColumn: 'span 2' }}>
-                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Phòng ban</span>
-                    <strong style={{ display: 'block', marginTop: '2px', color: '#0f172a', fontSize: '13px', fontWeight: 700 }}>
-                      {selectedStaff.department || 'Chưa gán'}
-                    </strong>
-                  </div>
-                  {selectedStaff.role === 'sales' ? (
-                    <div style={{ background: '#eff6ff', padding: '10px 12px', borderRadius: '12px', border: '1px solid #bfdbfe', gridColumn: 'span 2' }}>
-                      <span style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 600 }}>Thuộc TPKD</span>
-                      <strong style={{ display: 'block', marginTop: '2px', color: '#1d4ed8', fontSize: '13px', fontWeight: 700 }}>
-                        {getManagerLabel(selectedStaff.manager_id) || 'Chưa gán TPKD'}
-                      </strong>
+                {isAdmin && selectedStaff.role !== 'admin' ? (
+                  <div style={{ background: '#ffffff', padding: '10px 12px', borderRadius: '12px', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                      <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sửa phân quyền</span>
+                      <ShieldCheck size={15} style={{ color: '#0f766e' }} />
                     </div>
-                  ) : null}
-                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Trạng thái</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                      <span style={{
-                        width: '6px',
-                        height: '6px',
-                        borderRadius: '50%',
-                        background: (selectedStaff.activated_at || selectedStaff.invite_status === 'active') ? '#10b981' : selectedStaff.invite_status === 'canceled' ? '#ef4444' : '#f59e0b'
-                      }} />
-                      <strong style={{ color: '#0f172a', fontSize: '13px', fontWeight: 700 }}>{getStatusLabel(selectedStaff)}</strong>
-                    </div>
-                  </div>
-
-                  {isAdmin && selectedStaff.role !== 'admin' ? (
-                    <div style={{ background: '#ffffff', padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                        <div>
-                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Sửa phân quyền</span>
-                          <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#475569', fontWeight: 600 }}>Chỉnh vai trò và TPKD phụ trách cho nhân sự này.</p>
-                        </div>
-                        <ShieldCheck size={16} style={{ color: '#0f766e' }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '10px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>Vai trò</label>
+                        <select
+                          value={permissionRole}
+                          onChange={(event) => {
+                            const nextRole = event.target.value as 'sales' | 'manager';
+                            setPermissionRole(nextRole);
+                            if (nextRole === 'sales') {
+                              setPermissionDepartment('');
+                              setPermissionManagerId('');
+                            }
+                          }}
+                          disabled={permissionLoading}
+                          style={{ padding: '8px 10px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13px', fontWeight: 600, background: '#fff' }}
+                        >
+                          <option value="sales">TVBH</option>
+                          <option value="manager">TPKD</option>
+                        </select>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <label style={{ fontSize: '11px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>Vai trò</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <label style={{ fontSize: '10px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>
+                          {permissionRole === 'sales' ? 'TPKD phụ trách' : 'Phòng ban'}
+                        </label>
+                        {permissionRole === 'sales' ? (
                           <select
-                            value={permissionRole}
+                            value={permissionManagerId}
                             onChange={(event) => {
-                              const nextRole = event.target.value as 'sales' | 'manager';
-                              setPermissionRole(nextRole);
-                              if (nextRole === 'sales') {
-                                setPermissionDepartment('');
-                                setPermissionManagerId('');
-                              }
+                              const nextManagerId = event.target.value;
+                              setPermissionManagerId(nextManagerId);
+                              const nextManager = managerOptions.find((item) => item.id === nextManagerId);
+                              setPermissionDepartment(nextManager?.department || '');
                             }}
                             disabled={permissionLoading}
-                            style={{ padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13px', fontWeight: 600, background: '#fff' }}
+                            style={{ padding: '8px 10px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13px', fontWeight: 600, background: '#fff' }}
                           >
-                            <option value="sales">TVBH</option>
-                            <option value="manager">TPKD</option>
+                            <option value="">Chọn TPKD</option>
+                            {managerOptions.map((item) => (
+                              <option key={item.id} value={item.id}>
+                                {item.label}
+                              </option>
+                            ))}
                           </select>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <label style={{ fontSize: '11px', color: '#475569', fontWeight: 700, textTransform: 'uppercase' }}>
-                            {permissionRole === 'sales' ? 'TPKD phụ trách' : 'Phòng ban'}
-                          </label>
-                          {permissionRole === 'sales' ? (
-                            <select
-                              value={permissionManagerId}
-                              onChange={(event) => {
-                                const nextManagerId = event.target.value;
-                                setPermissionManagerId(nextManagerId);
-                                const nextManager = managerOptions.find((item) => item.id === nextManagerId);
-                                setPermissionDepartment(nextManager?.department || '');
-                              }}
-                              disabled={permissionLoading}
-                              style={{ padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13px', fontWeight: 600, background: '#fff' }}
-                            >
-                              <option value="">Chọn TPKD</option>
-                              {managerOptions.map((item) => (
-                                <option key={item.id} value={item.id}>
-                                  {item.label}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <input
-                              value={permissionDepartment}
-                              onChange={(event) => setPermissionDepartment(event.target.value)}
-                              disabled={permissionLoading}
-                              style={{ padding: '9px 10px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13px', fontWeight: 600 }}
-                            />
-                          )}
-                        </div>
+                        ) : (
+                          <input
+                            value={permissionDepartment}
+                            onChange={(event) => setPermissionDepartment(event.target.value)}
+                            disabled={permissionLoading}
+                            style={{ padding: '8px 10px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13px', fontWeight: 600 }}
+                          />
+                        )}
                       </div>
-                      {permissionRole === 'sales' ? (
-                        <div style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: 600 }}>
-                          TVBH sẽ được gán cho <strong>{getManagerLabel(permissionManagerId) || 'chưa chọn TPKD'}</strong>.
-                        </div>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={handleSavePermission}
-                        disabled={
-                          permissionLoading ||
-                          (selectedStaff.role === permissionRole &&
-                            ((permissionRole === 'sales' && selectedStaff.manager_id === permissionManagerId) ||
-                              (permissionRole === 'manager' && (selectedStaff.department || '') === permissionDepartment.trim())))
-                        }
-                        style={{ width: '100%', border: 0, background: '#0f766e', color: '#fff', padding: '10px 12px', borderRadius: '10px', fontWeight: 800, fontSize: '13px', cursor: 'pointer' }}
-                      >
-                        {permissionLoading ? 'Đang lưu...' : 'Lưu phân quyền'}
-                      </button>
                     </div>
-                  ) : isAdmin ? (
-                    <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '12px', borderRadius: '12px', gridColumn: 'span 2', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                      <ShieldCheck size={18} style={{ color: '#1d4ed8', marginTop: '1px', flexShrink: 0 }} />
-                      <span style={{ fontSize: '12.5px', color: '#1d4ed8', fontWeight: 600, lineHeight: '1.4' }}>
-                        Tài khoản Admin không chỉnh phân quyền tại đây.
-                      </span>
-                    </div>
-                  ) : null}
-
-                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Lần mời lúc</span>
-                    <strong style={{ display: 'block', marginTop: '2px', color: '#0f172a', fontSize: '13px', fontWeight: 700 }}>
-                      {selectedStaff.invited_at ? new Date(selectedStaff.invited_at).toLocaleDateString('vi-VN') : '---'}
-                    </strong>
+                    {permissionRole === 'sales' && permissionManagerId ? (
+                      <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>
+                        ✓ Thuộc quản lý của <strong>{getManagerLabel(permissionManagerId).split(' · ')[0]}</strong>
+                      </div>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={handleSavePermission}
+                      disabled={
+                        permissionLoading ||
+                        (selectedStaff.role === permissionRole &&
+                          ((permissionRole === 'sales' && selectedStaff.manager_id === permissionManagerId) ||
+                            (permissionRole === 'manager' && (selectedStaff.department || '') === permissionDepartment.trim())))
+                      }
+                      style={{ width: '100%', border: 0, background: '#0f766e', color: '#fff', padding: '8px 12px', borderRadius: '10px', fontWeight: 800, fontSize: '13px', cursor: 'pointer', marginTop: '2px' }}
+                    >
+                      {permissionLoading ? 'Đang lưu...' : 'Lưu phân quyền'}
+                    </button>
                   </div>
-                  <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0', gridColumn: 'span 2' }}>
-                    <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Kích hoạt hoàn tất</span>
-                    <strong style={{ display: 'block', marginTop: '2px', color: selectedStaff.activated_at ? '#059669' : '#64748b', fontSize: '13px', fontWeight: 700 }}>
+                ) : isAdmin ? (
+                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', padding: '8px 12px', borderRadius: '10px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <ShieldCheck size={14} style={{ color: '#64748b', flexShrink: 0 }} />
+                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>
+                      Không thể thay đổi phân quyền của tài khoản Admin.
+                    </span>
+                  </div>
+                ) : null}
+
+                {/* Metadata Timeline Bar */}
+                <div style={{ display: 'flex', gap: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '10px 14px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ngày gửi lời mời</div>
+                    <span style={{ fontSize: '12.5px', color: '#334155', fontWeight: 700, display: 'block', marginTop: '2px' }}>
+                      {selectedStaff.invited_at ? new Date(selectedStaff.invited_at).toLocaleDateString('vi-VN') : '---'}
+                    </span>
+                  </div>
+                  <div style={{ width: '1px', background: '#e2e8f0' }} />
+                  <div style={{ flex: 1.5 }}>
+                    <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Kích hoạt tài khoản</div>
+                    <span style={{ fontSize: '12.5px', color: selectedStaff.activated_at ? '#059669' : '#64748b', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                       {selectedStaff.activated_at ? `✅ ${new Date(selectedStaff.activated_at).toLocaleString('vi-VN')}` : '⌛ Đang chờ kích hoạt'}
-                    </strong>
+                    </span>
                   </div>
                 </div>
 
                 {/* Action Area */}
-                <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {isAdmin && selectedStaff.invite_status !== 'active' ? (
                     <>
                       <button
                         type="button"
                         onClick={() => runStaffAction('resend', selectedStaff, resendStaffInvite)}
                         disabled={rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'resend'}
-                        style={{ width: '100%', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '10px', fontSize: '13px', color: '#0f172a', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
+                        style={{ width: '100%', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '8px 12px', fontSize: '13px', color: '#0f172a', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
                       >
                         <RotateCw size={14} />
                         <span>{rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'resend' ? 'Đang thực thi...' : 'Gửi lại Email mời'}</span>
@@ -653,7 +650,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                           type="button"
                           onClick={() => runStaffAction('cancel', selectedStaff, cancelStaffInvite)}
                           disabled={rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'cancel'}
-                          style={{ width: '100%', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '10px', fontSize: '13px', color: '#b91c1c', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
+                          style={{ width: '100%', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '8px 12px', fontSize: '13px', color: '#b91c1c', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
                         >
                           <Trash2 size={14} />
                           <span>{rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'cancel' ? 'Đang thực thi...' : 'Thu hồi lời mời'}</span>
@@ -661,17 +658,17 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                       )}
                     </>
                   ) : isAdmin ? (
-                    <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '12px', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                      <ShieldCheck size={18} style={{ color: '#16a34a', marginTop: '1px', flexShrink: 0 }} />
-                      <span style={{ fontSize: '12.5px', color: '#15803d', fontWeight: 600, lineHeight: '1.4' }}>
-                        Tài khoản TVBH này đã kích hoạt thành công. Hiện có toàn quyền truy cập các báo cáo, đặt cọc, ghép xe và yêu cầu hóa đơn.
+                    <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '8px 12px', borderRadius: '10px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <ShieldCheck size={14} style={{ color: '#059669', flexShrink: 0 }} />
+                      <span style={{ fontSize: '12px', color: '#047857', fontWeight: 600 }}>
+                        Đã kích hoạt & có đầy đủ quyền thao tác trên hệ thống.
                       </span>
                     </div>
                   ) : (
-                    <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '12px', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                      <ShieldCheck size={18} style={{ color: '#1d4ed8', marginTop: '1px', flexShrink: 0 }} />
-                      <span style={{ fontSize: '12.5px', color: '#1d4ed8', fontWeight: 600, lineHeight: '1.4' }}>
-                        TPKD chỉ xem được nhân sự và đơn hàng thuộc phòng ban của mình.
+                    <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '10px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <ShieldCheck size={14} style={{ color: '#2563eb', flexShrink: 0 }} />
+                      <span style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: 600 }}>
+                        Quyền TPKD: Chỉ quản lý nhân sự & đơn hàng thuộc phòng ban.
                       </span>
                     </div>
                   )}

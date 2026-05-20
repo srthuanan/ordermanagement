@@ -6006,7 +6006,8 @@ td small {
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
   gap: 16px;
   flex: 1;
-  height: calc(100vh - 120px);
+  min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -6358,7 +6359,8 @@ td small {
   grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
   gap: 20px;
   flex: 1;
-  height: calc(100vh - 120px);
+  min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -6474,4 +6476,51 @@ td small {
   font-size: 20px;
   font-weight: 900;
   color: #0f172a;
+}
+
+/* ==========================================================================
+   DESKTOP SCREEN HEIGHT LOCK & INTERNAL SCROLLING
+   ========================================================================== */
+@media (min-width: 1025px) {
+  /* Lock the main page content wrapper to fit exactly 1 screen height */
+  .main-content {
+    overflow: hidden !important;
+  }
+
+  /* Make the Dashboard tab content scrollable internally so the page doesn't scroll */
+  .dashboard-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding-right: 4px !important;
+    min-height: 0 !important;
+  }
+
+  /* Force Staff and Pricing panels to occupy exactly 100% height and overflow internally */
+  .staff-panel,
+  .pricing-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Make staff list and detail panels respect parent constraints and support internal scrolling */
+  .staff-list-side,
+  .staff-detail-side,
+  .staff-detail-card {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+  }
+
+  .staff-detail-body {
+    overflow-y: auto !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
 }

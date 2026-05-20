@@ -249,7 +249,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
   };
 
   return (
-    <div className="invoice-modular-workspace" style={{ height: '100%', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <div className="orders-modular-workspace" style={{ height: '100%', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
       
       {/* 1. TOP SECTION: METRICS BAR */}
       <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', padding: '10px 16px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
