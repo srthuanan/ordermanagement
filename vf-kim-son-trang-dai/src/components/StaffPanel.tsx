@@ -281,49 +281,6 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
         </div>
       )}
 
-      <div className="staff-pill-stats">
-        {isPersonalView ? (
-          <>
-            <div className="staff-pill">
-              <span>Hồ sơ cá nhân</span>
-              <strong>{currentProfile?.full_name || 'TVBH'}</strong>
-            </div>
-            <div className="staff-pill">
-              <span>Phòng ban</span>
-              <strong>{currentProfile?.department || 'Chưa gán'}</strong>
-            </div>
-            <div className="staff-pill">
-              <span>Trạng thái</span>
-              <strong>{currentProfile ? getStatusLabel(currentProfile) : '---'}</strong>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="staff-pill">
-              <span>TVBH trong phòng</span>
-              <strong>{salesCount}</strong>
-            </div>
-            <div className="staff-pill">
-              <span>Đã kích hoạt</span>
-              <strong>{visibleStaff.filter((item) => item.activated_at || item.invite_status === 'active').length}</strong>
-            </div>
-            <div className="staff-pill">
-              <span>Chờ kích hoạt</span>
-              <strong>{pendingCount}</strong>
-            </div>
-            <div className="staff-pill">
-              <span>Đã hủy</span>
-              <strong>{inactiveCount}</strong>
-            </div>
-            {isManager && currentProfile?.department ? (
-              <div className="staff-pill" style={{ background: '#eff6ff', borderColor: '#bfdbfe' }}>
-                <span style={{ color: '#1d4ed8' }}>Phòng đang xem</span>
-                <strong style={{ color: '#1d4ed8' }}>{currentProfile.department}</strong>
-              </div>
-            ) : null}
-          </>
-        )}
-      </div>
 
       {/* Primary Modular Dual Pane Workspace */}
       {isPersonalView ? (
