@@ -281,44 +281,44 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
+      <div className="staff-pill-stats">
         {isPersonalView ? (
           <>
-            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '140px' }}>
-              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Hồ sơ cá nhân</div>
-              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{currentProfile?.full_name || 'TVBH'}</div>
+            <div className="staff-pill">
+              <span>Hồ sơ cá nhân</span>
+              <strong>{currentProfile?.full_name || 'TVBH'}</strong>
             </div>
-            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '140px' }}>
-              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Phòng ban</div>
-              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{currentProfile?.department || 'Chưa gán'}</div>
+            <div className="staff-pill">
+              <span>Phòng ban</span>
+              <strong>{currentProfile?.department || 'Chưa gán'}</strong>
             </div>
-            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '140px' }}>
-              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Trạng thái</div>
-              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{currentProfile ? getStatusLabel(currentProfile) : '---'}</div>
+            <div className="staff-pill">
+              <span>Trạng thái</span>
+              <strong>{currentProfile ? getStatusLabel(currentProfile) : '---'}</strong>
             </div>
           </>
         ) : (
           <>
-            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
-              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>TVBH trong phòng</div>
-              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{salesCount}</div>
+            <div className="staff-pill">
+              <span>TVBH trong phòng</span>
+              <strong>{salesCount}</strong>
             </div>
-            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
-              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Đã kích hoạt</div>
-              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{visibleStaff.filter((item) => item.activated_at || item.invite_status === 'active').length}</div>
+            <div className="staff-pill">
+              <span>Đã kích hoạt</span>
+              <strong>{visibleStaff.filter((item) => item.activated_at || item.invite_status === 'active').length}</strong>
             </div>
-            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
-              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Chờ kích hoạt</div>
-              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{pendingCount}</div>
+            <div className="staff-pill">
+              <span>Chờ kích hoạt</span>
+              <strong>{pendingCount}</strong>
             </div>
-            <div style={{ padding: '10px 14px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', minWidth: '120px' }}>
-              <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Đã hủy</div>
-              <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a' }}>{inactiveCount}</div>
+            <div className="staff-pill">
+              <span>Đã hủy</span>
+              <strong>{inactiveCount}</strong>
             </div>
             {isManager && currentProfile?.department ? (
-              <div style={{ padding: '10px 14px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', minWidth: '180px' }}>
-                <div style={{ fontSize: '11px', color: '#1d4ed8', fontWeight: 700, textTransform: 'uppercase' }}>Phòng đang xem</div>
-                <div style={{ fontSize: '15px', fontWeight: 900, color: '#1d4ed8' }}>{currentProfile.department}</div>
+              <div className="staff-pill" style={{ background: '#eff6ff', borderColor: '#bfdbfe' }}>
+                <span style={{ color: '#1d4ed8' }}>Phòng đang xem</span>
+                <strong style={{ color: '#1d4ed8' }}>{currentProfile.department}</strong>
               </div>
             ) : null}
           </>
@@ -327,7 +327,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
 
       {/* Primary Modular Dual Pane Workspace */}
       {isPersonalView ? (
-        <div className="orders-modular-workspace" style={{ gridTemplateColumns: '1fr' }}>
+        <div className="staff-modern-workspace" style={{ gridTemplateColumns: '1fr' }}>
           <div className="orders-data-side" style={{ display: 'flex', flexDirection: 'column', background: '#ffffff', borderRadius: '20px', border: '1px solid #cbd5e1', boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.02)', overflow: 'hidden' }}>
             <div style={{ padding: '14px 20px', borderBottom: '1px solid #e2e8f0', background: '#fafafb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <div>
@@ -369,10 +369,10 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
           </div>
         </div>
       ) : (
-        <div className="orders-modular-workspace">
+        <div className="staff-modern-workspace">
         
         {/* LEFT PANEL: Data Grid */}
-        <div className="orders-data-side" style={{ display: 'flex', flexDirection: 'column', background: '#ffffff', borderRadius: '20px', border: '1px solid #cbd5e1', boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.02)', overflow: 'hidden' }}>
+        <div className="staff-list-side">
           
           {/* Search & Actions Subheader */}
           <div style={{ padding: '14px 20px', borderBottom: '1px solid #e2e8f0', background: '#fafafb', display: 'flex', gap: '12px', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -398,7 +398,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
           </div>
 
           {/* Data Table */}
-          <div className="orders-table-scroller" style={{ flex: 1, overflowY: 'auto', maxHeight: 'calc(100vh - 260px)' }}>
+          <div className="orders-table-scroller custom-scrollbar" style={{ flex: 1, overflowY: 'auto' }}>
             {filteredStaff.length === 0 ? (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
                 <Users size={36} style={{ color: '#cbd5e1', marginBottom: '10px' }} />
@@ -479,63 +479,66 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
         </div>
 
         {/* RIGHT PANEL: Detail Widget */}
-        <div className="orders-visual-side" style={{ position: 'sticky', top: '70px', alignSelf: 'start' }}>
+        <div className="staff-detail-side">
           {selectedStaff ? (
-            <div style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '20px', boxShadow: '0 4px 20px -5px rgba(0, 0, 0, 0.03)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div className="staff-detail-card">
               
               {/* Card Header Banner */}
-              <div style={{ background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)', padding: '20px', borderBottom: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
-                <div style={{ height: '56px', width: '56px', borderRadius: '50%', background: '#0f766e', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', fontWeight: 800, boxShadow: '0 4px 10px rgba(15, 118, 110, 0.2)' }}>
+              <div className={`staff-detail-header-content staff-detail-header-${selectedStaff.role}`}>
+                <div className="staff-avatar-large">
                   {selectedStaff.full_name.trim().charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '16px', color: '#0f172a', fontWeight: 800 }}>{selectedStaff.full_name}</h3>
+                  <h3 style={{ margin: 0, fontSize: '20px', color: '#fff', fontWeight: 800 }}>{selectedStaff.full_name}</h3>
                   <div 
                     onClick={() => copyToClipboard(getRowEmail(selectedStaff), 'Email')}
-                    style={{ fontSize: '13px', color: '#64748b', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center', marginTop: '2px' }}
+                    style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)', fontWeight: 500, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center', marginTop: '2px' }}
                     title="Click để copy email"
                   >
                     {getRowEmail(selectedStaff)}
                     <Copy size={12} />
                   </div>
                 </div>
-                <span style={{
-                  background: selectedStaff.role === 'admin' ? '#dbeafe' : '#f1f5f9',
-                  color: selectedStaff.role === 'admin' ? '#1e40af' : '#475569',
-                  padding: '3px 10px',
-                  borderRadius: '20px',
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  border: '1px solid',
-                  borderColor: selectedStaff.role === 'admin' ? '#bfdbfe' : '#e2e8f0',
-                  marginTop: '2px'
-                }}>
-                  🚀 {roleLabels[selectedStaff.role]}
-                </span>
-                <span style={{
-                  background: '#f8fafc',
-                  color: '#0f172a',
-                  padding: '3px 10px',
-                  borderRadius: '20px',
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  border: '1px solid #e2e8f0'
-                }}>
-                  {selectedStaff.department || 'Chưa gán'}
-                </span>
-                {selectedStaff.role === 'sales' ? (
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '4px' }}>
                   <span style={{
-                    background: '#eff6ff',
-                    color: '#1d4ed8',
-                    padding: '3px 10px',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    color: '#fff',
+                    padding: '3px 12px',
                     borderRadius: '20px',
-                    fontSize: '11.5px',
+                    fontSize: '11px',
                     fontWeight: 700,
-                    border: '1px solid #bfdbfe'
+                    backdropFilter: 'blur(4px)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)'
                   }}>
-                    {getManagerLabel(selectedStaff.manager_id) || 'Chưa gắn TPKD'}
+                    🚀 {roleLabels[selectedStaff.role]}
                   </span>
-                ) : null}
+                  <span style={{
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    color: '#fff',
+                    padding: '3px 12px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    backdropFilter: 'blur(4px)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)'
+                  }}>
+                    {selectedStaff.department || 'Chưa gán'}
+                  </span>
+                  {selectedStaff.role === 'sales' ? (
+                    <span style={{
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      color: '#fff',
+                      padding: '3px 12px',
+                      borderRadius: '20px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      backdropFilter: 'blur(4px)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)'
+                    }}>
+                      {getManagerLabel(selectedStaff.manager_id) || 'Chưa gắn TPKD'}
+                    </span>
+                  ) : null}
+                </div>
               </div>
 
               {/* Content Block */}
