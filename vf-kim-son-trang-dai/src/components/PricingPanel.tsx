@@ -1224,16 +1224,19 @@ const getSwatchBackground = (colorCode: string, name: string) => {
   if (code === 'CE17') return '#cbd5e1'; // Desat Silver
   if (code === 'CE2K') return '#fda4af'; // Rose Metallic
   if (code === 'CE2I') return '#34d399'; // Tropical Jade
+  if (code === 'CE2J') return '#1e3a8a'; // Moonlit Ocean
+  if (code === 'CE2N') return '#5c4033'; // Introspective Brown
 
   if (lowerName.includes('white') || lowerName.includes('blanc')) return '#f8fafc';
   if (lowerName.includes('black')) return '#1e293b';
   if (lowerName.includes('grey') || lowerName.includes('gray')) return '#64748b';
   if (lowerName.includes('red') || lowerName.includes('ruby')) return '#b91c1c';
-  if (lowerName.includes('blue')) return '#3b82f6';
+  if (lowerName.includes('blue') || lowerName.includes('ocean')) return '#1e3a8a';
   if (lowerName.includes('green') || lowerName.includes('mint') || lowerName.includes('jade')) return '#10b981';
   if (lowerName.includes('yellow')) return '#facc15';
   if (lowerName.includes('pink') || lowerName.includes('rose')) return '#f472b6';
   if (lowerName.includes('silver')) return '#cbd5e1';
+  if (lowerName.includes('brown')) return '#5c4033';
 
   return '#e2e8f0';
 };
