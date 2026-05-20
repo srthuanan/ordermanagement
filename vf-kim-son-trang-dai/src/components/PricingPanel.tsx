@@ -1124,7 +1124,7 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
           <div className="pricing-result-card" ref={quoteRef}>
             <div className="pricing-result-header">
               {quote?.model ? (
-                <img src={quote.model.image} alt={quote.model.name} />
+                <img src={quote?.color?.image || quote.model.image} alt={quote.model.name} />
               ) : null}
               <h3>{quote?.model.name || 'Chưa chọn xe'}</h3>
               <p>{quote?.version.name || '--'} · {quote?.color?.name || '--'}</p>
