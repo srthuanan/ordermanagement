@@ -721,6 +721,18 @@ export const addNewVehicle = async (vehicle: KhoxeRow) => {
   return await supabase.from('khoxe').insert(vehicle);
 };
 
+export const checkExistingVins = async (vins: string[]): Promise<{ data: { vin: string }[] | null; error: any }> => {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  if (!vins.length) return { data: [], error: null };
+
+  const { data, error } = await supabase
+    .from('khoxe')
+    .select('vin')
+    .in('vin', vins);
+
+  return { data: data ?? null, error };
+};
+
 export const bulkUpsertVehicles = async (
   vehicles: Array<{
     vin: string;

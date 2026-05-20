@@ -269,7 +269,7 @@ export function useOrderOperations({
         const parsedLongitude = longitude ? Number(longitude) : null;
 
         return {
-          vin,
+          vin: vin.trim().toUpperCase(),
           dong_xe: dong_xe || '',
           phien_ban,
           ngoai_that,
@@ -280,6 +280,44 @@ export function useOrderOperations({
           ngay_nhap: ngay_nhap || null
         };
       });
+
+      // --- Kiểm tra trùng VIN trước khi import ---
+      const vinList = parsed.map((item) => item.vin);
+
+      // Kiểm tra trùng VIN ngay trong danh sách nhập
+      const vinCounts: Record<string, number> = {};
+      for (const vin of vinList) {
+        vinCounts[vin] = (vinCounts[vin] || 0) + 1;
+      }
+      const duplicatesInFile = Object.entries(vinCounts)
+        .filter(([, count]) => count > 1)
+        .map(([vin]) => vin);
+
+      if (duplicatesInFile.length > 0) {
+        setImportStockError(
+          `File có ${duplicatesInFile.length} VIN bị trùng lặp trong danh sách nhập: ${duplicatesInFile.join(', ')}. Vui lòng kiểm tra lại file.`
+        );
+        setIsImportingStock(false);
+        return false;
+      }
+
+      // Kiểm tra VIN đã tồn tại trong kho
+      const { data: existingVehicles, error: checkError } = await apiService.checkExistingVins(vinList);
+      if (checkError) {
+        setImportStockError(`Không thể kiểm tra dữ liệu kho: ${checkError.message}`);
+        setIsImportingStock(false);
+        return false;
+      }
+
+      if (existingVehicles && existingVehicles.length > 0) {
+        const existingVinList = existingVehicles.map((v: { vin: string }) => v.vin).join(', ');
+        setImportStockError(
+          `${existingVehicles.length} VIN đã tồn tại trong kho, không thể nhập trùng: ${existingVinList}. Vui lòng loại bỏ các VIN này khỏi file nhập.`
+        );
+        setIsImportingStock(false);
+        return false;
+      }
+      // ------------------------------------------
 
       const { error } = await apiService.bulkUpsertVehicles(parsed);
       if (error) {
