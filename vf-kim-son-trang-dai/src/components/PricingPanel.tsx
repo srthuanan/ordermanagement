@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calculator, CheckCircle2, ChevronRight, Download, FileText, Printer, RotateCcw, Save, Settings2, Tag } from 'lucide-react';
+import { Calculator, CheckCircle2, ChevronRight, Download, FileText, Printer, RotateCcw, Save, Settings2, Tag, User, Car, FilePlus2 } from 'lucide-react';
 import {
   clearPricingDatasetConfig,
   computePricingQuote,
@@ -948,339 +948,261 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
           {adminError ? <div className="pricing-admin-error">{adminError}</div> : null}
         </details>
       ) : null}
-      <section className="pricing-hero">
-        <div className="pricing-hero-copy">
-          <p className="eyebrow">WORKSPACE</p>
-          <h2>Chọn cấu hình ở bên trái, xem kết quả ở bên phải</h2>
-          <p>
-            Khung báo giá được sắp theo kiểu master-detail giống tab Đơn hàng để TVBH thao tác nhanh và dễ in.
-          </p>
-          <div className="pricing-hero-actions">
-            <button className="ghost-button" type="button" onClick={handlePrintQuote}>
-              <Printer size={17} />
-              <span>In báo giá</span>
-            </button>
-            <button className="ghost-button" type="button" onClick={handleDownloadQuote}>
-              <Download size={17} />
-              <span>Tải PDF</span>
-            </button>
-            {brochureUrl ? (
-              <a className="ghost-button" href={brochureUrl} target="_blank" rel="noreferrer">
-                <FileText size={17} />
-                <span>Xem brochure</span>
-              </a>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="pricing-hero-card">
-          {quote?.model ? (
-            <img className="pricing-hero-image" src={quote.model.image} alt={quote.model.name} />
-          ) : null}
-          <div className="pricing-hero-summary">
+      <div className="pricing-modern-workspace">
+        {/* LEFT COLUMN: Configuration */}
+        <div className="pricing-config-side custom-scrollbar">
+          
+          <div className="pricing-hero-header">
             <div>
-              <span>Dòng đang chọn</span>
-              <strong>{quote?.model.name || 'Chưa chọn'}</strong>
+              <h2>Tính Giá Chi Tiết</h2>
+              <p>Chọn các cấu hình, ưu đãi và dịch vụ bên dưới. Bảng báo giá sẽ tự động tính toán bên phải.</p>
             </div>
-            <div>
-              <span>Tạm tính</span>
-              <strong>{quote ? formatCurrency(quote.total) : '--'}</strong>
+            <div className="pricing-hero-actions">
+              <button className="ghost-button" type="button" onClick={handlePrintQuote}>
+                <Printer size={17} />
+                <span>In báo giá</span>
+              </button>
+              <button className="ghost-button" type="button" onClick={handleDownloadQuote}>
+                <Download size={17} />
+                <span>Tải PDF</span>
+              </button>
+              {brochureUrl ? (
+                <a className="ghost-button" href={brochureUrl} target="_blank" rel="noreferrer">
+                  <FileText size={17} />
+                  <span>Xem brochure</span>
+                </a>
+              ) : null}
             </div>
           </div>
-          <small>{pricingDraft.bannerContent || 'Ưu đãi và phí được lấy từ file cấu hình gốc.'}</small>
-        </div>
-      </section>
 
-      <section className="pricing-layout orders-modular-workspace">
-        <article className="panel pricing-form-card">
-          <div className="dashboard-band-header">
-            <div>
-              <p className="eyebrow">Thiết lập</p>
-              <h3>Cấu hình xe và ưu đãi</h3>
+          <div className="pricing-section-card">
+            <div className="pricing-section-title">
+              <User size={16} />
+              <span>Thông tin Khách hàng</span>
             </div>
-            <Calculator size={18} className="muted-icon" />
-          </div>
-
-          <div className="pricing-form-grid">
-            <label>
-              <span>Tên khách hàng</span>
-              <input value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Nhập tên khách hàng" />
-            </label>
-
-            <label>
-              <span>Số điện thoại</span>
-              <input value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} placeholder="Nhập số điện thoại" />
-            </label>
-
-            <label>
-              <span>Tư vấn viên</span>
-              <input value={consultantName} onChange={(event) => setConsultantName(event.target.value)} placeholder="Nhập tên tư vấn viên" />
-            </label>
-
-            <label>
-              <span>Dòng xe</span>
-              <select value={modelId} onChange={(event) => handleModelChange(event.target.value)}>
-                {pricingDraft.models.map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Phiên bản</span>
-              <select value={versionId} onChange={(event) => handleVersionChange(event.target.value)}>
-                {versionOptions.map((version) => (
-                  <option key={version.id} value={version.id}>
-                    {version.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Màu xe</span>
-              <select value={colorId} onChange={(event) => setColorId(event.target.value)}>
-                {selectedVersion?.colors.map((color) => (
-                  <option key={color.id} value={color.id}>
-                    {color.name}
-                  </option>
-                )) || null}
-              </select>
-            </label>
-
-            <label>
-              <span>Nhóm khách hàng</span>
-              <select value={customerTypeId} onChange={(event) => handleCustomerTypeChange(event.target.value)}>
-                {pricingDraft.customerTypes.map((customerType) => (
-                  <option key={customerType.id} value={customerType.id}>
-                    {customerType.emoji} {customerType.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              <span>Khu vực phí</span>
-              <select value={region} onChange={(event) => setRegion(event.target.value as 'hnhcm' | 'other')}>
-                <option value="hnhcm">Hà Nội / HCM</option>
-                <option value="other">Khu vực khác</option>
-              </select>
-            </label>
-
-            <label>
-              <span>VinClub</span>
-              <select
-                value={vinClubTierId || ''}
-                onChange={(event) => setVinClubTierId(event.target.value || null)}
-                disabled={!selectedCustomerType?.allowsVinclub || vinClubBlocked}
-              >
-                <option value="">Không áp dụng</option>
-                {pricingDraft.vinClubTiers.map((tier) => (
-                  <option key={tier.id} value={tier.id}>
-                    {tier.name} - {tier.discountPercentage}%
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <div className="pricing-hero-note">
-            <CheckCircle2 size={16} />
-            <span>
-              {quote?.version.name || 'Chưa có phiên bản'} · {quote?.color?.name || 'Chưa có màu'} ·{' '}
-              {selectedCustomerType?.name || 'Khách hàng'}
-            </span>
-          </div>
-
-          <div className="pricing-section">
-            <div className="pricing-section-header">
-              <div>
-                <strong>Ưu đãi áp dụng</strong>
-                <p>Chọn các ưu đãi phù hợp với phiên bản và nhóm khách hàng.</p>
+            <div className="pricing-section-content pricing-grid-3">
+              <div className="pricing-input-group">
+                <label>Tên khách hàng</label>
+                <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Nhập tên" />
               </div>
-              <Tag size={17} className="muted-icon" />
-            </div>
-
-            <div className="pricing-promo-list">
-              {availablePromotions.map((promotion) => {
-                const amount = quote?.promotionAmounts[promotion.id] || 0;
-                const selected = selectedPromotionSet.has(promotion.id);
-                return (
-                  <label key={promotion.id} className={selected ? 'pricing-promo-item active' : 'pricing-promo-item'}>
-                    <input
-                      type="checkbox"
-                      checked={selected}
-                      onChange={() => togglePromotion(promotion.id)}
-                    />
-                    <div>
-                      <strong>{promotion.name}</strong>
-                      <span>{selected ? `Giảm ${formatCurrency(amount)}` : describePromotion(promotion, quote?.basePrice || 0)}</span>
-                    </div>
-                    <ChevronRight size={16} />
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="pricing-section">
-            <div className="pricing-section-header">
-              <div>
-                <strong>Phí tùy chọn</strong>
-                <p>Áp dụng thêm nếu khách hàng cần dịch vụ hỗ trợ.</p>
+              <div className="pricing-input-group">
+                <label>Số điện thoại</label>
+                <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Nhập SĐT" />
+              </div>
+              <div className="pricing-input-group">
+                <label>Tư vấn viên</label>
+                <input value={consultantName} onChange={(e) => setConsultantName(e.target.value)} placeholder="Tên TVBH" />
+              </div>
+              <div className="pricing-input-group">
+                <label>Nhóm khách hàng</label>
+                <select value={customerTypeId} onChange={(e) => handleCustomerTypeChange(e.target.value)}>
+                  {pricingDraft.customerTypes.map((t) => (
+                    <option key={t.id} value={t.id}>{t.emoji} {t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="pricing-input-group">
+                <label>VinClub</label>
+                <select value={vinClubTierId || ''} onChange={(e) => setVinClubTierId(e.target.value || null)} disabled={!selectedCustomerType?.allowsVinclub || vinClubBlocked}>
+                  <option value="">Không áp dụng</option>
+                  {pricingDraft.vinClubTiers.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name} - {t.discountPercentage}%</option>
+                  ))}
+                </select>
+              </div>
+              <div className="pricing-input-group">
+                <label>Khu vực phí</label>
+                <select value={region} onChange={(e) => setRegion(e.target.value as 'hnhcm' | 'other')}>
+                  <option value="hnhcm">Hà Nội / HCM</option>
+                  <option value="other">Khu vực khác</option>
+                </select>
               </div>
             </div>
-
-            <div className="pricing-promo-list">
-              {pricingDraft.optionalFees.map((fee) => {
-                const selected = selectedOptionalFeeSet.has(fee.id);
-                return (
-                  <label key={fee.id} className={selected ? 'pricing-promo-item active' : 'pricing-promo-item'}>
-                    <input
-                      type="checkbox"
-                      checked={selected}
-                      onChange={() => toggleOptionalFee(fee.id)}
-                    />
-                    <div>
-                      <strong>{fee.name}</strong>
-                      <span>{formatCurrency(fee.defaultAmount)}</span>
-                    </div>
-                    <ChevronRight size={16} />
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-        </article>
-
-        <aside className="panel pricing-summary-card orders-visual-side" style={{ position: 'sticky', top: '70px', alignSelf: 'start' }}>
-          <div className="dashboard-band-header">
-            <div>
-              <p className="eyebrow">Kết quả</p>
-              <h3>Bảng tính</h3>
-            </div>
-            <Calculator size={18} className="muted-icon" />
           </div>
 
-          <div className="pricing-quote-sheet" ref={quoteRef}>
-            <header className="pricing-quote-header">
-              <div className="pricing-brand-block">
-                <div className="pricing-brand-mark">VF</div>
-                <div>
-                  <strong>BÁO GIÁ XE VINFAST</strong>
-                  <span>Mẫu nội bộ xuất từ công cụ tính giá</span>
+          <div className="pricing-section-card">
+            <div className="pricing-section-title">
+              <Car size={16} />
+              <span>Cấu hình Xe</span>
+            </div>
+            <div className="pricing-section-content">
+              <div className="pricing-grid-2">
+                <div className="pricing-input-group">
+                  <label>Dòng xe</label>
+                  <select value={modelId} onChange={(e) => handleModelChange(e.target.value)}>
+                    {pricingDraft.models.map((m) => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="pricing-input-group">
+                  <label>Phiên bản</label>
+                  <select value={versionId} onChange={(e) => handleVersionChange(e.target.value)}>
+                    {versionOptions.map((v) => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
-              <div className="pricing-quote-meta">
-                <span>Số báo giá</span>
-                <strong>{quoteNo}</strong>
-                <small>Ngày lập: {quoteDate}</small>
-              </div>
-            </header>
-
-            {quote?.model ? (
-              <div className="pricing-quote-image-wrap">
-                <img className="pricing-quote-image" src={quote.model.image} alt={quote.model.name} />
-              </div>
-            ) : null}
-
-            <section className="pricing-quote-info">
-              <InfoItem label="Khách hàng" value={customerName || 'Chưa nhập'} />
-              <InfoItem label="SĐT" value={customerPhone || 'Chưa nhập'} />
-              <InfoItem label="Tư vấn viên" value={consultantName || 'Chưa nhập'} />
-              <InfoItem label="Khu vực" value={region === 'hnhcm' ? 'Hà Nội / HCM' : 'Khu vực khác'} />
-            </section>
-
-            <section className="pricing-quote-model">
-              <div>
-                <span>Dòng xe</span>
-                <strong>{quote?.model.name || '--'}</strong>
-              </div>
-              <div>
-                <span>Phiên bản</span>
-                <strong>{quote?.version.name || '--'}</strong>
-              </div>
-              <div>
-                <span>Màu xe</span>
-                <strong>{quote?.color?.name || '--'}</strong>
-              </div>
-              <div>
-                <span>Khách hàng</span>
-                <strong>{selectedCustomerType?.name || '--'}</strong>
-              </div>
-            </section>
-
-            <section className="pricing-print-summary">
-              <InfoItem label="Tổng tạm tính" value={quote ? formatCurrency(quote.total) : '--'} />
-              <InfoItem label="Giảm ưu đãi" value={quote ? formatCurrency(quote.promotionDiscountTotal + quote.vinClubDiscount) : '--'} />
-              <InfoItem label="Phí bắt buộc" value={quote ? formatCurrency(quote.feeTotal) : '--'} />
-              <InfoItem label="Phí tùy chọn" value={quote ? formatCurrency(quote.optionalFeeTotal) : '--'} />
-            </section>
-
-            <section className="pricing-print-promos">
-              <div className="pricing-print-section-title">
-                <strong>CTKM áp dụng</strong>
-                <span>{quote?.selectedPromotions.length ? `${quote.selectedPromotions.length} ưu đãi` : 'Không có ưu đãi'}</span>
-              </div>
-              <div className="pricing-print-promo-list">
-                {quote?.selectedPromotions.length ? (
-                  quote.selectedPromotions.map((promotion) => (
-                    <div key={promotion.id} className="pricing-print-promo-row">
-                      <span>{promotion.name}</span>
-                      <strong>
-                        {quote.promotionAmounts[promotion.id]
-                          ? `- ${formatCurrency(quote.promotionAmounts[promotion.id])}`
-                          : '--'}
-                      </strong>
+              <div className="pricing-input-group" style={{ marginTop: '8px' }}>
+                <label>Màu sắc ({selectedVersion?.colors.find(c => c.id === colorId)?.name || 'Chưa chọn'})</label>
+                <div className="pricing-color-swatches">
+                  {selectedVersion?.colors.map((color) => (
+                    <div
+                      key={color.id}
+                      className={`color-swatch ${colorId === color.id ? 'active' : ''}`}
+                      style={{ backgroundColor: color.color_code }}
+                      title={color.name}
+                      onClick={() => setColorId(color.id)}
+                    >
+                      {colorId === color.id && <CheckCircle2 size={16} color={color.color_code === '#FFFFFF' ? '#000' : '#FFF'} />}
                     </div>
-                  ))
-                ) : (
-                  <div className="pricing-print-empty">Không có CTKM được chọn</div>
-                )}
-              </div>
-            </section>
-
-            <div className="pricing-total-card">
-              <span>Tổng tạm tính</span>
-              <strong>{quote ? formatCurrency(quote.total) : '--'}</strong>
-              <small>Đã bao gồm phí và các ưu đãi đang bật.</small>
-            </div>
-
-            <div className="pricing-breakdown">
-              {quote?.lines.map((line, index) => (
-                <div
-                  key={`${line.label}-${index}`}
-                  className={line.kind === 'info' ? 'pricing-line info' : line.kind === 'discount' ? 'pricing-line discount' : 'pricing-line'}
-                >
-                  <div>
-                    <strong>{line.label}</strong>
-                    {line.detail ? <span>{line.detail}</span> : null}
-                  </div>
-                  <strong className={line.kind === 'discount' ? 'negative' : ''}>
-                    {line.kind === 'discount' ? `- ${formatCurrency(line.amount)}` : formatCurrency(line.amount)}
-                  </strong>
+                  ))}
                 </div>
-              ))}
-            </div>
-
-            <div className="pricing-stat-grid">
-              <Stat label="Giá gốc" value={quote ? formatCurrency(quote.basePrice) : '--'} />
-              <Stat label="Giảm ưu đãi" value={quote ? formatCurrency(quote.promotionDiscountTotal + quote.vinClubDiscount) : '--'} />
-              <Stat label="Phí bắt buộc" value={quote ? formatCurrency(quote.feeTotal) : '--'} />
-              <Stat label="Phí tùy chọn" value={quote ? formatCurrency(quote.optionalFeeTotal) : '--'} />
-            </div>
-
-            {pricingDraft.guideContent ? (
-              <div className="pricing-guide">
-                <strong>Ghi chú dữ liệu</strong>
-                <p>{pricingDraft.guideContent.slice(0, 260)}…</p>
               </div>
-            ) : null}
+            </div>
           </div>
-        </aside>
-      </section>
+
+          <div className="pricing-section-card">
+            <div className="pricing-section-title">
+              <Tag size={16} />
+              <span>Chương trình Khuyến mãi</span>
+            </div>
+            <div className="pricing-section-content">
+              {availablePromotions.length === 0 ? (
+                <div style={{ fontSize: '13px', color: '#64748b' }}>Không có CTKM nào cho phiên bản này.</div>
+              ) : (
+                <div className="pricing-grid-2">
+                  {availablePromotions.map((promo) => {
+                    const selected = selectedPromotionSet.has(promo.id);
+                    return (
+                      <div key={promo.id} className={`pricing-toggle-item ${selected ? 'active' : ''}`} onClick={() => togglePromotion(promo.id)}>
+                        <div className="pricing-toggle-info">
+                          <strong>{promo.name}</strong>
+                          <span>{describePromotion(promo, quote?.basePrice || 0)}</span>
+                        </div>
+                        <div className="pricing-toggle-switch"></div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="pricing-section-card">
+            <div className="pricing-section-title">
+              <FilePlus2 size={16} />
+              <span>Phí Tùy chọn</span>
+            </div>
+            <div className="pricing-section-content">
+               {pricingDraft.optionalFees.length === 0 ? (
+                 <div style={{ fontSize: '13px', color: '#64748b' }}>Không có phí tùy chọn nào.</div>
+               ) : (
+                <div className="pricing-grid-2">
+                  {pricingDraft.optionalFees.map((fee) => {
+                    const selected = selectedOptionalFeeSet.has(fee.id);
+                    return (
+                      <div key={fee.id} className={`pricing-toggle-item ${selected ? 'active' : ''}`} onClick={() => toggleOptionalFee(fee.id)}>
+                        <div className="pricing-toggle-info">
+                          <strong>{fee.name}</strong>
+                          <span>{formatCurrency(fee.defaultAmount)}</span>
+                        </div>
+                        <div className="pricing-toggle-switch"></div>
+                      </div>
+                    );
+                  })}
+                </div>
+               )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* RIGHT COLUMN: Result */}
+        <div className="pricing-result-side">
+          <div className="pricing-result-card" ref={quoteRef}>
+            <div className="pricing-result-header">
+              {quote?.model ? (
+                <img src={quote.model.image} alt={quote.model.name} />
+              ) : null}
+              <h3>{quote?.model.name || 'Chưa chọn xe'}</h3>
+              <p>{quote?.version.name || '--'} · {quote?.color?.name || '--'}</p>
+              <div style={{ marginTop: '12px', display: 'inline-block', padding: '4px 12px', background: '#e2e8f0', borderRadius: '999px', fontSize: '11px', fontWeight: 700, color: '#475569' }}>
+                Báo giá: {quoteNo}
+              </div>
+            </div>
+
+            <div className="pricing-result-body custom-scrollbar">
+              <div style={{ marginBottom: '16px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>Giá xe</span>
+                <div className="pricing-receipt-line">
+                  <span>Giá niêm yết</span>
+                  <strong>{quote ? formatCurrency(quote.basePrice) : '--'}</strong>
+                </div>
+              </div>
+
+              {quote && quote.promotionDiscountTotal + quote.vinClubDiscount > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#fca5a5', textTransform: 'uppercase' }}>Khuyến mãi & Ưu đãi</span>
+                  {quote.selectedPromotions.map((promo) => (
+                    <div key={promo.id} className="pricing-receipt-line discount">
+                      <span>{promo.name}</span>
+                      <strong>-{formatCurrency(quote.promotionAmounts[promo.id])}</strong>
+                    </div>
+                  ))}
+                  {quote.vinClubDiscount > 0 && (
+                    <div className="pricing-receipt-line discount">
+                      <span>Chiết khấu VinClub</span>
+                      <strong>-{formatCurrency(quote.vinClubDiscount)}</strong>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {quote && quote.feeTotal > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#7dd3fc', textTransform: 'uppercase' }}>Phí bắt buộc (Lăn bánh)</span>
+                  {pricingDraft.fees.map((fee) => {
+                    const amt = region === 'hnhcm' ? fee.amountHnHcm : fee.amountOther;
+                    if (!amt) return null;
+                    return (
+                      <div key={fee.id} className="pricing-receipt-line fee">
+                        <span>{fee.name}</span>
+                        <strong>{formatCurrency(amt)}</strong>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              
+              {quote && quote.optionalFeeTotal > 0 && (
+                <div style={{ marginBottom: '16px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: '#cbd5e1', textTransform: 'uppercase' }}>Dịch vụ tùy chọn</span>
+                  {pricingDraft.optionalFees.map((fee) => {
+                    if (!selectedOptionalFeeSet.has(fee.id)) return null;
+                    return (
+                      <div key={fee.id} className="pricing-receipt-line">
+                        <span>{fee.name}</span>
+                        <strong>{formatCurrency(fee.defaultAmount)}</strong>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="pricing-result-footer">
+              <span>TỔNG THANH TOÁN (ƯỚC TÍNH)</span>
+              <strong>{quote ? formatCurrency(quote.total) : '--'}</strong>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                <span>Khách hàng: {customerName || 'N/A'}</span>
+                <span>Tư vấn: {consultantName || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
