@@ -5067,6 +5067,7 @@ td small {
   .topbar,
   .sync-banner,
   .pricing-hero,
+  .pricing-config-side,
   .pricing-form-card > .dashboard-band-header,
   .pricing-summary-card > .dashboard-band-header,
   .pricing-form-grid,
@@ -5084,10 +5085,31 @@ td small {
   .app-shell,
   .main,
   .pricing-shell,
-  .pricing-layout {
+  .pricing-layout,
+  .pricing-modern-workspace {
     display: block !important;
     padding: 0 !important;
     margin: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .pricing-result-side {
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .pricing-result-card {
+    border: none !important;
+    box-shadow: none !important;
+    height: auto !important;
+    border-radius: 0 !important;
+  }
+
+  .pricing-result-body {
+    overflow-y: visible !important;
+    padding: 0 !important;
   }
 
   .pricing-layout {
