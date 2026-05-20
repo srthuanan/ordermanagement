@@ -1051,7 +1051,7 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
                     <div
                       key={color.id}
                       className={`color-swatch ${colorId === color.id ? 'active' : ''}`}
-                      style={{ backgroundColor: color.color_code }}
+                      style={{ background: getSwatchBackground(color.color_code, color.name) }}
                       title={color.name}
                       onClick={() => setColorId(color.id)}
                     >
@@ -1205,6 +1205,37 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
       </div>
     </div>
   );
+};
+
+const getSwatchBackground = (colorCode: string, name: string) => {
+  const code = colorCode.toUpperCase();
+  const lowerName = name.toLowerCase();
+  
+  if (code.includes('181Y')) return 'linear-gradient(135deg, #87CEEB 50%, #f8fafc 50%)';
+  if (code.includes('181U')) return 'linear-gradient(135deg, #FCD34D 50%, #f8fafc 50%)';
+  if (code.includes('1821')) return 'linear-gradient(135deg, #F472B6 50%, #f8fafc 50%)';
+  if (code.includes('111U')) return 'linear-gradient(135deg, #FCD34D 50%, #1e293b 50%)';
+
+  if (code === 'CE18') return '#f8fafc'; // Blanc
+  if (code === 'CE1V') return '#64748b'; // Zenith Grey
+  if (code === 'CE2Q') return '#b91c1c'; // Solar Ruby
+  if (code === 'CE1W') return '#6ee7b7'; // Urban Mint
+  if (code === 'CE11') return '#1e293b'; // Jet Black
+  if (code === 'CE17') return '#cbd5e1'; // Desat Silver
+  if (code === 'CE2K') return '#fda4af'; // Rose Metallic
+  if (code === 'CE2I') return '#34d399'; // Tropical Jade
+
+  if (lowerName.includes('white') || lowerName.includes('blanc')) return '#f8fafc';
+  if (lowerName.includes('black')) return '#1e293b';
+  if (lowerName.includes('grey') || lowerName.includes('gray')) return '#64748b';
+  if (lowerName.includes('red') || lowerName.includes('ruby')) return '#b91c1c';
+  if (lowerName.includes('blue')) return '#3b82f6';
+  if (lowerName.includes('green') || lowerName.includes('mint') || lowerName.includes('jade')) return '#10b981';
+  if (lowerName.includes('yellow')) return '#facc15';
+  if (lowerName.includes('pink') || lowerName.includes('rose')) return '#f472b6';
+  if (lowerName.includes('silver')) return '#cbd5e1';
+
+  return '#e2e8f0';
 };
 
 function describePromotion(promotion: PricingPromotion, basePrice: number) {
