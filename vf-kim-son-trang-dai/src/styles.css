@@ -6042,6 +6042,18 @@ td small {
   color: #64748b;
 }
 
+.pricing-hero-header .ghost-button {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  gap: 6px;
+}
+
+.pricing-hero-header .ghost-button svg {
+  width: 14px;
+  height: 14px;
+}
+
 
 .pricing-section-card {
   background: #ffffff;
