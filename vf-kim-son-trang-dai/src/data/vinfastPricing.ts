@@ -97,6 +97,7 @@ export type PricingSelection = {
   region: 'hnhcm' | 'other';
   selectedPromotionIds: string[];
   selectedOptionalFeeIds: string[];
+  customOptionalFeeAmounts?: Record<string, number>;
 };
 
 export type QuoteLine = {
@@ -500,13 +501,14 @@ export function computePricingQuote(selection: PricingSelection) {
 
   const selectedOptionalFees = pricingDataset.optionalFees.filter((fee) => selection.selectedOptionalFeeIds.includes(fee.id));
   const optionalFeeTotal = selectedOptionalFees.reduce((sum, fee) => {
-    optionalFeeAmounts[fee.id] = fee.defaultAmount;
+    const amount = selection.customOptionalFeeAmounts?.[fee.id] ?? 0;
+    optionalFeeAmounts[fee.id] = amount;
     lines.push({
       label: fee.name,
-      amount: fee.defaultAmount,
+      amount: amount,
       kind: 'charge'
     });
-    return sum + fee.defaultAmount;
+    return sum + amount;
   }, 0);
 
   const total = runningSubtotal + feeTotal + optionalFeeTotal;

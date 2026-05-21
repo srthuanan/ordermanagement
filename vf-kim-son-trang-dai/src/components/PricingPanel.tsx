@@ -38,6 +38,7 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
   const [vinClubTierId, setVinClubTierId] = React.useState<string | null>(null);
   const [selectedPromotionIds, setSelectedPromotionIds] = React.useState<string[]>([]);
   const [selectedOptionalFeeIds, setSelectedOptionalFeeIds] = React.useState<string[]>([]);
+  const [customOptionalFeeAmounts, setCustomOptionalFeeAmounts] = React.useState<Record<string, number>>({});
   const [region, setRegion] = React.useState<'hnhcm' | 'other'>('hnhcm');
   const [adminTargetModelId, setAdminTargetModelId] = React.useState(defaultModel);
   const [adminTargetVersionId, setAdminTargetVersionId] = React.useState(defaultVersion);
@@ -168,11 +169,12 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
       vinClubTierId: selectedCustomerType.allowsVinclub ? vinClubTierId : null,
       region,
       selectedPromotionIds,
-      selectedOptionalFeeIds
+      selectedOptionalFeeIds,
+      customOptionalFeeAmounts
     };
 
     return computePricingQuote(selection);
-  }, [colorId, region, selectedCustomerType, selectedModel, selectedOptionalFeeIds, selectedPromotionIds, selectedVersion, vinClubTierId]);
+  }, [colorId, region, selectedCustomerType, selectedModel, selectedOptionalFeeIds, selectedPromotionIds, selectedVersion, vinClubTierId, customOptionalFeeAmounts]);
 
   const selectedPromotionSet = React.useMemo(() => new Set(selectedPromotionIds), [selectedPromotionIds]);
   const selectedOptionalFeeSet = React.useMemo(() => new Set(selectedOptionalFeeIds), [selectedOptionalFeeIds]);
@@ -1013,8 +1015,8 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
               <div className="pricing-input-group">
                 <label>Khu vực phí</label>
                 <select value={region} onChange={(e) => setRegion(e.target.value as 'hnhcm' | 'other')}>
-                  <option value="hnhcm">Hà Nội / HCM</option>
-                  <option value="other">Khu vực khác</option>
+                  <option value="hnhcm">Hà Nội / TP.HCM</option>
+                  <option value="other">Đồng Nai / Tỉnh khác</option>
                 </select>
               </div>
             </div>
@@ -1103,12 +1105,29 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
                   {pricingDraft.optionalFees.map((fee) => {
                     const selected = selectedOptionalFeeSet.has(fee.id);
                     return (
-                      <div key={fee.id} className={`pricing-toggle-item ${selected ? 'active' : ''}`} onClick={() => toggleOptionalFee(fee.id)}>
-                        <div className="pricing-toggle-info">
-                          <strong>{fee.name}</strong>
-                          <span>{formatCurrency(fee.defaultAmount)}</span>
+                      <div key={fee.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div className={`pricing-toggle-item ${selected ? 'active' : ''}`} onClick={() => toggleOptionalFee(fee.id)}>
+                          <div className="pricing-toggle-info">
+                            <strong>{fee.name}</strong>
+                            <span>Nhập số tiền tùy chọn</span>
+                          </div>
+                          <div className="pricing-toggle-switch"></div>
                         </div>
-                        <div className="pricing-toggle-switch"></div>
+                        {selected && (
+                          <div style={{ padding: '0 4px' }}>
+                            <input 
+                              type="number" 
+                              placeholder="Nhập số tiền thực tế (đ)"
+                              style={{ width: '100%', height: '36px', padding: '0 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', outline: 'none', background: '#ffffff', color: '#0f172a', fontWeight: 600 }}
+                              value={customOptionalFeeAmounts[fee.id] || ''}
+                              onChange={(e) => {
+                                const val = e.target.value === '' ? 0 : Number(e.target.value);
+                                setCustomOptionalFeeAmounts(prev => ({ ...prev, [fee.id]: val }));
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -1184,7 +1203,7 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
                     return (
                       <div key={fee.id} className="pricing-receipt-line">
                         <span>{fee.name}</span>
-                        <strong>{formatCurrency(fee.defaultAmount)}</strong>
+                        <strong>{formatCurrency(quote.optionalFeeAmounts[fee.id] ?? 0)}</strong>
                       </div>
                     );
                   })}
