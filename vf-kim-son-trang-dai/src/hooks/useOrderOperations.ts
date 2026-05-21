@@ -260,13 +260,10 @@ export function useOrderOperations({
         if (cols.length < 1) {
           throw new Error(`Dòng ${idx + 1}: cần tối thiểu 1 cột VIN.`);
         }
-        const [vin, dong_xe, phien_ban, ngoai_that, noi_that, vi_tri, latitude, longitude, ngay_nhap] = cols;
+        const [vin, dong_xe, phien_ban, ngoai_that, noi_that, ma_dms] = cols;
         if (!vin) {
           throw new Error(`Dòng ${idx + 1}: VIN đang trống.`);
         }
-
-        const parsedLatitude = latitude ? Number(latitude) : null;
-        const parsedLongitude = longitude ? Number(longitude) : null;
 
         return {
           vin: vin.trim().toUpperCase(),
@@ -274,33 +271,16 @@ export function useOrderOperations({
           phien_ban,
           ngoai_that,
           noi_that,
-          vi_tri,
-          latitude: parsedLatitude !== null && Number.isFinite(parsedLatitude) ? parsedLatitude : null,
-          longitude: parsedLongitude !== null && Number.isFinite(parsedLongitude) ? parsedLongitude : null,
-          ngay_nhap: ngay_nhap || null
+          vi_tri: null,
+          latitude: null,
+          longitude: null,
+          ngay_nhap: null,
+          ma_dms: ma_dms || null
         };
       });
 
-      // --- Kiểm tra trùng VIN trước khi import ---
       const vinList = parsed.map((item) => item.vin);
-
-      // Kiểm tra trùng VIN ngay trong danh sách nhập
-      const vinCounts: Record<string, number> = {};
-      for (const vin of vinList) {
-        vinCounts[vin] = (vinCounts[vin] || 0) + 1;
-      }
-      const duplicatesInFile = Object.entries(vinCounts)
-        .filter(([, count]) => count > 1)
-        .map(([vin]) => vin);
-
-      if (duplicatesInFile.length > 0) {
-        setImportStockError(
-          `File có ${duplicatesInFile.length} VIN bị trùng lặp trong danh sách nhập: ${duplicatesInFile.join(', ')}. Vui lòng kiểm tra lại file.`
-        );
-        setIsImportingStock(false);
-        return false;
-      }
-
+      
       // Kiểm tra VIN đã tồn tại trong kho
       const { data: existingVehicles, error: checkError } = await apiService.checkExistingVins(vinList);
       if (checkError) {
@@ -309,17 +289,31 @@ export function useOrderOperations({
         return false;
       }
 
-      if (existingVehicles && existingVehicles.length > 0) {
-        const existingVinList = existingVehicles.map((v: { vin: string }) => v.vin).join(', ');
-        setImportStockError(
-          `${existingVehicles.length} VIN đã tồn tại trong kho, không thể nhập trùng: ${existingVinList}. Vui lòng loại bỏ các VIN này khỏi file nhập.`
-        );
+      const existingVinSet = new Set(existingVehicles?.map((v: { vin: string }) => v.vin) || []);
+      
+      const validVehicles = [];
+      const duplicateVins = new Set<string>();
+      const seenInFile = new Set<string>();
+
+      for (const item of parsed) {
+        if (existingVinSet.has(item.vin)) {
+          duplicateVins.add(item.vin);
+        } else if (seenInFile.has(item.vin)) {
+          duplicateVins.add(item.vin);
+        } else {
+          validVehicles.push(item);
+          seenInFile.add(item.vin);
+        }
+      }
+
+      if (validVehicles.length === 0) {
+        setImportStockError(`Tất cả ${parsed.length} xe trong dữ liệu đều đã tồn tại trong kho hoặc bị trùng lặp. Không có xe mới nào được nhập.`);
         setIsImportingStock(false);
         return false;
       }
       // ------------------------------------------
 
-      const { error } = await apiService.bulkUpsertVehicles(parsed);
+      const { error } = await apiService.bulkUpsertVehicles(validVehicles);
       if (error) {
         setImportStockError(`Import thất bại: ${error.message}`);
         setIsImportingStock(false);
@@ -328,6 +322,11 @@ export function useOrderOperations({
 
       await loadWorkspace({ showLoading: false });
       setIsImportingStock(false);
+
+      if (duplicateVins.size > 0) {
+        alert(`Đã nhập thành công ${validVehicles.length} xe mới.\n\nBỏ qua ${duplicateVins.size} xe bị trùng (đã tồn tại): ${Array.from(duplicateVins).join(', ')}`);
+      }
+
       return true;
     } catch (err: any) {
       setImportStockError(err.message || 'Import kho thất bại');

@@ -102,7 +102,8 @@ export function mapKhoxeRows(rows: KhoxeRow[]): InventoryItem[] {
     isExtensionRequested: row.is_extension_requested || false,
     extensionReason: row.extension_reason ?? '',
     extensionEvidenceUrl: row.extension_evidence_url ?? '',
-    extensionCount: row.extension_count || 0
+    extensionCount: row.extension_count || 0,
+    dmsCode: row.ma_dms ?? null
   }));
 }
 
@@ -744,6 +745,7 @@ export const bulkUpsertVehicles = async (
     latitude?: number | null;
     longitude?: number | null;
     ngay_nhap?: string | null;
+    ma_dms?: string | null;
   }>
 ) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
@@ -759,6 +761,7 @@ export const bulkUpsertVehicles = async (
     latitude: item.latitude ?? null,
     longitude: item.longitude ?? null,
     ngay_nhap: item.ngay_nhap || null,
+    ma_dms: item.ma_dms?.trim() || null,
     trang_thai: 'Chưa ghép',
     updated_at: syncedAt
   }));

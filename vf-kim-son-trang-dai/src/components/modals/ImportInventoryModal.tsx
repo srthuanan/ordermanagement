@@ -29,11 +29,12 @@ export const ImportInventoryModal: React.FC<ImportInventoryModalProps> = ({
   const [phienBan, setPhienBan] = useState('');
   const [ngoaiThat, setNgoaiThat] = useState('');
   const [noiThat, setNoiThat] = useState('');
+  const [maDms, setMaDms] = useState('');
 
   const downloadSampleExcel = () => {
     const ws = XLSX.utils.aoa_to_sheet([
-      ['vin', 'dong_xe', 'phien_ban', 'ngoai_that', 'noi_that'],
-      ['RLV12345678900001', 'VF 8', 'Eco', 'Trắng', 'Đen']
+      ['vin', 'dong_xe', 'phien_ban', 'ngoai_that', 'noi_that', 'ma_dms'],
+      ['RLV12345678900001', 'VF 8', 'Eco', 'Trắng', 'Đen', 'N31913']
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'KhoXe');
@@ -86,8 +87,8 @@ export const ImportInventoryModal: React.FC<ImportInventoryModalProps> = ({
         return;
       }
       
-      const singleCsv = `${vin.trim().toUpperCase()},${dongXe.trim()},${phienBan.trim()},${ngoaiThat.trim()},${noiThat.trim()}`;
-      const header = 'vin,dong_xe,phien_ban,ngoai_that,noi_that';
+      const singleCsv = `${vin.trim().toUpperCase()},${dongXe.trim()},${phienBan.trim()},${ngoaiThat.trim()},${noiThat.trim()},${maDms.trim()}`;
+      const header = 'vin,dong_xe,phien_ban,ngoai_that,noi_that,ma_dms';
       
       const ok = await onSubmit(`${header}\n${singleCsv}`);
       if (ok) {
@@ -215,6 +216,15 @@ export const ImportInventoryModal: React.FC<ImportInventoryModalProps> = ({
                     />
                   </label>
                 </div>
+                <label className="full-span">
+                  <span>Mã DMS</span>
+                  <input
+                    type="text"
+                    value={maDms}
+                    onChange={(e) => setMaDms(e.target.value)}
+                    placeholder="Ví dụ: N31913"
+                  />
+                </label>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

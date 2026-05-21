@@ -326,9 +326,19 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
           {/* Table Block */}
           <div className="table-wrap" style={{ marginTop: '8px' }}>
             <table>
+              <colgroup>
+                <col style={{ width: '22%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '16%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '14%' }} />
+              </colgroup>
               <thead>
                 <tr>
                   <th>VIN</th>
+                  <th>Mã DMS</th>
                   <th>Dòng & Phiên bản</th>
                   <th>Ngoại thất</th>
                   <th>Nội thất</th>
@@ -339,7 +349,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
               <tbody>
                 {visibleItems.length === 0 ? (
                   <tr>
-                    <td colSpan={6}>
+                    <td colSpan={7}>
                       <div className="empty-state">Không có dữ liệu kho xe phù hợp với bộ lọc hiện tại.</div>
                     </td>
                   </tr>
@@ -367,6 +377,9 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                         </strong>
                       </td>
                       <td>
+                        <span style={{ display: 'block', fontSize: '12.5px', color: '#334155' }}>{item.dmsCode || '-'}</span>
+                      </td>
+                      <td>
                         <strong style={{ display: 'block', fontSize: '12.5px', color: '#334155' }}>{item.line}</strong>
                         <small style={{ display: 'block', color: '#64748b', marginTop: '2px', fontWeight: 500 }}>{item.version}</small>
                       </td>
@@ -379,29 +392,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                       <td>
                         <div className="row-actions">
 
-                          {item.status === 'Đang giữ' && item.holderUsername !== currentUsername && (
-                            queuedVins.some((vin) => vin.toUpperCase() === item.vin.toUpperCase()) ? (
-                              <button
-                                className="row-action-button action-btn-release"
-                                disabled={isQueueingVin === item.vin}
-                                onClick={() => onLeaveQueue(item.vin)}
-                                title="Hủy đăng ký hàng chờ"
-                              >
-                                <X size={14} />
-                                <span>{isQueueingVin === item.vin ? 'Đang hủy...' : 'Hủy chờ'}</span>
-                              </button>
-                            ) : (
-                              <button
-                                className="row-action-button action-btn-queue"
-                                disabled={isQueueingVin === item.vin}
-                                onClick={() => onJoinQueue(item.vin)}
-                                title="Đăng ký hàng chờ ưu tiên khi xe được nhả"
-                              >
-                                <Clock size={14} />
-                                <span>{isQueueingVin === item.vin ? 'Đang đăng ký...' : 'Chờ xe'}</span>
-                              </button>
-                            )
-                          )}
+                          
 
                           {item.status === 'Chưa ghép' && (
                             <button
@@ -534,27 +525,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                       </button>
                     )}
 
-                    {selectedItem.status === 'Đang giữ' && selectedItem.holderUsername !== currentUsername && (
-                      queuedVins.some((vin) => vin.toUpperCase() === selectedItem.vin.toUpperCase()) ? (
-                        <button
-                          className="ghost-button"
-                          disabled={isQueueingVin === selectedItem.vin}
-                          onClick={() => onLeaveQueue(selectedItem.vin)}
-                        >
-                          <X size={14} />
-                          <span>{isQueueingVin === selectedItem.vin ? 'Đang hủy...' : 'Hủy chờ'}</span>
-                        </button>
-                      ) : (
-                        <button
-                          className="ghost-button"
-                          disabled={isQueueingVin === selectedItem.vin}
-                          onClick={() => onJoinQueue(selectedItem.vin)}
-                        >
-                          <Clock size={14} />
-                          <span>{isQueueingVin === selectedItem.vin ? 'Đang đăng ký...' : 'Chờ xe'}</span>
-                        </button>
-                      )
-                    )}
+                    
 
                     {selectedItem.latitude !== null && selectedItem.longitude !== null ? (
                       <div className="inventory-mobile-gps-chip">

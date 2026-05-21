@@ -66,10 +66,11 @@ export interface InventoryItem {
   engineNo: string;
   latitude: number | null;
   longitude: number | null;
-  isExtensionRequested: boolean;
-  extensionReason: string;
-  extensionEvidenceUrl: string;
-  extensionCount: number;
+  is_extension_requested: boolean;
+  extension_reason: string | null;
+  extension_evidence_url: string | null;
+  extension_count: number;
+  ma_dms: string | null;
 }
 
 export interface NewOrderInput {
@@ -171,6 +172,9 @@ export interface KhoxeRow {
   extension_reason: string | null;
   extension_evidence_url: string | null;
   extension_count: number;
+  ma_dms: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface VehicleLocationRow {
