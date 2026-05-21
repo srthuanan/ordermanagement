@@ -81,12 +81,15 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
     return managerOptions.find((item) => item.id === managerId)?.label || '';
   };
   const visibleStaff = React.useMemo(() => {
+    // Hide canceled/deleted users from the UI
+    const activeStaff = staff.filter(item => item.invite_status !== 'canceled');
+
     if (isAdmin) {
-      return staff;
+      return activeStaff;
     }
 
     if (isManager && currentProfile) {
-      return staff.filter(
+      return activeStaff.filter(
         (item) =>
           item.role === 'sales' &&
           item.manager_id === currentProfile.id
@@ -94,7 +97,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
     }
 
     if (isSales && currentProfile) {
-      return staff.filter((item) => item.id === currentProfile.id);
+      return activeStaff.filter((item) => item.id === currentProfile.id);
     }
 
     return [];
@@ -164,11 +167,12 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
 
     try {
       const { data, error: actionError } = await handler({
-        email,
-        fullName: item.full_name,
+        email: item.email || '',
+        fullName: item.full_name || '',
         role: item.role === 'manager' ? 'manager' : 'sales',
-        department: item.role === 'manager' ? item.department || null : null,
-        managerId: item.role === 'sales' ? item.manager_id || null : null
+        department: item.department || null,
+        managerId: item.manager_id || null,
+        staffId: item.id
       });
 
       if (actionError) {
@@ -633,37 +637,45 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
 
                 {/* Action Area */}
                 <div style={{ marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {isAdmin && selectedStaff.invite_status !== 'active' ? (
+                  {isAdmin ? (
                     <>
-                      <button
-                        type="button"
-                        onClick={() => runStaffAction('resend', selectedStaff, resendStaffInvite)}
-                        disabled={rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'resend'}
-                        style={{ width: '100%', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '8px 12px', fontSize: '13px', color: '#0f172a', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
-                      >
-                        <RotateCw size={14} />
-                        <span>{rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'resend' ? 'Đang thực thi...' : 'Gửi lại Email mời'}</span>
-                      </button>
-
-                      {selectedStaff.invite_status !== 'canceled' && (
+                      {selectedStaff.invite_status !== 'active' && (
                         <button
                           type="button"
-                          onClick={() => runStaffAction('cancel', selectedStaff, cancelStaffInvite)}
+                          onClick={() => runStaffAction('resend', selectedStaff, resendStaffInvite)}
+                          disabled={rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'resend'}
+                          style={{ width: '100%', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '8px 12px', fontSize: '13px', color: '#0f172a', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
+                        >
+                          <RotateCw size={14} />
+                          <span>{rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'resend' ? 'Đang thực thi...' : 'Gửi lại Email mời'}</span>
+                        </button>
+                      )}
+
+                      {selectedStaff.invite_status === 'active' && (
+                        <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '8px 12px', borderRadius: '10px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <ShieldCheck size={14} style={{ color: '#059669', flexShrink: 0 }} />
+                          <span style={{ fontSize: '12px', color: '#047857', fontWeight: 600 }}>
+                            Đã kích hoạt & có đầy đủ quyền thao tác trên hệ thống.
+                          </span>
+                        </div>
+                      )}
+
+                      {selectedStaff.id !== currentProfile?.id && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`Bạn có chắc chắn muốn xóa nhân sự ${selectedStaff.full_name}?`)) {
+                              runStaffAction('cancel', selectedStaff, cancelStaffInvite);
+                            }
+                          }}
                           disabled={rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'cancel'}
                           style={{ width: '100%', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '8px 12px', fontSize: '13px', color: '#b91c1c', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
                         >
                           <Trash2 size={14} />
-                          <span>{rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'cancel' ? 'Đang thực thi...' : 'Thu hồi lời mời'}</span>
+                          <span>{rowAction?.email === getRowEmail(selectedStaff) && rowAction.action === 'cancel' ? 'Đang thực thi...' : 'Xóa nhân sự'}</span>
                         </button>
                       )}
                     </>
-                  ) : isAdmin ? (
-                    <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '8px 12px', borderRadius: '10px', display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <ShieldCheck size={14} style={{ color: '#059669', flexShrink: 0 }} />
-                      <span style={{ fontSize: '12px', color: '#047857', fontWeight: 600 }}>
-                        Đã kích hoạt & có đầy đủ quyền thao tác trên hệ thống.
-                      </span>
-                    </div>
                   ) : (
                     <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', padding: '8px 12px', borderRadius: '10px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                       <ShieldCheck size={14} style={{ color: '#2563eb', flexShrink: 0 }} />

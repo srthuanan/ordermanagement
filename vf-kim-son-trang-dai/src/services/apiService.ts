@@ -284,14 +284,15 @@ export const resendStaffInvite = async (input: { email: string; fullName: string
   });
 };
 
-export const cancelStaffInvite = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null; managerId?: string | null }) => {
+export const cancelStaffInvite = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null; managerId?: string | null; staffId?: string }) => {
   return await invokeStaffFunction({
     action: 'cancel',
     email: input.email,
     fullName: input.fullName,
     role: input.role,
     department: input.department ?? null,
-    managerId: input.managerId ?? null
+    managerId: input.managerId ?? null,
+    staffId: input.staffId
   });
 };
 
