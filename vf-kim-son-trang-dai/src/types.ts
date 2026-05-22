@@ -244,6 +244,10 @@ export interface ProfileRow {
   role: 'admin' | 'manager' | 'sales' | 'warehouse' | 'delivery' | 'staff';
   department: string | null;
   manager_id?: string | null;
+  phone?: string | null;
+  dob?: string | null;
+  gender?: string | null;
+  address?: string | null;
   email?: string | null;
   invite_status?: 'invite_sent' | 'recovery_sent' | 'active' | 'canceled' | null;
   invited_at?: string | null;

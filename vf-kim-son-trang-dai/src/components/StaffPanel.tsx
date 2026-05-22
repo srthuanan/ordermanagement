@@ -532,6 +532,33 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
               {/* Content Block */}
               <div className="staff-detail-body custom-scrollbar" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
                 
+                {/* Personal Info Block */}
+                <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #f1f5f9', paddingBottom: '6px' }}>
+                    Thông tin cá nhân
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>Số điện thoại</div>
+                      <div style={{ fontSize: '13px', color: '#334155', fontWeight: 700 }}>{selectedStaff.phone || '---'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>Giới tính</div>
+                      <div style={{ fontSize: '13px', color: '#334155', fontWeight: 700 }}>{selectedStaff.gender || '---'}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>Ngày sinh</div>
+                      <div style={{ fontSize: '13px', color: '#334155', fontWeight: 700 }}>
+                        {selectedStaff.dob ? new Date(selectedStaff.dob).toLocaleDateString('vi-VN') : '---'}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600 }}>Địa chỉ</div>
+                      <div style={{ fontSize: '13px', color: '#334155', fontWeight: 700 }}>{selectedStaff.address || '---'}</div>
+                    </div>
+                  </div>
+                </div>
+
                 {isAdmin && selectedStaff.role !== 'admin' ? (
                   <div style={{ background: '#ffffff', padding: '10px 12px', borderRadius: '12px', border: '1px solid #cbd5e1', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>

@@ -15,6 +15,7 @@ import { Header } from './components/layout/Header';
 import { AuthScreen } from './components/AuthScreen';
 import { SetPasswordScreen } from './components/SetPasswordScreen';
 import { ResetPasswordScreen } from './components/ResetPasswordScreen';
+import { CompleteProfileScreen } from './components/CompleteProfileScreen';
 
 // Lớp Giao diện Từng Tab Chức năng
 const Dashboard = lazy(() => import('./components/Dashboard').then((module) => ({ default: module.Dashboard })));
@@ -244,6 +245,19 @@ function App() {
         </section>
       </main>
     );
+  }
+
+  const isProfileIncomplete = profile && (!profile.phone || !profile.dob || !profile.gender || !profile.address);
+  
+  if (profile && isProfileIncomplete) {
+    return <CompleteProfileScreen 
+      profile={profile} 
+      onComplete={() => {
+        // Trigger a reload of the workspace to fetch updated profile
+        window.location.reload();
+      }} 
+      onLogout={handleSignOut} 
+    />;
   }
 
   const activeTabObj = visibleTabs.find((t) => t.key === activeTab);
