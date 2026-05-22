@@ -133,7 +133,8 @@ export function useAppData() {
       const isSalesUser = profileData.role === 'sales';
       const isManagerUser = profileData.role === 'manager';
 
-      const staffDirectory = (profilesResult.data || []) as ProfileRow[];
+      const staffDirectory = ((profilesResult.data || []) as ProfileRow[])
+        .filter(item => item.email !== 'showroomthuanan@gmail.com');
       const staffLookup = new Map<string, ProfileRow>();
       staffDirectory.forEach((item) => {
         const normalizedName = normalizeIdentity(item.full_name);
