@@ -322,6 +322,7 @@ export function useAppData() {
     syncMessage,
     setSyncState,
     setSyncMessage,
+    setProfile,
     setOrders,
     loadWorkspace,
     updateInventoryItem

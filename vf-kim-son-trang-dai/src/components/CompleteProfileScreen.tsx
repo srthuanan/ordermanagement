@@ -27,19 +27,43 @@ export function CompleteProfileScreen({ profile, onComplete, onLogout, onCancel 
     setSaving(true);
     setError(null);
     try {
-      const { error: updateError } = await supabase
+      if (!supabase) {
+        throw new Error('Supabase chưa được cấu hình.');
+      }
+
+      const updatePayload = {
+        phone: phone.trim(),
+        dob: dob.trim(),
+        gender: gender.trim(),
+        address: address.trim()
+      };
+
+      console.log('📤 Đang cập nhật profile:', profile.id, updatePayload);
+
+      const { data: updatedRows, error: updateError } = await supabase
         .from('profiles')
-        .update({
-          phone: phone.trim(),
-          dob: dob.trim(),
-          gender: gender.trim(),
-          address: address.trim()
-        })
-        .eq('id', profile.id);
+        .update(updatePayload)
+        .eq('id', profile.id)
+        .select();
         
+      console.log('📥 Kết quả update:', { updatedRows, updateError });
+
       if (updateError) throw updateError;
+
+      if (!updatedRows || updatedRows.length === 0) {
+        throw new Error('Không thể cập nhật hồ sơ. Có thể do chính sách bảo mật (RLS) chặn. Vui lòng liên hệ admin.');
+      }
+
+      // Xác nhận dữ liệu thực sự đã lưu
+      const saved = updatedRows[0];
+      if (!saved.phone || !saved.dob || !saved.gender || !saved.address) {
+        throw new Error('Dữ liệu chưa được lưu đầy đủ. Vui lòng thử lại.');
+      }
+
+      console.log('✅ Profile đã lưu thành công:', saved);
       onComplete();
     } catch (err: any) {
+      console.error('❌ Lỗi lưu profile:', err);
       setError(err.message || 'Có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại.');
     } finally {
       setSaving(false);

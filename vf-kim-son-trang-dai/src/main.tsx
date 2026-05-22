@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 
 // Lớp Dữ liệu & API
 import { supabase } from './services/supabaseClient';
+import { getProfile } from './services/apiService';
 import { useAppData } from './hooks/useAppData';
 import { useOrderOperations } from './hooks/useOrderOperations';
 import { TabKey } from './constants';
@@ -70,6 +71,7 @@ function App() {
     syncMessage,
     setSyncState,
     setSyncMessage,
+    setProfile,
     loadWorkspace,
     updateInventoryItem
   } = useAppData();
@@ -152,6 +154,7 @@ function App() {
   const [invoicingOrder, setInvoicingOrder] = useState<Order | null>(null);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(true);
   const [finalizingRequest, setFinalizingRequest] = useState<YeucauxhdRow | null>(null);
   const [supplementingRequest, setSupplementingRequest] = useState<YeucauxhdRow | null>(null);
   const [requestingSupplement, setRequestingSupplement] = useState<YeucauxhdRow | null>(null);
@@ -252,26 +255,45 @@ function App() {
     && profile.role !== 'admin' 
     && (!profile.phone || !profile.dob || !profile.gender || !profile.address);
   
-  if (profile && isProfileIncomplete) {
-    return <CompleteProfileScreen 
-      profile={profile} 
-      onComplete={() => {
-        // Trigger a reload of the workspace to fetch updated profile
-        window.location.reload();
-      }} 
-      onLogout={handleSignOut} 
-    />;
+  if (profile && isProfileIncomplete && showProfileModal) {
+    return (
+      <CompleteProfileScreen
+        profile={profile}
+        onComplete={async () => {
+          // Ẩn modal NGAY LẬP TỨC trước khi gọi bất kỳ async nào
+          setShowProfileModal(false);
+          try {
+            const result = await getProfile(session.user.id);
+            if (result.data) {
+              setProfile(result.data as ProfileRow);
+            }
+            await loadWorkspace({ showLoading: false });
+          } catch (err) {
+            console.error('Lỗi khi tải lại workspace:', err);
+          }
+        }}
+        onLogout={handleSignOut}
+      />
+    );
   }
 
-  if (profile && editProfileOpen) {
+  if (editProfileOpen && profile) {
     return (
       <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.5)', overflow: 'auto', display: 'grid', placeItems: 'center', padding: '20px' }}>
-        <CompleteProfileScreen 
-          profile={profile} 
-          onComplete={() => {
-            window.location.reload();
-          }} 
-          onCancel={() => setEditProfileOpen(false)} 
+        <CompleteProfileScreen
+          profile={profile}
+          onComplete={async () => {
+            // Refresh profile after successful update
+            const result = await getProfile(session.user.id);
+            if (result.data) {
+              setProfile(result.data as ProfileRow);
+            }
+            setEditProfileOpen(false);
+          }}
+          onLogout={() => {
+            handleSignOut();
+          }}
+          onCancel={() => setEditProfileOpen(false)}
         />
       </div>
     );
