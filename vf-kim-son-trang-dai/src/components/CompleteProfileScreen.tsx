@@ -57,52 +57,67 @@ export function CompleteProfileScreen({ profile, onComplete, onLogout, onCancel 
         
         {error && <div className="error-message">{error}</div>}
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '24px' }}>
-          <div className="input-field">
-            <label>Số điện thoại *</label>
-            <input 
-              type="tel" 
-              value={phone} 
-              onChange={e => setPhone(e.target.value)} 
-              placeholder="VD: 0987654321" 
-              required 
-            />
-          </div>
+        <form className="auth-form" onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gap: '20px' }}>
+            <label>
+              <span>Số điện thoại *</span>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type="tel" 
+                  value={phone} 
+                  onChange={e => setPhone(e.target.value)} 
+                  placeholder="VD: 0987654321" 
+                  required 
+                />
+              </div>
+            </label>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div className="input-field">
-              <label>Ngày sinh *</label>
-              <input 
-                type="date" 
-                value={dob} 
-                onChange={e => setDob(e.target.value)} 
-                required 
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <label>
+                <span>Ngày sinh *</span>
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type="date" 
+                    value={dob} 
+                    onChange={e => setDob(e.target.value)} 
+                    required 
+                  />
+                </div>
+              </label>
+              
+              <label>
+                <span>Giới tính *</span>
+                <div style={{ position: 'relative' }}>
+                  <select 
+                    value={gender} 
+                    onChange={e => setGender(e.target.value)} 
+                    required
+                    style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '14px', background: '#f8fafc', color: '#334155', appearance: 'none', fontWeight: 600 }}
+                  >
+                    <option value="">Chọn giới tính...</option>
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                    <option value="Khác">Khác</option>
+                  </select>
+                </div>
+              </label>
             </div>
-            
-            <div className="input-field">
-              <label>Giới tính *</label>
-              <select value={gender} onChange={e => setGender(e.target.value)} required>
-                <option value="">Chọn giới tính...</option>
-                <option value="Nam">Nam</option>
-                <option value="Nữ">Nữ</option>
-                <option value="Khác">Khác</option>
-              </select>
-            </div>
+
+            <label>
+              <span>Địa chỉ hiện tại *</span>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type="text" 
+                  value={address} 
+                  onChange={e => setAddress(e.target.value)} 
+                  placeholder="Nhập địa chỉ của bạn" 
+                  required 
+                />
+              </div>
+            </label>
           </div>
 
-          <div className="input-field">
-            <label>Địa chỉ hiện tại *</label>
-            <input 
-              type="text" 
-              value={address} 
-              onChange={e => setAddress(e.target.value)} 
-              placeholder="Nhập địa chỉ của bạn" 
-              required 
-            />
-          </div>
-
-          <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
             {onLogout && (
               <button 
                 type="button" 
