@@ -9,7 +9,8 @@ export function useOrderOperations({
   canOverrideHeldVehicle,
   loadWorkspace,
   setSyncState,
-  setSyncMessage
+  setSyncMessage,
+  updateInventoryItem
 }: {
   session: any;
   currentUsername: string;
@@ -18,6 +19,7 @@ export function useOrderOperations({
   loadWorkspace: (options?: { showLoading?: boolean }) => Promise<boolean>;
   setSyncState: any;
   setSyncMessage: any;
+  updateInventoryItem?: (vin: string, patch: any) => void;
 }) {
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState('');
@@ -154,7 +156,15 @@ export function useOrderOperations({
       setSyncState('success');
       setSyncMessage(`Đã giữ xe ${vin} thành công tạm thời trong 24h.`);
       
-      await loadWorkspace({ showLoading: false });
+      // Cập nhật optimistic: chỉ đổi trạng thái của 1 xe, không reload toàn bộ
+      if (updateInventoryItem) {
+        updateInventoryItem(vin, {
+          status: 'Đang giữ',
+          holder: currentFullName,
+        });
+      } else {
+        await loadWorkspace({ showLoading: false });
+      }
       return true;
     } catch (err: any) {
       const errMsg = err.message || 'Lỗi kết nối';
@@ -179,7 +189,15 @@ export function useOrderOperations({
         setSyncState('error');
         setSyncMessage(`Lỗi nhả xe ${vin}: ${String(data.message || 'Không thể bỏ giữ xe.')}`);
       } else {
-        await loadWorkspace({ showLoading: false });
+        // Cập nhật optimistic: chỉ đổi trạng thái của 1 xe, không reload toàn bộ
+        if (updateInventoryItem) {
+          updateInventoryItem(vin, {
+            status: 'Chưa ghép',
+            holder: '',
+          });
+        } else {
+          await loadWorkspace({ showLoading: false });
+        }
       }
     } finally {
       setIsReleasingVin('');

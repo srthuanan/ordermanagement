@@ -297,6 +297,15 @@ export function useAppData() {
     };
   }, [session, loadWorkspace]);
 
+  // Cập nhật 1 xe trong kho mà không reload toàn bộ (giữ nguyên thứ tự)
+  const updateInventoryItem = useCallback((vin: string, patch: Partial<import('../types').InventoryItem>) => {
+    setInventory(prev => prev.map(item =>
+      item.vin.trim().toUpperCase() === vin.trim().toUpperCase()
+        ? { ...item, ...patch }
+        : item
+    ));
+  }, []);
+
   return {
     session,
     profile,
@@ -313,6 +322,7 @@ export function useAppData() {
     setSyncState,
     setSyncMessage,
     setOrders,
-    loadWorkspace
+    loadWorkspace,
+    updateInventoryItem
   };
 }

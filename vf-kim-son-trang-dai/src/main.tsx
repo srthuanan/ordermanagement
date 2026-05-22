@@ -69,7 +69,8 @@ function App() {
     syncMessage,
     setSyncState,
     setSyncMessage,
-    loadWorkspace
+    loadWorkspace,
+    updateInventoryItem
   } = useAppData();
 
   // Derivations
@@ -129,7 +130,8 @@ function App() {
     canOverrideHeldVehicle: canOverrideHeldVehicle(userRole),
     loadWorkspace,
     setSyncState,
-    setSyncMessage
+    setSyncMessage,
+    updateInventoryItem
   });
 
   // UI states
