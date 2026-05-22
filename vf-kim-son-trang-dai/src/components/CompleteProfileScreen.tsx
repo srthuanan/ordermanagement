@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../services/apiService';
+import { supabase } from '../utils/supabaseClient';
 import { ProfileRow } from '../types';
 
 interface Props {
