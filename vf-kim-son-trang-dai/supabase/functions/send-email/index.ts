@@ -30,14 +30,14 @@ function normalizeString(str: string): string {
 
 async function getEmailForAdvisor(advisorName: string): Promise<string | null> {
   if (!advisorName) return null;
-  const { data, error } = await supabase.from("users").select("full_name, username, email").limit(500);
+  const { data, error } = await supabase.rpc("get_staff_directory");
   if (error || !data) return null;
   const normalizedTarget = normalizeString(advisorName);
   const rawTarget = String(advisorName).trim().toLowerCase();
   
   for (const row of data) {
     if (normalizeString(row.full_name || "") === normalizedTarget) return row.email || null;
-    const uName = String(row.username || "").trim().toLowerCase();
+    const uName = String(row.email || "").trim().toLowerCase(); // using email instead of username since get_staff_directory doesn't return username
     if (uName && uName === rawTarget) return row.email || null;
   }
   return null;
