@@ -194,6 +194,10 @@ export function useOrderOperations({
           updateInventoryItem(vin, {
             status: 'Chưa ghép',
             holder: '',
+            holderUsername: '',
+            holdExpiry: '',
+            isExtensionRequested: false,
+            extensionCount: 0,
           });
         } else {
           await loadWorkspace({ showLoading: false });
