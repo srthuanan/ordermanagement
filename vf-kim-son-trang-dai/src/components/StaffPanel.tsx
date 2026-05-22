@@ -661,7 +661,7 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                         </div>
                       )}
 
-                      {selectedStaff.id !== currentProfile?.id && (
+                      {selectedStaff.id !== currentProfile?.id && selectedStaff.role !== 'admin' && (
                         <button
                           type="button"
                           onClick={() => {
