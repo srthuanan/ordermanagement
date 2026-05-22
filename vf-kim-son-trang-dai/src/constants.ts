@@ -31,7 +31,7 @@ const roleTabAccess: Record<TabKey, AppRole[]> = {
   inventory: ['admin', 'sales', 'manager'],
   invoices: ['admin'],
   pricing: ['admin', 'sales', 'manager'],
-  staff: ['admin', 'manager', 'sales']
+  staff: ['admin', 'manager']
 };
 
 export function canAccessTab(role: AppRole, tabKey: TabKey) {
@@ -39,9 +39,7 @@ export function canAccessTab(role: AppRole, tabKey: TabKey) {
 }
 
 export function getVisibleTabs(role: AppRole) {
-  return tabs
-    .filter((tab) => canAccessTab(role, tab.key as TabKey))
-    .map((tab) => (role === 'sales' && tab.key === 'staff' ? { ...tab, label: 'Cá nhân' } : tab));
+  return tabs.filter((tab) => canAccessTab(role, tab.key as TabKey));
 }
 
 export function canCreateOrder(role: AppRole) {

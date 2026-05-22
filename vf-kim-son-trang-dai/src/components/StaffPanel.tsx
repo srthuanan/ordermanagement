@@ -91,8 +91,9 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
     if (isManager && currentProfile) {
       return activeStaff.filter(
         (item) =>
-          item.role === 'sales' &&
-          item.manager_id === currentProfile.id
+          item.department === currentProfile.department &&
+          currentProfile.department !== null &&
+          currentProfile.department !== ''
       );
     }
 
