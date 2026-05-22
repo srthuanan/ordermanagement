@@ -317,8 +317,7 @@ export const updateStaffPermission = async (input: {
 
 // --- Queries ---
 export const getCustomers = async () => {
-  if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.from('customers').select('*').limit(300);
+  return { data: [], error: null };
 };
 
 export const getOrders = async () => {
@@ -387,7 +386,7 @@ export const cancelOrder = async (
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   const { data: order, error: fetchError } = await supabase
     .from('donhang')
-    .select('updated_at')
+    .select('*')
     .eq('so_don_hang', orderId)
     .single();
 
@@ -395,13 +394,28 @@ export const cancelOrder = async (
     return { data: null, error: fetchError };
   }
 
-  return await supabase.rpc('cancel_order_donhang', {
+  const result = await supabase.rpc('cancel_order_donhang', {
     p_order_id: orderId,
     p_note: notes,
     p_unmatch_type: unmatchType,
     p_thoi_gian_can_xe: needDate || null,
     p_order_updated_at: order?.updated_at ?? null
   });
+
+  if (!result.error) {
+    supabase.functions.invoke('send-email', {
+      body: { 
+        actionId: 'order_self_cancelled', 
+        record: { 
+          ...(order || {}),
+          so_don_hang: orderId,
+          ghi_chu_admin: notes
+        }
+      }
+    }).catch(e => console.warn('Lỗi gọi gửi email hủy đơn:', e));
+  }
+
+  return result;
 };
 
 export const getSalesPolicies = async (): Promise<{ data: SalesPolicyRow[]; error: any }> => {
@@ -598,6 +612,15 @@ export const updateOrderDetails = async (
         .delete()
         .eq('vin', autoMatchedVin)
         .eq('type', 'QUEUE');
+
+      // CHỦ ĐỘNG GỌI ROBOT THÔNG BÁO GÁN VIN TỰ ĐỘNG
+      const { data: fullOrder } = await supabase.from('donhang').select('*').eq('so_don_hang', input.orderId).single();
+      supabase.functions.invoke('send-email', {
+        body: { 
+          actionId: 'match_success', 
+          record: fullOrder || { so_don_hang: input.orderId, vin: autoMatchedVin, ...updateData } 
+        }
+      }).catch(e => console.warn('Lỗi gọi gửi email ghép xe tự động:', e));
     }
   }
 
@@ -633,7 +656,7 @@ export const updateInvoiceInfo = async (
 // --- Safe Inventory / Pairing Actions (Optimistic Transaction RPCs) ---
 export const holdVehicle = async (vin: string, username: string, fullName: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.rpc('rpc_hold_car', {
+  return await supabase.rpc('rpc_hold_car_v2', {
     p_vin: vin.trim(),
     p_username: username,
     p_full_name: fullName
@@ -692,12 +715,24 @@ export const pairVehicle = async (orderId: string, vin: string) => {
     return { data: null, error: vehicleError };
   }
 
-  return await supabase.rpc('pair_donhang_with_khoxe_safe', {
+  const result = await supabase.rpc('pair_donhang_with_khoxe_safe', {
     p_order_id: orderId,
     p_vin: vin.trim(),
     p_order_updated_at: order?.updated_at ?? null,
     p_vehicle_updated_at: vehicle?.updated_at ?? null
   });
+
+  if (!result.error) {
+    const { data: fullOrder } = await supabase.from('donhang').select('*').eq('so_don_hang', orderId).single();
+    supabase.functions.invoke('send-email', {
+      body: { 
+        actionId: 'match_success', 
+        record: fullOrder || { so_don_hang: orderId, vin: vin.trim() } 
+      }
+    }).catch(e => console.warn('Lỗi gọi gửi email ghép xe thủ công:', e));
+  }
+
+  return result;
 };
 
 export const unpairVehicle = async (orderId: string) => {
@@ -1102,6 +1137,19 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
     detail: `Gửi hồ sơ xuất hóa đơn: ${input.policy}`
   });
 
+  supabase.functions.invoke('send-email', {
+    body: {
+      actionId: 'invoice_request_submitted',
+      record: {
+        so_don_hang: orderId,
+        ten_ban_hang: invoiceRow.tvbh || input.requesterName,
+        url_hop_dong: invoiceRow.url_hop_dong,
+        url_de_nghi_xhd: invoiceRow.url_de_nghi_xhd,
+        ...invoiceRow
+      }
+    }
+  }).catch(e => console.warn('Lỗi gọi gửi email yêu cầu XHĐ:', e));
+
   return { data: { status: 'SUCCESS' }, error: null };
 };
 
@@ -1171,6 +1219,14 @@ export const uploadSupplementaryInvoiceFiles = async (
     detail: 'Bổ sung hồ sơ xuất hóa đơn'
   });
 
+  const { data: updatedRecord } = await supabase.from('yeucauxhd').select('*').eq('so_don_hang', orderId).single();
+  supabase.functions.invoke('send-email', {
+    body: {
+      actionId: 'invoice_supplement_submitted',
+      record: { ...(updatedRecord || {}), filesInfo: [contractFile?.name, proposalFile?.name].filter(Boolean).join(', ') }
+    }
+  }).catch(e => console.warn('Lỗi gọi gửi email bổ sung XHĐ:', e));
+
   return { data: { status: 'SUCCESS' }, error: null };
 };
 
@@ -1193,10 +1249,24 @@ export const approveInvoiceRequest = async (requestId: string) => {
 
 export const requestInvoiceSupplement = async (requestId: string, reason: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.rpc('request_invoice_supplement', {
+  const result = await supabase.rpc('request_invoice_supplement', {
     p_request_id: requestId,
     p_reason: reason
   });
+
+  if (!result.error) {
+    const { data: reqData } = await supabase.from('yeucauxhd').select('*').eq('id', requestId).single();
+    if (reqData) {
+      supabase.functions.invoke('send-email', {
+        body: {
+          actionId: 'invoice_supplement_requested',
+          record: { ...reqData, ghi_chu_admin: reason }
+        }
+      }).catch(e => console.warn('Lỗi gọi gửi email yêu cầu bổ sung XHĐ:', e));
+    }
+  }
+
+  return result;
 };
 
 export const markInvoicePendingSignature = async (requestId: string, invoiceDate?: string) => {
@@ -1218,9 +1288,23 @@ export const uploadIssuedInvoice = async (requestId: string, orderId: string, cu
   if (uploadError) return { data: null, error: uploadError };
 
   const { data } = supabase.storage.from('yeucauxhd-files').getPublicUrl(path);
-  return await supabase.rpc('complete_issued_invoice', {
+  const result = await supabase.rpc('complete_issued_invoice', {
     p_request_id: requestId,
     p_invoice_url: data.publicUrl,
     p_mail_status: 'Chưa gửi mail'
   });
+
+  if (!result.error) {
+    const { data: reqData } = await supabase.from('yeucauxhd').select('*').eq('id', requestId).single();
+    if (reqData) {
+      supabase.functions.invoke('send-email', {
+        body: {
+          actionId: 'invoice_issued',
+          record: reqData
+        }
+      }).catch(e => console.warn('Lỗi gọi gửi email hóa đơn đã xuất:', e));
+    }
+  }
+
+  return result;
 };
