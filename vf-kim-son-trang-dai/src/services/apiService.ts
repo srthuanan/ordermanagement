@@ -656,11 +656,23 @@ export const updateInvoiceInfo = async (
 // --- Safe Inventory / Pairing Actions (Optimistic Transaction RPCs) ---
 export const holdVehicle = async (vin: string, username: string, fullName: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.rpc('rpc_hold_car_v2', {
-    p_vin: vin.trim(),
-    p_username: username,
-    p_full_name: fullName
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData.session?.access_token;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
+  const url = supabaseUrl.replace('.supabase.co', '.functions.supabase.co') + '/hold-car';
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken || supabaseKey}`,
+      'apikey': supabaseKey,
+    },
+    body: JSON.stringify({ p_vin: vin.trim(), p_username: username, p_full_name: fullName })
   });
+  const data = await res.json();
+  return { data, error: null };
 };
 
 export const releaseVehicle = async (vin: string, outcome: 'released' | 'expired' | 'matched' = 'released') => {
