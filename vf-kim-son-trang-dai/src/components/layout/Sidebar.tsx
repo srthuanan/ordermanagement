@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserRound, LogOut, LockKeyhole, type LucideIcon } from 'lucide-react';
+import { UserRound, LogOut, LockKeyhole, User, type LucideIcon } from 'lucide-react';
 import { TabKey, getVisibleTabs, roleLabels } from '../../constants';
 import { ProfileRow } from '../../types';
 
