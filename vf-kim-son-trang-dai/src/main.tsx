@@ -247,7 +247,9 @@ function App() {
     );
   }
 
-  const isProfileIncomplete = profile && (!profile.phone || !profile.dob || !profile.gender || !profile.address);
+  const isProfileIncomplete = profile 
+    && profile.role !== 'admin' 
+    && (!profile.phone || !profile.dob || !profile.gender || !profile.address);
   
   if (profile && isProfileIncomplete) {
     return <CompleteProfileScreen 
