@@ -151,6 +151,7 @@ function App() {
   const [cancelingOrder, setCancelingOrder] = useState<Order | null>(null);
   const [invoicingOrder, setInvoicingOrder] = useState<Order | null>(null);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [finalizingRequest, setFinalizingRequest] = useState<YeucauxhdRow | null>(null);
   const [supplementingRequest, setSupplementingRequest] = useState<YeucauxhdRow | null>(null);
   const [requestingSupplement, setRequestingSupplement] = useState<YeucauxhdRow | null>(null);
@@ -262,6 +263,20 @@ function App() {
     />;
   }
 
+  if (profile && editProfileOpen) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.5)', overflow: 'auto', display: 'grid', placeItems: 'center', padding: '20px' }}>
+        <CompleteProfileScreen 
+          profile={profile} 
+          onComplete={() => {
+            window.location.reload();
+          }} 
+          onCancel={() => setEditProfileOpen(false)} 
+        />
+      </div>
+    );
+  }
+
   const activeTabObj = visibleTabs.find((t) => t.key === activeTab);
   const panelFallback = (
     <div className="panel" style={{ minHeight: '20rem', display: 'grid', placeItems: 'center' }}>
@@ -281,6 +296,7 @@ function App() {
         userEmail={session.user.email}
         onSignOut={handleSignOut}
         onChangePassword={() => setChangePasswordOpen(true)}
+        onEditProfile={() => setEditProfileOpen(true)}
       />
 
       <main className="main">

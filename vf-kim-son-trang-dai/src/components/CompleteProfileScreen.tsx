@@ -5,10 +5,11 @@ import { ProfileRow } from '../types';
 interface Props {
   profile: ProfileRow;
   onComplete: () => void;
-  onLogout: () => void;
+  onLogout?: () => void;
+  onCancel?: () => void;
 }
 
-export function CompleteProfileScreen({ profile, onComplete, onLogout }: Props) {
+export function CompleteProfileScreen({ profile, onComplete, onLogout, onCancel }: Props) {
   const [phone, setPhone] = useState(profile.phone || '');
   const [dob, setDob] = useState(profile.dob || '');
   const [gender, setGender] = useState(profile.gender || '');
@@ -102,21 +103,33 @@ export function CompleteProfileScreen({ profile, onComplete, onLogout }: Props) 
           </div>
 
           <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-            <button 
-              type="button" 
-              className="secondary-button" 
-              onClick={onLogout}
-              style={{ flex: 1 }}
-            >
-              Đăng xuất
-            </button>
+            {onLogout && (
+              <button 
+                type="button" 
+                className="secondary-button" 
+                onClick={onLogout}
+                style={{ flex: 1 }}
+              >
+                Đăng xuất
+              </button>
+            )}
+            {onCancel && (
+              <button 
+                type="button" 
+                className="secondary-button" 
+                onClick={onCancel}
+                style={{ flex: 1 }}
+              >
+                Hủy bỏ
+              </button>
+            )}
             <button 
               type="submit" 
               className="primary-button" 
               disabled={saving}
               style={{ flex: 2 }}
             >
-              {saving ? 'Đang lưu...' : 'Lưu và Tiếp tục'}
+              {saving ? 'Đang lưu...' : 'Lưu Hồ Sơ'}
             </button>
           </div>
         </form>

@@ -13,6 +13,7 @@ interface SidebarProps {
   userEmail?: string;
   onSignOut: () => void;
   onChangePassword: () => void;
+  onEditProfile: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -24,7 +25,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   visibleTabs,
   userEmail,
   onSignOut,
-  onChangePassword
+  onChangePassword,
+  onEditProfile
 }) => {
   const tabs = visibleTabs.length ? visibleTabs : getVisibleTabs(profile?.role ?? 'sales');
 
@@ -66,6 +68,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>Vai trò: {profile ? roleLabels[profile.role] : 'Chưa có profile'}</span>
           </div>
         </div>
+        <button className="ghost-button" title="Sửa hồ sơ" onClick={onEditProfile}>
+          <User size={16} />
+        </button>
         <button className="ghost-button" title="Đổi mật khẩu" onClick={onChangePassword}>
           <LockKeyhole size={17} />
           <span>Đổi mật khẩu</span>
