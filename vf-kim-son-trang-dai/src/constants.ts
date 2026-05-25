@@ -43,7 +43,7 @@ export function getVisibleTabs(role: AppRole) {
 }
 
 export function canCreateOrder(role: AppRole) {
-  return ['admin', 'sales', 'manager'].includes(role);
+  return true;
 }
 
 export function canHoldVehicle(role: AppRole) {
