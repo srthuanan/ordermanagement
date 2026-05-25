@@ -67,6 +67,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
   const [xeXangVin, setXeXangVin] = React.useState(order.xeXangVin || '');
   const [xeXangHang, setXeXangHang] = React.useState(order.xeXangHang || '');
   const [xeXangModel, setXeXangModel] = React.useState(order.xeXangModel || '');
+  const [maAmis, setMaAmis] = React.useState(order.maAmis || '');
 
   const initialPolicies = order.policy ? order.policy.split(',').map(p => p.trim()).filter(Boolean) : [];
   const [policy, setPolicy] = React.useState<string[]>(initialPolicies);
@@ -195,7 +196,8 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
       xeXangVin,
       xeXangHang,
       xeXangModel,
-      policy
+      policy,
+      maAmis
     });
 
     if (ok) onClose();
@@ -219,6 +221,11 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
           <label>
             <span>Khách hàng *</span>
             <input value={customer} onChange={(e) => setCustomer(e.target.value)} required />
+          </label>
+
+          <label>
+            <span>Mã Amis</span>
+            <input value={maAmis} placeholder="Nhập mã Amis (nếu có)..." onChange={(e) => setMaAmis(e.target.value)} />
           </label>
 
 

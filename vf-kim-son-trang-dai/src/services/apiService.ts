@@ -80,7 +80,8 @@ export function mapOrderRow(row: DonhangRow, customerMap: Map<string, CustomerRo
     xeXangHang: row.xe_xang_hang ?? '',
     xeXangModel: row.xe_xang_model ?? '',
     giaCongBo: row.gia_cong_bo ?? null,
-    ghiChu: row.ghi_chu ?? ''
+    ghiChu: row.ghi_chu ?? '',
+    maAmis: row.ma_amis ?? ''
   };
 }
 
@@ -531,7 +532,8 @@ export const updateOrderDetails = async (
     xe_xang_hang: input.xeXangHang?.trim() || null,
     xe_xang_model: input.xeXangModel?.trim() || null,
     gia_cong_bo: input.giaCongBo ?? null,
-    ghi_chu: input.ghiChu?.trim() || null
+    ghi_chu: input.ghiChu?.trim() || null,
+    ma_amis: input.maAmis?.trim() || null
   };
 
   if (criticalChanged) {
@@ -1097,6 +1099,7 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
     xe_xang_vin: xeXangVin,
     xe_xang_hang: xeXangHang,
     xe_xang_model: xeXangModel,
+    ma_amis: input.order.maAmis?.trim() || null,
     gia_cong_bo: giaCongBo,
     ghi_chu: ghiChu,
     coc: soTienKhachDaDong !== null || Boolean(orderRow.ngay_coc || input.order.depositDate),
@@ -1129,6 +1132,7 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
       xe_xang_vin: xeXangVin,
       xe_xang_hang: xeXangHang,
       xe_xang_model: xeXangModel,
+      ma_amis: input.order.maAmis?.trim() || null,
       gia_cong_bo: giaCongBo,
       ghi_chu: ghiChu,
       updated_at: new Date().toISOString()

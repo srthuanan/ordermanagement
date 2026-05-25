@@ -586,6 +586,11 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                               <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedOrder.contractCode || 'Chưa tạo'}</strong>
                             </div>
 
+                            <div className={selectedOrder.maAmis ? 'clickable-copy-field' : ''} title={selectedOrder.maAmis ? 'Click để copy mã Amis' : ''} onClick={() => selectedOrder.maAmis && copyToClipboard(selectedOrder.maAmis, 'Mã Amis')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Mã Amis</span>
+                              <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedOrder.maAmis || 'Chưa khai báo'}</strong>
+                            </div>
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'right', alignItems: 'flex-end' }}>
                               <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Trạng thái</span>
                               <strong style={{ fontSize: '13px', color: '#334155', fontWeight: 600, lineHeight: 1.35 }}>{selectedOrder.status}</strong>
@@ -716,6 +721,11 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Hình thức & Hợp đồng</span>
                           <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 700 }}>{selectedOrder.paymentMethod || 'Tiền mặt'}</strong>
                           <small style={{ fontSize: '11px', color: '#64748b', marginTop: '2px', fontWeight: 500 }}>📜 HĐ: {selectedOrder.contractCode || 'Chưa tạo'}</small>
+                          {selectedOrder.maAmis && (
+                            <small style={{ fontSize: '11px', color: '#0f766e', marginTop: '2px', fontWeight: 600 }} onClick={(e) => { e.stopPropagation(); copyToClipboard(selectedOrder.maAmis!, 'Mã Amis'); }}>
+                              💳 Amis: {selectedOrder.maAmis}
+                            </small>
+                          )}
                         </div>
 
                         <div className="clickable-copy-field" title="Click để copy địa chỉ XHD" onClick={() => copyToClipboard(selectedOrder.invoiceAddress || '', 'Địa chỉ XHD')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '4px 8px', borderRadius: '6px', gridColumn: 'span 2' }}>

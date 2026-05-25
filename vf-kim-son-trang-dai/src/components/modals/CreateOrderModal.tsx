@@ -57,7 +57,8 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     xeXangHang: '',
     xeXangModel: '',
     giaCongBo: null,
-    ghiChu: ''
+    ghiChu: '',
+    maAmis: ''
   });
   const [policyRows, setPolicyRows] = React.useState<SalesPolicyRow[]>([]);
   const [policyLoading, setPolicyLoading] = React.useState(true);
@@ -162,7 +163,15 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     form.paymentMethod?.trim() &&
     form.depositDate &&
     form.needDate &&
-    !policyLoading
+    !policyLoading &&
+    form.maAmis?.trim() &&
+    form.ngayKyHopDong?.trim() &&
+    form.nguonKhach?.trim() &&
+    form.giaCongBo !== null &&
+    form.giaCongBo !== undefined &&
+    form.muaBaoHiem !== null &&
+    form.dangKyXe !== null &&
+    (!isGasToElectricPolicy || (form.xeXangVin?.trim() && form.xeXangHang?.trim() && form.xeXangModel?.trim()))
   );
 
   function updateField<K extends keyof NewOrderInput>(key: K, value: NewOrderInput[K]) {
@@ -248,6 +257,15 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             />
           </label>
           <label>
+            <span>Mã Amis *</span>
+            <input
+              value={form.maAmis || ''}
+              placeholder="Nhập mã Amis..."
+              onChange={(event) => updateField('maAmis', event.target.value)}
+              required
+            />
+          </label>
+          <label>
             <span>Dòng xe *</span>
             <select value={form.line} onChange={(event) => updateField('line', event.target.value)} disabled={isVehicleLocked} required>
               {vehicleLines.map((line) => (
@@ -280,7 +298,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             </select>
           </label>
           <label>
-            <span>Số tiền đã cọc (VNĐ)</span>
+            <span>Số tiền đã cọc (VNĐ) *</span>
             <input
               type="number"
               value={form.depositAmount !== null && form.depositAmount !== undefined ? form.depositAmount : ''}
@@ -290,7 +308,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             />
           </label>
           <label>
-            <span>Hình thức thanh toán</span>
+            <span>Hình thức thanh toán *</span>
             <select value={form.paymentMethod || 'Tiền mặt'} onChange={(event) => updateField('paymentMethod', event.target.value)} required>
               <option value="Tiền mặt">Tiền mặt</option>
               <option value="Vay ngân hàng">Vay ngân hàng</option>
@@ -340,7 +358,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             </div>
           </div>
           <label>
-            <span>Mã hợp đồng</span>
+            <span>Mã hợp đồng *</span>
             <input
               value={form.contractCode || ''}
               placeholder="Nhập mã HĐ..."
@@ -349,7 +367,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             />
           </label>
           <label className="full-span">
-            <span>Địa chỉ xuất hóa đơn (XHD)</span>
+            <span>Địa chỉ xuất hóa đơn (XHD) *</span>
             <input
               value={form.invoiceAddress || ''}
               placeholder="Nhập địa chỉ đầy đủ để xuất hóa đơn..."
@@ -365,35 +383,39 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
             </div>
             <div className="order-extra-grid">
               <label>
-                <span>Ngày ký hợp đồng</span>
+                <span>Ngày ký hợp đồng *</span>
                 <input
                   type="date"
                   value={form.ngayKyHopDong || ''}
                   onChange={(event) => updateField('ngayKyHopDong', event.target.value)}
+                  required
                 />
               </label>
               <label>
-                <span>Nguồn khách</span>
+                <span>Nguồn khách *</span>
                 <input
                   value={form.nguonKhach || ''}
                   placeholder="Giới thiệu, Marketing..."
                   onChange={(event) => updateField('nguonKhach', event.target.value)}
+                  required
                 />
               </label>
               <label>
-                <span>Giá công bố (VNĐ)</span>
+                <span>Giá công bố (VNĐ) *</span>
                 <input
                   type="number"
                   value={form.giaCongBo !== null && form.giaCongBo !== undefined ? form.giaCongBo : ''}
                   placeholder="VD: 599000000"
                   onChange={(event) => updateField('giaCongBo', event.target.value ? Number(event.target.value) : null)}
+                  required
                 />
               </label>
               <label>
-                <span>Mua bảo hiểm</span>
+                <span>Mua bảo hiểm *</span>
                 <select
                   value={form.muaBaoHiem === null ? '' : form.muaBaoHiem ? 'true' : 'false'}
                   onChange={(event) => updateField('muaBaoHiem', event.target.value === '' ? null : event.target.value === 'true')}
+                  required
                 >
                   <option value="">Chưa chọn</option>
                   <option value="true">Có</option>
@@ -401,10 +423,11 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                 </select>
               </label>
               <label>
-                <span>Đăng ký xe</span>
+                <span>Đăng ký xe *</span>
                 <select
                   value={form.dangKyXe === null ? '' : form.dangKyXe ? 'true' : 'false'}
                   onChange={(event) => updateField('dangKyXe', event.target.value === '' ? null : event.target.value === 'true')}
+                  required
                 >
                   <option value="">Chưa chọn</option>
                   <option value="true">Có</option>
@@ -429,27 +452,30 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
                 </div>
                 <div className="order-extra-grid order-extra-grid--compact">
                   <label>
-                    <span>VIN xe xăng</span>
+                    <span>VIN xe xăng *</span>
                     <input
                       value={form.xeXangVin || ''}
                       placeholder="Nhập VIN xe xăng..."
                       onChange={(event) => updateField('xeXangVin', event.target.value.toUpperCase())}
+                      required={isGasToElectricPolicy}
                     />
                   </label>
                   <label>
-                    <span>Hãng xe</span>
+                    <span>Hãng xe *</span>
                     <input
                       value={form.xeXangHang || ''}
                       placeholder="VD: Toyota"
                       onChange={(event) => updateField('xeXangHang', event.target.value)}
+                      required={isGasToElectricPolicy}
                     />
                   </label>
                   <label className="full-span">
-                    <span>Model xe</span>
+                    <span>Model xe *</span>
                     <input
                       value={form.xeXangModel || ''}
                       placeholder="VD: Vios 1.5G"
                       onChange={(event) => updateField('xeXangModel', event.target.value)}
+                      required={isGasToElectricPolicy}
                     />
                   </label>
                 </div>

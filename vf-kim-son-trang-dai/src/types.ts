@@ -50,6 +50,7 @@ export interface Order {
   xeXangModel?: string | null;
   giaCongBo?: number | null;
   ghiChu?: string | null;
+  maAmis?: string | null;
 }
 
 export interface InventoryItem {
@@ -99,6 +100,7 @@ export interface NewOrderInput {
   xeXangModel?: string | null;
   giaCongBo?: number | null;
   ghiChu?: string | null;
+  maAmis?: string | null;
 }
 
 // Bảng Supabase (Database Rows)
@@ -148,6 +150,7 @@ export interface DonhangRow {
   gia_cong_bo: number | null;
   ghi_chu: string | null;
   dia_chi_xhd: string | null;
+  ma_amis: string | null;
   ma_hop_dong: string | null;
   tm_vay: string | null;
 }
@@ -324,4 +327,5 @@ export interface UpdateOrderInput {
   xeXangModel?: string | null;
   giaCongBo?: number | null;
   ghiChu?: string | null;
+  maAmis?: string | null;
 }
