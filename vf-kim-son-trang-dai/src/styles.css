@@ -5465,9 +5465,9 @@ td small {
 
 .inventory-data-side th:last-child,
 .inventory-data-side td:last-child {
-  width: 172px !important;
-  min-width: 172px !important;
-  max-width: 172px !important;
+  width: 230px !important;
+  min-width: 230px !important;
+  max-width: 230px !important;
   text-align: right !important;
   box-sizing: border-box !important;
 }
