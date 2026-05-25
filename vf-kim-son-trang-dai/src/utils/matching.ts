@@ -1,11 +1,13 @@
 import { Order, InventoryItem } from '../types';
 
 export function matchesVehicleConfig(order: Order, item: InventoryItem) {
+  const norm = (str: string | undefined | null) => (str || '').trim().toLowerCase();
+  
   return (
-    order.line === item.line &&
-    order.version === item.version &&
-    order.exterior === item.exterior &&
-    order.interior === item.interior
+    norm(order.line) === norm(item.line) &&
+    norm(order.version) === norm(item.version) &&
+    norm(order.exterior) === norm(item.exterior) &&
+    norm(order.interior) === norm(item.interior)
   );
 }
 
