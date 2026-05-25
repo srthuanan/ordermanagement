@@ -350,7 +350,6 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           </td>
                           <td>
                             <div style={{ fontWeight: 600, color: '#1e293b' }}>{order.customer}</div>
-                            <div style={{ fontSize: '11px', color: '#64748b' }}>{order.phone}</div>
                           </td>
                           <td>
                             <div style={{ fontWeight: 600, color: '#334155' }}>{order.line} {order.version}</div>
@@ -646,7 +645,6 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         <div className="clickable-copy-field" title="Click để copy tên khách" onClick={() => copyToClipboard(selectedOrder.customer, 'Tên khách')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
                           <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, marginBottom: '1px' }}>Khách hàng</span>
                           <strong style={{ fontSize: '14px', color: '#0f172a', display: 'block', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedOrder.customer}</strong>
-                          <small className="clickable-copy-field" title="Click để copy SĐT" onClick={(e) => { e.stopPropagation(); copyToClipboard(selectedOrder.phone || '', 'Số điện thoại'); }} style={{ fontSize: '11.5px', color: '#475569', marginTop: '2px', fontWeight: 500 }}>📞 {selectedOrder.phone || 'Chưa có SĐT'}</small>
                         </div>
                         
                         <div className="clickable-copy-field" title="Click để copy tên TVBH" onClick={() => copyToClipboard(selectedOrder.staff, 'Tên TVBH')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
