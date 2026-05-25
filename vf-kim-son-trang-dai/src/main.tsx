@@ -8,7 +8,7 @@ import { getProfile } from './services/apiService';
 import { useAppData } from './hooks/useAppData';
 import { useOrderOperations } from './hooks/useOrderOperations';
 import { TabKey } from './constants';
-import { InventoryItem, Order, OrderStatus, YeucauxhdRow } from './types';
+import { InventoryItem, Order, OrderStatus, YeucauxhdRow, ProfileRow } from './types';
 
 // Giao diện Layout
 import { Sidebar } from './components/layout/Sidebar';
@@ -17,6 +17,7 @@ import { AuthScreen } from './components/AuthScreen';
 import { SetPasswordScreen } from './components/SetPasswordScreen';
 import { ResetPasswordScreen } from './components/ResetPasswordScreen';
 import { CompleteProfileScreen } from './components/CompleteProfileScreen';
+import { SettingsPanel } from './components/SettingsPanel';
 
 // Lớp Giao diện Từng Tab Chức năng
 const Dashboard = lazy(() => import('./components/Dashboard').then((module) => ({ default: module.Dashboard })));
@@ -66,6 +67,7 @@ function App() {
     queuedVins,
     auditLogs,
     invoiceRequests,
+    vehicleConfigs,
     authReady,
     syncState,
     syncMessage,
@@ -454,6 +456,7 @@ function App() {
             {activeTab === 'pricing' && <PricingPanel isAdmin={canManagePricingConfig(userRole)} />}
 
             {activeTab === 'staff' && <StaffPanel staff={profiles} currentProfile={profile} onReload={loadWorkspace} />}
+            {activeTab === 'settings' && <SettingsPanel configs={vehicleConfigs} onRefresh={loadWorkspace} />}
           </Suspense>
         </div>
 
@@ -468,6 +471,7 @@ function App() {
             isCreating={isCreating}
             initialVehicle={createFromVehicle}
             currentStaffName={currentFullName}
+            vehicleConfigs={vehicleConfigs}
             onClose={() => {
               if (!isCreating) {
                 setCreateOpen(false);
@@ -608,6 +612,7 @@ function App() {
           <EditOrderModal
             order={editingOrder}
             isSubmitting={isUpdatingOrder}
+            vehicleConfigs={vehicleConfigs}
             onClose={() => setEditingOrder(null)}
             onSubmit={handleUpdateOrder}
           />

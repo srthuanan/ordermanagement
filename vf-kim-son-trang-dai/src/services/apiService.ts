@@ -517,6 +517,7 @@ export const updateOrderDetails = async (
     so_tien_coc: input.depositAmount || null,
     so_tien_khach_da_dong: input.soTienKhachDaDong ?? input.depositAmount ?? null,
     ngay_ky_hop_dong: input.ngayKyHopDong || null,
+    chinh_sach: input.policy?.join(', ') || null,
     dia_chi_xhd: input.invoiceAddress || null,
     dia_chi: input.invoiceAddress || null,
     ma_hop_dong: input.contractCode || null,
@@ -1153,11 +1154,11 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
     body: {
       actionId: 'invoice_request_submitted',
       record: {
+        ...invoiceRow,
         so_don_hang: orderId,
         ten_ban_hang: invoiceRow.tvbh || input.requesterName,
         url_hop_dong: invoiceRow.url_hop_dong,
-        url_de_nghi_xhd: invoiceRow.url_de_nghi_xhd,
-        ...invoiceRow
+        url_de_nghi_xhd: invoiceRow.url_de_nghi_xhd
       }
     }
   }).catch(e => console.warn('Lỗi gọi gửi email yêu cầu XHĐ:', e));
@@ -1319,4 +1320,27 @@ export const uploadIssuedInvoice = async (requestId: string, orderId: string, cu
   }
 
   return result;
+};
+
+// --- Vehicle Configs ---
+export const getVehicleConfigs = async () => {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  return await supabase.from('vehicle_configs').select('*').order('created_at', { ascending: true });
+};
+
+export const createVehicleConfig = async (config: Omit<import('../types').VehicleConfigRow, 'id' | 'created_at' | 'updated_at'>) => {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  return await supabase.from('vehicle_configs').insert(config).select('*');
+};
+
+export const deleteVehicleConfig = async (id: string) => {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  // Deleting a line will cascade delete versions due to foreign key (if we used parent_id),
+  // but since we used parent_value, we might need to manually clean up or just rely on UI logic.
+  // Actually, we just need to delete by id. If it's a line, we should delete its versions too.
+  const { data } = await supabase.from('vehicle_configs').select('type, value').eq('id', id).single();
+  if (data?.type === 'line') {
+    await supabase.from('vehicle_configs').delete().eq('parent_value', data.value);
+  }
+  return await supabase.from('vehicle_configs').delete().eq('id', id);
 };

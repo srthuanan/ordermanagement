@@ -432,7 +432,7 @@ export function useOrderOperations({
     note: string,
     unmatchType: string = 'Hủy luôn đơn hàng (Hủy đơn)',
     needDate?: string
-  ) {
+  ): Promise<{ success: boolean; error?: string }> {
     setIsCanceling(true);
     try {
       const { error } = await apiService.cancelOrder(orderId, note, unmatchType, needDate);
@@ -440,14 +440,14 @@ export function useOrderOperations({
         setSyncState('error');
         setSyncMessage(`Không thể hủy đơn ${orderId}: ${error.message}`);
         setIsCanceling(false);
-        return false;
+        return { success: false, error: error.message };
       }
       await loadWorkspace({ showLoading: false });
       setIsCanceling(false);
-      return true;
-    } catch (err) {
+      return { success: true };
+    } catch (err: any) {
       setIsCanceling(false);
-      return false;
+      return { success: false, error: err.message };
     }
   }
 

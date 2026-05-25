@@ -177,6 +177,15 @@ export interface KhoxeRow {
   updatedAt: string;
 }
 
+export interface VehicleConfigRow {
+  id: string;
+  type: 'line' | 'version' | 'exterior' | 'interior';
+  value: string;
+  parent_value: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface VehicleLocationRow {
   vin: string;
   location: string;
@@ -298,6 +307,7 @@ export interface UpdateOrderInput {
   exterior: string;
   interior: string;
   staff: string;
+  policy?: string[];
   depositDate: string;
   needDate: string;
   depositAmount?: number | null;

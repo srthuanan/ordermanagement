@@ -10,7 +10,8 @@ import {
   CustomerRow,
   VehicleLocationRow,
   CarActivityRow,
-  YeucauxhdRow
+  YeucauxhdRow,
+  VehicleConfigRow
 } from '../types';
 
 export function useAppData() {
@@ -23,6 +24,7 @@ export function useAppData() {
   const [queuedVins, setQueuedVins] = useState<string[]>([]);
   const [auditLogs, setAuditLogs] = useState<CarActivityRow[]>([]);
   const [invoiceRequests, setInvoiceRequests] = useState<YeucauxhdRow[]>([]);
+  const [vehicleConfigs, setVehicleConfigs] = useState<VehicleConfigRow[]>([]);
   const [authReady, setAuthReady] = useState(!isSupabaseConfigured);
   const [syncState, setSyncState] = useState<SyncState>(isSupabaseConfigured ? 'loading' : 'sample');
   const [syncMessage, setSyncMessage] = useState(
@@ -58,6 +60,7 @@ export function useAppData() {
         setInventory([]);
         setVehicleLocations([]);
         setQueuedVins([]);
+        setVehicleConfigs([]);
         setSyncState('loading');
         setSyncMessage('Đăng nhập để đồng bộ Supabase');
       }
@@ -76,6 +79,7 @@ export function useAppData() {
       setInventory([]);
       setVehicleLocations([]);
       setQueuedVins([]);
+      setVehicleConfigs([]);
       setSyncState('loading');
       setSyncMessage('Đăng nhập để đồng bộ Supabase');
       return false;
@@ -104,7 +108,7 @@ export function useAppData() {
       await apiService.expireHoldVehicles();
 
       // 2. Tải song song dữ liệu Donhang, Khoxe, Khachhang, Audit
-      const [customersResult, ordersResult, inventoryResult, locationsResult, logsResult, invoicesResult, queueResult, profilesResult] = await Promise.all([
+      const [customersResult, ordersResult, inventoryResult, locationsResult, logsResult, invoicesResult, queueResult, profilesResult, configsResult] = await Promise.all([
         apiService.getCustomers(),
         apiService.getOrders(),
         apiService.getInventory(),
@@ -112,7 +116,8 @@ export function useAppData() {
         apiService.getCarHoldActivities(),
         apiService.getYeucauxhd(),
         apiService.getMyQueuedVins(session.user.email || ''),
-        apiService.getProfiles()
+        apiService.getProfiles(),
+        apiService.getVehicleConfigs()
       ]);
 
       if (customersResult.error || !customersResult.data ||
@@ -225,6 +230,7 @@ export function useAppData() {
           .filter(Boolean)
       );
       setProfiles(visibleProfiles);
+      setVehicleConfigs((configsResult.data as VehicleConfigRow[]) || []);
 
       setSyncState('live');
       setSyncMessage(`Đã tải ${ordersResult.data.length} đơn và ${inventoryResult.data.length} xe.`);
@@ -286,6 +292,13 @@ export function useAppData() {
       )
       .on(
         'postgres_changes',
+        { event: '*', schema: 'public', table: 'vehicle_configs' },
+        () => {
+          loadWorkspace({ showLoading: false });
+        }
+      )
+      .on(
+        'postgres_changes',
         { event: '*', schema: 'public', table: 'profiles' },
         () => {
           loadWorkspace({ showLoading: false });
@@ -324,6 +337,7 @@ export function useAppData() {
     setSyncMessage,
     setProfile,
     setOrders,
+    vehicleConfigs,
     loadWorkspace,
     updateInventoryItem
   };

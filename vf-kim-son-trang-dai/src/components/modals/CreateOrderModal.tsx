@@ -1,15 +1,12 @@
 import React from 'react';
 import { X, Plus, AlertTriangle } from 'lucide-react';
 import * as apiService from '../../services/apiService';
-import { InventoryItem, NewOrderInput, SalesPolicyRow } from '../../types';
+import { InventoryItem, NewOrderInput, SalesPolicyRow, VehicleConfigRow } from '../../types';
 import {
-  defaultExteriors,
-  defaultInteriors,
   interiorColorRules,
-  vehicleLines,
-  versionsMap,
   defaultSalesPolicies
 } from '../../constants';
+import { parseVehicleConfigs } from '../../utils/vehicleConfigUtils';
 
 interface CreateOrderModalProps {
   error: string;
@@ -18,6 +15,7 @@ interface CreateOrderModalProps {
   currentStaffName: string;
   onClose: () => void;
   onSubmit: (input: NewOrderInput) => void;
+  vehicleConfigs: VehicleConfigRow[];
 }
 
 export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
@@ -26,8 +24,14 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
   initialVehicle,
   currentStaffName,
   onClose,
-  onSubmit
+  onSubmit,
+  vehicleConfigs
 }) => {
+  const { vehicleLines, versionsMap, defaultExteriors, defaultInteriors } = React.useMemo(
+    () => parseVehicleConfigs(vehicleConfigs),
+    [vehicleConfigs]
+  );
+  
   const resolvedStaffName = currentStaffName.trim() || 'Nhân viên';
   const [form, setForm] = React.useState<NewOrderInput>({
     orderId: '',
@@ -72,10 +76,13 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     const versionNorm = form.version.toLowerCase();
     for (const rule of interiorColorRules) {
       if (!rule.models.includes(lineNorm)) continue;
-      if (!rule.versions || rule.versions.includes(versionNorm)) return rule.colors;
+      if (!rule.versions || rule.versions.includes(versionNorm)) {
+        // Only return rules if they match the newly fetched dynamic interiors, or just return the rule colors directly
+        return rule.colors;
+      }
     }
     return defaultInteriors;
-  }, [form.line, form.version]);
+  }, [form.line, form.version, defaultInteriors]);
 
   React.useEffect(() => {
     if (!versionOptions.includes(form.version)) {

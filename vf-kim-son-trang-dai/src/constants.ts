@@ -4,7 +4,8 @@ import {
   Boxes,
   ClipboardList,
   Calculator,
-  Users
+  Users,
+  Settings
 } from 'lucide-react';
 import { OrderStatus, StockStatus, ProfileRow } from './types';
 
@@ -19,7 +20,8 @@ export const tabs = [
   { key: 'inventory', label: 'Kho xe', icon: Boxes },
   { key: 'invoices', label: 'Yêu cầu HĐ', icon: ClipboardList },
   { key: 'pricing', label: 'Tính giá', icon: Calculator },
-  { key: 'staff', label: 'Nhân sự', icon: Users }
+  { key: 'staff', label: 'Nhân sự', icon: Users },
+  { key: 'settings', label: 'Cấu hình', icon: Settings }
 ] as const;
 
 export type TabKey = (typeof tabs)[number]['key'];
@@ -31,7 +33,8 @@ const roleTabAccess: Record<TabKey, AppRole[]> = {
   inventory: ['admin', 'sales', 'manager'],
   invoices: ['admin'],
   pricing: ['admin', 'sales', 'manager'],
-  staff: ['admin', 'manager']
+  staff: ['admin', 'manager'],
+  settings: ['admin']
 };
 
 export function canAccessTab(role: AppRole, tabKey: TabKey) {

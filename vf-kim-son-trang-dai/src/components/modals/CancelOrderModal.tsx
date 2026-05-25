@@ -11,7 +11,7 @@ interface CancelOrderModalProps {
     note: string,
     unmatchType: string,
     needDate?: string
-  ) => Promise<boolean>;
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
 export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
@@ -37,16 +37,16 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
       return;
     }
     setError('');
-    const ok = await onSubmit(
+    const result = await onSubmit(
       orderId,
       note.trim(),
       unmatchType === 'wait' ? 'Hủy ghép & Đợi xe khác (Chờ xe)' : 'Hủy luôn đơn hàng (Hủy đơn)',
       unmatchType === 'wait' ? needDate : undefined
     );
-    if (ok) {
+    if (result.success) {
       onClose();
     } else {
-      setError('Giao dịch không thành công, vui lòng thử lại.');
+      setError(result.error || 'Giao dịch không thành công, vui lòng thử lại.');
     }
   }
 

@@ -407,73 +407,66 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           <ArrowLeft size={14} />
                           <span>Danh sách</span>
                         </button>
-
-                        <div className="orders-mobile-actions-top no-scrollbar" style={{ display: 'flex', flexWrap: 'nowrap', gap: '6px', overflowX: 'auto', paddingBottom: '2px', WebkitOverflowScrolling: 'touch', flex: '1 1 auto', justifyContent: 'flex-end' }}>
-                        <button
-                          className="primary-button"
-                          disabled={!selectedCanPair}
-                          title={
-                            selectedCanPair
-                              ? `Có ${selectedCandidates.length} xe phù hợp trong kho`
-                              : selectedOrder.status !== 'Chưa ghép'
-                                ? 'Đơn đã ghép hoặc đã hoàn tất'
-                                : 'Không có xe rảnh tương ứng trong kho'
-                          }
-                          onClick={() => onPairOrder(selectedOrder)}
-                          style={{ height: '30px', fontSize: '10.5px', padding: '0 10px', whiteSpace: 'nowrap', flex: '0 0 auto' }}
-                        >
-                          <PackageCheck size={14} />
-                          <span>Ghép xe</span>
-                        </button>
-                        <button
-                          className="ghost-button"
-                          disabled={!selectedCanInvoice}
-                          title={selectedCanInvoice ? 'Cập nhật hồ sơ bàn giao xe & xuất hóa đơn GTGT' : 'Chỉ đơn đã ghép mới được chốt xuất hóa đơn'}
-                          onClick={() => onInvoiceOrder(selectedOrder)}
-                          style={{ height: '30px', fontSize: '10.5px', padding: '0 10px', whiteSpace: 'nowrap', flex: '0 0 auto', border: '1px solid #cbd5e1' }}
-                        >
-                          <FileCheck size={14} />
-                          <span>Xuất HĐ</span>
-                        </button>
-                        <button
-                          className="ghost-button"
-                          disabled={!selectedCanUnpair || isUnpairingOrderId === selectedOrder.id}
-                          title={selectedCanUnpair ? 'Hủy ghép và trả xe về trạng thái trống' : 'Chỉ đơn đã ghép mới hủy ghép được'}
-                          onClick={() => onUnpairOrder(selectedOrder.id)}
-                          style={{ height: '30px', fontSize: '10.5px', padding: '0 10px', whiteSpace: 'nowrap', flex: '0 0 auto', border: '1px solid #cbd5e1' }}
-                        >
-                          <X size={14} />
-                          <span>{isUnpairingOrderId === selectedOrder.id ? 'Đang...' : 'Hủy ghép'}</span>
-                        </button>
-                        <button
-                          className="ghost-button"
-                          disabled={!selectedCanEdit}
-                          title={selectedCanEdit ? 'Sửa thông tin đơn hàng' : 'Không cho sửa đơn đã hoàn tất'}
-                          onClick={() => onEditOrder(selectedOrder)}
-                          style={{ height: '30px', fontSize: '10.5px', padding: '0 10px', whiteSpace: 'nowrap', flex: '0 0 auto', border: '1px solid #cbd5e1' }}
-                        >
-                          <Pencil size={14} />
-                          <span>Sửa</span>
-                        </button>
-                        <button
-                          className="ghost-button"
-                          disabled={!selectedCanPolicy || isUpdatingPolicy}
-                          title={selectedCanPolicy ? 'Chọn chính sách áp dụng cho đơn hàng' : 'Đơn đã hủy'}
-                          onClick={() => onSelectPolicy(selectedOrder)}
-                          style={{ height: '30px', fontSize: '10.5px', padding: '0 10px', whiteSpace: 'nowrap', flex: '0 0 auto', border: '1px solid #cbd5e1' }}
-                        >
-                          <ScrollText size={14} />
-                          <span>CS</span>
-                        </button>
+                      <div className="orders-detail-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          <button
+                            className="primary-button"
+                            disabled={!selectedCanPair}
+                            title={
+                              selectedCanPair
+                                ? `Có ${selectedCandidates.length} xe phù hợp trong kho`
+                                : selectedOrder.status !== 'Chưa ghép'
+                                  ? 'Đơn đã ghép hoặc đã hoàn tất'
+                                  : 'Không có xe rảnh tương ứng trong kho'
+                            }
+                            onClick={() => onPairOrder(selectedOrder)}
+                            style={{ height: '36px', fontSize: '13px', borderRadius: '8px', padding: '0 12px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                          >
+                            <PackageCheck size={16} />
+                            <span>Ghép xe</span>
+                          </button>
+                          <button
+                            className="ghost-button"
+                            disabled={!selectedCanInvoice}
+                            title={selectedCanInvoice ? 'Cập nhật hồ sơ bàn giao xe & xuất hóa đơn GTGT' : 'Chỉ đơn đã ghép mới được chốt xuất hóa đơn'}
+                            onClick={() => onInvoiceOrder(selectedOrder)}
+                            style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 12px' }}
+                          >
+                            <FileCheck size={16} />
+                            <span>Xuất HĐ</span>
+                          </button>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                          <button
+                            className="ghost-button"
+                            disabled={!selectedCanEdit}
+                            title={selectedCanEdit ? 'Sửa thông tin đơn hàng' : 'Không cho sửa đơn đã hoàn tất'}
+                            onClick={() => onEditOrder(selectedOrder)}
+                            style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '0 12px' }}
+                          >
+                            <Pencil size={16} />
+                            <span>Sửa</span>
+                          </button>
+                          <button
+                            className="ghost-button"
+                            disabled={!selectedCanUnpair || isUnpairingOrderId === selectedOrder.id}
+                            title={selectedCanUnpair ? 'Hủy ghép và trả xe về trạng thái trống' : 'Chỉ đơn đã ghép mới hủy ghép được'}
+                            onClick={() => onUnpairOrder(selectedOrder.id)}
+                            style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px solid #cbd5e1', padding: '0 12px' }}
+                          >
+                            <X size={16} />
+                            <span>{isUnpairingOrderId === selectedOrder.id ? 'Đang...' : 'Hủy ghép'}</span>
+                          </button>
+                        </div>
                         <button
                           className="ghost-button order-card__danger"
                           disabled={!selectedCanCancel}
                           title={selectedCanCancel ? 'Hủy đơn hàng và hoàn cọc' : 'Không cho phép hủy đơn đã hoàn tất hoặc đã hủy'}
                           onClick={() => onCancelOrder(selectedOrder)}
-                          style={{ height: '30px', fontSize: '10.5px', padding: '0 10px', whiteSpace: 'nowrap', flex: '0 0 auto', border: '1px solid #fecdd3', color: '#be123c', background: '#fff1f2' }}
+                          style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px solid #fecdd3', color: '#be123c', background: '#fff1f2', width: '100%' }}
                         >
-                          <Ban size={14} />
-                          <span>Hủy</span>
+                          <Ban size={16} />
+                          <span>Hủy đơn</span>
                         </button>
                       </div>
                       </div>
@@ -743,72 +736,66 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                       </div>
                     </div>
 
-                    <div className="orders-detail-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
-                      <button
-                        className="primary-button"
-                        disabled={!selectedCanPair}
-                        title={
-                          selectedCanPair
-                            ? `Có ${selectedCandidates.length} xe phù hợp trong kho`
-                            : selectedOrder.status !== 'Chưa ghép'
-                              ? 'Đơn đã ghép hoặc đã hoàn tất'
-                              : 'Không có xe rảnh tương ứng trong kho'
-                        }
-                        onClick={() => onPairOrder(selectedOrder)}
-                        style={{ height: '30px', fontSize: '11.5px' }}
-                      >
-                        <PackageCheck size={14} />
-                        <span>Ghép xe</span>
-                      </button>
-                      <button
-                        className="ghost-button"
-                        disabled={!selectedCanInvoice}
-                        title={selectedCanInvoice ? 'Cập nhật hồ sơ bàn giao xe & xuất hóa đơn GTGT' : 'Chỉ đơn đã ghép mới được chốt xuất hóa đơn'}
-                        onClick={() => onInvoiceOrder(selectedOrder)}
-                        style={{ height: '30px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
-                      >
-                        <FileCheck size={14} />
-                        <span>Xuất HĐ</span>
-                      </button>
-                      <button
-                        className="ghost-button"
-                        disabled={!selectedCanUnpair || isUnpairingOrderId === selectedOrder.id}
-                        title={selectedCanUnpair ? 'Hủy ghép và trả xe về trạng thái trống' : 'Chỉ đơn đã ghép mới hủy ghép được'}
-                        onClick={() => onUnpairOrder(selectedOrder.id)}
-                        style={{ height: '30px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
-                      >
-                        <X size={14} />
-                        <span>{isUnpairingOrderId === selectedOrder.id ? 'Đang...' : 'Hủy ghép'}</span>
-                      </button>
-                      <button
-                        className="ghost-button"
-                        disabled={!selectedCanEdit}
-                        title={selectedCanEdit ? 'Sửa thông tin đơn hàng' : 'Không cho sửa đơn đã hoàn tất'}
-                        onClick={() => onEditOrder(selectedOrder)}
-                        style={{ height: '30px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
-                      >
-                        <Pencil size={14} />
-                        <span>Sửa</span>
-                      </button>
-                      <button
-                        className="ghost-button"
-                        disabled={!selectedCanPolicy || isUpdatingPolicy}
-                        title={selectedCanPolicy ? 'Chọn chính sách áp dụng cho đơn hàng' : 'Đơn đã hủy'}
-                        onClick={() => onSelectPolicy(selectedOrder)}
-                        style={{ height: '30px', fontSize: '11.5px', border: '1px solid #cbd5e1' }}
-                      >
-                        <ScrollText size={14} />
-                        <span>CS</span>
-                      </button>
+                    <div className="orders-detail-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <button
+                          className="primary-button"
+                          disabled={!selectedCanPair}
+                          title={
+                            selectedCanPair
+                              ? `Có ${selectedCandidates.length} xe phù hợp trong kho`
+                              : selectedOrder.status !== 'Chưa ghép'
+                                ? 'Đơn đã ghép hoặc đã hoàn tất'
+                                : 'Không có xe rảnh tương ứng trong kho'
+                          }
+                          onClick={() => onPairOrder(selectedOrder)}
+                          style={{ height: '36px', fontSize: '13px', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                        >
+                          <PackageCheck size={16} />
+                          <span>Ghép xe</span>
+                        </button>
+                        <button
+                          className="ghost-button"
+                          disabled={!selectedCanInvoice}
+                          title={selectedCanInvoice ? 'Cập nhật hồ sơ bàn giao xe & xuất hóa đơn GTGT' : 'Chỉ đơn đã ghép mới được chốt xuất hóa đơn'}
+                          onClick={() => onInvoiceOrder(selectedOrder)}
+                          style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}
+                        >
+                          <FileCheck size={16} />
+                          <span>Xuất HĐ</span>
+                        </button>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <button
+                          className="ghost-button"
+                          disabled={!selectedCanEdit}
+                          title={selectedCanEdit ? 'Sửa thông tin đơn hàng' : 'Không cho sửa đơn đã hoàn tất'}
+                          onClick={() => onEditOrder(selectedOrder)}
+                          style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                        >
+                          <Pencil size={16} />
+                          <span>Sửa</span>
+                        </button>
+                        <button
+                          className="ghost-button"
+                          disabled={!selectedCanUnpair || isUnpairingOrderId === selectedOrder.id}
+                          title={selectedCanUnpair ? 'Hủy ghép và trả xe về trạng thái trống' : 'Chỉ đơn đã ghép mới hủy ghép được'}
+                          onClick={() => onUnpairOrder(selectedOrder.id)}
+                          style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                        >
+                          <X size={16} />
+                          <span>{isUnpairingOrderId === selectedOrder.id ? 'Đang...' : 'Hủy ghép'}</span>
+                        </button>
+                      </div>
                       <button
                         className="ghost-button order-card__danger"
                         disabled={!selectedCanCancel}
                         title={selectedCanCancel ? 'Hủy đơn hàng và hoàn cọc' : 'Không cho phép hủy đơn đã hoàn tất hoặc đã hủy'}
                         onClick={() => onCancelOrder(selectedOrder)}
-                        style={{ height: '30px', fontSize: '11.5px', border: '1px solid #fecdd3', color: '#be123c', background: '#fff1f2' }}
+                        style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px dashed #fca5a5', color: '#be123c', background: 'transparent' }}
                       >
-                        <Ban size={14} />
-                        <span>Hủy</span>
+                        <Ban size={16} />
+                        <span>Hủy đơn</span>
                       </button>
                     </div>
                   </>
