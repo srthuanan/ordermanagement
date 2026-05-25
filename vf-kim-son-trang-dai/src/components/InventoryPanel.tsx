@@ -1,8 +1,10 @@
 import React from 'react';
-import { PackageCheck, X, Clock, FilePlus2, LocateFixed, Search, Filter, RotateCcw, ArrowLeft } from 'lucide-react';
+import { PackageCheck, X, Clock, FilePlus2, LocateFixed, Search, Filter, RotateCcw, ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import { InventoryItem, VehicleLocationRow } from '../types';
 import { stockTone } from '../constants';
 import { VehicleLocationMapPanel } from './VehicleLocationMapPanel';
+import { EditVehicleModal } from './modals/EditVehicleModal';
+import * as apiService from '../services/apiService';
 
 interface InventoryPanelProps {
   items: InventoryItem[];
@@ -23,6 +25,8 @@ interface InventoryPanelProps {
   onJoinQueue: (vin: string) => void;
   onLeaveQueue: (vin: string) => void;
   onUpdateVehicleLocation: (item: InventoryItem) => void;
+  vehicleConfigs: import('../types').VehicleConfigRow[];
+  onRefresh: () => void;
 }
 
 export const InventoryPanel: React.FC<InventoryPanelProps> = ({
@@ -43,10 +47,14 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
   onReleaseItem,
   onJoinQueue,
   onLeaveQueue,
-  onUpdateVehicleLocation
+  onUpdateVehicleLocation,
+  vehicleConfigs,
+  onRefresh
 }) => {
   const [highlightedVin, setHighlightedVin] = React.useState<string | null>(null);
   const [selectedVin, setSelectedVin] = React.useState<string | null>(null);
+  const [editingVehicle, setEditingVehicle] = React.useState<InventoryItem | null>(null);
+  const [isUpdatingVehicle, setIsUpdatingVehicle] = React.useState(false);
   const [searchText, setSearchText] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<'all' | InventoryItem['status']>('all');
   const [lineFilter, setLineFilter] = React.useState('all');
@@ -130,6 +138,35 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
     if (!isMobile) setMobileView('list');
   }, [isMobile]);
 
+  const handleDeleteVehicle = async (item: InventoryItem) => {
+    if (item.status === 'Đã ghép') {
+      alert('Không thể xóa xe đã ghép vào đơn hàng. Vui lòng gỡ ghép xe ở phần Đơn hàng trước.');
+      return;
+    }
+    
+    if (window.confirm(`Bạn có chắc chắn muốn xóa xe ${item.vin} khỏi kho không?`)) {
+      setIsUpdatingVehicle(true);
+      const { error } = await apiService.deleteVehicle(item.vin);
+      setIsUpdatingVehicle(false);
+      if (error) {
+        alert('Lỗi xóa xe: ' + error.message);
+      } else {
+        onRefresh();
+      }
+    }
+  };
+
+  const handleUpdateVehicle = async (vin: string, updates: Partial<InventoryItem>) => {
+    setIsUpdatingVehicle(true);
+    const { error } = await apiService.updateVehicle(vin, updates);
+    setIsUpdatingVehicle(false);
+    if (error) {
+      alert('Lỗi cập nhật xe: ' + error.message);
+      return false;
+    }
+    onRefresh();
+    return true;
+  };
 
 
   return (
@@ -394,6 +431,30 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
 
                           
 
+                          {canManageInventory && (
+                            <>
+                              <button
+                                className="row-action-button action-btn-edit"
+                                onClick={() => setEditingVehicle(item)}
+                                title="Sửa thông tin xe"
+                                style={{ background: '#f8fafc', color: '#0ea5e9', border: '1px solid #e0f2fe' }}
+                              >
+                                <Edit size={14} />
+                                <span>Sửa</span>
+                              </button>
+                              <button
+                                className="row-action-button action-btn-delete"
+                                onClick={() => handleDeleteVehicle(item)}
+                                disabled={isUpdatingVehicle}
+                                title="Xóa xe khỏi kho"
+                                style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fee2e2' }}
+                              >
+                                <Trash2 size={14} />
+                                <span>Xóa</span>
+                              </button>
+                            </>
+                          )}
+
                           {item.status === 'Chưa ghép' && (
                             <button
                               className="row-action-button action-btn-hold"
@@ -571,6 +632,16 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
         </div>
 
       </div>
+
+      {editingVehicle && (
+        <EditVehicleModal
+          vehicle={editingVehicle}
+          vehicleConfigs={vehicleConfigs}
+          isSubmitting={isUpdatingVehicle}
+          onClose={() => setEditingVehicle(null)}
+          onSubmit={handleUpdateVehicle}
+        />
+      )}
     </section>
   );
 };

@@ -1348,3 +1348,24 @@ export const deleteVehicleConfig = async (id: string) => {
   }
   return await supabase.from('vehicle_configs').delete().eq('id', id);
 };
+
+export const deleteVehicle = async (vin: string) => {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  return await supabase.from('khoxe').delete().eq('vin', vin.trim());
+};
+
+export const updateVehicle = async (vin: string, updates: Partial<import('../types').InventoryItem>) => {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  
+  const dbUpdates: any = {};
+  if (updates.line !== undefined) dbUpdates.dong_xe = updates.line;
+  if (updates.version !== undefined) dbUpdates.phien_ban = updates.version;
+  if (updates.exterior !== undefined) dbUpdates.ngoai_that = updates.exterior;
+  if (updates.interior !== undefined) dbUpdates.noi_that = updates.interior;
+  if (updates.location !== undefined) dbUpdates.vi_tri = updates.location;
+  if (updates.engineNo !== undefined) dbUpdates.so_may = updates.engineNo;
+  if (updates.ma_dms !== undefined) dbUpdates.ma_dms = updates.ma_dms;
+  dbUpdates.updated_at = new Date().toISOString();
+
+  return await supabase.from('khoxe').update(dbUpdates).eq('vin', vin.trim());
+};

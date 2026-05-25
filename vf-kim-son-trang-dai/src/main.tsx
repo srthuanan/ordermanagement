@@ -435,6 +435,8 @@ function App() {
                   setSyncMessage('');
                   setGpsItem(item);
                 }}
+                vehicleConfigs={vehicleConfigs}
+                onRefresh={() => loadWorkspace({ showLoading: false })}
               />
             )}
 
