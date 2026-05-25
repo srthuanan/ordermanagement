@@ -53,7 +53,7 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
           <section className="detail-summary">
             <div>
               <span className={statusTone[order.status]}>{order.status}</span>
-              <h3>{order.customer}</h3>
+              <h3 style={{ textTransform: 'uppercase' }}>{order.customer}</h3>
               <p>{order.phone}</p>
             </div>
             <div className="detail-total">

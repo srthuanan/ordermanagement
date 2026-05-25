@@ -287,7 +287,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                       >
                         <div className="orders-mobile-card-header">
                           <div className="orders-mobile-card-headings">
-                            <p className="orders-mobile-card-title">{order.customer}</p>
+                            <p className="orders-mobile-card-title" style={{ textTransform: 'uppercase' }}>{order.customer}</p>
                             <p className="orders-mobile-card-subtitle">{order.id}</p>
                           </div>
                           <span className={statusTone[order.status]} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 8px', borderRadius: '999px', fontSize: '11px', fontWeight: 700 }}>
@@ -349,7 +349,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                             {order.id}
                           </td>
                           <td>
-                            <div style={{ fontWeight: 600, color: '#1e293b' }}>{order.customer}</div>
+                            <div style={{ fontWeight: 600, color: '#1e293b', textTransform: 'uppercase' }}>{order.customer}</div>
                           </td>
                           <td>
                             <div style={{ fontWeight: 600, color: '#334155' }}>{order.line} {order.version}</div>
@@ -476,7 +476,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           <div className="clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedOrder.id, 'Mã đơn')} style={{ minWidth: 0 }}>
                             <p style={{ margin: 0, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', fontWeight: 700 }}>CHI TIẾT ĐƠN HÀNG</p>
                             <h3 style={{ margin: '2px 0 0', fontSize: '18px', lineHeight: 1.15, fontWeight: 700, color: '#0f172a' }}>{selectedOrder.id}</h3>
-                            <p style={{ margin: '2px 0 0', fontSize: '12px', fontWeight: 500, color: '#475569' }}>{selectedOrder.customer}</p>
+                            <p style={{ margin: '2px 0 0', fontSize: '12px', fontWeight: 500, color: '#475569', textTransform: 'uppercase' }}>{selectedOrder.customer}</p>
                           </div>
                           <span className={statusTone[selectedOrder.status]} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 10px', borderRadius: '999px', fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>
                             {selectedOrder.status}
@@ -494,7 +494,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 12px' }}>
                             <div className="clickable-copy-field" title="Click để copy tên khách" onClick={() => copyToClipboard(selectedOrder.customer, 'Tên khách')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
                               <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Khách hàng</span>
-                              <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedOrder.customer}</strong>
+                              <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word', textTransform: 'uppercase' }}>{selectedOrder.customer}</strong>
                             </div>
 
                             <div className="clickable-copy-field" title="Click để copy tên TVBH" onClick={() => copyToClipboard(selectedOrder.staff, 'Tên TVBH')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, textAlign: 'right', alignItems: 'flex-end' }}>
@@ -642,7 +642,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                       <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
                         <div className="clickable-copy-field" title="Click để copy tên khách" onClick={() => copyToClipboard(selectedOrder.customer, 'Tên khách')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
                           <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, marginBottom: '1px' }}>Khách hàng</span>
-                          <strong style={{ fontSize: '14px', color: '#0f172a', display: 'block', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedOrder.customer}</strong>
+                          <strong style={{ fontSize: '14px', color: '#0f172a', display: 'block', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>{selectedOrder.customer}</strong>
                         </div>
                         
                         <div className="clickable-copy-field" title="Click để copy tên TVBH" onClick={() => copyToClipboard(selectedOrder.staff, 'Tên TVBH')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
