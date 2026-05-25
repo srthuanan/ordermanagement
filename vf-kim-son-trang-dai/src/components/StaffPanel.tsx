@@ -347,6 +347,12 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                 style={{ width: '100%', padding: '8px 12px 8px 36px', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '13.5px', fontWeight: 500, background: '#fff' }}
               />
             </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', whiteSpace: 'nowrap', fontSize: '12px', fontWeight: 600, color: '#475569', background: '#f1f5f9', padding: '6px 12px', borderRadius: '20px', marginLeft: 'auto' }}>
+              <span style={{ color: '#0f766e' }}>{filteredStaff.length}</span>
+              <span style={{ color: '#94a3b8' }}>/</span>
+              <span>{visibleStaff.length} nhân sự</span>
+            </div>
             
             {isAdmin && (
               <button 
