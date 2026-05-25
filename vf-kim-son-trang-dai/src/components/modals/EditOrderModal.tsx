@@ -2,7 +2,6 @@ import React from 'react';
 import { X, Save, AlertTriangle } from 'lucide-react';
 import { Order, UpdateOrderInput, VehicleConfigRow, SalesPolicyRow } from '../../types';
 import {
-  interiorColorRules,
   staffNames,
   defaultSalesPolicies
 } from '../../constants';
@@ -140,18 +139,7 @@ export const EditOrderModal: React.FC<EditOrderModalProps> = ({
     [line, versionsMap]
   );
 
-  const interiorOptions = React.useMemo(() => {
-    const lineNorm = line.toLowerCase();
-    const versionNorm = version.toLowerCase();
-
-    for (const rule of interiorColorRules) {
-      if (!rule.models.includes(lineNorm)) continue;
-      if (!rule.versions || rule.versions.includes(versionNorm)) {
-        return rule.colors;
-      }
-    }
-    return defaultInteriors;
-  }, [line, version, defaultInteriors]);
+  const interiorOptions = defaultInteriors;
 
   React.useEffect(() => {
     if (!versionOptions.includes(version)) {

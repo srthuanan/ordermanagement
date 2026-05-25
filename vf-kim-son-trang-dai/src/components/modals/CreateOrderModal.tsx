@@ -3,7 +3,6 @@ import { X, Plus, AlertTriangle } from 'lucide-react';
 import * as apiService from '../../services/apiService';
 import { InventoryItem, NewOrderInput, SalesPolicyRow, VehicleConfigRow } from '../../types';
 import {
-  interiorColorRules,
   defaultSalesPolicies
 } from '../../constants';
 import { parseVehicleConfigs } from '../../utils/vehicleConfigUtils';
@@ -72,18 +71,7 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
     [form.line]
   );
 
-  const interiorOptions = React.useMemo(() => {
-    const lineNorm = form.line.toLowerCase();
-    const versionNorm = form.version.toLowerCase();
-    for (const rule of interiorColorRules) {
-      if (!rule.models.includes(lineNorm)) continue;
-      if (!rule.versions || rule.versions.includes(versionNorm)) {
-        // Only return rules if they match the newly fetched dynamic interiors, or just return the rule colors directly
-        return rule.colors;
-      }
-    }
-    return defaultInteriors;
-  }, [form.line, form.version, defaultInteriors]);
+  const interiorOptions = defaultInteriors;
 
   React.useEffect(() => {
     if (!versionOptions.includes(form.version)) {
