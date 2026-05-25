@@ -648,7 +648,6 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         <div className="clickable-copy-field" title="Click để copy tên TVBH" onClick={() => copyToClipboard(selectedOrder.staff, 'Tên TVBH')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
                           <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, marginBottom: '1px' }}>Tư vấn phụ trách</span>
                           <strong style={{ fontSize: '13.5px', color: '#0f172a', display: 'block', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedOrder.staff}</strong>
-                          <small style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px', fontWeight: 500 }}>📍 {selectedOrder.area || 'N/A'}</small>
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
