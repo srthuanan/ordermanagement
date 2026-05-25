@@ -377,7 +377,7 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                         </strong>
                       </td>
                       <td>
-                        <span style={{ display: 'block', fontSize: '12.5px', color: '#334155' }}>{item.dmsCode || '-'}</span>
+                        <span style={{ display: 'block', fontSize: '12.5px', color: '#334155' }}>{item.ma_dms || '-'}</span>
                       </td>
                       <td>
                         <strong style={{ display: 'block', fontSize: '12.5px', color: '#334155' }}>{item.line}</strong>

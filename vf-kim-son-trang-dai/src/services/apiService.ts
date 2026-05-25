@@ -100,11 +100,11 @@ export function mapKhoxeRows(rows: KhoxeRow[]): InventoryItem[] {
     engineNo: row.so_may ?? '',
     latitude: row.latitude ?? null,
     longitude: row.longitude ?? null,
-    isExtensionRequested: row.is_extension_requested || false,
-    extensionReason: row.extension_reason ?? '',
-    extensionEvidenceUrl: row.extension_evidence_url ?? '',
-    extensionCount: row.extension_count || 0,
-    dmsCode: row.ma_dms ?? null
+    is_extension_requested: row.is_extension_requested || false,
+    extension_reason: row.extension_reason ?? null,
+    extension_evidence_url: row.extension_evidence_url ?? null,
+    extension_count: row.extension_count || 0,
+    ma_dms: row.ma_dms ?? null
   }));
 }
 
@@ -274,7 +274,7 @@ export const inviteStaffMember = async (input: { email: string; fullName: string
   });
 };
 
-export const resendStaffInvite = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null; managerId?: string | null }) => {
+export const resendStaffInvite = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null; managerId?: string | null; staffId?: string }) => {
   return await invokeStaffFunction({
     action: 'resend',
     email: input.email,
@@ -317,7 +317,7 @@ export const updateStaffPermission = async (input: {
 };
 
 // --- Queries ---
-export const getCustomers = async () => {
+export const getCustomers = async (): Promise<{ data: CustomerRow[], error: any }> => {
   return { data: [], error: null };
 };
 
@@ -657,7 +657,7 @@ export const updateInvoiceInfo = async (
 };
 
 // --- Safe Inventory / Pairing Actions (Optimistic Transaction RPCs) ---
-export const holdVehicle = async (vin: string, username: string, fullName: string) => {
+export const holdVehicle = async (vin: string, username: string, fullName: string): Promise<{ data: any, error: any }> => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   const { data: sessionData } = await supabase.auth.getSession();
   const accessToken = sessionData.session?.access_token;
@@ -792,7 +792,7 @@ export const bulkUpsertVehicles = async (
     phien_ban?: string;
     ngoai_that?: string;
     noi_that?: string;
-    vi_tri?: string;
+    vi_tri?: string | null;
     latitude?: number | null;
     longitude?: number | null;
     ngay_nhap?: string | null;
