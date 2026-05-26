@@ -1002,10 +1002,20 @@ export const getYeucauxhd = async () => {
 
 export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) {
+    return serviceError('Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng tải lại trang (F5) và đăng nhập lại.');
+  }
+
   const orderId = input.order.id;
   const { data: orderRow, error: fetchError } = await getOrderRow(orderId);
 
   if (fetchError) {
+    // Check for 400 No API key found which usually means session expired + invalid anon key
+    if (fetchError.message?.includes('No API key') || fetchError.code === '400') {
+      return serviceError('Lỗi xác thực: Không tìm thấy API key. Vui lòng tải lại trang và đăng nhập lại.');
+    }
     return { data: null, error: fetchError };
   }
 
@@ -1019,6 +1029,13 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
     .eq('so_don_hang', orderId)
     .eq('status', 'pending')
     .maybeSingle();
+
+  if (existingRequest.error) {
+    if (existingRequest.error.message?.includes('No API key') || existingRequest.error.code === '400') {
+      return serviceError('Lỗi xác thực: Không tìm thấy API key hoặc phiên đăng nhập bị lỗi. Vui lòng F5 và đăng nhập lại.');
+    }
+    return { data: null, error: existingRequest.error };
+  }
 
   if (existingRequest.data) {
     return serviceError('Đơn hàng này đang có yêu cầu xuất hóa đơn chờ duyệt.');

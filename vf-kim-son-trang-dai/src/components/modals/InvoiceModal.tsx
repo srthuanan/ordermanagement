@@ -153,8 +153,10 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
     if (!isFormValid || !contractFile || !proposalFile) return;
     setError('');
     setProcessingStage(1);
-    setTimeout(() => setProcessingStage(2), 1200);
-    setTimeout(() => setProcessingStage(3), 2400);
+    
+    const t1 = setTimeout(() => setProcessingStage(2), 1200);
+    const t2 = setTimeout(() => setProcessingStage(3), 2400);
+    
     const raw = (s: string) => s.replace(/[^0-9]/g, '');
     const ok = await onSubmit({
       order, contractFile, proposalFile,
@@ -173,7 +175,12 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
       ghiChu,
     });
     if (ok) { setProcessingStage(4); setTimeout(onClose, 1800); }
-    else { setProcessingStage(0); setError('Có lỗi xảy ra. Vui lòng thử lại.'); }
+    else { 
+      clearTimeout(t1);
+      clearTimeout(t2);
+      setProcessingStage(0); 
+      setError('Có lỗi xảy ra. Vui lòng thử lại.'); 
+    }
   };
 
   const iS = { display:'flex', flexDirection:'column' as const, gap:'4px' };
