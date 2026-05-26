@@ -1116,7 +1116,7 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
     xe_xang_vin: xeXangVin,
     xe_xang_hang: xeXangHang,
     xe_xang_model: xeXangModel,
-    // ma_amis: input.order.maAmis?.trim() || null, // TODO: Cột này chưa có trong bảng yeucauxhd
+    ma_amis: input.order.maAmis?.trim() || null,
     gia_cong_bo: giaCongBo,
     ghi_chu: ghiChu,
     coc: soTienKhachDaDong !== null || Boolean(orderRow.ngay_coc || input.order.depositDate),
