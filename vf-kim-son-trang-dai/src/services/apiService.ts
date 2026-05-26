@@ -414,6 +414,13 @@ export const cancelOrder = async (
         }
       }
     }).catch(e => console.warn('Lỗi gọi gửi email hủy đơn:', e));
+
+    // Notify Admin
+    supabase.from('admin_notifications').insert({
+      type: 'order_canceled',
+      message: `Đơn hàng ${orderId} vừa bị hủy. Lý do: ${notes}`,
+      link: orderId
+    }).catch(e => console.warn('Lỗi tạo thông báo hủy đơn:', e));
   }
 
   return result;
@@ -1126,6 +1133,13 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
 
   const { error: insertError } = await supabase.from('yeucauxhd').insert(invoiceRow);
   if (insertError) return { data: null, error: insertError };
+
+  // Notify Admin
+  await supabase.from('admin_notifications').insert({
+    type: 'invoice_request',
+    message: `TVBH ${input.requesterName || 'Ai đó'} vừa gửi yêu cầu xuất hóa đơn cho đơn hàng ${orderId}.`,
+    link: orderId
+  });
 
   const { error: orderUpdateError } = await supabase
     .from('donhang')

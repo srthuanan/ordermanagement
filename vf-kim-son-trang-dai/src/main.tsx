@@ -326,6 +326,7 @@ function App() {
       <main className="main">
         <Header
           canCreateOrder={canCreateOrder(userRole)}
+          isAdmin={canApproveInvoice(userRole)}
           setSidebarOpen={setSidebarOpen}
           setCreateOpen={(open) => {
             if (open) setCreateFromVehicle(null);
