@@ -677,13 +677,20 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           <small style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px', fontWeight: 500 }}>🎨 {selectedFinishSummary}</small>
                         </div>
 
-                        <div className="clickable-copy-field" title={selectedOrder.policy || 'Mặc định'} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', cursor: 'help' }}>
-                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div className="policy-container" style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'help' }}>
                             Chính sách (CS) <Info size={12} />
                           </span>
                           <span style={{ fontSize: '12px', color: '#0ea5e9', fontWeight: 500, fontStyle: 'italic', marginTop: '2px' }}>
                             (Rê chuột xem chi tiết)
                           </span>
+                          {/* Tooltip */}
+                          <div className="policy-tooltip" style={{ display: 'none', position: 'absolute', top: '100%', left: 0, background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)', zIndex: 10, minWidth: '200px' }}>
+                            {selectedOrder.policy &&
+                              selectedOrder.policy.split('\n').filter(Boolean).map((line, idx) => (
+                                <div key={idx} style={{ fontSize: '12px', color: '#0f172a', marginBottom: '4px' }}>• {line}</div>
+                              ))}
+                          </div>
                         </div>
 
                         <div className={selectedOrder.vin ? "clickable-copy-field" : ""} title={selectedOrder.vin ? "Click để copy số VIN" : ""} onClick={() => selectedOrder.vin && copyToClipboard(selectedOrder.vin, 'Số VIN')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>

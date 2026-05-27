@@ -127,7 +127,18 @@ button:disabled {
   display: block;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
+.policy-container:hover .policy-tooltip { display: block; max-height: 250px; overflow-y: auto; }
+
+/* Optional arrow for tooltip */
+.policy-tooltip::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 12px;
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent transparent #e2e8f0 transparent;
+}
   background: transparent;
 }
 
