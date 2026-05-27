@@ -333,9 +333,12 @@ export const getOrders = async () => {
 export const getInventory = async () => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
 
+  const cacheBuster = `cb-${Date.now()}-${Math.random()}`;
+
   const khoxeResult = await supabase
     .from('khoxe')
     .select('*')
+    .neq('vin', cacheBuster) // Bypass browser cache
     .order('ngay_nhap', { ascending: false });
 
   if (khoxeResult.error) {
