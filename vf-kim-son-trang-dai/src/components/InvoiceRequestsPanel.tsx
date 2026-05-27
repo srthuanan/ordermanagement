@@ -70,6 +70,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
   const [activeDocKey, setActiveDocKey] = useState<'url_de_nghi_xhd' | 'url_hop_dong' | 'url_hoa_don_da_xuat'>('url_de_nghi_xhd');
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showPolicyTooltip, setShowPolicyTooltip] = useState(false);
 
   const handleSyncFromOrder = async (req: YeucauxhdRow) => {
     if (!supabase) return;
@@ -425,7 +426,47 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                         <DetailItem label="Hình thức TT" value={selectedRequest.hinh_thuc_tt || 'Tiền mặt'} />
                         <DetailItem label="Số Hợp đồng" value={selectedRequest.so_hop_dong || 'N/A'} copyable boldValue />
                         <DetailItem label="Ngày ký HĐ" value={formatMobileDate(selectedRequest.ngay_ky_hop_dong)} />
-                        <DetailItem label="Chính sách" value={selectedRequest.chinh_sach || 'Mặc định'} isFullWidth />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Chính sách</span>
+                          <div
+                            style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'help' }}
+                            onMouseEnter={() => setShowPolicyTooltip(true)}
+                            onMouseLeave={() => setShowPolicyTooltip(false)}
+                          >
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: '#0ea5e9' }}>
+                              {selectedRequest.chinh_sach
+                                ? `${selectedRequest.chinh_sach.split('\n').filter(Boolean).length} chính sách`
+                                : 'Mặc định'}
+                            </span>
+                            <Info size={13} style={{ color: '#0ea5e9' }} />
+                            {showPolicyTooltip && selectedRequest.chinh_sach && (
+                              <div style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                marginTop: '6px',
+                                background: '#1e293b',
+                                border: '1px solid #334155',
+                                borderRadius: '10px',
+                                padding: '10px 12px',
+                                boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+                                zIndex: 999,
+                                minWidth: '220px',
+                                maxWidth: '340px',
+                                pointerEvents: 'none',
+                                whiteSpace: 'normal'
+                              }}>
+                                <p style={{ margin: '0 0 6px', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Chi tiết chính sách</p>
+                                {selectedRequest.chinh_sach.split('\n').filter(Boolean).map((line: string, idx: number) => (
+                                  <div key={idx} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                    <span style={{ color: '#0ea5e9', fontWeight: 700, flexShrink: 0 }}>•</span>
+                                    <span style={{ fontSize: '12px', color: '#e2e8f0', lineHeight: 1.5 }}>{line}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                         <DetailItem label="Địa chỉ xuất HĐ" value={selectedRequest.dia_chi || 'N/A'} isFullWidth />
                       </div>
                     </SectionBox>
