@@ -125,6 +125,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
   const [isMobile, setIsMobile] = useState(false);
+  const [showPolicyTooltip, setShowPolicyTooltip] = useState(false);
   const selectedOrder = useMemo(
     () => orders.find((order) => order.id === selectedOrderId) ?? orders[0] ?? null,
     [orders, selectedOrderId]
@@ -677,20 +678,46 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           <small style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px', fontWeight: 500 }}>🎨 {selectedFinishSummary}</small>
                         </div>
 
-                        <div className="policy-container" style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', cursor: 'help' }}>
-                            Chính sách (CS) <Info size={12} />
+                        <div
+                          style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', cursor: 'help' }}
+                          onMouseEnter={() => setShowPolicyTooltip(true)}
+                          onMouseLeave={() => setShowPolicyTooltip(false)}
+                        >
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            Chính sách (CS) <Info size={12} style={{ color: '#0ea5e9' }} />
                           </span>
-                          <span style={{ fontSize: '12px', color: '#0ea5e9', fontWeight: 500, fontStyle: 'italic', marginTop: '2px' }}>
-                            (Rê chuột xem chi tiết)
-                          </span>
-                          {/* Tooltip */}
-                          <div className="policy-tooltip" style={{ display: 'none', position: 'absolute', top: '100%', left: 0, background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)', zIndex: 10, minWidth: '200px' }}>
-                            {selectedOrder.policy &&
-                              selectedOrder.policy.split('\n').filter(Boolean).map((line, idx) => (
-                                <div key={idx} style={{ fontSize: '12px', color: '#0f172a', marginBottom: '4px' }}>• {line}</div>
+                          <strong style={{ fontSize: '12.5px', color: '#0ea5e9', fontWeight: 600, marginTop: '2px' }}>
+                            {selectedOrder.policy
+                              ? `${selectedOrder.policy.split('\n').filter(Boolean).length} chính sách`
+                              : 'Mặc định'}
+                          </strong>
+                          {/* Popup tooltip */}
+                          {showPolicyTooltip && selectedOrder.policy && (
+                            <div style={{
+                              position: 'absolute',
+                              top: '100%',
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              marginTop: '6px',
+                              background: '#1e293b',
+                              border: '1px solid #334155',
+                              borderRadius: '10px',
+                              padding: '10px 12px',
+                              boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+                              zIndex: 999,
+                              minWidth: '220px',
+                              maxWidth: '320px',
+                              pointerEvents: 'none'
+                            }}>
+                              <p style={{ margin: '0 0 6px', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Chi tiết chính sách</p>
+                              {selectedOrder.policy.split('\n').filter(Boolean).map((line, idx) => (
+                                <div key={idx} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                  <span style={{ color: '#0ea5e9', fontWeight: 700, flexShrink: 0, marginTop: '1px' }}>•</span>
+                                  <span style={{ fontSize: '12px', color: '#e2e8f0', lineHeight: 1.5 }}>{line}</span>
+                                </div>
                               ))}
-                          </div>
+                            </div>
+                          )}
                         </div>
 
                         <div className={selectedOrder.vin ? "clickable-copy-field" : ""} title={selectedOrder.vin ? "Click để copy số VIN" : ""} onClick={() => selectedOrder.vin && copyToClipboard(selectedOrder.vin, 'Số VIN')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
