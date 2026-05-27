@@ -416,7 +416,7 @@ export const cancelOrder = async (
     }).catch(e => console.warn('Lỗi gọi gửi email hủy đơn:', e));
 
     // Notify Admin
-    supabase.from('admin_notifications').insert({
+    await supabase.from('admin_notifications').insert({
       type: 'order_canceled',
       message: `Đơn hàng ${orderId} vừa bị hủy. Lý do: ${notes}`,
       link: orderId
@@ -682,7 +682,7 @@ export const holdVehicle = async (vin: string, username: string, fullName: strin
     body: JSON.stringify({ p_vin: vin.trim(), p_username: username, p_full_name: fullName })
   });
   const data = await res.json();
-  supabase.from('activity_logs').insert({
+  await supabase.from('activity_logs').insert({
     vin: vin.trim(),
     action_type: 'hold',
     performed_by: username,
@@ -691,7 +691,7 @@ export const holdVehicle = async (vin: string, username: string, fullName: strin
   }).catch(e => console.warn('Lỗi ghi log giữ xe:', e));
 
   // Notify Admin
-  supabase.from('admin_notifications').insert({
+  await supabase.from('admin_notifications').insert({
     type: 'vehicle_held',
     message: `TVBH ${fullName} vừa thao tác Giữ xe cho VIN ${vin}.`
   }).catch(e => console.warn('Lỗi tạo thông báo giữ xe:', e));

@@ -42,6 +42,7 @@ const EditOrderModal = lazy(() => import('./components/modals/EditOrderModal').t
 const SelectPolicyModal = lazy(() => import('./components/modals/SelectPolicyModal').then((module) => ({ default: module.SelectPolicyModal })));
 import {
   canApproveInvoice,
+  canViewNotifications,
   canCreateOrder,
   canHoldVehicle,
   canManageInventory,
@@ -326,7 +327,7 @@ function App() {
       <main className="main">
         <Header
           canCreateOrder={canCreateOrder(userRole)}
-          isAdmin={canApproveInvoice(userRole)}
+          isAdmin={canViewNotifications(userRole)}
           setSidebarOpen={setSidebarOpen}
           setCreateOpen={(open) => {
             if (open) setCreateFromVehicle(null);

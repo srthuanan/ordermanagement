@@ -73,6 +73,10 @@ export function canApproveInvoice(role: AppRole) {
   return role === 'admin';
 }
 
+export function canViewNotifications(role: AppRole) {
+  return role === 'admin' || role === 'manager';
+}
+
 export function canManagePricingConfig(role: AppRole) {
   return role === 'admin';
 }
