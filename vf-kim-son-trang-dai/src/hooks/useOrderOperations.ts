@@ -153,10 +153,7 @@ export function useOrderOperations({
         return false;
       }
       
-      // Thông báo thành công qua Toast
-      setSyncState('success');
-      setSyncMessage(`Đã giữ xe ${vin} thành công tạm thời trong 24h.`);
-      
+      // Không hiển thị Toast thông báo thành công (theo yêu cầu user)
       // Cập nhật optimistic: chỉ đổi trạng thái của 1 xe, không reload toàn bộ
       if (updateInventoryItem) {
         updateInventoryItem(vin, {
