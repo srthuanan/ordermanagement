@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, Filter, Eye, PackageCheck, X, FileCheck, Ban, Pencil, ScrollText, User, Car, CreditCard, ArrowLeft } from 'lucide-react';
+import { Search, Filter, Eye, PackageCheck, X, FileCheck, Ban, Pencil, ScrollText, User, Car, CreditCard, ArrowLeft, Info } from 'lucide-react';
 import { Order, OrderStatus, InventoryItem } from '../types';
 import { statusTone } from '../constants';
 import { matchesVehicleConfig, canUseVehicleForPair } from '../utils/matching';
@@ -677,9 +677,13 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           <small style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px', fontWeight: 500 }}>🎨 {selectedFinishSummary}</small>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
-                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Chính sách (CS)</span>
-                          <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 700, lineHeight: 1.3 }}>{selectedOrder.policy || 'Mặc định'}</strong>
+                        <div className="clickable-copy-field" title={selectedOrder.policy || 'Mặc định'} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', cursor: 'help' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            Chính sách (CS) <Info size={12} />
+                          </span>
+                          <span style={{ fontSize: '12px', color: '#0ea5e9', fontWeight: 500, fontStyle: 'italic', marginTop: '2px' }}>
+                            (Rê chuột xem chi tiết)
+                          </span>
                         </div>
 
                         <div className={selectedOrder.vin ? "clickable-copy-field" : ""} title={selectedOrder.vin ? "Click để copy số VIN" : ""} onClick={() => selectedOrder.vin && copyToClipboard(selectedOrder.vin, 'Số VIN')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
