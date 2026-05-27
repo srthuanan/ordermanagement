@@ -21,7 +21,6 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(isAdmin);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [toastNotif, setToastNotif] = useState<AdminNotification | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
@@ -35,19 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Listen for new notifications to show toast
-  useEffect(() => {
-    const handleNewNotif = (event: Event) => {
-      const customEvent = event as CustomEvent<AdminNotification>;
-      setToastNotif(customEvent.detail);
-      // Auto hide after 5 seconds
-      setTimeout(() => {
-        setToastNotif(null);
-      }, 5000);
-    };
-    window.addEventListener('new-admin-notification', handleNewNotif);
-    return () => window.removeEventListener('new-admin-notification', handleNewNotif);
-  }, []);
+  // Removed toastNotif state and listener per user request
 
   return (
     <header className="topbar" style={{ 
@@ -191,30 +178,7 @@ export const Header: React.FC<HeaderProps> = ({
         </button>
       </div>
 
-      {/* Real-time Toast Notification */}
-      {toastNotif && (
-        <div style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          background: '#fff',
-          borderLeft: '4px solid #0ea5e9',
-          padding: '16px',
-          borderRadius: '8px',
-          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)',
-          zIndex: 9999,
-          maxWidth: '350px',
-          animation: 'slideInRight 0.3s ease-out forwards'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <Bell size={16} color="#0ea5e9" />
-            <strong style={{ fontSize: '14px', color: '#0f172a' }}>Thông báo mới</strong>
-          </div>
-          <p style={{ fontSize: '13px', color: '#475569', margin: 0, lineHeight: 1.5 }}>
-            {toastNotif.message}
-          </p>
-        </div>
-      )}
+      {/* Real-time Toast Notification (Removed by user request) */}
     </header>
   );
 };
