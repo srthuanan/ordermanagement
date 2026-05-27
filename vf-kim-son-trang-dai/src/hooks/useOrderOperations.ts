@@ -156,15 +156,8 @@ export function useOrderOperations({
       setSyncState('success');
       setSyncMessage(`Đã giữ xe ${vin} thành công tạm thời trong 24h.`);
       
-      // Cập nhật optimistic: chỉ đổi trạng thái của 1 xe, không reload toàn bộ
-      if (updateInventoryItem) {
-        updateInventoryItem(vin, {
-          status: 'Đang giữ',
-          holder: currentFullName,
-        });
-      } else {
-        await loadWorkspace({ showLoading: false });
-      }
+      // Force reload to ensure DB state is reflected perfectly
+      await loadWorkspace({ showLoading: true });
       return true;
     } catch (err: any) {
       const errMsg = err.message || 'Lỗi kết nối';
