@@ -378,7 +378,11 @@ export const createCustomer = async (customer: CustomerRow) => {
 
 export const createOrder = async (order: any) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.from('donhang').insert(order).select('*');
+  const result = await supabase.from('donhang').insert(order).select('*');
+  if (!result.error) {
+    await notifyAdminAction(`vừa tạo đơn hàng mới cho khách ${order.ten_khach_hang || ''}.`);
+  }
+  return result;
 };
 
 export const cancelOrder = async (
@@ -407,6 +411,8 @@ export const cancelOrder = async (
   });
 
   if (!result.error) {
+    await notifyAdminAction(`vừa hủy đơn hàng (Mã DMS: ${orderId}).`);
+    const { data: updatedRecord } = await supabase.from('donhang').select('*').eq('so_don_hang', orderId).single();
     supabase.functions.invoke('send-email', {
       body: { 
         actionId: 'order_self_cancelled', 
@@ -699,33 +705,34 @@ export const holdVehicle = async (vin: string, username: string, fullName: strin
   }
 
   // Notify Admin
-  try {
-    await supabase.from('admin_notifications').insert({
-      type: 'vehicle_held',
-      message: `TVBH ${fullName} vừa thao tác Giữ xe cho VIN ${vin}.`
-    });
-  } catch (e) {
-    console.warn('Lỗi tạo thông báo giữ xe:', e);
-  }
+  await notifyAdminAction(`vừa thao tác Giữ xe cho VIN ${vin}.`);
 
   return { data, error: null };
 };
 
 export const releaseVehicle = async (vin: string, outcome: 'released' | 'expired' | 'matched' = 'released') => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.rpc('rpc_release_car', {
+  const result = await supabase.rpc('rpc_release_car', {
     p_vin: vin.trim(),
     p_outcome: outcome
   });
+  if (!result.error && outcome !== 'matched') {
+    await notifyAdminAction(`vừa nhả (bỏ giữ) xe số VIN ${vin}.`);
+  }
+  return result;
 };
 
 export const joinHoldQueue = async (vin: string, username: string, fullName: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.rpc('rpc_join_hold_queue', {
+  const result = await supabase.rpc('rpc_join_hold_queue', {
     p_vin: vin.trim(),
     p_username: username,
     p_full_name: fullName
   });
+  if (!result.error) {
+    await notifyAdminAction(`vừa đăng ký xếp hàng chờ giữ xe số VIN ${vin}.`);
+  }
+  return result;
 };
 
 export const leaveHoldQueue = async (vin: string, username: string) => {
@@ -771,6 +778,7 @@ export const pairVehicle = async (orderId: string, vin: string) => {
   });
 
   if (!result.error) {
+    await notifyAdminAction(`vừa ghép xe số VIN ${vin} vào đơn hàng ${orderId}.`);
     const { data: fullOrder } = await supabase.from('donhang').select('*').eq('so_don_hang', orderId).single();
     supabase.functions.invoke('send-email', {
       body: { 
@@ -795,10 +803,15 @@ export const unpairVehicle = async (orderId: string) => {
     return { data: null, error: fetchError };
   }
 
-  return await supabase.rpc('unpair_donhang_with_khoxe_safe', {
+  const result = await supabase.rpc('unpair_donhang_with_khoxe_safe', {
     p_order_id: orderId,
     p_order_updated_at: order?.updated_at ?? null
   });
+
+  if (!result.error) {
+    await notifyAdminAction(`vừa hủy ghép xe khỏi đơn hàng ${orderId}.`);
+  }
+  return result;
 };
 
 export const addNewVehicle = async (vehicle: KhoxeRow) => {
