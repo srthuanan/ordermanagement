@@ -13,6 +13,20 @@ import {
 } from '../types';
 import { defaultSalesPolicies } from '../constants';
 
+export const notifyAdminAction = async (actionDesc: string) => {
+  if (!supabase) return;
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    const fullName = userData?.user?.user_metadata?.full_name || 'TVBH';
+    await supabase.from('admin_notifications').insert({
+      type: 'tvbh_action',
+      message: `${fullName} ${actionDesc}`
+    });
+  } catch (e) {
+    console.warn('Lỗi tạo thông báo admin:', e);
+  }
+};
+
 export function formatLocalDateTime(date: Date) {
   return new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit',
