@@ -253,56 +253,50 @@ export function useAppData() {
     if (!supabase) return;
 
     // Đăng ký kênh realtime để đồng bộ ngay lập tức khi có bất kỳ ai cập nhật dữ liệu
-      const channel = supabase
+    let realtimeTimeout: NodeJS.Timeout;
+    const triggerReload = () => {
+      clearTimeout(realtimeTimeout);
+      realtimeTimeout = setTimeout(() => {
+        loadWorkspace({ showLoading: false });
+      }, 1000);
+    };
+
+    const channel = supabase
       .channel('schema-db-changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'donhang' },
-        () => {
-          loadWorkspace({ showLoading: false });
-        }
-      )
-      .on(
-        'postgres_changes',
         { event: '*', schema: 'public', table: 'khoxe' },
-        () => {
-          loadWorkspace({ showLoading: false });
-        }
+        triggerReload
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'vehicle_locations' },
-        () => {
-          loadWorkspace({ showLoading: false });
-        }
+        { event: '*', schema: 'public', table: 'donhang' },
+        triggerReload
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'car_hold_activities' },
-        () => {
-          loadWorkspace({ showLoading: false });
-        }
+        triggerReload
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'yeucauxhd' },
-        () => {
-          loadWorkspace({ showLoading: false });
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'vehicle_configs' },
-        () => {
-          loadWorkspace({ showLoading: false });
-        }
+        triggerReload
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'profiles' },
-        () => {
-          loadWorkspace({ showLoading: false });
-        }
+        triggerReload
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vehicle_locations' },
+        triggerReload
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vehicle_configs' },
+        triggerReload
       )
       .subscribe();
 
