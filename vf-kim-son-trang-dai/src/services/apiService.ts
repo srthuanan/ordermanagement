@@ -685,19 +685,28 @@ export const holdVehicle = async (vin: string, username: string, fullName: strin
     body: JSON.stringify({ p_vin: vin.trim(), p_username: username, p_full_name: fullName })
   });
   const data = await res.json();
-  await supabase.from('activity_logs').insert({
-    vin: vin.trim(),
-    action_type: 'hold',
-    performed_by: username,
-    performed_by_name: fullName,
-    details: 'Giữ xe trên hệ thống'
-  }).catch(e => console.warn('Lỗi ghi log giữ xe:', e));
+  
+  try {
+    await supabase.from('activity_logs').insert({
+      vin: vin.trim(),
+      action_type: 'hold',
+      performed_by: username,
+      performed_by_name: fullName,
+      details: 'Giữ xe trên hệ thống'
+    });
+  } catch (e) {
+    console.warn('Lỗi ghi log giữ xe:', e);
+  }
 
   // Notify Admin
-  await supabase.from('admin_notifications').insert({
-    type: 'vehicle_held',
-    message: `TVBH ${fullName} vừa thao tác Giữ xe cho VIN ${vin}.`
-  }).catch(e => console.warn('Lỗi tạo thông báo giữ xe:', e));
+  try {
+    await supabase.from('admin_notifications').insert({
+      type: 'vehicle_held',
+      message: `TVBH ${fullName} vừa thao tác Giữ xe cho VIN ${vin}.`
+    });
+  } catch (e) {
+    console.warn('Lỗi tạo thông báo giữ xe:', e);
+  }
 
   return { data, error: null };
 };

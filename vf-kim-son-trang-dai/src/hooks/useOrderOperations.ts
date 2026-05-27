@@ -138,6 +138,7 @@ export function useOrderOperations({
     setHoldError('');
     try {
       const { data, error } = await apiService.holdVehicle(vin, currentUsername, currentFullName);
+      
       if (error) {
         setHoldError(error.message);
         setSyncState('error');
@@ -168,6 +169,7 @@ export function useOrderOperations({
       }
       return true;
     } catch (err: any) {
+      console.error("CATCH ERROR IN handleHoldVehicle:", err);
       const errMsg = err.message || 'Lỗi kết nối';
       setHoldError(errMsg);
       setSyncState('error');

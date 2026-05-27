@@ -78,6 +78,8 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
     [items]
   );
 
+  const isFilteringHeld = statusFilter.includes('Đang giữ');
+
   const visibleItems = React.useMemo(() => {
     const query = searchText.trim().toLowerCase();
     return items.filter((item) => {
@@ -423,8 +425,13 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                       <td>{item.exterior}</td>
                       <td>{item.interior}</td>
                       <td>
-                        <span className={stockTone[item.status]}>{item.status}</span>
-                        {item.holdExpiry ? <small>Hạn: {item.holdExpiry}</small> : null}
+                        <span className={stockTone[item.status]} style={{ display: 'inline-block', marginBottom: item.status === 'Đang giữ' ? '4px' : '0' }}>{item.status}</span>
+                        {item.status === 'Đang giữ' && (
+                          <div style={{ fontSize: '11px', color: '#64748b', lineHeight: 1.4, marginTop: '2px' }}>
+                            {item.holder && <div style={{ color: '#334155', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '140px' }} title={item.holder}>{item.holder}</div>}
+                            {item.holdExpiry && <div style={{ whiteSpace: 'nowrap' }}>Hạn: {item.holdExpiry}</div>}
+                          </div>
+                        )}
                       </td>
                       <td>
                         <div className="row-actions">
@@ -459,7 +466,10 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                             <button
                               className="row-action-button action-btn-hold"
                               disabled={!canHoldVehicle || isHoldingVin === item.vin}
-                              onClick={() => onHoldItem(item)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onHoldItem(item);
+                              }}
                               title="Giữ xe tạm thời trong 24h."
                             >
                               <PackageCheck size={14} />
