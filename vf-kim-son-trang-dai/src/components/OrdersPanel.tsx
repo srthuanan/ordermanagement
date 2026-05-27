@@ -408,29 +408,31 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           <span>Danh sách</span>
                         </button>
                       <div className="orders-detail-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: canPairOrder ? '1fr 1fr' : '1fr', gap: '8px' }}>
+                          {canPairOrder && (
+                            <button
+                              className="primary-button"
+                              disabled={!selectedCanPair}
+                              title={
+                                selectedCanPair
+                                  ? `Có ${selectedCandidates.length} xe phù hợp trong kho`
+                                  : selectedOrder.status !== 'Chưa ghép'
+                                    ? 'Đơn đã ghép hoặc đã hoàn tất'
+                                    : 'Không có xe rảnh tương ứng trong kho'
+                              }
+                              onClick={() => onPairOrder(selectedOrder)}
+                              style={{ height: '36px', fontSize: '13px', borderRadius: '8px', padding: '0 12px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                            >
+                              <PackageCheck size={16} />
+                              <span>Ghép xe</span>
+                            </button>
+                          )}
                           <button
-                            className="primary-button"
-                            disabled={!selectedCanPair}
-                            title={
-                              selectedCanPair
-                                ? `Có ${selectedCandidates.length} xe phù hợp trong kho`
-                                : selectedOrder.status !== 'Chưa ghép'
-                                  ? 'Đơn đã ghép hoặc đã hoàn tất'
-                                  : 'Không có xe rảnh tương ứng trong kho'
-                            }
-                            onClick={() => onPairOrder(selectedOrder)}
-                            style={{ height: '36px', fontSize: '13px', borderRadius: '8px', padding: '0 12px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
-                          >
-                            <PackageCheck size={16} />
-                            <span>Ghép xe</span>
-                          </button>
-                          <button
-                            className="ghost-button"
+                            className={canPairOrder ? "ghost-button" : "primary-button"}
                             disabled={!selectedCanInvoice}
                             title={selectedCanInvoice ? 'Cập nhật hồ sơ bàn giao xe & xuất hóa đơn GTGT' : 'Chỉ đơn đã ghép mới được chốt xuất hóa đơn'}
                             onClick={() => onInvoiceOrder(selectedOrder)}
-                            style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc', padding: '0 12px' }}
+                            style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: canPairOrder ? '1px solid #cbd5e1' : 'none', backgroundColor: canPairOrder ? '#f8fafc' : undefined, padding: '0 12px' }}
                           >
                             <FileCheck size={16} />
                             <span>Xuất HĐ</span>
@@ -746,29 +748,31 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                     </div>
 
                     <div className="orders-detail-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: canPairOrder ? '1fr 1fr' : '1fr', gap: '8px' }}>
+                        {canPairOrder && (
+                          <button
+                            className="primary-button"
+                            disabled={!selectedCanPair}
+                            title={
+                              selectedCanPair
+                                ? `Có ${selectedCandidates.length} xe phù hợp trong kho`
+                                : selectedOrder.status !== 'Chưa ghép'
+                                  ? 'Đơn đã ghép hoặc đã hoàn tất'
+                                  : 'Không có xe rảnh tương ứng trong kho'
+                            }
+                            onClick={() => onPairOrder(selectedOrder)}
+                            style={{ height: '36px', fontSize: '13px', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                          >
+                            <PackageCheck size={16} />
+                            <span>Ghép xe</span>
+                          </button>
+                        )}
                         <button
-                          className="primary-button"
-                          disabled={!selectedCanPair}
-                          title={
-                            selectedCanPair
-                              ? `Có ${selectedCandidates.length} xe phù hợp trong kho`
-                              : selectedOrder.status !== 'Chưa ghép'
-                                ? 'Đơn đã ghép hoặc đã hoàn tất'
-                                : 'Không có xe rảnh tương ứng trong kho'
-                          }
-                          onClick={() => onPairOrder(selectedOrder)}
-                          style={{ height: '36px', fontSize: '13px', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
-                        >
-                          <PackageCheck size={16} />
-                          <span>Ghép xe</span>
-                        </button>
-                        <button
-                          className="ghost-button"
+                          className={canPairOrder ? "ghost-button" : "primary-button"}
                           disabled={!selectedCanInvoice}
                           title={selectedCanInvoice ? 'Cập nhật hồ sơ bàn giao xe & xuất hóa đơn GTGT' : 'Chỉ đơn đã ghép mới được chốt xuất hóa đơn'}
                           onClick={() => onInvoiceOrder(selectedOrder)}
-                          style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f8fafc' }}
+                          style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: canPairOrder ? '1px solid #cbd5e1' : 'none', backgroundColor: canPairOrder ? '#f8fafc' : undefined }}
                         >
                           <FileCheck size={16} />
                           <span>Xuất HĐ</span>
