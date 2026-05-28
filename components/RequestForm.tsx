@@ -7,6 +7,7 @@ import FileUpload from './ui/FileUpload';
 import CarImage from './ui/CarImage';
 import Button from './ui/Button';
 import MultiSelectDropdown from './ui/MultiSelectDropdown';
+import SelectPolicyModal from './modals/SelectPolicyModal';
 
 interface ImageSource {
     src: string;
@@ -52,7 +53,9 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         ngay_coc: '',
         thoi_gian_can_xe: '',
         vin: '',
+        chinh_sach: '',
     });
+    const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
     const [chicFile, setChicFile] = useState<File | null>(null);
     const [isProcessingOcr, setIsProcessingOcr] = useState(false);
     const [ocrStatus, setOcrStatus] = useState('');
@@ -190,7 +193,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
     }, []);
 
     const handleClearForm = () => {
-        setFormData({ ten_ban_hang: currentUser, ten_khach_hang: '', so_don_hang: '', dong_xe: '', phien_ban: '', ngoai_that: '', noi_that: '', ngay_coc: '', thoi_gian_can_xe: '', vin: '', });
+        setFormData({ ten_ban_hang: currentUser, ten_khach_hang: '', so_don_hang: '', dong_xe: '', phien_ban: '', ngoai_that: '', noi_that: '', ngay_coc: '', thoi_gian_can_xe: '', vin: '', chinh_sach: '' });
         handleFileSelect(null);
         setStep(1);
     };
@@ -375,6 +378,28 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                             </InputGroup>
                                         </div>
                                     )}
+                                    <div className="md:col-span-2">
+                                        <InputGroup label="Chính sách" htmlFor="chinh_sach" icon="fa-scroll">
+                                            <div className="relative">
+                                                <input
+                                                    id="chinh_sach"
+                                                    type="text"
+                                                    value={formData.chinh_sach || ''}
+                                                    readOnly
+                                                    placeholder="Chọn chính sách (tùy chọn)..."
+                                                    className={`${inputClass} !py-2.5 cursor-pointer pr-10`}
+                                                    onClick={() => setIsPolicyModalOpen(true)}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-accent-primary p-2 hover:bg-slate-100 rounded-full transition-colors"
+                                                    onClick={() => setIsPolicyModalOpen(true)}
+                                                >
+                                                    <i className="fas fa-edit"></i>
+                                                </button>
+                                            </div>
+                                        </InputGroup>
+                                    </div>
                                 </div>
                                 <div className="p-4 md:p-5 bg-slate-50/50 backdrop-blur-sm rounded-2xl border border-slate-200/50 shadow-inner">
                                     <div className="flex justify-between items-center mb-3">
@@ -418,6 +443,17 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                     )}
                 </div>
             </div>
+
+            <SelectPolicyModal
+                isOpen={isPolicyModalOpen}
+                onClose={() => setIsPolicyModalOpen(false)}
+                onSelect={(policy) => {
+                    setFormData(prev => ({ ...prev, chinh_sach: policy }));
+                }}
+                currentPolicy={formData.chinh_sach}
+                carModel={formData.dong_xe}
+                compact={true}
+            />
         </form>
     );
 };

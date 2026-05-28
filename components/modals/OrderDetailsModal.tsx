@@ -348,8 +348,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order: in
                                             </div>
 
                                             <div className="flex-1 flex flex-col md:flex-row gap-3 md:gap-8 items-stretch min-h-0">
-                                                <div className={`flex-shrink-0 w-full md:w-3/5 flex items-center justify-center min-h-[100px] ${hasPolicy ? 'md:min-h-[150px] md:max-h-[180px]' : 'md:min-h-[200px] md:max-h-[250px]'} h-auto rounded-xl p-1.5 ${hasPolicy ? 'md:p-2' : 'md:p-4'} bg-gradient-to-br from-gray-50 to-white border border-gray-100 shadow-inner hover:shadow-lg transition-all duration-300`}>
-                                                    <CarImage model={order['Dòng xe']} exteriorColor={order['Ngoại thất']} className={`w-full h-auto object-contain ${hasPolicy ? 'max-h-[120px] md:max-h-[180px]' : 'max-h-[130px] md:max-h-[250px]'} drop-shadow-2xl transform hover:scale-105 transition-transform duration-500`} alt={order['Dòng xe']} />
+                                                <div className={`flex-shrink-0 w-full md:w-3/5 flex items-center justify-center min-h-[120px] ${hasPolicy ? 'md:min-h-[180px]' : 'md:min-h-[200px]'} rounded-xl p-2 md:p-4 bg-gradient-to-br from-gray-50 to-white border border-gray-100 shadow-inner hover:shadow-lg transition-all duration-300`}>
+                                                    <CarImage model={order['Dòng xe']} exteriorColor={order['Ngoại thất']} className={`w-full h-full object-contain drop-shadow-2xl transform hover:scale-105 transition-transform duration-500`} alt={order['Dòng xe']} />
                                                 </div>
 
                                                 <div className="flex-1 grid grid-cols-2 md:grid-cols-1 gap-x-4 gap-y-2 md:gap-y-0 md:justify-around text-xs md:text-base">

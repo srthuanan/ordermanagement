@@ -128,8 +128,11 @@ export const useAdminData = ({
             if (order['Số đơn hàng']) {
                 if (order.VIN && stockMap.has(order.VIN)) {
                     const matchedCar = stockMap.get(order.VIN)!;
-                    order["Số máy"] = matchedCar["Số máy"] || matchedCar.so_may;
-                    order["Mã DMS"] = matchedCar["Mã DMS"] || matchedCar.ma_dms;
+                    // Chỉ override nếu khoxe thực sự có giá trị, không ghi đè bằng chuỗi rỗng
+                    const carSoMay = matchedCar["Số máy"] || matchedCar.so_may;
+                    const carMaDms = matchedCar["Mã DMS"] || matchedCar.ma_dms;
+                    if (carSoMay) order["Số máy"] = carSoMay;
+                    if (carMaDms) order["Mã DMS"] = carMaDms;
                 }
                 oStatusMap.set(order['Số đơn hàng'], order); 
             }

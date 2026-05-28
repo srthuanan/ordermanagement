@@ -173,9 +173,12 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
             stockData.forEach((car: any) => {
                 if (car.VIN) {
                     const vin = car.VIN.trim().toUpperCase();
+                    const carEngine = car['Số máy'] || '';
+                    const carDms = car['Mã DMS'] || '';
                     vinMap[vin] = {
-                        engine: car['Số máy'] || vinMap[vin]?.engine,
-                        dms: car['Mã DMS'] || vinMap[vin]?.dms
+                        // Giữ lại giá trị cũ nếu khoxe không có số máy/mã DMS
+                        engine: carEngine || vinMap[vin]?.engine,
+                        dms: carDms || vinMap[vin]?.dms
                     };
                 }
             });

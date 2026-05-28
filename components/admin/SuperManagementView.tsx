@@ -72,6 +72,25 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
         }
     };
 
+    const [isSyncingEngine, setIsSyncingEngine] = useState(false);
+
+    const handleSyncEngineNumbers = async () => {
+        setIsSyncingEngine(true);
+        try {
+            const result = await (apiService as any).performAdminAction('syncEngineNumbers', {});
+            if (result.status === 'SUCCESS') {
+                showToast('Thành Công', result.message, 'success');
+                onSuccess(); // refresh data
+            } else {
+                showToast('Lỗi', result.message || 'Đồng bộ thất bại.', 'error');
+            }
+        } catch (e: any) {
+            showToast('Lỗi', e.message, 'error');
+        } finally {
+            setIsSyncingEngine(false);
+        }
+    };
+
     // --- TRỢ LÝ CHẠY NGẦM (BACKGROUND AUTO-SYNC) ---
     useEffect(() => {
         let isMounted = true;
@@ -300,8 +319,9 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                             <option value="Đã hủy">Đã hủy</option>
                         </select>
                     </div>
-                    <div className="relative group/audit">
-                        {isBackgroundAuditing && (
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                        <div className="relative group/audit">
+                            {isBackgroundAuditing && (
                             <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl blur opacity-30 animate-pulse"></div>
                         )}
                         <button 
@@ -334,6 +354,31 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-indigo-500/10 to-transparent -translate-x-full group-hover/audit:translate-x-full transition-transform duration-1000 ease-in-out"></div>
                             )}
                         </button>
+                        </div>
+                        <div className="relative group/sync">
+                            <button 
+                                type="button" 
+                                onClick={handleSyncEngineNumbers}
+                                disabled={isSyncingEngine}
+                                className={`w-full flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all relative overflow-hidden h-full ${
+                                    isSyncingEngine 
+                                        ? 'bg-blue-50 border border-blue-200 text-blue-700 shadow-inner' 
+                                        : 'bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:shadow-md hover:shadow-blue-500/10'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2 font-bold">
+                                    {isSyncingEngine ? (
+                                        <i className="fas fa-spinner fa-spin text-blue-600"></i>
+                                    ) : (
+                                        <i className="fas fa-microchip text-blue-500"></i>
+                                    )}
+                                    <span className="text-xs">Đồng Bộ Số Máy</span>
+                                </div>
+                                <div className="text-[9px] font-medium mt-1 opacity-80 text-center">
+                                    {isSyncingEngine ? 'Đang cập nhật...' : 'Cập nhật thủ công'}
+                                </div>
+                            </button>
+                        </div>
                     </div>
                 </div>
 

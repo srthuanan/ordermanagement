@@ -30,7 +30,8 @@
   "exclude": [
     "vite.config.ts",
     "supabase",
-    "scratch"
+    "scratch",
+    "vf-kim-son-trang-dai"
   ],
   "references": [
     {

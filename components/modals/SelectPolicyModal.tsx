@@ -8,9 +8,10 @@ interface SelectPolicyModalProps {
     onSelect: (policyName: string) => void;
     currentPolicy?: string;
     carModel?: string;
+    compact?: boolean;
 }
 
-const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({ isOpen, onClose, onSelect, currentPolicy, carModel }) => {
+const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({ isOpen, onClose, onSelect, currentPolicy, carModel, compact = false }) => {
     const [policies, setPolicies] = useState<Policy[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -70,11 +71,13 @@ const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({ isOpen, onClose, 
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
             <div 
-                className="relative bg-white w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-scale-in"
+                className={`relative bg-white w-full rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-scale-in ${
+                    compact ? 'max-w-xl max-h-[70vh]' : 'max-w-2xl max-h-[85vh]'
+                }`}
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-amber-50 to-white">
+                <div className={`px-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-amber-50 to-white ${compact ? 'py-3' : 'py-4'}`}>
                     <div>
                         <h2 className="text-lg font-black text-slate-800 tracking-tight">Chọn Chính Sách</h2>
                         <p className="text-[10px] text-amber-600 font-bold uppercase tracking-wider">
@@ -113,7 +116,7 @@ const SelectPolicyModal: React.FC<SelectPolicyModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 {/* List */}
-                <div className="flex-1 overflow-y-auto p-2 min-h-[300px] custom-scrollbar">
+                <div className={`flex-1 overflow-y-auto p-2 custom-scrollbar ${compact ? 'min-h-[200px]' : 'min-h-[300px]'}`}>
                     {loading ? (
                         <div className="flex flex-col items-center justify-center h-full py-12 space-y-4">
                             <i className="fas fa-spinner fa-spin text-amber-500 text-2xl"></i>

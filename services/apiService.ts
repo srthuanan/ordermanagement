@@ -1112,6 +1112,7 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
             vin: vinDk,
             thoi_gian_ghep: pairedTime,
             thoi_gian_can_xe: payloadData.thoi_gian_can_xe || null,
+            chinh_sach: payloadData.chinh_sach || null,
         };
 
         const { error } = await supabase.from('donhang')
@@ -4629,6 +4630,43 @@ export const performAdminAction = async (action: string, params: Record<string, 
             }
             await logAction('AUDIT_FIX', { count: fixedCount, issues: issuesToFix }, 'system', 'audit');
             return { status: 'SUCCESS', message: `Đã tự động xử lý thành công ${fixedCount} lỗi bất đồng bộ.` };
+        }
+        if (action === 'syncEngineNumbers') {
+            let fixedCount = 0;
+            const { data: donhangList } = await supabaseAdmin.from('donhang').select('so_don_hang, vin').not('vin', 'is', null).neq('vin', '');
+            if (donhangList && donhangList.length > 0) {
+                const targets = donhangList.filter((d: any) => !d.so_may || d.so_may.trim() === '');
+                for (const order of targets) {
+                    const { data: t } = await supabaseAdmin.from('thongtinxe').select('so_may').eq('vin', order.vin).maybeSingle();
+                    let so_may = t?.so_may;
+                    if (!so_may) {
+                        const { data: k } = await supabaseAdmin.from('khoxe').select('so_may').eq('vin', order.vin).maybeSingle();
+                        so_may = k?.so_may;
+                    }
+                    if (so_may && so_may.trim() !== '') {
+                        await supabaseAdmin.from('donhang').update({ so_may }).eq('so_don_hang', order.so_don_hang);
+                        fixedCount++;
+                    }
+                }
+            }
+            const { data: ycxList } = await supabaseAdmin.from('yeucauxhd').select('id, vin, so_may').not('vin', 'is', null).neq('vin', '');
+            if (ycxList && ycxList.length > 0) {
+                const targets = ycxList.filter((d: any) => !d.so_may || d.so_may.trim() === '');
+                for (const y of targets) {
+                    const { data: t } = await supabaseAdmin.from('thongtinxe').select('so_may').eq('vin', y.vin).maybeSingle();
+                    let so_may = t?.so_may;
+                    if (!so_may) {
+                        const { data: k } = await supabaseAdmin.from('khoxe').select('so_may').eq('vin', y.vin).maybeSingle();
+                        so_may = k?.so_may;
+                    }
+                    if (so_may && so_may.trim() !== '') {
+                        await supabaseAdmin.from('yeucauxhd').update({ so_may }).eq('id', y.id);
+                        fixedCount++;
+                    }
+                }
+            }
+            await logAction('SYNC_ENGINE_NUMBERS', { count: fixedCount }, 'system', 'audit');
+            return { status: 'SUCCESS', message: `Đã đồng bộ bổ sung thành công số máy cho ${fixedCount} bản ghi.` };
         }
     return await postApi({ action, ...params });
 };

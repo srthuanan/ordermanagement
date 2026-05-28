@@ -105,7 +105,12 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const [vinClubConfirmed, setVinClubConfirmed] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const isSubmittingRef = useRef(false);
-    const [policy, setPolicy] = useState<string[]>([]);
+    const [policy, setPolicy] = useState<string[]>(() => {
+        if (order && order["CHÍNH SÁCH"]) {
+            return order["CHÍNH SÁCH"].split('; ').filter(Boolean);
+        }
+        return [];
+    });
     const [commission, setCommission] = useState('');
     const [vpoint, setVpoint] = useState('');
     const [xeXangVin, setXeXangVin] = useState('');
@@ -237,7 +242,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         if (savedData) {
             try {
                 const parsed = JSON.parse(savedData);
-                if (parsed.policy) setPolicy(parsed.policy);
+                if (parsed.policy && parsed.policy.length > 0) setPolicy(parsed.policy);
                 if (parsed.commission) setCommission(parsed.commission);
                 if (parsed.vpoint) setVpoint(parsed.vpoint);
             } catch (e) { console.error(e); }
