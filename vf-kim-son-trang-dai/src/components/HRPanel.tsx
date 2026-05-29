@@ -201,201 +201,49 @@ const SubmitModal: React.FC<SubmitModalProps> = ({ profile, username, onClose, o
   );
 };
 
-// ─── Review Modal ─────────────────────────────────────────────────────────────
+// ─── Master-Detail Components ──────────────────────────────────────────────────
 
-interface ReviewModalProps {
-  request: HrLeaveRequestRow;
-  reviewerName: string;
-  onClose: () => void;
-  onSuccess: () => void;
-}
-
-const ReviewModal: React.FC<ReviewModalProps> = ({ request, reviewerName, onClose, onSuccess }) => {
-  const [decision, setDecision] = useState<'approved' | 'rejected'>('approved');
-  const [note, setNote] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async () => {
-    setLoading(true);
-    await apiService.reviewHrLeaveRequest(request.id, decision, note, reviewerName);
-    // Notify the requester via interactions table
-    try {
-      const { supabase } = await import('../services/supabaseClient');
-      if (supabase) {
-        await supabase.from('interactions').insert({
-          category: 'NOTIFICATION',
-          type: decision === 'approved' ? 'success' : 'warning',
-          recipient: request.requester_username,
-          message: decision === 'approved'
-            ? `✅ Yêu cầu ${TYPE_LABEL[request.type]} của bạn đã được ${reviewerName} phê duyệt.${note ? ' Ghi chú: ' + note : ''}`
-            : `❌ Yêu cầu ${TYPE_LABEL[request.type]} của bạn bị ${reviewerName} từ chối.${note ? ' Lý do: ' + note : ''}`,
-          actor_name: reviewerName,
-          target_view: 'hr',
-          target_id: request.id
-        });
-      }
-    } catch (_) {}
-    setLoading(false);
-    onSuccess();
-    onClose();
-  };
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-      <div style={{ background: '#fff', borderRadius: '20px', width: '100%', maxWidth: '440px', boxShadow: '0 24px 64px rgba(0,0,0,0.2)', overflow: 'hidden' }}>
-        <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #f1f5f9', background: 'linear-gradient(135deg, #fdf4ff, #ede9fe)' }}>
-          <p style={{ margin: 0, fontSize: '11px', fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Phê duyệt</p>
-          <h2 style={{ margin: '4px 0 0', fontSize: '18px', fontWeight: 800, color: '#0f172a' }}>Xử lý yêu cầu</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748b' }}>
-            <strong>{request.requester_name}</strong> — {TYPE_LABEL[request.type]} — {fmtDate(request.start_date)}
-          </p>
-        </div>
-
-        <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            {(['approved', 'rejected'] as const).map(d => (
-              <button key={d} onClick={() => setDecision(d)} style={{
-                padding: '12px', borderRadius: '12px',
-                border: `2px solid ${decision === d ? (d === 'approved' ? '#059669' : '#dc2626') : '#e2e8f0'}`,
-                background: decision === d ? (d === 'approved' ? '#ecfdf5' : '#fef2f2') : '#f8fafc',
-                color: decision === d ? (d === 'approved' ? '#059669' : '#dc2626') : '#64748b',
-                fontWeight: 700, fontSize: '13px', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
-              }}>
-                {d === 'approved' ? <CheckCircle2 size={14} /> : <XCircle size={14} />}
-                {d === 'approved' ? 'Phê duyệt' : 'Từ chối'}
-              </button>
-            ))}
-          </div>
-
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <span style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Ghi chú (tuỳ chọn)</span>
-            <textarea value={note} onChange={e => setNote(e.target.value)} rows={3}
-              placeholder="Thêm ghi chú cho nhân viên..."
-              style={{ padding: '10px 12px', borderRadius: '10px', border: '1.5px solid #e2e8f0', fontSize: '13px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', background: '#f8fafc' }} />
-          </label>
-
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: '10px', border: '1.5px solid #e2e8f0', background: '#f8fafc', color: '#475569', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
-              Hủy
-            </button>
-            <button onClick={handleSubmit} disabled={loading}
-              style={{ padding: '10px 24px', borderRadius: '10px', border: 'none', background: decision === 'approved' ? '#059669' : '#dc2626', color: '#fff', fontWeight: 700, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', opacity: loading ? 0.7 : 1 }}>
-              {loading ? <RefreshCw size={13} className="spin" /> : <FileCheck size={14} />}
-              {loading ? 'Đang xử lý...' : 'Xác nhận'}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ─── RequestCard ──────────────────────────────────────────────────────────────
-
-interface RequestCardProps {
+interface RequestListItemProps {
   req: HrLeaveRequestRow;
+  isSelected: boolean;
+  onClick: () => void;
   isAdmin: boolean;
-  onReview: (req: HrLeaveRequestRow) => void;
-  onDelete: (req: HrLeaveRequestRow) => void;
 }
 
-const RequestCard: React.FC<RequestCardProps> = ({ req, isAdmin, onReview, onDelete }) => {
-  const [expanded, setExpanded] = useState(false);
-
+const RequestListItem: React.FC<RequestListItemProps> = ({ req, isSelected, onClick, isAdmin }) => {
   return (
-    <div style={{
-      background: '#fff', borderRadius: '14px',
-      border: `1px solid ${req.status === 'pending' ? '#fde68a' : req.status === 'approved' ? '#a7f3d0' : '#fecaca'}`,
-      overflow: 'hidden', transition: 'box-shadow 0.2s',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.05)'
-    }}>
-      {/* Card header */}
-      <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
-        onClick={() => setExpanded(p => !p)}>
-        <div style={{
-          width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
-          background: req.type === 'nghi_phep' ? '#eff6ff' : '#fff7ed',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '18px'
-        }}>
-          {req.type === 'nghi_phep' ? '🏖️' : '⏰'}
-        </div>
-
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-              {req.type === 'nghi_phep' ? 'Nghỉ phép' : 'Đi trễ'}
-            </span>
-            <StatusBadge status={req.status} />
-          </div>
-          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {isAdmin && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}><User size={11} /> {req.requester_name}</span>
-            )}
-            <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-              <CalendarDays size={11} />
-              {fmtDate(req.start_date)}
-              {req.end_date && req.end_date !== req.start_date ? ` → ${fmtDate(req.end_date)}` : ''}
-              {req.type === 'nghi_phep' && req.session ? ` (${SESSION_LABEL[req.session]})` : ''}
-              {req.type === 'di_tre' && req.late_time ? ` — đến lúc ${req.late_time}` : ''}
-            </span>
-            {req.type === 'nghi_phep' && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                <Clock size={11} /> {daysBetween(req.start_date, req.end_date)} ngày
-              </span>
-            )}
-          </div>
-        </div>
-
-        <ChevronDown size={16} style={{ color: '#94a3b8', transform: expanded ? 'rotate(180deg)' : 'none', transition: '0.2s', flexShrink: 0 }} />
+    <div
+      onClick={onClick}
+      style={{
+        padding: '12px', borderRadius: '12px', cursor: 'pointer', transition: 'all 0.2s',
+        background: isSelected ? '#eff6ff' : '#fff',
+        border: `1px solid ${isSelected ? '#bae6fd' : '#f1f5f9'}`,
+        boxShadow: isSelected ? '0 2px 8px rgba(2,132,199,0.1)' : 'none',
+        display: 'flex', gap: '12px', alignItems: 'flex-start'
+      }}
+    >
+      <div style={{
+        width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
+        background: req.type === 'nghi_phep' ? '#e0f2fe' : '#ffedd5',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px'
+      }}>
+        {req.type === 'nghi_phep' ? '🏖️' : '⏰'}
       </div>
-
-      {/* Expanded body */}
-      {expanded && (
-        <div style={{ padding: '0 16px 14px', borderTop: '1px solid #f1f5f9', background: '#fafafa' }}>
-          <div style={{ paddingTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div>
-              <p style={{ margin: '0 0 3px', fontSize: '10px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Lý do</p>
-              <p style={{ margin: 0, fontSize: '13px', color: '#334155', lineHeight: 1.5 }}>{req.reason}</p>
-            </div>
-
-            {req.reviewer_note && (
-              <div style={{ padding: '10px 12px', borderRadius: '10px', background: req.status === 'approved' ? '#ecfdf5' : '#fef2f2', border: `1px solid ${req.status === 'approved' ? '#a7f3d0' : '#fecaca'}` }}>
-                <p style={{ margin: '0 0 2px', fontSize: '10px', fontWeight: 700, color: req.status === 'approved' ? '#059669' : '#dc2626', textTransform: 'uppercase' }}>
-                  Ghi chú từ Admin
-                </p>
-                <p style={{ margin: 0, fontSize: '12px', color: '#334155' }}>{req.reviewer_note}</p>
-              </div>
-            )}
-
-            {req.reviewed_at && (
-              <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8' }}>
-                Xử lý lúc: {fmtDateTime(req.reviewed_at)} {req.reviewed_by ? `bởi ${req.reviewed_by}` : ''}
-              </p>
-            )}
-
-            {!req.reviewed_at && (
-              <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8' }}>
-                Gửi lúc: {fmtDateTime(req.created_at)}
-              </p>
-            )}
-
-            <div style={{ display: 'flex', gap: '8px', marginTop: '4px', justifyContent: 'flex-end' }}>
-              {req.status === 'pending' && !isAdmin && (
-                <button onClick={() => onDelete(req)} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', borderRadius: '8px', border: '1px solid #fecaca', background: '#fff', color: '#dc2626', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                  <Trash2 size={12} /> Rút yêu cầu
-                </button>
-              )}
-              {isAdmin && req.status === 'pending' && (
-                <button onClick={() => onReview(req)} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 14px', borderRadius: '8px', border: 'none', background: '#7c3aed', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
-                  <FileCheck size={12} /> Xử lý
-                </button>
-              )}
-            </div>
-          </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <span style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {isAdmin ? req.requester_name : (req.type === 'nghi_phep' ? 'Nghỉ phép' : 'Đi trễ')}
+          </span>
+          <StatusBadge status={req.status} />
         </div>
-      )}
+        <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <CalendarDays size={12} />
+          {fmtDate(req.start_date)}
+        </div>
+        <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {req.reason}
+        </p>
+      </div>
     </div>
   );
 };
@@ -408,13 +256,43 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
   const [typeFilter, setTypeFilter] = useState<'all' | 'nghi_phep' | 'di_tre'>('all');
   const [searchQ, setSearchQ] = useState('');
   const [showSubmit, setShowSubmit] = useState(false);
-  const [reviewing, setReviewing] = useState<HrLeaveRequestRow | null>(null);
+  
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [reviewNote, setReviewNote] = useState('');
+  const [processing, setProcessing] = useState(false);
 
   const pendingCount = requests.filter(r => r.status === 'pending').length;
 
-  const handleDelete = async (req: HrLeaveRequestRow) => {
+  const handleDelete = async (reqId: string) => {
     if (!confirm('Bạn có chắc muốn rút yêu cầu này không?')) return;
-    await apiService.deleteHrLeaveRequest(req.id);
+    await apiService.deleteHrLeaveRequest(reqId);
+    if (selectedId === reqId) setSelectedId(null);
+    onReload();
+  };
+
+  const handleReview = async (req: HrLeaveRequestRow, decision: 'approved' | 'rejected') => {
+    if (!currentProfile) return;
+    setProcessing(true);
+    await apiService.reviewHrLeaveRequest(req.id, decision, reviewNote, currentProfile.full_name);
+    // Notify the requester
+    try {
+      const { supabase } = await import('../services/supabaseClient');
+      if (supabase) {
+        await supabase.from('interactions').insert({
+          category: 'NOTIFICATION',
+          type: decision === 'approved' ? 'success' : 'warning',
+          recipient: req.requester_username,
+          message: decision === 'approved'
+            ? `✅ Yêu cầu ${TYPE_LABEL[req.type]} của bạn đã được phê duyệt.${reviewNote ? ' Ghi chú: ' + reviewNote : ''}`
+            : `❌ Yêu cầu ${TYPE_LABEL[req.type]} của bạn bị từ chối.${reviewNote ? ' Lý do: ' + reviewNote : ''}`,
+          actor_name: currentProfile.full_name,
+          target_view: 'hr',
+          target_id: req.id
+        });
+      }
+    } catch (_) {}
+    setProcessing(false);
+    setReviewNote('');
     onReload();
   };
 
@@ -430,6 +308,8 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
     });
   }, [requests, filter, typeFilter, searchQ]);
 
+  const selectedReq = useMemo(() => filtered.find(r => r.id === selectedId) || null, [filtered, selectedId]);
+
   const FILTER_TABS = [
     { key: 'all', label: 'Tất cả', count: requests.length },
     { key: 'pending', label: 'Chờ duyệt', count: requests.filter(r => r.status === 'pending').length },
@@ -438,110 +318,235 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
   ] as const;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px' }}>
 
       {/* ── Top bar ── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px',
-        padding: '12px 16px', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0'
+        padding: '16px 20px', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #0284c7, #0ea5e9)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CalendarDays size={18} color="#fff" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #0284c7, #38bdf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(2,132,199,0.2)' }}>
+            <CalendarDays size={20} color="#fff" />
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>Quản lý Nhân sự</h2>
-            <p style={{ margin: 0, fontSize: '11px', color: '#64748b' }}>Nghỉ phép · Đi trễ · Phê duyệt</p>
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>Quản lý Nhân sự</h2>
+            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Phê duyệt nghỉ phép & đi trễ</p>
           </div>
-          {isAdmin && pendingCount > 0 && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '999px', background: '#fef3c7', color: '#d97706', fontSize: '11px', fontWeight: 800, border: '1px solid #fde68a' }}>
-              <Clock3 size={11} /> {pendingCount} chờ duyệt
-            </span>
-          )}
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={onReload} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', borderRadius: '10px', border: '1.5px solid #e2e8f0', background: '#f8fafc', color: '#475569', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-            <RefreshCw size={13} /> Làm mới
+        {/* Stats inline for admin */}
+        {isAdmin && (
+          <div style={{ display: 'flex', gap: '8px', background: '#f8fafc', padding: '6px', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+            <div style={{ padding: '6px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Tất cả</span>
+              <span style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>{requests.length}</span>
+            </div>
+            <div style={{ width: '1px', background: '#e2e8f0', margin: '4px 0' }} />
+            <div style={{ padding: '6px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <span style={{ fontSize: '10px', fontWeight: 700, color: '#d97706', textTransform: 'uppercase' }}>Chờ duyệt</span>
+              <span style={{ fontSize: '15px', fontWeight: 800, color: '#d97706' }}>{pendingCount}</span>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button onClick={onReload} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+            <RefreshCw size={14} /> Làm mới
           </button>
           {!isAdmin && (
-            <button onClick={() => setShowSubmit(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #0284c7, #0ea5e9)', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 8px rgba(2,132,199,0.3)' }}>
+            <button onClick={() => setShowSubmit(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #0284c7, #0ea5e9)', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(2,132,199,0.3)', transition: 'all 0.2s' }}>
               <Plus size={14} /> Gửi yêu cầu
             </button>
           )}
         </div>
       </div>
 
-      {/* ── Stats row (Admin only) ── */}
-      {isAdmin && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
-          {[
-            { label: 'Tổng yêu cầu', value: requests.length, color: '#0284c7', bg: '#eff6ff' },
-            { label: 'Chờ duyệt', value: requests.filter(r => r.status === 'pending').length, color: '#d97706', bg: '#fffbeb' },
-            { label: 'Đã duyệt', value: requests.filter(r => r.status === 'approved').length, color: '#059669', bg: '#ecfdf5' },
-            { label: 'Từ chối', value: requests.filter(r => r.status === 'rejected').length, color: '#dc2626', bg: '#fef2f2' },
-          ].map(stat => (
-            <div key={stat.label} style={{ background: stat.bg, borderRadius: '12px', padding: '12px 16px', border: `1px solid ${stat.color}20` }}>
-              <p style={{ margin: '0 0 2px', fontSize: '10px', fontWeight: 700, color: stat.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.label}</p>
-              <p style={{ margin: 0, fontSize: '22px', fontWeight: 900, color: stat.color }}>{stat.value}</p>
+      {/* ── Split Layout ── */}
+      <div style={{ display: 'flex', gap: '16px', flex: 1, minHeight: 0 }}>
+        
+        {/* LEFT PANE: List */}
+        <div style={{
+          width: '380px', display: 'flex', flexDirection: 'column', gap: '12px',
+          background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.03)', overflow: 'hidden'
+        }}>
+          {/* List Header / Filters */}
+          <div style={{ padding: '16px 16px 0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '4px' }} className="custom-scrollbar">
+              {FILTER_TABS.map(tab => (
+                <button key={tab.key} onClick={() => setFilter(tab.key)} style={{
+                  display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap',
+                  padding: '6px 12px', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+                  border: filter === tab.key ? '1px solid transparent' : '1px solid #e2e8f0',
+                  background: filter === tab.key ? '#eff6ff' : '#fff',
+                  color: filter === tab.key ? '#0284c7' : '#64748b'
+                }}>
+                  {tab.label}
+                  <span style={{ background: filter === tab.key ? '#0284c7' : '#f1f5f9', color: filter === tab.key ? '#fff' : '#64748b', borderRadius: '99px', padding: '0 6px', fontSize: '10px' }}>
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
 
-      {/* ── Filters ── */}
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center', padding: '10px 14px', background: '#fff', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-        {/* Status tabs */}
-        <div style={{ display: 'flex', gap: '4px', flex: 1, flexWrap: 'wrap' }}>
-          {FILTER_TABS.map(tab => (
-            <button key={tab.key} onClick={() => setFilter(tab.key)} style={{
-              display: 'flex', alignItems: 'center', gap: '5px',
-              padding: '5px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
-              border: filter === tab.key ? '1px solid #0284c7' : '1px solid #e2e8f0',
-              background: filter === tab.key ? '#eff6ff' : '#f8fafc',
-              color: filter === tab.key ? '#0284c7' : '#64748b'
-            }}>
-              {tab.label}
-              <span style={{ background: filter === tab.key ? '#0284c7' : '#e2e8f0', color: filter === tab.key ? '#fff' : '#64748b', borderRadius: '99px', padding: '0 5px', fontSize: '10px', fontWeight: 800 }}>
-                {tab.count}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Type filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', borderLeft: '1px solid #e2e8f0', paddingLeft: '10px' }}>
-          <Filter size={12} style={{ color: '#94a3b8' }} />
-          <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as any)}
-            style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '4px 8px', fontSize: '11px', fontWeight: 600, background: '#f8fafc', color: '#475569', outline: 'none' }}>
-            <option value="all">Tất cả loại</option>
-            <option value="nghi_phep">Nghỉ phép</option>
-            <option value="di_tre">Đi trễ</option>
-          </select>
-        </div>
-
-        {/* Search (admin only) */}
-        {isAdmin && (
-          <div style={{ position: 'relative' }}>
-            <Search size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-            <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Tìm nhân viên..." style={{ paddingLeft: '26px', paddingRight: '10px', height: '30px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '11px', background: '#f8fafc', outline: 'none', width: '150px' }} />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as any)}
+                style={{ flex: 1, padding: '8px 10px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '12px', fontWeight: 600, background: '#f8fafc', color: '#475569', outline: 'none' }}>
+                <option value="all">Tất cả loại</option>
+                <option value="nghi_phep">🏖️ Nghỉ phép</option>
+                <option value="di_tre">⏰ Đi trễ</option>
+              </select>
+              {isAdmin && (
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                  <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Tìm nhân viên..." style={{ width: '100%', padding: '8px 10px 8px 30px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '12px', background: '#f8fafc', outline: 'none' }} />
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* ── List ── */}
-      <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {filtered.length === 0 ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: '#94a3b8', gap: '12px' }}>
-            <Info size={40} style={{ opacity: 0.3 }} />
-            <p style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>Không có yêu cầu nào</p>
-            {!isAdmin && <p style={{ margin: 0, fontSize: '12px' }}>Nhấn "Gửi yêu cầu" để tạo mới.</p>}
+          <div style={{ height: '1px', background: '#f1f5f9', margin: '0 16px' }} />
+
+          {/* List Content */}
+          <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {filtered.length === 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 0', color: '#94a3b8', gap: '10px' }}>
+                <Info size={32} style={{ opacity: 0.3 }} />
+                <p style={{ margin: 0, fontSize: '13px', fontWeight: 600 }}>Không tìm thấy yêu cầu</p>
+              </div>
+            ) : (
+              filtered.map(req => (
+                <RequestListItem
+                  key={req.id}
+                  req={req}
+                  isAdmin={isAdmin}
+                  isSelected={selectedId === req.id}
+                  onClick={() => setSelectedId(req.id)}
+                />
+              ))
+            )}
           </div>
-        ) : (
-          filtered.map(req => (
-            <RequestCard key={req.id} req={req} isAdmin={isAdmin} onReview={setReviewing} onDelete={handleDelete} />
-          ))
-        )}
+        </div>
+
+        {/* RIGHT PANE: Detail */}
+        <div style={{
+          flex: 1, display: 'flex', flexDirection: 'column',
+          background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.03)', overflow: 'hidden'
+        }}>
+          {!selectedReq ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', gap: '16px' }}>
+              <FileCheck size={64} style={{ opacity: 0.1 }} />
+              <p style={{ margin: 0, fontSize: '15px', fontWeight: 600 }}>Chọn một yêu cầu để xem chi tiết</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              {/* Detail Header */}
+              <div style={{ padding: '24px 30px', borderBottom: '1px solid #f1f5f9', background: '#fafafa', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 800, color: '#0284c7', background: '#e0f2fe', padding: '4px 10px', borderRadius: '8px', textTransform: 'uppercase' }}>
+                      {selectedReq.type === 'nghi_phep' ? '🏖️ Nghỉ phép' : '⏰ Đi trễ'}
+                    </div>
+                    <StatusBadge status={selectedReq.status} />
+                  </div>
+                  <h3 style={{ margin: '0 0 6px', fontSize: '24px', fontWeight: 800, color: '#0f172a' }}>{selectedReq.requester_name}</h3>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <User size={14} /> {selectedReq.requester_username}
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ margin: '0 0 4px', fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Ngày tạo</p>
+                  <p style={{ margin: 0, fontSize: '13px', color: '#334155', fontWeight: 600 }}>{fmtDateTime(selectedReq.created_at)}</p>
+                </div>
+              </div>
+
+              {/* Detail Body */}
+              <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '30px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                
+                {/* Info Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                  <div>
+                    <p style={{ margin: '0 0 6px', fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Thời gian</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0f172a', fontWeight: 700, fontSize: '15px' }}>
+                      <CalendarDays size={18} color="#0284c7" />
+                      {fmtDate(selectedReq.start_date)}
+                      {selectedReq.end_date && selectedReq.end_date !== selectedReq.start_date ? ` → ${fmtDate(selectedReq.end_date)}` : ''}
+                    </div>
+                  </div>
+                  <div>
+                    <p style={{ margin: '0 0 6px', fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Chi tiết</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0f172a', fontWeight: 700, fontSize: '15px' }}>
+                      <Clock size={18} color="#0284c7" />
+                      {selectedReq.type === 'nghi_phep' ? (
+                        <>
+                          {selectedReq.session ? SESSION_LABEL[selectedReq.session] : ''}
+                          <span style={{ color: '#94a3b8', fontWeight: 500 }}>•</span>
+                          {daysBetween(selectedReq.start_date, selectedReq.end_date)} ngày
+                        </>
+                      ) : (
+                        `Dự kiến đến lúc ${selectedReq.late_time}`
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reason */}
+                <div>
+                  <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Lý do chi tiết</p>
+                  <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '16px 20px', borderRadius: '12px', fontSize: '14px', color: '#334155', lineHeight: 1.6 }}>
+                    {selectedReq.reason}
+                  </div>
+                </div>
+
+                {/* Admin Note / Review Actions */}
+                {selectedReq.status === 'pending' ? (
+                  isAdmin ? (
+                    <div style={{ marginTop: 'auto', background: '#fdf4ff', border: '1px solid #e9d5ff', padding: '20px', borderRadius: '16px' }}>
+                      <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 800, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <FileCheck size={16} /> Khu vực phê duyệt
+                      </p>
+                      <textarea
+                        value={reviewNote} onChange={e => setReviewNote(e.target.value)}
+                        placeholder="Thêm ghi chú cho nhân viên (tuỳ chọn)..."
+                        rows={2}
+                        style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #d8b4fe', fontSize: '13px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', background: '#fff', marginBottom: '16px' }}
+                      />
+                      <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                        <button onClick={() => handleReview(selectedReq, 'rejected')} disabled={processing} style={{ padding: '12px 24px', borderRadius: '10px', border: 'none', background: '#fef2f2', color: '#dc2626', fontWeight: 800, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', opacity: processing ? 0.7 : 1 }}>
+                          ❌ Từ chối
+                        </button>
+                        <button onClick={() => handleReview(selectedReq, 'approved')} disabled={processing} style={{ padding: '12px 32px', borderRadius: '10px', border: 'none', background: '#059669', color: '#fff', fontWeight: 800, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', opacity: processing ? 0.7 : 1, boxShadow: '0 4px 12px rgba(5,150,105,0.3)' }}>
+                          ✅ Phê duyệt
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end' }}>
+                      <button onClick={() => handleDelete(selectedReq.id)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s' }}>
+                        <Trash2 size={16} /> Rút yêu cầu
+                      </button>
+                    </div>
+                  )
+                ) : (
+                  <div>
+                    <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Kết quả xử lý</p>
+                    <div style={{ background: selectedReq.status === 'approved' ? '#ecfdf5' : '#fef2f2', border: `1px solid ${selectedReq.status === 'approved' ? '#a7f3d0' : '#fecaca'}`, padding: '16px 20px', borderRadius: '12px' }}>
+                      <p style={{ margin: '0 0 4px', fontSize: '11px', fontWeight: 700, color: selectedReq.status === 'approved' ? '#059669' : '#dc2626', textTransform: 'uppercase' }}>
+                        Bởi {selectedReq.reviewed_by} vào lúc {fmtDateTime(selectedReq.reviewed_at)}
+                      </p>
+                      <p style={{ margin: 0, fontSize: '14px', color: '#334155', fontWeight: 500 }}>
+                        {selectedReq.reviewer_note || '(Không có ghi chú)'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Modals ── */}
@@ -550,14 +555,6 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
           profile={currentProfile}
           username={currentUsername}
           onClose={() => setShowSubmit(false)}
-          onSuccess={onReload}
-        />
-      )}
-      {reviewing && (
-        <ReviewModal
-          request={reviewing}
-          reviewerName={currentProfile?.full_name || 'Admin'}
-          onClose={() => setReviewing(null)}
           onSuccess={onReload}
         />
       )}
