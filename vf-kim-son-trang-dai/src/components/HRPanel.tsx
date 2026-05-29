@@ -318,50 +318,7 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
   ] as const;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px' }}>
-
-      {/* ── Top bar ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px',
-        padding: '16px 20px', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.03)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'linear-gradient(135deg, #0284c7, #38bdf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(2,132,199,0.2)' }}>
-            <CalendarDays size={20} color="#fff" />
-          </div>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>Quản lý Nhân sự</h2>
-            <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>Phê duyệt nghỉ phép & đi trễ</p>
-          </div>
-        </div>
-
-        {/* Stats inline for admin */}
-        {isAdmin && (
-          <div style={{ display: 'flex', gap: '8px', background: '#f8fafc', padding: '6px', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-            <div style={{ padding: '6px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Tất cả</span>
-              <span style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>{requests.length}</span>
-            </div>
-            <div style={{ width: '1px', background: '#e2e8f0', margin: '4px 0' }} />
-            <div style={{ padding: '6px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span style={{ fontSize: '10px', fontWeight: 700, color: '#d97706', textTransform: 'uppercase' }}>Chờ duyệt</span>
-              <span style={{ fontSize: '15px', fontWeight: 800, color: '#d97706' }}>{pendingCount}</span>
-            </div>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={onReload} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#fff', color: '#475569', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
-            <RefreshCw size={14} /> Làm mới
-          </button>
-          {!isAdmin && (
-            <button onClick={() => setShowSubmit(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #0284c7, #0ea5e9)', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(2,132,199,0.3)', transition: 'all 0.2s' }}>
-              <Plus size={14} /> Gửi yêu cầu
-            </button>
-          )}
-        </div>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
       {/* ── Split Layout ── */}
       <div style={{ display: 'flex', gap: '16px', flex: 1, minHeight: 0 }}>
@@ -374,6 +331,19 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
         }}>
           {/* List Header / Filters */}
           <div style={{ padding: '16px 16px 0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            
+            {/* Actions */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={onReload} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px 12px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#475569', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+                <RefreshCw size={14} /> Làm mới
+              </button>
+              {!isAdmin && (
+                <button onClick={() => setShowSubmit(true)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px 12px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #0284c7, #0ea5e9)', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(2,132,199,0.3)', transition: 'all 0.2s' }}>
+                  <Plus size={14} /> Gửi yêu cầu
+                </button>
+              )}
+            </div>
+
             <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '4px' }} className="custom-scrollbar">
               {FILTER_TABS.map(tab => (
                 <button key={tab.key} onClick={() => setFilter(tab.key)} style={{
