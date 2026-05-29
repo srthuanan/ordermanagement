@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { X } from 'lucide-react';
+import { X, Users, CalendarDays } from 'lucide-react';
 
 // Lớp Dữ liệu & API
 import { supabase } from './services/supabaseClient';
@@ -165,6 +165,7 @@ function App() {
   const [requestingSupplement, setRequestingSupplement] = useState<YeucauxhdRow | null>(null);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [selectingPolicyOrder, setSelectingPolicyOrder] = useState<Order | null>(null);
+  const [staffSubTab, setStaffSubTab] = useState<'system' | 'hr'>('system');
   const isSetPasswordRoute = window.location.pathname === '/set-password';
   const isResetPasswordRoute = window.location.pathname === '/reset-password';
   
@@ -461,14 +462,51 @@ function App() {
 
             {activeTab === 'pricing' && <PricingPanel isAdmin={canManagePricingConfig(userRole)} />}
 
-            {activeTab === 'staff' && <StaffPanel staff={profiles} currentProfile={profile} onReload={loadWorkspace} />}
-            {activeTab === 'hr' && (
-              <HRPanel
-                requests={hrLeaveRequests}
-                currentProfile={profile}
-                currentUsername={currentUsername}
-                onReload={() => loadWorkspace({ showLoading: false })}
-              />
+            {activeTab === 'staff' && (
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '12px' }}>
+                <div style={{ display: 'flex', gap: '8px', padding: '12px 16px', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflowX: 'auto' }}>
+                  <button
+                    onClick={() => setStaffSubTab('system')}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '10px',
+                      border: 'none', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s',
+                      background: staffSubTab === 'system' ? '#eff6ff' : 'transparent',
+                      color: staffSubTab === 'system' ? '#0284c7' : '#64748b'
+                    }}
+                  >
+                    <Users size={16} /> Quản lý tài khoản
+                  </button>
+                  <button
+                    onClick={() => setStaffSubTab('hr')}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '10px',
+                      border: 'none', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s',
+                      background: staffSubTab === 'hr' ? '#eff6ff' : 'transparent',
+                      color: staffSubTab === 'hr' ? '#0284c7' : '#64748b'
+                    }}
+                  >
+                    <CalendarDays size={16} /> Chấm công & Phép
+                    {hrLeaveRequests.filter(r => r.status === 'pending').length > 0 && userRole === 'admin' && (
+                      <span style={{ background: '#ef4444', color: '#fff', borderRadius: '999px', padding: '0 6px', fontSize: '10px' }}>
+                        {hrLeaveRequests.filter(r => r.status === 'pending').length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+                <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                  {staffSubTab === 'system' && (
+                    <StaffPanel staff={profiles} currentProfile={profile} onReload={loadWorkspace} />
+                  )}
+                  {staffSubTab === 'hr' && (
+                    <HRPanel
+                      requests={hrLeaveRequests}
+                      currentProfile={profile}
+                      currentUsername={currentUsername}
+                      onReload={() => loadWorkspace({ showLoading: false })}
+                    />
+                  )}
+                </div>
+              </div>
             )}
             {activeTab === 'settings' && <SettingsPanel configs={vehicleConfigs} onRefresh={loadWorkspace} />}
           </Suspense>
