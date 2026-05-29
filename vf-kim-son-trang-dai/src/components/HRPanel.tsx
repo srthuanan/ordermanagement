@@ -439,9 +439,9 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
                     <p style={{ margin: '0 0 4px', fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Ngày tạo</p>
                     <p style={{ margin: 0, fontSize: '13px', color: '#334155', fontWeight: 600 }}>{fmtDateTime(selectedReq.created_at)}</p>
                   </div>
-                  {isAdmin && (
+                  {(isAdmin || (!isAdmin && selectedReq.status === 'pending')) && (
                     <button onClick={() => handleDelete(selectedReq.id)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
-                      <Trash2 size={14} /> Xoá yêu cầu
+                      <Trash2 size={14} /> {isAdmin ? 'Xoá yêu cầu' : 'Rút yêu cầu'}
                     </button>
                   )}
                 </div>
@@ -487,7 +487,7 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
 
                 {/* Admin Note / Review Actions */}
                 {selectedReq.status === 'pending' ? (
-                  isAdmin ? (
+                  isAdmin && (
                     <div style={{ marginTop: 'auto', background: '#fdf4ff', border: '1px solid #e9d5ff', padding: '20px', borderRadius: '16px' }}>
                       <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 800, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <FileCheck size={16} /> Khu vực phê duyệt
@@ -506,12 +506,6 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
                           ✅ Phê duyệt
                         </button>
                       </div>
-                    </div>
-                  ) : (
-                    <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-end' }}>
-                      <button onClick={() => handleDelete(selectedReq.id)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s' }}>
-                        <Trash2 size={16} /> Rút yêu cầu
-                      </button>
                     </div>
                   )
                 ) : (
