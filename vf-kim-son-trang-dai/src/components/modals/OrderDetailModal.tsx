@@ -73,7 +73,6 @@ export const OrderDetailModal: React.FC<OrderDetailModalProps> = ({
             <DetailField label="Ngày hẹn cần xe" value={order.needDate} />
             <DetailField label="Ngày ghép xe" value={order.pairedAt} />
             <DetailField label="Chính sách áp dụng" value={order.policy || 'Chưa áp dụng'} />
-            <DetailField label="Số máy" value={order.engineNo || 'N/A'} />
             <DetailField label="Số tiền đã cọc" value={order.depositAmount ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.depositAmount) : 'N/A'} />
             <DetailField label="Hình thức TT" value={order.paymentMethod || 'N/A'} />
             <DetailField label="Mã hợp đồng" value={order.contractCode || 'N/A'} />

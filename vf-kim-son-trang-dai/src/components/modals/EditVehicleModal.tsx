@@ -175,18 +175,7 @@ export const EditVehicleModal: React.FC<EditVehicleModalProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Số máy</label>
-              <input
-                type="text"
-                value={engineNo}
-                onChange={(e) => setEngineNo(e.target.value)}
-                disabled={isSubmitting}
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-              />
-            </div>
-            
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px', marginBottom: '24px' }}>
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Mã Amis (DMS)</label>
               <input

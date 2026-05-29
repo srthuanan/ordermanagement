@@ -502,8 +502,9 @@ export function useOrderOperations({
 
   async function handleRequestInvoice(input: {
     order: Order;
-    contractFile: File;
-    proposalFile: File;
+    hsXhdFile: File;
+    cdxFile: File | null;
+    transactionImages: File[];
     policy: string;
     soTienKhachDaDong?: number | null;
     aiNote?: string;

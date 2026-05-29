@@ -291,9 +291,23 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                             <p className="orders-mobile-card-title" style={{ textTransform: 'uppercase' }}>{order.customer}</p>
                             <p className="orders-mobile-card-subtitle">{order.id}</p>
                           </div>
-                          <span className={statusTone[order.status]} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 8px', borderRadius: '999px', fontSize: '11px', fontWeight: 700 }}>
-                            {order.status}
-                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                            <span className={statusTone[order.status]} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 8px', borderRadius: '999px', fontSize: '11px', fontWeight: 700 }}>
+                              {order.status}
+                            </span>
+                            {(() => {
+                              if (order.vin) return null;
+                              const matchCount = inventory.filter(v => matchesVehicleConfig(order, v) && canUseVehicleForPair(v, currentUsername, canOverrideHeldVehicle)).length;
+                              if (matchCount > 0 && canManageOrderActions) {
+                                return (
+                                  <span style={{ fontSize: '10px', background: '#dcfce7', color: '#166534', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                    Có {matchCount} xe rảnh
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </div>
                         </div>
 
                         <div className="orders-mobile-card-divider" />
@@ -359,9 +373,17 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           <td>
                             {order.vin ? (
                               <strong style={{ color: '#0284c7', fontSize: '12.5px', letterSpacing: '0.02em' }}>{order.vin}</strong>
-                            ) : (
-                              <span style={{ color: '#94a3b8', fontSize: '11.5px', fontStyle: 'italic' }}>Chưa ghép</span>
-                            )}
+                            ) : (() => {
+                              const matchCount = inventory.filter(v => matchesVehicleConfig(order, v) && canUseVehicleForPair(v, currentUsername, canOverrideHeldVehicle)).length;
+                              return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  <span style={{ color: '#94a3b8', fontSize: '11.5px', fontStyle: 'italic' }}>Chưa ghép</span>
+                                  {matchCount > 0 && canManageOrderActions && (
+                                    <span style={{ fontSize: '10px', background: '#dcfce7', color: '#166534', padding: '2px 6px', borderRadius: '4px', fontWeight: 700, width: 'fit-content' }}>Có {matchCount} xe rảnh</span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
                           <td>
                             <span 
@@ -557,11 +579,6 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                               <strong style={{ fontSize: '13px', color: selectedOrder.vin ? '#0f766e' : '#475569', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedOrder.vin || 'Chưa ghép'}</strong>
                             </div>
 
-                            <div className={selectedOrder.engineNo ? 'clickable-copy-field' : ''} title={selectedOrder.engineNo ? 'Click để copy số máy' : ''} onClick={() => selectedOrder.engineNo && copyToClipboard(selectedOrder.engineNo, 'Số máy')} style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0, textAlign: 'right', alignItems: 'flex-end' }}>
-                              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Số máy</span>
-                              <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 600, lineHeight: 1.35, wordBreak: 'break-word' }}>{selectedOrder.engineNo || 'Trống'}</strong>
-                            </div>
-
                           </div>
                         </div>
 
@@ -730,10 +747,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 600 }}>{selectedOrder.pairedAt || 'Chưa ghép'}</strong>
                         </div>
 
-                        <div className={selectedOrder.engineNo ? "clickable-copy-field" : ""} title={selectedOrder.engineNo ? "Click để copy số máy" : ""} onClick={() => selectedOrder.engineNo && copyToClipboard(selectedOrder.engineNo, 'Số máy')} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px', borderRadius: '6px' }}>
-                          <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Số máy</span>
-                          <strong style={{ fontSize: '13.5px', color: '#334155', fontWeight: 700 }}>{selectedOrder.engineNo || 'Trống'}</strong>
-                        </div>
+
 
                         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '3px 6px' }}>
                           <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Ngày hẹn cần xe</span>
@@ -799,7 +813,21 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                                   : 'Không có xe rảnh tương ứng trong kho'
                             }
                             onClick={() => onPairOrder(selectedOrder)}
-                            style={{ height: '36px', fontSize: '13px', borderRadius: '8px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                            style={{ 
+                              height: '36px', 
+                              fontSize: '13px', 
+                              borderRadius: '8px', 
+                              transition: 'all 0.3s',
+                              ...(selectedCanPair ? {
+                                background: '#16a34a',
+                                color: '#ffffff',
+                                boxShadow: '0 0 0 4px rgba(34, 197, 94, 0.2), 0 4px 12px rgba(22, 163, 74, 0.4)',
+                                border: 'none',
+                                transform: 'translateY(-1px)'
+                              } : {
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                              })
+                            }}
                           >
                             <PackageCheck size={16} />
                             <span>Ghép xe</span>

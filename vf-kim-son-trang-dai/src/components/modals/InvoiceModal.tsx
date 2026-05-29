@@ -26,8 +26,9 @@ interface InvoiceRequestModalProps {
     onClose: () => void;
     onSubmit: (input: {
     order: Order;
-    contractFile: File;
-    proposalFile: File;
+    hsXhdFile: File;
+    cdxFile: File | null;
+    transactionImages: File[];
     policy: string;
     soTienKhachDaDong?: number | null;
     ngayKyHopDong?: string;
@@ -69,8 +70,9 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
   const [xeXangVin, setXeXangVin] = useState(() => order.xeXangVin || '');
   const [xeXangHang, setXeXangHang] = useState(() => order.xeXangHang || '');
   const [xeXangModel, setXeXangModel] = useState(() => order.xeXangModel || '');
-  const [contractFile, setContractFile] = useState<File | null>(null);
-  const [proposalFile, setProposalFile] = useState<File | null>(null);
+  const [hsXhdFile, setHsXhdFile] = useState<File | null>(null);
+  const [cdxFile, setCdxFile] = useState<File | null>(null);
+  const [transactionImages, setTransactionImages] = useState<File[]>([]);
   const [aiNote, setAiNote] = useState('');
   const [vinClubConfirmed, setVinClubConfirmed] = useState(false);
   const [error, setError] = useState('');
@@ -80,8 +82,9 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
   const [isLoadingPolicies, setIsLoadingPolicies] = useState(true);
   const [availablePolicies, setAvailablePolicies] = useState<string[]>([]);
 
-  const contractRef = useRef<HTMLInputElement>(null);
-  const proposalRef = useRef<HTMLInputElement>(null);
+  const hsXhdRef = useRef<HTMLInputElement>(null);
+  const cdxRef = useRef<HTMLInputElement>(null);
+  const transImgRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -136,7 +139,7 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
   };
 
   const isStep1Valid = policy.length > 0 && soTienKhachDaDong && ngayKyHopDong && diaChi && soHopDong && hinhThucTT && nguonKhach && giaCongBo && (!isGasToElectricPolicy || (xeXangVin && xeXangHang && xeXangModel && !vinCheckError));
-  const isStep2Valid = contractFile !== null && proposalFile !== null;
+  const isStep2Valid = hsXhdFile !== null && transactionImages.length > 0;
   const isFormValid = isStep1Valid && isStep2Valid;
 
   const handleNext = () => {
@@ -150,7 +153,11 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid || !contractFile || !proposalFile) return;
+    if (step < 3) {
+      handleNext();
+      return;
+    }
+    if (!isFormValid || !hsXhdFile) return;
     setError('');
     setProcessingStage(1);
     
@@ -159,7 +166,7 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
     
     const raw = (s: string) => s.replace(/[^0-9]/g, '');
     const ok = await onSubmit({
-      order, contractFile, proposalFile,
+      order, hsXhdFile, cdxFile, transactionImages,
       policy: policy.join(', '),
       soTienKhachDaDong: soTienKhachDaDong ? Number(raw(soTienKhachDaDong)) : null,
       ngayKyHopDong,
@@ -229,7 +236,16 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
         </div>
 
         {/* CONTENT */}
-        <form onSubmit={handleSubmit} style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+        <form 
+          onSubmit={handleSubmit} 
+          onKeyDown={(e) => {
+            // Ngăn chặn việc bấm Enter vô tình submit form hoặc nhảy bước khi chưa đến bước 3
+            if (e.key === 'Enter' && step < 3) {
+              e.preventDefault();
+            }
+          }}
+          style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}
+        >
           <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
             
             {/* LEFT: MAIN FORM (70%) */}
@@ -238,11 +254,10 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
               {step === 1 && (
                 <>
                   {/* NEW SUMMARY SECTION */}
-                  <section style={{ background:'#f8fafc', borderRadius:'16px', padding:'20px', border:'1px solid #e2e8f0', display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'20px' }}>
+                  <section style={{ background:'#f8fafc', borderRadius:'16px', padding:'20px', border:'1px solid #e2e8f0', display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'20px' }}>
                     <div style={iS}><label style={{...lS, fontSize:'10px'}}>Khách hàng</label><div style={{ fontSize:'14px', fontWeight:700, color:'#0f172a' }}>{order.customer}</div></div>
                     <div style={iS}><label style={{...lS, fontSize:'10px'}}>Mã đơn hàng</label><div style={{ fontSize:'14px', fontWeight:700, color:'#0d9488' }}>{order.id}</div></div>
                     <div style={iS}><label style={{...lS, fontSize:'10px'}}>Số VIN</label><div style={{ fontSize:'14px', fontWeight:700, color:'#0f172a' }}>{order.vin || '---'}</div></div>
-                    <div style={iS}><label style={{...lS, fontSize:'10px'}}>Số Máy</label><div style={{ fontSize:'14px', fontWeight:700, color:'#0f172a' }}>{order.engineNo || '---'}</div></div>
                   </section>
                   <section>
                     <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'20px' }}>
@@ -308,24 +323,79 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
                        <h2 style={{ fontSize:'16px', fontWeight:700, color:'#0f172a', margin:0 }}>Tải lên chứng từ gốc</h2>
                    </div>
                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px' }}>
-                      {[ {r:contractRef, f:contractFile, sf:setContractFile, t:'Hợp đồng mua bán'}, {r:proposalRef, f:proposalFile, sf:setProposalFile, t:'Đề nghị xuất hóa đơn'} ].map((x,i) => (
-                        <div key={i} onClick={()=>!x.f && x.r.current?.click()} style={{ height:'280px', background:'#f8fafc', borderRadius:'24px', border:'2px dashed #cbd5e1', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px', cursor:'pointer', transition:'all 0.3s' }}>
-                          <input type="file" accept=".pdf,image/*" ref={x.r} style={{ display:'none' }} onChange={e=>x.sf(e.target.files?.[0]||null)} />
-                          {x.f ? (
-                            <>
-                              <div style={{ width:'72px', height:'72px', borderRadius:'20px', background:'#fff', boxShadow:'0 10px 25px rgba(0,0,0,0.05)', display:'flex', alignItems:'center', justifyContent:'center', color:'#0d9488', marginBottom:'20px' }}><FileText size={40} /></div>
-                              <div style={{ fontSize:'15px', fontWeight:700, textAlign:'center', color:'#0f172a', maxWidth:'220px', overflow:'hidden', textOverflow:'ellipsis' }}>{x.f.name}</div>
-                              <button type="button" onClick={(e)=>{e.stopPropagation(); x.sf(null);}} style={{ marginTop:'16px', border:'none', background:'#fff', color:'#e11d48', fontSize:'13px', fontWeight:700, padding:'8px 16px', borderRadius:'10px', boxShadow:'0 2px 4px rgba(0,0,0,0.05)' }}>Xóa file</button>
-                            </>
-                          ) : (
-                            <>
-                              <div style={{ width:'72px', height:'72px', background:'#fff', borderRadius:'20px', display:'flex', alignItems:'center', justifyContent:'center', color:'#94a3b8', marginBottom:'20px', boxShadow:'0 4px 6px rgba(0,0,0,0.02)' }}><UploadCloud size={40} /></div>
-                              <div style={{ fontSize:'16px', fontWeight:700, color:'#1e293b' }}>{x.t}</div>
-                              <div style={{ fontSize:'13px', color:'#64748b', marginTop:'6px' }}>Hỗ trợ PDF hoặc Ảnh (JPG, PNG)</div>
-                            </>
-                          )}
-                        </div>
-                      ))}
+                      {/* Bộ HS XHĐ */}
+                      <div onClick={()=>!hsXhdFile && hsXhdRef.current?.click()} style={{ height:'280px', background:'#f8fafc', borderRadius:'24px', border:'2px dashed #cbd5e1', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px', cursor:'pointer', transition:'all 0.3s' }}>
+                        <input type="file" accept=".pdf,image/*" ref={hsXhdRef} style={{ display:'none' }} onChange={e=>setHsXhdFile(e.target.files?.[0]||null)} />
+                        {hsXhdFile ? (
+                          <>
+                            <div style={{ width:'72px', height:'72px', borderRadius:'20px', background:'#fff', boxShadow:'0 10px 25px rgba(0,0,0,0.05)', display:'flex', alignItems:'center', justifyContent:'center', color:'#0d9488', marginBottom:'20px' }}><FileText size={40} /></div>
+                            <div style={{ fontSize:'15px', fontWeight:700, textAlign:'center', color:'#0f172a', maxWidth:'220px', overflow:'hidden', textOverflow:'ellipsis' }}>{hsXhdFile.name}</div>
+                            <button type="button" onClick={(e)=>{e.stopPropagation(); setHsXhdFile(null);}} style={{ marginTop:'16px', border:'none', background:'#fff', color:'#e11d48', fontSize:'13px', fontWeight:700, padding:'8px 16px', borderRadius:'10px', boxShadow:'0 2px 4px rgba(0,0,0,0.05)' }}>Xóa file</button>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ width:'72px', height:'72px', background:'#fff', borderRadius:'20px', display:'flex', alignItems:'center', justifyContent:'center', color:'#94a3b8', marginBottom:'20px', boxShadow:'0 4px 6px rgba(0,0,0,0.02)' }}><UploadCloud size={40} /></div>
+                            <div style={{ fontSize:'16px', fontWeight:700, color:'#1e293b' }}>Bộ HS XHĐ *</div>
+                            <div style={{ fontSize:'13px', color:'#64748b', marginTop:'6px' }}>Bắt buộc (PDF hoặc Ảnh)</div>
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Chuyển Đổi Xanh */}
+                      <div onClick={()=>!cdxFile && cdxRef.current?.click()} style={{ height:'280px', background:'#f8fafc', borderRadius:'24px', border:'2px dashed #cbd5e1', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px', cursor:'pointer', transition:'all 0.3s' }}>
+                        <input type="file" accept=".pdf,image/*" ref={cdxRef} style={{ display:'none' }} onChange={e=>setCdxFile(e.target.files?.[0]||null)} />
+                        {cdxFile ? (
+                          <>
+                            <div style={{ width:'72px', height:'72px', borderRadius:'20px', background:'#fff', boxShadow:'0 10px 25px rgba(0,0,0,0.05)', display:'flex', alignItems:'center', justifyContent:'center', color:'#0d9488', marginBottom:'20px' }}><FileText size={40} /></div>
+                            <div style={{ fontSize:'15px', fontWeight:700, textAlign:'center', color:'#0f172a', maxWidth:'220px', overflow:'hidden', textOverflow:'ellipsis' }}>{cdxFile.name}</div>
+                            <button type="button" onClick={(e)=>{e.stopPropagation(); setCdxFile(null);}} style={{ marginTop:'16px', border:'none', background:'#fff', color:'#e11d48', fontSize:'13px', fontWeight:700, padding:'8px 16px', borderRadius:'10px', boxShadow:'0 2px 4px rgba(0,0,0,0.05)' }}>Xóa file</button>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ width:'72px', height:'72px', background:'#fff', borderRadius:'20px', display:'flex', alignItems:'center', justifyContent:'center', color:'#94a3b8', marginBottom:'20px', boxShadow:'0 4px 6px rgba(0,0,0,0.02)' }}><UploadCloud size={40} /></div>
+                            <div style={{ fontSize:'16px', fontWeight:700, color:'#1e293b' }}>Chuyển Đổi Xanh</div>
+                            <div style={{ fontSize:'13px', color:'#64748b', marginTop:'6px' }}>Không bắt buộc</div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Ảnh giao dịch */}
+                      <div onClick={()=>transImgRef.current?.click()} style={{ gridColumn: '1 / -1', minHeight:'160px', background:'#f8fafc', borderRadius:'24px', border:'2px dashed #cbd5e1', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px', cursor:'pointer', transition:'all 0.3s' }}>
+                        <input type="file" accept="image/*" multiple ref={transImgRef} style={{ display:'none' }} onClick={(e) => { e.stopPropagation(); (e.target as HTMLInputElement).value = ''; }} onChange={e=>{
+                          const files = e.target.files;
+                          if (files && files.length > 0) {
+                            const newFiles = Array.from(files);
+                            setTransactionImages(prev => [...prev, ...newFiles]);
+                          }
+                        }} />
+                        {transactionImages.length > 0 ? (
+                          <div style={{ width: '100%' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                              <div style={{ fontSize:'16px', fontWeight:700, color:'#1e293b' }}>Ảnh giao dịch * ({transactionImages.length} ảnh)</div>
+                              <button type="button" onClick={(e)=>{e.stopPropagation(); transImgRef.current?.click();}} style={{ border:'none', background:'#0d9488', color:'#fff', fontSize:'13px', fontWeight:700, padding:'8px 16px', borderRadius:'10px', boxShadow:'0 2px 4px rgba(0,0,0,0.05)', cursor:'pointer' }}>+ Thêm ảnh</button>
+                            </div>
+                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                              {transactionImages.map((f, i) => (
+                                <div key={i} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                  <img src={URL.createObjectURL(f)} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  <button type="button" onClick={(e)=>{
+                                    e.stopPropagation();
+                                    setTransactionImages(prev => prev.filter((_, idx) => idx !== i));
+                                  }} style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#e11d48', padding: 0 }}>
+                                    <X size={12} strokeWidth={3} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div style={{ width:'64px', height:'64px', background:'#fff', borderRadius:'16px', display:'flex', alignItems:'center', justifyContent:'center', color:'#94a3b8', marginBottom:'16px', boxShadow:'0 4px 6px rgba(0,0,0,0.02)' }}><UploadCloud size={32} /></div>
+                            <div style={{ fontSize:'16px', fontWeight:700, color:'#1e293b' }}>Ảnh giao dịch *</div>
+                            <div style={{ fontSize:'13px', color:'#64748b', marginTop:'6px' }}>Bắt buộc. Hỗ trợ tải lên nhiều ảnh (JPG, PNG)</div>
+                          </>
+                        )}
+                      </div>
                    </div>
                 </div>
               )}

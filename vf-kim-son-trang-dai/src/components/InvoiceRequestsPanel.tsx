@@ -14,7 +14,7 @@ const toEmbeddableUrl = (url: string) => {
   return url;
 };
 
-const getRequestDocUrl = (request: YeucauxhdRow | null, docKey: 'url_hop_dong' | 'url_de_nghi_xhd' | 'url_hoa_don_da_xuat') => {
+const getRequestDocUrl = (request: YeucauxhdRow | null, docKey: 'url_hop_dong' | 'url_de_nghi_xhd' | 'url_hoa_don_da_xuat' | 'ghi_chu_ai') => {
   if (!request) return '';
 
   if (docKey === 'url_hop_dong') {
@@ -67,7 +67,12 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
   const [query, setQuery] = useState('');
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [isSplitView, setIsSplitView] = useState(true);
-  const [activeDocKey, setActiveDocKey] = useState<'url_de_nghi_xhd' | 'url_hop_dong' | 'url_hoa_don_da_xuat'>('url_de_nghi_xhd');
+  const [activeDocKey, setActiveDocKey] = useState<'url_de_nghi_xhd' | 'url_hop_dong' | 'url_hoa_don_da_xuat' | 'ghi_chu_ai'>('url_hop_dong');
+
+  const getActiveDocUrl = (req: YeucauxhdRow) => {
+    return req[activeDocKey];
+  };
+
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
   const [isSyncing, setIsSyncing] = useState(false);
   const [showPolicyTooltip, setShowPolicyTooltip] = useState(false);
@@ -203,12 +208,9 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
   useEffect(() => {
     if (!selectedRequest) return;
     const currentDocUrl = getRequestDocUrl(selectedRequest, activeDocKey);
-    if (currentDocUrl) return;
-
-    const nextDocKey = (['url_de_nghi_xhd', 'url_hop_dong', 'url_hoa_don_da_xuat'] as const)
-      .find((key) => Boolean(getRequestDocUrl(selectedRequest, key)));
-
-    if (nextDocKey) {
+    if (!currentDocUrl) {
+      const fallbackKeys: Array<'url_hop_dong' | 'url_de_nghi_xhd' | 'ghi_chu_ai' | 'url_hoa_don_da_xuat'> = ['url_hop_dong', 'url_de_nghi_xhd', 'ghi_chu_ai', 'url_hoa_don_da_xuat'];
+      const nextDocKey = fallbackKeys.find(key => getRequestDocUrl(selectedRequest, key)) || 'url_hop_dong';
       setActiveDocKey(nextDocKey);
     }
   }, [activeDocKey, selectedRequest]);
@@ -498,15 +500,26 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                 {isSplitView && (
                   <div style={{ flex: '1.4', background: '#fff', borderLeft: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ height: '44px', padding: '0 12px', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '8px', background: '#fff' }}>
-                      <TabButton label="Đề nghị XHĐ" active={activeDocKey === 'url_de_nghi_xhd'} onClick={() => setActiveDocKey('url_de_nghi_xhd')} />
-                      <TabButton label="Hợp đồng MB" active={activeDocKey === 'url_hop_dong'} onClick={() => setActiveDocKey('url_hop_dong')} />
+                      <TabButton label="Bộ HS XHĐ" active={activeDocKey === 'url_hop_dong'} onClick={() => setActiveDocKey('url_hop_dong')} />
+                      <TabButton label="Chuyển đổi xanh" active={activeDocKey === 'url_de_nghi_xhd'} onClick={() => setActiveDocKey('url_de_nghi_xhd')} />
+                      <TabButton label="Ảnh giao dịch" active={activeDocKey === 'ghi_chu_ai'} onClick={() => setActiveDocKey('ghi_chu_ai')} />
                       <TabButton label="Hóa đơn" active={activeDocKey === 'url_hoa_don_da_xuat'} onClick={() => setActiveDocKey('url_hoa_don_da_xuat')} />
                     </div>
-                    <div style={{ flex: 1, background: '#f1f5f9' }}>
+                    <div style={{ flex: 1, background: '#f1f5f9', overflow: 'hidden' }}>
                       {(() => {
                         const docUrl = getRequestDocUrl(selectedRequest, activeDocKey);
 
                         if (docUrl) {
+                          if (activeDocKey === 'ghi_chu_ai') {
+                            const images = docUrl.split(',');
+                            return (
+                              <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', height: '100%' }}>
+                                {images.map((imgUrl, i) => (
+                                  <img key={i} src={imgUrl} alt={`Ảnh giao dịch ${i+1}`} style={{ width: '100%', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }} />
+                                ))}
+                              </div>
+                            );
+                          }
                           return <iframe key={docUrl} src={toEmbeddableUrl(docUrl)} style={{ width: '100%', height: '100%', border: 'none' }} title="Doc" />;
                         }
 

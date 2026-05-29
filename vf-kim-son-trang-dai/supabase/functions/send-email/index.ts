@@ -304,7 +304,7 @@ async function attachFileFromUrl(url: string, label: string, orderNumber: string
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' } })
+    return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, cache-control' } })
   }
 
   const corsHeaders = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };

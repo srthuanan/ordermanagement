@@ -439,11 +439,12 @@ export const cancelOrder = async (
     }).catch(e => console.warn('Lỗi gọi gửi email hủy đơn:', e));
 
     // Notify Admin
-    await supabase.from('admin_notifications').insert({
+    const { error: notifyErr } = await supabase.from('admin_notifications').insert({
       type: 'order_canceled',
       message: `Đơn hàng ${orderId} vừa bị hủy. Lý do: ${notes}`,
       link: orderId
-    }).catch(e => console.warn('Lỗi tạo thông báo hủy đơn:', e));
+    });
+    if (notifyErr) console.warn('Lỗi tạo thông báo hủy đơn:', notifyErr);
   }
 
   return result;
@@ -960,8 +961,9 @@ export const updateVehicleLocation = async (
 // --- 2-Stage Invoicing ---
 type RequestInvoiceInput = {
   order: Order;
-  contractFile: File;
-  proposalFile: File;
+  hsXhdFile: File;
+  cdxFile: File | null;
+  transactionImages: File[];
   policy: string;
   soTienKhachDaDong?: number | null;
   diaChi?: string;
@@ -1013,9 +1015,10 @@ function maybeNumber(value?: string | number | null) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-async function uploadInvoiceFile(orderId: string, kind: 'hop_dong' | 'de_nghi_xhd', file: File) {
+async function uploadInvoiceFile(orderId: string, kind: string, file: File) {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  const path = `yeucauxhd/${orderId}/${kind}_${Date.now()}_${safeStorageName(file.name)}`;
+  const randomStr = Math.random().toString(36).substring(2, 8);
+  const path = `yeucauxhd/${orderId}/${kind}_${Date.now()}_${randomStr}_${safeStorageName(file.name)}`;
   const { error } = await supabase.storage
     .from('yeucauxhd-files')
     .upload(path, file, { upsert: false });
@@ -1115,13 +1118,24 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
     }
   }
 
-  const [contractUpload, proposalUpload] = await Promise.all([
-    uploadInvoiceFile(orderId, 'hop_dong', input.contractFile),
-    uploadInvoiceFile(orderId, 'de_nghi_xhd', input.proposalFile)
-  ]);
+  const uploadPromises = [
+    uploadInvoiceFile(orderId, 'hop_dong', input.hsXhdFile),
+    input.cdxFile ? uploadInvoiceFile(orderId, 'de_nghi_xhd', input.cdxFile) : Promise.resolve({ url: null, error: null }),
+    ...input.transactionImages.map(img => uploadInvoiceFile(orderId, 'anh_giao_dich', img))
+  ];
 
-  if (contractUpload.error) return { data: null, error: contractUpload.error };
-  if (proposalUpload.error) return { data: null, error: proposalUpload.error };
+  const uploadResults = await Promise.all(uploadPromises);
+
+  const hsXhdUpload = uploadResults[0];
+  const cdxUpload = uploadResults[1];
+  const transImgUploads = uploadResults.slice(2);
+
+  if (hsXhdUpload.error) return { data: null, error: hsXhdUpload.error };
+  if (cdxUpload.error) return { data: null, error: cdxUpload.error };
+  const firstImgError = transImgUploads.find(u => u.error);
+  if (firstImgError) return { data: null, error: firstImgError.error };
+
+  const transImgUrls = transImgUploads.map(u => u.url).filter(Boolean).join(',');
 
   const vin = orderRow.vin || input.order.vin;
   const vehicleMeta = await getVehicleMetadata(vin);
@@ -1155,13 +1169,11 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
     noi_that: orderRow.noi_that || input.order.interior || null,
     ngay_coc: orderRow.ngay_coc || input.order.depositDate || null,
     so_may: vehicleMeta.so_may || orderRow.so_may || input.order.engineNo || null,
-    requested_by: requestedBy,
     requested_by_name: input.requesterName,
     requested_by_username: input.requesterUsername,
-    url_hop_dong: contractUpload.url,
-    url_de_nghi_xhd: proposalUpload.url,
-    link_hop_dong: contractUpload.url,
-    link_de_nghi_xhd: proposalUpload.url,
+    url_hop_dong: hsXhdUpload.url,
+    url_de_nghi_xhd: cdxUpload.url || null,
+    ghi_chu_ai: transImgUrls || null,
     link_hoa_don_da_xuat: null,
     chinh_sach: input.policy || orderRow.chinh_sach || input.order.policy,
     so_tien_khach_da_dong: soTienKhachDaDong,
@@ -1170,7 +1182,7 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
     ngay_ky_hop_dong: ngayKyHopDong,
     hinh_thuc_tt: hinhThucTT,
     nguon_khach: nguonKhach,
-    ma_vso: input.order.id || null, // Sử dụng ID đơn hàng làm mã VSO nếu không có trường riêng
+    ma_vso: input.order.id || null,
     mua_bao_hiem: muaBaoHiem,
     dang_ky_xe: dangKyXe,
     xe_xang_vin: xeXangVin,
@@ -1181,6 +1193,7 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
     ghi_chu: ghiChu,
     coc: soTienKhachDaDong !== null || Boolean(orderRow.ngay_coc || input.order.depositDate),
     status: 'pending',
+    ngay_yeu_cau: new Date().toISOString(),
     note: 'Chờ phê duyệt xuất hóa đơn'
   };
 
@@ -1201,8 +1214,6 @@ export const requestInvoiceDonhang = async (input: RequestInvoiceInput) => {
       chinh_sach: input.policy,
       dia_chi_xhd: invoiceAddress,
       dia_chi: diaChi,
-      link_hop_dong: contractUpload.url,
-      link_de_nghi_xhd: proposalUpload.url,
       link_hoa_don_da_xuat: null,
       so_may: invoiceRow.so_may,
       so_tien_coc: input.order.depositAmount ?? orderRow.so_tien_coc ?? null,
