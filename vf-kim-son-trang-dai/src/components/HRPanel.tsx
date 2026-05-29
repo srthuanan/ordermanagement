@@ -434,9 +434,16 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
                     <User size={14} /> {selectedReq.requester_username}
                   </p>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ margin: '0 0 4px', fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Ngày tạo</p>
-                  <p style={{ margin: 0, fontSize: '13px', color: '#334155', fontWeight: 600 }}>{fmtDateTime(selectedReq.created_at)}</p>
+                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
+                  <div>
+                    <p style={{ margin: '0 0 4px', fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Ngày tạo</p>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#334155', fontWeight: 600 }}>{fmtDateTime(selectedReq.created_at)}</p>
+                  </div>
+                  {isAdmin && (
+                    <button onClick={() => handleDelete(selectedReq.id)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
+                      <Trash2 size={14} /> Xoá yêu cầu
+                    </button>
+                  )}
                 </div>
               </div>
 
