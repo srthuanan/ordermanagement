@@ -5,7 +5,8 @@ import {
   ClipboardList,
   Calculator,
   Users,
-  Settings
+  Settings,
+  CalendarDays
 } from 'lucide-react';
 import { OrderStatus, StockStatus, ProfileRow } from './types';
 
@@ -20,7 +21,8 @@ export const tabs = [
   { key: 'inventory', label: 'Kho xe', icon: Boxes },
   { key: 'invoices', label: 'Yêu cầu HĐ', icon: ClipboardList },
   { key: 'pricing', label: 'Tính giá', icon: Calculator },
-  { key: 'staff', label: 'Nhân sự', icon: Users },
+  { key: 'staff', label: 'Quản lý NS', icon: Users },
+  { key: 'hr', label: 'Chấm công', icon: CalendarDays },
   { key: 'settings', label: 'Cấu hình', icon: Settings }
 ] as const;
 
@@ -34,6 +36,7 @@ const roleTabAccess: Record<TabKey, AppRole[]> = {
   invoices: ['admin'],
   pricing: ['admin', 'sales', 'manager'],
   staff: ['admin', 'manager'],
+  hr: ['admin', 'sales', 'manager'],
   settings: ['admin']
 };
 

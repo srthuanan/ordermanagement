@@ -26,6 +26,7 @@ const InventoryPanel = lazy(() => import('./components/InventoryPanel').then((mo
 const InvoiceRequestsPanel = lazy(() => import('./components/InvoiceRequestsPanel').then((module) => ({ default: module.InvoiceRequestsPanel })));
 const PricingPanel = lazy(() => import('./components/PricingPanel').then((module) => ({ default: module.PricingPanel })));
 const StaffPanel = lazy(() => import('./components/StaffPanel').then((module) => ({ default: module.StaffPanel })));
+const HRPanel = lazy(() => import('./components/HRPanel').then((module) => ({ default: module.HRPanel })));
 
 // Lớp Popup Modal
 const CreateOrderModal = lazy(() => import('./components/modals/CreateOrderModal').then((module) => ({ default: module.CreateOrderModal })));
@@ -68,6 +69,7 @@ function App() {
     queuedVins,
     auditLogs,
     invoiceRequests,
+    hrLeaveRequests,
     vehicleConfigs,
     authReady,
     syncState,
@@ -460,6 +462,14 @@ function App() {
             {activeTab === 'pricing' && <PricingPanel isAdmin={canManagePricingConfig(userRole)} />}
 
             {activeTab === 'staff' && <StaffPanel staff={profiles} currentProfile={profile} onReload={loadWorkspace} />}
+            {activeTab === 'hr' && (
+              <HRPanel
+                requests={hrLeaveRequests}
+                currentProfile={profile}
+                currentUsername={currentUsername}
+                onReload={() => loadWorkspace({ showLoading: false })}
+              />
+            )}
             {activeTab === 'settings' && <SettingsPanel configs={vehicleConfigs} onRefresh={loadWorkspace} />}
           </Suspense>
         </div>

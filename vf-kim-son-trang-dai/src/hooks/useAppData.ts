@@ -11,7 +11,8 @@ import {
   VehicleLocationRow,
   CarActivityRow,
   YeucauxhdRow,
-  VehicleConfigRow
+  VehicleConfigRow,
+  HrLeaveRequestRow
 } from '../types';
 
 export function useAppData() {
@@ -25,6 +26,7 @@ export function useAppData() {
   const [auditLogs, setAuditLogs] = useState<CarActivityRow[]>([]);
   const [invoiceRequests, setInvoiceRequests] = useState<YeucauxhdRow[]>([]);
   const [vehicleConfigs, setVehicleConfigs] = useState<VehicleConfigRow[]>([]);
+  const [hrLeaveRequests, setHrLeaveRequests] = useState<HrLeaveRequestRow[]>([]);
   const [authReady, setAuthReady] = useState(!isSupabaseConfigured);
   const [syncState, setSyncState] = useState<SyncState>(isSupabaseConfigured ? 'loading' : 'sample');
   const [syncMessage, setSyncMessage] = useState(
@@ -108,7 +110,7 @@ export function useAppData() {
       await apiService.expireHoldVehicles();
 
       // 2. Tải song song dữ liệu Donhang, Khoxe, Khachhang, Audit
-      const [customersResult, ordersResult, inventoryResult, locationsResult, logsResult, invoicesResult, queueResult, profilesResult, configsResult] = await Promise.all([
+      const [customersResult, ordersResult, inventoryResult, locationsResult, logsResult, invoicesResult, queueResult, profilesResult, configsResult, hrResult] = await Promise.all([
         apiService.getCustomers(),
         apiService.getOrders(),
         apiService.getInventory(),
@@ -117,7 +119,8 @@ export function useAppData() {
         apiService.getYeucauxhd(),
         apiService.getMyQueuedVins(session.user.email || ''),
         apiService.getProfiles(),
-        apiService.getVehicleConfigs()
+        apiService.getVehicleConfigs(),
+        apiService.getHrLeaveRequests()
       ]);
 
       if (customersResult.error || !customersResult.data ||
@@ -232,6 +235,13 @@ export function useAppData() {
       setProfiles(visibleProfiles);
       setVehicleConfigs((configsResult.data as VehicleConfigRow[]) || []);
 
+      // HR: admin thấy tất cả, sales/manager chỉ thấy của mình
+      const allHrRequests = (hrResult.data as HrLeaveRequestRow[]) || [];
+      const visibleHrRequests = isAdminUser
+        ? allHrRequests
+        : allHrRequests.filter(r => r.requester_username === currentEmail || r.requester_name === currentFullName);
+      setHrLeaveRequests(visibleHrRequests);
+
       setSyncState('live');
       setSyncMessage(`Đã tải ${ordersResult.data.length} đơn và ${inventoryResult.data.length} xe.`);
       return true;
@@ -298,6 +308,11 @@ export function useAppData() {
         { event: '*', schema: 'public', table: 'vehicle_configs' },
         triggerReload
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'hr_leave_requests' },
+        triggerReload
+      )
       .subscribe();
 
     return () => {
@@ -324,6 +339,7 @@ export function useAppData() {
     profiles,
     auditLogs,
     invoiceRequests,
+    hrLeaveRequests,
     authReady,
     syncState,
     syncMessage,

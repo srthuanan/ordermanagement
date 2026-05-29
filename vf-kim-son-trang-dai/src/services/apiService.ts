@@ -1453,3 +1453,55 @@ export const updateVehicle = async (vin: string, updates: Partial<import('../typ
 
   return await supabase.from('khoxe').update(dbUpdates).eq('vin', vin.trim());
 };
+
+// =========================================================
+// HR LEAVE REQUESTS API
+// =========================================================
+
+export const getHrLeaveRequests = async () => {
+  if (!supabase) return { data: [], error: null };
+  return supabase
+    .from('hr_leave_requests')
+    .select('*')
+    .order('created_at', { ascending: false });
+};
+
+export const submitHrLeaveRequest = async (payload: {
+  requester_name: string;
+  requester_username: string;
+  requester_id: string | null;
+  type: 'nghi_phep' | 'di_tre';
+  start_date: string;
+  end_date?: string | null;
+  late_time?: string | null;
+  session?: 'sang' | 'chieu' | 'ca_ngay' | null;
+  reason: string;
+}) => {
+  if (!supabase) return { data: null, error: new Error('Supabase chưa cấu hình') };
+  return supabase.from('hr_leave_requests').insert(payload).select().single();
+};
+
+export const reviewHrLeaveRequest = async (
+  id: string,
+  status: 'approved' | 'rejected',
+  reviewer_note: string,
+  reviewed_by: string
+) => {
+  if (!supabase) return { data: null, error: new Error('Supabase chưa cấu hình') };
+  return supabase
+    .from('hr_leave_requests')
+    .update({
+      status,
+      reviewer_note,
+      reviewed_by,
+      reviewed_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single();
+};
+
+export const deleteHrLeaveRequest = async (id: string) => {
+  if (!supabase) return { error: new Error('Supabase chưa cấu hình') };
+  return supabase.from('hr_leave_requests').delete().eq('id', id);
+};

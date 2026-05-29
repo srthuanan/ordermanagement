@@ -329,3 +329,22 @@ export interface UpdateOrderInput {
   ghiChu?: string | null;
   maAmis?: string | null;
 }
+
+export interface HrLeaveRequestRow {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  requester_id: string | null;
+  requester_name: string;
+  requester_username: string;
+  type: 'nghi_phep' | 'di_tre';
+  start_date: string;
+  end_date: string | null;
+  late_time: string | null;
+  session: 'sang' | 'chieu' | 'ca_ngay' | null;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewer_note: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+}
