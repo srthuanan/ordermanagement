@@ -263,6 +263,12 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
 
   const pendingCount = requests.filter(r => r.status === 'pending').length;
 
+  const [isReloading, setIsReloading] = useState(false);
+  const handleReload = () => {
+    setIsReloading(true);
+    onReload();
+    setTimeout(() => setIsReloading(false), 800);
+  };
   const handleDelete = async (reqId: string) => {
     if (!confirm('Bạn có chắc muốn rút yêu cầu này không?')) return;
     await apiService.deleteHrLeaveRequest(reqId);
@@ -334,8 +340,9 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
             
             {/* Actions */}
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button onClick={onReload} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px 12px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#475569', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
-                <RefreshCw size={14} /> Làm mới
+              <button onClick={handleReload} disabled={isReloading} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px 12px', borderRadius: '10px', border: '1px solid #e2e8f0', background: isReloading ? '#e2e8f0' : '#f8fafc', color: '#475569', fontSize: '12px', fontWeight: 700, cursor: isReloading ? 'wait' : 'pointer', transition: 'all 0.2s', opacity: isReloading ? 0.7 : 1 }}>
+                <RefreshCw size={14} className={isReloading ? "spin-animation" : ""} style={{ transform: isReloading ? 'rotate(180deg)' : 'none', transition: 'transform 0.5s ease-in-out' }} /> 
+                {isReloading ? 'Đang tải...' : 'Làm mới'}
               </button>
               {!isAdmin && (
                 <button onClick={() => setShowSubmit(true)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px 12px', borderRadius: '10px', border: 'none', background: 'linear-gradient(135deg, #0284c7, #0ea5e9)', color: '#fff', fontSize: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(2,132,199,0.3)', transition: 'all 0.2s' }}>
