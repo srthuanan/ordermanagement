@@ -1,5 +1,29 @@
 import pricingRawText from '../../congcutinhgia.txt?raw';
 
+export function getMaxDealerInvoiceDeduction(modelId: string): number {
+  switch (modelId) {
+    case 'VF3':
+    case 'MinioGreen':
+    case 'ECVan':
+      return 6000000;
+    case 'VF5':
+    case 'HerioGreen':
+      return 10000000;
+    case 'VF6':
+    case 'LimoGreen':
+      return 12000000;
+    case 'VF7':
+    case 'VFMPV7':
+      return 15000000;
+    case 'VF8':
+      return 20000000;
+    case 'VF9':
+      return 25000000;
+    default:
+      return 0;
+  }
+}
+
 const RAW_MARKER = 'Dữ liệu thô đầy đủ (JSON):';
 
 export type PricingFee = {
@@ -102,6 +126,7 @@ export type PricingSelection = {
   customFeeAmounts?: Record<string, number>;
   selectedOptionalFeeIds: string[];
   customOptionalFeeAmounts?: Record<string, number>;
+  dealerDiscount?: number;
 };
 
 export type QuoteLine = {
@@ -123,6 +148,7 @@ export type PricingQuote = {
   colorSurcharge: number;
   promotionDiscountTotal: number;
   vinClubDiscount: number;
+  dealerDiscount: number;
   feeTotal: number;
   optionalFeeTotal: number;
   invoiceDeductions: number;
@@ -475,6 +501,28 @@ export function computePricingQuote(selection: PricingSelection) {
   let invoiceSurcharges = 0;
   let nonInvoiceDeductions = 0;
 
+  if (selection.dealerDiscount && selection.dealerDiscount > 0) {
+    const maxInvoiceDeduction = getMaxDealerInvoiceDeduction(selection.modelId);
+    let invoicePart = selection.dealerDiscount;
+    let nonInvoicePart = 0;
+    
+    if (selection.dealerDiscount > maxInvoiceDeduction) {
+      invoicePart = maxInvoiceDeduction;
+      nonInvoicePart = selection.dealerDiscount - maxInvoiceDeduction;
+    }
+
+    invoiceDeductions += invoicePart;
+    nonInvoiceDeductions += nonInvoicePart;
+
+    runningSubtotal -= selection.dealerDiscount;
+    promotionDiscountTotal += selection.dealerDiscount;
+    lines.push({
+      label: 'Ưu đãi Nhà phân phối',
+      amount: selection.dealerDiscount,
+      kind: 'discount'
+    });
+  }
+
   if (color?.is_advanced && (version.advancedColorPrice || 0) > 0) {
     lines.push({
       label: `Phí màu nâng cao ${color.name}`,
@@ -589,6 +637,7 @@ export function computePricingQuote(selection: PricingSelection) {
     colorSurcharge: color?.is_advanced ? version.advancedColorPrice || 0 : 0,
     promotionDiscountTotal,
     vinClubDiscount,
+    dealerDiscount: selection.dealerDiscount || 0,
     feeTotal,
     optionalFeeTotal,
     invoiceDeductions,

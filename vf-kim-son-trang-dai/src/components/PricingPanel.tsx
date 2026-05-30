@@ -37,10 +37,11 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
   const [customerTypeId, setCustomerTypeId] = React.useState(defaultCustomerType);
   const [vinClubTierId, setVinClubTierId] = React.useState<string | null>(null);
   const [selectedPromotionIds, setSelectedPromotionIds] = React.useState<string[]>([]);
-  const [selectedFeeIds, setSelectedFeeIds] = React.useState<string[]>(() => pricingDataset.fees.map(f => f.id));
+  const [selectedFeeIds, setSelectedFeeIds] = React.useState<string[]>([]);
   const [customFeeAmounts, setCustomFeeAmounts] = React.useState<Record<string, number>>({});
   const [selectedOptionalFeeIds, setSelectedOptionalFeeIds] = React.useState<string[]>([]);
   const [customOptionalFeeAmounts, setCustomOptionalFeeAmounts] = React.useState<Record<string, number>>({});
+  const [dealerDiscount, setDealerDiscount] = React.useState<number>(0);
   const [region, setRegion] = React.useState<'hnhcm' | 'other'>('hnhcm');
   const [adminTargetModelId, setAdminTargetModelId] = React.useState(defaultModel);
   const [adminTargetVersionId, setAdminTargetVersionId] = React.useState(defaultVersion);
@@ -174,11 +175,12 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
       selectedFeeIds,
       customFeeAmounts,
       selectedOptionalFeeIds,
-      customOptionalFeeAmounts
+      customOptionalFeeAmounts,
+      dealerDiscount
     };
 
     return computePricingQuote(selection);
-  }, [colorId, region, selectedCustomerType, selectedModel, selectedOptionalFeeIds, selectedPromotionIds, selectedVersion, vinClubTierId, customOptionalFeeAmounts]);
+  }, [colorId, region, selectedCustomerType, selectedModel, selectedOptionalFeeIds, selectedPromotionIds, selectedVersion, vinClubTierId, customOptionalFeeAmounts, selectedFeeIds, customFeeAmounts, dealerDiscount]);
 
   const selectedPromotionSet = React.useMemo(() => new Set(selectedPromotionIds), [selectedPromotionIds]);
   const selectedFeeSet = React.useMemo(() => new Set(selectedFeeIds), [selectedFeeIds]);
@@ -1135,6 +1137,24 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
 
           <div className="pricing-section-card">
             <div className="pricing-section-title">
+              <Tag size={16} />
+              <span>Ưu đãi Nhà phân phối & Đại lý</span>
+            </div>
+            <div className="pricing-section-content">
+              <div style={{ padding: '0 4px' }}>
+                <input 
+                  type="number" 
+                  placeholder="Nhập số tiền giảm giá ngoài (đ)"
+                  style={{ width: '100%', height: '40px', padding: '0 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', outline: 'none', background: '#ffffff', color: '#0f172a', fontWeight: 600 }}
+                  value={dealerDiscount || ''}
+                  onChange={(e) => setDealerDiscount(Number(e.target.value) || 0)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="pricing-section-card">
+            <div className="pricing-section-title">
               <FilePlus2 size={16} />
               <span>Phí Bắt Buộc (Lăn Bánh)</span>
             </div>
@@ -1275,6 +1295,12 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
                     <div className="pricing-receipt-line discount">
                       <span>Chiết khấu VinClub</span>
                       <strong>-{formatCurrency(quote.vinClubDiscount)}</strong>
+                    </div>
+                  )}
+                  {quote.dealerDiscount > 0 && (
+                    <div className="pricing-receipt-line discount">
+                      <span>Ưu đãi NPP & Đại lý</span>
+                      <strong style={{ color: 'inherit' }}>-{formatCurrency(quote.dealerDiscount)}</strong>
                     </div>
                   )}
                 </div>
