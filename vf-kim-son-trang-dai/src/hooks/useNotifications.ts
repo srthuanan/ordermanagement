@@ -52,7 +52,9 @@ export function useNotifications(isAdmin: boolean) {
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (supabase) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [isAdmin, fetchNotifications]);
 

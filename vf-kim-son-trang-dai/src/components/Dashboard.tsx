@@ -11,12 +11,10 @@ import {
   History,
   TrendingUp,
   AlertTriangle,
-  AlertTriangle,
   User,
-  PieChart as PieChartIcon,
-  BarChart as BarChartIcon
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart as PieChartIcon, BarChart as BarChartIcon } from 'lucide-react';
 import { Order, CarActivityRow, ProfileRow } from '../types';
 
 interface DashboardProps {
@@ -99,7 +97,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const salesLeaderboard = React.useMemo(() => {
     const counts: Record<string, number> = {};
     orders.forEach(o => {
-      const saleName = o.sale_name || 'Hệ thống';
+      const saleName = o.staff || 'Hệ thống';
       counts[saleName] = (counts[saleName] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5);
@@ -251,7 +249,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </Pie>
                 <Tooltip 
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-                  formatter={(value: number) => [`${value} xe`, 'Số lượng']}
+                  formatter={(value: any) => [`${value} xe`, 'Số lượng']}
                 />
                 <Legend verticalAlign="bottom" height={36} iconType="circle" />
               </PieChart>
@@ -286,7 +284,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Tooltip 
                   cursor={{ fill: '#f1f5f9' }}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-                  formatter={(value: number) => [`${value} đơn`, 'Thành tích']}
+                  formatter={(value: any) => [`${value} đơn`, 'Thành tích']}
                 />
                 <Bar dataKey="value" fill="#0ea5e9" radius={[0, 4, 4, 0]} barSize={20}>
                   {salesLeaderboard.map((entry, index) => (
