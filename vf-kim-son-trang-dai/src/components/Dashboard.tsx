@@ -11,8 +11,12 @@ import {
   History,
   TrendingUp,
   AlertTriangle,
-  User
+  AlertTriangle,
+  User,
+  PieChart as PieChartIcon,
+  BarChart as BarChartIcon
 } from 'lucide-react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Order, CarActivityRow, ProfileRow } from '../types';
 
 interface DashboardProps {
@@ -81,6 +85,47 @@ export const Dashboard: React.FC<DashboardProps> = ({
           staff.manager_id === currentProfile.id
       ).length
     : 0;
+
+  const modelDistribution = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    orders.forEach(o => {
+      const model = o.line || 'Khác';
+      counts[model] = (counts[model] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  }, [orders]);
+  const COLORS = ['#0f766e', '#0284c7', '#ea580c', '#eab308', '#8b5cf6', '#ec4899', '#64748b'];
+
+  const salesLeaderboard = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    orders.forEach(o => {
+      const saleName = o.sale_name || 'Hệ thống';
+      counts[saleName] = (counts[saleName] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5);
+  }, [orders]);
+
+  const dynamicInsights = React.useMemo(() => {
+    const insights = [];
+    const pendingInvoices = orders.filter(o => o.status === 'Chờ phê duyệt' || o.status === 'Yêu cầu bổ sung').length;
+    if (pendingInvoices > 0) {
+      insights.push({ icon: FileText, title: 'Hóa đơn', text: `Có ${pendingInvoices} đơn hàng đang chờ duyệt.` });
+    }
+    
+    const unmappedOrders = orders.filter(o => o.status === 'Chưa ghép').length;
+    if (unmappedOrders > 0) {
+      insights.push({ icon: Boxes, title: 'Ghép xe', text: `Có ${unmappedOrders} đơn hàng đang đợi ghép VIN.` });
+    }
+    
+    if (availableStock < 5) {
+      insights.push({ icon: Archive, title: 'Tồn kho', text: `Kho xe trống hiện chỉ còn ${availableStock} chiếc.` });
+    }
+
+    if (insights.length === 0) {
+      insights.push({ icon: CheckCircle2, title: 'Tuyệt vời', text: 'Mọi hoạt động vận hành đều đang trơn tru.' });
+    }
+    return insights;
+  }, [orders, availableStock]);
 
   return (
     <div className="dashboard-shell">
@@ -172,9 +217,84 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <AlertTriangle size={18} className="muted-icon" />
           </div>
           <div className="insight-list">
-            <InsightItem icon={LockKeyhole} title="Truy cập" text="RLS khóa dữ liệu theo quyền hệ thống." />
-            <InsightItem icon={Archive} title="Giữ xe" text="Xe quá hạn được cron tự trả về kho." />
-            <InsightItem icon={FileText} title="Ghép xe" text="Ghép VIN đi qua RPC để tránh ghi đè." />
+            {dynamicInsights.map((insight, idx) => (
+              <InsightItem key={idx} icon={insight.icon} title={insight.title} text={insight.text} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="dashboard-band">
+        <div className="dashboard-band-card dashboard-band-card-soft">
+          <div className="dashboard-band-header">
+            <div>
+              <p className="eyebrow">Phân tích</p>
+              <h3>Tỷ trọng Dòng Xe</h3>
+            </div>
+            <PieChartIcon size={18} className="muted-icon" />
+          </div>
+          <div style={{ height: '250px', width: '100%', marginTop: '1rem' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={modelDistribution}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {modelDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                  formatter={(value: number) => [`${value} xe`, 'Số lượng']}
+                />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="dashboard-band-card dashboard-band-card-soft">
+          <div className="dashboard-band-header">
+            <div>
+              <p className="eyebrow">Phân tích</p>
+              <h3>Top Nhân Viên (Sales)</h3>
+            </div>
+            <BarChartIcon size={18} className="muted-icon" />
+          </div>
+          <div style={{ height: '250px', width: '100%', marginTop: '1rem' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={salesLeaderboard}
+                layout="vertical"
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <XAxis type="number" hide />
+                <YAxis 
+                  dataKey="name" 
+                  type="category" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fontSize: 12, fill: '#64748b' }}
+                  width={100}
+                />
+                <Tooltip 
+                  cursor={{ fill: '#f1f5f9' }}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
+                  formatter={(value: number) => [`${value} đơn`, 'Thành tích']}
+                />
+                <Bar dataKey="value" fill="#0ea5e9" radius={[0, 4, 4, 0]} barSize={20}>
+                  {salesLeaderboard.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </section>
