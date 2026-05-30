@@ -63,10 +63,17 @@ export function useNotifications(isAdmin: boolean) {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     setUnreadCount(prev => Math.max(0, prev - 1));
 
-    await supabase
+    const { error } = await supabase
       .from('admin_notifications')
       .update({ is_read: true })
       .eq('id', id);
+      
+    if (error) {
+      console.error('Error marking as read:', error);
+      // Khôi phục lại trạng thái nếu lỗi
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: false } : n));
+      setUnreadCount(prev => prev + 1);
+    }
   };
 
   const markAllAsRead = async () => {

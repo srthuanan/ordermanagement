@@ -125,6 +125,8 @@ export const Header: React.FC<HeaderProps> = ({
                         key={notif.id} 
                         onClick={() => {
                           if (!notif.is_read) markAsRead(notif.id);
+                          // Đóng menu sau khi click
+                          setIsNotifOpen(false);
                         }}
                         style={{
                           padding: '12px 16px', borderBottom: '1px solid #f1f5f9',
