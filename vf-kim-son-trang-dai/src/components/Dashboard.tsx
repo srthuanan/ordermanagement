@@ -128,8 +128,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="dashboard-shell">
       <section className="dashboard-hero dashboard-hero-compact">
-
-        <div className="hero-mini-grid hero-mini-grid-compact">
+        <div className="hero-mini-grid hero-mini-grid-compact" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
           <MiniStat label="Đơn đang hoạt động" value={activeOrders} icon={Gauge} tone="teal" />
           <MiniStat label="Tỷ lệ đã ghép" value={pairingRate} icon={CheckCircle2} tone="blue" suffix="%" />
           <MiniStat label="Xe trống" value={availableStock} icon={Boxes} tone="amber" />
@@ -149,7 +148,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            <div className="hero-mini-grid hero-mini-grid-compact" style={{ marginTop: 0 }}>
+            <div className="hero-mini-grid hero-mini-grid-compact" style={{ marginTop: 0, gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
               <MiniStat label="Tổng đơn trong phòng" value={totalOrders} icon={Archive} tone="blue" />
               <MiniStat label="TVBH cùng phòng" value={departmentSalesCount} icon={User} tone="teal" />
               <MiniStat label="Chưa ghép" value={pendingOrders} icon={Clock3} tone="amber" />
@@ -233,9 +232,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <Pie
                   data={modelDistribution}
                   cx="50%"
-                  cy="45%"
-                  innerRadius={50}
-                  outerRadius={75}
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={85}
                   paddingAngle={4}
                   dataKey="value"
                 >
@@ -247,7 +246,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                   formatter={(value: any) => [`${value} xe`, 'Số lượng']}
                 />
-                <Legend verticalAlign="bottom" height={24} iconType="circle" wrapperStyle={{ fontSize: '13px' }} />
+                <Legend verticalAlign="bottom" height={24} iconType="circle" wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -266,7 +265,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <BarChart
                 data={salesLeaderboard}
                 layout="vertical"
-                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 10, right: 30, left: 10, bottom: 5 }}
               >
                 <XAxis type="number" hide />
                 <YAxis 
@@ -274,15 +273,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   type="category" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fontSize: 12, fill: '#64748b' }}
-                  width={100}
+                  tick={{ fontSize: 11, fill: '#64748b' }}
+                  width={130}
                 />
                 <Tooltip 
                   cursor={{ fill: '#f1f5f9' }}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                   formatter={(value: any) => [`${value} đơn`, 'Thành tích']}
                 />
-                <Bar dataKey="value" fill="#0ea5e9" radius={[0, 4, 4, 0]} barSize={20}>
+                <Bar dataKey="value" fill="#0ea5e9" radius={[0, 4, 4, 0]} barSize={16}>
                   {salesLeaderboard.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
