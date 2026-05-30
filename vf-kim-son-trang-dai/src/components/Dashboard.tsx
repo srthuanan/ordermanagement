@@ -171,10 +171,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <p className="eyebrow">Luồng đơn</p>
               <h3>Trạng thái xử lý</h3>
             </div>
-            <button className="ghost-button" type="button">
-              <SlidersHorizontal size={17} />
-              <span>Tùy chỉnh</span>
-            </button>
           </div>
 
           <div className="pipeline modern-pipeline">
