@@ -21,7 +21,8 @@ const SESSION_LABEL: Record<string, string> = {
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
-  pending: { label: 'Chờ duyệt', color: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: <Clock3 size={11} /> },
+  pending: { label: 'Chờ thẩm định', color: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: <Clock3 size={11} /> },
+  pending_director: { label: 'Chờ GĐ duyệt', color: '#6d28d9', bg: '#f5f3ff', border: '#ddd6fe', icon: <Clock3 size={11} /> },
   approved: { label: 'Đã duyệt', color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: <CheckCircle2 size={11} /> },
   rejected: { label: 'Từ chối', color: '#dc2626', bg: '#fef2f2', border: '#fecaca', icon: <XCircle size={11} /> }
 };
@@ -252,7 +253,10 @@ const RequestListItem: React.FC<RequestListItemProps> = ({ req, isSelected, onCl
 
 export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, currentUsername, onReload }) => {
   const isAdmin = currentProfile?.role === 'admin';
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const isDirector = currentProfile?.role === 'manager' && currentProfile?.department === 'Ban Giám Đốc';
+  const isTPKD = currentProfile?.role === 'manager' && currentProfile?.department !== 'Ban Giám Đốc';
+  const hasPrivilege = isAdmin || isDirector || isTPKD;
+  const [filter, setFilter] = useState<'all' | 'pending' | 'pending_director' | 'approved' | 'rejected'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'nghi_phep' | 'di_tre'>('all');
   const [searchQ, setSearchQ] = useState('');
   const [showSubmit, setShowSubmit] = useState(false);
@@ -276,7 +280,7 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
     onReload();
   };
 
-  const handleReview = async (req: HrLeaveRequestRow, decision: 'approved' | 'rejected') => {
+  const handleReview = async (req: HrLeaveRequestRow, decision: 'pending_director' | 'approved' | 'rejected') => {
     if (!currentProfile) return;
     setProcessing(true);
     await apiService.reviewHrLeaveRequest(req.id, decision, reviewNote, currentProfile.full_name);
@@ -284,17 +288,23 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
     try {
       const { supabase } = await import('../services/supabaseClient');
       if (supabase) {
-        await supabase.from('interactions').insert({
-          category: 'NOTIFICATION',
-          type: decision === 'approved' ? 'success' : 'warning',
-          recipient: req.requester_username,
-          message: decision === 'approved'
-            ? `✅ Yêu cầu ${TYPE_LABEL[req.type]} của bạn đã được phê duyệt.${reviewNote ? ' Ghi chú: ' + reviewNote : ''}`
-            : `❌ Yêu cầu ${TYPE_LABEL[req.type]} của bạn bị từ chối.${reviewNote ? ' Lý do: ' + reviewNote : ''}`,
-          actor_name: currentProfile.full_name,
-          target_view: 'hr',
-          target_id: req.id
-        });
+        if (decision === 'pending_director') {
+          await supabase.from('interactions').insert({
+            category: 'NOTIFICATION', type: 'info', recipient: req.requester_username,
+            message: `👀 Yêu cầu ${TYPE_LABEL[req.type]} của bạn đã được TPKD thẩm định, đang chờ Giám đốc duyệt.`,
+            actor_name: currentProfile.full_name, target_view: 'hr', target_id: req.id
+          });
+        } else {
+          await supabase.from('interactions').insert({
+            category: 'NOTIFICATION',
+            type: decision === 'approved' ? 'success' : 'warning',
+            recipient: req.requester_username,
+            message: decision === 'approved'
+              ? `✅ Yêu cầu ${TYPE_LABEL[req.type]} của bạn đã được GĐ phê duyệt.${reviewNote ? ' Ghi chú: ' + reviewNote : ''}`
+              : `❌ Yêu cầu ${TYPE_LABEL[req.type]} của bạn bị từ chối.${reviewNote ? ' Lý do: ' + reviewNote : ''}`,
+            actor_name: currentProfile.full_name, target_view: 'hr', target_id: req.id
+          });
+        }
       }
     } catch (_) {}
     setProcessing(false);
@@ -318,7 +328,8 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
 
   const FILTER_TABS = [
     { key: 'all', label: 'Tất cả', count: requests.length },
-    { key: 'pending', label: 'Chờ duyệt', count: requests.filter(r => r.status === 'pending').length },
+    { key: 'pending', label: 'Chờ TPKD', count: requests.filter(r => r.status === 'pending').length },
+    { key: 'pending_director', label: 'Chờ GĐ', count: requests.filter(r => r.status === 'pending_director').length },
     { key: 'approved', label: 'Đã duyệt', count: requests.filter(r => r.status === 'approved').length },
     { key: 'rejected', label: 'Từ chối', count: requests.filter(r => r.status === 'rejected').length },
   ] as const;
@@ -375,7 +386,7 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
                 <option value="nghi_phep">🏖️ Nghỉ phép</option>
                 <option value="di_tre">⏰ Đi trễ</option>
               </select>
-              {isAdmin && (
+              {hasPrivilege && (
                 <div style={{ position: 'relative', flex: 1 }}>
                   <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                   <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Tìm nhân viên..." style={{ width: '100%', padding: '8px 10px 8px 30px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '12px', background: '#f8fafc', outline: 'none' }} />
@@ -398,7 +409,7 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
                 <RequestListItem
                   key={req.id}
                   req={req}
-                  isAdmin={isAdmin}
+                  isAdmin={hasPrivilege}
                   isSelected={selectedId === req.id}
                   onClick={() => setSelectedId(req.id)}
                 />
@@ -439,7 +450,7 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
                     <p style={{ margin: '0 0 4px', fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>Ngày tạo</p>
                     <p style={{ margin: 0, fontSize: '13px', color: '#334155', fontWeight: 600 }}>{fmtDateTime(selectedReq.created_at)}</p>
                   </div>
-                  {(isAdmin || (!isAdmin && selectedReq.status === 'pending')) && (
+                  {(isAdmin || (selectedReq.requester_username === currentUsername && selectedReq.status === 'pending')) && (
                     <button onClick={() => handleDelete(selectedReq.id)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '8px', border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
                       <Trash2 size={14} /> {isAdmin ? 'Xoá yêu cầu' : 'Rút yêu cầu'}
                     </button>
@@ -486,8 +497,8 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
                 </div>
 
                 {/* Admin Note / Review Actions */}
-                {selectedReq.status === 'pending' ? (
-                  isAdmin && (
+                {selectedReq.status === 'pending' || selectedReq.status === 'pending_director' ? (
+                  ((isTPKD && selectedReq.status === 'pending') || (isDirector && (selectedReq.status === 'pending_director' || selectedReq.status === 'pending'))) && (
                     <div style={{ marginTop: 'auto', background: '#fdf4ff', border: '1px solid #e9d5ff', padding: '20px', borderRadius: '16px' }}>
                       <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 800, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <FileCheck size={16} /> Khu vực phê duyệt
@@ -502,8 +513,8 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
                         <button onClick={() => handleReview(selectedReq, 'rejected')} disabled={processing} style={{ padding: '12px 24px', borderRadius: '10px', border: 'none', background: '#fef2f2', color: '#dc2626', fontWeight: 800, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', opacity: processing ? 0.7 : 1 }}>
                           ❌ Từ chối
                         </button>
-                        <button onClick={() => handleReview(selectedReq, 'approved')} disabled={processing} style={{ padding: '12px 32px', borderRadius: '10px', border: 'none', background: '#059669', color: '#fff', fontWeight: 800, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', opacity: processing ? 0.7 : 1, boxShadow: '0 4px 12px rgba(5,150,105,0.3)' }}>
-                          ✅ Phê duyệt
+                        <button onClick={() => handleReview(selectedReq, (isTPKD && selectedReq.status === 'pending') ? 'pending_director' : 'approved')} disabled={processing} style={{ padding: '12px 32px', borderRadius: '10px', border: 'none', background: '#059669', color: '#fff', fontWeight: 800, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', opacity: processing ? 0.7 : 1, boxShadow: '0 4px 12px rgba(5,150,105,0.3)' }}>
+                          ✅ {(isTPKD && selectedReq.status === 'pending') ? 'Thẩm định' : 'Phê duyệt'}
                         </button>
                       </div>
                     </div>

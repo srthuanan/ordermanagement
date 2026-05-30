@@ -37,6 +37,8 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
   const [customerTypeId, setCustomerTypeId] = React.useState(defaultCustomerType);
   const [vinClubTierId, setVinClubTierId] = React.useState<string | null>(null);
   const [selectedPromotionIds, setSelectedPromotionIds] = React.useState<string[]>([]);
+  const [selectedFeeIds, setSelectedFeeIds] = React.useState<string[]>(() => pricingDataset.fees.map(f => f.id));
+  const [customFeeAmounts, setCustomFeeAmounts] = React.useState<Record<string, number>>({});
   const [selectedOptionalFeeIds, setSelectedOptionalFeeIds] = React.useState<string[]>([]);
   const [customOptionalFeeAmounts, setCustomOptionalFeeAmounts] = React.useState<Record<string, number>>({});
   const [region, setRegion] = React.useState<'hnhcm' | 'other'>('hnhcm');
@@ -169,6 +171,8 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
       vinClubTierId: selectedCustomerType.allowsVinclub ? vinClubTierId : null,
       region,
       selectedPromotionIds,
+      selectedFeeIds,
+      customFeeAmounts,
       selectedOptionalFeeIds,
       customOptionalFeeAmounts
     };
@@ -177,6 +181,7 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
   }, [colorId, region, selectedCustomerType, selectedModel, selectedOptionalFeeIds, selectedPromotionIds, selectedVersion, vinClubTierId, customOptionalFeeAmounts]);
 
   const selectedPromotionSet = React.useMemo(() => new Set(selectedPromotionIds), [selectedPromotionIds]);
+  const selectedFeeSet = React.useMemo(() => new Set(selectedFeeIds), [selectedFeeIds]);
   const selectedOptionalFeeSet = React.useMemo(() => new Set(selectedOptionalFeeIds), [selectedOptionalFeeIds]);
 
 
@@ -187,6 +192,12 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
     }
     setSelectedPromotionIds((current) =>
       current.includes(promotionId) ? current.filter((item) => item !== promotionId) : [...current, promotionId]
+    );
+  }
+
+  function toggleFee(feeId: string) {
+    setSelectedFeeIds((current) =>
+      current.includes(feeId) ? current.filter((item) => item !== feeId) : [...current, feeId]
     );
   }
 
@@ -317,7 +328,9 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
         applicableTo: adminTargetVersion ? [adminTargetVersion.id] : [],
         calculationBase: 'list_price',
         isFuelSwap: false,
-        versionOverrides: {}
+        versionOverrides: {},
+        rule_type: 'DISCOUNT',
+        deduct_from_invoice: true
       });
     });
   }
@@ -572,7 +585,35 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
                     />
                   </label>
                   <label>
-                    <span>Loại giảm</span>
+                    <span>Loại tác động</span>
+                    <select
+                      value={promotion.rule_type || 'DISCOUNT'}
+                      onChange={(event) =>
+                        updatePricingDraft((draft) => {
+                          draft.promotions[index].rule_type = event.target.value as PricingPromotion['rule_type'];
+                        })
+                      }
+                    >
+                      <option value="DISCOUNT">Khấu trừ / Giảm giá</option>
+                      <option value="SURCHARGE">Phụ phí cộng thêm</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Kiểu khấu trừ</span>
+                    <select
+                      value={promotion.deduct_from_invoice !== false ? 'true' : 'false'}
+                      onChange={(event) =>
+                        updatePricingDraft((draft) => {
+                          draft.promotions[index].deduct_from_invoice = event.target.value === 'true';
+                        })
+                      }
+                    >
+                      <option value="true">Tính vào Giá Hóa Đơn</option>
+                      <option value="false">Tính vào Giá Thu Thực Tế (Không ra HĐ)</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Cơ chế giảm</span>
                     <select
                       value={promotion.type}
                       onChange={(event) =>
@@ -1095,6 +1136,56 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
           <div className="pricing-section-card">
             <div className="pricing-section-title">
               <FilePlus2 size={16} />
+              <span>Phí Bắt Buộc (Lăn Bánh)</span>
+            </div>
+            <div className="pricing-section-content">
+               {pricingDraft.fees.length === 0 ? (
+                 <div style={{ fontSize: '13px', color: '#64748b' }}>Không có phí lăn bánh nào.</div>
+               ) : (
+                <div className="pricing-grid-2">
+                  {pricingDraft.fees.map((fee) => {
+                    const selected = selectedFeeSet.has(fee.id);
+                    const defaultAmount = region === 'hnhcm' ? fee.amountHnHcm : fee.amountOther;
+                    return (
+                      <div key={fee.id} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div className={`pricing-toggle-item ${selected ? 'active' : ''}`} onClick={() => toggleFee(fee.id)}>
+                          <div className="pricing-toggle-info">
+                            <strong>{fee.name}</strong>
+                            <span>Mặc định: {formatCurrency(defaultAmount)}</span>
+                          </div>
+                          <div className="pricing-toggle-switch"></div>
+                        </div>
+                        {selected && (
+                          <div style={{ padding: '0 4px' }}>
+                            <input 
+                              type="number" 
+                              placeholder={`Nhập số (Mặc định: ${defaultAmount})`}
+                              style={{ width: '100%', height: '36px', padding: '0 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', outline: 'none', background: '#ffffff', color: '#0f172a', fontWeight: 600 }}
+                              value={customFeeAmounts[fee.id] !== undefined ? customFeeAmounts[fee.id] : ''}
+                              onChange={(e) => {
+                                const val = e.target.value === '' ? undefined : Number(e.target.value);
+                                setCustomFeeAmounts(prev => {
+                                  const next = { ...prev };
+                                  if (val === undefined) delete next[fee.id];
+                                  else next[fee.id] = val;
+                                  return next;
+                                });
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+               )}
+            </div>
+          </div>
+
+          <div className="pricing-section-card">
+            <div className="pricing-section-title">
+              <FilePlus2 size={16} />
               <span>Phí Tùy chọn</span>
             </div>
             <div className="pricing-section-content">
@@ -1159,17 +1250,27 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
                   <span>Giá niêm yết</span>
                   <strong>{quote ? formatCurrency(quote.basePrice) : '--'}</strong>
                 </div>
+                {quote && quote.colorSurcharge > 0 && (
+                  <div className="pricing-receipt-line fee" style={{ marginTop: '8px' }}>
+                    <span>Phụ phí màu nâng cao ({quote.color?.name})</span>
+                    <strong>{formatCurrency(quote.colorSurcharge)}</strong>
+                  </div>
+                )}
               </div>
 
               {quote && quote.promotionDiscountTotal + quote.vinClubDiscount > 0 && (
                 <div style={{ marginBottom: '16px' }}>
                   <span style={{ fontSize: '12px', fontWeight: 800, color: '#fca5a5', textTransform: 'uppercase' }}>Khuyến mãi & Ưu đãi</span>
-                  {quote.selectedPromotions.map((promo) => (
-                    <div key={promo.id} className="pricing-receipt-line discount">
-                      <span>{promo.name}</span>
-                      <strong>-{formatCurrency(quote.promotionAmounts[promo.id])}</strong>
-                    </div>
-                  ))}
+                  {quote.selectedPromotions.map((promo) => {
+                    const sign = promo.rule_type === 'SURCHARGE' ? '+' : '-';
+                    const color = promo.rule_type === 'SURCHARGE' ? '#ef4444' : 'inherit';
+                    return (
+                      <div key={promo.id} className="pricing-receipt-line discount">
+                        <span>{promo.name}</span>
+                        <strong style={{ color }}>{sign}{formatCurrency(quote.promotionAmounts[promo.id])}</strong>
+                      </div>
+                    );
+                  })}
                   {quote.vinClubDiscount > 0 && (
                     <div className="pricing-receipt-line discount">
                       <span>Chiết khấu VinClub</span>
@@ -1183,12 +1284,11 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
                 <div style={{ marginBottom: '16px' }}>
                   <span style={{ fontSize: '12px', fontWeight: 800, color: '#7dd3fc', textTransform: 'uppercase' }}>Phí bắt buộc (Lăn bánh)</span>
                   {pricingDraft.fees.map((fee) => {
-                    const amt = region === 'hnhcm' ? fee.amountHnHcm : fee.amountOther;
-                    if (!amt) return null;
+                    if (!selectedFeeSet.has(fee.id)) return null;
                     return (
                       <div key={fee.id} className="pricing-receipt-line fee">
                         <span>{fee.name}</span>
-                        <strong>{formatCurrency(amt)}</strong>
+                        <strong>{formatCurrency(quote.feeAmounts[fee.id] ?? 0)}</strong>
                       </div>
                     );
                   })}
@@ -1211,9 +1311,15 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
               )}
             </div>
 
-            <div className="pricing-result-footer">
-              <span>TỔNG THANH TOÁN (ƯỚC TÍNH)</span>
-              <strong>{quote ? formatCurrency(quote.total) : '--'}</strong>
+            <div className="pricing-result-footer" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase' }}>Giá Xuất Hóa Đơn</span>
+                <strong style={{ fontSize: '16px', color: '#f8fafc' }}>{quote ? formatCurrency(quote.invoicePrice) : '--'}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #334155', paddingTop: '12px' }}>
+                <span style={{ color: '#38bdf8' }}>GIÁ THU THỰC TẾ</span>
+                <strong style={{ fontSize: '20px', color: '#38bdf8' }}>{quote ? formatCurrency(quote.collectionPrice) : '--'}</strong>
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
                 <span>Khách hàng: {customerName || 'N/A'}</span>
                 <span>Tư vấn: {consultantName || 'N/A'}</span>

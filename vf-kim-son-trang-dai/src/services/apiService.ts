@@ -1494,7 +1494,7 @@ export const submitHrLeaveRequest = async (payload: {
 
 export const reviewHrLeaveRequest = async (
   id: string,
-  status: 'approved' | 'rejected',
+  status: 'pending_director' | 'approved' | 'rejected',
   reviewer_note: string,
   reviewed_by: string
 ) => {

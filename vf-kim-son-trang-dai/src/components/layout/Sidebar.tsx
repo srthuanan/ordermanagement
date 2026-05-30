@@ -60,25 +60,49 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
       </nav>
 
-      <div className="sidebar-footer">
-        <div className="operator">
-          <UserRound size={18} />
-          <div>
-            <strong>{profile?.full_name ?? userEmail ?? 'Người dùng'}</strong>
-            <span>Vai trò: {profile ? roleLabels[profile.role] : 'Chưa có profile'}</span>
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+        {/* User Card */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: '#f8fafc', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'linear-gradient(135deg, #0f766e, #14b8a6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+            <UserRound size={18} strokeWidth={2.5} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {profile?.full_name ?? userEmail ?? 'Người dùng'}
+            </div>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748b', marginTop: '2px' }}>
+              Vai trò: {profile ? roleLabels[profile.role] : 'Chưa có profile'}
+            </div>
           </div>
         </div>
-        <button className="ghost-button" title="Sửa hồ sơ" onClick={onEditProfile}>
-          <User size={16} />
-        </button>
-        <button className="ghost-button" title="Đổi mật khẩu" onClick={onChangePassword}>
-          <LockKeyhole size={17} />
-          <span>Đổi mật khẩu</span>
-        </button>
-        <button className="ghost-button" title="Đăng xuất" onClick={onSignOut}>
-          <LogOut size={17} />
-          <span>Đăng xuất</span>
-        </button>
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <button 
+            onClick={onEditProfile}
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '10px', border: 'none', background: 'transparent', color: '#334155', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', outline: 'none' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#0f172a'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#334155'; }}
+          >
+            <User size={16} /> Cập nhật hồ sơ
+          </button>
+          <button 
+            onClick={onChangePassword}
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '10px', border: 'none', background: 'transparent', color: '#334155', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', outline: 'none' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#0f172a'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#334155'; }}
+          >
+            <LockKeyhole size={16} /> Đổi mật khẩu
+          </button>
+          <button 
+            onClick={onSignOut}
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1px solid transparent', background: '#fff1f2', color: '#e11d48', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', outline: 'none', marginTop: '4px' }}
+            onMouseEnter={e => { e.currentTarget.style.background = '#ffe4e6'; e.currentTarget.style.color = '#be123c'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = '#fff1f2'; e.currentTarget.style.color = '#e11d48'; }}
+          >
+            <LogOut size={16} /> Đăng xuất
+          </button>
+        </div>
       </div>
     </aside>
   );

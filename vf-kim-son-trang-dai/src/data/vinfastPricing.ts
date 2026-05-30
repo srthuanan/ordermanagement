@@ -49,6 +49,8 @@ export type PricingPromotion = {
   calculationBase: 'list_price' | 'discounted_price';
   isFuelSwap: boolean;
   versionOverrides: Record<string, number>;
+  rule_type: 'SURCHARGE' | 'DISCOUNT';
+  deduct_from_invoice: boolean;
 };
 
 export type PricingCustomerType = {
@@ -96,6 +98,8 @@ export type PricingSelection = {
   vinClubTierId: string | null;
   region: 'hnhcm' | 'other';
   selectedPromotionIds: string[];
+  selectedFeeIds?: string[];
+  customFeeAmounts?: Record<string, number>;
   selectedOptionalFeeIds: string[];
   customOptionalFeeAmounts?: Record<string, number>;
 };
@@ -121,10 +125,16 @@ export type PricingQuote = {
   vinClubDiscount: number;
   feeTotal: number;
   optionalFeeTotal: number;
+  invoiceDeductions: number;
+  invoiceSurcharges: number;
+  nonInvoiceDeductions: number;
+  invoicePrice: number;
+  collectionPrice: number;
   total: number;
   depositAmount: number;
   lines: QuoteLine[];
   promotionAmounts: Record<string, number>;
+  feeAmounts: Record<string, number>;
   optionalFeeAmounts: Record<string, number>;
 };
 
@@ -235,7 +245,9 @@ function normalizeJsonDataset(parsed: any): PricingDataset {
         applicableTo: toStringArray(promotion.applicableTo),
         calculationBase: promotion.calculationBase === 'discounted_price' ? 'discounted_price' : 'list_price',
         isFuelSwap: Boolean(promotion.isFuelSwap),
-        versionOverrides: toRecordNumber(promotion.versionOverrides)
+        versionOverrides: toRecordNumber(promotion.versionOverrides),
+        rule_type: promotion.rule_type === 'SURCHARGE' ? 'SURCHARGE' : 'DISCOUNT',
+        deduct_from_invoice: promotion.deduct_from_invoice !== false
       }))
     : [];
 
@@ -455,8 +467,13 @@ export function computePricingQuote(selection: PricingSelection) {
     { label: `Giá niêm yết ${version.name}`, amount: version.basePrice, kind: 'charge' }
   ];
   const promotionAmounts: Record<string, number> = {};
+  const feeAmounts: Record<string, number> = {};
   const optionalFeeAmounts: Record<string, number> = {};
   let promotionDiscountTotal = 0;
+
+  let invoiceDeductions = 0;
+  let invoiceSurcharges = 0;
+  let nonInvoiceDeductions = 0;
 
   if (color?.is_advanced && (version.advancedColorPrice || 0) > 0) {
     lines.push({
@@ -468,10 +485,29 @@ export function computePricingQuote(selection: PricingSelection) {
 
   for (const promotion of selectedPromotions) {
     const resolvedPromotion = availablePromotionMap.get(promotion.id) || promotion;
-    const amount = getPromotionAmount(resolvedPromotion, version, version.basePrice, runningSubtotal);
+    let amount = getPromotionAmount(resolvedPromotion, version, version.basePrice, runningSubtotal);
+    
+    // Ngoại lệ: Miễn phí màu
+    if (resolvedPromotion.name.toLowerCase().includes('miễn phí màu') && color && color.is_advanced && (version.advancedColorPrice || 0) > 0) {
+      amount = version.advancedColorPrice || 0;
+    }
+
     promotionAmounts[promotion.id] = amount;
     promotionDiscountTotal += amount;
     runningSubtotal -= amount;
+    
+    if (resolvedPromotion.rule_type === 'SURCHARGE') {
+      if (resolvedPromotion.deduct_from_invoice) {
+        invoiceSurcharges += amount;
+      }
+    } else {
+      if (resolvedPromotion.deduct_from_invoice) {
+        invoiceDeductions += amount;
+      } else {
+        nonInvoiceDeductions += amount;
+      }
+    }
+
     lines.push({
       label: promotion.name,
       amount,
@@ -489,8 +525,13 @@ export function computePricingQuote(selection: PricingSelection) {
     });
   }
 
-  const feeTotal = pricingDataset.fees.reduce((sum, fee) => {
-    const amount = getFeeAmount(fee, selection.region);
+  const selectedFees = selection.selectedFeeIds ? pricingDataset.fees.filter(fee => selection.selectedFeeIds!.includes(fee.id)) : pricingDataset.fees;
+  const feeTotal = selectedFees.reduce((sum, fee) => {
+    let amount = getFeeAmount(fee, selection.region);
+    if (selection.customFeeAmounts && selection.customFeeAmounts[fee.id] !== undefined) {
+       amount = selection.customFeeAmounts[fee.id];
+    }
+    feeAmounts[fee.id] = amount;
     lines.push({
       label: fee.name,
       amount,
@@ -511,7 +552,22 @@ export function computePricingQuote(selection: PricingSelection) {
     return sum + amount;
   }, 0);
 
-  const total = runningSubtotal + feeTotal + optionalFeeTotal;
+  // Xử lý VinClub vào giảm trừ hóa đơn
+  if (vinClubDiscount > 0) {
+    invoiceDeductions += vinClubDiscount;
+  }
+
+  // Phí bắt buộc (feeTotal) và Phí tùy chọn (optionalFeeTotal) - giả sử cộng vào giá thu thực tế, không cộng vào hóa đơn xe
+  // Trừ khi bạn muốn cộng vào hóa đơn. Tạm thời mình giữ logic:
+  // Giá xuất hóa đơn = Giá niêm yết + Phụ phí màu + Phụ phí hóa đơn - Khấu trừ hóa đơn
+  // Giá thu thực tế = Giá hóa đơn - Khấu trừ ngoài + Phí bắt buộc + Phí tùy chọn (hoặc gom chung vào nonInvoiceDeductions/Surcharges)
+  // Để chính xác nhất theo công thức dự án cha:
+  const baseTotal = version.basePrice + (color?.is_advanced ? version.advancedColorPrice || 0 : 0);
+  const invoicePrice = baseTotal + invoiceSurcharges - invoiceDeductions;
+  
+  // Tính tổng thu thực tế bao gồm cả phí lăn bánh
+  const collectionPrice = invoicePrice - nonInvoiceDeductions + feeTotal + optionalFeeTotal;
+  const total = collectionPrice;
 
   if (version.depositAmount > 0) {
     lines.push({
@@ -535,10 +591,16 @@ export function computePricingQuote(selection: PricingSelection) {
     vinClubDiscount,
     feeTotal,
     optionalFeeTotal,
+    invoiceDeductions,
+    invoiceSurcharges,
+    nonInvoiceDeductions,
+    invoicePrice,
+    collectionPrice,
     total,
     depositAmount: version.depositAmount,
     lines,
     promotionAmounts,
+    feeAmounts,
     optionalFeeAmounts
   } satisfies PricingQuote;
 }

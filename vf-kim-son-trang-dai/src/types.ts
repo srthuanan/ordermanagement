@@ -343,7 +343,7 @@ export interface HrLeaveRequestRow {
   late_time: string | null;
   session: 'sang' | 'chieu' | 'ca_ngay' | null;
   reason: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'pending_director' | 'approved' | 'rejected';
   reviewer_note: string | null;
   reviewed_by: string | null;
   reviewed_at: string | null;

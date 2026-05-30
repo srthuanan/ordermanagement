@@ -1352,7 +1352,7 @@ Dữ liệu thô đầy đủ (JSON):
       "specificPromotions": {
         "deposit-voucher": 10000000
       },
-      "advancedColorPrice": 0,
+      "advancedColorPrice": 10000000,
       "depositDiscount": 10000000,
       "bodyInsuranceAmount": 7000000,
       "depositAmount": 30000000,
