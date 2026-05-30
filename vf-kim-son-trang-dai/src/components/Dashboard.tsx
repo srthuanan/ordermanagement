@@ -218,7 +218,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
-      <section className="dashboard-band">
+      <section className="dashboard-band" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
         <div className="dashboard-band-card dashboard-band-card-soft">
           <div className="dashboard-band-header">
             <div>
@@ -227,16 +227,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <PieChartIcon size={18} className="muted-icon" />
           </div>
-          <div style={{ height: '250px', width: '100%', marginTop: '1rem' }}>
+          <div style={{ height: '220px', width: '100%', marginTop: '0.5rem' }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={modelDistribution}
                   cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
+                  cy="45%"
+                  innerRadius={50}
+                  outerRadius={75}
+                  paddingAngle={4}
                   dataKey="value"
                 >
                   {modelDistribution.map((entry, index) => (
@@ -247,7 +247,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                   formatter={(value: any) => [`${value} xe`, 'Số lượng']}
                 />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                <Legend verticalAlign="bottom" height={24} iconType="circle" wrapperStyle={{ fontSize: '13px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -261,7 +261,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <BarChartIcon size={18} className="muted-icon" />
           </div>
-          <div style={{ height: '250px', width: '100%', marginTop: '1rem' }}>
+          <div style={{ height: '220px', width: '100%', marginTop: '0.5rem' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={salesLeaderboard}
