@@ -210,6 +210,17 @@ function App() {
     }
   }, [activeTab, userRole, visibleTabs]);
 
+  React.useEffect(() => {
+    const handleNavigate = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { tab, search } = customEvent.detail;
+      if (tab) setActiveTab(tab);
+      if (search) setQuery(search);
+    };
+    window.addEventListener('navigate-to', handleNavigate);
+    return () => window.removeEventListener('navigate-to', handleNavigate);
+  }, []);
+
   // Màn hình Loading cấu hình
   if (!authReady) {
     return (

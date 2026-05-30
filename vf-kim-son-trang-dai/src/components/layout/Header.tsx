@@ -127,6 +127,18 @@ export const Header: React.FC<HeaderProps> = ({
                           if (!notif.is_read) markAsRead(notif.id);
                           // Đóng menu sau khi click
                           setIsNotifOpen(false);
+                          
+                          // Trích xuất mã đơn hàng từ tin nhắn (VD: G40107-VSO-26-05-0180)
+                          const orderMatch = notif.message.match(/(G\d{5}-VSO-\d{2}-\d{2}-\d{4})/i);
+                          if (orderMatch) {
+                            const orderId = orderMatch[1];
+                            // Nếu là yêu cầu hóa đơn thì qua tab Hóa đơn, ngược lại qua tab Đơn hàng
+                            const isInvoiceNotif = notif.message.toLowerCase().includes('yêu cầu xuất hóa đơn');
+                            const tab = isInvoiceNotif ? 'invoices' : 'orders';
+                            window.dispatchEvent(new CustomEvent('navigate-to', {
+                              detail: { tab, search: orderId }
+                            }));
+                          }
                         }}
                         style={{
                           padding: '12px 16px', borderBottom: '1px solid #f1f5f9',
