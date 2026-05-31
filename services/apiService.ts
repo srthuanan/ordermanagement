@@ -3008,13 +3008,13 @@ export const getAppSetting = async (key: string): Promise<ApiResult> => {
             .from('app_settings')
             .select('value')
             .eq('key', key)
-            .single();
+            .maybeSingle();
         
         if (error) throw error;
         return { 
             status: 'SUCCESS', 
             message: `Fetched ${key} from Supabase`,
-            data: data.value 
+            data: data?.value || null
         };
     } catch (err) {
         console.error(`Supabase getAppSetting error for ${key}:`, err);

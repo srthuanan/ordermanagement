@@ -26,7 +26,47 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
     });
 
     const tableRef = useRef<HTMLDivElement>(null);
+    const invoiceTableRef = useRef<HTMLDivElement>(null);
+    const matchingProgressTableRef = useRef<HTMLDivElement>(null);
+    const matchingTvbhTableRef = useRef<HTMLDivElement>(null);
+    const [copyingTable, setCopyingTable] = useState<string | null>(null);
+    const [fallbackImage, setFallbackImage] = useState<string | null>(null);
     const [isCopying, setIsCopying] = useState(false);
+
+    const handleCopySpecificTable = async (ref: React.RefObject<HTMLDivElement>, title: string, tableId: string) => {
+        if (!ref.current) return;
+        
+        // Tìm element table bên trong để chụp toàn bộ nội dung (tránh bị cắt do overflow)
+        const targetElement = ref.current.querySelector('table') || ref.current;
+        
+        setCopyingTable(tableId);
+        try {
+            const canvas = await html2canvas(targetElement as HTMLElement, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+            canvas.toBlob(async (blob) => {
+                if (blob) {
+                    try {
+                        if (!navigator.clipboard || !navigator.clipboard.write) {
+                            throw new Error('Clipboard API not supported');
+                        }
+                        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                        alert(`Đã copy ảnh bảng ${title} thành công!`);
+                    } catch (err) {
+                        console.warn('Lỗi copy:', err);
+                        const url = URL.createObjectURL(blob);
+                        setFallbackImage(url);
+                    }
+                }
+            }, 'image/png');
+        } catch (error) {
+            alert('Có lỗi xảy ra khi tạo ảnh.');
+        } finally {
+            setCopyingTable(null);
+        }
+    };
 
     const handleCopyImage = async () => {
         if (!tableRef.current) return;
@@ -40,6 +80,9 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
             canvas.toBlob(async (blob) => {
                 if (blob) {
                     try {
+                        if (!navigator.clipboard || !navigator.clipboard.write) {
+                            throw new Error('Clipboard API not supported');
+                        }
                         await navigator.clipboard.write([
                             new ClipboardItem({
                                 'image/png': blob
@@ -47,15 +90,9 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                         ]);
                         alert('Đã copy hình ảnh bảng thành công!');
                     } catch (err) {
-                        console.warn('Không thể copy ảnh vào clipboard, chuyển sang tải xuống:', err);
-                        // Fallback: Tự động tải ảnh xuống
+                        console.warn('Không thể copy ảnh vào clipboard:', err);
                         const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `Bang_Ghep_Xe_${moment().format('DD_MM_YYYY_HHmm')}.png`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                        alert('Trình duyệt không hỗ trợ copy trực tiếp. Đã tự động TẢI ẢNH XUỐNG máy tính thay thế!');
+                        setFallbackImage(url);
                     }
                 }
             }, 'image/png');
@@ -128,6 +165,35 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
             .sort();
     }, [currentMonthStats]);
 
+    // 3. Thống kê ghép xe THEO TVBH
+    const tvbhMatchingStats = useMemo(() => {
+        const stats: Record<string, Record<string, number> & { total: number }> = {};
+
+        pairedData.forEach(order => {
+            const tvbhNameRaw = order['Tên tư vấn bán hàng'] || order['Người YC'] || order['Tư vấn bán hàng'] || 'Không rõ';
+            const tvbh = String(tvbhNameRaw).normalize("NFC").trim().toLowerCase().split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+            const model = order['Dòng xe'] || 'Khác';
+
+            if (!stats[tvbh]) stats[tvbh] = { total: 0 };
+            stats[tvbh][model] = (stats[tvbh][model] || 0) + 1;
+            stats[tvbh].total += 1;
+        });
+
+        return stats;
+    }, [pairedData]);
+
+    const matchingTvbhModels = useMemo(() => {
+        const models = new Set<string>();
+        Object.values(tvbhMatchingStats).forEach(tvbhModels => {
+            Object.entries(tvbhModels).forEach(([m, count]) => {
+                if (m !== 'total' && typeof count === 'number' && count > 0) {
+                    models.add(m);
+                }
+            });
+        });
+        return Array.from(models).sort();
+    }, [tvbhMatchingStats]);
+
     // Click handlers
     const showInvoiceDetails = (tvbh?: string, model?: string) => {
         const filtered = xuathoadonData.filter(order => {
@@ -145,6 +211,34 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
             isOpen: true,
             title: `Chi tiết XHĐ: ${tvbh || 'Tất cả'} - ${model || 'Tất cả'}`,
             data: filtered
+        });
+    };
+
+    const showMatchingDetailsTvbh = (tvbh?: string, model?: string) => {
+        const filtered = pairedData.filter(order => {
+            const tvbhNameRaw = order['Tên tư vấn bán hàng'] || order['Người YC'] || order['Tư vấn bán hàng'] || 'Không rõ';
+            const orderTvbh = String(tvbhNameRaw).normalize("NFC").trim().toLowerCase().split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+            const orderModel = order['Dòng xe'] || 'Khác';
+
+            if (tvbh && model) return orderTvbh === tvbh && orderModel === model;
+            if (tvbh) return orderTvbh === tvbh;
+            if (model) return orderModel === model;
+            return true;
+        });
+
+        // Sort: đã ghép lâu nhất lên đầu
+        filtered.sort((a, b) => {
+            const dA = a['Thời gian ghép'] ? moment(a['Thời gian ghép']).valueOf() : 0;
+            const dB = b['Thời gian ghép'] ? moment(b['Thời gian ghép']).valueOf() : 0;
+            return dA - dB;
+        });
+
+        setDetailModal({
+            isOpen: true,
+            title: `Chi tiết Xe Ghép: ${tvbh || 'Tất cả'} - ${model || 'Tất cả'}`,
+            data: filtered,
+            showDaysColumn: true,
+            isMatchedView: true
         });
     };
 
@@ -204,10 +298,20 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                 </div>
                                 <h3 className="text-sm font-bold text-slate-800 tracking-tight">XUẤT HÓA ĐƠN THEO TVBH</h3>
                             </div>
-                            <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest bg-slate-50 px-2 py-1 rounded">Tất cả</span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => handleCopySpecificTable(invoiceTableRef, 'Xuat_Hoa_Don_TVBH', 'invoice')}
+                                    disabled={copyingTable === 'invoice'}
+                                    className="px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 hover:border-blue-600 rounded text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                                >
+                                    {copyingTable === 'invoice' ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-copy"></i>}
+                                    Copy Bảng
+                                </button>
+                                <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest bg-slate-50 px-2 py-1 rounded">Tất cả</span>
+                            </div>
                         </div>
 
-                        <div className="flex-1 overflow-auto bg-white custom-scrollbar">
+                        <div className="flex-1 overflow-auto bg-white custom-scrollbar" ref={invoiceTableRef}>
                             <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse min-w-[480px]">
                                 <thead className="sticky top-0 z-20">
@@ -274,8 +378,10 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                         </div>
                     </div>
 
-                    {/* SECTION 2: MONTHLY MATCHING STATS */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col min-h-[400px] lg:min-h-0 overflow-hidden">
+                    {/* SECTION 2 & 3 CONTAINER */}
+                    <div className="flex flex-col gap-5 h-full lg:min-h-0 overflow-hidden">
+                        {/* SECTION 2: MONTHLY MATCHING STATS */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col flex-1 min-h-[250px] overflow-hidden">
                         <div className="px-5 py-3.5 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -284,6 +390,14 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                 <h3 className="text-sm font-bold text-slate-800 tracking-tight">TIẾN ĐỘ GHÉP XE (TẤT CẢ ĐƠN)</h3>
                             </div>
                             <div className="hidden sm:flex items-center gap-2">
+                                <button
+                                    onClick={() => handleCopySpecificTable(matchingProgressTableRef, 'Tien_Do_Ghep_Xe', 'matching_progress')}
+                                    disabled={copyingTable === 'matching_progress'}
+                                    className="px-3 py-1 bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200 hover:border-emerald-600 rounded text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                                >
+                                    {copyingTable === 'matching_progress' ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-copy"></i>}
+                                    Copy Bảng
+                                </button>
                                 <div className="flex items-center gap-1 bg-emerald-50 px-1.5 py-0.5 rounded">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                     <span className="text-[8px] font-bold text-emerald-700 uppercase">Khớp</span>
@@ -295,7 +409,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-auto bg-white custom-scrollbar">
+                        <div className="flex-1 overflow-auto bg-white custom-scrollbar" ref={matchingProgressTableRef}>
                             <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse min-w-[320px]">
                                 <thead className="sticky top-0 z-20">
@@ -377,8 +491,135 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                             </div>
                         </div>
                     </div>
+
+                        {/* SECTION 3: PAIRED CARS BY TVBH */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col flex-1 min-h-[250px] overflow-hidden">
+                            <div className="px-5 py-3.5 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                                        <i className="fas fa-car-side text-sm"></i>
+                                    </div>
+                                    <h3 className="text-sm font-bold text-slate-800 tracking-tight">SỐ LƯỢNG XE GHÉP THEO TVBH</h3>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleCopySpecificTable(matchingTvbhTableRef, 'Xe_Ghep_Theo_TVBH', 'matching_tvbh')}
+                                        disabled={copyingTable === 'matching_tvbh'}
+                                        className="px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 hover:border-blue-600 rounded text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+                                    >
+                                        {copyingTable === 'matching_tvbh' ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-copy"></i>}
+                                        Copy Bảng
+                                    </button>
+                                    <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest bg-slate-50 px-2 py-1 rounded">Đã ghép</span>
+                                </div>
+                            </div>
+
+                            <div className="flex-1 overflow-auto bg-white custom-scrollbar" ref={matchingTvbhTableRef}>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse min-w-[480px]">
+                                        <thead className="sticky top-0 z-20">
+                                            <tr className="bg-slate-50">
+                                                <th className="sticky left-0 z-30 bg-slate-50 px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">Tư Vấn</th>
+                                                {matchingTvbhModels.map(model => (
+                                                    <th key={model} className="px-2 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200 text-center">{model}</th>
+                                                ))}
+                                                <th className="px-4 py-2.5 text-[10px] font-bold text-blue-600 uppercase tracking-wider border border-slate-200 text-center bg-blue-50/40">Tổng</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {Object.entries(tvbhMatchingStats).length > 0 ? (
+                                                Object.entries(tvbhMatchingStats).sort((a, b) => b[1].total - a[1].total || a[0].localeCompare(b[0])).map(([tvbh, models]) => (
+                                                    <tr key={tvbh} className="hover:bg-blue-50/20 transition-colors group">
+                                                        <td className="sticky left-0 z-10 bg-white group-hover:bg-blue-50/30 px-4 py-2 text-xs font-bold text-slate-700 border border-slate-200 shadow-[1px_0_3px_-1px_rgba(0,0,0,0.05)] whitespace-nowrap overflow-hidden text-ellipsis">
+                                                            <button onClick={() => showMatchingDetailsTvbh(tvbh)} className="hover:text-blue-600 transition-colors">{tvbh}</button>
+                                                        </td>
+                                                        {matchingTvbhModels.map(model => {
+                                                            const count = models[model] || 0;
+                                                            return (
+                                                                <td key={model} className={`px-2 py-2 text-xs text-center font-medium border border-slate-100 ${count > 0 ? 'text-slate-900 font-bold bg-emerald-50/5' : 'text-slate-300'}`}>
+                                                                    {count > 0 ? (
+                                                                        <button onClick={() => showMatchingDetailsTvbh(tvbh, model)} className="w-full h-full hover:text-blue-600 hover:scale-110 transition-all">
+                                                                            {count}
+                                                                        </button>
+                                                                    ) : '-'}
+                                                                </td>
+                                                            );
+                                                        })}
+                                                        <td className="px-4 py-2 text-xs font-black text-blue-600 text-center bg-blue-50/10 border border-slate-200">
+                                                            <button onClick={() => showMatchingDetailsTvbh(tvbh)} className="hover:scale-110 transition-transform">{models.total}</button>
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            ) : (
+                                                <tr>
+                                                    <td colSpan={matchingTvbhModels.length + 2} className="px-5 py-12 text-center text-slate-400 italic text-xs border border-slate-200">Chưa có xe ghép</td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                        {Object.entries(tvbhMatchingStats).length > 0 && (
+                                            <tfoot className="sticky bottom-0 z-30 bg-slate-100">
+                                                <tr>
+                                                    <td className="sticky left-0 z-30 bg-slate-100 px-4 py-2.5 text-xs font-black text-slate-800 border border-slate-200 text-center">TỔNG</td>
+                                                    {matchingTvbhModels.map(model => {
+                                                        const modelTotal = Object.values(tvbhMatchingStats).reduce((sum, stats) => sum + (stats[model] || 0), 0);
+                                                        return (
+                                                            <td key={model} className="px-2 py-2.5 text-xs font-black text-slate-800 text-center border border-slate-200">
+                                                                <button onClick={() => showMatchingDetailsTvbh(undefined, model)} className="hover:text-blue-600">{modelTotal || '-'}</button>
+                                                            </td>
+                                                        );
+                                                    })}
+                                                    <td className="px-4 py-2.5 text-xs font-black text-blue-700 text-center bg-blue-100 border border-slate-300">
+                                                        <button onClick={() => showMatchingDetailsTvbh()} className="hover:scale-110 transition-transform">
+                                                            {Object.values(tvbhMatchingStats).reduce((sum, stats) => sum + stats.total, 0)}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </tfoot>
+                                        )}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            {/* FALLBACK IMAGE MODAL */}
+            {fallbackImage && (
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" onClick={() => setFallbackImage(null)}></div>
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+                        <div className="px-6 py-4 bg-amber-50 border-b border-amber-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600">
+                                    <i className="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-800">Cần copy thủ công</h3>
+                                    <p className="text-xs text-slate-600 mt-0.5">Trình duyệt chặn copy tự động. Vui lòng <b>Chuột phải vào ảnh dưới &rarr; Chọn 'Sao chép hình ảnh'</b> (Copy image)</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setFallbackImage(null)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-auto p-4 bg-slate-100 flex justify-center custom-scrollbar">
+                            <img src={fallbackImage} alt="Bảng thống kê" className="max-w-full h-auto shadow-md rounded border border-slate-200" />
+                        </div>
+                        <div className="px-6 py-4 bg-white border-t border-slate-200 flex justify-end gap-3">
+                            <a href={fallbackImage} download={`Bang_Thong_Ke_${moment().format('DDMMYYYY')}.png`} className="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 rounded-lg text-xs font-bold transition-all shadow-sm">
+                                <i className="fas fa-download mr-1.5"></i>Tải Xuống Thay Thế
+                            </a>
+                            <button onClick={() => setFallbackImage(null)} className="px-5 py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700">
+                                Đã Hiểu & Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* DETAIL MODAL */}
             {detailModal.isOpen && (

@@ -35,6 +35,7 @@ import DonHangTonView from './DonHangTonView';
 import AIKnowledgeManagement from './AIKnowledgeManagement';
 import PolicySummaryView from './PolicySummaryView';
 import PricingCalculatorView from './PricingCalculatorView';
+import MaintenanceFeeManager from './MaintenanceFeeManager';
 
 import * as apiService from '../../services/apiService';
 
@@ -251,7 +252,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         system: {
             label: 'HỆ THỐNG',
             icon: 'fa-cogs',
-            views: ['super_edit', 'incomplete_cars', 'policies', 'ai_knowledge', 'phongkd'] as AdminSubView[]
+            views: ['super_edit', 'incomplete_cars', 'policies', 'ai_knowledge', 'phongkd', 'maintenance_fee'] as AdminSubView[]
         },
         stats: {
             label: 'THỐNG KÊ',
@@ -297,7 +298,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         ai_health: 'SỨC KHỎE AI',
         management: 'QUẢN TRỊ',
         inventory: 'KHO XE',
-        system: 'HỆ THỐNG'
+        system: 'HỆ THỐNG',
+        maintenance_fee: 'KINH PHÍ WEB'
     };
     const [unreadInquiryCount, setUnreadInquiryCount] = useState<number>(0);
 
@@ -368,7 +370,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         ai_health: null,
         management: null,
         inventory: null,
-        system: null
+        system: null,
+        maintenance_fee: null
     };
 
 
@@ -568,6 +571,10 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 {/* Pricing Calculator View */}
                 <div className={adminView === 'pricing_calculator' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
                     <PricingCalculatorView />
+                </div>
+                {/* Maintenance Fee View */}
+                <div className={adminView === 'maintenance_fee' ? 'flex-1 flex flex-col min-h-0 overflow-y-auto' : 'hidden'}>
+                    <MaintenanceFeeManager showToast={showToast} />
                 </div>
             </>
         );

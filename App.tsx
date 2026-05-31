@@ -34,7 +34,7 @@ import CustomTitleBar from './components/layout/CustomTitleBar';
 import CarInquiryView from './components/InquiryView';
 import ReportBacklogModal from './components/modals/ReportBacklogModal';
 import { VirtualAssistant } from './components/VirtualAssistant';
-
+import MaintenanceFeeBlocker from './components/MaintenanceFeeBlocker';
 
 import { useAppNavigation } from './hooks/useAppNavigation';
 import { useNotification } from './hooks/useNotification';
@@ -748,6 +748,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         <>
             <GlobalNotificationProvider>
                 <CustomTitleBar />
+
+                {!isCurrentUserAdmin && (
+                    <MaintenanceFeeBlocker currentUserName={currentUser || ''} onLogout={onLogout} />
+                )}
 
                 <div className="circuit-background"></div>
                 <div className="scanline"></div>

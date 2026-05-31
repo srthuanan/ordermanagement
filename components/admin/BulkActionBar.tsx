@@ -35,6 +35,7 @@ const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string
     system: [],
     policy_summary: [],
     pricing_calculator: [],
+    maintenance_fee: [],
 };
 
 const BulkActionBar: React.FC<BulkActionBarProps> = ({ view, selectedRows, setSelectedRows, setBulkActionModal }) => {

@@ -1,7 +1,7 @@
 // This file now contains the centralized type definitions for the application,
 // resolving numerous "has no exported member" errors.
 
-export type AdminSubView = 'invoices' | 'pending' | 'paired' | 'matching' | 'vc' | 'phongkd' | 'stats' | 'incomplete_cars' | 'super_edit' | 'inquiries' | 'holds' | 'policies' | 'don_ton' | 'ai_knowledge' | 'ai_health' | 'management' | 'inventory' | 'system' | 'policy_summary' | 'pricing_calculator';
+export type AdminSubView = 'invoices' | 'pending' | 'paired' | 'matching' | 'vc' | 'phongkd' | 'stats' | 'incomplete_cars' | 'super_edit' | 'inquiries' | 'holds' | 'policies' | 'don_ton' | 'ai_knowledge' | 'ai_health' | 'management' | 'inventory' | 'system' | 'policy_summary' | 'pricing_calculator' | 'maintenance_fee';
 
 export interface Order {
   "Số đơn hàng": string;
@@ -156,6 +156,17 @@ export interface ActiveUser {
 
 export type User = { name: string, role: string, username: string };
 
+export interface MaintenanceFee {
+  id: string;
+  ten_tvbh: string;
+  month: number;
+  year: number;
+  amount: number;
+  status: 'pending' | 'paid' | 'exempt';
+  paid_at?: string;
+  created_at?: string;
+  updated_at?: string;
+}
 
 export type InquiryStatus = 'pending' | 'auto_found' | 'manual_responded' | 'not_found' | 'held' | 'auto_checking';
 
