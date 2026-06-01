@@ -334,18 +334,23 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
                                     </td>
                                 </tr>
                             ) : (
-                                fees.map((fee, idx) => (
+                                fees.map((fee, idx) => {
+                                    const isAutoPaid = fee.status === 'paid' && (fee.amount % 1 !== 0);
+                                    return (
                                     <tr key={fee.id} className="hover:bg-blue-50/50 transition-colors bg-white">
                                         <td className="border border-slate-200 px-3 py-2 text-sm text-slate-600 text-center">{idx + 1}</td>
                                         <td className="border border-slate-200 px-3 py-2 text-sm font-medium text-slate-800">
                                             {fee.ten_tvbh}
                                         </td>
                                         <td className="border border-slate-200 px-3 py-2 text-sm font-medium text-slate-800 text-right">
-                                            {Number(fee.amount).toLocaleString()} đ
+                                            {Math.floor(fee.amount).toLocaleString()} đ
                                         </td>
                                         <td className="border border-slate-200 px-3 py-2 text-sm text-center">
                                             {fee.status === 'paid' ? (
-                                                <span className="text-green-600 font-bold">Đã đóng</span>
+                                                <div className="flex items-center justify-center gap-1 text-green-600 font-bold">
+                                                    Đã đóng
+                                                    {isAutoPaid && <i className="fas fa-check-circle text-[10px] text-green-500" title="Chuyển khoản tự động"></i>}
+                                                </div>
                                             ) : fee.status === 'exempt' ? (
                                                 <span className="text-purple-600 font-bold">Miễn phí</span>
                                             ) : (
@@ -356,19 +361,29 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
                                             {fee.paid_at ? new Date(fee.paid_at).toLocaleDateString('vi-VN') : '-'}
                                         </td>
                                         <td className="border border-slate-200 px-3 py-2 text-center">
-                                            <button 
-                                                onClick={() => handleMarkAsPaid(fee.id, fee.status)}
-                                                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all shadow-sm ${
-                                                    fee.status === 'paid' 
-                                                    ? 'bg-slate-100 border border-slate-300 text-slate-600 hover:bg-slate-200' 
-                                                    : 'bg-green-600 text-white hover:bg-green-700 shadow-green-600/30'
-                                                }`}
-                                            >
-                                                {fee.status === 'paid' ? 'Hủy Xác Nhận' : 'Đóng Tiền'}
-                                            </button>
+                                            {isAutoPaid ? (
+                                                <button 
+                                                    disabled
+                                                    className="px-3 py-1.5 rounded-md text-xs font-bold transition-all shadow-sm bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed mx-auto flex items-center justify-center gap-1.5"
+                                                    title="Giao dịch tự động không thể hủy"
+                                                >
+                                                    <i className="fas fa-lock text-[10px]"></i> Đã Khóa
+                                                </button>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => handleMarkAsPaid(fee.id, fee.status)}
+                                                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all shadow-sm mx-auto flex justify-center ${
+                                                        fee.status === 'paid' 
+                                                        ? 'bg-slate-100 border border-slate-300 text-slate-600 hover:bg-slate-200' 
+                                                        : 'bg-green-600 border border-green-600 text-white hover:bg-green-700 shadow-green-600/30'
+                                                    }`}
+                                                >
+                                                    {fee.status === 'paid' ? 'Hủy Xác Nhận' : 'Đóng Tiền'}
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
-                                ))
+                                )})
                             )}
                         </tbody>
                     </table>
