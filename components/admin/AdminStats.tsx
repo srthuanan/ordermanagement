@@ -311,10 +311,9 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-auto bg-white custom-scrollbar" ref={invoiceTableRef}>
-                            <div className="overflow-x-auto">
+                        <div className="flex-1 overflow-auto bg-white custom-scrollbar relative" ref={invoiceTableRef}>
                             <table className="w-full text-left border-collapse min-w-[480px]">
-                                <thead className="sticky top-0 z-20">
+                                <thead className="sticky top-0 z-40 shadow-sm">
                                     <tr className="bg-slate-50">
                                         <th className="sticky left-0 z-30 bg-slate-50 px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">Tư Vấn</th>
                                         {invoiceModels.map(model => (
@@ -374,7 +373,6 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                     </tfoot>
                                 )}
                             </table>
-                            </div>
                         </div>
                     </div>
 
@@ -409,10 +407,9 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-auto bg-white custom-scrollbar" ref={matchingProgressTableRef}>
-                            <div className="overflow-x-auto">
+                        <div className="flex-1 overflow-auto bg-white custom-scrollbar relative" ref={matchingProgressTableRef}>
                             <table className="w-full text-left border-collapse min-w-[320px]">
-                                <thead className="sticky top-0 z-20">
+                                <thead className="sticky top-0 z-40 shadow-sm">
                                     <tr className="bg-slate-50">
                                         <th className="px-5 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">Dòng Xe</th>
                                         <th className="px-2 py-2.5 text-[10px] font-bold text-emerald-600 uppercase tracking-wider border border-slate-200 text-center w-20">Đã Ghép</th>
@@ -488,7 +485,6 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                     </tfoot>
                                 )}
                             </table>
-                            </div>
                         </div>
                     </div>
 
@@ -514,10 +510,9 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                 </div>
                             </div>
 
-                            <div className="flex-1 overflow-auto bg-white custom-scrollbar" ref={matchingTvbhTableRef}>
-                                <div className="overflow-x-auto">
+                            <div className="flex-1 overflow-auto bg-white custom-scrollbar relative" ref={matchingTvbhTableRef}>
                                     <table className="w-full text-left border-collapse min-w-[480px]">
-                                        <thead className="sticky top-0 z-20">
+                                        <thead className="sticky top-0 z-40 shadow-sm">
                                             <tr className="bg-slate-50">
                                                 <th className="sticky left-0 z-30 bg-slate-50 px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">Tư Vấn</th>
                                                 {matchingTvbhModels.map(model => (
@@ -577,7 +572,6 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                             </tfoot>
                                         )}
                                     </table>
-                                </div>
                             </div>
                         </div>
                     </div>
