@@ -30,92 +30,79 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
 
     return (
         <div
-            className={`group relative overflow-hidden rounded-2xl backdrop-blur-md border shadow-sm p-3 active:scale-[0.98] cursor-pointer flex flex-col h-full min-h-[140px] transition-all duration-300 ${isNight ? 'bg-slate-800/85 border-slate-600 hover:shadow-lg hover:shadow-slate-500/40 hover:border-slate-500 text-slate-100' : 'bg-white/90 border-cyan-100 hover:shadow-lg hover:shadow-cyan-200/40 hover:border-cyan-300 text-slate-800'}`}
+            className={`group relative overflow-hidden rounded-2xl backdrop-blur-md border shadow-sm p-4 active:scale-[0.98] cursor-pointer flex flex-col h-full min-h-[130px] transition-all duration-300 ${isNight ? 'bg-slate-800/85 border-slate-600 hover:shadow-lg hover:shadow-slate-500/40 hover:border-slate-500 text-slate-100' : 'bg-white/90 border-slate-200/60 hover:shadow-lg hover:shadow-slate-200/60 hover:border-slate-300 text-slate-800'}`}
             onClick={() => onViewDetails(order)}
         >
-            {/* Background Image - clearer with animation */}
-            <div className="absolute -right-10 -bottom-6 w-40 z-0 transition-all duration-700 ease-out group-hover:scale-125 group-hover:-translate-x-4 group-hover:-translate-y-2 group-hover:opacity-100 group-hover:rotate-0 opacity-60 transform -rotate-12 animate-drive-in-right origin-bottom-right">
+            {/* Background Watermark Image - Lower opacity to reduce clutter */}
+            <div className={`absolute -right-8 -bottom-4 w-36 z-0 transition-all duration-700 ease-out group-hover:scale-110 group-hover:-translate-x-2 group-hover:-translate-y-1 transform animate-drive-in-right origin-bottom-right ${isNight ? 'opacity-10' : 'opacity-[0.15]'}`}>
                 <CarImage
                     model={order['Dòng xe']}
                     exteriorColor={order['Ngoại thất']}
-                    className="w-full h-auto object-contain drop-shadow-xl"
+                    className="w-full h-auto object-contain grayscale-[20%]"
                     alt=""
                 />
             </div>
 
-
-
-            {/* Gradient overlay for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent z-5"></div>
-
-
-            {/* Content */}
-            <div className="relative z-10 flex flex-col flex-grow gap-1 min-w-0">
-
-                <div className="flex justify-between items-start">
+            {/* Content - Modern "Linear" Style */}
+            <div className="relative z-10 flex flex-col flex-grow min-w-0">
+                {/* Top Row: Order ID */}
+                <div className="flex items-center mb-1.5">
                     <p
-                        className={`text-sm font-bold leading-tight pr-2 truncate cursor-pointer transition-colors ${copiedLabel === 'customer' ? 'text-green-500' : (isNight ? 'text-slate-50 hover:text-cyan-300' : 'text-slate-700 hover:text-blue-600')}`}
-                        title="Click để sao chép tên khách hàng"
+                        className={`text-[10px] uppercase tracking-wider font-bold cursor-pointer transition-colors ${copiedLabel === 'orderId' ? 'text-green-500' : (isNight ? 'text-slate-400 hover:text-cyan-300' : 'text-slate-500 hover:text-blue-600')}`}
+                        title="Click để sao chép Số đơn hàng"
                         onClick={(e) => {
                             e.stopPropagation();
-                            navigator.clipboard.writeText(order["Tên khách hàng"]).then(() => {
-                                setCopiedLabel('customer');
+                            navigator.clipboard.writeText(order["Số đơn hàng"]).then(() => {
+                                setCopiedLabel('orderId');
                                 setTimeout(() => setCopiedLabel(null), 2000);
                             });
                         }}
                     >
-                        {copiedLabel === 'customer' ? <span className="flex items-center gap-1"><i className="fas fa-check text-[10px]"></i> Đã copy</span> : order["Tên khách hàng"]}
+                        {copiedLabel === 'orderId' ? <span className="flex items-center gap-1"><i className="fas fa-check"></i> Copied</span> : `#${order["Số đơn hàng"]}`}
                     </p>
-                    <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                        {isProcessing && (
-                            <div className="flex items-center justify-center w-8 h-8">
-                                <i className="fas fa-spinner fa-spin text-accent-primary text-lg"></i>
-                            </div>
-                        )}
-                    </div>
                 </div>
-                <p
-                    className={`text-xs font-mono truncate cursor-pointer transition-colors ${copiedLabel === 'orderId' ? 'text-green-500 font-bold' : (isNight ? 'text-slate-300 hover:text-cyan-300' : 'text-slate-500 hover:text-blue-600')}`}
-                    title="Click để sao chép Số đơn hàng"
+
+                {/* Customer Name */}
+                <h3
+                    className={`text-[14px] font-semibold leading-tight truncate mb-2.5 cursor-pointer transition-colors ${copiedLabel === 'customer' ? 'text-green-500' : (isNight ? 'text-slate-200 hover:text-cyan-300' : 'text-slate-700 hover:text-blue-600')}`}
+                    title="Click để sao chép tên khách hàng"
                     onClick={(e) => {
                         e.stopPropagation();
-                        navigator.clipboard.writeText(order["Số đơn hàng"]).then(() => {
-                            setCopiedLabel('orderId');
+                        navigator.clipboard.writeText(order["Tên khách hàng"]).then(() => {
+                            setCopiedLabel('customer');
                             setTimeout(() => setCopiedLabel(null), 2000);
                         });
                     }}
                 >
-                    {copiedLabel === 'orderId' ? <span className="flex items-center gap-1"><i className="fas fa-check text-[9px]"></i> Đã copy</span> : order["Số đơn hàng"]}
-                </p>
-                <div className={`text-xs space-y-1 my-0.5 py-0.5 border-y border-dashed ${isNight ? 'text-slate-300 border-slate-600' : 'text-slate-500 border-slate-200'}`}>
-                    <p className="truncate" title={`${order["Dòng xe"]} - ${order["Phiên bản"]}`}>
-                        <i className={`fas fa-car fa-fw mr-1.5 ${isNight ? 'text-slate-400' : 'text-slate-400'}`}></i> {order["Dòng xe"]} - {order["Phiên bản"]}
-                    </p>
-                    <p className="truncate font-medium" title={`${order["Ngoại thất"]} / ${order["Nội thất"]}`}>
-                        <i className={`fas fa-palette fa-fw mr-1.5 ${isNight ? 'text-slate-400' : 'text-slate-400'}`}></i>
-                        <span style={getExteriorColorStyle(order['Ngoại thất'])}>{order["Ngoại thất"]}</span>
-                        <span> / {order["Nội thất"]}</span>
-                    </p>
+                    {copiedLabel === 'customer' ? <span className="flex items-center gap-1"><i className="fas fa-check text-[11px]"></i> Đã copy</span> : order["Tên khách hàng"]}
+                </h3>
+
+                {/* Vehicle Data Pills */}
+                <div className="flex flex-col items-start gap-1.5 mb-2">
+                    <span className={`inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium border ${isNight ? 'bg-slate-700/60 border-slate-600 text-slate-200' : 'bg-slate-50 border-slate-200/60 text-slate-700'}`}>
+                        {order["Dòng xe"]} - {order["Phiên bản"]}
+                    </span>
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium border ${isNight ? 'bg-slate-700/60 border-slate-600 text-slate-300' : 'bg-slate-50 border-slate-200/60 text-slate-600'}`} title={`${order["Ngoại thất"]} / ${order["Nội thất"]}`}>
+                        <span className="w-2.5 h-2.5 rounded-full border border-black/20 shadow-inner shrink-0 bg-current" style={getExteriorColorStyle(order['Ngoại thất'])}></span>
+                        <span className="truncate">{order["Ngoại thất"]} / {order["Nội thất"]}</span>
+                    </span>
                 </div>
-                <div className={`flex items-center justify-between text-xs ${isNight ? 'text-slate-300' : 'text-slate-500'}`}>
-                    <div className="flex items-center gap-1.5 truncate" title={`TVBH: ${order["Tên tư vấn bán hàng"]}`}>
-                        <i className={`fas fa-user-tie fa-fw ${isNight ? 'text-slate-400' : 'text-slate-400'}`}></i>
-                        <span className="truncate">{order["Tên tư vấn bán hàng"]}</span>
+
+                {/* Footer: Status Badge & Actions - Aligned Left to balance the car image on the right */}
+                <div className="mt-auto flex items-center justify-start gap-2">
+                    
+                    <div className="scale-90 origin-left">
+                        {isProcessing ? (
+                            <i className="fas fa-spinner fa-spin text-accent-primary text-sm"></i>
+                        ) : (
+                            <StatusBadge status={statusText} size="sm" />
+                        )}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0" title={`Showroom: ${order["Showroom"]}`}>
-                        <i className={`fas fa-map-marker-alt fa-fw ${isNight ? 'text-slate-400' : 'text-slate-400'}`}></i>
-                        <span className="truncate max-w-[80px]">{order["Showroom"]}</span>
-                    </div>
-                </div>
-                <div className="mt-auto pt-2 flex items-center justify-between">
-                    <StatusBadge status={statusText} />
 
                     {!isReferenceAccount && showOrderInAdmin && (() => {
                         const ketQua = (order["Kết quả"] || '').toLowerCase();
-                        // Khớp với TT có trong InvoiceInboxView (tất cả folder)
                         const INVOICE_STATUSES = ['chờ phê duyệt', 'đã phê duyệt', 'yêu cầu bổ sung', 'đã bổ sung', 'chờ ký hóa đơn', 'đã xuất hóa đơn'];
                         const hasInvoiceData = !!order.LinkHoaDonDaXuat || INVOICE_STATUSES.includes(ketQua);
-                        // Chỉ hiện nút VC khi có record thực sự trong tab Xử Lý VC (khớp với folder filter của VcInboxView)
                         const vcStatus = (order["Trạng thái VC"] || '').toLowerCase();
                         const hasVC = hasInvoiceData && (
                             vcStatus === 'chờ duyệt ycvc' ||
@@ -128,30 +115,28 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
                             vcStatus.includes('đã có vc')
                         );
 
-                        // Giai đoạn 1: Chỉ mới ghép xe, chưa xuất hóa đơn
                         if (!hasInvoiceData && !!order.VIN) {
                             return (
                                 <button onClick={(e) => { e.stopPropagation(); showOrderInAdmin(order, 'matching'); }}
-                                    className="w-9 h-9 lg:w-7 lg:h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-accent-primary hover:text-white text-slate-400 transition-all border border-slate-200/50 opacity-0 group-hover:opacity-100"
+                                    className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all opacity-0 group-hover:opacity-100 ${isNight ? 'bg-slate-700 text-slate-300 hover:bg-cyan-600 hover:text-white' : 'bg-slate-50 hover:bg-accent-primary hover:text-white text-slate-500 border border-slate-200'}`}
                                     title="Đến Ghép Xe">
-                                    <i className="fas fa-car text-[13px] lg:text-[10px]"></i>
+                                    <i className="fas fa-car text-[11px]"></i>
                                 </button>
                             );
                         }
-                        // Giai đoạn 2+3: Đã xuất hóa đơn (+ có thể có VC)
                         if (hasInvoiceData) {
                             return (
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button onClick={(e) => { e.stopPropagation(); showOrderInAdmin(order, 'invoices'); }}
-                                        className="w-9 h-9 lg:w-7 lg:h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-accent-primary hover:text-white text-slate-400 transition-all border border-slate-200/50"
+                                        className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${isNight ? 'bg-slate-700 text-slate-300 hover:bg-cyan-600 hover:text-white' : 'bg-slate-50 hover:bg-accent-primary hover:text-white text-slate-500 border border-slate-200'}`}
                                         title="Đến Hóa Đơn">
-                                        <i className="fas fa-file-invoice-dollar text-[13px] lg:text-[10px]"></i>
+                                        <i className="fas fa-file-invoice-dollar text-[11px]"></i>
                                     </button>
                                     {hasVC && (
                                         <button onClick={(e) => { e.stopPropagation(); showOrderInAdmin(order, 'vc'); }}
-                                            className="w-9 h-9 lg:w-7 lg:h-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-accent-primary hover:text-white text-slate-400 transition-all border border-slate-200/50"
+                                            className={`w-7 h-7 flex items-center justify-center rounded-lg transition-all ${isNight ? 'bg-slate-700 text-slate-300 hover:bg-cyan-600 hover:text-white' : 'bg-slate-50 hover:bg-accent-primary hover:text-white text-slate-500 border border-slate-200'}`}
                                             title="Đến Xử Lý VC">
-                                            <i className="fas fa-id-card text-[13px] lg:text-[10px]"></i>
+                                            <i className="fas fa-id-card text-[11px]"></i>
                                         </button>
                                     )}
                                 </div>
