@@ -253,43 +253,46 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
                 defaultAmount={defaultMonthlyAmount}
             />
 
-            {/* Simple Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
-                <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-center">
-                    <p className="text-sm text-slate-500 mb-1 font-medium">Tổng TVBH / Dòng</p>
-                    <p className="text-2xl font-bold text-slate-800">{fees.length}</p>
-                </div>
-                <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-center">
-                    <p className="text-sm text-slate-500 mb-1 font-medium">Đã Thu</p>
-                    <p className="text-2xl font-bold text-green-600">{totalCollected.toLocaleString()} đ</p>
-                </div>
-                <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-center">
-                    <p className="text-sm text-slate-500 mb-1 font-medium">Dự Kiến Thu</p>
-                    <p className="text-2xl font-bold text-blue-600">{totalExpected.toLocaleString()} đ</p>
-                </div>
-            </div>
-
-            {/* Filters Bar */}
-            <div className="mb-1 flex flex-col sm:flex-row gap-2">
-                <div className="relative flex-1">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i className="fas fa-search text-slate-400"></i>
+            {/* Compact Stats & Filters Toolbar */}
+            <div className="flex flex-col md:flex-row items-center justify-between bg-white p-2 rounded-lg shadow-sm border border-slate-200 mb-2 gap-2">
+                {/* Stats */}
+                <div className="flex items-center w-full md:w-auto overflow-x-auto custom-scrollbar pb-1 md:pb-0">
+                    <div className="flex items-center gap-2 px-2 whitespace-nowrap">
+                        <span className="text-xs text-slate-500 font-medium">Tổng:</span>
+                        <span className="text-sm font-bold text-slate-800">{fees.length}</span>
                     </div>
-                    <input
-                        type="text"
-                        placeholder="Tìm theo tên TVBH..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 w-full px-3 py-1.5 border border-slate-300 rounded text-sm bg-white font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
-                    />
+                    <div className="w-px h-4 bg-slate-300 mx-1"></div>
+                    <div className="flex items-center gap-2 px-2 whitespace-nowrap">
+                        <span className="text-xs text-slate-500 font-medium">Đã Thu:</span>
+                        <span className="text-sm font-bold text-green-600">{totalCollected.toLocaleString()} đ</span>
+                    </div>
+                    <div className="w-px h-4 bg-slate-300 mx-1"></div>
+                    <div className="flex items-center gap-2 px-2 whitespace-nowrap">
+                        <span className="text-xs text-slate-500 font-medium">Dự Kiến:</span>
+                        <span className="text-sm font-bold text-blue-600">{totalExpected.toLocaleString()} đ</span>
+                    </div>
                 </div>
-                <div className="w-full sm:w-48">
+
+                {/* Filters */}
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <div className="relative flex-1 md:w-48">
+                        <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                            <i className="fas fa-search text-slate-400 text-[10px]"></i>
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Tìm TVBH..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-6 w-full px-2 py-1.5 border border-slate-300 rounded text-xs bg-white font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
+                        />
+                    </div>
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm bg-white font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm"
+                        className="w-full md:w-32 px-2 py-1.5 border border-slate-300 rounded text-xs bg-white font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm"
                     >
-                        <option value="all">Tất cả trạng thái</option>
+                        <option value="all">Tất cả</option>
                         <option value="pending">Chưa đóng</option>
                         <option value="paid">Đã đóng</option>
                         <option value="exempt">Miễn phí</option>
