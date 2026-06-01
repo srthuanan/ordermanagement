@@ -169,9 +169,9 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
     const totalCollected = fees.filter(f => f.status === 'paid').reduce((acc, f) => acc + Math.floor(Number(f.amount)), 0);
 
     return (
-        <div className="flex flex-col h-full bg-[#f4f7f6] p-4 sm:p-6 overflow-y-auto">
+        <div className="flex flex-col h-full bg-[#f4f7f6] p-1 sm:p-2 overflow-y-auto">
             {/* Header & Filters */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-4 rounded-lg shadow-sm border border-slate-200 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-2 rounded-lg shadow-sm border border-slate-200 mb-2">
                 <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
                         <i className="fas fa-money-bill-wave text-lg"></i>
@@ -254,23 +254,23 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
             />
 
             {/* Simple Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-center">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-center">
                     <p className="text-sm text-slate-500 mb-1 font-medium">Tổng TVBH / Dòng</p>
                     <p className="text-2xl font-bold text-slate-800">{fees.length}</p>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-center">
+                <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-center">
                     <p className="text-sm text-slate-500 mb-1 font-medium">Đã Thu</p>
                     <p className="text-2xl font-bold text-green-600">{totalCollected.toLocaleString()} đ</p>
                 </div>
-                <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-center">
+                <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-center">
                     <p className="text-sm text-slate-500 mb-1 font-medium">Dự Kiến Thu</p>
                     <p className="text-2xl font-bold text-blue-600">{totalExpected.toLocaleString()} đ</p>
                 </div>
             </div>
 
             {/* Filters Bar */}
-            <div className="mb-4 flex flex-col sm:flex-row gap-3">
+            <div className="mb-1 flex flex-col sm:flex-row gap-2">
                 <div className="relative flex-1">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i className="fas fa-search text-slate-400"></i>
@@ -280,14 +280,14 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
                         placeholder="Tìm theo tên TVBH..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 w-full px-4 py-2 border border-slate-300 rounded text-sm bg-white font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
+                        className="pl-10 w-full px-3 py-1.5 border border-slate-300 rounded text-sm bg-white font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
                     />
                 </div>
                 <div className="w-full sm:w-48">
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm"
+                        className="w-full px-2 py-1.5 border border-slate-300 rounded text-sm bg-white font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm"
                     >
                         <option value="all">Tất cả trạng thái</option>
                         <option value="pending">Chưa đóng</option>
@@ -299,7 +299,7 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
 
             {/* Quick Add Form */}
             {isAdding && (
-                <div className="mb-6 bg-white p-5 rounded-lg shadow-sm border border-slate-200 flex flex-wrap items-center gap-4 animate-fade-in-up">
+                <div className="mb-2 bg-white p-3 rounded-lg shadow-sm border border-slate-200 flex flex-wrap items-center gap-2 animate-fade-in-up">
                     <div className="flex-1 min-w-[200px]">
                         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Chọn TVBH</label>
                         <select
@@ -334,7 +334,7 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
             )}
 
             {/* Data Table */}
-            <div className="bg-white flex flex-col flex-1 overflow-hidden mt-2">
+            <div className="bg-white flex flex-col flex-1 overflow-hidden mt-0">
                 <div className="overflow-x-auto overflow-y-auto flex-1">
                     <table className="w-full text-left border-collapse whitespace-nowrap min-w-max">
                         <thead className="bg-[#e8edf2] sticky top-0 z-10">
