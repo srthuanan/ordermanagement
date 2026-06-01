@@ -163,8 +163,8 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
         }
     };
 
-    const totalExpected = fees.reduce((acc, f) => acc + Number(f.amount), 0);
-    const totalCollected = fees.filter(f => f.status === 'paid').reduce((acc, f) => acc + Number(f.amount), 0);
+    const totalExpected = fees.reduce((acc, f) => acc + Math.floor(Number(f.amount)), 0);
+    const totalCollected = fees.filter(f => f.status === 'paid').reduce((acc, f) => acc + Math.floor(Number(f.amount)), 0);
 
     return (
         <div className="flex flex-col h-full bg-[#f4f7f6] p-4 sm:p-6 overflow-y-auto">
