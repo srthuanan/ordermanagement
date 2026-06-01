@@ -167,7 +167,23 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
     // Extract cars with GPS
     const allCarsWithGps = useMemo(() => {
         try {
-            const combinedData = [...stockData, ...xuathoadonData];
+            const currentMonthStart = moment().startOf('month');
+            const recentXuathoadonData = xuathoadonData.filter(r => {
+                const invoiceDate = r['Ngày xuất hóa đơn'] || r['NGÀY XUẤT HÓA ĐƠN'] || r.ngay_xuat_hoa_don || r['Thời gian nhập'] || r['NGÀY YÊU CẦU XHĐ'];
+                if (!invoiceDate) return true; // Giữ lại nếu chưa có ngày
+                
+                let mDate = moment(invoiceDate, 'DD/MM/YYYY', true);
+                if (!mDate.isValid()) {
+                    mDate = moment(invoiceDate);
+                }
+                
+                if (!mDate.isValid()) return true;
+
+                // Chỉ giữ lại xe XHĐ trong tháng hiện tại
+                return mDate.isSameOrAfter(currentMonthStart);
+            });
+
+            const combinedData = [...stockData, ...recentXuathoadonData];
             const activeGpsCars = combinedData.filter(car => {
                 if (!car) return false;
                 const reason = car.extension_reason || (car as any)['extension_reason'];
@@ -202,7 +218,7 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             });
 
             const invoicedMap = new Map();
-            xuathoadonData.forEach(r => {
+            recentXuathoadonData.forEach(r => {
                 if (!r) return;
                 const vin = String(r.VIN || r.vin || '').trim().toUpperCase();
                 if (vin) invoicedMap.set(vin, r);
@@ -266,7 +282,14 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             // Chỉ hiển thị Lịch sử vị trí khi đã đồng bộ xong với DB để tránh hiện xe "ma" đã bị xoá
             const cachedGpsCars = isSynced 
                 ? Object.values(newCache)
-                    .filter((c: any) => !activeVins.has(c.vin))
+                    .filter((c: any) => {
+                        if (activeVins.has(c.vin)) return false;
+                        
+                        const vinUpper = String(c.vin || '').trim().toUpperCase();
+                        // Chỉ hiển thị Lịch sử vị trí nếu xe này vẫn còn trong Kho (combinedMap)
+                        // hoặc là xe mới Xuất hóa đơn trong tháng này (invoicedMap)
+                        return combinedMap.has(vinUpper) || invoicedMap.has(vinUpper);
+                    })
                     .map((c: any) => {
                         const vinUpper = String(c.vin || '').trim().toUpperCase();
                         const matchedCar = combinedMap.get(vinUpper);
