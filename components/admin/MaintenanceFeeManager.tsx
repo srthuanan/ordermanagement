@@ -401,7 +401,12 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
                                             )}
                                         </td>
                                         <td className="border border-slate-200 px-3 py-2 text-sm text-slate-600 text-center">
-                                            {fee.paid_at ? new Date(fee.paid_at).toLocaleDateString('vi-VN') : '-'}
+                                            {fee.paid_at ? (
+                                                <div className="flex flex-col items-center justify-center text-[11px] leading-tight">
+                                                    <span className="font-bold text-slate-700">{new Date(fee.paid_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    <span className="text-slate-500">{new Date(fee.paid_at).toLocaleDateString('vi-VN')}</span>
+                                                </div>
+                                            ) : '-'}
                                         </td>
                                         <td className="border border-slate-200 px-3 py-2 text-center">
                                             {isAutoPaid ? (
