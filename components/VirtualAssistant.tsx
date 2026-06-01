@@ -353,20 +353,29 @@ export const VirtualAssistant: React.FC = () => {
                 >
                     <div className="relative z-10 w-full h-full flex items-center justify-center p-2">
                         {!imgError ? (
-                            <motion.img 
-                                src="https://jwvgxqrkjlbewvpkvucj.supabase.co/storage/v1/object/public/car-images/logoai.png"
-                                alt="AI"
-                                onError={() => setImgError(true)}
-                                animate={{ 
-                                    y: [0, -4, 0],
-                                }}
-                                transition={{ 
-                                    duration: 3, 
-                                    repeat: Infinity, 
-                                    ease: "easeInOut" 
-                                }}
-                                className="w-14 h-14 object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-transform duration-500"
-                            />
+                            <div className="relative">
+                                <motion.img 
+                                    src="https://jwvgxqrkjlbewvpkvucj.supabase.co/storage/v1/object/public/car-images/logoai.png"
+                                    alt="AI"
+                                    onError={() => setImgError(true)}
+                                    animate={{ 
+                                        y: [0, -4, 0],
+                                    }}
+                                    transition={{ 
+                                        duration: 3, 
+                                        repeat: Infinity, 
+                                        ease: "easeInOut" 
+                                    }}
+                                    className="w-14 h-14 object-contain drop-shadow-[0_10px_15px_rgba(0,0,0,0.1)] group-hover:scale-110 transition-transform duration-500"
+                                />
+                                <motion.div 
+                                    animate={{ y: [0, -4, 0] }}
+                                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                    className="absolute top-2 left-1/2 -translate-x-1/2 text-2xl drop-shadow-md pointer-events-none group-hover:scale-110 transition-transform duration-500"
+                                >
+                                    🕶️
+                                </motion.div>
+                            </div>
                         ) : (
                             <Sparkles size={28} className="text-[#3b82f6] group-hover:scale-110 group-hover:rotate-12 transition-all duration-500 ease-out" />
                         )}

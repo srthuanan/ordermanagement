@@ -4,7 +4,7 @@ import 'moment/locale/vi';
 import { DropdownFilterConfig } from './components/ui/Filters';
 import TabbedFilter from './components/ui/TabbedFilter';
 import MultiSelectDropdown from './components/ui/MultiSelectDropdown';
-import AnimatedBackground from './components/ui/AnimatedBackground';
+import SummerBackground from './components/ui/SummerBackground';
 
 // Lazy Load Components
 import StockView from './components/StockView';
@@ -689,13 +689,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     </TabbedFilter>
                 </div>
                 <div ref={containerRef} className="flex-1 flex flex-col min-h-0 -mt-2">
-                    <div className="bg-slate-50 relative rounded-xl shadow-lg border border-border-primary flex flex-col h-full overflow-hidden">
-                        {/* Premium Animated Background Effect */}
-                        <AnimatedBackground />
+                    <div className="bg-sky-50/70 backdrop-blur-md relative rounded-xl shadow-lg border border-cyan-100 flex flex-col h-full overflow-hidden">
+                        {/* Premium Summer Background Effect */}
+                        <SummerBackground />
 
                         <div className="flex-grow overflow-y-auto relative z-10 hidden-scrollbar p-1 flex flex-col">
                             {isLoading && allHistoryData.length === 0 ? (
-                                <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 p-1">
+                                <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-2.5 p-1">
                                     {skeletons}
                                 </div>
                             ) : (

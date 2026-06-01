@@ -3,6 +3,7 @@ import { Order } from '../types';
 import StatusBadge from './ui/StatusBadge';
 import CarImage from './ui/CarImage';
 import { getExteriorColorStyle } from '../utils/styleUtils';
+import { useNightMode } from '../hooks/useNightMode';
 
 
 // ... (Imports below will be cleaned up by removing unused ones)
@@ -25,14 +26,15 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
     const [copiedLabel, setCopiedLabel] = React.useState<string | null>(null);
     const statusText = order["Trạng thái VC"] || order["Kết quả"] || "Chưa ghép";
     const isProcessing = processingOrder === order["Số đơn hàng"];
+    const isNight = useNightMode();
 
     return (
         <div
-            className="group relative overflow-hidden rounded-2xl glass-card p-4 shadow-sm active:scale-[0.98] cursor-pointer flex flex-col h-full min-h-[160px]"
+            className={`group relative overflow-hidden rounded-2xl backdrop-blur-md border shadow-sm p-3 active:scale-[0.98] cursor-pointer flex flex-col h-full min-h-[140px] transition-all duration-300 ${isNight ? 'bg-slate-800/85 border-slate-600 hover:shadow-lg hover:shadow-slate-500/40 hover:border-slate-500 text-slate-100' : 'bg-white/90 border-cyan-100 hover:shadow-lg hover:shadow-cyan-200/40 hover:border-cyan-300 text-slate-800'}`}
             onClick={() => onViewDetails(order)}
         >
             {/* Background Image - clearer with animation */}
-            <div className="absolute -right-10 -bottom-6 w-48 z-0 transition-all duration-700 ease-out group-hover:scale-125 group-hover:-translate-x-4 group-hover:-translate-y-2 group-hover:opacity-100 group-hover:rotate-0 opacity-60 transform -rotate-12 animate-drive-in-right origin-bottom-right">
+            <div className="absolute -right-10 -bottom-6 w-40 z-0 transition-all duration-700 ease-out group-hover:scale-125 group-hover:-translate-x-4 group-hover:-translate-y-2 group-hover:opacity-100 group-hover:rotate-0 opacity-60 transform -rotate-12 animate-drive-in-right origin-bottom-right">
                 <CarImage
                     model={order['Dòng xe']}
                     exteriorColor={order['Ngoại thất']}
@@ -48,11 +50,11 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
 
 
             {/* Content */}
-            <div className="relative z-10 flex flex-col flex-grow gap-1.5 min-w-0">
+            <div className="relative z-10 flex flex-col flex-grow gap-1 min-w-0">
 
                 <div className="flex justify-between items-start">
                     <p
-                        className={`text-sm font-bold leading-tight pr-2 truncate cursor-pointer transition-colors ${copiedLabel === 'customer' ? 'text-green-500' : 'text-light-text-primary hover:text-accent-primary'}`}
+                        className={`text-sm font-bold leading-tight pr-2 truncate cursor-pointer transition-colors ${copiedLabel === 'customer' ? 'text-green-500' : (isNight ? 'text-slate-50 hover:text-cyan-300' : 'text-slate-700 hover:text-blue-600')}`}
                         title="Click để sao chép tên khách hàng"
                         onClick={(e) => {
                             e.stopPropagation();
@@ -73,7 +75,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
                     </div>
                 </div>
                 <p
-                    className={`text-xs font-mono truncate cursor-pointer transition-colors ${copiedLabel === 'orderId' ? 'text-green-500 font-bold' : 'text-light-text-secondary hover:text-accent-primary'}`}
+                    className={`text-xs font-mono truncate cursor-pointer transition-colors ${copiedLabel === 'orderId' ? 'text-green-500 font-bold' : (isNight ? 'text-slate-300 hover:text-cyan-300' : 'text-slate-500 hover:text-blue-600')}`}
                     title="Click để sao chép Số đơn hàng"
                     onClick={(e) => {
                         e.stopPropagation();
@@ -85,20 +87,24 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
                 >
                     {copiedLabel === 'orderId' ? <span className="flex items-center gap-1"><i className="fas fa-check text-[9px]"></i> Đã copy</span> : order["Số đơn hàng"]}
                 </p>
-                <div className="text-xs text-light-text-secondary space-y-1 my-1 py-1 border-y border-dashed">
+                <div className={`text-xs space-y-1 my-0.5 py-0.5 border-y border-dashed ${isNight ? 'text-slate-300 border-slate-600' : 'text-slate-500 border-slate-200'}`}>
                     <p className="truncate" title={`${order["Dòng xe"]} - ${order["Phiên bản"]}`}>
-                        <i className="fas fa-car fa-fw mr-1.5 text-slate-400"></i> {order["Dòng xe"]} - {order["Phiên bản"]}
+                        <i className={`fas fa-car fa-fw mr-1.5 ${isNight ? 'text-slate-400' : 'text-slate-400'}`}></i> {order["Dòng xe"]} - {order["Phiên bản"]}
                     </p>
                     <p className="truncate font-medium" title={`${order["Ngoại thất"]} / ${order["Nội thất"]}`}>
-                        <i className="fas fa-palette fa-fw mr-1.5 text-slate-400"></i>
+                        <i className={`fas fa-palette fa-fw mr-1.5 ${isNight ? 'text-slate-400' : 'text-slate-400'}`}></i>
                         <span style={getExteriorColorStyle(order['Ngoại thất'])}>{order["Ngoại thất"]}</span>
                         <span> / {order["Nội thất"]}</span>
                     </p>
                 </div>
-                <div className="flex items-center justify-between text-xs text-light-text-secondary">
+                <div className={`flex items-center justify-between text-xs ${isNight ? 'text-slate-300' : 'text-slate-500'}`}>
                     <div className="flex items-center gap-1.5 truncate" title={`TVBH: ${order["Tên tư vấn bán hàng"]}`}>
-                        <i className="fas fa-user-tie fa-fw text-slate-400"></i>
+                        <i className={`fas fa-user-tie fa-fw ${isNight ? 'text-slate-400' : 'text-slate-400'}`}></i>
                         <span className="truncate">{order["Tên tư vấn bán hàng"]}</span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0" title={`Showroom: ${order["Showroom"]}`}>
+                        <i className={`fas fa-map-marker-alt fa-fw ${isNight ? 'text-slate-400' : 'text-slate-400'}`}></i>
+                        <span className="truncate max-w-[80px]">{order["Showroom"]}</span>
                     </div>
                 </div>
                 <div className="mt-auto pt-2 flex items-center justify-between">

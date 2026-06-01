@@ -225,7 +225,7 @@ const StockCard: React.FC<StockCardProps> = ({
 
     return (
         <div 
-            className={`relative flex flex-col gap-2 rounded-xl bg-white/70 backdrop-blur-sm p-2 shadow-md border ${isMissingVersion ? 'border-amber-300 ring-1 ring-amber-100/50 shadow-amber-50' : 'border-light-border'} hover:shadow-xl hover:z-[99] transition-all duration-300 ease-out active:scale-[0.98] group`}
+            className={`relative flex flex-col gap-2 rounded-xl bg-white p-2 shadow-sm ${isMissingVersion ? 'border-amber-300 ring-1 ring-amber-100/50 shadow-amber-50' : 'border border-cyan-100 shadow-cyan-100/50'} hover:shadow-lg hover:shadow-cyan-200/40 hover:border-cyan-300 hover:z-[99] transition-all duration-300 ease-out active:scale-[0.98] group`}
         >
             {/* Premium Glassmorphism Interactive Tooltip - Hidden on mobile where tap opens details */}
             <div className="absolute top-[30%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%+12px)] min-w-[190px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_25px_60px_-15px_rgba(59,130,246,0.25)] border border-blue-100/80 p-2.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-400 z-[100] scale-95 group-hover:scale-100 pointer-events-auto delay-100 hidden md:block">

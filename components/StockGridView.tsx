@@ -26,17 +26,19 @@ interface StockGridViewProps {
   isReferenceAccount?: boolean;
 }
 
+import { useNightMode } from '../hooks/useNightMode';
+
 const StockGridView: React.FC<StockGridViewProps> = (props) => {
+  const isNight = useNightMode();
+
   if (props.vehicles.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full bg-slate-50 rounded-2xl">
-        <div className="relative w-24 h-24 bg-white border border-gray-100 shadow-sm rounded-full flex items-center justify-center mb-6">
-          <div className="absolute inset-0 border border-gray-200/60 rounded-full transform scale-110"></div>
-          <div className="absolute inset-0 border border-gray-100 rounded-full transform scale-125"></div>
-          <i className="fas fa-car-side text-gray-300 text-4xl"></i>
-        </div>
-        <h3 className="text-xl font-bold text-gray-600 mb-2 tracking-tight">Trống Không!</h3>
-        <p className="text-sm text-gray-400 max-w-sm text-center">Không tìm thấy chiếc xe nào trong kho thỏa mãn tiêu chí của bạn. Hãy thử thay đổi bộ lọc nhé.</p>
+      <div className="flex flex-col items-center justify-center py-24 px-4 w-full h-full">
+        <div className="text-6xl mb-6 drop-shadow-md animate-bounce" style={{ animationDuration: '2s' }}>🏖️</div>
+        <h3 className={`text-xl font-bold mb-2 tracking-tight ${isNight ? 'text-slate-200' : 'text-gray-700'}`}>Không có xe nào ở đây!</h3>
+        <p className={`text-sm max-w-sm text-center ${isNight ? 'text-slate-400' : 'text-gray-500'}`}>
+          Tất cả xe đã được bán hết hoặc bộ lọc của bạn quá khắt khe. Hãy thử đổi bộ lọc rồi ra biển dạo chơi nhé!
+        </p>
       </div>
     );
   }

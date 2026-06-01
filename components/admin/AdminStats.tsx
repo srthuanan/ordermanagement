@@ -287,7 +287,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
             <div className="flex-1 overflow-auto p-4 md:p-5 custom-scrollbar">
 
                 {/* 5:5 Grid Layout for Desktop */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 h-full lg:min-h-0">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 h-full lg:min-h-0">
 
                     {/* SECTION 1: TVBH INVOICE STATS */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col min-h-[400px] lg:min-h-0 overflow-hidden">
@@ -377,7 +377,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                     </div>
 
                     {/* SECTION 2 & 3 CONTAINER */}
-                    <div className="flex flex-col gap-3 h-full lg:min-h-0 overflow-hidden">
+                    <div className="flex flex-col gap-5 h-full lg:min-h-0 overflow-hidden">
                         {/* SECTION 2: MONTHLY MATCHING STATS */}
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col flex-1 min-h-[250px] overflow-hidden">
                         <div className="px-5 py-3.5 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0">

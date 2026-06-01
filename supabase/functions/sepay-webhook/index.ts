@@ -114,7 +114,8 @@ serve(async (req) => {
       .from('tvbh_maintenance_fees')
       .update({ 
         status: 'paid',
-        paid_at: new Date().toISOString()
+        paid_at: new Date().toISOString(),
+        amount: feeData.amount + 0.5 // Flag as auto-paid via webhook
       })
       .eq('id', feeData.id);
 

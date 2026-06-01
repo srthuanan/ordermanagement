@@ -128,9 +128,14 @@ const Header: React.FC<HeaderProps> = ({
         navItems.push({ id: 'admin', label: 'Admin', icon: 'fa-user-shield' });
     }
 
+    const isNight = React.useMemo(() => {
+        const hour = new Date().getHours();
+        return hour >= 18 || hour < 6;
+    }, []);
+
     return (
         <>
-            <header className={`relative sticky top-0 w-full z-[1010] h-14 bg-surface-card/95 backdrop-blur-md border-b border-border-primary/50 flex items-center justify-between px-4 sm:px-6 shadow-sm`}>
+            <header className={`relative sticky top-0 w-full z-[1010] h-14 ${isNight ? 'bg-slate-900/40 border-slate-700/50' : 'bg-white/40 border-white/50'} backdrop-blur-xl border-b flex items-center justify-between px-4 sm:px-6 shadow-sm`}>
                 <div className="flex items-center gap-4">
                     <div className="flex flex-col">
                         <img src={logo1} alt="OrderMgmt" className="h-11 w-auto -ml-2 object-contain" />

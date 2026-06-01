@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNightMode } from '../../hooks/useNightMode';
 
 interface Tab {
     id: string;
@@ -42,6 +43,7 @@ const TabbedFilter: React.FC<TabbedFilterProps> = ({
     extraActions
 }) => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const isNight = useNightMode();
 
     // Local state for debounced search
     const [localSearch, setLocalSearch] = useState(searchValue);
@@ -72,26 +74,26 @@ const TabbedFilter: React.FC<TabbedFilterProps> = ({
     return (
         <div className="w-full mb-1">
             {/* Main Toolbar Container: Stack vertically on mobile, horizontal on desktop */}
-            <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-1.5 p-1.5 lg:p-0.5 bg-white border border-blue-100/50 rounded-lg shadow-sm">
+            <div className={`flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-1.5 p-1.5 lg:p-0.5 ${isNight ? 'bg-slate-900/40 border-slate-700/50' : 'bg-white/40 border-white/50'} backdrop-blur-xl rounded-lg shadow-sm`}>
 
                 {/* Header Row on Mobile: Tabs + Filter Toggle */}
                 <div className="flex items-center justify-between gap-2 lg:contents">
                     {/* 1. Tabs Group - Scrollable on mobile, no wrap */}
-                    <div className="flex items-center gap-0.5 bg-gray-50/80 rounded-md p-0.5 overflow-x-auto no-scrollbar flex-shrink-0 max-w-[calc(100%-100px)] lg:max-w-none">
+                    <div className={`flex items-center gap-0.5 ${isNight ? 'bg-slate-800/40' : 'bg-gray-50/40'} rounded-md p-0.5 overflow-x-auto no-scrollbar flex-shrink-0 max-w-[calc(100%-100px)] lg:max-w-none`}>
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
                                 onClick={() => onTabChange(tab.id)}
                                 className={`
-                                    flex items-center gap-1.5 px-4 py-2.5 lg:py-1 text-[12px] lg:text-[10px] font-bold rounded transition-all duration-200 outline-none whitespace-nowrap min-h-[36px] lg:min-h-0
+                                    flex items-center gap-1.5 px-4 py-2.5 lg:py-1 text-[12px] lg:text-[10px] font-bold rounded-lg transition-all duration-300 outline-none whitespace-nowrap min-h-[36px] lg:min-h-0
                                     ${activeTab === tab.id
-                                        ? 'bg-white text-accent-primary shadow-sm'
-                                        : 'text-gray-500 hover:text-gray-700 hover:bg-white/40'}
+                                        ? 'bg-gradient-to-r from-sky-400 to-cyan-500 text-white shadow-md shadow-cyan-200 border-0 scale-105'
+                                        : (isNight ? 'text-slate-300 hover:text-cyan-300 hover:bg-slate-700/50' : 'text-gray-500 hover:text-cyan-700 hover:bg-sky-50')}
                                 `}
                             >
                                 {tab.label}
                                 {tab.count !== undefined && (
-                                    <span className={`text-[9px] px-1 rounded-sm ${activeTab === tab.id ? 'bg-accent-primary/10 text-accent-primary' : 'bg-gray-200/60 text-gray-400'}`}>
+                                    <span className={`text-[9px] px-1 rounded-sm ${activeTab === tab.id ? 'bg-white/20 text-white' : (isNight ? 'bg-slate-700/60 text-slate-300' : 'bg-gray-200/60 text-gray-400')}`}>
                                         {tab.count}
                                     </span>
                                 )}

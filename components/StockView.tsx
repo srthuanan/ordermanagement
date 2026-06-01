@@ -6,7 +6,7 @@ import { DropdownFilterConfig } from './ui/Filters';
 import TabbedFilter from './ui/TabbedFilter';
 import MultiSelectDropdown from './ui/MultiSelectDropdown';
 import { includesNormalized } from '../utils/stringUtils';
-import AnimatedBackground from './ui/AnimatedBackground';
+import SummerBackground from './ui/SummerBackground';
 import AdminCarEditModal from './modals/AdminCarEditModal';
 
 
@@ -501,8 +501,8 @@ const StockView: React.FC<StockViewProps> = ({
                     </TabbedFilter>
                 </div>
                 <div ref={containerRef} className="flex-1 flex flex-col min-h-0 -mt-2">
-                    <div className="bg-slate-50 relative rounded-xl shadow-md border border-border-primary flex flex-col h-full overflow-hidden">
-                        <AnimatedBackground />
+                    <div className="bg-sky-50/70 backdrop-blur-md relative rounded-xl shadow-lg border border-cyan-100 flex flex-col h-full overflow-hidden">
+                        <SummerBackground />
                         <div className="flex-grow overflow-y-auto relative hidden-scrollbar p-1 z-10">
                             {isLoading && stockData.length === 0 ? (
                                 <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2 p-1">
