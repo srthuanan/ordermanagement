@@ -33,12 +33,12 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
             className={`group relative overflow-hidden rounded-2xl backdrop-blur-md border shadow-sm p-4 active:scale-[0.98] cursor-pointer flex flex-col h-full min-h-[130px] transition-all duration-300 ${isNight ? 'bg-slate-800/85 border-slate-600 hover:shadow-lg hover:shadow-slate-500/40 hover:border-slate-500 text-slate-100' : 'bg-white/90 border-slate-200/60 hover:shadow-lg hover:shadow-slate-200/60 hover:border-slate-300 text-slate-800'}`}
             onClick={() => onViewDetails(order)}
         >
-            {/* Background Watermark Image - Lower opacity to reduce clutter */}
-            <div className={`absolute -right-8 -bottom-4 w-36 z-0 transition-all duration-700 ease-out group-hover:scale-110 group-hover:-translate-x-2 group-hover:-translate-y-1 transform animate-drive-in-right origin-bottom-right ${isNight ? 'opacity-10' : 'opacity-[0.15]'}`}>
+            {/* Background Image - Slight fade (50%) as requested */}
+            <div className={`absolute -right-8 -bottom-4 w-36 z-0 transition-all duration-700 ease-out group-hover:scale-110 group-hover:-translate-x-2 group-hover:-translate-y-1 transform animate-drive-in-right origin-bottom-right ${isNight ? 'opacity-30' : 'opacity-50'}`}>
                 <CarImage
                     model={order['Dòng xe']}
                     exteriorColor={order['Ngoại thất']}
-                    className="w-full h-auto object-contain grayscale-[20%]"
+                    className="w-full h-auto object-contain drop-shadow-md"
                     alt=""
                 />
             </div>
