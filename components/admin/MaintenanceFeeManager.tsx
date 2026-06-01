@@ -140,6 +140,8 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
     const [isAdding, setIsAdding] = useState(false);
     const [isBankConfigOpen, setIsBankConfigOpen] = useState(false);
     const [newFee, setNewFee] = useState({ ten_tvbh: '', amount: 50000 });
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
 
     const handleAddManual = async () => {
         if (!newFee.ten_tvbh) return;
@@ -267,6 +269,34 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
                 </div>
             </div>
 
+            {/* Filters Bar */}
+            <div className="mb-4 flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i className="fas fa-search text-slate-400"></i>
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Tìm theo tên TVBH..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 w-full px-4 py-2 border border-slate-300 rounded text-sm bg-white font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
+                    />
+                </div>
+                <div className="w-full sm:w-48">
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm"
+                    >
+                        <option value="all">Tất cả trạng thái</option>
+                        <option value="pending">Chưa đóng</option>
+                        <option value="paid">Đã đóng</option>
+                        <option value="exempt">Miễn phí</option>
+                    </select>
+                </div>
+            </div>
+
             {/* Quick Add Form */}
             {isAdding && (
                 <div className="mb-6 bg-white p-5 rounded-lg shadow-sm border border-slate-200 flex flex-wrap items-center gap-4 animate-fade-in-up">
@@ -327,14 +357,24 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
                                         <p className="text-slate-500 text-sm font-medium">Đang tải dữ liệu...</p>
                                     </td>
                                 </tr>
-                            ) : fees.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="text-center py-8 border border-slate-200 text-slate-500 text-sm">
-                                        Chưa có danh sách thu tiền.
-                                    </td>
-                                </tr>
-                            ) : (
-                                fees.map((fee, idx) => {
+                            ) : (() => {
+                                const filteredFees = fees.filter(fee => {
+                                    const matchSearch = fee.ten_tvbh.toLowerCase().includes(searchTerm.toLowerCase());
+                                    const matchStatus = statusFilter === 'all' || fee.status === statusFilter;
+                                    return matchSearch && matchStatus;
+                                });
+                                
+                                if (filteredFees.length === 0) {
+                                    return (
+                                        <tr>
+                                            <td colSpan={6} className="text-center py-8 border border-slate-200 text-slate-500 text-sm">
+                                                Không tìm thấy dữ liệu phù hợp.
+                                            </td>
+                                        </tr>
+                                    );
+                                }
+                                
+                                return filteredFees.map((fee, idx) => {
                                     const isAutoPaid = fee.status === 'paid' && (fee.amount % 1 !== 0);
                                     return (
                                     <tr key={fee.id} className="hover:bg-blue-50/50 transition-colors bg-white">
@@ -383,8 +423,8 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
                                             )}
                                         </td>
                                     </tr>
-                                )})
-                            )}
+                                )});
+                            })()}
                         </tbody>
                     </table>
                 </div>
