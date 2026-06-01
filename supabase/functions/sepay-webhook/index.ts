@@ -87,7 +87,7 @@ serve(async (req) => {
 
     // Function to remove accents (diacritics) and spaces
     const normalizeName = (str: string) => {
-        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "").toUpperCase();
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, 'd').replace(/Đ/g, 'D').replace(/\s+/g, "").toUpperCase();
     };
 
     // Find the matching fee
