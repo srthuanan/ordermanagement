@@ -1482,6 +1482,11 @@ export const createVehicleConfig = async (config: Omit<import('../types').Vehicl
   return await supabase.from('vehicle_configs').insert(config).select('*');
 };
 
+export const updateVehicleConfig = async (id: string, updates: Partial<Omit<import('../types').VehicleConfigRow, 'id' | 'created_at' | 'updated_at'>>) => {
+  if (!supabase) throw new Error('Supabase chưa được cấu hình');
+  return await supabase.from('vehicle_configs').update(updates).eq('id', id).select('*');
+};
+
 export const deleteVehicleConfig = async (id: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
   // Deleting a line will cascade delete versions due to foreign key (if we used parent_id),

@@ -25,6 +25,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
   const [newPolicyExpiry, setNewPolicyExpiry] = useState('');
   const [editingPolicyId, setEditingPolicyId] = useState<string | null>(null);
 
+  const [editingConfigId, setEditingConfigId] = useState<string | null>(null);
+  const [editConfigValue, setEditConfigValue] = useState('');
+
   const [isLineDropdownOpen, setIsLineDropdownOpen] = useState(false);
   const lineDropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -135,6 +138,37 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
       }
       onRefresh();
     }
+  };
+
+  const handleSaveEditConfig = async (config: VehicleConfigRow) => {
+    const val = editConfigValue.trim();
+    if (!val || val === config.value) {
+      setEditingConfigId(null);
+      return;
+    }
+
+    const siblings = configs.filter(c => c.type === config.type && c.parent_value === config.parent_value && c.id !== config.id);
+    if (siblings.some(c => c.value.toLowerCase() === val.toLowerCase())) {
+      alert('Giá trị này đã tồn tại!');
+      return;
+    }
+
+    const { error } = await apiService.updateVehicleConfig(config.id!, { value: val });
+    if (error) {
+      alert(`Lỗi cập nhật: ${error.message}`);
+      return;
+    }
+
+    if (config.type === 'line') {
+      const children = configs.filter(c => c.type === 'version' && c.parent_value === config.value);
+      for (const child of children) {
+        await apiService.updateVehicleConfig(child.id!, { parent_value: val });
+      }
+      if (selectedLine === config.value) setSelectedLine(val);
+    }
+
+    setEditingConfigId(null);
+    onRefresh();
   };
 
   const handleSavePolicy = async () => {
@@ -262,10 +296,30 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
                   }}
                   onClick={() => setSelectedLine(line.value)}
                 >
-                  <span style={{ fontWeight: selectedLine === line.value ? 700 : 500 }}>{line.value}</span>
-                  <button className="icon-button" style={{ color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); handleDelete(line.id, line.value); }}>
-                    <Trash2 size={16} />
-                  </button>
+                  {editingConfigId === line.id ? (
+                    <div style={{ display: 'flex', flex: 1, gap: '8px', marginRight: '8px' }} onClick={(e) => e.stopPropagation()}>
+                      <input 
+                        type="text" 
+                        value={editConfigValue} 
+                        onChange={(e) => setEditConfigValue(e.target.value)} 
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveEditConfig(line)}
+                        autoFocus
+                        style={{ flex: 1, padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '14px' }}
+                      />
+                      <button className="primary-button" style={{ padding: '4px 12px' }} onClick={() => handleSaveEditConfig(line)}>Lưu</button>
+                      <button className="ghost-button" style={{ padding: '4px 12px' }} onClick={() => setEditingConfigId(null)}>Hủy</button>
+                    </div>
+                  ) : (
+                    <span style={{ fontWeight: selectedLine === line.value ? 700 : 500, flex: 1 }}>{line.value}</span>
+                  )}
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button className="icon-button" style={{ color: '#3b82f6' }} onClick={(e) => { e.stopPropagation(); setEditingConfigId(line.id!); setEditConfigValue(line.value); }}>
+                      <Pencil size={16} />
+                    </button>
+                    <button className="icon-button" style={{ color: '#ef4444' }} onClick={(e) => { e.stopPropagation(); handleDelete(line.id!, line.value); }}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -294,10 +348,30 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
               ) : (
                 versions.map(version => (
                   <div key={version.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', borderBottom: '1px solid #f1f5f9' }}>
-                    <span>{version.value}</span>
-                    <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDelete(version.id, version.value)}>
-                      <Trash2 size={16} />
-                    </button>
+                    {editingConfigId === version.id ? (
+                      <div style={{ display: 'flex', flex: 1, gap: '8px', marginRight: '8px' }}>
+                        <input 
+                          type="text" 
+                          value={editConfigValue} 
+                          onChange={(e) => setEditConfigValue(e.target.value)} 
+                          onKeyDown={(e) => e.key === 'Enter' && handleSaveEditConfig(version)}
+                          autoFocus
+                          style={{ flex: 1, padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '14px' }}
+                        />
+                        <button className="primary-button" style={{ padding: '4px 12px' }} onClick={() => handleSaveEditConfig(version)}>Lưu</button>
+                        <button className="ghost-button" style={{ padding: '4px 12px' }} onClick={() => setEditingConfigId(null)}>Hủy</button>
+                      </div>
+                    ) : (
+                      <span style={{ flex: 1 }}>{version.value}</span>
+                    )}
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button className="icon-button" style={{ color: '#3b82f6' }} onClick={() => { setEditingConfigId(version.id!); setEditConfigValue(version.value); }}>
+                        <Pencil size={16} />
+                      </button>
+                      <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDelete(version.id!, version.value)}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -323,10 +397,30 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
           <div style={{ overflowY: 'auto', flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '10px', alignContent: 'start' }}>
             {exteriors.map(ext => (
               <div key={ext.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontWeight: 500, color: '#334155' }}>{ext.value}</span>
-                <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDelete(ext.id, ext.value)}>
-                  <Trash2 size={16} />
-                </button>
+                {editingConfigId === ext.id ? (
+                  <div style={{ display: 'flex', flex: 1, gap: '8px', marginRight: '8px' }}>
+                    <input 
+                      type="text" 
+                      value={editConfigValue} 
+                      onChange={(e) => setEditConfigValue(e.target.value)} 
+                      onKeyDown={(e) => e.key === 'Enter' && handleSaveEditConfig(ext)}
+                      autoFocus
+                      style={{ flex: 1, padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '14px' }}
+                    />
+                    <button className="primary-button" style={{ padding: '4px 12px' }} onClick={() => handleSaveEditConfig(ext)}>Lưu</button>
+                    <button className="ghost-button" style={{ padding: '4px 12px' }} onClick={() => setEditingConfigId(null)}>Hủy</button>
+                  </div>
+                ) : (
+                  <span style={{ fontWeight: 500, color: '#334155', flex: 1 }}>{ext.value}</span>
+                )}
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button className="icon-button" style={{ color: '#3b82f6' }} onClick={() => { setEditingConfigId(ext.id!); setEditConfigValue(ext.value); }}>
+                    <Pencil size={16} />
+                  </button>
+                  <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDelete(ext.id!, ext.value)}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -350,10 +444,30 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
           <div style={{ overflowY: 'auto', flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '10px', alignContent: 'start' }}>
             {interiors.map(int => (
               <div key={int.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontWeight: 500, color: '#334155' }}>{int.value}</span>
-                <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDelete(int.id, int.value)}>
-                  <Trash2 size={16} />
-                </button>
+                {editingConfigId === int.id ? (
+                  <div style={{ display: 'flex', flex: 1, gap: '8px', marginRight: '8px' }}>
+                    <input 
+                      type="text" 
+                      value={editConfigValue} 
+                      onChange={(e) => setEditConfigValue(e.target.value)} 
+                      onKeyDown={(e) => e.key === 'Enter' && handleSaveEditConfig(int)}
+                      autoFocus
+                      style={{ flex: 1, padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '14px' }}
+                    />
+                    <button className="primary-button" style={{ padding: '4px 12px' }} onClick={() => handleSaveEditConfig(int)}>Lưu</button>
+                    <button className="ghost-button" style={{ padding: '4px 12px' }} onClick={() => setEditingConfigId(null)}>Hủy</button>
+                  </div>
+                ) : (
+                  <span style={{ fontWeight: 500, color: '#334155', flex: 1 }}>{int.value}</span>
+                )}
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button className="icon-button" style={{ color: '#3b82f6' }} onClick={() => { setEditingConfigId(int.id!); setEditConfigValue(int.value); }}>
+                    <Pencil size={16} />
+                  </button>
+                  <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDelete(int.id!, int.value)}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
