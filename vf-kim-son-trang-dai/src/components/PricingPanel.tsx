@@ -47,6 +47,8 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
   const [adminTargetVersionId, setAdminTargetVersionId] = React.useState(defaultVersion);
   const [adminTargetCustomerTypeId, setAdminTargetCustomerTypeId] = React.useState(defaultCustomerType);
   const [adminFlowPreset, setAdminFlowPreset] = React.useState<AdminFlowPreset>('standard');
+  const [activeAdminTab, setActiveAdminTab] = React.useState<'vehicles' | 'promotions' | 'fees' | 'settings'>('vehicles');
+  const [editingPromotionIndex, setEditingPromotionIndex] = React.useState<number | null>(null);
   const [customerName, setCustomerName] = React.useState('');
   const [customerPhone, setCustomerPhone] = React.useState('');
   const [consultantName, setConsultantName] = React.useState('');
@@ -390,26 +392,60 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
             <Settings2 size={16} />
             <span>Cấu hình giá cho admin</span>
           </summary>
-          <p className="pricing-admin-hint">
-            Màn hình này được chia theo bước. Chỉ cần làm phần nhanh trước, các mục còn lại để dưới phần chi tiết.
-          </p>
-          <div className="pricing-admin-actions">
-            <button type="button" className="ghost-button" onClick={handleResetPricingConfig}>
-              <RotateCcw size={16} />
-              <span>Khôi phục mặc định</span>
-            </button>
-            <button type="button" className="primary-button" onClick={handleSavePricingConfig}>
-              <Save size={16} />
-              <span>Lưu cấu hình</span>
-            </button>
+          <div style={{ padding: '16px 0', borderBottom: '1px solid #e2e8f0', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <button
+                type="button"
+                className={`ghost-button ${activeAdminTab === 'vehicles' ? 'active' : ''}`}
+                style={{ borderBottom: activeAdminTab === 'vehicles' ? '2px solid #0f172a' : 'none', borderRadius: 0, paddingBottom: '8px' }}
+                onClick={() => setActiveAdminTab('vehicles')}
+              >
+                Cấu hình Xe
+              </button>
+              <button
+                type="button"
+                className={`ghost-button ${activeAdminTab === 'promotions' ? 'active' : ''}`}
+                style={{ borderBottom: activeAdminTab === 'promotions' ? '2px solid #0f172a' : 'none', borderRadius: 0, paddingBottom: '8px' }}
+                onClick={() => setActiveAdminTab('promotions')}
+              >
+                Khuyến mãi
+              </button>
+              <button
+                type="button"
+                className={`ghost-button ${activeAdminTab === 'fees' ? 'active' : ''}`}
+                style={{ borderBottom: activeAdminTab === 'fees' ? '2px solid #0f172a' : 'none', borderRadius: 0, paddingBottom: '8px' }}
+                onClick={() => setActiveAdminTab('fees')}
+              >
+                Phụ phí
+              </button>
+              <button
+                type="button"
+                className={`ghost-button ${activeAdminTab === 'settings' ? 'active' : ''}`}
+                style={{ borderBottom: activeAdminTab === 'settings' ? '2px solid #0f172a' : 'none', borderRadius: 0, paddingBottom: '8px' }}
+                onClick={() => setActiveAdminTab('settings')}
+              >
+                Cài đặt chung
+              </button>
+            </div>
+            
+            <div className="pricing-admin-actions" style={{ marginTop: '16px' }}>
+              <button type="button" className="ghost-button" onClick={handleResetPricingConfig}>
+                <RotateCcw size={16} />
+                <span>Khôi phục mặc định</span>
+              </button>
+              <button type="button" className="primary-button" onClick={handleSavePricingConfig}>
+                <Save size={16} />
+                <span>Lưu cấu hình</span>
+              </button>
+            </div>
           </div>
 
-          <section className="pricing-admin-card pricing-admin-card-quick">
-            <div className="pricing-admin-card-header">
-              <strong>Bước 1 — Chỉnh giá chính</strong>
-              <span>Phần hay dùng nhất</span>
-            </div>
-            <p className="pricing-admin-help">Chọn đúng xe rồi nhập giá. Đây là phần người dùng không rành kỹ thuật vẫn có thể làm được.</p>
+          {activeAdminTab === 'vehicles' && (
+            <section className="pricing-admin-card pricing-admin-card-quick">
+              <div className="pricing-admin-card-header">
+                <strong>Cấu hình Giá & Thông tin xe</strong>
+                <span>Chọn dòng xe để sửa giá cơ bản</span>
+              </div>
             <div className="pricing-admin-flow-row">
               <button
                 type="button"
@@ -559,206 +595,151 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
               </label>
             </div>
           </section>
+          )}
 
-          <section className="pricing-admin-card pricing-admin-card-quick">
-            <div className="pricing-admin-card-header">
-              <strong>Bước 2 — Khuyến mãi</strong>
-              <div className="pricing-admin-inline-actions">
-                <span>{pricingDraft.promotions.length} CTKM</span>
-                <button type="button" className="ghost-button pricing-admin-mini-button" onClick={addPromotion}>
-                  Thêm CTKM
-                </button>
+          {activeAdminTab === 'promotions' && (
+            <section className="pricing-admin-card pricing-admin-card-quick">
+              <div className="pricing-admin-card-header">
+                <strong>Khuyến mãi</strong>
+                <div className="pricing-admin-inline-actions">
+                  <span>{pricingDraft.promotions.length} CTKM</span>
+                  <button type="button" className="primary-button pricing-admin-mini-button" onClick={() => { addPromotion(); setEditingPromotionIndex(pricingDraft.promotions.length); }}>
+                    Thêm CTKM
+                  </button>
+                </div>
               </div>
-            </div>
-            <p className="pricing-admin-help">Mỗi CTKM là một dòng. Bạn có thể sửa trực tiếp hoặc xóa nếu không dùng.</p>
-            <div className="pricing-admin-stack">
-              {pricingDraft.promotions.map((promotion, index) => (
-                <div key={promotion.id || index} className="pricing-admin-row pricing-admin-promo-row">
-                  <span className="pricing-admin-id">{promotion.id}</span>
-                  <label>
-                    <span>Tên CTKM</span>
-                    <input
-                      value={promotion.name}
-                      onChange={(event) =>
-                        updatePricingDraft((draft) => {
-                          draft.promotions[index].name = event.target.value;
-                        })
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>Loại tác động</span>
-                    <select
-                      value={promotion.rule_type || 'DISCOUNT'}
-                      onChange={(event) =>
-                        updatePricingDraft((draft) => {
-                          draft.promotions[index].rule_type = event.target.value as PricingPromotion['rule_type'];
-                        })
-                      }
-                    >
-                      <option value="DISCOUNT">Khấu trừ / Giảm giá</option>
-                      <option value="SURCHARGE">Phụ phí cộng thêm</option>
-                    </select>
-                  </label>
-                  <label>
-                    <span>Kiểu khấu trừ</span>
-                    <select
-                      value={promotion.deduct_from_invoice !== false ? 'true' : 'false'}
-                      onChange={(event) =>
-                        updatePricingDraft((draft) => {
-                          draft.promotions[index].deduct_from_invoice = event.target.value === 'true';
-                        })
-                      }
-                    >
-                      <option value="true">Tính vào Giá Hóa Đơn</option>
-                      <option value="false">Tính vào Giá Thu Thực Tế (Không ra HĐ)</option>
-                    </select>
-                  </label>
-                  <label>
-                    <span>Cơ chế giảm</span>
-                    <select
-                      value={promotion.type}
-                      onChange={(event) =>
-                        updatePricingDraft((draft) => {
-                          draft.promotions[index].type = event.target.value as PricingPromotion['type'];
-                        })
-                      }
-                    >
-                      <option value="fixed">Số tiền</option>
-                      <option value="percentage">Phần trăm</option>
-                    </select>
-                  </label>
-                  <label>
-                    <span>Mức giảm</span>
-                    <input
-                      type="number"
-                      value={promotion.value}
-                      onChange={(event) =>
-                        updatePricingDraft((draft) => {
-                          draft.promotions[index].value = Number(event.target.value || 0);
-                        })
-                      }
-                    />
-                  </label>
-                  <label>
-                    <span>Áp dụng cho xe</span>
-                    <input
-                      value={promotion.applicableTo.join(', ')}
-                      onChange={(event) =>
-                        updatePricingDraft((draft) => {
-                          draft.promotions[index].applicableTo = parseCsvList(event.target.value);
-                        })
-                      }
-                      placeholder="Ví dụ: vf3-standard, vf3-plus"
-                    />
-                  </label>
-                  <label>
-                    <span>Không dùng chung với</span>
-                    <input
-                      value={promotion.incompatibleWith.join(', ')}
-                      onChange={(event) =>
-                        updatePricingDraft((draft) => {
-                          draft.promotions[index].incompatibleWith = parseCsvList(event.target.value);
-                        })
-                      }
-                      placeholder="Ví dụ: p1, p2"
-                    />
-                  </label>
-                  <div className="pricing-admin-row-actions">
-                    <button type="button" className="ghost-button pricing-admin-mini-button" onClick={() => removePromotion(promotion.id)}>
-                      Xóa
-                    </button>
+              <p className="pricing-admin-help">Quản lý các chương trình khuyến mãi. Bấm Sửa để chỉnh cấu hình chi tiết.</p>
+              
+              <div className="pricing-admin-stack" style={{ marginTop: '16px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                      <th style={{ padding: '12px 8px' }}>Mã / Tên CTKM</th>
+                      <th style={{ padding: '12px 8px' }}>Loại</th>
+                      <th style={{ padding: '12px 8px' }}>Mức giảm</th>
+                      <th style={{ padding: '12px 8px', textAlign: 'right' }}>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pricingDraft.promotions.map((promotion, index) => (
+                      <tr key={promotion.id || index} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '12px 8px' }}>
+                          <strong style={{ display: 'block', color: '#0f172a' }}>{promotion.id}</strong>
+                          <span style={{ color: '#475569' }}>{promotion.name}</span>
+                        </td>
+                        <td style={{ padding: '12px 8px', color: '#475569' }}>
+                          {promotion.rule_type === 'DISCOUNT' ? 'Giảm giá' : 'Phụ phí'}
+                          <br/>
+                          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                            {promotion.deduct_from_invoice !== false ? '(Vào HĐ)' : '(Ngoài HĐ)'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px 8px', color: '#475569', fontWeight: 500 }}>
+                          {promotion.type === 'percentage' ? `${promotion.value}%` : formatCurrency(promotion.value)}
+                        </td>
+                        <td style={{ padding: '12px 8px', textAlign: 'right' }}>
+                          <button type="button" className="ghost-button" style={{ padding: '6px 12px', marginRight: '8px' }} onClick={() => setEditingPromotionIndex(index)}>
+                            Sửa
+                          </button>
+                          <button type="button" className="ghost-button" style={{ color: '#ef4444', padding: '6px 12px' }} onClick={() => removePromotion(promotion.id)}>
+                            Xóa
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          <div className="pricing-admin-settings-container">
+            {activeAdminTab === 'settings' && (
+              <div className="pricing-admin-grid">
+                <section className="pricing-admin-card pricing-admin-card-wide">
+                  <div className="pricing-admin-card-header">
+                    <strong>Thông tin hiển thị</strong>
+                    <span>Banner và ghi chú</span>
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
+                  <div className="pricing-admin-fields">
+                    <label>
+                      <span>Banner nội dung</span>
+                      <textarea
+                        value={pricingDraft.bannerContent}
+                        onChange={(event) =>
+                          updatePricingDraft((draft) => {
+                            draft.bannerContent = event.target.value;
+                          })
+                        }
+                        placeholder="Nội dung banner ngắn cho tab tính giá"
+                      />
+                    </label>
+                    <label>
+                      <span>Ghi chú nội bộ</span>
+                      <textarea
+                        value={pricingDraft.guideContent}
+                        onChange={(event) =>
+                          updatePricingDraft((draft) => {
+                            draft.guideContent = event.target.value;
+                          })
+                        }
+                        placeholder="Lưu ý nội bộ cho người sử dụng"
+                      />
+                    </label>
+                  </div>
+                </section>
 
-          <details className="pricing-admin-advanced">
-            <summary>Cấu hình chi tiết</summary>
-            <p className="pricing-admin-hint">
-              Chỉ mở phần này khi cần chỉnh dữ liệu nền như phí, nhóm khách, VinClub hoặc ghi chú nội bộ.
-            </p>
-            <div className="pricing-admin-grid">
-              <section className="pricing-admin-card pricing-admin-card-wide">
-                <div className="pricing-admin-card-header">
-                  <strong>Thông tin hiển thị</strong>
-                  <span>Banner và ghi chú</span>
-                </div>
-                <div className="pricing-admin-fields">
-                  <label>
-                    <span>Banner nội dung</span>
-                    <textarea
-                      value={pricingDraft.bannerContent}
-                      onChange={(event) =>
-                        updatePricingDraft((draft) => {
-                          draft.bannerContent = event.target.value;
-                        })
-                      }
-                      placeholder="Nội dung banner ngắn cho tab tính giá"
-                    />
-                  </label>
-                  <label>
-                    <span>Ghi chú nội bộ</span>
-                    <textarea
-                      value={pricingDraft.guideContent}
-                      onChange={(event) =>
-                        updatePricingDraft((draft) => {
-                          draft.guideContent = event.target.value;
-                        })
-                      }
-                      placeholder="Lưu ý nội bộ cho người sử dụng"
-                    />
-                  </label>
-                </div>
-              </section>
-
-              <section className="pricing-admin-card">
-                <div className="pricing-admin-card-header">
-                  <strong>Dòng xe</strong>
-                  <span>{pricingDraft.models.length} mẫu</span>
-                </div>
-                <div className="pricing-admin-stack">
-                  {pricingDraft.models.map((model, index) => (
-                    <div key={model.id || index} className="pricing-admin-row">
-                      <span className="pricing-admin-id">{model.id}</span>
-                      <label>
-                        <span>Tên hiển thị</span>
-                        <input
-                          value={model.name}
-                          onChange={(event) =>
-                            updatePricingDraft((draft) => {
-                              draft.models[index].name = event.target.value;
-                            })
-                          }
-                        />
-                      </label>
-                      <label>
-                        <span>Ảnh</span>
-                        <input
-                          value={model.image}
-                          onChange={(event) =>
-                            updatePricingDraft((draft) => {
-                              draft.models[index].image = event.target.value;
-                            })
-                          }
-                        />
-                      </label>
-                      <label>
-                        <span>Brochure</span>
-                        <input
-                          value={model.brochure_url}
-                          onChange={(event) =>
-                            updatePricingDraft((draft) => {
-                              draft.models[index].brochure_url = event.target.value;
-                            })
-                          }
-                        />
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                <section className="pricing-admin-card">
+                  <div className="pricing-admin-card-header">
+                    <strong>Dòng xe</strong>
+                    <span>{pricingDraft.models.length} mẫu</span>
+                  </div>
+                  <div className="pricing-admin-stack">
+                    {pricingDraft.models.map((model, index) => (
+                      <div key={model.id || index} className="pricing-admin-row">
+                        <span className="pricing-admin-id">{model.id}</span>
+                        <label>
+                          <span>Tên hiển thị</span>
+                          <input
+                            value={model.name}
+                            onChange={(event) =>
+                              updatePricingDraft((draft) => {
+                                draft.models[index].name = event.target.value;
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          <span>Ảnh</span>
+                          <input
+                            value={model.image}
+                            onChange={(event) =>
+                              updatePricingDraft((draft) => {
+                                draft.models[index].image = event.target.value;
+                              })
+                            }
+                          />
+                        </label>
+                        <label>
+                          <span>Brochure</span>
+                          <input
+                            value={model.brochure_url}
+                            onChange={(event) =>
+                              updatePricingDraft((draft) => {
+                                draft.models[index].brochure_url = event.target.value;
+                              })
+                            }
+                          />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            )}
+            
+            {activeAdminTab === 'fees' && (
+              <div className="pricing-admin-grid">
 
               <section className="pricing-admin-card">
                 <div className="pricing-admin-card-header">
@@ -809,6 +790,48 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
                 </div>
               </section>
 
+
+              <section className="pricing-admin-card">
+                <div className="pricing-admin-card-header">
+                  <strong>Phí tùy chọn</strong>
+                  <span>{pricingDraft.optionalFees.length} dòng</span>
+                </div>
+                <div className="pricing-admin-stack">
+                  {pricingDraft.optionalFees.map((fee, index) => (
+                    <div key={fee.id || index} className="pricing-admin-row">
+                      <span className="pricing-admin-id">{fee.id}</span>
+                      <label>
+                        <span>Tên</span>
+                        <input
+                          value={fee.name}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.optionalFees[index].name = event.target.value;
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>Giá trị</span>
+                        <input
+                          type="number"
+                          value={fee.defaultAmount}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.optionalFees[index].defaultAmount = Number(event.target.value || 0);
+                            })
+                          }
+                        />
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          )}
+
+          {activeAdminTab === 'settings' && (
+            <div className="pricing-admin-grid">
               <section className="pricing-admin-card">
                 <div className="pricing-admin-card-header">
                   <strong>Nhóm khách hàng</strong>
@@ -929,66 +952,113 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
                 </div>
               </section>
 
-              <section className="pricing-admin-card">
+            </div>
+          )}
+
+          {activeAdminTab === 'settings' && (
+            <div className="pricing-admin-grid" style={{ marginTop: '24px' }}>
+              <section className="pricing-admin-card pricing-admin-card-wide">
                 <div className="pricing-admin-card-header">
-                  <strong>Phí tùy chọn</strong>
-                  <span>{pricingDraft.optionalFees.length} dòng</span>
+                  <strong>JSON nâng cao</strong>
+                  <span>Chỉ dùng khi cần import nhanh hoặc sửa trường chưa có trên màn hình.</span>
                 </div>
-                <div className="pricing-admin-stack">
-                  {pricingDraft.optionalFees.map((fee, index) => (
-                    <div key={fee.id || index} className="pricing-admin-row">
-                      <span className="pricing-admin-id">{fee.id}</span>
-                      <label>
-                        <span>Tên</span>
-                        <input
-                          value={fee.name}
-                          onChange={(event) =>
-                            updatePricingDraft((draft) => {
-                              draft.optionalFees[index].name = event.target.value;
-                            })
-                          }
-                        />
-                      </label>
-                      <label>
-                        <span>Giá trị</span>
-                        <input
-                          type="number"
-                          value={fee.defaultAmount}
-                          onChange={(event) =>
-                            updatePricingDraft((draft) => {
-                              draft.optionalFees[index].defaultAmount = Number(event.target.value || 0);
-                            })
-                          }
-                        />
-                      </label>
-                    </div>
-                  ))}
+                <textarea
+                  className="pricing-admin-editor"
+                  value={advancedJson}
+                  onChange={(event) => setAdvancedJson(event.target.value)}
+                  spellCheck={false}
+                  style={{ width: '100%', minHeight: '200px', padding: '12px', fontFamily: 'monospace', fontSize: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '12px' }}
+                />
+                <div className="pricing-admin-actions" style={{ marginTop: '12px' }}>
+                  <button type="button" className="ghost-button" onClick={() => setAdvancedJson(JSON.stringify(pricingDraft, null, 2))}>
+                    <span>Nạp từ form</span>
+                  </button>
+                  <button type="button" className="primary-button" onClick={handleApplyAdvancedJson}>
+                    <Save size={16} />
+                    <span>Áp dụng JSON</span>
+                  </button>
                 </div>
               </section>
             </div>
-
-            <details className="pricing-admin-advanced">
-              <summary>JSON nâng cao</summary>
-              <p className="pricing-admin-hint">
-                Chỉ dùng khi cần import nhanh hoặc sửa một trường chưa có trên màn hình.
-              </p>
-              <textarea
-                className="pricing-admin-editor"
-                value={advancedJson}
-                onChange={(event) => setAdvancedJson(event.target.value)}
-                spellCheck={false}
-              />
-              <div className="pricing-admin-actions">
-                <button type="button" className="ghost-button" onClick={() => setAdvancedJson(JSON.stringify(pricingDraft, null, 2))}>
-                  <span>Nạp từ form</span>
-                </button>
-                <button type="button" className="primary-button" onClick={handleApplyAdvancedJson}>
-                  <Save size={16} />
-                  <span>Áp dụng JSON</span>
-                </button>
+          )}
+          </div>
+          {editingPromotionIndex !== null && pricingDraft.promotions[editingPromotionIndex] && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', width: '90%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+                <h3 style={{ margin: '0 0 16px 0', fontSize: '18px' }}>Chỉnh sửa Khuyến Mãi</h3>
+                <div className="pricing-admin-quick-grid">
+                  <label>
+                    <span>Mã CTKM</span>
+                    <input disabled value={pricingDraft.promotions[editingPromotionIndex].id} style={{ background: '#f8fafc' }} />
+                  </label>
+                  <label>
+                    <span>Tên CTKM</span>
+                    <input
+                      value={pricingDraft.promotions[editingPromotionIndex].name}
+                      onChange={(e) => updatePricingDraft(draft => { draft.promotions[editingPromotionIndex].name = e.target.value; })}
+                    />
+                  </label>
+                  <label>
+                    <span>Loại tác động</span>
+                    <select
+                      value={pricingDraft.promotions[editingPromotionIndex].rule_type || 'DISCOUNT'}
+                      onChange={(e) => updatePricingDraft(draft => { draft.promotions[editingPromotionIndex].rule_type = e.target.value as PricingPromotion['rule_type']; })}
+                    >
+                      <option value="DISCOUNT">Khấu trừ / Giảm giá</option>
+                      <option value="SURCHARGE">Phụ phí cộng thêm</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Kiểu khấu trừ</span>
+                    <select
+                      value={pricingDraft.promotions[editingPromotionIndex].deduct_from_invoice !== false ? 'true' : 'false'}
+                      onChange={(e) => updatePricingDraft(draft => { draft.promotions[editingPromotionIndex].deduct_from_invoice = e.target.value === 'true'; })}
+                    >
+                      <option value="true">Tính vào Giá Hóa Đơn</option>
+                      <option value="false">Tính vào Giá Thu Thực Tế (Không ra HĐ)</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Cơ chế giảm</span>
+                    <select
+                      value={pricingDraft.promotions[editingPromotionIndex].type}
+                      onChange={(e) => updatePricingDraft(draft => { draft.promotions[editingPromotionIndex].type = e.target.value as PricingPromotion['type']; })}
+                    >
+                      <option value="fixed">Số tiền</option>
+                      <option value="percentage">Phần trăm</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Mức giảm</span>
+                    <input
+                      type="number"
+                      value={pricingDraft.promotions[editingPromotionIndex].value}
+                      onChange={(e) => updatePricingDraft(draft => { draft.promotions[editingPromotionIndex].value = Number(e.target.value || 0); })}
+                    />
+                  </label>
+                  <label>
+                    <span>Áp dụng cho xe</span>
+                    <input
+                      value={pricingDraft.promotions[editingPromotionIndex].applicableTo.join(', ')}
+                      onChange={(e) => updatePricingDraft(draft => { draft.promotions[editingPromotionIndex].applicableTo = parseCsvList(e.target.value); })}
+                      placeholder="Ví dụ: vf3-standard, vf3-plus"
+                    />
+                  </label>
+                  <label>
+                    <span>Không dùng chung với</span>
+                    <input
+                      value={pricingDraft.promotions[editingPromotionIndex].incompatibleWith.join(', ')}
+                      onChange={(e) => updatePricingDraft(draft => { draft.promotions[editingPromotionIndex].incompatibleWith = parseCsvList(e.target.value); })}
+                      placeholder="Ví dụ: p1, p2"
+                    />
+                  </label>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '24px' }}>
+                  <button type="button" className="primary-button" onClick={() => setEditingPromotionIndex(null)}>Xong</button>
+                </div>
               </div>
-            </details>
-          </details>
+            </div>
+          )}
 
           {adminError ? <div className="pricing-admin-error">{adminError}</div> : null}
         </details>

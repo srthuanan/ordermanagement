@@ -1,0 +1,670 @@
+                type="button"
+                className={adminFlowPreset === 'promotion' ? 'ghost-button pricing-admin-flow active' : 'ghost-button pricing-admin-flow'}
+                onClick={() => applyAdminFlowPreset('promotion')}
+              >
+                Mẫu khuyến mãi
+              </button>
+            </div>
+            <div className="pricing-admin-preset-row">
+              {pricingDraft.models.map((model) => (
+                <button
+                  key={model.id}
+                  type="button"
+                  className={model.id === adminTargetModelId ? 'ghost-button pricing-admin-preset active' : 'ghost-button pricing-admin-preset'}
+                  onClick={() => applyAdminPreset(model.id)}
+                >
+                  {model.name}
+                </button>
+              ))}
+            </div>
+            <div className="pricing-admin-quick-grid">
+              <label>
+                <span>Chọn xe</span>
+                <select value={adminTargetModelId} onChange={(event) => handleAdminTargetModelChange(event.target.value)}>
+                  {pricingDraft.models.map((model) => (
+                    <option key={model.id} value={model.id}>
+                      {model.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Chọn phiên bản</span>
+                <select value={adminTargetVersionId} onChange={(event) => setAdminTargetVersionId(event.target.value)}>
+                  {adminTargetVersionOptions.map((version) => (
+                    <option key={version.id} value={version.id}>
+                      {version.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Nhóm khách</span>
+                <select value={adminTargetCustomerTypeId} onChange={(event) => setAdminTargetCustomerTypeId(event.target.value)}>
+                  {pricingDraft.customerTypes.map((customerType) => (
+                    <option key={customerType.id} value={customerType.id}>
+                      {customerType.emoji} {customerType.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>Giá bán cơ bản</span>
+                <input
+                  type="number"
+                  value={adminTargetVersion?.basePrice ?? 0}
+                  onChange={(event) =>
+                    updateAdminTargetVersion((version) => {
+                      version.basePrice = Number(event.target.value || 0);
+                    })
+                  }
+                />
+              </label>
+              <label>
+                <span>Phụ phí màu đặc biệt</span>
+                <input
+                  type="number"
+                  value={adminTargetVersion?.advancedColorPrice ?? 0}
+                  onChange={(event) =>
+                    updateAdminTargetVersion((version) => {
+                      version.advancedColorPrice = Number(event.target.value || 0);
+                    })
+                  }
+                />
+              </label>
+              <label>
+                <span>Tiền đặt cọc</span>
+                <input
+                  type="number"
+                  value={adminTargetVersion?.depositAmount ?? 0}
+                  onChange={(event) =>
+                    updateAdminTargetVersion((version) => {
+                      version.depositAmount = Number(event.target.value || 0);
+                    })
+                  }
+                />
+              </label>
+              <label>
+                <span>Bảo hiểm</span>
+                <input
+                  type="number"
+                  value={adminTargetVersion?.bodyInsuranceAmount ?? 0}
+                  onChange={(event) =>
+                    updateAdminTargetVersion((version) => {
+                      version.bodyInsuranceAmount = Number(event.target.value || 0);
+                    })
+                  }
+                />
+              </label>
+              <label>
+                <span>Tên xe hiển thị</span>
+                <input
+                  value={adminTargetModel?.name || ''}
+                  onChange={(event) =>
+                    updateAdminTargetModel((model) => {
+                      model.name = event.target.value;
+                    })
+                  }
+                />
+              </label>
+              <label>
+                <span>Link ảnh xe</span>
+                <input
+                  value={adminTargetModel?.image || ''}
+                  onChange={(event) =>
+                    updateAdminTargetModel((model) => {
+                      model.image = event.target.value;
+                    })
+                  }
+                />
+              </label>
+              <label>
+                <span>Thông điệp ngắn</span>
+                <input
+                  value={pricingDraft.bannerContent}
+                  onChange={(event) =>
+                    updatePricingDraft((draft) => {
+                      draft.bannerContent = event.target.value;
+                    })
+                  }
+                />
+              </label>
+            </div>
+          </section>
+
+          <section className="pricing-admin-card pricing-admin-card-quick">
+            <div className="pricing-admin-card-header">
+              <strong>Bước 2 — Khuyến mãi</strong>
+              <div className="pricing-admin-inline-actions">
+                <span>{pricingDraft.promotions.length} CTKM</span>
+                <button type="button" className="ghost-button pricing-admin-mini-button" onClick={addPromotion}>
+                  Thêm CTKM
+                </button>
+              </div>
+            </div>
+            <p className="pricing-admin-help">Mỗi CTKM là một dòng. Bạn có thể sửa trực tiếp hoặc xóa nếu không dùng.</p>
+            <div className="pricing-admin-stack">
+              {pricingDraft.promotions.map((promotion, index) => (
+                <div key={promotion.id || index} className="pricing-admin-row pricing-admin-promo-row">
+                  <span className="pricing-admin-id">{promotion.id}</span>
+                  <label>
+                    <span>Tên CTKM</span>
+                    <input
+                      value={promotion.name}
+                      onChange={(event) =>
+                        updatePricingDraft((draft) => {
+                          draft.promotions[index].name = event.target.value;
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Loại tác động</span>
+                    <select
+                      value={promotion.rule_type || 'DISCOUNT'}
+                      onChange={(event) =>
+                        updatePricingDraft((draft) => {
+                          draft.promotions[index].rule_type = event.target.value as PricingPromotion['rule_type'];
+                        })
+                      }
+                    >
+                      <option value="DISCOUNT">Khấu trừ / Giảm giá</option>
+                      <option value="SURCHARGE">Phụ phí cộng thêm</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Kiểu khấu trừ</span>
+                    <select
+                      value={promotion.deduct_from_invoice !== false ? 'true' : 'false'}
+                      onChange={(event) =>
+                        updatePricingDraft((draft) => {
+                          draft.promotions[index].deduct_from_invoice = event.target.value === 'true';
+                        })
+                      }
+                    >
+                      <option value="true">Tính vào Giá Hóa Đơn</option>
+                      <option value="false">Tính vào Giá Thu Thực Tế (Không ra HĐ)</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Cơ chế giảm</span>
+                    <select
+                      value={promotion.type}
+                      onChange={(event) =>
+                        updatePricingDraft((draft) => {
+                          draft.promotions[index].type = event.target.value as PricingPromotion['type'];
+                        })
+                      }
+                    >
+                      <option value="fixed">Số tiền</option>
+                      <option value="percentage">Phần trăm</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Mức giảm</span>
+                    <input
+                      type="number"
+                      value={promotion.value}
+                      onChange={(event) =>
+                        updatePricingDraft((draft) => {
+                          draft.promotions[index].value = Number(event.target.value || 0);
+                        })
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>Áp dụng cho xe</span>
+                    <input
+                      value={promotion.applicableTo.join(', ')}
+                      onChange={(event) =>
+                        updatePricingDraft((draft) => {
+                          draft.promotions[index].applicableTo = parseCsvList(event.target.value);
+                        })
+                      }
+                      placeholder="Ví dụ: vf3-standard, vf3-plus"
+                    />
+                  </label>
+                  <label>
+                    <span>Không dùng chung với</span>
+                    <input
+                      value={promotion.incompatibleWith.join(', ')}
+                      onChange={(event) =>
+                        updatePricingDraft((draft) => {
+                          draft.promotions[index].incompatibleWith = parseCsvList(event.target.value);
+                        })
+                      }
+                      placeholder="Ví dụ: p1, p2"
+                    />
+                  </label>
+                  <div className="pricing-admin-row-actions">
+                    <button type="button" className="ghost-button pricing-admin-mini-button" onClick={() => removePromotion(promotion.id)}>
+                      Xóa
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <details className="pricing-admin-advanced">
+            <summary>Cấu hình chi tiết</summary>
+            <p className="pricing-admin-hint">
+              Chỉ mở phần này khi cần chỉnh dữ liệu nền như phí, nhóm khách, VinClub hoặc ghi chú nội bộ.
+            </p>
+            <div className="pricing-admin-grid">
+              <section className="pricing-admin-card pricing-admin-card-wide">
+                <div className="pricing-admin-card-header">
+                  <strong>Thông tin hiển thị</strong>
+                  <span>Banner và ghi chú</span>
+                </div>
+                <div className="pricing-admin-fields">
+                  <label>
+                    <span>Banner nội dung</span>
+                    <textarea
+                      value={pricingDraft.bannerContent}
+                      onChange={(event) =>
+                        updatePricingDraft((draft) => {
+                          draft.bannerContent = event.target.value;
+                        })
+                      }
+                      placeholder="Nội dung banner ngắn cho tab tính giá"
+                    />
+                  </label>
+                  <label>
+                    <span>Ghi chú nội bộ</span>
+                    <textarea
+                      value={pricingDraft.guideContent}
+                      onChange={(event) =>
+                        updatePricingDraft((draft) => {
+                          draft.guideContent = event.target.value;
+                        })
+                      }
+                      placeholder="Lưu ý nội bộ cho người sử dụng"
+                    />
+                  </label>
+                </div>
+              </section>
+
+              <section className="pricing-admin-card">
+                <div className="pricing-admin-card-header">
+                  <strong>Dòng xe</strong>
+                  <span>{pricingDraft.models.length} mẫu</span>
+                </div>
+                <div className="pricing-admin-stack">
+                  {pricingDraft.models.map((model, index) => (
+                    <div key={model.id || index} className="pricing-admin-row">
+                      <span className="pricing-admin-id">{model.id}</span>
+                      <label>
+                        <span>Tên hiển thị</span>
+                        <input
+                          value={model.name}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.models[index].name = event.target.value;
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>Ảnh</span>
+                        <input
+                          value={model.image}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.models[index].image = event.target.value;
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>Brochure</span>
+                        <input
+                          value={model.brochure_url}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.models[index].brochure_url = event.target.value;
+                            })
+                          }
+                        />
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="pricing-admin-card">
+                <div className="pricing-admin-card-header">
+                  <strong>Phí bắt buộc</strong>
+                  <span>{pricingDraft.fees.length} dòng</span>
+                </div>
+                <div className="pricing-admin-stack">
+                  {pricingDraft.fees.map((fee, index) => (
+                    <div key={fee.id || index} className="pricing-admin-row">
+                      <span className="pricing-admin-id">{fee.id}</span>
+                      <label>
+                        <span>Tên phí</span>
+                        <input
+                          value={fee.name}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.fees[index].name = event.target.value;
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>HN / HCM</span>
+                        <input
+                          type="number"
+                          value={fee.amountHnHcm}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.fees[index].amountHnHcm = Number(event.target.value || 0);
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>Khu vực khác</span>
+                        <input
+                          type="number"
+                          value={fee.amountOther}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.fees[index].amountOther = Number(event.target.value || 0);
+                            })
+                          }
+                        />
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="pricing-admin-card">
+                <div className="pricing-admin-card-header">
+                  <strong>Nhóm khách hàng</strong>
+                  <span>{pricingDraft.customerTypes.length} nhóm</span>
+                </div>
+                <div className="pricing-admin-stack">
+                  {pricingDraft.customerTypes.map((customerType, index) => (
+                    <div key={customerType.id || index} className="pricing-admin-row">
+                      <span className="pricing-admin-id">{customerType.id}</span>
+                      <label>
+                        <span>Tên nhóm</span>
+                        <input
+                          value={customerType.name}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.customerTypes[index].name = event.target.value;
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>Biểu tượng</span>
+                        <input
+                          value={customerType.emoji}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.customerTypes[index].emoji = event.target.value;
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>Mô tả</span>
+                        <input
+                          value={customerType.description}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.customerTypes[index].description = event.target.value;
+                            })
+                          }
+                        />
+                      </label>
+                      <label className="pricing-admin-toggle">
+                        <input
+                          type="checkbox"
+                          checked={customerType.allowsDeposit}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.customerTypes[index].allowsDeposit = event.target.checked;
+                            })
+                          }
+                        />
+                        <span>Cho phép đặt cọc</span>
+                      </label>
+                      <label className="pricing-admin-toggle">
+                        <input
+                          type="checkbox"
+                          checked={customerType.allowsVinclub}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.customerTypes[index].allowsVinclub = event.target.checked;
+                            })
+                          }
+                        />
+                        <span>Cho phép VinClub</span>
+                      </label>
+                      <label>
+                        <span>CTKM mặc định</span>
+                        <input
+                          value={pricingDraft.customerTypePromos[customerType.id]?.join(', ') || ''}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.customerTypePromos[customerType.id] = parseCsvList(event.target.value);
+                            })
+                          }
+                          placeholder="Ví dụ: p1, p3"
+                        />
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="pricing-admin-card">
+                <div className="pricing-admin-card-header">
+                  <strong>VinClub</strong>
+                  <span>{pricingDraft.vinClubTiers.length} hạng</span>
+                </div>
+                <div className="pricing-admin-stack">
+                  {pricingDraft.vinClubTiers.map((tier, index) => (
+                    <div key={tier.id || index} className="pricing-admin-row">
+                      <span className="pricing-admin-id">{tier.id}</span>
+                      <label>
+                        <span>Tên hạng</span>
+                        <input
+                          value={tier.name}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.vinClubTiers[index].name = event.target.value;
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>Giảm %</span>
+                        <input
+                          type="number"
+                          value={tier.discountPercentage}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.vinClubTiers[index].discountPercentage = Number(event.target.value || 0);
+                            })
+                          }
+                        />
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="pricing-admin-card">
+                <div className="pricing-admin-card-header">
+                  <strong>Phí tùy chọn</strong>
+                  <span>{pricingDraft.optionalFees.length} dòng</span>
+                </div>
+                <div className="pricing-admin-stack">
+                  {pricingDraft.optionalFees.map((fee, index) => (
+                    <div key={fee.id || index} className="pricing-admin-row">
+                      <span className="pricing-admin-id">{fee.id}</span>
+                      <label>
+                        <span>Tên</span>
+                        <input
+                          value={fee.name}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.optionalFees[index].name = event.target.value;
+                            })
+                          }
+                        />
+                      </label>
+                      <label>
+                        <span>Giá trị</span>
+                        <input
+                          type="number"
+                          value={fee.defaultAmount}
+                          onChange={(event) =>
+                            updatePricingDraft((draft) => {
+                              draft.optionalFees[index].defaultAmount = Number(event.target.value || 0);
+                            })
+                          }
+                        />
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+
+            <details className="pricing-admin-advanced">
+              <summary>JSON nâng cao</summary>
+              <p className="pricing-admin-hint">
+                Chỉ dùng khi cần import nhanh hoặc sửa một trường chưa có trên màn hình.
+              </p>
+              <textarea
+                className="pricing-admin-editor"
+                value={advancedJson}
+                onChange={(event) => setAdvancedJson(event.target.value)}
+                spellCheck={false}
+              />
+              <div className="pricing-admin-actions">
+                <button type="button" className="ghost-button" onClick={() => setAdvancedJson(JSON.stringify(pricingDraft, null, 2))}>
+                  <span>Nạp từ form</span>
+                </button>
+                <button type="button" className="primary-button" onClick={handleApplyAdvancedJson}>
+                  <Save size={16} />
+                  <span>Áp dụng JSON</span>
+                </button>
+              </div>
+            </details>
+          </details>
+
+          {adminError ? <div className="pricing-admin-error">{adminError}</div> : null}
+        </details>
+      ) : null}
+      <div className="pricing-modern-workspace">
+        {/* LEFT COLUMN: Configuration */}
+        <div className="pricing-config-side custom-scrollbar">
+          
+          <div className="pricing-hero-header">
+            <div>
+              <h2>Tính Giá Chi Tiết</h2>
+              <p>Chọn các cấu hình, ưu đãi và dịch vụ bên dưới. Bảng báo giá sẽ tự động tính toán bên phải.</p>
+            </div>
+            <div className="pricing-hero-actions">
+              <button className="ghost-button" type="button" onClick={handlePrintQuote}>
+                <Printer size={17} />
+                <span>In báo giá</span>
+              </button>
+              <button className="ghost-button" type="button" onClick={handleDownloadQuote}>
+                <Download size={17} />
+                <span>Tải PDF</span>
+              </button>
+              {brochureUrl ? (
+                <a className="ghost-button" href={brochureUrl} target="_blank" rel="noreferrer">
+                  <FileText size={17} />
+                  <span>Xem brochure</span>
+                </a>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="pricing-section-card">
+            <div className="pricing-section-title">
+              <User size={16} />
+              <span>Thông tin Khách hàng</span>
+            </div>
+            <div className="pricing-section-content pricing-grid-3">
+              <div className="pricing-input-group">
+                <label>Tên khách hàng</label>
+                <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Nhập tên" />
+              </div>
+              <div className="pricing-input-group">
+                <label>Số điện thoại</label>
+                <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Nhập SĐT" />
+              </div>
+              <div className="pricing-input-group">
+                <label>Tư vấn viên</label>
+                <input value={consultantName} onChange={(e) => setConsultantName(e.target.value)} placeholder="Tên TVBH" />
+              </div>
+              <div className="pricing-input-group">
+                <label>Nhóm khách hàng</label>
+                <select value={customerTypeId} onChange={(e) => handleCustomerTypeChange(e.target.value)}>
+                  {pricingDraft.customerTypes.map((t) => (
+                    <option key={t.id} value={t.id}>{t.emoji} {t.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="pricing-input-group">
+                <label>VinClub</label>
+                <select value={vinClubTierId || ''} onChange={(e) => setVinClubTierId(e.target.value || null)} disabled={!selectedCustomerType?.allowsVinclub || vinClubBlocked}>
+                  <option value="">Không áp dụng</option>
+                  {pricingDraft.vinClubTiers.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name} - {t.discountPercentage}%</option>
+                  ))}
+                </select>
+              </div>
+              <div className="pricing-input-group">
+                <label>Khu vực phí</label>
+                <select value={region} onChange={(e) => setRegion(e.target.value as 'hnhcm' | 'other')}>
+                  <option value="hnhcm">Hà Nội / TP.HCM</option>
+                  <option value="other">Đồng Nai / Tỉnh khác</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="pricing-section-card">
+            <div className="pricing-section-title">
+              <Car size={16} />
+              <span>Cấu hình Xe</span>
+            </div>
+            <div className="pricing-section-content">
+              <div className="pricing-grid-2">
+                <div className="pricing-input-group">
+                  <label>Dòng xe</label>
+                  <select value={modelId} onChange={(e) => handleModelChange(e.target.value)}>
+                    {pricingDraft.models.map((m) => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="pricing-input-group">
+                  <label>Phiên bản</label>
+                  <select value={versionId} onChange={(e) => handleVersionChange(e.target.value)}>
+                    {versionOptions.map((v) => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="pricing-input-group" style={{ marginTop: '8px' }}>
+                <label>Màu sắc ({selectedVersion?.colors.find(c => c.id === colorId)?.name || 'Chưa chọn'})</label>
+                <div className="pricing-color-swatches">
+                  {selectedVersion?.colors.map((color) => (
+                    <div
+                      key={color.id}
+                      className={`color-swatch ${colorId === color.id ? 'active' : ''}`}
