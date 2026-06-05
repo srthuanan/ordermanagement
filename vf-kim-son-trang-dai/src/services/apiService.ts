@@ -503,7 +503,12 @@ export const getAllSalesPolicies = async (): Promise<{ data: SalesPolicyRow[]; e
     if (p.trang_thai === 'Hoạt động' && p.han_su_dung) {
       const expiryDate = parseDate(p.han_su_dung);
       if (expiryDate && expiryDate < now) {
-        expiredIds.push(p.id!);
+        if (p.id) {
+          expiredIds.push(p.id);
+        } else {
+          // If no ID, we try to update by name
+          updateSalesPolicy('', { trang_thai: 'Ngừng hoạt động' }, p.ten_chinh_sach).catch(console.error);
+        }
         p.trang_thai = 'Ngừng hoạt động';
       }
     }
@@ -529,25 +534,35 @@ export const createSalesPolicy = async (payload: Omit<SalesPolicyRow, 'id' | 'cr
   return { error };
 };
 
-export const updateSalesPolicy = async (id: string, payload: Partial<Omit<SalesPolicyRow, 'id' | 'created_at'>>): Promise<{ error: any }> => {
+export const updateSalesPolicy = async (id: string, payload: Partial<Omit<SalesPolicyRow, 'id' | 'created_at'>>, oldName?: string): Promise<{ error: any }> => {
   if (!supabase) return { error: new Error('Supabase chưa được cấu hình') };
 
-  const { error } = await supabase
-    .from('chinhsach')
-    .update(payload)
-    .eq('id', id);
+  let query = supabase.from('chinhsach').update(payload);
+  if (id) {
+    query = query.eq('id', id);
+  } else if (oldName) {
+    query = query.eq('ten_chinh_sach', oldName);
+  } else {
+    return { error: new Error('Thiếu thông tin để cập nhật (không có ID và tên cũ)') };
+  }
 
+  const { error } = await query;
   return { error };
 };
 
-export const deleteSalesPolicy = async (id: string): Promise<{ error: any }> => {
+export const deleteSalesPolicy = async (id: string, oldName?: string): Promise<{ error: any }> => {
   if (!supabase) return { error: new Error('Supabase chưa được cấu hình') };
 
-  const { error } = await supabase
-    .from('chinhsach')
-    .delete()
-    .eq('id', id);
+  let query = supabase.from('chinhsach').delete();
+  if (id) {
+    query = query.eq('id', id);
+  } else if (oldName) {
+    query = query.eq('ten_chinh_sach', oldName);
+  } else {
+    return { error: new Error('Thiếu thông tin để xóa') };
+  }
 
+  const { error } = await query;
   return { error };
 };
 

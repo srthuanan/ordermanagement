@@ -205,19 +205,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
     const p = policies[editingPolicyIndex];
     if (!p) return;
     
-    // If id is missing, we shouldn't crash, but we can't update either.
-    // Assuming API requires ID.
-    if (!p.id) {
-       alert("Không thể cập nhật vì chính sách này thiếu ID.");
-       return;
-    }
-    
-    const { error } = await apiService.updateSalesPolicy(p.id, {
+    const { error } = await apiService.updateSalesPolicy(p.id || '', {
       ten_chinh_sach: editPolicyData.name,
       dong_xe: editPolicyData.line.trim() || 'Tất cả',
       trang_thai: editPolicyData.status,
       han_su_dung: editPolicyData.expiry.trim() || null
-    });
+    }, p.ten_chinh_sach);
     if (error) {
       alert(`Lỗi cập nhật chính sách: ${error.message}`);
       return;
@@ -237,7 +230,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
 
   const handleDeletePolicy = async (id: string, name: string) => {
     if (window.confirm(`Bạn có chắc chắn muốn xóa "${name}"?`)) {
-      const { error } = await apiService.deleteSalesPolicy(id);
+      const { error } = await apiService.deleteSalesPolicy(id || '', name);
       if (error) {
         alert(`Lỗi xóa chính sách: ${error.message}`);
         return;
@@ -671,7 +664,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
                         <button className="icon-button" style={{ color: '#3b82f6' }} onClick={() => handleEditPolicy(p, index)}>
                           <Pencil size={16} />
                         </button>
-                        <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDeletePolicy(p.id!, p.ten_chinh_sach)}>
+                        <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDeletePolicy(p.id || '', p.ten_chinh_sach)}>
                           <Trash2 size={16} />
                         </button>
                       </td>
