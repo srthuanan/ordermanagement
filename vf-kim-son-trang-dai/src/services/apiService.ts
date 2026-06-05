@@ -485,9 +485,10 @@ export const getAllSalesPolicies = async (): Promise<{ data: SalesPolicyRow[]; e
   const now = new Date();
 
   const parseDate = (str: string) => {
-    const match = str.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if (match) {
-      return new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]), 23, 59, 59);
+    const matches = [...str.matchAll(/(\d{1,2})\/(\d{1,2})\/(\d{4})/g)];
+    if (matches.length > 0) {
+      const lastMatch = matches[matches.length - 1];
+      return new Date(parseInt(lastMatch[3]), parseInt(lastMatch[2]) - 1, parseInt(lastMatch[1]), 23, 59, 59);
     }
     return null;
   };
