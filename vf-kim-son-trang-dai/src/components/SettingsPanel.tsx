@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Plus, Trash2, Car, PaintBucket, Armchair, GitBranch, BadgeDollarSign } from 'lucide-react';
+import { Settings, Plus, Trash2, Car, PaintBucket, Armchair, GitBranch, BadgeDollarSign, Pencil } from 'lucide-react';
 import { VehicleConfigRow, SalesPolicyRow } from '../types';
 import * as apiService from '../services/apiService';
 
@@ -23,6 +23,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
   const [newPolicyLine, setNewPolicyLine] = useState('');
   const [newPolicyStatus, setNewPolicyStatus] = useState('Hoạt động');
   const [newPolicyExpiry, setNewPolicyExpiry] = useState('');
+  const [editingPolicyId, setEditingPolicyId] = useState<string | null>(null);
 
   const lines = configs.filter(c => c.type === 'line').sort((a, b) => a.value.localeCompare(b.value));
   const versions = configs.filter(c => c.type === 'version' && c.parent_value === selectedLine).sort((a, b) => a.value.localeCompare(b.value));
@@ -123,23 +124,56 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
     }
   };
 
-  const handleAddPolicy = async () => {
+  const handleSavePolicy = async () => {
     const val = newPolicyName.trim();
     if (!val) return;
-    const { error } = await apiService.createSalesPolicy({
-      ten_chinh_sach: val,
-      dong_xe: newPolicyLine.trim() || 'Tất cả',
-      trang_thai: newPolicyStatus,
-      han_su_dung: newPolicyExpiry.trim() || null
-    });
-    if (error) {
-      alert(`Lỗi thêm chính sách: ${error.message}`);
-      return;
+    
+    if (editingPolicyId) {
+      const { error } = await apiService.updateSalesPolicy(editingPolicyId, {
+        ten_chinh_sach: val,
+        dong_xe: newPolicyLine.trim() || 'Tất cả',
+        trang_thai: newPolicyStatus,
+        han_su_dung: newPolicyExpiry.trim() || null
+      });
+      if (error) {
+        alert(`Lỗi cập nhật chính sách: ${error.message}`);
+        return;
+      }
+      setEditingPolicyId(null);
+    } else {
+      const { error } = await apiService.createSalesPolicy({
+        ten_chinh_sach: val,
+        dong_xe: newPolicyLine.trim() || 'Tất cả',
+        trang_thai: newPolicyStatus,
+        han_su_dung: newPolicyExpiry.trim() || null
+      });
+      if (error) {
+        alert(`Lỗi thêm chính sách: ${error.message}`);
+        return;
+      }
     }
+    
     setNewPolicyName('');
     setNewPolicyLine('');
     setNewPolicyExpiry('');
+    setNewPolicyStatus('Hoạt động');
     loadPolicies();
+  };
+
+  const handleEditPolicy = (p: SalesPolicyRow) => {
+    setEditingPolicyId(p.id!);
+    setNewPolicyName(p.ten_chinh_sach);
+    setNewPolicyLine(p.dong_xe || '');
+    setNewPolicyExpiry(p.han_su_dung || '');
+    setNewPolicyStatus(p.trang_thai || 'Hoạt động');
+  };
+
+  const handleCancelEditPolicy = () => {
+    setEditingPolicyId(null);
+    setNewPolicyName('');
+    setNewPolicyLine('');
+    setNewPolicyExpiry('');
+    setNewPolicyStatus('Hoạt động');
   };
 
   const handleDeletePolicy = async (id: string, name: string) => {
@@ -358,7 +392,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
                 <option value="Ngừng hoạt động">Ngừng hoạt động</option>
               </select>
             </div>
-            <button className="primary-button" onClick={handleAddPolicy} disabled={!newPolicyName.trim()} style={{ height: '38px' }}>Thêm mới</button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="primary-button" onClick={handleSavePolicy} disabled={!newPolicyName.trim()} style={{ height: '38px' }}>
+                {editingPolicyId ? 'Lưu' : 'Thêm mới'}
+              </button>
+              {editingPolicyId && (
+                <button className="ghost-button" onClick={handleCancelEditPolicy} style={{ height: '38px', color: '#64748b' }}>Hủy</button>
+              )}
+            </div>
           </div>
           
           <div style={{ overflowY: 'auto', flex: 1 }}>
@@ -387,7 +428,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
                         {p.trang_thai || 'Hoạt động'}
                       </span>
                     </td>
-                    <td style={{ padding: '12px', textAlign: 'right' }}>
+                    <td style={{ padding: '12px', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                      <button className="icon-button" style={{ color: '#3b82f6' }} onClick={() => handleEditPolicy(p)}>
+                        <Pencil size={16} />
+                      </button>
                       <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDeletePolicy(p.id!, p.ten_chinh_sach)}>
                         <Trash2 size={16} />
                       </button>

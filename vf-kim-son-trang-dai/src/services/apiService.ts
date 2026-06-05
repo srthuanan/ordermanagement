@@ -497,6 +497,17 @@ export const createSalesPolicy = async (payload: Omit<SalesPolicyRow, 'id' | 'cr
   return { error };
 };
 
+export const updateSalesPolicy = async (id: string, payload: Partial<Omit<SalesPolicyRow, 'id' | 'created_at'>>): Promise<{ error: any }> => {
+  if (!supabase) return { error: new Error('Supabase chưa được cấu hình') };
+
+  const { error } = await supabase
+    .from('chinhsach')
+    .update(payload)
+    .eq('id', id);
+
+  return { error };
+};
+
 export const deleteSalesPolicy = async (id: string): Promise<{ error: any }> => {
   if (!supabase) return { error: new Error('Supabase chưa được cấu hình') };
 
