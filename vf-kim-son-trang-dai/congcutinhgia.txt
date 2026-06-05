@@ -1014,34 +1014,6 @@ Dữ liệu thô đầy đủ (JSON):
           "is_advanced": false
         },
         {
-          "id": "vc_vf8an_1v18",
-          "name": "Trắng (Infinity Blanc) + Nóc xám",
-          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-2.webp",
-          "color_code": "1v18",
-          "is_advanced": true
-        },
-        {
-          "id": "vc_vf8an_2911",
-          "name": "Đen (Jet Black) + Nóc đồng",
-          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11.webp",
-          "color_code": "2911",
-          "is_advanced": true
-        },
-        {
-          "id": "vc_vf8an_2927",
-          "name": "Đỏ (Crimson Velvet) + Nóc đồng",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/2927.png",
-          "color_code": "2927",
-          "is_advanced": true
-        },
-        {
-          "id": "vc_vf8an_171v",
-          "name": "Xám (Zenith Grey) + Nóc bạc",
-          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/171V.png",
-          "color_code": "171v",
-          "is_advanced": true
-        },
-        {
           "id": "vc_vf8an_ce32",
           "name": "Cam (Vitality)",
           "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE32.webp",
