@@ -29,12 +29,12 @@ export type TabKey = (typeof tabs)[number]['key'];
 export type AppRole = ProfileRow['role'];
 
 const roleTabAccess: Record<TabKey, AppRole[]> = {
-  dashboard: ['admin', 'manager'],
-  orders: ['admin', 'sales', 'manager'],
-  inventory: ['admin', 'sales', 'manager'],
+  dashboard: ['admin', 'manager', 'warehouse', 'delivery', 'staff'],
+  orders: ['admin', 'sales', 'manager', 'delivery'],
+  inventory: ['admin', 'sales', 'manager', 'warehouse', 'delivery'],
   invoices: ['admin'],
   pricing: ['admin', 'sales', 'manager'],
-  staff: ['admin', 'sales', 'manager'],
+  staff: ['admin', 'sales', 'manager', 'staff'],
   settings: ['admin']
 };
 
@@ -63,7 +63,7 @@ export function canManageOrderActions(role: AppRole) {
 }
 
 export function canManageInventory(role: AppRole) {
-  return role === 'admin';
+  return role === 'admin' || role === 'warehouse';
 }
 
 export function canOverrideHeldVehicle(role: AppRole) {
@@ -83,7 +83,7 @@ export function canManagePricingConfig(role: AppRole) {
 }
 
 export function canManageStaff(role: AppRole) {
-  return role === 'admin';
+  return role === 'admin' || role === 'staff';
 }
 
 export const versionsMap: Record<string, string[]> = {

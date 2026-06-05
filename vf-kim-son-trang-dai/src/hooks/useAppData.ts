@@ -140,6 +140,9 @@ export function useAppData() {
       const isAdminUser = profileData.role === 'admin';
       const isSalesUser = profileData.role === 'sales';
       const isManagerUser = profileData.role === 'manager';
+      const isDeliveryUser = profileData.role === 'delivery';
+      const isWarehouseUser = profileData.role === 'warehouse';
+      const isStaffUser = profileData.role === 'staff';
 
       const staffDirectory = ((profilesResult.data || []) as ProfileRow[])
         .filter(item => item.email !== 'showroomthuanan@gmail.com');
@@ -179,7 +182,7 @@ export function useAppData() {
       };
 
       const mappedOrders = ordersResult.data.map((row) => apiService.mapOrderRow(row, customerMap));
-      const visibleOrders = isAdminUser
+      const visibleOrders = (isAdminUser || isDeliveryUser)
         ? mappedOrders
         : isSalesUser
           ? mappedOrders.filter((order) => matchesCurrentUser(order.staff, currentFullName, currentEmail))
@@ -187,7 +190,7 @@ export function useAppData() {
             ? mappedOrders.filter((order) => isSalesOwnedOrder(order.staff))
             : [];
 
-      const visibleLogs = isAdminUser
+      const visibleLogs = (isAdminUser || isWarehouseUser)
         ? (logsResult.data || [])
         : isSalesUser
           ? (logsResult.data || []).filter((log) => matchesCurrentUser(log.actor_name, currentFullName, currentEmail))
@@ -207,7 +210,7 @@ export function useAppData() {
             ? (invoicesResult.data || []).filter((row) => isManagedByCurrentManager(row.tvbh || row.requested_by_name))
             : [];
 
-      const visibleProfiles = isAdminUser
+      const visibleProfiles = (isAdminUser || isStaffUser)
         ? staffDirectory
         : isManagerUser
           ? staffDirectory.filter((item) => (item.role === 'sales' && item.manager_id === profileData.id) || item.id === profileData.id)
@@ -237,9 +240,9 @@ export function useAppData() {
       setProfiles(visibleProfiles);
       setVehicleConfigs((configsResult.data as VehicleConfigRow[]) || []);
 
-      // HR: admin thấy tất cả, sales/manager chỉ thấy của mình
+      // HR: admin/staff thấy tất cả, người khác chỉ thấy của mình
       const allHrRequests = (hrResult.data as HrLeaveRequestRow[]) || [];
-      const visibleHrRequests = isAdminUser
+      const visibleHrRequests = (isAdminUser || isStaffUser)
         ? allHrRequests
         : allHrRequests.filter(r => r.requester_username === currentEmail || r.requester_name === currentFullName);
       setHrLeaveRequests(visibleHrRequests);
