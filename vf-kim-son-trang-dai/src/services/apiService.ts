@@ -469,6 +469,45 @@ export const getSalesPolicies = async (): Promise<{ data: SalesPolicyRow[]; erro
   return { data: (data || []) as SalesPolicyRow[], error: null };
 };
 
+export const getAllSalesPolicies = async (): Promise<{ data: SalesPolicyRow[]; error: any }> => {
+  if (!supabase) return { data: [], error: new Error('Supabase chưa được cấu hình') };
+
+  const { data, error } = await supabase
+    .from('chinhsach')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    return { data: [], error };
+  }
+
+  return { data: (data || []) as SalesPolicyRow[], error: null };
+};
+
+export const createSalesPolicy = async (payload: Omit<SalesPolicyRow, 'id' | 'created_at'>): Promise<{ error: any }> => {
+  if (!supabase) return { error: new Error('Supabase chưa được cấu hình') };
+
+  const { error } = await supabase
+    .from('chinhsach')
+    .insert([{
+      ...payload,
+      created_at: new Date().toISOString()
+    }]);
+
+  return { error };
+};
+
+export const deleteSalesPolicy = async (id: string): Promise<{ error: any }> => {
+  if (!supabase) return { error: new Error('Supabase chưa được cấu hình') };
+
+  const { error } = await supabase
+    .from('chinhsach')
+    .delete()
+    .eq('id', id);
+
+  return { error };
+};
+
 export const updateOrderPolicy = async (orderId: string, policy: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Settings, Plus, Trash2, Car, PaintBucket, Armchair, GitBranch } from 'lucide-react';
-import { VehicleConfigRow } from '../types';
+import { Settings, Plus, Trash2, Car, PaintBucket, Armchair, GitBranch, BadgeDollarSign } from 'lucide-react';
+import { VehicleConfigRow, SalesPolicyRow } from '../types';
 import * as apiService from '../services/apiService';
 
 interface SettingsPanelProps {
@@ -9,7 +9,7 @@ interface SettingsPanelProps {
 }
 
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'lines' | 'exteriors' | 'interiors'>('lines');
+  const [activeSubTab, setActiveSubTab] = useState<'lines' | 'exteriors' | 'interiors' | 'policies'>('lines');
   
   const [newLine, setNewLine] = useState('');
   const [selectedLine, setSelectedLine] = useState('');
@@ -17,6 +17,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
   
   const [newExterior, setNewExterior] = useState('');
   const [newInterior, setNewInterior] = useState('');
+
+  const [policies, setPolicies] = useState<SalesPolicyRow[]>([]);
+  const [newPolicyName, setNewPolicyName] = useState('');
+  const [newPolicyLine, setNewPolicyLine] = useState('');
+  const [newPolicyStatus, setNewPolicyStatus] = useState('Hoạt động');
+  const [newPolicyExpiry, setNewPolicyExpiry] = useState('');
 
   const lines = configs.filter(c => c.type === 'line').sort((a, b) => a.value.localeCompare(b.value));
   const versions = configs.filter(c => c.type === 'version' && c.parent_value === selectedLine).sort((a, b) => a.value.localeCompare(b.value));
@@ -29,6 +35,17 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
       setSelectedLine(lines[0].value);
     }
   }, [lines, selectedLine]);
+
+  React.useEffect(() => {
+    if (activeSubTab === 'policies') {
+      loadPolicies();
+    }
+  }, [activeSubTab]);
+
+  const loadPolicies = async () => {
+    const { data } = await apiService.getAllSalesPolicies();
+    setPolicies(data);
+  };
 
   const handleAddLine = async () => {
     const val = newLine.trim();
@@ -106,6 +123,36 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
     }
   };
 
+  const handleAddPolicy = async () => {
+    const val = newPolicyName.trim();
+    if (!val) return;
+    const { error } = await apiService.createSalesPolicy({
+      ten_chinh_sach: val,
+      dong_xe: newPolicyLine.trim() || 'Tất cả',
+      trang_thai: newPolicyStatus,
+      han_su_dung: newPolicyExpiry.trim() || null
+    });
+    if (error) {
+      alert(`Lỗi thêm chính sách: ${error.message}`);
+      return;
+    }
+    setNewPolicyName('');
+    setNewPolicyLine('');
+    setNewPolicyExpiry('');
+    loadPolicies();
+  };
+
+  const handleDeletePolicy = async (id: string, name: string) => {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa "${name}"?`)) {
+      const { error } = await apiService.deleteSalesPolicy(id);
+      if (error) {
+        alert(`Lỗi xóa chính sách: ${error.message}`);
+        return;
+      }
+      loadPolicies();
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#f8fafc', padding: '20px', gap: '20px', overflowY: 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -131,6 +178,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
           onClick={() => setActiveSubTab('interiors')}
         >
           <Armchair size={18} /> Màu nội thất
+        </button>
+        <button
+          className={activeSubTab === 'policies' ? 'primary-button' : 'ghost-button'}
+          onClick={() => setActiveSubTab('policies')}
+        >
+          <BadgeDollarSign size={18} /> Chính sách bán hàng
         </button>
       </div>
 
@@ -256,6 +309,93 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
                 </button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {activeSubTab === 'policies' && (
+        <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <h3 style={{ margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}><BadgeDollarSign size={18} /> Quản lý Chính sách bán hàng</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto', gap: '8px', marginBottom: '16px', alignItems: 'end' }}>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px', display: 'block' }}>Tên chính sách</label>
+              <input 
+                type="text" 
+                placeholder="VD: Chương trình ưu đãi VF 5..." 
+                value={newPolicyName} 
+                onChange={(e) => setNewPolicyName(e.target.value)} 
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px', display: 'block' }}>Dòng xe áp dụng</label>
+              <input 
+                type="text" 
+                placeholder="VD: Tất cả, Limo, VF 6" 
+                value={newPolicyLine} 
+                onChange={(e) => setNewPolicyLine(e.target.value)} 
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px', display: 'block' }}>Hạn sử dụng</label>
+              <input 
+                type="text" 
+                placeholder="VD: Đến 30/06/2026" 
+                value={newPolicyExpiry} 
+                onChange={(e) => setNewPolicyExpiry(e.target.value)} 
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px', display: 'block' }}>Trạng thái</label>
+              <select 
+                value={newPolicyStatus} 
+                onChange={(e) => setNewPolicyStatus(e.target.value)} 
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+              >
+                <option value="Hoạt động">Hoạt động</option>
+                <option value="Ngừng hoạt động">Ngừng hoạt động</option>
+              </select>
+            </div>
+            <button className="primary-button" onClick={handleAddPolicy} disabled={!newPolicyName.trim()} style={{ height: '38px' }}>Thêm mới</button>
+          </div>
+          
+          <div style={{ overflowY: 'auto', flex: 1 }}>
+            <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>Tên chính sách</th>
+                  <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>Dòng xe áp dụng</th>
+                  <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>Hạn sử dụng</th>
+                  <th style={{ textAlign: 'left', padding: '12px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>Trạng thái</th>
+                  <th style={{ textAlign: 'right', padding: '12px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {policies.map(p => (
+                  <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '12px', fontWeight: 500 }}>{p.ten_chinh_sach}</td>
+                    <td style={{ padding: '12px', color: '#475569' }}>{p.dong_xe || 'Tất cả'}</td>
+                    <td style={{ padding: '12px', color: '#475569', fontSize: '13px' }}>{p.han_su_dung || '-'}</td>
+                    <td style={{ padding: '12px' }}>
+                      <span style={{ 
+                        padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 600,
+                        background: p.trang_thai === 'Hoạt động' ? '#dcfce7' : '#f1f5f9',
+                        color: p.trang_thai === 'Hoạt động' ? '#16a34a' : '#64748b'
+                      }}>
+                        {p.trang_thai || 'Hoạt động'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px', textAlign: 'right' }}>
+                      <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDeletePolicy(p.id!, p.ten_chinh_sach)}>
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

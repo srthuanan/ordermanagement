@@ -298,8 +298,12 @@ export interface CarActivityRow {
 }
 
 export interface SalesPolicyRow {
+  id?: string;
+  created_at?: string;
   ten_chinh_sach: string;
   dong_xe: string | null;
+  han_su_dung?: string | null;
+  trang_thai?: string | null;
 }
 
 export interface UpdateOrderInput {
