@@ -28,13 +28,20 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
   const [editingConfigId, setEditingConfigId] = useState<string | null>(null);
   const [editConfigValue, setEditConfigValue] = useState('');
 
-  const [isLineDropdownOpen, setIsLineDropdownOpen] = useState(false);
+  const [editPolicyData, setEditPolicyData] = useState({ name: '', line: '', expiry: '', status: 'Hoạt động' });
+
+  const [isAddDropdownOpen, setIsAddDropdownOpen] = useState(false);
+  const [isInlineDropdownOpen, setIsInlineDropdownOpen] = useState(false);
   const lineDropdownRef = React.useRef<HTMLDivElement>(null);
+  const inlineDropdownRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (lineDropdownRef.current && !lineDropdownRef.current.contains(event.target as Node)) {
-        setIsLineDropdownOpen(false);
+        setIsAddDropdownOpen(false);
+      }
+      if (inlineDropdownRef.current && !inlineDropdownRef.current.contains(event.target as Node)) {
+        setIsInlineDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -171,33 +178,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
     onRefresh();
   };
 
-  const handleSavePolicy = async () => {
+  const handleAddPolicy = async () => {
     const val = newPolicyName.trim();
     if (!val) return;
     
-    if (editingPolicyId) {
-      const { error } = await apiService.updateSalesPolicy(editingPolicyId, {
-        ten_chinh_sach: val,
-        dong_xe: newPolicyLine.trim() || 'Tất cả',
-        trang_thai: newPolicyStatus,
-        han_su_dung: newPolicyExpiry.trim() || null
-      });
-      if (error) {
-        alert(`Lỗi cập nhật chính sách: ${error.message}`);
-        return;
-      }
-      setEditingPolicyId(null);
-    } else {
-      const { error } = await apiService.createSalesPolicy({
-        ten_chinh_sach: val,
-        dong_xe: newPolicyLine.trim() || 'Tất cả',
-        trang_thai: newPolicyStatus,
-        han_su_dung: newPolicyExpiry.trim() || null
-      });
-      if (error) {
-        alert(`Lỗi thêm chính sách: ${error.message}`);
-        return;
-      }
+    const { error } = await apiService.createSalesPolicy({
+      ten_chinh_sach: val,
+      dong_xe: newPolicyLine.trim() || 'Tất cả',
+      trang_thai: newPolicyStatus,
+      han_su_dung: newPolicyExpiry.trim() || null
+    });
+    if (error) {
+      alert(`Lỗi thêm chính sách: ${error.message}`);
+      return;
     }
     
     setNewPolicyName('');
@@ -207,20 +200,29 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
     loadPolicies();
   };
 
+  const handleSaveInlinePolicy = async () => {
+    if (!editPolicyData.name.trim() || !editingPolicyId) return;
+    const { error } = await apiService.updateSalesPolicy(editingPolicyId, {
+      ten_chinh_sach: editPolicyData.name,
+      dong_xe: editPolicyData.line.trim() || 'Tất cả',
+      trang_thai: editPolicyData.status,
+      han_su_dung: editPolicyData.expiry.trim() || null
+    });
+    if (error) {
+      alert(`Lỗi cập nhật chính sách: ${error.message}`);
+      return;
+    }
+    setEditingPolicyId(null);
+    loadPolicies();
+  };
+
   const handleEditPolicy = (p: SalesPolicyRow) => {
     setEditingPolicyId(p.id!);
-    setNewPolicyName(p.ten_chinh_sach);
-    setNewPolicyLine(p.dong_xe || '');
-    setNewPolicyExpiry(p.han_su_dung || '');
-    setNewPolicyStatus(p.trang_thai || 'Hoạt động');
+    setEditPolicyData({ name: p.ten_chinh_sach, line: p.dong_xe || '', expiry: p.han_su_dung || '', status: p.trang_thai || 'Hoạt động' });
   };
 
   const handleCancelEditPolicy = () => {
     setEditingPolicyId(null);
-    setNewPolicyName('');
-    setNewPolicyLine('');
-    setNewPolicyExpiry('');
-    setNewPolicyStatus('Hoạt động');
   };
 
   const handleDeletePolicy = async (id: string, name: string) => {
@@ -491,7 +493,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
             <div ref={lineDropdownRef} style={{ position: 'relative' }}>
               <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px', display: 'block' }}>Dòng xe áp dụng</label>
               <div 
-                onClick={() => setIsLineDropdownOpen(!isLineDropdownOpen)}
+                onClick={() => setIsAddDropdownOpen(!isAddDropdownOpen)}
                 style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff', minHeight: '38px', display: 'flex', alignItems: 'center' }}
               >
                 <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: newPolicyLine ? '#0f172a' : '#64748b' }}>
@@ -499,7 +501,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
                 </span>
               </div>
               
-              {isLineDropdownOpen && (
+              {isAddDropdownOpen && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '4px', zIndex: 50, maxHeight: '200px', overflowY: 'auto', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
                   <div 
                     onClick={() => setNewPolicyLine('')}
@@ -555,12 +557,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
               </select>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button className="primary-button" onClick={handleSavePolicy} disabled={!newPolicyName.trim()} style={{ height: '38px' }}>
-                {editingPolicyId ? 'Lưu' : 'Thêm mới'}
+              <button className="primary-button" onClick={handleAddPolicy} disabled={!newPolicyName.trim()} style={{ height: '38px' }}>
+                Thêm mới
               </button>
-              {editingPolicyId && (
-                <button className="ghost-button" onClick={handleCancelEditPolicy} style={{ height: '38px', color: '#64748b' }}>Hủy</button>
-              )}
             </div>
           </div>
           
@@ -576,30 +575,99 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
                 </tr>
               </thead>
               <tbody>
-                {policies.map(p => (
-                  <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '12px', fontWeight: 500 }}>{p.ten_chinh_sach}</td>
-                    <td style={{ padding: '12px', color: '#475569' }}>{p.dong_xe || 'Tất cả'}</td>
-                    <td style={{ padding: '12px', color: '#475569', fontSize: '13px' }}>{p.han_su_dung || '-'}</td>
-                    <td style={{ padding: '12px' }}>
-                      <span style={{ 
-                        padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 600,
-                        background: p.trang_thai === 'Hoạt động' ? '#dcfce7' : '#f1f5f9',
-                        color: p.trang_thai === 'Hoạt động' ? '#16a34a' : '#64748b'
-                      }}>
-                        {p.trang_thai || 'Hoạt động'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                      <button className="icon-button" style={{ color: '#3b82f6' }} onClick={() => handleEditPolicy(p)}>
-                        <Pencil size={16} />
-                      </button>
-                      <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDeletePolicy(p.id!, p.ten_chinh_sach)}>
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {policies.map(p => {
+                  if (editingPolicyId === p.id) {
+                    return (
+                      <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '8px' }}>
+                          <input type="text" value={editPolicyData.name} onChange={e => setEditPolicyData({...editPolicyData, name: e.target.value})} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                        </td>
+                        <td style={{ padding: '8px' }}>
+                          <div ref={inlineDropdownRef} style={{ position: 'relative' }}>
+                            <div 
+                              onClick={() => setIsInlineDropdownOpen(!isInlineDropdownOpen)}
+                              style={{ width: '100%', padding: '6px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff', minHeight: '34px', display: 'flex', alignItems: 'center' }}
+                            >
+                              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: editPolicyData.line ? '#0f172a' : '#64748b', fontSize: '13px' }}>
+                                {editPolicyData.line || 'Tất cả'}
+                              </span>
+                            </div>
+                            {isInlineDropdownOpen && (
+                              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '4px', zIndex: 9999, maxHeight: '200px', overflowY: 'auto', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                                <div 
+                                  onClick={() => setEditPolicyData({...editPolicyData, line: ''})}
+                                  style={{ padding: '8px 12px', cursor: 'pointer', background: !editPolicyData.line ? '#f1f5f9' : '#fff', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}
+                                >
+                                  <input type="checkbox" checked={!editPolicyData.line} readOnly style={{ cursor: 'pointer' }} />
+                                  <span style={{ fontWeight: 500 }}>Tất cả các dòng xe</span>
+                                </div>
+                                {lines.map(l => {
+                                  const currentLines = editPolicyData.line ? editPolicyData.line.split(',').map(s => s.trim()).filter(Boolean) : [];
+                                  const isSelected = currentLines.includes(l.value);
+                                  return (
+                                    <div 
+                                      key={l.id} 
+                                      onClick={() => {
+                                        let updated = [...currentLines];
+                                        if (isSelected) {
+                                          updated = updated.filter(item => item !== l.value);
+                                        } else {
+                                          updated.push(l.value);
+                                        }
+                                        setEditPolicyData({...editPolicyData, line: updated.join(', ')});
+                                      }}
+                                      style={{ padding: '8px 12px', cursor: 'pointer', background: isSelected ? '#f1f5f9' : '#fff', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}
+                                    >
+                                      <input type="checkbox" checked={isSelected} readOnly style={{ cursor: 'pointer' }} />
+                                      <span>{l.value}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td style={{ padding: '8px' }}>
+                          <input type="text" value={editPolicyData.expiry} onChange={e => setEditPolicyData({...editPolicyData, expiry: e.target.value})} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+                        </td>
+                        <td style={{ padding: '8px' }}>
+                          <select value={editPolicyData.status} onChange={e => setEditPolicyData({...editPolicyData, status: e.target.value})} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1' }}>
+                            <option value="Hoạt động">Hoạt động</option>
+                            <option value="Ngừng hoạt động">Ngừng hoạt động</option>
+                          </select>
+                        </td>
+                        <td style={{ padding: '8px', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '4px' }}>
+                          <button className="primary-button" style={{ padding: '4px 12px' }} onClick={handleSaveInlinePolicy}>Lưu</button>
+                          <button className="ghost-button" style={{ padding: '4px 12px' }} onClick={handleCancelEditPolicy}>Hủy</button>
+                        </td>
+                      </tr>
+                    );
+                  }
+                  return (
+                    <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '12px', fontWeight: 500 }}>{p.ten_chinh_sach}</td>
+                      <td style={{ padding: '12px', color: '#475569' }}>{p.dong_xe || 'Tất cả'}</td>
+                      <td style={{ padding: '12px', color: '#475569', fontSize: '13px' }}>{p.han_su_dung || '-'}</td>
+                      <td style={{ padding: '12px' }}>
+                        <span style={{ 
+                          padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 600,
+                          background: p.trang_thai === 'Hoạt động' ? '#dcfce7' : '#f1f5f9',
+                          color: p.trang_thai === 'Hoạt động' ? '#16a34a' : '#64748b'
+                        }}>
+                          {p.trang_thai || 'Hoạt động'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                        <button className="icon-button" style={{ color: '#3b82f6' }} onClick={() => handleEditPolicy(p)}>
+                          <Pencil size={16} />
+                        </button>
+                        <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDeletePolicy(p.id!, p.ten_chinh_sach)}>
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
