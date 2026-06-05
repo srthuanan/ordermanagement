@@ -481,7 +481,34 @@ export const getAllSalesPolicies = async (): Promise<{ data: SalesPolicyRow[]; e
     return { data: [], error };
   }
 
-  return { data: (data || []) as SalesPolicyRow[], error: null };
+  const policies = (data || []) as SalesPolicyRow[];
+  const now = new Date();
+
+  const parseDate = (str: string) => {
+    const match = str.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (match) {
+      return new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]), 23, 59, 59);
+    }
+    return null;
+  };
+
+  const expiredIds: string[] = [];
+
+  for (const p of policies) {
+    if (p.trang_thai === 'Hoạt động' && p.han_su_dung) {
+      const expiryDate = parseDate(p.han_su_dung);
+      if (expiryDate && expiryDate < now) {
+        expiredIds.push(p.id!);
+        p.trang_thai = 'Ngừng hoạt động';
+      }
+    }
+  }
+
+  if (expiredIds.length > 0) {
+    Promise.all(expiredIds.map(id => updateSalesPolicy(id, { trang_thai: 'Ngừng hoạt động' }))).catch(console.error);
+  }
+
+  return { data: policies, error: null };
 };
 
 export const createSalesPolicy = async (payload: Omit<SalesPolicyRow, 'id' | 'created_at'>): Promise<{ error: any }> => {
