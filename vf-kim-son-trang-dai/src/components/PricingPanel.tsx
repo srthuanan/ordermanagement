@@ -1432,11 +1432,23 @@ const getSwatchBackground = (colorCode: string, name: string) => {
   const code = colorCode.toUpperCase();
   const lowerName = name.toLowerCase();
   
-  if (code.includes('181Y')) return 'linear-gradient(135deg, #87CEEB 50%, #f8fafc 50%)';
-  if (code.includes('181U')) return 'linear-gradient(135deg, #FCD34D 50%, #f8fafc 50%)';
-  if (code.includes('1821')) return 'linear-gradient(135deg, #F472B6 50%, #f8fafc 50%)';
-  if (code.includes('111U')) return 'linear-gradient(135deg, #FCD34D 50%, #1e293b 50%)';
+  // Two-tone colors
+  if (code.includes('181Y')) return 'linear-gradient(135deg, #87CEEB 50%, #f8fafc 50%)'; // Sky Blue + Blanc
+  if (code.includes('181U')) return 'linear-gradient(135deg, #FCD34D 50%, #f8fafc 50%)'; // Summer Yellow + Blanc
+  if (code.includes('1821')) return 'linear-gradient(135deg, #F472B6 50%, #f8fafc 50%)'; // Rose Pink + Blanc
+  if (code.includes('111U')) return 'linear-gradient(135deg, #FCD34D 50%, #1e293b 50%)'; // Summer Yellow + Jet Black
+  if (code.includes('112Q')) return 'linear-gradient(135deg, #b91c1c 50%, #1e293b 50%)'; // Solar Ruby + Jet Black
+  if (code.includes('1132')) return 'linear-gradient(135deg, #ea580c 50%, #1e293b 50%)'; // Vitality Orange + Jet Black
+  if (code.includes('1832')) return 'linear-gradient(135deg, #ea580c 50%, #f8fafc 50%)'; // Vitality Orange + Blanc
+  if (code.includes('1833')) return 'linear-gradient(135deg, #0284c7 50%, #f8fafc 50%)'; // Starburst Blue + Blanc
+  if (code.includes('312O')) return 'linear-gradient(135deg, #4c1d95 50%, #cbd5e1 50%)'; // Mysterioso Purple + Silver
+  if (code.includes('3111')) return 'linear-gradient(135deg, #1e293b 50%, #cbd5e1 50%)'; // Jet Black + Silver
+  if (code.includes('171V')) return 'linear-gradient(135deg, #64748b 50%, #cbd5e1 50%)'; // Zenith Grey + Silver
+  if (code.includes('1V18')) return 'linear-gradient(135deg, #f8fafc 50%, #64748b 50%)'; // Blanc + Zenith Grey
+  if (code.includes('2911')) return 'linear-gradient(135deg, #1e293b 50%, #b45309 50%)'; // Jet Black + Đồng
+  if (code.includes('2927')) return 'linear-gradient(135deg, #7f1d1d 50%, #b45309 50%)'; // Crimson Velvet + Đồng
 
+  // Solid colors
   if (code === 'CE18') return '#f8fafc'; // Blanc
   if (code === 'CE1V') return '#64748b'; // Zenith Grey
   if (code === 'CE2Q') return '#b91c1c'; // Solar Ruby
@@ -1447,17 +1459,23 @@ const getSwatchBackground = (colorCode: string, name: string) => {
   if (code === 'CE2I') return '#34d399'; // Tropical Jade
   if (code === 'CE2J') return '#1e3a8a'; // Moonlit Ocean
   if (code === 'CE2N') return '#5c4033'; // Introspective Brown
+  if (code === 'CE33') return '#0284c7'; // Starburst Blue
+  if (code === 'CE32') return '#ea580c'; // Vitality Orange
+  if (code === 'CE2O') return '#4c1d95'; // Mysterioso Purple
 
-  if (lowerName.includes('white') || lowerName.includes('blanc')) return '#f8fafc';
-  if (lowerName.includes('black')) return '#1e293b';
-  if (lowerName.includes('grey') || lowerName.includes('gray')) return '#64748b';
-  if (lowerName.includes('red') || lowerName.includes('ruby')) return '#b91c1c';
-  if (lowerName.includes('blue') || lowerName.includes('ocean')) return '#1e3a8a';
-  if (lowerName.includes('green') || lowerName.includes('mint') || lowerName.includes('jade')) return '#10b981';
-  if (lowerName.includes('yellow')) return '#facc15';
-  if (lowerName.includes('pink') || lowerName.includes('rose')) return '#f472b6';
-  if (lowerName.includes('silver')) return '#cbd5e1';
-  if (lowerName.includes('brown')) return '#5c4033';
+  // Fallback names
+  if (lowerName.includes('white') || lowerName.includes('blanc') || lowerName.includes('trắng')) return '#f8fafc';
+  if (lowerName.includes('black') || lowerName.includes('đen')) return '#1e293b';
+  if (lowerName.includes('grey') || lowerName.includes('gray') || lowerName.includes('xám')) return '#64748b';
+  if (lowerName.includes('red') || lowerName.includes('ruby') || lowerName.includes('đỏ')) return '#b91c1c';
+  if (lowerName.includes('blue') || lowerName.includes('ocean') || lowerName.includes('dương')) return '#0284c7';
+  if (lowerName.includes('green') || lowerName.includes('mint') || lowerName.includes('jade') || lowerName.includes('xanh lá')) return '#10b981';
+  if (lowerName.includes('yellow') || lowerName.includes('vàng')) return '#facc15';
+  if (lowerName.includes('pink') || lowerName.includes('rose') || lowerName.includes('hồng')) return '#f472b6';
+  if (lowerName.includes('silver') || lowerName.includes('bạc')) return '#cbd5e1';
+  if (lowerName.includes('brown') || lowerName.includes('nâu')) return '#5c4033';
+  if (lowerName.includes('orange') || lowerName.includes('cam')) return '#ea580c';
+  if (lowerName.includes('purple') || lowerName.includes('tím')) return '#4c1d95';
 
   return '#e2e8f0';
 };
