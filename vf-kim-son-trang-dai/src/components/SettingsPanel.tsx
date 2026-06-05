@@ -23,7 +23,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
   const [newPolicyLine, setNewPolicyLine] = useState('');
   const [newPolicyStatus, setNewPolicyStatus] = useState('Hoạt động');
   const [newPolicyExpiry, setNewPolicyExpiry] = useState('');
-  const [editingPolicyId, setEditingPolicyId] = useState<string | null>(null);
+  const [editingPolicyIndex, setEditingPolicyIndex] = useState<number | null>(null);
 
   const [editingConfigId, setEditingConfigId] = useState<string | null>(null);
   const [editConfigValue, setEditConfigValue] = useState('');
@@ -201,8 +201,18 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
   };
 
   const handleSaveInlinePolicy = async () => {
-    if (!editPolicyData.name.trim() || !editingPolicyId) return;
-    const { error } = await apiService.updateSalesPolicy(editingPolicyId, {
+    if (!editPolicyData.name.trim() || editingPolicyIndex === null) return;
+    const p = policies[editingPolicyIndex];
+    if (!p) return;
+    
+    // If id is missing, we shouldn't crash, but we can't update either.
+    // Assuming API requires ID.
+    if (!p.id) {
+       alert("Không thể cập nhật vì chính sách này thiếu ID.");
+       return;
+    }
+    
+    const { error } = await apiService.updateSalesPolicy(p.id, {
       ten_chinh_sach: editPolicyData.name,
       dong_xe: editPolicyData.line.trim() || 'Tất cả',
       trang_thai: editPolicyData.status,
@@ -212,17 +222,17 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
       alert(`Lỗi cập nhật chính sách: ${error.message}`);
       return;
     }
-    setEditingPolicyId(null);
+    setEditingPolicyIndex(null);
     loadPolicies();
   };
 
-  const handleEditPolicy = (p: SalesPolicyRow) => {
-    setEditingPolicyId(p.id!);
+  const handleEditPolicy = (p: SalesPolicyRow, index: number) => {
+    setEditingPolicyIndex(index);
     setEditPolicyData({ name: p.ten_chinh_sach, line: p.dong_xe || '', expiry: p.han_su_dung || '', status: p.trang_thai || 'Hoạt động' });
   };
 
   const handleCancelEditPolicy = () => {
-    setEditingPolicyId(null);
+    setEditingPolicyIndex(null);
   };
 
   const handleDeletePolicy = async (id: string, name: string) => {
@@ -575,10 +585,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
                 </tr>
               </thead>
               <tbody>
-                {policies.map(p => {
-                  if (editingPolicyId === p.id) {
+                {policies.map((p, index) => {
+                  if (editingPolicyIndex === index) {
                     return (
-                      <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <tr key={p.id || index} style={{ borderBottom: '1px solid #f1f5f9' }}>
                         <td style={{ padding: '8px' }}>
                           <input type="text" value={editPolicyData.name} onChange={e => setEditPolicyData({...editPolicyData, name: e.target.value})} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
                         </td>
@@ -644,7 +654,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
                     );
                   }
                   return (
-                    <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <tr key={p.id || index} style={{ borderBottom: '1px solid #f1f5f9' }}>
                       <td style={{ padding: '12px', fontWeight: 500 }}>{p.ten_chinh_sach}</td>
                       <td style={{ padding: '12px', color: '#475569' }}>{p.dong_xe || 'Tất cả'}</td>
                       <td style={{ padding: '12px', color: '#475569', fontSize: '13px' }}>{p.han_su_dung || '-'}</td>
@@ -658,7 +668,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
                         </span>
                       </td>
                       <td style={{ padding: '12px', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                        <button className="icon-button" style={{ color: '#3b82f6' }} onClick={() => handleEditPolicy(p)}>
+                        <button className="icon-button" style={{ color: '#3b82f6' }} onClick={() => handleEditPolicy(p, index)}>
                           <Pencil size={16} />
                         </button>
                         <button className="icon-button" style={{ color: '#ef4444' }} onClick={() => handleDeletePolicy(p.id!, p.ten_chinh_sach)}>
