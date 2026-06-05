@@ -162,11 +162,13 @@ export function useAppData() {
 
       const isManagedByCurrentManager = (nameOrEmail: string | null | undefined) => {
         if (!isManagerUser) return false;
+        if (matchesCurrentUser(nameOrEmail, currentFullName, currentEmail)) return true;
         const profile = getStaffRecord(nameOrEmail);
         return profile?.role === 'sales' && profile?.manager_id === profileData.id;
       };
 
       const isSalesOwnedOrder = (nameOrEmail: string | null | undefined) => {
+        if (matchesCurrentUser(nameOrEmail, currentFullName, currentEmail)) return true;
         const profile = getStaffRecord(nameOrEmail);
         if (!profile) return false;
         return profile.role === 'sales' && (
@@ -208,7 +210,7 @@ export function useAppData() {
       const visibleProfiles = isAdminUser
         ? staffDirectory
         : isManagerUser
-          ? staffDirectory.filter((item) => item.role === 'sales' && item.manager_id === profileData.id)
+          ? staffDirectory.filter((item) => (item.role === 'sales' && item.manager_id === profileData.id) || item.id === profileData.id)
           : staffDirectory.filter((item) => item.id === profileData.id);
 
       setOrders(visibleOrders);
