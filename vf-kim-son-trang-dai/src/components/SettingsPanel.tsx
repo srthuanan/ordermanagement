@@ -25,6 +25,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
   const [newPolicyExpiry, setNewPolicyExpiry] = useState('');
   const [editingPolicyId, setEditingPolicyId] = useState<string | null>(null);
 
+  const [isLineDropdownOpen, setIsLineDropdownOpen] = useState(false);
+  const lineDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (lineDropdownRef.current && !lineDropdownRef.current.contains(event.target as Node)) {
+        setIsLineDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const lines = configs.filter(c => c.type === 'line').sort((a, b) => a.value.localeCompare(b.value));
   const versions = configs.filter(c => c.type === 'version' && c.parent_value === selectedLine).sort((a, b) => a.value.localeCompare(b.value));
   const exteriors = configs.filter(c => c.type === 'exterior').sort((a, b) => a.value.localeCompare(b.value));
@@ -361,15 +374,50 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ configs, onRefresh
                 style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
               />
             </div>
-            <div>
+            <div ref={lineDropdownRef} style={{ position: 'relative' }}>
               <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px', display: 'block' }}>Dòng xe áp dụng</label>
-              <input 
-                type="text" 
-                placeholder="VD: Tất cả, Limo, VF 6" 
-                value={newPolicyLine} 
-                onChange={(e) => setNewPolicyLine(e.target.value)} 
-                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-              />
+              <div 
+                onClick={() => setIsLineDropdownOpen(!isLineDropdownOpen)}
+                style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', cursor: 'pointer', background: '#fff', minHeight: '38px', display: 'flex', alignItems: 'center' }}
+              >
+                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: newPolicyLine ? '#0f172a' : '#64748b' }}>
+                  {newPolicyLine || 'Tất cả các dòng xe'}
+                </span>
+              </div>
+              
+              {isLineDropdownOpen && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '4px', zIndex: 50, maxHeight: '200px', overflowY: 'auto', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                  <div 
+                    onClick={() => setNewPolicyLine('')}
+                    style={{ padding: '8px 12px', cursor: 'pointer', background: !newPolicyLine ? '#f1f5f9' : '#fff', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #e2e8f0' }}
+                  >
+                    <input type="checkbox" checked={!newPolicyLine} readOnly style={{ cursor: 'pointer' }} />
+                    <span style={{ fontWeight: 500 }}>Tất cả các dòng xe</span>
+                  </div>
+                  {lines.map(l => {
+                    const currentLines = newPolicyLine ? newPolicyLine.split(',').map(s => s.trim()).filter(Boolean) : [];
+                    const isSelected = currentLines.includes(l.value);
+                    return (
+                      <div 
+                        key={l.id} 
+                        onClick={() => {
+                          let updated = [...currentLines];
+                          if (isSelected) {
+                            updated = updated.filter(item => item !== l.value);
+                          } else {
+                            updated.push(l.value);
+                          }
+                          setNewPolicyLine(updated.join(', '));
+                        }}
+                        style={{ padding: '8px 12px', cursor: 'pointer', background: isSelected ? '#f1f5f9' : '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}
+                      >
+                        <input type="checkbox" checked={isSelected} readOnly style={{ cursor: 'pointer' }} />
+                        <span>{l.value}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <div>
               <label style={{ fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px', display: 'block' }}>Hạn sử dụng</label>
