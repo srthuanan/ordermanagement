@@ -170,28 +170,28 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "vc_ecvan_cc_ce18",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwddcf5d86/images/ECVAN/TG12V/CE18.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-14.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "vc_ecvan_cc_ce1u",
           "name": "Yellow",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw269064cd/images/ECVAN/TG12V/CE1U.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1U-1.png",
           "color_code": "CE1U",
           "is_advanced": false
         },
         {
           "id": "vc_ecvan_cc_ce1w",
           "name": "Urban Mint",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwaf408f05/images/ECVAN/TG12V/CE1W.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-9.png",
           "color_code": "CE1W",
           "is_advanced": false
         },
         {
           "id": "vc_ecvan_cc_ce2q",
           "name": "Solar Ruby",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa4f41267/images/ECVAN/TG12V/CE2Q.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-9.png",
           "color_code": "CE2Q",
           "is_advanced": false
         }
@@ -214,28 +214,28 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "vc_ecvan_nc_ce18",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwcb4bbbaa/images/ECVAN/TG11V/CE18.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-14.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "vc_ecvan_nc_ce1w",
           "name": "Urban Mint",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa285abf1/images/ECVAN/TG11V/CE1W.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-9.png",
           "color_code": "CE1W",
           "is_advanced": false
         },
         {
           "id": "vc_ecvan_nc_ce1u",
           "name": "Yellow",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw4cd5306d/images/ECVAN/TG11V/CE1U.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1U-1.png",
           "color_code": "CE1U",
           "is_advanced": false
         },
         {
           "id": "vc_ecvan_nc_ce2q",
           "name": "Solar Ruby",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwcb4bbbaa/images/ECVAN/TG11V/CE18.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-9.png",
           "color_code": "CE2Q",
           "is_advanced": false
         }
@@ -258,28 +258,28 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "vc_ecvan_tc_ce18",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe2a7e078/images/ECVAN/TG10V/CE18.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-14.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "vc_ecvan_tc_ce1w",
           "name": "Urban Mint",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa3b049ee/images/ECVAN/TG10V/CE1W.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-9.png",
           "color_code": "CE1W",
           "is_advanced": false
         },
         {
           "id": "vc_ecvan_tc_ce2q",
           "name": "Solar Ruby",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw11678742/images/ECVAN/TG10V/CE2Q.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-9.png",
           "color_code": "CE2Q",
           "is_advanced": false
         },
         {
           "id": "vc_ecvan_tc_ce1u",
           "name": "Yellow",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw38888116/images/ECVAN/TG10V/CE1U.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1U-1.png",
           "color_code": "CE1U",
           "is_advanced": false
         }
@@ -300,28 +300,28 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "vc_herio_ce18",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw7e0d8431/images/HerioGreen/GA1QV/CE18.webp",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-9.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "vc_herio_ce11",
           "name": "Jet Black",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw315a6865/images/HerioGreen/GA1QV/CE11.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-4.png",
           "color_code": "CE11",
           "is_advanced": false
         },
         {
           "id": "vc_herio_ce17",
           "name": "Desat Silver",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe6b7b6fe/images/HerioGreen/GA1QV/CE17.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE17-2-1.png",
           "color_code": "CE17",
           "is_advanced": false
         },
         {
           "id": "vc_herio_ce2q",
           "name": "Solar Ruby",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw0efc30f8/images/HerioGreen/GA1QV/CE2Q.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-4.png",
           "color_code": "CE2Q",
           "is_advanced": false
         }
@@ -344,28 +344,28 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "vc_limo_ce18",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw03f37450/images/LimoGreen/SL1VV/CE18.webp",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-8.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "vc_limo_ce17",
           "name": "Desat Silver",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd414e9c8/images/LimoGreen/SL1VV/CE17.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE17-5.png",
           "color_code": "CE17",
           "is_advanced": false
         },
         {
           "id": "vc_limo_ce11",
           "name": "Jet Black",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwac981cbc/images/LimoGreen/SL1VV/CE11.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-7.png",
           "color_code": "CE11",
           "is_advanced": false
         },
         {
           "id": "vc_limo_ce2q",
           "name": "Solar Ruby",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwdccfd85f/images/LimoGreen/SL1VV/CE2Q.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-8.png",
           "color_code": "CE2Q",
           "is_advanced": false
         }
@@ -787,35 +787,35 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "color_1773130159554_g3gg6b",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwdafc2bb7/images/VF7/GC15V/CE18.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-3.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "color_1773130160400_7vyzng",
           "name": "Zenith Grey",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw38b16d7a/images/VF7/GC15V/CE1V.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V-1.png",
           "color_code": "CE1V",
           "is_advanced": false
         },
         {
           "id": "color_1773130159961_zxvlnp",
           "name": "Solar Ruby",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd5e75327/images/VF7/GC15V/CE2Q.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-2.png",
           "color_code": "CE2Q",
           "is_advanced": false
         },
         {
           "id": "color_1773130160224_ebv2x3",
           "name": "Jet Black",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw7fd70968/images/VF7/GC15V/CE11.webp",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-1.png",
           "color_code": "CE11",
           "is_advanced": false
         },
         {
           "id": "color_1773130159785_90sh83",
           "name": "Urban Mint",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe7e3a128/images/VF7/GC15V/CE1W.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-1.png",
           "color_code": "CE1W",
           "is_advanced": true
         }
@@ -838,35 +838,35 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "color_1773130184098_b4w4vw",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwdafc2bb7/images/VF7/GC15V/CE18.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-3.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "color_1773130184893_zjs59i",
           "name": "Zenith Grey",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw38b16d7a/images/VF7/GC15V/CE1V.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V-1.png",
           "color_code": "CE1V",
           "is_advanced": false
         },
         {
           "id": "color_1773130184542_lg6psd",
           "name": "Solar Ruby",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd5e75327/images/VF7/GC15V/CE2Q.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-2.png",
           "color_code": "CE2Q",
           "is_advanced": false
         },
         {
           "id": "color_1773130184718_fp1j7y",
           "name": "Jet Black",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw7fd70968/images/VF7/GC15V/CE11.webp",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-1.png",
           "color_code": "CE11",
           "is_advanced": false
         },
         {
           "id": "color_1773130184369_khrbp6",
           "name": "Urban Mint",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe7e3a128/images/VF7/GC15V/CE1W.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-1.png",
           "color_code": "CE1W",
           "is_advanced": true
         }
@@ -914,35 +914,35 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "color_1773130194762_6w2dhe",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwdafc2bb7/images/VF7/GC15V/CE18.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-3.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "color_1773130195551_f0jf3w",
           "name": "Zenith Grey",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw38b16d7a/images/VF7/GC15V/CE1V.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V-1.png",
           "color_code": "CE1V",
           "is_advanced": false
         },
         {
           "id": "color_1773130195182_eimy8p",
           "name": "Solar Ruby",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd5e75327/images/VF7/GC15V/CE2Q.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-2.png",
           "color_code": "CE2Q",
           "is_advanced": false
         },
         {
           "id": "color_1773130195360_re3bam",
           "name": "Jet Black",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw7fd70968/images/VF7/GC15V/CE11.webp",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-1.png",
           "color_code": "CE11",
           "is_advanced": false
         },
         {
           "id": "color_1773130194996_5kfaz8",
           "name": "Urban Mint",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe7e3a128/images/VF7/GC15V/CE1W.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-1.png",
           "color_code": "CE1W",
           "is_advanced": true
         }
@@ -988,42 +988,42 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "vc_vf8an_ce18",
           "name": "Trắng (Infinity Blanc)",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/CE18.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-2.webp",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "vc_vf8an_ce11",
           "name": "Đen (Jet Black)",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/CE11.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11.webp",
           "color_code": "CE11",
           "is_advanced": false
         },
         {
           "id": "vc_vf8an_ce2q",
           "name": "Đỏ (Solar Ruby)",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/CE2Q.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q.webp",
           "color_code": "CE2Q",
           "is_advanced": false
         },
         {
           "id": "vc_vf8an_ce33",
           "name": "Xanh dương (Starburst)",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/CE33.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE33.webp",
           "color_code": "CE33",
           "is_advanced": false
         },
         {
           "id": "vc_vf8an_1v18",
           "name": "Trắng (Infinity Blanc) + Nóc xám",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/1v18.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-2.webp",
           "color_code": "1v18",
           "is_advanced": true
         },
         {
           "id": "vc_vf8an_2911",
           "name": "Đen (Jet Black) + Nóc đồng",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/2911.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11.webp",
           "color_code": "2911",
           "is_advanced": true
         },
@@ -1037,63 +1037,63 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "vc_vf8an_171v",
           "name": "Xám (Zenith Grey) + Nóc bạc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/171v.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/171V.png",
           "color_code": "171v",
           "is_advanced": true
         },
         {
           "id": "vc_vf8an_ce32",
           "name": "Cam (Vitality)",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/CE32.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE32.webp",
           "color_code": "CE32",
           "is_advanced": true
         },
         {
           "id": "vc_vf8an_ce2o",
           "name": "Tím (Mysterioso)",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/CE2O.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2O.webp",
           "color_code": "CE2O",
           "is_advanced": true
         },
         {
           "id": "vc_vf8an_112q",
           "name": "Đỏ Solar Ruby + nóc đen",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/112q.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/112Q.webp",
           "color_code": "112q",
           "is_advanced": true
         },
         {
           "id": "vc_vf8an_1132",
           "name": "Cam Vitality + nóc đen",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/1132.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/1132.webp",
           "color_code": "1132",
           "is_advanced": true
         },
         {
           "id": "vc_vf8an_1832",
           "name": "Cam Vitality + nóc trắng",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/1832.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/1832.webp",
           "color_code": "1832",
           "is_advanced": true
         },
         {
           "id": "vc_vf8an_1833",
           "name": "Xanh dương Starburst + nóc trắng",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/1833.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/1833.webp",
           "color_code": "1833",
           "is_advanced": true
         },
         {
           "id": "vc_vf8an_312o",
           "name": "Tím Mysterioso + nóc bạc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/312o.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/312O.webp",
           "color_code": "312o",
           "is_advanced": true
         },
         {
           "id": "vc_vf8an_3111",
           "name": "Đen Jet Black + nóc bạc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29445869/images/VF8/ND31V/3111.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/3111.webp",
           "color_code": "3111",
           "is_advanced": true
         }
@@ -1117,42 +1117,42 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "color_1773139649853_gvqwmi",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwafc3ac80/images/VF8/ND31V/CE18.webp",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "color_1773139680265_ksj41b",
           "name": "Jet Black",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw19321e63/images/VF8/ND31V/CE11.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-2.png",
           "color_code": "CE11",
           "is_advanced": false
         },
         {
           "id": "color_1773139721595_awmw5o",
           "name": "Crimson Red",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw65f5fd6d/images/VF8/ND31V/CE1M.webp",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1M-1.png",
           "color_code": "CE1M",
           "is_advanced": false
         },
         {
           "id": "color_1773139745417_jz1ji0",
           "name": "Ivy Green",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw5aa8e062/images/VF8/ND31V/CE22.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE22-2.png",
           "color_code": "CE22",
           "is_advanced": false
         },
         {
           "id": "color_1773139840957_scrtj3",
           "name": "Zenith Grey - Desat Silver Roof",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwa349f493/images/VF8/ND31V/171V.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/171V.png",
           "color_code": "171V",
           "is_advanced": true
         },
         {
           "id": "color_1773139874886_ah8xtg",
           "name": "Infinity Blanc - Zenith Grey Roof",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwf71b68ce/images/VF8/ND31V/1V18.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/1V18.png",
           "color_code": "1V18",
           "is_advanced": true
         }
@@ -1176,42 +1176,42 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "color_1773139916453_i5eb59",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwafc3ac80/images/VF8/ND31V/CE18.webp",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "color_1773139916649_3w3ufi",
           "name": "Jet Black",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw19321e63/images/VF8/ND31V/CE11.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-2.png",
           "color_code": "CE11",
           "is_advanced": false
         },
         {
           "id": "color_1773139916827_eyjr1s",
           "name": "Crimson Red",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw65f5fd6d/images/VF8/ND31V/CE1M.webp",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1M-1.png",
           "color_code": "CE1M",
           "is_advanced": false
         },
         {
           "id": "color_1773139916992_etkcj8",
           "name": "Ivy Green",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw5aa8e062/images/VF8/ND31V/CE22.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE22-2.png",
           "color_code": "CE22",
           "is_advanced": false
         },
         {
           "id": "color_1773139917338_77xgox",
           "name": "Zenith Grey - Desat Silver Roof",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwa349f493/images/VF8/ND31V/171V.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/171V.png",
           "color_code": "171V",
           "is_advanced": true
         },
         {
           "id": "color_1773139917534_iw1dg3",
           "name": "Infinity Blanc - Zenith Grey Roof",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwf71b68ce/images/VF8/ND31V/1V18.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/1V18.png",
           "color_code": "1V18",
           "is_advanced": true
         }
@@ -1234,42 +1234,42 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "color_1773139931143_xrg4jl",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw3aa598fc/images/VF8/ND32V/CE18.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "color_1773139931336_j1nrqy",
           "name": "Jet Black",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwe99399ba/images/VF8/ND32V/CE11.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-2.png",
           "color_code": "CE11",
           "is_advanced": false
         },
         {
           "id": "color_1773139931546_cq99am",
           "name": "Crimson Red",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw7ee45c93/images/VF8/ND32V/CE1M.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1M-1.png",
           "color_code": "CE1M",
           "is_advanced": false
         },
         {
           "id": "color_1773139931717_xcdsgc",
           "name": "Ivy Green",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw90acd258/images/VF8/ND32V/CE22.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE22-2.png",
           "color_code": "CE22",
           "is_advanced": false
         },
         {
           "id": "color_1773139932102_405fht",
           "name": "Zenith Grey - Desat Silver Roof",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw2ab390ed/images/VF8/ND32V/171V.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/171V.png",
           "color_code": "171V",
           "is_advanced": true
         },
         {
           "id": "color_1773139932272_c64m38",
           "name": "Infinity Blanc - Zenith Grey Roof",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwb82fddcc/images/VF8/ND32V/1V18.webp ",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/1V18.png",
           "color_code": "1V18",
           "is_advanced": true
         }
@@ -1357,49 +1357,49 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "vc_vf9plus_ce18",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw16ca8e24/images/VF9/NE3MV/CE18.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-2.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "vc_vf9plus_ce1m",
           "name": "Crimson Red",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw8c8b0b0c/images/VF9/NE3MV/CE1M.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1M-5.png",
           "color_code": "CE1M",
           "is_advanced": false
         },
         {
           "id": "vc_vf9plus_ce11",
           "name": "Jet Black",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw15bf4548/images/VF9/NE3MV/CE11.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-6.png",
           "color_code": "CE11",
           "is_advanced": false
         },
         {
           "id": "vc_vf9plus_ce22",
           "name": "Ivy Green",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw3c986628/images/VF9/NE3MV/CE22.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE22-1-1.png",
           "color_code": "CE22",
           "is_advanced": false
         },
         {
           "id": "vc_vf9plus_ce1v",
           "name": "Zenith Grey",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw140c09f3/images/VF9/NE3MV/CE1V.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V-2.png",
           "color_code": "CE1V",
           "is_advanced": false
         },
         {
           "id": "vc_vf9plus_ce17",
           "name": "Desat Silver",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw5e3e1d10/images/VF9/NE3MV/CE17.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE17-2.png",
           "color_code": "CE17",
           "is_advanced": false
         },
         {
           "id": "vc_vf9plus_ce1w",
           "name": "Urban Mint",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwf72707f0/images/VF9/NE3MV/CE1W.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-3.png",
           "color_code": "CE1W",
           "is_advanced": false
         }
@@ -1422,49 +1422,49 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "vc_vf9cap_ce18",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe861d018/images/VF9/NE3NV/CE18.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-2.png",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "vc_vf9cap_ce1m",
           "name": "Crimson Red",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwb97545ea/images/VF9/NE3NV/CE1M.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1M-5.png",
           "color_code": "CE1M",
           "is_advanced": false
         },
         {
           "id": "vc_vf9cap_ce11",
           "name": "Jet Black",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa0d506d6/images/VF9/NE3NV/CE11.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-6.png",
           "color_code": "CE11",
           "is_advanced": false
         },
         {
           "id": "vc_vf9cap_ce22",
           "name": "Ivy Green",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw19ebd8dd/images/VF9/NE3NV/CE22.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE22-1-1.png",
           "color_code": "CE22",
           "is_advanced": false
         },
         {
           "id": "vc_vf9cap_ce1v",
           "name": "Zenith Grey",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw72fbcd05/images/VF9/NE3NV/CE1V.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V-2.png",
           "color_code": "CE1V",
           "is_advanced": false
         },
         {
           "id": "vc_vf9cap_ce17",
           "name": "Desat Silver",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwcaee8de4/images/VF9/NE3NV/CE17.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE17-2.png",
           "color_code": "CE17",
           "is_advanced": false
         },
         {
           "id": "vc_vf9cap_ce1w",
           "name": "Urban Mint",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw29074c9e/images/VF9/NE3NV/CE1W.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-3.png",
           "color_code": "CE1W",
           "is_advanced": false
         }
@@ -1487,42 +1487,42 @@ Dữ liệu thô đầy đủ (JSON):
         {
           "id": "vc_mpv7_ce18",
           "name": "Infinity Blanc",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwc07e37d2/images/VFMPV7/SL1WV/CE18.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18.webp",
           "color_code": "CE18",
           "is_advanced": false
         },
         {
           "id": "vc_mpv7_ce1v",
           "name": "Zenith Grey",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwaa49bf74/images/VFMPV7/SL1WV/CE1V.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V.webp",
           "color_code": "CE1V",
           "is_advanced": false
         },
         {
           "id": "vc_mpv7_ce11",
           "name": "Jet Black",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw4455dc5c/images/VFMPV7/SL1WV/CE11.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-1-1.webp",
           "color_code": "CE11",
           "is_advanced": false
         },
         {
           "id": "vc_mpv7_ce2q",
           "name": "Solar Ruby",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw0e4bf426/images/VFMPV7/SL1WV/CE2Q.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-1.webp",
           "color_code": "CE2Q",
           "is_advanced": false
         },
         {
           "id": "vc_mpv7_ce2n",
           "name": "Introspective Brown",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw30cd00e9/images/VFMPV7/SL1WV/CE2N.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2N-1.webp",
           "color_code": "CE2N",
           "is_advanced": true
         },
         {
           "id": "vc_mpv7_ce2j",
           "name": "Moonlit Ocean",
-          "image": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw387ee762/images/VFMPV7/SL1WV/CE2J.png",
+          "image": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2J-1.webp",
           "color_code": "CE2J",
           "is_advanced": true
         }
