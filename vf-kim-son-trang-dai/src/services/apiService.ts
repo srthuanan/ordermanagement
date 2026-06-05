@@ -485,6 +485,10 @@ export const getAllSalesPolicies = async (): Promise<{ data: SalesPolicyRow[]; e
   const now = new Date();
 
   const parseDate = (str: string) => {
+    const lower = str.toLowerCase();
+    if (lower.includes('thông báo mới') || lower.includes('không quy định')) {
+      return null;
+    }
     const matches = [...str.matchAll(/(\d{1,2})\/(\d{1,2})\/(\d{4})/g)];
     if (matches.length > 0) {
       const lastMatch = matches[matches.length - 1];
