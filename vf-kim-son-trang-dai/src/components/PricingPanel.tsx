@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calculator, CheckCircle2, ChevronRight, Download, FileText, Printer, RotateCcw, Save, Settings2, Tag, User, Car, FilePlus2 } from 'lucide-react';
+import { Calculator, CheckCircle2, ChevronRight, Download, FileText, Printer, RotateCcw, Save, Settings2, Tag, User, Car, FilePlus2, Trash2 } from 'lucide-react';
 import {
   clearPricingDatasetConfig,
   computePricingQuote,
