@@ -4,12 +4,14 @@ import { getCarImage, getModelDefaultImage, getGlobalDefaultImage } from '../../
 interface CarImageProps {
   model: string;
   exteriorColor: string;
+  version?: string;
   className?: string;
+  style?: React.CSSProperties;
   alt?: string;
 }
 
-const CarImage: React.FC<CarImageProps> = ({ model, exteriorColor, className, alt }) => {
-  const primarySrc = getCarImage(model, exteriorColor);
+const CarImage: React.FC<CarImageProps> = ({ model, exteriorColor, version, className, style, alt }) => {
+  const primarySrc = getCarImage(model, exteriorColor, version);
   const modelFallbackSrc = getModelDefaultImage(model);
   const globalFallbackSrc = getGlobalDefaultImage();
 
@@ -37,7 +39,7 @@ const CarImage: React.FC<CarImageProps> = ({ model, exteriorColor, className, al
     }
   };
 
-  return <img src={src} onError={handleError} className={className} alt={alt || `Image of ${model} in ${exteriorColor}`} loading="lazy" draggable="false" />;
+  return <img src={src} onError={handleError} className={className} style={style} alt={alt || `Image of ${model} in ${exteriorColor}`} loading="lazy" draggable="false" />;
 };
 
 export default CarImage;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StockVehicle } from '../../types';
-import { versionsMap, defaultExteriors, defaultInteriors, VALID_IMAGES_BY_MODEL } from '../../constants';
+import { versionsMap, defaultExteriors, defaultInteriors, getAvailableExteriors } from '../../constants';
 import CarImage from '../ui/CarImage';
 import Button from '../ui/Button';
 import * as apiService from '../../services/apiService';
@@ -97,14 +97,7 @@ const AdminCarEditModal: React.FC<AdminCarEditModalProps> = ({ isOpen, vehicle, 
     };
 
     const getFilteredExteriors = () => {
-        const modelKey = (currentModel || '').toLowerCase().replace(/\s+/g, '');
-        const validCodes = VALID_IMAGES_BY_MODEL[modelKey] || [];
-        if (!modelKey || validCodes.length === 0) return defaultExteriors;
-        return defaultExteriors.filter(colorStr => {
-            const codeMatch = colorStr.match(/\(([^)]+)\)/);
-            if (!codeMatch) return true;
-            return validCodes.includes(codeMatch[1].toLowerCase());
-        });
+        return getAvailableExteriors(currentModel, currentVersion);
     };
 
     const versions = versionsMap[(currentModel || '') as keyof typeof versionsMap] || [];

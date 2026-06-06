@@ -112,12 +112,12 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
       return `${base} rounded-lg ${sizeClass} ${activeState} ${disabledClass} font-semibold lg:font-medium transition-all duration-200`;
     }
 
-    // Default variant (Neumorphism Style)
-    const sizeClass = isCompact ? 'px-2 h-7 text-[10px]' : 'px-4 h-12 text-base lg:px-6';
+    // Default variant
+    const sizeClass = isCompact ? 'px-2 h-7 text-[10px]' : 'px-4 h-12 text-sm lg:px-6';
     const activeState = !disabled && (isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple'))
-      ? 'bg-white text-[#6d5dfc] shadow-[inset_2px_2px_5px_#e5e7eb,inset_-2px_-2px_5px_#ffffff] font-bold'
-      : 'bg-white text-gray-700 shadow-[-2px_-2px_5px_#ffffff,2px_2px_5px_#e5e7eb] hover:text-[#6d5dfc] font-medium';
-    return `${base} rounded-full ${sizeClass} ${activeState} ${disabledClass} w-full`;
+      ? 'bg-white text-accent-primary border border-accent-primary/50 shadow-sm'
+      : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-300 shadow-sm';
+    return `${base} rounded-full ${sizeClass} ${activeState} ${disabledClass} w-full font-medium`;
   }, [isCompact, isOpen, selectedOptions.length, variant, selectionMode, disabled]);
 
 
@@ -227,7 +227,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
           <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple') ? 'bg-accent-primary/10 text-accent-primary' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'}`}>
             <i className={`fas ${icon} text-[10px]`}></i>
           </div>
-          <span className="truncate font-bold tracking-tight text-slate-700">{displayLabel}</span>
+          <span className="truncate font-medium text-slate-800">{displayLabel}</span>
         </div>
         <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${isOpen ? 'bg-slate-100 text-slate-900' : 'text-slate-300'}`}>
           <i className={`fas fa-chevron-down text-[7px] transition-transform duration-500 ${isOpen ? 'rotate-180' : ''}`}></i>
@@ -273,7 +273,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
               const isSelected = selectedOptions.includes(option);
               return (
                 <li key={option}>
-                  <label className={`flex items-center gap-3 w-full ${isCompact ? 'px-3 py-2 text-xs' : 'px-4 py-3 text-xs lg:text-[13px]'} rounded-xl transition-all cursor-pointer group relative overflow-hidden ${isSelected ? 'bg-accent-primary/5 text-accent-primary font-bold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
+                  <label className={`flex items-center gap-3 w-full ${isCompact ? 'px-3 py-2 text-xs' : 'px-4 py-3 text-sm'} rounded-xl transition-all cursor-pointer group relative overflow-hidden ${isSelected ? 'bg-accent-primary/5 text-accent-primary font-medium' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}>
                     {isSelected && <div className="absolute left-0 top-0 w-1 h-full bg-accent-primary animate-in slide-in-from-left duration-300"></div>}
                     
                     {selectionMode === 'multiple' && (

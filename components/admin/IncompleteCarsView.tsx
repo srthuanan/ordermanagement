@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { StockVehicle } from '../../types';
-import { versionsMap, defaultExteriors, defaultInteriors, VALID_IMAGES_BY_MODEL } from '../../constants';
+import { versionsMap, defaultExteriors, defaultInteriors, getAvailableExteriors } from '../../constants';
 import Button from '../ui/Button';
 import CarImage from '../ui/CarImage';
 import * as apiService from '../../services/apiService';
@@ -328,19 +328,9 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
                                                 >
                                                     <option value="">-- Chọn Màu --</option>
                                                     {(() => {
-                                                        const currentModel = (localChanges[selectedCar.VIN]?.['Dòng xe'] || selectedCar['Dòng xe'] || '').toLowerCase().replace(/\s+/g, '');
-                                                        const validCodes = VALID_IMAGES_BY_MODEL[currentModel] || []; 
-                                                        
-                                                        // Nếu không có modelKey hoặc không có validCodes, hiện hết (fallback)
-                                                        if (!currentModel || validCodes.length === 0) return defaultExteriors.map(c => <option key={c} value={c}>{c}</option>);
-                                                        
-                                                        return defaultExteriors
-                                                            .filter(colorStr => {
-                                                                const codeMatch = colorStr.match(/\(([^)]+)\)/);
-                                                                if (!codeMatch) return true; 
-                                                                return validCodes.includes(codeMatch[1].toLowerCase());
-                                                            })
-                                                            .map(c => <option key={c} value={c}>{c}</option>);
+                                                        const currentModel = localChanges[selectedCar.VIN]?.['Dòng xe'] || selectedCar['Dòng xe'];
+                                                        const currentVersion = localChanges[selectedCar.VIN]?.['Phiên bản'] || selectedCar['Phiên bản'];
+                                                        return getAvailableExteriors(currentModel, currentVersion).map(c => <option key={c} value={c}>{c}</option>);
                                                     })()}
                                                 </select>
                                                 <input

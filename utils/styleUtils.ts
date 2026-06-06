@@ -147,83 +147,122 @@ const modelNameToImageKeyMap: Record<string, string> = {
 
 // VinFast CDN Images Lookup Map
 const vinfastCdnImages: Record<string, string> = {
-    // EC Van
-    "ecvan-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwddcf5d86/images/ECVAN/TG12V/CE18.png",
-    "ecvan-ce1u": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw269064cd/images/ECVAN/TG12V/CE1U.png",
-    "ecvan-ce1w": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwaf408f05/images/ECVAN/TG12V/CE1W.png",
-    "ecvan-ce2q": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa4f41267/images/ECVAN/TG12V/CE2Q.png",
-    // Herio
-    "herio-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw7e0d8431/images/HerioGreen/GA1QV/CE18.webp",
-    "herio-ce11": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw315a6865/images/HerioGreen/GA1QV/CE11.png",
-    "herio-ce17": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe6b7b6fe/images/HerioGreen/GA1QV/CE17.png",
-    "herio-ce2q": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw0efc30f8/images/HerioGreen/GA1QV/CE2Q.png",
-    // Limo
-    "limo-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw03f37450/images/LimoGreen/SL1VV/CE18.webp",
-    "limo-ce17": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd414e9c8/images/LimoGreen/SL1VV/CE17.png",
-    "limo-ce11": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwac981cbc/images/LimoGreen/SL1VV/CE11.png",
-    "limo-ce2q": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwdccfd85f/images/LimoGreen/SL1VV/CE2Q.png",
-    // Minio
-    "minio-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwf5c66334/images/MinioGreen/TH12V/CE18.webp",
-    "minio-ce2k": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw4c4df6a3/images/MinioGreen/TH12V/CE2K.png",
-    "minio-ce17": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd04ff62a/images/MinioGreen/TH12V/CE17.png",
-    "minio-ce11": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw378f8fa3/images/MinioGreen/TH12V/CE11.png",
-    "minio-ce2q": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe6d79257/images/MinioGreen/TH12V/CE2Q.png",
-    "minio-ce2i": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw1e0e3a97/images/MinioGreen/TH12V/CE2I.png",
-    // VF 3
-    "vf3-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw3a19c1c4/images/VF3/TI1CV/CE18.png",
-    "vf3-ce1v": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw4d9f9a2f/images/VF3/TI1CV/CE1V.png",
-    "vf3-ce2q": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw303e0698/images/VF3/TI1CV/CE2Q.png",
-    "vf3-ce1w": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw8f3fc29c/images/VF3/TI1CV/CE1W.png",
-    "vf3-181y": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw3ead61ed/images/VF3/TI1CV/181Y.png",
-    "vf3-181u": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa42e2716/images/VF3/TI1CV/181U.png",
-    "vf3-1821": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwf1a2d6d0/images/VF3/TI1CV/1821.png",
-    // VF 5
-    "vf5-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa56f6ef3/images/VF5/GA12V/CE18.png",
-    "vf5-ce1v": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw99cec5c0/images/VF5/GA12V/CE1V.png",
-    "vf5-ce2q": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe1fd1d5e/images/VF5/GA12V/CE2Q.png",
-    "vf5-111u": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe77f7665/images/VF5/GA12V/111U.png",
-    "vf5-ce1w": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwc759397a/images/VF5/GA12V/CE1W.png",
-    "vf5-181y": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw699981ee/images/VF5/GA12V/181Y.png",
-    // VF 6
-    "vf6-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwed426ed5/images/VF6/JB12V/CE18.png",
-    "vf6-ce2q": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwb0021530/images/VF6/JB12V/CE2Q.png",
-    "vf6-ce1v": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw08623347/images/VF6/JB12V/CE1V.png",
-    "vf6-ce11": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw759ca288/images/VF6/JB12V/CE11.png",
-    "vf6-ce1w": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw26f526a3/images/VF6/JB12V/CE1W.png",
-    // VF 7
-    "vf7-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwdafc2bb7/images/VF7/GC15V/CE18.png",
-    "vf7-ce1v": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw38b16d7a/images/VF7/GC15V/CE1V.png",
-    "vf7-ce2q": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwd5e75327/images/VF7/GC15V/CE2Q.png",
-    "vf7-ce11": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw7fd70968/images/VF7/GC15V/CE11.webp",
-    "vf7-ce1w": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwe7e3a128/images/VF7/GC15V/CE1W.png",
-    // VF 8
-    "vf8-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwafc3ac80/images/VF8/ND31V/CE18.webp",
-    "vf8-ce11": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw19321e63/images/VF8/ND31V/CE11.webp",
-    "vf8-ce1m": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw65f5fd6d/images/VF8/ND31V/CE1M.webp",
-    "vf8-ce22": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw5aa8e062/images/VF8/ND31V/CE22.webp",
-    "vf8-171v": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwa349f493/images/VF8/ND31V/171V.webp",
-    "vf8-1v18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwf71b68ce/images/VF8/ND31V/1V18.webp",
-    // VF 9
-    "vf9-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw359f3d29/images/VF9/NE3LV/CE18.png",
-    "vf9-ce1m": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw13165e38/images/VF9/NE3LV/CE1M.png",
-    "vf9-ce11": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwf7b9f784/images/VF9/NE3LV/CE11.png",
-    "vf9-ce22": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwa8631ed5/images/VF9/NE3LV/CE22.png",
-    "vf9-ce1v": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw0c7ae75d/images/VF9/NE3LV/CE1V.png",
-    "vf9-ce17": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw08e2a618/images/VF9/NE3LV/CE17.png",
-    "vf9-ce1w": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwed816812/images/VF9/NE3LV/CE1W.png",
-    // VFMPV7 / VFLIMO
-    "vfmpv7-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwc07e37d2/images/VFMPV7/SL1WV/CE18.png",
-    "vflimo-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwc07e37d2/images/VFMPV7/SL1WV/CE18.png",
-    "vfmpv7-ce1v": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwaa49bf74/images/VFMPV7/SL1WV/CE1V.png",
-    "vflimo-ce1v": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dwaa49bf74/images/VFMPV7/SL1WV/CE1V.png",
-    "vfmpv7-ce11": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw4455dc5c/images/VFMPV7/SL1WV/CE11.png",
-    "vflimo-ce11": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw4455dc5c/images/VFMPV7/SL1WV/CE11.png",
-    "vfmpv7-ce2q": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw0e4bf426/images/VFMPV7/SL1WV/CE2Q.png",
-    "vflimo-ce2q": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw0e4bf426/images/VFMPV7/SL1WV/CE2Q.png",
-    "vfmpv7-ce2n": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw30cd00e9/images/VFMPV7/SL1WV/CE2N.png",
-    "vflimo-ce2n": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw30cd00e9/images/VFMPV7/SL1WV/CE2N.png",
-    "vfmpv7-ce2j": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw387ee762/images/VFMPV7/SL1WV/CE2J.png",
-    "vflimo-ce2j": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-vinfast_vn_master/default/dw387ee762/images/VFMPV7/SL1WV/CE2J.png",
+    // VF8 All New
+    "vf8-allnew-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-2.webp",
+    "vf8-allnew-ce33": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE33.webp",
+    "vf8-allnew-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q.webp",
+    "vf8-allnew-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11.webp",
+    "vf8-allnew-112q": "https://vinfasto2o.com/wp-content/uploads/2026/05/112Q.webp",
+    "vf8-allnew-1132": "https://vinfasto2o.com/wp-content/uploads/2026/05/1132.webp",
+    "vf8-allnew-1833": "https://vinfasto2o.com/wp-content/uploads/2026/05/1833.webp",
+    "vf8-allnew-312o": "https://vinfasto2o.com/wp-content/uploads/2026/05/312O.webp",
+    "vf8-allnew-3111": "https://vinfasto2o.com/wp-content/uploads/2026/05/3111.webp",
+    "vf8-allnew-1832": "https://vinfasto2o.com/wp-content/uploads/2026/05/1832.webp",
+    "vf8-allnew-ce32": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE32.webp",
+    "vf8-allnew-ce2o": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2O.webp",
+    // VF8 Plus
+    "vf8-plus-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18.png",
+    "vf8-plus-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-2.png",
+    "vf8-plus-ce1m": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1M-1.png",
+    "vf8-plus-ce22": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE22-2.png",
+    "vf8-plus-171v": "https://vinfasto2o.com/wp-content/uploads/2026/05/171V.png",
+    "vf8-plus-1v18": "https://vinfasto2o.com/wp-content/uploads/2026/05/1V18.png",
+    // VF8 Eco
+    "vf8-eco-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-5.png",
+    "vf8-eco-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-11.png",
+    "vf8-eco-ce1m": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1M-3.png",
+    "vf8-eco-ce22": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE22-1.png",
+    "vf8-eco-171v": "https://vinfasto2o.com/wp-content/uploads/2026/05/171V-1.png",
+    "vf8-eco-1v18": "https://vinfasto2o.com/wp-content/uploads/2026/05/1V18-1.png",
+
+
+    // LIMO
+    "limo-ce17": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE17-5.png",
+    "limo-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-7.png",
+    "limo-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-8.png",
+    "limo-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-8.png",
+
+    // HERIO
+    "herio-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-4.png",
+    "herio-ce17": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE17-2-1.png",
+    "herio-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-9.png",
+    "herio-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-4.png",
+
+    // MINIO
+    "minio-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-12.png",
+    "minio-ce17": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE17-6.png",
+    "minio-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-15.png",
+    "minio-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-10.png",
+    "minio-1u11": "https://vinfasto2o.com/wp-content/uploads/2026/05/1U11.png",
+    "minio-1117": "https://vinfasto2o.com/wp-content/uploads/2026/05/1117.png",
+    "minio-181u": "https://vinfasto2o.com/wp-content/uploads/2026/05/181U.png",
+    "minio-ce2i": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2I.png",
+    "minio-ce2k": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2K.png",
+    "minio-182k": "https://vinfasto2o.com/wp-content/uploads/2026/05/182K.png",
+    "minio-1p2k": "https://vinfasto2o.com/wp-content/uploads/2026/05/1P2K.png",
+    "minio-182i": "https://vinfasto2o.com/wp-content/uploads/2026/05/182I.png",
+    "minio-1u2i": "https://vinfasto2o.com/wp-content/uploads/2026/05/1U2I.png",
+    "minio-182q": "https://vinfasto2o.com/wp-content/uploads/2026/05/182Q.png",
+
+    // EC VAN
+    "ecvan-ce1w": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-9.png",
+    "ecvan-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-9.png",
+    "ecvan-ce1u": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1U-1.png",
+    "ecvan-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-14.png",
+
+    // MPV7 / VFLIMO
+    "vfmpv7-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18.webp",
+    "vflimo-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18.webp",
+    "vfmpv7-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-1-1.webp",
+    "vflimo-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-1-1.webp",
+    "vfmpv7-ce1v": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V.webp",
+    "vflimo-ce1v": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V.webp",
+    "vfmpv7-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-1.webp",
+    "vflimo-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-1.webp",
+    "vfmpv7-ce2j": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2J-1.webp",
+    "vflimo-ce2j": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2J-1.webp",
+    "vfmpv7-ce2n": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2N-1.webp",
+    "vflimo-ce2n": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2N-1.webp",
+
+    // VF9
+    "vf9-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-2.png",
+    "vf9-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-6.png",
+    "vf9-ce1v": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V-2.png",
+    "vf9-ce1m": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1M-5.png",
+    "vf9-ce1w": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-3.png",
+    "vf9-ce22": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE22-1-1.png",
+    "vf9-ce17": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE17-2.png",
+
+    // VF7
+    "vf7-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-3.png",
+    "vf7-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-1.png",
+    "vf7-ce1v": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V-1.png",
+    "vf7-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-2.png",
+    "vf7-ce1w": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-1.png",
+
+    // VF6
+    "vf6-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-12-scaled.png",
+    "vf6-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-8-scaled.png",
+    "vf6-ce1v": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V-7-scaled.png",
+    "vf6-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-7-scaled.png",
+    "vf6-ce1w": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-8-scaled.png",
+
+    // VF5
+    "vf5-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-11.png",
+    "vf5-ce1v": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V-6.png",
+    "vf5-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-6.png",
+    "vf5-111u": "https://vinfasto2o.com/wp-content/uploads/2026/05/111U.png",
+    "vf5-181y": "https://vinfasto2o.com/wp-content/uploads/2026/05/181Y-1.png",
+    "vf5-ce1w": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-7.png",
+
+    // VF3
+    "vf3-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-10.png",
+    "vf3-ce1v": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1V-5.png",
+    "vf3-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q-5.png",
+    "vf3-181u": "https://vinfasto2o.com/wp-content/uploads/2026/05/181U-1.png",
+    "vf3-181y": "https://vinfasto2o.com/wp-content/uploads/2026/05/181Y.png",
+    "vf3-1821": "https://vinfasto2o.com/wp-content/uploads/2026/05/1821.png",
+    "vf3-ce1w": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1W-6.png",
 };
 
 // Maps significant parts of the exterior color string to a simplified key for filenames.
@@ -256,7 +295,7 @@ const colorNameToImageKeyMap: Record<string, string> = {
  * @param exteriorColor - The car's full exterior color string (e.g., "Crimson Red (CE1M)").
  * @returns The constructed image path.
  */
-export const getCarImage = (model?: string, exteriorColor?: string): string => {
+export const getCarImage = (model?: string, exteriorColor?: string, version?: string): string => {
     if (!model) return getGlobalDefaultImage();
 
     const cleanedModel = model.trim().toUpperCase();
@@ -264,6 +303,10 @@ export const getCarImage = (model?: string, exteriorColor?: string): string => {
                      Object.entries(modelNameToImageKeyMap).find(([k]) => k.toUpperCase() === cleanedModel)?.[1] ||
                      model.toLowerCase().replace(/\s+/g, '');
     const lowerExterior = exteriorColor?.toLowerCase().trim() || '';
+    const lowerVersion = version?.toLowerCase().trim() || '';
+    const isAllNew = lowerVersion.includes('all new');
+    const isEco = lowerVersion.includes('eco');
+    const isPlus = lowerVersion.includes('plus');
 
     // 1. Extract color code inside parentheses, e.g., "Infinity Blanc (CE18)"
     const codeMatch = lowerExterior.match(/\(([^)]+)\)/);
@@ -281,7 +324,18 @@ export const getCarImage = (model?: string, exteriorColor?: string): string => {
     }
 
     if (colorCodeKey) {
-        const cdnLink = vinfastCdnImages[`${modelKey}-${colorCodeKey}`];
+        let cdnLink = null;
+        if (isAllNew) {
+            cdnLink = vinfastCdnImages[`${modelKey}-allnew-${colorCodeKey}`];
+        } else if (isEco) {
+            cdnLink = vinfastCdnImages[`${modelKey}-eco-${colorCodeKey}`];
+        } else if (isPlus) {
+            cdnLink = vinfastCdnImages[`${modelKey}-plus-${colorCodeKey}`];
+        }
+        
+        if (!cdnLink) {
+            cdnLink = vinfastCdnImages[`${modelKey}-${colorCodeKey}`];
+        }
         if (cdnLink) {
             return cdnLink;
         }

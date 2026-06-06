@@ -4,7 +4,7 @@ import { submitCarInquiry, getCarInquiries, markInquiryAsRead, deleteCarInquiry 
 import { CarInquiry } from '../../types';
 import Button from '../ui/Button';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
-import { versionsMap, defaultExteriors, defaultInteriors, interiorColorRules, VALID_IMAGES_BY_MODEL } from '../../constants';
+import { versionsMap, defaultExteriors, defaultInteriors, interiorColorRules, getAvailableExteriors } from '../../constants';
 import moment from 'moment';
 
 interface CarInquiryModalProps {
@@ -52,17 +52,7 @@ const CarInquiryModal: React.FC<CarInquiryModalProps> = ({ isOpen, onClose, curr
                 setFormData(prev => ({ ...prev, version: versions[0] }));
             }
 
-            const modelKey = model.toLowerCase().replace(/\s+/g, '');
-            const validCodes = VALID_IMAGES_BY_MODEL[modelKey];
-            if (validCodes) {
-                const filteredExteriors = defaultExteriors.filter(color => {
-                    const match = color.match(/\(([^)]+)\)/);
-                    return match && match[1] && validCodes.includes(match[1].toLowerCase());
-                });
-                setAvailableExteriors(filteredExteriors);
-            } else {
-                setAvailableExteriors(defaultExteriors);
-            }
+            setAvailableExteriors(getAvailableExteriors(model, version));
         } else {
             setAvailableExteriors(defaultExteriors);
         }

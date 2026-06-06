@@ -44,14 +44,41 @@ export const defaultExteriors = [
     "Jet Black_Mystery Bronze Roof (2911)", "Champagne Creme_Infinity Blanc Roof (1823)",
     "Silver (CE17)", "Pink Gold (CE2K)", "Solar Ruby (CE2Q)", "Moonlit Ocean (CE2J)",
     "Infinity Blanc Roof-Sky Blue (182G)", "Introspective Brown (CE2N)",
-    "Starburst Blue (BLV) (CE33)", 
-    "Jet Black - Solar Ruby (112Q)", "Vitality Orange (ORD) (CE32)", "Mysterioso Purple (PRF) (CE2O)", 
+    "Starburst Blue (CE33)", 
+    "Jet Black - Solar Ruby (112Q)", "Vitality Orange (CE32)", "Mysterioso Purple (CE2O)", 
     "Jet Black - Vitality Orange (1132)", "Infinity Blanc - Vitality Orange (1832)", 
     "Infinity Blanc - Starburst Blue (1833)", "Stealth Gray - Mysterioso Purple (312O)", 
-    "Stealth Gray - Jet Black (3111)"
+    "Stealth Gray - Jet Black (3111)",
+    "Solar Ruby Body - Jet Black Roof (112Q)",
+    "Vitality Orange Body - Jet Black Roof (1132)",
+    "Starburst Blue Body - Infinity Blanc Roof (1833)",
+    "Mysterioso Purple Body - Stealth Gray Roof (312O)",
+    "Jet Black Body - Stealth Gray Roof (3111)",
+    "Vitality Orange Body - Infinity Blanc Roof (1832)"
 ];
 
 export const defaultInteriors = ["Black", "Brown", "Beige", "Grey"];
+
+export const exteriorColorRules = [
+    {
+        models: ["vf 8"],
+        versions: ["all new"],
+        colors: [
+            "Infinity Blanc (CE18)",
+            "Starburst Blue (CE33)",
+            "Solar Ruby (CE2Q)",
+            "Jet Black (CE11)",
+            "Solar Ruby Body - Jet Black Roof (112Q)",
+            "Vitality Orange Body - Jet Black Roof (1132)",
+            "Starburst Blue Body - Infinity Blanc Roof (1833)",
+            "Mysterioso Purple Body - Stealth Gray Roof (312O)",
+            "Jet Black Body - Stealth Gray Roof (3111)",
+            "Vitality Orange Body - Infinity Blanc Roof (1832)",
+            "Vitality Orange (CE32)",
+            "Mysterioso Purple (CE2O)"
+        ]
+    }
+];
 
 export const interiorColorRules = [
     { models: ["vf 3", "vf 5"], colors: ["Black"] },
@@ -66,11 +93,37 @@ export const VALID_IMAGES_BY_MODEL: Record<string, string[]> = {
     "vf5": ["111u", "181y", "ce11", "ce14", "ce18", "ce1m", "ce1n", "ce1v", "ce1w", "ce1x", "ce2q"],
     "vf6": ["ce11", "ce14", "ce18", "ce1h", "ce1m", "ce1n", "ce1v", "ce1w", "ce2q"],
     "vf7": ["ce11", "ce14", "ce17", "ce18", "ce1h", "ce1m", "ce1n", "ce1v", "ce1w", "ce2q"],
-    "vf8": ["ce11", "ce14", "ce18", "ce1h", "ce1m", "ce1n", "ce1v", "ce1w", "ce22", "ce2q", "ce33", "112q", "ce32", "ce2o", "1132", "1832", "1833", "312o", "3111"],
+    "vf8": ["ce11", "ce14", "ce18", "ce1h", "ce1m", "ce1n", "ce1v", "ce1w", "ce22", "ce2q"],
     "vf9": ["ce11", "ce14", "ce17", "ce18", "ce1h", "ce1m", "ce1n", "ce1w", "ce22", "ce2q"],
     "ecvan": ["ce18", "ce1m", "ce1u", "ce1w", "ce2q"],
     "herio": ["ce11", "ce17", "ce1m", "ce1u", "ce2q"],
     "limo": ["ce11", "ce17", "ce18", "ce1m", "ce1u", "ce2q"],
     "vflimo": ["ce11", "ce17", "ce18", "ce1m", "ce1u", "ce2q", "ce2j", "ce2n"],
     "nerio": ["ce11", "ce17", "ce1m", "ce1u", "ce2q"],
+    "minio": ["ce11", "ce17", "ce18", "ce1m", "ce1u", "ce1w", "ce2k", "ce2q"],
+};
+
+export const getAvailableExteriors = (model?: string, version?: string): string[] => {
+    if (!model) return defaultExteriors;
+    const lowerModel = model.toLowerCase().trim();
+    const lowerVersion = version ? version.toLowerCase().trim() : '';
+
+    // Check specific rules first
+    for (const rule of exteriorColorRules) {
+        if (rule.models.includes(lowerModel) && (!rule.versions || rule.versions.includes(lowerVersion))) {
+            return rule.colors;
+        }
+    }
+
+    // Fallback to general VALID_IMAGES_BY_MODEL
+    const modelKey = lowerModel.replace(/\s+/g, '');
+    const validCodes = VALID_IMAGES_BY_MODEL[modelKey];
+    if (validCodes) {
+        return defaultExteriors.filter(color => {
+            const match = color.match(/\(([^)]+)\)/);
+            return match && match[1] && validCodes.includes(match[1].toLowerCase());
+        });
+    }
+
+    return defaultExteriors;
 };
