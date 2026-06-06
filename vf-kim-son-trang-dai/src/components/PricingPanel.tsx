@@ -1194,7 +1194,7 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
                       <div key={promo.id} className={`pricing-toggle-item ${selected ? 'active' : ''}`} onClick={() => togglePromotion(promo.id)}>
                         <div className="pricing-toggle-info">
                           <strong>{promo.name}</strong>
-                          <span>{describePromotion(promo, quote?.basePrice || 0)}</span>
+                          <span>{describePromotion(promo, quote?.basePrice || 0, selectedVersion?.id)}</span>
                         </div>
                         <div className="pricing-toggle-switch"></div>
                       </div>
@@ -1480,12 +1480,12 @@ const getSwatchBackground = (colorCode: string, name: string) => {
   return '#e2e8f0';
 };
 
-function describePromotion(promotion: PricingPromotion, basePrice: number) {
+function describePromotion(promotion: PricingPromotion, basePrice: number, versionId?: string) {
   if (promotion.type === 'percentage') {
     return `Giảm ${promotion.value}% trên ${promotion.calculationBase === 'discounted_price' ? 'giá sau ưu đãi' : 'giá niêm yết'}${basePrice ? '' : ''}`;
   }
 
-  const overrideAmount = promotion.versionOverrides ? Object.values(promotion.versionOverrides)[0] : 0;
+  const overrideAmount = (promotion.versionOverrides && versionId) ? promotion.versionOverrides[versionId] : 0;
   const amount = overrideAmount || promotion.value;
   return `Ước tính ${formatCurrency(amount)}`;
 }
