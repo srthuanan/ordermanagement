@@ -218,10 +218,10 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
 
         <form className="order-form" onSubmit={handleSubmit}>
           <label className="full-span">
-            <span>Số đơn hàng *</span>
+            <span>Số đơn hàng - Số VSO *</span>
             <input
               value={form.orderId}
-              placeholder="Nxxxxx-XXX-yy-mm-zzzz"
+              placeholder="G401xx-VSO-yy-mm-zzzz"
               onChange={(event) => updateField('orderId', event.target.value.trim().toUpperCase())}
               required
             />
