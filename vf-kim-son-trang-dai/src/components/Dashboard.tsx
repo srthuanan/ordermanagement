@@ -246,7 +246,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
                   formatter={(value: any) => [`${value} xe`, 'Số lượng']}
                 />
-                <Legend verticalAlign="bottom" height={24} iconType="circle" wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }} />
+                <Legend 
+                  verticalAlign="bottom" 
+                  iconType="circle" 
+                  wrapperStyle={{ 
+                    fontSize: '13px', 
+                    paddingTop: '10px',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                    gap: '10px'
+                  }} 
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
