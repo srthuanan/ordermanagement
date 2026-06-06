@@ -723,18 +723,13 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
                             {/* Load More Archives Trigger (if local data exhausted) */}
                             {visibleCount >= processedData.length && !isLastArchive && (
-                                <div className="mt-auto p-6 flex justify-center">
+                                <div className="mt-auto p-4 flex justify-center">
                                     <button
                                         onClick={handleLoadMoreArchives}
                                         disabled={isLoadingArchives}
-                                        className="group relative px-5 py-2.5 bg-gradient-to-r from-slate-50 to-white border border-slate-200 rounded-lg text-slate-600 font-medium text-xs hover:border-accent-primary/40 hover:text-accent-primary hover:shadow-md hover:shadow-accent-primary/5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2.5 hover:-translate-y-0.5"
+                                        className="text-gray-500 hover:text-gray-800 hover:underline text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
                                     >
-                                        {isLoadingArchives ? (
-                                            <i className="fas fa-spinner fa-spin text-sm"></i>
-                                        ) : (
-                                            <i className="fas fa-cloud-download-alt text-sm group-hover:scale-110 transition-transform"></i>
-                                        )}
-                                        <span>Tải thêm</span>
+                                        {isLoadingArchives ? "Đang tải thêm..." : "Tải thêm lưu trữ"}
                                     </button>
                                 </div>
                             )}
