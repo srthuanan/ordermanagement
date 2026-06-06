@@ -744,7 +744,16 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
               <section className="pricing-admin-card">
                 <div className="pricing-admin-card-header">
                   <strong>Phí bắt buộc</strong>
-                  <span>{pricingDraft.fees.length} dòng</span>
+                  <div className="pricing-admin-inline-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span>{pricingDraft.fees.length} dòng</span>
+                    <button type="button" className="primary-button pricing-admin-mini-button" onClick={() => {
+                      updatePricingDraft((draft) => {
+                        draft.fees.push({ id: 'f' + Date.now(), name: 'Phí mới', amountHnHcm: 0, amountOther: 0 });
+                      });
+                    }}>
+                      Thêm phí
+                    </button>
+                  </div>
                 </div>
                 <div className="pricing-admin-stack">
                   {pricingDraft.fees.map((fee, index) => (
@@ -785,6 +794,16 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
                           }
                         />
                       </label>
+                      <button 
+                        type="button" 
+                        className="ghost-button" 
+                        style={{ color: '#ef4444', padding: '8px', alignSelf: 'flex-end', marginBottom: '2px' }} 
+                        onClick={() => {
+                          updatePricingDraft(draft => { draft.fees.splice(index, 1) });
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -794,7 +813,16 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
               <section className="pricing-admin-card">
                 <div className="pricing-admin-card-header">
                   <strong>Phí tùy chọn</strong>
-                  <span>{pricingDraft.optionalFees.length} dòng</span>
+                  <div className="pricing-admin-inline-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span>{pricingDraft.optionalFees.length} dòng</span>
+                    <button type="button" className="primary-button pricing-admin-mini-button" onClick={() => {
+                      updatePricingDraft((draft) => {
+                        draft.optionalFees.push({ id: 'of' + Date.now(), name: 'Phí tùy chọn mới', defaultAmount: 0 });
+                      });
+                    }}>
+                      Thêm phí
+                    </button>
+                  </div>
                 </div>
                 <div className="pricing-admin-stack">
                   {pricingDraft.optionalFees.map((fee, index) => (
@@ -823,6 +851,16 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
                           }
                         />
                       </label>
+                      <button 
+                        type="button" 
+                        className="ghost-button" 
+                        style={{ color: '#ef4444', padding: '8px', alignSelf: 'flex-end', marginBottom: '2px' }} 
+                        onClick={() => {
+                          updatePricingDraft(draft => { draft.optionalFees.splice(index, 1) });
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   ))}
                 </div>
