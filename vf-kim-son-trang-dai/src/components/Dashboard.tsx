@@ -226,40 +226,38 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <PieChartIcon size={18} className="muted-icon" />
           </div>
-          <div style={{ height: '220px', width: '100%', marginTop: '0.5rem' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={modelDistribution}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={85}
-                  paddingAngle={4}
-                  dataKey="value"
-                >
-                  {modelDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
-                  formatter={(value: any) => [`${value} xe`, 'Số lượng']}
-                />
-                <Legend 
-                  verticalAlign="bottom" 
-                  iconType="circle" 
-                  wrapperStyle={{ 
-                    fontSize: '13px', 
-                    paddingTop: '10px',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    justifyContent: 'center',
-                    gap: '10px'
-                  }} 
-                />
-              </PieChart>
-            </ResponsiveContainer>
+          <div style={{ height: '220px', width: '100%', marginTop: '0.5rem', overflowY: 'auto' }}>
+            <table className="compact-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+              <thead style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
+                <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b', fontSize: '13px' }}>
+                  <th style={{ padding: '8px', fontWeight: 500 }}>Dòng Xe</th>
+                  <th style={{ padding: '8px', textAlign: 'center', fontWeight: 500 }}>Số lượng</th>
+                  <th style={{ padding: '8px', textAlign: 'center', fontWeight: 500 }}>Tỷ trọng</th>
+                </tr>
+              </thead>
+              <tbody>
+                {modelDistribution.map((entry, index) => {
+                  const percentage = orders.length > 0 ? ((entry.value / orders.length) * 100).toFixed(1) : '0.0';
+                  return (
+                    <tr key={index} style={{ borderBottom: '1px solid #f1f5f9', fontSize: '14px' }}>
+                      <td style={{ padding: '8px', fontWeight: 500 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: COLORS[index % COLORS.length] }}></div>
+                          {entry.name}
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px', textAlign: 'center' }}>{entry.value}</td>
+                      <td style={{ padding: '8px', textAlign: 'center' }}>{percentage}%</td>
+                    </tr>
+                  );
+                })}
+                {modelDistribution.length === 0 && (
+                  <tr>
+                    <td colSpan={3} style={{ padding: '16px', textAlign: 'center', color: '#94a3b8' }}>Chưa có dữ liệu</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
