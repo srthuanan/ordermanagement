@@ -24,22 +24,31 @@ function parseSortDate(value?: string | null) {
 export const QueueRankingModal: React.FC<QueueRankingModalProps> = ({ orders, onClose }) => {
   const pendingOrders = useMemo(() => orders.filter((o) => o.status === 'Chưa ghép'), [orders]);
   
-  // Nhóm theo Dòng xe
+  // Nhóm theo Cấu hình (Dòng xe + Phiên bản + Màu ngoại thất + Màu nội thất)
   const configGroups = useMemo(() => {
     const map = new Map<string, {
       id: string;
       line: string;
+      version: string;
+      exterior: string;
+      interior: string;
       orders: Order[];
     }>();
     
     pendingOrders.forEach(o => {
       const line = o.line || 'Khác';
+      const version = o.version || 'Khác';
+      const exterior = o.exterior || 'Khác';
+      const interior = o.interior || 'Khác';
       
-      const configId = line;
+      const configId = `${line}|${version}|${exterior}|${interior}`;
       if (!map.has(configId)) {
         map.set(configId, {
           id: configId,
           line,
+          version,
+          exterior,
+          interior,
           orders: []
         });
       }
@@ -127,7 +136,10 @@ export const QueueRankingModal: React.FC<QueueRankingModalProps> = ({ orders, on
                         >
                           <div>
                             <div style={{ fontWeight: 600, color: isSelected ? '#1d4ed8' : '#0f172a', fontSize: '14px' }}>
-                              {g.line}
+                              {g.line} <span style={{ color: isSelected ? '#3b82f6' : '#64748b', fontWeight: 400 }}>• {g.version}</span>
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                              Ngoại thất: <strong style={{ color: '#475569' }}>{g.exterior}</strong> - Nội thất: <strong style={{ color: '#475569' }}>{g.interior}</strong>
                             </div>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -154,7 +166,7 @@ export const QueueRankingModal: React.FC<QueueRankingModalProps> = ({ orders, on
                   <div style={{ padding: '12px 16px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontWeight: 600, color: '#334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span>Thứ tự ưu tiên ghép</span>
-                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 400 }}>{selectedGroup.line}</span>
+                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 400 }}>{selectedGroup.line} • {selectedGroup.version}</span>
                     </div>
                     <span style={{ color: '#0f766e', background: '#ccfbf1', padding: '2px 8px', borderRadius: '12px', fontSize: '12px' }}>{rankedOrders.length} đơn</span>
                   </div>
