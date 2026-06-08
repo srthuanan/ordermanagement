@@ -17,18 +17,18 @@ export const PendingOrdersMonthModal: React.FC<PendingOrdersMonthModalProps> = (
   });
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '1000px', width: '90vw' }}>
-        <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Calendar size={20} className="primary-icon" />
-            <h2>Chi tiết đơn hàng tồn - {month}</h2>
+    <div className="modal-layer" role="presentation">
+      <section className="order-modal detail-modal" role="dialog" aria-modal="true" style={{ width: 'min(1000px, 100vw)' }}>
+        <div className="panel-heading">
+          <div>
+            <p className="eyebrow">Chi tiết tồn kho</p>
+            <h2>Tháng {month}</h2>
           </div>
           <button className="icon-button" onClick={onClose} title="Đóng">
             <X size={20} />
           </button>
         </div>
-        <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto', padding: 0 }}>
+        <div className="panel-content" style={{ overflowY: 'auto', padding: 0 }}>
           <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
             <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8fafc', zIndex: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
               <tr>
@@ -73,12 +73,12 @@ export const PendingOrdersMonthModal: React.FC<PendingOrdersMonthModalProps> = (
             </tbody>
           </table>
         </div>
-        <div className="modal-footer" style={{ justifyContent: 'flex-end', padding: '16px' }}>
+        <div className="panel-footer" style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px', borderTop: '1px solid #e2e8f0', background: '#f8fafc' }}>
           <button className="ghost-button" onClick={onClose}>
             Đóng bảng
           </button>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
