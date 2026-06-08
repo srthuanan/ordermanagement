@@ -45,9 +45,9 @@ export const PendingOrdersMonthModal: React.FC<PendingOrdersMonthModalProps> = (
               {sortedOrders.length > 0 ? (
                 sortedOrders.map((order, index) => {
                   return (
-                    <tr key={order.orderId} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <tr key={order.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                       <td style={{ padding: '12px 16px', color: '#64748b' }}>{index + 1}</td>
-                      <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0f172a' }}>{order.orderId}</td>
+                      <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0f172a' }}>{order.id}</td>
                       <td style={{ padding: '12px 16px' }}>{order.customer}</td>
                       <td style={{ padding: '12px 16px' }}>{order.staff}</td>
                       <td style={{ padding: '12px 16px' }}>
