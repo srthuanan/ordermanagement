@@ -58,6 +58,21 @@ function formatActivityAction(log: CarActivityRow) {
   }
 }
 
+function parseDateForDashboard(value?: string | null) {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const isoCandidate = new Date(trimmed);
+  if (!Number.isNaN(isoCandidate.getTime()) && /\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+    return isoCandidate;
+  }
+  const match1 = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(trimmed);
+  if (match1) return new Date(Number(match1[3]), Number(match1[2]) - 1, Number(match1[1]));
+  const match2 = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(trimmed);
+  if (match2) return new Date(Number(match2[1]), Number(match2[2]) - 1, Number(match2[3]));
+  return null;
+}
+
 export const Dashboard: React.FC<DashboardProps> = ({
   orders,
   availableStock,
@@ -90,8 +105,53 @@ export const Dashboard: React.FC<DashboardProps> = ({
       const model = o.line || 'Khác';
       counts[model] = (counts[model] || 0) + 1;
     });
-    return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+    return Object.entries(counts).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value).slice(0, 5);
   }, [orders]);
+
+  const pendingInsights = React.useMemo(() => {
+    let oldPendingCount = 0;
+    const now = new Date();
+    const pendingOrders = orders.filter(o => o.status === 'Chưa ghép');
+    const pendingByMonthMap: Record<string, { total: number, models: Record<string, number> }> = {};
+    
+    pendingOrders.forEach(o => {
+      const dateStr = (o.depositDate && o.depositDate !== 'Chưa có') ? o.depositDate : o.createdAt;
+      const d = parseDateForDashboard(dateStr);
+      
+      let monthKey = 'Chưa xác định';
+      if (d) {
+        const m = (d.getMonth() + 1).toString().padStart(2, '0');
+        const y = d.getFullYear();
+        monthKey = `Tháng ${m}/${y}`;
+        
+        const diffTime = Math.abs(now.getTime() - d.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays >= 7) {
+          oldPendingCount++;
+        }
+      }
+      
+      if (!pendingByMonthMap[monthKey]) {
+        pendingByMonthMap[monthKey] = { total: 0, models: {} };
+      }
+      pendingByMonthMap[monthKey].total++;
+      const model = o.line || 'Khác';
+      pendingByMonthMap[monthKey].models[model] = (pendingByMonthMap[monthKey].models[model] || 0) + 1;
+    });
+
+    const pendingByMonth = Object.entries(pendingByMonthMap).map(([month, data]) => ({
+      month,
+      total: data.total,
+      models: data.models
+    })).sort((a, b) => {
+      if (a.month === 'Chưa xác định') return 1;
+      if (b.month === 'Chưa xác định') return -1;
+      return b.month.localeCompare(a.month);
+    });
+
+    return { oldPendingCount, pendingByMonth };
+  }, [orders]);
+
   const COLORS = ['#0f766e', '#0284c7', '#ea580c', '#eab308', '#8b5cf6', '#ec4899', '#64748b'];
 
   const salesLeaderboard = React.useMemo(() => {
@@ -112,9 +172,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
     
     const unmappedOrders = orders.filter(o => o.status === 'Chưa ghép').length;
     if (unmappedOrders > 0) {
-      insights.push({ icon: Boxes, title: 'Ghép xe', text: `Có ${unmappedOrders} đơn hàng đang đợi ghép VIN.` });
+      insights.push({ icon: Boxes, title: 'Ghép xe', text: `Có ${unmappedOrders} đơn hàng đang đợi ghép VIN.`, tone: 'warning' });
     }
     
+    if (pendingInsights.oldPendingCount > 0) {
+      insights.push({ 
+        icon: AlertTriangle, 
+        title: 'Tồn kho lâu', 
+        text: `Có ${pendingInsights.oldPendingCount} đơn hàng chưa ghép đã chờ từ 7-10 ngày trở lên. Cần kiểm tra lại với TVBH.`,
+        tone: 'error'
+      });
+    }
+
     if (availableStock < 5) {
       insights.push({ icon: Archive, title: 'Tồn kho', text: `Kho xe trống hiện chỉ còn ${availableStock} chiếc.` });
     }
@@ -123,7 +192,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       insights.push({ icon: CheckCircle2, title: 'Tuyệt vời', text: 'Mọi hoạt động vận hành đều đang trơn tru.' });
     }
     return insights;
-  }, [orders, availableStock]);
+  }, [orders, availableStock, pendingInsights]);
 
   return (
     <div className="dashboard-shell">
@@ -211,13 +280,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
           <div className="insight-list">
             {dynamicInsights.map((insight, idx) => (
-              <InsightItem key={idx} icon={insight.icon} title={insight.title} text={insight.text} />
+              <InsightItem key={idx} icon={insight.icon} title={insight.title} text={insight.text} tone={(insight as any).tone} />
             ))}
           </div>
         </div>
       </section>
 
-      <section className="dashboard-band" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+      <section className="dashboard-band" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
         <div className="dashboard-band-card dashboard-band-card-soft">
           <div className="dashboard-band-header">
             <div>
@@ -258,6 +327,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <div className="dashboard-band-card dashboard-band-card-soft" style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div className="dashboard-band-header">
+            <div>
+              <p className="eyebrow">Phân tích</p>
+              <h3>Đơn tồn theo tháng</h3>
+            </div>
+            <Clock3 size={18} className="muted-icon" />
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', marginTop: '0.5rem', paddingRight: '4px' }}>
+            {pendingInsights.pendingByMonth.length === 0 ? (
+              <div style={{ padding: '16px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>Không có đơn chưa ghép</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {pendingInsights.pendingByMonth.map((item, idx) => (
+                  <details key={idx} style={{ background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <summary style={{ padding: '10px 12px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}>
+                      <span>{item.month}</span>
+                      <span style={{ background: '#ef4444', color: 'white', padding: '2px 8px', borderRadius: '999px', fontSize: '11px' }}>{item.total} đơn</span>
+                    </summary>
+                    <div style={{ padding: '0 12px 12px 12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {Object.entries(item.models).sort((a,b) => b[1] - a[1]).map(([model, count], mIdx) => (
+                        <div key={mIdx} style={{ background: 'white', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', color: '#334155', fontWeight: 500 }}>
+                          {model}: <span style={{ color: '#ef4444' }}>{count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -394,17 +496,19 @@ function MiniStat({
 function InsightItem({
   icon: Icon,
   title,
-  text
+  text,
+  tone
 }: {
   icon: any;
   title: string;
   text: string;
+  tone?: 'error' | 'warning' | 'success';
 }) {
   return (
-    <article className="insight-item">
-      <Icon size={18} />
+    <article className={`insight-item ${tone ? 'insight-item-' + tone : ''}`}>
+      <Icon size={18} style={{ color: tone === 'error' ? 'var(--error-color)' : tone === 'warning' ? 'var(--warning-color)' : 'inherit' }} />
       <div>
-        <strong>{title}</strong>
+        <strong style={{ color: tone === 'error' ? 'var(--error-color)' : tone === 'warning' ? 'var(--warning-color)' : 'inherit' }}>{title}</strong>
         <p>{text}</p>
       </div>
     </article>
