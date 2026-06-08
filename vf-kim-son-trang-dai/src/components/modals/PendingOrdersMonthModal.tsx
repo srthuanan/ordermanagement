@@ -22,7 +22,7 @@ export const PendingOrdersMonthModal: React.FC<PendingOrdersMonthModalProps> = (
         <div className="panel-heading">
           <div>
             <p className="eyebrow">Chi tiết tồn kho</p>
-            <h2>Tháng {month}</h2>
+            <h2>{month}</h2>
           </div>
           <button className="icon-button" onClick={onClose} title="Đóng">
             <X size={20} />
@@ -33,12 +33,12 @@ export const PendingOrdersMonthModal: React.FC<PendingOrdersMonthModalProps> = (
             <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f8fafc', zIndex: 1, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
               <tr>
                 <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0' }}>STT</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Mã Đơn / CRM</th>
+                <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>Mã Đơn / CRM</th>
                 <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Khách hàng</th>
                 <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0' }}>TVBH</th>
                 <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Dòng xe / Phiên bản</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Ngày cọc</th>
-                <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0' }}>Trạng thái</th>
+                <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>Ngày cọc</th>
+                <th style={{ padding: '12px 16px', fontWeight: 600, color: '#475569', borderBottom: '2px solid #e2e8f0', whiteSpace: 'nowrap' }}>Trạng thái</th>
               </tr>
             </thead>
             <tbody>
@@ -47,7 +47,7 @@ export const PendingOrdersMonthModal: React.FC<PendingOrdersMonthModalProps> = (
                   return (
                     <tr key={order.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
                       <td style={{ padding: '12px 16px', color: '#64748b' }}>{index + 1}</td>
-                      <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0f172a' }}>{order.id}</td>
+                      <td style={{ padding: '12px 16px', fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>{order.id}</td>
                       <td style={{ padding: '12px 16px' }}>{order.customer}</td>
                       <td style={{ padding: '12px 16px' }}>{order.staff}</td>
                       <td style={{ padding: '12px 16px' }}>
