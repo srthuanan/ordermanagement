@@ -185,7 +185,22 @@ export function useAppData() {
       };
 
       const mappedOrders = ordersResult.data.map((row) => apiService.mapOrderRow(row, customerMap));
-      setAllOrders(mappedOrders);
+      
+      const obscuredAllOrders = (isAdminUser || isManagerUser || isDeliveryUser) 
+        ? mappedOrders 
+        : mappedOrders.map(order => {
+            if (matchesCurrentUser(order.staff, currentFullName, currentEmail)) {
+              return order;
+            }
+            return {
+              ...order,
+              id: '***' + order.id.slice(-4),
+              customer: 'Khách hàng khác',
+              phone: '***'
+            };
+          });
+
+      setAllOrders(obscuredAllOrders);
       
       const visibleOrders = (isAdminUser || isDeliveryUser)
         ? mappedOrders
