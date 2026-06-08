@@ -13,10 +13,10 @@ import {
   AlertTriangle,
   User,
 } from 'lucide-react';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { PieChart as PieChartIcon, BarChart as BarChartIcon } from 'lucide-react';
 import { Order, CarActivityRow, ProfileRow } from '../types';
 import { PendingOrdersMonthModal } from './modals/PendingOrdersMonthModal';
+import { QueueRankingModal } from './modals/QueueRankingModal';
 
 interface DashboardProps {
   orders: Order[];
@@ -90,6 +90,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   staffProfiles
 }) => {
   const [selectedMonthOrders, setSelectedMonthOrders] = React.useState<{month: string, orders: Order[]} | null>(null);
+  const [showQueueModal, setShowQueueModal] = React.useState(false);
   const totalOrders = orders.length;
   const pendingOrders = orders.filter((o) => o.status === 'Chưa ghép').length;
   const pairedOrders = orders.filter((o) => o.status === 'Đã ghép').length;
@@ -346,7 +347,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="dashboard-band-header">
             <div>
               <p className="eyebrow">Phân tích</p>
-              <h3>Đơn tồn theo tháng</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h3>Đơn tồn theo tháng</h3>
+                <button 
+                  onClick={() => setShowQueueModal(true)}
+                  style={{ background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  Xếp hạng ưu tiên
+                </button>
+              </div>
             </div>
             <Clock3 size={18} className="muted-icon" />
           </div>
@@ -467,6 +476,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
           month={selectedMonthOrders.month}
           orders={selectedMonthOrders.orders}
           onClose={() => setSelectedMonthOrders(null)}
+        />
+      )}
+
+      {showQueueModal && (
+        <QueueRankingModal
+          orders={orders}
+          onClose={() => setShowQueueModal(false)}
         />
       )}
     </div>

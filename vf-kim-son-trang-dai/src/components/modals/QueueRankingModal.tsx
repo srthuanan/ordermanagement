@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { X, Trophy, Clock, Search, Car } from 'lucide-react';
+import { X, Trophy, Clock, Search, Car, ChevronRight } from 'lucide-react';
 import { Order } from '../../types';
 
 interface QueueRankingModalProps {
@@ -24,112 +24,178 @@ function parseSortDate(value?: string | null) {
 export const QueueRankingModal: React.FC<QueueRankingModalProps> = ({ orders, onClose }) => {
   const pendingOrders = useMemo(() => orders.filter((o) => o.status === 'Chưa ghép'), [orders]);
   
-  // Lấy danh sách các dòng xe đang có đơn tồn
-  const models = useMemo(() => {
-    const set = new Set<string>();
-    pendingOrders.forEach((o) => set.add(o.line || 'Khác'));
-    return Array.from(set).sort();
+  // Nhóm theo Cấu hình (Dòng xe + Phiên bản + Màu ngoại thất + Màu nội thất)
+  const configGroups = useMemo(() => {
+    const map = new Map<string, {
+      id: string;
+      line: string;
+      version: string;
+      exterior: string;
+      interior: string;
+      orders: Order[];
+    }>();
+    
+    pendingOrders.forEach(o => {
+      const line = o.line || 'Khác';
+      const version = o.version || 'Khác';
+      const exterior = o.exterior || 'Khác';
+      const interior = o.interior || 'Khác';
+      
+      const configId = `${line}|${version}|${exterior}|${interior}`;
+      if (!map.has(configId)) {
+        map.set(configId, {
+          id: configId,
+          line,
+          version,
+          exterior,
+          interior,
+          orders: []
+        });
+      }
+      map.get(configId)!.orders.push(o);
+    });
+    
+    // Sort groups by demand (highest orders first), then by line name
+    return Array.from(map.values()).sort((a, b) => {
+      if (b.orders.length !== a.orders.length) {
+        return b.orders.length - a.orders.length;
+      }
+      return a.line.localeCompare(b.line);
+    });
   }, [pendingOrders]);
 
-  const [selectedModel, setSelectedModel] = useState<string>(models.includes('VF 3') ? 'VF 3' : (models[0] || ''));
+  const [selectedConfigId, setSelectedConfigId] = useState<string | null>(null);
+
+  const selectedGroup = useMemo(() => {
+    if (!selectedConfigId) return null;
+    return configGroups.find(g => g.id === selectedConfigId) || null;
+  }, [configGroups, selectedConfigId]);
 
   const rankedOrders = useMemo(() => {
-    return pendingOrders
-      .filter((o) => (o.line || 'Khác') === selectedModel)
-      .sort((a, b) => {
-        const timeA = parseSortDate(a.depositDate) || parseSortDate(a.createdAt);
-        const timeB = parseSortDate(b.depositDate) || parseSortDate(b.createdAt);
-        return timeA - timeB;
-      });
-  }, [pendingOrders, selectedModel]);
+    if (!selectedGroup) return [];
+    return [...selectedGroup.orders].sort((a, b) => {
+      const timeA = parseSortDate(a.depositDate) || parseSortDate(a.createdAt);
+      const timeB = parseSortDate(b.depositDate) || parseSortDate(b.createdAt);
+      return timeA - timeB;
+    });
+  }, [selectedGroup]);
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ maxWidth: '600px', width: '95%' }}>
-        <div className="modal-header" style={{ padding: '20px 24px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', borderRadius: '12px 12px 0 0' }}>
+    <div className="modal-layer" role="presentation">
+      <section className="order-modal detail-modal" role="dialog" aria-modal="true" style={{ width: 'min(1000px, 100vw)' }}>
+        <div className="panel-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
-              <Trophy size={20} />
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
+              <Trophy size={22} />
             </div>
             <div>
-              <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Thứ tự phân xe (Hàng đợi)</h2>
-              <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0 0' }}>Xem vị trí ưu tiên ghép xe của các đơn hàng</p>
+              <p className="eyebrow">Thống kê nhu cầu & Xếp hạng</p>
+              <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', margin: 0 }}>Thứ tự chờ ghép xe</h2>
             </div>
           </div>
-          <button className="icon-button" onClick={onClose} style={{ alignSelf: 'flex-start' }}>
+          <button className="icon-button" onClick={onClose} title="Đóng">
             <X size={20} />
           </button>
         </div>
 
-        <div className="modal-body" style={{ padding: '20px 24px' }}>
-          {models.length === 0 ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center', color: '#64748b' }}>
-              Không có đơn hàng nào đang chờ ghép xe.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '8px' }}>
-                  Chọn dòng xe:
-                </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {models.map(m => (
-                    <button
-                      key={m}
-                      onClick={() => setSelectedModel(m)}
-                      style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        border: selectedModel === m ? '1px solid #3b82f6' : '1px solid #cbd5e1',
-                        background: selectedModel === m ? '#eff6ff' : 'white',
-                        color: selectedModel === m ? '#1d4ed8' : '#475569',
-                        fontWeight: 600,
-                        fontSize: '13px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
+        <div className="panel-content" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100% - 160px)', padding: '24px', gap: '20px' }}>
+          
+          <div style={{ display: 'flex', gap: '20px', height: '100%', minHeight: 0 }}>
+            {/* Left Column: List of Configurations */}
+            <div style={{ flex: '1', display: 'flex', flexDirection: 'column', border: '1px solid #e2e8f0', borderRadius: '12px', background: 'white', overflow: 'hidden' }}>
+              <div style={{ padding: '12px 16px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontWeight: 600, color: '#334155', display: 'flex', justifyContent: 'space-between' }}>
+                <span>Cấu hình đang chờ</span>
+                <span style={{ color: '#ef4444', background: '#fee2e2', padding: '2px 8px', borderRadius: '12px', fontSize: '12px' }}>{pendingOrders.length} đơn</span>
               </div>
+              <div style={{ overflowY: 'auto', flex: 1, padding: '8px' }}>
+                {configGroups.length === 0 ? (
+                  <div style={{ padding: '40px 20px', textAlign: 'center', color: '#64748b', fontSize: '13px' }}>
+                    Không có đơn hàng nào đang chờ ghép xe.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {configGroups.map(g => {
+                      const isSelected = selectedConfigId === g.id;
+                      return (
+                        <div
+                          key={g.id}
+                          onClick={() => setSelectedConfigId(g.id)}
+                          style={{
+                            padding: '12px',
+                            borderRadius: '8px',
+                            border: isSelected ? '1px solid #3b82f6' : '1px solid transparent',
+                            background: isSelected ? '#eff6ff' : 'white',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                          }}
+                          onMouseOver={(e) => { if (!isSelected) e.currentTarget.style.background = '#f8fafc' }}
+                          onMouseOut={(e) => { if (!isSelected) e.currentTarget.style.background = 'white' }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: 600, color: isSelected ? '#1d4ed8' : '#0f172a', fontSize: '14px' }}>
+                              {g.line} <span style={{ color: isSelected ? '#3b82f6' : '#64748b', fontWeight: 400 }}>• {g.version}</span>
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                              Ngoại thất: <strong style={{ color: '#475569' }}>{g.exterior}</strong> - Nội thất: <strong style={{ color: '#475569' }}>{g.interior}</strong>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontWeight: 700, fontSize: '15px', color: isSelected ? '#1d4ed8' : '#334155' }}>{g.orders.length}</span>
+                            <ChevronRight size={16} color={isSelected ? '#3b82f6' : '#cbd5e1'} />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
 
-              <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-                <div style={{ background: '#f8fafc', padding: '10px 16px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>Danh sách xếp hạng ưu tiên</span>
-                  <span style={{ fontSize: '12px', background: '#3b82f6', color: 'white', padding: '2px 8px', borderRadius: '999px', fontWeight: 600 }}>{rankedOrders.length} đơn</span>
+            {/* Right Column: Ranked Orders */}
+            <div style={{ flex: '1.5', display: 'flex', flexDirection: 'column', border: '1px solid #e2e8f0', borderRadius: '12px', background: 'white', overflow: 'hidden' }}>
+              {!selectedGroup ? (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', gap: '12px' }}>
+                  <Car size={40} style={{ opacity: 0.5 }} />
+                  <span style={{ fontSize: '14px' }}>Chọn một cấu hình bên trái để xem hàng đợi chi tiết.</span>
                 </div>
-                
-                <div style={{ maxHeight: '350px', overflowY: 'auto' }}>
-                  {rankedOrders.length === 0 ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>Không có đơn hàng</div>
-                  ) : (
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                      <thead style={{ position: 'sticky', top: 0, background: '#f1f5f9', zIndex: 1 }}>
+              ) : (
+                <>
+                  <div style={{ padding: '12px 16px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', fontWeight: 600, color: '#334155', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span>Thứ tự ưu tiên ghép</span>
+                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 400 }}>{selectedGroup.line} • {selectedGroup.version}</span>
+                    </div>
+                    <span style={{ color: '#0f766e', background: '#ccfbf1', padding: '2px 8px', borderRadius: '12px', fontSize: '12px' }}>{rankedOrders.length} đơn</span>
+                  </div>
+                  <div style={{ overflowY: 'auto', flex: 1 }}>
+                    <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                      <thead style={{ position: 'sticky', top: 0, backgroundColor: '#f1f5f9', zIndex: 1 }}>
                         <tr>
-                          <th style={{ padding: '10px 16px', fontSize: '12px', fontWeight: 600, color: '#64748b' }}>#Hạng</th>
-                          <th style={{ padding: '10px 16px', fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Đơn hàng</th>
-                          <th style={{ padding: '10px 16px', fontSize: '12px', fontWeight: 600, color: '#64748b' }}>TVBH</th>
-                          <th style={{ padding: '10px 16px', fontSize: '12px', fontWeight: 600, color: '#64748b' }}>Ngày cọc/tạo</th>
+                          <th style={{ padding: '10px 16px', fontWeight: 600, color: '#475569' }}>Hạng</th>
+                          <th style={{ padding: '10px 16px', fontWeight: 600, color: '#475569' }}>Mã / Khách hàng</th>
+                          <th style={{ padding: '10px 16px', fontWeight: 600, color: '#475569' }}>TVBH</th>
+                          <th style={{ padding: '10px 16px', fontWeight: 600, color: '#475569' }}>Ngày chờ</th>
                         </tr>
                       </thead>
                       <tbody>
                         {rankedOrders.map((order, idx) => (
-                          <tr key={order.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }}>
+                          <tr key={order.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
                             <td style={{ padding: '12px 16px', fontWeight: 700, color: idx < 3 ? '#ef4444' : '#64748b', fontSize: '15px' }}>
-                              {idx + 1}
+                              #{idx + 1}
                             </td>
                             <td style={{ padding: '12px 16px' }}>
-                              <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '13px' }}>{order.id}</div>
-                              <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase' }}>{order.customer}</div>
-                              <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>{order.version} • {order.exterior}</div>
+                              <div style={{ fontWeight: 600, color: '#0f172a' }}>{order.id}</div>
+                              <div style={{ fontSize: '12px', color: '#64748b' }}>{order.customer}</div>
                             </td>
-                            <td style={{ padding: '12px 16px' }}>
-                              <div style={{ fontWeight: 600, color: '#334155', fontSize: '13px' }}>{order.staff}</div>
+                            <td style={{ padding: '12px 16px', fontWeight: 500, color: '#334155' }}>
+                              {order.staff}
                             </td>
                             <td style={{ padding: '12px 16px' }}>
                               <div style={{ fontSize: '12px', color: '#475569', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <Clock size={12} />
+                                <Clock size={14} />
                                 {(order.depositDate && order.depositDate !== 'Chưa có') ? order.depositDate : order.createdAt}
                               </div>
                             </td>
@@ -137,19 +203,19 @@ export const QueueRankingModal: React.FC<QueueRankingModalProps> = ({ orders, on
                         ))}
                       </tbody>
                     </table>
-                  )}
-                </div>
-              </div>
+                  </div>
+                </>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
-        <div className="modal-footer" style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', borderRadius: '0 0 12px 12px', display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="panel-footer" style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'flex-end' }}>
           <button className="primary-button" onClick={onClose}>
             Đóng
           </button>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
