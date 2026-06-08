@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   User,
 } from 'lucide-react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { PieChart as PieChartIcon, BarChart as BarChartIcon } from 'lucide-react';
 import { Order, CarActivityRow, ProfileRow } from '../types';
 import { PendingOrdersMonthModal } from './modals/PendingOrdersMonthModal';
