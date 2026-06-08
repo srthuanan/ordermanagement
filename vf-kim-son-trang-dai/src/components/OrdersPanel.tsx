@@ -4,6 +4,7 @@ import { Order, OrderStatus, InventoryItem } from '../types';
 import { statusTone } from '../constants';
 import { matchesVehicleConfig, canUseVehicleForPair } from '../utils/matching';
 import { copyToClipboard } from '../utils/clipboard';
+import { QueueRankingModal } from './modals/QueueRankingModal';
 
 const viDateTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
   day: '2-digit',
@@ -128,6 +129,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
   const [isMobile, setIsMobile] = useState(false);
   const [showPolicyTooltip, setShowPolicyTooltip] = useState(false);
+  const [showQueueModal, setShowQueueModal] = useState(false);
   const selectedOrder = useMemo(
     () => orders.find((order) => order.id === selectedOrderId) ?? orders[0] ?? null,
     [orders, selectedOrderId]
@@ -265,6 +267,15 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
               </select>
             </label>
 
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={() => setShowQueueModal(true)}
+              style={{ flex: '0 0 auto', minHeight: '34px', height: '34px', padding: '0 12px', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#f8fafc', color: '#3b82f6', fontWeight: 600, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Car size={14} />
+              Thứ tự phân xe
+            </button>
           </div>
 
           {/* 3. Bảng dữ liệu DATA TABLE chuyên nghiệp */}
@@ -894,9 +905,15 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                 <span>Chọn một đơn ở bên trái để xem chi tiết.</span>
               </div>
             )}
+            </div>
           </div>
         </div>
-      </div>
-    </section>
-  );
-};
+        {showQueueModal && (
+          <QueueRankingModal
+            orders={orders}
+            onClose={() => setShowQueueModal(false)}
+          />
+        )}
+      </section>
+    );
+  };
