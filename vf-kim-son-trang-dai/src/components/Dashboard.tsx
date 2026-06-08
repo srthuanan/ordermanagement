@@ -16,6 +16,7 @@ import {
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { PieChart as PieChartIcon, BarChart as BarChartIcon } from 'lucide-react';
 import { Order, CarActivityRow, ProfileRow } from '../types';
+import { PendingOrdersMonthModal } from './modals/PendingOrdersMonthModal';
 
 interface DashboardProps {
   orders: Order[];
@@ -88,6 +89,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   currentProfile,
   staffProfiles
 }) => {
+  const [selectedMonthOrders, setSelectedMonthOrders] = React.useState<{month: string, orders: Order[]} | null>(null);
   const totalOrders = orders.length;
   const pendingOrders = orders.filter((o) => o.status === 'Chưa ghép').length;
   const pairedOrders = orders.filter((o) => o.status === 'Đã ghép').length;
@@ -120,7 +122,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     let oldPendingCount = 0;
     const now = new Date();
     const pendingOrders = orders.filter(o => o.status === 'Chưa ghép');
-    const pendingByMonthMap: Record<string, { total: number, models: Record<string, number> }> = {};
+    const pendingByMonthMap: Record<string, { total: number, models: Record<string, number>, orders: Order[] }> = {};
     
     pendingOrders.forEach(o => {
       const dateStr = (o.depositDate && o.depositDate !== 'Chưa có') ? o.depositDate : o.createdAt;
@@ -140,9 +142,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       }
       
       if (!pendingByMonthMap[monthKey]) {
-        pendingByMonthMap[monthKey] = { total: 0, models: {} };
+        pendingByMonthMap[monthKey] = { total: 0, models: {}, orders: [] };
       }
       pendingByMonthMap[monthKey].total++;
+      pendingByMonthMap[monthKey].orders.push(o);
       const model = o.line || 'Khác';
       pendingByMonthMap[monthKey].models[model] = (pendingByMonthMap[monthKey].models[model] || 0) + 1;
     });
@@ -150,7 +153,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const pendingByMonth = Object.entries(pendingByMonthMap).map(([month, data]) => ({
       month,
       total: data.total,
-      models: data.models
+      models: data.models,
+      orders: data.orders
     })).sort((a, b) => {
       if (a.month === 'Chưa xác định') return 1;
       if (b.month === 'Chưa xác định') return -1;
@@ -352,11 +356,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {pendingInsights.pendingByMonth.map((item, idx) => (
-                  <details key={idx} style={{ background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                    <summary style={{ padding: '10px 12px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}>
+                  <div 
+                    key={idx} 
+                    onClick={() => setSelectedMonthOrders({ month: item.month, orders: item.orders })}
+                    style={{ background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', cursor: 'pointer', transition: 'all 0.2s' }}
+                    onMouseOver={(e) => e.currentTarget.style.borderColor = '#0d9488'}
+                    onMouseOut={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
+                  >
+                    <div style={{ padding: '10px 12px', fontWeight: 600, fontSize: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', userSelect: 'none' }}>
                       <span>{item.month}</span>
                       <span style={{ background: '#ef4444', color: 'white', padding: '2px 8px', borderRadius: '999px', fontSize: '11px' }}>{item.total} đơn</span>
-                    </summary>
+                    </div>
                     <div style={{ padding: '0 12px 12px 12px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                       {Object.entries(item.models).sort((a,b) => b[1] - a[1]).map(([model, count], mIdx) => (
                         <div key={mIdx} style={{ background: 'white', border: '1px solid #cbd5e1', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', color: '#334155', fontWeight: 500 }}>
@@ -364,7 +374,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
                       ))}
                     </div>
-                  </details>
+                  </div>
                 ))}
               </div>
             )}
@@ -451,6 +461,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       </section>
+
+      {selectedMonthOrders && (
+        <PendingOrdersMonthModal
+          month={selectedMonthOrders.month}
+          orders={selectedMonthOrders.orders}
+          onClose={() => setSelectedMonthOrders(null)}
+        />
+      )}
     </div>
   );
 };
