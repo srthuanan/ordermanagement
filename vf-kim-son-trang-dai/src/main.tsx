@@ -399,6 +399,7 @@ function App() {
                 canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}
                 canPairOrder={canPairOrder(userRole)}
                 canManageOrderActions={canManageOrderActions(userRole)}
+                showStaffColumn={userRole === 'admin' || userRole === 'sales_manager'}
                 isUnpairingOrderId={isUnpairingOrderId}
                 isUpdatingPolicy={isUpdatingPolicy}
                 query={query}

@@ -98,6 +98,7 @@ interface OrdersPanelProps {
   onCancelOrder: (order: Order) => void;
   onEditOrder: (order: Order) => void;
   onSelectPolicy: (order: Order) => void;
+  showStaffColumn?: boolean;
 }
 
 export const OrdersPanel: React.FC<OrdersPanelProps> = ({
@@ -119,7 +120,8 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
   onInvoiceOrder,
   onCancelOrder,
   onEditOrder,
-  onSelectPolicy
+  onSelectPolicy,
+  showStaffColumn
 }) => {
   const reviewStatuses: OrderStatus[] = ['Chờ phê duyệt', 'Đã phê duyệt', 'Yêu cầu bổ sung', 'Đã bổ sung', 'Chờ ký hóa đơn'];
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
@@ -333,6 +335,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                   <tr>
                     <th>Mã đơn</th>
                     <th>Khách hàng</th>
+                    {showStaffColumn && <th>Tên TVBH</th>}
                     <th>Cấu hình xe</th>
                     <th>VIN ghép</th>
                     <th>Trạng thái</th>
@@ -366,6 +369,11 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           <td>
                             <div style={{ fontWeight: 600, color: '#1e293b', textTransform: 'uppercase' }}>{order.customer}</div>
                           </td>
+                          {showStaffColumn && (
+                            <td>
+                              <div style={{ fontWeight: 600, color: '#475569' }}>{order.staff}</div>
+                            </td>
+                          )}
                           <td>
                             <div style={{ fontWeight: 600, color: '#334155' }}>{order.line} {order.version}</div>
                             <div style={{ fontSize: '11px', color: '#64748b' }}>{order.exterior} · {order.interior}</div>
