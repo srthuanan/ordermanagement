@@ -274,7 +274,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
               style={{ flex: '0 0 auto', minHeight: '34px', height: '34px', padding: '0 12px', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#f8fafc', color: '#3b82f6', fontWeight: 600, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <Car size={14} />
-              Thứ tự phân xe
+              Xếp hạng chờ ghép xe
             </button>
           </div>
 
