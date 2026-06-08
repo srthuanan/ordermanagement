@@ -64,6 +64,7 @@ function App() {
     profile,
     profiles,
     orders,
+    allOrders,
     inventory,
     vehicleLocations,
     queuedVins,
@@ -394,6 +395,7 @@ function App() {
             {activeTab === 'orders' && (
               <OrdersPanel
                 orders={filteredOrders}
+                allOrders={allOrders}
                 inventory={inventory}
                 currentUsername={currentUsername}
                 canOverrideHeldVehicle={canOverrideHeldVehicle(userRole)}

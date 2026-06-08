@@ -20,6 +20,7 @@ export function useAppData() {
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [profiles, setProfiles] = useState<ProfileRow[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [allOrders, setAllOrders] = useState<Order[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [vehicleLocations, setVehicleLocations] = useState<VehicleLocationRow[]>([]);
   const [queuedVins, setQueuedVins] = useState<string[]>([]);
@@ -59,6 +60,7 @@ export function useAppData() {
         setProfile(null);
         setProfiles([]);
         setOrders([]);
+        setAllOrders([]);
         setInventory([]);
         setVehicleLocations([]);
         setQueuedVins([]);
@@ -78,6 +80,7 @@ export function useAppData() {
     if (!supabase) return false;
     if (!session) {
       setOrders([]);
+      setAllOrders([]);
       setInventory([]);
       setVehicleLocations([]);
       setQueuedVins([]);
@@ -182,6 +185,8 @@ export function useAppData() {
       };
 
       const mappedOrders = ordersResult.data.map((row) => apiService.mapOrderRow(row, customerMap));
+      setAllOrders(mappedOrders);
+      
       const visibleOrders = (isAdminUser || isDeliveryUser)
         ? mappedOrders
         : isSalesUser
@@ -338,6 +343,7 @@ export function useAppData() {
     session,
     profile,
     orders,
+    allOrders,
     inventory,
     vehicleLocations,
     queuedVins,

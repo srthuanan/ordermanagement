@@ -81,6 +81,7 @@ const formatDetailDate = (value?: string) => {
 
 interface OrdersPanelProps {
   orders: Order[];
+  allOrders?: Order[];
   inventory: InventoryItem[];
   currentUsername: string;
   canOverrideHeldVehicle: boolean;
@@ -104,6 +105,7 @@ interface OrdersPanelProps {
 
 export const OrdersPanel: React.FC<OrdersPanelProps> = ({
   orders,
+  allOrders,
   inventory,
   currentUsername,
   canOverrideHeldVehicle,
@@ -910,7 +912,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
         </div>
         {showQueueModal && (
           <QueueRankingModal
-            orders={orders}
+            orders={allOrders || orders}
             onClose={() => setShowQueueModal(false)}
           />
         )}
