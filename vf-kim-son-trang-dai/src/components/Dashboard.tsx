@@ -303,8 +303,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <PieChartIcon size={18} className="muted-icon" />
           </div>
-          <div style={{ height: '220px', width: '100%', marginTop: '0.5rem', overflowY: 'auto' }}>
-            <table className="compact-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+          <div style={{ height: '220px', width: '100%', marginTop: '0.5rem', overflowY: 'auto', overflowX: 'hidden' }}>
+            <table className="compact-table" style={{ width: '100%', minWidth: '100%', textAlign: 'left', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
               <thead style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                 <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b', fontSize: '13px' }}>
                   <th style={{ padding: '8px', fontWeight: 500 }}>Dòng Xe</th>
