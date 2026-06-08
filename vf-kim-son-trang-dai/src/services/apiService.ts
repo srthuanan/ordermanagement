@@ -13,6 +13,26 @@ import {
 } from '../types';
 import { defaultSalesPolicies } from '../constants';
 
+export const logSystemActivity = async (action: string, orderId: string | null, detail: string) => {
+  if (!supabase) return;
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    const fullName = userData?.user?.user_metadata?.full_name || 'Hệ thống';
+    const email = userData?.user?.email || 'system';
+    
+    // Fallback: ghi log bằng RPC hoặc insert trực tiếp (nếu schema hỗ trợ)
+    await supabase.from('car_hold_activities').insert({
+      action,
+      so_don_hang: orderId,
+      actor_name: fullName,
+      actor_username: email,
+      detail
+    });
+  } catch (e) {
+    console.warn('Lỗi ghi activity log:', e);
+  }
+};
+
 export const notifyAdminAction = async (actionDesc: string) => {
   if (!supabase) return;
   try {
@@ -395,6 +415,7 @@ export const createOrder = async (order: any) => {
   const result = await supabase.from('donhang').insert(order).select('*');
   if (!result.error) {
     await notifyAdminAction(`vừa tạo đơn hàng mới cho khách ${order.ten_khach_hang || ''}.`);
+    await logSystemActivity('create_order', order.so_don_hang, `Khách hàng: ${order.ten_khach_hang || ''}`);
   }
   return result;
 };
@@ -754,6 +775,8 @@ export const updateOrderDetails = async (
       }).catch(e => console.warn('Lỗi gọi gửi email ghép xe tự động:', e));
     }
   }
+
+  await logSystemActivity('update_order', input.orderId, `Cập nhật thông tin cho khách hàng: ${input.customer}`);
 
   return {
     data: {

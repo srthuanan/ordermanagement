@@ -13,6 +13,7 @@ import {
   type PricingSelection,
   type PricingPromotion
 } from '../data/vinfastPricing';
+import { logSystemActivity } from '../services/apiService';
 
 type PricingDraft = PricingDataset;
 type AdminFlowPreset = 'standard' | 'showroom' | 'promotion';
@@ -361,6 +362,7 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
     setAdminError('');
     try {
       savePricingDatasetConfig(pricingDraft);
+      logSystemActivity('update_config', null, 'Cập nhật cấu hình phụ phí và bảng giá xe');
       window.location.reload();
     } catch (error: any) {
       setAdminError(error?.message || 'JSON cấu hình không hợp lệ.');
@@ -376,8 +378,10 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
     setAdminError('');
     try {
       const parsed = JSON.parse(advancedJson);
+      setPricingDraft(parsed);
       savePricingDatasetConfig(parsed);
-      window.location.reload();
+      logSystemActivity('update_config', null, 'Cập nhật cấu hình phụ phí và bảng giá xe');
+      alert('Đã lưu cấu hình bảng giá/phụ phí thành công!');
     } catch (error: any) {
       setAdminError(error?.message || 'JSON cấu hình nâng cao không hợp lệ.');
     }

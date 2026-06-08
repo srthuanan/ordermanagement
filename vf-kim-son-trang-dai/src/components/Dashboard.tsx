@@ -53,6 +53,14 @@ function formatActivityAction(log: CarActivityRow) {
       return <span><strong>{actor}</strong> đã hủy hàng chờ cho {vinPart}</span>;
     case 'queue_prioritized':
       return <span style={{ color: 'var(--warning-color)' }}><strong>Hệ thống</strong> cấp ưu tiên 15 phút cho {vinPart}</span>;
+    case 'create_order':
+      return <span><strong style={{ color: '#059669' }}>{actor}</strong> đã tạo mới {orderPart}</span>;
+    case 'update_order':
+      return <span><strong style={{ color: '#2563eb' }}>{actor}</strong> đã cập nhật thông tin {orderPart}</span>;
+    case 'update_config':
+      return <span><strong style={{ color: '#9333ea' }}>{actor}</strong> đã cập nhật cấu hình/bảng giá</span>;
+    case 'system_action':
+      return <span><strong style={{ color: '#475569' }}>Hệ thống</strong>: {log.detail}</span>;
     default:
       return <span><strong>{actor}</strong>: {log.detail || 'Thực hiện thao tác hệ thống'}</span>;
   }

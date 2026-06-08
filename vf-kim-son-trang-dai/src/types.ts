@@ -288,7 +288,11 @@ export interface CarActivityRow {
     | 'cancel_order'
     | 'queue_join'
     | 'queue_leave'
-    | 'queue_prioritized';
+    | 'queue_prioritized'
+    | 'create_order'
+    | 'update_order'
+    | 'update_config'
+    | 'system_action';
   so_don_hang: string | null;
   vin: string | null;
   actor_name: string | null;
