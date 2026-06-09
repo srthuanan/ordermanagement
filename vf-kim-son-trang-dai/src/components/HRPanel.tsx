@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   CalendarDays, Clock, CheckCircle2, XCircle, Clock3,
   Plus, ChevronDown, Trash2, RefreshCw, User,
-  FileCheck, AlertCircle, Filter, Search, Info
+  FileCheck, AlertCircle, Filter, Search, Info, X
 } from 'lucide-react';
 import { HrLeaveRequestRow, ProfileRow } from '../types';
 import * as apiService from '../services/apiService';
@@ -267,6 +267,15 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
 
   const pendingCount = requests.filter(r => r.status === 'pending').length;
 
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 760px)');
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+
   const [isReloading, setIsReloading] = useState(false);
   const handleReload = () => {
     setIsReloading(true);
@@ -338,11 +347,11 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
 
       {/* ── Split Layout ── */}
-      <div style={{ display: 'flex', gap: '16px', flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'flex', gap: isMobile ? 0 : '16px', flex: 1, minHeight: 0 }}>
         
         {/* LEFT PANE: List */}
         <div style={{
-          width: '380px', display: 'flex', flexDirection: 'column', gap: '12px',
+          width: isMobile ? '100%' : '380px', display: 'flex', flexDirection: 'column', gap: '12px',
           background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0',
           boxShadow: '0 4px 20px rgba(0,0,0,0.03)', overflow: 'hidden'
         }}>
@@ -419,11 +428,28 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
         </div>
 
         {/* RIGHT PANE: Detail */}
-        <div style={{
-          flex: 1, display: 'flex', flexDirection: 'column',
-          background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.03)', overflow: 'hidden'
-        }}>
+        {(!isMobile || selectedReq) && (
+          <div 
+            className={isMobile ? "slide-over-overlay" : ""} 
+            onClick={() => isMobile && setSelectedId(null)}
+          >
+            <div 
+              className={isMobile ? "slide-over-panel" : ""} 
+              onClick={(e) => e.stopPropagation()}
+              style={!isMobile ? {
+                flex: 1, display: 'flex', flexDirection: 'column',
+                background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.03)', overflow: 'hidden'
+              } : { display: 'flex', flexDirection: 'column', background: '#fff', height: '100%' }}
+            >
+              {isMobile && selectedReq && (
+                <button 
+                  onClick={() => setSelectedId(null)} 
+                  style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10, background: '#e2e8f0', border: 'none', borderRadius: '50%', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}
+                >
+                  <X size={20} />
+                </button>
+              )}
           {!selectedReq ? (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', gap: '16px' }}>
               <FileCheck size={64} style={{ opacity: 0.1 }} />
@@ -535,7 +561,9 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
               </div>
             </div>
           )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Modals ── */}
