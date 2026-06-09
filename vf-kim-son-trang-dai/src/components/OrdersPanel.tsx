@@ -128,6 +128,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
 }) => {
   const reviewStatuses: OrderStatus[] = ['Chờ phê duyệt', 'Đã phê duyệt', 'Yêu cầu bổ sung', 'Đã bổ sung', 'Chờ ký hóa đơn'];
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
+  const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
   const [isMobile, setIsMobile] = useState(false);
   const [showPolicyTooltip, setShowPolicyTooltip] = useState(false);
@@ -207,7 +208,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
     <section
       className={isMobile ? `panel orders-panel ${mobileView === 'detail' ? 'orders-mobile-detail' : 'orders-mobile-list'}` : 'panel orders-panel'}
     >
-      <div className="orders-modular-workspace">
+      <div className="orders-modular-workspace" style={{ display: 'flex', flexDirection: 'column' }}>
         {/* Cánh trái: Bảng dữ liệu đơn hàng & Bộ lọc */}
         <div className="orders-data-side">
           {/* 1. Hàng Metrics rút gọn siêu gọn */}
@@ -298,6 +299,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         className={isActive ? 'orders-mobile-card active' : 'orders-mobile-card'}
                         onClick={() => {
                           setSelectedOrderId(order.id);
+                          setIsDetailPanelOpen(true);
                           setMobileView('detail');
                         }}
                       >
@@ -369,6 +371,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           key={order.id}
                           onClick={() => {
                             setSelectedOrderId(order.id);
+                            setIsDetailPanelOpen(true);
                             if (isMobile) {
                               setMobileView('detail');
                             }
@@ -431,7 +434,18 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
         </div>
 
         {/* Cánh phải: Chi tiết đơn hàng & Các nút hành động */}
-        <div className="orders-visual-side">
+        {isDetailPanelOpen && (
+          <div className="slide-over-overlay" onClick={() => setIsDetailPanelOpen(false)}>
+            <div className="slide-over-panel" onClick={(e) => e.stopPropagation()}>
+              {!isMobile && (
+                <button 
+                  onClick={() => setIsDetailPanelOpen(false)} 
+                  style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10, background: '#e2e8f0', border: 'none', borderRadius: '50%', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}
+                >
+                  <X size={20} />
+                </button>
+              )}
+              <div className="orders-visual-side" style={{ height: '100%' }}>
           <div className="order-detail-widget-container">
             {selectedOrder ? (
               (() => {
@@ -445,7 +459,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         <button
                           type="button"
                           className="ghost-button orders-mobile-back"
-                          onClick={() => setMobileView('list')}
+                          onClick={() => { setMobileView('list'); setIsDetailPanelOpen(false); }}
                           style={{ flex: '0 0 auto', height: '32px', padding: '0 10px', fontSize: '12px' }}
                         >
                           <ArrowLeft size={14} />
@@ -662,7 +676,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                       <button
                         type="button"
                         className="ghost-button orders-mobile-back"
-                        onClick={() => setMobileView('list')}
+                        onClick={() => { setMobileView('list'); setIsDetailPanelOpen(false); }}
                         style={{ alignSelf: 'flex-start', height: '32px', padding: '0 10px', fontSize: '12px' }}
                       >
                         <ArrowLeft size={14} />
@@ -901,14 +915,12 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                   </>
                 );
               })()
-            ) : (
-              <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#64748b', gap: '8px' }}>
-                <Eye size={32} style={{ opacity: 0.3 }} />
-                <span>Chọn một đơn ở bên trái để xem chi tiết.</span>
-              </div>
-            )}
+            ) : null}
             </div>
           </div>
+            </div>
+          </div>
+        )}
         </div>
         {showQueueModal && (
           <QueueRankingModal
