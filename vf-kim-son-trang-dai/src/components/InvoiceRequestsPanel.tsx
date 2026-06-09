@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Search, CheckCircle2, XCircle, Clock, ExternalLink, CheckSquare, FilePlus2, User, Car, CreditCard, FileText, HelpCircle, ArrowLeft, Eye, ShieldCheck, ClipboardCheck, Info, Mail, RefreshCw } from 'lucide-react';
+import { Search, CheckCircle2, XCircle, Clock, ExternalLink, CheckSquare, FilePlus2, User, Car, CreditCard, FileText, HelpCircle, ArrowLeft, Eye, ShieldCheck, ClipboardCheck, Info, Mail, RefreshCw, X } from 'lucide-react';
 import { YeucauxhdRow, Order } from '../types';
 import { copyToClipboard } from '../utils/clipboard';
 import * as apiService from '../services/apiService';
@@ -74,6 +74,19 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
   };
 
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list');
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 760px)');
+    const update = () => setIsMobile(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  
+  useEffect(() => {
+    if (!isMobile) setMobileView('list');
+  }, [isMobile]);
+
   const [isSyncing, setIsSyncing] = useState(false);
   const [showPolicyTooltip, setShowPolicyTooltip] = useState(false);
 
@@ -287,7 +300,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: isSplitView ? '0.35fr 1.65fr' : '1fr 0fr', gap: '8px', minHeight: 0 }}>
         
         {/* COLUMN 2: DATA LIST (Ultra Mini) */}
-        <div className={`orders-data-side ${mobileView === 'detail' ? 'hidden-mobile' : ''}`} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', minHeight: 0 }}>
+        <div className={`orders-data-side`} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', minHeight: 0 }}>
           <div style={{ position: 'relative' }}>
             <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
             <input 
@@ -333,7 +346,26 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
         </div>
 
         {/* COLUMN 3: DETAIL VIEW (FULL INFO) */}
-        <div className={`orders-visual-side ${mobileView !== 'detail' ? 'hidden-mobile' : ''}`} style={{ display: 'flex', flexDirection: 'column', minWidth: 0, background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+        {(!isMobile || mobileView === 'detail') && (
+          <div 
+            className={isMobile ? "slide-over-overlay" : ""} 
+            onClick={() => isMobile && setMobileView('list')}
+          >
+            <div 
+              className={isMobile ? "slide-over-panel orders-visual-side" : "orders-visual-side"} 
+              onClick={(e) => e.stopPropagation()}
+              style={!isMobile ? {
+                display: 'flex', flexDirection: 'column', minWidth: 0, background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', overflow: 'hidden', flex: 1
+              } : { display: 'flex', flexDirection: 'column', background: '#fff', height: '100%', flex: 1 }}
+            >
+              {isMobile && selectedRequest && (
+                <button 
+                  onClick={() => setMobileView('list')} 
+                  style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10, background: '#e2e8f0', border: 'none', borderRadius: '50%', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}
+                >
+                  <X size={20} />
+                </button>
+              )}
           {selectedRequest ? (
             <>
               {/* COMPACT HEADER WITH ACTIONS */}
@@ -538,7 +570,9 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
           ) : (
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>Chọn một yêu cầu để xem chi tiết</div>
           )}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
