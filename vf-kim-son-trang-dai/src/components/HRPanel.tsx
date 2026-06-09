@@ -253,8 +253,8 @@ const RequestListItem: React.FC<RequestListItemProps> = ({ req, isSelected, onCl
 
 export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, currentUsername, onReload }) => {
   const isAdmin = currentProfile?.role === 'admin';
-  const isDirector = currentProfile?.role === 'manager' && currentProfile?.department === 'Ban Giám Đốc';
-  const isTPKD = currentProfile?.role === 'manager' && currentProfile?.department !== 'Ban Giám Đốc';
+  const isDirector = isAdmin || (currentProfile?.role === 'manager' && currentProfile?.department === 'Ban Giám Đốc');
+  const isTPKD = isAdmin || (currentProfile?.role === 'manager' && currentProfile?.department !== 'Ban Giám Đốc');
   const hasPrivilege = isAdmin || isDirector || isTPKD;
   const [filter, setFilter] = useState<'all' | 'pending' | 'pending_director' | 'approved' | 'rejected'>('all');
   const [typeFilter, setTypeFilter] = useState<'all' | 'nghi_phep' | 'di_tre'>('all');
