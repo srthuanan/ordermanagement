@@ -292,30 +292,14 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
   const handleReview = async (req: HrLeaveRequestRow, decision: 'pending_director' | 'approved' | 'rejected') => {
     if (!currentProfile) return;
     setProcessing(true);
-    await apiService.reviewHrLeaveRequest(req.id, decision, reviewNote, currentProfile.full_name);
-    // Notify the requester
-    try {
-      const { supabase } = await import('../services/supabaseClient');
-      if (supabase) {
-        if (decision === 'pending_director') {
-          await supabase.from('interactions').insert({
-            category: 'NOTIFICATION', type: 'info', recipient: req.requester_username,
-            message: `👀 Yêu cầu ${TYPE_LABEL[req.type]} của bạn đã được TPKD thẩm định, đang chờ Giám đốc duyệt.`,
-            actor_name: currentProfile.full_name, target_view: 'hr', target_id: req.id
-          });
-        } else {
-          await supabase.from('interactions').insert({
-            category: 'NOTIFICATION',
-            type: decision === 'approved' ? 'success' : 'warning',
-            recipient: req.requester_username,
-            message: decision === 'approved'
-              ? `✅ Yêu cầu ${TYPE_LABEL[req.type]} của bạn đã được GĐ phê duyệt.${reviewNote ? ' Ghi chú: ' + reviewNote : ''}`
-              : `❌ Yêu cầu ${TYPE_LABEL[req.type]} của bạn bị từ chối.${reviewNote ? ' Lý do: ' + reviewNote : ''}`,
-            actor_name: currentProfile.full_name, target_view: 'hr', target_id: req.id
-          });
-        }
-      }
-    } catch (_) {}
+    const { error } = await apiService.reviewHrLeaveRequest(req.id, decision, reviewNote, currentProfile.full_name);
+    
+    if (error) {
+      alert('Có lỗi xảy ra khi thẩm định/phê duyệt: ' + (error.message || JSON.stringify(error)));
+      setProcessing(false);
+      return;
+    }
+
     setProcessing(false);
     setReviewNote('');
     onReload();

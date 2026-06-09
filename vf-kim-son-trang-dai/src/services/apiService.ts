@@ -1596,10 +1596,24 @@ export const updateVehicle = async (vin: string, updates: Partial<import('../typ
 
 export const getHrLeaveRequests = async () => {
   if (!supabase) return { data: [], error: null };
-  return supabase
+  const res = await supabase
     .from('hr_leave_requests')
     .select('*')
     .order('created_at', { ascending: false });
+
+  if (res.data) {
+    res.data = res.data.map((req: any) => {
+      if (req.status === 'pending' && req.reviewer_note && req.reviewer_note.startsWith('[TPKD_APPROVED]')) {
+        return {
+          ...req,
+          status: 'pending_director',
+          reviewer_note: req.reviewer_note.replace('[TPKD_APPROVED] ', '').replace('[TPKD_APPROVED]', '')
+        };
+      }
+      return req;
+    });
+  }
+  return res;
 };
 
 export const submitHrLeaveRequest = async (payload: {
@@ -1624,11 +1638,20 @@ export const reviewHrLeaveRequest = async (
   reviewed_by: string
 ) => {
   if (!supabase) return { data: null, error: new Error('Supabase chưa cấu hình') };
+  
+  let dbStatus: any = status;
+  let dbNote = reviewer_note;
+  
+  if (status === 'pending_director') {
+    dbStatus = 'pending';
+    dbNote = reviewer_note ? `[TPKD_APPROVED] ${reviewer_note}` : '[TPKD_APPROVED]';
+  }
+
   return supabase
     .from('hr_leave_requests')
     .update({
-      status,
-      reviewer_note,
+      status: dbStatus,
+      reviewer_note: dbNote,
       reviewed_by,
       reviewed_at: new Date().toISOString()
     })
