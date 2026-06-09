@@ -14,6 +14,7 @@ import {
   type PricingPromotion
 } from '../data/vinfastPricing';
 import { logSystemActivity } from '../services/apiService';
+import { LoanSchedule } from './LoanSchedule';
 
 type PricingDraft = PricingDataset;
 type AdminFlowPreset = 'standard' | 'showroom' | 'promotion';
@@ -1466,6 +1467,11 @@ export const PricingPanel: React.FC<PricingPanelProps> = ({ isAdmin }) => {
           </div>
         </div>
       </div>
+      
+      {/* Tích hợp công cụ Tính Lãi Vay */}
+      {quote && quote.collectionPrice > 0 && (
+        <LoanSchedule carPrice={quote.collectionPrice} />
+      )}
     </div>
   );
 };
