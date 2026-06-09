@@ -260,11 +260,13 @@ export function useAppData() {
       setProfiles(visibleProfiles);
       setVehicleConfigs((configsResult.data as VehicleConfigRow[]) || []);
 
-      // HR: admin/staff thấy tất cả, người khác chỉ thấy của mình
+      // HR: admin/staff thấy tất cả, người quản lý thấy của nhân sự mình quản lý, người khác chỉ thấy của mình
       const allHrRequests = (hrResult.data as HrLeaveRequestRow[]) || [];
       const visibleHrRequests = (isAdminUser || isStaffUser)
         ? allHrRequests
-        : allHrRequests.filter(r => r.requester_username === currentEmail || r.requester_name === currentFullName);
+        : isManagerUser
+          ? allHrRequests.filter(r => isManagedByCurrentManager(r.requester_username) || isManagedByCurrentManager(r.requester_name))
+          : allHrRequests.filter(r => r.requester_username === currentEmail || r.requester_name === currentFullName);
       setHrLeaveRequests(visibleHrRequests);
 
       setSyncState('live');
