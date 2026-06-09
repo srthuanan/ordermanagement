@@ -588,8 +588,13 @@ export const InventoryPanel: React.FC<InventoryPanelProps> = ({
                         <span>{isReleasingVin === selectedItem.vin ? 'Đang nhả...' : 'Bỏ giữ'}</span>
                       </button>
                     )}
-
-
+                    {selectedItem.latitude !== null && selectedItem.longitude !== null ? (
+                          <div className="inventory-mobile-gps-chip">
+                            <LocateFixed size={14} />
+                            <span>GPS Live</span>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </>
                 )}
