@@ -683,145 +683,107 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         <span>Danh sách</span>
                       </button>
                     ) : null}
-                    <div className="orders-detail-pane__header" style={{ paddingBottom: '12px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                      <div className="clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedOrder.id, 'Mã đơn')} style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-                        <h3 style={{ fontSize: '20px', margin: 0, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', fontFamily: '"Inter", sans-serif' }}>{selectedOrder.id}</h3>
-                        <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#64748b', fontWeight: 700, margin: 0 }}>Hồ sơ</p>
+                    <div className="orders-detail-pane__header" style={{ paddingBottom: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div className="clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedOrder.id, 'Mã đơn')} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <h3 style={{ fontSize: '28px', margin: 0, fontWeight: 700, color: '#111827', letterSpacing: '-0.02em', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' }}>{selectedOrder.id}</h3>
+                        <p style={{ fontSize: '13px', color: '#6b7280', margin: 0, fontWeight: 500 }}>Chi tiết hồ sơ đặt xe</p>
                       </div>
-                      <span className={statusTone[selectedOrder.status]} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '4px 10px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, border: '1px solid currentColor', opacity: 0.9 }}>
+                      <span className={statusTone[selectedOrder.status]} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 12px', borderRadius: '999px', fontSize: '12px', fontWeight: 600, backgroundColor: 'transparent', border: '1px solid currentColor', opacity: 0.9 }}>
                         {selectedOrder.status}
                       </span>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', paddingTop: '16px', flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                      {/* Cột 1: Thông tin khách hàng & Tài chính */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', paddingTop: '32px', flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                      
+                      {/* Section: Khách hàng & Nhân sự */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        {/* Khách hàng & Nhân sự */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <p style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.08em', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <User size={12} /> Liên hệ
-                          </p>
-                          <div className="clickable-copy-field" title="Click để copy tên khách" onClick={() => copyToClipboard(selectedOrder.customer, 'Tên khách')} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#0f172a', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 700, flexShrink: 0 }}>
-                              {selectedOrder.customer.charAt(0).toUpperCase()}
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Khách hàng</span>
-                              <strong style={{ fontSize: '13px', color: '#0f172a', fontWeight: 800, textTransform: 'uppercase' }}>{selectedOrder.customer}</strong>
-                            </div>
+                        <h4 style={{ fontSize: '12px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Thông tin liên hệ</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                          <div className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.customer, 'Tên khách')} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Khách hàng</span>
+                            <strong style={{ fontSize: '15px', color: '#111827', fontWeight: 500 }}>{selectedOrder.customer}</strong>
                           </div>
-
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '0 4px' }}>
-                            <div className="clickable-copy-field" title="Click để copy tên TVBH" onClick={() => copyToClipboard(selectedOrder.staff, 'Tên TVBH')} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Tư vấn viên</span>
-                              <strong style={{ fontSize: '12px', color: '#1e293b', fontWeight: 600 }}>{selectedOrder.staff}</strong>
-                            </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Ngày cọc</span>
-                              <strong style={{ fontSize: '12px', color: '#1e293b', fontWeight: 600 }}>{selectedOrder.depositDate || '—'}</strong>
-                            </div>
+                          <div className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.staff, 'Tên TVBH')} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Tư vấn viên</span>
+                            <strong style={{ fontSize: '15px', color: '#111827', fontWeight: 500 }}>{selectedOrder.staff}</strong>
                           </div>
-                        </div>
-
-                        {/* Hóa đơn & Biên lai */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <p style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.08em', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <CreditCard size={12} /> Tài chính
-                          </p>
-                          <div style={{ background: '#fafafa', border: '1px solid #e5e5e5', borderRadius: '8px', padding: '16px', position: 'relative' }}>
-                            <div style={{ position: 'absolute', top: '-3px', left: '8px', right: '8px', height: '6px', background: 'radial-gradient(circle, transparent 3px, #fafafa 3.5px) repeat-x', backgroundSize: '8px 8px' }} />
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '1px dashed #d4d4d4', paddingBottom: '12px' }}>
-                                <span style={{ fontSize: '11px', color: '#525252', fontWeight: 600, textTransform: 'uppercase' }}>Đã cọc</span>
-                                <strong style={{ fontSize: '18px', fontFamily: '"JetBrains Mono", monospace', color: '#171717', fontWeight: 800 }}>
-                                  {selectedOrder.depositAmount ? new Intl.NumberFormat('vi-VN').format(selectedOrder.depositAmount) + ' ₫' : 'N/A'}
-                               </strong>
-                              </div>
-                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', borderBottom: '1px dashed #d4d4d4', paddingBottom: '12px' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span style={{ fontSize: '10px', color: '#737373', fontWeight: 600, textTransform: 'uppercase' }}>Hình thức</span>
-                                  <strong style={{ fontSize: '12px', color: '#171717', fontWeight: 600 }}>{selectedOrder.paymentMethod || 'Tiền mặt'}</strong>
-                                </div>
-                                <div className={selectedOrder.contractCode ? "clickable-copy-field" : ""} onClick={() => selectedOrder.contractCode && copyToClipboard(selectedOrder.contractCode, 'Mã HĐ')} style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
-                                  <span style={{ fontSize: '10px', color: '#737373', fontWeight: 600, textTransform: 'uppercase' }}>Hợp Đồng</span>
-                                  <strong style={{ fontSize: '12px', color: '#171717', fontWeight: 600 }}>{selectedOrder.contractCode || 'Chưa tạo'}</strong>
-                                </div>
-                              </div>
-                              <div className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.invoiceAddress || '', 'Địa chỉ XHD')} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                <span style={{ fontSize: '10px', color: '#737373', fontWeight: 600, textTransform: 'uppercase' }}>Thông tin XHD</span>
-                                <strong style={{ fontSize: '11px', color: '#171717', fontWeight: 500, lineHeight: 1.4, wordBreak: 'break-word' }}>
-                                  {selectedOrder.invoiceAddress || 'Chưa có thông tin XHD'}
-                                </strong>
-                                {selectedOrder.maAmis && (
-                                  <div style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 6px', background: '#e0f2fe', color: '#0284c7', borderRadius: '4px', width: 'fit-content', fontSize: '10px', fontWeight: 700, marginTop: '4px' }} onClick={(e) => { e.stopPropagation(); copyToClipboard(selectedOrder.maAmis!, 'Mã Amis'); }}>
-                                    Mã Amis: {selectedOrder.maAmis}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Ngày đặt cọc</span>
+                            <strong style={{ fontSize: '15px', color: '#111827', fontWeight: 500 }}>{selectedOrder.depositDate || '—'}</strong>
                           </div>
                         </div>
                       </div>
 
-                      {/* Cột 2: Xe & Cấu hình */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%' }}>
-                          <p style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.08em', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <Car size={12} /> Phương tiện
-                          </p>
-                          <div style={{ background: '#0f172a', color: '#fff', borderRadius: '12px', padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative', overflow: 'hidden', flex: 1 }}>
-                            <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '100px', height: '100px', background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%)', borderRadius: '50%' }} />
-                            
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 1 }}>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Dòng xe</span>
-                                <strong style={{ fontSize: '16px', fontWeight: 800, color: '#f8fafc' }}>{selectedVehicleSummary}</strong>
-                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '999px', width: 'fit-content', marginTop: '2px' }}>
-                                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: selectedOrder.exterior.includes('Trắng') ? '#fff' : selectedOrder.exterior.includes('Đỏ') ? '#ef4444' : selectedOrder.exterior.includes('Đen') ? '#000' : '#cbd5e1', border: '1px solid rgba(255,255,255,0.2)' }} />
-                                  <span style={{ fontSize: '11px', color: '#e2e8f0', fontWeight: 500 }}>{selectedFinishSummary}</span>
-                                </div>
-                              </div>
-                              <div
-                                style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px', cursor: 'help', position: 'relative' }}
-                                onMouseEnter={() => setShowPolicyTooltip(true)}
-                                onMouseLeave={() => setShowPolicyTooltip(false)}
-                              >
-                                <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Chính sách</span>
-                                <strong style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 700 }}>
-                                  {selectedOrder.policy ? `${selectedOrder.policy.split('\n').filter(Boolean).length} CS` : 'Mặc định'}
-                                </strong>
-                                {showPolicyTooltip && selectedOrder.policy && (
-                                  <div style={{ position: 'absolute', top: '100%', right: '0', marginTop: '8px', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px 12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 999, minWidth: '200px' }}>
-                                    <p style={{ margin: '0 0 4px', fontSize: '10px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>Chi tiết</p>
-                                    {selectedOrder.policy.split('\n').filter(Boolean).map((line, idx) => (
-                                      <div key={idx} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start', marginBottom: '4px' }}>
-                                        <span style={{ color: '#0ea5e9', fontWeight: 700, flexShrink: 0 }}>•</span>
-                                        <span style={{ fontSize: '11px', color: '#334155', lineHeight: 1.4 }}>{line}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                      <div style={{ height: '1px', background: '#f3f4f6', width: '100%' }} />
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', zIndex: 1, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px', marginTop: 'auto' }}>
-                              <span style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Số VIN định danh</span>
-                              {selectedOrder.vin ? (
-                                <div className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.vin!, 'Số VIN')} style={{ background: 'linear-gradient(135deg, #e2e8f0 0%, #ffffff 100%)', borderRadius: '4px', padding: '6px 12px', width: 'fit-content', boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.5)' }}>
-                                  <strong style={{ fontSize: '14px', fontFamily: '"JetBrains Mono", monospace', letterSpacing: '0.1em', color: '#0f172a', fontWeight: 800 }}>{selectedOrder.vin}</strong>
-                                </div>
-                              ) : (
-                                <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '4px', padding: '6px 12px', width: 'fit-content' }}>
-                                  <span style={{ fontSize: '12px', fontStyle: 'italic', color: '#94a3b8', fontWeight: 500 }}>Chưa được cấp VIN</span>
-                                </div>
-                              )}
+                      {/* Section: Phương tiện */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <h4 style={{ fontSize: '12px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Cấu hình phương tiện</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Dòng xe & Phiên bản</span>
+                            <strong style={{ fontSize: '15px', color: '#111827', fontWeight: 500 }}>{selectedVehicleSummary}</strong>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Màu sắc (Ngoại/Nội)</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: selectedOrder.exterior.includes('Trắng') ? '#f8fafc' : selectedOrder.exterior.includes('Đỏ') ? '#ef4444' : selectedOrder.exterior.includes('Đen') ? '#111827' : '#9ca3af', border: '1px solid #d1d5db' }} />
+                              <strong style={{ fontSize: '15px', color: '#111827', fontWeight: 500 }}>{selectedFinishSummary}</strong>
                             </div>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Chính sách bán hàng</span>
+                            <strong style={{ fontSize: '14px', color: '#0ea5e9', fontWeight: 500 }}>
+                              {selectedOrder.policy ? selectedOrder.policy.split('\n')[0] + (selectedOrder.policy.split('\n').length > 1 ? '...' : '') : 'Mặc định'}
+                            </strong>
+                          </div>
+                          <div className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.vin || '', 'Số VIN')} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Số VIN định danh</span>
+                            {selectedOrder.vin ? (
+                              <strong style={{ fontSize: '15px', fontFamily: '"JetBrains Mono", monospace', color: '#111827', fontWeight: 600, letterSpacing: '0.05em' }}>{selectedOrder.vin}</strong>
+                            ) : (
+                              <span style={{ fontSize: '14px', color: '#9ca3af', fontStyle: 'italic' }}>Chưa được cấp</span>
+                            )}
                           </div>
                         </div>
                       </div>
+
+                      <div style={{ height: '1px', background: '#f3f4f6', width: '100%' }} />
+
+                      {/* Section: Tài chính */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        <h4 style={{ fontSize: '12px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Hồ sơ tài chính</h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Tiền đã cọc</span>
+                            <strong style={{ fontSize: '18px', color: '#111827', fontWeight: 600 }}>
+                              {selectedOrder.depositAmount ? new Intl.NumberFormat('vi-VN').format(selectedOrder.depositAmount) + ' ₫' : '—'}
+                            </strong>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Hình thức thanh toán</span>
+                            <strong style={{ fontSize: '15px', color: '#111827', fontWeight: 500 }}>{selectedOrder.paymentMethod || 'Tiền mặt'}</strong>
+                          </div>
+                          <div className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.contractCode || '', 'Mã HĐ')} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Mã Hợp Đồng</span>
+                            <strong style={{ fontSize: '15px', color: '#111827', fontWeight: 500 }}>{selectedOrder.contractCode || '—'}</strong>
+                          </div>
+                          <div className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.maAmis || '', 'Mã Amis')} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Mã ERP (Amis)</span>
+                            <strong style={{ fontSize: '15px', color: '#111827', fontWeight: 500 }}>{selectedOrder.maAmis || '—'}</strong>
+                          </div>
+                          <div className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.invoiceAddress || '', 'Địa chỉ XHD')} style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: 'span 2' }}>
+                            <span style={{ fontSize: '13px', color: '#6b7280' }}>Địa chỉ xuất hóa đơn</span>
+                            <strong style={{ fontSize: '15px', color: '#111827', fontWeight: 400, lineHeight: 1.5 }}>
+                              {selectedOrder.invoiceAddress || '—'}
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
+
                     </div>
 
-                    <div className="orders-detail-actions" style={{ position: 'sticky', bottom: 0, background: '#ffffff', display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '20px', paddingBottom: '20px', borderTop: '1px solid #f1f5f9', zIndex: 10 }}>
+                    <div className="orders-detail-actions" style={{ position: 'sticky', bottom: 0, background: '#ffffff', display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '24px', paddingBottom: '24px', borderTop: '1px solid #f3f4f6', zIndex: 10 }}>
                       <div style={{ display: 'grid', gridTemplateColumns: canPairOrder ? '1fr 1fr' : '1fr', gap: '12px' }}>
                         {canPairOrder && (
                           <button
@@ -836,24 +798,24 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                             }
                             onClick={() => onPairOrder(selectedOrder)}
                             style={{ 
-                              height: '40px', 
-                              fontSize: '13.5px', 
-                              borderRadius: '8px', 
-                              fontWeight: 600,
+                              height: '44px', 
+                              fontSize: '14px', 
+                              borderRadius: '6px', 
+                              fontWeight: 500,
                               transition: 'all 0.2s ease',
                               ...(selectedCanPair ? {
-                                background: '#0f172a',
+                                background: '#111827',
                                 color: '#ffffff',
                                 border: 'none',
                               } : {
-                                background: '#f8fafc',
-                                color: '#94a3b8',
-                                border: '1px solid #e2e8f0'
+                                background: '#f9fafb',
+                                color: '#9ca3af',
+                                border: '1px solid #e5e7eb'
                               })
                             }}
                           >
                             <PackageCheck size={16} />
-                            <span>Ghép xe</span>
+                            <span>Ghép xe định danh</span>
                           </button>
                         )}
                         <button
@@ -862,13 +824,13 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           title={selectedCanInvoice ? 'Cập nhật hồ sơ bàn giao xe & xuất hóa đơn GTGT' : 'Chỉ đơn đã ghép mới được chốt xuất hóa đơn'}
                           onClick={() => onInvoiceOrder(selectedOrder)}
                           style={{ 
-                            height: '40px', 
-                            fontSize: '13.5px', 
-                            borderRadius: '8px', 
-                            fontWeight: 600,
-                            border: '1px solid #e2e8f0', 
-                            backgroundColor: selectedCanInvoice ? '#ffffff' : '#f8fafc',
-                            color: selectedCanInvoice ? '#0f172a' : '#94a3b8'
+                            height: '44px', 
+                            fontSize: '14px', 
+                            borderRadius: '6px', 
+                            fontWeight: 500,
+                            border: '1px solid #e5e7eb', 
+                            backgroundColor: selectedCanInvoice ? '#ffffff' : '#f9fafb',
+                            color: selectedCanInvoice ? '#111827' : '#9ca3af'
                           }}
                         >
                           <FileCheck size={16} />
@@ -881,20 +843,20 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           disabled={!selectedCanEdit}
                           title={selectedCanEdit ? 'Sửa thông tin đơn hàng' : 'Không cho sửa đơn đã hoàn tất'}
                           onClick={() => onEditOrder(selectedOrder)}
-                          style={{ height: '38px', fontSize: '13px', borderRadius: '8px', border: '1px solid #e2e8f0', fontWeight: 500, color: '#475569', background: '#ffffff' }}
+                          style={{ height: '36px', fontSize: '13px', borderRadius: '6px', border: '1px solid transparent', fontWeight: 500, color: '#6b7280', background: 'transparent' }}
                         >
-                          <Pencil size={15} />
-                          <span>Sửa thông tin</span>
+                          <Pencil size={14} />
+                          <span>Chỉnh sửa hồ sơ</span>
                         </button>
                         <button
                           className="ghost-button"
                           disabled={!selectedCanUnpair || isUnpairingOrderId === selectedOrder.id}
                           title={selectedCanUnpair ? 'Hủy ghép và trả xe về trạng thái trống' : 'Chỉ đơn đã ghép mới hủy ghép được'}
                           onClick={() => onUnpairOrder(selectedOrder.id)}
-                          style={{ height: '38px', fontSize: '13px', borderRadius: '8px', border: '1px solid #e2e8f0', fontWeight: 500, color: '#475569', background: '#ffffff' }}
+                          style={{ height: '36px', fontSize: '13px', borderRadius: '6px', border: '1px solid transparent', fontWeight: 500, color: '#6b7280', background: 'transparent' }}
                         >
-                          <X size={15} />
-                          <span>{isUnpairingOrderId === selectedOrder.id ? 'Đang hủy...' : 'Hủy ghép'}</span>
+                          <X size={14} />
+                          <span>{isUnpairingOrderId === selectedOrder.id ? 'Đang hủy...' : 'Hủy ghép xe'}</span>
                         </button>
                       </div>
                       <button
@@ -902,9 +864,9 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         disabled={!selectedCanCancel}
                         title={selectedCanCancel ? 'Hủy đơn hàng và hoàn cọc' : 'Không cho phép hủy đơn đã hoàn tất hoặc đã hủy'}
                         onClick={() => onCancelOrder(selectedOrder)}
-                        style={{ height: '38px', fontSize: '13px', borderRadius: '8px', border: 'none', color: selectedCanCancel ? '#ef4444' : '#f87171', background: selectedCanCancel ? '#fef2f2' : 'transparent', width: '100%', fontWeight: 500, transition: 'all 0.2s ease' }}
+                        style={{ height: '36px', fontSize: '13px', borderRadius: '6px', border: 'none', color: selectedCanCancel ? '#ef4444' : '#fca5a5', background: 'transparent', width: '100%', fontWeight: 500 }}
                       >
-                        <Ban size={15} />
+                        <Ban size={14} />
                         <span>Hủy bỏ đơn hàng</span>
                       </button>
                     </div>
