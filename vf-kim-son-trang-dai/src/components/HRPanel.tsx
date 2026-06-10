@@ -548,7 +548,8 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
                   }
 
                   return null;
-                  {selectedReq.status === 'approved' || selectedReq.status === 'rejected' ? (
+                })()}
+                {selectedReq.status === 'approved' || selectedReq.status === 'rejected' ? (
                     <div>
                       <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Kết quả xử lý</p>
                       <div style={{ background: selectedReq.status === 'approved' ? '#ecfdf5' : '#fef2f2', border: `1px solid ${selectedReq.status === 'approved' ? '#a7f3d0' : '#fecaca'}`, padding: '16px 20px', borderRadius: '12px' }}>
