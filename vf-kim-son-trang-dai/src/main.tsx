@@ -417,6 +417,9 @@ function App() {
                 onInvoiceOrder={setInvoicingOrder}
                 onCancelOrder={setCancelingOrder}
                 onEditOrder={setEditingOrder}
+                onUpdateOrder={handleUpdateOrder}
+                isUpdatingOrder={isUpdatingOrder}
+                vehicleConfigs={vehicleConfigs}
                 onSelectPolicy={setSelectingPolicyOrder}
               />
             )}
