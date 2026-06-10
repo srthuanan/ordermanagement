@@ -776,16 +776,34 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                               <tr>
                                 <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Chính sách</td>
                                 <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>
-                                  {selectedOrder.policy ? (
-                                    <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                      {selectedOrder.policy.split(/,(?!\d)/).map((p, i) => {
-                                        const trimmed = p.trim();
-                                        return trimmed ? <li key={i}>{trimmed}</li> : null;
-                                      })}
-                                    </ul>
-                                  ) : (
-                                    'Mặc định'
-                                  )}
+                                  {(() => {
+                                    if (!selectedOrder.policy) return 'Mặc định';
+                                    const policies = selectedOrder.policy.split(/,(?!\d)/).map(p => p.trim()).filter(Boolean);
+                                    if (policies.length === 0) return 'Mặc định';
+                                    
+                                    if (policies.length <= 3) {
+                                      return (
+                                        <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                          {policies.map((p, i) => <li key={i}>{p}</li>)}
+                                        </ul>
+                                      );
+                                    }
+
+                                    const mid = Math.ceil(policies.length / 2);
+                                    const col1 = policies.slice(0, mid);
+                                    const col2 = policies.slice(mid);
+
+                                    return (
+                                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px' }}>
+                                        <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                          {col1.map((p, i) => <li key={i}>{p}</li>)}
+                                        </ul>
+                                        <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                          {col2.map((p, i) => <li key={i}>{p}</li>)}
+                                        </ul>
+                                      </div>
+                                    );
+                                  })()}
                                 </td>
                               </tr>
                               <tr>
