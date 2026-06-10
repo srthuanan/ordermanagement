@@ -6583,12 +6583,15 @@ td small {
 
 .slide-over-panel .orders-visual-side {
   flex: 1;
-  padding: 24px 20px;
+  padding: 24px 0;
   overflow-y: auto;
   background: transparent;
   box-shadow: none;
   border: none;
   height: 100%;
+}
+.slide-over-panel .order-detail-widget-container {
+  margin: 0 20px;
 }
 
 @keyframes slideInRight {
