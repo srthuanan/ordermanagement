@@ -68,7 +68,7 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
   const [xeXangModel, setXeXangModel] = React.useState(order.xeXangModel || '');
   const [maAmis, setMaAmis] = React.useState(order.maAmis || '');
 
-  const initialPolicies = order.policy ? order.policy.split(',').map(p => p.trim()).filter(Boolean) : [];
+  const initialPolicies = order.policy ? order.policy.split(/,(?!\d)/).map(p => p.trim()).filter(Boolean) : [];
   const [policy, setPolicy] = React.useState<string[]>(initialPolicies);
   const [policyRows, setPolicyRows] = React.useState<SalesPolicyRow[]>([]);
   const [policyLoading, setPolicyLoading] = React.useState(true);

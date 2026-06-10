@@ -778,7 +778,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                                 <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>
                                   {selectedOrder.policy ? (
                                     <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                      {selectedOrder.policy.split(',').map((p, i) => {
+                                      {selectedOrder.policy.split(/,(?!\d)/).map((p, i) => {
                                         const trimmed = p.trim();
                                         return trimmed ? <li key={i}>{trimmed}</li> : null;
                                       })}
