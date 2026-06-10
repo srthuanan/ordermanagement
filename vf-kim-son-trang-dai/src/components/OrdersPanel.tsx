@@ -715,7 +715,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         />
                       ) : (
                         <>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #cbd5e1' }}>
+                          <table style={{ width: '100%', height: '100%', flex: 1, borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #cbd5e1' }}>
                             <tbody>
                               <tr>
                                 <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '18%' }}>Khách hàng</td>
@@ -788,7 +788,7 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                             </tbody>
                           </table>
 
-                          <div style={{ marginTop: 'auto', paddingTop: '16px', display: 'flex', gap: '8px' }}>
+                          <div style={{ paddingTop: '16px', display: 'flex', gap: '8px' }}>
                             {canPairOrder && (
                               <button
                                 disabled={!selectedCanPair}
