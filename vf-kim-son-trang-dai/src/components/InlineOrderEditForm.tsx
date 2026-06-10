@@ -199,11 +199,11 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '18%' }}>Khách hàng *</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px', width: '32%' }}>
-                <input value={customer} onChange={(e) => setCustomer(e.target.value)} required style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+                <input value={customer} onChange={(e) => setCustomer(e.target.value)} required style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }} />
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '18%' }}>Tư vấn viên *</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px', width: '32%' }}>
-                <select value={staff} onChange={(e) => setStaff(e.target.value)} required style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                <select value={staff} onChange={(e) => setStaff(e.target.value)} required style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }}>
                   {staffNames.map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               </td>
@@ -211,17 +211,17 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Dòng xe *</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <select value={line} onChange={(e) => setLine(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                <select value={line} onChange={(e) => setLine(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }}>
                   {vehicleLines.map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Màu (Ngoại/Nội) *</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
                 <div style={{ display: 'flex', gap: '4px' }}>
-                  <select value={exterior} onChange={(e) => setExterior(e.target.value)} style={{ width: '50%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                  <select value={exterior} onChange={(e) => setExterior(e.target.value)} style={{ width: '50%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }}>
                     {defaultExteriors.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
-                  <select value={interior} onChange={(e) => setInterior(e.target.value)} style={{ width: '50%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                  <select value={interior} onChange={(e) => setInterior(e.target.value)} style={{ width: '50%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }}>
                     {interiorOptions.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
                 </div>
@@ -234,62 +234,62 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày cần xe *</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <input type="date" value={needDate} onChange={(e) => setNeedDate(e.target.value)} required style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+                <input type="date" value={needDate} onChange={(e) => setNeedDate(e.target.value)} required style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }} />
               </td>
             </tr>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày đặt cọc *</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <input type="date" value={depositDate} onChange={(e) => setDepositDate(e.target.value)} required style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+                <input type="date" value={depositDate} onChange={(e) => setDepositDate(e.target.value)} required style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }} />
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Tiền đã cọc</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <input type="number" value={depositAmount !== null && depositAmount !== undefined ? depositAmount : ''} placeholder="VD: 50000000" onChange={(e) => setDepositAmount(e.target.value ? Number(e.target.value) : null)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+                <input type="number" value={depositAmount !== null && depositAmount !== undefined ? depositAmount : ''} placeholder="VD: 50000000" onChange={(e) => setDepositAmount(e.target.value ? Number(e.target.value) : null)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }} />
               </td>
             </tr>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Thanh toán</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }}>
                   <option value="Tiền mặt">Tiền mặt</option>
                   <option value="Vay ngân hàng">Vay ngân hàng</option>
                 </select>
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Nguồn khách</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <input value={nguonKhach} placeholder="VD: Marketing" onChange={(e) => setNguonKhach(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+                <input value={nguonKhach} placeholder="VD: Marketing" onChange={(e) => setNguonKhach(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }} />
               </td>
             </tr>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mã Hợp Đồng</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <input value={contractCode} placeholder="Nhập mã HĐ..." onChange={(e) => setContractCode(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+                <input value={contractCode} placeholder="Nhập mã HĐ..." onChange={(e) => setContractCode(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }} />
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mã Amis</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <input value={maAmis} placeholder="Nhập mã Amis..." onChange={(e) => setMaAmis(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+                <input value={maAmis} placeholder="Nhập mã Amis..." onChange={(e) => setMaAmis(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }} />
               </td>
             </tr>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày ký HĐ</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <input type="date" value={ngayKyHopDong} onChange={(e) => setNgayKyHopDong(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+                <input type="date" value={ngayKyHopDong} onChange={(e) => setNgayKyHopDong(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }} />
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Giá công bố</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <input type="number" value={giaCongBo !== null && giaCongBo !== undefined ? giaCongBo : ''} placeholder="VD: 599000000" onChange={(e) => setGiaCongBo(e.target.value ? Number(e.target.value) : null)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+                <input type="number" value={giaCongBo !== null && giaCongBo !== undefined ? giaCongBo : ''} placeholder="VD: 599000000" onChange={(e) => setGiaCongBo(e.target.value ? Number(e.target.value) : null)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }} />
               </td>
             </tr>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Đăng ký xe</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <select value={dangKyXe === null ? '' : dangKyXe ? 'true' : 'false'} onChange={(e) => setDangKyXe(e.target.value === '' ? null : e.target.value === 'true')} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                <select value={dangKyXe === null ? '' : dangKyXe ? 'true' : 'false'} onChange={(e) => setDangKyXe(e.target.value === '' ? null : e.target.value === 'true')} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }}>
                   <option value="">Chưa chọn</option><option value="true">Có</option><option value="false">Không</option>
                 </select>
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mua bảo hiểm</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <select value={muaBaoHiem === null ? '' : muaBaoHiem ? 'true' : 'false'} onChange={(e) => setMuaBaoHiem(e.target.value === '' ? null : e.target.value === 'true')} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                <select value={muaBaoHiem === null ? '' : muaBaoHiem ? 'true' : 'false'} onChange={(e) => setMuaBaoHiem(e.target.value === '' ? null : e.target.value === 'true')} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }}>
                   <option value="">Chưa chọn</option><option value="true">Có</option><option value="false">Không</option>
                 </select>
               </td>
@@ -299,9 +299,9 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
                 <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Xe xăng thu cũ</td>
                 <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
                   <div style={{ display: 'flex', gap: '8px' }}>
-                    <input value={xeXangVin} placeholder="VIN xe xăng" onChange={(e) => setXeXangVin(e.target.value.toUpperCase())} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0 }} />
-                    <input value={xeXangHang} placeholder="Hãng (VD: Toyota)" onChange={(e) => setXeXangHang(e.target.value)} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0 }} />
-                    <input value={xeXangModel} placeholder="Model (VD: Vios 1.5G)" onChange={(e) => setXeXangModel(e.target.value)} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0 }} />
+                    <input value={xeXangVin} placeholder="VIN xe xăng" onChange={(e) => setXeXangVin(e.target.value.toUpperCase())} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box', minWidth: 0 }} />
+                    <input value={xeXangHang} placeholder="Hãng (VD: Toyota)" onChange={(e) => setXeXangHang(e.target.value)} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box', minWidth: 0 }} />
+                    <input value={xeXangModel} placeholder="Model (VD: Vios 1.5G)" onChange={(e) => setXeXangModel(e.target.value)} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box', minWidth: 0 }} />
                   </div>
                 </td>
               </tr>
@@ -347,13 +347,13 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Địa chỉ XHD</td>
               <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <input value={invoiceAddress} placeholder="Nhập địa chỉ đầy đủ để xuất hóa đơn..." onChange={(e) => setInvoiceAddress(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+                <input value={invoiceAddress} placeholder="Nhập địa chỉ đầy đủ để xuất hóa đơn..." onChange={(e) => setInvoiceAddress(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0, boxSizing: 'border-box' }} />
               </td>
             </tr>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ghi chú</td>
               <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
-                <textarea value={ghiChu} placeholder="Ghi chú cho bộ phận xuất hóa đơn..." onChange={(e) => setGhiChu(e.target.value)} rows={2} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', resize: 'vertical', outline: 'none', fontFamily: 'inherit', fontSize: '13px' }} />
+                <textarea value={ghiChu} placeholder="Ghi chú cho bộ phận xuất hóa đơn..." onChange={(e) => setGhiChu(e.target.value)} rows={2} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', resize: 'vertical', outline: 'none', minWidth: 0, boxSizing: 'border-box', fontFamily: 'inherit', fontSize: '13px' }} />
               </td>
             </tr>
           </tbody>
