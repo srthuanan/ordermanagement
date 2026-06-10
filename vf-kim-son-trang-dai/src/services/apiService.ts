@@ -298,7 +298,7 @@ const invokeStaffFunction = async (body: Record<string, unknown>) => {
 };
 
 export const inviteStaffMember = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null; managerId?: string | null }) => {
-  return await invokeStaffFunction({
+  const result = await invokeStaffFunction({
     action: 'invite',
     email: input.email,
     fullName: input.fullName,
@@ -306,10 +306,14 @@ export const inviteStaffMember = async (input: { email: string; fullName: string
     department: input.department ?? null,
     managerId: input.managerId ?? null
   });
+  if (!result.error) {
+    await logSystemActivity('system_action', null, `Đã mời nhân sự: ${input.fullName} (${input.email})`);
+  }
+  return result;
 };
 
 export const resendStaffInvite = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null; managerId?: string | null; staffId?: string }) => {
-  return await invokeStaffFunction({
+  const result = await invokeStaffFunction({
     action: 'resend',
     email: input.email,
     fullName: input.fullName,
@@ -317,10 +321,14 @@ export const resendStaffInvite = async (input: { email: string; fullName: string
     department: input.department ?? null,
     managerId: input.managerId ?? null
   });
+  if (!result.error) {
+    await logSystemActivity('system_action', null, `Đã gửi lại lời mời cho: ${input.fullName}`);
+  }
+  return result;
 };
 
 export const cancelStaffInvite = async (input: { email: string; fullName: string; role: 'sales' | 'manager'; department?: string | null; managerId?: string | null; staffId?: string }) => {
-  return await invokeStaffFunction({
+  const result = await invokeStaffFunction({
     action: 'cancel',
     email: input.email,
     fullName: input.fullName,
@@ -329,6 +337,10 @@ export const cancelStaffInvite = async (input: { email: string; fullName: string
     managerId: input.managerId ?? null,
     staffId: input.staffId
   });
+  if (!result.error) {
+    await logSystemActivity('system_action', null, `Đã hủy lời mời/xóa nhân sự: ${input.fullName}`);
+  }
+  return result;
 };
 
 export const updateStaffPermission = async (input: {
@@ -339,7 +351,7 @@ export const updateStaffPermission = async (input: {
   department?: string | null;
   managerId?: string | null;
 }) => {
-  return await invokeStaffFunction({
+  const result = await invokeStaffFunction({
     action: 'update',
     staffId: input.staffId,
     email: input.email ?? null,
@@ -348,6 +360,10 @@ export const updateStaffPermission = async (input: {
     department: input.department ?? null,
     managerId: input.managerId ?? null
   });
+  if (!result.error) {
+    await logSystemActivity('system_action', null, `Cập nhật phân quyền nhân sự: ${input.fullName}`);
+  }
+  return result;
 };
 
 // --- Queries ---
@@ -407,7 +423,11 @@ export const getCarHoldActivities = async () => {
 // --- Actions & Mutations ---
 export const createCustomer = async (customer: CustomerRow) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.from('customers').upsert(customer, { onConflict: 'phone' });
+  const result = await supabase.from('customers').upsert(customer, { onConflict: 'phone' });
+  if (!result.error) {
+    await logSystemActivity('system_action', null, `Cập nhật khách hàng: ${customer.full_name}`);
+  }
+  return result;
 };
 
 export const createOrder = async (order: any) => {
@@ -552,6 +572,10 @@ export const createSalesPolicy = async (payload: Omit<SalesPolicyRow, 'id' | 'cr
       created_at: new Date().toISOString()
     }]);
 
+  if (!error) {
+    await logSystemActivity('update_config', null, `Đã tạo chính sách: ${payload.ten_chinh_sach}`);
+  }
+
   return { error };
 };
 
@@ -568,6 +592,9 @@ export const updateSalesPolicy = async (id: string, payload: Partial<Omit<SalesP
   }
 
   const { error } = await query;
+  if (!error) {
+    await logSystemActivity('update_config', null, `Đã cập nhật chính sách: ${payload.ten_chinh_sach || oldName || id}`);
+  }
   return { error };
 };
 
@@ -584,6 +611,9 @@ export const deleteSalesPolicy = async (id: string, oldName?: string): Promise<{
   }
 
   const { error } = await query;
+  if (!error) {
+    await logSystemActivity('update_config', null, `Đã xóa chính sách: ${oldName || id}`);
+  }
   return { error };
 };
 
@@ -605,6 +635,8 @@ export const updateOrderPolicy = async (orderId: string, policy: string) => {
     .from('yeucauxhd')
     .update({ chinh_sach: policy, updated_at: new Date().toISOString() })
     .eq('so_don_hang', orderId);
+
+  await logSystemActivity('update_order', orderId, `Cập nhật chính sách đơn hàng thành: ${policy}`);
 
   return { data: { status: 'SUCCESS' }, error: null };
 };
@@ -795,7 +827,7 @@ export const updateInvoiceInfo = async (
   policy: string
 ) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase
+  const result = await supabase
     .from('donhang')
     .update({
       ket_qua: 'Đã xuất hóa đơn',
@@ -805,6 +837,11 @@ export const updateInvoiceInfo = async (
       updated_at: new Date().toISOString()
     })
     .eq('so_don_hang', orderId);
+
+  if (!result.error) {
+    await logSystemActivity('update_order', orderId, 'Cập nhật TT xuất hóa đơn');
+  }
+  return result;
 };
 
 // --- Safe Inventory / Pairing Actions (Optimistic Transaction RPCs) ---
@@ -951,7 +988,11 @@ export const unpairVehicle = async (orderId: string) => {
 
 export const addNewVehicle = async (vehicle: KhoxeRow) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.from('khoxe').insert(vehicle);
+  const result = await supabase.from('khoxe').insert(vehicle);
+  if (!result.error) {
+    await logSystemActivity('system_action', null, `Đã thêm mới xe VIN: ${vehicle.vin}`);
+  }
+  return result;
 };
 
 export const checkExistingVins = async (vins: string[]): Promise<{ data: { vin: string }[] | null; error: any }> => {
@@ -1549,29 +1590,42 @@ export const getVehicleConfigs = async () => {
 
 export const createVehicleConfig = async (config: Omit<import('../types').VehicleConfigRow, 'id' | 'created_at' | 'updated_at'>) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.from('vehicle_configs').insert(config).select('*');
+  const result = await supabase.from('vehicle_configs').insert(config).select();
+  if (!result.error) {
+    await logSystemActivity('update_config', null, `Đã tạo cấu hình xe: ${config.line} ${config.version}`);
+  }
+  return result;
 };
 
 export const updateVehicleConfig = async (id: string, updates: Partial<Omit<import('../types').VehicleConfigRow, 'id' | 'created_at' | 'updated_at'>>) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.from('vehicle_configs').update(updates).eq('id', id).select('*');
+  const result = await supabase.from('vehicle_configs').update(updates).eq('id', id).select();
+  if (!result.error) {
+    await logSystemActivity('update_config', null, `Đã cập nhật cấu hình xe (ID: ${id})`);
+  }
+  return result;
 };
 
 export const deleteVehicleConfig = async (id: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  // Deleting a line will cascade delete versions due to foreign key (if we used parent_id),
-  // but since we used parent_value, we might need to manually clean up or just rely on UI logic.
-  // Actually, we just need to delete by id. If it's a line, we should delete its versions too.
   const { data } = await supabase.from('vehicle_configs').select('type, value').eq('id', id).single();
   if (data?.type === 'line') {
     await supabase.from('vehicle_configs').delete().eq('parent_value', data.value);
   }
-  return await supabase.from('vehicle_configs').delete().eq('id', id);
+  const result = await supabase.from('vehicle_configs').delete().eq('id', id);
+  if (!result.error) {
+    await logSystemActivity('update_config', null, `Đã xóa cấu hình xe (ID: ${id})`);
+  }
+  return result;
 };
 
 export const deleteVehicle = async (vin: string) => {
   if (!supabase) throw new Error('Supabase chưa được cấu hình');
-  return await supabase.from('khoxe').delete().eq('vin', vin.trim());
+  const result = await supabase.from('khoxe').delete().eq('vin', vin.trim());
+  if (!result.error) {
+    await logSystemActivity('delete_vehicle', null, `Đã xóa xe (VIN: ${vin})`);
+  }
+  return result;
 };
 
 export const updateVehicle = async (vin: string, updates: Partial<import('../types').InventoryItem>) => {

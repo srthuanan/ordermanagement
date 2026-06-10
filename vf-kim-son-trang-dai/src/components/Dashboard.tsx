@@ -62,7 +62,7 @@ function formatActivityAction(log: CarActivityRow) {
     case 'update_config':
       return <span><strong style={{ color: '#9333ea' }}>{actor}</strong> đã cập nhật cấu hình/bảng giá</span>;
     case 'system_action':
-      return <span><strong style={{ color: '#475569' }}>Hệ thống</strong>: {log.detail}</span>;
+      return <span><strong style={{ color: '#475569' }}>{actor}</strong>: {log.detail}</span>;
     default:
       return <span><strong>{actor}</strong>: {log.detail || 'Thực hiện thao tác hệ thống'}</span>;
   }
