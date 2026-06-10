@@ -425,11 +425,11 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
           </div>
         </div>
 
-        {/* RIGHT PANE: Detail */}
         {(!isMobile || selectedReq) && (
           <div 
             className={isMobile ? "slide-over-overlay" : ""} 
             onClick={() => isMobile && setSelectedId(null)}
+            style={!isMobile ? { flex: 1, display: 'flex', minWidth: 0 } : undefined}
           >
             <div 
               className={isMobile ? "slide-over-panel" : ""} 
