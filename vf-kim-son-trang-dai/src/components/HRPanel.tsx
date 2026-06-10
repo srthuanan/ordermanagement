@@ -497,25 +497,40 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
               
               {/* Info Block */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '12px', fontSize: '13px' }}>
-                  <span style={{ color: '#64748b' }}>Thời gian:</span>
-                  <span style={{ color: '#0f172a', fontWeight: 500 }}>
-                    {fmtDate(selectedReq.start_date)}
-                    {selectedReq.end_date && selectedReq.end_date !== selectedReq.start_date ? ` → ${fmtDate(selectedReq.end_date)}` : ''}
-                  </span>
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '12px', fontSize: '13px' }}>
-                  <span style={{ color: '#64748b' }}>Chi tiết:</span>
-                  <span style={{ color: '#0f172a', fontWeight: 500 }}>
-                    {selectedReq.type === 'nghi_phep' ? (
-                      <>
-                        {selectedReq.session ? SESSION_LABEL[selectedReq.session] : ''} ({daysBetween(selectedReq.start_date, selectedReq.end_date)} ngày)
-                      </>
-                    ) : (
-                      `Giờ đến: ${selectedReq.late_time}`
-                    )}
-                  </span>
-                </div>
+                {selectedReq.type === 'nghi_phep' ? (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px', fontSize: '13px' }}>
+                      <span style={{ color: '#64748b' }}>Ngày xin nghỉ:</span>
+                      <span style={{ color: '#0f172a', fontWeight: 600 }}>
+                        {fmtDate(selectedReq.start_date)}
+                        {selectedReq.end_date && selectedReq.end_date !== selectedReq.start_date ? ` → ${fmtDate(selectedReq.end_date)}` : ''}
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px', fontSize: '13px' }}>
+                      <span style={{ color: '#64748b' }}>Ca nghỉ:</span>
+                      <span style={{ color: '#0f172a', fontWeight: 600 }}>
+                        {selectedReq.session ? SESSION_LABEL[selectedReq.session] : 'Cả ngày'} 
+                        <span style={{ color: '#94a3b8', margin: '0 6px', fontWeight: 400 }}>•</span>
+                        Tổng cộng: {daysBetween(selectedReq.start_date, selectedReq.end_date)} ngày
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px', fontSize: '13px' }}>
+                      <span style={{ color: '#64748b' }}>Ngày xin đi trễ:</span>
+                      <span style={{ color: '#0f172a', fontWeight: 600 }}>
+                        {fmtDate(selectedReq.start_date)}
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '12px', fontSize: '13px' }}>
+                      <span style={{ color: '#64748b' }}>Giờ đến công ty:</span>
+                      <span style={{ color: '#b45309', fontWeight: 700 }}>
+                        {selectedReq.late_time}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Reason */}
