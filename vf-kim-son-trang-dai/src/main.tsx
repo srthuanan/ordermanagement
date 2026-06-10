@@ -516,6 +516,7 @@ function App() {
                       requests={hrLeaveRequests}
                       currentProfile={profile}
                       currentUsername={currentUsername}
+                      staffProfiles={profiles}
                       onReload={() => loadWorkspace({ showLoading: false })}
                     />
                   )}

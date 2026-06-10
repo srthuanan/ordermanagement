@@ -53,6 +53,7 @@ interface HRPanelProps {
   currentProfile: ProfileRow | null;
   currentUsername: string;
   onReload: () => void;
+  staffProfiles: ProfileRow[];
 }
 
 // ─── StatusBadge ─────────────────────────────────────────────────────────────
@@ -251,7 +252,7 @@ const RequestListItem: React.FC<RequestListItemProps> = ({ req, isSelected, onCl
 
 // ─── Main Panel ───────────────────────────────────────────────────────────────
 
-export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, currentUsername, onReload }) => {
+export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, currentUsername, staffProfiles, onReload }) => {
   const isAdmin = currentProfile?.role === 'admin';
   const isDirector = isAdmin || (currentProfile?.role === 'manager' && currentProfile?.department === 'Ban Giám Đốc');
   const isTPKD = isAdmin || (currentProfile?.role === 'manager' && currentProfile?.department !== 'Ban Giám Đốc');
@@ -265,7 +266,20 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
   const [reviewNote, setReviewNote] = useState('');
   const [processing, setProcessing] = useState(false);
 
-  const pendingCount = requests.filter(r => r.status === 'pending').length;
+  const viewableRequests = useMemo(() => {
+    if (isAdmin || isDirector) return requests;
+    if (isTPKD) {
+      const myDept = currentProfile?.department;
+      return requests.filter(r => {
+        if (r.requester_username === currentUsername) return true;
+        const reqProfile = staffProfiles.find(p => p.id === r.requester_id || p.email === r.requester_username);
+        return reqProfile?.department === myDept;
+      });
+    }
+    return requests.filter(r => r.requester_username === currentUsername);
+  }, [requests, isAdmin, isDirector, isTPKD, currentUsername, currentProfile, staffProfiles]);
+
+  const pendingCount = viewableRequests.filter(r => r.status === 'pending').length;
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -306,7 +320,7 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
   };
 
   const filtered = useMemo(() => {
-    return requests.filter(r => {
+    return viewableRequests.filter(r => {
       if (filter !== 'all' && r.status !== filter) return false;
       if (typeFilter !== 'all' && r.type !== typeFilter) return false;
       if (searchQ.trim()) {
@@ -315,16 +329,16 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
       }
       return true;
     });
-  }, [requests, filter, typeFilter, searchQ]);
+  }, [viewableRequests, filter, typeFilter, searchQ]);
 
   const selectedReq = useMemo(() => filtered.find(r => r.id === selectedId) || null, [filtered, selectedId]);
 
   const FILTER_TABS = [
-    { key: 'all', label: 'Tất cả', count: requests.length },
-    { key: 'pending', label: 'Chờ TPKD', count: requests.filter(r => r.status === 'pending').length },
-    { key: 'pending_director', label: 'Chờ GĐ', count: requests.filter(r => r.status === 'pending_director').length },
-    { key: 'approved', label: 'Đã duyệt', count: requests.filter(r => r.status === 'approved').length },
-    { key: 'rejected', label: 'Từ chối', count: requests.filter(r => r.status === 'rejected').length },
+    { key: 'all', label: 'Tất cả', count: viewableRequests.length },
+    { key: 'pending', label: 'Chờ TPKD', count: viewableRequests.filter(r => r.status === 'pending').length },
+    { key: 'pending_director', label: 'Chờ GĐ', count: viewableRequests.filter(r => r.status === 'pending_director').length },
+    { key: 'approved', label: 'Đã duyệt', count: viewableRequests.filter(r => r.status === 'approved').length },
+    { key: 'rejected', label: 'Từ chối', count: viewableRequests.filter(r => r.status === 'rejected').length },
   ] as const;
 
   return (
