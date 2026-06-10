@@ -149,6 +149,16 @@ export function useAppData() {
 
       const staffDirectory = ((profilesResult.data || []) as ProfileRow[])
         .filter(item => item.email !== 'showroomthuanan@gmail.com');
+        
+      // Gán lại profileData bằng dữ liệu chi tiết từ get_staff_directory (có chứa email, activated_at...)
+      if (profileData) {
+        const enrichedProfile = staffDirectory.find(p => p.id === profileData!.id);
+        if (enrichedProfile) {
+          profileData = enrichedProfile;
+          setProfile(profileData);
+        }
+      }
+
       const staffLookup = new Map<string, ProfileRow>();
       staffDirectory.forEach((item) => {
         const normalizedName = normalizeIdentity(item.full_name);
