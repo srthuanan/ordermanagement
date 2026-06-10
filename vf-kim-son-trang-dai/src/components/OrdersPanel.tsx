@@ -789,19 +789,19 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                                       );
                                     }
 
-                                    const mid = Math.ceil(policies.length / 2);
-                                    const col1 = policies.slice(0, mid);
-                                    const col2 = policies.slice(mid);
-
                                     return (
-                                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '0 24px' }}>
-                                        <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, wordBreak: 'break-word', whiteSpace: 'normal' }}>
-                                          {col1.map((p, i) => <li key={i}>{p}</li>)}
-                                        </ul>
-                                        <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px', minWidth: 0, wordBreak: 'break-word', whiteSpace: 'normal' }}>
-                                          {col2.map((p, i) => <li key={i}>{p}</li>)}
-                                        </ul>
-                                      </div>
+                                      <ul style={{ 
+                                        margin: 0, 
+                                        paddingLeft: '16px', 
+                                        columnCount: 2, 
+                                        columnGap: '24px',
+                                        wordBreak: 'break-word',
+                                        whiteSpace: 'pre-wrap'
+                                      }}>
+                                        {policies.map((p, i) => (
+                                          <li key={i} style={{ breakInside: 'avoid', marginBottom: '4px' }}>{p}</li>
+                                        ))}
+                                      </ul>
                                     );
                                   })()}
                                 </td>
