@@ -507,29 +507,48 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
                 </div>
 
                 {/* Admin Note / Review Actions */}
-                {selectedReq.status === 'pending' || selectedReq.status === 'pending_director' ? (
-                  ((isTPKD && selectedReq.status === 'pending') || (isDirector && (selectedReq.status === 'pending_director' || selectedReq.status === 'pending'))) && (
-                    <div style={{ marginTop: 'auto', background: '#fdf4ff', border: '1px solid #e9d5ff', padding: '20px', borderRadius: '16px' }}>
-                      <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 800, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <FileCheck size={16} /> Khu vực phê duyệt
-                      </p>
-                      <textarea
-                        value={reviewNote} onChange={e => setReviewNote(e.target.value)}
-                        placeholder="Thêm ghi chú cho nhân viên (tuỳ chọn)..."
-                        rows={2}
-                        style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #d8b4fe', fontSize: '13px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', background: '#fff', marginBottom: '16px' }}
-                      />
-                      <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-                        <button onClick={() => handleReview(selectedReq, 'rejected')} disabled={processing} style={{ padding: '12px 24px', borderRadius: '10px', border: 'none', background: '#fef2f2', color: '#dc2626', fontWeight: 800, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', opacity: processing ? 0.7 : 1 }}>
-                          ❌ Từ chối
-                        </button>
-                        <button onClick={() => handleReview(selectedReq, (isTPKD && selectedReq.status === 'pending') ? 'pending_director' : 'approved')} disabled={processing} style={{ padding: '12px 32px', borderRadius: '10px', border: 'none', background: '#059669', color: '#fff', fontWeight: 800, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', opacity: processing ? 0.7 : 1, boxShadow: '0 4px 12px rgba(5,150,105,0.3)' }}>
-                          ✅ {(isTPKD && selectedReq.status === 'pending') ? 'Thẩm định' : 'Phê duyệt'}
-                        </button>
+                {(() => {
+                  const isOwnRequest = selectedReq.requester_username === currentUsername;
+                  const canThamdinh = isTPKD && !isDirector && !isOwnRequest && selectedReq.status === 'pending';
+                  const canPheduyet = isDirector && !isOwnRequest && (selectedReq.status === 'pending' || selectedReq.status === 'pending_director');
+                  const showReviewArea = canThamdinh || canPheduyet;
+
+                  if (showReviewArea) {
+                    return (
+                      <div style={{ marginTop: 'auto', background: '#fdf4ff', border: '1px solid #e9d5ff', padding: '20px', borderRadius: '16px' }}>
+                        <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 800, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <FileCheck size={16} /> Khu vực phê duyệt
+                        </p>
+                        <textarea
+                          value={reviewNote} onChange={e => setReviewNote(e.target.value)}
+                          placeholder="Thêm ghi chú cho nhân viên (tuỳ chọn)..."
+                          rows={2}
+                          style={{ width: '100%', padding: '12px 16px', borderRadius: '10px', border: '1px solid #d8b4fe', fontSize: '13px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', background: '#fff', marginBottom: '16px' }}
+                        />
+                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                          <button onClick={() => handleReview(selectedReq, 'rejected')} disabled={processing} style={{ padding: '12px 24px', borderRadius: '10px', border: 'none', background: '#fef2f2', color: '#dc2626', fontWeight: 800, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', opacity: processing ? 0.7 : 1 }}>
+                            ❌ Từ chối
+                          </button>
+                          <button onClick={() => handleReview(selectedReq, canPheduyet ? 'approved' : 'pending_director')} disabled={processing} style={{ padding: '12px 32px', borderRadius: '10px', border: 'none', background: '#059669', color: '#fff', fontWeight: 800, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s', opacity: processing ? 0.7 : 1, boxShadow: '0 4px 12px rgba(5,150,105,0.3)' }}>
+                            ✅ {canPheduyet ? 'Phê duyệt' : 'Thẩm định'}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )
-                ) : (
+                    );
+                  }
+
+                  if (selectedReq.status === 'pending' || selectedReq.status === 'pending_director') {
+                    return (
+                      <div style={{ marginTop: 'auto', padding: '16px', borderRadius: '12px', background: '#f8fafc', border: '1px dashed #cbd5e1', textAlign: 'center' }}>
+                        <p style={{ margin: 0, fontSize: '13px', color: '#64748b', fontWeight: 500 }}>
+                          {isOwnRequest ? 'Đang chờ cấp trên duyệt.' : 'Bạn không có quyền duyệt yêu cầu này.'}
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })()}
                   <div>
                     <p style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Kết quả xử lý</p>
                     <div style={{ background: selectedReq.status === 'approved' ? '#ecfdf5' : '#fef2f2', border: `1px solid ${selectedReq.status === 'approved' ? '#a7f3d0' : '#fecaca'}`, padding: '16px 20px', borderRadius: '12px' }}>
