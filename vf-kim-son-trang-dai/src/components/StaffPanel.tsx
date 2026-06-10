@@ -272,24 +272,26 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
   };
 
   return (
-    <section className="panel staff-panel custom-scrollbar" style={{ background: 'transparent', border: '0', padding: '0', boxShadow: 'none', display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', overflow: 'hidden' }}>
+    <section className="panel staff-panel custom-scrollbar" style={{ background: 'transparent', border: '0', padding: '0', boxShadow: 'none', display: 'flex', flexDirection: 'column', gap: '20px', flex: 1, minHeight: 0, overflow: 'hidden' }}>
       
       {/* Status Banner Notifications */}
       {error && (
-        <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', color: '#b91c1c', fontWeight: 600, fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', color: '#b91c1c', fontWeight: 600, fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
           <X size={16} /> {error}
         </div>
       )}
       {success && (
-        <div style={{ padding: '12px 16px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', color: '#047857', fontWeight: 600, fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ padding: '12px 16px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', color: '#047857', fontWeight: 600, fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
           <MailCheck size={16} /> {success}
         </div>
       )}
 
       {/* Personal Profile Section */}
       {isPersonalView ? (
-        <div style={{ display: 'flex', flexDirection: 'column', background: '#ffffff', borderRadius: '20px', border: '1px solid #cbd5e1', boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.02)', overflow: 'hidden' }}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid #e2e8f0', background: '#fafafb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+        <div className="staff-modern-workspace" style={{ gridTemplateColumns: '1fr' }}>
+          <div className="staff-list-side" style={{ overflowY: 'auto' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', background: '#ffffff', borderRadius: '0', border: '0', overflow: 'hidden' }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid #e2e8f0', background: '#fafafb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
             <div>
               <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Hồ sơ của bạn</div>
               <div style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>{currentProfile?.full_name || 'Đang tải...'}</div>
@@ -345,6 +347,8 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
               </strong>
             </div>
           </div>
+        </div>
+        </div>
         </div>
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', background: '#ffffff', borderRadius: '16px', border: '1px solid #cbd5e1', boxShadow: '0 2px 8px -2px rgba(0,0,0,0.02)', flexShrink: 0 }}>
