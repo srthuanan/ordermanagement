@@ -794,11 +794,11 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                                     const col2 = policies.slice(mid);
 
                                     return (
-                                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px' }}>
-                                        <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: '0 24px' }}>
+                                        <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px', wordBreak: 'break-word' }}>
                                           {col1.map((p, i) => <li key={i}>{p}</li>)}
                                         </ul>
-                                        <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px', wordBreak: 'break-word' }}>
                                           {col2.map((p, i) => <li key={i}>{p}</li>)}
                                         </ul>
                                       </div>
