@@ -775,7 +775,18 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                               ) : null}
                               <tr>
                                 <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Chính sách</td>
-                                <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{selectedOrder.policy || 'Mặc định'}</td>
+                                <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>
+                                  {selectedOrder.policy ? (
+                                    <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                      {selectedOrder.policy.split(',').map((p, i) => {
+                                        const trimmed = p.trim();
+                                        return trimmed ? <li key={i}>{trimmed}</li> : null;
+                                      })}
+                                    </ul>
+                                  ) : (
+                                    'Mặc định'
+                                  )}
+                                </td>
                               </tr>
                               <tr>
                                 <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Địa chỉ XHD</td>
