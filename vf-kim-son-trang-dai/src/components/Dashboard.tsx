@@ -100,7 +100,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const activeOrders = orders.filter((o) => !['Đã xuất hóa đơn', 'Đã hủy'].includes(o.status)).length;
   const pairingRate = totalOrders > 0 ? Math.round((pairedOrders / totalOrders) * 100) : 0;
   const pipelineFill = totalOrders > 0 ? Math.round(((pairedOrders + invoicedOrders) / totalOrders) * 100) : 0;
-  const recentLogs = auditLogs.slice(0, 6);
+  const recentLogs = auditLogs.slice(0, 100);
   const currentDepartment = currentProfile?.department?.trim() || '';
   const isManagerView = currentProfile?.role === 'manager';
   const departmentSalesCount = isManagerView
@@ -440,7 +440,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <History size={18} className="muted-icon" />
           </div>
-          <div className="activity-feed">
+          <div className="activity-feed" style={{ maxHeight: '600px', overflowY: 'auto', paddingRight: '8px' }}>
             {recentLogs.length === 0 ? (
               <div className="empty-state" style={{ padding: '2rem' }}>
                 Chưa có giao dịch gần đây.
