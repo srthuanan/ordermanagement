@@ -683,15 +683,15 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         <span>Danh sách</span>
                       </button>
                     ) : null}
-                    <div className="orders-detail-pane__header clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedOrder.id, 'Mã đơn')} style={{ paddingBottom: '6px', borderBottom: '1px dashed #e2e8f0', borderRadius: '4px', padding: '4px' }}>
-                      <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', fontWeight: 700, margin: 0 }}>CHI TIẾT ĐƠN</p>
-                      <h3 style={{ fontSize: '16px', margin: 0, fontWeight: 800, color: '#0f766e' }}>{selectedOrder.id}</h3>
+                    <div className="orders-detail-pane__header clickable-copy-field" title="Click để copy mã đơn" onClick={() => copyToClipboard(selectedOrder.id, 'Mã đơn')} style={{ paddingBottom: '16px', borderBottom: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <p style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#94a3b8', fontWeight: 600, margin: 0 }}>Chi tiết đơn</p>
+                      <h3 style={{ fontSize: '20px', margin: 0, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>{selectedOrder.id}</h3>
                     </div>
 
                     {/* Modul 1: Nhân sự & Tiến độ */}
-                    <div className="order-detail-card-module" style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, minHeight: 0, boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '6px', borderBottom: '1px dashed #cbd5e1', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#0f766e', letterSpacing: '0.04em' }}>
-                        <User size={14} />
+                    <div className="order-detail-card-module" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '20px 0', borderBottom: '1px solid #f1f5f9' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', letterSpacing: '0.06em' }}>
+                        <User size={13} />
                         <span>Nhân sự & Lịch hẹn</span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
@@ -718,9 +718,9 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                     </div>
 
                     {/* Modul 2: Cấu hình xe & Hệ thống ghép */}
-                    <div className="order-detail-card-module" style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1.4, minHeight: 0, boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '6px', borderBottom: '1px dashed #cbd5e1', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#0f766e', letterSpacing: '0.04em' }}>
-                        <Car size={14} />
+                    <div className="order-detail-card-module" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '20px 0', borderBottom: '1px solid #f1f5f9' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', letterSpacing: '0.06em' }}>
+                        <Car size={13} />
                         <span>Cấu hình xe & Hệ thống</span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
@@ -792,9 +792,9 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                     </div>
 
                     {/* Modul 3: Tài chính & Hồ sơ */}
-                    <div className="order-detail-card-module" style={{ background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1.2, minHeight: 0, boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingBottom: '6px', borderBottom: '1px dashed #cbd5e1', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', color: '#0f766e', letterSpacing: '0.04em' }}>
-                        <CreditCard size={14} />
+                    <div className="order-detail-card-module" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '20px 0' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#64748b', letterSpacing: '0.06em' }}>
+                        <CreditCard size={13} />
                         <span>Tài chính & Hồ sơ</span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', flex: 1, alignContent: 'center' }}>
@@ -834,8 +834,8 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                       </div>
                     </div>
 
-                    <div className="orders-detail-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #e2e8f0' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: canPairOrder ? '1fr 1fr' : '1fr', gap: '8px' }}>
+                    <div className="orders-detail-actions" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid #f1f5f9' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: canPairOrder ? '1fr 1fr' : '1fr', gap: '12px' }}>
                         {canPairOrder && (
                           <button
                             className="primary-button"
@@ -849,18 +849,19 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                             }
                             onClick={() => onPairOrder(selectedOrder)}
                             style={{ 
-                              height: '36px', 
-                              fontSize: '13px', 
+                              height: '40px', 
+                              fontSize: '13.5px', 
                               borderRadius: '8px', 
-                              transition: 'all 0.3s',
+                              fontWeight: 600,
+                              transition: 'all 0.2s ease',
                               ...(selectedCanPair ? {
-                                background: '#16a34a',
+                                background: '#0f172a',
                                 color: '#ffffff',
-                                boxShadow: '0 0 0 4px rgba(34, 197, 94, 0.2), 0 4px 12px rgba(22, 163, 74, 0.4)',
                                 border: 'none',
-                                transform: 'translateY(-1px)'
                               } : {
-                                boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+                                background: '#f8fafc',
+                                color: '#94a3b8',
+                                border: '1px solid #e2e8f0'
                               })
                             }}
                           >
@@ -873,43 +874,51 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           disabled={!selectedCanInvoice}
                           title={selectedCanInvoice ? 'Cập nhật hồ sơ bàn giao xe & xuất hóa đơn GTGT' : 'Chỉ đơn đã ghép mới được chốt xuất hóa đơn'}
                           onClick={() => onInvoiceOrder(selectedOrder)}
-                          style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: canPairOrder ? '1px solid #cbd5e1' : 'none', backgroundColor: canPairOrder ? '#f8fafc' : undefined }}
+                          style={{ 
+                            height: '40px', 
+                            fontSize: '13.5px', 
+                            borderRadius: '8px', 
+                            fontWeight: 600,
+                            border: '1px solid #e2e8f0', 
+                            backgroundColor: selectedCanInvoice ? '#ffffff' : '#f8fafc',
+                            color: selectedCanInvoice ? '#0f172a' : '#94a3b8'
+                          }}
                         >
                           <FileCheck size={16} />
-                          <span>Xuất HĐ</span>
+                          <span>Xuất hóa đơn</span>
                         </button>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         <button
                           className="ghost-button"
                           disabled={!selectedCanEdit}
                           title={selectedCanEdit ? 'Sửa thông tin đơn hàng' : 'Không cho sửa đơn đã hoàn tất'}
                           onClick={() => onEditOrder(selectedOrder)}
-                          style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                          style={{ height: '38px', fontSize: '13px', borderRadius: '8px', border: '1px solid #e2e8f0', fontWeight: 500, color: '#475569', background: '#ffffff' }}
                         >
-                          <Pencil size={16} />
-                          <span>Sửa</span>
+                          <Pencil size={15} />
+                          <span>Sửa thông tin</span>
                         </button>
                         <button
                           className="ghost-button"
                           disabled={!selectedCanUnpair || isUnpairingOrderId === selectedOrder.id}
                           title={selectedCanUnpair ? 'Hủy ghép và trả xe về trạng thái trống' : 'Chỉ đơn đã ghép mới hủy ghép được'}
                           onClick={() => onUnpairOrder(selectedOrder.id)}
-                          style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                          style={{ height: '38px', fontSize: '13px', borderRadius: '8px', border: '1px solid #e2e8f0', fontWeight: 500, color: '#475569', background: '#ffffff' }}
                         >
-                          <X size={16} />
-                          <span>{isUnpairingOrderId === selectedOrder.id ? 'Đang...' : 'Hủy ghép'}</span>
+                          <X size={15} />
+                          <span>{isUnpairingOrderId === selectedOrder.id ? 'Đang hủy...' : 'Hủy ghép'}</span>
                         </button>
                       </div>
                       <button
-                        className="ghost-button order-card__danger"
+                        className="ghost-button"
                         disabled={!selectedCanCancel}
                         title={selectedCanCancel ? 'Hủy đơn hàng và hoàn cọc' : 'Không cho phép hủy đơn đã hoàn tất hoặc đã hủy'}
                         onClick={() => onCancelOrder(selectedOrder)}
-                        style={{ height: '36px', fontSize: '13px', borderRadius: '8px', border: '1px dashed #fca5a5', color: '#be123c', background: 'transparent' }}
+                        style={{ height: '38px', fontSize: '13px', borderRadius: '8px', border: 'none', color: selectedCanCancel ? '#ef4444' : '#f87171', background: selectedCanCancel ? '#fef2f2' : 'transparent', width: '100%', fontWeight: 500, transition: 'all 0.2s ease' }}
                       >
-                        <Ban size={16} />
-                        <span>Hủy đơn</span>
+                        <Ban size={15} />
+                        <span>Hủy bỏ đơn hàng</span>
                       </button>
                     </div>
                   </>
