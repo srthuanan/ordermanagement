@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   CalendarDays, Clock, CheckCircle2, XCircle, Clock3,
-  Plus, ChevronDown, Trash2, RefreshCw, User,
-  FileCheck, AlertCircle, Filter, Search, Info, X, Users, CheckSquare
+  Plus, Trash2, RefreshCw, User,
+  FileText, AlertCircle, Search, Info, X, Users, CheckSquare, FileDigit
 } from 'lucide-react';
 import { HrLeaveRequestRow, ProfileRow } from '../types';
 import * as apiService from '../services/apiService';
@@ -10,8 +10,8 @@ import * as apiService from '../services/apiService';
 // ─── Constants ──────────────────────────────────────────────────────────────
 
 const TYPE_LABEL: Record<string, string> = {
-  nghi_phep: '🏖️ Nghỉ phép',
-  di_tre: '⏰ Đi trễ'
+  nghi_phep: 'Nghỉ phép',
+  di_tre: 'Đi trễ'
 };
 
 const SESSION_LABEL: Record<string, string> = {
@@ -21,10 +21,10 @@ const SESSION_LABEL: Record<string, string> = {
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: React.ReactNode }> = {
-  pending: { label: 'Chờ thẩm định', color: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: <Clock3 size={12} /> },
-  pending_director: { label: 'Chờ GĐ duyệt', color: '#6d28d9', bg: '#f5f3ff', border: '#ddd6fe', icon: <Clock3 size={12} /> },
-  approved: { label: 'Đã duyệt', color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: <CheckCircle2 size={12} /> },
-  rejected: { label: 'Từ chối', color: '#dc2626', bg: '#fef2f2', border: '#fecaca', icon: <XCircle size={12} /> }
+  pending: { label: 'Chờ thẩm định', color: '#b45309', bg: '#fffbeb', border: '#fde68a', icon: <Clock3 size={11} /> },
+  pending_director: { label: 'Chờ GĐ duyệt', color: '#4338ca', bg: '#e0e7ff', border: '#c7d2fe', icon: <Clock3 size={11} /> },
+  approved: { label: 'Đã duyệt', color: '#047857', bg: '#d1fae5', border: '#a7f3d0', icon: <CheckCircle2 size={11} /> },
+  rejected: { label: 'Từ chối', color: '#b91c1c', bg: '#fee2e2', border: '#fecaca', icon: <XCircle size={11} /> }
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -63,10 +63,9 @@ const StatusBadge = ({ status }: { status: string }) => {
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '4px',
-      padding: '4px 10px', borderRadius: '8px',
-      fontSize: '11px', fontWeight: 800,
-      background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`,
-      textTransform: 'uppercase', letterSpacing: '0.04em'
+      padding: '2px 8px', borderRadius: '4px',
+      fontSize: '11px', fontWeight: 600,
+      background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`
     }}>
       {cfg.icon} {cfg.label}
     </span>
@@ -114,20 +113,19 @@ const SubmitModal: React.FC<SubmitModalProps> = ({ profile, username, onClose, o
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', animation: 'fadeIn 0.2s ease-out' }}>
-      <div style={{ background: '#fff', borderRadius: '24px', width: '100%', maxWidth: '480px', boxShadow: '0 24px 64px rgba(0,0,0,0.2)', overflow: 'hidden', animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
-        <div style={{ padding: '24px 30px', borderBottom: '1px solid #f1f5f9', background: 'linear-gradient(135deg, #f0f9ff, #e0f2fe)' }}>
-          <p style={{ margin: 0, fontSize: '12px', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Nhân sự</p>
-          <h2 style={{ margin: '4px 0 0', fontSize: '20px', fontWeight: 800, color: '#0f172a' }}>Gửi yêu cầu mới</h2>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(2px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', animation: 'fadeIn 0.2s ease-out' }}>
+      <div style={{ background: '#fff', borderRadius: '12px', width: '100%', maxWidth: '440px', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)', overflow: 'hidden', animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)', border: '1px solid #e2e8f0' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', background: '#fff' }}>
+          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#0f172a', letterSpacing: '-0.01em' }}>Tạo yêu cầu mới</h2>
         </div>
 
-        <div style={{ padding: '24px 30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             {(['nghi_phep', 'di_tre'] as const).map(t => (
               <button key={t} onClick={() => setType(t)} style={{
-                padding: '14px', borderRadius: '16px', border: `2px solid ${type === t ? '#0284c7' : '#e2e8f0'}`,
-                background: type === t ? '#eff6ff' : '#f8fafc', color: type === t ? '#0284c7' : '#64748b',
-                fontWeight: 700, fontSize: '14px', cursor: 'pointer', transition: 'all 0.15s'
+                padding: '10px', borderRadius: '8px', border: `1px solid ${type === t ? '#0f172a' : '#e2e8f0'}`,
+                background: type === t ? '#0f172a' : '#fff', color: type === t ? '#fff' : '#475569',
+                fontWeight: 600, fontSize: '13px', cursor: 'pointer', transition: 'all 0.1s'
               }}>
                 {TYPE_LABEL[t]}
               </button>
@@ -135,61 +133,61 @@ const SubmitModal: React.FC<SubmitModalProps> = ({ profile, username, onClose, o
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: type === 'nghi_phep' ? '1fr 1fr' : '1fr', gap: '16px' }}>
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>
                 {type === 'di_tre' ? 'Ngày đi trễ' : 'Ngày bắt đầu'}
               </span>
               <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-                style={{ padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '14px', outline: 'none', background: '#f8fafc' }} />
+                style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', background: '#fff' }} />
             </label>
             {type === 'nghi_phep' && (
-              <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Ngày kết thúc</span>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Ngày kết thúc</span>
                 <input type="date" value={endDate} min={startDate} onChange={e => setEndDate(e.target.value)}
-                  style={{ padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '14px', outline: 'none', background: '#f8fafc' }} />
+                  style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', background: '#fff' }} />
               </label>
             )}
           </div>
 
           {type === 'nghi_phep' ? (
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Buổi nghỉ</span>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Buổi nghỉ</span>
               <select value={session} onChange={e => setSession(e.target.value as any)}
-                style={{ padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '14px', outline: 'none', background: '#f8fafc' }}>
+                style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', background: '#fff' }}>
                 <option value="ca_ngay">Cả ngày</option>
                 <option value="sang">Buổi sáng</option>
                 <option value="chieu">Buổi chiều</option>
               </select>
             </label>
           ) : (
-            <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Giờ đến dự kiến</span>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Giờ đến dự kiến</span>
               <input type="time" value={lateTime} onChange={e => setLateTime(e.target.value)}
-                style={{ padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '14px', outline: 'none', background: '#f8fafc' }} />
+                style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', background: '#fff' }} />
             </label>
           )}
 
-          <label style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Lý do</span>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>Lý do</span>
             <textarea value={reason} onChange={e => setReason(e.target.value)} rows={3}
-              placeholder="Nhập chi tiết lý do..."
-              style={{ padding: '14px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '14px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', background: '#f8fafc' }} />
+              placeholder="Nhập lý do rõ ràng..."
+              style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', background: '#fff' }} />
           </label>
 
           {error && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 16px', background: '#fef2f2', borderRadius: '12px', color: '#dc2626', fontSize: '13px', fontWeight: 500 }}>
-              <AlertCircle size={16} /> {error}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', color: '#b91c1c', fontSize: '13px', fontWeight: 500 }}>
+              <AlertCircle size={14} /> {error}
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '8px' }}>
-            <button onClick={onClose} style={{ padding: '12px 24px', borderRadius: '12px', border: '1.5px solid #e2e8f0', background: '#f8fafc', color: '#475569', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}>
-              Hủy
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '4px' }}>
+            <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', color: '#475569', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
+              Hủy bỏ
             </button>
             <button onClick={handleSubmit} disabled={loading}
-              style={{ padding: '12px 28px', borderRadius: '12px', border: 'none', background: '#0284c7', color: '#fff', fontWeight: 700, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', opacity: loading ? 0.7 : 1, boxShadow: '0 4px 12px rgba(2,132,199,0.3)' }}>
-              {loading ? <RefreshCw size={16} className="spin-animation" /> : <FileCheck size={16} />}
-              {loading ? 'Đang gửi...' : 'Gửi yêu cầu'}
+              style={{ padding: '8px 20px', borderRadius: '6px', border: 'none', background: '#0f172a', color: '#fff', fontWeight: 600, fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', opacity: loading ? 0.7 : 1 }}>
+              {loading ? <RefreshCw size={14} className="spin-animation" /> : null}
+              {loading ? 'Đang gửi...' : 'Xác nhận'}
             </button>
           </div>
         </div>
@@ -281,9 +279,9 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
   const selectedReq = useMemo(() => filtered.find(r => r.id === selectedId) || null, [filtered, selectedId]);
 
   const STATS = [
-    { label: 'Tổng số đơn', count: viewableRequests.length, color: '#0284c7', bg: '#f0f9ff', icon: <FileCheck size={20} /> },
-    { label: 'Chờ xử lý', count: viewableRequests.filter(r => r.status === 'pending' || r.status === 'pending_director').length, color: '#d97706', bg: '#fffbeb', icon: <Clock size={20} /> },
-    { label: 'Đã duyệt', count: viewableRequests.filter(r => r.status === 'approved').length, color: '#059669', bg: '#ecfdf5', icon: <CheckSquare size={20} /> },
+    { label: 'Tổng Đơn', count: viewableRequests.length },
+    { label: 'Chờ Xử Lý', count: viewableRequests.filter(r => r.status === 'pending' || r.status === 'pending_director').length },
+    { label: 'Đã Duyệt', count: viewableRequests.filter(r => r.status === 'approved').length },
   ];
 
   const FILTER_TABS = [
@@ -295,7 +293,7 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
   ] as const;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, position: 'relative' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, position: 'relative', background: '#fafafa' }}>
       
       {/* ── Component Styles ── */}
       <style>{`
@@ -308,115 +306,126 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
           to { opacity: 1; }
         }
         @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
         .hr-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-          gap: 20px;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 16px;
         }
         .hr-card {
           background: #fff;
-          border-radius: 20px;
+          border-radius: 8px;
           border: 1px solid #e2e8f0;
-          padding: 24px;
+          padding: 16px;
           cursor: pointer;
-          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+          transition: all 0.15s ease;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 12px;
         }
         .hr-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 16px 32px rgba(0,0,0,0.08);
           border-color: #cbd5e1;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
         .hr-card.active {
-          border-color: #0284c7;
-          box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.1);
+          border-color: #0f172a;
+          box-shadow: 0 0 0 1px #0f172a;
         }
         .slide-over-backdrop {
           position: fixed;
           inset: 0;
           z-index: 100;
-          background: rgba(15, 23, 42, 0.3);
-          backdrop-filter: blur(8px);
+          background: rgba(15, 23, 42, 0.2);
+          backdrop-filter: blur(2px);
           display: flex;
           justify-content: flex-end;
-          animation: fadeIn 0.2s ease-out forwards;
+          animation: fadeIn 0.15s ease-out forwards;
         }
         .slide-over-content {
           width: 100%;
-          max-width: 540px;
+          max-width: 480px;
           height: 100%;
           background: #fff;
-          box-shadow: -12px 0 48px rgba(0,0,0,0.15);
+          box-shadow: -4px 0 24px rgba(0,0,0,0.05);
           display: flex;
           flex-direction: column;
-          animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          border-left: 1px solid #e2e8f0;
+        }
+        .filter-btn {
+          display: flex;
+          align-items: center;
+          padding: 6px 12px;
+          border-radius: 6px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.1s;
+          border: 1px solid transparent;
+        }
+        .filter-btn.active {
+          background: #f1f5f9;
+          color: #0f172a;
+          font-weight: 600;
+        }
+        .filter-btn:not(.active) {
+          color: #64748b;
+        }
+        .filter-btn:not(.active):hover {
+          color: #0f172a;
         }
       `}</style>
 
       {/* ── Top Dashboard ── */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '0 0 24px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px 24px 0' }}>
         
         {/* Stats Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'flex', gap: '24px', paddingBottom: '16px', borderBottom: '1px solid #e2e8f0' }}>
           {STATS.map(stat => (
-            <div key={stat.label} style={{ background: '#fff', borderRadius: '20px', padding: '20px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '20px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-              <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: stat.bg, color: stat.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {stat.icon}
-              </div>
-              <div>
-                <p style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.label}</p>
-                <h3 style={{ margin: 0, fontSize: '28px', fontWeight: 900, color: '#0f172a' }}>{stat.count}</h3>
-              </div>
+            <div key={stat.label} style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{stat.label}</span>
+              <span style={{ fontSize: '24px', fontWeight: 600, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1.2 }}>{stat.count}</span>
             </div>
           ))}
         </div>
 
         {/* Toolbar Row */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between', background: '#fff', padding: '16px 20px', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '16px' }}>
           
-          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto' }} className="custom-scrollbar">
+          <div style={{ display: 'flex', gap: '4px', overflowX: 'auto' }} className="custom-scrollbar">
             {FILTER_TABS.map(tab => (
-              <button key={tab.key} onClick={() => setFilter(tab.key)} style={{
-                display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap',
-                padding: '10px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
-                border: filter === tab.key ? '1px solid transparent' : '1px solid #e2e8f0',
-                background: filter === tab.key ? '#eff6ff' : '#f8fafc',
-                color: filter === tab.key ? '#0284c7' : '#64748b'
-              }}>
+              <button key={tab.key} onClick={() => setFilter(tab.key)} className={`filter-btn ${filter === tab.key ? 'active' : ''}`}>
                 {tab.label}
               </button>
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end', alignItems: 'center' }}>
             <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as any)}
-              style={{ minWidth: '160px', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '13px', fontWeight: 600, background: '#f8fafc', color: '#475569', outline: 'none' }}>
-              <option value="all">Tất cả loại đơn</option>
-              <option value="nghi_phep">🏖️ Nghỉ phép</option>
-              <option value="di_tre">⏰ Đi trễ</option>
+              style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '13px', background: '#fff', color: '#0f172a', outline: 'none' }}>
+              <option value="all">Tất cả loại</option>
+              <option value="nghi_phep">Nghỉ phép</option>
+              <option value="di_tre">Đi trễ</option>
             </select>
             
             {hasPrivilege && (
-              <div style={{ position: 'relative', width: '220px' }}>
-                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Tìm nhân viên..." style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '13px', background: '#f8fafc', outline: 'none', fontWeight: 500 }} />
+              <div style={{ position: 'relative', width: '200px' }}>
+                <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Tìm nhân viên..." style={{ width: '100%', padding: '6px 10px 6px 30px', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '13px', background: '#fff', outline: 'none', color: '#0f172a' }} />
               </div>
             )}
 
-            <button onClick={handleReload} disabled={isReloading} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: isReloading ? '#e2e8f0' : '#fff', color: '#475569', fontSize: '13px', fontWeight: 700, cursor: isReloading ? 'wait' : 'pointer', transition: 'all 0.2s' }}>
-              <RefreshCw size={16} className={isReloading ? "spin-animation" : ""} style={{ transform: isReloading ? 'rotate(180deg)' : 'none', transition: 'transform 0.5s ease-in-out' }} /> 
-              <span className={isMobile ? "mobile-only" : ""}>Làm mới</span>
+            <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 4px' }} />
+
+            <button onClick={handleReload} disabled={isReloading} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#fff', color: '#64748b', cursor: isReloading ? 'wait' : 'pointer', transition: 'all 0.1s' }}>
+              <RefreshCw size={14} className={isReloading ? "spin-animation" : ""} />
             </button>
 
             {!isAdmin && (
-              <button onClick={() => setShowSubmit(true)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, #0284c7, #0ea5e9)', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 14px rgba(2,132,199,0.3)', transition: 'all 0.2s' }}>
-                <Plus size={16} /> Gửi yêu cầu mới
+              <button onClick={() => setShowSubmit(true)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 16px', height: '32px', borderRadius: '6px', border: 'none', background: '#0f172a', color: '#fff', fontSize: '13px', fontWeight: 500, cursor: 'pointer', transition: 'background 0.1s' }}>
+                <Plus size={14} /> Gửi yêu cầu
               </button>
             )}
           </div>
@@ -424,48 +433,33 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
       </div>
 
       {/* ── Main Grid ── */}
-      <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', paddingBottom: '32px' }}>
+      <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '0 24px 32px' }}>
         {filtered.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0', color: '#94a3b8', gap: '16px' }}>
-            <FileCheck size={64} style={{ opacity: 0.2 }} />
-            <p style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>Không tìm thấy yêu cầu nào phù hợp</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', color: '#94a3b8', gap: '12px' }}>
+            <FileText size={48} strokeWidth={1} style={{ opacity: 0.5 }} />
+            <p style={{ margin: 0, fontSize: '14px', fontWeight: 500 }}>Không tìm thấy yêu cầu</p>
           </div>
         ) : (
           <div className="hr-grid">
             {filtered.map(req => (
               <div key={req.id} className={`hr-card ${selectedId === req.id ? 'active' : ''}`} onClick={() => setSelectedId(req.id)}>
-                
-                {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: req.type === 'nghi_phep' ? '#e0f2fe' : '#ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                      {req.type === 'nghi_phep' ? '🏖️' : '⏰'}
-                    </div>
-                    <div>
-                      <h4 style={{ margin: '0 0 4px', fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>{isAdmin || isTPKD ? req.requester_name : (req.type === 'nghi_phep' ? 'Đơn Nghỉ Phép' : 'Đơn Đi Trễ')}</h4>
-                      <p style={{ margin: 0, fontSize: '12px', color: '#64748b', fontWeight: 500 }}>{fmtDate(req.created_at)}</p>
-                    </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>{isAdmin || isTPKD ? req.requester_name : (req.type === 'nghi_phep' ? 'Đơn xin nghỉ phép' : 'Đơn xin đi trễ')}</h4>
+                    <span style={{ fontSize: '12px', color: '#64748b' }}>{TYPE_LABEL[req.type]} • {fmtDate(req.created_at)}</span>
                   </div>
                 </div>
 
-                {/* Body */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#334155', fontSize: '13px', fontWeight: 600 }}>
-                    <CalendarDays size={14} color="#0284c7" />
-                    {fmtDate(req.start_date)}
-                    {req.end_date && req.end_date !== req.start_date ? ` → ${fmtDate(req.end_date)}` : ''}
-                  </div>
-                  <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {req.reason}
-                  </p>
+                <div style={{ flex: 1, color: '#334155', fontSize: '13px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.5 }}>
+                  {req.reason}
                 </div>
 
-                {/* Footer */}
-                <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
                   <StatusBadge status={req.status} />
-                  {req.reviewed_by && (
-                    <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600 }}>Duyệt bởi: {req.reviewed_by.split(' ').pop()}</span>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '12px' }}>
+                    <CalendarDays size={12} />
+                    {fmtDate(req.start_date)}
+                  </div>
                 </div>
               </div>
             ))}
@@ -479,58 +473,55 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
           <div className="slide-over-content" onClick={e => e.stopPropagation()}>
             
             {/* Header */}
-            <div style={{ padding: '24px 32px', borderBottom: '1px solid #f1f5f9', background: 'linear-gradient(to bottom, #f8fafc, #fff)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#0284c7', background: '#e0f2fe', padding: '6px 12px', borderRadius: '10px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {selectedReq.type === 'nghi_phep' ? '🏖️ Nghỉ phép' : '⏰ Đi trễ'}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#475569' }}>
+                    {TYPE_LABEL[selectedReq.type]}
                   </span>
+                  <span style={{ color: '#cbd5e1' }}>•</span>
                   <StatusBadge status={selectedReq.status} />
                 </div>
-                <h2 style={{ margin: '0 0 8px', fontSize: '28px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>{selectedReq.requester_name}</h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: '#64748b', fontSize: '14px', fontWeight: 500 }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><User size={16} /> {selectedReq.requester_username}</span>
+                <h2 style={{ margin: '0 0 4px', fontSize: '20px', fontWeight: 600, color: '#0f172a', letterSpacing: '-0.01em' }}>{selectedReq.requester_name}</h2>
+                <div style={{ color: '#64748b', fontSize: '13px' }}>
+                  {selectedReq.requester_username}
                 </div>
               </div>
-              <button onClick={() => setSelectedId(null)} style={{ background: '#f1f5f9', border: 'none', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <button onClick={() => setSelectedId(null)} style={{ background: 'transparent', border: 'none', padding: '4px', color: '#94a3b8', cursor: 'pointer', borderRadius: '4px' }}>
                 <X size={20} />
               </button>
             </div>
 
             {/* Content Scrollable */}
-            <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '32px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
+            <div className="custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
               
               {/* Info Block */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', background: '#f8fafc', padding: '24px', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
-                <div>
-                  <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Thời gian</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#0f172a', fontWeight: 800, fontSize: '16px' }}>
-                    <CalendarDays size={20} color="#0284c7" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '12px', fontSize: '13px' }}>
+                  <span style={{ color: '#64748b' }}>Thời gian:</span>
+                  <span style={{ color: '#0f172a', fontWeight: 500 }}>
                     {fmtDate(selectedReq.start_date)}
                     {selectedReq.end_date && selectedReq.end_date !== selectedReq.start_date ? ` → ${fmtDate(selectedReq.end_date)}` : ''}
-                  </div>
+                  </span>
                 </div>
-                <div>
-                  <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Chi tiết</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#0f172a', fontWeight: 800, fontSize: '16px' }}>
-                    <Clock size={20} color="#0284c7" />
+                <div style={{ display: 'grid', gridTemplateColumns: '100px 1fr', gap: '12px', fontSize: '13px' }}>
+                  <span style={{ color: '#64748b' }}>Chi tiết:</span>
+                  <span style={{ color: '#0f172a', fontWeight: 500 }}>
                     {selectedReq.type === 'nghi_phep' ? (
                       <>
-                        {selectedReq.session ? SESSION_LABEL[selectedReq.session] : ''}
-                        <span style={{ color: '#cbd5e1' }}>|</span>
-                        {daysBetween(selectedReq.start_date, selectedReq.end_date)} ngày
+                        {selectedReq.session ? SESSION_LABEL[selectedReq.session] : ''} ({daysBetween(selectedReq.start_date, selectedReq.end_date)} ngày)
                       </>
                     ) : (
-                      `Đến lúc ${selectedReq.late_time}`
+                      `Giờ đến: ${selectedReq.late_time}`
                     )}
-                  </div>
+                  </span>
                 </div>
               </div>
 
               {/* Reason */}
               <div>
-                <p style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Lý do chi tiết</p>
-                <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '20px 24px', borderRadius: '16px', fontSize: '15px', color: '#334155', lineHeight: 1.7, boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+                <p style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>Lý do</p>
+                <div style={{ fontSize: '14px', color: '#334155', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                   {selectedReq.reason}
                 </div>
               </div>
@@ -544,22 +535,20 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
 
                 if (showReviewArea) {
                   return (
-                    <div style={{ marginTop: 'auto', background: 'linear-gradient(135deg, #fdf4ff, #faf5ff)', border: '1px solid #e9d5ff', padding: '24px', borderRadius: '20px', boxShadow: '0 8px 24px rgba(168, 85, 247, 0.08)' }}>
-                      <p style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 800, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FileCheck size={18} /> Phê duyệt yêu cầu
-                      </p>
+                    <div style={{ marginTop: 'auto', borderTop: '1px solid #e2e8f0', paddingTop: '24px' }}>
+                      <p style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>Phê duyệt</p>
                       <textarea
                         value={reviewNote} onChange={e => setReviewNote(e.target.value)}
-                        placeholder="Thêm ghi chú cho nhân viên (tuỳ chọn)..."
+                        placeholder="Ghi chú thêm (tuỳ chọn)..."
                         rows={3}
-                        style={{ width: '100%', padding: '16px 20px', borderRadius: '12px', border: '1px solid #d8b4fe', fontSize: '14px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', background: '#fff', marginBottom: '20px', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}
+                        style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', resize: 'vertical', fontFamily: 'inherit', marginBottom: '16px' }}
                       />
-                      <div style={{ display: 'flex', gap: '16px', justifyContent: 'flex-end' }}>
-                        <button onClick={() => handleReview(selectedReq, 'rejected')} disabled={processing} style={{ padding: '14px 28px', borderRadius: '12px', border: 'none', background: '#fef2f2', color: '#dc2626', fontWeight: 800, fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s', opacity: processing ? 0.7 : 1 }}>
-                          ❌ Từ chối
+                      <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                        <button onClick={() => handleReview(selectedReq, 'rejected')} disabled={processing} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #e2e8f0', background: '#fff', color: '#b91c1c', fontWeight: 500, fontSize: '13px', cursor: 'pointer' }}>
+                          Từ chối
                         </button>
-                        <button onClick={() => handleReview(selectedReq, canPheduyet ? 'approved' : 'pending_director')} disabled={processing} style={{ padding: '14px 36px', borderRadius: '12px', border: 'none', background: 'linear-gradient(135deg, #059669, #10b981)', color: '#fff', fontWeight: 800, fontSize: '15px', cursor: 'pointer', transition: 'all 0.2s', opacity: processing ? 0.7 : 1, boxShadow: '0 8px 16px rgba(5,150,105,0.25)' }}>
-                          ✅ {canPheduyet ? 'Phê duyệt' : 'Thẩm định'}
+                        <button onClick={() => handleReview(selectedReq, canPheduyet ? 'approved' : 'pending_director')} disabled={processing} style={{ padding: '8px 20px', borderRadius: '6px', border: 'none', background: '#0f172a', color: '#fff', fontWeight: 500, fontSize: '13px', cursor: 'pointer' }}>
+                          {canPheduyet ? 'Phê duyệt' : 'Thẩm định'}
                         </button>
                       </div>
                     </div>
@@ -568,14 +557,14 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
 
                 if (selectedReq.status === 'approved' || selectedReq.status === 'rejected') {
                   return (
-                    <div style={{ marginTop: 'auto' }}>
-                      <p style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Kết quả xử lý</p>
-                      <div style={{ background: selectedReq.status === 'approved' ? '#f0fdf4' : '#fef2f2', border: `1px solid ${selectedReq.status === 'approved' ? '#86efac' : '#fecaca'}`, padding: '20px 24px', borderRadius: '16px' }}>
-                        <p style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: selectedReq.status === 'approved' ? '#059669' : '#dc2626', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          Bởi {selectedReq.reviewed_by} vào lúc {fmtDateTime(selectedReq.reviewed_at)}
+                    <div style={{ marginTop: 'auto', borderTop: '1px solid #e2e8f0', paddingTop: '24px' }}>
+                      <p style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>Kết quả</p>
+                      <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <p style={{ margin: '0 0 4px', fontSize: '12px', color: '#475569' }}>
+                          Được {selectedReq.status === 'approved' ? 'duyệt' : 'từ chối'} bởi <strong>{selectedReq.reviewed_by}</strong> lúc {fmtDateTime(selectedReq.reviewed_at)}
                         </p>
-                        <p style={{ margin: 0, fontSize: '15px', color: '#1e293b', fontWeight: 500, lineHeight: 1.6 }}>
-                          {selectedReq.reviewer_note || '(Không có ghi chú bổ sung)'}
+                        <p style={{ margin: 0, fontSize: '13px', color: '#0f172a' }}>
+                          {selectedReq.reviewer_note || 'Không có ghi chú.'}
                         </p>
                       </div>
                     </div>
@@ -584,10 +573,9 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
 
                 if (selectedReq.status === 'pending' || selectedReq.status === 'pending_director') {
                   return (
-                    <div style={{ marginTop: 'auto', padding: '24px', borderRadius: '16px', background: '#f8fafc', border: '2px dashed #cbd5e1', textAlign: 'center' }}>
-                      <Clock3 size={32} color="#94a3b8" style={{ marginBottom: '12px', opacity: 0.5 }} />
-                      <p style={{ margin: 0, fontSize: '14px', color: '#64748b', fontWeight: 600 }}>
-                        {isOwnRequest ? 'Đơn của bạn đang chờ cấp trên phê duyệt.' : 'Đơn đang trong quá trình xử lý.'}
+                    <div style={{ marginTop: 'auto', borderTop: '1px solid #e2e8f0', paddingTop: '24px' }}>
+                      <p style={{ margin: 0, fontSize: '13px', color: '#64748b', fontStyle: 'italic' }}>
+                        {isOwnRequest ? 'Đơn đang chờ cấp trên xử lý.' : 'Đơn đang trong quá trình xử lý.'}
                       </p>
                     </div>
                   );
@@ -598,13 +586,13 @@ export const HRPanel: React.FC<HRPanelProps> = ({ requests, currentProfile, curr
             </div>
 
             {/* Footer Actions */}
-            <div style={{ padding: '20px 32px', borderTop: '1px solid #f1f5f9', background: '#fafafa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>
-                Ngày tạo: <strong style={{ color: '#334155' }}>{fmtDateTime(selectedReq.created_at)}</strong>
+            <div style={{ padding: '16px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '12px', color: '#64748b' }}>
+                Tạo lúc: {fmtDateTime(selectedReq.created_at)}
               </div>
               {(isAdmin || (selectedReq.requester_username === currentUsername && selectedReq.status === 'pending')) && (
-                <button onClick={() => handleDelete(selectedReq.id)} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s' }}>
-                  <Trash2 size={16} /> {isAdmin ? 'Xoá yêu cầu' : 'Rút yêu cầu'}
+                <button onClick={() => handleDelete(selectedReq.id)} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', borderRadius: '6px', border: '1px solid #fecaca', background: '#fef2f2', color: '#b91c1c', fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}>
+                  <Trash2 size={14} /> {isAdmin ? 'Xoá yêu cầu' : 'Rút yêu cầu'}
                 </button>
               )}
             </div>
