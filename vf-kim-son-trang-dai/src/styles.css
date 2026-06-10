@@ -2112,7 +2112,7 @@ small {
 
 .orders-master-detail {
   display: grid;
-  grid-template-columns: minmax(280px, 0.65fr) minmax(0, 1.35fr);
+  grid-template-columns: minmax(280px, 0.5fr) minmax(0, 1.5fr);
   gap: 10px;
   flex: 1;
   min-height: 0;
