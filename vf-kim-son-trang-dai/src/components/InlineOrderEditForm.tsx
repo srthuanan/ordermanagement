@@ -192,279 +192,187 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
-      <form className="order-form" onSubmit={handleSubmit} style={{ padding: '24px' }}>
-          <label>
-            <span>Khách hàng *</span>
-            <input value={customer} onChange={(e) => setCustomer(e.target.value)} required />
-          </label>
-
-          <label>
-            <span>Mã Amis</span>
-            <input value={maAmis} placeholder="Nhập mã Amis (nếu có)..." onChange={(e) => setMaAmis(e.target.value)} />
-          </label>
-
-
-
-          <label>
-            <span>Dòng xe *</span>
-            <select value={line} onChange={(e) => setLine(e.target.value)}>
-              {vehicleLines.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span>Phiên bản *</span>
-            <select value={version} onChange={(e) => setVersion(e.target.value)}>
-              {versionOptions.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span>Ngoại thất *</span>
-            <select value={exterior} onChange={(e) => setExterior(e.target.value)}>
-              {defaultExteriors.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span>Nội thất *</span>
-            <select value={interior} onChange={(e) => setInterior(e.target.value)}>
-              {interiorOptions.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
-            </select>
-          </label>
-
-          
-
-          
-
-          <label>
-            <span>Số tiền đã cọc (VNĐ)</span>
-            <input
-              type="number"
-              value={depositAmount !== null && depositAmount !== undefined ? depositAmount : ''}
-              placeholder="VD: 50000000"
-              onChange={(e) => setDepositAmount(e.target.value ? Number(e.target.value) : null)}
-            />
-          </label>
-
-          <label>
-            <span>Hình thức thanh toán</span>
-            <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-              <option value="Tiền mặt">Tiền mặt</option>
-              <option value="Vay ngân hàng">Vay ngân hàng</option>
-            </select>
-          </label>
-<div className="full-span policy-picker">
-            <label className="field-label">
-              Chính sách bán hàng *
-            </label>
-
-            <div className={`multi-select ${policyOpen ? 'open' : ''}`} ref={policySelectRef}>
-              <div className="select-box" onClick={policyLoading ? undefined : togglePolicyDropdown}>
-                <div>
-                  <div className="selected-main">
-                    {selectedPolicyCount > 0 ? (selectedPolicyPreview || 'Đã chọn chính sách') : 'Chọn chính sách...'}
-                  </div>
-                  <div className="selected-more">
-                    {selectedPolicyCount > 1 ? `+${selectedPolicyCount - 1}` : ''}
-                  </div>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <form className="order-form-inline-table" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%', flex: 1 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #cbd5e1', tableLayout: 'fixed' }}>
+          <tbody>
+            <tr>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '18%' }}>Khách hàng *</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px', width: '32%' }}>
+                <input value={customer} onChange={(e) => setCustomer(e.target.value)} required style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+              </td>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '18%' }}>Tư vấn viên *</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px', width: '32%' }}>
+                <select value={staff} onChange={(e) => setStaff(e.target.value)} required style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                  {staffNames.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Dòng xe *</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <select value={line} onChange={(e) => setLine(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                  {vehicleLines.map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+              </td>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Màu (Ngoại/Nội) *</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <select value={exterior} onChange={(e) => setExterior(e.target.value)} style={{ width: '50%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                    {defaultExteriors.map((item) => <option key={item} value={item}>{item}</option>)}
+                  </select>
+                  <select value={interior} onChange={(e) => setInterior(e.target.value)} style={{ width: '50%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                    {interiorOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+                  </select>
                 </div>
-                <span className="select-caret" />
-              </div>
-
-              <div className="dropdown-list" id="dropdownList">
-                {policyLoading ? (
-                  <div className="policy-picker-empty">Đang tải danh sách chính sách...</div>
-                ) : filteredPolicyOptions.length === 0 ? (
-                  <div className="policy-picker-empty">Không có chính sách phù hợp.</div>
-                ) : (
-                  filteredPolicyOptions.map((p) => {
-                    const checked = policy.includes(p.ten_chinh_sach);
-                    return (
-                      <label key={p.ten_chinh_sach}>
-                        <input
-                          type="checkbox"
-                          value={p.ten_chinh_sach}
-                          checked={checked}
-                          onChange={() => togglePolicy(p.ten_chinh_sach)}
-                        />
-                        <span>{p.ten_chinh_sach}</span>
-                      </label>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-          <label>
-            <span>Mã hợp đồng</span>
-            <input
-              value={contractCode || ''}
-              placeholder="Nhập mã HĐ..."
-              onChange={(event) => setContractCode(event.target.value)}
-              required
-            />
-          </label>
-          <label className="full-span">
-            <span>Địa chỉ xuất hóa đơn (XHD)</span>
-            <input
-              value={invoiceAddress || ''}
-              placeholder="Nhập địa chỉ đầy đủ để xuất hóa đơn..."
-              onChange={(event) => setInvoiceAddress(event.target.value)}
-              required
-            />
-          </label>
-
-          <div className="full-span order-extra-card">
-            <div className="order-extra-title">
-              <span>Thông tin XHĐ</span>
-              <small>Đồng bộ với form yêu cầu hóa đơn</small>
-            </div>
-            <div className="order-extra-grid">
-              <label>
-                <span>Ngày ký hợp đồng</span>
-                <input
-                  type="date"
-                  value={ngayKyHopDong || ''}
-                  onChange={(event) => setNgayKyHopDong(event.target.value)}
-                />
-              </label>
-              <label>
-                <span>Nguồn khách</span>
-                <input
-                  value={nguonKhach || ''}
-                  placeholder="Giới thiệu, Marketing..."
-                  onChange={(event) => setNguonKhach(event.target.value)}
-                />
-              </label>
-              <label>
-                <span>Giá công bố (VNĐ)</span>
-                <input
-                  type="number"
-                  value={giaCongBo !== null && giaCongBo !== undefined ? giaCongBo : ''}
-                  placeholder="VD: 599000000"
-                  onChange={(event) => setGiaCongBo(event.target.value ? Number(event.target.value) : null)}
-                />
-              </label>
-              <label>
-                <span>Mua bảo hiểm</span>
-                <select
-                  value={muaBaoHiem === null ? '' : muaBaoHiem ? 'true' : 'false'}
-                  onChange={(event) => setMuaBaoHiem(event.target.value === '' ? null : event.target.value === 'true')}
-                >
-                  <option value="">Chưa chọn</option>
-                  <option value="true">Có</option>
-                  <option value="false">Không</option>
+              </td>
+            </tr>
+            <tr>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Số VIN định danh</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 700 }}>
+                {order.vin || <span style={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 400 }}>Chưa cấp</span>}
+              </td>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày cần xe *</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <input type="date" value={needDate} onChange={(e) => setNeedDate(e.target.value)} required style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày đặt cọc *</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <input type="date" value={depositDate} onChange={(e) => setDepositDate(e.target.value)} required style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+              </td>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Tiền đã cọc</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <input type="number" value={depositAmount !== null && depositAmount !== undefined ? depositAmount : ''} placeholder="VD: 50000000" onChange={(e) => setDepositAmount(e.target.value ? Number(e.target.value) : null)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Thanh toán</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                  <option value="Tiền mặt">Tiền mặt</option>
+                  <option value="Vay ngân hàng">Vay ngân hàng</option>
                 </select>
-              </label>
-              <label>
-                <span>Đăng ký xe</span>
-                <select
-                  value={dangKyXe === null ? '' : dangKyXe ? 'true' : 'false'}
-                  onChange={(event) => setDangKyXe(event.target.value === '' ? null : event.target.value === 'true')}
-                >
-                  <option value="">Chưa chọn</option>
-                  <option value="true">Có</option>
-                  <option value="false">Không</option>
+              </td>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Nguồn khách</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <input value={nguonKhach} placeholder="VD: Marketing" onChange={(e) => setNguonKhach(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mã Hợp Đồng</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <input value={contractCode} placeholder="Nhập mã HĐ..." onChange={(e) => setContractCode(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+              </td>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mã Amis</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <input value={maAmis} placeholder="Nhập mã Amis..." onChange={(e) => setMaAmis(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày ký HĐ</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <input type="date" value={ngayKyHopDong} onChange={(e) => setNgayKyHopDong(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+              </td>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Giá công bố</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <input type="number" value={giaCongBo !== null && giaCongBo !== undefined ? giaCongBo : ''} placeholder="VD: 599000000" onChange={(e) => setGiaCongBo(e.target.value ? Number(e.target.value) : null)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Đăng ký xe</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <select value={dangKyXe === null ? '' : dangKyXe ? 'true' : 'false'} onChange={(e) => setDangKyXe(e.target.value === '' ? null : e.target.value === 'true')} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                  <option value="">Chưa chọn</option><option value="true">Có</option><option value="false">Không</option>
                 </select>
-              </label>
-              <label className="full-span">
-                <span>Ghi chú</span>
-                <textarea
-                  value={ghiChu || ''}
-                  placeholder="Ghi chú cho bộ phận xuất hóa đơn..."
-                  onChange={(event) => setGhiChu(event.target.value)}
-                  rows={3}
-                />
-              </label>
-            </div>
+              </td>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mua bảo hiểm</td>
+              <td style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <select value={muaBaoHiem === null ? '' : muaBaoHiem ? 'true' : 'false'} onChange={(e) => setMuaBaoHiem(e.target.value === '' ? null : e.target.value === 'true')} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }}>
+                  <option value="">Chưa chọn</option><option value="true">Có</option><option value="false">Không</option>
+                </select>
+              </td>
+            </tr>
             {isGasToElectricPolicy ? (
-              <div className="order-extra-gas">
-                <div className="order-extra-title order-extra-title--sub">
-                  <span>Thông tin xe xăng</span>
-                  <small>Áp dụng cho chính sách thu cũ đổi mới</small>
-                </div>
-                <div className="order-extra-grid order-extra-grid--compact">
-                  <label>
-                    <span>VIN xe xăng</span>
-                    <input
-                      value={xeXangVin || ''}
-                      placeholder="Nhập VIN xe xăng..."
-                      onChange={(event) => setXeXangVin(event.target.value.toUpperCase())}
-                    />
-                  </label>
-                  <label>
-                    <span>Hãng xe</span>
-                    <input
-                      value={xeXangHang || ''}
-                      placeholder="VD: Toyota"
-                      onChange={(event) => setXeXangHang(event.target.value)}
-                    />
-                  </label>
-                  <label className="full-span">
-                    <span>Model xe</span>
-                    <input
-                      value={xeXangModel || ''}
-                      placeholder="VD: Vios 1.5G"
-                      onChange={(event) => setXeXangModel(event.target.value)}
-                    />
-                  </label>
-                </div>
-              </div>
+              <tr>
+                <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Xe xăng thu cũ</td>
+                <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input value={xeXangVin} placeholder="VIN xe xăng" onChange={(e) => setXeXangVin(e.target.value.toUpperCase())} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0 }} />
+                    <input value={xeXangHang} placeholder="Hãng (VD: Toyota)" onChange={(e) => setXeXangHang(e.target.value)} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0 }} />
+                    <input value={xeXangModel} placeholder="Model (VD: Vios 1.5G)" onChange={(e) => setXeXangModel(e.target.value)} style={{ flex: 1, border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none', minWidth: 0 }} />
+                  </div>
+                </td>
+              </tr>
             ) : null}
+            <tr>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Chính sách</td>
+              <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '4px 8px', position: 'relative' }}>
+                <div className={`multi-select ${policyOpen ? 'open' : ''}`} ref={policySelectRef} style={{ width: '100%', position: 'static' }}>
+                  <div className="select-box" onClick={policyLoading ? undefined : togglePolicyDropdown} style={{ border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', background: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: 1 }}>
+                      <div className="selected-main" style={{ fontSize: '13px' }}>
+                        {selectedPolicyCount > 0 ? (selectedPolicyPreview || 'Đã chọn chính sách') : 'Chọn chính sách...'}
+                      </div>
+                      <div className="selected-more" style={{ fontSize: '12px', color: '#64748b' }}>
+                        {selectedPolicyCount > 1 ? `+${selectedPolicyCount - 1}` : ''}
+                      </div>
+                    </div>
+                    <span className="select-caret" />
+                  </div>
+
+                  <div className="dropdown-list" id="dropdownList" style={{ left: 0, right: 0, marginTop: '4px', position: 'absolute', zIndex: 50, border: '1px solid #cbd5e1', borderRadius: '6px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}>
+                    {policyLoading ? (
+                      <div className="policy-picker-empty" style={{ padding: '8px 12px' }}>Đang tải danh sách chính sách...</div>
+                    ) : filteredPolicyOptions.length === 0 ? (
+                      <div className="policy-picker-empty" style={{ padding: '8px 12px' }}>Không có chính sách phù hợp.</div>
+                    ) : (
+                      <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                        {filteredPolicyOptions.map((p) => {
+                          const checked = policy.includes(p.ten_chinh_sach);
+                          return (
+                            <label key={p.ten_chinh_sach} style={{ padding: '6px 12px', display: 'flex', gap: '8px', cursor: 'pointer', margin: 0, alignItems: 'center', backgroundColor: checked ? '#f0fdf4' : 'transparent' }}>
+                              <input type="checkbox" value={p.ten_chinh_sach} checked={checked} onChange={() => togglePolicy(p.ten_chinh_sach)} style={{ margin: 0 }} />
+                              <span style={{ fontSize: '13px', lineHeight: 1.4 }}>{p.ten_chinh_sach}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Địa chỉ XHD</td>
+              <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <input value={invoiceAddress} placeholder="Nhập địa chỉ đầy đủ để xuất hóa đơn..." onChange={(e) => setInvoiceAddress(e.target.value)} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', outline: 'none' }} />
+              </td>
+            </tr>
+            <tr>
+              <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ghi chú</td>
+              <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '4px 8px' }}>
+                <textarea value={ghiChu} placeholder="Ghi chú cho bộ phận xuất hóa đơn..." onChange={(e) => setGhiChu(e.target.value)} rows={2} style={{ width: '100%', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '6px 8px', resize: 'vertical', outline: 'none', fontFamily: 'inherit', fontSize: '13px' }} />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        {error ? (
+          <div className="form-error" style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: '#b91c1c', background: '#fef2f2', padding: '12px', borderRadius: '6px', border: '1px solid #fecaca' }}>
+            <AlertTriangle size={17} />
+            <span style={{ fontSize: '13px', fontWeight: 500 }}>{error}</span>
           </div>
+        ) : null}
 
-          <label>
-            <span>Ngày cọc *</span>
-            <input
-              type="date"
-              value={depositDate}
-              onChange={(event) => setDepositDate(event.target.value)}
-              required
-              />
-            </label>
-          <label>
-            <span>Ngày cần xe *</span>
-            <input
-              type="date"
-              value={needDate}
-              onChange={(event) => setNeedDate(event.target.value)}
-              required
-            />
-          </label>
-
-          
-          
-
-          
-        
-
-          {error ? (
-            <div className="form-error">
-              <AlertTriangle size={17} />
-              <span>{error}</span>
-            </div>
-          ) : null}
-
-          <div className="modal-actions" style={{ position: 'sticky', bottom: '-24px', background: 'white', padding: '16px 0', marginTop: '24px', borderTop: '1px solid #e2e8f0', zIndex: 10 }}>
-            <button type="button" className="ghost-button" onClick={onCancel} disabled={isSubmitting}>
-              Hủy
-            </button>
-            <button type="submit" className="primary-button" disabled={isSubmitting}>
-              <Save size={18} />
-              <span>{isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
-            </button>
-          </div>
-        </form>
+        <div style={{ paddingTop: '16px', display: 'flex', gap: '8px', marginTop: 'auto' }}>
+          <button type="button" onClick={onCancel} disabled={isSubmitting} style={{ flex: 1, padding: '10px', fontSize: '13px', fontWeight: 600, border: '1px solid #cbd5e1', background: '#ffffff', color: '#64748b', cursor: 'pointer', borderRadius: 0 }}>Hủy</button>
+          <button type="submit" disabled={isSubmitting} style={{ flex: 2, padding: '10px', fontSize: '13px', fontWeight: 600, border: '1px solid #1d4ed8', background: '#1d4ed8', color: '#ffffff', cursor: 'pointer', borderRadius: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <Save size={16} />
+            <span>{isSubmitting ? 'Đang lưu...' : 'Lưu thay đổi'}</span>
+          </button>
+        </div>
+      </form>
     </div>
   );
 };
