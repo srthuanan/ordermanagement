@@ -692,43 +692,55 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                         <span className={statusTone[selectedOrder.status]} style={{ padding: '4px 8px', border: '1px solid currentColor', fontSize: '12px', fontWeight: 600 }}>{selectedOrder.status}</span>
                       </div>
 
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #cbd5e1' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px', border: '1px solid #cbd5e1' }}>
                         <tbody>
                           <tr>
-                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 10px', fontWeight: 600, color: '#475569', width: '140px' }}>Khách hàng</td>
-                            <td style={{ border: '1px solid #cbd5e1', padding: '6px 10px', color: '#0f172a', fontWeight: 500 }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.customer, 'Tên khách')}>{selectedOrder.customer}</td>
-                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 10px', fontWeight: 600, color: '#475569', width: '140px' }}>Ngày đặt cọc</td>
-                            <td style={{ border: '1px solid #cbd5e1', padding: '6px 10px', color: '#0f172a', fontWeight: 500 }}>{selectedOrder.depositDate || '—'}</td>
+                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569', width: '30%' }}>Khách hàng</td>
+                            <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.customer, 'Tên khách')}>{selectedOrder.customer}</td>
                           </tr>
                           <tr>
-                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 10px', fontWeight: 600, color: '#475569' }}>Tư vấn viên</td>
-                            <td style={{ border: '1px solid #cbd5e1', padding: '6px 10px', color: '#0f172a', fontWeight: 500 }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.staff, 'Tên TVBH')}>{selectedOrder.staff}</td>
-                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 10px', fontWeight: 600, color: '#475569' }}>Tiền đã cọc</td>
-                            <td style={{ border: '1px solid #cbd5e1', padding: '6px 10px', color: '#b91c1c', fontWeight: 700 }}>{selectedOrder.depositAmount ? new Intl.NumberFormat('vi-VN').format(selectedOrder.depositAmount) + ' ₫' : '—'}</td>
+                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Tư vấn viên</td>
+                            <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.staff, 'Tên TVBH')}>{selectedOrder.staff}</td>
                           </tr>
                           <tr>
-                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 10px', fontWeight: 600, color: '#475569' }}>Dòng xe</td>
-                            <td style={{ border: '1px solid #cbd5e1', padding: '6px 10px', color: '#0f172a', fontWeight: 600 }}>{selectedVehicleSummary}</td>
-                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 10px', fontWeight: 600, color: '#475569' }}>Thanh toán</td>
-                            <td style={{ border: '1px solid #cbd5e1', padding: '6px 10px', color: '#0f172a', fontWeight: 500 }}>{selectedOrder.paymentMethod || 'Tiền mặt'}</td>
+                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Dòng xe</td>
+                            <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 600 }}>{selectedVehicleSummary}</td>
                           </tr>
                           <tr>
-                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 10px', fontWeight: 600, color: '#475569' }}>Màu (Ngoại/Nội)</td>
-                            <td style={{ border: '1px solid #cbd5e1', padding: '6px 10px', color: '#0f172a', fontWeight: 500 }}>{selectedFinishSummary}</td>
-                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 10px', fontWeight: 600, color: '#475569' }}>Mã Hợp Đồng</td>
-                            <td style={{ border: '1px solid #cbd5e1', padding: '6px 10px', color: '#0f172a', fontWeight: 500 }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.contractCode || '', 'Mã HĐ')}>{selectedOrder.contractCode || '—'}</td>
+                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Màu (Ngoại/Nội)</td>
+                            <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }}>{selectedFinishSummary}</td>
                           </tr>
                           <tr>
-                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 10px', fontWeight: 600, color: '#475569' }}>Chính sách</td>
-                            <td style={{ border: '1px solid #cbd5e1', padding: '6px 10px', color: '#0f172a', fontWeight: 500 }}>{selectedOrder.policy ? selectedOrder.policy.split('\n')[0] + (selectedOrder.policy.split('\n').length > 1 ? '...' : '') : 'Mặc định'}</td>
-                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 10px', fontWeight: 600, color: '#475569' }}>Mã Amis</td>
-                            <td style={{ border: '1px solid #cbd5e1', padding: '6px 10px', color: '#0f172a', fontWeight: 500 }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.maAmis || '', 'Mã Amis')}>{selectedOrder.maAmis || '—'}</td>
+                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Số VIN định danh</td>
+                            <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 700, letterSpacing: '0.05em' }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.vin || '', 'Số VIN')}>{selectedOrder.vin || <span style={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 400 }}>Chưa cấp</span>}</td>
                           </tr>
                           <tr>
-                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 10px', fontWeight: 600, color: '#475569' }}>Số VIN định danh</td>
-                            <td style={{ border: '1px solid #cbd5e1', padding: '6px 10px', color: '#0f172a', fontWeight: 700, letterSpacing: '0.05em' }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.vin || '', 'Số VIN')}>{selectedOrder.vin || <span style={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 400 }}>Chưa cấp</span>}</td>
-                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '6px 10px', fontWeight: 600, color: '#475569' }}>Địa chỉ XHD</td>
-                            <td style={{ border: '1px solid #cbd5e1', padding: '6px 10px', color: '#0f172a', fontWeight: 500, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.invoiceAddress || '', 'Địa chỉ XHD')}>{selectedOrder.invoiceAddress || '—'}</td>
+                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Chính sách</td>
+                            <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }}>{selectedOrder.policy ? selectedOrder.policy.split('\n')[0] + (selectedOrder.policy.split('\n').length > 1 ? '...' : '') : 'Mặc định'}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Ngày đặt cọc</td>
+                            <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }}>{selectedOrder.depositDate || '—'}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Tiền đã cọc</td>
+                            <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#b91c1c', fontWeight: 700 }}>{selectedOrder.depositAmount ? new Intl.NumberFormat('vi-VN').format(selectedOrder.depositAmount) + ' ₫' : '—'}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Thanh toán</td>
+                            <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }}>{selectedOrder.paymentMethod || 'Tiền mặt'}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Mã Hợp Đồng</td>
+                            <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.contractCode || '', 'Mã HĐ')}>{selectedOrder.contractCode || '—'}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Mã Amis</td>
+                            <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.maAmis || '', 'Mã Amis')}>{selectedOrder.maAmis || '—'}</td>
+                          </tr>
+                          <tr>
+                            <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Địa chỉ XHD</td>
+                            <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500, wordBreak: 'break-word', whiteSpace: 'pre-wrap' }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.invoiceAddress || '', 'Địa chỉ XHD')}>{selectedOrder.invoiceAddress || '—'}</td>
                           </tr>
                         </tbody>
                       </table>
