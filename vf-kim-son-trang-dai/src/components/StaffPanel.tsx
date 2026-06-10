@@ -287,35 +287,16 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
       )}
 
       {/* Personal Profile Section */}
-      {isPersonalView ? (
+      {isPersonalView && (
         <div style={{ display: 'flex', flexDirection: 'column', background: '#ffffff', borderRadius: '20px', border: '1px solid #cbd5e1', boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.02)', overflow: 'hidden' }}>
           <div style={{ padding: '14px 20px', borderBottom: '1px solid #e2e8f0', background: '#fafafb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
             <div>
               <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Hồ sơ của bạn</div>
               <div style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>{currentProfile?.full_name || 'Đang tải...'}</div>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              {onEditProfile && (
-                <button 
-                  onClick={onEditProfile}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', color: '#0f172a', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-                >
-                  <UserRound size={14} /> Cập nhật hồ sơ
-                </button>
-              )}
-              {onChangePassword && (
-                <button 
-                  onClick={onChangePassword}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', color: '#0f172a', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#fff'}
-                >
-                  <ShieldCheck size={14} /> Đổi mật khẩu
-                </button>
-              )}
-            </div>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '6px 10px', borderRadius: '999px' }}>
+              Chỉ bạn xem
+            </span>
           </div>
           <div style={{ padding: '20px', display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
@@ -344,42 +325,6 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
                 {currentProfile?.activated_at ? `✅ ${new Date(currentProfile.activated_at).toLocaleString('vi-VN')}` : '⌛ Đang chờ kích hoạt'}
               </strong>
             </div>
-          </div>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', background: '#ffffff', borderRadius: '16px', border: '1px solid #cbd5e1', boxShadow: '0 2px 8px -2px rgba(0,0,0,0.02)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'linear-gradient(135deg, #0f766e, #14b8a6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-              <UserRound size={20} strokeWidth={2.5} />
-            </div>
-            <div>
-              <div style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a' }}>{currentProfile?.full_name || 'Đang tải...'}</div>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: '#64748b', marginTop: '2px' }}>
-                {currentProfile ? roleLabels[currentProfile.role] : '---'} {currentProfile?.department ? `• ${currentProfile.department}` : ''}
-              </div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {onEditProfile && (
-              <button 
-                onClick={onEditProfile}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#334155', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#0f172a'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.color = '#334155'; }}
-              >
-                <UserRound size={14} /> Cập nhật hồ sơ
-              </button>
-            )}
-            {onChangePassword && (
-              <button 
-                onClick={onChangePassword}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#334155', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#0f172a'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.color = '#334155'; }}
-              >
-                <ShieldCheck size={14} /> Đổi mật khẩu
-              </button>
-            )}
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { X, Users, CalendarDays } from 'lucide-react';
+import { X, Users, CalendarDays, UserRound, ShieldCheck } from 'lucide-react';
 
 // Lớp Dữ liệu & API
 import { supabase } from './services/supabaseClient';
@@ -478,34 +478,55 @@ function App() {
 
             {activeTab === 'staff' && (
               <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '12px' }}>
-                <div style={{ display: 'flex', gap: '8px', padding: '12px 16px', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflowX: 'auto' }}>
-                  <button
-                    onClick={() => setStaffSubTab('system')}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '10px',
-                      border: 'none', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s',
-                      background: staffSubTab === 'system' ? '#eff6ff' : 'transparent',
-                      color: staffSubTab === 'system' ? '#0284c7' : '#64748b'
-                    }}
-                  >
-                    <Users size={16} /> Quản lý tài khoản
-                  </button>
-                  <button
-                    onClick={() => setStaffSubTab('hr')}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '10px',
-                      border: 'none', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s',
-                      background: staffSubTab === 'hr' ? '#eff6ff' : 'transparent',
-                      color: staffSubTab === 'hr' ? '#0284c7' : '#64748b'
-                    }}
-                  >
-                    <CalendarDays size={16} /> Chấm công & Phép
-                    {hrLeaveRequests.filter(r => r.status === 'pending').length > 0 && userRole === 'admin' && (
-                      <span style={{ background: '#ef4444', color: '#fff', borderRadius: '999px', padding: '0 6px', fontSize: '10px' }}>
-                        {hrLeaveRequests.filter(r => r.status === 'pending').length}
-                      </span>
-                    )}
-                  </button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflowX: 'auto', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => setStaffSubTab('system')}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '10px',
+                        border: 'none', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s',
+                        background: staffSubTab === 'system' ? '#eff6ff' : 'transparent',
+                        color: staffSubTab === 'system' ? '#0284c7' : '#64748b'
+                      }}
+                    >
+                      <Users size={16} /> Quản lý tài khoản
+                    </button>
+                    <button
+                      onClick={() => setStaffSubTab('hr')}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: '10px',
+                        border: 'none', fontWeight: 700, fontSize: '13px', cursor: 'pointer', transition: 'all 0.2s',
+                        background: staffSubTab === 'hr' ? '#eff6ff' : 'transparent',
+                        color: staffSubTab === 'hr' ? '#0284c7' : '#64748b'
+                      }}
+                    >
+                      <CalendarDays size={16} /> Chấm công & Phép
+                      {hrLeaveRequests.filter(r => r.status === 'pending').length > 0 && userRole === 'admin' && (
+                        <span style={{ background: '#ef4444', color: '#fff', borderRadius: '999px', padding: '0 6px', fontSize: '10px' }}>
+                          {hrLeaveRequests.filter(r => r.status === 'pending').length}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      onClick={() => setEditProfileOpen(true)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#334155', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#0f172a'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.color = '#334155'; }}
+                    >
+                      <UserRound size={14} /> Cập nhật hồ sơ
+                    </button>
+                    <button 
+                      onClick={() => setChangePasswordOpen(true)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#334155', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#0f172a'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = '#f8fafc'; e.currentTarget.style.color = '#334155'; }}
+                    >
+                      <ShieldCheck size={14} /> Đổi mật khẩu
+                    </button>
+                  </div>
                 </div>
                 <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                   {staffSubTab === 'system' && (
