@@ -25,9 +25,11 @@ type StaffPanelProps = {
   staff: ProfileRow[];
   currentProfile: ProfileRow | null;
   onReload: () => Promise<boolean>;
+  onEditProfile?: () => void;
+  onChangePassword?: () => void;
 };
 
-export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, onReload }) => {
+export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, onReload, onEditProfile, onChangePassword }) => {
   const [email, setEmail] = React.useState('');
   const [fullName, setFullName] = React.useState('');
   const [inviteRole, setInviteRole] = React.useState<'sales' | 'manager'>('sales');
@@ -270,67 +272,82 @@ export const StaffPanel: React.FC<StaffPanelProps> = ({ staff, currentProfile, o
   };
 
   return (
-    <section className="panel staff-panel" style={{ background: 'transparent', border: '0', padding: '0', boxShadow: 'none' }}>
+    <section className="panel staff-panel custom-scrollbar" style={{ background: 'transparent', border: '0', padding: '0', boxShadow: 'none', display: 'flex', flexDirection: 'column', gap: '24px', overflowY: 'auto' }}>
       
-
-
       {/* Status Banner Notifications */}
       {error && (
-        <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', color: '#b91c1c', fontWeight: 600, fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+        <div style={{ padding: '12px 16px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', color: '#b91c1c', fontWeight: 600, fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <X size={16} /> {error}
         </div>
       )}
       {success && (
-        <div style={{ padding: '12px 16px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', color: '#047857', fontWeight: 600, fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+        <div style={{ padding: '12px 16px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '12px', color: '#047857', fontWeight: 600, fontSize: '13.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <MailCheck size={16} /> {success}
         </div>
       )}
 
-
-      {/* Primary Modular Dual Pane Workspace */}
-      {isPersonalView ? (
-        <div className="staff-modern-workspace" style={{ gridTemplateColumns: '1fr' }}>
-          <div className="orders-data-side" style={{ display: 'flex', flexDirection: 'column', background: '#ffffff', borderRadius: '20px', border: '1px solid #cbd5e1', boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.02)', overflow: 'hidden' }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid #e2e8f0', background: '#fafafb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-              <div>
-                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Mục cá nhân</div>
-                <div style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>{currentProfile?.full_name || 'TVBH'}</div>
-              </div>
-              <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f766e', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '6px 10px', borderRadius: '999px' }}>
-                Chỉ bạn xem
-              </span>
-            </div>
-            <div style={{ padding: '20px', display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Họ & tên</span>
-                <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile?.full_name || '---'}</strong>
-              </div>
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Email</span>
-                <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile?.email || '---'}</strong>
-              </div>
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Phòng ban</span>
-                <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile?.department || 'Chưa gán'}</strong>
-              </div>
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Quyền hạn</span>
-                <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile ? roleLabels[currentProfile.role] : 'TVBH'}</strong>
-              </div>
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Trạng thái</span>
-                <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile ? getStatusLabel(currentProfile) : '---'}</strong>
-              </div>
-              <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>
-                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Kích hoạt hoàn tất</span>
-                <strong style={{ display: 'block', marginTop: '4px', color: currentProfile?.activated_at ? '#059669' : '#64748b', fontSize: '14px' }}>
-                  {currentProfile?.activated_at ? `✅ ${new Date(currentProfile.activated_at).toLocaleString('vi-VN')}` : '⌛ Đang chờ kích hoạt'}
-                </strong>
-              </div>
-            </div>
+      {/* Personal Profile Section (Always Visible) */}
+      <div style={{ display: 'flex', flexDirection: 'column', background: '#ffffff', borderRadius: '20px', border: '1px solid #cbd5e1', boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.02)', overflow: 'hidden' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid #e2e8f0', background: '#fafafb', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <div>
+            <div style={{ fontSize: '12px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Hồ sơ của bạn</div>
+            <div style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>{currentProfile?.full_name || 'Đang tải...'}</div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {onEditProfile && (
+              <button 
+                onClick={onEditProfile}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', color: '#0f172a', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+              >
+                <UserRound size={14} /> Cập nhật hồ sơ
+              </button>
+            )}
+            {onChangePassword && (
+              <button 
+                onClick={onChangePassword}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', color: '#0f172a', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+              >
+                <ShieldCheck size={14} /> Đổi mật khẩu
+              </button>
+            )}
           </div>
         </div>
-      ) : (
+        <div style={{ padding: '20px', display: 'grid', gap: '12px', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+          <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Họ & tên</span>
+            <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile?.full_name || '---'}</strong>
+          </div>
+          <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Email</span>
+            <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile?.email || '---'}</strong>
+          </div>
+          <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Phòng ban</span>
+            <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile?.department || 'Chưa gán'}</strong>
+          </div>
+          <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Quyền hạn</span>
+            <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile ? roleLabels[currentProfile.role] : 'TVBH'}</strong>
+          </div>
+          <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Trạng thái</span>
+            <strong style={{ display: 'block', marginTop: '4px', color: '#0f172a', fontSize: '14px' }}>{currentProfile ? getStatusLabel(currentProfile) : '---'}</strong>
+          </div>
+          <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>
+            <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Kích hoạt hoàn tất</span>
+            <strong style={{ display: 'block', marginTop: '4px', color: currentProfile?.activated_at ? '#059669' : '#64748b', fontSize: '14px' }}>
+              {currentProfile?.activated_at ? `✅ ${new Date(currentProfile.activated_at).toLocaleString('vi-VN')}` : '⌛ Đang chờ kích hoạt'}
+            </strong>
+          </div>
+        </div>
+      </div>
+
+      {/* Primary Modular Dual Pane Workspace (Visible for Admins & Managers) */}
+      {!isPersonalView && (
         <div className="staff-modern-workspace">
         
         {/* LEFT PANEL: Data Grid */}

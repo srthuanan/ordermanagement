@@ -79,22 +79,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Action Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           <button 
-            onClick={onEditProfile}
-            style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '10px', border: 'none', background: 'transparent', color: '#334155', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', outline: 'none' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#0f172a'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#334155'; }}
-          >
-            <User size={16} /> Cập nhật hồ sơ
-          </button>
-          <button 
-            onClick={onChangePassword}
-            style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '10px', border: 'none', background: 'transparent', color: '#334155', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', outline: 'none' }}
-            onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#0f172a'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#334155'; }}
-          >
-            <LockKeyhole size={16} /> Đổi mật khẩu
-          </button>
-          <button 
             onClick={onSignOut}
             style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1px solid transparent', background: '#fff1f2', color: '#e11d48', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', outline: 'none', marginTop: '4px' }}
             onMouseEnter={e => { e.currentTarget.style.background = '#ffe4e6'; e.currentTarget.style.color = '#be123c'; }}

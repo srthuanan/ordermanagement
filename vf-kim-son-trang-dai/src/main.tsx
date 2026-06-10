@@ -509,7 +509,13 @@ function App() {
                 </div>
                 <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                   {staffSubTab === 'system' && (
-                    <StaffPanel staff={profiles} currentProfile={profile} onReload={loadWorkspace} />
+                    <StaffPanel 
+                      staff={profiles} 
+                      currentProfile={profile} 
+                      onReload={loadWorkspace} 
+                      onEditProfile={() => setIsEditProfileOpen(true)}
+                      onChangePassword={() => setIsChangePasswordOpen(true)}
+                    />
                   )}
                   {staffSubTab === 'hr' && (
                     <HRPanel
