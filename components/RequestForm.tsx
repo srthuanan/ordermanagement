@@ -63,8 +63,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
     const [warningType, setWarningType] = useState<'hot' | 'slow' | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [dmsWarning, setDmsWarning] = useState('');
-
-    const { versionsMap, allPossibleVersions, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
+    const { versionsMap, allPossibleVersions, vehicleLines } = useVehicleConfig();
 
     const [availableExteriors, setAvailableExteriors] = useState<string[]>([]);
     const [availableInteriors, setAvailableInteriors] = useState<string[]>([]);
