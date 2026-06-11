@@ -6,7 +6,7 @@ export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', '
 export const versionsMap = {
     "VF 3": ["Base", "Base Tiêu chuẩn 2", "Plus"],
     "VF 5": ["Plus"],
-    "VF 6": ["Eco Tiêu chuẩn", "Eco Nâng cấp", "Plus Tiêu chuẩn", "Plus Nâng cấp", "Plus_US", "Plus Tiêu chuẩn 1", "Plus Tiêu chuẩn 2"],
+    "VF 6": ["Eco Tiêu chuẩn", "Plus Tiêu chuẩn 2"],
     "VF 7": ["Eco", "Eco_HUD", "Plus_Metal Nâng cấp", "Plus_Metal Tiêu chuẩn", "Plus Tiêu chuẩn", "Plus Nâng cấp", "Eco Tiêu chuẩn 1", "Eco Tiêu chuẩn 2", "Eco_HUD Tiêu chuẩn 1", "Eco_HUD Tiêu chuẩn 2", "Plus_Metal Tiêu chuẩn 1", "Plus_Metal Tiêu chuẩn 2", "Plus Tiêu chuẩn 2", "Plus Tiêu chuẩn 1", "Plus_Metal Tiêu chuẩn 1 (FWD)", "Plus_Metal Tiêu chuẩn 1 (AWD)", "Plus_Metal Tiêu chuẩn 2 (1 Cầu)", "Plus_Metal Tiêu chuẩn 2 (2 Cầu)"],
     "VF 8": ["Eco Tiêu chuẩn", "Eco Nâng cấp", "Plus", "Eco_US", "Plus_US", "All New"],
     "VF 9": ["Plus_CAP_Metal_3ZONES", "Plus_Metal_3ZONES", "Eco_3ZONES", "Plus_Metal", "Plus_CAP_Metal", "Plus_CAP"],
