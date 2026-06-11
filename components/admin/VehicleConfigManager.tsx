@@ -93,11 +93,11 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
     });
 
     const TableWrapper = ({ title, columns, children }: any) => (
-        <div className="mb-6">
-            <h3 className="font-bold text-slate-800 mb-2 uppercase tracking-wider text-sm">{title}</h3>
-            <div className="border border-slate-300 bg-white overflow-hidden shadow-sm">
+        <div className="mb-6 flex flex-col max-h-[80vh]">
+            <h3 className="font-bold text-slate-800 mb-2 uppercase tracking-wider text-sm flex-shrink-0">{title}</h3>
+            <div className="border border-slate-300 bg-white shadow-sm flex-1 overflow-y-auto custom-scrollbar">
                 <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-100 border-b border-slate-300">
+                    <thead className="bg-slate-100 border-b border-slate-300 sticky top-0 z-10 shadow-sm">
                         <tr>
                             {columns.map((col: string, i: number) => (
                                 <th key={i} className={`p-1.5 border-r border-slate-300 last:border-r-0 font-bold text-slate-700 ${col === 'Thao tác' ? 'w-24 text-center' : ''}`}>{col}</th>
@@ -118,6 +118,16 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
                 <div>
                     {/* BẢNG DÒNG XE */}
                     <TableWrapper title="Bảng Dòng Xe" columns={['Tên Dòng Xe', 'Thao tác']}>
+                        <tr className="bg-yellow-50/50 sticky top-[33px] z-10 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border-b border-slate-200">
+                            <td className="p-1 border-r border-slate-300">
+                                <input value={newLine} onChange={e => setNewLine(e.target.value)} onKeyDown={e => {
+                                    if (e.key === 'Enter') handleAddConfig('line', newLine);
+                                }} placeholder="Nhập tên dòng xe mới..." className="w-full px-2 py-0.5 bg-transparent outline-none focus:bg-white" />
+                            </td>
+                            <td className="p-1 text-center">
+                                <button disabled={isProcessing || !newLine.trim()} onClick={() => handleAddConfig('line', newLine)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs w-full disabled:opacity-50 font-medium">Thêm</button>
+                            </td>
+                        </tr>
                         {lines.map(line => (
                             <tr key={line.id} className={`border-b border-slate-200 ${editingId === line.id ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}>
                                 <td className="p-1 border-r border-slate-300">
@@ -142,20 +152,26 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
                                 </td>
                             </tr>
                         ))}
-                        <tr className="bg-yellow-50/50">
-                            <td className="p-1 border-r border-slate-300">
-                                <input value={newLine} onChange={e => setNewLine(e.target.value)} onKeyDown={e => {
-                                    if (e.key === 'Enter') handleAddConfig('line', newLine);
-                                }} placeholder="Nhập tên dòng xe mới..." className="w-full px-2 py-0.5 bg-transparent outline-none focus:bg-white" />
-                            </td>
-                            <td className="p-1 text-center">
-                                <button disabled={isProcessing || !newLine.trim()} onClick={() => handleAddConfig('line', newLine)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs w-full disabled:opacity-50">Thêm</button>
-                            </td>
-                        </tr>
                     </TableWrapper>
 
                     {/* BẢNG PHIÊN BẢN */}
                     <TableWrapper title="Bảng Phiên Bản" columns={['Thuộc Dòng Xe', 'Tên Phiên Bản', 'Thao tác']}>
+                        <tr className="bg-yellow-50/50 sticky top-[33px] z-10 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border-b border-slate-200">
+                            <td className="p-1 border-r border-slate-300">
+                                <select value={selectedLine} onChange={e => setSelectedLine(e.target.value)} className="w-full px-1 py-0.5 bg-transparent outline-none focus:bg-white cursor-pointer">
+                                    <option value="">-- Chọn Dòng Xe --</option>
+                                    {lines.map(l => <option key={l.id} value={l.value}>{l.value}</option>)}
+                                </select>
+                            </td>
+                            <td className="p-1 border-r border-slate-300">
+                                <input value={newVersion} onChange={e => setNewVersion(e.target.value)} onKeyDown={e => {
+                                    if (e.key === 'Enter') handleAddConfig('version', newVersion, selectedLine);
+                                }} placeholder="Nhập phiên bản mới..." className="w-full px-2 py-0.5 bg-transparent outline-none focus:bg-white" />
+                            </td>
+                            <td className="p-1 text-center">
+                                <button disabled={isProcessing || !selectedLine || !newVersion.trim()} onClick={() => handleAddConfig('version', newVersion, selectedLine)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-xs w-full disabled:opacity-50 font-medium">Thêm</button>
+                            </td>
+                        </tr>
                         {versions.map(v => (
                             <tr key={v.id} className={`border-b border-slate-200 ${editingId === v.id ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}>
                                 <td className="p-1 border-r border-slate-300">
@@ -189,28 +205,28 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
                                 </td>
                             </tr>
                         ))}
-                        <tr className="bg-yellow-50/50">
-                            <td className="p-1 border-r border-slate-300">
-                                <select value={selectedLine} onChange={e => setSelectedLine(e.target.value)} className="w-full px-1 py-0.5 bg-transparent outline-none focus:bg-white cursor-pointer">
-                                    <option value="">-- Chọn --</option>
-                                    {lines.map(l => <option key={l.id} value={l.value}>{l.value}</option>)}
-                                </select>
-                            </td>
-                            <td className="p-1 border-r border-slate-300">
-                                <input value={newVersion} onChange={e => setNewVersion(e.target.value)} onKeyDown={e => {
-                                    if (e.key === 'Enter') handleAddConfig('version', newVersion, selectedLine);
-                                }} placeholder="Nhập phiên bản mới..." className="w-full px-2 py-0.5 bg-transparent outline-none focus:bg-white" />
-                            </td>
-                            <td className="p-1 text-center">
-                                <button disabled={isProcessing || !selectedLine || !newVersion.trim()} onClick={() => handleAddConfig('version', newVersion, selectedLine)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-xs w-full disabled:opacity-50">Thêm</button>
-                            </td>
-                        </tr>
                     </TableWrapper>
                 </div>
 
                 <div>
                     {/* BẢNG MÀU SẮC */}
                     <TableWrapper title="Bảng Màu Sắc" columns={['Phân Loại', 'Tên Màu Sắc', 'Thao tác']}>
+                        <tr className="bg-yellow-50/50 sticky top-[33px] z-10 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border-b border-slate-200">
+                            <td className="p-1 border-r border-slate-300">
+                                <select value={newColorType} onChange={e => setNewColorType(e.target.value as any)} className="w-full px-1 py-0.5 bg-transparent outline-none focus:bg-white cursor-pointer text-xs">
+                                    <option value="exterior">Ngoại Thất</option>
+                                    <option value="interior">Nội Thất</option>
+                                </select>
+                            </td>
+                            <td className="p-1 border-r border-slate-300">
+                                <input value={newColor} onChange={e => setNewColor(e.target.value)} onKeyDown={e => {
+                                    if (e.key === 'Enter') handleAddConfig(newColorType, newColor);
+                                }} placeholder="Nhập tên màu mới..." className="w-full px-2 py-0.5 bg-transparent outline-none focus:bg-white" />
+                            </td>
+                            <td className="p-1 text-center">
+                                <button disabled={isProcessing || !newColor.trim()} onClick={() => handleAddConfig(newColorType, newColor)} className="bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded text-xs w-full disabled:opacity-50 font-medium">Thêm</button>
+                            </td>
+                        </tr>
                         {colors.map(color => (
                             <tr key={color.id} className={`border-b border-slate-200 ${editingId === color.id ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}>
                                 <td className="p-1 border-r border-slate-300 w-28">
@@ -248,22 +264,6 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
                                 </td>
                             </tr>
                         ))}
-                        <tr className="bg-yellow-50/50">
-                            <td className="p-1 border-r border-slate-300">
-                                <select value={newColorType} onChange={e => setNewColorType(e.target.value as any)} className="w-full px-1 py-0.5 bg-transparent outline-none focus:bg-white cursor-pointer text-xs">
-                                    <option value="exterior">Ngoại Thất</option>
-                                    <option value="interior">Nội Thất</option>
-                                </select>
-                            </td>
-                            <td className="p-1 border-r border-slate-300">
-                                <input value={newColor} onChange={e => setNewColor(e.target.value)} onKeyDown={e => {
-                                    if (e.key === 'Enter') handleAddConfig(newColorType, newColor);
-                                }} placeholder="Nhập tên màu mới..." className="w-full px-2 py-0.5 bg-transparent outline-none focus:bg-white" />
-                            </td>
-                            <td className="p-1 text-center">
-                                <button disabled={isProcessing || !newColor.trim()} onClick={() => handleAddConfig(newColorType, newColor)} className="bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded text-xs w-full disabled:opacity-50">Thêm</button>
-                            </td>
-                        </tr>
                     </TableWrapper>
                 </div>
             </div>
