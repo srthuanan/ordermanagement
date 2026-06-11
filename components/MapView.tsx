@@ -776,20 +776,34 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
                     }
                     
                     // Cập nhật Icon và Content nếu có sự thay đổi (tránh nhấp nháy)
-                    existingMarker.setIcon(carIcon); existingMarker.options.customStatus = car.trang_thai;
-                    existingMarker.setPopupContent(popupContent);
+                    if (existingMarker.options.isHovered !== isHovered || existingMarker.options.customStatus !== car.trang_thai) {
+                        existingMarker.setIcon(carIcon);
+                        existingMarker.options.isHovered = isHovered;
+                        existingMarker.options.customStatus = car.trang_thai;
+                    }
+                    
+                    // Cập nhật popup content
+                    if (existingMarker.options.popupContent !== popupContent) {
+                        existingMarker.setPopupContent(popupContent);
+                        existingMarker.options.popupContent = popupContent;
+                    }
+
                     newMarkers[car.vin] = existingMarker;
                 } else {
                     // MARKER MỚI HOÀN TOÀN
                     const marker = L.marker([car.lat, car.lng], { icon: carIcon })
-                        .addTo(mapInstance.current)
                         .bindPopup(popupContent);
 
                     marker.on('popupopen', () => {
                         resolveAddress(car.lat, car.lng, car.vin, popupId);
                     });
 
-                    marker.options.customStatus = car.trang_thai; if(markerClusterGroupRef.current) markerClusterGroupRef.current.addLayer(marker); newMarkers[car.vin] = marker;
+                    marker.options.customStatus = car.trang_thai; 
+                    marker.options.isHovered = isHovered;
+                    marker.options.popupContent = popupContent;
+
+                    if(markerClusterGroupRef.current) markerClusterGroupRef.current.addLayer(marker); 
+                    newMarkers[car.vin] = marker;
                 }
             });
 
