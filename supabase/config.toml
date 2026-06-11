@@ -445,3 +445,7 @@ entrypoint = "./functions/get-secrets/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/extract-date/index.ts"
+
+[functions.sepay-webhook]
+verify_jwt = false
+entrypoint = "./functions/sepay-webhook/index.ts"

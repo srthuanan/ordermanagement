@@ -42,7 +42,7 @@ known_users = [
     "PHẠM THÀNH NHÂN", "ĐINH TRỌNG NHÂN", "TẤT BÁCH TƯỜNG", "NGUYỄN TRẦN HOÀNG THANH",
     "NGUYỄN BẢO XUYÊN", "NGUYỄN THỊ DIỆN", "HUỲNH DIỆP THANH TRÂM", "NGUYỄN DƯ THUẬN",
     "THÀNH NGỌC VINH", "NGUYỄN THIÊN THẢO", "TRẦN DANH PHƯƠNG", "NGUYỄN HOÀNG PHÚC",
-    "NGUYỄN THANH CẢ", "ĐÀO MINH KỲ", "PHẠM THỊ THÚY NGA", "NGUYỄN ANH TIẾN",
+    "NGUYỄN THANH CẢ", "ĐÀO MINH KÝ", "PHẠM THỊ THÚY NGA", "NGUYỄN ANH TIẾN",
     "VÕ THẾ LÂN", "NGUYỄN THỊ YẾN VY", "NGUYỄN HOÀNG KHANG HUY", "TỐNG THÀNH ĐẠT",
     "TỐNG QUỐC THẮNG", "PHẠM TRỌNG HUY", "VĂN THỊ THANH DIỆU", "PHAN VĂN CƯỜNG",
     "HÀ HỮU HUY", "THÀNH NHÂN PHẠM"

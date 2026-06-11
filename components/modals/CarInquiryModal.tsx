@@ -45,7 +45,7 @@ const CarInquiryModal: React.FC<CarInquiryModalProps> = ({ isOpen, onClose, curr
 
     // Cascading logic for Version and Colors
     useEffect(() => {
-        const { model, version } = formData;
+        const { model } = formData;
         
         if (model) {
             const versions = versionsMap[model] || [];

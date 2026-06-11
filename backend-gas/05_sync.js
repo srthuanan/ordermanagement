@@ -276,10 +276,15 @@ function writeSheet(ss, tableName, sheetName, data) {
             }
           });
           
-          // Định dạng xen kẽ màu dòng (Zebra striping)
+          // Định dạng xen kẽ màu dòng (Zebra striping) bằng setBackgrounds để tăng tốc
+          var colorBackgrounds = [];
           for (var r = 2; r <= numRows; r++) {
             var color = (r % 2 === 0) ? (config.rowColor1 || "#ffffff") : (config.rowColor2 || "#f8fafc");
-            sheet.getRange(r, 1, 1, numCols).setBackground(color);
+            var rowColors = new Array(numCols).fill(color);
+            colorBackgrounds.push(rowColors);
+          }
+          if (colorBackgrounds.length > 0) {
+            sheet.getRange(2, 1, numRows - 1, numCols).setBackgrounds(colorBackgrounds);
           }
        }
        
@@ -291,11 +296,8 @@ function writeSheet(ss, tableName, sheetName, data) {
        
        // 5. Tự động chỉnh độ rộng cột
        sheet.autoResizeColumns(1, numCols);
-       for (var c = 1; c <= numCols; c++) {
-         var w = sheet.getColumnWidth(c);
-         if (w > 400) sheet.setColumnWidth(c, 400); // Giới hạn max width
-         else sheet.setColumnWidth(c, w + 15); // Thêm chút padding
-       }
+       // Tối ưu hóa: Bỏ vòng lặp getColumnWidth/setColumnWidth vì nó tốn rất nhiều API calls
+       
        
        // 6. Tự động sắp xếp dòng theo Ngày xuất hóa đơn (hoặc config tùy chỉnh)
        applySorting(sheet, sheetName);
@@ -525,9 +527,13 @@ function applySorting(sheet, sheetName) {
       if (config) {
         var color1 = config.rowColor1 || "#ffffff";
         var color2 = config.rowColor2 || "#f1f5f9";
+        var sortColorBackgrounds = [];
         for (var r = 2; r <= lastRow; r++) {
           var rowColor = (r % 2 === 0) ? color1 : color2;
-          sheet.getRange(r, 1, 1, lastCol).setBackground(rowColor);
+          sortColorBackgrounds.push(new Array(lastCol).fill(rowColor));
+        }
+        if (sortColorBackgrounds.length > 0) {
+          sheet.getRange(2, 1, lastRow - 1, lastCol).setBackgrounds(sortColorBackgrounds);
         }
       }
     }

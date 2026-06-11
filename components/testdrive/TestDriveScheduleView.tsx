@@ -33,6 +33,7 @@ const timeToMinutes = (time: string): number => {
 };
 
 const TestDriveScheduleView: React.FC<TestDriveScheduleViewProps> = ({ allTestDrives, isLoading }) => {
+    const { vehicleLines } = useVehicleConfig();
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedCar, setSelectedCar] = useState('');
 
@@ -136,7 +137,7 @@ const TestDriveScheduleView: React.FC<TestDriveScheduleViewProps> = ({ allTestDr
                     <label htmlFor="schedule-car" className="block text-sm font-medium text-text-secondary">Chọn loại xe</label>
                     <select name="schedule-car" id="schedule-car" value={selectedCar} onChange={e => setSelectedCar(e.target.value)} className="mt-1 block w-full futuristic-input p-2 text-sm">
                         <option value="" disabled>Chọn loại xe</option>
-                        {vehicleLines.map(model => (<option key={model} value={model}>{model}</option>))}
+                        {vehicleLines.map((model: string) => (<option key={model} value={model}>{model}</option>))}
                     </select>
                 </div>
             </div>

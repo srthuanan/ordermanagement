@@ -283,7 +283,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
     return (
         <div className="flex flex-col h-full space-y-2 p-1 md:p-0">
             {/* Header with Tabs & Filters */}
-            <div className="flex-shrink-0 bg-white/40 backdrop-blur-md rounded-xl border border-white/60 p-1.5 shadow-sm">
+            <div className="flex-shrink-0 bg-white/40 backdrop-blur-md rounded-xl border border-white/60 p-1.5 shadow-sm relative z-50">
                 <TabbedFilter
                     tabs={tabs}
                     activeTab={activeTab}

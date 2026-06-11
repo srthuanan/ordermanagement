@@ -409,13 +409,10 @@ function App() {
                 onQueryChange={setQuery}
                 onStatusChange={setStatus}
                 onViewOrder={setSelectedOrder}
-                onPairOrder={(order) => {
-                  setPairError('');
-                  setPairingOrder(order);
-                }}
+                onPairOrderSubmit={handlePairVehicle}
                 onUnpairOrder={handleUnpairVehicle}
                 onInvoiceOrder={setInvoicingOrder}
-                onCancelOrder={setCancelingOrder}
+                onCancelOrderSubmit={handleCancelOrder}
                 onEditOrder={setEditingOrder}
                 onUpdateOrder={handleUpdateOrder}
                 isUpdatingOrder={isUpdatingOrder}

@@ -40,11 +40,11 @@ function generateKpiSheet() {
   // Danh sách TVBH cố định theo thứ tự ảnh
   const tvbhList = [
     "Tất Bách Tường", "Nguyễn Trần Hoàng Thanh", "Phạm Trọng Huy", "Tống Thành Đạt",
-    "Huỳnh Diệp Thanh Trâm", "Phan Văn Cường", "Nguyễn Thị Diện",
-    "Nguyễn Bảo Xuyên", "Văn Thị Thanh Diệu", "Hà Hữu Huy", "Nguyễn Dư Thuận",
-    "Đinh Trọng Nhân", "Đào Minh Ký", "Nguyễn Thanh Cả", "Nguyễn Thiện Thảo",
-    "Thành Ngọc Vinh", "Trần Danh Phương", "Nguyễn Hoàng Phúc", "Nguyễn Anh Tiến",
-    "Phạm Thị Thúy Nga"
+    "Huỳnh Diệp Thanh Trâm", "Phan Văn Cường", "Lê Thị Hương Trà", "Hà Hữu Huy",
+    "Nguyễn Dư Thuận", "Nguyễn Văn Nghĩa", "Đinh Trọng Nhân", "Đào Minh Ký",
+    "Nguyễn Thanh Cả", "Nguyễn Thiện Thảo", "Thành Ngọc Vinh", "Trần Danh Phương",
+    "Nguyễn Hoàng Phúc", "Nguyễn Anh Tiến", "Phạm Thị Thúy Nga", "Võ Thế Lân",
+    "Nguyễn Thị Yến Vy", "Nguyễn Hoàng Khang Huy", "Phạm Khánh Duy"
   ];
 
   // --- Chuẩn bị dữ liệu để ghi ---
@@ -64,9 +64,9 @@ function generateKpiSheet() {
     for (let i = 0; i < DONG_XE_LIST.length; i++) {
         // Cột tương ứng trong Excel (C, D, E...)
         const colLetter = String.fromCharCode(67 + i); 
-        // Công thức: Đếm nếu TVBH khớp, Dòng xe khớp, và Ngày xuất hóa đơn không trống
-        // yeucauxhd!$H:$H là cột TVBH, yeucauxhd!$D:$D là cột Dòng xe, yeucauxhd!$L:$L là cột Ngày xuất HĐ
-        const formula = `=COUNTIFS(yeucauxhd!$H:$H; $B${currentRow}; yeucauxhd!$D:$D; ${colLetter}$2; yeucauxhd!$L:$L; "<>")`;
+        // Công thức: Đếm nếu TVBH khớp và Dòng xe khớp (bỏ qua điều kiện ngày xuất hóa đơn)
+        // yeucauxhd!$H:$H là cột TVBH, yeucauxhd!$D:$D là cột Dòng xe
+        const formula = `=COUNTIFS(yeucauxhd!$H:$H;$B${currentRow};yeucauxhd!$D:$D;${colLetter}$2)`;
         row.push(formula);
     }
     
@@ -95,17 +95,8 @@ function generateKpiSheet() {
   // Xóa dữ liệu cũ trước khi ghi công thức
   sheet.getRange(1, 1, sheet.getMaxRows(), sheet.getMaxColumns()).clearContent();
   
-  // Ghi mảng công thức/giá trị
-  sheet.getRange(1, 1, numRows, numCols).setFormulas(rows.map(r => r.map(cell => {
-      // Nếu là số hoặc text bình thường (không bắt đầu bằng =) thì trả về rỗng để setValues sau hoặc xử lý riêng
-      return (typeof cell === 'string' && cell.startsWith('=')) ? cell : "";
-  })));
-
-  // Ghi các giá trị không phải công thức (STT, Tên, Headers)
-  const staticValues = rows.map(r => r.map(cell => {
-      return (typeof cell === 'string' && cell.startsWith('=')) ? "" : cell;
-  }));
-  sheet.getRange(1, 1, numRows, numCols).setValues(staticValues);
+  // Ghi dữ liệu (setValues tự động nhận diện công thức bắt đầu bằng dấu '=')
+  sheet.getRange(1, 1, numRows, numCols).setValues(rows);
 
   // --- Định dạng (Giữ nguyên phần định dạng cũ) ---
   // ... (Phần code định dạng bên dưới vẫn giữ nguyên)

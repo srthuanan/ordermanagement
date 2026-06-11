@@ -231,7 +231,7 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
                             <tr key={color.id} className={`border-b border-slate-200 ${editingId === color.id ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}>
                                 <td className="p-1 border-r border-slate-300 w-28">
                                     {editingId === color.id ? (
-                                        <select value={editData.parent_value || color.type} onChange={e => setEditData({...editData, parent_value: null})} disabled className="w-full px-1 py-0.5 bg-slate-100 text-slate-500 rounded outline-none cursor-not-allowed text-xs">
+                                        <select value={editData.parent_value || color.type} onChange={() => setEditData({...editData, parent_value: null})} disabled className="w-full px-1 py-0.5 bg-slate-100 text-slate-500 rounded outline-none cursor-not-allowed text-xs">
                                             <option value={color.type}>{color.type === 'exterior' ? 'Ngoại Thất' : 'Nội Thất'}</option>
                                         </select>
                                     ) : (

@@ -96,10 +96,10 @@ interface OrdersPanelProps {
   onQueryChange: (value: string) => void;
   onStatusChange: (value: OrderStatus | 'Tất cả') => void;
   onViewOrder: (order: Order) => void;
-  onPairOrder: (order: Order) => void;
+  onPairOrderSubmit: (orderId: string, vin: string) => Promise<boolean>;
   onUnpairOrder: (orderId: string) => void;
   onInvoiceOrder: (order: Order) => void;
-  onCancelOrder: (order: Order) => void;
+  onCancelOrderSubmit: (orderId: string, note: string, unmatchType: string, needDate?: string) => Promise<{ success: boolean; error?: string }>;
   onEditOrder?: (order: Order) => void; // Made optional since we use inline now
   onUpdateOrder: (input: UpdateOrderInput) => Promise<boolean>;
   onSelectPolicy: (order: Order) => void;
@@ -123,10 +123,10 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
   onQueryChange,
   onStatusChange,
   onViewOrder,
-  onPairOrder,
+  onPairOrderSubmit,
   onUnpairOrder,
   onInvoiceOrder,
-  onCancelOrder,
+  onCancelOrderSubmit,
   onEditOrder,
   onUpdateOrder,
   onSelectPolicy,
@@ -142,10 +142,90 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [showPolicyTooltip, setShowPolicyTooltip] = useState(false);
   const [showQueueModal, setShowQueueModal] = useState(false);
+  const [isPairingInline, setIsPairingInline] = useState(false);
+  const [isCancelingInline, setIsCancelingInline] = useState(false);
+  const [isPairingSubmit, setIsPairingSubmit] = useState(false);
+  const [isCancelingSubmit, setIsCancelingSubmit] = useState(false);
+  
+  // Pair inline form state
+  const [pairVin, setPairVin] = useState('');
+  const [pairError, setPairError] = useState('');
+  
+  // Cancel inline form state
+  const [cancelNote, setCancelNote] = useState('');
+  const [cancelType, setCancelType] = useState<'cancel' | 'wait'>('cancel');
+  const [cancelNeedDate, setCancelNeedDate] = useState('');
+  const [cancelError, setCancelError] = useState('');
+
   const selectedOrder = useMemo(
     () => orders.find((order) => order.id === selectedOrderId) ?? orders[0] ?? null,
     [orders, selectedOrderId]
   );
+
+  const candidates = useMemo(() => {
+    if (!selectedOrder) return [];
+    return inventory.filter(
+      (item) =>
+        matchesVehicleConfig(selectedOrder, item) &&
+        canUseVehicleForPair(item, currentUsername, canOverrideHeldVehicle)
+    );
+  }, [selectedOrder, inventory, currentUsername, canOverrideHeldVehicle]);
+
+  // Reset states when order changes
+  useEffect(() => {
+    setIsEditingInline(false);
+    setIsPairingInline(false);
+    setIsCancelingInline(false);
+    setPairVin(candidates[0]?.vin ?? '');
+    setPairError('');
+    if (selectedOrder) {
+      setCancelNeedDate(selectedOrder.needDate || '');
+    }
+    setCancelNote('');
+    setCancelType('cancel');
+    setCancelError('');
+  }, [selectedOrder, candidates]);
+
+  const handlePairInlineSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedOrder || !pairVin) return;
+    setIsPairingSubmit(true);
+    setPairError('');
+    const success = await onPairOrderSubmit(selectedOrder.id, pairVin);
+    if (success) {
+      setIsPairingInline(false);
+    } else {
+      setPairError('Lỗi ghép xe. Vui lòng thử lại.');
+    }
+    setIsPairingSubmit(false);
+  };
+
+  const handleCancelInlineSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedOrder) return;
+    if (!cancelNote.trim()) {
+      setCancelError('Bắt buộc nhập lý do hủy để lưu vết hệ thống.');
+      return;
+    }
+    if (cancelType === 'wait' && !cancelNeedDate) {
+      setCancelError('Vui lòng nhập thời gian cần xe khi chọn chế độ chờ xe.');
+      return;
+    }
+    setIsCancelingSubmit(true);
+    setCancelError('');
+    const result = await onCancelOrderSubmit(
+      selectedOrder.id,
+      cancelNote.trim(),
+      cancelType === 'wait' ? 'Hủy ghép & Đợi xe khác (Chờ xe)' : 'Hủy luôn đơn hàng (Hủy đơn)',
+      cancelType === 'wait' ? cancelNeedDate : undefined
+    );
+    if (result.success) {
+      setIsCancelingInline(false);
+    } else {
+      setCancelError(result.error || 'Giao dịch không thành công, vui lòng thử lại.');
+    }
+    setIsCancelingSubmit(false);
+  };
 
   useEffect(() => {
     const media = window.matchMedia('(max-width: 760px)');
@@ -818,44 +898,137 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                           </table>
 
                           <div style={{ paddingTop: '16px', display: 'flex', gap: '8px' }}>
-                            {canPairOrder && (
+                            {canPairOrder && !isPairingInline && !isCancelingInline && (
                               <button
                                 disabled={!selectedCanPair}
-                                onClick={() => onPairOrder(selectedOrder)}
+                                onClick={() => setIsPairingInline(true)}
                                 style={{ flex: 1, padding: '10px', fontSize: '13px', fontWeight: 600, border: '1px solid #cbd5e1', background: selectedCanPair ? '#f1f5f9' : '#ffffff', color: selectedCanPair ? '#0f172a' : '#94a3b8', cursor: selectedCanPair ? 'pointer' : 'not-allowed', borderRadius: 0 }}
                               >
                                 Ghép xe
                               </button>
                             )}
-                            <button
-                              disabled={!selectedCanInvoice}
-                              onClick={() => onInvoiceOrder(selectedOrder)}
-                              style={{ flex: 1, padding: '10px', fontSize: '13px', fontWeight: 600, border: '1px solid #cbd5e1', background: selectedCanInvoice ? '#f1f5f9' : '#ffffff', color: selectedCanInvoice ? '#0f172a' : '#94a3b8', cursor: selectedCanInvoice ? 'pointer' : 'not-allowed', borderRadius: 0 }}
-                            >
-                              Xuất HĐ
-                            </button>
-                            <button
-                              disabled={!selectedCanEdit}
-                              onClick={() => setIsEditingInline(true)}
-                              style={{ flex: 1, padding: '10px', fontSize: '13px', fontWeight: 600, border: '1px solid #cbd5e1', background: '#ffffff', color: selectedCanEdit ? '#0f172a' : '#94a3b8', cursor: selectedCanEdit ? 'pointer' : 'not-allowed', borderRadius: 0 }}
-                            >
-                              Sửa
-                            </button>
-                            <button
-                              disabled={!selectedCanUnpair || isUnpairingOrderId === selectedOrder.id}
-                              onClick={() => onUnpairOrder(selectedOrder.id)}
-                              style={{ flex: 1, padding: '10px', fontSize: '13px', fontWeight: 600, border: '1px solid #cbd5e1', background: '#ffffff', color: selectedCanUnpair ? '#0f172a' : '#94a3b8', cursor: selectedCanUnpair ? 'pointer' : 'not-allowed', borderRadius: 0 }}
-                            >
-                              {isUnpairingOrderId === selectedOrder.id ? 'Đang hủy...' : 'Hủy ghép'}
-                            </button>
-                            <button
-                              disabled={!selectedCanCancel}
-                              onClick={() => onCancelOrder(selectedOrder)}
-                              style={{ flex: 1, padding: '10px', fontSize: '13px', fontWeight: 600, border: '1px solid #cbd5e1', background: selectedCanCancel ? '#fef2f2' : '#ffffff', color: selectedCanCancel ? '#b91c1c' : '#fca5a5', cursor: selectedCanCancel ? 'pointer' : 'not-allowed', borderRadius: 0 }}
-                            >
-                              Hủy đơn
-                            </button>
+                            {!isPairingInline && !isCancelingInline && (
+                              <button
+                                disabled={!selectedCanInvoice}
+                                onClick={() => onInvoiceOrder(selectedOrder)}
+                                style={{ flex: 1, padding: '10px', fontSize: '13px', fontWeight: 600, border: '1px solid #cbd5e1', background: selectedCanInvoice ? '#f1f5f9' : '#ffffff', color: selectedCanInvoice ? '#0f172a' : '#94a3b8', cursor: selectedCanInvoice ? 'pointer' : 'not-allowed', borderRadius: 0 }}
+                              >
+                                Xuất HĐ
+                              </button>
+                            )}
+                            {!isPairingInline && !isCancelingInline && (
+                              <button
+                                disabled={!selectedCanEdit}
+                                onClick={() => setIsEditingInline(true)}
+                                style={{ flex: 1, padding: '10px', fontSize: '13px', fontWeight: 600, border: '1px solid #cbd5e1', background: '#ffffff', color: selectedCanEdit ? '#0f172a' : '#94a3b8', cursor: selectedCanEdit ? 'pointer' : 'not-allowed', borderRadius: 0 }}
+                              >
+                                Sửa
+                              </button>
+                            )}
+                            {!isPairingInline && !isCancelingInline && (
+                              <button
+                                disabled={!selectedCanUnpair || isUnpairingOrderId === selectedOrder.id}
+                                onClick={() => onUnpairOrder(selectedOrder.id)}
+                                style={{ flex: 1, padding: '10px', fontSize: '13px', fontWeight: 600, border: '1px solid #cbd5e1', background: '#ffffff', color: selectedCanUnpair ? '#0f172a' : '#94a3b8', cursor: selectedCanUnpair ? 'pointer' : 'not-allowed', borderRadius: 0 }}
+                              >
+                                {isUnpairingOrderId === selectedOrder.id ? 'Đang hủy...' : 'Hủy ghép'}
+                              </button>
+                            )}
+                            {canManageOrderActions && !isPairingInline && !isCancelingInline && (
+                              <button
+                                disabled={!selectedCanCancel}
+                                onClick={() => setIsCancelingInline(true)}
+                                style={{ flex: 1, padding: '10px', fontSize: '13px', fontWeight: 600, border: '1px solid #fecaca', background: selectedCanCancel ? '#fef2f2' : '#ffffff', color: selectedCanCancel ? '#ef4444' : '#fca5a5', cursor: selectedCanCancel ? 'pointer' : 'not-allowed', borderRadius: 0 }}
+                              >
+                                Hủy đơn
+                              </button>
+                            )}
                           </div>
+
+                          {isPairingInline && (
+                            <form onSubmit={handlePairInlineSubmit} style={{ marginTop: '16px', padding: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                              <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600, color: '#0f172a' }}>Liên kết ghép xe</h4>
+                              <label style={{ display: 'block', marginBottom: '12px' }}>
+                                <span style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 500, color: '#475569' }}>Số khung (VIN) phù hợp *</span>
+                                <select
+                                  value={pairVin}
+                                  onChange={(e) => setPairVin(e.target.value)}
+                                  disabled={isPairingSubmit || candidates.length === 0}
+                                  style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '13px', color: '#0f172a' }}
+                                >
+                                  {candidates.length === 0 ? <option value="">Không tìm thấy xe trống phù hợp cấu hình</option> : null}
+                                  {candidates.map((item) => (
+                                    <option key={item.vin} value={item.vin}>
+                                      {item.vin} · Vị trí: {item.location || 'Chưa có'}
+                                      {item.latitude !== null && item.longitude !== null ? ` · GPS: ${item.latitude.toFixed(4)}, ${item.longitude.toFixed(4)}` : ''}
+                                      · Trạng thái: {item.status}
+                                      {item.holder ? ` · Giữ bởi ${item.holder}` : ''}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              {pairError && <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '12px' }}>{pairError}</div>}
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                <button type="button" onClick={() => setIsPairingInline(false)} disabled={isPairingSubmit} style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 500, background: 'transparent', border: 'none', cursor: 'pointer', color: '#475569' }}>Hủy</button>
+                                <button type="submit" disabled={isPairingSubmit || !pairVin} style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 500, background: '#0284c7', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>{isPairingSubmit ? 'Đang xử lý...' : 'Xác nhận ghép'}</button>
+                              </div>
+                            </form>
+                          )}
+
+                          {isCancelingInline && (
+                            <form onSubmit={handleCancelInlineSubmit} style={{ marginTop: '16px', padding: '16px', background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px' }}>
+                              <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: 600, color: '#991b1b' }}>Hủy đơn hàng</h4>
+                              <p style={{ fontSize: '12px', color: '#991b1b', marginBottom: '12px' }}>
+                                Hành động này sẽ giải phóng số khung (VIN) của đơn hàng (nếu đã ghép) về trạng thái trống và hủy kích hoạt quy trình bán hàng. Không thể đảo ngược hành động.
+                              </p>
+                              <label style={{ display: 'block', marginBottom: '12px' }}>
+                                <span style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 500, color: '#991b1b' }}>Kiểu hủy *</span>
+                                <select
+                                  value={cancelType}
+                                  onChange={(e) => setCancelType(e.target.value as 'cancel' | 'wait')}
+                                  disabled={isCancelingSubmit}
+                                  style={{ width: '100%', padding: '8px', border: '1px solid #fecaca', borderRadius: '4px', fontSize: '13px', color: '#991b1b', background: '#fff' }}
+                                >
+                                  <option value="cancel">Hủy luôn đơn hàng (Hủy đơn)</option>
+                                  <option value="wait">Hủy ghép & Đợi xe khác (Chờ xe)</option>
+                                </select>
+                              </label>
+
+                              {cancelType === 'wait' && (
+                                <label style={{ display: 'block', marginBottom: '12px' }}>
+                                  <span style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 500, color: '#991b1b' }}>Thời gian cần xe *</span>
+                                  <input
+                                    type="date"
+                                    value={cancelNeedDate}
+                                    onChange={(e) => setCancelNeedDate(e.target.value)}
+                                    required
+                                    disabled={isCancelingSubmit}
+                                    style={{ width: '100%', padding: '8px', border: '1px solid #fecaca', borderRadius: '4px', fontSize: '13px', color: '#991b1b', background: '#fff' }}
+                                  />
+                                </label>
+                              )}
+
+                              <label style={{ display: 'block', marginBottom: '12px' }}>
+                                <span style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 500, color: '#991b1b' }}>Lý do hủy đơn hàng *</span>
+                                <textarea
+                                  value={cancelNote}
+                                  onChange={(e) => setCancelNote(e.target.value)}
+                                  placeholder="Nhập chi tiết lý do khách trả cọc, đổi nhu cầu..."
+                                  rows={3}
+                                  required
+                                  disabled={isCancelingSubmit}
+                                  style={{ width: '100%', padding: '8px', border: '1px solid #fecaca', borderRadius: '4px', fontSize: '13px', color: '#991b1b', background: '#fff', resize: 'vertical' }}
+                                />
+                              </label>
+
+                              {cancelError && <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '12px' }}>{cancelError}</div>}
+                              
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                <button type="button" onClick={() => setIsCancelingInline(false)} disabled={isCancelingSubmit} style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 500, background: 'transparent', border: 'none', cursor: 'pointer', color: '#991b1b' }}>Quay lại</button>
+                                <button type="submit" disabled={isCancelingSubmit} style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 500, background: '#dc2626', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>{isCancelingSubmit ? 'Đang thực thi hủy...' : 'Xác nhận hủy đơn'}</button>
+                              </div>
+                            </form>
+                          )}
                         </>
                       )}
                     </div>

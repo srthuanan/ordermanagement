@@ -80,9 +80,9 @@ export const getSoldCarsDataByMonth = async (month: string, year: number): Promi
             let mappedData = rawData.filter(row => Array.isArray(row) && row.length > 2 && row[2]).map((row, index) => mapSoldDataRowToOrder(row, index, month, year));
             
             if (!isTrueAdmin) {
-                const lowerTeamMembers = teamMembers.map(name => name.toLowerCase().trim());
+                const lowerTeamMembers = teamMembers.map(name => name.normalize("NFC").toLowerCase().trim());
                 mappedData = mappedData.filter((order: any) => 
-                    lowerTeamMembers.includes(String(order["Tên tư vấn bán hàng"]).toLowerCase().trim())
+                    lowerTeamMembers.includes(String(order["Tên tư vấn bán hàng"]).normalize("NFC").toLowerCase().trim())
                 );
             }
 
@@ -100,40 +100,30 @@ export const getSoldCarsDataByMonth = async (month: string, year: number): Promi
         // Truy vấn bảng yeucauxhd (cho xe hiện tại)
         let queryYeucau = supabase.from('yeucauxhd').select('*').not('ngay_xuat_hoa_don', 'is', null).gte('ngay_xuat_hoa_don', startDateString).lte('ngay_xuat_hoa_don', endDateString);
         
-        // Apply Filters
-        if (!isTrueAdmin) {
-            if (isManager) {
-                queryYeucau = queryYeucau.in('tvbh', teamMembers);
-            } else {
-                queryYeucau = queryYeucau.eq('tvbh', currentUser);
-            }
-        }
-        
         const { data: yeucauData, error: err1 } = await queryYeucau;
         if (err1) console.warn("Yeucauxhd query issue:", err1);
 
         // Truy vấn bảng archived_orders (cho xe cũ qua 1 tháng)
         let queryArchived = supabase.from('archived_orders').select('*').not('ngay_xuat_hoa_don', 'is', null).gte('ngay_xuat_hoa_don', startDateString).lte('ngay_xuat_hoa_don', endDateString);
         
-        if (!isTrueAdmin) {
-            if (isManager) {
-                queryArchived = queryArchived.in('tvbh', teamMembers);
-            } else {
-                queryArchived = queryArchived.eq('tvbh', currentUser);
-            }
-        }
-        
         const { data: archivedData, error: err2 } = await queryArchived;
         if (err2) console.warn("Archived query issue:", err2);
 
         // Cả 2 bảng này đều có cột tvbh thay vì ten_tu_van_ban_hang, cần map lại.
         const combinedRawData = [...(yeucauData || []), ...(archivedData || [])];
-        const normalizedData = combinedRawData.map(row => ({
+        let normalizedData = combinedRawData.map(row => ({
              ...row,
              ket_qua: 'Đã xuất hóa đơn', // Hardcode cho UI vì table yeucauxhd không giữ cột ket_qua
              ten_tu_van_ban_hang: row.tvbh,
              link_hoa_don_da_xuat: row.url_hoa_don_da_xuat
         }));
+
+        if (!isTrueAdmin) {
+            const lowerTeamMembers = teamMembers.map(name => name.normalize("NFC").toLowerCase().trim());
+            normalizedData = normalizedData.filter((row: any) => 
+                lowerTeamMembers.includes(String(row.ten_tu_van_ban_hang).normalize("NFC").toLowerCase().trim())
+            );
+        }
 
         return { status: 'SUCCESS', message: 'Fetched sold cars FROM Supabase', data: normalizedData.map(mapOrderDbToUi) };
     } catch (err: any) {
@@ -192,9 +182,9 @@ export const getAllSoldCarsData = async (year: number): Promise<ApiResult> => {
                 .map((row, index) => mapSoldDataRowToOrder(row, index, "January", 2026));
             
             if (!isTrueAdmin) {
-                const lowerTeamMembers = teamMembers.map(name => name.toLowerCase().trim());
+                const lowerTeamMembers = teamMembers.map(name => name.normalize("NFC").toLowerCase().trim());
                 sheetsData = sheetsData.filter((order: any) => 
-                    lowerTeamMembers.includes(String(order["Tên tư vấn bán hàng"]).toLowerCase().trim())
+                    lowerTeamMembers.includes(String(order["Tên tư vấn bán hàng"]).normalize("NFC").toLowerCase().trim())
                 );
             }
         }
@@ -204,29 +194,30 @@ export const getAllSoldCarsData = async (year: number): Promise<ApiResult> => {
         
         // Current Query
         let queryYeucau = supabase.from('yeucauxhd').select('*').not('ngay_xuat_hoa_don', 'is', null).gte('ngay_xuat_hoa_don', startDateString).lte('ngay_xuat_hoa_don', endDateString);
-        if (!isTrueAdmin) {
-            if (isManager) queryYeucau = queryYeucau.in('tvbh', teamMembers);
-            else queryYeucau = queryYeucau.eq('tvbh', currentUser);
-        }
         const { data: yeucauData, error: err1 } = await queryYeucau;
         if (err1) console.warn("Yeucauxhd query issue in getAll:", err1);
 
         // Archived Query
         let queryArchived = supabase.from('archived_orders').select('*').not('ngay_xuat_hoa_don', 'is', null).gte('ngay_xuat_hoa_don', startDateString).lte('ngay_xuat_hoa_don', endDateString);
-        if (!isTrueAdmin) {
-            if (isManager) queryArchived = queryArchived.in('tvbh', teamMembers);
-            else queryArchived = queryArchived.eq('tvbh', currentUser);
-        }
         const { data: archivedData, error: err2 } = await queryArchived;
         if (err2) console.warn("Archived query issue in getAll:", err2);
 
         const combinedRawData = [...(yeucauData || []), ...(archivedData || [])];
-        const supabaseNormalized = combinedRawData.map(row => ({
+        let supabaseNormalized = combinedRawData.map(row => ({
              ...row,
              ket_qua: 'Đã xuất hóa đơn',
              ten_tu_van_ban_hang: row.tvbh,
              link_hoa_don_da_xuat: row.url_hoa_don_da_xuat
-        })).map(mapOrderDbToUi);
+        }));
+
+        if (!isTrueAdmin) {
+            const lowerTeamMembers = teamMembers.map(name => name.normalize("NFC").toLowerCase().trim());
+            supabaseNormalized = supabaseNormalized.filter((row: any) => 
+                lowerTeamMembers.includes(String(row.ten_tu_van_ban_hang).normalize("NFC").toLowerCase().trim())
+            );
+        }
+
+        supabaseNormalized = supabaseNormalized.map(mapOrderDbToUi);
 
         const finalData = [...sheetsData, ...supabaseNormalized];
 

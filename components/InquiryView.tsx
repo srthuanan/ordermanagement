@@ -162,7 +162,7 @@ const CarInquiryView: React.FC<CarInquiryViewProps> = ({ currentUser, showToast,
 
     // Cascading logic for Version
     useEffect(() => {
-        const { model, version } = formData;
+        const { model } = formData;
         if (model) {
             const versions = versionsMap[model] || [];
             if (versions.length === 1 && formData.version !== versions[0]) {
