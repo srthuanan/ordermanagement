@@ -82,8 +82,16 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
     if (isLoading) return <div className="p-8 text-center text-slate-500"><i className="fas fa-spinner fa-spin mr-2"></i> Đang tải dữ liệu...</div>;
 
     const lines = rawConfigs.filter(c => c.type === 'line').sort((a,b) => a.value.localeCompare(b.value));
-    const versions = rawConfigs.filter(c => c.type === 'version').sort((a,b) => a.value.localeCompare(b.value));
-    const colors = rawConfigs.filter(c => c.type === 'exterior' || c.type === 'interior').sort((a,b) => a.value.localeCompare(b.value));
+    const versions = rawConfigs.filter(c => c.type === 'version').sort((a,b) => {
+        const parentCompare = (a.parent_value || '').localeCompare(b.parent_value || '');
+        if (parentCompare !== 0) return parentCompare;
+        return a.value.localeCompare(b.value);
+    });
+    const colors = rawConfigs.filter(c => c.type === 'exterior' || c.type === 'interior').sort((a,b) => {
+        const typeCompare = a.type.localeCompare(b.type);
+        if (typeCompare !== 0) return typeCompare;
+        return a.value.localeCompare(b.value);
+    });
 
     const TableWrapper = ({ title, columns, children }: any) => (
         <div className="mb-6">
