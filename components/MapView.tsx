@@ -36,6 +36,10 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
     });
 
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [hoveredVin] = useState<string | null>(null);
+    const [polygonCoords, setPolygonCoords] = useState<any[] | null>(null);
+    const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+
     const [carToShare, setCarToShare] = useState<any>(null);
 
 
@@ -47,6 +51,9 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
     const labelLayerRef = useRef<any>(null);
     const routePolylineRef = useRef<any>(null);
     const userMarkerRef = useRef<any>(null);
+    const markerClusterGroupRef = useRef<any>(null);
+    const drawnItemsRef = useRef<any>(null);
+
     const hasFittedBounds = useRef<boolean>(false);
     const addressesRef = useRef<Record<string, any>>(addresses);
 
@@ -338,7 +345,7 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
 
     const filteredCars = useMemo(() => {
         try {
-            return allCarsWithGps.filter(car => {
+            let cars = allCarsWithGps.filter(car => {
                 const vinStr = String(car.vin || '').toLowerCase();
                 const modelStr = String(car.dong_xe || '').toLowerCase();
                 const versionStr = String(car.phien_ban || '').toLowerCase();
@@ -347,8 +354,22 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
                     modelStr.includes(searchTerm.toLowerCase()) ||
                     versionStr.includes(searchTerm.toLowerCase());
                 const matchesModel = selectedModel === 'all' || car.dong_xe === selectedModel;
-                return matchesSearch && matchesModel;
-            });
+                const match = matchesSearch && matchesModel; return match; });
+            // Lọc theo Geofencing (Polygon)
+            if (polygonCoords && polygonCoords.length > 3) {
+                try {
+                    const turf = (window as any).turf;
+                    if (turf) {
+                        const searchPolygon = turf.polygon([polygonCoords]);
+                        cars = cars.filter(car => {
+                            const point = turf.point([car.lng, car.lat]);
+                            return turf.booleanPointInPolygon(point, searchPolygon);
+                        });
+                    }
+                } catch(e) { console.error("Turf error", e); }
+            }
+            return cars;
+
         } catch (err) {
             return [];
         }
@@ -379,9 +400,68 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 subdomains: 'abcd',
                 maxZoom: 18
-            }).addTo(mapInstance.current);
+            });
 
             tileLayerRef.current.on('load', () => setIsMapLoaded(true));
+            // Initialize Marker Cluster Group
+            markerClusterGroupRef.current = L.markerClusterGroup({
+                showCoverageOnHover: false,
+                spiderfyOnMaxZoom: true,
+                maxClusterRadius: 60,
+                iconCreateFunction: function (cluster: any) {
+                    const childCount = cluster.getChildCount();
+                    const markers = cluster.getAllChildMarkers();
+                    let sold = 0;
+                    let available = 0;
+                    
+                    markers.forEach((m: any) => {
+                        const status = m.options.customStatus || '';
+                        if (status === 'Chưa ghép') available++;
+                        else sold++;
+                    });
+                    
+                    const total = sold + available;
+                    const availablePercent = (available / total) * 100;
+                    
+                    const html = `
+                        <div style="width: 40px; height: 40px; border-radius: 50%; background: conic-gradient(#16a34a 0% ${availablePercent}%, #475569 ${availablePercent}% 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); border: 2px solid white;">
+                            <div style="background: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; color: #1e293b;">
+                                ${childCount}
+                            </div>
+                        </div>
+                    `;
+                    return L.divIcon({ html: html, className: 'custom-cluster-icon', iconSize: L.point(40, 40) });
+                }
+            });
+            mapInstance.current.addLayer(markerClusterGroupRef.current);
+
+            // Initialize Draw Control
+            drawnItemsRef.current = new L.FeatureGroup();
+            mapInstance.current.addLayer(drawnItemsRef.current);
+            
+            const drawControl = new L.Control.Draw({
+                draw: { marker: false, polyline: false, circle: false, rectangle: true, circlemarker: false, polygon: { allowIntersection: false, drawError: { color: '#e1e100', message: 'Không được cắt chéo' }, shapeOptions: { color: '#4f46e5' } } },
+                edit: { featureGroup: drawnItemsRef.current, remove: true, edit: false }
+            });
+            mapInstance.current.addControl(drawControl);
+
+            mapInstance.current.on(L.Draw.Event.CREATED, function (e: any) {
+                drawnItemsRef.current.clearLayers();
+                const layer = e.layer;
+                drawnItemsRef.current.addLayer(layer);
+                let latlngs;
+                if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+                    latlngs = layer.getLatLngs()[0];
+                    const coords = latlngs.map((ll: any) => [ll.lng, ll.lat]);
+                    if (coords.length > 0) coords.push([...coords[0]]);
+                    setPolygonCoords(coords);
+                }
+            });
+
+            mapInstance.current.on(L.Draw.Event.DELETED, function () {
+                setPolygonCoords(null);
+            });
+
             const fallbackTimer = setTimeout(() => setIsMapLoaded(true), 1200);
 
             // Trigger size calculations
@@ -392,6 +472,7 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             navigator.geolocation.getCurrentPosition((pos) => {
                 const userLat = pos.coords.latitude;
                 const userLng = pos.coords.longitude;
+                setUserLocation({lat: userLat, lng: userLng});
                 if (!mapInstance.current) return;
 
                 const userIcon = L.divIcon({
@@ -644,34 +725,36 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             };
 
             const newMarkers: Record<string, any> = {};
-            const currentVinSet = new Set(allCarsWithGps.map(c => c.vin));
+            const currentVinSet = new Set(filteredCars.map(c => c.vin));
 
             // 1. Dọn dẹp: Xóa bỏ những marker không còn tồn tại trong dữ liệu mới
             Object.keys(markersRef.current).forEach(vin => {
                 if (!currentVinSet.has(vin)) {
-                    markersRef.current[vin].remove();
+                    if (markerClusterGroupRef.current) markerClusterGroupRef.current.removeLayer(markersRef.current[vin]); delete markersRef.current[vin];
                 }
             });
 
-            if (allCarsWithGps.length === 0) {
+            if (filteredCars.length === 0) {
                 markersRef.current = {};
                 return;
             }
 
             // 2. Vẽ/Cập nhật markers một cách thông minh (Smart Reconciliation)
-            allCarsWithGps.forEach(car => {
+            filteredCars.forEach(car => {
                 const popupId = `popup-vin-${car.vin}`;
                 const isCarRouted = car.vin === routedVin;
                 const isDrawing = isDrawingRoute === car.vin;
 
                 const popupContent = getPopupContentForCar(car, isCarRouted, isCarRouted ? routeInfo : null, isDrawing);
                 const carImgUrl = getCarImage(car.dong_xe, car.ngoai_that);
+                const isHovered = hoveredVin === car.vin;
                 const statusColor = car.trang_thai === 'Chưa ghép' ? '#16a34a' : car.trang_thai === 'Đã ghép' ? '#2563eb' : car.trang_thai === 'Đang giữ' ? '#4f46e5' : car.trang_thai === 'Lịch sử vị trí' ? '#9333ea' : '#475569';
+                const pulseHtml = isHovered ? `<div style="position: absolute; width: 64px; height: 64px; top: -7px; left: -10px; border-radius: 50%; background: ${statusColor}; opacity: 0.6; animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>` : '';
 
                 const carIcon = L.divIcon({
                     html: `
-                    <div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 44px; height: 50px; transition: transform 0.2s;" class="hover:scale-110">
-                        <div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; --pulse-color: ${statusColor}55; animation: markerPulse 2.2s infinite ease-in-out; opacity: 0; top: 0; pointer-events: none;"></div>
+                    <div style="position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 44px; height: 50px; transition: transform 0.2s;" class="${isHovered ? 'scale-125 z-50' : 'hover:scale-110'}">
+                        ${pulseHtml} <div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; --pulse-color: ${statusColor}55; animation: markerPulse 2.2s infinite ease-in-out; opacity: 0; top: 0; pointer-events: none;"></div>
                         <div style="background: white; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.22); border: 2.5px solid ${statusColor}; padding: 2px; position: relative; z-index: 2;">
                             <img src="${carImgUrl}" style="width: 100%; height: 100%; object-fit: contain;" alt="${car.dong_xe}" />
                         </div>
@@ -693,7 +776,7 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
                     }
                     
                     // Cập nhật Icon và Content nếu có sự thay đổi (tránh nhấp nháy)
-                    existingMarker.setIcon(carIcon);
+                    existingMarker.setIcon(carIcon); existingMarker.options.customStatus = car.trang_thai;
                     existingMarker.setPopupContent(popupContent);
                     newMarkers[car.vin] = existingMarker;
                 } else {
@@ -706,7 +789,7 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
                         resolveAddress(car.lat, car.lng, car.vin, popupId);
                     });
 
-                    newMarkers[car.vin] = marker;
+                    marker.options.customStatus = car.trang_thai; if(markerClusterGroupRef.current) markerClusterGroupRef.current.addLayer(marker); newMarkers[car.vin] = marker;
                 }
             });
 
@@ -722,8 +805,9 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
         } catch (err) {
             console.error('Error drawing markers:', err);
         }
-    }, [allCarsWithGps, isMapLoaded, routedVin, routeInfo, isDrawingRoute]);
+    }, [filteredCars, isMapLoaded, routedVin, routeInfo, isDrawingRoute, hoveredVin]);
 
+    
     // Auto-focus target VIN when arriving from deep link or external click
     useEffect(() => {
         if (!targetVinOnMap || !isMapLoaded) return;
