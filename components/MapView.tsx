@@ -400,7 +400,7 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                 subdomains: 'abcd',
                 maxZoom: 18
-            });
+            }).addTo(mapInstance.current);
 
             tileLayerRef.current.on('load', () => setIsMapLoaded(true));
             // Initialize Marker Cluster Group
