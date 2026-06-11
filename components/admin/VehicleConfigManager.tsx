@@ -22,12 +22,12 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
         loadRawConfigs();
     }, []);
 
-    const loadRawConfigs = async () => {
-        setIsLoading(true);
+    const loadRawConfigs = async (showLoading = true) => {
+        if (showLoading) setIsLoading(true);
         const { getVehicleConfigs } = await import('../../services/api/vehicleConfigService');
         const res = await getVehicleConfigs();
         if (res.status === 'SUCCESS') setRawConfigs(res.data || []);
-        setIsLoading(false);
+        if (showLoading) setIsLoading(false);
     };
 
     const handleAddConfig = async (type: string, value: string, parentValue: string | null = null) => {
@@ -36,8 +36,8 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
         const res = await addVehicleConfig(type, value.trim(), parentValue);
         if (res.status === 'SUCCESS') {
             showToast('Thành công', 'Đã thêm cấu hình.', 'success');
-            await loadRawConfigs();
-            await refreshConfigs();
+            if (res.data) setRawConfigs(prev => [...prev, res.data]);
+            refreshConfigs(); // update global context quietly
             setNewLine(''); setNewVersion(''); setNewColor('');
         } else {
             showToast('Lỗi', 'Không thể thêm: ' + res.message, 'error');
@@ -51,8 +51,8 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
         const res = await updateVehicleConfig(editingId, editData.value.trim(), editData.parent_value);
         if (res.status === 'SUCCESS') {
             showToast('Thành công', 'Đã cập nhật.', 'success');
-            await loadRawConfigs();
-            await refreshConfigs();
+            if (res.data) setRawConfigs(prev => prev.map(item => item.id === editingId ? res.data : item));
+            refreshConfigs(); // update global context quietly
             setEditingId(null);
         } else {
             showToast('Lỗi', 'Không thể cập nhật: ' + res.message, 'error');
@@ -71,8 +71,8 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
         const res = await deleteVehicleConfig(id);
         if (res.status === 'SUCCESS') {
             showToast('Thành công', 'Đã xóa.', 'success');
-            await loadRawConfigs();
-            await refreshConfigs();
+            setRawConfigs(prev => prev.filter(item => item.id !== id));
+            refreshConfigs(); // update global context quietly
         } else {
             showToast('Lỗi', 'Không thể xóa: ' + res.message, 'error');
         }
