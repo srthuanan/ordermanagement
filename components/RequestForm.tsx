@@ -7,6 +7,7 @@ import FileUpload from './ui/FileUpload';
 import CarImage from './ui/CarImage';
 import Button from './ui/Button';
 import SelectPolicyModal from './modals/SelectPolicyModal';
+import { getAvailableExteriors, getAvailableInteriors } from '../constants';
 
 interface ImageSource {
     src: string;
@@ -73,9 +74,9 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
     // --- Effects ---
     useEffect(() => {
-        setAvailableExteriors(vehicleColors);
-        setAvailableInteriors(vehicleInteriors);
-    }, [vehicleColors, vehicleInteriors]);
+        setAvailableExteriors(getAvailableExteriors(formData.dong_xe, formData.phien_ban));
+        setAvailableInteriors(getAvailableInteriors(formData.dong_xe, formData.phien_ban));
+    }, [formData.dong_xe, formData.phien_ban]);
 
     useEffect(() => {
         if (initialVehicle) {

@@ -127,3 +127,17 @@ export const getAvailableExteriors = (model?: string, version?: string): string[
 
     return defaultExteriors;
 };
+
+export const getAvailableInteriors = (model?: string, version?: string): string[] => {
+    if (!model) return defaultInteriors;
+    const lowerModel = model.toLowerCase().trim();
+    const lowerVersion = version ? version.toLowerCase().trim() : '';
+
+    for (const rule of interiorColorRules) {
+        if (rule.models.includes(lowerModel) && (!rule.versions || rule.versions.includes(lowerVersion))) {
+            return rule.colors;
+        }
+    }
+
+    return defaultInteriors;
+};
