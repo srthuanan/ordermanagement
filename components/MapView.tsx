@@ -38,7 +38,7 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [hoveredVin] = useState<string | null>(null);
     const [polygonCoords, setPolygonCoords] = useState<any[] | null>(null);
-    const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+    const [, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
 
     const [carToShare, setCarToShare] = useState<any>(null);
 
