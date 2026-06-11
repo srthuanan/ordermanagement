@@ -66,7 +66,6 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
     };
 
     const handleDeleteConfig = async (id: string) => {
-        if (!window.confirm('Bạn có chắc muốn xóa? LƯU Ý: Việc này có thể ảnh hưởng đến dữ liệu cũ.')) return;
         setIsProcessing(true);
         const res = await deleteVehicleConfig(id);
         if (res.status === 'SUCCESS') {
