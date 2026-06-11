@@ -33,11 +33,11 @@ export const VehicleConfigProvider = ({ children }: { children: ReactNode }) => 
         const res = await getVehicleConfigs();
         if (res.status === 'SUCCESS' && res.data && res.data.length > 0) {
             const data = res.data;
-            const lines = data.filter((c: any) => c.type === 'line').map((c: any) => c.value);
+            const lines = Array.from(new Set(data.filter((c: any) => c.type === 'line').map((c: any) => c.value as string)));
             const versionsMap: Record<string, string[]> = {};
-            const allPossibleVersions = data.filter((c: any) => c.type === 'version').map((c: any) => c.value);
-            const vehicleColors = data.filter((c: any) => c.type === 'exterior').map((c: any) => c.value);
-            const vehicleInteriors = data.filter((c: any) => c.type === 'interior').map((c: any) => c.value);
+            const allPossibleVersions = Array.from(new Set(data.filter((c: any) => c.type === 'version').map((c: any) => c.value as string)));
+            const vehicleColors = Array.from(new Set(data.filter((c: any) => c.type === 'exterior').map((c: any) => c.value as string)));
+            const vehicleInteriors = Array.from(new Set(data.filter((c: any) => c.type === 'interior').map((c: any) => c.value as string)));
             
             lines.forEach((line: string) => {
                 versionsMap[line] = data.filter((c: any) => c.type === 'version' && c.parent_value === line).map((c: any) => c.value);
