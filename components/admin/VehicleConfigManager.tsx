@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useVehicleConfig } from '../../hooks/useVehicleConfig';
-import { addVehicleConfig, deleteVehicleConfig } from '../../services/api/vehicleConfigService';
+import { addVehicleConfig, deleteVehicleConfig, updateVehicleConfig } from '../../services/api/vehicleConfigService';
 
 export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
     const { refreshConfigs } = useVehicleConfig();
@@ -10,6 +10,10 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
     const [newColor, setNewColor] = useState('');
     const [newColorType, setNewColorType] = useState<'exterior' | 'interior'>('exterior');
     const [isProcessing, setIsProcessing] = useState(false);
+    
+    // Edit state
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editData, setEditData] = useState<{ value: string, parent_value: string | null }>({ value: '', parent_value: null });
 
     const [rawConfigs, setRawConfigs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +45,26 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
         setIsProcessing(false);
     };
 
+    const handleUpdateConfig = async () => {
+        if (!editingId || !editData.value.trim()) return;
+        setIsProcessing(true);
+        const res = await updateVehicleConfig(editingId, editData.value.trim(), editData.parent_value);
+        if (res.status === 'SUCCESS') {
+            showToast('Thành công', 'Đã cập nhật.', 'success');
+            await loadRawConfigs();
+            await refreshConfigs();
+            setEditingId(null);
+        } else {
+            showToast('Lỗi', 'Không thể cập nhật: ' + res.message, 'error');
+        }
+        setIsProcessing(false);
+    };
+
+    const startEdit = (item: any) => {
+        setEditingId(item.id);
+        setEditData({ value: item.value, parent_value: item.parent_value });
+    };
+
     const handleDeleteConfig = async (id: string) => {
         if (!window.confirm('Bạn có chắc muốn xóa? LƯU Ý: Việc này có thể ảnh hưởng đến dữ liệu cũ.')) return;
         setIsProcessing(true);
@@ -69,7 +93,7 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
                     <thead className="bg-slate-100 border-b border-slate-300">
                         <tr>
                             {columns.map((col: string, i: number) => (
-                                <th key={i} className={`p-1.5 border-r border-slate-300 last:border-r-0 font-bold text-slate-700 ${col === 'Thao tác' ? 'w-20 text-center' : ''}`}>{col}</th>
+                                <th key={i} className={`p-1.5 border-r border-slate-300 last:border-r-0 font-bold text-slate-700 ${col === 'Thao tác' ? 'w-24 text-center' : ''}`}>{col}</th>
                             ))}
                         </tr>
                     </thead>
@@ -95,10 +119,26 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
                     {/* BẢNG DÒNG XE */}
                     <TableWrapper title="Bảng Dòng Xe" columns={['Tên Dòng Xe', 'Thao tác']}>
                         {lines.map(line => (
-                            <tr key={line.id} className="border-b border-slate-200 hover:bg-slate-50">
-                                <td className="p-1.5 border-r border-slate-300 font-medium text-slate-800">{line.value}</td>
-                                <td className="p-1.5 text-center">
-                                    <button onClick={() => handleDeleteConfig(line.id)} disabled={isProcessing} className="text-red-500 hover:bg-red-100 px-2 py-0.5 rounded text-xs"><i className="fas fa-trash"></i></button>
+                            <tr key={line.id} className={`border-b border-slate-200 ${editingId === line.id ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}>
+                                <td className="p-1 border-r border-slate-300">
+                                    {editingId === line.id ? (
+                                        <input autoFocus value={editData.value} onChange={e => setEditData({...editData, value: e.target.value})} onKeyDown={e => e.key === 'Enter' && handleUpdateConfig()} className="w-full px-2 py-0.5 border border-indigo-300 rounded outline-none" />
+                                    ) : (
+                                        <span className="font-medium text-slate-800 px-1.5">{line.value}</span>
+                                    )}
+                                </td>
+                                <td className="p-1 text-center">
+                                    {editingId === line.id ? (
+                                        <div className="flex justify-center gap-1">
+                                            <button onClick={handleUpdateConfig} disabled={isProcessing} className="bg-indigo-600 text-white px-2 py-0.5 rounded hover:bg-indigo-700"><i className="fas fa-check text-xs"></i></button>
+                                            <button onClick={() => setEditingId(null)} className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded hover:bg-slate-300"><i className="fas fa-times text-xs"></i></button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex justify-center gap-1">
+                                            <button onClick={() => startEdit(line)} disabled={isProcessing} className="text-blue-500 hover:bg-blue-100 px-2 py-0.5 rounded text-xs"><i className="fas fa-pen"></i></button>
+                                            <button onClick={() => handleDeleteConfig(line.id)} disabled={isProcessing} className="text-red-500 hover:bg-red-100 px-2 py-0.5 rounded text-xs"><i className="fas fa-trash"></i></button>
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ))}
@@ -117,11 +157,35 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
                     {/* BẢNG PHIÊN BẢN */}
                     <TableWrapper title="Bảng Phiên Bản" columns={['Thuộc Dòng Xe', 'Tên Phiên Bản', 'Thao tác']}>
                         {versions.map(v => (
-                            <tr key={v.id} className="border-b border-slate-200 hover:bg-slate-50">
-                                <td className="p-1.5 border-r border-slate-300 text-slate-600">{v.parent_value}</td>
-                                <td className="p-1.5 border-r border-slate-300 font-medium text-slate-800">{v.value}</td>
-                                <td className="p-1.5 text-center">
-                                    <button onClick={() => handleDeleteConfig(v.id)} disabled={isProcessing} className="text-red-500 hover:bg-red-100 px-2 py-0.5 rounded text-xs"><i className="fas fa-trash"></i></button>
+                            <tr key={v.id} className={`border-b border-slate-200 ${editingId === v.id ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}>
+                                <td className="p-1 border-r border-slate-300">
+                                    {editingId === v.id ? (
+                                        <select value={editData.parent_value || ''} onChange={e => setEditData({...editData, parent_value: e.target.value})} className="w-full px-1 py-0.5 border border-indigo-300 rounded outline-none cursor-pointer">
+                                            {lines.map(l => <option key={l.id} value={l.value}>{l.value}</option>)}
+                                        </select>
+                                    ) : (
+                                        <span className="text-slate-600 px-1.5">{v.parent_value}</span>
+                                    )}
+                                </td>
+                                <td className="p-1 border-r border-slate-300">
+                                    {editingId === v.id ? (
+                                        <input autoFocus value={editData.value} onChange={e => setEditData({...editData, value: e.target.value})} onKeyDown={e => e.key === 'Enter' && handleUpdateConfig()} className="w-full px-2 py-0.5 border border-indigo-300 rounded outline-none" />
+                                    ) : (
+                                        <span className="font-medium text-slate-800 px-1.5">{v.value}</span>
+                                    )}
+                                </td>
+                                <td className="p-1 text-center">
+                                    {editingId === v.id ? (
+                                        <div className="flex justify-center gap-1">
+                                            <button onClick={handleUpdateConfig} disabled={isProcessing} className="bg-indigo-600 text-white px-2 py-0.5 rounded hover:bg-indigo-700"><i className="fas fa-check text-xs"></i></button>
+                                            <button onClick={() => setEditingId(null)} className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded hover:bg-slate-300"><i className="fas fa-times text-xs"></i></button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex justify-center gap-1">
+                                            <button onClick={() => startEdit(v)} disabled={isProcessing} className="text-blue-500 hover:bg-blue-100 px-2 py-0.5 rounded text-xs"><i className="fas fa-pen"></i></button>
+                                            <button onClick={() => handleDeleteConfig(v.id)} disabled={isProcessing} className="text-red-500 hover:bg-red-100 px-2 py-0.5 rounded text-xs"><i className="fas fa-trash"></i></button>
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ))}
@@ -148,15 +212,39 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
                     {/* BẢNG MÀU SẮC */}
                     <TableWrapper title="Bảng Màu Sắc" columns={['Phân Loại', 'Tên Màu Sắc', 'Thao tác']}>
                         {colors.map(color => (
-                            <tr key={color.id} className="border-b border-slate-200 hover:bg-slate-50">
-                                <td className="p-1.5 border-r border-slate-300 text-slate-600 w-28">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${color.type === 'exterior' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-700'}`}>
-                                        {color.type === 'exterior' ? 'Ngoại thất' : 'Nội thất'}
-                                    </span>
+                            <tr key={color.id} className={`border-b border-slate-200 ${editingId === color.id ? 'bg-indigo-50' : 'hover:bg-slate-50'}`}>
+                                <td className="p-1 border-r border-slate-300 w-28">
+                                    {editingId === color.id ? (
+                                        <select value={editData.parent_value || color.type} onChange={e => setEditData({...editData, parent_value: null})} disabled className="w-full px-1 py-0.5 bg-slate-100 text-slate-500 rounded outline-none cursor-not-allowed text-xs">
+                                            <option value={color.type}>{color.type === 'exterior' ? 'Ngoại Thất' : 'Nội Thất'}</option>
+                                        </select>
+                                    ) : (
+                                        <div className="px-1.5">
+                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${color.type === 'exterior' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-700'}`}>
+                                                {color.type === 'exterior' ? 'Ngoại thất' : 'Nội thất'}
+                                            </span>
+                                        </div>
+                                    )}
                                 </td>
-                                <td className="p-1.5 border-r border-slate-300 font-medium text-slate-800">{color.value}</td>
-                                <td className="p-1.5 text-center">
-                                    <button onClick={() => handleDeleteConfig(color.id)} disabled={isProcessing} className="text-red-500 hover:bg-red-100 px-2 py-0.5 rounded text-xs"><i className="fas fa-trash"></i></button>
+                                <td className="p-1 border-r border-slate-300">
+                                    {editingId === color.id ? (
+                                        <input autoFocus value={editData.value} onChange={e => setEditData({...editData, value: e.target.value})} onKeyDown={e => e.key === 'Enter' && handleUpdateConfig()} className="w-full px-2 py-0.5 border border-indigo-300 rounded outline-none" />
+                                    ) : (
+                                        <span className="font-medium text-slate-800 px-1.5">{color.value}</span>
+                                    )}
+                                </td>
+                                <td className="p-1 text-center">
+                                    {editingId === color.id ? (
+                                        <div className="flex justify-center gap-1">
+                                            <button onClick={handleUpdateConfig} disabled={isProcessing} className="bg-indigo-600 text-white px-2 py-0.5 rounded hover:bg-indigo-700"><i className="fas fa-check text-xs"></i></button>
+                                            <button onClick={() => setEditingId(null)} className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded hover:bg-slate-300"><i className="fas fa-times text-xs"></i></button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex justify-center gap-1">
+                                            <button onClick={() => startEdit(color)} disabled={isProcessing} className="text-blue-500 hover:bg-blue-100 px-2 py-0.5 rounded text-xs"><i className="fas fa-pen"></i></button>
+                                            <button onClick={() => handleDeleteConfig(color.id)} disabled={isProcessing} className="text-red-500 hover:bg-red-100 px-2 py-0.5 rounded text-xs"><i className="fas fa-trash"></i></button>
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ))}

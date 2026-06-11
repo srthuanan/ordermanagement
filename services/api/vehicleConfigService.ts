@@ -23,6 +23,18 @@ export const addVehicleConfig = async (type: string, value: string, parentValue:
     }
 };
 
+export const updateVehicleConfig = async (id: string, value: string, parentValue: string | null = null) => {
+    try {
+        const { data, error } = await supabase.from('vehicle_configs').update({
+            value, parent_value: parentValue, updated_at: new Date().toISOString()
+        }).eq('id', id).select().single();
+        if (error) throw error;
+        return { status: 'SUCCESS', data };
+    } catch (err: any) {
+        return { status: 'ERROR', message: err.message };
+    }
+};
+
 export const deleteVehicleConfig = async (id: string) => {
     try {
         const { error } = await supabase.from('vehicle_configs').delete().eq('id', id);
