@@ -114,13 +114,6 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
 
     return (
         <div className="p-4 h-full flex flex-col bg-slate-50 overflow-y-auto">
-            <div className="mb-4 flex justify-between items-end">
-                <div>
-                    <h2 className="text-xl font-bold text-slate-800 uppercase">Quản Lý Cấu Hình Xe (Excel Mode)</h2>
-                    <p className="text-slate-500 text-xs mt-1">Giao diện dạng bảng tính, cập nhật dữ liệu trực tiếp.</p>
-                </div>
-            </div>
-
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
                 <div>
                     {/* BẢNG DÒNG XE */}
