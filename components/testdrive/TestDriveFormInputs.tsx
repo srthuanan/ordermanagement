@@ -137,6 +137,7 @@ interface TestDriveFormInputsProps {
 }
 
 const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, handleInputChange, handleRadioChange, conflictError, scheduleForSelectedCar, suggestions, onSuggestionClick, onReset, onSave, isSubmitting, onSwitchToList }) => {
+    const { vehicleLines } = useVehicleConfig();
     return (
         <aside className="lg:col-span-2 print-hidden h-full overflow-hidden flex flex-col">
             <div className="bg-surface-card rounded-xl flex flex-col h-full overflow-hidden shadow-sm border border-border-primary/50">
