@@ -13,13 +13,23 @@ export const getDriveFileId = (url: string): string | null => {
         // but for now let's keep it safe.
         // return null; 
     }
-    // Tries to match /d/FILE_ID, /file/d/FILE_ID, and ?id=FILE_ID or &id=FILE_ID
-    const match = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|[?&]id=([a-zA-Z0-9_-]{25,})/);
+    // Tries to match /d/FILE_ID, /file/d/FILE_ID, /folders/FOLDER_ID and ?id=FILE_ID or &id=FILE_ID
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]{25,})|\/folders\/([a-zA-Z0-9_-]{25,})|[?&]id=([a-zA-Z0-9_-]{25,})/);
     if (match) {
-        // The ID will be in capture group 1 or 2
-        return match[1] || match[2];
+        // The ID will be in capture group 1, 2, or 3
+        return match[1] || match[2] || match[3];
     }
     return null;
+};
+
+/**
+ * Checks if a Google Drive URL is a folder.
+ * @param url The Google Drive URL.
+ * @returns boolean
+ */
+export const isDriveFolder = (url: string): boolean => {
+    if (!url || typeof url !== 'string') return false;
+    return url.includes('/folders/') || url.includes('embeddedfolderview');
 };
 
 /**
@@ -48,6 +58,11 @@ export const toEmbeddableUrl = (url: string, size?: number): string => {
     const fileId = getDriveFileId(url);
     if (fileId) {
         const lowerUrl = url.toLowerCase();
+        // If it's a folder, return the embedded folder view
+        if (isDriveFolder(url)) {
+            return `https://drive.google.com/embeddedfolderview?id=${fileId}#grid`;
+        }
+        
         // If it looks like a PDF or a document, or if no size/large size is requested, use /preview
         if (lowerUrl.includes('.pdf') || !size || size > 1000) {
             return `https://drive.google.com/file/d/${fileId}/preview`;

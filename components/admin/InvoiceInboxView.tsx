@@ -732,10 +732,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     const isDrive = url.toLowerCase().includes('drive.google.com');
                                                     
                                                     if (isDrive) {
-                                                        const fileId = getDriveFileId(url);
                                                         return (
                                                             <iframe 
-                                                                src={`https://drive.google.com/file/d/${fileId}/preview`} 
+                                                                src={toEmbeddableUrl(url)} 
                                                                 className="w-full h-full border-0"
                                                                 title="Document Preview"
                                                             />
