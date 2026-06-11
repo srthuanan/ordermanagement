@@ -12,15 +12,9 @@ ALTER TABLE public.vehicle_configs ENABLE ROW LEVEL SECURITY;
 DO $$ 
 BEGIN
   IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'vehicle_configs' AND policyname = 'authenticated can read vehicle_configs'
+    SELECT 1 FROM pg_policies WHERE tablename = 'vehicle_configs' AND policyname = 'Allow public full access on vehicle_configs'
   ) THEN
-    CREATE POLICY "authenticated can read vehicle_configs" ON public.vehicle_configs FOR SELECT TO authenticated USING (true);
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_policies WHERE tablename = 'vehicle_configs' AND policyname = 'admin can manage vehicle_configs'
-  ) THEN
-    CREATE POLICY "admin can manage vehicle_configs" ON public.vehicle_configs FOR ALL TO authenticated USING (app_private.current_user_role() = 'admin') WITH CHECK (app_private.current_user_role() = 'admin');
+    CREATE POLICY "Allow public full access on vehicle_configs" ON public.vehicle_configs FOR ALL USING (true) WITH CHECK (true);
   END IF;
 END $$;
 
