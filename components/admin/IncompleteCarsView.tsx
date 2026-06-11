@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { StockVehicle } from '../../types';
-import { versionsMap, defaultExteriors, defaultInteriors, getAvailableExteriors } from '../../constants';
+import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import Button from '../ui/Button';
 import CarImage from '../ui/CarImage';
 import * as apiService from '../../services/apiService';
@@ -12,6 +12,7 @@ interface IncompleteCarsViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRefresh, showToast }) => {
+    const { versionsMap, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
     const [updatingVin, setUpdatingVin] = useState<string | null>(null);
     const [localChanges, setLocalChanges] = useState<Record<string, Partial<StockVehicle>>>({});
     const [searchQuery, setSearchQuery] = useState('');
@@ -292,7 +293,7 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
                                             onChange={(e) => handleFieldChange(selectedCar.VIN, 'Dòng xe', e.target.value)}
                                         >
                                             <option value="">-- Chọn Dòng Xe --</option>
-                                            {Object.keys(versionsMap).sort().map(m => <option key={m} value={m}>{m}</option>)}
+                                            {vehicleLines.slice().sort().map(m => <option key={m} value={m}>{m}</option>)}
                                         </select>
                                     </div>
                                     <div className="space-y-1">
@@ -323,14 +324,12 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
                                             <div className="flex flex-col gap-2">
                                                 <select
                                                     className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-accent-primary transition-all"
-                                                    value={defaultExteriors.includes((localChanges[selectedCar.VIN]?.['Ngoại thất'] || selectedCar['Ngoại thất']) || '') ? (localChanges[selectedCar.VIN]?.['Ngoại thất'] || selectedCar['Ngoại thất']) : ''}
+                                                    value={vehicleColors.includes((localChanges[selectedCar.VIN]?.['Ngoại thất'] || selectedCar['Ngoại thất']) || '') ? (localChanges[selectedCar.VIN]?.['Ngoại thất'] || selectedCar['Ngoại thất']) : ''}
                                                     onChange={(e) => handleFieldChange(selectedCar.VIN, 'Ngoại thất', e.target.value)}
                                                 >
                                                     <option value="">-- Chọn Màu --</option>
                                                     {(() => {
-                                                        const currentModel = localChanges[selectedCar.VIN]?.['Dòng xe'] || selectedCar['Dòng xe'];
-                                                        const currentVersion = localChanges[selectedCar.VIN]?.['Phiên bản'] || selectedCar['Phiên bản'];
-                                                        return getAvailableExteriors(currentModel, currentVersion).map(c => <option key={c} value={c}>{c}</option>);
+                                                        return vehicleColors.map(c => <option key={c} value={c}>{c}</option>);
                                                     })()}
                                                 </select>
                                                 <input
@@ -350,8 +349,8 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
                                                 onChange={(e) => handleFieldChange(selectedCar.VIN, 'Nội thất', e.target.value)}
                                             >
                                                 <option value="">-- Chọn Nội Thất --</option>
-                                                {defaultInteriors.map(c => <option key={c} value={c}>{c}</option>)}
-                                                {selectedCar['Nội thất'] && !defaultInteriors.includes(selectedCar['Nội thất']) && <option value={selectedCar['Nội thất']}>{selectedCar['Nội thất']}</option>}
+                                                {vehicleInteriors.map(c => <option key={c} value={c}>{c}</option>)}
+                                                {selectedCar['Nội thất'] && !vehicleInteriors.includes(selectedCar['Nội thất']) && <option value={selectedCar['Nội thất']}>{selectedCar['Nội thất']}</option>}
                                             </select>
                                         </div>
                                     </div>

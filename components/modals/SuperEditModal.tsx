@@ -1,6 +1,6 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { Order } from '../../types';
-import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, interiorColorRules } from '../../constants';
+import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import * as apiService from '../../services/apiService';
 import moment from 'moment';
 
@@ -17,7 +17,8 @@ interface SuperEditModalProps {
 const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSuccess, showToast, order }) => {
     const [formData, setFormData] = useState<any>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
+    const { versionsMap, allPossibleVersions, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
+    const [availableInteriors, setAvailableInteriors] = useState<string[]>([]);
 
     useEffect(() => {
         if (order) {
@@ -46,7 +47,7 @@ const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSucc
         setFormData((prev: any) => {
             const newState = { ...prev, [name]: value };
             if (name === 'Dòng xe') {
-                const versions = versionsMap[value as keyof typeof versionsMap] || [];
+                const versions = versionsMap[value] || [];
                 if (versions.length === 1) newState['Phiên bản'] = versions[0];
             }
             return newState;
@@ -54,18 +55,8 @@ const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSucc
     };
 
     useEffect(() => {
-        const { 'Dòng xe': dong_xe, 'Phiên bản': phien_ban } = formData;
-        if (!dong_xe) { setAvailableInteriors(defaultInteriors); return; }
-        const lowerDongXe = (dong_xe as string).toLowerCase();
-        const lowerPhienBan = (phien_ban as string).toLowerCase();
-        let interiors = defaultInteriors;
-        for (const rule of interiorColorRules) {
-            if (rule.models.includes(lowerDongXe) && (!rule.versions || rule.versions.includes(lowerPhienBan))) {
-                interiors = rule.colors; break;
-            }
-        }
-        setAvailableInteriors(interiors);
-    }, [formData['Dòng xe'], formData['Phiên bản']]);
+        setAvailableInteriors(vehicleInteriors);
+    }, [vehicleInteriors]);
 
     if (!isOpen || !order) return null;
 
@@ -174,20 +165,20 @@ const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSucc
                                     <label className={labelClass}>Dòng Xe</label>
                                     <select name="Dòng xe" value={formData["Dòng xe"] || ''} onChange={handleInputChange} className={inputClass}>
                                         <option value="">Chọn dòng xe</option>
-                                        {Object.keys(versionsMap).map(v => <option key={v} value={v}>{v}</option>)}
+                                        {vehicleLines.map(v => <option key={v} value={v}>{v}</option>)}
                                     </select>
                                 </div>
                                 <div>
                                     <label className={labelClass}>Phiên Bản</label>
                                     <select name="Phiên bản" value={formData["Phiên bản"] || ''} onChange={handleInputChange} className={inputClass}>
                                         <option value="">Chọn phiên bản</option>
-                                        {(formData["Dòng xe"] ? versionsMap[formData["Dòng xe"] as keyof typeof versionsMap] || allPossibleVersions : allPossibleVersions).map(v => <option key={v} value={v}>{v}</option>)}
+                                        {(formData["Dòng xe"] ? versionsMap[formData["Dòng xe"]] || allPossibleVersions : allPossibleVersions).map(v => <option key={v} value={v}>{v}</option>)}
                                     </select>
                                 </div>
                                 <div>
                                     <label className={labelClass}>Ngoại Thất</label>
                                     <select name="Ngoại thất" value={formData["Ngoại thất"] || ''} onChange={handleInputChange} className={inputClass}>
-                                        {defaultExteriors.map(c => <option key={c} value={c}>{c}</option>)}
+                                        {vehicleColors.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                                 <div>

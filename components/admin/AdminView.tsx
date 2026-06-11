@@ -36,6 +36,7 @@ import AIKnowledgeManagement from './AIKnowledgeManagement';
 import PolicySummaryView from './PolicySummaryView';
 import PricingCalculatorView from './PricingCalculatorView';
 import MaintenanceFeeManager from './MaintenanceFeeManager';
+import VehicleConfigManager from './VehicleConfigManager';
 
 import * as apiService from '../../services/apiService';
 
@@ -252,7 +253,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         system: {
             label: 'HỆ THỐNG',
             icon: 'fa-cogs',
-            views: ['super_edit', 'incomplete_cars', 'policies', 'ai_knowledge', 'phongkd', 'maintenance_fee'] as AdminSubView[]
+            views: ['super_edit', 'incomplete_cars', 'policies', 'ai_knowledge', 'phongkd', 'maintenance_fee', 'vehicle_config'] as AdminSubView[]
         },
         stats: {
             label: 'THỐNG KÊ',
@@ -299,7 +300,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         management: 'QUẢN TRỊ',
         inventory: 'KHO XE',
         system: 'HỆ THỐNG',
-        maintenance_fee: 'KINH PHÍ WEB'
+        maintenance_fee: 'KINH PHÍ WEB',
+        vehicle_config: 'CẤU HÌNH XE'
     };
     const [unreadInquiryCount, setUnreadInquiryCount] = useState<number>(0);
 
@@ -371,7 +373,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         management: null,
         inventory: null,
         system: null,
-        maintenance_fee: null
+        maintenance_fee: null,
+        vehicle_config: null
     };
 
 
@@ -575,6 +578,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 {/* Maintenance Fee View */}
                 <div className={adminView === 'maintenance_fee' ? 'flex-1 flex flex-col min-h-0 overflow-y-auto' : 'hidden'}>
                     <MaintenanceFeeManager showToast={showToast} />
+                </div>
+
+                {/* Vehicle Config Manager */}
+                <div className={adminView === 'vehicle_config' ? 'flex-1 flex flex-col min-h-0 overflow-y-auto' : 'hidden'}>
+                    <VehicleConfigManager showToast={showToast} />
                 </div>
             </>
         );

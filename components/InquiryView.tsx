@@ -4,7 +4,7 @@ import { submitCarInquiry, getCarInquiries, markInquiryAsRead, deleteCarInquiry 
 import { CarInquiry } from '../types';
 import Button from './ui/Button';
 import MultiSelectDropdown from './ui/MultiSelectDropdown';
-import { versionsMap, defaultExteriors, defaultInteriors, interiorColorRules, getAvailableExteriors } from '../constants';
+import { useVehicleConfig } from '../hooks/useVehicleConfig';
 import moment from 'moment';
 import AnimatedBackground from './ui/AnimatedBackground';
 import CarImage from './ui/CarImage';
@@ -27,8 +27,10 @@ const CarInquiryView: React.FC<CarInquiryViewProps> = ({ currentUser, showToast,
         interior_color: ''
     });
 
-    const [availableExteriors, setAvailableExteriors] = useState<string[]>(defaultExteriors);
-    const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
+    const { versionsMap, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
+
+    const [availableExteriors, setAvailableExteriors] = useState<string[]>([]);
+    const [availableInteriors, setAvailableInteriors] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [history, setHistory] = useState<CarInquiry[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -153,38 +155,21 @@ const CarInquiryView: React.FC<CarInquiryViewProps> = ({ currentUser, showToast,
 
 
 
-    // Cascading logic for Version and Colors
+    useEffect(() => {
+        setAvailableExteriors(vehicleColors);
+        setAvailableInteriors(vehicleInteriors);
+    }, [vehicleColors, vehicleInteriors]);
+
+    // Cascading logic for Version
     useEffect(() => {
         const { model, version } = formData;
         if (model) {
-            const versions = versionsMap[model as keyof typeof versionsMap] || [];
+            const versions = versionsMap[model] || [];
             if (versions.length === 1 && formData.version !== versions[0]) {
                 setFormData(prev => ({ ...prev, version: versions[0] }));
             }
-
-            setAvailableExteriors(getAvailableExteriors(model, version));
-        } else {
-            setAvailableExteriors(defaultExteriors);
         }
-
-        if (!model) {
-            setAvailableInteriors(defaultInteriors);
-        } else {
-            const lowerModel = model.toLowerCase();
-            const lowerVersion = version.toLowerCase();
-            let interiors = defaultInteriors;
-            for (const rule of interiorColorRules) {
-                if (rule.models.includes(lowerModel) && (!rule.versions || rule.versions.includes(lowerVersion))) {
-                    interiors = rule.colors;
-                    break;
-                }
-            }
-            setAvailableInteriors(interiors);
-            if (interiors.length === 1 && formData.interior_color !== interiors[0]) {
-                setFormData(prev => ({ ...prev, interior_color: interiors[0] }));
-            }
-        }
-    }, [formData.model, formData.version]);
+    }, [formData.model, formData.version, versionsMap]);
 
     // --- Actions ---
     const handleSelectChange = (name: string, value: string) => {
@@ -306,7 +291,7 @@ const CarInquiryView: React.FC<CarInquiryViewProps> = ({ currentUser, showToast,
         setMobileView('detail');
     };
 
-    const availableVersions = formData.model ? (versionsMap[formData.model as keyof typeof versionsMap] || []) : [];
+    const availableVersions = formData.model ? (versionsMap[formData.model] || []) : [];
 
     return (
         <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-border-primary overflow-hidden animate-fade-in relative z-0">
@@ -456,7 +441,7 @@ const CarInquiryView: React.FC<CarInquiryViewProps> = ({ currentUser, showToast,
                                             <div className="border border-transparent hover:border-slate-100 rounded-xl transition-colors">
                                                 <MultiSelectDropdown
                                                     id="model" label="Dòng xe" placeholder="Chọn dòng xe..."
-                                                    options={Object.keys(versionsMap)}
+                                                    options={vehicleLines}
                                                     selectedOptions={formData.model ? [formData.model] : []}
                                                     onChange={(s) => handleSelectChange('model', s[0] || '')}
                                                     icon="fa-car" selectionMode="single" variant="modern" searchable={false}

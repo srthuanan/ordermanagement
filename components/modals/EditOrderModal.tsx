@@ -1,6 +1,6 @@
 import React, { useState, useEffect, FormEvent } from 'react';
 import { Order } from '../../types';
-import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, interiorColorRules } from '../../constants';
+import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import * as apiService from '../../services/apiService';
 import moment from 'moment';
 
@@ -20,7 +20,8 @@ interface EditOrderModalProps {
 const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSuccess, showToast, order, existingOrderNumbers, isAdmin }) => {
     const [formData, setFormData] = useState<Partial<Order>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
+    const { versionsMap, allPossibleVersions, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
+    const [availableInteriors, setAvailableInteriors] = useState<string[]>([]);
 
     useEffect(() => {
         if (order) {
@@ -46,7 +47,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                 newState['Phiên bản'] = '';
                 newState['Ngoại thất'] = '';
                 newState['Nội thất'] = '';
-                const versions = versionsMap[value as keyof typeof versionsMap] || [];
+                const versions = versionsMap[value] || [];
                 if (versions.length === 1) newState['Phiên bản'] = versions[0];
             }
             if (name === 'Phiên bản') {
@@ -58,21 +59,8 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
     };
 
     useEffect(() => {
-        const { 'Dòng xe': dong_xe, 'Phiên bản': phien_ban } = formData;
-        if (!dong_xe) { setAvailableInteriors(defaultInteriors); return; }
-        const lowerDongXe = (dong_xe as string).toLowerCase();
-        const lowerPhienBan = (phien_ban as string).toLowerCase();
-        let interiors = defaultInteriors;
-        for (const rule of interiorColorRules) {
-            if (rule.models.includes(lowerDongXe) && (!rule.versions || rule.versions.includes(lowerPhienBan))) {
-                interiors = rule.colors; break;
-            }
-        }
-        setAvailableInteriors(interiors);
-        if (interiors.length === 1 && formData['Nội thất'] !== interiors[0]) {
-            setFormData(prev => ({ ...prev, 'Nội thất': interiors[0] }));
-        }
-    }, [formData['Dòng xe'], formData['Phiên bản']]);
+        setAvailableInteriors(vehicleInteriors);
+    }, [vehicleInteriors]);
 
 
     if (!isOpen || !order) return null;
@@ -175,7 +163,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
         }
     };
 
-    const availableVersions = formData['Dòng xe'] ? (versionsMap[formData['Dòng xe'] as keyof typeof versionsMap] || allPossibleVersions) : [];
+    const availableVersions = formData['Dòng xe'] ? (versionsMap[formData['Dòng xe']] || allPossibleVersions) : [];
 
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in overflow-hidden" onClick={onClose}>
@@ -278,7 +266,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                                         <label className={labelClass} htmlFor="Dòng xe">Dòng xe</label>
                                         <div className="relative">
                                             <i className="fas fa-car absolute top-1/2 left-3.5 -translate-y-1/2 text-gray-400 text-xs"></i>
-                                            <select id="Dòng xe" name="Dòng xe" value={formData["Dòng xe"] || ''} onChange={handleInputChange} required className={`${inputClass} appearance-none cursor-pointer`}><option value="" disabled>Chọn dòng xe</option>{Object.keys(versionsMap).map(car => <option key={car} value={car}>{car}</option>)}</select>
+                                            <select id="Dòng xe" name="Dòng xe" value={formData["Dòng xe"] || ''} onChange={handleInputChange} required className={`${inputClass} appearance-none cursor-pointer`}><option value="" disabled>Chọn dòng xe</option>{vehicleLines.map(car => <option key={car} value={car}>{car}</option>)}</select>
                                             <i className="fas fa-chevron-down absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
                                         </div>
                                     </div>
@@ -294,7 +282,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                                         <label className={labelClass} htmlFor="Ngoại thất">Màu ngoại thất</label>
                                         <div className="relative">
                                             <i className="fas fa-palette absolute top-1/2 left-3.5 -translate-y-1/2 text-gray-400 text-xs"></i>
-                                            <select id="Ngoại thất" name="Ngoại thất" value={formData["Ngoại thất"] || ''} onChange={handleInputChange} required disabled={!formData["Phiên bản"]} className={`${inputClass} appearance-none cursor-pointer disabled:bg-gray-100 disabled:text-gray-400`}><option value="" disabled>Chọn màu ngoại thất</option>{defaultExteriors.map(color => <option key={color} value={color}>{color}</option>)}</select>
+                                            <select id="Ngoại thất" name="Ngoại thất" value={formData["Ngoại thất"] || ''} onChange={handleInputChange} required disabled={!formData["Phiên bản"]} className={`${inputClass} appearance-none cursor-pointer disabled:bg-gray-100 disabled:text-gray-400`}><option value="" disabled>Chọn màu ngoại thất</option>{vehicleColors.map(color => <option key={color} value={color}>{color}</option>)}</select>
                                             <i className="fas fa-chevron-down absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 text-xs pointer-events-none"></i>
                                         </div>
                                     </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, FormEvent } from 'react';
 import { AnalyticsData, Order, StockVehicle } from '../types';
 import { extractDateFromImageTesseract, extractDateWithGemini } from '../services/ocrService';
-import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, interiorColorRules, getAvailableExteriors } from '../constants';
+import { useVehicleConfig } from '../hooks/useVehicleConfig';
 import * as apiService from '../services/apiService';
 import FileUpload from './ui/FileUpload';
 import CarImage from './ui/CarImage';
@@ -63,13 +63,20 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [dmsWarning, setDmsWarning] = useState('');
 
-    const [availableExteriors, setAvailableExteriors] = useState<string[]>(defaultExteriors);
-    const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
+    const { versionsMap, allPossibleVersions, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
+
+    const [availableExteriors, setAvailableExteriors] = useState<string[]>([]);
+    const [availableInteriors, setAvailableInteriors] = useState<string[]>([]);
 
     const inputClass = "w-full pl-4 pr-4 py-3.5 bg-white border border-slate-200 rounded-lg text-base font-medium text-slate-800 placeholder-slate-400 outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/10 transition-all duration-300 shadow-sm hover:border-slate-300";
     const isPreFilled = !!initialVehicle;
 
     // --- Effects ---
+    useEffect(() => {
+        setAvailableExteriors(vehicleColors);
+        setAvailableInteriors(vehicleInteriors);
+    }, [vehicleColors, vehicleInteriors]);
+
     useEffect(() => {
         if (initialVehicle) {
             setFormData(prev => ({
@@ -80,10 +87,6 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                 noi_that: initialVehicle['Nội thất'] || '',
                 vin: initialVehicle.VIN || '',
             }));
-            const model = initialVehicle['Dòng xe'];
-            if (model) {
-                setAvailableExteriors(getAvailableExteriors(model));
-            }
             setStep(2); // Automatically jump to step 2 if pairing a specific vehicle
         } else {
             setStep(1);
@@ -114,32 +117,15 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
             if (name === 'dong_xe') {
                 newState.phien_ban = ''; newState.ngoai_that = ''; newState.noi_that = '';
-                const versions = versionsMap[value as keyof typeof versionsMap] || [];
+                const versions = versionsMap[value] || [];
                 if (versions.length === 1) newState.phien_ban = versions[0];
-                setAvailableExteriors(getAvailableExteriors(value, newState.phien_ban));
             }
             if (name === 'phien_ban') { 
                 newState.ngoai_that = ''; newState.noi_that = ''; 
-                setAvailableExteriors(getAvailableExteriors(newState.dong_xe, value));
             }
             return newState;
         });
     };
-
-    useEffect(() => {
-        const { dong_xe, phien_ban } = formData;
-        if (!dong_xe) { setAvailableInteriors(defaultInteriors); return; }
-        const lowerDongXe = dong_xe.toLowerCase();
-        const lowerPhienBan = phien_ban.toLowerCase();
-        let interiors = defaultInteriors;
-        for (const rule of interiorColorRules) {
-            if (rule.models.includes(lowerDongXe) && (!rule.versions || rule.versions.includes(lowerPhienBan))) {
-                interiors = rule.colors; break;
-            }
-        }
-        setAvailableInteriors(interiors);
-        if (interiors.length === 1) setFormData(prev => ({ ...prev, noi_that: interiors[0] }));
-    }, [formData.dong_xe, formData.phien_ban]);
 
     const handleFileSelect = useCallback(async (file: File | null) => {
         console.log('[RequestForm] File selected:', file?.name);
@@ -240,7 +226,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
     };
 
     const handleShowSample = (e: React.MouseEvent) => { e.preventDefault(); onOpenImagePreview([{ src: 'pictures/uynhiemchi.webp', originalUrl: 'pictures/uynhiemchi.webp', label: 'Mẫu UNC' }], 0, 'Ảnh Mẫu'); };
-    const availableVersions = formData.dong_xe ? (versionsMap[formData.dong_xe as keyof typeof versionsMap] || allPossibleVersions) : [];
+    const availableVersions = formData.dong_xe ? (versionsMap[formData.dong_xe] || allPossibleVersions) : [];
     const warningClasses = {
         'hot': 'bg-orange-50 border-orange-100 text-orange-700 font-bold shadow-sm animate-pulse-subtle',
         'slow': 'bg-green-50 border-green-100 text-green-700 font-bold shadow-sm'
@@ -334,7 +320,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                     <div>
                                         <InputGroup label="Dòng xe (Model)" htmlFor="dong_xe" required>
                                             <div className="flex flex-wrap gap-2 mt-2">
-                                                {Object.keys(versionsMap).map(model => {
+                                                {vehicleLines.map(model => {
                                                     const isSelected = formData.dong_xe === model;
                                                     return (
                                                         <button

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StockVehicle } from '../../types';
-import { versionsMap, defaultExteriors, defaultInteriors, getAvailableExteriors } from '../../constants';
+import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import CarImage from '../ui/CarImage';
 import Button from '../ui/Button';
 import * as apiService from '../../services/apiService';
@@ -14,6 +14,7 @@ interface AdminCarEditModalProps {
 }
 
 const AdminCarEditModal: React.FC<AdminCarEditModalProps> = ({ isOpen, vehicle, onClose, showToast, onSuccess }) => {
+    const { versionsMap, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
     const [mode, setMode] = useState<'edit' | 'delete'>('edit');
     const [isSaving, setIsSaving] = useState(false);
     const [deleteReason, setDeleteReason] = useState('');
@@ -96,11 +97,7 @@ const AdminCarEditModal: React.FC<AdminCarEditModalProps> = ({ isOpen, vehicle, 
         }
     };
 
-    const getFilteredExteriors = () => {
-        return getAvailableExteriors(currentModel, currentVersion);
-    };
-
-    const versions = versionsMap[(currentModel || '') as keyof typeof versionsMap] || [];
+    const versions = versionsMap[(currentModel || '')] || [];
 
     return (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
@@ -174,7 +171,7 @@ const AdminCarEditModal: React.FC<AdminCarEditModalProps> = ({ isOpen, vehicle, 
                                         onChange={(e) => handleFieldChange('Dòng xe', e.target.value)}
                                     >
                                         <option value="">-- Chọn --</option>
-                                        {Object.keys(versionsMap).sort().map(m => <option key={m} value={m}>{m}</option>)}
+                                        {vehicleLines.slice().sort().map(m => <option key={m} value={m}>{m}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1">
@@ -197,11 +194,11 @@ const AdminCarEditModal: React.FC<AdminCarEditModalProps> = ({ isOpen, vehicle, 
                                     <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Ngoại Thất</label>
                                     <select
                                         className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-accent-primary transition-all"
-                                        value={defaultExteriors.includes(currentExterior || '') ? currentExterior : ''}
+                                        value={vehicleColors.includes(currentExterior || '') ? currentExterior : ''}
                                         onChange={(e) => handleFieldChange('Ngoại thất', e.target.value)}
                                     >
                                         <option value="">-- Chọn --</option>
-                                        {getFilteredExteriors().map(c => <option key={c} value={c}>{c}</option>)}
+                                        {vehicleColors.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                                 <div className="space-y-1">
@@ -212,8 +209,8 @@ const AdminCarEditModal: React.FC<AdminCarEditModalProps> = ({ isOpen, vehicle, 
                                         onChange={(e) => handleFieldChange('Nội thất', e.target.value)}
                                     >
                                         <option value="">-- Chọn --</option>
-                                        {defaultInteriors.map(c => <option key={c} value={c}>{c}</option>)}
-                                        {currentInterior && !defaultInteriors.includes(currentInterior) && <option value={currentInterior}>{currentInterior}</option>}
+                                        {vehicleInteriors.map(c => <option key={c} value={c}>{c}</option>)}
+                                        {currentInterior && !vehicleInteriors.includes(currentInterior) && <option value={currentInterior}>{currentInterior}</option>}
                                     </select>
                                 </div>
                             </div>

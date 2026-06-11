@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { versionsMap } from '../../constants';
+import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import { TestDriveBooking } from '../../types';
 import moment from 'moment';
 import Button from '../ui/Button';
@@ -201,7 +201,7 @@ const TestDriveFormInputs: React.FC<TestDriveFormInputsProps> = ({ formData, han
                                 <label htmlFor="loaiXe" className="block text-[11px] font-medium text-text-secondary mb-0.5 whitespace-nowrap">Loại xe <span className="text-danger ml-0.5">*</span></label>
                                 <select name="loaiXe" id="loaiXe" value={formData.loaiXe} onChange={handleInputChange} className="block w-full futuristic-input px-2.5 py-1.5 text-sm rounded-lg border-border-secondary bg-surface-ground h-9 transition-all focus:border-accent-primary focus:ring-1 focus:ring-accent-primary text-text-primary">
                                     <option value="" disabled>Chọn xe</option>
-                                    {Object.keys(versionsMap).map(model => (<option key={model} value={model}>{model}</option>))}
+                                    {vehicleLines.map(model => (<option key={model} value={model}>{model}</option>))}
                                 </select>
                             </div>
                             <InputField name="bienSo" label="Biển số xe" value={formData.bienSo || ''} onChange={handleInputChange} placeholder="VD: 98A-123.45" required />

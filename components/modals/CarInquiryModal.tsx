@@ -4,7 +4,7 @@ import { submitCarInquiry, getCarInquiries, markInquiryAsRead, deleteCarInquiry 
 import { CarInquiry } from '../../types';
 import Button from '../ui/Button';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
-import { versionsMap, defaultExteriors, defaultInteriors, interiorColorRules, getAvailableExteriors } from '../../constants';
+import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import moment from 'moment';
 
 interface CarInquiryModalProps {
@@ -25,8 +25,9 @@ let persistentFormData = {
 const CarInquiryModal: React.FC<CarInquiryModalProps> = ({ isOpen, onClose, currentUser, showToast }) => {
     const [formData, setFormData] = useState(persistentFormData);
     
-    const [availableExteriors, setAvailableExteriors] = useState<string[]>(defaultExteriors);
-    const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
+    const { versionsMap, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
+    const [availableExteriors, setAvailableExteriors] = useState<string[]>([]);
+    const [availableInteriors, setAvailableInteriors] = useState<string[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [history, setHistory] = useState<CarInquiry[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -47,34 +48,15 @@ const CarInquiryModal: React.FC<CarInquiryModalProps> = ({ isOpen, onClose, curr
         const { model, version } = formData;
         
         if (model) {
-            const versions = versionsMap[model as keyof typeof versionsMap] || [];
+            const versions = versionsMap[model] || [];
             if (versions.length === 1 && formData.version !== versions[0]) {
                 setFormData(prev => ({ ...prev, version: versions[0] }));
             }
-
-            setAvailableExteriors(getAvailableExteriors(model, version));
-        } else {
-            setAvailableExteriors(defaultExteriors);
         }
 
-        if (!model) {
-            setAvailableInteriors(defaultInteriors);
-        } else {
-            const lowerModel = model.toLowerCase();
-            const lowerVersion = version.toLowerCase();
-            let interiors = defaultInteriors;
-            for (const rule of interiorColorRules) {
-                if (rule.models.includes(lowerModel) && (!rule.versions || rule.versions.includes(lowerVersion))) {
-                    interiors = rule.colors;
-                    break;
-                }
-            }
-            setAvailableInteriors(interiors);
-            if (interiors.length === 1 && formData.interior_color !== interiors[0]) {
-                setFormData(prev => ({ ...prev, interior_color: interiors[0] }));
-            }
-        }
-    }, [formData.model, formData.version]);
+        setAvailableExteriors(vehicleColors);
+        setAvailableInteriors(vehicleInteriors);
+    }, [formData.model, formData.version, versionsMap, vehicleColors, vehicleInteriors]);
 
     const fetchHistory = async () => {
         setIsLoadingHistory(true);
@@ -175,7 +157,7 @@ const CarInquiryModal: React.FC<CarInquiryModalProps> = ({ isOpen, onClose, curr
         }
     };
 
-    const availableVersions = formData.model ? (versionsMap[formData.model as keyof typeof versionsMap] || []) : [];
+    const availableVersions = formData.model ? (versionsMap[formData.model] || []) : [];
 
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-fade-in" onClick={onClose}>
@@ -216,7 +198,7 @@ const CarInquiryModal: React.FC<CarInquiryModalProps> = ({ isOpen, onClose, curr
                                     <label className="text-sm font-semibold text-slate-600 block ml-1">Dòng xe</label>
                                     <MultiSelectDropdown
                                         id="model" label="Dòng xe" placeholder="Chọn dòng xe..."
-                                        options={Object.keys(versionsMap)}
+                                        options={vehicleLines}
                                         selectedOptions={formData.model ? [formData.model] : []}
                                         onChange={(s) => handleSelectChange('model', s[0] || '')}
                                         icon="fa-car" selectionMode="single" variant="modern" searchable={false}

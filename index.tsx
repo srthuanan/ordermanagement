@@ -14,6 +14,7 @@ import UpdateModal from './components/modals/UpdateModal';
 import ChangePasswordModal from './components/modals/ChangePasswordModal';
 import { PublicLiveMapView } from './components/PublicLiveMapView';
 import { registerSW } from 'virtual:pwa-register';
+import { VehicleConfigProvider } from './hooks/useVehicleConfig';
 
 // Build version from Vite define (timestamp)
 const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
@@ -274,17 +275,19 @@ const Root = () => {
 
     return (
         <SWRConfig value={{ provider: () => new Map() }}>
-            {renderContent()}
-            <ChangePasswordModal 
-                isOpen={directChangePassword.isOpen} 
-                onClose={() => setDirectChangePassword(prev => ({ ...prev, isOpen: false }))} 
-                username={directChangePassword.username}
-                showToast={showToast}
-                isFirstLogin={true}
-            />
-            {toasts.map((t, index) => <Toast key={t.id} {...t} show={true} index={toasts.length - 1 - index} onClose={hideToast} />)}
-            {successInfo && <SuccessAnimation show={true} title={successInfo.title} message={successInfo.message} onClose={() => setSuccessInfo(null)} duration={3000} />}
-            <UpdateModal />
+            <VehicleConfigProvider>
+                {renderContent()}
+                <ChangePasswordModal 
+                    isOpen={directChangePassword.isOpen} 
+                    onClose={() => setDirectChangePassword(prev => ({ ...prev, isOpen: false }))} 
+                    username={directChangePassword.username}
+                    showToast={showToast}
+                    isFirstLogin={true}
+                />
+                {toasts.map((t, index) => <Toast key={t.id} {...t} show={true} index={toasts.length - 1 - index} onClose={hideToast} />)}
+                {successInfo && <SuccessAnimation show={true} title={successInfo.title} message={successInfo.message} onClose={() => setSuccessInfo(null)} duration={3000} />}
+                <UpdateModal />
+            </VehicleConfigProvider>
         </SWRConfig>
     );
 };

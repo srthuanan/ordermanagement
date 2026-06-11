@@ -4,7 +4,7 @@ import Button from '../ui/Button';
 import StatusBadge from '../ui/StatusBadge';
 import AnimatedBackground from '../ui/AnimatedBackground';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
-import { versionsMap, allPossibleVersions, defaultExteriors, defaultInteriors, interiorColorRules } from '../../constants';
+import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import * as apiService from '../../services/apiService';
 import moment from 'moment';
 
@@ -22,7 +22,8 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
 
     const [formData, setFormData] = useState<any>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [availableInteriors, setAvailableInteriors] = useState<string[]>(defaultInteriors);
+    const { versionsMap, allPossibleVersions, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
+    const [availableInteriors, setAvailableInteriors] = useState<string[]>([]);
 
     const [filterModel, setFilterModel] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
@@ -235,7 +236,7 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
         setFormData((prev: any) => {
             const newState = { ...prev, [name]: value };
             if (name === 'Dòng xe') {
-                const versions = versionsMap[value as keyof typeof versionsMap] || [];
+                const versions = versionsMap[value] || [];
                 if (versions.length === 1) newState['Phiên bản'] = versions[0];
             }
             return newState;
@@ -243,18 +244,8 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
     };
 
     useEffect(() => {
-        const { 'Dòng xe': dong_xe, 'Phiên bản': phien_ban } = formData;
-        if (!dong_xe) { setAvailableInteriors(defaultInteriors); return; }
-        const lowerDongXe = (dong_xe as string).toLowerCase();
-        const lowerPhienBan = (phien_ban as string).toLowerCase();
-        let interiors = defaultInteriors;
-        for (const rule of interiorColorRules) {
-            if (rule.models.includes(lowerDongXe) && (!rule.versions || rule.versions.includes(lowerPhienBan))) {
-                interiors = rule.colors; break;
-            }
-        }
-        setAvailableInteriors(interiors);
-    }, [formData['Dòng xe'], formData['Phiên bản']]);
+        setAvailableInteriors(vehicleInteriors);
+    }, [vehicleInteriors]);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -305,7 +296,7 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                             onChange={(e) => setFilterModel(e.target.value)}
                         >
                             <option value="">Tất cả dòng xe</option>
-                            {Object.keys(versionsMap).map(m => <option key={m} value={m}>{m}</option>)}
+                            {vehicleLines.map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
                         <select 
                             className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold outline-none focus:border-red-500"
@@ -524,21 +515,21 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                                                 <label className={labelClass}>Dòng Xe</label>
                                                 <select name="Dòng xe" value={formData["Dòng xe"] || ''} onChange={handleInputChange} className={inputClass}>
                                                     <option value="">Chọn dòng xe...</option>
-                                                    {Object.keys(versionsMap).map(v => <option key={v} value={v}>{v}</option>)}
+                                                    {vehicleLines.map(v => <option key={v} value={v}>{v}</option>)}
                                                 </select>
                                             </div>
                                             <div className="md:col-span-1">
                                                 <label className={labelClass}>Phiên Bản</label>
                                                 <select name="Phiên bản" value={formData["Phiên bản"] || ''} onChange={handleInputChange} className={inputClass}>
                                                     <option value="">Chọn phiên bản...</option>
-                                                    {(formData["Dòng xe"] ? versionsMap[formData["Dòng xe"] as keyof typeof versionsMap] || allPossibleVersions : allPossibleVersions).map(v => <option key={v} value={v}>{v}</option>)}
+                                                    {(formData["Dòng xe"] ? versionsMap[formData["Dòng xe"]] || allPossibleVersions : allPossibleVersions).map(v => <option key={v} value={v}>{v}</option>)}
                                                 </select>
                                             </div>
                                             <div className="md:col-span-1">
                                                 <label className={labelClass}>Ngoại Thất</label>
                                                 <select name="Ngoại thất" value={formData["Ngoại thất"] || ''} onChange={handleInputChange} className={inputClass}>
                                                     <option value="">Màu ngoại thất...</option>
-                                                    {defaultExteriors.map(c => <option key={c} value={c}>{c}</option>)}
+                                                    {vehicleColors.map(c => <option key={c} value={c}>{c}</option>)}
                                                 </select>
                                             </div>
                                             <div className="md:col-span-1">
