@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getVehicleConfigs } from '../services/api/vehicleConfigService';
-import { versionsMap as defaultVersionsMap, allPossibleVersions as defaultAllVersions, defaultExteriors, defaultInteriors, vehicleLines as defaultLines } from '../constants';
+import { versionsMap as defaultVersionsMap, allPossibleVersions as defaultAllVersions, defaultExteriors, defaultInteriors } from '../constants';
+
+const defaultLines = Object.keys(defaultVersionsMap);
 
 interface VehicleConfigContextProps {
     versionsMap: Record<string, string[]>;
