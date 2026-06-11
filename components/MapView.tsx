@@ -833,18 +833,21 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             if (mapInstance.current && markersRef.current && markersRef.current[targetVinOnMap]) {
                 console.log(`[MapView] Auto-focusing target marker: ${targetVinOnMap}`);
                 const marker = markersRef.current[targetVinOnMap];
-                const latLng = marker.getLatLng();
                 
                 // Cho dừng mọi animation đang chạy
                 mapInstance.current.stop();
                 
-                // Bay đến vị trí với độ zoom phù hợp
-                mapInstance.current.setView(latLng, 16, { animate: true });
-                
-                // Mở popup sau một nhịp thở để đảm bảo map ổn định
-                setTimeout(() => {
-                    marker.openPopup();
-                }, 300);
+                if (markerClusterGroupRef.current) {
+                    markerClusterGroupRef.current.zoomToShowLayer(marker, () => {
+                        marker.openPopup();
+                    });
+                } else {
+                    const latLng = marker.getLatLng();
+                    mapInstance.current.setView(latLng, 16, { animate: true });
+                    setTimeout(() => {
+                        marker.openPopup();
+                    }, 300);
+                }
 
                 if (onClearTargetVinOnMap) {
                     onClearTargetVinOnMap();
@@ -905,12 +908,19 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
     const flyToCar = (car: any) => {
         if (!mapInstance.current) return;
         mapInstance.current.stop();
-        mapInstance.current.flyTo([car.lat, car.lng], 16, { animate: true, duration: 1 });
+        
         const marker = markersRef.current[car.vin];
-        if (marker) {
-            setTimeout(() => {
+        if (marker && markerClusterGroupRef.current) {
+            markerClusterGroupRef.current.zoomToShowLayer(marker, () => {
                 marker.openPopup();
-            }, 1000);
+            });
+        } else {
+            mapInstance.current.flyTo([car.lat, car.lng], 16, { animate: true, duration: 1 });
+            if (marker) {
+                setTimeout(() => {
+                    marker.openPopup();
+                }, 1000);
+            }
         }
     };
 
