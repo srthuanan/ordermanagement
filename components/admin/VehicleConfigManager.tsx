@@ -11,6 +11,57 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
     const [newColor, setNewColor] = useState('');
     const [newColorType, setNewColorType] = useState<'exterior' | 'interior'>('exterior');
     const [isProcessing, setIsProcessing] = useState(false);
+
+    const LineCard = ({ line, versions, handleAddConfig, handleDeleteConfig, isProcessing }: any) => {
+        const [versionInput, setVersionInput] = useState('');
+        return (
+            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm mb-4 animate-fade-in-scale-up relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500"></div>
+                <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-3 pl-2">
+                    <h4 className="font-bold text-lg text-slate-800 flex items-center gap-2">
+                        {line.value}
+                    </h4>
+                    <button onClick={() => handleDeleteConfig(line.id)} disabled={isProcessing} className="text-xs text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors font-medium">
+                        <i className="fas fa-trash mr-1"></i> Xóa dòng xe
+                    </button>
+                </div>
+                
+                <div className="flex flex-wrap gap-2 mb-4 pl-2">
+                    {versions.map((version: any) => (
+                        <span key={version.id} className="inline-flex items-center bg-slate-50 text-slate-700 text-sm font-medium px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
+                            {version.value}
+                            <button onClick={() => handleDeleteConfig(version.id)} disabled={isProcessing} className="ml-2 text-slate-400 hover:text-red-500 transition-colors w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50">
+                                <i className="fas fa-times text-xs"></i>
+                            </button>
+                        </span>
+                    ))}
+                    {versions.length === 0 && <span className="text-slate-400 text-sm italic py-1">Chưa có phiên bản nào.</span>}
+                </div>
+                
+                <div className="flex gap-2 max-w-sm pl-2">
+                    <input 
+                        value={versionInput}
+                        onChange={e => setVersionInput(e.target.value)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && versionInput.trim()) {
+                                handleAddConfig('version', versionInput, line.value);
+                                setVersionInput('');
+                            }
+                        }}
+                        placeholder={`+ Thêm phiên bản cho ${line.value}...`}
+                        className="flex-1 px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all"
+                    />
+                    <button 
+                        disabled={isProcessing || !versionInput.trim()} 
+                        onClick={() => { handleAddConfig('version', versionInput, line.value); setVersionInput(''); }}
+                        className="px-4 py-2 bg-slate-800 text-white text-sm rounded-xl hover:bg-slate-700 disabled:opacity-50 transition-colors font-semibold"
+                    >
+                        Lưu
+                    </button>
+                </div>
+            </div>
+        );
+    };
     
     const [rawConfigs, setRawConfigs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -86,58 +137,36 @@ export const VehicleConfigManager = ({ showToast }: { showToast: any }) => {
             </div>
 
             {activeTab === 'versions' && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Quản lý Dòng Xe */}
-                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><i className="fas fa-tags text-indigo-500"></i> Quản lý Dòng Xe</h3>
-                        <div className="flex gap-2 mb-4">
-                            <input value={newLine} onChange={e => setNewLine(e.target.value)} placeholder="Nhập tên dòng xe mới (VD: VF 6)..." className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all" />
-                            <button disabled={isProcessing || !newLine.trim()} onClick={() => handleAddConfig('line', newLine)} className="px-4 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-700 disabled:opacity-50 transition-colors">
-                                <i className="fas fa-plus"></i> Thêm
-                            </button>
+                <div className="w-full lg:w-5/6 xl:w-3/4">
+                    {/* Add new line */}
+                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm mb-8 flex flex-col md:flex-row gap-3 md:items-end">
+                        <div className="flex-1">
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2"><i className="fas fa-tags text-indigo-500 mr-1"></i> Thêm dòng xe mới</label>
+                            <input value={newLine} onChange={e => setNewLine(e.target.value)} onKeyDown={e => {
+                                if (e.key === 'Enter' && newLine.trim()) {
+                                    handleAddConfig('line', newLine);
+                                    setNewLine('');
+                                }
+                            }} placeholder="VD: VF 6, VF 7..." className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all" />
                         </div>
-                        <ul className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                            {lines.map(line => (
-                                <li key={line.id} className="flex justify-between items-center bg-slate-50 p-3 border border-slate-100 rounded-xl">
-                                    <span className="font-semibold text-slate-700">{line.value}</span>
-                                    <button onClick={() => handleDeleteConfig(line.id)} className="text-slate-400 hover:text-red-500 hover:bg-red-50 w-8 h-8 rounded-lg flex items-center justify-center transition-colors">
-                                        <i className="fas fa-trash"></i>
-                                    </button>
-                                </li>
-                            ))}
-                            {lines.length === 0 && <p className="text-center text-slate-400 py-4 text-sm">Chưa có dòng xe nào.</p>}
-                        </ul>
+                        <button disabled={isProcessing || !newLine.trim()} onClick={() => { handleAddConfig('line', newLine); setNewLine(''); }} className="px-6 py-2 h-[42px] bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-colors whitespace-nowrap">
+                            <i className="fas fa-plus mr-1"></i> Thêm Dòng Xe
+                        </button>
                     </div>
 
-                    {/* Quản lý Phiên Bản */}
-                    <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><i className="fas fa-code-branch text-emerald-500"></i> Quản lý Phiên Bản</h3>
-                        <div className="flex flex-col gap-3 mb-4">
-                            <select value={selectedLine} onChange={e => setSelectedLine(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none cursor-pointer">
-                                <option value="">-- Chọn dòng xe để thêm phiên bản --</option>
-                                {lines.map(line => <option key={line.id} value={line.value}>{line.value}</option>)}
-                            </select>
-                            <div className="flex gap-2">
-                                <input value={newVersion} onChange={e => setNewVersion(e.target.value)} placeholder="Nhập tên phiên bản mới (VD: Plus)..." className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all" />
-                                <button disabled={isProcessing || !selectedLine || !newVersion.trim()} onClick={() => handleAddConfig('version', newVersion, selectedLine)} className="px-4 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-700 disabled:opacity-50 transition-colors">
-                                    <i className="fas fa-plus"></i> Thêm
-                                </button>
-                            </div>
-                        </div>
-                        <ul className="space-y-2 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                            {versions.filter(v => v.parent_value === selectedLine || !selectedLine).map(version => (
-                                <li key={version.id} className="flex justify-between items-center bg-slate-50 p-3 border border-slate-100 rounded-xl text-sm">
-                                    <span className="text-slate-700">
-                                        <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded mr-2 uppercase text-[10px] tracking-wider">{version.parent_value}</span>
-                                        {version.value}
-                                    </span>
-                                    <button onClick={() => handleDeleteConfig(version.id)} className="text-slate-400 hover:text-red-500 hover:bg-red-50 w-8 h-8 rounded-lg flex items-center justify-center transition-colors">
-                                        <i className="fas fa-trash"></i>
-                                    </button>
-                                </li>
-                            ))}
-                            {versions.filter(v => v.parent_value === selectedLine || !selectedLine).length === 0 && <p className="text-center text-slate-400 py-4 text-sm">Chưa có phiên bản nào.</p>}
-                        </ul>
+                    {/* List lines */}
+                    <div className="space-y-4 pb-10">
+                        {lines.map(line => (
+                            <LineCard 
+                                key={line.id} 
+                                line={line} 
+                                versions={versions.filter(v => v.parent_value === line.value)} 
+                                handleAddConfig={handleAddConfig} 
+                                handleDeleteConfig={handleDeleteConfig} 
+                                isProcessing={isProcessing} 
+                            />
+                        ))}
+                        {lines.length === 0 && <div className="text-center py-10 text-slate-400 bg-white rounded-2xl border border-slate-200 border-dashed font-medium"><i className="fas fa-folder-open block text-3xl mb-3 text-slate-300"></i> Chưa có dòng xe nào trong hệ thống.</div>}
                     </div>
                 </div>
             )}
