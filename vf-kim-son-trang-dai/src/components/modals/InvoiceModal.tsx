@@ -195,7 +195,7 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
         )}
 
         {/* HEADER AREA */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexShrink: 0 }}>
           <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
             Hồ sơ: {order.id} 
             <Copy className="clickable-copy-icon" onClick={() => copyToClipboard(order.id)} size={14} style={{ display: 'inline', marginLeft: '6px', cursor: 'pointer', color: '#64748b' }} />
@@ -213,7 +213,7 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
         {/* CONTENT */}
         <form onSubmit={handleSubmit} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', paddingRight: '4px' }}>
           {error && (
-             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#ef4444', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px', fontWeight: 600 }}>
+             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#ef4444', padding: '8px 12px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px', fontWeight: 600 }}>
                {error}
              </div>
           )}
@@ -221,82 +221,82 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #cbd5e1', tableLayout: 'fixed' }}>
             <tbody>
               <tr>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569', width: '20%' }}>Khách hàng</td>
-                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 600, width: '30%' }}>{order.customer}</td>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569', width: '20%' }}>Tư vấn viên</td>
-                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500, width: '30%' }}>{order.staff}</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '20%' }}>Khách hàng</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 600, width: '30%' }}>{order.customer}</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '20%' }}>Tư vấn viên</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500, width: '30%' }}>{order.staff}</td>
               </tr>
               <tr>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Dòng xe</td>
-                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 600 }}>{order.line} / {order.version}</td>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Màu (Ngoại/Nội)</td>
-                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }}>{order.exterior} · {order.interior}</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Dòng xe</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 600 }}>{order.line} / {order.version}</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Màu (Ngoại/Nội)</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{order.exterior} · {order.interior}</td>
               </tr>
               <tr>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Số VIN định danh</td>
-                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 700, letterSpacing: '0.05em' }}>{order.vin || '—'}</td>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Ngày cần xe</td>
-                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }}>{order.needDate || order.needDateIso || '—'}</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Số VIN định danh</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 700, letterSpacing: '0.05em' }}>{order.vin || '—'}</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày cần xe</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{order.needDate || order.needDateIso || '—'}</td>
               </tr>
               <tr>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Ngày đặt cọc</td>
-                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }}>{order.depositDate || '—'}</td>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Tiền đã cọc *</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày đặt cọc</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{order.depositDate || '—'}</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Tiền đã cọc *</td>
                 <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
-                   <input required value={soTienKhachDaDong} onChange={handleNumberChange(setSoTienKhachDaDong)} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', color: '#dc2626', fontWeight: 700, fontSize: '13px', boxSizing: 'border-box' }} placeholder="VD: 5.000.000 đ" />
+                   <input required value={soTienKhachDaDong} onChange={handleNumberChange(setSoTienKhachDaDong)} style={{ width: '100%', border: 'none', padding: '8px 12px', outline: 'none', background: 'transparent', color: '#dc2626', fontWeight: 700, fontSize: '13px', boxSizing: 'border-box' }} placeholder="VD: 5.000.000 đ" />
                 </td>
               </tr>
               <tr>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Thanh toán *</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Thanh toán *</td>
                 <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
-                  <select value={hinhThucTT} onChange={e=>setHinhThucTT(e.target.value)} required style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', color: '#0f172a', boxSizing: 'border-box' }}>
+                  <select value={hinhThucTT} onChange={e=>setHinhThucTT(e.target.value)} required style={{ width: '100%', border: 'none', padding: '8px 12px', outline: 'none', background: 'transparent', fontSize: '13px', color: '#0f172a', boxSizing: 'border-box' }}>
                      <option value="Tiền mặt">Tiền mặt</option>
                      <option value="Vay ngân hàng">Vay ngân hàng</option>
                      <option value="Chuyển khoản">Chuyển khoản</option>
                   </select>
                 </td>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Nguồn khách *</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Nguồn khách *</td>
                 <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
-                   <input required value={nguonKhach} onChange={e=>setNguonKhach(e.target.value)} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} placeholder="VD: marketing" />
+                   <input required value={nguonKhach} onChange={e=>setNguonKhach(e.target.value)} style={{ width: '100%', border: 'none', padding: '8px 12px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} placeholder="VD: marketing" />
                 </td>
               </tr>
               <tr>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Mã Hợp Đồng *</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mã Hợp Đồng *</td>
                 <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
-                   <input required value={soHopDong} onChange={e=>setSoHopDong(e.target.value)} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} />
+                   <input required value={soHopDong} onChange={e=>setSoHopDong(e.target.value)} style={{ width: '100%', border: 'none', padding: '8px 12px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} />
                 </td>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Mã Amis</td>
-                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }}>—</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mã Amis</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>—</td>
               </tr>
               <tr>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Ngày ký HĐ *</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày ký HĐ *</td>
                 <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
-                   <input type="date" required value={ngayKyHopDong} onChange={e=>setNgayKyHopDong(e.target.value)} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} />
+                   <input type="date" required value={ngayKyHopDong} onChange={e=>setNgayKyHopDong(e.target.value)} style={{ width: '100%', border: 'none', padding: '8px 12px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} />
                 </td>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Giá công bố *</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Giá công bố *</td>
                 <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
-                   <input required value={giaCongBo} onChange={handleNumberChange(setGiaCongBo)} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', fontWeight: 600, boxSizing: 'border-box' }} placeholder="315.000.000 đ" />
+                   <input required value={giaCongBo} onChange={handleNumberChange(setGiaCongBo)} style={{ width: '100%', border: 'none', padding: '8px 12px', outline: 'none', background: 'transparent', fontSize: '13px', fontWeight: 600, boxSizing: 'border-box' }} placeholder="315.000.000 đ" />
                 </td>
               </tr>
               <tr>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Đăng ký xe</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Đăng ký xe</td>
                 <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
-                   <select value={dangKyXe ? 'Có' : 'Không'} onChange={e=>setDangKyXe(e.target.value === 'Có')} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }}>
+                   <select value={dangKyXe ? 'Có' : 'Không'} onChange={e=>setDangKyXe(e.target.value === 'Có')} style={{ width: '100%', border: 'none', padding: '8px 12px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }}>
                      <option value="Có">Có</option>
                      <option value="Không">Không</option>
                    </select>
                 </td>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Mua bảo hiểm</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mua bảo hiểm</td>
                 <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
-                   <select value={muaBaoHiem ? 'Có' : 'Không'} onChange={e=>setMuaBaoHiem(e.target.value === 'Có')} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }}>
+                   <select value={muaBaoHiem ? 'Có' : 'Không'} onChange={e=>setMuaBaoHiem(e.target.value === 'Có')} style={{ width: '100%', border: 'none', padding: '8px 12px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }}>
                      <option value="Có">Có</option>
                      <option value="Không">Không</option>
                    </select>
                 </td>
               </tr>
               <tr>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Chính sách *</td>
-                <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '12px 16px' }}>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Chính sách *</td>
+                <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
                    <div style={{ position: 'relative' }}>
                      {isPolicyDropdownOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsPolicyDropdownOpen(false)} />}
                      <div 
@@ -327,20 +327,20 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
                 </td>
               </tr>
               <tr>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Địa chỉ XHĐ *</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Địa chỉ XHĐ *</td>
                 <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: 0 }}>
-                   <input required value={diaChi} onChange={e=>setDiaChi(e.target.value)} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} placeholder="Địa chỉ chi tiết..." />
+                   <input required value={diaChi} onChange={e=>setDiaChi(e.target.value)} style={{ width: '100%', border: 'none', padding: '8px 12px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} placeholder="Địa chỉ chi tiết..." />
                 </td>
               </tr>
               <tr>
-                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Ghi chú</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ghi chú</td>
                 <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: 0 }}>
-                   <input value={ghiChu || aiNote} onChange={e=>{setAiNote(e.target.value); setGhiChu(e.target.value);}} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} placeholder="—" />
+                   <input value={ghiChu || aiNote} onChange={e=>{setAiNote(e.target.value); setGhiChu(e.target.value);}} style={{ width: '100%', border: 'none', padding: '8px 12px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} placeholder="—" />
                 </td>
               </tr>
               {isGasToElectricPolicy && (
                 <tr>
-                  <td style={{ backgroundColor: '#fff7ed', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#9a3412' }}>Thu cũ (VIN/Hãng)</td>
+                  <td style={{ backgroundColor: '#fff7ed', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#9a3412' }}>Thu cũ (VIN/Hãng)</td>
                   <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: 0, backgroundColor: '#fff7ed' }}>
                      <div style={{ display: 'flex', gap: '12px', padding: '8px 16px' }}>
                        <input value={xeXangVin} onChange={e=>setXeXangVin(e.target.value.toUpperCase())} placeholder="VIN xe xăng" style={{ border: '1px solid #fdba74', padding: '6px 12px', borderRadius: '4px', background: '#fff', outline: 'none', fontSize: '13px', width: '200px' }} />
@@ -355,8 +355,8 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
           </table>
 
           {/* UPLOAD SECTION */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '24px' }}>
-            <div onClick={()=>!hsXhdFile && hsXhdRef.current?.click()} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f8fafc', minHeight: '120px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '16px' }}>
+            <div onClick={()=>!hsXhdFile && hsXhdRef.current?.click()} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f8fafc', minHeight: '80px' }}>
               <input type="file" accept=".pdf,image/*" ref={hsXhdRef} style={{ display:'none' }} onChange={e=>setHsXhdFile(e.target.files?.[0]||null)} />
               {hsXhdFile ? (
                 <>
@@ -372,7 +372,7 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
               )}
             </div>
             
-            <div onClick={()=>!cdxFile && cdxRef.current?.click()} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f8fafc', minHeight: '120px' }}>
+            <div onClick={()=>!cdxFile && cdxRef.current?.click()} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f8fafc', minHeight: '80px' }}>
               <input type="file" accept=".pdf,image/*" ref={cdxRef} style={{ display:'none' }} onChange={e=>setCdxFile(e.target.files?.[0]||null)} />
               {cdxFile ? (
                 <>
@@ -388,7 +388,7 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
               )}
             </div>
 
-            <div onClick={()=>transImgRef.current?.click()} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f8fafc', minHeight: '120px' }}>
+            <div onClick={()=>transImgRef.current?.click()} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f8fafc', minHeight: '80px' }}>
               <input type="file" accept="image/*" multiple ref={transImgRef} style={{ display:'none' }} onClick={(e) => { e.stopPropagation(); (e.target as HTMLInputElement).value = ''; }} onChange={e=>{
                 const files = e.target.files;
                 if (files && files.length > 0) {
