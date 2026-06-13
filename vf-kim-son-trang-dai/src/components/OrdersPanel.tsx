@@ -465,11 +465,12 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                               setMobileView('detail');
                             }
                           }}
-                          className={isActive ? 'active-row' : ''}
-                          style={{ cursor: 'pointer', transition: 'background 0.15s' }}
+                          className={`${isActive ? 'active-row' : ''} ${order.isWarning ? 'warning-row' : ''}`}
+                          style={{ cursor: 'pointer', transition: 'background 0.15s', backgroundColor: order.isWarning ? '#fff1f2' : undefined }}
                         >
-                          <td style={{ fontWeight: 700, color: '#0f766e' }}>
+                          <td style={{ fontWeight: 700, color: order.isWarning ? '#e11d48' : '#0f766e', display: 'flex', alignItems: 'center', gap: '6px', borderBottom: 'none' }}>
                             {order.id}
+                            {order.isWarning && <AlertTriangle size={14} color="#e11d48" title={order.warningMessage} />}
                           </td>
                           <td>
                             <div style={{ fontWeight: 600, color: '#1e293b', textTransform: 'uppercase' }}>{order.customer}</div>
@@ -812,14 +813,18 @@ export const OrdersPanel: React.FC<OrdersPanelProps> = ({
                               <tr>
                                 <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Số VIN định danh</td>
                                 <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 700, letterSpacing: '0.05em' }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedOrder.vin || '', 'Số VIN')}>{selectedOrder.vin || <span style={{ color: '#94a3b8', fontStyle: 'italic', fontWeight: 400 }}>Chưa cấp</span>}</td>
-                                <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày cần xe</td>
-                                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{formatDetailDate(selectedOrder.needDateIso || selectedOrder.needDate) || '—'}</td>
+                                <td style={{ backgroundColor: '#fef3c7', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 700, color: '#92400e' }}>Ngày ghép xe</td>
+                                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 600 }}>{selectedOrder.pairedAt !== 'Chưa ghép' ? selectedOrder.pairedAt : '—'}</td>
                               </tr>
                               <tr>
+                                <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày cần xe</td>
+                                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{formatDetailDate(selectedOrder.needDateIso || selectedOrder.needDate) || '—'}</td>
                                 <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày đặt cọc</td>
                                 <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{selectedOrder.depositDate || '—'}</td>
+                              </tr>
+                              <tr>
                                 <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Tiền đã cọc</td>
-                                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#b91c1c', fontWeight: 700 }}>{selectedOrder.depositAmount ? new Intl.NumberFormat('vi-VN').format(selectedOrder.depositAmount) + ' ₫' : '—'}</td>
+                                <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#b91c1c', fontWeight: 700 }} colSpan={3}>{selectedOrder.depositAmount ? new Intl.NumberFormat('vi-VN').format(selectedOrder.depositAmount) + ' ₫' : '—'}</td>
                               </tr>
                               <tr>
                                 <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Thanh toán</td>

@@ -172,7 +172,7 @@ function App() {
   
   // Thực thi Filter trên danh sách orders
   const filteredOrders = useMemo(() => {
-    return orders.filter((order) => {
+    let result = orders.filter((order) => {
       const matchesStatus = status === 'Tất cả' || order.status === status;
       if (!matchesStatus) return false;
 
@@ -190,9 +190,23 @@ function App() {
         order.interior.toLowerCase().includes(normQuery)
       );
     });
+    
+    // SLA Warning: Đưa các đơn cảnh báo lên đầu
+    result.sort((a, b) => {
+      if (a.isWarning && !b.isWarning) return -1;
+      if (!a.isWarning && b.isWarning) return 1;
+      return 0; // fallback to original order (often by createdAt)
+    });
+
+    return result;
   }, [orders, query, status]);
 
   // Lấy thống kê xe trống
+    // Đếm số đơn cảnh báo
+  const slaWarningCount = useMemo(() => {
+    return orders.filter(o => o.isWarning).length;
+  }, [orders]);
+
   const availableStock = useMemo(
     () => inventory.filter((item) => item.status === 'Chưa ghép').length,
     [inventory]
@@ -265,6 +279,24 @@ function App() {
             Đăng xuất
           </button>
         </section>
+              {/* Cảnh báo SLA Global */}
+        {slaWarningCount > 0 && canViewNotifications(userRole) && (
+          <div style={{ position: 'fixed', bottom: 20, right: 20, background: '#ef4444', color: 'white', padding: '12px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)', zIndex: 9999 }}>
+            <AlertTriangle size={20} />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontWeight: 700, fontSize: '14px' }}>Cảnh báo tiến độ!</span>
+              <span style={{ fontSize: '12.5px', opacity: 0.9 }}>Có {slaWarningCount} đơn hàng bị quá hạn XHĐ.</span>
+            </div>
+            <button 
+              onClick={() => {
+                setActiveTab('orders');
+                setSidebarOpen(false);
+              }}
+              style={{ background: 'white', color: '#ef4444', border: 'none', padding: '4px 10px', borderRadius: '6px', fontWeight: 700, fontSize: '12px', cursor: 'pointer', marginLeft: '10px' }}>
+              Xem ngay
+            </button>
+          </div>
+        )}
       </main>
     );
   }

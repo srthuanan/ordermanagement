@@ -6693,6 +6693,9 @@ td small {
 .premium-select,
 .premium-textarea {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 10px 14px;
   font-size: 14px;
   color: #0f172a;

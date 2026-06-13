@@ -51,6 +51,8 @@ export interface Order {
   giaCongBo?: number | null;
   ghiChu?: string | null;
   maAmis?: string | null;
+  isWarning?: boolean;
+  warningMessage?: string;
 }
 
 export interface InventoryItem {

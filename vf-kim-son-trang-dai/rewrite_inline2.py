@@ -1,200 +1,20 @@
-import React from 'react';
-import { X, Save, AlertTriangle } from 'lucide-react';
-import { Order, UpdateOrderInput, VehicleConfigRow, SalesPolicyRow } from '../types';
-import {
-  staffNames,
-  defaultSalesPolicies
-} from '../constants';
-import * as apiService from '../services/apiService';
-import { parseVehicleConfigs } from '../utils/vehicleConfigUtils';
+import sys
 
-export interface InlineOrderEditFormProps {
-  order: Order;
-  isSubmitting: boolean;
-  onCancel: () => void;
-  onSubmit: (input: UpdateOrderInput) => Promise<boolean>;
-  vehicleConfigs: VehicleConfigRow[];
-}
+file_path = "c:\\Users\\USER\\Documents\\ordermanagement\\vf-kim-son-trang-dai\\src\\components\\InlineOrderEditForm.tsx"
 
-function toDateInput(value: string | null | undefined) {
-  if (!value) return '';
+with open(file_path, "r", encoding="utf-8") as f:
+    content = f.read()
 
-  if (value.includes('/')) {
-    const [day, month, year] = value.split('/');
-    if (day && month && year) {
-      return `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-  }
+start_idx = content.find("    <form onSubmit={handleSubmit} style={{ display: 'flex'")
+end_idx = content.rfind("  );")
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toISOString().slice(0, 10);
-}
+if start_idx == -1 or end_idx == -1:
+    print("Could not find block to replace")
+    sys.exit(1)
 
-export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
-  order,
-  isSubmitting,
-  onCancel,
-  onSubmit,
-  vehicleConfigs
-}) => {
-  const { vehicleLines, versionsMap, defaultExteriors, defaultInteriors } = React.useMemo(
-    () => parseVehicleConfigs(vehicleConfigs),
-    [vehicleConfigs]
-  );
-  
-  const [error, setError] = React.useState('');
-  const [customer, setCustomer] = React.useState(order.customer);
-  const [line, setLine] = React.useState(order.line);
-  const [version, setVersion] = React.useState(order.version);
-  const [exterior, setExterior] = React.useState(order.exterior);
-  const [interior, setInterior] = React.useState(order.interior);
-  const [staff, setStaff] = React.useState(order.staff);
-  const [depositDate, setDepositDate] = React.useState(toDateInput(order.depositDate));
-  const [needDate, setNeedDate] = React.useState(toDateInput(order.needDateIso || order.needDate));
-  const [depositAmount, setDepositAmount] = React.useState<number | null>(order.depositAmount ?? null);
-  const [invoiceAddress, setInvoiceAddress] = React.useState(order.invoiceAddress || '');
-  const [contractCode, setContractCode] = React.useState(order.contractCode || '');
-  const [paymentMethod, setPaymentMethod] = React.useState(order.paymentMethod || 'Tiền mặt');
-
-  const [ngayKyHopDong, setNgayKyHopDong] = React.useState(toDateInput(order.ngayKyHopDong || ''));
-  const [nguonKhach, setNguonKhach] = React.useState(order.nguonKhach || '');
-  const [giaCongBo, setGiaCongBo] = React.useState<number | null>(order.giaCongBo ?? null);
-  const [muaBaoHiem, setMuaBaoHiem] = React.useState<boolean | null>(order.muaBaoHiem ?? null);
-  const [dangKyXe, setDangKyXe] = React.useState<boolean | null>(order.dangKyXe ?? null);
-  const [ghiChu, setGhiChu] = React.useState(order.ghiChu || '');
-  const [xeXangVin, setXeXangVin] = React.useState(order.xeXangVin || '');
-  const [xeXangHang, setXeXangHang] = React.useState(order.xeXangHang || '');
-  const [xeXangModel, setXeXangModel] = React.useState(order.xeXangModel || '');
-  const [maAmis, setMaAmis] = React.useState(order.maAmis || '');
-
-  const initialPolicies = order.policy ? order.policy.split(/,(?!\d)/).map(p => p.trim()).filter(Boolean) : [];
-  const [policy, setPolicy] = React.useState<string[]>(initialPolicies);
-  const [policyRows, setPolicyRows] = React.useState<SalesPolicyRow[]>([]);
-  const [policyLoading, setPolicyLoading] = React.useState(true);
-  const [policyOpen, setPolicyOpen] = React.useState(false);
-  const policySelectRef = React.useRef<HTMLDivElement | null>(null);
-
-  React.useEffect(() => {
-    let active = true;
-    (async () => {
-      const { data, error } = await apiService.getSalesPolicies();
-      if (!active) return;
-      setPolicyRows(data || defaultSalesPolicies.map((name) => ({ ten_chinh_sach: name, dong_xe: 'Tất cả các dòng xe' })));
-      setPolicyLoading(false);
-    })();
-    return () => { active = false; };
-  }, []);
-
-  const policyOptions = React.useMemo(() => {
-    const lineNorm = line.toLowerCase().trim();
-    return policyRows.filter((item) => {
-      const name = (item.ten_chinh_sach || '').toLowerCase();
-      const lineStr = (item.dong_xe || '').toLowerCase();
-      if (!name) return false;
-      if (!lineStr || lineStr.includes('tất cả') || lineStr.includes('all')) return true;
-      return lineStr.includes(lineNorm) || lineNorm.includes(lineStr);
-    });
-  }, [line, policyRows]);
-
-  React.useEffect(() => {
-    if (policy.length === 0) return;
-    const allowed = new Set(policyOptions.map((item) => item.ten_chinh_sach));
-    const filtered = policy.filter((p) => allowed.has(p));
-    if (filtered.length !== policy.length) {
-      setPolicy(filtered);
-    }
-  }, [line, policyOptions]);
-
-  const filteredPolicyOptions = policyOptions;
-  const selectedPolicyCount = policy.length;
-  const selectedPolicyPreview = policy[0] || '';
-  const isGasToElectricPolicy = policy.some((name) => name.toLowerCase().includes('thu cũ'));
-
-  function togglePolicy(name: string) {
-    setPolicy((current) => {
-      return current.includes(name)
-        ? current.filter((item) => item !== name)
-        : [...current, name];
-    });
-  }
-
-  function togglePolicyDropdown() {
-    setPolicyOpen((current) => !current);
-  }
-
-  React.useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (policySelectRef.current && !policySelectRef.current.contains(event.target as Node)) {
-        setPolicyOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const versionOptions = React.useMemo(
-    () => versionsMap[line] || [],
-    [line, versionsMap]
-  );
-
-  const interiorOptions = defaultInteriors;
-
-  React.useEffect(() => {
-    if (!versionOptions.includes(version)) {
-      setVersion(versionOptions[0] || '');
-    }
-  }, [versionOptions, version]);
-
-  React.useEffect(() => {
-    if (!interiorOptions.includes(interior)) {
-      setInterior(interiorOptions[0] || '');
-    }
-  }, [interiorOptions, interior]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!customer.trim() || !line || !version || !exterior || !interior || !staff || !depositDate) {
-      setError('Vui lòng nhập đầy đủ thông tin bắt buộc.');
-      return;
-    }
-    setError('');
-
-    const ok = await onSubmit({
-      orderId: order.id,
-      customer: customer.trim(),
-      line,
-      version,
-      exterior,
-      interior,
-      staff,
-      depositDate,
-      needDate,
-      depositAmount,
-      invoiceAddress,
-      contractCode,
-      paymentMethod,
-      ngayKyHopDong,
-      nguonKhach,
-      giaCongBo,
-      muaBaoHiem,
-      dangKyXe,
-      ghiChu,
-      xeXangVin,
-      xeXangHang,
-      xeXangModel,
-      policy,
-      maAmis
-    });
-
-    if (ok) onCancel();
-    else setError('Không thể lưu thay đổi đơn hàng.');
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        <table style={{ width: '100%', boxSizing: 'border-box', tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #cbd5e1' }}>
+new_jsx = """    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px 20px 20px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <tbody>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '18%' }}>Khách hàng</td>
@@ -211,22 +31,22 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Dòng xe</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
-                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                  <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, minWidth: 0, width: '0' }} value={line} onChange={(e) => setLine(e.target.value)} required>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1 }} value={line} onChange={(e) => setLine(e.target.value)} required>
                     {vehicleLines.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
-                  <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, minWidth: 0, width: '0' }} value={version} onChange={(e) => setVersion(e.target.value)} required>
+                  <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1 }} value={version} onChange={(e) => setVersion(e.target.value)} required>
                     {versionOptions.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
                 </div>
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Màu (Ngoại/Nội)</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
-                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                  <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, minWidth: 0, width: '0' }} value={exterior} onChange={(e) => setExterior(e.target.value)} required>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1 }} value={exterior} onChange={(e) => setExterior(e.target.value)} required>
                     {defaultExteriors.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
-                  <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, minWidth: 0, width: '0' }} value={interior} onChange={(e) => setInterior(e.target.value)} required>
+                  <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1 }} value={interior} onChange={(e) => setInterior(e.target.value)} required>
                     {interiorOptions.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
                 </div>
@@ -333,10 +153,10 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
                 <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }} colSpan={4}>
                   <div style={{ padding: '10px', background: '#fffbeb', borderRadius: '6px', border: '1px solid #fde68a' }}>
                     <strong>Cấu hình thu mua xe cũ (Chỉ hiển thị khi có thu mua):</strong>
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '8px', width: '100%' }}>
-                      <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, borderColor: '#fed7aa', minWidth: 0, width: 0 }} value={xeXangVin} placeholder="VIN xe xăng" onChange={(e) => setXeXangVin(e.target.value)} />
-                      <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, borderColor: '#fed7aa', minWidth: 0, width: 0 }} value={xeXangHang} placeholder="Hãng xe" onChange={(e) => setXeXangHang(e.target.value)} />
-                      <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, borderColor: '#fed7aa', minWidth: 0, width: 0 }} value={xeXangModel} placeholder="Model xe" onChange={(e) => setXeXangModel(e.target.value)} />
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
+                      <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, borderColor: '#fed7aa' }} value={xeXangVin} placeholder="VIN xe xăng" onChange={(e) => setXeXangVin(e.target.value)} />
+                      <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, borderColor: '#fed7aa' }} value={xeXangHang} placeholder="Hãng xe" onChange={(e) => setXeXangHang(e.target.value)} />
+                      <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, borderColor: '#fed7aa' }} value={xeXangModel} placeholder="Model xe" onChange={(e) => setXeXangModel(e.target.value)} />
                     </div>
                   </div>
                 </td>
@@ -362,6 +182,11 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
           <span>{isSubmitting ? 'Đang lưu...' : 'Lưu thông tin'}</span>
         </button>
       </div>
-    </form>
-  );
-}
+    </form>"""
+
+new_content = content[:start_idx] + new_jsx + "\n"
+
+with open(file_path, "w", encoding="utf-8") as f:
+    f.write(new_content)
+
+print("InlineOrderEditForm table layout rewritten successfully.")
