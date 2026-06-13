@@ -425,43 +425,59 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
               <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
                 <div className="custom-scrollbar" style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   
-                  {/* GRID: 4 COLUMNS FOR DENSE INFO */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
-                    
-                    {/* SECTION: KHÁCH HÀNG & NHÂN SỰ */}
-                    <SectionBox title="Khách hàng & Nhân sự" icon={User}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <DetailItem label="Tên khách hàng" value={selectedRequest.ten_khach_hang} copyable boldValue />
-                        <DetailItem label="Tư vấn bán hàng" value={selectedRequest.tvbh || selectedRequest.requested_by_name || 'N/A'} copyable />
-                        <DetailItem label="Nguồn khách" value={selectedRequest.nguon_khach || 'Trực tiếp'} />
-                        <DetailItem label="Mã VSO" value={selectedRequest.ma_vso || 'N/A'} copyable />
-                        <DetailItem label="Người yêu cầu" value={selectedRequest.requested_by_name || 'N/A'} />
-                        <DetailItem label="Ngày yêu cầu" value={formatMobileDate(selectedRequest.ngay_yeu_cau || selectedRequest.created_at)} />
-                      </div>
-                    </SectionBox>
-
-                    {/* SECTION: THÔNG TIN XE */}
-                    <SectionBox title="Thông tin xe" icon={Car}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <DetailItem label="Dòng xe" value={selectedRequest.dong_xe} />
-                        <DetailItem label="Phiên bản" value={selectedRequest.phien_ban} />
-                        <DetailItem label="Ngoại thất" value={selectedRequest.ngoai_that} />
-                        <DetailItem label="Nội thất" value={selectedRequest.noi_that} />
-                        <DetailItem label="Số VIN" value={selectedRequest.vin || 'Chưa ghép'} copyable color="#0284c7" isFullWidth boldValue />
-                        <DetailItem label="Giá công bố" value={formatCurrency(selectedRequest.gia_cong_bo)} color="#b45309" boldValue />
-                        <DetailItem label="Ngày cọc" value={formatMobileDate(selectedRequest.ngay_coc)} />
-                      </div>
-                    </SectionBox>
-
-                    {/* SECTION: TÀI CHÍNH & HỢP ĐỒNG */}
-                    <SectionBox title="Tài chính & Hợp đồng" icon={CreditCard}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <DetailItem label="Số tiền đã đóng" value={formatCurrency(selectedRequest.so_tien_khach_da_dong)} color="#059669" boldValue />
-                        <DetailItem label="Hình thức TT" value={selectedRequest.hinh_thuc_tt || 'Tiền mặt'} />
-                        <DetailItem label="Số Hợp đồng" value={selectedRequest.so_hop_dong || 'N/A'} copyable boldValue />
-                        <DetailItem label="Ngày ký HĐ" value={formatMobileDate(selectedRequest.ngay_ky_hop_dong)} />
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1' }}>
-                          <span style={{ fontSize: '10px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>Chính sách</span>
+                  <table style={{ width: '100%', height: '100%', flex: 1, borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #cbd5e1', tableLayout: 'fixed' }}>
+                    <tbody>
+                      <tr>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '20%' }}>Khách hàng</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 600, width: '30%' }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedRequest.ten_khach_hang, 'Tên khách')}>{selectedRequest.ten_khach_hang}</td>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '20%' }}>Tư vấn viên</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500, width: '30%' }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedRequest.tvbh || selectedRequest.requested_by_name || 'N/A', 'Tên TVBH')}>{selectedRequest.tvbh || selectedRequest.requested_by_name || 'N/A'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Dòng xe</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 600 }}>{selectedRequest.dong_xe} / {selectedRequest.phien_ban}</td>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Màu (Ngoại/Nội)</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{selectedRequest.ngoai_that} · {selectedRequest.noi_that}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Số VIN định danh</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0284c7', fontWeight: 700, letterSpacing: '0.05em' }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedRequest.vin || '', 'Số VIN')}>{selectedRequest.vin || '—'}</td>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày yêu cầu</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{formatMobileDate(selectedRequest.ngay_yeu_cau || selectedRequest.created_at) || '—'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày đặt cọc</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{formatMobileDate(selectedRequest.ngay_coc) || '—'}</td>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Tiền đã cọc</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#dc2626', fontWeight: 700 }}>{formatCurrency(selectedRequest.so_tien_khach_da_dong) || '—'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Thanh toán</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{selectedRequest.hinh_thuc_tt || 'Tiền mặt'}</td>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Nguồn khách</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{selectedRequest.nguon_khach || 'Trực tiếp'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mã Hợp Đồng</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedRequest.so_hop_dong || '', 'Mã HĐ')}>{selectedRequest.so_hop_dong || 'N/A'}</td>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mã VSO</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }} className="clickable-copy-field" onClick={() => copyToClipboard(selectedRequest.ma_vso || '', 'Mã VSO')}>{selectedRequest.ma_vso || 'N/A'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày ký HĐ</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{formatMobileDate(selectedRequest.ngay_ky_hop_dong) || '—'}</td>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Giá công bố</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{formatCurrency(selectedRequest.gia_cong_bo) || '—'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Đăng ký xe</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{selectedRequest.dang_ky_xe ? 'Có' : 'Không'}</td>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mua bảo hiểm</td>
+                        <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', fontWeight: 500 }}>{selectedRequest.mua_bao_hiem ? 'Có' : 'Không'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Chính sách</td>
+                        <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a' }}>
                           <div
                             style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'help' }}
                             onMouseEnter={() => setShowPolicyTooltip(true)}
@@ -500,30 +516,28 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
                               </div>
                             )}
                           </div>
-                        </div>
-                        <DetailItem label="Địa chỉ xuất HĐ" value={selectedRequest.dia_chi || 'N/A'} isFullWidth />
-                      </div>
-                    </SectionBox>
-
-                    {/* SECTION: DỊCH VỤ & THU CŨ */}
-                    <SectionBox title="Dịch vụ & Thu cũ" icon={ShieldCheck}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <DetailItem label="Mua bảo hiểm" value={selectedRequest.mua_bao_hiem ? '✅ Có' : '❌ Không'} />
-                        <DetailItem label="Đăng ký xe" value={selectedRequest.dang_ky_xe ? '✅ Có' : '❌ Không'} />
-                        <DetailItem label="Xe cũ (Đổi mới)" value={selectedRequest.xe_xang_vin || '❌ Không'} copyable={!!selectedRequest.xe_xang_vin} />
-                        <DetailItem label="Hãng xe cũ" value={selectedRequest.xe_xang_hang || '—'} />
-                        <DetailItem label="Model xe cũ" value={selectedRequest.xe_xang_model || '—'} isFullWidth />
-                      </div>
-                    </SectionBox>
-                  </div>
-
-
-                  {/* SECTION: GHI CHÚ */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
-                    <SectionBox title="Ghi chú từ Tư vấn bán hàng" icon={Info}>
-                      <p style={{ margin: 0, fontSize: '13px', color: '#475569', lineHeight: 1.6 }}>{selectedRequest.ghi_chu || 'Không có ghi chú từ TVBH'}</p>
-                    </SectionBox>
-                  </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Địa chỉ XHĐ</td>
+                        <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a' }}>{selectedRequest.dia_chi || 'N/A'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ghi chú</td>
+                        <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#475569' }}>{selectedRequest.ghi_chu || '—'}</td>
+                      </tr>
+                      {selectedRequest.xe_xang_vin || selectedRequest.xe_xang_model || selectedRequest.xe_xang_hang ? (
+                        <tr>
+                          <td style={{ backgroundColor: '#fff7ed', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#9a3412' }}>Xe xăng thu cũ</td>
+                          <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '8px 12px', color: '#0f172a', backgroundColor: '#fff7ed', fontWeight: 500 }}>
+                            {selectedRequest.xe_xang_vin ? `${selectedRequest.xe_xang_vin} - ` : ''}
+                            {selectedRequest.xe_xang_hang ? `${selectedRequest.xe_xang_hang} ` : ''}
+                            {selectedRequest.xe_xang_model || ''}
+                          </td>
+                        </tr>
+                      ) : null}
+                    </tbody>
+                  </table>
 
                   {/* STICKY ACTION FOOTER REMOVED (Actions moved to header) */}
                 </div>
