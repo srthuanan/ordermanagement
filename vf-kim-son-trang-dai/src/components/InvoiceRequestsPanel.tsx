@@ -229,9 +229,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
   }, [activeDocKey, selectedRequest]);
 
   useEffect(() => {
-    if (filtered.length > 0 && (!selectedRequestId || !filtered.some(r => r.id === selectedRequestId))) {
-      setSelectedRequestId(filtered[0].id);
-    }
+    // Không tự động chọn yêu cầu đầu tiên nữa, để drawer luôn đóng lúc đầu.
   }, [filtered, selectedFolder]);
 
   const statusColors: Record<string, string> = {
@@ -265,122 +263,132 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
   };
 
   return (
-    <div className="orders-modular-workspace" style={{ height: '100%', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <div className="orders-modular-workspace" style={{ height: '100%', flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', minHeight: 0, position: 'relative', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
       
-      {/* 1. TOP SECTION: METRICS BAR */}
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', padding: '10px 16px', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-        {folders.map(folder => (
-          <button
-            key={folder.id}
-            onClick={() => setSelectedFolder(folder.id)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '4px 12px',
-              borderRadius: '8px',
-              border: selectedFolder === folder.id ? `1px solid ${folder.color}` : `1px solid ${folder.border}`,
-              background: selectedFolder === folder.id ? folder.color : folder.bg,
-              color: selectedFolder === folder.id ? '#fff' : folder.color,
-              fontSize: '11px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: '0.2s',
-              boxShadow: selectedFolder === folder.id ? `0 2px 6px ${folder.color}30` : 'none'
-            }}
-          >
-            <folder.icon size={12} />
-            <span>{folder.label}</span>
-            <strong style={{ opacity: 0.9 }}>{folder.count}</strong>
-          </button>
-        ))}
+      {/* TOOLBAR */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderBottom: '1px solid #e2e8f0' }}>
+        {/* FOLDERS - MINIMAL PREMIUM STYLE */}
+        <div className="custom-scrollbar" style={{ display: 'flex', gap: '4px', overflowX: 'auto', flex: 1, minWidth: '300px' }}>
+          {folders.map(folder => {
+            const isActive = selectedFolder === folder.id;
+            return (
+              <button
+                key={folder.id}
+                onClick={() => setSelectedFolder(folder.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '20px',
+                  border: 'none',
+                  background: isActive ? '#0f172a' : 'transparent',
+                  color: isActive ? '#fff' : '#64748b',
+                  fontSize: '13px', fontWeight: isActive ? 600 : 500, whiteSpace: 'nowrap', transition: 'all 0.2s',
+                  cursor: 'pointer'
+                }}
+                className={isActive ? '' : 'hover-bg-slate'}
+              >
+                <folder.icon size={14} style={{ opacity: isActive ? 1 : 0.7 }} />
+                <span>{folder.label}</span>
+                {folder.count > 0 && (
+                  <span style={{ 
+                    fontSize: '11px', fontWeight: 700, 
+                    background: isActive ? 'rgba(255,255,255,0.2)' : '#e2e8f0', 
+                    color: isActive ? '#fff' : '#475569', 
+                    padding: '2px 8px', borderRadius: '12px' 
+                  }}>
+                    {folder.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {/* SEARCH - MINIMAL */}
+        <div style={{ position: 'relative', width: isMobile ? '100%' : '260px' }}>
+          <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+          <input 
+            type="text" 
+            placeholder="Tìm kiếm mã ĐH, khách hàng, VIN..." 
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{ width: '100%', padding: '8px 12px 8px 32px', borderRadius: '20px', border: '1px solid #e2e8f0', fontSize: '13px', background: '#f8fafc', outline: 'none', color: '#0f172a', transition: 'all 0.2s' }}
+            onFocus={(e) => { e.target.style.background = '#fff'; e.target.style.borderColor = '#cbd5e1'; e.target.style.boxShadow = '0 0 0 3px rgba(241, 245, 249, 1)'; }}
+            onBlur={(e) => { e.target.style.background = '#f8fafc'; e.target.style.borderColor = '#e2e8f0'; e.target.style.boxShadow = 'none'; }}
+          />
+        </div>
       </div>
 
-      {/* 2. BOTTOM SECTION */}
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: isSplitView ? '0.35fr 1.65fr' : '1fr 0fr', gap: '8px', minHeight: 0 }}>
-        
-        {/* COLUMN 2: DATA LIST (Ultra Mini) */}
-        <div className={`orders-data-side`} style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', minHeight: 0 }}>
-          <div style={{ position: 'relative' }}>
-            <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm..." 
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              style={{ width: '100%', padding: '8px 12px 8px 36px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '12px', background: '#f8fafc', outline: 'none' }}
-            />
-          </div>
-
-          <div className="table-wrap custom-scrollbar" style={{ flex: 1, overflowY: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '12px' }}>Trống</td>
-                  </tr>
-                ) : (
-                  filtered.map(r => (
+      {/* DATA GRID */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div className="table-wrap custom-scrollbar" style={{ flex: 1, overflow: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+            <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 10, boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+              <tr>
+                <th style={{ padding: '16px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0' }}>Mã ĐH</th>
+                <th style={{ padding: '16px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0' }}>Khách Hàng</th>
+                <th style={{ padding: '16px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0' }}>Trạng Thái</th>
+                <th style={{ padding: '16px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0' }}>Dòng Xe</th>
+                <th style={{ padding: '16px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0' }}>Tư Vấn Bán Hàng</th>
+                <th style={{ padding: '16px', fontSize: '12px', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid #e2e8f0' }}>Ngày Yêu Cầu</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr><td colSpan={6} style={{ padding: '60px', textAlign: 'center', color: '#94a3b8' }}>Không có yêu cầu nào</td></tr>
+              ) : (
+                filtered.map(r => {
+                  const isSelected = selectedRequestId === r.id;
+                  const status = getWorkflowStatus(r);
+                  return (
                     <tr 
                       key={r.id}
-                      onClick={() => {
-                        setSelectedRequestId(r.id);
-                        setMobileView('detail');
-                      }}
+                      onClick={() => { setSelectedRequestId(r.id); }}
                       style={{
-                        cursor: 'pointer',
-                        background: selectedRequestId === r.id ? '#f0f9ff' : 'transparent',
-                        transition: '0.1s'
+                        cursor: 'pointer', transition: 'all 0.2s',
+                        background: isSelected ? '#f0f9ff' : '#fff',
+                        borderBottom: '1px solid #f1f5f9'
                       }}
+                      className="hover-bg-slate"
                     >
-                      <td style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9' }}>
-                        <div style={{ fontSize: '12px', fontWeight: 800, color: '#0284c7', fontFamily: 'monospace' }}>{r.so_don_hang}</div>
-                        <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.ten_khach_hang}</div>
-                      </td>
+                      <td style={{ padding: '16px', fontSize: '14px', fontWeight: 700, color: '#0284c7', fontFamily: 'monospace' }}>{r.so_don_hang}</td>
+                      <td style={{ padding: '16px', fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>{r.ten_khach_hang}</td>
+                      <td style={{ padding: '16px' }}>{renderStatusBadge(status)}</td>
+                      <td style={{ padding: '16px', fontSize: '13px', color: '#475569' }}>{r.dong_xe} {r.phien_ban && `- ${r.phien_ban}`}</td>
+                      <td style={{ padding: '16px', fontSize: '13px', color: '#475569' }}>{r.tvbh || 'N/A'}</td>
+                      <td style={{ padding: '16px', fontSize: '13px', color: '#475569' }}>{formatMobileDate(r.ngay_yeu_cau || r.created_at)}</td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* COLUMN 3: DETAIL VIEW (FULL INFO) */}
-        {(!isMobile || mobileView === 'detail') && (
-          <div 
-            className={isMobile ? "slide-over-overlay" : ""} 
-            onClick={() => isMobile && setMobileView('list')}
-          >
-            <div 
-              className={isMobile ? "slide-over-panel orders-visual-side" : "orders-visual-side"} 
-              onClick={(e) => e.stopPropagation()}
-              style={!isMobile ? {
-                display: 'flex', flexDirection: 'column', minWidth: 0, background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', overflow: 'hidden', flex: 1
-              } : { display: 'flex', flexDirection: 'column', background: '#fff', height: '100%', flex: 1 }}
-            >
-              {isMobile && selectedRequest && (
-                <button 
-                  onClick={() => setMobileView('list')} 
-                  style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 10, background: '#e2e8f0', border: 'none', borderRadius: '50%', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569' }}
-                >
-                  <X size={20} />
-                </button>
+                  )
+                })
               )}
-          {selectedRequest ? (
-            <>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* SLIDE-OVER DETAIL PANE */}
+      {selectedRequestId && (
+        <div className="slide-over-overlay" onClick={() => setSelectedRequestId(null)} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15,23,42,0.4)', zIndex: 100, backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'flex-end', borderRadius: '16px', overflow: 'hidden' }}>
+          <div className="slide-over-panel orders-visual-side" onClick={(e) => e.stopPropagation()} style={{ width: isMobile ? '100%' : '95%', maxWidth: '1400px', background: '#fff', height: '100%', boxShadow: '-8px 0 32px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <button 
+              onClick={() => setSelectedRequestId(null)} 
+              style={{ position: 'absolute', top: '10px', right: '16px', zIndex: 110, background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '50%', padding: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#475569', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'all 0.2s' }}
+              className="hover-bg-slate"
+            >
+              <X size={20} />
+            </button>
+            {selectedRequest ? (
+              <>
               {/* COMPACT HEADER WITH ACTIONS */}
               <div style={{ 
                 background: '#fff', 
-                padding: '0 16px', 
+                padding: '0 60px 0 16px', 
                 borderBottom: '1px solid #e2e8f0',
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center',
                 flexShrink: 0,
-                height: '44px'
+                height: '52px'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <button onClick={() => setMobileView('list')} className="mobile-only" style={{ background: '#f1f5f9', border: 'none', color: '#475569', padding: '4px', borderRadius: '6px' }}><ArrowLeft size={16} /></button>
+                  <button onClick={() => setSelectedRequestId(null)} className="mobile-only" style={{ background: '#f1f5f9', border: 'none', color: '#475569', padding: '4px', borderRadius: '6px' }}><ArrowLeft size={16} /></button>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <h2 style={{ margin: 0, fontSize: '14px', fontWeight: 800, color: '#1e293b', whiteSpace: 'nowrap' }}>{selectedRequest.ten_khach_hang}</h2>
                     {renderStatusBadge(getWorkflowStatus(selectedRequest))}
@@ -484,7 +492,7 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
 
                     return (
                       <div style={{ display: 'grid', gridTemplateColumns: isSplitView ? 'minmax(120px, 35%) 1fr' : 'minmax(120px, 20%) 1fr minmax(120px, 20%) 1fr', borderTop: '1px solid #cbd5e1', borderLeft: '1px solid #cbd5e1', fontSize: '13px' }}>
-                        {fields.map(f => (
+                        {fields.map((f: any) => (
                           <React.Fragment key={f.label}>
                             <div style={{ padding: '8px 12px', borderRight: '1px solid #cbd5e1', borderBottom: '1px solid #cbd5e1', backgroundColor: f.labelBg || '#f8fafc', fontWeight: 600, color: f.color || '#475569', display: 'flex', alignItems: 'center' }}>{f.label}</div>
                             <div style={{ padding: '8px 12px', borderRight: '1px solid #cbd5e1', borderBottom: '1px solid #cbd5e1', backgroundColor: f.bg || '#fff', color: f.valueColor || '#0f172a', fontWeight: 500, wordBreak: 'break-word', gridColumn: f.fullWidth && !isSplitView ? 'span 3' : 'span 1', display: 'flex', alignItems: 'center' }}>{f.value}</div>
@@ -542,7 +550,6 @@ export const InvoiceRequestsPanel: React.FC<InvoiceRequestsPanelProps> = ({
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 };

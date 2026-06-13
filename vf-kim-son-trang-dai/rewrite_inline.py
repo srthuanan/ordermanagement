@@ -1,199 +1,19 @@
-import React from 'react';
-import { X, Save, AlertTriangle } from 'lucide-react';
-import { Order, UpdateOrderInput, VehicleConfigRow, SalesPolicyRow } from '../types';
-import {
-  staffNames,
-  defaultSalesPolicies
-} from '../constants';
-import * as apiService from '../services/apiService';
-import { parseVehicleConfigs } from '../utils/vehicleConfigUtils';
+import sys
 
-export interface InlineOrderEditFormProps {
-  order: Order;
-  isSubmitting: boolean;
-  onCancel: () => void;
-  onSubmit: (input: UpdateOrderInput) => Promise<boolean>;
-  vehicleConfigs: VehicleConfigRow[];
-}
+file_path = "c:\\Users\\USER\\Documents\\ordermanagement\\vf-kim-son-trang-dai\\src\\components\\InlineOrderEditForm.tsx"
+with open(file_path, "r", encoding="utf-8") as f:
+    content = f.read()
 
-function toDateInput(value: string | null | undefined) {
-  if (!value) return '';
+start_idx = content.find('<form className="order-form-inline-table"')
+if start_idx == -1:
+    start_idx = content.find('<form ')
+end_idx = content.find('</form>', start_idx) + len('</form>')
 
-  if (value.includes('/')) {
-    const [day, month, year] = value.split('/');
-    if (day && month && year) {
-      return `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-    }
-  }
+if start_idx == -1 or end_idx == -1:
+    print("Could not find form")
+    sys.exit(1)
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toISOString().slice(0, 10);
-}
-
-export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
-  order,
-  isSubmitting,
-  onCancel,
-  onSubmit,
-  vehicleConfigs
-}) => {
-  const { vehicleLines, versionsMap, defaultExteriors, defaultInteriors } = React.useMemo(
-    () => parseVehicleConfigs(vehicleConfigs),
-    [vehicleConfigs]
-  );
-  
-  const [error, setError] = React.useState('');
-  const [customer, setCustomer] = React.useState(order.customer);
-  const [line, setLine] = React.useState(order.line);
-  const [version, setVersion] = React.useState(order.version);
-  const [exterior, setExterior] = React.useState(order.exterior);
-  const [interior, setInterior] = React.useState(order.interior);
-  const [staff, setStaff] = React.useState(order.staff);
-  const [depositDate, setDepositDate] = React.useState(toDateInput(order.depositDate));
-  const [needDate, setNeedDate] = React.useState(toDateInput(order.needDateIso || order.needDate));
-  const [depositAmount, setDepositAmount] = React.useState<number | null>(order.depositAmount ?? null);
-  const [invoiceAddress, setInvoiceAddress] = React.useState(order.invoiceAddress || '');
-  const [contractCode, setContractCode] = React.useState(order.contractCode || '');
-  const [paymentMethod, setPaymentMethod] = React.useState(order.paymentMethod || 'Tiền mặt');
-
-  const [ngayKyHopDong, setNgayKyHopDong] = React.useState(toDateInput(order.ngayKyHopDong || ''));
-  const [nguonKhach, setNguonKhach] = React.useState(order.nguonKhach || '');
-  const [giaCongBo, setGiaCongBo] = React.useState<number | null>(order.giaCongBo ?? null);
-  const [muaBaoHiem, setMuaBaoHiem] = React.useState<boolean | null>(order.muaBaoHiem ?? null);
-  const [dangKyXe, setDangKyXe] = React.useState<boolean | null>(order.dangKyXe ?? null);
-  const [ghiChu, setGhiChu] = React.useState(order.ghiChu || '');
-  const [xeXangVin, setXeXangVin] = React.useState(order.xeXangVin || '');
-  const [xeXangHang, setXeXangHang] = React.useState(order.xeXangHang || '');
-  const [xeXangModel, setXeXangModel] = React.useState(order.xeXangModel || '');
-  const [maAmis, setMaAmis] = React.useState(order.maAmis || '');
-
-  const initialPolicies = order.policy ? order.policy.split(/,(?!\d)/).map(p => p.trim()).filter(Boolean) : [];
-  const [policy, setPolicy] = React.useState<string[]>(initialPolicies);
-  const [policyRows, setPolicyRows] = React.useState<SalesPolicyRow[]>([]);
-  const [policyLoading, setPolicyLoading] = React.useState(true);
-  const [policyOpen, setPolicyOpen] = React.useState(false);
-  const policySelectRef = React.useRef<HTMLDivElement | null>(null);
-
-  React.useEffect(() => {
-    let active = true;
-    (async () => {
-      const { data, error } = await apiService.getSalesPolicies();
-      if (!active) return;
-      setPolicyRows(data || defaultSalesPolicies.map((name) => ({ ten_chinh_sach: name, dong_xe: 'Tất cả các dòng xe' })));
-      setPolicyLoading(false);
-    })();
-    return () => { active = false; };
-  }, []);
-
-  const policyOptions = React.useMemo(() => {
-    const lineNorm = line.toLowerCase().trim();
-    return policyRows.filter((item) => {
-      const name = (item.ten_chinh_sach || '').toLowerCase();
-      const lineStr = (item.dong_xe || '').toLowerCase();
-      if (!name) return false;
-      if (!lineStr || lineStr.includes('tất cả') || lineStr.includes('all')) return true;
-      return lineStr.includes(lineNorm) || lineNorm.includes(lineStr);
-    });
-  }, [line, policyRows]);
-
-  React.useEffect(() => {
-    if (policy.length === 0) return;
-    const allowed = new Set(policyOptions.map((item) => item.ten_chinh_sach));
-    const filtered = policy.filter((p) => allowed.has(p));
-    if (filtered.length !== policy.length) {
-      setPolicy(filtered);
-    }
-  }, [line, policyOptions]);
-
-  const filteredPolicyOptions = policyOptions;
-  const selectedPolicyCount = policy.length;
-  const selectedPolicyPreview = policy[0] || '';
-  const isGasToElectricPolicy = policy.some((name) => name.toLowerCase().includes('thu cũ'));
-
-  function togglePolicy(name: string) {
-    setPolicy((current) => {
-      return current.includes(name)
-        ? current.filter((item) => item !== name)
-        : [...current, name];
-    });
-  }
-
-  function togglePolicyDropdown() {
-    setPolicyOpen((current) => !current);
-  }
-
-  React.useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (policySelectRef.current && !policySelectRef.current.contains(event.target as Node)) {
-        setPolicyOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const versionOptions = React.useMemo(
-    () => versionsMap[line] || [],
-    [line, versionsMap]
-  );
-
-  const interiorOptions = defaultInteriors;
-
-  React.useEffect(() => {
-    if (!versionOptions.includes(version)) {
-      setVersion(versionOptions[0] || '');
-    }
-  }, [versionOptions, version]);
-
-  React.useEffect(() => {
-    if (!interiorOptions.includes(interior)) {
-      setInterior(interiorOptions[0] || '');
-    }
-  }, [interiorOptions, interior]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!customer.trim() || !line || !version || !exterior || !interior || !staff || !depositDate) {
-      setError('Vui lòng nhập đầy đủ thông tin bắt buộc.');
-      return;
-    }
-    setError('');
-
-    const ok = await onSubmit({
-      orderId: order.id,
-      customer: customer.trim(),
-      line,
-      version,
-      exterior,
-      interior,
-      staff,
-      depositDate,
-      needDate,
-      depositAmount,
-      invoiceAddress,
-      contractCode,
-      paymentMethod,
-      ngayKyHopDong,
-      nguonKhach,
-      giaCongBo,
-      muaBaoHiem,
-      dangKyXe,
-      ghiChu,
-      xeXangVin,
-      xeXangHang,
-      xeXangModel,
-      policy,
-      maAmis
-    });
-
-    if (ok) onCancel();
-    else setError('Không thể lưu thay đổi đơn hàng.');
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <div className="premium-form-layout" style={{ flex: 1, overflowY: 'auto' }}>
+new_form = """<form onSubmit={handleSubmit} className="premium-form-layout" style={{ flex: 1, overflowY: 'auto' }}>
           
           {/* CARD: THÔNG TIN CHUNG */}
           <div className="premium-card">
@@ -394,9 +214,8 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
               <span style={{ fontSize: '14px', fontWeight: 500 }}>{error}</span>
             </div>
           )}
-      </div>
 
-          <div className="premium-footer" style={{ padding: '16px 20px', background: '#fff' }}>
+          <div className="premium-footer">
             <button type="button" onClick={onCancel} disabled={isSubmitting} className="premium-btn-secondary">
               Hủy thay đổi
             </button>
@@ -405,6 +224,10 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
               <span>{isSubmitting ? 'Đang lưu...' : 'Lưu thông tin'}</span>
             </button>
           </div>
-        </form>
-  );
-};
+        </form>"""
+
+new_content = content[:start_idx] + new_form + content[end_idx:]
+with open(file_path, "w", encoding="utf-8") as f:
+    f.write(new_content)
+
+print("InlineOrderEditForm rewritten successfully.")

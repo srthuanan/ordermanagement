@@ -1,224 +1,19 @@
-import React from 'react';
-import { X, Plus, AlertTriangle } from 'lucide-react';
-import * as apiService from '../../services/apiService';
-import { InventoryItem, NewOrderInput, SalesPolicyRow, VehicleConfigRow } from '../../types';
-import {
-  defaultSalesPolicies
-} from '../../constants';
-import { parseVehicleConfigs } from '../../utils/vehicleConfigUtils';
+import sys
 
-interface CreateOrderModalProps {
-  error: string;
-  isCreating: boolean;
-  initialVehicle?: InventoryItem | null;
-  currentStaffName: string;
-  onClose: () => void;
-  onSubmit: (input: NewOrderInput) => void;
-  vehicleConfigs: VehicleConfigRow[];
-}
+file_path = "c:\\Users\\USER\\Documents\\ordermanagement\\vf-kim-son-trang-dai\\src\\components\\modals\\CreateOrderModal.tsx"
+with open(file_path, "r", encoding="utf-8") as f:
+    content = f.read()
 
-export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
-  error,
-  isCreating,
-  initialVehicle,
-  currentStaffName,
-  onClose,
-  onSubmit,
-  vehicleConfigs
-}) => {
-  const { vehicleLines, versionsMap, defaultExteriors, defaultInteriors } = React.useMemo(
-    () => parseVehicleConfigs(vehicleConfigs),
-    [vehicleConfigs]
-  );
-  
-  const resolvedStaffName = currentStaffName.trim() || 'Nhân viên';
-  const [form, setForm] = React.useState<NewOrderInput>({
-    orderId: '',
-    customer: '',
-    line: initialVehicle?.line || vehicleLines[0],
-    version: initialVehicle?.version || versionsMap[vehicleLines[0]]?.[0] || '',
-    exterior: initialVehicle?.exterior || defaultExteriors[0],
-    interior: initialVehicle?.interior || defaultInteriors[0],
-    staff: resolvedStaffName,
-    policy: [],
-    depositDate: '',
-    needDate: new Date().toISOString().slice(0, 10),
-    pairedVin: initialVehicle?.vin,
-    depositAmount: null,
-    ngayKyHopDong: '',
-    invoiceAddress: '',
-    contractCode: '',
-    paymentMethod: 'Tiền mặt',
-    nguonKhach: '',
-    muaBaoHiem: null,
-    dangKyXe: null,
-    xeXangVin: '',
-    xeXangHang: '',
-    xeXangModel: '',
-    giaCongBo: null,
-    ghiChu: '',
-    maAmis: ''
-  });
-  const [policyRows, setPolicyRows] = React.useState<SalesPolicyRow[]>([]);
-  const [policyLoading, setPolicyLoading] = React.useState(true);
-  const [policyOpen, setPolicyOpen] = React.useState(false);
-  const [validationError, setValidationError] = React.useState('');
-  const policySelectRef = React.useRef<HTMLDivElement | null>(null);
-  const isVehicleLocked = !!initialVehicle;
+start_idx = content.find('<form onSubmit={handleSubmit}')
+end_idx = content.find('</form>', start_idx) + len('</form>')
 
-  const versionOptions = React.useMemo(
-    () => versionsMap[form.line] || [],
-    [form.line]
-  );
+if start_idx == -1 or end_idx == -1:
+    print("Could not find form")
+    sys.exit(1)
 
-  const interiorOptions = defaultInteriors;
-
-  React.useEffect(() => {
-    if (!versionOptions.includes(form.version)) {
-      updateField('version', versionOptions[0] || '');
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [versionOptions]);
-
-  React.useEffect(() => {
-    if (!interiorOptions.includes(form.interior)) {
-      updateField('interior', interiorOptions[0] || '');
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interiorOptions]);
-
-  React.useEffect(() => {
-    updateField('staff', resolvedStaffName);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolvedStaffName]);
-
-  React.useEffect(() => {
-    let active = true;
-    (async () => {
-      const { data, error } = await apiService.getSalesPolicies();
-      if (!active) return;
-      setPolicyRows(data || defaultSalesPolicies.map((name) => ({ ten_chinh_sach: name, dong_xe: 'Tất cả các dòng xe' })));
-      setPolicyLoading(false);
-    })();
-
-    return () => {
-      active = false;
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const policyOptions = React.useMemo(() => {
-    const lineNorm = form.line.toLowerCase().trim();
-    return policyRows.filter((item) => {
-      const name = (item.ten_chinh_sach || '').toLowerCase();
-      const line = (item.dong_xe || '').toLowerCase();
-      if (!name) return false;
-      if (!line || line.includes('tất cả') || line.includes('all')) return true;
-      return line.includes(lineNorm) || lineNorm.includes(line);
-    });
-  }, [form.line, policyRows]);
-
-  const filteredPolicyOptions = React.useMemo(() => {
-    return policyOptions;
-  }, [policyOptions]);
-
-  React.useEffect(() => {
-    if (form.policy.length === 0) return;
-    const allowed = new Set(policyOptions.map((item) => item.ten_chinh_sach));
-    const filtered = form.policy.filter((policy) => allowed.has(policy));
-    if (filtered.length !== form.policy.length) {
-      updateField('policy', filtered);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.line, policyOptions]);
-
-  const selectedPolicyCount = form.policy.length;
-  const selectedPolicyPreview = form.policy[0] || '';
-  const isGasToElectricPolicy = form.policy.some((name) => name.toLowerCase().includes('thu cũ'));
-  const isFormValid = Boolean(
-    form.orderId.trim() &&
-    form.customer.trim() &&
-    form.line.trim() &&
-    form.version.trim() &&
-    form.exterior.trim() &&
-    form.interior.trim() &&
-    form.staff.trim() &&
-    form.policy.length > 0 &&
-    form.depositAmount !== null &&
-    form.depositAmount !== undefined &&
-    form.invoiceAddress?.trim() &&
-    form.contractCode?.trim() &&
-    form.paymentMethod?.trim() &&
-    form.depositDate &&
-    form.needDate &&
-    !policyLoading &&
-    form.maAmis?.trim() &&
-    form.ngayKyHopDong?.trim() &&
-    form.nguonKhach?.trim() &&
-    form.giaCongBo !== null &&
-    form.giaCongBo !== undefined &&
-    form.muaBaoHiem !== null &&
-    form.dangKyXe !== null &&
-    (!isGasToElectricPolicy || (form.xeXangVin?.trim() && form.xeXangHang?.trim() && form.xeXangModel?.trim()))
-  );
-
-  function updateField<K extends keyof NewOrderInput>(key: K, value: NewOrderInput[K]) {
-    if (validationError) setValidationError('');
-    setForm((current) => ({ ...current, [key]: value }));
-  }
-
-  function togglePolicy(name: string) {
-    setForm((current) => {
-      const currentPolicies = current.policy || [];
-      return {
-        ...current,
-        policy: currentPolicies.includes(name)
-          ? currentPolicies.filter((item) => item !== name)
-          : [...currentPolicies, name]
-      };
-    });
-  }
-
-  function togglePolicyDropdown() {
-    setPolicyOpen((current) => !current);
-  }
-
-  React.useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (policySelectRef.current && !policySelectRef.current.contains(event.target as Node)) {
-        setPolicyOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!isFormValid) {
-      setValidationError('Vui lòng điền đầy đủ tất cả trường thông tin trước khi tạo đơn.');
-      return;
-    }
-    onSubmit(form);
-  }
-
-  return (
-    <div className="modal-layer" role="presentation" style={{ justifyContent: 'flex-end', padding: 0 }}>
-      <section className="order-modal" role="dialog" aria-modal="true" aria-labelledby="create-order-title" style={{ maxWidth: '900px', width: '95vw', height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">Đơn hàng mới</p>
-            <h2 id="create-order-title">{initialVehicle ? `Tạo đơn ghép VIN ${initialVehicle.vin}` : 'Tạo đơn xe VinFast'}</h2>
-          </div>
-          <button type="button" className="icon-button" onClick={onClose} title="Đóng" disabled={isCreating}>
-            <X size={20} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-          <div className="premium-form-layout" style={{ flex: 1, overflowY: 'auto' }}>
-            {/* CARD: THÔNG TIN CHUNG */}
+new_form = """<form onSubmit={handleSubmit} className="premium-form-layout" style={{ flex: 1, overflowY: 'auto' }}>
+          
+          {/* CARD: THÔNG TIN CHUNG */}
           <div className="premium-card">
             <div className="premium-card-header">
               <h3 className="premium-card-title">
@@ -428,9 +223,8 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
               <span style={{ fontSize: '14px', fontWeight: 500 }}>{validationError}</span>
             </div>
           )}
-          </div> {/* End premium-form-layout */}
 
-          <div className="premium-footer" style={{ padding: '16px 20px', background: '#fff' }}>
+          <div className="premium-footer">
             <button type="button" onClick={onClose} disabled={isCreating} className="premium-btn-secondary">
               Hủy bỏ
             </button>
@@ -439,8 +233,10 @@ export const CreateOrderModal: React.FC<CreateOrderModalProps> = ({
               <span>{isCreating ? 'Đang xử lý...' : initialVehicle ? 'Tạo đơn & ghép xe' : 'Hoàn tất Tạo đơn'}</span>
             </button>
           </div>
-        </form>
-      </section>
-    </div>
-  );
-};
+        </form>"""
+
+new_content = content[:start_idx] + new_form + content[end_idx:]
+with open(file_path, "w", encoding="utf-8") as f:
+    f.write(new_content)
+
+print("CreateOrderModal rewritten successfully.")
