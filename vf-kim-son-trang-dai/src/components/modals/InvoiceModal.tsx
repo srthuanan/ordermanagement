@@ -179,8 +179,8 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
   return (
     <div className="slide-over-overlay" role="presentation" onClick={onClose}>
       <section className="slide-over-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', overflow: 'hidden', fontFamily: 'inherit' }}>
-        <div className="orders-visual-side" style={{ height: '100%', overflowY: 'auto', padding: '24px' }}>
-          <div className="order-details-card" style={{ background: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
+        <div className="orders-visual-side" style={{ height: '100%', overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+          <div className="order-details-card" style={{ background: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         
         {(isSubmitting || processingStage > 0) && (
           <div className="processing-overlay" style={{ background:'rgba(255,255,255,0.9)', backdropFilter:'blur(8px)', zIndex: 50, position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -417,7 +417,7 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
           </div>
 
           {/* FOOTER ACTIONS */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', marginTop: '32px', borderTop: '1px solid #f1f5f9', paddingTop: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', marginTop: 'auto', borderTop: '1px solid #f1f5f9', paddingTop: '24px' }}>
             <button type="button" onClick={onClose} style={{ padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#f8fafc', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Đóng</button>
             <div style={{ gridColumn: 'span 2' }}></div>
             <button type="submit" disabled={!isFormValid || isSubmitting} style={{ gridColumn: 'span 2', padding: '10px', borderRadius: '6px', border: '1px solid #10b981', background: '#f0fdf4', color: '#166534', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
