@@ -136,6 +136,8 @@ export function mapOrderRow(row: DonhangRow, customerMap: Map<string, CustomerRo
     xeXangHang: row.xe_xang_hang ?? null,
     xeXangModel: row.xe_xang_model ?? null,
     giaCongBo: row.gia_cong_bo ?? null,
+    ghiChu: row.ghi_chu ?? null,
+    maAmis: row.ma_amis ?? null,
     isWarning,
     warningMessage
   };
