@@ -193,17 +193,53 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <style>
+        {`
+          .seamless-input, .seamless-select {
+            width: 100%;
+            border: 1px solid transparent;
+            background: transparent;
+            padding: 0;
+            margin: 0;
+            font-size: inherit;
+            font-family: inherit;
+            color: inherit;
+            font-weight: inherit;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.2s;
+            border-radius: 4px;
+          }
+          .seamless-input:hover, .seamless-select:hover {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+            padding: 4px;
+            margin: -4px;
+          }
+          .seamless-input:focus, .seamless-select:focus {
+            border-color: #3b82f6;
+            background: #fff;
+            padding: 4px;
+            margin: -4px;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          }
+          td:focus-within {
+            position: relative;
+            z-index: 10;
+          }
+        `}
+      </style>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <table style={{ width: '100%', boxSizing: 'border-box', tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #cbd5e1' }}>
           <tbody>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '18%' }}>Khách hàng</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', width: '32%' }}>
-                <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} value={customer} onChange={(e) => setCustomer(e.target.value)} required />
+                <input className="seamless-input" value={customer} onChange={(e) => setCustomer(e.target.value)} required />
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '18%' }}>Tư vấn viên</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px', width: '32%' }}>
-                <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} value={staff} onChange={(e) => setStaff(e.target.value)} required>
+                <select className="seamless-select" value={staff} onChange={(e) => setStaff(e.target.value)} required>
                   {staffNames.map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               </td>
@@ -212,10 +248,10 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Dòng xe</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
                 <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                  <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, minWidth: 0, width: '0' }} value={line} onChange={(e) => setLine(e.target.value)} required>
+                  <select className="seamless-select" style={{ flex: 1, minWidth: 0, width: '0' }} value={line} onChange={(e) => setLine(e.target.value)} required>
                     {vehicleLines.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
-                  <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, minWidth: 0, width: '0' }} value={version} onChange={(e) => setVersion(e.target.value)} required>
+                  <select className="seamless-select" style={{ flex: 1, minWidth: 0, width: '0' }} value={version} onChange={(e) => setVersion(e.target.value)} required>
                     {versionOptions.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
                 </div>
@@ -223,10 +259,10 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Màu (Ngoại/Nội)</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
                 <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                  <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, minWidth: 0, width: '0' }} value={exterior} onChange={(e) => setExterior(e.target.value)} required>
+                  <select className="seamless-select" style={{ flex: 1, minWidth: 0, width: '0' }} value={exterior} onChange={(e) => setExterior(e.target.value)} required>
                     {defaultExteriors.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
-                  <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, minWidth: 0, width: '0' }} value={interior} onChange={(e) => setInterior(e.target.value)} required>
+                  <select className="seamless-select" style={{ flex: 1, minWidth: 0, width: '0' }} value={interior} onChange={(e) => setInterior(e.target.value)} required>
                     {interiorOptions.map((item) => <option key={item} value={item}>{item}</option>)}
                   </select>
                 </div>
@@ -245,23 +281,23 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày cần xe</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
-                <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} type="date" value={needDate} onChange={(e) => setNeedDate(e.target.value)} />
+                <input className="seamless-input" type="date" value={needDate} onChange={(e) => setNeedDate(e.target.value)} />
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày đặt cọc</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
-                <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} type="date" value={depositDate} onChange={(e) => setDepositDate(e.target.value)} required />
+                <input className="seamless-input" type="date" value={depositDate} onChange={(e) => setDepositDate(e.target.value)} required />
               </td>
             </tr>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Tiền đã cọc</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }} colSpan={3}>
-                <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', width: '50%' }} type="number" value={depositAmount !== null ? depositAmount : ''} placeholder="VD: 50000000" onChange={(e) => setDepositAmount(e.target.value ? Number(e.target.value) : null)} />
+                <input className="seamless-input" type="number" value={depositAmount !== null ? depositAmount : ''} placeholder="VD: 50000000" onChange={(e) => setDepositAmount(e.target.value ? Number(e.target.value) : null)} />
               </td>
             </tr>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Thanh toán</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
-                <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                <select className="seamless-select" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
                   <option value="Tiền mặt">Tiền mặt</option>
                   <option value="Vay ngân hàng">Vay ngân hàng</option>
                   <option value="Chuyển khoản">Chuyển khoản</option>
@@ -269,33 +305,33 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Nguồn khách</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
-                <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} value={nguonKhach} placeholder="VD: Marketing" onChange={(e) => setNguonKhach(e.target.value)} />
+                <input className="seamless-input" value={nguonKhach} placeholder="VD: Marketing" onChange={(e) => setNguonKhach(e.target.value)} />
               </td>
             </tr>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mã Hợp Đồng</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
-                <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} value={contractCode} placeholder="Mã HĐ..." onChange={(e) => setContractCode(e.target.value)} />
+                <input className="seamless-input" value={contractCode} placeholder="Mã HĐ..." onChange={(e) => setContractCode(e.target.value)} />
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mã Amis</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
-                <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} value={maAmis} placeholder="Mã Amis..." onChange={(e) => setMaAmis(e.target.value)} />
+                <input className="seamless-input" value={maAmis} placeholder="Mã Amis..." onChange={(e) => setMaAmis(e.target.value)} />
               </td>
             </tr>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ngày ký HĐ</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
-                <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} type="date" value={ngayKyHopDong} onChange={(e) => setNgayKyHopDong(e.target.value)} />
+                <input className="seamless-input" type="date" value={ngayKyHopDong} onChange={(e) => setNgayKyHopDong(e.target.value)} />
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Giá công bố</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
-                <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} type="number" value={giaCongBo !== null ? giaCongBo : ''} placeholder="VD: 315000000" onChange={(e) => setGiaCongBo(e.target.value ? Number(e.target.value) : null)} />
+                <input className="seamless-input" type="number" value={giaCongBo !== null ? giaCongBo : ''} placeholder="VD: 315000000" onChange={(e) => setGiaCongBo(e.target.value ? Number(e.target.value) : null)} />
               </td>
             </tr>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Đăng ký xe</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
-                <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} value={dangKyXe === true ? 'true' : dangKyXe === false ? 'false' : ''} onChange={(e) => {
+                <select className="seamless-select" value={dangKyXe === true ? 'true' : dangKyXe === false ? 'false' : ''} onChange={(e) => {
                   const val = e.target.value;
                   setDangKyXe(val === 'true' ? true : val === 'false' ? false : null);
                 }}>
@@ -306,7 +342,7 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
               </td>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Mua bảo hiểm</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }}>
-                <select className="premium-select" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} value={muaBaoHiem === true ? 'true' : muaBaoHiem === false ? 'false' : ''} onChange={(e) => {
+                <select className="seamless-select" value={muaBaoHiem === true ? 'true' : muaBaoHiem === false ? 'false' : ''} onChange={(e) => {
                   const val = e.target.value;
                   setMuaBaoHiem(val === 'true' ? true : val === 'false' ? false : null);
                 }}>
@@ -319,13 +355,13 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Địa chỉ XHĐ</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }} colSpan={3}>
-                <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} value={invoiceAddress} placeholder="Địa chỉ xuất hóa đơn..." onChange={(e) => setInvoiceAddress(e.target.value)} />
+                <input className="seamless-input" value={invoiceAddress} placeholder="Địa chỉ xuất hóa đơn..." onChange={(e) => setInvoiceAddress(e.target.value)} />
               </td>
             </tr>
             <tr>
               <td style={{ backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569' }}>Ghi chú</td>
               <td style={{ border: '1px solid #cbd5e1', padding: '8px 12px' }} colSpan={3}>
-                <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px' }} value={ghiChu} placeholder="Ghi chú thêm..." onChange={(e) => setGhiChu(e.target.value)} />
+                <input className="seamless-input" value={ghiChu} placeholder="Ghi chú thêm..." onChange={(e) => setGhiChu(e.target.value)} />
               </td>
             </tr>
             {order.status === 'Chờ phê duyệt' || order.status === 'Yêu cầu bổ sung' || order.status === 'Chờ ký hóa đơn' || order.status === 'Đã bổ sung' ? (
@@ -334,9 +370,9 @@ export const InlineOrderEditForm: React.FC<InlineOrderEditFormProps> = ({
                   <div style={{ padding: '10px', background: '#fffbeb', borderRadius: '6px', border: '1px solid #fde68a' }}>
                     <strong>Cấu hình thu mua xe cũ (Chỉ hiển thị khi có thu mua):</strong>
                     <div style={{ display: 'flex', gap: '10px', marginTop: '8px', width: '100%' }}>
-                      <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, borderColor: '#fed7aa', minWidth: 0, width: 0 }} value={xeXangVin} placeholder="VIN xe xăng" onChange={(e) => setXeXangVin(e.target.value)} />
-                      <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, borderColor: '#fed7aa', minWidth: 0, width: 0 }} value={xeXangHang} placeholder="Hãng xe" onChange={(e) => setXeXangHang(e.target.value)} />
-                      <input className="premium-input" style={{ padding: '6px 10px', height: 'auto', fontSize: '13px', flex: 1, borderColor: '#fed7aa', minWidth: 0, width: 0 }} value={xeXangModel} placeholder="Model xe" onChange={(e) => setXeXangModel(e.target.value)} />
+                      <input className="seamless-input" style={{ flex: 1, minWidth: 0, width: 0, border: '1px solid #fed7aa', padding: '6px' }} value={xeXangVin} placeholder="VIN xe xăng" onChange={(e) => setXeXangVin(e.target.value)} />
+                      <input className="seamless-input" style={{ flex: 1, minWidth: 0, width: 0, border: '1px solid #fed7aa', padding: '6px' }} value={xeXangHang} placeholder="Hãng xe" onChange={(e) => setXeXangHang(e.target.value)} />
+                      <input className="seamless-input" style={{ flex: 1, minWidth: 0, width: 0, border: '1px solid #fed7aa', padding: '6px' }} value={xeXangModel} placeholder="Model xe" onChange={(e) => setXeXangModel(e.target.value)} />
                     </div>
                   </div>
                 </td>
