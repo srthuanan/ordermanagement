@@ -195,8 +195,8 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
   const inputS: React.CSSProperties = { width:'100%', border:'1px solid #e2e8f0', borderRadius:'10px', padding:'12px 14px', fontSize:'14px', color:'#1e293b', background:'#f8fafc', outline:'none', transition:'all 0.2s', boxSizing:'border-box' };
   
   return (
-    <div className="modal-layer" role="presentation">
-      <section role="dialog" aria-modal="true" style={{ position:'relative', display:'flex', flexDirection:'column', width:'940px', height:'100vh', background:'#fff', boxShadow:'-20px 0 60px rgba(0,0,0,0.1)', overflow:'hidden', fontFamily:'inherit', marginLeft:'auto' }}>
+    <div className="slide-over-overlay" role="presentation" onClick={onClose}>
+      <section className="slide-over-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ position:'relative', overflow:'hidden', fontFamily:'inherit' }}>
         
         {(isSubmitting || processingStage > 0) && (
           <div className="processing-overlay" style={{ background:'rgba(255,255,255,0.9)', backdropFilter:'blur(8px)' }}>
