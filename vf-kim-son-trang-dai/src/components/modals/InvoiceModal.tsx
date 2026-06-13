@@ -176,8 +176,10 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
   };
 
   return (
-    <div className="slide-over-overlay" role="presentation" onClick={onClose} style={{ justifyContent: 'center', alignItems: 'center' }}>
-      <section className="order-details-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '900px', maxWidth: '95vw', maxHeight: '90vh', background: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div className="slide-over-overlay" role="presentation" onClick={onClose}>
+      <section className="slide-over-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', overflow: 'hidden', fontFamily: 'inherit' }}>
+        <div className="orders-visual-side" style={{ height: '100%', overflowY: 'auto', padding: '24px' }}>
+          <div className="order-details-card" style={{ background: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column' }}>
         
         {(isSubmitting || processingStage > 0) && (
           <div className="processing-overlay" style={{ background:'rgba(255,255,255,0.9)', backdropFilter:'blur(8px)', zIndex: 50, position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -405,6 +407,8 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
           </div>
 
         </form>
+          </div>
+        </div>
       </section>
     </div>
   );
