@@ -81,7 +81,8 @@ export function useOrderOperations({
           xe_xang_hang: input.xeXangHang?.trim() || null,
           xe_xang_model: input.xeXangModel?.trim() || null,
           gia_cong_bo: input.giaCongBo ?? null,
-          ghi_chu: input.ghiChu?.trim() || null
+          ghi_chu: input.ghiChu?.trim() || null,
+          ma_amis: input.maAmis?.trim() || null
         });
 
         if (orderRes.error) {
