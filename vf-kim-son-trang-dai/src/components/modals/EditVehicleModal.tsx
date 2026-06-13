@@ -29,7 +29,6 @@ export const EditVehicleModal: React.FC<EditVehicleModalProps> = ({
   const [version, setVersion] = React.useState(vehicle.version);
   const [exterior, setExterior] = React.useState(vehicle.exterior);
   const [interior, setInterior] = React.useState(vehicle.interior);
-  const [location, setLocation] = React.useState(vehicle.location);
   const [engineNo, setEngineNo] = React.useState(vehicle.engineNo);
   const [maDms, setMaDms] = React.useState(vehicle.ma_dms || '');
   
@@ -50,7 +49,7 @@ export const EditVehicleModal: React.FC<EditVehicleModalProps> = ({
       version,
       exterior,
       interior,
-      location,
+      location: vehicle.location,
       engineNo,
       ma_dms: maDms
     });
@@ -83,23 +82,12 @@ export const EditVehicleModal: React.FC<EditVehicleModalProps> = ({
           )}
 
           <div style={{ marginBottom: '20px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Trạng thái (Không thể sửa)</label>
                 <div className={stockTone[vehicle.status]} style={{ padding: '10px 12px', background: '#f1f5f9', borderRadius: '8px', fontSize: '14px', fontWeight: 600, border: '1px solid #e2e8f0', color: '#334155' }}>
                   {vehicle.status}
                 </div>
-              </div>
-              
-              <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Vị trí (Bãi xe)</label>
-                <input
-                  type="text"
-                  value={location || ''}
-                  onChange={(e) => setLocation(e.target.value)}
-                  disabled={isSubmitting}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }}
-                />
               </div>
             </div>
           </div>
