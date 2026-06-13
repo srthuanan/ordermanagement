@@ -47,6 +47,7 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
       .map((item) => item.trim())
       .filter(Boolean);
 
+  const [isPolicyDropdownOpen, setIsPolicyDropdownOpen] = useState(false);
   const [policy, setPolicy] = useState<string[]>(() => splitPolicies(order.policy));
   const [soTienKhachDaDong, setSoTienKhachDaDong] = useState(() => (order.soTienKhachDaDong ?? order.depositAmount ?? '').toString());
   const [ngayKyHopDong, setNgayKyHopDong] = useState(() => order.ngayKyHopDong || order.needDateIso || order.depositDate || new Date().toISOString().split('T')[0]);
@@ -296,13 +297,31 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
               <tr>
                 <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Chính sách *</td>
                 <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '12px 16px' }}>
-                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-                     {isLoadingPolicies ? <Loader2 size={16} className="vin-spinner-wrap" /> : filteredPolicies.map(opt => (
-                       <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', color: '#0f172a' }}>
-                         <input type="checkbox" checked={policy.includes(opt)} onChange={() => handleTogglePolicy(opt)} style={{ cursor: 'pointer', width: '14px', height: '14px' }} />
-                         {opt}
-                       </label>
-                     ))}
+                   <div style={{ position: 'relative' }}>
+                     {isPolicyDropdownOpen && <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsPolicyDropdownOpen(false)} />}
+                     <div 
+                       onClick={() => setIsPolicyDropdownOpen(!isPolicyDropdownOpen)} 
+                       style={{ border: '1px solid #cbd5e1', borderRadius: '6px', padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', fontSize: '13px', position: 'relative', zIndex: 41 }}
+                     >
+                       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '95%', color: policy.length > 0 ? '#0f172a' : '#94a3b8', fontWeight: policy.length > 0 ? 500 : 400 }}>
+                         {policy.length > 0 ? policy.join('; ') : '— Chọn chính sách —'}
+                       </div>
+                       <span style={{ fontSize: '10px', color: '#64748b' }}>▼</span>
+                     </div>
+                     {isPolicyDropdownOpen && (
+                       <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '4px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 50, maxHeight: '300px', overflowY: 'auto', padding: '12px' }}>
+                         {isLoadingPolicies ? <Loader2 size={16} className="vin-spinner-wrap" /> : (
+                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                             {filteredPolicies.map(opt => (
+                               <label key={opt} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#0f172a', padding: '4px 0' }}>
+                                 <input type="checkbox" checked={policy.includes(opt)} onChange={() => handleTogglePolicy(opt)} style={{ cursor: 'pointer', width: '14px', height: '14px', marginTop: '2px' }} />
+                                 <span style={{ flex: 1, lineHeight: '1.4' }}>{opt}</span>
+                               </label>
+                             ))}
+                           </div>
+                         )}
+                       </div>
+                     )}
                    </div>
                    {policy.length === 0 && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '6px' }}>Vui lòng chọn ít nhất 1 chính sách.</div>}
                 </td>
