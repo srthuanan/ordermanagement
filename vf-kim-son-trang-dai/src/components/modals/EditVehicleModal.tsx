@@ -177,7 +177,7 @@ export const EditVehicleModal: React.FC<EditVehicleModalProps> = ({
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px', marginBottom: '24px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Mã Amis (DMS)</label>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#475569', marginBottom: '6px' }}>Mã DMS</label>
               <input
                 type="text"
                 value={maDms}
