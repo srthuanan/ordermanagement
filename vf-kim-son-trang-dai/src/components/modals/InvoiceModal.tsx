@@ -218,7 +218,7 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
              </div>
           )}
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #cbd5e1', tableLayout: 'fixed' }}>
+          <table style={{ width: '100%', height: '100%', flex: 1, borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #cbd5e1', tableLayout: 'fixed' }}>
             <tbody>
               <tr>
                 <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 12px', fontWeight: 600, color: '#475569', width: '20%' }}>Khách hàng</td>
