@@ -1,19 +1,11 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
 import {
   X,
-  AlertTriangle,
   UploadCloud,
   Check,
   FileText,
-  ArrowLeft,
-  ArrowRight,
-  Send,
   Loader2,
-  User,
-  Barcode,
-  Cog,
-  Info,
-  Tag,
+  Copy,
 } from 'lucide-react';
 import * as apiService from '../../services/apiService';
 import { supabase } from '../../services/supabaseClient';
@@ -23,8 +15,8 @@ import { Order } from '../../types';
 interface InvoiceRequestModalProps {
   order: Order;
   isSubmitting: boolean;
-    onClose: () => void;
-    onSubmit: (input: {
+  onClose: () => void;
+  onSubmit: (input: {
     order: Order;
     hsXhdFile: File;
     cdxFile: File | null;
@@ -55,7 +47,6 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
       .map((item) => item.trim())
       .filter(Boolean);
 
-  const [step, setStep] = useState(1);
   const [policy, setPolicy] = useState<string[]>(() => splitPolicies(order.policy));
   const [soTienKhachDaDong, setSoTienKhachDaDong] = useState(() => (order.soTienKhachDaDong ?? order.depositAmount ?? '').toString());
   const [ngayKyHopDong, setNgayKyHopDong] = useState(() => order.ngayKyHopDong || order.needDateIso || order.depositDate || new Date().toISOString().split('T')[0]);
@@ -142,22 +133,12 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
   const isStep2Valid = hsXhdFile !== null && transactionImages.length > 0;
   const isFormValid = isStep1Valid && isStep2Valid;
 
-  const handleNext = () => {
-    if (step === 1 && !isStep1Valid) { setError('Vui lòng điền đầy đủ thông tin bắt buộc.'); return; }
-    if (step === 2 && !isStep2Valid) { setError('Vui lòng tải lên đầy đủ chứng từ.'); return; }
-    setError('');
-    setStep(s => s + 1);
-  };
-
-  const handleBack = () => { setError(''); setStep(s => s - 1); };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (step < 3) {
-      handleNext();
+    if (!isFormValid || !hsXhdFile) {
+      setError('Vui lòng điền đầy đủ thông tin bắt buộc và tải lên chứng từ gốc.');
       return;
     }
-    if (!isFormValid || !hsXhdFile) return;
     setError('');
     setProcessingStage(1);
     
@@ -172,14 +153,14 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
       ngayKyHopDong,
       soHopDong,
       hinhThucTT,
-      diaChi, aiNote,
+      diaChi, aiNote: aiNote || ghiChu,
       xeXangVin: isGasToElectricPolicy ? xeXangVin : undefined,
       xeXangHang: isGasToElectricPolicy ? xeXangHang : undefined,
       xeXangModel: isGasToElectricPolicy ? xeXangModel : undefined,
       nguonKhach, maVso: order.id,
       muaBaoHiem, dangKyXe,
       giaCongBo: raw(giaCongBo),
-      ghiChu,
+      ghiChu: ghiChu || aiNote,
     });
     if (ok) { setProcessingStage(4); setTimeout(onClose, 1800); }
     else { 
@@ -190,297 +171,239 @@ export const InvoiceRequestModal: React.FC<InvoiceRequestModalProps> = ({ order,
     }
   };
 
-  const iS = { display:'flex', flexDirection:'column' as const, gap:'4px' };
-  const lS: React.CSSProperties = { fontSize:'12px', fontWeight:600, color:'#64748b', marginBottom:'4px' };
-  const inputS: React.CSSProperties = { width:'100%', border:'1px solid #e2e8f0', borderRadius:'10px', padding:'12px 14px', fontSize:'14px', color:'#1e293b', background:'#f8fafc', outline:'none', transition:'all 0.2s', boxSizing:'border-box' };
-  
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
   return (
-    <div className="slide-over-overlay" role="presentation" onClick={onClose}>
-      <section className="slide-over-panel" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ position:'relative', overflow:'hidden', fontFamily:'inherit' }}>
+    <div className="slide-over-overlay" role="presentation" onClick={onClose} style={{ justifyContent: 'center', alignItems: 'center' }}>
+      <section className="order-details-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: '900px', maxWidth: '95vw', maxHeight: '90vh', background: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         
         {(isSubmitting || processingStage > 0) && (
-          <div className="processing-overlay" style={{ background:'rgba(255,255,255,0.9)', backdropFilter:'blur(8px)' }}>
-            <div className="processing-card" style={{ border:'none', boxShadow:'0 25px 50px -12px rgba(0,0,0,0.1)' }}>
-              <div className={processingStage === 4 ? 'processing-spinner-wrap completed' : 'processing-spinner-wrap'}>
-                {processingStage === 4 ? <Check size={40} strokeWidth={3} /> : <Loader2 size={38} />}
+          <div className="processing-overlay" style={{ background:'rgba(255,255,255,0.9)', backdropFilter:'blur(8px)', zIndex: 50, position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="processing-card" style={{ border:'none', boxShadow:'0 25px 50px -12px rgba(0,0,0,0.1)', background: '#fff', padding: '32px', borderRadius: '16px', textAlign: 'center' }}>
+              <div className={processingStage === 4 ? 'processing-spinner-wrap completed' : 'processing-spinner-wrap'} style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                {processingStage === 4 ? <Check size={40} strokeWidth={3} color="#10b981" /> : <Loader2 size={38} className="spin" color="#0ea5e9" />}
               </div>
               <h3 style={{ fontSize:'20px', fontWeight:800 }}>{processingStage === 4 ? 'Thành công!' : 'Đang xử lý hồ sơ'}</h3>
               <p style={{ color:'#64748b' }}>{processingStage === 4 ? 'Yêu cầu của bạn đã được ghi nhận.' : 'Vui lòng giữ kết nối Internet...'}</p>
-              <div className="stage-list" style={{ marginTop:'20px' }}>
-                <div className={processingStage > 1 ? 'stage-item completed' : processingStage === 1 ? 'stage-item active' : 'stage-item'} style={{ padding:'10px' }}>
-                  {processingStage > 1 ? <Check size={18} /> : <Loader2 size={18} />}
-                  <span style={{ fontSize:'14px' }}>Tạo Hợp đồng mua bán</span>
-                </div>
-                <div className={processingStage > 2 ? 'stage-item completed' : processingStage === 2 ? 'stage-item active' : 'stage-item'} style={{ padding:'10px' }}>
-                  {processingStage > 2 ? <Check size={18} /> : <Loader2 size={18} />}
-                  <span style={{ fontSize:'14px' }}>Lập Đề nghị xuất hóa đơn</span>
-                </div>
-                <div className={processingStage > 3 ? 'stage-item completed' : processingStage === 3 ? 'stage-item active' : 'stage-item'} style={{ padding:'10px' }}>
-                  {processingStage > 3 ? <Check size={18} /> : <Loader2 size={18} />}
-                  <span style={{ fontSize:'14px' }}>Đồng bộ dữ liệu hệ thống...</span>
-                </div>
-              </div>
             </div>
           </div>
         )}
 
-        {/* HEADER AREA - SIMPLIFIED */}
-        <div style={{ padding:'16px 32px', background:'#fff', borderBottom:'1px solid #f1f5f9', display:'flex', justifyContent:'space-between', alignItems:'center', flexShrink:0 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
-            <div style={{ width:'4px', height:'20px', background:'#0d9488', borderRadius:'2px' }} />
-            <h1 style={{ fontSize:'16px', fontWeight:800, color:'#0f172a', margin:0, letterSpacing:'-0.01em' }}>YÊU CẦU XUẤT HÓA ĐƠN</h1>
+        {/* HEADER AREA */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexShrink: 0 }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+            Hồ sơ: {order.id} 
+            <Copy className="clickable-copy-icon" onClick={() => copyToClipboard(order.id)} size={14} style={{ display: 'inline', marginLeft: '6px', cursor: 'pointer', color: '#64748b' }} />
+          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ padding: '4px 8px', border: '1px solid currentColor', fontSize: '12px', fontWeight: 600, borderRadius: '20px', color: '#0369a1', backgroundColor: '#e0f2fe' }}>
+              Yêu cầu Xuất Hóa Đơn
+            </span>
+            <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+              <X size={20} />
+            </button>
           </div>
-          <button type="button" onClick={onClose} style={{ width:'28px', height:'28px', borderRadius:'6px', border:'none', background:'#f1f5f9', color:'#64748b', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <X size={16} />
-          </button>
         </div>
 
         {/* CONTENT */}
-        <form 
-          onSubmit={handleSubmit} 
-          onKeyDown={(e) => {
-            // Ngăn chặn việc bấm Enter vô tình submit form hoặc nhảy bước khi chưa đến bước 3
-            if (e.key === 'Enter' && step < 3) {
-              e.preventDefault();
-            }
-          }}
-          style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}
-        >
-          <div style={{ flex:1, display:'flex', overflow:'hidden' }}>
-            
-            {/* LEFT: MAIN FORM (70%) */}
-            <div style={{ flex:1, overflowY:'auto', padding:'24px 32px', display:'flex', flexDirection:'column', gap:'32px' }}>
-              
-              {step === 1 && (
+        <form onSubmit={handleSubmit} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', paddingRight: '4px' }}>
+          {error && (
+             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#ef4444', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px', fontWeight: 600 }}>
+               {error}
+             </div>
+          )}
+
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', border: '1px solid #cbd5e1', tableLayout: 'fixed' }}>
+            <tbody>
+              <tr>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569', width: '20%' }}>Khách hàng</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 600, width: '30%' }}>{order.customer}</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569', width: '20%' }}>Tư vấn viên</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500, width: '30%' }}>{order.staff}</td>
+              </tr>
+              <tr>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Dòng xe</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 600 }}>{order.line} / {order.version}</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Màu (Ngoại/Nội)</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }}>{order.exterior} · {order.interior}</td>
+              </tr>
+              <tr>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Số VIN định danh</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 700, letterSpacing: '0.05em' }}>{order.vin || '—'}</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Ngày cần xe</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }}>{order.needDate || order.needDateIso || '—'}</td>
+              </tr>
+              <tr>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Ngày đặt cọc</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }}>{order.depositDate || '—'}</td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Tiền đã cọc *</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
+                   <input required value={soTienKhachDaDong} onChange={handleNumberChange(setSoTienKhachDaDong)} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', color: '#dc2626', fontWeight: 700, fontSize: '13px', boxSizing: 'border-box' }} placeholder="VD: 5.000.000 đ" />
+                </td>
+              </tr>
+              <tr>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Thanh toán *</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
+                  <select value={hinhThucTT} onChange={e=>setHinhThucTT(e.target.value)} required style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', color: '#0f172a', boxSizing: 'border-box' }}>
+                     <option value="Tiền mặt">Tiền mặt</option>
+                     <option value="Vay ngân hàng">Vay ngân hàng</option>
+                     <option value="Chuyển khoản">Chuyển khoản</option>
+                  </select>
+                </td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Nguồn khách *</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
+                   <input required value={nguonKhach} onChange={e=>setNguonKhach(e.target.value)} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} placeholder="VD: marketing" />
+                </td>
+              </tr>
+              <tr>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Mã Hợp Đồng *</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
+                   <input required value={soHopDong} onChange={e=>setSoHopDong(e.target.value)} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} />
+                </td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Mã Amis</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: '12px 16px', color: '#0f172a', fontWeight: 500 }}>—</td>
+              </tr>
+              <tr>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Ngày ký HĐ *</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
+                   <input type="date" required value={ngayKyHopDong} onChange={e=>setNgayKyHopDong(e.target.value)} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} />
+                </td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Giá công bố *</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
+                   <input required value={giaCongBo} onChange={handleNumberChange(setGiaCongBo)} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', fontWeight: 600, boxSizing: 'border-box' }} placeholder="315.000.000 đ" />
+                </td>
+              </tr>
+              <tr>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Đăng ký xe</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
+                   <select value={dangKyXe ? 'Có' : 'Không'} onChange={e=>setDangKyXe(e.target.value === 'Có')} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }}>
+                     <option value="Có">Có</option>
+                     <option value="Không">Không</option>
+                   </select>
+                </td>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Mua bảo hiểm</td>
+                <td style={{ border: '1px solid #cbd5e1', padding: 0 }}>
+                   <select value={muaBaoHiem ? 'Có' : 'Không'} onChange={e=>setMuaBaoHiem(e.target.value === 'Có')} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }}>
+                     <option value="Có">Có</option>
+                     <option value="Không">Không</option>
+                   </select>
+                </td>
+              </tr>
+              <tr>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Chính sách *</td>
+                <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: '12px 16px' }}>
+                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+                     {isLoadingPolicies ? <Loader2 size={16} className="vin-spinner-wrap" /> : filteredPolicies.map(opt => (
+                       <label key={opt} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '13px', color: '#0f172a' }}>
+                         <input type="checkbox" checked={policy.includes(opt)} onChange={() => handleTogglePolicy(opt)} style={{ cursor: 'pointer', width: '14px', height: '14px' }} />
+                         {opt}
+                       </label>
+                     ))}
+                   </div>
+                   {policy.length === 0 && <div style={{ color: '#ef4444', fontSize: '12px', marginTop: '6px' }}>Vui lòng chọn ít nhất 1 chính sách.</div>}
+                </td>
+              </tr>
+              <tr>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Địa chỉ XHĐ *</td>
+                <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: 0 }}>
+                   <input required value={diaChi} onChange={e=>setDiaChi(e.target.value)} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} placeholder="Địa chỉ chi tiết..." />
+                </td>
+              </tr>
+              <tr>
+                <td style={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#475569' }}>Ghi chú</td>
+                <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: 0 }}>
+                   <input value={ghiChu || aiNote} onChange={e=>{setAiNote(e.target.value); setGhiChu(e.target.value);}} style={{ width: '100%', border: 'none', padding: '12px 16px', outline: 'none', background: 'transparent', fontSize: '13px', boxSizing: 'border-box' }} placeholder="—" />
+                </td>
+              </tr>
+              {isGasToElectricPolicy && (
+                <tr>
+                  <td style={{ backgroundColor: '#fff7ed', border: '1px solid #cbd5e1', padding: '12px 16px', fontWeight: 600, color: '#9a3412' }}>Thu cũ (VIN/Hãng)</td>
+                  <td colSpan={3} style={{ border: '1px solid #cbd5e1', padding: 0, backgroundColor: '#fff7ed' }}>
+                     <div style={{ display: 'flex', gap: '12px', padding: '8px 16px' }}>
+                       <input value={xeXangVin} onChange={e=>setXeXangVin(e.target.value.toUpperCase())} placeholder="VIN xe xăng" style={{ border: '1px solid #fdba74', padding: '6px 12px', borderRadius: '4px', background: '#fff', outline: 'none', fontSize: '13px', width: '200px' }} />
+                       <input value={xeXangHang} onChange={e=>setXeXangHang(e.target.value)} placeholder="Hãng" style={{ border: '1px solid #fdba74', padding: '6px 12px', borderRadius: '4px', background: '#fff', outline: 'none', fontSize: '13px', width: '120px' }} />
+                       <input value={xeXangModel} onChange={e=>setXeXangModel(e.target.value)} placeholder="Model" style={{ border: '1px solid #fdba74', padding: '6px 12px', borderRadius: '4px', background: '#fff', outline: 'none', fontSize: '13px', width: '120px' }} />
+                       {vinCheckError && <span style={{ color: '#ef4444', fontSize: '12px', alignSelf: 'center' }}>{vinCheckError}</span>}
+                     </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          {/* UPLOAD SECTION */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '24px' }}>
+            <div onClick={()=>!hsXhdFile && hsXhdRef.current?.click()} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f8fafc', minHeight: '120px' }}>
+              <input type="file" accept=".pdf,image/*" ref={hsXhdRef} style={{ display:'none' }} onChange={e=>setHsXhdFile(e.target.files?.[0]||null)} />
+              {hsXhdFile ? (
                 <>
-                  {/* NEW SUMMARY SECTION */}
-                  <section style={{ background:'#f8fafc', borderRadius:'16px', padding:'20px', border:'1px solid #e2e8f0', display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:'20px' }}>
-                    <div style={iS}><label style={{...lS, fontSize:'10px'}}>Khách hàng</label><div style={{ fontSize:'14px', fontWeight:700, color:'#0f172a' }}>{order.customer}</div></div>
-                    <div style={iS}><label style={{...lS, fontSize:'10px'}}>Mã đơn hàng</label><div style={{ fontSize:'14px', fontWeight:700, color:'#0d9488' }}>{order.id}</div></div>
-                    <div style={iS}><label style={{...lS, fontSize:'10px'}}>Số VIN</label><div style={{ fontSize:'14px', fontWeight:700, color:'#0f172a' }}>{order.vin || '---'}</div></div>
-                  </section>
-                  <section>
-                    <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'20px' }}>
-                       <span style={{ width:'24px', height:'24px', borderRadius:'50%', background:'#0d9488', color:'#fff', fontSize:'12px', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' }}>1</span>
-                       <h2 style={{ fontSize:'16px', fontWeight:700, color:'#0f172a', margin:0 }}>Thông tin khách hàng & Tài chính</h2>
-                    </div>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px' }}>
-                      <div style={iS}><label style={lS}>Số tiền khách đã đóng *</label>
-                        <div style={{ position:'relative' }}>
-                          <input value={soTienKhachDaDong} onChange={handleNumberChange(setSoTienKhachDaDong)} placeholder="0" required style={{ ...inputS, border:'2px solid #0d9488', fontSize:'18px', fontWeight:800, color:'#0d9488' }} />
-                          <span style={{ position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', fontWeight:700, color:'#94a3b8' }}>VNĐ</span>
-                        </div>
-                      </div>
-                      <div style={iS}><label style={lS}>Giá công bố *</label>
-                        <div style={{ position:'relative' }}>
-                          <input value={giaCongBo} onChange={handleNumberChange(setGiaCongBo)} placeholder="0" required style={inputS} />
-                          <span style={{ position:'absolute', right:'16px', top:'50%', transform:'translateY(-50%)', fontWeight:600, color:'#94a3b8' }}>VNĐ</span>
-                        </div>
-                      </div>
-                      <div style={iS}><label style={lS}>Ngày ký hợp đồng *</label><input type="date" value={ngayKyHopDong} onChange={e=>setNgayKyHopDong(e.target.value)} required style={inputS} /></div>
-                      <div style={iS}><label style={lS}>Số hợp đồng *</label><input value={soHopDong} onChange={e=>setSoHopDong(e.target.value)} required style={inputS} /></div>
-                      <div style={{...iS, gridColumn:'1/-1'}}><label style={lS}>Địa chỉ xuất hóa đơn *</label><input value={diaChi} onChange={e=>setDiaChi(e.target.value)} placeholder="Theo CCCD hoặc Giấy phép kinh doanh" required style={inputS} /></div>
-                    </div>
-                  </section>
-
-                  <section>
-                    <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'20px' }}>
-                       <span style={{ width:'24px', height:'24px', borderRadius:'50%', background:'#0d9488', color:'#fff', fontSize:'12px', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' }}>2</span>
-                       <h2 style={{ fontSize:'16px', fontWeight:700, color:'#0f172a', margin:0 }}>Hình thức & Nguồn khách</h2>
-                    </div>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px' }}>
-                      <div style={iS}>
-                        <label style={lS}>Hình thức thanh toán *</label>
-                        <select value={hinhThucTT} onChange={e=>setHinhThucTT(e.target.value)} required style={{...inputS, appearance:'none'}}>
-                          <option value="Tiền mặt">Tiền mặt</option>
-                          <option value="Vay ngân hàng">Vay ngân hàng</option>
-                          <option value="Chuyển khoản">Chuyển khoản</option>
-                        </select>
-                      </div>
-                      <div style={iS}><label style={lS}>Nguồn khách *</label><input value={nguonKhach} onChange={e=>setNguonKhach(e.target.value)} placeholder="Giới thiệu, Marketing..." required style={inputS} /></div>
-                    </div>
-                  </section>
-
-                  <section>
-                    <div style={{ display:'flex', gap:'16px' }}>
-                      {[{l:'Mua bảo hiểm',v:muaBaoHiem,s:setMuaBaoHiem},{l:'Làm đăng ký xe',v:dangKyXe,s:setDangKyXe}].map(x => (
-                        <div key={x.l} onClick={()=>x.s(!x.v)} style={{ flex:1, padding:'18px', borderRadius:'16px', border: x.v ? '2px solid #0d9488' : '1px solid #e2e8f0', background: x.v ? '#f0fdfa' : '#fff', cursor:'pointer', display:'flex', alignItems:'center', gap:'12px', transition:'0.2s' }}>
-                          <div style={{ width:'20px', height:'20px', borderRadius:'6px', border: x.v ? 'none' : '2px solid #cbd5e1', background: x.v ? '#0d9488' : '#fff', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                            {x.v && <Check size={14} color="#fff" strokeWidth={4} />}
-                          </div>
-                          <span style={{ fontSize:'14px', fontWeight:700, color: x.v ? '#0d9488' : '#475569' }}>{x.l}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
+                  <FileText size={24} color="#0d9488" style={{ marginBottom: '8px' }} />
+                  <div style={{ fontSize: '12px', fontWeight: 600, textAlign: 'center', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{hsXhdFile.name}</div>
+                  <button type="button" onClick={(e)=>{e.stopPropagation(); setHsXhdFile(null);}} style={{ marginTop: '8px', border: 'none', background: 'transparent', color: '#e11d48', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Xóa</button>
+                </>
+              ) : (
+                <>
+                  <UploadCloud size={24} color="#64748b" style={{ marginBottom: '8px' }} />
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Bộ HS XHĐ *</div>
                 </>
               )}
-
-              {step === 2 && (
-                <div style={{ display:'flex', flexDirection:'column', gap:'32px' }}>
-                   <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                       <span style={{ width:'24px', height:'24px', borderRadius:'50%', background:'#0d9488', color:'#fff', fontSize:'12px', fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' }}>3</span>
-                       <h2 style={{ fontSize:'16px', fontWeight:700, color:'#0f172a', margin:0 }}>Tải lên chứng từ gốc</h2>
-                   </div>
-                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px' }}>
-                      {/* Bộ HS XHĐ */}
-                      <div onClick={()=>!hsXhdFile && hsXhdRef.current?.click()} style={{ height:'280px', background:'#f8fafc', borderRadius:'24px', border:'2px dashed #cbd5e1', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px', cursor:'pointer', transition:'all 0.3s' }}>
-                        <input type="file" accept=".pdf,image/*" ref={hsXhdRef} style={{ display:'none' }} onChange={e=>setHsXhdFile(e.target.files?.[0]||null)} />
-                        {hsXhdFile ? (
-                          <>
-                            <div style={{ width:'72px', height:'72px', borderRadius:'20px', background:'#fff', boxShadow:'0 10px 25px rgba(0,0,0,0.05)', display:'flex', alignItems:'center', justifyContent:'center', color:'#0d9488', marginBottom:'20px' }}><FileText size={40} /></div>
-                            <div style={{ fontSize:'15px', fontWeight:700, textAlign:'center', color:'#0f172a', maxWidth:'220px', overflow:'hidden', textOverflow:'ellipsis' }}>{hsXhdFile.name}</div>
-                            <button type="button" onClick={(e)=>{e.stopPropagation(); setHsXhdFile(null);}} style={{ marginTop:'16px', border:'none', background:'#fff', color:'#e11d48', fontSize:'13px', fontWeight:700, padding:'8px 16px', borderRadius:'10px', boxShadow:'0 2px 4px rgba(0,0,0,0.05)' }}>Xóa file</button>
-                          </>
-                        ) : (
-                          <>
-                            <div style={{ width:'72px', height:'72px', background:'#fff', borderRadius:'20px', display:'flex', alignItems:'center', justifyContent:'center', color:'#94a3b8', marginBottom:'20px', boxShadow:'0 4px 6px rgba(0,0,0,0.02)' }}><UploadCloud size={40} /></div>
-                            <div style={{ fontSize:'16px', fontWeight:700, color:'#1e293b' }}>Bộ HS XHĐ *</div>
-                            <div style={{ fontSize:'13px', color:'#64748b', marginTop:'6px' }}>Bắt buộc (PDF hoặc Ảnh)</div>
-                          </>
-                        )}
-                      </div>
-                      
-                      {/* Chuyển Đổi Xanh */}
-                      <div onClick={()=>!cdxFile && cdxRef.current?.click()} style={{ height:'280px', background:'#f8fafc', borderRadius:'24px', border:'2px dashed #cbd5e1', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px', cursor:'pointer', transition:'all 0.3s' }}>
-                        <input type="file" accept=".pdf,image/*" ref={cdxRef} style={{ display:'none' }} onChange={e=>setCdxFile(e.target.files?.[0]||null)} />
-                        {cdxFile ? (
-                          <>
-                            <div style={{ width:'72px', height:'72px', borderRadius:'20px', background:'#fff', boxShadow:'0 10px 25px rgba(0,0,0,0.05)', display:'flex', alignItems:'center', justifyContent:'center', color:'#0d9488', marginBottom:'20px' }}><FileText size={40} /></div>
-                            <div style={{ fontSize:'15px', fontWeight:700, textAlign:'center', color:'#0f172a', maxWidth:'220px', overflow:'hidden', textOverflow:'ellipsis' }}>{cdxFile.name}</div>
-                            <button type="button" onClick={(e)=>{e.stopPropagation(); setCdxFile(null);}} style={{ marginTop:'16px', border:'none', background:'#fff', color:'#e11d48', fontSize:'13px', fontWeight:700, padding:'8px 16px', borderRadius:'10px', boxShadow:'0 2px 4px rgba(0,0,0,0.05)' }}>Xóa file</button>
-                          </>
-                        ) : (
-                          <>
-                            <div style={{ width:'72px', height:'72px', background:'#fff', borderRadius:'20px', display:'flex', alignItems:'center', justifyContent:'center', color:'#94a3b8', marginBottom:'20px', boxShadow:'0 4px 6px rgba(0,0,0,0.02)' }}><UploadCloud size={40} /></div>
-                            <div style={{ fontSize:'16px', fontWeight:700, color:'#1e293b' }}>Chuyển Đổi Xanh</div>
-                            <div style={{ fontSize:'13px', color:'#64748b', marginTop:'6px' }}>Không bắt buộc</div>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Ảnh giao dịch */}
-                      <div onClick={()=>transImgRef.current?.click()} style={{ gridColumn: '1 / -1', minHeight:'160px', background:'#f8fafc', borderRadius:'24px', border:'2px dashed #cbd5e1', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'24px', cursor:'pointer', transition:'all 0.3s' }}>
-                        <input type="file" accept="image/*" multiple ref={transImgRef} style={{ display:'none' }} onClick={(e) => { e.stopPropagation(); (e.target as HTMLInputElement).value = ''; }} onChange={e=>{
-                          const files = e.target.files;
-                          if (files && files.length > 0) {
-                            const newFiles = Array.from(files);
-                            setTransactionImages(prev => [...prev, ...newFiles]);
-                          }
-                        }} />
-                        {transactionImages.length > 0 ? (
-                          <div style={{ width: '100%' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                              <div style={{ fontSize:'16px', fontWeight:700, color:'#1e293b' }}>Ảnh giao dịch * ({transactionImages.length} ảnh)</div>
-                              <button type="button" onClick={(e)=>{e.stopPropagation(); transImgRef.current?.click();}} style={{ border:'none', background:'#0d9488', color:'#fff', fontSize:'13px', fontWeight:700, padding:'8px 16px', borderRadius:'10px', boxShadow:'0 2px 4px rgba(0,0,0,0.05)', cursor:'pointer' }}>+ Thêm ảnh</button>
-                            </div>
-                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                              {transactionImages.map((f, i) => (
-                                <div key={i} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                                  <img src={URL.createObjectURL(f)} alt={f.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                  <button type="button" onClick={(e)=>{
-                                    e.stopPropagation();
-                                    setTransactionImages(prev => prev.filter((_, idx) => idx !== i));
-                                  }} style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#e11d48', padding: 0 }}>
-                                    <X size={12} strokeWidth={3} />
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div style={{ width:'64px', height:'64px', background:'#fff', borderRadius:'16px', display:'flex', alignItems:'center', justifyContent:'center', color:'#94a3b8', marginBottom:'16px', boxShadow:'0 4px 6px rgba(0,0,0,0.02)' }}><UploadCloud size={32} /></div>
-                            <div style={{ fontSize:'16px', fontWeight:700, color:'#1e293b' }}>Ảnh giao dịch *</div>
-                            <div style={{ fontSize:'13px', color:'#64748b', marginTop:'6px' }}>Bắt buộc. Hỗ trợ tải lên nhiều ảnh (JPG, PNG)</div>
-                          </>
-                        )}
-                      </div>
-                   </div>
-                </div>
-              )}
-
-              {step === 3 && (
-                <div style={{ display:'flex', flexDirection:'column', gap:'32px' }}>
-                   <div style={{ background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:'20px', padding:'32px' }}>
-                      <h2 style={{ fontSize:'16px', fontWeight:800, color:'#166534', marginBottom:'20px', letterSpacing:'0.05em' }}>XÁC NHẬN YÊU CẦU</h2>
-                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px 48px' }}>
-                         {([['Họ tên', order.customer],['Mã đơn', order.id],['Số tiền đóng', soTienKhachDaDong+' VNĐ'],['Hình thức', hinhThucTT],['Ngày ký', ngayKyHopDong],['Địa chỉ XHĐ', diaChi]] as [string,string][]).map(([k,v])=>(
-                           <div key={k} style={{ display:'flex', justifyContent:'space-between', padding:'12px 0', borderBottom:'1px solid rgba(22,101,52,0.1)' }}>
-                             <span style={{ fontSize:'14px', color:'#166534', opacity:0.8 }}>{k}</span>
-                             <span style={{ fontSize:'14px', fontWeight:700, color:'#166534' }}>{v}</span>
-                           </div>
-                         ))}
-                      </div>
-                   </div>
-                   <div style={iS}>
-                     <label style={lS}>Ghi chú cho bộ phận kế toán</label>
-                     <textarea value={aiNote} onChange={e=>setAiNote(e.target.value)} placeholder="Nhập thêm lưu ý nếu có..." style={{ ...inputS, height:'140px', resize:'none', background:'#fff' }} />
-                   </div>
-                </div>
+            </div>
+            
+            <div onClick={()=>!cdxFile && cdxRef.current?.click()} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f8fafc', minHeight: '120px' }}>
+              <input type="file" accept=".pdf,image/*" ref={cdxRef} style={{ display:'none' }} onChange={e=>setCdxFile(e.target.files?.[0]||null)} />
+              {cdxFile ? (
+                <>
+                  <FileText size={24} color="#0d9488" style={{ marginBottom: '8px' }} />
+                  <div style={{ fontSize: '12px', fontWeight: 600, textAlign: 'center', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cdxFile.name}</div>
+                  <button type="button" onClick={(e)=>{e.stopPropagation(); setCdxFile(null);}} style={{ marginTop: '8px', border: 'none', background: 'transparent', color: '#e11d48', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Xóa</button>
+                </>
+              ) : (
+                <>
+                  <UploadCloud size={24} color="#64748b" style={{ marginBottom: '8px' }} />
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Chuyển Đổi Xanh</div>
+                </>
               )}
             </div>
 
-            {/* RIGHT: SIDEBAR (30%) */}
-            <div style={{ width:'320px', background:'#f8fafc', borderLeft:'1px solid #f1f5f9', display:'flex', flexDirection:'column' }}>
-               <div style={{ flex:1, padding:'32px 24px', display:'flex', flexDirection:'column', gap:'24px', overflowY:'auto' }}>
-                  
-                  <div>
-                    <h3 style={{ fontSize:'11px', fontWeight:800, color:'#64748b', letterSpacing:'0.1em', marginBottom:'16px' }}>CHÍNH SÁCH BÁN HÀNG</h3>
-                    <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
-                      {isLoadingPolicies ? <Loader2 size={24} className="vin-spinner-wrap" /> : filteredPolicies.map(opt => {
-                        const sel = policy.includes(opt);
-                        return (
-                          <div key={opt} onClick={()=>handleTogglePolicy(opt)} style={{ padding:'14px', borderRadius:'14px', background: sel ? '#0d9488' : '#fff', border: sel ? 'none' : '1px solid #e2e8f0', color: sel ? '#fff' : '#475569', cursor:'pointer', transition:'0.2s', boxShadow: sel ? '0 4px 15px rgba(13,148,136,0.2)' : 'none' }}>
-                            <div style={{ fontSize:'13.5px', fontWeight: sel ? 700 : 500, lineHeight:1.4 }}>{opt}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {isGasToElectricPolicy && (
-                    <div style={{ background:'#fff7ed', borderRadius:'20px', border:'1.5px solid #fed7aa', padding:'20px' }}>
-                      <div style={{ fontSize:'11px', fontWeight:800, color:'#9a3412', marginBottom:'16px' }}>THU CŨ ĐỔI MỚI</div>
-                      <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
-                        <div style={iS}><label style={{...lS, fontSize:'10px'}}>Số VIN xe xăng</label><input value={xeXangVin} onChange={e=>setXeXangVin(e.target.value.toUpperCase())} style={{...inputS, padding:'10px', fontSize:'13px'}} /></div>
-                        <div style={iS}><label style={{...lS, fontSize:'10px'}}>Hãng / Model</label><input value={xeXangHang+' '+xeXangModel} readOnly style={{...inputS, padding:'10px', fontSize:'13px', background:'#fff'}} /></div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div style={{ marginTop:'auto' }}>
-                    <div onClick={()=>setVinClubConfirmed(!vinClubConfirmed)} style={{ padding:'20px', borderRadius:'20px', background: vinClubConfirmed ? '#0d9488' : '#fff', border: vinClubConfirmed ? 'none' : '1px solid #e2e8f0', color: vinClubConfirmed ? '#fff' : '#475569', cursor:'pointer', display:'flex', gap:'16px', alignItems:'center', transition:'0.2s', boxShadow: vinClubConfirmed ? '0 12px 25px rgba(13,148,136,0.2)' : 'none' }}>
-                       <div style={{ width:'24px', height:'24px', borderRadius:'8px', background: vinClubConfirmed ? 'rgba(255,255,255,0.2)' : '#f1f5f9', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                         {vinClubConfirmed && <Check size={16} strokeWidth={4} />}
-                       </div>
-                       <div style={{ fontSize:'14px', fontWeight:700 }}>Xác nhận VinClub</div>
-                    </div>
-                  </div>
-               </div>
+            <div onClick={()=>transImgRef.current?.click()} style={{ border: '1px solid #cbd5e1', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#f8fafc', minHeight: '120px' }}>
+              <input type="file" accept="image/*" multiple ref={transImgRef} style={{ display:'none' }} onClick={(e) => { e.stopPropagation(); (e.target as HTMLInputElement).value = ''; }} onChange={e=>{
+                const files = e.target.files;
+                if (files && files.length > 0) {
+                  const newFiles = Array.from(files);
+                  setTransactionImages(prev => [...prev, ...newFiles]);
+                }
+              }} />
+              {transactionImages.length > 0 ? (
+                <>
+                  <FileText size={24} color="#0d9488" style={{ marginBottom: '8px' }} />
+                  <div style={{ fontSize: '12px', fontWeight: 600, textAlign: 'center' }}>Đã tải {transactionImages.length} ảnh</div>
+                  <button type="button" onClick={(e)=>{e.stopPropagation(); setTransactionImages([]);}} style={{ marginTop: '8px', border: 'none', background: 'transparent', color: '#e11d48', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>Xóa tất cả</button>
+                </>
+              ) : (
+                <>
+                  <UploadCloud size={24} color="#64748b" style={{ marginBottom: '8px' }} />
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>Ảnh giao dịch *</div>
+                </>
+              )}
             </div>
           </div>
 
-          {/* FOOTER */}
-          <div style={{ padding:'24px 40px', background:'#fff', borderTop:'1px solid #f1f5f9', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-             <div style={{ display:'flex', gap:'10px' }}>
-               {[1,2,3].map(n => (
-                 <div key={n} style={{ width:'12px', height:'12px', borderRadius:'50%', background: step === n ? '#0d9488' : '#e2e8f0', transition:'0.3s' }} />
-               ))}
-             </div>
-             <div style={{ display:'flex', gap:'16px' }}>
-               {step > 1 && <button type="button" onClick={handleBack} style={{ padding:'14px 28px', borderRadius:'14px', border:'1px solid #e2e8f0', background:'#fff', color:'#64748b', fontSize:'15px', fontWeight:700, cursor:'pointer' }}>Quay lại</button>}
-               {step < 3 ? (
-                 <button type="button" onClick={handleNext} disabled={ (step===1 && !isStep1Valid) || (step===2 && !isStep2Valid) } style={{ padding:'14px 40px', borderRadius:'14px', border:'none', background:'#0f172a', color:'#fff', fontSize:'15px', fontWeight:800, cursor:'pointer', boxShadow:'0 10px 25px rgba(15,23,42,0.2)' }}>
-                   Tiếp theo
-                 </button>
-               ) : (
-                 <button type="submit" disabled={!isFormValid || isSubmitting} style={{ padding:'14px 48px', borderRadius:'14px', border:'none', background:'#10b981', color:'#fff', fontSize:'15px', fontWeight:800, cursor:'pointer', boxShadow:'0 10px 25px rgba(16,185,129,0.2)' }}>
-                   {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu ngay'}
-                 </button>
-               )}
-             </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '16px' }}>
+             <input type="checkbox" id="vinclub" checked={vinClubConfirmed} onChange={(e) => setVinClubConfirmed(e.target.checked)} style={{ cursor: 'pointer' }} />
+             <label htmlFor="vinclub" style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', cursor: 'pointer' }}>Xác nhận khách hàng đã tham gia VinClub</label>
           </div>
+
+          {/* FOOTER ACTIONS */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', marginTop: '32px', borderTop: '1px solid #f1f5f9', paddingTop: '24px' }}>
+            <button type="button" onClick={onClose} style={{ padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#f8fafc', color: '#475569', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Đóng</button>
+            <div style={{ gridColumn: 'span 2' }}></div>
+            <button type="submit" disabled={!isFormValid || isSubmitting} style={{ gridColumn: 'span 2', padding: '10px', borderRadius: '6px', border: '1px solid #10b981', background: '#f0fdf4', color: '#166534', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+              {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu XHĐ'}
+            </button>
+          </div>
+
         </form>
       </section>
     </div>
