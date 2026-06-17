@@ -1016,27 +1016,54 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
 
     // Nếu lúc tạo đơn mà chọn luôn VIN (Giữ xe rồi ghép)
     if (payloadData.vin) {
-        // --- KIỂM TRA MÃ DMS ---
+        // --- Bắt đầu: Ràng buộc FIFO ---
         try {
+            const currentUser = getStorageItem("currentUser") || "admin";
             const { data: carData } = await supabase.from('khoxe')
-                .select('ma_dms')
+                .select('ma_dms, dong_xe, phien_ban, ngoai_that, noi_that, ngay_nhap')
                 .eq('vin', payloadData.vin)
                 .single();
             
-            if (carData && carData.ma_dms) {
-                const orderPrefix = payloadData.so_don_hang.substring(0, 6).toUpperCase();
-                const dmsUpperNode = carData.ma_dms.toUpperCase();
-                if (orderPrefix !== dmsUpperNode) {
-                    return { 
-                        status: 'ERROR', 
-                        message: `Mã DMS của xe (${dmsUpperNode}) không khớp với 6 ký tự đầu của Số đơn hàng (${orderPrefix}). Vui lòng kiểm tra lại.` 
-                    };
+            if (carData) {
+                if (currentUser !== 'admin' && carData.ngay_nhap) {
+                    const { data: olderCars } = await supabase.from('khoxe')
+                        .select('vin')
+                        .eq('trang_thai', 'Chưa ghép')
+                        .is('nguoi_giu_xe', null)
+                        .eq('dong_xe', carData.dong_xe)
+                        .eq('phien_ban', carData.phien_ban)
+                        .eq('ngoai_that', carData.ngoai_that)
+                        .eq('noi_that', carData.noi_that)
+                        .lt('ngay_nhap', carData.ngay_nhap)
+                        .order('ngay_nhap', { ascending: true })
+                        .limit(1);
+
+                    if (olderCars && olderCars.length > 0) {
+                        const errorMsg = `Hệ thống từ chối: Xe này nhập sau.\nVui lòng ưu tiên ghép xe cũ hơn (VIN: ${olderCars[0].vin}) theo đúng quy tắc FIFO!`;
+                        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('fifo-error', { detail: { message: errorMsg } }));
+                        return { 
+                            status: 'ERROR', 
+                            message: errorMsg 
+                        };
+                    }
+                }
+
+                // --- KIỂM TRA MÃ DMS ---
+                if (carData.ma_dms) {
+                    const orderPrefix = payloadData.so_don_hang.substring(0, 6).toUpperCase();
+                    const dmsUpperNode = carData.ma_dms.toUpperCase();
+                    if (orderPrefix !== dmsUpperNode) {
+                        return { 
+                            status: 'ERROR', 
+                            message: `Mã DMS của xe (${dmsUpperNode}) không khớp với 6 ký tự đầu của Số đơn hàng (${orderPrefix}). Vui lòng kiểm tra lại.` 
+                        };
+                    }
                 }
             }
-        } catch (dmsErr) {
-            console.error("DMS validation error:", dmsErr);
+        } catch (fifoErr) {
+            console.error("FIFO validation error:", fifoErr);
         }
-        // -----------------------
+        // --- Kết thúc: Ràng buộc FIFO ---
 
         payloadData.vin_giu_yeu_cau = payloadData.vin;
         vinDk = payloadData.vin;
@@ -1203,21 +1230,49 @@ export const pairVinToOrder = async (orderNumber: string, vin: string) => {
     const pairedBy = getStorageItem("currentConsultant") || "Unknown";
     const pairedTime = new Date().toISOString();
 
-    // 1. Kiểm tra mã DMS
+    // 1. Kiểm tra mã DMS và Ràng buộc FIFO
     try {
+        const currentUser = getStorageItem("currentUser") || "admin";
         const { data: carData } = await supabase.from('khoxe')
-            .select('ma_dms')
+            .select('ma_dms, dong_xe, phien_ban, ngoai_that, noi_that, ngay_nhap')
             .eq('vin', vin)
             .single();
 
-        if (carData && carData.ma_dms) {
-            const orderPrefix = orderNumber.substring(0, 6).toUpperCase();
-            const dmsUpperNode = carData.ma_dms.toUpperCase();
-            if (orderPrefix !== dmsUpperNode) {
-                return { 
-                    status: 'ERROR', 
-                    message: `Mã DMS của xe (${dmsUpperNode}) không khớp với 6 ký tự đầu của Số đơn hàng (${orderPrefix}). Vui lòng kiểm tra lại.` 
-                };
+        if (carData) {
+            // --- Bắt đầu: Ràng buộc FIFO ---
+            if (currentUser !== 'admin' && carData.ngay_nhap) {
+                const { data: olderCars } = await supabase.from('khoxe')
+                    .select('vin')
+                    .eq('trang_thai', 'Chưa ghép')
+                    .is('nguoi_giu_xe', null)
+                    .eq('dong_xe', carData.dong_xe)
+                    .eq('phien_ban', carData.phien_ban)
+                    .eq('ngoai_that', carData.ngoai_that)
+                    .eq('noi_that', carData.noi_that)
+                    .lt('ngay_nhap', carData.ngay_nhap)
+                    .order('ngay_nhap', { ascending: true })
+                    .limit(1);
+
+                if (olderCars && olderCars.length > 0) {
+                    const errorMsg = `Hệ thống từ chối: Xe này nhập sau.\nVui lòng ưu tiên giữ/ghép xe cũ hơn (VIN: ${olderCars[0].vin}) theo đúng quy tắc FIFO!`;
+                    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('fifo-error', { detail: { message: errorMsg } }));
+                    return { 
+                        status: 'ERROR', 
+                        message: errorMsg 
+                    };
+                }
+            }
+            // --- Kết thúc: Ràng buộc FIFO ---
+
+            if (carData.ma_dms) {
+                const orderPrefix = orderNumber.substring(0, 6).toUpperCase();
+                const dmsUpperNode = carData.ma_dms.toUpperCase();
+                if (orderPrefix !== dmsUpperNode) {
+                    return { 
+                        status: 'ERROR', 
+                        message: `Mã DMS của xe (${dmsUpperNode}) không khớp với 6 ký tự đầu của Số đơn hàng (${orderPrefix}). Vui lòng kiểm tra lại.` 
+                    };
+                }
             }
         }
     } catch (dmsErr) {

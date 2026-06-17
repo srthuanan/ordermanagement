@@ -28,6 +28,8 @@ import RequestVcModal from './components/modals/RequestVcModal';
 import FilePreviewModal from './components/modals/FilePreviewModal';
 import PendingStatsModal from './components/modals/PendingStatsModal';
 import HoldExtensionModal from './components/modals/HoldExtensionModal';
+import GenerateMonthlyModal from './components/modals/GenerateMonthlyModal';
+import FifoAlertModal from './components/modals/FifoAlertModal';
 import GlobalSearchModal from './components/modals/GlobalSearchModal';
 import OrderGridView from './components/OrderGridView';
 import CustomTitleBar from './components/layout/CustomTitleBar';
@@ -158,6 +160,22 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     // State để điều hướng từ thông báo đến đúng xe
     const [stockSearch, setStockSearch] = useState('');
     const [targetInquiryIdForTVBH, setTargetInquiryIdForTVBH] = useState<string | null>(null);
+
+    useEffect(() => {
+        const handleNavigateStock = (e: any) => {
+            const vin = e.detail?.vin;
+            if (vin) {
+                // Force state change by clearing first
+                setStockSearch('');
+                setTimeout(() => {
+                    setStockSearch(vin);
+                    setActiveView('stock');
+                }, 10);
+            }
+        };
+        window.addEventListener('navigate-stock', handleNavigateStock);
+        return () => window.removeEventListener('navigate-stock', handleNavigateStock);
+    }, [setActiveView]);
 
     const [isStockEnabled, setIsStockEnabled] = useState(true);
     const [isTogglingStock, setIsTogglingStock] = useState(false);
@@ -1134,6 +1152,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
                 />
                 {/* {new Date() >= new Date('2026-01-05T00:00:00') && <LuckyMoneyWidget />} */}
+                <FifoAlertModal />
             </GlobalNotificationProvider>
         </>
     );

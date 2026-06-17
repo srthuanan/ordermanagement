@@ -75,7 +75,13 @@ const StockView: React.FC<StockViewProps> = ({
     // Listen for external search commands (e.g. from notifications)
     useEffect(() => {
         if (forcedSearch) {
-            setFilters(prev => ({ ...prev, keyword: forcedSearch }));
+            setFilters({
+                keyword: forcedSearch,
+                carModel: [],
+                version: [],
+                status: [],
+                exterior: [],
+            });
             setVisibleCount(20);
             if (containerRef.current) {
                 const scrollContainer = containerRef.current.querySelector('.flex-grow.overflow-y-auto');

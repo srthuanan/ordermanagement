@@ -17,6 +17,38 @@ export const holdCar = async (vin: string) => {
     const username = getStorageItem("currentUser") || ADMIN_USER;
     const fullName = getStorageItem("currentConsultant") || username;
     try {
+        // --- Bắt đầu: Ràng buộc FIFO ---
+        if (username !== 'admin') {
+            const { data: currentCar } = await supabase.from('khoxe')
+                .select('dong_xe, phien_ban, ngoai_that, noi_that, ngay_nhap')
+                .eq('vin', vin)
+                .single();
+
+            if (currentCar && currentCar.ngay_nhap) {
+                const { data: olderCars } = await supabase.from('khoxe')
+                    .select('vin')
+                    .eq('trang_thai', 'Chưa ghép')
+                    .is('nguoi_giu_xe', null)
+                    .eq('dong_xe', currentCar.dong_xe)
+                    .eq('phien_ban', currentCar.phien_ban)
+                    .eq('ngoai_that', currentCar.ngoai_that)
+                    .eq('noi_that', currentCar.noi_that)
+                    .lt('ngay_nhap', currentCar.ngay_nhap)
+                    .order('ngay_nhap', { ascending: true })
+                    .limit(1);
+
+                if (olderCars && olderCars.length > 0) {
+                    const errorMsg = `Hệ thống từ chối: Xe này nhập sau.\nVui lòng ưu tiên giữ/ghép xe cũ hơn (VIN: ${olderCars[0].vin}) theo đúng quy tắc FIFO!`;
+                    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('fifo-error', { detail: { message: errorMsg } }));
+                    return { 
+                        status: 'ERROR', 
+                        message: errorMsg 
+                    };
+                }
+            }
+        }
+        // --- Kết thúc: Ràng buộc FIFO ---
+
         const { data, error } = await supabase.rpc('rpc_hold_car', { p_vin: vin, p_username: username, p_full_name: fullName });
         if (error) throw error;
         if (data.status === 'SUCCESS') {
