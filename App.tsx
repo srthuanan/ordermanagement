@@ -28,7 +28,6 @@ import RequestVcModal from './components/modals/RequestVcModal';
 import FilePreviewModal from './components/modals/FilePreviewModal';
 import PendingStatsModal from './components/modals/PendingStatsModal';
 import HoldExtensionModal from './components/modals/HoldExtensionModal';
-import GenerateMonthlyModal from './components/modals/GenerateMonthlyModal';
 import FifoAlertModal from './components/modals/FifoAlertModal';
 import GlobalSearchModal from './components/modals/GlobalSearchModal';
 import OrderGridView from './components/OrderGridView';
