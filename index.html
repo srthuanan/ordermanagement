@@ -1033,68 +1033,9 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      background-color: #FFFFFF !important;
-      /* Fallback */
-    }
-
     .fixed.inset-0>.bg-surface-card::before,
     .fixed.inset-0>.bg-surface-ground::before {
       display: none;
-    }
-
-    /* === NEW ANIMATED BACKGROUND STYLES === */
-    .circuit-background {
-      position: fixed;
-      inset: 0;
-      z-index: -2;
-      background-color: var(--tw-color-surface-ground, #F7F9FC);
-      --circuit-color: rgba(13, 71, 161, 0.07);
-      background-image:
-        linear-gradient(var(--circuit-color) 1.5px, transparent 1.5px),
-        linear-gradient(to right, var(--circuit-color) 1.5px, transparent 1.5px),
-        linear-gradient(rgba(13, 71, 161, 0.04) 1px, transparent 1px),
-        linear-gradient(to right, rgba(13, 71, 161, 0.04) 1px, transparent 1px);
-      background-size:
-        70px 70px,
-        70px 70px,
-        14px 14px,
-        14px 14px;
-      background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px;
-      animation: circuit-flow 120s linear infinite;
-    }
-
-    @keyframes circuit-flow {
-      0% {
-        background-position: 0 0, 0 0, 0 0, 0 0;
-      }
-
-      100% {
-        background-position: -1400px 1400px, -1400px 1400px, -280px 280px, -280px 280px;
-      }
-    }
-
-    .scanline {
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      pointer-events: none;
-      background: linear-gradient(to bottom,
-          transparent 0%,
-          rgba(13, 71, 161, 0.03) 50%,
-          transparent 100%);
-      background-size: 100% 4px;
-      opacity: 0.6;
-      animation: scan-move 7s linear infinite;
-    }
-
-    @keyframes scan-move {
-      0% {
-        background-position: 0 -4px;
-      }
-
-      100% {
-        background-position: 0 100%;
-      }
     }
 
     /* Tippy.js Custom Theme */
@@ -1333,7 +1274,7 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/ordermanagement/assets/index-CQB_l9x3.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-C11___oD.js"></script>
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-react-tAaa2TlE.js">
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-jspdf-4V19iiIZ.js">
   <link rel="stylesheet" crossorigin href="/ordermanagement/assets/index-DQN6ilfT.css">
