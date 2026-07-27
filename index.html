@@ -638,133 +638,221 @@
       border-radius: 6px;
     }
 
-    /* === NEUMORPHIC STATUS BADGE STYLES V4 === */
+    /* === MODERN V5 GLASSMORTIC VIBRANT STATUS BADGES === */
     .status-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5.5px;
       border-radius: 9999px;
-      /* pill shape */
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 1;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.2;
       white-space: nowrap;
-      padding: 6px 12px;
-      color: var(--status-text-color, #374151);
-      background: var(--surface-ground, #F7F9FC);
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      box-shadow:
-        2px 2px 4px #d1d9e6,
-        -2px -2px 4px #ffffff;
-      transition: all 0.2s ease-in-out;
+      padding: 4.5px 11px;
+      color: var(--status-text-color, #334155);
+      background-color: var(--status-bg-color, rgba(241, 245, 249, 0.9));
+      border: 1.5px solid var(--status-border-color, rgba(203, 213, 225, 0.8));
+      box-shadow: 0 1px 3px var(--status-shadow-color, rgba(0, 0, 0, 0.04));
+      backdrop-filter: blur(4px);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .status-badge:hover {
       transform: translateY(-1px);
-      box-shadow:
-        3px 3px 6px #d1d9e6,
-        -3px -3px 6px #ffffff;
-    }
-
-    .status-badge:active {
-      transform: translateY(0);
-      box-shadow:
-        inset 1px 1px 2px #d1d9e6,
-        inset -1px -1px 2px #ffffff;
+      box-shadow: 0 3px 8px var(--status-shadow-color, rgba(0, 0, 0, 0.08));
     }
 
     .status-badge .badge-icon {
-      /* Icon is now just a colored icon, no background circle */
-      color: var(--status-text-color, #374151);
+      color: var(--status-text-color, #334155);
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 14px;
-      text-align: center;
     }
 
     .status-badge .badge-icon i {
       font-size: 12px;
     }
 
-    .status-badge .badge-text {
-      padding-right: 2px;
-    }
-
     .status-badge.pulse-icon .badge-icon {
       animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 
-    /* --- Color Variants (Text Color Only) --- */
-    /* Note: --status-bg-color and --status-shadow-rgb are no longer used */
-    .status-da-huy,
-    .status-tu-choi-ycvc {
-      --status-text-color: rgb(220 38 38);
-    }
-
-    .status-chua-ghep {
-      --status-text-color: rgb(22 163 74);
-    }
-
-    .status-cho-phe-duyet,
-    .status-cho-duyet-ycvc,
-    .status-cho-check-in {
-      --status-text-color: rgb(59 130 246);
-    }
-
-    .status-cho-ky-hoa-don {
-      --status-text-color: rgb(6 182 212);
-    }
-
-    .status-yeu-cau-bo-sung,
-    .status-cho-xac-thuc-vc {
-      --status-text-color: rgb(245 158 11);
-    }
-
-    .status-dang-giu,
-    .status-dang-lai-thu {
-      --status-text-color: rgb(99 102 241);
-    }
-
+    /* --- 100% DISTINCT INDIVIDUAL COLOR PALETTES FOR EVERY STATUS --- */
+    
+    /* 1. Đã ghép (Ocean Sky Blue + Key Icon) */
     .status-da-ghep {
-      --status-text-color: rgb(14 165 233);
+      --status-text-color: #0284c7;
+      --status-bg-color: #e0f2fe;
+      --status-border-color: #7dd3fc;
+      --status-shadow-color: rgba(14, 165, 233, 0.2);
     }
 
+    /* 2. Chưa ghép / Chưa tìm thấy VIN (Slate Cool Neutral) */
+    .status-chua-ghep {
+      --status-text-color: #475569;
+      --status-bg-color: #f1f5f9;
+      --status-border-color: #cbd5e1;
+      --status-shadow-color: rgba(71, 85, 105, 0.12);
+    }
+
+    /* 3. Đã xuất hóa đơn (Vibrant Lime Green) */
+    .status-da-xuat-hoa-don {
+      --status-text-color: #16a34a;
+      --status-bg-color: #dcfce7;
+      --status-border-color: #86efac;
+      --status-shadow-color: rgba(34, 197, 94, 0.2);
+    }
+
+    /* 4. Chờ ký hóa đơn (Cyan Aqua) */
+    .status-cho-ky-hoa-don {
+      --status-text-color: #0d9488;
+      --status-bg-color: #ccfbf1;
+      --status-border-color: #5eead4;
+      --status-shadow-color: rgba(13, 148, 136, 0.2);
+    }
+
+    /* 5. Chờ phê duyệt (Royal Indigo) */
+    .status-cho-phe-duyet {
+      --status-text-color: #4338ca;
+      --status-bg-color: #e0e7ff;
+      --status-border-color: #a5b4fc;
+      --status-shadow-color: rgba(99, 102, 241, 0.2);
+    }
+
+    /* 6. Chờ duyệt YCVC (Cobalt Blue) */
+    .status-cho-duyet-ycvc {
+      --status-text-color: #1d4ed8;
+      --status-bg-color: #dbeafe;
+      --status-border-color: #93c5fd;
+      --status-shadow-color: rgba(59, 130, 246, 0.2);
+    }
+
+    /* 7. Yêu cầu bổ sung (Vibrant Orange) */
+    .status-yeu-cau-bo-sung {
+      --status-text-color: #ea580c;
+      --status-bg-color: #ffedd5;
+      --status-border-color: #fdba74;
+      --status-shadow-color: rgba(234, 88, 12, 0.2);
+    }
+
+    /* 8. Chờ xác thực VC (Golden Amber) */
+    .status-cho-xac-thuc-vc {
+      --status-text-color: #d97706;
+      --status-bg-color: #fef3c7;
+      --status-border-color: #fde68a;
+      --status-shadow-color: rgba(217, 119, 6, 0.2);
+    }
+
+    /* 9. Đang giữ (Deep Violet) */
+    .status-dang-giu {
+      --status-text-color: #7c3aed;
+      --status-bg-color: #f3e8ff;
+      --status-border-color: #d8b4fe;
+      --status-shadow-color: rgba(124, 58, 237, 0.2);
+    }
+
+    /* 10. Đang lái thử (Hot Magenta Pink) */
+    .status-dang-lai-thu {
+      --status-text-color: #db2777;
+      --status-bg-color: #fce7f3;
+      --status-border-color: #f9a8d4;
+      --status-shadow-color: rgba(219, 39, 119, 0.2);
+    }
+
+    /* 11. Đã bổ sung (Emerald Mint) */
+    .status-da-bo-sung {
+      --status-text-color: #059669;
+      --status-bg-color: #d1fae5;
+      --status-border-color: #6ee7b7;
+      --status-shadow-color: rgba(5, 150, 105, 0.2);
+    }
+
+    /* 12. Đã phê duyệt (Teal Blue) */
     .status-da-phe-duyet {
-      --status-text-color: rgb(14 165 233);
+      --status-text-color: #0891b2;
+      --status-bg-color: #cffaff;
+      --status-border-color: #67e8f9;
+      --status-shadow-color: rgba(8, 145, 178, 0.2);
     }
 
-    /* Sky Blue */
-    .status-da-bo-sung,
-    .status-da-xuat-hoa-don,
-    .status-da-co-vc,
-    .status-da-hoan-tat {
-      --status-text-color: rgb(22 163 74);
-    }
-
+    /* 13. Yêu cầu VinClub (Purple Grape) */
     .status-yeu-cau-vinclub {
-      --status-text-color: rgb(124 58 237);
+      --status-text-color: #9333ea;
+      --status-bg-color: #f3e8ff;
+      --status-border-color: #c084fc;
+      --status-shadow-color: rgba(147, 51, 234, 0.2);
     }
 
-    .status-san-sang {
-      --status-text-color: rgb(22 163 74);
+    /* 14. Đã cấp VC / Đã có VC (Fuchsia Violet) */
+    .status-da-cap-vc,
+    .status-da-co-vc {
+      --status-text-color: #c026d3;
+      --status-bg-color: #fae8ff;
+      --status-border-color: #f0abfc;
+      --status-shadow-color: rgba(192, 38, 211, 0.2);
     }
 
-    .status-cho-duyet-vc {
-      --status-text-color: rgb(59 130 246);
+    /* 15. Đã hoàn tất (Dark Forest Green) */
+    .status-da-hoan-tat {
+      --status-text-color: #15803d;
+      --status-bg-color: #dcfce7;
+      --status-border-color: #4ade80;
+      --status-shadow-color: rgba(21, 128, 61, 0.2);
     }
 
-    .status-da-cap-vc {
-      --status-text-color: rgb(147 51 234);
-      /* Vibrant Purple for Premium Feel */
+    /* 16. Đã hủy / Đã hủy UI (Crimson Red) */
+    .status-da-huy {
+      --status-text-color: #dc2626;
+      --status-bg-color: #fee2e2;
+      --status-border-color: #fca5a5;
+      --status-shadow-color: rgba(220, 38, 38, 0.2);
     }
 
+    /* 17. Từ chối YCVC (Dark Rose Red) */
+    .status-tu-choi-ycvc {
+      --status-text-color: #991b1b;
+      --status-bg-color: #ffe4e6;
+      --status-border-color: #fecdd3;
+      --status-shadow-color: rgba(153, 27, 27, 0.2);
+    }
+
+    /* 18. Từ chối VC (Rose Coral) */
     .status-tu-choi-vc {
-      --status-text-color: rgb(220 38 38);
+      --status-text-color: #e11d48;
+      --status-bg-color: #ffe4e6;
+      --status-border-color: #fda4af;
+      --status-shadow-color: rgba(225, 29, 72, 0.2);
+    }
+
+    /* 19. Sẵn sàng (Leaf Green) */
+    .status-san-sang {
+      --status-text-color: #16a34a;
+      --status-bg-color: #f0fdf4;
+      --status-border-color: #86efac;
+      --status-shadow-color: rgba(22, 163, 74, 0.2);
+    }
+
+    /* 20. Chờ check-in (Sky Blue) */
+    .status-cho-check-in {
+      --status-text-color: #0284c7;
+      --status-bg-color: #e0f2fe;
+      --status-border-color: #7dd3fc;
+      --status-shadow-color: rgba(2, 132, 199, 0.2);
+    }
+
+    /* 21. Chờ duyệt VC (Electric Blue) */
+    .status-cho-duyet-vc {
+      --status-text-color: #2563eb;
+      --status-bg-color: #eff6ff;
+      --status-border-color: #93c5fd;
+      --status-shadow-color: rgba(37, 99, 235, 0.2);
     }
 
     .status-default {
-      --status-text-color: rgb(107 114 128);
+      --status-text-color: #475569;
+      --status-bg-color: #f8fafc;
+      --status-border-color: #e2e8f0;
+      --status-shadow-color: rgba(100, 116, 139, 0.12);
     }
 
     @keyframes pulse-dot {
@@ -1274,7 +1362,7 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/ordermanagement/assets/index-DRnglKZA.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-DUpZqNvs.js"></script>
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-react-tAaa2TlE.js">
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-jspdf-4V19iiIZ.js">
   <link rel="stylesheet" crossorigin href="/ordermanagement/assets/index-Co9QmW9L.css">
