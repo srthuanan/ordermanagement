@@ -1038,29 +1038,59 @@
             breakdownPromos.innerHTML = '';
 
             if (car.promos) {
+                // Tính phần tri ân xe xăng trước (nếu được chọn) để làm cơ sở cộng thêm cho VinClub
+                let triAnAmt = 0;
+                const triAnPromo = car.promos.find(p => selectedPromos[p.id] && (p.id === 'tri_an_xe_xang' || p.id.includes('tri_an')));
+                if (triAnPromo) {
+                    if (triAnPromo.options && triAnPromo.options.length > 0) {
+                        const optSel = document.getElementById(`promo-opt-${triAnPromo.id}`);
+                        const oIdx = optSel ? Number(optSel.value) : 0;
+                        const opt = triAnPromo.options[oIdx];
+                        if (opt) {
+                            let rawVal = String(opt.value).replace(',', '.');
+                            if (rawVal.includes('%') || (!isNaN(rawVal) && Number(rawVal) <= 100)) {
+                                triAnAmt = basePrice * (parseFloat(rawVal) / 100);
+                            } else {
+                                triAnAmt = Number(rawVal);
+                            }
+                        }
+                    } else if (triAnPromo.value) {
+                        let valStr = String(triAnPromo.value).replace(',', '.');
+                        if (valStr.includes('%')) {
+                            triAnAmt = basePrice * (parseFloat(valStr) / 100);
+                        } else {
+                            triAnAmt = Number(triAnPromo.value);
+                        }
+                    }
+                }
+
                 car.promos.forEach(p => {
                     if (selectedPromos[p.id]) {
                         let discountAmt = 0;
                         let title = vfe_global_data.promo_dict[p.id] || p.id;
+
+                        // VinClub được tính dựa trên (Giá xe + Tri ân xe xăng)
+                        let calcBasePrice = (p.id === 'vinclub' || p.id.includes('vinclub')) ? (basePrice + triAnAmt) : basePrice;
 
                         if (p.options && p.options.length > 0) {
                             const optSel = document.getElementById(`promo-opt-${p.id}`);
                             const oIdx = optSel ? Number(optSel.value) : 0;
                             const opt = p.options[oIdx];
                             if (opt) {
-                                let rawVal = String(opt.value);
+                                let rawVal = String(opt.value).replace(',', '.');
                                 if (rawVal.includes('%') || (!isNaN(rawVal) && Number(rawVal) <= 100)) {
                                     const pct = parseFloat(rawVal) / 100;
-                                    discountAmt = basePrice * pct;
+                                    discountAmt = calcBasePrice * pct;
                                 } else {
                                     discountAmt = Number(rawVal);
                                 }
                                 title += ` (${opt.name})`;
                             }
                         } else if (p.value) {
-                            if (p.value.includes('%')) {
-                                const pct = parseFloat(p.value) / 100;
-                                discountAmt = basePrice * pct;
+                            let valStr = String(p.value).replace(',', '.');
+                            if (valStr.includes('%')) {
+                                const pct = parseFloat(valStr) / 100;
+                                discountAmt = calcBasePrice * pct;
                             } else {
                                 discountAmt = Number(p.value);
                             }
