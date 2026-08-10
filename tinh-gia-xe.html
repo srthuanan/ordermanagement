@@ -782,6 +782,19 @@
 
             if (car.promos) {
                 car.promos.forEach((promo) => {
+                    // Cập nhật danh sách tùy chọn VinClub chuẩn theo Chính sách Ưu Đãi Đặc Biệt x3 (01/08/2026 - 31/10/2026)
+                    if (promo.id === 'vinclub' || promo.id.includes('vinclub')) {
+                        promo.options = [
+                            { name: 'KH chưa có hạng', value: '0.5%' },
+                            { name: 'Hạng GOLD (x3 quyền lợi)', value: '1.5%' },
+                            { name: 'Hạng Platinum (x3 quyền lợi)', value: '3%' },
+                            { name: 'Hạng Diamond (x3 quyền lợi)', value: '4.5%' },
+                            { name: 'Hạng GOLD (Tiêu chuẩn)', value: '0.5%' },
+                            { name: 'Hạng Platinum (Tiêu chuẩn)', value: '1%' },
+                            { name: 'Hạng Diamond (Tiêu chuẩn)', value: '1.5%' }
+                        ];
+                    }
+
                     const item = document.createElement('label');
                     item.className = 'promo-card-item';
 
@@ -1038,39 +1051,42 @@
             breakdownPromos.innerHTML = '';
 
             if (car.promos) {
-                // Tính phần tri ân xe xăng trước (nếu được chọn) để làm cơ sở cộng thêm cho VinClub
-                let triAnAmt = 0;
-                const triAnPromo = car.promos.find(p => selectedPromos[p.id] && (p.id === 'tri_an_xe_xang' || p.id.includes('tri_an')));
-                if (triAnPromo) {
-                    if (triAnPromo.options && triAnPromo.options.length > 0) {
-                        const optSel = document.getElementById(`promo-opt-${triAnPromo.id}`);
-                        const oIdx = optSel ? Number(optSel.value) : 0;
-                        const opt = triAnPromo.options[oIdx];
-                        if (opt) {
-                            let rawVal = String(opt.value).replace(',', '.');
-                            if (rawVal.includes('%') || (!isNaN(rawVal) && Number(rawVal) <= 100)) {
-                                triAnAmt = basePrice * (parseFloat(rawVal) / 100);
+                // Tính tổng tất cả các ưu đãi khác (trừ VinClub & Đại lý giảm) để trừ khỏi giá niêm yết trước khi tính % VinClub
+                let otherPromosDeduction = 0;
+                car.promos.forEach(p => {
+                    if (selectedPromos[p.id] && p.id !== 'vinclub' && !p.id.includes('vinclub')) {
+                        let promoAmt = 0;
+                        if (p.options && p.options.length > 0) {
+                            const optSel = document.getElementById(`promo-opt-${p.id}`);
+                            const oIdx = optSel ? Number(optSel.value) : 0;
+                            const opt = p.options[oIdx];
+                            if (opt) {
+                                let rawVal = String(opt.value).replace(',', '.');
+                                if (rawVal.includes('%') || (!isNaN(rawVal) && Number(rawVal) <= 100)) {
+                                    promoAmt = basePrice * (parseFloat(rawVal) / 100);
+                                } else {
+                                    promoAmt = Number(rawVal);
+                                }
+                            }
+                        } else if (p.value) {
+                            let valStr = String(p.value).replace(',', '.');
+                            if (valStr.includes('%')) {
+                                promoAmt = basePrice * (parseFloat(valStr) / 100);
                             } else {
-                                triAnAmt = Number(rawVal);
+                                promoAmt = Number(p.value);
                             }
                         }
-                    } else if (triAnPromo.value) {
-                        let valStr = String(triAnPromo.value).replace(',', '.');
-                        if (valStr.includes('%')) {
-                            triAnAmt = basePrice * (parseFloat(valStr) / 100);
-                        } else {
-                            triAnAmt = Number(triAnPromo.value);
-                        }
+                        otherPromosDeduction += promoAmt;
                     }
-                }
+                });
 
                 car.promos.forEach(p => {
                     if (selectedPromos[p.id]) {
                         let discountAmt = 0;
                         let title = vfe_global_data.promo_dict[p.id] || p.id;
 
-                        // VinClub được tính dựa trên (Giá xe + Tri ân xe xăng)
-                        let calcBasePrice = (p.id === 'vinclub' || p.id.includes('vinclub')) ? (basePrice + triAnAmt) : basePrice;
+                        // VinClub được tính dựa trên (Giá xe - Tổng tất cả các chương trình giảm giá khác đã chọn)
+                        let calcBasePrice = (p.id === 'vinclub' || p.id.includes('vinclub')) ? Math.max(0, basePrice - otherPromosDeduction) : basePrice;
 
                         if (p.options && p.options.length > 0) {
                             const optSel = document.getElementById(`promo-opt-${p.id}`);
