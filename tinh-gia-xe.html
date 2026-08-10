@@ -665,10 +665,65 @@
             return num.toLocaleString('vi-VN') + ' đ';
         }
 
+        function syncPricingConfigFromOverride() {
+            try {
+                const saved = localStorage.getItem('vfe_pricing_config_override');
+                if (!saved) return;
+                const override = JSON.parse(saved);
+                
+                if (override.global_promos && Array.isArray(override.global_promos)) {
+                    vfe_global_data.cars.forEach(car => {
+                        car.promos = JSON.parse(JSON.stringify(override.global_promos));
+                    });
+                }
+                
+                if (override.cars && Array.isArray(override.cars)) {
+                    override.cars.forEach(oCar => {
+                        const targetCar = vfe_global_data.cars.find(c => c.car_name === oCar.car_name);
+                        if (targetCar) {
+                            if (oCar.dlpp_discount_cap !== undefined) {
+                                targetCar.dlpp_discount_cap = oCar.dlpp_discount_cap;
+                            }
+                            if (oCar.versions && Array.isArray(oCar.versions)) {
+                                oCar.versions.forEach(oVer => {
+                                    const targetVer = targetCar.versions.find(v => v.name === oVer.name);
+                                    if (targetVer) {
+                                        targetVer.price = oVer.price;
+                                        if (targetVer.colors) {
+                                            targetVer.colors.forEach(col => {
+                                                if (!col.advanced) col.price = oVer.price;
+                                            });
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            } catch(e) {
+                console.error("Error syncing pricing config override:", e);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            syncPricingConfigFromOverride();
             renderModelChipsBar();
             bindEvents();
             calculate();
+        });
+
+        window.addEventListener('vfe_pricing_config_updated', () => {
+            syncPricingConfigFromOverride();
+            renderModelChipsBar();
+            calculate();
+        });
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'vfe_pricing_config_override') {
+                syncPricingConfigFromOverride();
+                renderModelChipsBar();
+                calculate();
+            }
         });
 
         function renderModelChipsBar() {
@@ -782,8 +837,8 @@
 
             if (car.promos) {
                 car.promos.forEach((promo) => {
-                    // Cập nhật danh sách tùy chọn VinClub chuẩn theo Chính sách Ưu Đãi Đặc Biệt x3 (01/08/2026 - 31/10/2026)
-                    if (promo.id === 'vinclub' || promo.id.includes('vinclub')) {
+                    // Cập nhật danh sách tùy chọn VinClub chuẩn theo Chính sách Ưu Đãi Đặc Biệt x3 nếu chưa có sẵn
+                    if ((promo.id === 'vinclub' || promo.id.includes('vinclub')) && (!promo.options || promo.options.length === 0)) {
                         promo.options = [
                             { name: 'KH chưa có hạng', value: '0.5%' },
                             { name: 'Hạng GOLD (x3 quyền lợi)', value: '1.5%' },
