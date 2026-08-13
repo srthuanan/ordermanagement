@@ -105,4 +105,4 @@ Error generating stack: `+o.message+`
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
- */const wp=[["path",{d:"M18 6 6 18",key:"1bl5f8"}],["path",{d:"m6 6 12 12",key:"d8bk6v"}]],Mp=sr("x",wp);export{Np as C,sp as Q,Z as R,zp as S,Mp as X,Ep as a,hc as b,Sp as c,Pp as d,xp as e,Ku as f,ts as g,kp as j,Be as r};
+ */const wp=[["path",{d:"M18 6 6 18",key:"1bl5f8"}],["path",{d:"m6 6 12 12",key:"d8bk6v"}]],Mp=sr("x",wp);export{Np as C,sp as Q,Z as R,zp as S,Mp as X,Ep as a,hc as b,Sp as c,Ku as d,xp as e,Pp as f,ts as g,kp as j,Be as r};
