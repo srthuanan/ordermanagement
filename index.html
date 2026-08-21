@@ -44,8 +44,32 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <script src="https://unpkg.com/@popperjs/core@2"></script>
   <script src="https://unpkg.com/tippy.js@6"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.22.0",
+    "moment/": "https://aistudiocdn.com/moment@^2.30.1/",
+    "moment": "https://aistudiocdn.com/moment@^2.30.1",
+    "vite": "https://aistudiocdn.com/vite@^7.1.9",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.0.4",
+    "chart.js/": "https://aistudiocdn.com/chart.js@^4.5.0/",
+    "rxjs": "https://aistudiocdn.com/rxjs@^7.8.2?conditions=es2015",
+    "rxjs/operators": "https://aistudiocdn.com/rxjs@^7.8.2/operators?conditions=es2015",
+    "rxjs/ajax": "https://aistudiocdn.com/rxjs@^7.8.2/ajax?conditions=es2015",
+    "rxjs/webSocket": "https://aistudiocdn.com/rxjs@^7.8.2/webSocket?conditions=es2015",
+    "rxjs/testing": "https://aistudiocdn.com/rxjs@^7.8.2/testing?conditions=es2015",
+    "rxjs/fetch": "https://aistudiocdn.com/rxjs@^7.8.2/fetch?conditions=es2015",
+    "react-dom/client": "https://next.esm.sh/react-dom@^19.2.0/client?external=rxjs",
+    "react/jsx-runtime": "https://next.esm.sh/react@^19.2.0/jsx-runtime?external=rxjs",
+    "moment/locale/vi": "https://next.esm.sh/moment@^2.30.1/locale/vi?external=rxjs"
+  }
+}
+</script>
+  <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1338,31 +1362,7 @@
     }
   </style>
 
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.22.0",
-    "moment/": "https://aistudiocdn.com/moment@^2.30.1/",
-    "moment": "https://aistudiocdn.com/moment@^2.30.1",
-    "vite": "https://aistudiocdn.com/vite@^7.1.9",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.0.4",
-    "chart.js/": "https://aistudiocdn.com/chart.js@^4.5.0/",
-    "rxjs": "https://aistudiocdn.com/rxjs@^7.8.2?conditions=es2015",
-    "rxjs/operators": "https://aistudiocdn.com/rxjs@^7.8.2/operators?conditions=es2015",
-    "rxjs/ajax": "https://aistudiocdn.com/rxjs@^7.8.2/ajax?conditions=es2015",
-    "rxjs/webSocket": "https://aistudiocdn.com/rxjs@^7.8.2/webSocket?conditions=es2015",
-    "rxjs/testing": "https://aistudiocdn.com/rxjs@^7.8.2/testing?conditions=es2015",
-    "rxjs/fetch": "https://aistudiocdn.com/rxjs@^7.8.2/fetch?conditions=es2015",
-    "react-dom/client": "https://next.esm.sh/react-dom@^19.2.0/client?external=rxjs",
-    "react/jsx-runtime": "https://next.esm.sh/react@^19.2.0/jsx-runtime?external=rxjs",
-    "moment/locale/vi": "https://next.esm.sh/moment@^2.30.1/locale/vi?external=rxjs"
-  }
-}
-</script>
-  <script type="module" crossorigin src="/ordermanagement/assets/index-CqVKjazG.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-nLMuzD9O.js"></script>
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-react-DC_ylhYQ.js">
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-excel-D2ilIwzN.js">
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-supabase-DH7NlqY0.js">
