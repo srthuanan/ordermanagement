@@ -4,22 +4,21 @@ import 'moment/locale/vi';
 import { DropdownFilterConfig } from './components/ui/Filters';
 import TabbedFilter from './components/ui/TabbedFilter';
 import MultiSelectDropdown from './components/ui/MultiSelectDropdown';
-import SummerBackground from './components/ui/SummerBackground';
 
 // Lazy Load Components
 import StockView from './components/StockView';
 import SoldCarsView from './components/SoldCarsView';
 import AdminView from './components/admin/AdminView';
-import MapView from './components/MapView';
+import PricingCalculatorIframeView from './components/PricingCalculatorIframeView';
 const TestDriveForm = React.lazy(() => import('./components/testdrive/TestDriveForm'));
+const VirtualAssistant = React.lazy(() => import('./components/VirtualAssistant'));
 
 // Eager imports for modals (lightweight enough or critical)
-import OrderDetailsModal from './components/modals/OrderDetailsModal';
+import { OrderDetailView } from './components/OrderDetailView';
 import CancelRequestModal from './components/modals/CancelRequestModal';
 import RequestInvoiceModal from './components/modals/RequestInvoiceModal';
 import SupplementaryFileModal from './components/modals/SupplementaryFileModal';
 import CreateRequestModal from './components/modals/CreateRequestModal';
-import EditOrderModal from './components/modals/EditOrderModal';
 import SuperEditModal from './components/modals/SuperEditModal';
 import ChangePasswordModal from './components/modals/ChangePasswordModal';
 import ImagePreviewModal from './components/modals/ImagePreviewModal';
@@ -32,9 +31,7 @@ import FifoAlertModal from './components/modals/FifoAlertModal';
 import GlobalSearchModal from './components/modals/GlobalSearchModal';
 import OrderGridView from './components/OrderGridView';
 import CustomTitleBar from './components/layout/CustomTitleBar';
-import CarInquiryView from './components/InquiryView';
 import ReportBacklogModal from './components/modals/ReportBacklogModal';
-import { VirtualAssistant } from './components/VirtualAssistant';
 import MaintenanceFeeBlocker from './components/MaintenanceFeeBlocker';
 
 import { useAppNavigation } from './hooks/useAppNavigation';
@@ -47,6 +44,7 @@ import { useHoldReminder } from './hooks/useHoldReminder';
 
 import Header from './components/layout/Header';
 import BottomNav from './components/layout/BottomNav';
+import RealtimeFooterClock from './components/layout/RealtimeFooterClock';
 import StockArrivalPopup from './components/ui/StockArrivalPopup';
 import BroadcastPopup from './components/ui/BroadcastPopup';
 // import LuckyMoneyWidget from './components/ui/LuckyMoneyWidget';
@@ -55,7 +53,6 @@ import * as apiService from './services/apiService';
 import { supabase } from './services/apiService';
 import { AnalyticsData, Order } from './types';
 import { GlobalNotificationProvider } from './components/context/GlobalNotificationContext';
-import footerImg from './pictures/footer.png';
 
 
 moment.locale('vi');
@@ -93,8 +90,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         isSidebarCollapsed, isMobileMenuOpen, setIsMobileMenuOpen, activeView, setActiveView,
         initialAdminState, showOrderInAdmin, showAdminTab, showInquiryInAdmin, clearInitialState
     } = useAppNavigation();
-
-    const [targetVinOnMap, setTargetVinOnMap] = useState<string | null>(null);
 
     const {
         allHistoryData, setAllHistoryData, historyData, isLoadingHistory, errorHistory, refetchHistory, archivesLoadedFromCache,
@@ -134,6 +129,12 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     } = useOrderOperations({ showToast, hideToast, refetchHistory, refetchStock, setAllHistoryData, isReferenceAccount });
 
     const [isBacklogModalOpen, setIsBacklogModalOpen] = useState(false);
+    const [mobileSubTab, setMobileSubTab] = useState<'list' | 'detail'>('list');
+
+    const handleSelectOrderMobile = useCallback((order: Order) => {
+        handleViewDetails(order);
+        setMobileSubTab('detail');
+    }, [handleViewDetails]);
 
     // Tự động nhắc nhở sắp hết hạn giữ xe
     useHoldReminder({ stockData, currentUser, username: currentUserName });
@@ -149,8 +150,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
         if (vin) {
             console.log("Deep link detected for VIN:", vin);
-            setActiveView('map');
-            setTargetVinOnMap(vin);
+            setActiveView('stock');
+            setStockSearch(vin);
             const cleanUrl = window.location.origin + window.location.pathname;
             window.history.replaceState({}, document.title, cleanUrl);
         }
@@ -158,7 +159,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
     // State để điều hướng từ thông báo đến đúng xe
     const [stockSearch, setStockSearch] = useState('');
-    const [targetInquiryIdForTVBH, setTargetInquiryIdForTVBH] = useState<string | null>(null);
 
     useEffect(() => {
         const handleNavigateStock = (e: any) => {
@@ -430,19 +430,61 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
     }, [isCurrentUserAdmin, setActiveView]);
 
-    // Heartbeat: Record user presence every 5 minutes
+    // Record user presence on login and when tab becomes active
     useEffect(() => {
-        const intervalId = setInterval(() => {
-            if (currentUser) {
-                apiService.recordUserPresence();
-            }
-        }, 5 * 60 * 1000); // 5 minutes
-
-        // Initial call
-        apiService.recordUserPresence();
-
-        return () => clearInterval(intervalId);
+        if (currentUser) {
+            apiService.recordUserPresence();
+        }
     }, [currentUser]);
+
+    // --- GLOBAL KEYBOARD SHORTCUTS ---
+    // Ctrl+F / Cmd+F: Focus active search bar
+    // Esc: Close any open modal or detail view
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ctrl + F or Cmd + F: Search Shortcut
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'f' || e.key === 'F')) {
+                e.preventDefault();
+                const activeSearchInput = (
+                    document.querySelector('input[placeholder*="Tìm"]') as HTMLInputElement ||
+                    document.querySelector('input[type="text"]') as HTMLInputElement
+                );
+                if (activeSearchInput) {
+                    activeSearchInput.focus();
+                    activeSearchInput.select();
+                } else {
+                    setIsGlobalSearchOpen(true);
+                }
+            }
+
+            // Esc: Close Modal Shortcut
+            if (e.key === 'Escape') {
+                if (imagePreview) setImagePreview(null);
+                else if (filePreview) setFilePreview(null);
+                else if (selectedOrder) setSelectedOrder(null);
+                else if (orderToCancel) setOrderToCancel(null);
+                else if (orderToRequestInvoice) setOrderToRequestInvoice(null);
+                else if (orderToSupplement) setOrderToSupplement(null);
+                else if (orderToEdit) setOrderToEdit(null);
+                else if (orderToRequestVC) setOrderToRequestVC(null);
+                else if (orderToConfirmVC) setOrderToConfirmVC(null);
+                else if (orderToSuperEdit) setOrderToSuperEdit(null);
+                else if (isGlobalSearchOpen) setIsGlobalSearchOpen(false);
+                else if (isPendingStatsModalOpen) setIsPendingStatsModalOpen(false);
+                else if (isChangePasswordModalOpen) setIsChangePasswordModalOpen(false);
+                else if (isBacklogModalOpen) setIsBacklogModalOpen(false);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [
+        imagePreview, filePreview, selectedOrder, orderToCancel, orderToRequestInvoice,
+        orderToSupplement, orderToEdit, orderToRequestVC, orderToConfirmVC, orderToSuperEdit,
+        isGlobalSearchOpen, isPendingStatsModalOpen, isChangePasswordModalOpen, isBacklogModalOpen,
+        setImagePreview, setFilePreview, setSelectedOrder, setOrderToCancel, setOrderToRequestInvoice,
+        setOrderToSupplement, setOrderToEdit, setOrderToRequestVC, setOrderToConfirmVC, setOrderToSuperEdit
+    ]);
 
     const {
         filters, handleFilterChange, handleResetFilters,
@@ -522,7 +564,15 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
     }, [selectedOrder, processedData, setSelectedOrder]);
 
-    const handleCloseOrderDetails = useCallback(() => setSelectedOrder(null), [setSelectedOrder]);
+
+
+    useEffect(() => {
+        if (activeView === 'orders' && paginatedData.length > 0) {
+            if (!selectedOrder || !paginatedData.some(o => o['Số đơn hàng'] === selectedOrder['Số đơn hàng'])) {
+                setSelectedOrder(paginatedData[0]);
+            }
+        }
+    }, [activeView, paginatedData, setSelectedOrder]);
 
     const vehicleAnalyticsData = useMemo((): AnalyticsData => {
         const pendingRequests = allHistoryData.filter((o: any) => o['Kết quả']?.toLowerCase().includes('chưa'));
@@ -593,7 +643,24 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const uniqueStatuses = useMemo(() => [...new Set(historyData.map((o: any) => o["Trạng thái VC"] || o["Kết quả"] || "Chưa ghép").filter(Boolean))].sort(), [historyData]);
     const uniqueExteriors = useMemo(() => [...new Set(historyData.map((o: any) => o["Ngoại thất"]).filter(Boolean))].sort(), [historyData]);
 
+    const orderModelCounts = useMemo(() => {
+        const counts: Record<string, number> = {};
+        for (let i = 0; i < historyData.length; i++) {
+            const model = historyData[i]["Dòng xe"];
+            if (model) {
+                counts[model] = (counts[model] || 0) + 1;
+            }
+        }
+        return counts;
+    }, [historyData]);
 
+    const carModelTabs = useMemo(() => {
+        return uniqueCarModels.map((model: string) => ({
+            id: model,
+            label: model,
+            count: orderModelCounts[model] || 0
+        }));
+    }, [uniqueCarModels, orderModelCounts]);
 
     const renderOrdersContent = () => {
         const animationClass = 'animate-fade-in-up';
@@ -608,28 +675,18 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             { id: 'order-filter-exterior', key: 'exterior', label: 'Ngoại Thất', options: uniqueExteriors as string[], icon: 'fa-palette' },
         ].filter(d => d.options.length > 0);
 
-        const quickActionMenu = (
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={() => setIsPendingStatsModalOpen(true)}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-accent-primary hover:border-accent-primary/30 hover:bg-accent-primary/5 transition-all duration-300 shadow-sm"
-                    title="Thống kê yêu cầu"
-                >
-                    <i className="fas fa-chart-pie text-xs"></i>
-                </button>
-
-                {/* Admin button removed as requested */}
-            </div>
+        const statsButton = (
+            <button
+                onClick={() => setIsPendingStatsModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 lg:py-1 text-[12px] lg:text-[11px] font-semibold rounded-lg transition-all duration-200 outline-none whitespace-nowrap min-h-[32px] lg:min-h-0 bg-white/90 hover:bg-white text-slate-700 hover:text-amber-600 border border-slate-200/80 shadow-xs hover:shadow-sm hover:scale-[1.02] active:scale-95 cursor-pointer"
+                title="Thống kê yêu cầu"
+            >
+                <i className="fas fa-chart-pie text-[12px] lg:text-[11px] text-amber-500"></i>
+                <span className="font-bold">Thống kê</span>
+            </button>
         );
 
         // --- TABS LOGIC ---
-        // Calculate counts for each car model
-        const carModelTabs = uniqueCarModels.map((model: any) => ({
-            id: model as string,
-            label: model as string,
-            count: historyData.filter((o: any) => o['Dòng xe'] === model).length as number
-        }));
-
         const totalCount = historyData.length;
         const tabs = [
             { id: 'all', label: 'Tất cả', count: totalCount as number },
@@ -679,11 +736,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         tabs={tabs}
                         activeTab={activeTab}
                         onTabChange={handeTabChange}
+                        tabsExtra={statsButton}
                         searchValue={filters.keyword || ''}
                         onSearchChange={(val) => handleFilterChange({ keyword: val })}
                         onReset={handleResetFilters}
                         canReset={true} // Simplified check, ideally check if filters are active
-                        extraActions={quickActionMenu}
                     >
                         {/* Render Secondary Filters */}
                         {dropdownConfigs.map(dropdown => (
@@ -705,51 +762,107 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         ))}
                     </TabbedFilter>
                 </div>
-                <div ref={containerRef} className="flex-1 flex flex-col min-h-0 -mt-2">
-                    <div className="bg-sky-50/70 backdrop-blur-md relative rounded-xl shadow-lg border border-cyan-100 flex flex-col h-full overflow-hidden">
-                        {/* Premium Summer Background Effect */}
-                        <SummerBackground />
+                <div ref={containerRef} className="flex-1 flex flex-col min-h-0 mt-1">
+                    <div className="bg-slate-50 relative rounded-2xl shadow-sm border border-slate-200/70 flex flex-col h-full overflow-hidden transition-all duration-300">
+                        {/* Mobile Sub-Tab Navigation Header (Only visible on < lg screens) */}
+                        <div className="flex lg:hidden items-center justify-between bg-slate-100/90 p-1.5 border-b border-slate-200 shrink-0">
+                            <div className="flex items-center gap-1 w-full bg-slate-200/80 p-1 rounded-xl">
+                                <button
+                                    onClick={() => setMobileSubTab('list')}
+                                    className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
+                                        mobileSubTab === 'list' 
+                                            ? 'bg-white text-slate-800 shadow-xs' 
+                                            : 'text-slate-500 hover:text-slate-800'
+                                    }`}
+                                >
+                                    <i className="fas fa-list-ul text-[11px]"></i>
+                                    <span>Danh sách ({processedData.length})</span>
+                                </button>
 
-                        <div className="flex-grow overflow-y-auto relative z-10 hidden-scrollbar p-1 flex flex-col">
-                            {isLoading && allHistoryData.length === 0 ? (
-                                <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-2.5 p-1">
-                                    {skeletons}
-                                </div>
-                            ) : (
-                                <OrderGridView
-                                    orders={paginatedData}
-                                    onViewDetails={handleViewDetails}
+                                <button
+                                    onClick={() => setMobileSubTab('detail')}
+                                    className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-extrabold transition-all flex items-center justify-center gap-2 ${
+                                        mobileSubTab === 'detail' 
+                                            ? 'bg-white text-blue-600 shadow-xs' 
+                                            : 'text-slate-500 hover:text-slate-800'
+                                    }`}
+                                >
+                                    <i className="fas fa-info-circle text-[11px]"></i>
+                                    <span className="truncate">Chi tiết {selectedOrder ? `(${selectedOrder['Tên khách hàng'] || 'Đơn hàng'})` : ''}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col lg:flex-row w-full h-full overflow-hidden">
+                            {/* Left Pane: Master Order List (30% width on Desktop, Full height when active on Mobile) */}
+                            <div className={`w-full lg:w-[30%] ${mobileSubTab === 'list' ? 'h-full flex' : 'hidden lg:flex'} lg:h-full flex-col overflow-y-auto hidden-scrollbar p-1.5 border-b lg:border-b-0 lg:border-r border-slate-200/70 z-10`}>
+                                {isLoading && allHistoryData.length === 0 ? (
+                                    <div className="grid grid-cols-1 gap-2.5 p-1">
+                                        {skeletons}
+                                    </div>
+                                ) : (
+                                    <OrderGridView
+                                        orders={paginatedData}
+                                        onViewDetails={handleSelectOrderMobile}
+                                        onCancel={setOrderToCancel}
+                                        onRequestInvoice={setOrderToRequestInvoice}
+                                        onSupplement={setOrderToSupplement}
+                                        onEdit={setOrderToEdit}
+                                        onRequestVC={setOrderToRequestVC}
+                                        onConfirmVC={setOrderToConfirmVC}
+                                        processingOrder={processingOrder}
+                                        showOrderInAdmin={isCurrentUserAdmin ? showOrderInAdmin : undefined}
+                                        showAdminTab={isCurrentUserAdmin ? showAdminTab : undefined}
+                                        isReferenceAccount={isReferenceAccount}
+                                        selectedOrderId={selectedOrder?.['Số đơn hàng']}
+                                    />
+                                )}
+                                {/* Load More Trigger for Infinite Scroll */}
+                                {visibleCount < processedData.length && (
+                                    <div ref={loadMoreRef} className="h-12 w-full flex items-center justify-center py-4 shrink-0">
+                                        <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
+                                    </div>
+                                )}
+                                {/* Load More Archives Trigger (if local data exhausted) */}
+                                {visibleCount >= processedData.length && !isLastArchive && (
+                                    <div className="p-4 flex justify-center shrink-0">
+                                        <button
+                                            onClick={handleLoadMoreArchives}
+                                            disabled={isLoadingArchives}
+                                            className="text-gray-500 hover:text-gray-800 hover:underline text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
+                                        >
+                                            {isLoadingArchives ? "Đang tải thêm..." : "Tải thêm lưu trữ"}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Right Pane: Embedded Order Details Panel (70% width on Desktop, Full height when active on Mobile) */}
+                            <div className={`w-full lg:w-[70%] ${mobileSubTab === 'detail' ? 'h-full flex' : 'hidden lg:flex'} lg:h-full relative overflow-hidden p-1 flex-col`}>
+                                <div className="flex-1 min-h-0 h-full">
+                                <OrderDetailView
+                                    order={selectedOrder}
+                                    orderList={processedData}
+                                    onNavigate={handleOrderNavigation}
                                     onCancel={setOrderToCancel}
                                     onRequestInvoice={setOrderToRequestInvoice}
                                     onSupplement={setOrderToSupplement}
-                                    onEdit={setOrderToEdit}
                                     onRequestVC={setOrderToRequestVC}
                                     onConfirmVC={setOrderToConfirmVC}
-                                    processingOrder={processingOrder}
-                                    showOrderInAdmin={isCurrentUserAdmin ? showOrderInAdmin : undefined}
-                                    showAdminTab={isCurrentUserAdmin ? showAdminTab : undefined}
+                                    onEdit={(updatedOrder) => handleEditSuccess(undefined, updatedOrder)}
+                                    onSelectPolicy={handleSelectPolicy}
                                     isReferenceAccount={isReferenceAccount}
+                                    showToast={showToast}
+                                    onInvoiceConfirm={handleRequestInvoice}
+                                    onCancelConfirm={handleCancelOrder}
+                                    stockData={stockData}
+                                    onClose={() => {
+                                        setSelectedOrder(null);
+                                        setMobileSubTab('list');
+                                    }}
                                 />
-                            )}
-                            {/* Load More Trigger for Infinite Scroll */}
-                            {visibleCount < processedData.length && (
-                                <div ref={loadMoreRef} className="mt-auto h-10 w-full flex items-center justify-center py-4">
-                                    <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
                                 </div>
-                            )}
-
-                            {/* Load More Archives Trigger (if local data exhausted) */}
-                            {visibleCount >= processedData.length && !isLastArchive && (
-                                <div className="mt-auto p-4 flex justify-center">
-                                    <button
-                                        onClick={handleLoadMoreArchives}
-                                        disabled={isLoadingArchives}
-                                        className="text-gray-500 hover:text-gray-800 hover:underline text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:no-underline"
-                                    >
-                                        {isLoadingArchives ? "Đang tải thêm..." : "Tải thêm lưu trữ"}
-                                    </button>
-                                </div>
-                            )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -765,8 +878,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     <MaintenanceFeeBlocker currentUserName={currentUser || ''} onLogout={onLogout} />
                 )}
 
-                <div className="circuit-background"></div>
-                <div className="scanline"></div>
                 <div id="sidebar-overlay" onClick={() => setIsMobileMenuOpen(false)} className={`fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 lg:hidden ${isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}></div>
 
                 <div className={`relative h-screen flex flex-col transition-all duration-300 ease-in-out w-full pb-16 lg:pb-0`}>
@@ -788,7 +899,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             },
                             showInquiryInAdmin,
                             showAdminTab,
-                            setTargetInquiryIdForTVBH,
                             setExtensionVehicle: (vin) => {
                                 const car = stockData.find((c: any) => c.VIN === vin);
                                 if (car) {
@@ -824,20 +934,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         <div hidden={activeView !== 'orders'} className="h-full">
                             {renderOrdersContent()}
                         </div>
-                        {activeView === 'map' && (
-                            <div className="h-full">
-                                <MapView
-                                    stockData={stockData}
-                                    xuathoadonData={xuathoadonData}
-                                    refetchStock={refetchStock}
-                                    showToast={showToast}
-                                    currentUser={currentUser}
-                                    targetVinOnMap={targetVinOnMap}
-                                    onClearTargetVinOnMap={() => setTargetVinOnMap(null)}
-                                    isReferenceAccount={isReferenceAccount}
-                                />
-                            </div>
-                        )}
                         <div hidden={activeView !== 'stock'} className="h-full relative overflow-hidden flex flex-col">
                             {!isStockEnabled && isCurrentUserAdmin && (
                                 <div className="flex-shrink-0 bg-amber-500/10 backdrop-blur-md border-b border-amber-500/20 px-4 py-2 flex items-center justify-center gap-3 animate-fade-in z-20">
@@ -908,12 +1004,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                         forcedSearch={stockSearch}
                                         isReferenceAccount={isReferenceAccount}
                                         onNavigateToInquiry={() => {
-                                            setTargetInquiryIdForTVBH('new');
                                             setActiveView('inquiry');
                                         }}
-                                        onViewCarOnMap={(vin: string) => {
-                                            setTargetVinOnMap(vin);
-                                            setActiveView('map');
+                                        onViewCarOnMap={() => {
+                                            setActiveView('stock');
                                         }}
                                     />
                                 )}
@@ -944,14 +1038,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                 />
                             </Suspense>
                         </div>
-                        <div hidden={activeView !== 'inquiry'} className="h-full">
-                            <CarInquiryView
-                                currentUser={{ name: currentUserName, email: currentUser }}
-                                showToast={showToast}
-                                initialInquiryId={targetInquiryIdForTVBH || undefined}
-                                onProcessed={() => setTargetInquiryIdForTVBH(null)}
-                                isReferenceAccount={isReferenceAccount}
-                            />
+                        <div hidden={activeView !== 'pricing'} className="h-full">
+                            <PricingCalculatorIframeView />
                         </div>
                         <div hidden={activeView !== 'admin'} className="h-full">
                             {isCurrentUserAdmin &&
@@ -980,8 +1068,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             }
                         </div>
                     </main >
-                    <footer className="hidden lg:flex flex-shrink-0 h-8 bg-surface-card/70 backdrop-blur-xl border-t border-border-primary/50 items-center justify-center px-4 sm:px-6">
-                        <img src={footerImg} alt="Order Management 2026" className="h-5 w-auto object-contain opacity-80" />
+                    <footer className="hidden lg:flex flex-shrink-0 h-7 px-5 bg-transparent items-center justify-between text-[10px] select-none">
+                        <RealtimeFooterClock />
+                        <span className="font-bold tracking-[0.22em] text-slate-400/80 uppercase">© 2026 ORDER MANAGEMENT</span>
                     </footer>
                 </div >
 
@@ -1026,48 +1115,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     showToast={showToast}
                     username={currentUserName}
                 />
-                <OrderDetailsModal
-                    isOpen={!!selectedOrder}
-                    order={selectedOrder}
-                    onClose={handleCloseOrderDetails}
-                    orderList={processedData}
-                    onNavigate={handleOrderNavigation}
-                    onCancel={setOrderToCancel}
-                    onRequestInvoice={setOrderToRequestInvoice}
-                    onSupplement={setOrderToSupplement}
-                    onRequestVC={setOrderToRequestVC}
-                    onConfirmVC={setOrderToConfirmVC}
-                    onEdit={setOrderToEdit}
-                    onSelectPolicy={handleSelectPolicy}
-                    isAdmin={isCurrentUserAdmin}
-                    onEditVin={async (order: Order, newVin: string) => {
-                        showToast('Đang cập nhật...', 'Vui lòng chờ trong giây lát.', 'loading');
-                        try {
-                            const res = await apiService.updateCarInfo(order.VIN || '', { VIN: newVin });
-                            if (res.status === 'SUCCESS') {
-                                showToast('Thành công', `Đã cập nhật số VIN thành ${newVin}`, 'success');
-                                refetchHistory();
-                                refetchStock();
-                            } else {
-                                showToast('Lỗi', res.message, 'error');
-                            }
-                        } catch (error: any) {
-                            showToast('Lỗi', error.message, 'error');
-                        }
-                    }}
-                />
-                <EditOrderModal
-                    isOpen={!!orderToEdit}
-                    onClose={() => setOrderToEdit(null)}
-                    onSuccess={handleEditSuccess}
-                    order={orderToEdit}
-                    showToast={showToast}
-                    existingOrderNumbers={allHistoryData
-                        .map((o: any) => o["Số đơn hàng"])
-                        .filter((num: any) => num !== orderToEdit?.["Số đơn hàng"])
-                    }
-                    isAdmin={isCurrentUserAdmin}
-                />
+
+
                 <SuperEditModal
                     isOpen={!!orderToSuperEdit}
                     onClose={() => setOrderToSuperEdit(null)}
@@ -1134,7 +1183,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     />
                 )}
 
-                {isChatEnabled && <VirtualAssistant />}
+                {isChatEnabled && (
+                    <Suspense fallback={null}>
+                        <VirtualAssistant />
+                    </Suspense>
+                )}
 
                 <BottomNav
                     activeView={activeView}

@@ -18,10 +18,13 @@ interface RequestInvoiceModalProps {
         preProcessedPayloads?: any,
         xeXangVin?: string,
         xeXangHang?: string,
-        xeXangModel?: string
+        xeXangModel?: string,
+        maVc?: string
     ) => Promise<any>;
     stockData?: any[]; 
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
+    /** When true, renders inline inside a parent container (no fixed overlay) */
+    inline?: boolean;
 }
 
 const Stepper: React.FC<{ currentStep: number, hasVinClub?: boolean }> = ({ currentStep, hasVinClub }) => {
@@ -98,7 +101,7 @@ const Stepper: React.FC<{ currentStep: number, hasVinClub?: boolean }> = ({ curr
     );
 };
 
-const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClose, onConfirm, stockData, showToast }) => {
+const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClose, onConfirm, stockData, showToast, inline = false }) => {
     const [step, setStep] = useState(1);
     const [contractFile, setContractFile] = useState<File | null>(null);
     const [proposalFile, setProposalFile] = useState<File | null>(null);
@@ -116,6 +119,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const [xeXangVin, setXeXangVin] = useState('');
     const [xeXangHang, setXeXangHang] = useState('');
     const [xeXangModel, setXeXangModel] = useState('');
+    const [maVc, setMaVc] = useState('');
     const [vinCheckError, setVinCheckError] = useState('');
     const [isCheckingVin, setIsCheckingVin] = useState(false);
     
@@ -146,31 +150,117 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     }, []);
 
     const filteredSalesPolicies = useMemo(() => {
+        const orderPolicies = (order && order["CHÍNH SÁCH"])
+            ? order["CHÍNH SÁCH"].split('; ').map(s => s.trim()).filter(Boolean)
+            : [];
+
+        const allValidFromDb = salesPoliciesOptions
+            .map(p => typeof p === 'string' ? (p as string).trim() : (p?.ten_chinh_sach || '').trim())
+            .filter(Boolean);
+
         if (!order || !order["Dòng xe"] || salesPoliciesOptions.length === 0) {
-            return salesPoliciesOptions.map(p => p.ten_chinh_sach).sort();
+            return [...new Set([...orderPolicies, ...allValidFromDb])].sort();
         }
-        const currentCarModel = order["Dòng xe"].replace(/\s+/g, '').toLowerCase();
-        const specificPolicies = salesPoliciesOptions.filter(policy => {
-            if (policy.dong_xe) {
-                const dongXeArr = policy.dong_xe.toLowerCase().split(',').map(s => s.replace(/\s+/g, ''));
-                return dongXeArr.some(dx => dx === currentCarModel || currentCarModel.includes(dx));
+
+        const rawCarModel = (order["Dòng xe"] || '').toLowerCase().replace(/\s+/g, '');
+        const rawVersion = (order["Phiên bản"] || '').toLowerCase().replace(/\s+/g, '');
+
+        // Bảng tra cứu tất cả các mẫu xe VinFast & biệt danh (Nerio, Herio, Sherio, v.v.)
+        const carModelAliases: Record<string, string[]> = {
+            vf2: ['vf2', 'vf 2'],
+            vf3: ['vf3', 'vf 3', 'nerio'],
+            vf5: ['vf5', 'vf 5', 'herio'],
+            vfe34: ['vfe34', 'vf e34', 'e34'],
+            vf6: ['vf6', 'vf 6', 'shero'],
+            vf7: ['vf7', 'vf 7'],
+            vf8: ['vf8', 'vf 8'],
+            vf9: ['vf9', 'vf 9'],
+            fadil: ['fadil'],
+            luxa: ['luxa', 'lux a'],
+            luxsa: ['luxsa', 'lux sa'],
+            ec300: ['ec300', 'ec 300'],
+            limo: ['limo']
+        };
+
+        // Tìm key dòng xe hiện tại của đơn hàng (ví dụ: 'vf5')
+        let orderModelKey = '';
+        for (const [key, aliases] of Object.entries(carModelAliases)) {
+            if (aliases.some(alias => rawCarModel.includes(alias.replace(/\s+/g, '')))) {
+                orderModelKey = key;
+                break;
             }
-            return false;
-        });
-        const genericPolicies = salesPoliciesOptions.filter(policy => {
-            if (!policy.dong_xe || policy.dong_xe.trim() === '') return true;
-            const dxLower = policy.dong_xe.toLowerCase().trim();
-            return dxLower.includes('tất cả') || dxLower === 'all';
-        });
-        const result = [...new Set([...specificPolicies, ...genericPolicies].map(p => p.ten_chinh_sach))];
-        return result.length > 0 ? result.sort() : salesPoliciesOptions.map(p => p.ten_chinh_sach).sort();
+        }
+        if (!orderModelKey) orderModelKey = rawCarModel;
+
+        const matchedFromDb = salesPoliciesOptions.map(p => {
+            const name = typeof p === 'string' ? (p as string).trim() : (p?.ten_chinh_sach || '').trim();
+            const dongXe = typeof p === 'string' ? '' : (p?.dong_xe || '').trim();
+            return { name, dongXe };
+        }).filter(item => item.name !== '').filter(item => {
+            const nameLower = item.name.toLowerCase();
+            const dongXeLower = item.dongXe.toLowerCase();
+            const combinedText = `${nameLower} ${dongXeLower}`;
+
+            // 1. Kiểm tra nếu có trường dongXe cụ thể trong DB
+            if (item.dongXe) {
+                const dongXeList = item.dongXe.toLowerCase().split(',').map(s => s.trim().replace(/\s+/g, ''));
+                if (dongXeList.some(dx => dx === 'tatca' || dx === 'all' || dx.includes('tấtcả'))) return true;
+                const matchesDbDongXe = dongXeList.some(dx => {
+                    const modelAliases = carModelAliases[orderModelKey] || [orderModelKey];
+                    return modelAliases.some(alias => dx.includes(alias.replace(/\s+/g, '')) || alias.replace(/\s+/g, '').includes(dx));
+                });
+                if (!matchesDbDongXe) return false;
+            }
+
+            // 2. Kiểm tra xem tên chính sách có đề cập đến bất kỳ dòng xe nào khác trong hệ thống không
+            const mentionedModelKeys: string[] = [];
+            for (const [key, aliases] of Object.entries(carModelAliases)) {
+                const isMentioned = aliases.some(alias => {
+                    const cleanAlias = alias.replace(/\s+/g, '');
+                    return combinedText.includes(alias) || combinedText.replace(/\s+/g, '').includes(cleanAlias);
+                });
+                if (isMentioned) {
+                    mentionedModelKeys.push(key);
+                }
+            }
+
+            // Nếu chính sách đề cập đến dòng xe cụ thể:
+            if (mentionedModelKeys.length > 0) {
+                // Nếu không khớp với dòng xe đơn hàng hiện tại -> LOẠI BỎ NGAY!
+                if (!mentionedModelKeys.includes(orderModelKey)) {
+                    return false;
+                }
+            }
+
+            // 3. Kiểm tra lọc theo phiên bản xe (Plus vs Eco, 1 cầu vs 2 cầu)
+            if (combinedText.includes('2 cầu') && (orderModelKey === 'vf5' || orderModelKey === 'vf3' || rawVersion.includes('1cầu') || rawVersion.includes('1cau'))) {
+                return false; // VF5/VF3 không có 2 cầu
+            }
+
+            if (combinedText.includes('[eco') && rawVersion.includes('plus')) {
+                if (!combinedText.includes('plus')) {
+                    return false;
+                }
+            }
+
+            if (combinedText.includes('[plus') && rawVersion.includes('eco')) {
+                if (!combinedText.includes('eco')) {
+                    return false;
+                }
+            }
+
+            return true;
+        }).map(item => item.name);
+
+        const result = [...new Set([...orderPolicies, ...matchedFromDb])].filter(Boolean);
+
+        return result.sort();
     }, [order, salesPoliciesOptions]);
 
     useEffect(() => {
-        if (filteredSalesPolicies.length > 0) {
-            setPolicy(currentSelection => currentSelection.filter(p => filteredSalesPolicies.includes(p)));
-        }
-    }, [filteredSalesPolicies]);
+        // Clean up any empty policy strings
+        setPolicy(currentSelection => currentSelection.filter(p => p && p.trim() !== ''));
+    }, []);
 
     const [processingStage, setProcessingStage] = useState(0); 
 
@@ -191,6 +281,15 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             return (low.includes('xăng') && low.includes('điện')) ||
                    low.includes('thu cũ đổi mới');
         });
+    }, [policy]);
+
+    const isVinFastGasCarAppreciationPolicy = useMemo(() => {
+        const targetPolicies = [
+            'Tri ân khách hàng xe xăng [Fadil] - 30Tr',
+            'Tri ân khách hàng xe xăng [Lux A] - 60Tr',
+            'Tri ân khách hàng xe xăng [Lux SA] - 80Tr'
+        ];
+        return policy.some(p => targetPolicies.some(target => p.includes(target)));
     }, [policy]);
 
     useEffect(() => {
@@ -232,7 +331,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         return () => clearTimeout(timeoutId);
     }, [xeXangVin, isGasToElectricPolicy]);
 
-    const isStep1Valid = policy.length > 0 && commission && parseFloat(getRawValue(commission)) >= 0 && vpoint && parseFloat(getRawValue(vpoint)) >= 0 && (!isGasToElectricPolicy || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError));
+    const isStep1Valid = policy.length > 0 && commission && parseFloat(getRawValue(commission)) >= 0 && vpoint && parseFloat(getRawValue(vpoint)) >= 0 && (!isGasToElectricPolicy || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError)) && (!isVinFastGasCarAppreciationPolicy || maVc.trim() !== '');
     const isStep2Valid = contractFile && proposalFile;
     const isStep3Valid = vinClubConfirmed;
     const isFormValid = isStep1Valid && isStep2Valid && isStep3Valid;
@@ -245,14 +344,15 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 if (parsed.policy && parsed.policy.length > 0) setPolicy(parsed.policy);
                 if (parsed.commission) setCommission(parsed.commission);
                 if (parsed.vpoint) setVpoint(parsed.vpoint);
+                if (parsed.maVc) setMaVc(parsed.maVc);
             } catch (e) { console.error(e); }
         }
     }, [order]);
 
     useEffect(() => {
-        const dataToSave = { policy, commission, vpoint };
+        const dataToSave = { policy, commission, vpoint, maVc };
         sessionStorage.setItem(`invoice_draft_${order["Số đơn hàng"]}`, JSON.stringify(dataToSave));
-    }, [policy, commission, vpoint, order]);
+    }, [policy, commission, vpoint, maVc, order]);
 
     const payloadsRef = useRef<{ contract: any, proposal: any }>({ contract: null, proposal: null });
 
@@ -377,7 +477,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 payloadsRef.current,
                 xeXangVin.trim() || undefined,
                 xeXangHang.trim() || undefined,
-                xeXangModel.trim() || undefined
+                xeXangModel.trim() || undefined,
+                maVc.trim() || undefined
             );
             sessionStorage.removeItem(`invoice_draft_${order["Số đơn hàng"]}`);
             setProcessingStage(4);
@@ -412,12 +513,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     };
 
     if (isSubmitting) {
-        return (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-slate-800/40">
-                    <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-500/15 to-cyan-500/10 rounded-full blur-3xl animate-pulse" />
-                    <div className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-gradient-to-tl from-purple-500/15 to-pink-500/10 rounded-full blur-3xl animate-pulse" />
-                </div>
+        const submittingContent = (
+            <div className="flex flex-col items-center justify-center flex-1 py-10 animate-fade-in">
                 <div className="relative z-10 bg-white/95 backdrop-blur-3xl w-full max-w-md rounded-2xl shadow-2xl p-6 flex flex-col items-center animate-fade-in-scale-up border border-white/20">
                     <div className="w-16 h-16 mb-4 relative">
                         <div className="absolute inset-0 rounded-full border-4 border-border-primary"></div>
@@ -436,34 +533,51 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 </div>
             </div>
         );
+        if (inline) return submittingContent;
+        return (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-slate-800/40">
+                    <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-500/15 to-cyan-500/10 rounded-full blur-3xl animate-pulse" />
+                    <div className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-gradient-to-tl from-purple-500/15 to-pink-500/10 rounded-full blur-3xl animate-pulse" />
+                </div>
+                {submittingContent}
+            </div>
+        );
     }
 
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in overflow-hidden" onClick={onClose}>
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-slate-800/40">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/20" />
-            </div>
-
-            <div className="relative z-10 w-full max-w-7xl mx-auto px-2 md:px-4 py-8 flex flex-col justify-center min-h-[100dvh] pointer-events-none">
-                <div className="flex flex-col w-full h-[90vh] animate-fade-in-scale-up pointer-events-auto border border-white/20 rounded-2xl overflow-hidden shadow-2xl bg-white/95 backdrop-blur-3xl relative" onClick={e => e.stopPropagation()}>
-                    <header className="flex-shrink-0">
-                        <div className="bg-gradient-to-r from-blue-50 via-white to-blue-50 p-4 md:p-5 border-b border-blue-200/30 shadow-sm relative overflow-hidden group">
-                            <div className="flex items-center justify-between relative z-10">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-1.5 h-10 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full shadow-sm"></div>
-                                    <div className="flex flex-col">
-                                        <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight">
-                                            YÊU CẦU <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">XUẤT HÓA ĐƠN</span>
-                                        </h1>
-                                        <p className="text-[10px] md:text-xs text-text-secondary font-bold uppercase tracking-wider mt-0.5">Cung cấp chứng từ để tiến hành xuất hóa đơn</p>
-                                    </div>
-                                </div>
-                                <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center bg-white/50 hover:bg-white text-gray-400 hover:text-gray-900 transition-all hover:rotate-90 hover:scale-110 shadow-sm border border-gray-100">
-                                    <i className="fas fa-times text-xl"></i>
-                                </button>
-                            </div>
+    // Shared inner content (header + steps + form)
+    const innerContent = (
+        <>
+            <header className="flex-shrink-0">
+                {inline ? (
+                    <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                            <div className="w-1 h-5 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full"></div>
+                            <h3 className="text-xs font-black text-slate-800 uppercase tracking-tight">Xuất Hóa Đơn</h3>
                         </div>
-                    </header>
+                        <button onClick={onClose} className="px-3 py-1.5 text-[11px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors flex items-center gap-1.5 shadow-2xs">
+                            <i className="fas fa-arrow-left text-[9px]"></i> Quay lại
+                        </button>
+                    </div>
+                ) : (
+                    <div className="bg-gradient-to-r from-blue-50 via-white to-blue-50 p-4 md:p-5 border-b border-blue-200/30 shadow-sm relative overflow-hidden group">
+                        <div className="flex items-center justify-between relative z-10">
+                            <div className="flex items-center gap-4">
+                                <div className="w-1.5 h-10 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full shadow-sm"></div>
+                                <div className="flex flex-col">
+                                    <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight">
+                                        YÊU CẦU <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-blue-800">XUẤT HÓA ĐƠN</span>
+                                    </h1>
+                                    <p className="text-[10px] md:text-xs text-text-secondary font-bold uppercase tracking-wider mt-0.5">Cung cấp chứng từ để tiến hành xuất hóa đơn</p>
+                                </div>
+                            </div>
+                            <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center bg-white/50 hover:bg-white text-gray-400 hover:text-gray-900 transition-all hover:rotate-90 hover:scale-110 shadow-sm border border-gray-100">
+                                <i className="fas fa-times text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </header>
 
                     <main className="flex-grow min-h-0 flex flex-col overflow-hidden relative z-10 p-3 md:p-5">
                         <div className="flex flex-col mb-3 space-y-1.5 md:space-y-2">
@@ -506,7 +620,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             {/* STEP 1 */}
                             <div style={{ display: step === 1 ? 'flex' : 'none' }} className="flex-col h-full overflow-hidden">
                                 <div className="flex flex-col bg-white/60 p-5 md:p-8 rounded-2xl border border-gray-200/60 shadow-sm flex-grow overflow-y-auto custom-scrollbar">
-                                    <div className="flex flex-col min-h-full gap-8">
+                                    <div className="flex flex-col min-h-full gap-4">
                                         <div className="flex flex-col">
                                             <label className="block text-sm font-bold text-text-primary mb-3 uppercase tracking-wider">
                                                 Chính sách bán hàng áp dụng <span className="text-danger">*</span>
@@ -517,9 +631,13 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                                         <i className="fas fa-spinner fa-spin mr-3 text-xl"></i>
                                                         <span className="font-medium">Đang tải danh sách chính sách...</span>
                                                     </div>
+                                                ) : filteredSalesPolicies.filter(p => p && p.trim() !== '').length === 0 ? (
+                                                    <div className="p-4 text-center text-text-secondary text-xs font-medium">
+                                                        Chưa có danh sách chính sách nào cho dòng xe này. Vui lòng liên hệ Admin.
+                                                    </div>
                                                 ) : (
                                                     <div className="flex flex-wrap gap-2">
-                                                        {filteredSalesPolicies.map(option => (
+                                                        {filteredSalesPolicies.filter(p => p && p.trim() !== '').map(option => (
                                                             <button 
                                                                 key={option} 
                                                                 type="button" 
@@ -541,7 +659,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 pt-2 border-t border-gray-100">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
                                             <div className="group">
                                                 <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center gap-2">
                                                     <i className="fas fa-money-bill-wave text-emerald-500"></i>
@@ -575,6 +693,25 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {isVinFastGasCarAppreciationPolicy && (
+                                            <div className="pt-2 border-t border-gray-100 mt-0 animate-fade-in">
+                                                <div className="group">
+                                                    <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center gap-2">
+                                                        <i className="fas fa-ticket-alt text-amber-500"></i>
+                                                        Mã VC (Voucher) *
+                                                    </label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={maVc} 
+                                                        onChange={(e) => setMaVc(e.target.value.toUpperCase())} 
+                                                        className="w-full bg-surface-ground border border-border-primary rounded-lg p-2 text-sm font-bold text-slate-800 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 transition-all placeholder:italic placeholder:font-normal placeholder:text-[11px] placeholder:text-slate-400" 
+                                                        placeholder="Nhập mã VC..." 
+                                                        required
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {isGasToElectricPolicy && (
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-gray-100 mt-1 animate-fade-in">
@@ -772,6 +909,25 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid} variant="success" size="sm" isLoading={isSubmitting} leftIcon={<i className="fas fa-paper-plane"></i>}>Gửi Yêu Cầu</Button>
                         )}
                     </footer>
+        </>
+    );
+
+    if (inline) {
+        return (
+            <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+                {innerContent}
+            </div>
+        );
+    }
+
+    return (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in overflow-hidden" onClick={onClose}>
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-slate-800/40">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/20" />
+            </div>
+            <div className="relative z-10 w-full max-w-7xl mx-auto px-2 md:px-4 py-8 flex flex-col justify-center min-h-[100dvh] pointer-events-none">
+                <div className="flex flex-col w-full h-[90vh] animate-fade-in-scale-up pointer-events-auto border border-white/20 rounded-2xl overflow-hidden shadow-2xl bg-white/95 backdrop-blur-3xl relative" onClick={e => e.stopPropagation()}>
+                    {innerContent}
                 </div>
             </div>
         </div>

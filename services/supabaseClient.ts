@@ -3,13 +3,12 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Supabase URL and Anon Key must be provided in the environment variables.');
 }
 
-// Client thông thường (anon key) — dùng cho read và các thao tác user thông thường
+// Client thông thường (anon key) — dùng cho tất cả các thao tác của hệ thống
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
         detectSessionInUrl: true
@@ -17,15 +16,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 /**
- * Client admin (service role key) — bypass RLS, dùng cho ghi dữ liệu phía admin.
- * Sử dụng auth: { persistSession: false } để tránh xung đột với client chính.
+ * Client admin — Sử dụng chung client mã hóa an toàn với session người dùng.
+ * Quyền hạn được kiểm soát thông qua các chính sách Row Level Security (RLS) & RPC của Supabase Database.
  */
-export const supabaseAdmin = supabaseServiceKey && supabaseServiceKey !== 'YOUR_SERVICE_ROLE_KEY_HERE'
-    ? createClient(supabaseUrl, supabaseServiceKey, {
-        auth: { 
-            autoRefreshToken: false, 
-            persistSession: false,
-            detectSessionInUrl: false // Tắt để tránh Multiple GoTrueClient instances warning
-        }
-    })
-    : supabase;
+export const supabaseAdmin = supabase;
+
+
+

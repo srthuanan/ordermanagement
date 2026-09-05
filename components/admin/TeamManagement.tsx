@@ -1,7 +1,8 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useModalBackground } from '../../utils/styleUtils';
 
 import { User } from '../../types';
+import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 
 interface TeamManagementProps {
     teamData: Record<string, string[]>;
@@ -11,6 +12,7 @@ interface TeamManagementProps {
 }
 
 export const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamData, onEditTeam, onAddNewTeam, onDeleteTeam }) => {
+    const copyWithFeedback = useCopyFeedback();
     const [selectedFolder, setSelectedFolder] = useState<'all' | 'empty'>('all');
     const [selectedLeader, setSelectedLeader] = useState<string | null>(null);
 
@@ -51,36 +53,34 @@ export const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamDat
     };
 
     return (
-        <div className="flex h-full bg-white/40 backdrop-blur-xl rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-white/50 overflow-hidden animate-fade-in relative ring-1 ring-black/5">
+        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-slate-200 overflow-hidden animate-fade-in relative z-0">
             {/* Column 1: Folders / Navigation */}
-            <div className={`w-full md:w-56 flex-shrink-0 border-r border-slate-200/50 bg-slate-50/50 backdrop-blur-md flex flex-col absolute md:relative inset-0 z-10 md:z-auto transition-transform duration-300 ${mobileView === 'folders' ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-                <div className="p-4 border-b border-slate-200/50">
+            <div className={`w-full md:w-56 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+                <div className="p-3 border-b border-slate-100">
                     <button
                         onClick={onAddNewTeam}
-                        className="w-full bg-accent-primary hover:bg-accent-primary-hover text-white h-10 rounded-xl flex items-center justify-center gap-2 font-bold text-xs shadow-md shadow-accent-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white h-9 rounded-xl flex items-center justify-center gap-2 font-bold text-xs shadow-xs transition-all"
                     >
                         <i className="fas fa-plus text-[10px]"></i>
                         <span>Tạo Phòng Mới</span>
                     </button>
                 </div>
-                <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-                    <h3 className="px-3 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Danh mục</h3>
+                <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+                    <h3 className="px-3 text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-2">Danh mục</h3>
                     {folders.map(folder => {
                         const isActive = selectedFolder === folder.id;
                         return (
                             <button
                                 key={folder.id}
                                 onClick={() => handleFolderClick(folder.id as any)}
-                                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold transition-all ${isActive ? 'bg-white text-accent-primary shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:bg-white/50 hover:text-slate-800'}`}
+                                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${isActive ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'}`}
                             >
                                 <div className="flex items-center gap-2">
-                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isActive ? 'bg-accent-primary/10 text-accent-primary' : 'bg-slate-200/50 text-slate-400'}`}>
-                                        <i className={`fas ${folder.icon} text-[10px]`}></i>
-                                    </div>
+                                    <i className={`fas ${folder.icon} w-5 text-center text-xs ${isActive ? 'text-white' : 'text-slate-400'}`}></i>
                                     <span>{folder.label}</span>
                                 </div>
                                 {folder.count > 0 && (
-                                    <span className={`min-w-[1.25rem] h-5 flex items-center justify-center rounded-md text-[9px] px-1 ${isActive ? 'bg-accent-primary text-white' : 'bg-slate-200/50 text-slate-500'}`}>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
                                         {folder.count}
                                     </span>
                                 )}
@@ -91,20 +91,20 @@ export const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamDat
             </div>
 
             {/* Column 2: Team List */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200/50 flex flex-col bg-white absolute md:relative inset-0 z-20 md:z-auto transition-transform duration-300 ${mobileView === 'list' ? 'translate-x-0' : (mobileView === 'detail' ? '-translate-x-full md:translate-x-0' : 'translate-x-full md:translate-x-0')}`}>
-                <div className="p-4 border-b border-slate-100 bg-white flex items-center gap-3">
-                    <button onClick={() => setMobileView('folders')} className="md:hidden w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-500 active:scale-95 transition-transform">
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 flex flex-col bg-white relative z-10 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
+                <div className="p-3 bg-white border-b border-slate-100 flex items-center gap-3">
+                    <button onClick={() => setMobileView('folders')} className="md:hidden w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-500">
                         <i className="fas fa-arrow-left text-xs"></i>
                     </button>
-                    <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Danh Sách Phòng</h3>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Danh Sách Phòng</h3>
                 </div>
-                <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
                     {filteredTeams.length === 0 ? (
                         <div className="flex flex-col items-center justify-center p-8 h-full bg-slate-50/50">
-                            <div className="w-16 h-16 bg-white border border-gray-100 shadow-sm rounded-2xl flex items-center justify-center mb-4">
-                                <i className="fas fa-search text-gray-300 text-2xl"></i>
+                            <div className="w-16 h-16 bg-white border border-slate-100 shadow-sm rounded-2xl flex items-center justify-center mb-4">
+                                <i className="fas fa-search text-slate-300 text-2xl"></i>
                             </div>
-                            <p className="text-sm font-semibold text-gray-400 text-center">Không có phòng</p>
+                            <p className="text-sm font-semibold text-slate-400 text-center">Không có phòng</p>
                         </div>
                     ) : (
                         filteredTeams.map(([leader, members]) => {
@@ -112,29 +112,17 @@ export const TeamManagementComponent: React.FC<TeamManagementProps> = ({ teamDat
                             return (
                                 <div
                                     key={leader}
-                                    onClick={() => handleTeamClick(leader)}
-                                    className={`p-3 cursor-pointer rounded-xl transition-all duration-300 group ${isSelected ? 'bg-accent-primary text-white shadow-md shadow-accent-primary/10' : 'hover:bg-slate-50 active:scale-98'}`}
+                                    onClick={(e) => {
+                                        handleTeamClick(leader);
+                                        copyWithFeedback(leader, e);
+                                    }}
+                                    className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${isSelected ? 'bg-slate-100/90 border-blue-600 font-semibold' : 'border-transparent hover:bg-slate-50'}`}
                                 >
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shadow-sm ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 group-hover:bg-white group-hover:text-accent-primary'}`}>
-                                                {leader.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div className={`font-bold text-xs truncate ${isSelected ? 'text-white' : 'text-slate-800'}`}>{leader}</div>
-                                        </div>
-                                        {isSelected && <div className="w-1 h-1 rounded-full bg-white animate-pulse"></div>}
+                                    <div className="text-xs font-bold text-slate-900 truncate mb-1">
+                                        Trưởng phòng: {leader}
                                     </div>
-                                    <div className="flex items-center justify-between">
-                                        <div className={`flex -space-x-1.5 ${isSelected ? 'opacity-80' : ''}`}>
-                                            {[...Array(Math.min(members.length, 3))].map((_, i) => (
-                                                <div key={i} className={`w-4 h-4 rounded-full border border ${isSelected ? 'border-accent-primary bg-white/30' : 'border-white bg-slate-200'} flex items-center justify-center text-[7px] font-black`}>
-                                                    {members[i]?.charAt(0)}
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <span className={`text-[9px] font-bold tracking-tight ${isSelected ? 'text-white/80' : 'text-slate-400'}`}>
-                                            {members.length} thành viên
-                                        </span>
+                                    <div className="text-[11px] text-slate-500 font-normal truncate">
+                                        {members.length} thành viên
                                     </div>
                                 </div>
                             );

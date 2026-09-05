@@ -8,6 +8,7 @@ interface CarImageProps {
   className?: string;
   style?: React.CSSProperties;
   alt?: string;
+  hideDecal?: boolean;
 }
 
 const CarImage: React.FC<CarImageProps> = ({ model, exteriorColor, version, className, style, alt }) => {
@@ -16,6 +17,7 @@ const CarImage: React.FC<CarImageProps> = ({ model, exteriorColor, version, clas
   const globalFallbackSrc = getGlobalDefaultImage();
 
   const [src, setSrc] = useState(primarySrc);
+
 
   // Reset src when the primary source prop changes (e.g., user selects a different car)
   useEffect(() => {
@@ -39,7 +41,21 @@ const CarImage: React.FC<CarImageProps> = ({ model, exteriorColor, version, clas
     }
   };
 
-  return <img src={src} onError={handleError} className={className} style={style} alt={alt || `Image of ${model} in ${exteriorColor}`} loading="lazy" draggable="false" />;
+  return (
+    <div className="relative inline-flex items-center justify-center max-w-full max-h-full">
+      <img 
+        src={src} 
+        onError={handleError} 
+        className={className} 
+        style={style} 
+        alt={alt || `Image of ${model} in ${exteriorColor}`} 
+        loading="lazy" 
+        draggable="false" 
+      />
+
+
+    </div>
+  );
 };
 
 export default CarImage;

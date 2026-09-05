@@ -409,8 +409,8 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
 
                 {/* Right Column: Details */}
                 <div className={`
-                    fixed inset-y-0 right-0 w-full md:w-[400px] bg-white z-[9999] transform transition-transform duration-300 ease-in-out
-                    lg:relative lg:transform-none lg:w-[420px] lg:z-0 lg:flex lg:flex-col lg:bg-transparent
+                    fixed inset-y-0 right-0 w-full md:w-[450px] bg-white z-[9999] transform transition-transform duration-300 ease-in-out
+                    lg:relative lg:transform-none lg:w-[480px] xl:w-[540px] 2xl:w-[580px] lg:z-0 lg:flex lg:flex-col lg:bg-transparent
                     ${isDetailDrawerOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
                 `}>
                     <div className="h-full flex flex-col lg:bg-white/60 lg:backdrop-blur-md lg:rounded-2xl lg:border lg:border-white/80 lg:shadow-[0_4px_30px_rgba(0,0,0,0.03)] overflow-hidden">

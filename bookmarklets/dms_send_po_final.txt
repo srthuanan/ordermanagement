@@ -1,0 +1,154 @@
+javascript:(function(){
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var f = window.frames;
+            for (var i = 0; i < f.length; i++) {
+                if (f[i].Xrm && f[i].Xrm.WebApi) { _Xrm = f[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert("⚠️ Vui lòng mở trang VinFast DMS trước khi bấm!");
+        return;
+    }
+
+    var targets = [];
+    var seen = {};
+
+    function addTarget(id, num) {
+        var guid = (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || "")) ? id : "";
+        var poNum = (num && num.length > 5) ? num.trim() : "";
+        if (!guid && !poNum) return;
+        var key = guid || poNum;
+        if (seen[key]) return;
+        seen[key] = true;
+        targets.push({ id: guid, number: poNum });
+    }
+
+    try {
+        var controls = _Xrm.Page ? _Xrm.Page.getControl() : null;
+        if (controls && controls.forEach) {
+            controls.forEach(function(c) {
+                if (c.getGrid && c.getGrid().getSelectedRows) {
+                    var rows = c.getGrid().getSelectedRows();
+                    if (rows && rows.forEach) {
+                        rows.forEach(function(r) {
+                            var entity = r.getData ? r.getData().getEntity() : null;
+                            if (entity) addTarget((entity.getId() || "").replace(/[{}]/g, ""), entity.getPrimaryAttributeValue() || "");
+                        });
+                    }
+                }
+            });
+        }
+    } catch(e){}
+
+    try {
+        var rows = document.querySelectorAll('tr[aria-selected="true"], div[aria-selected="true"], [role="row"][aria-selected="true"], .ag-row-selected');
+        rows.forEach(function(r) {
+            var isChecked = r.getAttribute('aria-selected') === 'true' || r.classList.contains('ag-row-selected') || r.querySelector('input:checked, [role="checkbox"][aria-checked="true"]');
+            if (isChecked) {
+                var rawId = r.getAttribute('data-id') || r.getAttribute('aria-rowid') || "";
+                var text = r.innerText || r.textContent || "";
+                var m = text.match(/N\d{4,5}-PO-[\d\-]+/i);
+                addTarget(rawId.replace(/[{}]/g, "").split(";")[0], m ? m[0] : "");
+            }
+        });
+    } catch(e){}
+
+    try {
+        if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity && _Xrm.Page.data.entity.getEntityName() === "xts_purchaseorder") {
+            var formId = (_Xrm.Page.data.entity.getId() || "").replace(/[{}]/g, "");
+            var formAttr = _Xrm.Page.getAttribute("xts_purchaseordernumber");
+            var formNum = formAttr ? formAttr.getValue() : "";
+            addTarget(formId, formNum);
+        }
+    } catch(e){}
+
+    var defaultInput = targets.map(function(t){ return t.number || t.id; }).filter(Boolean).join(", ");
+    var inputStr = prompt("🚀 CHUYỂN TRẠNG THÁI SANG 'ĐÃ GỬI' (xts_status = 101)\n\nNhập hoặc xác nhận danh sách số PO:", defaultInput);
+    if (!inputStr || !inputStr.trim()) return;
+
+    var poList = inputStr.split(/[\n,;]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+    if (poList.length === 0) return;
+
+    if (!confirm("⚠️ Bạn có chắc chắn muốn chuyển " + poList.length + " Đơn Mua Hàng sang 'ĐÃ GỬI' (xts_status = 101) không?")) return;
+
+    var overlay = document.createElement('div');
+    overlay.style = 'position:fixed;top:20px;right:20px;background:#0f172a;color:#38bdf8;padding:20px 24px;z-index:9999999;border-radius:14px;font-family:sans-serif;font-size:13px;font-weight:bold;box-shadow:0 15px 40px rgba(0,0,0,0.8);border:1px solid #38bdf850;min-width:340px;max-width:480px;backdrop-filter:blur(10px);';
+    overlay.innerHTML = '<div style="font-size:14px;margin-bottom:10px;color:#38bdf8;display:flex;justify-content:space-between;"><span>⚙️ Đang chuyển PO sang ĐÃ GỬI...</span><span id="dmsPoCount">0/' + poList.length + '</span></div><div id="dmsPoLog" style="font-size:12px;color:#cbd5e1;max-height:220px;overflow-y:auto;font-family:monospace;background:#090d16;padding:10px;border-radius:8px;"></div>';
+    document.body.appendChild(overlay);
+
+    var logEl = document.getElementById('dmsPoLog');
+    function log(msg, isErr) {
+        var d = document.createElement('div');
+        d.style.color = isErr ? '#f87171' : '#34d399';
+        d.style.marginTop = '4px';
+        d.textContent = msg;
+        logEl.appendChild(d);
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    var successCount = 0;
+    var failCount = 0;
+
+    function processIndex(idx) {
+        if (idx >= poList.length) {
+            log("----------------------------------------");
+            log("🎉 Hoàn tất! Thành công: " + successCount + " | Thất bại: " + failCount);
+            setTimeout(function() {
+                alert("🎉 Đã chuyển trạng thái ĐÃ GỬI cho " + successCount + "/" + poList.length + " Đơn mua hàng!");
+                overlay.remove();
+                try { if (_Xrm.Page && _Xrm.Page.data) _Xrm.Page.data.refresh(true); else location.reload(); } catch(e){ location.reload(); }
+            }, 1000);
+            return;
+        }
+
+        document.getElementById('dmsPoCount').textContent = (idx + 1) + '/' + poList.length;
+        var itemStr = poList[idx];
+        var isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(itemStr);
+        var query = isGuid ? "?$filter=xts_purchaseorderid eq " + itemStr : "?$filter=xts_purchaseordernumber eq '" + encodeURIComponent(itemStr) + "'";
+
+        _Xrm.WebApi.retrieveMultipleRecords("xts_purchaseorder", query).then(function(res) {
+            var entities = res.entities || [];
+            if (entities.length === 0) {
+                log("❌ [" + itemStr + "] Không tìm thấy số PO này!", true);
+                failCount++;
+                setTimeout(function(){ processIndex(idx + 1); }, 300);
+                return;
+            }
+
+            var item = entities[0];
+            var poId = item.xts_purchaseorderid;
+            var poNum = item.xts_purchaseordernumber || itemStr;
+
+            // xts_status = 101 là "Đã gửi"
+            var payload = {
+                "xts_status": 101,
+                "xts_handling": 2
+            };
+
+            _Xrm.WebApi.updateRecord("xts_purchaseorder", poId, payload).then(function() {
+                log("✅ [" + poNum + "] ➔ Đã đổi sang ĐÃ GỬI (101)!");
+                successCount++;
+                setTimeout(function(){ processIndex(idx + 1); }, 400);
+            }, function(err) {
+                _Xrm.WebApi.updateRecord("xts_purchaseorder", poId, { "xts_status": 101 }).then(function() {
+                    log("✅ [" + poNum + "] ➔ Đã đổi xts_status sang 101!");
+                    successCount++;
+                    setTimeout(function(){ processIndex(idx + 1); }, 400);
+                }, function(err2) {
+                    log("❌ [" + poNum + "] Lỗi: " + (err.message || err2.message), true);
+                    failCount++;
+                    setTimeout(function(){ processIndex(idx + 1); }, 400);
+                });
+            });
+        }, function(err) {
+            log("❌ [" + itemStr + "] Lỗi tra cứu OData", true);
+            failCount++;
+            setTimeout(function(){ processIndex(idx + 1); }, 300);
+        });
+    }
+
+    processIndex(0);
+})();

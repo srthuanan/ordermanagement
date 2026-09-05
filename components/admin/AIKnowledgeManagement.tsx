@@ -4,6 +4,7 @@ import AnimatedBackground from '../ui/AnimatedBackground';
 import Button from '../ui/Button';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 
 // Memoized Markdown components for premium look
 const MARKDOWN_COMPONENTS: any = {
@@ -45,6 +46,7 @@ interface Lesson {
 }
 
 const AIKnowledgeManagement: React.FC = () => {
+    const copyWithFeedback = useCopyFeedback();
     const [lessons, setLessons] = useState<Lesson[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedFolder, setSelectedFolder] = useState<string>('all');
@@ -309,13 +311,17 @@ const AIKnowledgeManagement: React.FC = () => {
                         <button
                             key={folder.id}
                             onClick={() => { setSelectedFolder(folder.id); setMobileView('list'); }}
-                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${selectedFolder === folder.id ? 'bg-blue-600 text-white shadow-md shadow-blue-100' : 'text-slate-500 hover:bg-white hover:text-blue-600 hover:shadow-sm'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${selectedFolder === folder.id ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'}`}
                         >
                             <div className="flex items-center gap-3">
-                                <i className={`fas ${folder.icon} w-5 text-center opacity-70`}></i>
+                                <i className={`fas ${folder.icon} w-5 text-center text-xs ${selectedFolder === folder.id ? 'text-white' : 'text-slate-400'}`}></i>
                                 <span>{folder.label}</span>
                             </div>
-                            {folder.count > 0 && <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${selectedFolder === folder.id ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-500'}`}>{folder.count}</span>}
+                            {folder.count > 0 && (
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${selectedFolder === folder.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                    {folder.count}
+                                </span>
+                            )}
                         </button>
                     ))}
                 </nav>
@@ -351,13 +357,13 @@ const AIKnowledgeManagement: React.FC = () => {
             </div>
 
             {/* Cột 2: Danh sách Bài học */}
-            <div className={`w-full md:w-[400px] lg:w-[450px] flex-shrink-0 border-r border-border-primary flex flex-col bg-white/90 relative z-10 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`w-full md:w-[400px] lg:w-[450px] flex-shrink-0 border-r border-border-primary flex flex-col bg-white relative z-10 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-3 bg-white border-b border-border-secondary flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
                         <button onClick={() => setMobileView('folders')} className="md:hidden p-2 hover:bg-slate-100 rounded-lg">
                             <i className="fas fa-arrow-left text-slate-400"></i>
                         </button>
-                        <span className="font-black text-[11px] text-slate-400 uppercase tracking-widest pl-1">
+                        <span className="font-bold text-[11px] text-slate-500 uppercase tracking-widest pl-1">
                             {selectedFolder === 'all' ? 'Tất cả bài học' : `Nhóm: ${selectedFolder}`}
                         </span>
                     </div>
@@ -365,12 +371,12 @@ const AIKnowledgeManagement: React.FC = () => {
                         <button 
                             onClick={fetchLessons} 
                             disabled={loading} 
-                            className="p-1.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-500 text-[10px] font-black uppercase transition-all flex items-center gap-2 border border-slate-100 shadow-sm"
+                            className="p-1.5 px-3 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-500 text-[10px] font-bold uppercase transition-all flex items-center gap-2 border border-slate-200 shadow-2xs"
                             title="Làm mới danh sách"
                         >
                             <i className={`fas fa-sync-alt ${loading ? 'animate-spin' : ''}`}></i> {loading ? 'Đang tải...' : 'Làm mới'}
                         </button>
-                        <button onClick={handleStartCreate} className="px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-600 text-[10px] font-black uppercase transition-all flex items-center gap-2 border border-blue-100 shadow-sm">
+                        <button onClick={handleStartCreate} className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase transition-all flex items-center gap-2 shadow-2xs">
                             <i className="fas fa-plus"></i> Thêm mới
                         </button>
                     </div>
@@ -384,7 +390,7 @@ const AIKnowledgeManagement: React.FC = () => {
                             placeholder="Tìm kiếm kiến thức, quy tắc..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full bg-slate-50 border-transparent focus:bg-white focus:border-blue-200 text-xs font-bold pl-9 pr-3 py-2.5 rounded-xl transition-all outline-none"
+                            className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 text-xs font-medium pl-9 pr-3 py-2 rounded-xl transition-all outline-none"
                         />
                     </div>
                 </div>
@@ -399,26 +405,31 @@ const AIKnowledgeManagement: React.FC = () => {
                         filteredLessons.map(lesson => (
                             <div
                                 key={lesson.id}
-                                onClick={() => { setSelectedLessonId(lesson.id); setIsEditing(false); setAiReviewMode(false); setMobileView('detail'); }}
-                                className={`px-4 py-4 cursor-pointer transition-all border-l-4 ${selectedLessonId === lesson.id && !isEditing && !aiReviewMode ? 'bg-blue-50/50 border-blue-600' : 'border-transparent hover:bg-slate-50'}`}
+                                onClick={(e) => { 
+                                    setSelectedLessonId(lesson.id); 
+                                    setIsEditing(false); 
+                                    setAiReviewMode(false); 
+                                    setMobileView('detail');
+                                    copyWithFeedback(lesson.content, e);
+                                }}
+                                className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${selectedLessonId === lesson.id && !isEditing && !aiReviewMode ? 'bg-slate-100/90 border-blue-600 font-semibold' : 'border-transparent hover:bg-slate-50'}`}
                             >
-                                <div className="flex items-center gap-2">
-                                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border ${getImportanceColor(lesson.importance)}`}>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${getImportanceColor(lesson.importance)}`}>
                                         {lesson.category}
                                     </span>
                                     {lesson.status === 'PENDING' && (
-                                        <span className="px-1.5 py-0.5 rounded bg-orange-500 text-white text-[8px] font-black uppercase tracking-widest flex items-center gap-1 animate-pulse">
+                                        <span className="px-1.5 py-0.5 rounded bg-orange-500 text-white text-[8px] font-bold uppercase tracking-widest flex items-center gap-1 animate-pulse">
                                             <i className="fas fa-clock text-[7px]"></i> CHỜ DUYỆT
                                         </span>
                                     )}
                                     {lesson.visibility === 'admin' && (
-                                        <span className="px-1.5 py-0.5 rounded bg-slate-800 text-white text-[8px] font-black uppercase tracking-widest flex items-center gap-1">
+                                        <span className="px-1.5 py-0.5 rounded bg-slate-800 text-white text-[8px] font-bold uppercase tracking-widest flex items-center gap-1">
                                             <i className="fas fa-lock text-[7px]"></i> {lesson.visibility}
                                         </span>
                                     )}
                                 </div>
-                                <span className="text-[9px] font-bold text-slate-300">#{lesson.importance}/5</span>
-                                <p className={`text-[12px] leading-relaxed line-clamp-2 font-bold ${selectedLessonId === lesson.id && !aiReviewMode ? 'text-blue-900' : 'text-slate-600'}`}>
+                                <p className={`text-[12px] leading-relaxed line-clamp-2 font-normal ${selectedLessonId === lesson.id && !aiReviewMode ? 'text-slate-900 font-medium' : 'text-slate-600'}`}>
                                     {lesson.content}
                                 </p>
                             </div>

@@ -43,7 +43,7 @@ export const useNotification = (showToast: (title: string, message: string, type
 
     useEffect(() => {
         fetchNotifications();
-        const intervalId = setInterval(fetchNotifications, 60000); // Tăng lên 1 phút vì đã có realtime
+        const intervalId = setInterval(fetchNotifications, 5 * 60 * 1000); // 5 minutes fallback (Realtime is primary)
         return () => clearInterval(intervalId);
     }, [fetchNotifications]);
 

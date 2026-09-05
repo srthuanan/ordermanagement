@@ -1,0 +1,68 @@
+javascript:(async function(){
+    try {
+        var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+        if (!_Xrm) {
+            for (var i = 0; i < frames.length; i++) {
+                try { if (frames[i].Xrm) { _Xrm = frames[i].Xrm; break; } } catch(e){}
+            }
+        }
+        if (!_Xrm) { alert("⚠️ Vui lòng mở trang DMS!"); return; }
+
+        var entityName = "itv_electronicwarrantybook";
+        var recordId = "";
+        try {
+            if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity) {
+                entityName = _Xrm.Page.data.entity.getEntityName() || entityName;
+                recordId = (_Xrm.Page.data.entity.getId() || "").replace(/[{}]/g, "");
+            }
+        } catch(e){}
+        if (!recordId) {
+            var urlParams = new URLSearchParams(window.location.search);
+            entityName = urlParams.get("etn") || entityName;
+            recordId = (urlParams.get("id") || "").replace(/[{}]/g, "");
+        }
+
+        if (!recordId) { alert("⚠️ Không tìm thấy ID bản ghi!"); return; }
+
+        var r = await _Xrm.WebApi.retrieveRecord(entityName, recordId);
+        
+        var owner = r["_ownerid_value@OData.Community.Display.V1.FormattedValue"] || r["_ownerid_value"] || "Chưa rõ";
+        var bu = r["_owningbusinessunit_value@OData.Community.Display.V1.FormattedValue"] || r["_owningbusinessunit_value"] || "Chưa rõ";
+        var customerName = r["_itv_customerid_value@OData.Community.Display.V1.FormattedValue"] || r["_xts_customerid_value@OData.Community.Display.V1.FormattedValue"] || "";
+        var customerId = r["_itv_customerid_value"] || r["_xts_customerid_value"] || r["_itv_contactid_value"] || r["_xts_contactid_value"] || "";
+        var customerType = r["_itv_customerid_value@Microsoft.Dynamics.CRM.lookumlogicalname"] || "contact";
+        var currentPhone = r["itv_mobilephone"] || r["itv_phonenumber"] || "Chưa có";
+        var ewbCode = r["itv_name"] || recordId;
+
+        // Mở khóa UI trên màn hình
+        if (_Xrm.Page && _Xrm.Page.ui && _Xrm.Page.ui.controls) {
+            _Xrm.Page.ui.controls.forEach(function(c){ try{ if(typeof c.setDisabled==="function") c.setDisabled(false); }catch(e){} });
+        }
+        document.querySelectorAll('input, select, textarea, [aria-disabled="true"], [disabled], [readonly]').forEach(function(el){
+            el.removeAttribute('disabled');
+            el.removeAttribute('readonly');
+            el.setAttribute('aria-disabled', 'false');
+            el.style.pointerEvents = 'auto';
+        });
+
+        var msg = "📋 THÔNG TIN SỔ BẢO HÀNH ĐIỆN TỬ:\n" +
+                  "----------------------------------------\n" +
+                  "• Mã Sổ: " + ewbCode + "\n" +
+                  "• SĐT hiện tại: " + currentPhone + "\n" +
+                  "• Người sở hữu (Owner): " + owner + "\n" +
+                  "• Đơn vị (BU): " + bu + "\n";
+
+        if (customerName && customerId) {
+            msg += "• Khách hàng liên kết: " + customerName + "\n\n" +
+                   "👉 Bấm OK để mở ngay Hồ sơ Khách hàng (" + customerName + ") sang tab mới để sửa SĐT!";
+            if (confirm(msg)) {
+                window.open("/main.aspx?pagetype=entityrecord&etn=" + customerType + "&id=" + customerId, "_blank");
+            }
+        } else {
+            msg += "\n⚠️ Bản ghi này bị khóa ở cấp máy chủ CRM (tài khoản không có quyền Ghi).";
+            alert(msg);
+        }
+    } catch(err) {
+        alert("Lỗi: " + (err.message || JSON.stringify(err)));
+    }
+})();

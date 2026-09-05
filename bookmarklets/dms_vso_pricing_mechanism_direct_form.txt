@@ -1,0 +1,301 @@
+javascript:(function(){
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm) {
+        try {
+            var frames = window.frames;
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].Xrm) { _Xrm = frames[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+
+    if (!_Xrm) {
+        alert("⚠️ Vui lòng mở trang Đơn hàng bán xe (VSO) trên DMS trước khi bấm!");
+        return;
+    }
+
+    function getAttrVal(name) {
+        try {
+            if (_Xrm.Page && _Xrm.Page.getAttribute) {
+                var attr = _Xrm.Page.getAttribute(name);
+                if (attr) {
+                    var val = attr.getValue();
+                    if (val !== null && val !== undefined) {
+                        if (Array.isArray(val) && val[0]) return val[0].name || val[0].id;
+                        return val;
+                    }
+                }
+            }
+        } catch(e){}
+        return null;
+    }
+
+    function getAttrText(name) {
+        try {
+            if (_Xrm.Page && _Xrm.Page.getAttribute) {
+                var attr = _Xrm.Page.getAttribute(name);
+                if (attr) {
+                    if (attr.getText) {
+                        var t = attr.getText();
+                        if (t) return t;
+                    }
+                    var val = attr.getValue();
+                    if (val !== null && val !== undefined) {
+                        if (Array.isArray(val) && val[0]) return val[0].name || val[0].id;
+                        return String(val);
+                    }
+                }
+            }
+        } catch(e){}
+        return "";
+    }
+
+    // Quét toàn bộ các trường trên Form
+    var allFormFields = {};
+    try {
+        if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity && _Xrm.Page.data.entity.attributes) {
+            _Xrm.Page.data.entity.attributes.forEach(function(attr) {
+                var n = attr.getName();
+                var v = attr.getValue();
+                if (v !== null && v !== undefined) {
+                    allFormFields[n] = v;
+                }
+            });
+        }
+    } catch(e){}
+
+    function fmt(val) {
+        if (val === undefined || val === null || isNaN(val)) return "0 đ";
+        return Math.round(Number(val)).toLocaleString('vi-VN') + " đ";
+    }
+
+    // Trích xuất các số liệu tài chính trực tiếp từ Form đang hiển thị
+    var vsoNumber = getAttrText("xts_newvehiclesalesordernumber") || "Đơn hàng VSO";
+    var customer = getAttrText("xts_potentialcustomerid") || getAttrText("xts_customerid") || "Khách hàng";
+    var tvbh = getAttrText("xts_salespersonid") || getAttrText("ownerid") || "TVBH";
+    var product = getAttrText("xts_productid") || getAttrText("xts_productdescription") || "Ô tô VinFast";
+    var config = getAttrText("xts_productconfigurationid") || getAttrText("xvf_characteristicconfiguration") || "";
+    var extColor = getAttrText("xts_productexteriorcolorid") || getAttrText("xvf_exteriorcolor") || "";
+    var intColor = getAttrText("xts_productinteriorcolorid") || getAttrText("xvf_interiorcolor") || "";
+    var vin = getAttrText("xts_chassisid") || getAttrText("xts_chassisnumber") || "Chưa ghép VIN";
+    var promoName = getAttrText("xvf_promotionid") || getAttrText("itv_promotiondetail") || "Khuyến mại trên đơn";
+    var vatOption = getAttrText("xts_consumptiontax1id") || getAttrText("xts_vatid") || "VAT-OUT-10%(INC)";
+
+    // Tìm các trường giá trị số từ Form
+    var totalPrice = 0;
+    var totalDiscount = 0;
+    var netAfterDiscount = 0;
+    var vatAmount = 0;
+    var charPrice = 0;
+    var charDisc = 0;
+
+    // Scan for totalPrice
+    var possibleTotalPriceKeys = ["xts_totalprice", "xts_totalpriceamount", "xts_vehicleprice", "xts_vehicleamount", "xvf_totalprice"];
+    for (var i = 0; i < possibleTotalPriceKeys.length; i++) {
+        var v = getAttrVal(possibleTotalPriceKeys[i]);
+        if (v && Number(v) > 0) { totalPrice = Number(v); break; }
+    }
+
+    // Scan for totalDiscount
+    var possibleDiscountKeys = ["xts_totaldiscountamount", "xts_discountamount", "xvf_discountamount", "xts_totaldiscount"];
+    for (var i = 0; i < possibleDiscountKeys.length; i++) {
+        var v = getAttrVal(possibleDiscountKeys[i]);
+        if (v && Number(v) > 0) { totalDiscount = Number(v); break; }
+    }
+
+    // Scan for netAfterDiscount
+    var possibleNetKeys = ["xts_netamountaftertax", "xts_totalamount", "xts_balance", "xvf_grandtotal", "xts_grandtotal", "xts_netamount"];
+    for (var i = 0; i < possibleNetKeys.length; i++) {
+        var v = getAttrVal(possibleNetKeys[i]);
+        if (v && Number(v) > 0) { netAfterDiscount = Number(v); break; }
+    }
+
+    // Scan for vatAmount
+    var possibleVatKeys = ["xts_consumptiontax1amount", "xts_taxamount", "xts_totaltaxamount", "xvf_vatamount"];
+    for (var i = 0; i < possibleVatKeys.length; i++) {
+        var v = getAttrVal(possibleVatKeys[i]);
+        if (v && Number(v) > 0) { vatAmount = Number(v); break; }
+    }
+
+    // Fallbacks if not found by name:
+    if (totalPrice === 0 && netAfterDiscount > 0 && totalDiscount > 0) {
+        totalPrice = netAfterDiscount + totalDiscount;
+    } else if (netAfterDiscount === 0 && totalPrice > 0) {
+        netAfterDiscount = totalPrice - totalDiscount;
+    }
+
+    // Calculation Breakdown
+    var priceBeforeTax = netAfterDiscount / 1.10;
+    if (vatAmount === 0 && netAfterDiscount > 0) {
+        vatAmount = netAfterDiscount - priceBeforeTax;
+    }
+
+    // Display Overlay
+    var old = document.getElementById('dmsPricingMechanismOverlay');
+    if (old) old.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'dmsPricingMechanismOverlay';
+    overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.9);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:system-ui,-apple-system,sans-serif;backdrop-filter:blur(8px);';
+
+    var modal = document.createElement('div');
+    modal.style = 'background:#0f172a;width:1100px;max-width:96%;height:90vh;border-radius:18px;border:1px solid #334155;box-shadow:0 25px 60px rgba(0,0,0,0.85);display:flex;flex-direction:column;overflow:hidden;color:#e2e8f0;';
+
+    // Header
+    var header = document.createElement('div');
+    header.style = 'background:#1e293b;padding:18px 24px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;';
+    header.innerHTML = `
+        <div>
+            <h3 style="margin:0;color:#38bdf8;font-size:17px;display:flex;align-items:center;gap:8px;">💡 CƠ CHẾ TÍNH GIÁ XUẤT HÓA ĐƠN ĐƠN HÀNG VSO</h3>
+            <p style="margin:4px 0 0 0;font-size:12px;color:#94a3b8;">Đơn hàng: <b style="color:#f8fafc;">${vsoNumber}</b> | Khách hàng: <b style="color:#f8fafc;">${customer}</b> | Dòng xe: <b style="color:#10b981;">${product}</b></p>
+        </div>
+        <button id="btnCloseMechanism" style="background:transparent;border:none;color:#94a3b8;font-size:22px;cursor:pointer;padding:4px;">✕</button>
+    `;
+
+    // Body
+    var body = document.createElement('div');
+    body.style = 'flex-grow:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px;';
+
+    body.innerHTML = `
+        <!-- SƠ ĐỒ CƠ CHẾ TÍNH GIÁ TỪNG BƯỚC -->
+        <div style="background:#1e293b;border-radius:14px;padding:20px;border:1px solid #334155;">
+            <h4 style="margin:0 0 16px 0;color:#10b981;font-size:14px;">
+                📊 1. CƠ CHẾ DÒNG TIỀN VÀ QUYẾT TOÁN THỰC THU
+            </h4>
+
+            <div style="display:grid;grid-template-columns:1fr 40px 1fr 40px 1fr;align-items:center;gap:8px;text-align:center;">
+                <!-- Step 1: List Price -->
+                <div style="background:#0f172a;padding:16px;border-radius:10px;border:1px solid #334155;text-align:left;">
+                    <span style="color:#94a3b8;font-size:11px;font-weight:bold;">1. GIÁ NIÊM YẾT (TOTAL PRICE)</span>
+                    <div style="color:#38bdf8;font-size:20px;font-weight:bold;margin:6px 0;">${fmt(totalPrice)}</div>
+                    <span style="color:#64748b;font-size:11px;">Bao gồm VAT 10% (Giá công bố)</span>
+                </div>
+
+                <!-- Minus icon -->
+                <div style="font-size:24px;font-weight:bold;color:#ef4444;">−</div>
+
+                <!-- Step 2: Discount -->
+                <div style="background:#0f172a;padding:16px;border-radius:10px;border:1px solid #ef444450;text-align:left;">
+                    <span style="color:#f87171;font-size:11px;font-weight:bold;">2. TỔNG CHIẾT KHẤU & KHUYẾN MẠI</span>
+                    <div style="color:#ef4444;font-size:20px;font-weight:bold;margin:6px 0;">${fmt(totalDiscount)}</div>
+                    <span style="color:#64748b;font-size:11px;">CT: ${promoName || 'Ưu đãi trên đơn'}</span>
+                </div>
+
+                <!-- Equal icon -->
+                <div style="font-size:24px;font-weight:bold;color:#10b981;">=</div>
+
+                <!-- Step 3: Net Payable -->
+                <div style="background:#064e3b30;padding:16px;border-radius:10px;border:1px solid #10b981;text-align:left;">
+                    <span style="color:#34d399;font-size:11px;font-weight:bold;">3. SỐ TIỀN THỰC SAU THUẾ</span>
+                    <div style="color:#10b981;font-size:20px;font-weight:bold;margin:6px 0;">${fmt(netAfterDiscount)}</div>
+                    <span style="color:#34d399;font-size:11px;">Tổng tiền khách hàng phải thanh toán</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CƠ CHẾ BÓC TÁCH THUẾ GTGT XUẤT HÓA ĐƠN SAP -->
+        <div style="background:#1e293b;border-radius:14px;padding:20px;border:1px solid #38bdf850;">
+            <h4 style="margin:0 0 16px 0;color:#38bdf8;font-size:14px;">
+                🧾 2. CƠ CHẾ BÓC TÁCH THUẾ VAT 10% ĐẨY SANG HÓA ĐƠN ĐIỆN TỬ SAP
+            </h4>
+
+            <div style="background:#0f172a;padding:14px 18px;border-radius:10px;border-left:4px solid #38bdf8;margin-bottom:16px;line-height:1.6;font-size:12.5px;">
+                Chính sách thuế: <b style="color:#38bdf8;">${vatOption}</b> (Giá bán đã bao gồm thuế GTGT 10%).<br>
+                Doanh nghiệp phải bóc tách Doanh thu chưa thuế và Tiền thuế GTGT theo đúng chuẩn kế toán:
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                <div style="background:#0f172a;padding:16px;border-radius:10px;border:1px solid #334155;">
+                    <span style="color:#94a3b8;font-size:12px;">🏢 A. Doanh thu bán hàng (Giá CHƯA thuế GTGT):</span>
+                    <div style="color:#f8fafc;font-size:22px;font-weight:bold;margin:6px 0;">${fmt(priceBeforeTax)}</div>
+                    <span style="color:#64748b;font-size:11.5px;">Công thức: <code>${fmt(netAfterDiscount)} / 1.10 = <b>${fmt(priceBeforeTax)}</b></code></span>
+                </div>
+
+                <div style="background:#0f172a;padding:16px;border-radius:10px;border:1px solid #334155;">
+                    <span style="color:#94a3b8;font-size:12px;">🏛️ B. Tiền thuế GTGT 10% (Số tiền thuế VAT 1):</span>
+                    <div style="color:#eab308;font-size:22px;font-weight:bold;margin:6px 0;">${fmt(vatAmount)}</div>
+                    <span style="color:#64748b;font-size:11.5px;">Công thức: <code>${fmt(netAfterDiscount)} - ${fmt(priceBeforeTax)} = <b>${fmt(vatAmount)}</b></code></span>
+                </div>
+            </div>
+
+            <!-- Bảng dòng hàng hóa đơn -->
+            <div style="background:#0f172a;border-radius:10px;overflow:hidden;border:1px solid #334155;">
+                <div style="background:#1e293b;padding:10px 16px;font-weight:bold;font-size:12px;color:#38bdf8;">
+                    📄 MÔ PHỎNG DÒNG HÀNG TRÊN HÓA ĐƠN GTGT (HÓA ĐƠN ĐỎ SAP):
+                </div>
+                <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
+                    <thead style="background:#090d16;color:#94a3b8;">
+                        <tr>
+                            <th style="padding:10px 14px;">Tên hàng hóa, dịch vụ</th>
+                            <th style="padding:10px 14px;">Đơn giá chưa thuế</th>
+                            <th style="padding:10px 14px;">Thuế suất</th>
+                            <th style="padding:10px 14px;">Tiền thuế GTGT</th>
+                            <th style="padding:10px 14px;text-align:right;">Tổng tiền thanh toán</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding:12px 14px;color:#f8fafc;font-weight:bold;">${product} (Cấu hình: ${config || 'Tiêu chuẩn'})</td>
+                            <td style="padding:12px 14px;color:#cbd5e1;font-family:monospace;">${fmt(priceBeforeTax)}</td>
+                            <td style="padding:12px 14px;color:#38bdf8;font-weight:bold;">10%</td>
+                            <td style="padding:12px 14px;color:#eab308;font-family:monospace;">${fmt(vatAmount)}</td>
+                            <td style="padding:12px 14px;color:#10b981;font-weight:bold;font-size:14px;text-align:right;">${fmt(netAfterDiscount)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- BẢNG TOÀN BỘ CÁC TRƯỜNG DỮ LIỆU TÀI CHÍNH QUÉT TỪ FORM -->
+        <div style="background:#1e293b;border-radius:14px;padding:20px;border:1px solid #334155;">
+            <h4 style="margin:0 0 12px 0;color:#a78bfa;font-size:13px;">
+                📋 3. TẤT CẢ GIÁ TRỊ TÀI CHÍNH TRÊN FORM HIỆN TẠI (DIRECT FORM ATTRIBUTES)
+            </h4>
+            <div style="background:#0f172a;border-radius:8px;padding:12px;max-height:180px;overflow-y:auto;font-family:monospace;font-size:11.5px;color:#94a3b8;line-height:1.7;">
+                ${Object.keys(allFormFields).filter(k => typeof allFormFields[k] === 'number' || (typeof allFormFields[k] === 'string' && /^\d+$/.test(allFormFields[k]))).map(k => `<div>• <span style="color:#f43f5e;">${k}</span>: <b style="color:#cbd5e1;">${typeof allFormFields[k] === 'number' ? allFormFields[k].toLocaleString('vi-VN') : allFormFields[k]}</b></div>`).join('') || 'Đã đọc trực tiếp các trường giá trị.'}
+            </div>
+        </div>
+    `;
+
+    // Footer
+    var footer = document.createElement('div');
+    footer.style = 'padding:14px 24px;background:#1e293b;border-top:1px solid #334155;display:flex;justify-content:space-between;align-items:center;';
+    footer.innerHTML = `
+        <button id="btnCopyReportText" style="background:#10b981;color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:bold;font-size:12.5px;cursor:pointer;">
+            📋 Copy Bảng Quyết Toán & Giải Trình Giá
+        </button>
+        <button id="btnCloseMechanismBottom" style="background:#334155;color:white;border:none;padding:8px 18px;border-radius:8px;font-weight:bold;font-size:12.5px;cursor:pointer;">
+            Đóng
+        </button>
+    `;
+
+    modal.appendChild(header);
+    modal.appendChild(body);
+    modal.appendChild(footer);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    document.getElementById('btnCloseMechanism').onclick = function() { overlay.remove(); };
+    document.getElementById('btnCloseMechanismBottom').onclick = function() { overlay.remove(); };
+
+    document.getElementById('btnCopyReportText').onclick = function() {
+        var rep = `BÁO CÁO GIẢI TRÌNH CƠ CHẾ TÍNH GIÁ XUẤT HÓA ĐƠN\n` +
+                  `Đơn hàng VSO: ${vsoNumber}\n` +
+                  `Khách hàng: ${customer} | TVBH: ${tvbh}\n` +
+                  `Sản phẩm: ${product} (VIN: ${vin})\n` +
+                  `--------------------------------------------------\n` +
+                  `1. Giá niêm yết (Total Price): ${fmt(totalPrice)}\n` +
+                  `2. Tổng chiết khấu & Khuyến mại: - ${fmt(totalDiscount)} (${promoName})\n` +
+                  `3. SỐ TIỀN THỰC THU SAU THUẾ: ${fmt(netAfterDiscount)}\n` +
+                  `--------------------------------------------------\n` +
+                  `BÓC TÁCH HÓA ĐƠN GTGT 10% (SAP INVOICE):\n` +
+                  `• Doanh thu bán xe chưa thuế: ${fmt(priceBeforeTax)}\n` +
+                  `• Tiền thuế GTGT 10% (Số tiền thuế VAT 1): ${fmt(vatAmount)}\n` +
+                  `• TỔNG TIỀN THANH TOÁN TRÊN HÓA ĐƠN: ${fmt(netAfterDiscount)}\n`;
+
+        navigator.clipboard.writeText(rep);
+        this.innerText = '✅ Đã copy vào Clipboard!';
+        var self = this;
+        setTimeout(function(){ self.innerText = '📋 Copy Bảng Quyết Toán & Giải Trình Giá'; }, 2000);
+    };
+})();

@@ -1,0 +1,59 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - KIỂM TRA CHI TIẾT SỔ BẢO HÀNH & LIÊN KẾT KHÁCH HÀNG
+     * ========================================================================= */
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm) {
+        for (var i = 0; i < frames.length; i++) {
+            try { if (frames[i].Xrm) { _Xrm = frames[i].Xrm; break; } } catch(e){}
+        }
+    }
+    if (!_Xrm) { alert("Vui lòng mở trang DMS!"); return; }
+
+    var entityName = "itv_electronicwarrantybook";
+    var recordId = "";
+    try {
+        if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity) {
+            entityName = _Xrm.Page.data.entity.getEntityName() || entityName;
+            recordId = (_Xrm.Page.data.entity.getId() || "").replace(/[{}]/g, "");
+        }
+    } catch(e){}
+    if (!recordId) {
+        var urlParams = new URLSearchParams(window.location.search);
+        entityName = urlParams.get("etn") || entityName;
+        recordId = (urlParams.get("id") || "").replace(/[{}]/g, "");
+    }
+
+    try {
+        var rec = await _Xrm.WebApi.retrieveRecord(entityName, recordId);
+        console.log("Chi tiết bản ghi EWB:", rec);
+        
+        var owner = rec["_ownerid_value@OData.Community.Display.V1.FormattedValue"] || rec["_ownerid_value"];
+        var bu = rec["_owningbusinessunit_value@OData.Community.Display.V1.FormattedValue"] || rec["_owningbusinessunit_value"];
+        var status = rec["statuscode@OData.Community.Display.V1.FormattedValue"] || rec["statuscode"];
+        var customer = rec["_itv_customerid_value@OData.Community.Display.V1.FormattedValue"] || rec["_itv_customerid_value"] || rec["_xts_customerid_value@OData.Community.Display.V1.FormattedValue"];
+        var customerId = rec["_itv_customerid_value"] || rec["_xts_customerid_value"] || rec["_itv_contactid_value"] || rec["_xts_contactid_value"];
+        var customerType = rec["_itv_customerid_value@Microsoft.Dynamics.CRM.lookuplogicalname"] || "contact";
+
+        var msg = `📌 THÔNG TIN PHÂN QUYỀN BẢN GHI:\n` +
+                  `- Mã EWB: ${rec.itv_name || recordId}\n` +
+                  `- SĐT hiện tại: ${rec.itv_mobilephone || "Trống"}\n` +
+                  `- Người sở hữu (Owner): ${owner}\n` +
+                  `- Đơn vị (Business Unit): ${bu}\n` +
+                  `- Trạng thái: ${status}\n` +
+                  `- Khách hàng liên kết: ${customer || "Không có"}\n\n` +
+                  `⚠️ NGUYÊN NHÂN BỊ KHÓA:\n` +
+                  `Server CRM báo tài khoản của bạn thuộc BU khác hoặc Vai trò bảo mật (Security Role) chưa được cấp quyền Ghi (Write Privilege) lên bản ghi Sổ bảo hành này.`;
+
+        if (customerId) {
+            msg += `\n\n👉 Bạn có muốn mở trực tiếp Hồ sơ Khách hàng (${customer}) để đổi SĐT trên Khách hàng không?`;
+            if (confirm(msg)) {
+                window.open(`/main.aspx?pagetype=entityrecord&etn=${customerType}&id=${customerId}`, '_blank');
+            }
+        } else {
+            alert(msg);
+        }
+    } catch(err) {
+        alert("Lỗi khi đọc bản ghi: " + (err.message || err));
+    }
+})();

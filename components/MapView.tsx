@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { getCarImage } from '../utils/styleUtils';
+import { getCarImage, getBackgroundColorStyle } from '../utils/styleUtils';
 import { getAppSetting, updateAppSetting, supabase } from '../services/apiService';
 import moment from 'moment';
 import 'moment/locale/vi';
 import ShareSidePanel from './modals/ShareSidePanel';
+import { reverseGeocode } from '../utils/geocodeUtils';
 moment.locale('vi');
 
 interface MapViewProps {
@@ -15,17 +16,22 @@ interface MapViewProps {
     targetVinOnMap?: string | null;
     onClearTargetVinOnMap?: () => void;
     isReferenceAccount?: boolean;
+    onSelectVin?: (vin: string) => void;
+    hideSidebar?: boolean;
 }
 
-const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refetchStock: _refetchStock, showToast, currentUser: _currentUser, targetVinOnMap, onClearTargetVinOnMap, isReferenceAccount }) => {
+const TOMTOM_KEY = 'WbsnHpupuR5dtk36955dkSQVG5QKZ21d';
+
+const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refetchStock: _refetchStock, showToast, currentUser: _currentUser, targetVinOnMap, onClearTargetVinOnMap, isReferenceAccount, onSelectVin, hideSidebar = false }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedModel, setSelectedModel] = useState('all');
+    const [selectedColor, setSelectedColor] = useState('all');
     const [mapType, setMapType] = useState<'satellite' | 'standard'>('standard');
+    const [showTraffic, setShowTraffic] = useState<boolean>(true);
+    const [showIncidents, setShowIncidents] = useState<boolean>(true);
+    const [isTrafficMenuOpen, setIsTrafficMenuOpen] = useState<boolean>(false);
     const [isMapLoaded, setIsMapLoaded] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [routedVin, setRoutedVin] = useState<string | null>(null);
-    const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
-    const [isDrawingRoute, setIsDrawingRoute] = useState<string | null>(null);
     const [addresses, setAddresses] = useState<Record<string, any>>(() => {
         try {
             const cached = localStorage.getItem('car_addresses_cache');
@@ -37,22 +43,19 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
 
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [hoveredVin] = useState<string | null>(null);
-    const [polygonCoords, setPolygonCoords] = useState<any[] | null>(null);
     const [, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
 
     const [carToShare, setCarToShare] = useState<any>(null);
-
-
 
     const mapRef = useRef<HTMLDivElement | null>(null);
     const mapInstance = useRef<any>(null);
     const markersRef = useRef<Record<string, any>>({});
     const tileLayerRef = useRef<any>(null);
+    const trafficLayerRef = useRef<any>(null);
+    const incidentsLayerRef = useRef<any>(null);
     const labelLayerRef = useRef<any>(null);
-    const routePolylineRef = useRef<any>(null);
     const userMarkerRef = useRef<any>(null);
     const markerClusterGroupRef = useRef<any>(null);
-    const drawnItemsRef = useRef<any>(null);
 
     const hasFittedBounds = useRef<boolean>(false);
     const addressesRef = useRef<Record<string, any>>(addresses);
@@ -343,6 +346,15 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
         }
     }, [allCarsWithGps]);
 
+    const carColors = useMemo(() => {
+        try {
+            const colors = allCarsWithGps.map(car => car.ngoai_that).filter(Boolean);
+            return Array.from(new Set(colors)).sort();
+        } catch (err) {
+            return [];
+        }
+    }, [allCarsWithGps]);
+
     const filteredCars = useMemo(() => {
         try {
             let cars = allCarsWithGps.filter(car => {
@@ -354,26 +366,14 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
                     modelStr.includes(searchTerm.toLowerCase()) ||
                     versionStr.includes(searchTerm.toLowerCase());
                 const matchesModel = selectedModel === 'all' || car.dong_xe === selectedModel;
-                const match = matchesSearch && matchesModel; return match; });
-            // Lọc theo Geofencing (Polygon)
-            if (polygonCoords && polygonCoords.length > 3) {
-                try {
-                    const turf = (window as any).turf;
-                    if (turf) {
-                        const searchPolygon = turf.polygon([polygonCoords]);
-                        cars = cars.filter(car => {
-                            const point = turf.point([car.lng, car.lat]);
-                            return turf.booleanPointInPolygon(point, searchPolygon);
-                        });
-                    }
-                } catch(e) { console.error("Turf error", e); }
-            }
+                const matchesColor = selectedColor === 'all' || car.ngoai_that === selectedColor;
+                const match = matchesSearch && matchesModel && matchesColor; return match; });
             return cars;
 
         } catch (err) {
             return [];
         }
-    }, [allCarsWithGps, searchTerm, selectedModel]);
+    }, [allCarsWithGps, searchTerm, selectedModel, selectedColor]);
 
     // Initialize Map
     useEffect(() => {
@@ -397,9 +397,8 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             }).fitBounds(vnBounds);
             hasFittedBounds.current = true;
 
-            tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                subdomains: 'abcd',
-                maxZoom: 18
+            tileLayerRef.current = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20
             }).addTo(mapInstance.current);
 
             tileLayerRef.current.on('load', () => setIsMapLoaded(true));
@@ -407,6 +406,7 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             markerClusterGroupRef.current = L.markerClusterGroup({
                 showCoverageOnHover: false,
                 spiderfyOnMaxZoom: true,
+                disableClusteringAtZoom: 1,  // Không bao giờ gom cluster, luôn hiển thị từng xe riêng
                 maxClusterRadius: 60,
                 iconCreateFunction: function (cluster: any) {
                     const childCount = cluster.getChildCount();
@@ -435,32 +435,7 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             });
             mapInstance.current.addLayer(markerClusterGroupRef.current);
 
-            // Initialize Draw Control
-            drawnItemsRef.current = new L.FeatureGroup();
-            mapInstance.current.addLayer(drawnItemsRef.current);
-            
-            const drawControl = new L.Control.Draw({
-                draw: { marker: false, polyline: false, circle: false, rectangle: true, circlemarker: false, polygon: { allowIntersection: false, drawError: { color: '#e1e100', message: 'Không được cắt chéo' }, shapeOptions: { color: '#4f46e5' } } },
-                edit: { featureGroup: drawnItemsRef.current, remove: true, edit: false }
-            });
-            mapInstance.current.addControl(drawControl);
 
-            mapInstance.current.on(L.Draw.Event.CREATED, function (e: any) {
-                drawnItemsRef.current.clearLayers();
-                const layer = e.layer;
-                drawnItemsRef.current.addLayer(layer);
-                let latlngs;
-                if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-                    latlngs = layer.getLatLngs()[0];
-                    const coords = latlngs.map((ll: any) => [ll.lng, ll.lat]);
-                    if (coords.length > 0) coords.push([...coords[0]]);
-                    setPolygonCoords(coords);
-                }
-            });
-
-            mapInstance.current.on(L.Draw.Event.DELETED, function () {
-                setPolygonCoords(null);
-            });
 
             const fallbackTimer = setTimeout(() => setIsMapLoaded(true), 1200);
 
@@ -468,6 +443,21 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             setTimeout(() => mapInstance.current?.invalidateSize(), 50);
             setTimeout(() => mapInstance.current?.invalidateSize(), 150);
             setTimeout(() => mapInstance.current?.invalidateSize(), 300);
+            setTimeout(() => mapInstance.current?.invalidateSize(), 800);
+
+            // ResizeObserver: tự động invalidate khi container xuất hiện trong split-screen
+            let resizeObserver: ResizeObserver | null = null;
+            if (mapRef.current && typeof ResizeObserver !== 'undefined') {
+                resizeObserver = new ResizeObserver((entries) => {
+                    for (const entry of entries) {
+                        const { width, height } = entry.contentRect;
+                        if (width > 0 && height > 0 && mapInstance.current) {
+                            mapInstance.current.invalidateSize();
+                        }
+                    }
+                });
+                resizeObserver.observe(mapRef.current);
+            }
 
             navigator.geolocation.getCurrentPosition((pos) => {
                 const userLat = pos.coords.latitude;
@@ -499,6 +489,9 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
 
             return () => {
                 clearTimeout(fallbackTimer);
+                if (resizeObserver) {
+                    resizeObserver.disconnect();
+                }
                 if (mapInstance.current) {
                     mapInstance.current.remove();
                     mapInstance.current = null;
@@ -516,18 +509,13 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             if (!L) return;
 
             if (mapType === 'satellite') {
-                tileLayerRef.current.setUrl('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+                tileLayerRef.current.setUrl('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}');
                 if (labelLayerRef.current) {
-                    labelLayerRef.current.setUrl('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png');
-                } else {
-                    labelLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-                        subdomains: 'abcd',
-                        maxZoom: 18
-                    }).addTo(mapInstance.current);
+                    labelLayerRef.current.remove();
+                    labelLayerRef.current = null;
                 }
             } else {
-                // Minimalist mode
-                tileLayerRef.current.setUrl('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
+                tileLayerRef.current.setUrl('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}');
                 if (labelLayerRef.current) {
                     labelLayerRef.current.remove();
                     labelLayerRef.current = null;
@@ -537,6 +525,43 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             console.error('Error switching map mode:', err);
         }
     }, [mapType]);
+
+    // TomTom Realtime Traffic Flow & Incidents
+    useEffect(() => {
+        if (!mapInstance.current) return;
+        const L = (window as any).L;
+        if (!L) return;
+
+        // Manage Traffic Flow Layer
+        if (showTraffic) {
+            if (!trafficLayerRef.current) {
+                trafficLayerRef.current = L.tileLayer(
+                    `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${TOMTOM_KEY}`,
+                    { maxZoom: 18, opacity: 0.85, zIndex: 50 }
+                );
+            }
+            if (!mapInstance.current.hasLayer(trafficLayerRef.current)) {
+                trafficLayerRef.current.addTo(mapInstance.current);
+            }
+        } else if (trafficLayerRef.current && mapInstance.current.hasLayer(trafficLayerRef.current)) {
+            trafficLayerRef.current.remove();
+        }
+
+        // Manage Traffic Incidents Layer
+        if (showIncidents) {
+            if (!incidentsLayerRef.current) {
+                incidentsLayerRef.current = L.tileLayer(
+                    `https://api.tomtom.com/traffic/map/4/tile/incidents/s0/{z}/{x}/{y}.png?key=${TOMTOM_KEY}`,
+                    { maxZoom: 18, opacity: 0.95, zIndex: 60 }
+                );
+            }
+            if (!mapInstance.current.hasLayer(incidentsLayerRef.current)) {
+                incidentsLayerRef.current.addTo(mapInstance.current);
+            }
+        } else if (incidentsLayerRef.current && mapInstance.current.hasLayer(incidentsLayerRef.current)) {
+            incidentsLayerRef.current.remove();
+        }
+    }, [showTraffic, showIncidents, isMapLoaded]);
 
     // Draw markers
     useEffect(() => {
@@ -572,156 +597,182 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
                 }
             };
 
-            const getPopupContentForCar = (car: any, isRouted: boolean, rInfo: any, isDrawing: boolean) => {
+            (window as any).shareCarFromMap = (vin: string) => {
+                const targetVin = (vin || '').trim().toUpperCase();
+                if (!targetVin) return;
+
+                const shareUrl = `${window.location.origin}${window.location.pathname}?vin=${targetVin}`;
+                navigator.clipboard.writeText(shareUrl).catch(() => {});
+
+                const infoEl = document.getElementById(`popup-body-info-${targetVin}`);
+                const qrEl = document.getElementById(`popup-body-qr-${targetVin}`);
+                if (infoEl) infoEl.style.display = 'none';
+                if (qrEl) qrEl.style.display = 'flex';
+
+                // Auto-center map on the marker & offset popup to the exact middle of screen
+                const marker = markersRef.current[targetVin] || Object.values(markersRef.current).find((m: any) => m.options?.carVin === targetVin);
+                if (marker && mapInstance.current) {
+                    const latLng = marker.getLatLng();
+                    mapInstance.current.panTo(latLng, { animate: true });
+                    setTimeout(() => {
+                        if (mapInstance.current) {
+                            mapInstance.current.panBy([0, -145], { animate: true });
+                        }
+                    }, 50);
+                }
+            };
+
+            (window as any).showInfoInPopup = (vin: string) => {
+                const targetVin = (vin || '').trim().toUpperCase();
+                const infoEl = document.getElementById(`popup-body-info-${targetVin}`);
+                const qrEl = document.getElementById(`popup-body-qr-${targetVin}`);
+                if (infoEl) infoEl.style.display = 'flex';
+                if (qrEl) qrEl.style.display = 'none';
+            };
+
+            (window as any).copyShareUrlFromPopup = (vin: string, urlEncoded: string) => {
+                const url = decodeURIComponent(urlEncoded);
+                navigator.clipboard.writeText(url).catch(() => {});
+
+                const btnEl = document.getElementById(`btn-copy-qr-${vin}`);
+                const textEl = document.getElementById(`text-copy-qr-${vin}`);
+                if (btnEl && textEl) {
+                    const originalText = textEl.innerHTML;
+                    const originalBg = btnEl.style.background;
+                    btnEl.style.background = 'linear-gradient(135deg,#16a34a 0%,#15803d 100%)';
+                    textEl.innerHTML = '✓ Đã copy link!';
+                    setTimeout(() => {
+                        if (btnEl && textEl) {
+                            btnEl.style.background = originalBg;
+                            textEl.innerHTML = originalText;
+                        }
+                    }, 1800);
+                }
+            };
+
+            const getPopupContentForCar = (car: any) => {
                 const popupId = `popup-vin-${car.vin}`;
                 const vinElId = `vin-el-${car.vin}`;
-                const bgClass = car.trang_thai === 'Chưa ghép' ? 'background: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7;' : car.trang_thai === 'Đã ghép' ? 'background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe;' : car.trang_thai === 'Lịch sử vị trí' ? 'background: #faf5ff; color: #9333ea; border: 1px solid #f3e8ff;' : 'background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;';
+                const carImgUrl = getCarImage(car.dong_xe, car.ngoai_that);
+                const shareUrl = `${window.location.origin}${window.location.pathname}?vin=${car.vin}`;
+
+                const statusColor = car.trang_thai === 'Chưa ghép' ? '#16a34a'
+                    : car.trang_thai === 'Đã ghép' ? '#2563eb'
+                    : car.trang_thai === 'Đang giữ' ? '#4f46e5'
+                    : car.trang_thai === 'Lịch sử vị trí' ? '#9333ea'
+                    : '#64748b';
+                const statusBg = car.trang_thai === 'Chưa ghép' ? '#f0fdf4'
+                    : car.trang_thai === 'Đã ghép' ? '#eff6ff'
+                    : car.trang_thai === 'Đang giữ' ? '#eef2ff'
+                    : car.trang_thai === 'Lịch sử vị trí' ? '#faf5ff'
+                    : '#f8fafc';
+
+                const formatTime = (t: any) => {
+                    if (!t) return 'Không rõ';
+                    const dt = new Date(t);
+                    if (isNaN(dt.getTime())) return String(t);
+                    const h = dt.getHours(), m = dt.getMinutes(), d = dt.getDate(), mo = dt.getMonth() + 1;
+                    return (h < 10 ? '0' + h : h) + ':' + (m < 10 ? '0' + m : m) + ' • ' + (d < 10 ? '0' + d : d) + '/' + (mo < 10 ? '0' + mo : mo);
+                };
+                const updateTimeStr = car.updated_at ? formatTime(car.updated_at) : 'Chưa rõ';
 
                 return `
-                    <div style="min-width: 220px; font-family: sans-serif; padding: 4px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span style="font-size: 11px; font-weight: bold; color: #4f46e5; text-transform: uppercase;">${car.dong_xe}</span>
-                            <span style="font-size: 10px; ${bgClass} padding: 2px 6px; border-radius: 6px; font-weight: bold;">${car.trang_thai}</span>
-                        </div>
-                        <div style="font-size: 13px; font-weight: bold; color: #111827; margin-bottom: 4px;">${car.phien_ban}</div>
-                        <div 
-                            id="${vinElId}"
-                            onclick="event.stopPropagation(); window.copyVinFromMap('${car.vin}', '${vinElId}')" 
-                            title="Click để copy số VIN" 
-                            style="font-size: 13px; font-family: monospace; color: #1e1b4b; font-weight: 900; margin-bottom: 8px; cursor: pointer; letter-spacing: 0.5px; background: #f1f5f9; padding: 4px 6px; border-radius: 6px; border: 1px dashed #94a3b8; display: inline-block; transition: all 0.2s;"
-                        >
-                            VIN: ${car.vin}
-                        </div>
-                        <div 
-                            onclick="event.stopPropagation(); window.copyAddressFromMap('${popupId}')" 
-                            title="Click để copy địa chỉ"
-                            style="font-size: 11px; color: #1f2937; line-height: 1.4; border-top: 1px solid #e5e7eb; padding-top: 6px; margin-top: 4px; cursor: pointer;"
-                        >
-                            📍 <strong>Địa chỉ:</strong>
-                            <span id="${popupId}" style="display: block; color: #374151; margin-top: 2px; font-style: italic; text-decoration: underline dashed 1px #cbd5e1;">Đang lấy địa chỉ...</span>
-                        </div>
-                        <div style="border-top: 1px solid #f1f5f9; padding-top: 8px; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; justify-content: center;">
-                            ${isRouted ? `
-                            <div style="font-size: 11px; font-weight: bold; color: #4338ca; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; background: #e0e7ff; padding: 4px 8px; border-radius: 6px;">
-                                🏁 <span>${rInfo ? `${rInfo.distance} • ${rInfo.duration}` : 'Đang tính...'}</span>
+                    <div style="width:215px;font-family:'Segoe UI',system-ui,sans-serif;border-radius:14px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.13);background:#fff;">
+                        <!-- Header: ảnh xe + gradient -->
+                        <div style="position:relative;background:linear-gradient(135deg,#1e293b 0%,#334155 100%);padding:12px 12px 10px;display:flex;align-items:center;gap:10px;">
+                            <div style="width:52px;height:52px;border-radius:12px;background:rgba(255,255,255,0.12);backdrop-filter:blur(4px);border:1.5px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+                                <img src="${carImgUrl}" style="width:100%;height:100%;object-fit:contain;" alt="${car.dong_xe}" />
                             </div>
-                            <button 
-                                onclick="event.stopPropagation(); window.clearRouteFromMap('${car.vin}');"
-                                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; transition: all 0.2s;"
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px;">${car.dong_xe}</div>
+                                <div style="font-size:13px;font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${car.phien_ban || '—'}</div>
+                                <div style="margin-top:5px;">
+                                    <span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${statusBg};color:${statusColor};">
+                                        <span style="width:6px;height:6px;border-radius:50%;background:${statusColor};display:inline-block;"></span>
+                                        ${car.trang_thai}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Body 1: Info View -->
+                        <div id="popup-body-info-${car.vin}" style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;">
+                            <!-- VIN chip -->
+                            <div
+                                id="${vinElId}"
+                                onclick="event.stopPropagation();window.copyVinFromMap('${car.vin}','${vinElId}')"
+                                title="Click để copy VIN"
+                                style="display:flex;align-items:center;gap:6px;background:#f1f5f9;border:1px dashed #94a3b8;border-radius:8px;padding:5px 8px;cursor:pointer;transition:background 0.2s;"
                             >
-                                ❌ Hủy chỉ đường
-                            </button>
-                            ` : `
-                            <button 
-                                id="draw-route-btn-${car.vin}"
-                                onclick="event.stopPropagation(); window.drawRouteOnMap(${car.lat}, ${car.lng}, '${car.vin}');"
-                                ${isDrawing ? 'disabled' : ''}
-                                style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; background: ${isDrawing ? '#94a3b8' : '#16a34a'}; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: ${isDrawing ? 'not-allowed' : 'pointer'}; transition: all 0.2s;"
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                                <span style="font-size:11px;font-family:monospace;font-weight:800;color:#1e1b4b;letter-spacing:0.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${car.vin}</span>
+                            </div>
+
+                            <!-- Địa chỉ -->
+                            <div
+                                onclick="event.stopPropagation();window.copyAddressFromMap('${popupId}')"
+                                title="Click để copy địa chỉ"
+                                style="display:flex;align-items:flex-start;gap:6px;cursor:pointer;"
                             >
-                                ${isDrawing ? '⏳ Đang tính...' : '🗺️ Chỉ đường'}
+                                <div style="width:20px;height:20px;border-radius:6px;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                                </div>
+                                <span id="${popupId}" style="font-size:11px;color:#374151;line-height:1.45;flex:1;">Đang lấy địa chỉ...</span>
+                            </div>
+
+                            <!-- Timestamp -->
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:6px;border-top:1px solid #f1f5f9;">
+                                <div style="display:flex;align-items:center;gap:5px;">
+                                    <div style="width:18px;height:18px;border-radius:5px;background:#fefce8;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 16 14"/></svg>
+                                    </div>
+                                    <span style="font-size:10px;font-weight:600;color:#92400e;">${updateTimeStr}</span>
+                                </div>
+                            </div>
+
+                            <!-- Share Location Button -->
+                            <button
+                                id="btn-share-car-${car.vin}"
+                                type="button"
+                                onclick="event.stopPropagation();window.shareCarFromMap('${car.vin}')"
+                                style="width:100%;background:linear-gradient(135deg,#0284c7 0%,#0369a1 100%);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 3px 8px rgba(2,132,199,0.35);margin-top:2px;transition:all 0.2s;"
+                            >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                <span id="btn-share-text-${car.vin}">Chia sẻ vị trí</span>
                             </button>
-                            `}
+                        </div>
+
+                        <!-- Body 2: QR Code View (Morphs inside this popup!) -->
+                        <div id="popup-body-qr-${car.vin}" style="display:none;padding:10px 12px;flex-direction:column;align-items:center;gap:7px;background:#f8fafc;">
+                            <div style="background:#fff;padding:8px;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);display:flex;justify-content:center;margin-top:2px;">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(shareUrl)}" style="width:130px;height:130px;display:block;" alt="QR Code" />
+                            </div>
+
+                            <span style="font-size:10px;font-weight:700;color:#475569;text-align:center;">
+                                Quét camera để xem vị trí xe Live
+                            </span>
+
+                            <button
+                                id="btn-copy-qr-${car.vin}"
+                                type="button"
+                                onclick="event.stopPropagation();window.copyShareUrlFromPopup('${car.vin}','${encodeURIComponent(shareUrl)}')"
+                                style="width:100%;background:linear-gradient(135deg,#0284c7 0%,#0369a1 100%);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 2px 6px rgba(2,132,199,0.3);margin-top:2px;"
+                            >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                                <span id="text-copy-qr-${car.vin}">SAO CHÉP LINK</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onclick="event.stopPropagation();window.showInfoInPopup('${car.vin}')"
+                                style="width:100%;background:#fff;color:#475569;border:1px solid #cbd5e1;border-radius:8px;padding:5px 8px;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;"
+                            >
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                                <span>Quay lại thông tin</span>
+                            </button>
                         </div>
                     </div>
                 `;
-            };
-
-            (window as any).clearRouteFromMap = (vin?: string) => {
-                if (routePolylineRef.current) {
-                    routePolylineRef.current.remove();
-                    routePolylineRef.current = null;
-                }
-                const prevRoutedVin = routedVin;
-                setRoutedVin(null);
-                setRouteInfo(null);
-                showToast('Đã Xóa', 'Đã xóa đường đi trên bản đồ.', 'info');
-
-                const targetVin = vin || prevRoutedVin;
-                if (targetVin && markersRef.current[targetVin]) {
-                    const carObj = allCarsWithGps.find(c => c.vin === targetVin);
-                    if (carObj) {
-                        markersRef.current[targetVin].setPopupContent(getPopupContentForCar(carObj, false, null, false));
-                    }
-                }
-            };
-
-            (window as any).drawRouteOnMap = (carLat: number, carLng: number, vin: string) => {
-                if (!mapInstance.current) return;
-                setIsDrawingRoute(vin);
-                const btn = document.getElementById(`draw-route-btn-${vin}`);
-                if (btn) {
-                    (btn as any).disabled = true;
-                    btn.style.background = '#94a3b8';
-                    btn.style.cursor = 'not-allowed';
-                    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Đang tính...</span>';
-                }
-                navigator.geolocation.getCurrentPosition(async (pos) => {
-                    const userLat = pos.coords.latitude;
-                    const userLng = pos.coords.longitude;
-                    try {
-                        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${userLng},${userLat};${carLng},${carLat}?overview=full&geometries=geojson`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.routes && data.routes.length > 0) {
-                                const route = data.routes[0];
-                                const coordinates = route.geometry.coordinates;
-                                const latLngs = coordinates.map((coord: any) => [coord[1], coord[0]]);
-
-                                const L = (window as any).L;
-                                if (!L) return;
-
-                                if (routePolylineRef.current) {
-                                    routePolylineRef.current.remove();
-                                }
-
-                                const distanceInKm = route.distance / 1000;
-                                const distance = distanceInKm.toFixed(1);
-                                const duration = Math.max(Math.round(route.duration / 60 * 1.6), Math.round(distanceInKm * 2.2));
-
-                                routePolylineRef.current = L.polyline(latLngs, {
-                                    color: '#4f46e5',
-                                    weight: 5,
-                                    opacity: 0.8,
-                                    lineJoin: 'round'
-                                }).addTo(mapInstance.current);
-
-                                routePolylineRef.current.bindTooltip(
-                                    `<div class="bg-indigo-600 text-white font-black text-[11px] px-3 py-1.5 rounded-xl flex items-center justify-center gap-1 border border-indigo-500/30 select-none shadow-md whitespace-nowrap animate-fade-in" style="pointer-events: none;">
-                                        <i class="fa-solid fa-route text-xs flex-shrink-0"></i>
-                                        <span>${distance} km • ${duration} phút</span>
-                                    </div>`,
-                                    {
-                                        permanent: true,
-                                        direction: 'center',
-                                        className: 'leaflet-route-tooltip'
-                                    }
-                                ).openTooltip();
-
-                                mapInstance.current.fitBounds(L.latLngBounds([[userLat, userLng], [carLat, carLng]]), { padding: [50, 50] });
-
-                                showToast('Thành Công', 'Đã vẽ đường đi đến xe!', 'success');
-                                setRoutedVin(vin);
-                                setRouteInfo({ distance: `${distance} km`, duration: `${duration} phút` });
-
-                                if (markersRef.current[vin]) {
-                                    const carObj = allCarsWithGps.find(c => c.vin === vin);
-                                    if (carObj) {
-                                        markersRef.current[vin].setPopupContent(getPopupContentForCar(carObj, true, { distance: `${distance} km`, duration: `${duration} phút` }, false));
-                                    }
-                                }
-                            }
-                        } else {
-                            showToast('Lỗi', 'Không thể lấy thông tin chỉ đường.', 'error');
-                        }
-                    } catch (e) {
-                        showToast('Lỗi', 'Lỗi khi kết nối với máy chủ chỉ đường.', 'error');
-                    } finally {
-                        setIsDrawingRoute(null);
-                    }
-                }, () => {
-                    showToast('Cần cấp quyền', 'Vui lòng cho phép truy cập vị trí trên trình duyệt của bạn.', 'warning');
-                    setIsDrawingRoute(null);
-                });
             };
 
             const newMarkers: Record<string, any> = {};
@@ -742,10 +793,8 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             // 2. Vẽ/Cập nhật markers một cách thông minh (Smart Reconciliation)
             filteredCars.forEach(car => {
                 const popupId = `popup-vin-${car.vin}`;
-                const isCarRouted = car.vin === routedVin;
-                const isDrawing = isDrawingRoute === car.vin;
 
-                const popupContent = getPopupContentForCar(car, isCarRouted, isCarRouted ? routeInfo : null, isDrawing);
+                const popupContent = getPopupContentForCar(car);
                 const carImgUrl = getCarImage(car.dong_xe, car.ngoai_that);
                 const isHovered = hoveredVin === car.vin;
                 const statusColor = car.trang_thai === 'Chưa ghép' ? '#16a34a' : car.trang_thai === 'Đã ghép' ? '#2563eb' : car.trang_thai === 'Đang giữ' ? '#4f46e5' : car.trang_thai === 'Lịch sử vị trí' ? '#9333ea' : '#475569';
@@ -792,10 +841,34 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
                 } else {
                     // MARKER MỚI HOÀN TOÀN
                     const marker = L.marker([car.lat, car.lng], { icon: carIcon })
-                        .bindPopup(popupContent);
+                        .bindPopup(popupContent, { autoPan: false });
 
                     marker.on('popupopen', () => {
                         resolveAddress(car.lat, car.lng, car.vin, popupId);
+                        if (onSelectVin) onSelectVin(car.vin);
+
+                        // Auto-center map so popup is dead-centered vertically & horizontally on screen
+                        if (mapInstance.current) {
+                            const latLng = marker.getLatLng();
+                            mapInstance.current.panTo(latLng, { animate: true });
+                            setTimeout(() => {
+                                if (mapInstance.current) {
+                                    mapInstance.current.panBy([0, -145], { animate: true });
+                                }
+                            }, 50);
+                        }
+                    });
+                    marker.on('click', () => {
+                        if (onSelectVin) onSelectVin(car.vin);
+                        if (mapInstance.current) {
+                            const latLng = marker.getLatLng();
+                            mapInstance.current.panTo(latLng, { animate: true });
+                            setTimeout(() => {
+                                if (mapInstance.current) {
+                                    mapInstance.current.panBy([0, -145], { animate: true });
+                                }
+                            }, 50);
+                        }
                     });
 
                     marker.options.customStatus = car.trang_thai; 
@@ -819,7 +892,7 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
         } catch (err) {
             console.error('Error drawing markers:', err);
         }
-    }, [filteredCars, isMapLoaded, routedVin, routeInfo, isDrawingRoute, hoveredVin]);
+    }, [filteredCars, isMapLoaded, hoveredVin]);
 
     
     // Auto-focus target VIN when arriving from deep link or external click
@@ -827,31 +900,34 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
         if (!targetVinOnMap || !isMapLoaded) return;
 
         let retryCount = 0;
-        const maxRetries = 20; // Chờ tối đa 2 giây
+        const maxRetries = 40; // Chờ tối đa 4 giây
 
         const tryFocusMarker = () => {
             if (mapInstance.current && markersRef.current && markersRef.current[targetVinOnMap]) {
-                console.log(`[MapView] Auto-focusing target marker: ${targetVinOnMap}`);
                 const marker = markersRef.current[targetVinOnMap];
-                
-                // Cho dừng mọi animation đang chạy
-                mapInstance.current.stop();
-                
-                if (markerClusterGroupRef.current) {
-                    markerClusterGroupRef.current.zoomToShowLayer(marker, () => {
-                        marker.openPopup();
-                    });
-                } else {
-                    const latLng = marker.getLatLng();
-                    mapInstance.current.setView(latLng, 16, { animate: true });
+                const latLng = marker.getLatLng ? marker.getLatLng() : null;
+
+                try { mapInstance.current.invalidateSize(); } catch (e) {}
+
+                if (latLng) {
+                    try {
+                        mapInstance.current.setView(latLng, 18, { animate: true });
+                    } catch (e) {}
+
+                    // Mở popup sau khi animation setView kết thúc (~600ms)
                     setTimeout(() => {
-                        marker.openPopup();
-                    }, 300);
+                        try {
+                            marker.openPopup();
+                            if (mapInstance.current) {
+                                mapInstance.current.panBy([0, -110], { animate: true });
+                            }
+                        } catch (e) {}
+                    }, 650);
+                } else {
+                    try { marker.openPopup(); } catch (e) {}
                 }
 
-                if (onClearTargetVinOnMap) {
-                    onClearTargetVinOnMap();
-                }
+                if (onClearTargetVinOnMap) onClearTargetVinOnMap();
                 return true;
             }
             return false;
@@ -867,7 +943,7 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
                 clearInterval(interval);
                 if (retryCount >= maxRetries && onClearTargetVinOnMap) {
                     console.warn(`[MapView] Failed to auto-focus marker ${targetVinOnMap} after timeout.`);
-                    onClearTargetVinOnMap(); // Dọn sạch cờ để ko bị kẹt
+                    onClearTargetVinOnMap();
                 }
             }
         }, 100);
@@ -884,24 +960,17 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
         }
 
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=vi`, {
-                headers: { 'User-Agent': 'ShowroomThuanAnOrderManagement/1.0' }
-            });
-            if (res.ok) {
-                const d = await res.json();
-                const address = d.display_name || 'Không tìm thấy địa chỉ cụ thể';
-                addressesRef.current[vin] = { address, lat, lng };
-                
-                localStorage.setItem('car_addresses_cache', JSON.stringify(addressesRef.current));
+            const address = await reverseGeocode(lat, lng);
+            addressesRef.current[vin] = { address, lat, lng };
+            localStorage.setItem('car_addresses_cache', JSON.stringify(addressesRef.current));
 
-                const el = document.getElementById(popupId);
-                if (el) el.innerHTML = `<strong>${address}</strong>`;
+            const el = document.getElementById(popupId);
+            if (el) el.innerHTML = `<strong>${address}</strong>`;
 
-                setAddresses({ ...addressesRef.current });
-            }
+            setAddresses({ ...addressesRef.current });
         } catch (err) {
             const el = document.getElementById(popupId);
-            if (el) el.innerHTML = 'Không thể lấy địa chỉ';
+            if (el) el.innerHTML = `Tọa độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         }
     };
 
@@ -925,7 +994,7 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
     };
 
     return (
-        <div className="flex flex-col md:flex-row overflow-hidden bg-slate-50 w-full border border-slate-200/60 rounded-2xl h-[calc(100vh-130px)] md:h-[calc(100vh-86px)]">
+        <div className="flex flex-col md:flex-row overflow-hidden bg-slate-50/80 backdrop-blur-xl w-full border border-slate-200/70 rounded-2xl h-[calc(100vh-130px)] md:h-[calc(100vh-86px)] shadow-sm">
             <style>{`
                 .leaflet-route-tooltip {
                     background: transparent !important;
@@ -940,12 +1009,12 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
                 @keyframes markerPulse {
                     0% {
                         transform: scale(0.9);
-                        box-shadow: 0 0 0 0px var(--pulse-color, rgba(99, 102, 241, 0.4));
+                        box-shadow: 0 0 0 0px var(--pulse-color, rgba(2, 132, 199, 0.4));
                         opacity: 0.9;
                     }
                     100% {
                         transform: scale(1.6);
-                        box-shadow: 0 0 0 14px rgba(99, 102, 241, 0);
+                        box-shadow: 0 0 0 14px rgba(2, 132, 199, 0);
                         opacity: 0;
                     }
                 }
@@ -954,26 +1023,114 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
             <div className="flex-1 h-1/2 md:h-full relative min-h-[300px] md:min-h-0">
                 <div ref={mapRef} className="w-full h-full bg-white" />
                 
-                {/* Map Type Toggle Button */}
-                <div className="absolute top-4 right-4 z-[400] bg-white p-1 rounded-xl shadow-lg border border-slate-200/80 flex gap-1 select-none">
+                {/* Glassmorphic Map Type Toggle Button */}
+                <div className={`absolute top-2 right-2 z-[400] bg-white/90 backdrop-blur-md p-1 rounded-xl shadow-md border border-slate-200/70 flex items-center gap-1 select-none`}>
+                    {/* TomTom Live Traffic Toggle */}
+                    <div className="relative">
+                        <button 
+                            onClick={() => setIsTrafficMenuOpen(!isTrafficMenuOpen)}
+                            className={`text-[10px] font-extrabold px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+                                showTraffic || showIncidents
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-300/80 shadow-xs'
+                                    : 'text-slate-600 hover:bg-slate-100/60'
+                            }`}
+                            title="Lưu lượng giao thông thời gian thực TomTom"
+                        >
+                            <i className="fa-solid fa-traffic-light text-amber-500 text-[11px]"></i>
+                            {!hideSidebar && <span>GIAO THÔNG</span>}
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        </button>
+
+                        {/* Traffic Dropdown Panel */}
+                        {isTrafficMenuOpen && (
+                            <div className="absolute top-full right-0 mt-2 w-64 bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl shadow-xl p-3.5 z-[1050] animate-fade-in-up text-left">
+                                <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100">
+                                    <div className="flex items-center gap-1.5">
+                                        <i className="fa-solid fa-traffic-light text-amber-500 text-xs"></i>
+                                        <span className="text-[11px] font-extrabold text-slate-800 tracking-tight">TomTom Live Traffic</span>
+                                    </div>
+                                    <button 
+                                        onClick={() => setIsTrafficMenuOpen(false)}
+                                        className="text-slate-400 hover:text-slate-600 text-xs p-1"
+                                    >
+                                        <i className="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+
+                                <div className="space-y-2 mb-3">
+                                    <label className="flex items-center gap-2 text-[11px] font-bold text-slate-700 cursor-pointer select-none">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={showTraffic} 
+                                            onChange={(e) => setShowTraffic(e.target.checked)}
+                                            className="w-3.5 h-3.5 rounded text-indigo-600 accent-indigo-600 cursor-pointer"
+                                        />
+                                        <span>Tình trạng kẹt xe (Traffic Flow)</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-2 text-[11px] font-bold text-slate-700 cursor-pointer select-none">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={showIncidents} 
+                                            onChange={(e) => setShowIncidents(e.target.checked)}
+                                            className="w-3.5 h-3.5 rounded text-indigo-600 accent-indigo-600 cursor-pointer"
+                                        />
+                                        <span>Cảnh báo sự cố / Tai nạn</span>
+                                    </label>
+                                </div>
+
+                                <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-500 space-y-1">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                                        <span>Thông thoáng (Bình thường)</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+                                        <span>Chậm chạp (Đông đúc)</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
+                                        <span>Tắc nghẽn nghiêm trọng (Kẹt xe)</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-slate-700 shrink-0"></span>
+                                        <span>Đường đóng / Công trình</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="w-px h-4 bg-slate-200 mx-0.5"></div>
+
                     <button 
                         onClick={() => setMapType('satellite')}
-                        className={`text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${mapType === 'satellite' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
+                        className={`text-[10px] font-extrabold px-2 py-1.5 rounded-lg flex items-center gap-1 transition-all ${
+                            mapType === 'satellite' 
+                                ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-md shadow-sky-500/25 scale-[1.02]' 
+                                : 'text-slate-600 hover:bg-slate-100/60'
+                        }`}
+                        title="Vệ tinh"
                     >
-                        <i className="fa-solid fa-satellite"></i>
-                        <span>VỆ TINH</span>
+                        <i className="fa-solid fa-satellite text-[11px]"></i>
+                        {!hideSidebar && <span>VỆ TINH</span>}
                     </button>
                     <button 
                         onClick={() => setMapType('standard')}
-                        className={`text-[10px] font-black px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${mapType === 'standard' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}
+                        className={`text-[10px] font-extrabold px-2 py-1.5 rounded-lg flex items-center gap-1 transition-all ${
+                            mapType === 'standard' 
+                                ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-md shadow-sky-500/25 scale-[1.02]' 
+                                : 'text-slate-600 hover:bg-slate-100/60'
+                        }`}
+                        title="Bản đồ thường"
                     >
-                        <i className="fa-solid fa-map"></i>
-                        <span>MINIMALIST</span>
+                        <i className="fa-solid fa-map text-[11px]"></i>
+                        {!hideSidebar && <span>MINIMALIST</span>}
                     </button>
                 </div>
 
                 {/* Map Control Buttons */}
-                <div className="absolute top-16 right-4 z-[400] flex flex-col gap-2 select-none">
+                <div className="absolute top-12 right-2 z-[400] flex flex-col gap-1.5 select-none">
                     <button 
                         onClick={() => {
                             if (!mapInstance.current) return;
@@ -982,9 +1139,9 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
                             });
                         }}
                         title="Vị trí của tôi"
-                        className="bg-white hover:bg-slate-50 text-indigo-600 shadow-md border border-slate-200/80 w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer"
+                        className="bg-white/90 backdrop-blur-md hover:bg-white text-sky-600 hover:text-sky-700 shadow-md border border-slate-200/70 w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer hover:scale-105"
                     >
-                        <i className="fa-solid fa-crosshairs text-base"></i>
+                        <i className="fa-solid fa-crosshairs text-sm"></i>
                     </button>
 
                     <button 
@@ -993,180 +1150,185 @@ const MapView: React.FC<MapViewProps> = ({ stockData, xuathoadonData = [], refet
                             const bounds = allCarsWithGps.map(c => [c.lat, c.lng]);
                             const L = (window as any).L;
                             if (L) {
-                                mapInstance.current.fitBounds(L.latLngBounds(bounds), { padding: [50, 50] });
+                                mapInstance.current.fitBounds(L.latLngBounds(bounds), { padding: [30, 30] });
                             }
                         }}
                         title="Xem toàn bộ xe"
-                        className="bg-white hover:bg-slate-50 text-indigo-600 shadow-md border border-slate-200/80 w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer"
+                        className="bg-white/90 backdrop-blur-md hover:bg-white text-sky-600 hover:text-sky-700 shadow-md border border-slate-200/70 w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer hover:scale-105"
                     >
-                        <i className="fa-solid fa-expand text-base"></i>
+                        <i className="fa-solid fa-expand text-sm"></i>
                     </button>
 
-                    {routedVin && (
-                        <div className="flex flex-col items-end gap-2">
-                            <button 
-                                onClick={() => {
-                                    if (routePolylineRef.current) {
-                                        routePolylineRef.current.remove();
-                                        routePolylineRef.current = null;
-                                    }
-                                    setRoutedVin(null);
-                                    setRouteInfo(null);
-                                    showToast('Đã Xóa', 'Đã xóa đường đi trên bản đồ.', 'info');
-                                }}
-                                title="Xóa đường đi"
-                                className="bg-red-50 hover:bg-red-100 text-red-600 shadow-md border border-red-200/80 w-10 h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer animate-fade-in"
-                            >
-                                <i className="fa-solid fa-trash-can text-base"></i>
-                            </button>
-                        </div>
-                    )}
+
                 </div>
             </div>
 
-            {/* Sidebar Car List */}
-            <div className="bg-white flex flex-col h-1/2 md:h-full w-full md:w-[380px] md:min-w-[380px] flex-shrink-0 shadow-sm z-10 border-t md:border-t-0 md:border-l border-slate-200/80">
-                {/* Header */}
-                <div className="p-4 bg-slate-50/70 border-b border-slate-200/80 space-y-3">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-sm font-black text-slate-800 flex items-center gap-2">
-                            <i className="fa-solid fa-map-location-dot text-indigo-600"></i>
-                            <span>Vị Trí Xe</span>
-                            <button 
-                                onClick={async () => {
-                                    if (!_refetchStock) return;
-                                    setIsRefreshing(true);
-                                    try {
-                                        await Promise.all([
-                                            _refetchStock(),
-                                            fetchDBCache()
-                                        ]);
-                                        showToast('Thành công', 'Đã làm mới dữ liệu vị trí xe.', 'success');
-                                    } catch (err) {
-                                        showToast('Lỗi', 'Không thể tải lại dữ liệu.', 'error');
-                                    } finally {
-                                        setIsRefreshing(false);
-                                    }
-                                }}
-                                title="Tải lại dữ liệu xe"
-                                className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/60 p-1.5 rounded-lg transition-all"
-                            >
-                                <i className={`fa-solid fa-arrows-rotate ${isRefreshing ? 'fa-spin' : ''}`}></i>
-                            </button>
-                            {!isReferenceAccount && (
+            {/* Sidebar Car List Panel */}
+            {!hideSidebar && (
+                <div className="bg-white/95 backdrop-blur-xl flex flex-col h-1/2 md:h-full w-full md:w-[390px] md:min-w-[390px] flex-shrink-0 shadow-sm z-10 border-t md:border-t-0 md:border-l border-slate-200/70">
+                    {/* Header Section */}
+                    <div className="p-4 bg-slate-50/60 backdrop-blur-md border-b border-slate-200/70 space-y-3">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                                <i className="fa-solid fa-map-location-dot text-sky-600"></i>
+                                <span>Vị Trí Xe</span>
                                 <button 
-                                    onClick={() => {
-                                        hasCleanedGhosts.current = false;
-                                        fetchDBCache();
-                                        showToast('Hệ thống', 'Đang quét và dọn dẹp các vị trí xe cũ...', 'info');
-                                    }}
-                                    title="Dọn dẹp xe ma (VIN không tồn tại)"
-                                    className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/60 p-1.5 rounded-lg transition-all"
-                                >
-                                    <i className="fa-solid fa-broom"></i>
-                                </button>
-                            )}
-                        </h2>
-                        <div className="flex items-center gap-1.5">
-                            {!isMapLoaded && (
-                                <span className="text-[10px] text-amber-600 bg-amber-50 font-bold px-2 py-0.5 rounded border border-amber-100 flex items-center gap-1 animate-pulse">
-                                    <i className="fa-solid fa-spinner fa-spin"></i> Đang tải...
-                                </span>
-                            )}
-                            <span className="text-[10px] bg-indigo-50 text-indigo-600 font-bold px-2 py-0.5 rounded border border-indigo-100">
-                                {allCarsWithGps.length} Xe Định Vị
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <div className="relative flex-1">
-                            <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                            <input
-                                type="text"
-                                placeholder="Tìm theo VIN, model..."
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all outline-none"
-                            />
-                        </div>
-
-                        <select
-                            value={selectedModel}
-                            onChange={e => setSelectedModel(e.target.value)}
-                            className="text-xs bg-white border border-slate-200 rounded-xl px-2 py-1.5 outline-none focus:border-indigo-500 transition-all min-w-[130px]"
-                        >
-                            <option value="all">Tất cả dòng xe</option>
-                            {carModels.map(m => (
-                                <option key={m} value={m}>{m}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-
-                {/* Car List */}
-                <div className="flex-1 overflow-y-auto divide-y divide-slate-200/80 p-2 space-y-0.5">
-                    {filteredCars.length > 0 ? (
-                        filteredCars.map(car => {
-                            return (
-                                <div
-                                    key={car.vin}
-                                    onClick={() => {
-                                        if (isMapLoaded) {
-                                            flyToCar(car);
-                                        } else {
-                                            showToast('Đang Tải Bản Đồ', 'Vui lòng chờ bản đồ tải xong trước khi xem xe.', 'warning');
+                                    onClick={async () => {
+                                        if (!_refetchStock) return;
+                                        setIsRefreshing(true);
+                                        try {
+                                            await Promise.all([
+                                                _refetchStock(),
+                                                fetchDBCache()
+                                            ]);
+                                            showToast('Thành công', 'Đã làm mới dữ liệu vị trí xe.', 'success');
+                                        } catch (err) {
+                                            showToast('Lỗi', 'Không thể tải lại dữ liệu.', 'error');
+                                        } finally {
+                                            setIsRefreshing(false);
                                         }
                                     }}
-                                    className={`p-3 flex items-center transition-all border rounded-xl cursor-pointer ${!isMapLoaded ? 'opacity-90' : 'hover:bg-indigo-50/20 bg-white hover:border-indigo-100/60 hover:shadow-sm border-slate-200'}`}
+                                    title="Tải lại dữ liệu xe"
+                                    className="text-sky-600 hover:text-sky-700 hover:bg-sky-50 p-1.5 rounded-lg transition-all"
                                 >
-                                    {/* Column 1: Car Model */}
-                                    <div className="w-[24%] min-w-0 pr-2 border-r border-slate-200 h-full flex flex-col justify-center">
-                                        <p className="text-[11px] font-black text-slate-800 truncate leading-tight" title={car.dong_xe}>
-                                            {car.dong_xe}
-                                        </p>
-                                        <p className="text-[9px] text-slate-400 font-medium truncate mt-0.5" title={car.phien_ban}>
-                                            {car.phien_ban}
-                                        </p>
-                                    </div>
+                                    <i className={`fa-solid fa-arrows-rotate ${isRefreshing ? 'fa-spin' : ''}`}></i>
+                                </button>
+                                {!isReferenceAccount && (
+                                    <button 
+                                        onClick={() => {
+                                            hasCleanedGhosts.current = false;
+                                            fetchDBCache();
+                                            showToast('Hệ thống', 'Đang quét và dọn dẹp các vị trí xe cũ...', 'info');
+                                        }}
+                                        title="Dọn dẹp xe ma (VIN không tồn tại)"
+                                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 p-1.5 rounded-lg transition-all"
+                                    >
+                                        <i className="fa-solid fa-broom"></i>
+                                    </button>
+                                )}
+                            </h2>
+                            <div className="flex items-center gap-1.5">
+                                {!isMapLoaded && (
+                                    <span className="text-[10px] text-amber-700 bg-amber-50 font-bold px-2 py-0.5 rounded-md border border-amber-200 flex items-center gap-1 animate-pulse">
+                                        <i className="fa-solid fa-spinner fa-spin"></i> Đang tải...
+                                    </span>
+                                )}
+                                <span className="text-[10px] bg-sky-50 text-sky-700 font-extrabold px-2.5 py-0.5 rounded-full border border-sky-200/60 shadow-xs">
+                                    {allCarsWithGps.length} Xe Định Vị
+                                </span>
+                            </div>
+                        </div>
 
-                                    {/* Column 2: VIN & Color */}
-                                    <div className="w-[44%] min-w-0 px-2.5 border-r border-slate-200 h-full flex flex-col justify-center">
-                                        <p className="text-xs font-mono font-black text-slate-800 uppercase tracking-wider select-all truncate" title={car.vin}>
-                                            {car.vin}
-                                        </p>
-                                        <p className="text-[9px] text-slate-400 truncate mt-0.5" title={`${car.ngoai_that} / ${car.noi_that}`}>
-                                            {car.ngoai_that}
-                                        </p>
-                                    </div>
+                        {/* Filter Inputs */}
+                        <div className="flex items-center gap-2">
+                            <div className="relative flex-1">
+                                <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input
+                                    type="text"
+                                    placeholder="Tìm kiếm VIN..."
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                    className="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all outline-none placeholder-slate-400 text-slate-800"
+                                />
+                            </div>
 
-                                    {/* Column 3: Button */}
-                                    <div className="w-[32%] min-w-0 pl-2.5 flex flex-col items-end flex-shrink-0 h-full justify-center">
-                                        <div className="flex flex-col gap-1 items-end">
+                            <div className="relative flex-shrink-0">
+                                <select
+                                    value={selectedModel}
+                                    onChange={e => setSelectedModel(e.target.value)}
+                                    className="text-xs font-bold bg-white border border-slate-200 rounded-xl pl-3 pr-7 py-1.5 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all appearance-none cursor-pointer text-slate-700 w-[100px]"
+                                >
+                                    <option value="all">Dòng xe</option>
+                                    {carModels.map(m => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))}
+                                </select>
+                                <i className="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
+                            </div>
+
+                            <div className="relative flex-shrink-0">
+                                <select
+                                    value={selectedColor}
+                                    onChange={e => setSelectedColor(e.target.value)}
+                                    className="text-xs font-bold bg-white border border-slate-200 rounded-xl pl-3 pr-7 py-1.5 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all appearance-none cursor-pointer text-slate-700 w-[95px]"
+                                >
+                                    <option value="all">Màu sắc</option>
+                                    {carColors.map((c: string) => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
+                                <i className="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[9px] pointer-events-none"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Car List Items */}
+                    <div className="flex-1 overflow-y-auto p-2.5 space-y-2 hidden-scrollbar">
+                        {filteredCars.length > 0 ? (
+                            filteredCars.map(car => {
+                                return (
+                                    <div
+                                        key={car.vin}
+                                        onClick={() => {
+                                            if (isMapLoaded) {
+                                                flyToCar(car);
+                                            } else {
+                                                showToast('Đang Tải Bản Đồ', 'Vui lòng chờ bản đồ tải xong trước khi xem xe.', 'warning');
+                                            }
+                                        }}
+                                        className={`p-3 flex items-center transition-all duration-200 border rounded-xl cursor-pointer group ${
+                                            !isMapLoaded 
+                                                ? 'opacity-90' 
+                                                : 'bg-white hover:bg-sky-50/40 border-slate-200/70 hover:border-sky-300 hover:shadow-md'
+                                        }`}
+                                    >
+                                        {/* Column 1: Car Model & Trim */}
+                                        <div className="w-[28%] min-w-0 pr-2 border-r border-slate-100 h-full flex flex-col justify-center">
+                                            <p className="text-[12px] font-extrabold text-slate-800 group-hover:text-sky-600 transition-colors truncate leading-tight" title={car.dong_xe}>
+                                                {car.dong_xe}
+                                            </p>
+                                            <p className="text-[10px] text-slate-500 font-medium truncate mt-0.5" title={car.phien_ban}>
+                                                {car.phien_ban}
+                                            </p>
+                                        </div>
+
+                                        {/* Column 2: VIN & Color */}
+                                        <div className="w-[42%] min-w-0 px-2.5 border-r border-slate-100 h-full flex flex-col justify-center">
+                                            <p className="text-xs font-mono font-bold text-slate-800 uppercase tracking-wider select-all truncate" title={car.vin}>
+                                                {car.vin}
+                                            </p>
+                                            <p className="text-[10px] text-slate-500 truncate mt-0.5 flex items-center gap-1" title={`${car.ngoai_that} / ${car.noi_that}`}>
+                                                <span className="w-2 h-2 rounded-full border border-black/20 shrink-0 inline-block" style={getBackgroundColorStyle(car.ngoai_that)}></span>
+                                                <span className="truncate">{car.ngoai_that}</span>
+                                            </p>
+                                        </div>
+
+                                        {/* Column 3: Action Button */}
+                                        <div className="w-[30%] min-w-0 pl-2 flex flex-col items-end flex-shrink-0 h-full justify-center">
                                             <button 
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     setCarToShare(car);
                                                     setIsShareModalOpen(true);
                                                 }}
-                                                className="text-[9px] font-black bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white px-2.5 py-1 rounded-lg flex items-center justify-center gap-1 transition-all border border-indigo-100/40 w-max cursor-pointer"
+                                                className="text-[10px] font-bold bg-sky-50 hover:bg-sky-600 text-sky-700 hover:text-white px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 transition-all border border-sky-200/60 shadow-xs hover:shadow-md cursor-pointer"
                                             >
-                                                <i className="fa-solid fa-share-nodes text-[8px]"></i>
+                                                <i className="fa-solid fa-share-nodes text-[9px]"></i>
                                                 <span>Chia sẻ</span>
                                             </button>
                                         </div>
                                     </div>
-                                </div>
-                            );
-                        })
-                    ) : (
-                        <div className="text-center py-12 flex flex-col items-center justify-center gap-2">
-                            <i className="fa-solid fa-map-pin text-3xl text-slate-200"></i>
-                            <p className="text-xs font-bold text-slate-400">Không tìm thấy xe định vị nào</p>
-                        </div>
-                    )}
+                                );
+                            })
+                        ) : (
+                            <div className="text-center py-12 flex flex-col items-center justify-center gap-2">
+                                <i className="fa-solid fa-map-pin text-3xl text-slate-300"></i>
+                                <p className="text-xs font-bold text-slate-400">Không tìm thấy xe định vị nào</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {isShareModalOpen && carToShare && (
                 <ShareSidePanel 

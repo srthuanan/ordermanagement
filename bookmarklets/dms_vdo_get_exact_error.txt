@@ -1,0 +1,70 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - ĐỌC NGUYÊN VĂN LỖI PHÁT HÀNH PHIẾU GIAO XE (VDO)
+     * ========================================================================= */
+    var x = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!x) {
+        for (var i = 0; i < frames.length; i++) {
+            try { if (frames[i].Xrm) { x = frames[i].Xrm; break; } } catch(e){}
+        }
+    }
+    if (!x) { alert("Vui lòng mở trang DMS!"); return; }
+
+    var etn = "xts_newvehicledeliveryorder";
+    var recId = "";
+    try {
+        if (x.Page && x.Page.data && x.Page.data.entity) {
+            etn = x.Page.data.entity.getEntityName() || etn;
+            recId = (x.Page.data.entity.getId() || "").replace(/[{}]/g, "");
+        }
+    } catch(e){}
+    if (!recId) {
+        var u = new URLSearchParams(window.location.search);
+        etn = u.get("etn") || etn;
+        recId = (u.get("id") || "").replace(/[{}]/g, "");
+    }
+
+    // 1. Thử qua Form UI Save
+    var formError = "";
+    try {
+        var hAttr = x.Page.data.entity.attributes.get("xts_handling");
+        if (hAttr) {
+            var opts = hAttr.getOptions ? hAttr.getOptions() : [];
+            var relVal = 2;
+            opts.forEach(function(o){
+                if (o.text && (o.text.includes("Phát hành") || o.text.includes("phát hành") || o.text.includes("Release"))) {
+                    relVal = o.value;
+                }
+            });
+            hAttr.setValue(relVal);
+            hAttr.setSubmitMode("always");
+        }
+        await x.Page.data.save();
+        alert("🎉 CHÚC MỪNG! Đã chuyển trạng thái Phát hành thành công!");
+        window.location.reload();
+        return;
+    } catch(errF) {
+        formError = errF.message || JSON.stringify(errF);
+    }
+
+    // 2. Thử qua Web API nếu Form Save báo lỗi
+    var apiError = "";
+    try {
+        await x.WebApi.updateRecord(etn, recId, { "xts_handling": 2 });
+        alert("🎉 ĐÃ CẬP NHẬT PHÁT HÀNH QUA WEB API THÀNH CÔNG!");
+        window.location.reload();
+        return;
+    } catch(errA) {
+        apiError = errA.message || JSON.stringify(errA);
+    }
+
+    // Hiển thị nguyên văn lỗi
+    var finalMsg = "❌ THÔNG BÁO LỖI NGUYÊN VĂN TỪ MÁY CHỦ DMS:\n" +
+                   "--------------------------------------------------\n" +
+                   (formError || apiError || "Không xác định") + "\n\n" +
+                   "--------------------------------------------------\n" +
+                   "👉 Hãy chụp ảnh hoặc gửi dòng thông báo lỗi này để xử lý đúng điểm nghẽn!";
+
+    alert(finalMsg);
+    console.error("DMS VDO Release Error:", { formError: formError, apiError: apiError });
+})();

@@ -1,17 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/apiService';
 import moment from 'moment';
+import { reverseGeocode } from '../utils/geocodeUtils';
 
 interface PublicLiveMapViewProps {
     sharedVin?: string;
     shareToken?: string;
 }
 
+const TOMTOM_KEY = 'WbsnHpupuR5dtk36955dkSQVG5QKZ21d';
+
 export const PublicLiveMapView: React.FC<PublicLiveMapViewProps> = ({ sharedVin, shareToken }) => {
     const [car, setCar] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [address, setAddress] = useState<string>('Đang lấy địa chỉ...');
     const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
+    const [showTraffic, setShowTraffic] = useState<boolean>(true);
+    const [showIncidents, setShowIncidents] = useState<boolean>(true);
+    const [isTrafficMenuOpen, setIsTrafficMenuOpen] = useState<boolean>(false);
     
     // Security & Data states
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -22,6 +28,8 @@ export const PublicLiveMapView: React.FC<PublicLiveMapViewProps> = ({ sharedVin,
     const mapRef = useRef<HTMLDivElement | null>(null);
     const mapInstance = useRef<any>(null);
     const tileLayerRef = useRef<any>(null);
+    const trafficLayerRef = useRef<any>(null);
+    const incidentsLayerRef = useRef<any>(null);
     const markerRef = useRef<any>(null);
     const polylineRef = useRef<any>(null);
 
@@ -208,15 +216,12 @@ export const PublicLiveMapView: React.FC<PublicLiveMapViewProps> = ({ sharedVin,
         let isMounted = true;
         const resolveAddress = async () => {
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${car.lat}&lon=${car.lng}&accept-language=vi`, {
-                    headers: { 'User-Agent': 'ShowroomThuanAnOrderManagement/1.0' }
-                });
-                if (res.ok && isMounted) {
-                    const d = await res.json();
-                    setAddress(d.display_name || 'Không tìm thấy địa chỉ cụ thể');
+                const addr = await reverseGeocode(car.lat, car.lng);
+                if (isMounted) {
+                    setAddress(addr);
                 }
             } catch (err) {
-                if (isMounted) setAddress('Không thể lấy địa chỉ');
+                if (isMounted) setAddress(`${car.lat.toFixed(5)}, ${car.lng.toFixed(5)}`);
             }
         };
 
@@ -244,9 +249,8 @@ export const PublicLiveMapView: React.FC<PublicLiveMapViewProps> = ({ sharedVin,
             maxBoundsViscosity: 1.0
         }).setView([car.lat, car.lng], 16);
 
-        tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            subdomains: 'abcd',
-            maxZoom: 18
+        tileLayerRef.current = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            maxZoom: 20
         }).addTo(mapInstance.current);
 
         // Draw Breadcrumbs
@@ -327,16 +331,52 @@ export const PublicLiveMapView: React.FC<PublicLiveMapViewProps> = ({ sharedVin,
         }
 
         if (mapType === 'satellite') {
-            tileLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 18
+            tileLayerRef.current = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                maxZoom: 20
             }).addTo(mapInstance.current);
         } else {
-            tileLayerRef.current = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                subdomains: 'abcd',
-                maxZoom: 18
+            tileLayerRef.current = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20
             }).addTo(mapInstance.current);
         }
     }, [mapType]);
+
+    // 6. TomTom Realtime Traffic Flow & Incidents Layers
+    useEffect(() => {
+        if (!mapInstance.current) return;
+        const L = (window as any).L;
+        if (!L) return;
+
+        // Manage Traffic Flow Layer
+        if (showTraffic) {
+            if (!trafficLayerRef.current) {
+                trafficLayerRef.current = L.tileLayer(
+                    `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${TOMTOM_KEY}`,
+                    { maxZoom: 18, opacity: 0.85, zIndex: 50 }
+                );
+            }
+            if (!mapInstance.current.hasLayer(trafficLayerRef.current)) {
+                trafficLayerRef.current.addTo(mapInstance.current);
+            }
+        } else if (trafficLayerRef.current && mapInstance.current.hasLayer(trafficLayerRef.current)) {
+            trafficLayerRef.current.remove();
+        }
+
+        // Manage Traffic Incidents Layer
+        if (showIncidents) {
+            if (!incidentsLayerRef.current) {
+                incidentsLayerRef.current = L.tileLayer(
+                    `https://api.tomtom.com/traffic/map/4/tile/incidents/s0/{z}/{x}/{y}.png?key=${TOMTOM_KEY}`,
+                    { maxZoom: 18, opacity: 0.95, zIndex: 60 }
+                );
+            }
+            if (!mapInstance.current.hasLayer(incidentsLayerRef.current)) {
+                incidentsLayerRef.current.addTo(mapInstance.current);
+            }
+        } else if (incidentsLayerRef.current && mapInstance.current.hasLayer(incidentsLayerRef.current)) {
+            incidentsLayerRef.current.remove();
+        }
+    }, [showTraffic, showIncidents, car]);
 
     if (errorMsg) {
         return (
@@ -388,7 +428,7 @@ export const PublicLiveMapView: React.FC<PublicLiveMapViewProps> = ({ sharedVin,
     return (
         <div className="w-screen h-screen relative flex flex-col overflow-hidden bg-slate-100">
             {/* Top Minimalist Header */}
-            <div className="absolute top-0 left-0 right-0 h-14 bg-white/80 backdrop-blur-md border-b border-slate-200/50 z-[1000] flex items-center justify-between px-4 sm:px-6 shadow-sm">
+            <div className="absolute top-0 left-0 right-0 h-14 bg-white/85 backdrop-blur-md border-b border-slate-200/50 z-[1000] flex items-center justify-between px-4 sm:px-6 shadow-sm">
                 <div className="flex items-center gap-3">
                     <div className="w-9 h-9 bg-indigo-600 text-white rounded-xl flex items-center justify-center shadow-md">
                         <i className="fa-solid fa-car-side text-base"></i>
@@ -400,12 +440,85 @@ export const PublicLiveMapView: React.FC<PublicLiveMapViewProps> = ({ sharedVin,
                 </div>
 
                 <div className="flex items-center gap-2 select-none">
+                    {/* TomTom Live Traffic Button */}
+                    <div className="relative">
+                        <button 
+                            onClick={() => setIsTrafficMenuOpen(!isTrafficMenuOpen)}
+                            className={`font-black text-[10px] border px-3 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer ${showTraffic || showIncidents ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-white/90 border-slate-200 text-slate-600 hover:bg-white'}`}
+                            title="Lưu lượng giao thông thời gian thực TomTom"
+                        >
+                            <i className="fa-solid fa-traffic-light text-amber-500"></i>
+                            <span className="hidden sm:inline">GIAO THÔNG LIVE</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        </button>
+
+                        {/* Traffic Control & Legend Dropdown */}
+                        {isTrafficMenuOpen && (
+                            <div className="absolute top-full right-0 mt-2 w-64 bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl shadow-xl p-3.5 z-[1050] animate-fade-in-up">
+                                <div className="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-100">
+                                    <div className="flex items-center gap-1.5">
+                                        <i className="fa-solid fa-traffic-light text-amber-500 text-xs"></i>
+                                        <span className="text-[11px] font-extrabold text-slate-800 tracking-tight">TomTom Live Traffic</span>
+                                    </div>
+                                    <button 
+                                        onClick={() => setIsTrafficMenuOpen(false)}
+                                        className="text-slate-400 hover:text-slate-600 text-xs p-1"
+                                    >
+                                        <i className="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+
+                                <div className="space-y-2 mb-3">
+                                    <label className="flex items-center gap-2 text-[11px] font-bold text-slate-700 cursor-pointer select-none">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={showTraffic} 
+                                            onChange={(e) => setShowTraffic(e.target.checked)}
+                                            className="w-3.5 h-3.5 rounded text-indigo-600 accent-indigo-600 cursor-pointer"
+                                        />
+                                        <span>Tình trạng kẹt xe (Traffic Flow)</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-2 text-[11px] font-bold text-slate-700 cursor-pointer select-none">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={showIncidents} 
+                                            onChange={(e) => setShowIncidents(e.target.checked)}
+                                            className="w-3.5 h-3.5 rounded text-indigo-600 accent-indigo-600 cursor-pointer"
+                                        />
+                                        <span>Cảnh báo sự cố / Tai nạn</span>
+                                    </label>
+                                </div>
+
+                                <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-500 space-y-1">
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                                        <span>Thông thoáng (Bình thường)</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+                                        <span>Chậm chạp (Đông đúc)</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0"></span>
+                                        <span>Tắc nghẽn nghiêm trọng (Kẹt xe)</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-slate-700 shrink-0"></span>
+                                        <span>Đường đóng / Công trình</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Satellite / Standard Toggle */}
                     <button 
                         onClick={() => setMapType(mapType === 'standard' ? 'satellite' : 'standard')}
-                        className="bg-white/90 hover:bg-white text-indigo-600 font-black text-[10px] border border-slate-200 px-3 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                        className="bg-white/90 hover:bg-white text-indigo-600 font-black text-[10px] border border-slate-200 px-3 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
                     >
                         <i className={`fa-solid ${mapType === 'satellite' ? 'fa-map' : 'fa-satellite'}`}></i>
-                        <span>{mapType === 'satellite' ? 'BẢN ĐỒ PHẲNG' : 'BẢN ĐỒ VỆ TINH'}</span>
+                        <span>{mapType === 'satellite' ? 'BẢN ĐỒ PHẲNG' : 'VỆ TINH'}</span>
                     </button>
                 </div>
             </div>

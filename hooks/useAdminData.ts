@@ -2,7 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import useSWR from 'swr';
 import { Order, VcRequest, StockVehicle, SortConfig, VcSortConfig, AdminSubView } from '../types';
 import * as apiService from '../services/apiService';
+import { supabase } from '../services/supabaseClient';
 import { includesNormalized } from '../utils/stringUtils';
+
 
 interface UseAdminDataProps {
     allOrders: Order[];
@@ -47,8 +49,7 @@ export const useAdminData = ({
 
     // INVOICE Data State (Local fetch for faster Admin view)
     const { data: xhdRes, error: errorXhdRaw, mutate: mutateXhd } = useSWR('xuathoadonData', async () => {
-        const { supabase: s } = await import('../services/supabaseClient');
-        const { data, error } = await s
+        const { data, error } = await supabase
             .from('yeucauxhd')
             .select('*')
             .order('ngay_yeu_cau', { ascending: false })
@@ -93,7 +94,10 @@ export const useAdminData = ({
             'NGÀY YÊU CẦU XHĐ': row.ngay_yeu_cau,
             'NGÀY XUẤT HÓA ĐƠN': row.ngay_xuat_hoa_don,
             'Trạng thái VC': row.trang_thai_vc || '',
+            'Mã VC': row.ma_vc || '',
             'Ghi chú AI': row.ghi_chu_ai,
+            'Ghi chú Admin': row.ghi_chu_admin || '',
+            'ghi_chu_admin': row.ghi_chu_admin || '',
             'Xe xăng VIN': row.xe_xang_vin,
             'Xe xăng Hãng': row.xe_xang_hang,
             'Xe xăng Model': row.xe_xang_model,
@@ -169,7 +173,7 @@ export const useAdminData = ({
                     "LinkHopDong": isValidUrl(urlHopDongTemp) ? urlHopDongTemp : '',
                     "LinkDeNghiXHD": isValidUrl(urlDeNghiTemp) ? urlDeNghiTemp : '',
                     "LinkHoaDonDaXuat": isValidUrl(bestUrl) ? bestUrl : '',
-                    "Kết quả": correspondingOrder?.["Trạng thái VC"] || correspondingOrder?.["Kết quả"] || 'Đã xuất hóa đơn',
+                    "Kết quả": correspondingOrder?.["Trạng thái VC"] || correspondingOrder?.["Kết quả"] || invoice['Kết quả'] || 'Chờ phê duyệt',
                 };
                 (mergedOrder as any)['Trạng thái xử lý'] = mergedOrder["Kết quả"];
                 return mergedOrder;

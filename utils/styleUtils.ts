@@ -3,63 +3,43 @@ import React from 'react';
 
 // Centralized helper function to apply dynamic styles based on exterior color text.
 export const getExteriorColorStyle = (exteriorValue: string | undefined): React.CSSProperties => {
-    const isDarkMode = false;
-    const outlineStyle: React.CSSProperties = {
-        textShadow: '0 0 4px rgba(0,0,0,0.8)',
-    };
-
     if (!exteriorValue) return {};
-    const lowerExteriorValue = exteriorValue.toLowerCase().trim();
+    const lower = exteriorValue.toLowerCase().trim();
 
-    if (lowerExteriorValue === "brahminy white (ce18)") return isDarkMode ? { color: 'white' } : { color: 'white', ...outlineStyle };
-    if (lowerExteriorValue.includes("sunset orb (ce1a)")) return { color: 'var(--exterior-orange-text)' };
-    if (lowerExteriorValue.includes("crimson red (ce1m)")) return { color: 'var(--exterior-red-text)' };
-    if (lowerExteriorValue.includes("vinfast blue (ce1n)")) return { color: 'var(--exterior-blue-text)' };
-    if (lowerExteriorValue.includes("neptune grey (ce14)")) return isDarkMode ? { color: '#aebcc5' } : { color: '#778899' };
-    if (lowerExteriorValue.includes("jet black (ce11)")) return isDarkMode ? { color: 'white' } : { color: 'black' };
-    if (lowerExteriorValue.includes("electric blue (ce1j)")) return { color: 'var(--exterior-blue-text)' };
-    if (lowerExteriorValue.includes("moonlit ocean (ce2j)")) return { color: '#103975' };
-    if (lowerExteriorValue.includes("zenith grey (ce1v)")) return isDarkMode ? { color: '#d4e0f2' } : { color: '#B0C4DE' };
-    if (lowerExteriorValue.includes("jet black roof- summer yellow body (111u)")) return { color: 'var(--exterior-yellow-text)' };
-    if (lowerExteriorValue.includes("brahminy white roof- aquatic azure body (181y)")) return { color: 'var(--exterior-blue-text)' };
-    if (lowerExteriorValue.includes("brahminy white roof- rose pink body (1821)")) return { color: 'var(--exterior-pink-text)' };
-    if (lowerExteriorValue.includes("brahminy white roof - iris berry body (181x)")) return { color: 'var(--exterior-pink-text)' };
-    if (lowerExteriorValue.includes("urbant mint (ce1w)")) return isDarkMode ? { color: '#6ee6a0' } : { color: '#3CB371' };
-    if (lowerExteriorValue.includes("vinbus green (ce2b)")) return { color: 'var(--exterior-green-text)' };
-    if (lowerExteriorValue.includes("deep ocean (ce1h)")) return isDarkMode ? { color: '#2e8b57' } : { color: '#006400' };
-    if (lowerExteriorValue.includes("iris berry (ce1x)")) return { color: 'var(--exterior-pink-text)' };
-    if (lowerExteriorValue.includes("zenith grey-desat silver roof (171v)")) return { color: 'var(--exterior-grey-text)' };
-    if (lowerExteriorValue.includes("urbant mint green - desat silv (171w)")) return { color: 'var(--exterior-green-text)' };
-    if (lowerExteriorValue.includes("ivy green-desat silver roof (1722)")) return { color: 'var(--exterior-green-text)' };
-    if (lowerExteriorValue.includes("atlantic blue-aquatic azure ro (1y26)")) return { color: 'var(--exterior-blue-text)' };
-    if (lowerExteriorValue.includes("jet black-champagne creme roof (2311)")) return isDarkMode ? { color: 'white' } : { color: 'white', ...outlineStyle };
-    if (lowerExteriorValue.includes("infinity blanc _ silky white r (2418)")) return { color: 'var(--exterior-white-text)' };
-    if (lowerExteriorValue.includes("champagne creme - matte champa (2523)")) return { color: 'var(--exterior-yellow-text)' };
-    if (lowerExteriorValue.includes("jet black - graphite roof (2811)")) return isDarkMode ? { color: 'white' } : { color: 'white', ...outlineStyle };
-    if (lowerExteriorValue.includes("crimson velvet - mystery bronz (2927)")) return { color: 'var(--exterior-red-text)' };
-    if (lowerExteriorValue.includes("ivy_green_gne (ce22)")) return { color: 'var(--exterior-green-text)' };
-    if (lowerExteriorValue.includes("champagne_creme_ylg (ce23)")) return { color: 'var(--exterior-yellow-text)' };
-    if (lowerExteriorValue.includes("crimson red - jet black roof (111m)")) return { color: 'var(--exterior-red-text)' };
-    if (lowerExteriorValue.includes("infinity blanc_zenith grey roof (1v18)")) return { color: 'var(--exterior-white-text)' };
-    if (lowerExteriorValue.includes("deep ocean_jet black roof (111h)")) return isDarkMode ? { color: 'white' } : { color: 'white', ...outlineStyle };
-    if (lowerExteriorValue.includes("alantic blue_denim blue roof (2a26)")) return { color: 'var(--exterior-blue-text)' };
-    if (lowerExteriorValue.includes("jet black_mystery bronze roof (2911)")) return isDarkMode ? { color: 'white' } : { color: 'white', ...outlineStyle };
-    if (lowerExteriorValue.includes("champagne creme_infinity blanc roof (1823)")) return { color: 'var(--exterior-yellow-text)' };
-    if (lowerExteriorValue.includes("infinity blanc roof-sky blue (182g)")) return { color: 'var(--exterior-blue-text)' };
-    if (lowerExteriorValue.includes("de sat silver ind12007 (ce17)")) return { color: 'var(--exterior-grey-text)' };
-    if (lowerExteriorValue.includes("crimson red") || lowerExteriorValue.includes("crimson velvet") || lowerExteriorValue.includes("ruby")) return { color: 'var(--exterior-red-text)' };
-    if (lowerExteriorValue.includes("rose pink") || lowerExteriorValue.includes("iris berry")) return { color: 'var(--exterior-pink-text)' };
-    if (lowerExteriorValue.includes("vinfast blue") || lowerExteriorValue.includes("electric blue") || lowerExteriorValue.includes("atlantic blue") || lowerExteriorValue.includes("aquatic azure") || lowerExteriorValue.includes("alantic blue") || lowerExteriorValue.includes("moonlit ocean") || lowerExteriorValue.includes("sky blue")) return { color: 'var(--exterior-blue-text)' };
-    if (lowerExteriorValue.includes("deep ocean")) return isDarkMode ? { color: 'white' } : { color: 'white', ...outlineStyle };
-    if (lowerExteriorValue.includes("sunset orb")) return { color: 'var(--exterior-orange-text)' };
-    if (lowerExteriorValue.includes("summer yellow") || lowerExteriorValue.includes("champagne creme") || lowerExteriorValue.includes("champagne_creme_ylg")) return { color: 'var(--exterior-yellow-text)' };
-    if (lowerExteriorValue.includes("urbant mint") || lowerExteriorValue.includes("vinbus green") || lowerExteriorValue.includes("ivy green") || lowerExteriorValue.includes("ivy_green_gne")) return { color: 'var(--exterior-green-text)' };
-    if (lowerExteriorValue.includes("jet black")) return isDarkMode ? { color: 'white' } : { color: 'white', ...outlineStyle };
-    if (lowerExteriorValue.includes("brahminy white") || lowerExteriorValue.includes("infinity blanc")) return { color: 'var(--exterior-white-text)' };
-    if (lowerExteriorValue.includes("neptune grey") || lowerExteriorValue.includes("zenith grey") || lowerExteriorValue.includes("de sat silver") || lowerExteriorValue.includes("graphite")) return { color: 'var(--exterior-grey-text)' };
-    if (lowerExteriorValue.includes("mystery bronz")) return { color: 'var(--exterior-bronze-text)' };
-    if (lowerExteriorValue.includes("pink gold (ce2k)")) return { color: 'var(--exterior-pink-text)' };
-    if (lowerExteriorValue.includes("solar ruby (ce2q)")) return { color: 'var(--exterior-red-text)' };
+    // 1. Extract color code from parentheses if available (e.g. "CE17", "CE21", "CE1U", "CE18")
+    const codeMatch = lower.match(/\(([^)]+)\)/);
+    const code = codeMatch ? codeMatch[1].trim().toLowerCase() : '';
+
+    // Check by color code first
+    if (code === 'ce18' || lower.includes('ce18') || lower.includes('white') || lower.includes('trắng') || lower.includes('blanc')) return { color: '#334155' }; // Dark Slate / Charcoal for crisp readability on light backgrounds
+    if (code === 'ce1u' || code === '111u' || code === '181u' || lower.includes('ce1u') || lower.includes('111u') || lower.includes('181u')) return { color: '#D97706' }; // Rich Amber Yellow
+    if (code === 'ce1a' || lower.includes('ce1a')) return { color: '#EA580C' }; // Sunset ORB Orange
+    if (code === 'ce1m' || code === '111m' || lower.includes('ce1m') || lower.includes('111m')) return { color: '#DC2626' }; // Crimson Red
+    if (code === 'ce1n' || code === 'ce1j' || code === 'ce2j' || code === '1y26' || code === '182g' || code === '2a26' || code === 'ce33' || lower.includes('ce1n') || lower.includes('ce1j') || lower.includes('ce2j') || lower.includes('ce33')) return { color: '#2563EB' }; // VinFast Blue
+    if (code === 'ce17' || lower.includes('ce17')) return { color: '#64748B' }; // Silver / Slate
+    if (code === 'ce14' || code === 'ce1v' || code === '171v' || code === '1v18' || code === '2811' || lower.includes('ce14') || lower.includes('ce1v') || lower.includes('171v')) return { color: '#475569' }; // Neptune Grey / Zenith Grey
+    if (code === 'ce11' || code === '3111' || lower.includes('ce11')) return { color: '#0F172A' }; // Jet Black
+    if (code === 'ce1w' || code === 'ce2b' || code === 'ce1h' || code === 'ce22' || code === 'ce21' || code === '171w' || code === '1722' || lower.includes('ce21') || lower.includes('ce1w') || lower.includes('ce2b') || lower.includes('ce1h') || lower.includes('ce22')) return { color: '#059669' }; // Emerald Green / Criterio Green
+    if (code === 'ce1x' || code === 'ce2k' || code === '1821' || code === '181x' || lower.includes('ce2k') || lower.includes('ce1x')) return { color: '#DB2777' }; // Pink Gold / Iris Berry
+    if (code === 'ce2q' || code === '112q' || code === '182q' || lower.includes('ce2q') || lower.includes('112q')) return { color: '#DC2626' }; // Solar Ruby
+    if (code === 'ce23' || code === '2523' || code === '1823' || lower.includes('ce23')) return { color: '#D97706' }; // Champagne Creme
+    if (code === 'ce2n' || code === '2927' || lower.includes('ce2n')) return { color: '#92400E' }; // Introspective Brown / Mystery Bronze
+    if (code === 'ce32' || code === '1132' || code === '1832' || lower.includes('ce32')) return { color: '#EA580C' }; // Vitality Orange
+    if (code === 'ce2o' || code === '312o' || lower.includes('ce2o')) return { color: '#9333EA' }; // Mysterioso Purple
+
+    // 2. Keyword fallback
+    if (lower.includes('criterio') || lower.includes('green') || lower.includes('mint') || lower.includes('ivy') || lower.includes('xanh lá') || lower.includes('ocean')) return { color: '#059669' };
+    if (lower.includes('silver') || lower.includes('bạc') || lower.includes('desat')) return { color: '#64748B' };
+    if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('creme') || lower.includes('champagne')) return { color: '#D97706' };
+    if (lower.includes('pink') || lower.includes('rose') || lower.includes('berry') || lower.includes('hồng')) return { color: '#DB2777' };
+    if (lower.includes('ruby') || lower.includes('crimson') || lower.includes('red') || lower.includes('đỏ')) return { color: '#DC2626' };
+    if (lower.includes('blue') || lower.includes('azure') || lower.includes('xanh dương') || lower.includes('xanh lam')) return { color: '#2563EB' };
+    if (lower.includes('black') || lower.includes('đen')) return { color: '#0F172A' };
+    if (lower.includes('grey') || lower.includes('gray') || lower.includes('xám') || lower.includes('graphite') || lower.includes('neptune') || lower.includes('zenith') || lower.includes('stealth')) return { color: '#475569' };
+    if (lower.includes('orange') || lower.includes('cam') || lower.includes('sunset') || lower.includes('orb') || lower.includes('vitality')) return { color: '#EA580C' };
+    if (lower.includes('purple') || lower.includes('tím') || lower.includes('mysterioso')) return { color: '#9333EA' };
+    if (lower.includes('brown') || lower.includes('bronze') || lower.includes('nâu')) return { color: '#92400E' };
+    if (lower.includes('gold')) return { color: '#D97706' };
 
     return {};
 };
@@ -87,50 +67,35 @@ export const getInteriorColorStyle = (interiorValue: string | undefined): React.
     return {};
 };
 
-const colorMap: { [key: string]: string } = {
-    // Exterior
-    'white': '#F8F8F8', 'blanc': '#F5F5DC',
-    'sunset orb': '#F97316', 'orange': '#F97316',
-    'red': '#EF4444', 'crimson': '#DC143C',
-    'blue': '#3B82F6', 'azure': '#007FFF', 'sky blue': '#87CEEB',
-    'grey': '#778899', 'gray': '#778899', 'silver': '#A9A9A9', 'graphite': '#36454F',
-    'black': '#1E1E1E',
-    'yellow': '#EAB308', 'creme': '#F5DEB3',
-    'pink': '#EC4899', 'berry': '#EC4899',
-    'mint': '#3CB371', 'green': '#22C55E', 'ocean': '#006400', 'moonlit ocean': '#103975',
-    'bronze': '#92400E',
-    // Interior
-    'beige': '#F5F5DC',
-    'introspective brown': '#634030',
-    'brown': '#A52A2A',
-};
-
 export const getBackgroundColorStyle = (colorName: string | undefined): React.CSSProperties => {
-    if (!colorName) return {};
-    const lowerColor = colorName.toLowerCase();
+    if (!colorName) return { backgroundColor: '#CBD5E1' };
+    const lower = colorName.toLowerCase().trim();
+    const codeMatch = lower.match(/\(([^)]+)\)/);
+    const code = codeMatch ? codeMatch[1].trim().toLowerCase() : '';
 
-    // Find a matching key in our map
-    const matchedKey = Object.keys(colorMap).find(key => lowerColor.includes(key));
+    if (code === 'ce18' || lower.includes('ce18') || lower.includes('white') || lower.includes('trắng') || lower.includes('blanc')) return { backgroundColor: '#FFFFFF' };
+    if (code === 'ce1u' || code === '111u' || code === '181u' || lower.includes('ce1u') || lower.includes('111u') || lower.includes('181u') || lower.includes('yellow') || lower.includes('vàng')) return { backgroundColor: '#EAB308' };
+    if (code === 'ce1a' || lower.includes('ce1a') || lower.includes('sunset') || lower.includes('orange') || lower.includes('cam')) return { backgroundColor: '#F97316' };
+    if (code === 'ce1m' || code === '111m' || lower.includes('ce1m') || lower.includes('111m') || lower.includes('red') || lower.includes('crimson') || lower.includes('đỏ')) return { backgroundColor: '#EF4444' };
+    if (code === 'ce1n' || code === 'ce1j' || code === 'ce2j' || code === '1y26' || code === '182g' || code === '2a26' || code === 'ce33' || lower.includes('blue') || lower.includes('xanh dương')) return { backgroundColor: '#2563EB' };
+    if (code === 'ce17' || lower.includes('ce17') || lower.includes('silver') || lower.includes('bạc')) return { backgroundColor: '#CBD5E1' };
+    if (code === 'ce14' || code === 'ce1v' || lower.includes('ce14') || lower.includes('ce1v') || lower.includes('grey') || lower.includes('gray') || lower.includes('xám')) return { backgroundColor: '#64748B' };
+    if (code === 'ce11' || code === '3111' || lower.includes('ce11') || lower.includes('black') || lower.includes('đen')) return { backgroundColor: '#0F172A' };
+    if (code === 'ce1w' || code === 'ce2b' || code === 'ce1h' || code === 'ce22' || code === 'ce21' || lower.includes('ce21') || lower.includes('green') || lower.includes('mint') || lower.includes('criterio') || lower.includes('xanh lá') || lower.includes('ocean')) return { backgroundColor: '#10B981' };
+    if (code === 'ce1x' || code === 'ce2k' || lower.includes('ce2k') || lower.includes('pink') || lower.includes('rose') || lower.includes('berry') || lower.includes('hồng')) return { backgroundColor: '#EC4899' };
+    if (code === 'ce2q' || code === '112q' || lower.includes('ce2q') || lower.includes('ruby')) return { backgroundColor: '#DC2626' };
+    if (code === 'ce23' || lower.includes('ce23') || lower.includes('creme') || lower.includes('champagne')) return { backgroundColor: '#F59E0B' };
+    if (code === 'ce2n' || lower.includes('ce2n') || lower.includes('brown') || lower.includes('nâu') || lower.includes('bronze')) return { backgroundColor: '#92400E' };
 
-    if (matchedKey) {
-        const hex = colorMap[matchedKey];
-        const style: React.CSSProperties = { backgroundColor: hex };
-        // Add a border for very light or dark colors to ensure visibility on similar backgrounds
-        if (hex === '#F8F8F8' || hex === '#1E1E1E' || hex === '#F5F5DC') {
-            // FIX: Cast style to 'any' to add the 'border' property, bypassing a strict or incomplete
-            // CSSProperties type definition in the project's environment.
-            (style as any).border = '1px solid #CBD5E1';
-        }
-        return style;
-    }
-
-    return { backgroundColor: '#E2E8F0' }; // fallback color
+    return { backgroundColor: '#CBD5E1' };
 };
 
 // --- NEW DATA-DRIVEN IMAGE LOGIC ---
 
 // Maps the official model name from the sheet to a simplified key for filenames.
 const modelNameToImageKeyMap: Record<string, string> = {
+    "VF 2": "vf2",
+    "VF2": "vf2",
     "VF 3": "vf3",
     "VF 5": "vf5",
     "VF 6": "vf6",
@@ -147,7 +112,40 @@ const modelNameToImageKeyMap: Record<string, string> = {
 
 // VinFast CDN Images Lookup Map
 const vinfastCdnImages: Record<string, string> = {
-    // VF8 All New
+    // VF2 Official Images
+    "vf2-ce18": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-infinity-blanc-car.webp",
+    "vf2-ce17": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-desat-silver-car.webp",
+    "vf2-ce2q": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-solar-ruby-car.webp",
+    "vf2-ce1w": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-urbant-mint-car.webp",
+    "vf2-ce1u": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-summer-yellow-car.webp",
+    "vf2-ce21": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-rose-pink-car.webp",
+    "vf2-ce2g": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-sky-blue-car.webp",
+    "vf2-ce2t": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-pebble-beige-car.webp",
+    "vf2-182g": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-sky-blue-car.webp",
+    "vf2-1821": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-rose-pink-car.webp",
+    "vf2-white": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-infinity-blanc-car.webp",
+    "vf2-silver": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-desat-silver-car.webp",
+    "vf2-red": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-solar-ruby-car.webp",
+    "vf2-ruby": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-solar-ruby-car.webp",
+    "vf2-mint": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-urbant-mint-car.webp",
+    "vf2-green": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-urbant-mint-car.webp",
+    "vf2-yellow": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-summer-yellow-car.webp",
+    "vf2-pink": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-rose-pink-car.webp",
+    "vf2-rose": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-rose-pink-car.webp",
+    "vf2-blue": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-sky-blue-car.webp",
+    "vf2-beige": "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-pebble-beige-car.webp",
+    // VF8
+    "vf8-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18.png",
+    "vf8-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-2.png",
+    "vf8-ce1m": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1M-1.png",
+    "vf8-ce22": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE22-2.png",
+    "vf8-171v": "https://vinfasto2o.com/wp-content/uploads/2026/05/171V.png",
+    "vf8-1v18": "https://vinfasto2o.com/wp-content/uploads/2026/05/1V18.png",
+    "vf8-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE1M-1.png",
+    "vf8-ce1v": "https://vinfasto2o.com/wp-content/uploads/2026/05/171V.png",
+    "vf8-ce14": "https://vinfasto2o.com/wp-content/uploads/2026/05/171V.png",
+
+    // VF8 All New (Đồng bộ chuẩn bộ ảnh All New từ phần Yêu cầu đơn hàng / tinh-gia-xe)
     "vf8-allnew-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-2.webp",
     "vf8-allnew-ce33": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE33.webp",
     "vf8-allnew-ce2q": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2Q.webp",
@@ -160,6 +158,7 @@ const vinfastCdnImages: Record<string, string> = {
     "vf8-allnew-1832": "https://vinfasto2o.com/wp-content/uploads/2026/05/1832.webp",
     "vf8-allnew-ce32": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE32.webp",
     "vf8-allnew-ce2o": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE2O.webp",
+
     // VF8 Plus
     "vf8-plus-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18.png",
     "vf8-plus-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-2.png",
@@ -167,6 +166,7 @@ const vinfastCdnImages: Record<string, string> = {
     "vf8-plus-ce22": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE22-2.png",
     "vf8-plus-171v": "https://vinfasto2o.com/wp-content/uploads/2026/05/171V.png",
     "vf8-plus-1v18": "https://vinfasto2o.com/wp-content/uploads/2026/05/1V18.png",
+
     // VF8 Eco
     "vf8-eco-ce18": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE18-5.png",
     "vf8-eco-ce11": "https://vinfasto2o.com/wp-content/uploads/2026/05/CE11-11.png",
@@ -314,7 +314,7 @@ export const getCarImage = (model?: string, exteriorColor?: string, version?: st
     if (codeMatch && codeMatch[1]) {
         colorCodeKey = codeMatch[1].trim().toLowerCase();
     } else {
-        const knownCodes = ['ce18', 'ce1u', 'ce1w', 'ce2q', 'ce11', 'ce17', 'ce2k', 'ce2i', 'ce1v', '181y', '181u', '1821', '111u', 'ce1m', 'ce22', '171v', '1v18', 'ce2n', 'ce2j'];
+        const knownCodes = ['ce18', 'ce1u', 'ce1w', 'ce2q', 'ce11', 'ce17', 'ce2k', 'ce2i', 'ce1v', '181y', '181u', '1821', '111u', 'ce1m', 'ce22', '171v', '1v18', 'ce2n', 'ce2j', 'ce33', '112q', '1132', '1833', '312o', '3111', '1832', 'ce32', 'ce2o'];
         for (const code of knownCodes) {
             if (lowerExterior.includes(code)) {
                 colorCodeKey = code;
@@ -355,7 +355,12 @@ export const getCarImage = (model?: string, exteriorColor?: string, version?: st
         return vinfastCdnImages[`${modelKey}-${colorKey}`];
     }
 
-    // 3. Supabase fallback
+    // 3. Local pictures fallback / VF2 fallback
+    if (modelKey === 'vf2') {
+        return "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-infinity-blanc-car.webp";
+    }
+
+    // 4. Supabase fallback
     const supabaseStorageUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/car-images/`;
     if (colorCodeKey) {
         return `${supabaseStorageUrl}${modelKey}-${colorCodeKey}.webp`;
@@ -379,6 +384,10 @@ export const getModelDefaultImage = (model?: string): string => {
     const modelKey = modelNameToImageKeyMap[cleanedModel] || 
                      Object.entries(modelNameToImageKeyMap).find(([k]) => k.toUpperCase() === cleanedModel)?.[1] ||
                      cleanedModel.toLowerCase().replace(/\s+/g, '');
+
+    if (modelKey === 'vf2') {
+        return "https://vinfastauto.com/themes/porto/img/pdp-page/vf2/vf2-car/vf2-infinity-blanc-car.webp";
+    }
 
     // Fallback to one of the CDN links if we have any for this model
     const anyModelCdnLink = Object.entries(vinfastCdnImages).find(([k]) => k.startsWith(`${modelKey}-`))?.[1];
@@ -423,6 +432,7 @@ export const useModalBackground = () => {
 
 // Maps significant parts of the car model string to official brochure download URLs.
 const brochureUrls: Record<string, string> = {
+    "VF2": "https://static-cms-prod.vinfastauto.com/brochure_vf_2.pdf",
     "VF3": "https://storage.googleapis.com/vinfast-data-01/brochure/VF%203_Brochure_Final_280126%20(18PM).pdf",
     "VF5": "https://storage.googleapis.com/vinfast-data-01/brochure/VF%205_Brochure_Final_290126%20(13PM).pdf",
     "VF6": "https://storage.googleapis.com/vinfast-data-01/brochure/VF%206_Brochure_Final_090226%20(10AM).pdf",

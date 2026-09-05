@@ -1,0 +1,372 @@
+javascript:(async function(){
+    /* ==========================================================================================
+     * VINFAST DMS - UNIVERSAL BATTERY SERIAL & STOCK VEHICLE MASTER TOOL (RESILIENT VERSION)
+     * Đã sửa lỗi: Bỏ trường xts_purchaseordernumber không tồn tại trên xts_purchasereceipt
+     * Bọc try-catch độc lập cho từng truy vấn OData
+     * ========================================================================================== */
+
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var frames = window.frames;
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].Xrm && frames[i].Xrm.WebApi) { _Xrm = frames[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert("⚠️ Vui lòng mở hệ thống VinFast DMS (Dynamics 365) trước khi bấm Bookmarklet này!");
+        return;
+    }
+
+    var oldOverlay = document.getElementById("dmsUniversalMasterOverlay");
+    if (oldOverlay) oldOverlay.remove();
+
+    var overlay = document.createElement("div");
+    overlay.id = "dmsUniversalMasterOverlay";
+    overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,15,30,0.92);backdrop-filter:blur(14px);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#f8fafc;";
+
+    var modal = document.createElement("div");
+    modal.style = "background:#0f172a;width:1050px;max-width:96%;max-height:92vh;border-radius:18px;border:1px solid rgba(56,189,248,0.35);box-shadow:0 30px 80px rgba(0,0,0,0.95);display:flex;flex-direction:column;overflow:hidden;animation:dmsZoomIn 0.2s ease-out;";
+
+    var css = document.createElement("style");
+    css.innerHTML = `
+        @keyframes dmsZoomIn { from { opacity:0; transform:scale(0.97); } to { opacity:1; transform:scale(1); } }
+        .dms-u-tab { background:transparent; border:none; color:#94a3b8; padding:10px 18px; font-weight:600; font-size:12.5px; cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s; }
+        .dms-u-tab:hover { color:#38bdf8; }
+        .dms-u-tab.active { color:#38bdf8; border-bottom-color:#38bdf8; background:rgba(56,189,248,0.08); }
+        .dms-btn-primary { background:linear-gradient(135deg,#0284c7,#0369a1); color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:12.5px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s; box-shadow:0 4px 12px rgba(2,132,199,0.3); }
+        .dms-btn-primary:hover { background:linear-gradient(135deg,#0369a1,#075985); transform:translateY(-1px); }
+        .dms-btn-success { background:linear-gradient(135deg,#10b981,#059669); color:#fff; border:none; padding:8px 18px; border-radius:8px; font-weight:700; font-size:12.5px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:all 0.2s; box-shadow:0 4px 12px rgba(16,185,129,0.35); }
+        .dms-btn-success:hover { background:linear-gradient(135deg,#059669,#047857); transform:translateY(-1px); }
+    `;
+    modal.appendChild(css);
+
+    var initialKey = "";
+    var currentEntity = "";
+    var currentRecordId = "";
+
+    try {
+        var page = _Xrm.Page || (_Xrm.Utility && _Xrm.Utility.getPageContext && _Xrm.Utility.getPageContext().input);
+        if (page && page.data && page.data.entity) {
+            currentEntity = page.data.entity.getEntityName() || "";
+            currentRecordId = (page.data.entity.getId() || "").replace(/[{}]/g, "");
+
+            function getVal(attrName) {
+                var a = page.getAttribute(attrName);
+                if (!a) return "";
+                var v = a.getValue();
+                if (!v) return "";
+                if (Array.isArray(v) && v.length > 0) return v[0].name || v[0].id.replace(/[{}]/g, "");
+                return String(v);
+            }
+
+            if (currentEntity === "xts_inventorynewvehicle") {
+                initialKey = getVal("xts_stocknumber") || getVal("xts_chassisnumber") || currentRecordId;
+            } else if (currentEntity === "xts_matchunmatch") {
+                initialKey = getVal("xts_stockid") || getVal("xts_chassisnumber") || getVal("xts_inventorynewvehicleid");
+            } else if (currentEntity === "xts_newvehiclesalesorder") {
+                initialKey = getVal("xts_stockid") || getVal("itv_vinnumber");
+            }
+        }
+    } catch(e){}
+
+    if (!initialKey) {
+        try {
+            var searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.get("etn")) currentEntity = searchParams.get("etn");
+            if (searchParams.get("id")) {
+                currentRecordId = searchParams.get("id").replace(/[{}]/g, "");
+                if (currentEntity === "xts_inventorynewvehicle") initialKey = currentRecordId;
+            }
+        } catch(e){}
+    }
+
+    modal.innerHTML += `
+        <div style="background:#1e293b;padding:16px 24px;border-bottom:1px solid rgba(56,189,248,0.25);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;background:rgba(56,189,248,0.15);border:1px solid rgba(56,189,248,0.3);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">
+                    ⚡
+                </div>
+                <div>
+                    <h3 style="margin:0;font-size:16px;font-weight:800;color:#38bdf8;display:flex;align-items:center;gap:8px;">
+                        TOOL ĐỒNG BỘ SÊ-RI PIN & XỬ LÝ GHÉP XE TOÀN NĂNG
+                        <span style="background:rgba(16,185,129,0.2);color:#34d399;font-size:10px;padding:2px 8px;border-radius:6px;border:1px solid rgba(16,185,129,0.3);">Dùng cho mọi xe DMS</span>
+                    </h3>
+                    <p style="margin:2px 0 0 0;font-size:12px;color:#94a3b8;">
+                        Tự động tìm kiếm, kích hoạt Sẵn Sàng Sê-ri PIN (xts_inventserial) & Khắc phục lỗi ghép xe
+                    </p>
+                </div>
+            </div>
+            <button id="dmsUniBtnClose" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#94a3b8;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
+        </div>
+
+        <div style="background:#0f172a;padding:12px 24px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;gap:10px;align-items:center;flex-wrap:wrap;flex-shrink:0;">
+            <div style="flex:1;min-width:300px;">
+                <input type="text" id="dmsUniInputKey" placeholder="Nhập Số Tồn Kho (vd: N319-SN-...) / Số Khung (VIN) / Mã PIN..." 
+                       value="${initialKey}" 
+                       style="width:100%;box-sizing:border-box;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 14px;color:#f8fafc;font-size:13.5px;font-family:monospace;outline:none;" />
+            </div>
+            <button id="dmsUniBtnSearch" class="dms-btn-primary" style="padding:10px 18px;font-size:13px;">
+                🔍 Quét & Kiểm Tra
+            </button>
+            <button id="dmsUniBtnQuickFix" class="dms-btn-success" style="padding:10px 18px;font-size:13px;">
+                🛠️ KÍCH HOẠT SẴN SÀNG PIN NGAY
+            </button>
+        </div>
+
+        <div style="background:#1e293b80;padding:0 24px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;gap:4px;flex-shrink:0;">
+            <button class="dms-u-tab active" data-tab="u-tab-diag">📋 Kết Quả Chẩn Đoán & Trạng Thái</button>
+            <button class="dms-u-tab" data-tab="u-tab-serials">🔋 Chi Tiết Sê-ri PIN (xts_inventserial)</button>
+            <button class="dms-u-tab" data-tab="u-tab-raw">📦 Dữ Liệu Gốc (JSON)</button>
+        </div>
+
+        <div id="dmsUniBody" style="flex:1;overflow-y:auto;padding:20px 24px;background:#090d16;font-size:13px;line-height:1.6;color:#cbd5e1;font-family:monospace;">
+            <div style="color:#94a3b8;text-align:center;padding:40px 0;">Nhập Số tồn kho hoặc Số Khung (VIN) để bắt đầu phân tích.</div>
+        </div>
+
+        <div style="background:#1e293b;padding:12px 24px;border-top:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <span id="dmsUniFoot" style="font-size:12px;color:#94a3b8;">📍 Sẵn sàng...</span>
+            <div style="font-size:12px;color:#64748b;">VinFast DMS Diagnostics Tool</div>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    var bodyEl = document.getElementById("dmsUniBody");
+    var footEl = document.getElementById("dmsUniFoot");
+    var inputKey = document.getElementById("dmsUniInputKey");
+    var searchBtn = document.getElementById("dmsUniBtnSearch");
+    var quickFixBtn = document.getElementById("dmsUniBtnQuickFix");
+
+    document.getElementById("dmsUniBtnClose").onclick = function() { overlay.remove(); };
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+    var currentData = {
+        vehicle: null,
+        pinSerialRecord: null,
+        allSerials: [],
+        pr: null
+    };
+
+    async function analyzeVehicle(key) {
+        key = (key || "").trim();
+        if (!key) {
+            alert("⚠️ Vui lòng nhập Số Tồn Kho, Số Khung (VIN) hoặc Mã PIN!");
+            return;
+        }
+
+        footEl.innerHTML = `🔍 Đang quét xe: [${key}]...`;
+        bodyEl.innerHTML = `<div style="text-align:center;padding:40px 0;color:#38bdf8;">⚡ Đang truy vấn OData CRM cho xe [${key}]...</div>`;
+
+        currentData = { vehicle: null, pinSerialRecord: null, allSerials: [], pr: null };
+
+        try {
+            // 1. Tìm Xe trong xts_inventorynewvehicle
+            var vehFilter = "";
+            if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(key)) {
+                vehFilter = `xts_inventorynewvehicleid eq ${key}`;
+            } else if (key.length === 17) {
+                vehFilter = `xts_chassisnumber eq '${key}'`;
+            } else if (key.indexOf("-SN-") !== -1 || key.indexOf("SN") !== -1) {
+                vehFilter = `xts_stocknumber eq '${key}'`;
+            } else {
+                vehFilter = `xts_stocknumber eq '${key}' or xts_chassisnumber eq '${key}'`;
+            }
+
+            var vehRes = await _Xrm.WebApi.retrieveMultipleRecords("xts_inventorynewvehicle", `?$filter=${encodeURIComponent(vehFilter)}&$top=1`);
+            if (vehRes && vehRes.entities && vehRes.entities.length > 0) {
+                currentData.vehicle = vehRes.entities[0];
+            } else {
+                bodyEl.innerHTML = `<div style="color:#f87171;text-align:center;padding:30px;">❌ Không tìm thấy bản ghi xe nào với từ khóa: <b>${key}</b></div>`;
+                footEl.innerHTML = "❌ Không tìm thấy xe";
+                return;
+            }
+
+            var veh = currentData.vehicle;
+            var pinCode = veh.itv_batteryserial;
+            var poNum = veh.xts_referencenumber;
+
+            // 2. Tìm Sê-ri PIN trong xts_inventserial
+            if (pinCode) {
+                try {
+                    var sRes = await _Xrm.WebApi.retrieveMultipleRecords("xts_inventserial", `?$filter=xts_serialnumber eq '${pinCode}'&$top=5`);
+                    if (sRes && sRes.entities && sRes.entities.length > 0) {
+                        currentData.pinSerialRecord = sRes.entities[0];
+                        currentData.allSerials = sRes.entities;
+                    }
+                } catch(ePin){
+                    console.warn("Lỗi sê-ri PIN:", ePin);
+                }
+            }
+
+            // 3. Tìm PR (Chỉ dùng xts_purchasereceiptnumber)
+            if (poNum) {
+                try {
+                    var prRes = await _Xrm.WebApi.retrieveMultipleRecords("xts_purchasereceipt", `?$filter=contains(xts_purchasereceiptnumber, '${poNum}')&$top=1`);
+                    if (prRes && prRes.entities && prRes.entities.length > 0) {
+                        currentData.pr = prRes.entities[0];
+                    }
+                } catch(ePr){
+                    console.warn("Lỗi PR:", ePr);
+                }
+            }
+
+            footEl.innerHTML = `✅ Đã quét xong xe [${veh.xts_stocknumber}] lúc ${(new Date()).toLocaleTimeString("vi-VN")}`;
+            renderUniTab("u-tab-diag");
+
+        } catch(err) {
+            console.error("Lỗi:", err);
+            bodyEl.innerHTML = `<div style="color:#f87171;padding:20px;">❌ Lỗi truy vấn: ${err.message || JSON.stringify(err)}</div>`;
+            footEl.innerHTML = "❌ Lỗi truy vấn";
+        }
+    }
+
+    function renderUniTab(tabId) {
+        var veh = currentData.vehicle;
+        var pinS = currentData.pinSerialRecord;
+        if (!veh) return;
+
+        var isPinReady = pinS && pinS.xts_availabilitystatus === 6;
+
+        if (tabId === "u-tab-diag") {
+            bodyEl.innerHTML = `
+                <div style="background:rgba(30,41,59,0.7);border:1px solid rgba(56,189,248,0.25);border-radius:12px;padding:16px;margin-bottom:16px;">
+                    <div style="font-size:14px;font-weight:700;color:#38bdf8;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+                        <span>🚗 THÔNG TIN XE: ${veh.xts_stocknumber}</span>
+                        <span style="font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;padding:3px 8px;border-radius:6px;">${veh.xts_productdescription || 'VF'}</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12.5px;">
+                        <div>• Số Tồn Kho: <b style="color:#fbbf24;">${veh.xts_stocknumber}</b></div>
+                        <div>• Số Khung (VIN): <b style="color:#38bdf8;">${veh.xts_chassisnumber}</b></div>
+                        <div>• Mã PIN theo xe: <b style="color:#34d399;">${veh.itv_batteryserial || 'Chưa ghi nhận'}</b></div>
+                        <div>• Đơn Hàng Mua (PO): <b style="color:#cbd5e1;">${veh.xts_referencenumber || '---'}</b></div>
+                        <div>• Kho / Chi Nhánh: <b>${veh['_xts_warehouseid_value@OData.Community.Display.V1.FormattedValue'] || '---'}</b> (${veh['_xts_siteid_value@OData.Community.Display.V1.FormattedValue'] || '---'})</div>
+                        <div>• Trạng Thái Kho: <b>${veh['statuscode@OData.Community.Display.V1.FormattedValue'] || 'Hiệu lực'}</b></div>
+                    </div>
+                </div>
+
+                <div style="background:rgba(30,41,59,0.7);border:1px solid ${isPinReady ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'};border-radius:12px;padding:16px;margin-bottom:16px;">
+                    <div style="font-size:14px;font-weight:700;color:#38bdf8;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+                        <span>🔋 TRẠNG THÁI SÊ-RI PIN (XTS_INVENTSERIAL)</span>
+                        <span style="padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;${isPinReady ? 'background:rgba(16,185,129,0.2);color:#34d399;' : 'background:rgba(239,68,68,0.2);color:#f87171;'}">
+                            ${isPinReady ? '🟢 ĐÃ SẴN SÀNG (AVAILABLE)' : '🔴 CHƯA SẴN SÀNG'}
+                        </span>
+                    </div>
+                    ${pinS ? `
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12.5px;">
+                            <div>• ID Sê-ri: <code>${pinS.xts_inventserialid}</code></div>
+                            <div>• Số Sê-ri PIN: <b style="color:#34d399;">${pinS.xts_serialnumber}</b></div>
+                            <div>• Trạng thái Sẵn sàng: <b style="color:${isPinReady ? '#34d399' : '#fbbf24'};">${pinS['xts_availabilitystatus@OData.Community.Display.V1.FormattedValue'] || pinS.xts_availabilitystatus} (Chuẩn: Có sẵn = 6)</b></div>
+                            <div>• Trạng thái Tồn kho: <b style="color:#34d399;">${pinS['xts_stockstatus@OData.Community.Display.V1.FormattedValue'] || pinS.xts_stockstatus} (Chuẩn: Tồn kho = 3)</b></div>
+                        </div>
+                    ` : `
+                        <div style="color:#f87171;font-weight:600;">⚠️ Chưa có bản ghi sê-ri kho cho mã PIN <code>${veh.itv_batteryserial}</code>.</div>
+                    `}
+                </div>
+
+                <div style="background:rgba(2,132,199,0.1);border:1px solid rgba(2,132,199,0.3);border-radius:12px;padding:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="font-weight:700;color:#38bdf8;font-size:13.5px;">⚡ THỰC THI SỬA LỖI & KÍCH HOẠT:</div>
+                            <div style="font-size:12px;color:#94a3b8;margin-top:2px;">Bấm nút bên cạnh để tự động chuyển sê-ri PIN sang trạng thái Sẵn Sàng.</div>
+                        </div>
+                        <button class="dms-btn-success" onclick="window.dmsExecuteAutoFix()">
+                            🛠️ Kích Hoạt Sẵn Sàng Sê-ri PIN
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else if (tabId === "u-tab-serials") {
+            bodyEl.innerHTML = `<pre style="color:#38bdf8;">${JSON.stringify(currentData.allSerials, null, 2)}</pre>`;
+        } else if (tabId === "u-tab-raw") {
+            bodyEl.innerHTML = `<textarea readonly style="width:100%;height:380px;background:#050811;color:#38bdf8;border:1px solid #334155;border-radius:8px;padding:12px;font-family:monospace;font-size:12px;box-sizing:border-box;">${JSON.stringify(currentData, null, 2)}</textarea>`;
+        }
+    }
+
+    modal.querySelectorAll(".dms-u-tab").forEach(function(btn) {
+        btn.onclick = function() {
+            modal.querySelectorAll(".dms-u-tab").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            renderUniTab(btn.getAttribute("data-tab"));
+        };
+    });
+
+    window.dmsExecuteAutoFix = async function() {
+        var veh = currentData.vehicle;
+        if (!veh) {
+            alert("⚠️ Vui lòng quét thông tin xe trước!");
+            return;
+        }
+
+        var pinCode = veh.itv_batteryserial;
+        var vin = veh.xts_chassisnumber;
+        var poNum = veh.xts_referencenumber;
+        var vehId = veh.xts_inventorynewvehicleid;
+
+        if (!pinCode) {
+            alert("⚠️ Xe này chưa có mã Sê-ri PIN trên trường itv_batteryserial!");
+            return;
+        }
+
+        footEl.innerHTML = "⏳ Đang kích hoạt Sẵn Sàng Sê-ri PIN...";
+        try {
+            var targetPinSerialId = currentData.pinSerialRecord ? currentData.pinSerialRecord.xts_inventserialid : "";
+
+            if (targetPinSerialId) {
+                await _Xrm.WebApi.updateRecord("xts_inventserial", targetPinSerialId, {
+                    "xts_availabilitystatus": 6,
+                    "xts_stockstatus": 3
+                });
+            } else {
+                var createPayload = {
+                    "xts_serialnumber": pinCode,
+                    "xts_description": (poNum || "") + " - PIN theo xe " + vin,
+                    "xts_availabilitystatus": 6,
+                    "xts_stockstatus": 3,
+                    "xts_vehiclesource": 1,
+                    "statecode": 0,
+                    "statuscode": 1
+                };
+                var newRes = await _Xrm.WebApi.createRecord("xts_inventserial", createPayload);
+                targetPinSerialId = newRes.id;
+            }
+
+            try {
+                await _Xrm.WebApi.updateRecord("xts_inventorynewvehicle", vehId, {
+                    "itv_serialid@odata.bind": `/xts_inventserials(${targetPinSerialId})`,
+                    "itv_batteryserial": pinCode
+                });
+            } catch(eBind){
+                console.warn("Bind vehicle:", eBind);
+            }
+
+            if (currentData.pr && (currentData.pr.xts_status === 1 || currentData.pr.xts_handling === 1)) {
+                try {
+                    await _Xrm.WebApi.updateRecord("xts_purchasereceipt", currentData.pr.xts_purchasereceiptid, {
+                        "xts_handling": 2,
+                        "xts_calculatetax": true
+                    });
+                } catch(ePr){}
+            }
+
+            alert("🎉 ĐÃ KÍCH HOẠT SẴN SÀNG SÊ-RI PIN CHO XE [" + veh.xts_stocknumber + "] THÀNH CÔNG!\n\nBây giờ xe đã đủ điều kiện để Ghép vào Đơn hàng.");
+            analyzeVehicle(veh.xts_stocknumber);
+
+        } catch(errFix) {
+            alert("❌ Lỗi kích hoạt: " + (errFix.message || JSON.stringify(errFix)));
+            footEl.innerHTML = "❌ Lỗi kích hoạt: " + (errFix.message || String(errFix));
+        }
+    };
+
+    searchBtn.onclick = function() { analyzeVehicle(inputKey.value); };
+    quickFixBtn.onclick = async function() {
+        if (!currentData.vehicle) await analyzeVehicle(inputKey.value);
+        if (currentData.vehicle) window.dmsExecuteAutoFix();
+    };
+    inputKey.onkeydown = function(e) { if (e.key === "Enter") analyzeVehicle(this.value); };
+
+    if (initialKey) analyzeVehicle(initialKey);
+})();

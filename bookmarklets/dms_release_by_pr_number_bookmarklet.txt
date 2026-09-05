@@ -1,0 +1,82 @@
+javascript:(function(){
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var frames = window.frames;
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].Xrm && frames[i].Xrm.WebApi) { _Xrm = frames[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert("⚠️ Vui lòng mở trang DMS VinFast trước khi chạy!");
+        return;
+    }
+
+    // Tự động nhận diện số PR nếu đang mở form phiếu
+    var currentPrNum = "";
+    try {
+        if (_Xrm.Page && _Xrm.Page.getAttribute && _Xrm.Page.getAttribute("xts_purchasereceiptnumber")) {
+            currentPrNum = _Xrm.Page.getAttribute("xts_purchasereceiptnumber").getValue() || "";
+        }
+    } catch(e){}
+
+    var inputPrompt = prompt("Nhập SỐ PHIẾU NHẬP (Số PR) cần phát hành:\n(Có thể nhập 1 số hoặc dán nhiều số cách nhau bằng dấu phẩy / xuống dòng):", currentPrNum || "N31913-PR-26-08-0086");
+    if (!inputPrompt || !inputPrompt.trim()) return;
+
+    var prList = inputPrompt.split(/[\n,;]+/).map(function(s){ return s.trim(); }).filter(function(s){ return s.length > 0; });
+    if (prList.length === 0) return;
+
+    var progress = document.createElement('div');
+    progress.style = 'position:fixed;top:15px;right:15px;background:#0f172a;color:#38bdf8;padding:16px 22px;z-index:9999999;border-radius:12px;font-family:sans-serif;font-size:13px;font-weight:bold;box-shadow:0 12px 30px rgba(0,0,0,0.6);border:1px solid #38bdf840;backdrop-filter:blur(8px);';
+    progress.innerHTML = '⚙️ Đang xử lý phát hành ' + prList.length + ' phiếu PR...';
+    document.body.appendChild(progress);
+
+    var successCount = 0;
+    var failList = [];
+
+    function processPrIndex(idx) {
+        if (idx >= prList.length) {
+            progress.remove();
+            var msg = "🎉 KẾT QUẢ PHÁT HÀNH PHIẾU NHẬP (PR):\n";
+            msg += "• Thành công: " + successCount + " phiếu\n";
+            if (failList.length > 0) {
+                msg += "• Thất bại (" + failList.length + "):\n" + failList.map(function(f){ return "  - " + f.pr + ": " + f.err; }).join("\n");
+            }
+            alert(msg);
+            try {
+                if (_Xrm.Page && _Xrm.Page.data) _Xrm.Page.data.refresh(true);
+                else location.reload();
+            } catch(e) { location.reload(); }
+            return;
+        }
+
+        var prNum = prList[idx];
+        progress.innerHTML = '⚙️ (' + (idx + 1) + '/' + prList.length + ') Đang phát hành: <b>' + prNum + '</b>...';
+
+        _Xrm.WebApi.retrieveMultipleRecords("xts_purchasereceipt", "?$filter=xts_purchasereceiptnumber eq '" + encodeURIComponent(prNum) + "'").then(function(res){
+            if (!res.entities || res.entities.length === 0) {
+                failList.push({ pr: prNum, err: "Không tìm thấy số phiếu PR này trên hệ thống." });
+                setTimeout(function(){ processPrIndex(idx + 1); }, 400);
+                return;
+            }
+
+            var prId = res.entities[0].xts_purchasereceiptid;
+            
+            // Gửi lệnh phát hành: xts_handling = 2
+            _Xrm.WebApi.updateRecord("xts_purchasereceipt", prId, { "xts_handling": 2 }).then(function(){
+                successCount++;
+                setTimeout(function(){ processPrIndex(idx + 1); }, 600);
+            }, function(err){
+                failList.push({ pr: prNum, err: err.message || err.description || JSON.stringify(err) });
+                setTimeout(function(){ processPrIndex(idx + 1); }, 600);
+            });
+        }, function(queryErr){
+            failList.push({ pr: prNum, err: queryErr.message || queryErr.description || "Lỗi truy vấn" });
+            setTimeout(function(){ processPrIndex(idx + 1); }, 400);
+        });
+    }
+
+    processPrIndex(0);
+})();

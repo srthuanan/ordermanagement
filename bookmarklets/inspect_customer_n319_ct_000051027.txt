@@ -1,0 +1,93 @@
+javascript:(function(){
+    var targetCode = "N319-CT-000051027";
+
+    var x = typeof Xrm !== "undefined" ? Xrm : (window.top && window.top.Xrm ? window.top.Xrm : null);
+    if (!x || !x.WebApi) {
+        alert("❌ Vui lòng mở trang VinFast DMS trước khi chạy!");
+        return;
+    }
+
+    var progressDiv = document.createElement('div');
+    progressDiv.style = 'position:fixed;top:15px;right:15px;background:#0f172a;color:#ffffff;padding:18px 24px;z-index:9999999;border-radius:12px;font-family:system-ui,-apple-system,sans-serif;font-size:14px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);border:1px solid #3b82f6;font-weight:600;';
+    progressDiv.innerHTML = '🔍 Đang kiểm tra chi tiết Mã KH Chưa xác thực: <strong style="color:#ef4444;">' + targetCode + '</strong>...';
+    document.body.appendChild(progressDiv);
+
+    // 1. Kiểm tra bảng account
+    var accQuery = "?$select=accountid,accountnumber,name,telephone1,emailaddress1,itv_vgcustomerid,_itv_customerexternalprofile_value,createdon&$filter=accountnumber eq '" + targetCode + "'";
+    
+    x.WebApi.retrieveMultipleRecords("account", accQuery).then(function(accRes) {
+        var acc = (accRes.entities && accRes.entities.length > 0) ? accRes.entities[0] : null;
+        
+        if (!acc) {
+            progressDiv.remove();
+            alert("❌ Không tìm thấy Khách hàng " + targetCode + " trên bảng account DMS!");
+            return;
+        }
+
+        var accGuid = acc.accountid ? acc.accountid.toLowerCase() : "";
+
+        // 2. Kiểm tra bảng itv_customerexternalprofile qua GUID accountid
+        var profQuery = "?$select=itv_customerexternalprofileid,itv_vclubuserid,itv_vclubtiercode,itv_customernumber,_itv_account_value&$filter=_itv_account_value eq " + accGuid;
+        
+        x.WebApi.retrieveMultipleRecords("itv_customerexternalprofile", profQuery).then(function(profRes) {
+            var prof = (profRes.entities && profRes.entities.length > 0) ? profRes.entities[0] : null;
+            progressDiv.remove();
+            showUnverifiedDiagnosticUI(targetCode, acc, prof);
+        }).catch(function() {
+            progressDiv.remove();
+            showUnverifiedDiagnosticUI(targetCode, acc, null);
+        });
+    }).catch(function(err) {
+        progressDiv.remove();
+        alert("❌ Lỗi khi truy vấn " + targetCode + ": " + (err.message || err));
+    });
+
+    function showUnverifiedDiagnosticUI(code, acc, prof) {
+        var old = document.getElementById("dms-unv-modal");
+        if (old) old.remove();
+
+        var isOneIdExist = Boolean(acc.itv_vgcustomerid);
+        var isProfileLookupExist = Boolean(acc._itv_customerexternalprofile_value);
+        var isProfRecordExist = Boolean(prof);
+        var isUserIdExist = Boolean(prof && prof.itv_vclubuserid);
+
+        var isVerified = isOneIdExist || isProfileLookupExist || isProfRecordExist || isUserIdExist;
+
+        var overlay = document.createElement("div");
+        overlay.id = "dms-unv-modal";
+        overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.85);backdrop-filter:blur(12px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;";
+
+        var modal = document.createElement("div");
+        modal.style = "width:90%;max-width:960px;max-height:88vh;background:#1e293b;border-radius:20px;border:1px solid #334155;box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);display:flex;flex-direction:column;overflow:hidden;color:#f8fafc;";
+
+        var header = document.createElement("div");
+        header.style = "padding:20px 28px;background:#0f172a;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;";
+        header.innerHTML = '<div style="display:flex;align-items:center;gap:16px;">' +
+                           '<span style="font-size:32px;">🔬</span>' +
+                           '<div><h2 style="margin:0;font-size:20px;font-weight:700;color:#f87171;">KẾT QUẢ KIỂM TRA MÃ KH CHƯA XÁC THỰC: ' + code + '</h2>' +
+                           '<p style="margin:4px 0 0 0;font-size:13px;color:#94a3b8;">Xác nhận Trạng thái: ' + (isVerified ? '<strong style="color:#34d399;">🟢 ĐÃ XÁC THỰC (Phát hiện dữ liệu)</strong>' : '<strong style="color:#f87171;">🔴 ĐÚNG NÓ CHƯA XÁC THỰC VINCLUB (TRỐNG DỮ LIỆU 100%)</strong>') + '</p></div>' +
+                           '</div>' +
+                           '<button onclick="document.getElementById(\'dms-unv-modal\').remove()" style="background:transparent;border:none;color:#94a3b8;font-size:26px;cursor:pointer;">✕</button>';
+
+        var contentDiv = document.createElement("div");
+        contentDiv.style = "flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:16px;";
+
+        var summaryHtml = '<div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:18px;">' +
+                          '<h3 style="margin:0 0 12px 0;font-size:15px;color:#38bdf8;">📌 BẢNG ĐỐI SOÁT BẰNG CHỨNG XÁC THỰC VINCLUB CỦA ' + code + '</h3>' +
+                          '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
+                          '<tbody>' +
+                          '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:10px;color:#94a3b8;width:45%;">Tên Khách Hàng:</td><td style="padding:10px;font-weight:700;color:#fff;">' + acc.name + '</td></tr>' +
+                          '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:10px;color:#94a3b8;">Số Điện Thoại:</td><td style="padding:10px;color:#cbd5e1;">' + (acc.telephone1 || "Trống") + '</td></tr>' +
+                          '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:10px;color:#94a3b8;">1. Mã OneID Vingroup (itv_vgcustomerid):</td><td style="padding:10px;color:#f87171;font-weight:700;">' + (acc.itv_vgcustomerid || "❌ Trống (null)") + '</td></tr>' +
+                          '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:10px;color:#94a3b8;">2. Profile VinClub Lookup (_itv_customerexternalprofile_value):</td><td style="padding:10px;color:#f87171;font-weight:700;">' + (acc._itv_customerexternalprofile_value || "❌ Trống (null)") + '</td></tr>' +
+                          '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:10px;color:#94a3b8;">3. Bản ghi Profile VinClub (itv_customerexternalprofile):</td><td style="padding:10px;color:#f87171;font-weight:700;">' + (isProfRecordExist ? "✔ Đã tạo Profile (" + prof.itv_customerexternalprofileid + ")" : "❌ Chưa từng tạo bản ghi Profile") + '</td></tr>' +
+                          '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);"><td style="padding:10px;color:#94a3b8;">4. VinClub User ID (itv_vclubuserid):</td><td style="padding:10px;color:#f87171;font-weight:700;">' + (isUserIdExist ? prof.itv_vclubuserid : "❌ Trống (null)") + '</td></tr>' +
+                          '</tbody></table></div>';
+
+        contentDiv.innerHTML = summaryHtml;
+        modal.appendChild(header);
+        modal.appendChild(contentDiv);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+    }
+})();

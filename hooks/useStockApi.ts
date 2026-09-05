@@ -6,12 +6,12 @@ import { supabase } from '../services/supabaseClient';
 
 export const useStockApi = () => {
     const { data: result, error, mutate } = useSWR('stockData', () => apiService.getStockData(), {
-        revalidateOnFocus: true,
+        revalidateOnFocus: false,
         revalidateOnReconnect: true,
     });
 
     const { data: queuedVins, mutate: mutateQueued } = useSWR('myQueuedVins', () => apiService.getMyQueuedVins(), {
-        revalidateOnFocus: true,
+        revalidateOnFocus: false,
         revalidateOnReconnect: true,
     });
 

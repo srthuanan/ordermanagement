@@ -36,6 +36,21 @@ declare module 'react' {
         class?: string;
         [key: string]: any;
       };
+      'dotlottie-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        src?: string;
+        background?: string;
+        speed?: string | number;
+        style?: React.CSSProperties;
+        loop?: boolean;
+        autoplay?: boolean;
+        mode?: string;
+        direction?: string | number;
+        hover?: boolean;
+        controls?: boolean;
+        ref?: any;
+        class?: string;
+        [key: string]: any;
+      };
     }
   }
 }

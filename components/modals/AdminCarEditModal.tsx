@@ -21,13 +21,20 @@ const AdminCarEditModal: React.FC<AdminCarEditModalProps> = ({ isOpen, vehicle, 
     const [localChanges, setLocalChanges] = useState<Partial<StockVehicle>>({});
 
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && vehicle) {
             setMode('edit');
-            setLocalChanges({});
             setDeleteReason('');
             setIsSaving(false);
+            const initialModel = vehicle['Dòng xe'] || '';
+            const initialVersion = vehicle['Phiên bản'] || '';
+            const versions = versionsMap[initialModel] || [];
+            if (versions.length === 1 && !initialVersion) {
+                setLocalChanges({ 'Phiên bản': versions[0] });
+            } else {
+                setLocalChanges({});
+            }
         }
-    }, [isOpen, vehicle?.VIN]);
+    }, [isOpen, vehicle?.VIN, versionsMap]);
 
     if (!isOpen || !vehicle) return null;
 
@@ -42,8 +49,13 @@ const AdminCarEditModal: React.FC<AdminCarEditModalProps> = ({ isOpen, vehicle, 
     const handleFieldChange = (field: keyof StockVehicle, value: string) => {
         setLocalChanges(prev => {
             const next = { ...prev, [field]: value };
-            if (field === 'Dòng xe' && (value === 'VF5' || value === 'vf5' || value === 'VF 5')) {
-                next['Phiên bản'] = 'Plus';
+            if (field === 'Dòng xe') {
+                const versions = versionsMap[value] || [];
+                if (versions.length === 1) {
+                    next['Phiên bản'] = versions[0];
+                } else if (value === 'VF5' || value === 'vf5' || value === 'VF 5') {
+                    next['Phiên bản'] = 'Plus';
+                }
             }
             return next;
         });

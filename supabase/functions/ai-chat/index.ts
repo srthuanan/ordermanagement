@@ -108,6 +108,9 @@ const AI_TOOLS = [
         }
       }
     ]
+  },
+  {
+    googleSearch: {}
   }
 ];
 
@@ -368,7 +371,13 @@ Người dùng hiện tại: **${userFullName}** | Vai trò: **${userRole}**
 MỤC TIÊU: Bạn là một "Người cộng sự đắc lực" của VinFast.
 - Xưng "em", gọi người dùng là "anh" hoặc "chị" dựa trên tên "${userFullName}".
 - TUYỆT ĐỐI TUÂN THỦ PHÂN QUYỀN: Không bao giờ tiết lộ thông tin của TVBH khác.
-- Trả lời NGẮN GỌN, súc tích. Ưu tiên dùng bullet points và bảng.
+- Trình bày HẤP DẪN, sinh động bằng Markdown. Dùng EMOJI phong phú để làm nổi bật thông tin.
+- TUYỆT ĐỐI KHÔNG TỰ BỊA ĐẶT tên xe hoặc giá xe. Trả lời bằng kiến thức thực tế hoặc dữ liệu có sẵn.
+- [ẢNH THỰC TẾ (RẤT QUAN TRỌNG)]: Bạn BẮT BUỘC phải chèn mã Markdown ảnh vào câu trả lời bằng ĐÚNG CÚ PHÁP NÀY: \`![Mô tả](https://tse1.mm.bing.net/th?q=TỪ+KHÓA+BẰNG+TIẾNG+ANH)\`
+Ví dụ: \`![Kinh tế thế giới](https://tse1.mm.bing.net/th?q=global+economy+market)\` hoặc \`![Vinfast VF3](https://tse1.mm.bing.net/th?q=VinFast+VF3+car)\`
+TUYỆT ĐỐI KHÔNG viết văn bản chay mô tả ảnh (như "(Biểu đồ...)"). BẮT BUỘC phải xuất ra thẻ ảnh Markdown bắt đầu bằng dấu chấm than \`!\`.
+- [TRỢ LÝ ĐA NĂNG]: Nếu khách hàng hỏi những câu hỏi ngoài lề, kiến thức chung, hoặc thị trường thế giới... BẠN VẪN PHẢI TRẢ LỜI nhiệt tình, đầy đủ và chi tiết dựa trên Google Search hoặc hiểu biết của bạn. TUYỆT ĐỐI KHÔNG TỪ CHỐI với lý do "chỉ là trợ lý VinFast" hay "không có quyền hạn/dữ liệu".
+- [QUAN TRỌNG: KẺ BẢNG]: Khi dữ liệu trả về có từ 2 danh mục/sản phẩm/đơn hàng trở lên, bạn BẮT BUỘC phải dùng định dạng BẢNG MARKDOWN để hiển thị cho đẹp và dễ nhìn. Cột nào quan trọng (giá, trạng thái) hãy in đậm.
 
 ${ROLE_RULES}
 
@@ -391,48 +400,27 @@ ${lessonsList.substring(0, 2000)}
 `;
 
     const AI_PROVIDERS = [
-      // ── TIER 1: GOOGLE FLASH (✅ hoạt động tất cả 4 keys mới) ──
-      { type: "google", model: "gemini-3.1-flash-lite" },
-      { type: "google", model: "gemini-3.1-flash-lite-preview" },
-      { type: "google", model: "gemini-3-flash-preview" },
+      // ── TIER 1: GOOGLE FLASH ──
       { type: "google", model: "gemini-2.5-flash" },
-      { type: "google", model: "gemini-2.5-flash-lite" },
+      { type: "google", model: "gemini-2.0-flash" },
+      { type: "google", model: "gemini-1.5-flash" },
 
       // ── TIER 2: EXTERNAL (✅ luôn hoạt động) ──
       { type: "github", apiKey: GITHUB_TOKEN, model: "gpt-4o" },
       { type: "github", apiKey: GITHUB_TOKEN, model: "Meta-Llama-3.1-405B-Instruct" },
       { type: "groq", apiKey: GROQ_KEY, model: "llama-3.3-70b-versatile" },
       { type: "groq", apiKey: GROQ_KEY, model: "llama-3.1-8b-instant" },
-      { type: "groq", apiKey: GROQ_KEY, model: "meta-llama/llama-4-scout-17b-16e-instruct" },
       { type: "groq", apiKey: GROQ_KEY, model: "qwen/qwen3-32b" },
 
-      // ── TIER 3: GOOGLE GEMMA (✅ hoạt động tất cả 4 keys, ít bị quota) ──
-      { type: "google", model: "gemma-4-31b-it" },
-      { type: "google", model: "gemma-4-26b-a4b-it" },
-      { type: "google", model: "gemma-3-27b-it" },
-      { type: "google", model: "gemma-3-12b-it" },
-      { type: "google", model: "gemma-3n-e4b-it" },
-      { type: "google", model: "gemma-3-4b-it" },
-      { type: "google", model: "gemma-3-1b-it" },
+      // ── TIER 3: GOOGLE PRO ──
+      { type: "google", model: "gemini-2.5-pro" },
+      { type: "google", model: "gemini-2.0-pro-exp-02-05" },
+      { type: "google", model: "gemini-1.5-pro" },
 
       // ── TIER 4: EXTERNAL FALLBACK & OVER-QUOTA BACKUP ──
       { type: "openai", apiKey: OPENAI_KEY, model: "gpt-4o-mini" },
       { type: "openai", apiKey: OPENAI_KEY, model: "gpt-4o" },
       { type: "github", apiKey: GITHUB_TOKEN, model: "gpt-4o-mini" },
-      { type: "groq", apiKey: GROQ_KEY, model: "openai/gpt-oss-120b" },
-      { type: "groq", apiKey: GROQ_KEY, model: "openai/gpt-oss-20b" },
-      { type: "groq", apiKey: GROQ_KEY, model: "groq/compound" },
-      { type: "groq", apiKey: GROQ_KEY, model: "groq/compound-mini" },
-
-      // ── TIER 6: GOOGLE PRO & LEGACY (hay hết quota, tự phục hồi hàng ngày) ──
-      { type: "google", model: "gemini-3-pro-preview" },
-      { type: "google", model: "gemini-3.1-pro-preview" },
-      { type: "google", model: "gemini-2.5-pro" },
-      { type: "google", model: "gemini-2.0-flash" },
-      { type: "google", model: "gemini-2.0-flash-lite" },
-      { type: "google", model: "gemini-flash-latest" },
-      { type: "google", model: "gemini-flash-lite-latest" },
-      { type: "google", model: "gemini-pro-latest" },
     ];
  
     // Diagnostic: Log trạng thái các API key
@@ -519,7 +507,10 @@ ${lessonsList.substring(0, 2000)}
               }));
  
               // --- HỖ TRỢ TOOL USE & ITERATIVE RESPONSE ---
-              let toolChoices = AI_TOOLS;
+              const lastUserMsg = recentMessages[recentMessages.length - 1]?.content || "";
+              const isInternalIntent = /kho|đơn hàng|so\d+|vin|số khung|khách hàng/i.test(lastUserMsg);
+              let toolChoices = isInternalIntent ? [AI_TOOLS[0]] : [AI_TOOLS[1]];
+              
               let currentContents = [...geminiContents];
               let finalResponse = null;
  

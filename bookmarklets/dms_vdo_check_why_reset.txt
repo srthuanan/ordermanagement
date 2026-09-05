@@ -1,0 +1,55 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - KIỂM TRA CHI TIẾT TẠI SAO RESET VỀ TRẠNG THÁI "MỞ"
+     * ========================================================================= */
+    var x = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!x) {
+        for (var i = 0; i < frames.length; i++) {
+            try { if (frames[i].Xrm) { x = frames[i].Xrm; break; } } catch(e){}
+        }
+    }
+    var recId = (new URLSearchParams(window.location.search).get("id") || "").replace(/[{}]/g, "");
+
+    try {
+        var vdo = await x.WebApi.retrieveRecord("xts_newvehicledeliveryorder", recId);
+        
+        // Quét các trường ở section "Xác nhận O2D" và các trường SAP
+        var o2dFields = [];
+        for (var k in vdo) {
+            var lower = k.toLowerCase();
+            if (lower.includes("o2d") || lower.includes("sap") || lower.includes("confirm") || lower.includes("xacnhan") || lower.includes("phathanh") || lower.includes("release")) {
+                var fmt = vdo[k + "@OData.Community.Display.V1.FormattedValue"] || vdo[k];
+                if (fmt !== null && fmt !== "") {
+                    o2dFields.push(`• ${k}: ${fmt}`);
+                }
+            }
+        }
+
+        var stockId = vdo._xts_stockid_value;
+        var stockInfo = "";
+        if (stockId) {
+            try {
+                var stock = await x.WebApi.retrieveRecord("xts_inventorynewvehicle", stockId);
+                stockInfo = `\n📦 TRẠNG THÁI XE KHO (${stock.xts_stocknumber || stockId}):\n` +
+                            `• Trạng thái xe: ${stock["statuscode@OData.Community.Display.V1.FormattedValue"] || stock.statuscode}\n` +
+                            `• Sê-ri PIN: ${stock.itv_batteryserial || "Chưa có"}\n` +
+                            `• Trạng thái tồn: ${stock["xts_stockstatus@OData.Community.Display.V1.FormattedValue"] || stock.xts_stockstatus}\n`;
+            } catch(eStk){}
+        }
+
+        var msg = `🔍 NGUYÊN NHÂN HỆ THỐNG RESET VỀ 'MỞ':\n` +
+                  `----------------------------------------\n` +
+                  `1. Số Phiếu Xuất Kho SAP: ${vdo.xvf_sapdeliveryordernumber ? vdo.xvf_sapdeliveryordernumber : "TRỐNG ⚠️ (SAP chưa duyệt)"}\n` +
+                  `2. Trạng thái O2D: ${vdo.itv_comfirmationstatus ? vdo.itv_comfirmationstatus : "CHƯA XÁC NHẬN ⚠️"}\n\n` +
+                  `📋 CÁC DỮ LIỆU ĐỒNG BỘ HIỆN TẠI:\n` +
+                  (o2dFields.length > 0 ? o2dFields.join("\n") : "Không có dữ liệu O2D/SAP") +
+                  stockInfo +
+                  `\n----------------------------------------\n` +
+                  `💡 GIẢI THÍCH:\n` +
+                  `Khi bạn bấm Phát hành, Plugin của DMS tự động kiểm tra xem SAP đã trả về "Số phiếu xuất kho" (xvf_sapdeliveryordernumber) chưa. Nếu SAP chưa cấp số phiếu, hệ thống sẽ tự động bật ngược Handling về "Không hành động" và giữ ở trạng thái "Mở".`;
+
+        alert(msg);
+    } catch(err) {
+        alert("Lỗi kiểm tra: " + (err.message || err));
+    }
+})();

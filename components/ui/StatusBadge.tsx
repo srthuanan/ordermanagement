@@ -1,86 +1,190 @@
 import React from 'react';
 
+import statusBgEmerald from '../../pictures/status_bg_emerald.webp';
+import statusBgTeal from '../../pictures/status_bg_teal.webp';
+import statusBgBlue from '../../pictures/status_bg_blue.webp';
+import statusBgAmber from '../../pictures/status_bg_amber.webp';
+import statusBgSlate from '../../pictures/status_bg_slate.webp';
+
 interface StatusBadgeProps {
   status: string;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   iconOnly?: boolean;
+  className?: string;
 }
 
-const getStatusInfo = (statusText: string): { className: string, icon: string, pulse: boolean } => {
+/**
+ * Ultra-Luxury Animated Frosted Glass Capsule
+ * - Nền kính quang học hoạt cảnh chuyển động phát quang (Animated Aurora Capsule)
+ * - Ánh phản xạ viền Hairline siêu mỏng tinh xảo
+ * - Chấm quang học phát sáng (Optic Jewel Dot Glow)
+ * - Kiểu chữ trầm sang trọng, đẳng cấp thượng lưu
+ */
+const getLuxuryTheme = (statusText: string): {
+  dotGlow: string;
+  dotColor: string;
+  textColor: string;
+  accentBorder: string;
+  bgImg: string;
+  pulse?: boolean;
+} => {
   if (!statusText || typeof statusText !== 'string') {
-    return { className: 'status-default', icon: 'help', pulse: false };
+    return {
+      dotColor: 'bg-slate-400',
+      dotGlow: 'shadow-[0_0_6px_rgba(148,163,184,0.4)]',
+      textColor: 'text-slate-700',
+      accentBorder: 'border-slate-300/80 hover:border-slate-400',
+      bgImg: statusBgSlate,
+    };
   }
-  const lowerStatus = statusText.toLowerCase().trim().normalize('NFC');
 
-  switch (lowerStatus) {
-    // Negative
-    case 'đã hủy': case 'đã hủy (ui)': return { className: 'status-da-huy', icon: 'do_not_disturb_on', pulse: false };
-    case 'từ chối ycvc': return { className: 'status-tu-choi-ycvc', icon: 'block', pulse: false };
+  const lower = statusText.toLowerCase().trim().normalize('NFC');
 
-    // Pending / Waiting
-    case 'chưa ghép': case 'chưa tìm thấy vin': return { className: 'status-chua-ghep', icon: 'electric_car', pulse: false };
-    case 'chờ phê duyệt': return { className: 'status-cho-phe-duyet', icon: 'assignment_late', pulse: false };
-    case 'chờ ký hóa đơn': case 'chờ ký hóa đơn': return { className: 'status-cho-ky-hoa-don', icon: 'signature', pulse: false };
-    case 'chờ duyệt ycvc': return { className: 'status-cho-duyet-ycvc', icon: 'manage_history', pulse: false };
-    case 'chờ check-in': return { className: 'status-cho-check-in', icon: 'event_available', pulse: false };
-
-    // Action Required
-    case 'yêu cầu bổ sung': return { className: 'status-yeu-cau-bo-sung', icon: 'report_problem', pulse: true };
-    case 'chờ xác thực vc (tvbh)': return { className: 'status-cho-xac-thuc-vc', icon: 'report_problem', pulse: true };
-
-    // In Progress
-    case 'đang giữ': return { className: 'status-dang-giu', icon: 'lock_person', pulse: false };
-    case 'đang lái thử': return { className: 'status-dang-lai-thu', icon: 'minor_crash', pulse: false };
-    case 'đã ghép': return { className: 'status-da-ghep', icon: 'vpn_key', pulse: false };
-
-    // Positive / Completed
-    case 'đã bổ sung': return { className: 'status-da-bo-sung', icon: 'add_task', pulse: false };
-    case 'đã phê duyệt': return { className: 'status-da-phe-duyet', icon: 'verified', pulse: false };
-    case 'đã xuất hóa đơn': return { className: 'status-da-xuat-hoa-don', icon: 'receipt_long', pulse: false };
-    case 'yêu cầu vinclub': return { className: 'status-yeu-cau-vinclub', icon: 'loyalty', pulse: false };
-    case 'đã có vc': return { className: 'status-da-co-vc', icon: 'confirmation_number', pulse: false };
-    case 'đã hoàn tất': return { className: 'status-da-hoan-tat', icon: 'flag_circle', pulse: false };
-
-    // Car Inquiry Statuses
-    case 'đang chờ': return { className: 'status-cho-phe-duyet', icon: 'hourglass_empty', pulse: false };
-    case 'admin đang check': return { className: 'status-cho-phe-duyet', icon: 'manage_search', pulse: true };
-    case 'đã tìm thấy': return { className: 'status-da-phe-duyet', icon: 'check_circle', pulse: false };
-    case 'admin phản hồi': return { className: 'status-da-bo-sung', icon: 'quick_phrases', pulse: false };
-    case 'đã giữ xe': return { className: 'status-dang-giu', icon: 'lock_person', pulse: false };
-
-    // New VC Statuses
-    case 'chờ duyệt vc': return { className: 'status-cho-duyet-vc', icon: 'manage_history', pulse: true };
-    case 'đã cấp vc': return { className: 'status-da-cap-vc', icon: 'verified', pulse: false };
-    case 'từ chối vc': return { className: 'status-tu-choi-vc', icon: 'cancel', pulse: false };
-
-    default:
-      if (lowerStatus.startsWith('vpas') || /^[a-z0-9]{17}$/.test(lowerStatus)) {
-        return { className: 'status-san-sang', icon: 'directions_car', pulse: false };
-      }
-      return { className: 'status-default', icon: 'help_center', pulse: false };
+  // 1. Đã xuất hóa đơn / Đã hoàn tất (Deep Emerald Lục Bảo)
+  if (lower.includes('đã xuất hóa đơn') || lower.includes('đã hoàn tất') || lower.includes('đã cấp vc')) {
+    return {
+      dotColor: 'bg-emerald-500',
+      dotGlow: 'shadow-[0_0_8px_rgba(16,185,129,0.85)]',
+      textColor: 'text-emerald-900',
+      accentBorder: 'border-emerald-200/90 hover:border-emerald-300',
+      bgImg: statusBgEmerald,
+    };
   }
+
+  // 2. Đã ghép xe (Sapphire Blue Hoàng Gia)
+  if (lower.includes('đã ghép') || lower.includes('đã tìm thấy') || lower.includes('đã bổ sung')) {
+    return {
+      dotColor: 'bg-blue-600',
+      dotGlow: 'shadow-[0_0_8px_rgba(37,99,235,0.85)]',
+      textColor: 'text-blue-950',
+      accentBorder: 'border-blue-200/90 hover:border-blue-300',
+      bgImg: statusBgBlue,
+    };
+  }
+
+  // 3. Đang giữ xe (Warm Bronze Amber)
+  if (lower.includes('đang giữ') || lower.includes('đã giữ xe') || lower.includes('đang lái thử')) {
+    return {
+      dotColor: 'bg-amber-500',
+      dotGlow: 'shadow-[0_0_8px_rgba(245,158,11,0.9)]',
+      textColor: 'text-amber-950',
+      accentBorder: 'border-amber-200/90 hover:border-amber-300',
+      bgImg: statusBgAmber,
+      pulse: true,
+    };
+  }
+
+  // 4. Chờ ký hóa đơn (Deep Aqua Teal)
+  if (lower.includes('chờ ký') || lower.includes('chờ ký')) {
+    return {
+      dotColor: 'bg-teal-500',
+      dotGlow: 'shadow-[0_0_8px_rgba(20,184,166,0.85)]',
+      textColor: 'text-teal-950',
+      accentBorder: 'border-teal-200/90 hover:border-teal-300',
+      bgImg: statusBgTeal,
+    };
+  }
+
+  // 5. Chờ duyệt / Phê duyệt (Royal Amber)
+  if (lower.includes('chờ duyệt') || lower.includes('chờ phê duyệt') || lower.includes('chờ check-in') || lower.includes('đang chờ')) {
+    return {
+      dotColor: 'bg-amber-500',
+      dotGlow: 'shadow-[0_0_8px_rgba(245,158,11,0.85)]',
+      textColor: 'text-amber-950',
+      accentBorder: 'border-amber-200/90 hover:border-amber-300',
+      bgImg: statusBgAmber,
+      pulse: true,
+    };
+  }
+
+  // 6. Cần bổ sung / Xác thực (Vibrant Mandarin)
+  if (lower.includes('yêu cầu bổ sung') || lower.includes('chờ xác thực')) {
+    return {
+      dotColor: 'bg-amber-500',
+      dotGlow: 'shadow-[0_0_8px_rgba(245,158,11,0.85)]',
+      textColor: 'text-amber-950',
+      accentBorder: 'border-amber-200/90 hover:border-amber-300',
+      bgImg: statusBgAmber,
+      pulse: true,
+    };
+  }
+
+  // 7. Đã hủy / Từ chối (Ruby Crimson)
+  if (lower.includes('hủy') || lower.includes('từ chối')) {
+    return {
+      dotColor: 'bg-rose-500',
+      dotGlow: 'shadow-[0_0_8px_rgba(244,63,94,0.85)]',
+      textColor: 'text-rose-900',
+      accentBorder: 'border-rose-200/90 hover:border-rose-300',
+      bgImg: statusBgSlate,
+    };
+  }
+
+  // 8. Chưa ghép (Titanium Slate)
+  if (lower.includes('chưa ghép') || lower.includes('chưa tìm thấy')) {
+    return {
+      dotColor: 'bg-slate-400',
+      dotGlow: 'shadow-[0_0_6px_rgba(148,163,184,0.6)]',
+      textColor: 'text-slate-700',
+      accentBorder: 'border-slate-200/90 hover:border-slate-300',
+      bgImg: statusBgSlate,
+    };
+  }
+
+  // Mặc định
+  return {
+    dotColor: 'bg-slate-400',
+    dotGlow: 'shadow-[0_0_6px_rgba(148,163,184,0.6)]',
+    textColor: 'text-slate-700',
+    accentBorder: 'border-slate-200/90 hover:border-slate-300',
+    bgImg: statusBgSlate,
+  };
 };
 
-
-const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md', iconOnly = false }) => {
-  const { className, icon, pulse } = getStatusInfo(status);
+const StatusBadge: React.FC<StatusBadgeProps> = ({
+  status,
+  size = 'md',
+  iconOnly = false,
+  className = '',
+}) => {
+  const theme = getLuxuryTheme(status);
 
   if (iconOnly) {
     return (
-      <div className={`status-badge ${className} ${pulse ? 'pulse-icon' : ''} flex items-center justify-center rounded-lg w-8 h-8 p-0 shadow-sm border border-white/20`} title={status}>
-        <span className="material-symbols-outlined text-[20px] leading-none">{icon}</span>
+      <div
+        className={`relative w-6 h-6 rounded-full overflow-hidden flex items-center justify-center border border-slate-200/90 shadow-xs ${className}`}
+        title={status}
+      >
+        <img
+          src={theme.bgImg}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover rounded-full pointer-events-none"
+        />
+        <span className={`relative z-10 w-1.5 h-1.5 rounded-full ${theme.dotColor} ${theme.dotGlow} ${theme.pulse ? 'animate-pulse' : ''}`} />
       </div>
     );
   }
 
-  const sizeClass = size === 'sm' ? 'text-[10px] px-1.5 py-0.5' : '';
+  const sizeStyles = {
+    sm: 'h-[23px] px-2.5 text-[10px]',
+    md: 'h-[26px] px-3.5 text-[10.5px]',
+    lg: 'h-[29px] px-4 text-[11.5px]',
+  };
 
   return (
-    <div className={`status-badge ${className} ${pulse ? 'pulse-icon' : ''} ${sizeClass}`} title={status}>
-      <span className="badge-icon flex items-center">
-        <span className="material-symbols-outlined text-[14px] leading-none">{icon}</span>
-      </span>
-      <span className="badge-text truncate">{status}</span>
+    <div
+      className={`relative inline-flex items-center justify-center rounded-l-md rounded-r-xl overflow-hidden border shadow-[0_2px_8px_-1px_rgba(15,23,42,0.06),0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-200 hover:shadow-md hover:scale-[1.03] select-none ${sizeStyles[size]} ${theme.textColor} ${theme.accentBorder} ${className}`}
+      title={status}
+    >
+      {/* Animated Modern Aerodynamic Tag Background */}
+      <img
+        src={theme.bgImg}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      />
+
+      {/* Luxury Refined High-End Typography */}
+      <span className="relative z-10 truncate tracking-tight font-extrabold text-center">{status}</span>
     </div>
   );
 };

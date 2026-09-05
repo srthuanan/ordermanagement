@@ -4,6 +4,8 @@ import Button from '../ui/Button';
 import AnimatedBackground from '../ui/AnimatedBackground';
 import moment from 'moment';
 
+import { useCopyFeedback } from '../../hooks/useCopyFeedback';
+
 interface StockVehicleExtended {
     vin: string;
     dong_xe: string;
@@ -43,17 +45,22 @@ interface QueueItem {
 const FolderButton = React.memo(({ folder, isActive, onClick }: { folder: any, isActive: boolean, onClick: (id: string) => void }) => (
     <button
         onClick={() => onClick(folder.id)}
-        className={`w-full flex items-center justify-between px-3 py-3 rounded-xl text-xs font-bold transition-all ${isActive ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
+        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${isActive ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'}`}
     >
         <div className="flex items-center gap-3">
-            <i className={`fas ${folder.icon} w-5 text-center text-sm ${isActive ? 'text-accent-primary' : 'text-slate-400'}`}></i>
+            <i className={`fas ${folder.icon} w-5 text-center text-xs ${isActive ? 'text-white' : 'text-slate-400'}`}></i>
             <span>{folder.label}</span>
         </div>
-        {folder.count > 0 && <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${isActive ? 'bg-accent-primary text-white' : 'bg-slate-200 text-slate-500'}`}>{folder.count}</span>}
+        {folder.count > 0 && (
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                {folder.count}
+            </span>
+        )}
     </button>
 ));
 
 const ListItem = React.memo(({ item, activeSubTab, isSelected, onClick }: { item: any, activeSubTab: string, isSelected: boolean, onClick: (id: string) => void }) => {
+    const copyWithFeedback = useCopyFeedback();
     let title = '';
     let subtitle = '';
     let id = '';
@@ -66,40 +73,43 @@ const ListItem = React.memo(({ item, activeSubTab, isSelected, onClick }: { item
         subtitle = ext.nguoi_giu_xe;
         id = ext.vin;
         statusText = `Lần ${ext.extension_count}`;
-        statusColor = 'bg-blue-100 text-blue-600';
+        statusColor = 'bg-blue-50 text-blue-600 border border-blue-100 font-semibold';
     } else if (activeSubTab === 'reputation') {
         const rep = item as UserReputation;
         title = rep.name;
         subtitle = rep.email;
         id = rep.email;
         statusText = `${rep.score}%`;
-        statusColor = rep.score >= 85 ? 'bg-emerald-100 text-emerald-600' : rep.score >= 65 ? 'bg-amber-100 text-amber-600' : 'bg-rose-100 text-rose-600';
+        statusColor = rep.score >= 85 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 font-semibold' : rep.score >= 65 ? 'bg-amber-50 text-amber-600 border border-amber-100 font-semibold' : 'bg-rose-50 text-rose-600 border border-rose-100 font-semibold';
     } else if (activeSubTab === 'queue') {
         title = item.vin;
         subtitle = `${item.items.length} người chờ`;
         id = item.vin;
         statusText = 'HOT';
-        statusColor = 'bg-orange-100 text-orange-600';
+        statusColor = 'bg-orange-50 text-orange-600 border border-orange-100 font-semibold';
     }
 
     return (
         <div
-            onClick={() => onClick(id)}
-            className={`px-4 py-3 cursor-pointer transition-all duration-300 group relative border-l-2 ${isSelected
-                ? 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)] border-accent-primary z-10'
-                : 'bg-transparent border-transparent hover:bg-slate-50/80 hover:border-slate-200'
+            onClick={(e) => {
+                onClick(id);
+                copyWithFeedback(title, e);
+            }}
+            className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${isSelected
+                ? 'bg-slate-100/90 border-blue-600 font-semibold'
+                : 'border-transparent hover:bg-slate-50'
                 }`}
         >
             <div className="flex items-center justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                    <div className={`text-[13px] font-bold truncate mb-0.5 ${isSelected ? 'text-accent-primary' : 'text-slate-700'}`}>
+                    <div className="text-xs font-bold text-slate-900 truncate mb-1">
                         {title}
                     </div>
-                    <div className="text-[10px] text-slate-400 font-medium truncate">
+                    <div className="text-[11px] text-slate-500 font-normal truncate">
                         {subtitle}
                     </div>
                 </div>
-                <div className={`text-[9px] font-black px-1.5 py-0.5 rounded ${statusColor}`}>
+                <div className={`text-[10px] px-2 py-0.5 rounded-full ${statusColor}`}>
                     {statusText}
                 </div>
             </div>

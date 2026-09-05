@@ -1,0 +1,262 @@
+javascript:(function(){
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var frames = window.frames;
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].Xrm && frames[i].Xrm.WebApi) { _Xrm = frames[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert("⚠️ Vui lòng mở trang Đơn hàng bán xe (VSO) trên DMS trước khi bấm!");
+        return;
+    }
+
+    var vsoId = "";
+    try {
+        if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity) {
+            vsoId = _Xrm.Page.data.entity.getId();
+        }
+    } catch(e){}
+
+    if (!vsoId) {
+        var urlParams = new URLSearchParams(window.location.search || (window.parent && window.parent.location.search));
+        vsoId = urlParams.get('id') || '';
+    }
+
+    if (!vsoId) {
+        alert("⚠️ Vui lòng mở một bản ghi Đơn hàng bán xe (VSO) cụ thể!");
+        return;
+    }
+
+    vsoId = vsoId.replace(/[{}]/g, "").trim();
+
+    var progressDiv = document.createElement('div');
+    progressDiv.style = 'position:fixed;top:15px;right:15px;background:#0f172a;color:#38bdf8;padding:16px 22px;z-index:9999999;border-radius:12px;font-family:sans-serif;font-size:13px;font-weight:bold;box-shadow:0 12px 30px rgba(0,0,0,0.6);border:1px solid #38bdf840;backdrop-filter:blur(8px);';
+    progressDiv.innerHTML = '🔍 Đang giải mã công thức tính giá & bóc tách hóa đơn VAT...';
+    document.body.appendChild(progressDiv);
+
+    _Xrm.WebApi.retrieveRecord("xts_newvehiclesalesorder", vsoId).then(function(item) {
+        progressDiv.remove();
+        showInvoicePricingModal(item);
+    }, function(err) {
+        progressDiv.remove();
+        alert("❌ Lỗi khi lấy dữ liệu đơn hàng VSO: " + (err.message || err));
+    });
+
+    function formatVND(val) {
+        if (val === undefined || val === null || isNaN(val)) return "0 đ";
+        return Math.round(val).toLocaleString('vi-VN') + " đ";
+    }
+
+    function showInvoicePricingModal(vso) {
+        var old = document.getElementById('dmsInvoicePricingOverlay');
+        if (old) old.remove();
+
+        var vsoNumber = vso.xts_newvehiclesalesordernumber || "VSO-" + vso.xts_newvehiclesalesorderid.slice(0, 8);
+        var customer = vso["_xts_potentialcustomerid_value@OData.Community.Display.V1.FormattedValue"] || vso.xts_potentiallookupname || "Khách hàng";
+        var tvbh = vso["_xts_salespersonid_value@OData.Community.Display.V1.FormattedValue"] || vso["_ownerid_value@OData.Community.Display.V1.FormattedValue"] || "TVBH";
+        var product = vso.xts_productdescription || vso["_xts_productid_value@OData.Community.Display.V1.FormattedValue"] || "Ô tô VinFast";
+        var vin = vso["_xts_chassisid_value@OData.Community.Display.V1.FormattedValue"] || vso.xts_chassisnumber || "Chưa gán VIN";
+        var promoDetail = vso["_xvf_promotionid_value@OData.Community.Display.V1.FormattedValue"] || vso.itv_promotiondetail || "Không có";
+
+        // Raw Financial values
+        var totalPrice = parseFloat(vso.xts_totalprice) || parseFloat(vso.xts_vehicleprice) || 0;
+        var totalDiscount = parseFloat(vso.xts_totaldiscountamount) || 0;
+        var netAfterDiscount = parseFloat(vso.xts_netamountaftertax) || parseFloat(vso.xts_totalamount) || (totalPrice - totalDiscount);
+        var vatAmountStored = parseFloat(vso.xts_taxamount) || 0;
+        var grandTotal = parseFloat(vso.xvf_grandtotal) || netAfterDiscount;
+
+        // Formula Calculation
+        var taxRate = 0.10; // 10% VAT
+        var priceBeforeTax = netAfterDiscount / (1 + taxRate);
+        var calculatedVat = netAfterDiscount - priceBeforeTax;
+
+        if (vatAmountStored === 0) {
+            vatAmountStored = calculatedVat;
+        }
+
+        var overlay = document.createElement('div');
+        overlay.id = 'dmsInvoicePricingOverlay';
+        overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.88);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:system-ui,-apple-system,sans-serif;backdrop-filter:blur(8px);';
+
+        var modal = document.createElement('div');
+        modal.style = 'background:#0f172a;width:950px;max-width:95%;height:88vh;border-radius:18px;border:1px solid #334155;box-shadow:0 25px 60px rgba(0,0,0,0.85);display:flex;flex-direction:column;overflow:hidden;color:#e2e8f0;';
+
+        // Header
+        var header = document.createElement('div');
+        header.style = 'background:#1e293b;padding:18px 24px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;';
+        header.innerHTML = `
+            <div>
+                <h3 style="margin:0;color:#38bdf8;font-size:17px;display:flex;align-items:center;gap:8px;">🧾 GIẢI MÃ CÔNG THỨC TÍNH GIÁ XUẤT HÓA ĐƠN VSO</h3>
+                <p style="margin:4px 0 0 0;font-size:12px;color:#94a3b8;">Đơn hàng: <b style="color:#f8fafc;">${vsoNumber}</b> | Khách: <b style="color:#f8fafc;">${customer}</b> | TVBH: <b style="color:#f8fafc;">${tvbh}</b></p>
+            </div>
+            <button id="btnCloseInvoicePricing" style="background:transparent;border:none;color:#94a3b8;font-size:22px;cursor:pointer;padding:4px;">✕</button>
+        `;
+
+        // Body Content
+        var body = document.createElement('div');
+        body.style = 'flex-grow:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px;';
+
+        body.innerHTML = `
+            <!-- SƠ ĐỒ DÒNG TIỀN QUYẾT TOÁN HÓA ĐƠN -->
+            <div style="background:#1e293b;border-radius:14px;padding:20px;border:1px solid #334155;">
+                <h4 style="margin:0 0 16px 0;color:#10b981;font-size:14px;display:flex;align-items:center;gap:8px;">
+                    📌 1. SƠ ĐỒ DÒNG TIỀN QUYẾT TOÁN (TỪ GIÁ NIÊM YẾT ➔ TIỀN THU THỰC TẾ)
+                </h4>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;margin-bottom:16px;">
+                    <!-- Card 1 -->
+                    <div style="background:#0f172a;padding:14px;border-radius:10px;border:1px solid #334155;">
+                        <span style="color:#94a3b8;font-size:11px;font-weight:bold;text-transform:uppercase;">1. Giá Niêm Yết Xe (Total Price)</span>
+                        <div style="color:#38bdf8;font-size:18px;font-weight:bold;margin-top:4px;">${formatVND(totalPrice)}</div>
+                        <span style="color:#64748b;font-size:11px;">Đã bao gồm VAT 10%</span>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div style="background:#0f172a;padding:14px;border-radius:10px;border:1px solid #ef444440;">
+                        <span style="color:#f87171;font-size:11px;font-weight:bold;text-transform:uppercase;">2. Tổng Chiết Khấu & Khuyến Mại</span>
+                        <div style="color:#ef4444;font-size:18px;font-weight:bold;margin-top:4px;">- ${formatVND(totalDiscount)}</div>
+                        <span style="color:#64748b;font-size:11px;">Khuyến mại: ${promoDetail}</span>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div style="background:#064e3b30;padding:14px;border-radius:10px;border:1px solid #10b981;">
+                        <span style="color:#34d399;font-size:11px;font-weight:bold;text-transform:uppercase;">3. Số Tiền Thực Thu Sau Thuế</span>
+                        <div style="color:#10b981;font-size:18px;font-weight:bold;margin-top:4px;">${formatVND(netAfterDiscount)}</div>
+                        <span style="color:#34d399;font-size:11px;">(1) - (2) = Tổng tiền phải trả</span>
+                    </div>
+                </div>
+
+                <div style="background:#0f172a;padding:12px 16px;border-radius:8px;font-size:12px;color:#cbd5e1;line-height:1.6;border:1px solid #334155;">
+                    💡 <b>Công thức tính tiền thực thu:</b><br>
+                    <code>Số tiền thực sau thuế = Giá niêm yết (${formatVND(totalPrice)}) - Chiết khấu (${formatVND(totalDiscount)}) = <b>${formatVND(netAfterDiscount)}</b></code>
+                </div>
+            </div>
+
+            <!-- BÓC TÁCH THUẾ GTGT XUẤT HÓA ĐƠN ĐỎ (SAP VAT BREAKDOWN) -->
+            <div style="background:#1e293b;border-radius:14px;padding:20px;border:1px solid #38bdf850;">
+                <h4 style="margin:0 0 16px 0;color:#38bdf8;font-size:14px;display:flex;align-items:center;gap:8px;">
+                    🧾 2. BÓC TÁCH THUẾ GTGT 10% ĐỂ XUẤT HÓA ĐƠN ĐỎ (SAP INVOICE BREAKDOWN)
+                </h4>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                    <div style="background:#0f172a;padding:16px;border-radius:10px;border:1px solid #334155;">
+                        <div style="color:#94a3b8;font-size:12px;">Doanh thu bán xe (Giá CHƯA thuế GTGT):</div>
+                        <div style="color:#f8fafc;font-size:20px;font-weight:bold;margin:6px 0;">${formatVND(priceBeforeTax)}</div>
+                        <div style="color:#64748b;font-size:11.5px;line-height:1.5;">
+                            = <code>${formatVND(netAfterDiscount)} / 1.10</code>
+                        </div>
+                    </div>
+
+                    <div style="background:#0f172a;padding:16px;border-radius:10px;border:1px solid #334155;">
+                        <div style="color:#94a3b8;font-size:12px;">Tiền Thuế GTGT 10% (Số tiền thuế VAT 1):</div>
+                        <div style="color:#eab308;font-size:20px;font-weight:bold;margin:6px 0;">${formatVND(calculatedVat)}</div>
+                        <div style="color:#64748b;font-size:11.5px;line-height:1.5;">
+                            = <code>${formatVND(netAfterDiscount)} - ${formatVND(priceBeforeTax)}</code>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bảng mô phỏng Hóa đơn GTGT -->
+                <div style="background:#0f172a;border-radius:10px;overflow:hidden;border:1px solid #334155;">
+                    <div style="background:#1e293b80;padding:10px 16px;font-weight:bold;font-size:12px;color:#38bdf8;border-bottom:1px solid #334155;">
+                        📄 MÔ PHỎNG DÒNG HÀNG TRÊN HÓA ĐƠN ĐIỆN TỬ SAP:
+                    </div>
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;">
+                        <thead style="background:#0f172a;color:#94a3b8;">
+                            <tr>
+                                <th style="padding:8px 12px;border-bottom:1px solid #334155;">Tên hàng hóa / Dịch vụ</th>
+                                <th style="padding:8px 12px;border-bottom:1px solid #334155;">Đơn giá chưa thuế</th>
+                                <th style="padding:8px 12px;border-bottom:1px solid #334155;">Thuế suất</th>
+                                <th style="padding:8px 12px;border-bottom:1px solid #334155;">Tiền thuế GTGT</th>
+                                <th style="padding:8px 12px;border-bottom:1px solid #334155;text-align:right;">Tổng thanh toán</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding:10px 12px;color:#f8fafc;font-weight:bold;">${product} (VIN: ${vin})</td>
+                                <td style="padding:10px 12px;color:#cbd5e1;font-family:monospace;">${formatVND(priceBeforeTax)}</td>
+                                <td style="padding:10px 12px;color:#38bdf8;font-weight:bold;">10%</td>
+                                <td style="padding:10px 12px;color:#eab308;font-family:monospace;">${formatVND(calculatedVat)}</td>
+                                <td style="padding:10px 12px;color:#10b981;font-weight:bold;font-size:13px;text-align:right;">${formatVND(netAfterDiscount)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- BẢNG TRA CỨU TÊN TRƯỜNG DỮ LIỆU CRM -->
+            <div style="background:#1e293b;border-radius:14px;padding:20px;border:1px solid #334155;">
+                <h4 style="margin:0 0 12px 0;color:#a78bfa;font-size:13px;">
+                    📋 3. TÊN TRƯỜNG DỮ LIỆU GỐC TRÊN CSDL DYNAMICS 365:
+                </h4>
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <tr style="border-bottom:1px solid #334155;">
+                        <td style="padding:6px 8px;color:#94a3b8;">Giá niêm yết:</td>
+                        <td style="padding:6px 8px;font-family:monospace;color:#f43f5e;">xts_totalprice</td>
+                        <td style="padding:6px 8px;color:#cbd5e1;font-weight:bold;">${formatVND(totalPrice)}</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid #334155;">
+                        <td style="padding:6px 8px;color:#94a3b8;">Tổng chiết khấu:</td>
+                        <td style="padding:6px 8px;font-family:monospace;color:#f43f5e;">xts_totaldiscountamount</td>
+                        <td style="padding:6px 8px;color:#ef4444;font-weight:bold;">- ${formatVND(totalDiscount)}</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid #334155;">
+                        <td style="padding:6px 8px;color:#94a3b8;">Số tiền thực sau thuế:</td>
+                        <td style="padding:6px 8px;font-family:monospace;color:#f43f5e;">xts_netamountaftertax</td>
+                        <td style="padding:6px 8px;color:#10b981;font-weight:bold;">${formatVND(netAfterDiscount)}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:6px 8px;color:#94a3b8;">Số tiền thuế VAT 1:</td>
+                        <td style="padding:6px 8px;font-family:monospace;color:#f43f5e;">xts_taxamount / calculated</td>
+                        <td style="padding:6px 8px;color:#eab308;font-weight:bold;">${formatVND(calculatedVat)}</td>
+                    </tr>
+                </table>
+            </div>
+        `;
+
+        // Footer
+        var footer = document.createElement('div');
+        footer.style = 'padding:14px 24px;background:#1e293b;border-top:1px solid #334155;display:flex;justify-content:space-between;align-items:center;';
+        footer.innerHTML = `
+            <button id="btnCopyPricingText" style="background:#10b981;color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:bold;font-size:12.5px;cursor:pointer;">
+                📋 Copy Bảng Quyết Toán & Hóa Đơn
+            </button>
+            <button id="btnCloseInvoicePricingBottom" style="background:#334155;color:white;border:none;padding:8px 18px;border-radius:8px;font-weight:bold;font-size:12.5px;cursor:pointer;">
+                Đóng
+            </button>
+        `;
+
+        modal.appendChild(header);
+        modal.appendChild(body);
+        modal.appendChild(footer);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        document.getElementById('btnCloseInvoicePricing').onclick = function() { overlay.remove(); };
+        document.getElementById('btnCloseInvoicePricingBottom').onclick = function() { overlay.remove(); };
+
+        document.getElementById('btnCopyPricingText').onclick = function() {
+            var copyText = `BÁO CÁO TÍNH GIÁ XUẤT HÓA ĐƠN - ĐƠN HÀNG VSO: ${vsoNumber}\n` +
+                           `Khách hàng: ${customer} | TVBH: ${tvbh}\n` +
+                           `Sản phẩm: ${product} (VIN: ${vin})\n` +
+                           `-----------------------------------------\n` +
+                           `1. Giá niêm yết xe (Total Price): ${formatVND(totalPrice)}\n` +
+                           `2. Chiết khấu & Khuyến mại: - ${formatVND(totalDiscount)} (${promoDetail})\n` +
+                           `3. SỐ TIỀN THỰC THU SAU THUẾ: ${formatVND(netAfterDiscount)}\n` +
+                           `-----------------------------------------\n` +
+                           `BÓC TÁCH HÓA ĐƠN ĐỎ VAT 10%:\n` +
+                           `• Doanh thu chưa thuế (Net before tax): ${formatVND(priceBeforeTax)}\n` +
+                           `• Thuế VAT 10%: ${formatVND(calculatedVat)}\n` +
+                           `• TỔNG TIỀN GHI TRÊN HÓA ĐƠN: ${formatVND(netAfterDiscount)}\n`;
+
+            navigator.clipboard.writeText(copyText);
+            this.innerText = '✅ Đã copy vào Clipboard!';
+            var self = this;
+            setTimeout(function(){ self.innerText = '📋 Copy Bảng Quyết Toán & Hóa Đơn'; }, 2000);
+        };
+    }
+})();

@@ -3,8 +3,10 @@ import { supabaseAdmin } from '../../services/supabaseClient';
 import { policyAdminService, Policy, normalizePolicyName } from '../../services/api/policyAdminService';
 import AnimatedBackground from '../ui/AnimatedBackground';
 import Button from '../ui/Button';
+import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 
 export const PolicyManagementView: React.FC<{showToast: any}> = ({showToast}) => {
+    const copyWithFeedback = useCopyFeedback();
     const [policies, setPolicies] = useState<Policy[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedFolder, setSelectedFolder] = useState<string>('all');
@@ -256,35 +258,27 @@ export const PolicyManagementView: React.FC<{showToast: any}> = ({showToast}) =>
         return (
             <div
                 key={policy.ten_chinh_sach}
-                onClick={() => handleSelectPolicy(policy.ten_chinh_sach)}
-                className={`px-4 py-3 cursor-pointer transition-all duration-300 group relative border-l-2 ${isSelected
-                    ? 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)] border-accent-primary z-10'
-                    : 'bg-transparent border-transparent hover:bg-slate-50/80 hover:border-slate-200'
+                onClick={(e) => {
+                    handleSelectPolicy(policy.ten_chinh_sach);
+                    copyWithFeedback(policy.ten_chinh_sach, e);
+                }}
+                className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${isSelected
+                    ? 'bg-slate-100/90 border-blue-600 font-semibold'
+                    : 'border-transparent hover:bg-slate-50'
                     }`}
             >
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
                         <div
-                            className={`text-[13px] font-bold truncate mb-1 cursor-pointer transition-colors ${isSelected ? 'text-accent-primary' : 'text-slate-700 group-hover:text-accent-primary'}`}
+                            className="text-xs font-bold text-slate-900 truncate mb-1"
                             title={policy.ten_chinh_sach}
                         >
                             {policy.ten_chinh_sach}
                         </div>
-                        <div className="flex flex-col gap-0.5">
-                            {policy.dong_xe && (
-                                <div className="text-[10px] text-purple-500 font-bold uppercase tracking-wider flex items-center gap-1.5 leading-none mt-1">
-                                    <i className="fas fa-car opacity-70"></i>
-                                    <span className="truncate" title={policy.dong_xe}>{policy.dong_xe}</span>
-                                </div>
-                            )}
-                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5 leading-none mt-1">
-                                <i className="far fa-calendar-alt opacity-70"></i>
-                                <span className="truncate">{policy.han_su_dung || 'Không giới hạn'}</span>
-                            </div>
+                        <div className="text-[11px] text-slate-500 font-normal truncate">
+                            {policy.dong_xe ? `${policy.dong_xe} • ` : ''}{policy.han_su_dung || 'Không giới hạn'}
                         </div>
                     </div>
-                </div>
-                <div className="mt-2.5 flex items-center justify-between border-t border-slate-100/50 pt-2">
                     <span className={`px-2 py-0.5 inline-flex text-[9px] font-bold uppercase tracking-wider rounded border ${
                         policy.trang_thai === 'Hoạt động' 
                         ? 'bg-green-50 text-green-600 border-green-200' 
@@ -298,12 +292,12 @@ export const PolicyManagementView: React.FC<{showToast: any}> = ({showToast}) =>
     };
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-border-primary overflow-hidden animate-fade-in relative z-0">
+        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-slate-200 overflow-hidden animate-fade-in relative z-0">
             <AnimatedBackground />
             
             {/* Column 1: Folders */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
-                <div className="md:hidden p-3 bg-white border-b border-border-secondary flex items-center justify-center relative">
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+                <div className="md:hidden p-3 bg-white border-b border-slate-100 flex items-center justify-center relative">
                     <span className="font-bold text-sm">Chính Sách</span>
                 </div>
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
@@ -311,13 +305,17 @@ export const PolicyManagementView: React.FC<{showToast: any}> = ({showToast}) =>
                         <button
                             key={folder.id}
                             onClick={() => handleFolderChange(folder.id)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedFolder === folder.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${selectedFolder === folder.id ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'}`}
                         >
                             <div className="flex items-center gap-3">
-                                <i className={`fas ${folder.icon} w-5 text-center`}></i>
+                                <i className={`fas ${folder.icon} w-5 text-center text-xs ${selectedFolder === folder.id ? 'text-white' : 'text-slate-400'}`}></i>
                                 <span>{folder.label}</span>
                             </div>
-                            {folder.count > 0 && <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${selectedFolder === folder.id ? 'bg-accent-primary text-white' : 'bg-surface-hover text-text-secondary'}`}>{folder.count}</span>}
+                            {folder.count > 0 && (
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${selectedFolder === folder.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                    {folder.count}
+                                </span>
+                            )}
                         </button>
                     ))}
                 </nav>

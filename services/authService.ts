@@ -60,17 +60,24 @@ export const login = async (emailOrUsername: string, password: string, rememberM
         }
 
         if (authData.user) {
-            // 3. Lấy thông tin Profile để hiển thị trên giao diện
+            // 3. Lấy thông tin Profile để hiển thị trên giao diện (truy vấn theo email case-insensitive)
             const { data: profile } = await supabase
                 .from('users')
                 .select('username, full_name, role')
-                .eq('email', email)
+                .ilike('email', email)
                 .maybeSingle();
 
-            console.log("[Auth] ✅ Đăng nhập THÀNH CÔNG!");
+            const userMetaName = authData.user.user_metadata?.full_name || authData.user.user_metadata?.name;
+            const resolvedConsultantName = (profile?.full_name && profile.full_name.trim())
+                ? profile.full_name.trim()
+                : ((userMetaName && userMetaName.trim())
+                    ? userMetaName.trim()
+                    : (profile?.username || email.split('@')[0]));
+
+            console.log(`[Auth] ✅ Đăng nhập THÀNH CÔNG cho TVBH: ${resolvedConsultantName}`);
             return applyLoginState({
                 username: profile?.username || email.split('@')[0],
-                consultantName: profile?.full_name || 'Nhân viên',
+                consultantName: resolvedConsultantName,
                 role: profile?.role || 'Tư vấn bán hàng',
                 email: email,
                 token: authData.session?.access_token
@@ -131,21 +138,29 @@ export const logout = async () => {
 export const restoreSession = async (): Promise<boolean> => {
     try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return false;
+        if (!session?.user?.email) return false;
 
+        const email = session.user.email;
         const { data: profile } = await supabase
             .from('users')
             .select('username, full_name, role')
-            .eq('email', session.user.email)
+            .ilike('email', email)
             .maybeSingle();
+
+        const userMetaName = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
+        const resolvedConsultantName = (profile?.full_name && profile.full_name.trim())
+            ? profile.full_name.trim()
+            : ((userMetaName && userMetaName.trim())
+                ? userMetaName.trim()
+                : (profile?.username || email.split('@')[0]));
 
         const rememberMe = localStorage.getItem('rememberMe') === 'true';
 
         applyLoginState({
-            username: profile?.username || session.user.email?.split('@')[0],
-            consultantName: profile?.full_name || 'Nhân viên',
+            username: profile?.username || email.split('@')[0],
+            consultantName: resolvedConsultantName,
             role: profile?.role || 'Tư vấn bán hàng',
-            email: session.user.email,
+            email: email,
             token: session.access_token
         }, rememberMe);
         return true;
@@ -170,22 +185,34 @@ export const changePassword = async (username: string, oldPassword: string, newP
 
 export const forgotPassword = async (email: string): Promise<any> => {
     try {
-        console.log(`[Auth] Yêu cầu khôi phục mật khẩu (Native) cho: ${email}`);
+        const cleanEmail = email.trim().toLowerCase();
+        console.log(`[Auth] Gửi yêu cầu khôi phục mật khẩu qua Edge Function cho: ${cleanEmail}`);
         
-        // SỬ DỤNG NATIVE SUPABASE AUTH FLOW
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + window.location.pathname
+        const origin = window.location.origin + window.location.pathname;
+        const { data, error } = await supabase.functions.invoke('send-email', {
+            body: {
+                actionId: 'forgot_password_secure',
+                record: {
+                    email: cleanEmail,
+                    redirectTo: origin
+                }
+            }
         });
 
         if (error) {
-            console.error("[Auth] Reset Password Error:", error);
-            return { success: false, message: error.message || "Email không tồn tại hoặc lỗi hệ thống." };
+            console.warn("[Auth] Edge function error, fallback to native reset:", error);
+            const { error: nativeErr } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+                redirectTo: origin
+            });
+            if (nativeErr) throw nativeErr;
+        } else if (data && data.success === false) {
+            return { success: false, message: data.message || "Email không tồn tại trong hệ thống." };
         }
 
         return { success: true, message: 'Hướng dẫn đặt lại mật khẩu đã được gửi đến email của bạn.' };
     } catch (error: any) { 
         console.error("[Auth] Unexpected Forgot Password Error:", error);
-        return { success: false, message: "Lỗi hệ thống khi gửi yêu cầu." }; 
+        return { success: false, message: error.message || "Lỗi hệ thống khi gửi yêu cầu." }; 
     }
 };
 
@@ -303,13 +330,42 @@ export const resetPassword = async (newPassword: string): Promise<any> => {
     try {
         console.log("[Auth] Đang cập nhật mật khẩu mới qua recovery session...");
         
-        // Trong luồng recovery, Supabase đã thiết lập session cho user sau khi họ click link hoặc verify OTP thành công.
-        // Chúng ta chỉ cần update mật khẩu.
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
+        // 1. Cập nhật mật khẩu trong Supabase Auth
+        const { data: updateData, error } = await supabase.auth.updateUser({ password: newPassword });
         
         if (error) {
             console.error("[Auth] Update password error:", error);
             return { success: false, message: error.message || "Không thể đặt lại mật khẩu." };
+        }
+
+        // 2. CẬP NHẬT NGAY LẬP TỨC PHIÊN ĐĂNG NHẬP CHO USER VỪA KÍCH HOẠT
+        if (updateData.user?.email) {
+            const email = updateData.user.email;
+            const { data: profile } = await supabase
+                .from('users')
+                .select('username, full_name, role')
+                .ilike('email', email)
+                .maybeSingle();
+
+            const userMetaName = updateData.user.user_metadata?.full_name || updateData.user.user_metadata?.name;
+            const resolvedConsultantName = (profile?.full_name && profile.full_name.trim())
+                ? profile.full_name.trim()
+                : ((userMetaName && userMetaName.trim())
+                    ? userMetaName.trim()
+                    : (profile?.username || email.split('@')[0]));
+
+            const { data: sessionData } = await supabase.auth.getSession();
+
+            // Áp dụng trạng thái đăng nhập cho user mới
+            applyLoginState({
+                username: profile?.username || email.split('@')[0],
+                consultantName: resolvedConsultantName,
+                role: profile?.role || 'Tư vấn bán hàng',
+                email: email,
+                token: sessionData.session?.access_token
+            }, true);
+            
+            console.log(`[Auth] ✅ Đã đăng nhập chính thức cho: ${resolvedConsultantName} (${email})`);
         }
 
         return { success: true, message: 'Mật khẩu của bạn đã được cập nhật thành công.' };

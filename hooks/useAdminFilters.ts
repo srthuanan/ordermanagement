@@ -111,7 +111,7 @@ export const useAdminFilters = ({ initialState, clearInitialState }: UseAdminFil
             }
 
             if (initialState.inquiryId) {
-                setAdminView('inquiries');
+                setAdminView('super_management');
                 setTargetInquiryId(initialState.inquiryId);
             }
 

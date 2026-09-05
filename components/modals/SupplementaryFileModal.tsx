@@ -138,9 +138,17 @@ const SupplementaryFileModal: React.FC<SupplementaryFileModalProps> = ({ order, 
                                     <div className="w-1.5 h-10 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full shadow-sm"></div>
                                     <div className="flex flex-col">
                                         <h1 className="text-xl md:text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
-                                            BỔ SUNG <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-700">CHỨNG TỪ</span>
+                                            {(order["Kết quả"] || '').toLowerCase().includes('yêu cầu bổ sung') ? (
+                                                <>BỔ SUNG <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-700">CHỨNG TỪ</span></>
+                                            ) : (
+                                                <>SCAN LẠI / <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-700">CẬP NHẬT FILE</span></>
+                                            )}
                                         </h1>
-                                        <p className="text-[10px] md:text-xs text-text-secondary font-bold uppercase tracking-wider mt-0.5">Tải lên các tệp mới để cập nhật hoặc thay thế</p>
+                                        <p className="text-[10px] md:text-xs text-text-secondary font-bold uppercase tracking-wider mt-0.5">
+                                            {(order["Kết quả"] || '').toLowerCase().includes('yêu cầu bổ sung')
+                                                ? 'Tải lên các tệp mới để hoàn tất yêu cầu bổ sung'
+                                                : 'Tải lên bản scan mới (tự động lưu trữ Cloud, giữ nguyên trạng thái đơn hàng)'}
+                                        </p>
                                     </div>
                                 </div>
                                 <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center bg-white/50 hover:bg-white text-gray-400 hover:text-gray-900 transition-all hover:rotate-90 hover:scale-110 shadow-sm border border-gray-100">

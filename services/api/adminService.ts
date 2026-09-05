@@ -2,6 +2,48 @@ import { supabase, supabaseAdmin } from '../supabaseClient';
 import { getStorageItem, logAction, ApiResult, postApi, getExteriorColorName, getInteriorColorName, uploadToSupabase, getApi, ADMIN_USER } from './baseService';
 import { createNotification } from './notificationService';
 import { StockVehicle } from '../../types';
+import { versionsMap } from '../../constants';
+
+export const normalizeCarModelAndVersion = (rawModel: string, rawVersion: string = ''): { dong_xe: string; phien_ban: string } => {
+    if (!rawModel) return { dong_xe: '', phien_ban: rawVersion };
+
+    let m = rawModel.trim();
+    let v = rawVersion.trim();
+    const mUpper = m.toUpperCase().replace(/\s+/g, ' ');
+
+    if (mUpper === 'VF5' || mUpper === 'VF 5' || mUpper.startsWith('VF5 ') || mUpper.startsWith('VF 5 ')) {
+        m = 'VF 5';
+        if (!v) v = 'Plus';
+    } else if (mUpper === 'VF3' || mUpper === 'VF 3' || mUpper.startsWith('VF3 ') || mUpper.startsWith('VF 3 ')) {
+        m = 'VF 3';
+    } else if (mUpper === 'VF6' || mUpper === 'VF 6' || mUpper.startsWith('VF6 ') || mUpper.startsWith('VF 6 ')) {
+        m = 'VF 6';
+    } else if (mUpper === 'VF7' || mUpper === 'VF 7' || mUpper.startsWith('VF7 ') || mUpper.startsWith('VF 7 ')) {
+        m = 'VF 7';
+    } else if (mUpper === 'VF8' || mUpper === 'VF 8' || mUpper.startsWith('VF8 ') || mUpper.startsWith('VF 8 ')) {
+        m = 'VF 8';
+    } else if (mUpper === 'VF9' || mUpper === 'VF 9' || mUpper.startsWith('VF9 ') || mUpper.startsWith('VF 9 ')) {
+        m = 'VF 9';
+    } else if (mUpper.includes('LIMO')) {
+        m = 'LIMO';
+    } else if (mUpper.includes('HERIO')) {
+        m = 'HERIO';
+    } else if (mUpper.includes('NERIO')) {
+        m = 'NERIO';
+    } else if (mUpper.includes('MINIO')) {
+        m = 'MINIO';
+    } else if (mUpper.includes('VAN') || mUpper.includes('EC VAN')) {
+        m = 'EC Van';
+    }
+
+    const vMap = versionsMap as Record<string, string[]>;
+    const versions = vMap[m] || [];
+    if (versions.length === 1 && !v) {
+        v = versions[0];
+    }
+
+    return { dong_xe: m, phien_ban: v };
+};
 
 export const performAdminAction = async (action: string, params: Record<string, any>): Promise<ApiResult> => {
     const currentUser = getStorageItem("currentUser") || "Unknown Admin";
@@ -34,6 +76,15 @@ export const performAdminAction = async (action: string, params: Record<string, 
                         actionLabel: 'Xóa xe khỏi kho.'
                     });
                 }
+                // 4. Mâu thuẫn trạng thái (Car in stock is matched to an active order but stock status is NOT 'Đã ghép')
+                if (activeVins.has(car.vin) && car.trang_thai !== 'Đã ghép') {
+                    issues.push({
+                        type: 'unmatched_stock_status',
+                        vin: car.vin,
+                        description: `Xe ${car.vin} đã được ghép với đơn hàng hoạt động nhưng trạng thái trong Kho vẫn báo '${car.trang_thai}'.`,
+                        actionLabel: 'Cập nhật trạng thái trong Kho thành Đã ghép.'
+                    });
+                }
             });
 
             // 3. Mất tích xe (Active order has VIN but VIN not in stock AND not in invoice phase)
@@ -63,6 +114,9 @@ export const performAdminAction = async (action: string, params: Record<string, 
                     fixedCount++;
                 } else if (issue.type === 'zombie_car') {
                     await supabaseAdmin.from('khoxe').delete().eq('vin', issue.vin);
+                    fixedCount++;
+                } else if (issue.type === 'unmatched_stock_status') {
+                    await supabaseAdmin.from('khoxe').update({ trang_thai: 'Đã ghép', thoi_gian_het_han_giu: 'Vô thời hạn' }).eq('vin', issue.vin);
                     fixedCount++;
                 } else if (issue.type === 'missing_car') {
                     const { data: m } = await supabaseAdmin.from('thongtinxe').select('*').eq('vin', issue.vin).maybeSingle();
@@ -178,37 +232,213 @@ export const performAdminAction = async (action: string, params: Record<string, 
             if (res.complete > 0) createNotification({ message: `Đã cập nhật <b>${res.complete} xe mới</b> vào kho dữ liệu. Sẵn sàng giao dịch!`, type: 'stock_hero', targetView: 'stock' });
             return { status: 'SUCCESS', message: `Hoàn tất: Thêm ${res.success} (${res.complete} đủ thông tin). Bỏ qua ${res.skipped}. Thất bại ${res.failed}.` };
         }
-        if (action === 'deleteCarFromStockLogic') {
-            const vin = params.vinToDelete; const reason = params.reason;
-            const { data: carSnap } = await supabaseAdmin.from('khoxe').select('*').eq('vin', vin).maybeSingle();
-            const { data: matchedOrder } = await supabaseAdmin.from('donhang').select('so_don_hang').eq('vin', vin).maybeSingle();
-            if (matchedOrder) await supabaseAdmin.from('donhang').update({ ket_qua: 'Chưa ghép', vin: null, thoi_gian_ghep: null }).eq('so_don_hang', (matchedOrder as any).so_don_hang);
-            await logAction('DELETE_CAR', { vin, reason, snapshot: carSnap }, vin, 'stock');
-            await supabaseAdmin.from('khoxe').delete().eq('vin', vin);
-
-            // Xoá xe khỏi bộ nhớ đệm định vị GPS
-            const { data: settingData } = await supabaseAdmin.from('app_settings').select('value').eq('key', 'car_gps_cache').maybeSingle();
-            if (settingData && settingData.value && typeof settingData.value === 'object' && settingData.value !== null) {
-                const updatedCache = { ...settingData.value as object };
-                delete (updatedCache as any)[vin];
-                await supabaseAdmin.from('app_settings').update({ value: updatedCache, updated_at: new Date().toISOString() }).eq('key', 'car_gps_cache');
+        if (action === 'bulkAddCarsDetailed') {
+            const rawCarData = params.carData ? (typeof params.carData === 'string' ? JSON.parse(params.carData) : params.carData) : [];
+            if (!Array.isArray(rawCarData) || rawCarData.length === 0) {
+                return { status: 'ERROR', message: 'Không có dữ liệu xe để nhập.' };
             }
 
-            return { status: 'SUCCESS', message: `Đã xóa xe ${vin}.` + (matchedOrder ? ` (Đã tự động hủy ghép ĐH ${(matchedOrder as any).so_don_hang})` : '') };
+            const uniqueMap = new Map<string, any>();
+            rawCarData.forEach(item => {
+                const vin = String(item.vin || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+                if (vin && vin.length === 17) {
+                    uniqueMap.set(vin, item);
+                }
+            });
+
+            const uniqueCars = Array.from(uniqueMap.values());
+            if (uniqueCars.length === 0) {
+                return { status: 'ERROR', message: 'Không tìm thấy số VIN hợp lệ (17 ký tự).' };
+            }
+
+            const vins = uniqueCars.map(c => c.vin);
+
+            // 1. Query existing master thongtinxe
+            const { data: masters } = await supabaseAdmin.from('thongtinxe').select('*').in('vin', vins);
+            const masterMap = new Map<string, any>();
+            (masters || []).forEach((m: any) => masterMap.set(m.vin.trim().toUpperCase(), m));
+
+            // 2. Query existing khoxe
+            const { data: existingCars } = await supabaseAdmin.from('khoxe').select('*').in('vin', vins);
+            const khoxeMap = new Map<string, any>();
+            (existingCars || []).forEach((c: any) => khoxeMap.set(c.vin.trim().toUpperCase(), c));
+
+            const khoxeUpserts: any[] = [];
+            let newAddedCount = 0;
+            let updatedCount = 0;
+
+            for (const car of uniqueCars) {
+                const vin = car.vin;
+                const master = masterMap.get(vin);
+                const existingInStock = khoxeMap.get(vin);
+
+                const rawDongXe = car.dong_xe || master?.mo_ta || existingInStock?.dong_xe || '';
+                const rawPhienBan = car.phien_ban || master?.phien_ban || existingInStock?.phien_ban || '';
+                const { dong_xe: finalDongXe, phien_ban: finalPhienBan } = normalizeCarModelAndVersion(rawDongXe, rawPhienBan);
+
+                const finalNgoaiThat = getExteriorColorName(car.ngoai_that || master?.ngoai_that || existingInStock?.ngoai_that || '');
+                const finalNoiThat = getInteriorColorName(car.noi_that || master?.noi_that || existingInStock?.noi_that || '');
+                const finalMaDms = car.ma_dms || master?.khu_vuc || existingInStock?.ma_dms || '';
+                const finalSoMay = car.so_may || master?.so_may || existingInStock?.so_may || '';
+
+                if (existingInStock) {
+                    updatedCount++;
+                } else {
+                    newAddedCount++;
+                }
+
+                // Clean object for khoxe without extra DB metadata fields that cause 400 Bad Request
+                khoxeUpserts.push({
+                    vin,
+                    dong_xe: finalDongXe,
+                    phien_ban: finalPhienBan,
+                    ngoai_that: finalNgoaiThat,
+                    noi_that: finalNoiThat,
+                    so_may: finalSoMay,
+                    ma_dms: finalMaDms,
+                    trang_thai: existingInStock?.trang_thai || 'Chưa ghép',
+                    ngay_nhap: existingInStock?.ngay_nhap || new Date().toISOString()
+                });
+            }
+
+            // Perform Bulk Upsert into khoxe
+            if (khoxeUpserts.length > 0) {
+                const { error: khoxeErr } = await supabaseAdmin.from('khoxe').upsert(khoxeUpserts, { onConflict: 'vin' });
+                if (khoxeErr) {
+                    console.error('[bulkAddCarsDetailed] khoxe upsert error:', khoxeErr);
+                    throw new Error(`Lỗi cập nhật Kho xe: ${khoxeErr.message}`);
+                }
+            }
+
+            await logAction('ADD_CAR_BULK_DETAILED', { total: uniqueCars.length, newAddedCount, updatedCount }, 'bulk_import', 'stock');
+
+            createNotification({
+                message: `Đã cập nhật đủ <b>${uniqueCars.length} xe</b> vào Kho dữ liệu từ Excel (${newAddedCount} xe mới, ${updatedCount} xe cập nhật thông tin). Sẵn sàng giao dịch!`,
+                type: 'stock_hero',
+                targetView: 'stock'
+            });
+
+            return {
+                status: 'SUCCESS',
+                message: `Hoàn tất nhập kho 100%: Đã xử lý đủ ${uniqueCars.length} xe (${newAddedCount} xe mới, ${updatedCount} xe được cập nhật bổ sung thông tin).`
+            };
+        }
+        if (action === 'deleteCarFromStockLogic') {
+            const rawVin = params.vinToDelete || params.vin || params.VIN || '';
+            const vin = rawVin.trim().toUpperCase();
+            const reason = (params.reason || params.ly_do || '').trim();
+
+            if (!vin) {
+                return { status: 'ERROR', message: 'Vui lòng nhập hoặc chọn số VIN cần xóa.' };
+            }
+
+            const userEmail = getStorageItem("userEmail") || getStorageItem("currentConsultant") || "admin@system.com";
+            const userFullName = getStorageItem("currentUser") || "Admin";
+
+            // 1. Thử gọi qua PostgreSQL RPC (Security Definer) đảm bảo giao dịch nguyên tử và không bị nghẽn bởi RLS
+            try {
+                const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('rpc_delete_car', {
+                    p_vin: vin,
+                    p_reason: reason,
+                    p_actor_email: userEmail,
+                    p_actor_name: userFullName
+                });
+
+                if (!rpcError && rpcData) {
+                    if (rpcData.status === 'SUCCESS') {
+                        return { status: 'SUCCESS', message: rpcData.message || `Đã xóa xe ${vin} khỏi kho.` };
+                    } else if (rpcData.status === 'ERROR') {
+                        return { status: 'ERROR', message: rpcData.message || `Không thể xóa xe ${vin}.` };
+                    }
+                }
+            } catch (rpcEx: any) {
+                console.warn('[deleteCarFromStockLogic] RPC rpc_delete_car failed or not found, falling back to direct client execution:', rpcEx);
+            }
+
+            // 2. Fallback thực thi trực tiếp trên Client nếu RPC chưa áp dụng
+            const { data: carSnap } = await supabaseAdmin.from('khoxe').select('*').ilike('vin', vin).maybeSingle();
+            if (!carSnap) {
+                return { status: 'ERROR', message: `Không tìm thấy xe ${vin} trong Kho Xe.` };
+            }
+
+            // Hủy ghép các đơn hàng đang gắn với VIN này
+            const { data: matchedOrders } = await supabaseAdmin.from('donhang').select('so_don_hang').ilike('vin', vin);
+            if (matchedOrders && matchedOrders.length > 0) {
+                const orderNumbers = matchedOrders.map((o: any) => o.so_don_hang);
+                await supabaseAdmin.from('donhang').update({ ket_qua: 'Chưa ghép', vin: null, thoi_gian_ghep: null }).in('so_don_hang', orderNumbers);
+            }
+
+            // Dọn dẹp hàng đợi & hoạt động giữ xe liên quan
+            try { await supabaseAdmin.from('hold_queue').delete().ilike('vin', vin); } catch {}
+            try { await supabaseAdmin.from('car_hold_activities').delete().ilike('vin', vin); } catch {}
+            try { await supabaseAdmin.from('car_telemetry').delete().ilike('vin', vin); } catch {}
+
+            // Lưu log tương tác để phục vụ phục hồi (restore)
+            await logAction('DELETE_CAR', { vin, reason, snapshot: carSnap, unmatched_orders: matchedOrders?.map((o: any) => o.so_don_hang) }, vin, 'stock');
+
+            // Xóa xe khỏi khoxe
+            const { error: delError } = await supabaseAdmin.from('khoxe').delete().ilike('vin', vin);
+            if (delError) {
+                throw new Error(`Lỗi xóa kho xe: ${delError.message}`);
+            }
+
+            // Dọn dẹp GPS cache an toàn
+            try {
+                const { data: settingData } = await supabaseAdmin.from('app_settings').select('value').eq('key', 'car_gps_cache').maybeSingle();
+                if (settingData && settingData.value && typeof settingData.value === 'object') {
+                    const updatedCache = { ...settingData.value as object };
+                    delete (updatedCache as any)[vin];
+                    await supabaseAdmin.from('app_settings').update({ value: updatedCache, updated_at: new Date().toISOString() }).eq('key', 'car_gps_cache');
+                }
+            } catch (cacheErr) {
+                console.warn('[deleteCarFromStockLogic] Non-critical cache cleanup error:', cacheErr);
+            }
+
+            const unmatchText = matchedOrders && matchedOrders.length > 0
+                ? ` (Đã tự động hủy ghép ${matchedOrders.map((o: any) => o.so_don_hang).join(', ')})`
+                : '';
+
+            return { status: 'SUCCESS', message: `Đã xóa xe ${vin} thành công.${unmatchText}` };
         }
         if (action === 'restoreCarToStockLogic') {
-            const vin = params.vinToRestore;
+            const rawVin = params.vinToRestore || params.vin || params.VIN || '';
+            const vin = rawVin.trim().toUpperCase();
+
+            if (!vin) {
+                return { status: 'ERROR', message: 'Vui lòng nhập hoặc chọn số VIN cần phục hồi.' };
+            }
+
             const { data: logs } = await supabaseAdmin.from('interactions').select('metadata').eq('target_id', vin).eq('category', 'LOG').eq('type', 'DELETE_CAR').order('created_at', { ascending: false }).limit(1);
             let carData: any = null;
             if (logs && logs[0]?.metadata?.snapshot) {
-                carData = { ...logs[0].metadata.snapshot }; delete carData.id; carData.trang_thai = 'Chưa ghép'; carData.nguoi_giu_xe = null; carData.thoi_gian_het_han_giu = null; carData.ngay_nhap = new Date().toISOString();
+                carData = { ...logs[0].metadata.snapshot }; 
+                delete carData.id; 
+                carData.trang_thai = 'Chưa ghép'; 
+                carData.nguoi_giu_xe = null; 
+                carData.thoi_gian_het_han_giu = null; 
+                carData.ngay_nhap = new Date().toISOString();
             } else {
-                const { data: m } = await supabaseAdmin.from('thongtinxe').select('*').eq('vin', vin).maybeSingle();
-                carData = { vin, trang_thai: 'Chưa ghép', ngay_nhap: new Date().toISOString(), dong_xe: (m as any)?.mo_ta || '', phien_ban: (m as any)?.phien_ban || '', ngoai_that: getExteriorColorName((m as any)?.ngoai_that || ''), noi_that: getInteriorColorName((m as any)?.noi_that || ''), ma_dms: (m as any)?.khu_vuc || '', so_may: (m as any)?.so_may || '' };
+                const { data: m } = await supabaseAdmin.from('thongtinxe').select('*').ilike('vin', vin).maybeSingle();
+                carData = { 
+                    vin, 
+                    trang_thai: 'Chưa ghép', 
+                    ngay_nhap: new Date().toISOString(), 
+                    dong_xe: (m as any)?.mo_ta || '', 
+                    phien_ban: (m as any)?.phien_ban || '', 
+                    ngoai_that: getExteriorColorName((m as any)?.ngoai_that || ''), 
+                    noi_that: getInteriorColorName((m as any)?.noi_that || ''), 
+                    ma_dms: (m as any)?.khu_vuc || '', 
+                    so_may: (m as any)?.so_may || '' 
+                };
             }
-            await supabaseAdmin.from('khoxe').insert([carData]);
+
+            const { error: insErr } = await supabaseAdmin.from('khoxe').upsert([carData], { onConflict: 'vin' });
+            if (insErr) {
+                throw new Error(`Lỗi phục hồi xe vào kho: ${insErr.message}`);
+            }
+
             await logAction('RESTORE_CAR', { vin }, vin, 'stock');
-            return { status: 'SUCCESS', message: `Đã phục hồi xe ${vin}.` };
+            return { status: 'SUCCESS', message: `Đã phục hồi xe ${vin} thành công.` };
         }
         if (action === 'approveSelectedInvoiceRequest') {
             const nos = params.orderNumbers ? JSON.parse(params.orderNumbers) : [];
@@ -330,10 +560,87 @@ export const performAdminAction = async (action: string, params: Record<string, 
             if (successCount === 0) throw new Error("Không tìm thấy đơn hàng hợp lệ để yêu cầu bổ sung.");
             return { status: 'SUCCESS', message: `Đã gửi yêu cầu bổ sung thành công cho ${successCount} đơn hàng.` };
         }
+        if (action === 'requestRescanForInvoice') {
+            const nos = params.orderNumbers ? JSON.parse(params.orderNumbers) : [];
+
+            let finalReason = params.reason || '';
+            if (params.pastedImagesBase64) {
+                try {
+                    const base64Images = JSON.parse(params.pastedImagesBase64);
+                    if (Array.isArray(base64Images) && base64Images.length > 0) {
+                        const uploadedUrls = [];
+                        for (let i = 0; i < base64Images.length; i++) {
+                            const dataUrl = base64Images[i];
+                            if (dataUrl) {
+                                const res = await fetch(dataUrl);
+                                const blob = await res.blob();
+                                const orderFolder = nos.length > 0 ? nos[0].replace(/[^a-zA-Z0-9]/g, '_') : 'bulk';
+                                const path = `${orderFolder}/RESCAN_IMG_${Date.now()}_${i}.png`;
+                                const url = await uploadToSupabase(blob, path);
+                                uploadedUrls.push(url);
+                            }
+                        }
+                        if (uploadedUrls.length > 0) {
+                            finalReason += '\n\nFile đính kèm: ' + uploadedUrls.join(', ');
+                        }
+                    }
+                } catch (err) {
+                    console.error("Failed to upload rescan images:", err);
+                }
+            }
+
+            let successCount = 0;
+            for (const orderNo of nos) {
+                const tr = orderNo.trim();
+                const { data: o } = await supabaseAdmin.from('donhang').select('ten_tu_van_ban_hang, vin').eq('so_don_hang', tr).maybeSingle();
+                if (!o) continue;
+
+                const rescanNote = `[YÊU CẦU SCAN LẠI]: ${finalReason}`;
+                await supabaseAdmin.from('yeucauxhd').update({ ghi_chu_admin: rescanNote }).eq('so_don_hang', tr);
+                // TUYỆT ĐỐI KHÔNG đổi trạng thái donhang.ket_qua
+                // TUYỆT ĐỐI KHÔNG phạt điểm uy tín car_hold_activities
+
+                await logAction('REQUEST_RESCAN', { reason: finalReason }, tr, 'invoice_bulk');
+
+                if (o.ten_tu_van_ban_hang) {
+                    await createNotification({
+                        message: `Admin yêu cầu scan lại hồ sơ cho ĐH ${tr}: ${finalReason}`,
+                        type: 'info',
+                        recipient: o.ten_tu_van_ban_hang,
+                        targetView: 'orders',
+                        targetId: tr
+                    });
+
+                    // Gửi email thông báo cho TVBH
+                    try {
+                        const payload = {
+                            actionId: 'invoice_supplement_requested',
+                            record: {
+                                tvbh: o.ten_tu_van_ban_hang,
+                                ten_khach_hang: 'Khách hàng',
+                                so_don_hang: tr,
+                                vin: o.vin || '',
+                                ma_dms: (o as any).ma_dms || '',
+                                ghi_chu_admin: `[YÊU CẦU SCAN LẠI] ${finalReason}`
+                            }
+                        };
+                        const { error: emailErr } = await supabaseAdmin.functions.invoke('send-email', { body: payload });
+                        if (emailErr) console.error(`[ERROR-MAIL] Gửi mail yêu cầu scan lại cho đơn ${tr} thất bại:`, emailErr);
+                        else console.log(`[SUCCESS-MAIL] Đã gửi mail yêu cầu scan lại cho đơn ${tr}`);
+                    } catch (err) {
+                        console.error('[CATCH-MAIL] Lỗi gửi mail yêu cầu scan lại:', err);
+                    }
+                }
+                successCount++;
+            }
+
+            if (successCount === 0) throw new Error("Không tìm thấy đơn hàng hợp lệ để yêu cầu scan lại.");
+            return { status: 'SUCCESS', message: `Đã gửi yêu cầu scan lại thành công cho ${successCount} đơn hàng.` };
+        }
         if (action === 'handleBulkUploadIssuedInvoices') {
             const files = params.filesData ? JSON.parse(params.filesData) : [];
             for (let f of files) {
-                const tr = f.orderNumber.trim(); const { data: o } = await supabaseAdmin.from('donhang').select('ten_tu_van_ban_hang, vin').eq('so_don_hang', tr).single();
+                const tr = f.orderNumber.trim(); const { data: o } = await supabaseAdmin.from('donhang').select('ten_tu_van_ban_hang, vin').eq('so_don_hang', tr).limit(1).maybeSingle();
                 const up: any = {}; if (f.invoiceUrl) up.url_hoa_don_da_xuat = f.invoiceUrl;
                 await supabaseAdmin.from('yeucauxhd').update(up).eq('so_don_hang', tr);
                 await supabaseAdmin.from('donhang').update({ ket_qua: 'Đã xuất hóa đơn' }).eq('so_don_hang', tr);
@@ -404,7 +711,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
         }
         if (action === 'manualMatchCar') {
             const tr = params.orderNumber; const vin = params.vin;
-            const { data: o } = await supabaseAdmin.from('donhang').select('ten_tu_van_ban_hang').eq('so_don_hang', tr).single();
+            const { data: o } = await supabaseAdmin.from('donhang').select('ten_tu_van_ban_hang').eq('so_don_hang', tr).limit(1).maybeSingle();
             await supabaseAdmin.from('khoxe').update({ trang_thai: 'Đã ghép', nguoi_giu_xe: currentUser, thoi_gian_het_han_giu: 'Vô thời hạn' }).eq('vin', vin);
             await supabaseAdmin.from('donhang').update({ vin, ket_qua: 'Đã ghép', thoi_gian_ghep: new Date().toISOString() }).eq('so_don_hang', tr);
             
@@ -423,7 +730,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
                 await createNotification({ message: `Admin đã ghép xe (VIN: ${vin}) cho ĐH ${tr}.`, type: 'success', recipient: tvbh, targetView: 'orders', targetId: tr });
                 // Gửi email thông báo ghép xe thành công cho TVBH
                 // Fetch bản ghi đầy đủ sau khi update để gửi email (consistent với apiService.pairVinToOrder)
-                const { data: fullOrder } = await supabaseAdmin.from('donhang').select('*').eq('so_don_hang', tr).single();
+                const { data: fullOrder } = await supabaseAdmin.from('donhang').select('*').eq('so_don_hang', tr).limit(1).maybeSingle();
 
                 if (fullOrder) {
                     supabaseAdmin.functions.invoke('send-email', {
@@ -606,7 +913,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
             return { status: 'SUCCESS', message: 'Đã tiến tới trạng thái tiếp theo thành công.' };
         }
         if (action === 'approveVcRequest') {
-            const tr = params.orderNumber; const { data: vc } = await supabaseAdmin.from('yeucauvc').select('nguoi_yc').eq('so_don_hang', tr).maybeSingle();
+            const tr = params.orderNumber; const { data: vc } = await supabaseAdmin.from('yeucauvc').select('nguoi_yc').eq('so_don_hang', tr).limit(1).maybeSingle();
             await supabaseAdmin.from('yeucauvc').update({ trang_thai_xu_ly: 'Đã phê duyệt' }).eq('so_don_hang', tr);
             await supabaseAdmin.from('donhang').update({ trang_thai_vc: 'Đã phê duyệt VC' }).eq('so_don_hang', tr);
             if (vc && (vc as any).nguoi_yc) await createNotification({ message: `Yêu cầu VinClub cho ĐH ${tr} đã được phê duyệt.`, type: 'success', recipient: (vc as any).nguoi_yc, targetView: 'orders', targetId: tr });
@@ -642,11 +949,11 @@ export const performAdminAction = async (action: string, params: Record<string, 
                 }
             }
 
-            const { data: vc } = await supabaseAdmin.from('yeucauvc').select('nguoi_yc').eq('so_don_hang', tr).maybeSingle();
+            const { data: vc } = await supabaseAdmin.from('yeucauvc').select('nguoi_yc').eq('so_don_hang', tr).limit(1).maybeSingle();
             await supabaseAdmin.from('yeucauvc').update({ trang_thai_xu_ly: 'Từ chối ycvc', ghi_chu: rs }).eq('so_don_hang', tr);
             await supabaseAdmin.from('donhang').update({ trang_thai_vc: 'Từ chối VC' }).eq('so_don_hang', tr);
             if (vc && (vc as any).nguoi_yc) {
-                const { data: ov } = await supabaseAdmin.from('donhang').select('vin').eq('so_don_hang', tr).maybeSingle();
+                const { data: ov } = await supabaseAdmin.from('donhang').select('vin').eq('so_don_hang', tr).limit(1).maybeSingle();
                 if (ov && (ov as any).vin) {
                     const { error: rejectErr } = await supabaseAdmin.from('car_hold_activities').insert({ vin: (ov as any).vin, username: (vc as any).nguoi_yc, tvbh_name: (vc as any).nguoi_yc, type: 'PENALTY', status: 'vc_rejected', reason: `Từ chối VC: ${rs.substring(0, 50)}`, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
                     if (rejectErr) console.warn("Skipped car_hold_activities penalty inside reject VC:", rejectErr.message);
@@ -657,7 +964,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
             return { status: 'SUCCESS', message: 'Đã từ chối VC thành công.' };
         }
         if (action === 'confirmVcUnc') {
-            const tr = params.orderNumber; const { data: vc } = await supabaseAdmin.from('yeucauvc').select('nguoi_yc').eq('so_don_hang', tr).maybeSingle();
+            const tr = params.orderNumber; const { data: vc } = await supabaseAdmin.from('yeucauvc').select('nguoi_yc').eq('so_don_hang', tr).limit(1).maybeSingle();
             await supabaseAdmin.from('yeucauvc').update({ trang_thai_xu_ly: 'Đã xác thực UNC' }).eq('so_don_hang', tr);
             await supabaseAdmin.from('donhang').update({ trang_thai_vc: 'Đã có VC' }).eq('so_don_hang', tr);
             if (vc && (vc as any).nguoi_yc) await createNotification({ message: `UNC VinClub ĐH ${tr} đã xác thực.`, type: 'success', recipient: (vc as any).nguoi_yc, targetView: 'orders', targetId: tr });
@@ -665,7 +972,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
             return { status: 'SUCCESS', message: 'Đã xác nhận UNC thành công.' };
         }
     } catch (e: any) {
-        if (['deleteOrderLogic', 'cancelRequest', 'findAndAddCarByVin', 'bulkAddCarsByVin', 'deleteCarFromStockLogic', 'restoreCarToStockLogic', 'approveSelectedInvoiceRequest', 'markAsPendingSignature', 'requestSupplementForInvoice', 'unmatchOrder', 'updateRowData', 'manualMatchCar', 'revertOrderStatus', 'approveVcRequest', 'rejectVcRequest'].includes(action)) return { status: 'ERROR', message: `Lỗi Supabase: ${e.message}` };
+        if (['deleteOrderLogic', 'cancelRequest', 'findAndAddCarByVin', 'bulkAddCarsByVin', 'deleteCarFromStockLogic', 'restoreCarToStockLogic', 'approveSelectedInvoiceRequest', 'markAsPendingSignature', 'requestSupplementForInvoice', 'requestRescanForInvoice', 'unmatchOrder', 'updateRowData', 'manualMatchCar', 'revertOrderStatus', 'approveVcRequest', 'rejectVcRequest'].includes(action)) return { status: 'ERROR', message: `Lỗi Supabase: ${e.message}` };
     }
     if (action === 'archiveInvoicedOrdersMonthly') {
         await logAction('ARCHIVE_DATA', {}, 'system', 'archive');
@@ -786,53 +1093,106 @@ export const performAdminAction = async (action: string, params: Record<string, 
             return { status: 'ERROR', message: `Lỗi: ${err.message}` };
         }
     }
-    if (action === 'addUser') {
-        // [PURE SUPABASE AUTH] Khởi tạo tài khoản và gửi Link mời qua Email
+    if (action === 'syncNewUser' || action === 'addUser') {
+        // Tạo tài khoản Auth và đồng bộ thông tin nhân viên vào bảng hồ sơ (public.users) và danh sách email TVBH (public.tvbh_emails)
         try {
-            const username = params.email.split('@')[0].toLowerCase();
-            const redirectTo = window.location.origin + window.location.pathname + '#/reset-password';
-            
-            console.log(`[AddUser] Đang mời nhân viên mới: ${params.email}...`);
+            const rawEmail = (params.email || '').trim().toLowerCase();
+            if (!rawEmail) return { status: 'ERROR', message: 'Email không được để trống.' };
 
-            // 1. Mời user qua Supabase Auth (Gửi email hệ thống)
-            const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(params.email, {
-                redirectTo: redirectTo,
-                data: {
-                    full_name: params.fullName,
-                    role: params.role || 'Tư vấn bán hàng'
-                }
+            const upperFullName = (params.fullName || '').trim().toUpperCase().normalize('NFC');
+            if (!upperFullName) return { status: 'ERROR', message: 'Họ và tên không được để trống.' };
+
+            let username = (params.username || rawEmail.split('@')[0]).trim().toLowerCase();
+            const role = params.role || 'Tư vấn bán hàng';
+            const tempPassword = params.password || 'VinFast@2026';
+
+            // Xử lý manager_id nếu được truyền theo format "Tên (username)" hoặc "username"
+            let managerId: string | null = null;
+            if (params.manager && params.manager !== '(Không có / Trực thuộc Admin)') {
+                const match = params.manager.match(/\(([^)]+)\)$/);
+                managerId = match ? match[1].trim().toLowerCase() : params.manager.trim().toLowerCase();
+            } else if (params.manager_id) {
+                managerId = params.manager_id.trim().toLowerCase();
+            }
+
+            console.log(`[${action}] 🚀 Đang tạo/đồng bộ nhân viên qua RPC: ${upperFullName} (${rawEmail}) - Role: ${role} - Manager: ${managerId}...`);
+
+            const { data: rpcRes, error: rpcErr } = await supabase.rpc('admin_create_or_update_user', {
+                p_email: rawEmail,
+                p_fullname: upperFullName,
+                p_username: username,
+                p_role: role,
+                p_manager_id: managerId,
+                p_password: tempPassword
             });
 
-            if (authErr) {
-                // Nếu user đã tồn tại trong Auth, chúng ta vẫn cập nhật profile bên dưới
-                console.warn("[AddUser] Auth user might already exist:", authErr.message);
+            if (rpcErr) {
+                console.error(`[${action}] Lỗi gọi RPC admin_create_or_update_user:`, rpcErr);
+                throw rpcErr;
             }
 
-            // 2. Cập nhật hoặc chèn mới vào bảng Hồ sơ (public.users)
-            const { error: insErr } = await supabaseAdmin.from('users').upsert({
-                username: username,
-                email: params.email,
-                full_name: params.fullName,
-                role: params.role || 'Tư vấn bán hàng',
-                uid: authData?.user?.id || params.uid || null
-            }, { onConflict: 'email' });
-
-            if (insErr) throw insErr;
-
-            // 3. Đồng bộ sang danh sách email TVBH (tvbh_emails)
-            const { data: existEmail } = await supabaseAdmin.from('tvbh_emails').select('id').eq('email', params.email).maybeSingle();
-            if (!existEmail) {
-                await supabaseAdmin.from('tvbh_emails').insert({ 
-                    ten_tvbh: params.fullName, 
-                    email: params.email 
-                });
+            if (rpcRes && rpcRes.success === false) {
+                return { status: 'ERROR', message: rpcRes.message || 'Không thể tạo nhân viên.' };
             }
 
-            await logAction('ADD_USER_INVITE', { fullName: params.fullName, email: params.email, username }, params.email, 'user');
-            return { status: 'SUCCESS', message: `Đã gửi Link mời kích hoạt tài khoản đến email ${params.email}.` };
+            await logAction('ADD_USER', { fullName: upperFullName, email: rawEmail, username, role, managerId, uid: rpcRes?.uid }, rawEmail, 'user');
+            return { 
+                status: 'SUCCESS', 
+                message: `Đã ${rpcRes?.is_new ? 'tạo mới' : 'cập nhật'} nhân viên ${upperFullName} thành công! Mật khẩu khởi tạo: ${tempPassword}`,
+                data: { username, fullName: upperFullName, email: rawEmail, role, managerId, uid: rpcRes?.uid }
+            };
         } catch (err: any) {
-            console.error('Lỗi khi mời nhân viên:', err);
-            return { status: 'ERROR', message: `Lỗi: ${err.message}` };
+            console.error(`Lỗi khi ${action}:`, err);
+            return { status: 'ERROR', message: `Lỗi tạo nhân viên: ${err.message}` };
+        }
+    }
+    if (action === 'deleteUser') {
+        try {
+            // Target user identifier: can be email, username, or formatted string
+            let target = (params.email || params.username || params.user || '').trim();
+            
+            // Trích xuất email nếu chuỗi chứa địa chỉ email
+            const emailMatch = target.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+            const extractedEmail = emailMatch ? emailMatch[1].toLowerCase() : null;
+
+            // Trích xuất username trong ngoặc nếu có dạng (username)
+            const unameMatch = target.match(/\(([^)\s@]+)(?:\s*-[^)]*)?\)$/);
+            const extractedUsername = unameMatch ? unameMatch[1].toLowerCase() : null;
+
+            const identifier = extractedEmail || extractedUsername || target;
+
+            if (!identifier) return { status: 'ERROR', message: 'Vui lòng nhập hoặc chọn Email / Username nhân viên cần xóa.' };
+
+            if (identifier.toLowerCase() === 'admin' || identifier.toLowerCase() === 'showroomthuanan@gmail.com') {
+                return { status: 'ERROR', message: 'Không thể xóa tài khoản Admin quản trị cao nhất.' };
+            }
+
+            console.log(`[deleteUser] 🗑️ Đang xóa nhân viên: ${identifier}...`);
+
+            // Gọi RPC admin_delete_user chạy với quyền SECURITY DEFINER
+            const { data: rpcData, error: rpcErr } = await supabase.rpc('admin_delete_user', { 
+                target_identifier: identifier 
+            });
+
+            if (rpcErr) {
+                console.error(`[deleteUser] Lỗi gọi RPC admin_delete_user:`, rpcErr);
+                throw rpcErr;
+            }
+
+            if (rpcData && rpcData.success === false) {
+                return { status: 'ERROR', message: rpcData.message || 'Không thể xóa nhân viên.' };
+            }
+
+            const displayName = rpcData?.full_name || rpcData?.username || identifier;
+            await logAction('DELETE_USER', { identifier, details: rpcData }, identifier, 'user');
+
+            return {
+                status: 'SUCCESS',
+                message: `Đã xóa nhân viên ${displayName} (${identifier}) khỏi hệ thống thành công.`
+            };
+        } catch (err: any) {
+            console.error('Lỗi khi xóa nhân viên:', err);
+            return { status: 'ERROR', message: `Lỗi xóa nhân viên: ${err.message}` };
         }
     }
     if (action === 'resendEmail') {
@@ -976,7 +1336,7 @@ export const uploadBulkInvoices = async (files: any[]): Promise<ApiResult> => {
     let failCount = 0;
     const errors: string[] = [];
 
-    for (let f of files) {
+    const processSingleFile = async (f: any) => {
         try {
             const rawOrderNo = f.orderNumber;
             const trimmedOrderNo = rawOrderNo.trim();
@@ -1001,7 +1361,7 @@ export const uploadBulkInvoices = async (files: any[]): Promise<ApiResult> => {
             if (!o) {
                 errors.push(`Đơn hàng "${trimmedOrderNo}" không tồn tại.`);
                 failCount++;
-                continue;
+                return;
             }
             
             const exactOrderNo = o.so_don_hang;
@@ -1035,51 +1395,35 @@ export const uploadBulkInvoices = async (files: any[]): Promise<ApiResult> => {
                 
                 await logAction('UPLOAD_INVOICE', { orderNumber: exactOrderNo }, exactOrderNo, 'order'); 
                 
-                // Gửi email thông báo: CẦN AWAIT để tránh tình trạng Edge Function bị đóng sớm hoặc Gmail quá tải
-                console.log(`[DEBUG-BULK] Đang xử lý gửi mail cho: "${exactOrderNo}"`);
-                
-                const invoice_ext = f.fileObject?.name ? f.fileObject.name.split('.').pop() : (url ? url.split('?')[0].split('.').pop() : 'pdf');
-                try {
-                    console.log(`[DEBUG-BULK] Tiến hành gọi EF cho ${exactOrderNo}...`);
-                    const { error: mailErr } = await supabaseAdmin.functions.invoke('send-email', {
-                        body: {
-                            actionId: 'invoice_issued',
-                            record: { ...o, link_hoa_don_da_xuat: url, invoice_ext }
-                        }
-                    });
+                // Gửi email thông báo bất đồng bộ ngầm (Fire & Forget) để UI người dùng phản hồi tức thì
+                const sendEmailInBackground = async () => {
+                    const invoice_ext = f.fileObject?.name ? f.fileObject.name.split('.').pop() : (url ? url.split('?')[0].split('.').pop() : 'pdf');
+                    try {
+                        console.log(`[DEBUG-BULK] Gửi mail ngầm cho ${exactOrderNo}...`);
+                        const { error: mailErr } = await supabaseAdmin.functions.invoke('send-email', {
+                            body: {
+                                actionId: 'invoice_issued',
+                                record: { ...o, link_hoa_don_da_xuat: url, invoice_ext }
+                            }
+                        });
                         
                         if (mailErr) {
-                            console.warn(`[MAIL-DELAYED] Lỗi gửi mail cho đơn ${exactOrderNo}:`, mailErr);
+                            console.warn(`[MAIL-DELAYED] Lỗi gửi mail ngầm cho đơn ${exactOrderNo}:`, mailErr);
                             await supabaseAdmin.from('yeucauxhd').update({ ket_qua_gui_mail: `Lỗi: ${mailErr.message || 'Unknown'}` }).eq('so_don_hang', exactOrderNo);
                         } else {
-                            console.log(`[DEBUG-BULK] EF trả về thành công cho ${exactOrderNo}`);
-                            const { error: updErr } = await supabaseAdmin.from('yeucauxhd').update({ ket_qua_gui_mail: 'Đã gửi mail' }).eq('so_don_hang', exactOrderNo);
-                            if (updErr) console.error(`[DEBUG-BULK] Lỗi cập nhật trạng thái "Đã gửi mail" cho ${exactOrderNo}:`, updErr);
+                            console.log(`[DEBUG-BULK] Mail gửi thành công ngầm cho ${exactOrderNo}`);
+                            await supabaseAdmin.from('yeucauxhd').update({ ket_qua_gui_mail: 'Đã gửi mail' }).eq('so_don_hang', exactOrderNo);
                         }
-                        
-                        // Nghỉ 2 giây giữa mỗi lần gửi email để tránh rate limit của Gmail/SMTP
-                        await new Promise(resolve => setTimeout(resolve, 2000));
-
                     } catch (mailEx: any) {
-                        console.error(`[MAIL-CRITICAL] Lỗi gọi Edge Function cho đơn ${exactOrderNo}:`, mailEx);
-                        // Thử lại một lần duy nhất nếu lỗi kết nối
-                        try {
-                            console.log(`[RETRY] Thử lại gửi mail cho ${exactOrderNo}...`);
-                            await new Promise(res => setTimeout(res, 3000));
-                            const { error: retryErr } = await supabaseAdmin.functions.invoke('send-email', {
-                                body: { actionId: 'invoice_issued', record: { ...o, link_hoa_don_da_xuat: url, invoice_ext } }
-                            });
-                            if (retryErr) throw retryErr;
-                            
-                            console.log(`[RETRY-SUCCESS] Gửi lại mail cho ${exactOrderNo} thành công.`);
-                            await supabaseAdmin.from('yeucauxhd').update({ ket_qua_gui_mail: 'Đã gửi mail (Retry)' }).eq('so_don_hang', exactOrderNo);
-                        } catch (secondErr) {
-                            errors.push(`Đơn ${exactOrderNo}: Gửi email thất bại sau khi thử lại.`);
-                            await supabaseAdmin.from('yeucauxhd').update({ ket_qua_gui_mail: `Lỗi gọi EF: ${mailEx.message}` }).eq('so_don_hang', exactOrderNo);
-                        }
+                        console.error(`[MAIL-CRITICAL] Lỗi gọi EF ngầm cho đơn ${exactOrderNo}:`, mailEx);
+                        await supabaseAdmin.from('yeucauxhd').update({ ket_qua_gui_mail: `Lỗi gọi EF: ${mailEx.message}` }).eq('so_don_hang', exactOrderNo);
                     }
+                };
 
-                // Luôn thực hiện các bước hậu kỳ cho dù mail có lỗi hay không (để tránh mất dữ liệu)
+                // Kích hoạt gửi mail ngầm không chặn luồng chính
+                sendEmailInBackground();
+
+                // Thực hiện hậu kỳ cho đơn hàng
                 await postApi({ action: 'archiveOrderNow', orderNumber: exactOrderNo }).catch(() => {});
                 successCount++;
             } else {
@@ -1091,6 +1435,13 @@ export const uploadBulkInvoices = async (files: any[]): Promise<ApiResult> => {
             failCount++;
             errors.push(`${f.orderNumber}: ${e.message}`);
         }
+    };
+
+    // Xử lý song song theo từng batch 3 file cùng lúc để tối ưu tốc độ tối đa
+    const CONCURRENCY_LIMIT = 3;
+    for (let i = 0; i < files.length; i += CONCURRENCY_LIMIT) {
+        const batch = files.slice(i, i + CONCURRENCY_LIMIT);
+        await Promise.all(batch.map(f => processSingleFile(f)));
     }
 
     if (successCount === 0 && files.length > 0) {
@@ -1127,3 +1478,44 @@ export const updateAppSetting = async (key: string, value: any): Promise<ApiResu
         return { status: 'ERROR', message: err.message };
     }
 };
+
+export const addBacklogOrder = async (soDonHang: string, ghiChu: string, tvbhName: string): Promise<ApiResult> => {
+    try {
+        const { data: existing } = await supabase.from('donhang_ton').select('id').eq('so_don_hang', soDonHang).maybeSingle();
+        if (existing) {
+            return { status: 'ERROR', message: `Đơn hàng ${soDonHang} đã tồn tại trong danh sách đơn tồn!` };
+        }
+        const { error } = await supabase.from('donhang_ton').insert({
+            so_don_hang: soDonHang,
+            ghi_chu: ghiChu,
+            tvbh_name: tvbhName,
+            status: 'pending',
+            created_at: new Date().toISOString()
+        });
+        if (error) throw error;
+        return { status: 'SUCCESS', message: `Đã báo cáo đơn hàng tồn ${soDonHang} thành công!` };
+    } catch (err: any) {
+        return { status: 'ERROR', message: err.message || 'Lỗi khi báo cáo đơn hàng tồn' };
+    }
+};
+
+export const getBacklogOrders = async (): Promise<ApiResult> => {
+    try {
+        const { data, error } = await supabase.from('donhang_ton').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        return { status: 'SUCCESS', message: 'Tải danh sách đơn hàng tồn thành công', data: data || [] };
+    } catch (err: any) {
+        return { status: 'ERROR', message: err.message || 'Lỗi khi tải đơn hàng tồn' };
+    }
+};
+
+export const updateBacklogStatus = async (id: string, status: string, ghi_chu_admin?: string): Promise<ApiResult> => {
+    try {
+        const { error } = await supabase.from('donhang_ton').update({ status, ghi_chu_admin, updated_at: new Date().toISOString() }).eq('id', id);
+        if (error) throw error;
+        return { status: 'SUCCESS', message: 'Cập nhật trạng thái thành công' };
+    } catch (err: any) {
+        return { status: 'ERROR', message: err.message || 'Lỗi khi cập nhật trạng thái đơn hàng tồn' };
+    }
+};
+

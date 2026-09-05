@@ -1,0 +1,70 @@
+javascript:(function(){
+    var guid = "ac44e49d-b48f-f111-8077-70a8a501a8bd";
+    var custCode = "N319-CT-000051027";
+
+    var x = typeof Xrm !== "undefined" ? Xrm : (window.top && window.top.Xrm ? window.top.Xrm : null);
+    if (!x || !x.WebApi) {
+        alert("❌ Vui lòng mở trang VinFast DMS.");
+        return;
+    }
+
+    var progressDiv = document.createElement('div');
+    progressDiv.style = 'position:fixed;top:15px;right:15px;background:#0f172a;color:#ffffff;padding:18px 24px;z-index:9999999;border-radius:12px;font-family:system-ui,-apple-system,sans-serif;font-size:14px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);border:1px solid #3b82f6;font-weight:600;';
+    progressDiv.innerHTML = '🔍 Đang soi GUID Profile mồ côi: <strong style="color:#ef4444;">' + guid + '</strong>...';
+    document.body.appendChild(progressDiv);
+
+    x.WebApi.retrieveRecord("itv_customerexternalprofile", guid, "?$select=*").then(function(p) {
+        progressDiv.remove();
+        showGuidDiagnosticResult(custCode, guid, p);
+    }, function(err) {
+        progressDiv.remove();
+        alert("❌ Bản ghi Profile GUID (" + guid + ") KHÔNG TỒN TẠI hoặc đã bị XÓA TRÊN CRM: " + (err.message || err));
+    });
+
+    function showGuidDiagnosticResult(code, guid, p) {
+        var old = document.getElementById("dms-orphan-inspect-modal");
+        if (old) old.remove();
+
+        var overlay = document.createElement("div");
+        overlay.id = "dms-orphan-inspect-modal";
+        overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.85);backdrop-filter:blur(12px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;";
+
+        var modal = document.createElement("div");
+        modal.style = "width:90%;max-width:960px;max-height:88vh;background:#1e293b;border-radius:20px;border:1px solid #334155;box-shadow:0 25px 50px -12px rgba(0,0,0,0.6);display:flex;flex-direction:column;overflow:hidden;color:#f8fafc;";
+
+        var header = document.createElement("div");
+        header.style = "padding:20px 28px;background:#0f172a;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;";
+        header.innerHTML = '<div><h2 style="margin:0;font-size:18px;font-weight:700;color:#f87171;">SOI CHI TIẾT BẢN GHI PROFILE MO CÔI (' + guid + ')</h2>' +
+                           '<p style="margin:4px 0 0 0;font-size:12px;color:#94a3b8;">Mã KH: <strong>' + code + '</strong></p></div>' +
+                           '<button onclick="document.getElementById(\'dms-orphan-inspect-modal\').remove()" style="background:transparent;border:none;color:#94a3b8;font-size:24px;cursor:pointer;">✕</button>';
+
+        var contentDiv = document.createElement("div");
+        contentDiv.style = "flex:1;overflow-y:auto;padding:24px;";
+
+        var rowsHtml = '';
+        var nonNullCount = 0;
+        for (var key in p) {
+            if (p.hasOwnProperty(key) && !key.startsWith("@odata.context") && !key.startsWith("@odata.etag")) {
+                var val = p[key];
+                if (val !== null && val !== undefined && val !== "") {
+                    nonNullCount++;
+                    rowsHtml += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">' +
+                                '<td style="padding:10px 16px;color:#38bdf8;font-weight:700;width:45%;">' + key + '</td>' +
+                                '<td style="padding:10px 16px;color:#ffffff;font-family:monospace;word-break:break-all;">' + val + '</td>' +
+                                '</tr>';
+                }
+            }
+        }
+
+        var tableHtml = '<div style="background:#0f172a;border:1px solid #334155;border-radius:12px;overflow:hidden;">' +
+                        '<div style="padding:12px 18px;background:#ef4444;color:#ffffff;font-weight:700;font-size:13px;">KẾT QUẢ SOI THỰC TẾ: ' + nonNullCount + ' TRƯỜNG DỮ LIỆU</div>' +
+                        '<table style="width:100%;border-collapse:collapse;font-size:13px;"><tbody>' + rowsHtml + '</tbody>***' +
+                        '</div>';
+
+        contentDiv.innerHTML = tableHtml;
+        modal.appendChild(header);
+        modal.appendChild(contentDiv);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+    }
+})();

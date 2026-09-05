@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "VinFast DMS Radar & Auto Sync",
+  "version": "1.1.0",
+  "description": "Tự động đồng bộ Radar GPS, Đơn hàng & Kho xe VinFast DMS về Supabase",
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.dynamics.com/*",
+        "https://*.crm.dynamics.com/*",
+        "https://*.crm4.dynamics.com/*",
+        "https://*.crm5.dynamics.com/*",
+        "https://*.vinfast.vn/*",
+        "https://*.powerapps.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    }
+  ]
+}

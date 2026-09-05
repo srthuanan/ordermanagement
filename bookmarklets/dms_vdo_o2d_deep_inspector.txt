@@ -1,0 +1,138 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - SOI CHI TIẾT LỖI O2D & ĐỒNG BỘ SAP TRÊN PHIẾU GIAO XE (VDO)
+     * ========================================================================= */
+
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm) {
+        for (var i = 0; i < frames.length; i++) {
+            try { if (frames[i].Xrm) { _Xrm = frames[i].Xrm; break; } } catch(e){}
+        }
+    }
+    if (!_Xrm) { alert("⚠️ Vui lòng mở trang VinFast DMS!"); return; }
+
+    var entityName = "xts_newvehicledeliveryorder";
+    var recordId = (new URLSearchParams(window.location.search).get("id") || "").replace(/[{}]/g, "");
+
+    // Xóa overlay cũ
+    var old = document.getElementById("dmsO2DOverlay");
+    if (old) old.remove();
+
+    var overlay = document.createElement("div");
+    overlay.id = "dmsO2DOverlay";
+    overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#f8fafc;";
+
+    var modal = document.createElement("div");
+    modal.style = "background:#0f172a;width:780px;max-width:95%;border-radius:18px;border:1px solid rgba(56,189,248,0.35);box-shadow:0 25px 60px rgba(0,0,0,0.85);display:flex;flex-direction:column;overflow:hidden;";
+
+    modal.innerHTML = `
+        <div style="background:linear-gradient(135deg,#dc2626,#991b1b);padding:16px 22px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:26px;">⚡</span>
+                <div>
+                    <h3 style="margin:0;font-size:16px;font-weight:800;color:#fff;">BÁO CÁO PHẢN HỒI LỖI O2D & SAP TỪ NHÀ MÁY</h3>
+                    <p style="margin:2px 0 0 0;font-size:12px;color:#fecaca;">Chi tiết lý do hệ thống từ chối xác nhận O2D</p>
+                </div>
+            </div>
+            <button id="dmsO2DClose" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:16px;">✕</button>
+        </div>
+
+        <div style="padding:18px 22px;max-height:500px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;background:#090d16;">
+            <div id="dmsO2DDetails" style="background:#1e293b;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;font-size:13px;line-height:1.7;">
+                <div style="color:#38bdf8;">⏳ Đang quét nhật ký phản hồi O2D từ SAP & CRM...</div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:12px;font-weight:700;color:#94a3b8;">📋 NỘI DUNG LỖI ĐỂ COPY GỬI HỖ TRỢ / ADMIN:</label>
+                <textarea id="dmsO2DCopyBox" readonly style="width:100%;height:140px;background:#030712;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fca5a5;padding:10px;font-family:monospace;font-size:12px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+            </div>
+        </div>
+
+        <div style="background:#1e293b;padding:14px 22px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.06);">
+            <button id="dmsO2DCopyBtn" style="background:linear-gradient(135deg,#0284c7,#2563eb);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
+                📋 SAO CHÉP NỘI DUNG LỖI
+            </button>
+            <button id="dmsO2DCancel" style="background:rgba(255,255,255,0.1);border:none;color:#cbd5e1;padding:9px 18px;border-radius:8px;font-size:13px;cursor:pointer;">
+                Đóng
+            </button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    var closeBtn = document.getElementById("dmsO2DClose");
+    var cancelBtn = document.getElementById("dmsO2DCancel");
+    var copyBtn = document.getElementById("dmsO2DCopyBtn");
+    var detailsBox = document.getElementById("dmsO2DDetails");
+    var copyBox = document.getElementById("dmsO2DCopyBox");
+
+    function closeModal() { overlay.remove(); }
+    closeBtn.onclick = closeModal;
+    cancelBtn.onclick = closeModal;
+
+    copyBtn.onclick = function() {
+        copyBox.select();
+        document.execCommand("copy");
+        copyBtn.innerText = "✅ ĐÃ SAO CHÉP!";
+        setTimeout(function(){ copyBtn.innerText = "📋 SAO CHÉP NỘI DUNG LỖI"; }, 2000);
+    };
+
+    try {
+        var vdo = await _Xrm.WebApi.retrieveRecord(entityName, recordId);
+        console.log("VDO Full Payload:", vdo);
+
+        var errorFields = [];
+        var allKeys = Object.keys(vdo);
+        allKeys.forEach(function(k) {
+            var lower = k.toLowerCase();
+            var val = vdo[k];
+            if (val !== null && val !== "" && (lower.includes("error") || lower.includes("message") || lower.includes("response") || lower.includes("reason") || lower.includes("sap") || lower.includes("o2d") || lower.includes("status") || lower.includes("fail") || lower.includes("result"))) {
+                var fmt = vdo[k + "@OData.Community.Display.V1.FormattedValue"] || val;
+                errorFields.push(`• ${k}: ${fmt}`);
+            }
+        });
+
+        // Kiểm tra VSO liên kết
+        var vsoId = vdo._xts_newvehiclesalesorderid_value;
+        var vsoDetails = [];
+        if (vsoId) {
+            try {
+                var vso = await _Xrm.WebApi.retrieveRecord("xts_newvehiclesalesorder", vsoId);
+                var vsoKeys = Object.keys(vso);
+                vsoKeys.forEach(function(k) {
+                    var lower = k.toLowerCase();
+                    var val = vso[k];
+                    if (val !== null && val !== "" && (lower.includes("invoice") || lower.includes("sap") || lower.includes("o2d") || lower.includes("status") || lower.includes("error"))) {
+                        var fmt = vso[k + "@OData.Community.Display.V1.FormattedValue"] || val;
+                        vsoDetails.push(`  - VSO [${k}]: ${fmt}`);
+                    }
+                });
+            } catch(eVso){}
+        }
+
+        var html = `<div style="font-weight:700;color:#f87171;font-size:14px;margin-bottom:8px;">❌ CHI TIẾT CÁC TRƯỜNG PHẢN HỒI TỪ HỆ THỐNG:</div>`;
+        if (errorFields.length > 0) {
+            html += errorFields.slice(0, 10).map(function(f){ return `<div>${f}</div>`; }).join("");
+        } else {
+            html += `<div style="color:#94a3b8;">Chưa ghi nhận mã lỗi text từ server.</div>`;
+        }
+
+        var reportText = `=== BÁO CÁO PHẢN HỒI LỖI O2D & VDO ===\n` +
+                         `Phiếu giao xe: ${vdo.xts_deliveryordernumber || recordId}\n` +
+                         `Biển số: ${vdo.xts_platenumber || "Chưa có"}\n` +
+                         `Trạng thái O2D: ${vdo.itv_comfirmationstatus || "null"}\n` +
+                         `Số phiếu SAP: ${vdo.xvf_sapdeliveryordernumber || "null"}\n\n` +
+                         `--- CÁC TRƯỜNG THÔNG BÁO TỪ HỆ THỐNG ---\n` +
+                         errorFields.join("\n") + `\n\n` +
+                         `--- THÔNG TIN ĐƠN HÀNG VSO LIÊN KẾT ---\n` +
+                         vsoDetails.join("\n");
+
+        detailsBox.innerHTML = html;
+        copyBox.value = reportText;
+
+    } catch(err) {
+        detailsBox.innerHTML = `<div style="color:#f87171;">Lỗi quét: ${err.message || JSON.stringify(err)}</div>`;
+        copyBox.value = "Lỗi khi quét: " + (err.message || JSON.stringify(err));
+    }
+})();

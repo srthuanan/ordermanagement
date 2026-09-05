@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Order, AdminSubView } from '../types';
 
-export type ActiveView = 'orders' | 'stock' | 'sold' | 'admin' | 'laithu' | 'inquiry' | 'map';
+export type ActiveView = 'orders' | 'stock' | 'sold' | 'admin' | 'laithu' | 'inquiry' | 'map' | 'pricing';
 
 export const useAppNavigation = () => {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -34,7 +34,7 @@ export const useAppNavigation = () => {
 
     const showInquiryInAdmin = useCallback((inquiryId: string) => {
         setActiveView('admin');
-        setInitialAdminState({ targetTab: 'inquiries', inquiryId });
+        setInitialAdminState({ targetTab: 'super_management', inquiryId });
     }, []);
 
     const clearInitialState = useCallback(() => {

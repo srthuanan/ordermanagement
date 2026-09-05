@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Order, VcRequest, ActionType, StockVehicle } from '../types';
+import { Order, VcRequest, ActionType, StockVehicle, User } from '../types';
 import * as apiService from '../services/apiService';
 import { supabaseAdmin } from '../services/supabaseClient';
 
@@ -12,7 +12,7 @@ interface UseAdminActionsProps {
     refetchAdminData: (isSilent?: boolean) => void;
     fetchVcData: (isSilent?: boolean) => void;
     teamData: Record<string, string[]>;
-    allUsers: { name: string, role: string, username: string }[];
+    allUsers: User[];
     allOrders: Order[];
     suggestionsMap: Map<string, StockVehicle[]>;
     selectedRows: Set<string>;
@@ -27,7 +27,7 @@ export const useAdminActions = ({
     const [invoiceModalState, setInvoiceModalState] = useState<{ type: ActionType; order: Order | VcRequest } | null>(null);
     const [bulkActionModal, setBulkActionModal] = useState<{ type: ActionType } | null>(null);
     const [suggestionModalState, setSuggestionModalState] = useState<{ order: Order; cars: StockVehicle[] } | null>(null);
-    const [adminModal, setAdminModal] = useState<'archive' | 'addCar' | 'bulkAddCar' | 'bulkAddCarExcel' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'advanceOrder' | 'timeline' | 'addUser' | 'thongTinXeExcel' | null>(null);
+    const [adminModal, setAdminModal] = useState<'archive' | 'addCar' | 'bulkAddCar' | 'bulkAddCarExcel' | 'deleteCar' | 'restoreCar' | 'deleteOrder' | 'revertOrder' | 'advanceOrder' | 'timeline' | 'addUser' | 'deleteUser' | 'thongTinXeExcel' | null>(null);
     const [editingOrder, setEditingOrder] = useState<Order | null>(null);
     const [isBulkUploadModalOpen, setIsBulkUploadModalOpen] = useState(false);
     const [editingTeam, setEditingTeam] = useState<{ leader: string; members: string[] } | null>(null);
@@ -109,6 +109,7 @@ export const useAdminActions = ({
             approve: 'approveSelectedInvoiceRequest',
             pendingSignature: 'markAsPendingSignature',
             supplement: 'requestSupplementForInvoice',
+            rescan: 'requestRescanForInvoice',
             cancel: 'cancelRequest',
         };
         const apiAction = apiActionMap[action] || action;
@@ -267,28 +268,66 @@ export const useAdminActions = ({
                 showToast('Đang quét lại', 'Đang lấy dữ liệu ảnh từ Supabase Storage...', 'loading');
                 const storageRes = await apiService.getSupabaseScanImages(order['Số đơn hàng']);
                 
-                if (storageRes.status === 'ERROR' || !storageRes.files) {
-                    throw new Error(storageRes.message || "Không tìm thấy ảnh trên Storage.");
-                }
-
-                showToast('Đang phân tích', `Đang gửi ${storageRes.files.length} ảnh cho AI kiểm toán...`, 'loading');
-                
-                // Call edge function
-                const { data, error } = await supabaseAdmin.functions.invoke('scan-pdf', {
-                    body: { 
-                        files: storageRes.files, 
-                        orderData: order 
+                let aiData;
+                if (storageRes.status === 'ERROR' || !storageRes.files || storageRes.files.length === 0) {
+                    console.warn("Không tìm thấy ảnh trên Storage, thử quét thẳng từ Google Drive links...");
+                    const urls: string[] = [];
+                    // Lấy tất cả các URL từ order (sử dụng đúng key đã map)
+                    if (order['LinkHopDong'] || order['URL Hợp đồng']) urls.push(order['LinkHopDong'] || order['URL Hợp đồng']);
+                    if (order['LinkDeNghiXHD'] || order['URL Đề nghị XHĐ']) urls.push(order['LinkDeNghiXHD'] || order['URL Đề nghị XHĐ']);
+                    if (order['LinkTBCV'] || order['URL TBCV']) urls.push(order['LinkTBCV'] || order['URL TBCV']);
+                    
+                    if (urls.length === 0) {
+                        throw new Error("Không tìm thấy ảnh quét lại trên Storage và cũng không có link Google Drive.");
                     }
-                });
+                    showToast('Đang quét lại', 'Đang tải file từ Google Drive...', 'loading');
+                    const { scanMultipleFilesFromUrls } = await import('../utils/aiGeminiPdfScanner');
+                    aiData = await scanMultipleFilesFromUrls(urls, order);
+                } else {
+                    showToast('Đang phân tích', `Đang gửi ${storageRes.files.length} ảnh cho AI kiểm toán...`, 'loading');
+                    
+                    // Call edge function
+                    const { data, error } = await supabaseAdmin.functions.invoke('scan-pdf', {
+                        body: { 
+                            files: storageRes.files, 
+                            orderData: order 
+                        }
+                    });
 
-                if (error) throw error;
-                if (!data?.success) throw new Error(data?.error || "AI gặp lỗi khi xử lý.");
-
-                const aiData = data.data;
+                    if (error) throw error;
+                    if (!data?.success) throw new Error(data?.error || "AI gặp lỗi khi xử lý.");
+                    aiData = data.data;
+                }
                 
                 // Construct result comment similar to manual audit
                 let resultComment = '';
-                if (aiData.canh_bao_sai_lech && aiData.canh_bao_sai_lech.toLowerCase() !== 'không có') {
+                const isNoMismatch = (text?: string) => {
+                    if (!text) return true;
+                    const lower = text.toLowerCase().trim();
+                    if (lower === '' || lower === 'không có' || lower === 'khong co' || lower === 'không' || lower === 'none') return true;
+                    if (lower.includes('không có sự mâu thuẫn') ||
+                        lower.includes('khong co su mau thuan') ||
+                        lower.includes('không có mâu thuẫn') ||
+                        lower.includes('khong co mau thuan') ||
+                        lower.includes('không phát hiện') ||
+                        lower.includes('khong phat hien') ||
+                        lower.includes('hồ sơ khớp') ||
+                        lower.includes('khớp 100%')) {
+                        return true;
+                    }
+                    if ((lower.includes('địa chỉ') || lower.includes('dia chi')) &&
+                        !lower.includes('tên khách hàng') &&
+                        !lower.includes('số vin') &&
+                        !lower.includes('màu') &&
+                        !lower.includes('phiên bản') &&
+                        !lower.includes('dòng xe') &&
+                        !lower.includes('giá')) {
+                        return true;
+                    }
+                    return false;
+                };
+
+                if (aiData.canh_bao_sai_lech && !isNoMismatch(aiData.canh_bao_sai_lech)) {
                     resultComment = `⚠️ SAI LỆCH AI: ${aiData.canh_bao_sai_lech}`;
                 } else {
                     resultComment = `✅ AI QUÉT LẠI: Khớp dữ liệu.`;
@@ -496,45 +535,75 @@ export const useAdminActions = ({
     const handleBulkAddCarDetailedSubmit = useCallback((carData: any[]) => handleBackgroundAdminSubmit('bulkAddCarsDetailed', { carData: JSON.stringify(carData) }, 'Đã xử lý nhập xe hàng loạt từ Excel.', 'stock'), [handleBackgroundAdminSubmit]);
     const handleAddUserSubmit = useCallback(async (data: Record<string, string>) => {
         try {
-            if (!data.email) throw new Error("Vui lòng nhập Email nhân viên.");
+            if (!data.fullName?.trim()) throw new Error("Vui lòng nhập Họ và Tên nhân viên.");
+            if (!data.email?.trim()) throw new Error("Vui lòng nhập Email nhân viên.");
             
-            showToast('Đang xử lý', 'Đang gửi Email mời nhân viên...', 'loading');
+            showToast('Đang xử lý', 'Đang tạo tài khoản và đồng bộ nhân sự...', 'loading');
 
-            // 1. GỬI EMAIL MỜI QUA SUPABASE EDGE FUNCTION (GIAO DIỆN CHUYÊN NGHIỆP)
-            const { data: resData, error: inviteError } = await supabaseAdmin.functions.invoke('send-email', {
-                body: {
-                    actionId: 'welcome_new_user',
-                    record: {
-                        email: data.email,
-                        full_name: data.fullName,
-                        redirectTo: window.location.origin + window.location.pathname + '#type=invite'
-                    }
-                }
+            // 1. TẠO TÀI KHOẢN VÀ ĐỒNG BỘ PUBLIC.USERS + SUPABASE AUTH
+            const result = await apiService.performAdminAction('addUser', {
+                fullName: data.fullName,
+                email: data.email,
+                username: data.username,
+                role: data.role || 'Tư vấn bán hàng',
+                manager: data.manager,
+                password: data.password || 'VinFast@2026'
             });
 
-            if (inviteError) throw inviteError;
-            if (resData && resData.success === false) throw new Error(resData.message || "Gửi mail thất bại.");
-
-            // 2. LƯU THÔNG TIN VÀO BẢNG USERS (Dự phòng để hiển thị ngay)
-            // (Thường Supabase Trigger sẽ xử lý, nhưng ta có thể gọi API để chắc chắn)
-            try {
-                await apiService.performAdminAction('syncNewUser', {
-                    email: data.email,
-                    fullName: data.fullName,
-                    role: data.role || 'Tư vấn bán hàng'
-                });
-            } catch (syncErr) {
-                console.warn("User sync warning:", syncErr);
+            if (result.status !== 'SUCCESS') {
+                throw new Error(result.message || 'Không thể tạo nhân viên.');
             }
 
-            showToast('Thành công!', `Đã gửi Email mời chuyên nghiệp tới: ${data.email}. Nhân viên hãy kiểm tra hộp thư (cả mục Spam) để kích hoạt tài khoản.`, 'success', 6000);
+            // 2. GỬI EMAIL THÔNG BÁO TÀI KHOẢN QUA SUPABASE EDGE FUNCTION (Tùy chọn)
+            try {
+                await supabaseAdmin.functions.invoke('send-email', {
+                    body: {
+                        actionId: 'welcome_new_user',
+                        record: {
+                            email: data.email,
+                            full_name: data.fullName.trim().toUpperCase(),
+                            username: data.username || data.email.split('@')[0],
+                            password: data.password || 'VinFast@2026',
+                            role: data.role || 'Tư vấn bán hàng',
+                            redirectTo: window.location.origin + window.location.pathname
+                        }
+                    }
+                });
+            } catch (mailErr) {
+                console.warn("Gửi email thông báo thất bại:", mailErr);
+            }
+
+            showToast('Thành công!', result.message || `Đã tạo nhân viên ${data.fullName.toUpperCase()} thành công!`, 'success', 7000);
             
             refetchAdminData(true);
             setAdminModal(null);
             return true;
         } catch (error: any) {
-            console.error("Invite Error:", error);
-            showToast('Thao tác thất bại', error.message || "Không thể gửi email mời.", 'error');
+            console.error("Add User Error:", error);
+            showToast('Thao tác thất bại', error.message || "Không thể tạo tài khoản nhân viên.", 'error');
+            return false;
+        }
+    }, [showToast, refetchAdminData]);
+
+    const handleDeleteUserSubmit = useCallback(async (data: Record<string, string>) => {
+        try {
+            const userTarget = data.email?.trim() || data.user?.trim() || data.username?.trim();
+            if (!userTarget) throw new Error("Vui lòng chọn từ danh sách hoặc nhập Email / Username nhân viên cần xóa.");
+
+            showToast('Đang xử lý', 'Đang xóa nhân viên và thu hồi quyền truy cập...', 'loading');
+
+            const result = await apiService.performAdminAction('deleteUser', { username: userTarget, email: data.email });
+            if (result.status !== 'SUCCESS') {
+                throw new Error(result.message || 'Không thể xóa nhân viên.');
+            }
+
+            showToast('Thành công!', result.message, 'success', 6000);
+            refetchAdminData(true);
+            setAdminModal(null);
+            return true;
+        } catch (error: any) {
+            console.error("Delete User Error:", error);
+            showToast('Thao tác thất bại', error.message || "Không thể xóa nhân viên.", 'error');
             return false;
         }
     }, [showToast, refetchAdminData]);
@@ -575,6 +644,7 @@ export const useAdminActions = ({
         handleBulkAddCarSubmit,
         handleBulkAddCarDetailedSubmit,
         handleAddUserSubmit,
+        handleDeleteUserSubmit,
         handleDeleteOrderSubmit,
         handleRevertOrderSubmit,
         handleAdvanceOrderSubmit,

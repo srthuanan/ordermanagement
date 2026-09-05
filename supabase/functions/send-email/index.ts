@@ -342,8 +342,8 @@ Deno.serve(async (req: Request) => {
       record = await enrichRecord(record);
     }
 
-    const tenTVBH = record?.ten_ban_hang || record?.ten_tu_van_ban_hang || record?.tvbh || "TVBH";
-    let recipientEmail = payload.recipient_email;
+    const tenTVBH = payload.targetTvbh || payload.target_tvbh || payload.tvbh || payload.actor_name || record?.ten_ban_hang || record?.ten_tu_van_ban_hang || record?.tvbh || record?.user_full_name || "TVBH";
+    let recipientEmail = payload.recipient_email || payload.recipientEmail;
 
     // Đối với các tác vụ liên quan đến tài khoản, lấy thẳng từ record.email
     if (actionId === 'welcome_new_user' || actionId === 'forgot_password_otp' || actionId === 'forgot_password_secure') {
@@ -567,49 +567,50 @@ Deno.serve(async (req: Request) => {
     // 8. CHÀO MỪNG NHÂN VIÊN MỚI (welcome_new_user - NEW FLOW)
     // ============================================================
     else if (actionId === 'welcome_new_user') {
-      const { email, full_name, redirectTo } = record;
-      
-      // 1. Tạo Link Invite từ Supabase (Mặc định cho nhân viên mới)
+      const { email, full_name, redirectTo, role } = record;
+      const userRole = role || 'Tư vấn bán hàng';
+      const origin = redirectTo ? redirectTo.split('#')[0] : 'https://srthuanan.github.io/ordermanagement/';
+
+      // 1. Tạo Link Kích hoạt tài khoản & Thiết lập mật khẩu từ Supabase Auth
       let { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
         type: 'invite',
         email: email,
-        options: { redirectTo: redirectTo }
+        options: { 
+          redirectTo: origin
+        }
       });
 
-      // 2. FALLBACK: Nếu nhân viên đã tồn tại, chuyển sang dùng Link Recovery (Khôi phục)
-      if (linkErr && linkErr.message.includes('already been registered')) {
-        console.log("User already exists, falling back to recovery link...");
+      // 2. Fallback nếu user đã có sẵn trong Auth: Sử dụng Recovery/Set Password Link
+      const rawLink = linkData?.properties?.action_link || (linkData as any)?.action_link;
+      if (linkErr || !rawLink) {
+        console.log("Generating recovery link for user activation...", linkErr);
         const recoveryResult = await supabase.auth.admin.generateLink({
           type: 'recovery',
           email: email,
-          options: { redirectTo: redirectTo }
+          options: { redirectTo: origin }
         });
         linkData = recoveryResult.data;
         linkErr = recoveryResult.error;
       }
 
-      if (linkErr) {
-        console.error("Link Generation Error:", linkErr.message);
-        return new Response(JSON.stringify({ success: false, message: "Không thể tạo link xác thực. " + linkErr.message }), { status: 200, headers: corsHeaders });
-      }
+      const activationLink = linkData?.properties?.action_link || (linkData as any)?.action_link || origin;
+      console.log("[send-email] Generated activation link:", activationLink);
 
-      const actionLink = linkData.properties.action_link;
-
-      subject = `✨ [CHÀO MỪNG] Tài khoản truy cập hệ thống Quản lý VinFast Thuận An`;
+      subject = `✨ [KÍCH HOẠT TÀI KHOẢN] Chào mừng Bạn đến với Hệ thống VinFast`;
       recipientEmail = email;
       
       const details: Record<string, string> = {
         "Họ và tên": `<b>${full_name}</b>`,
-        "Tên đăng nhập": `<b>${email}</b>`,
-        "Vai trò": "Nhân viên (TVBH)",
-        "Hành động": `<a href="${actionLink}" class="btn-primary" style="display: inline-block; background-color: #1e3a8a; color: #ffffff; padding: 10px 22px; border-radius: 30px; text-decoration: none; font-weight: 600; font-size: 13px; margin: 5px 0; transition: all 0.3s ease;">Kích hoạt tài khoản</a>`
+        "Email đăng nhập": `<b>${email}</b>`,
+        "Chức vụ / Vai trò": `<b>${userRole}</b>`,
+        "Hành động": `<a href="${activationLink}" class="btn-primary" style="display: inline-block; background-color: #1e3a8a; color: #ffffff; padding: 12px 28px; border-radius: 30px; text-decoration: none; font-weight: 700; font-size: 14px; margin: 6px 0; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.35);">👉 Kích Hoạt & Đặt Mật Khẩu Ngay</a>`
       };
       
       htmlBody = buildHtml(
-        "Chào mừng Bạn đến với hệ thống!", 
+        "Kích hoạt tài khoản Hệ thống VinFast", 
         full_name, 
         details, 
-        "<b>Chào mừng Bạn gia nhập đội ngũ VinFast Thuận An!</b><br/>Tài khoản của bạn đã được khởi tạo thành công. Vui lòng bấm vào nút phía trên để thiết lập mật khẩu và bắt đầu hành trình tuyệt vời cùng chúng tôi.", 
+        "<b>Chào mừng Bạn gia nhập đội ngũ VinFast!</b><br/>Tài khoản của bạn đã được quản trị viên khởi tạo thành công trên hệ thống. Vui lòng bấm vào nút <b>Kích Hoạt & Đặt Mật Khẩu Ngay</b> bên dưới để tự thiết lập mật khẩu cá nhân và bắt đầu làm việc.", 
         "#1e3a8a"
       );
     }
@@ -631,7 +632,7 @@ Deno.serve(async (req: Request) => {
         return new Response(JSON.stringify({ success: false, message: "Không thể tạo link khôi phục. Email có thể không tồn tại." }), { status: 200, headers: corsHeaders });
       }
 
-      const resetLink = linkData.properties.action_link;
+      const resetLink = linkData?.properties?.action_link || (linkData as any)?.action_link || redirectTo;
       
       // Tìm tên nhân viên để đưa vào email
       const { data: userData } = await supabase.from('users').select('full_name, username').eq('email', email).maybeSingle();
@@ -664,6 +665,45 @@ Deno.serve(async (req: Request) => {
         "VIN mới": `<span style="color:#16a34a; font-weight:700;">${record.new_vin || "N/A"}</span>`,
       };
       htmlBody = buildHtml("Thông báo thay đổi số VIN trên đơn hàng:", tenTVBH, details, "Số VIN trên đơn hàng của Anh/Chị đã được Admin cập nhật. Vui lòng kiểm tra lại thông tin trên hệ thống. Trân trọng.", "#d97706");
+    }
+    // ============================================================
+    // 11. XÁC NHẬN HOÁN ĐỔI XE GIỮA 2 TVBH (swap_car_success)
+    // ============================================================
+    else if (actionId === 'swap_car_success') {
+      const targetAdvisor = payload.targetTvbh || tenTVBH;
+      const orderA = payload.orderA || record?.orderA || "N/A";
+      const orderB = payload.orderB || record?.orderB || "N/A";
+      const tvbhA = payload.tvbhA || record?.tvbhA || "N/A";
+      const tvbhB = payload.tvbhB || record?.tvbhB || "N/A";
+
+      const vinA = payload.vinA || record?.vinA || "N/A";
+      const newVinA = payload.newVinA || payload.vinB || "N/A";
+
+      const vinB = payload.vinB || record?.vinB || "N/A";
+      const newVinB = payload.newVinB || payload.vinA || "N/A";
+
+      const config = payload.config || record?.config || {};
+      
+      subject = `🔄 [HOÁN ĐỔI XE] Xác nhận đổi VIN thành công giữa đơn ${orderA} & ${orderB}`;
+      
+      const details: Record<string, string> = {
+        "TVBH đề nghị": `<b>${tvbhA}</b> (Đơn: ${orderA})`,
+        "VIN mới Đơn A": `<span style="color:#16a34a; font-weight:700;">${newVinA}</span> <span style="color:#64748b; font-size:11px;">(VIN cũ: ${vinA})</span>`,
+        "TVBH hoán đổi": `<b>${tvbhB}</b> (Đơn: ${orderB})`,
+        "VIN mới Đơn B": `<span style="color:#16a34a; font-weight:700;">${newVinB}</span> <span style="color:#64748b; font-size:11px;">(VIN cũ: ${vinB})</span>`,
+        "Dòng xe & Phiên bản": `${config.dong_xe || 'N/A'} - ${config.phien_ban || 'N/A'}`,
+        "Ngoại thất / Nội thất": `${config.ngoai_that || 'N/A'} / ${config.noi_that || 'N/A'}`,
+        "Lý do hoán đổi": payload.reason || "Trao đổi xe cùng cấu hình",
+        "Thời gian xử lý": formatDate(new Date().toISOString()),
+      };
+
+      htmlBody = buildHtml(
+        `Thông báo hoán đổi VIN thành công dành cho TVBH <b>${targetAdvisor}</b>:`,
+        targetAdvisor,
+        details,
+        "Yêu cầu hoán đổi VIN giữa 2 Tư vấn bán hàng đã được Admin phê duyệt thành công trên hệ thống. Vui lòng kiểm tra lại thông tin đơn hàng trên ứng dụng. Trân trọng.",
+        "#ea580c"
+      );
     }
     // ============================================================
     // UNKNOWN ACTION

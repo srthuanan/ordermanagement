@@ -11,75 +11,151 @@ interface ToastProps {
     index: number;
 }
 
+/**
+ * Luxury Glassmorphic Dynamic Pill HUD (Linear & Apple Design Language)
+ * - Nền kính quang học đa tầng (Optical Multi-layer Glassmorphism)
+ * - Ánh phản quang viền siêu mỏng (Subtle Inner Hairline Specular Glow)
+ * - Kiểu chữ cao cấp, tương phản hoàn hảo, sang trọng & chuyên nghiệp
+ */
 const Toast: React.FC<ToastProps> = ({ id, title, message, type, onClose, duration, index }) => {
     const [isExiting, setIsExiting] = useState(false);
     const timeoutRef = useRef<number | null>(null);
+
+    // Thời gian hiển thị thông minh: Thành công tan biến sau 1.6s, Lỗi cho phép đọc trong 3.5s
+    const autoDuration = duration ?? (type === 'error' ? 3600 : type === 'loading' ? 12000 : 1600);
 
     const handleClose = useCallback(() => {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         setIsExiting(true);
         setTimeout(() => {
             onClose(id);
-        }, 300);
+        }, 220);
     }, [onClose, id]);
 
     useEffect(() => {
-        // Safety: Loading toasts should not stay forever. Defaulting to 20s if not specified.
-        const effectiveDuration = (type === 'loading' && (!duration || duration <= 0)) ? 20000 : duration;
-
-        if (effectiveDuration && effectiveDuration > 0) {
-            timeoutRef.current = window.setTimeout(handleClose, effectiveDuration);
+        if (autoDuration > 0) {
+            timeoutRef.current = window.setTimeout(handleClose, autoDuration);
         }
         return () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
-    }, [title, message, type, duration, handleClose]);
+    }, [autoDuration, handleClose]);
 
-    const typeDetails = {
-        success: { icon: 'fa-check', color: 'text-emerald-500', bg: 'bg-emerald-500/5', border: 'border-emerald-500/20' },
-        error: { icon: 'fa-times', color: 'text-rose-500', bg: 'bg-rose-500/5', border: 'border-rose-500/20' },
-        loading: { icon: 'fa-spinner fa-spin', color: 'text-blue-500', bg: 'bg-blue-500/5', border: 'border-blue-500/20' },
-        warning: { icon: 'fa-exclamation', color: 'text-amber-500', bg: 'bg-amber-500/5', border: 'border-amber-500/20' },
-        info: { icon: 'fa-info', color: 'text-sky-500', bg: 'bg-sky-500/5', border: 'border-sky-500/20' },
+    // Xử lý câu chữ chuyên nghiệp
+    const renderBody = () => {
+        if (type === 'error') {
+            const errorDetail = message || title || 'Đã xảy ra lỗi trong quá trình xử lý';
+            return (
+                <div className="flex items-center gap-2 min-w-0 max-w-[420px]">
+                    <span className="text-[12.5px] font-bold text-rose-600 uppercase tracking-wider text-[11px] whitespace-nowrap bg-rose-50 px-1.5 py-0.5 rounded-md border border-rose-100">
+                        Thất bại
+                    </span>
+                    <span className="text-[12.5px] font-medium text-slate-700 truncate" title={errorDetail}>
+                        {errorDetail}
+                    </span>
+                </div>
+            );
+        }
+
+        if (type === 'success') {
+            let successText = title || message || 'Thao tác thành công';
+            if (!successText.toLowerCase().includes('thành công') && !successText.toLowerCase().includes('hoàn tất')) {
+                successText = `${successText} thành công`;
+            }
+            return (
+                <div className="flex items-center gap-1.5 min-w-0 pr-1">
+                    <span className="text-[13px] font-semibold text-slate-800 tracking-tight whitespace-nowrap">
+                        {successText}
+                    </span>
+                </div>
+            );
+        }
+
+        if (type === 'loading') {
+            return (
+                <div className="flex items-center gap-2 min-w-0 pr-1">
+                    <span className="text-[13px] font-medium text-slate-700 tracking-tight whitespace-nowrap">
+                        {title || message || 'Hệ thống đang xử lý...'}
+                    </span>
+                </div>
+            );
+        }
+
+        // Warning / Info
+        return (
+            <div className="flex items-center gap-2 min-w-0 max-w-[380px] pr-1">
+                <span className="text-[13px] font-semibold text-slate-800 whitespace-nowrap">{title}</span>
+                {message && <span className="text-[12px] font-normal text-slate-500 truncate">• {message}</span>}
+            </div>
+        );
     };
 
-    const style = (typeDetails as any)[type] || typeDetails.info;
-    const bottomOffset = index * 64 + 20; // Căn khoảng cách từ mép dưới lên
-    const animationClass = isExiting
-        ? 'opacity-0 translate-y-10 scale-95 blur-sm' // Khi tắt: Trượt xuống dưới, mờ đi
-        : 'opacity-100 translate-y-0 scale-100 blur-none'; // Khi bật: Hiển thị mượt mà
+    // Thiết kế icon cao cấp theo từng loại
+    const typeStyles = {
+        success: {
+            icon: 'fa-check',
+            iconColor: 'text-emerald-600',
+            badgeBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600',
+            accentGlow: 'hover:border-emerald-300/80',
+        },
+        error: {
+            icon: 'fa-xmark',
+            iconColor: 'text-rose-600',
+            badgeBg: 'bg-rose-500/10 border-rose-500/20 text-rose-600',
+            accentGlow: 'hover:border-rose-300/80',
+        },
+        loading: {
+            icon: 'fa-circle-notch fa-spin',
+            iconColor: 'text-indigo-600',
+            badgeBg: 'bg-indigo-500/10 border-indigo-500/20 text-indigo-600',
+            accentGlow: 'hover:border-indigo-300/80',
+        },
+        warning: {
+            icon: 'fa-triangle-exclamation',
+            iconColor: 'text-amber-600',
+            badgeBg: 'bg-amber-500/10 border-amber-500/20 text-amber-600',
+            accentGlow: 'hover:border-amber-300/80',
+        },
+        info: {
+            icon: 'fa-circle-info',
+            iconColor: 'text-sky-600',
+            badgeBg: 'bg-sky-500/10 border-sky-500/20 text-sky-600',
+            accentGlow: 'hover:border-sky-300/80',
+        },
+    };
+
+    const style = typeStyles[type] || typeStyles.info;
+    const topOffset = 18 + index * 46;
+
+    const animationStyle = isExiting
+        ? 'opacity-0 scale-95 -translate-y-2.5 blur-[1px]'
+        : 'opacity-100 scale-100 translate-y-0 blur-none';
 
     return (
         <div
-            className={`fixed right-4 z-[9999] transition-all duration-500 ease-out flex justify-end w-full max-w-sm pointer-events-none ${animationClass}`}
-            style={{ bottom: `${bottomOffset}px` }}
+            className={`fixed left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 cubic-bezier(0.16,1,0.3,1) flex justify-center pointer-events-none ${animationStyle}`}
+            style={{ top: `${topOffset}px` }}
         >
             <div
-                className={`pointer-events-auto flex items-center gap-3 bg-white/95 backdrop-blur-2xl border ${style.border} rounded-2xl px-4 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.12)] min-w-[280px] max-w-[360px] cursor-default`}
-                role="alert"
+                onClick={handleClose}
+                className={`pointer-events-auto group relative flex items-center gap-3 bg-white/92 hover:bg-white backdrop-blur-2xl border border-slate-200/80 hover:border-slate-300 rounded-2xl px-3.5 py-2 shadow-[0_12px_36px_-6px_rgba(15,23,42,0.12),0_4px_12px_-2px_rgba(15,23,42,0.06),inset_0_1px_1px_rgba(255,255,255,0.9)] cursor-pointer transition-all duration-200 active:scale-[0.98] select-none ${style.accentGlow}`}
+                role="status"
             >
-                {/* Icon Circle */}
-                <div className={`w-6 h-6 rounded-full ${style.bg} ${style.color} flex items-center justify-center flex-shrink-0`}>
-                    <i className={`fas ${style.icon} text-[11px]`}></i>
+                {/* Luxury Micro Badge Icon */}
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 shadow-sm ${style.badgeBg}`}>
+                    <i className={`fas ${style.icon} ${style.iconColor} text-[9.5px]`}></i>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-bold text-slate-800 leading-tight">{title}</p>
-                    {message && (
-                        <p className="text-[10px] text-slate-500 leading-normal line-clamp-1 mt-0.5">{message}</p>
-                    )}
-                </div>
+                {/* Body Content */}
+                {renderBody()}
 
-                {/* Close Button */}
-                {type !== 'loading' && (
-                    <button
-                        onClick={handleClose}
-                        className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition-all ml-1"
-                    >
-                        <i className="fas fa-times text-[9px]"></i>
-                    </button>
-                )}
+                {/* Close Button on Hover */}
+                <button
+                    onClick={handleClose}
+                    className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all -mr-0.5 ml-1"
+                >
+                    <i className="fas fa-times text-[8.5px]"></i>
+                </button>
             </div>
         </div>
     );

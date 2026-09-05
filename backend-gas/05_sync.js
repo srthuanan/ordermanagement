@@ -16,6 +16,7 @@ function onOpen() {
       .addSeparator()
       .addItem('📥 Làm mới toàn bộ dữ liệu (Sync Supabase)', 'syncAllFromSupabase')
       .addSeparator()
+      .addItem('✂️ Xóa ô trống thừa (Giảm dung lượng file)', 'trimEmptyCells')
       .addItem('🧹 Hút Bụi: Xóa sạch các Sheet rác', 'cleanUpGhostSheets')
       .addSeparator()
       .addItem('🚑 KHÔI PHỤC FILE PDF (Từ Thùng Rác)', 'restoreTrashedPdfs')
@@ -53,7 +54,8 @@ var CUSTOM_CONFIGS = {
       { key: 'ngay_coc', label: 'Ngày cọc', type: 'date' },
       { key: 'url_hop_dong', label: 'Hợp đồng', type: 'link' },
       { key: 'url_de_nghi_xhd', label: 'Đề nghị XHĐ', type: 'link' },
-      { key: 'url_hoa_don_da_xuat', label: 'Hóa đơn đã xuất', type: 'link' }
+      { key: 'url_hoa_don_da_xuat', label: 'Hóa đơn đã xuất', type: 'link' },
+      { key: 'ma_vc', label: 'Mã VC' }
     ],
     headerColor: '#0f172a', // Slate 900
     headerTextColor: '#ffffff',
@@ -98,6 +100,49 @@ function cleanUpGhostSheets() {
        }
     }
     SpreadsheetApp.getActiveSpreadsheet().toast('Đã dọn dẹp thành công ' + count + ' sheet rác!', 'Hoàn tất', 10);
+  } catch (e) {
+    Logger.log(e);
+    SpreadsheetApp.getActiveSpreadsheet().toast('Lỗi: ' + e.message, 'Lỗi', 10);
+  }
+}
+
+function trimEmptyCells() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    ss.toast('Đang dò tìm và xóa các ô trống thừa...', 'Tối ưu hóa dung lượng', 15);
+    var sheets = ss.getSheets();
+    var totalCellsDeleted = 0;
+    
+    for (var i = 0; i < sheets.length; i++) {
+      var sheet = sheets[i];
+      var maxRows = sheet.getMaxRows();
+      var lastRow = sheet.getLastRow();
+      var maxCols = sheet.getMaxColumns();
+      var lastCol = sheet.getLastColumn();
+      
+      // Nếu sheet trống trơn (lastRow == 0), giữ lại ít nhất 2 dòng, 2 cột để không bị lỗi
+      if (lastRow === 0) lastRow = 2;
+      if (lastCol === 0) lastCol = 2;
+      
+      // Luôn chừa ra một vài dòng/cột để dự phòng
+      var rowThreshold = 10; 
+      var colThreshold = 2;
+      
+      if (maxRows - lastRow > rowThreshold) {
+        var rowsToDelete = maxRows - lastRow - rowThreshold;
+        sheet.deleteRows(lastRow + rowThreshold + 1, rowsToDelete);
+        totalCellsDeleted += rowsToDelete * maxCols;
+        maxRows -= rowsToDelete; // Cập nhật lại maxRows
+      }
+      
+      if (maxCols - lastCol > colThreshold) {
+        var colsToDelete = maxCols - lastCol - colThreshold;
+        sheet.deleteColumns(lastCol + colThreshold + 1, colsToDelete);
+        totalCellsDeleted += colsToDelete * maxRows;
+      }
+    }
+    
+    ss.toast('Đã dọn dẹp xong! Giải phóng được ' + totalCellsDeleted + ' ô.', 'Hoàn tất', 10);
   } catch (e) {
     Logger.log(e);
     SpreadsheetApp.getActiveSpreadsheet().toast('Lỗi: ' + e.message, 'Lỗi', 10);

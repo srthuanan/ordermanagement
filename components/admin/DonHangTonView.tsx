@@ -97,7 +97,7 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
                     };
                 });
                 
-                setBacklogOrders(enriched.filter(o => !o.isProcessed));
+                setBacklogOrders(enriched.filter((o: any) => !o.isProcessed));
             } else {
                 showToast('Lỗi', res.message || 'Lỗi khi tải đơn hàng tồn', 'error');
             }
@@ -169,31 +169,28 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
         }
     }, [filteredOrders, selectedOrderId]);
 
+    const copyWithFeedback = useCopyFeedback();
+
     const renderOrderListItem = (order: any) => {
         const isSelected = selectedOrderId === order.id;
         return (
             <div
                 key={order.id}
-                onClick={() => { setSelectedOrderId(order.id); setMobileView('detail'); }}
-                className={`px-4 py-4 cursor-pointer transition-all duration-300 group relative border-l-2 ${isSelected
-                    ? 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)] border-accent-primary z-10'
-                    : 'bg-transparent border-transparent hover:bg-slate-50/80 hover:border-slate-200'
+                onClick={(e) => { 
+                    setSelectedOrderId(order.id); 
+                    setMobileView('detail');
+                    copyWithFeedback(order.khach_hang, e);
+                }}
+                className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${isSelected
+                    ? 'bg-slate-100/90 border-blue-600 font-semibold'
+                    : 'border-transparent hover:bg-slate-50'
                     }`}
             >
-                <div className="flex flex-col gap-1.5 min-w-0">
-                    <div className={`text-[13px] font-bold truncate transition-colors ${isSelected ? 'text-accent-primary' : 'text-slate-700 group-hover:text-accent-primary'}`}>
-                        {order.khach_hang}
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] font-black text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded uppercase leading-none">{order.displayModel}</span>
-                            <span className="text-[10px] font-bold text-slate-400 truncate tracking-tight">{order.displayVersion}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-[9px] text-slate-400 font-medium">
-                            <i className="fas fa-palette text-[8px] opacity-40"></i>
-                            <span>{order.ngoai_that} / {order.noi_that}</span>
-                        </div>
-                    </div>
+                <div className="text-xs font-bold text-slate-900 truncate mb-1 uppercase">
+                    {order.khach_hang}
+                </div>
+                <div className="text-[11px] text-slate-500 font-normal truncate">
+                    {order.displayModel} - {order.displayVersion}
                 </div>
             </div>
         );
@@ -233,39 +230,39 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
             <AnimatedBackground />
             
             {/* Column 1: Sales Consultants */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
-                <div className="hidden md:flex p-4 border-b border-border-secondary">
-                    <span className="font-black text-[11px] uppercase tracking-widest text-slate-400">DS Tư Vấn Bán Hàng</span>
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+                <div className="hidden md:flex p-4 border-b border-slate-100">
+                    <span className="font-bold text-xs uppercase tracking-wider text-slate-400">DS Tư Vấn Bán Hàng</span>
                 </div>
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                     <button
                         onClick={() => { setSelectedTVBH('all'); setMobileView('list'); }}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-bold transition-colors ${selectedTVBH === 'all' ? 'bg-accent-primary text-white shadow-lg' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${selectedTVBH === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-700 hover:bg-slate-100'}`}
                     >
                         <div className="flex items-center gap-3">
                             <i className="fas fa-users w-5 text-center"></i>
                             <span>Tất Cả Sales</span>
                         </div>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${selectedTVBH === 'all' ? 'bg-white/20' : 'bg-surface-hover text-text-secondary'}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${selectedTVBH === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
                             {backlogOrders.length}
                         </span>
                     </button>
                     
-                    <div className="h-px bg-slate-200/50 my-2 mx-2"></div>
+                    <div className="h-px bg-slate-100 my-2 mx-2"></div>
                     
                     {tvbhList.map(item => (
                         <button
                             key={item.id}
                             onClick={() => { setSelectedTVBH(item.id); setMobileView('list'); }}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedTVBH === item.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${selectedTVBH === item.id ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'}`}
                         >
                             <div className="flex items-center gap-3">
-                                <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold">
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${selectedTVBH === item.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
                                     {item.label[0].toUpperCase()}
                                 </div>
                                 <span className="truncate max-w-[120px]">{item.label}</span>
                             </div>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${selectedTVBH === item.id ? 'bg-accent-primary text-white' : 'bg-surface-hover text-text-secondary'}`}>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${selectedTVBH === item.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
                                 {item.count}
                             </span>
                         </button>
@@ -317,7 +314,7 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
                                         {selectedOrder.khach_hang?.[0].toUpperCase()}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <h2 className="text-base font-black text-slate-800 truncate tracking-tight mb-0.5">{selectedOrder.khach_hang}</h2>
+                                        <h2 className="text-base font-black text-slate-800 truncate tracking-tight mb-0.5 uppercase">{selectedOrder.khach_hang}</h2>
                                         <div className="flex items-center gap-1.5">
                                             <div className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-500 border border-slate-200/50">
                                                 <i className="fas fa-user-tie text-[8px] opacity-60"></i>

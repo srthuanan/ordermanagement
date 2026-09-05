@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import useSWR from 'swr';
 
-import { Order, StockVehicle } from '../types';
+import { Order, StockVehicle, User } from '../types';
 import * as apiService from '../services/apiService';
+import { supabase } from '../services/supabaseClient';
 import { useVinFastApi } from './useVinFastApi';
 import { useStockApi } from './useStockApi';
 import { useTestDriveApi } from './useTestDriveApi';
 import { normalizeName } from '../services/authService';
+
 
 interface UseAppDataProps {
     currentUser: string;
@@ -20,7 +22,7 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
     // --- EXISTING HOOKS ---
     // --- NEW LOCAL STATES (Moved up for dependencies) ---
     const [teamData, setTeamData] = useState<Record<string, string[]>>({});
-    const [allUsers, setAllUsers] = useState<{ name: string, role: string, username: string }[]>([]);
+    const [allUsers, setAllUsers] = useState<User[]>([]);
 
     // --- PERMISSION / FILTERING LOGIC (Moved up for useVinFastApi dependency) ---
     const usersToView = useMemo(() => {
@@ -58,8 +60,6 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
     }, [rawTestDriveData, isCurrentUserAdmin, userRole, usersToView, currentUser]);
 
     const { data: xuathoadonRes, error: errorXuathoadonRaw, mutate: mutateXuathoadon } = useSWR('xuathoadonData', async () => {
-        const { supabase } = await import('../services/supabaseClient');
-        
         // Use a limit to keep the 'Inbox' view fast. 300 records is plenty for immediate action.
         const { data: rawData, error } = await supabase
             .from('yeucauxhd')
@@ -69,7 +69,20 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
             
         if (error) throw new Error(error.message);
         return rawData || [];
-    }, { refreshInterval: 10000, revalidateOnFocus: false }); // Disable revalidateOnFocus to avoid UI flicker on tab switch
+    }, { revalidateOnFocus: false });
+
+    useEffect(() => {
+        const channel = supabase
+            .channel('yeucauxhd_realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'yeucauxhd' }, () => {
+                mutateXuathoadon();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [mutateXuathoadon]);
 
     const xuathoadonData = useMemo(() => {
         if (!xuathoadonRes) return [];
@@ -112,7 +125,10 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
             'NGÀY YÊU CẦU XHĐ': row.ngay_yeu_cau,
             'NGÀY XUẤT HÓA ĐƠN': row.ngay_xuat_hoa_don,
             'Trạng thái VC': row.trang_thai_vc || '',
+            'Mã VC': row.ma_vc || '',
             'Ghi chú AI': row.ghi_chu_ai,
+            'Ghi chú Admin': row.ghi_chu_admin || '',
+            'ghi_chu_admin': row.ghi_chu_admin || '',
             'Xe xăng VIN': row.xe_xang_vin,
             'Xe xăng Hãng': row.xe_xang_hang,
             'Xe xăng Model': row.xe_xang_model,

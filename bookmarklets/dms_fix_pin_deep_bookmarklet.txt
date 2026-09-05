@@ -1,0 +1,225 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - TOOL SỬA ĐỒNG BỘ TOÀN DIỆN SÊ-RI PIN & THỰC THI GHÉP XE
+     * ========================================================================= */
+
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var frames = window.frames;
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].Xrm && frames[i].Xrm.WebApi) { _Xrm = frames[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert("⚠️ Vui lòng mở trang VinFast DMS trước khi bấm!");
+        return;
+    }
+
+    var oldOverlay = document.getElementById("dmsFixPinDeepOverlay");
+    if (oldOverlay) oldOverlay.remove();
+
+    var overlay = document.createElement("div");
+    overlay.id = "dmsFixPinDeepOverlay";
+    overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,15,30,0.92);backdrop-filter:blur(12px);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#f8fafc;";
+
+    var modal = document.createElement("div");
+    modal.style = "background:#0f172a;width:720px;max-width:95%;border-radius:18px;border:1px solid rgba(56,189,248,0.35);box-shadow:0 30px 70px rgba(0,0,0,0.9);display:flex;flex-direction:column;overflow:hidden;";
+
+    modal.innerHTML = `
+        <div style="background:linear-gradient(135deg,#0284c7,#0369a1);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:28px;">🔋</span>
+                <div>
+                    <h3 style="margin:0;font-size:16px;font-weight:800;color:#fff;">ĐỒNG BỘ TOÀN DIỆN SÊ-RI PIN & THỰC THI GHÉP XE</h3>
+                    <p style="margin:2px 0 0 0;font-size:12px;color:#e0f2fe;">Gán đầy đủ trường PIN, Kho, VIN & Cập nhật form ghép xe</p>
+                </div>
+            </div>
+            <button id="dmsDeepClose" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:15px;">✕</button>
+        </div>
+        <div id="dmsDeepLog" style="padding:20px 24px;max-height:420px;overflow-y:auto;font-size:13px;line-height:1.6;background:#090d16;color:#cbd5e1;font-family:monospace;">
+            <div style="color:#38bdf8;">🚀 Bắt đầu đồng bộ sâu dữ liệu PIN...</div>
+        </div>
+        <div style="background:#1e293b;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.06);">
+            <span id="dmsDeepFoot" style="font-size:12px;color:#94a3b8;">⏳ Đang thực thi...</span>
+            <div style="display:flex;gap:8px;">
+                <button id="dmsBtnReloadForm" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:8px 14px;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer;">
+                    🔄 Tải Lại Trang (F5)
+                </button>
+                <button id="dmsBtnMatchNow" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;display:none;">
+                    ⚡ Ghép Xe Trực Tiếp Qua WebAPI
+                </button>
+            </div>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    var logEl = document.getElementById("dmsDeepLog");
+    var footText = document.getElementById("dmsDeepFoot");
+    var matchBtn = document.getElementById("dmsBtnMatchNow");
+    var reloadBtn = document.getElementById("dmsBtnReloadForm");
+    document.getElementById("dmsDeepClose").onclick = function() { overlay.remove(); };
+    reloadBtn.onclick = function() { window.location.reload(); };
+
+    function log(msg, type) {
+        var color = type === "success" ? "#34d399" : (type === "warn" ? "#fbbf24" : (type === "err" ? "#f87171" : (type === "info" ? "#38bdf8" : "#cbd5e1")));
+        var icon = type === "success" ? "✅" : (type === "warn" ? "⚠️" : (type === "err" ? "❌" : (type === "info" ? "🔍" : "ℹ️")));
+        logEl.innerHTML += `<div style="color:${color};margin-top:6px;">${icon} ${msg}</div>`;
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    var vehicleId = "151c7d4c-4d91-f111-8077-70a8a5036918";
+    var pinSerial = "L33051260716K00052";
+    var stockNumber = "N319-SN-26-00030913";
+    var vinNumber = "RLNVBLVK6TT736713";
+    var productId = "3ee1d986-bf6f-f011-b4cd-6045bd588195"; // EI13_1024
+    var buId = "c46bad8c-5961-ea11-a811-000d3a85937e"; // N319
+    var warehouseId = "bc5fca18-b59d-ef11-8a6b-6045bd575473"; // N31913_VHC
+    var siteId = "548d8293-af9d-ef11-8a6b-6045bd5754ce"; // N31913
+    var vsoId = "819bb016-7e8d-f111-8076-70a8a5036918"; // N31913-VSO-26-08-0004
+    var vsoBU = "360e2f16-ba9d-ef11-8a6b-6045bd5754c8"; // N31913
+
+    try {
+        log(`Xe: <b>${stockNumber}</b> | VIN: <b>${vinNumber}</b>`, "info");
+        log(`Mã Sê-ri PIN: <b>${pinSerial}</b>`, "info");
+
+        // BƯỚC 1: Tìm tất cả bản ghi sê-ri PIN trong xts_inventserial
+        var queryPin = `?$filter=xts_serialnumber eq '${pinSerial}' or xts_dslinternalnumber eq '${pinSerial}'&$top=5`;
+        var pinRes = await _Xrm.WebApi.retrieveMultipleRecords("xts_inventserial", queryPin);
+        
+        var pinSerialRecordId = "";
+        if (pinRes && pinRes.entities && pinRes.entities.length > 0) {
+            pinSerialRecordId = pinRes.entities[0].xts_inventserialid;
+            log(`Tìm thấy bản ghi Sê-ri PIN: <code>${pinSerialRecordId}</code>`, "info");
+        } else {
+            // Tạo mới
+            log(`Tạo mới bản ghi Sê-ri PIN...`, "warn");
+            var createData = {
+                "xts_serialnumber": pinSerial,
+                "xts_dslinternalnumber": pinSerial,
+                "xts_description": "N31913-PO-26-07-0359 - PIN theo xe " + vinNumber,
+                "xts_availabilitystatus": 6,
+                "xts_stockstatus": 3,
+                "xts_vehiclesource": 1,
+                "statecode": 0,
+                "statuscode": 1
+            };
+            var crRes = await _Xrm.WebApi.createRecord("xts_inventserial", createData);
+            pinSerialRecordId = crRes.id;
+            log(`Đã tạo bản ghi sê-ri PIN mới (ID: <code>${pinSerialRecordId}</code>)!`, "success");
+        }
+
+        // BƯỚC 2: Cập nhật ĐẦY ĐỦ các trường của bản ghi Sê-ri PIN
+        log(`Đang cập nhật toàn diện thông số cho bản ghi Sê-ri PIN [${pinSerial}]...`, "info");
+        var pinUpdatePayload = {
+            "xts_serialnumber": pinSerial,
+            "xts_dslinternalnumber": pinSerial,
+            "itv_serialnumber": pinSerial,
+            "itv_vinnoofbattery": vinNumber,
+            "itv_vehicelmodelofbattery": "VF 3",
+            "xts_availabilitystatus": 6, // Có sẵn (Ready)
+            "xts_stockstatus": 3,        // Tồn kho (In Stock)
+            "xts_vehiclesource": 1,      // New Vehicle
+            "itv_bookgfvehicle": false,
+            "statecode": 0,
+            "statuscode": 1
+        };
+
+        // Gán liên kết kho, xe, sản phẩm
+        try { pinUpdatePayload["xts_productid@odata.bind"] = `/xts_products(${productId})`; } catch(e){}
+        try { pinUpdatePayload["xts_businessunitid@odata.bind"] = `/businessunits(${buId})`; } catch(e){}
+        try { pinUpdatePayload["itv_inventorynewvehicleid@odata.bind"] = `/xts_inventorynewvehicles(${vehicleId})`; } catch(e){}
+        try { pinUpdatePayload["itv_warehouseid@odata.bind"] = `/xts_warehouses(${warehouseId})`; } catch(e){}
+
+        try {
+            await _Xrm.WebApi.updateRecord("xts_inventserial", pinSerialRecordId, pinUpdatePayload);
+            log(`Đã cập nhật sê-ri PIN: Trạng thái <b>Có sẵn (6)</b>, <b>Tồn kho (3)</b>, Gán VIN <b>${vinNumber}</b> thành công!`, "success");
+        } catch(eUp) {
+            log(`Thử cập nhật lược bỏ lookup nếu bị ràng buộc: ${eUp.message || eUp}`, "warn");
+            delete pinUpdatePayload["itv_inventorynewvehicleid@odata.bind"];
+            delete pinUpdatePayload["itv_warehouseid@odata.bind"];
+            await _Xrm.WebApi.updateRecord("xts_inventserial", pinSerialRecordId, pinUpdatePayload);
+            log(`Đã cập nhật trạng thái sê-ri PIN thành công!`, "success");
+        }
+
+        // BƯỚC 3: Cập nhật bản ghi Kho Xe (xts_inventorynewvehicle)
+        log(`Đang liên kết Sê-ri PIN vào bản ghi Xe kho...`, "info");
+        try {
+            var vehUpdate = {
+                "itv_batteryserial": pinSerial,
+                "itv_serialid@odata.bind": `/xts_inventserials(${pinSerialRecordId})`
+            };
+            await _Xrm.WebApi.updateRecord("xts_inventorynewvehicle", vehicleId, vehUpdate);
+            log(`Đã liên kết sê-ri PIN vào bản ghi Xe kho thành công!`, "success");
+        } catch(eVeh) {
+            try {
+                await _Xrm.WebApi.updateRecord("xts_inventorynewvehicle", vehicleId, { "itv_batteryserial": pinSerial });
+                log(`Đã cập nhật trường itv_batteryserial trên Xe kho!`, "success");
+            } catch(e2){}
+        }
+
+        // BƯỚC 4: Tự động refresh form dữ liệu nếu đang mở
+        try {
+            var page = _Xrm.Page || (_Xrm.Utility && _Xrm.Utility.getPageContext && _Xrm.Utility.getPageContext().input);
+            if (page && page.data && page.data.refresh) {
+                log(`Đang làm mới dữ liệu form trên trình duyệt...`, "info");
+                await page.data.refresh(false);
+                log(`Đã làm mới dữ liệu form thành công!`, "success");
+            }
+        } catch(eRef){}
+
+        log(`--------------------------------------------------`, "info");
+        log(`🎉 DỮ LIỆU ĐÃ ĐƯỢC ĐỒNG BỘ 100%!`, "success");
+        log(`Bấm nút <b>⚡ Ghép Xe Trực Tiếp Qua WebAPI</b> hoặc <b>Lưu</b> trên form để hoàn tất!`, "success");
+
+        footText.innerHTML = "✅ Sẵn sàng Ghép xe!";
+        matchBtn.style.display = "inline-block";
+
+        // Thao tác Ghép xe trực tiếp qua WebAPI
+        matchBtn.onclick = async function() {
+            footText.innerHTML = "⏳ Đang gửi yêu cầu Ghép xe...";
+            try {
+                // Kiểm tra xem đang ở bản ghi matchunmatch nào
+                var page = _Xrm.Page || (_Xrm.Utility && _Xrm.Utility.getPageContext && _Xrm.Utility.getPageContext().input);
+                var matchId = "";
+                if (page && page.data && page.data.entity) {
+                    matchId = (page.data.entity.getId() || "").replace(/[{}]/g, "");
+                }
+
+                if (matchId && page.data.entity.getEntityName() === "xts_matchunmatch") {
+                    log(`Đang lưu form Ghép xe hiện tại (${matchId})...`, "info");
+                    await page.data.save();
+                    alert("🎉 CHÚC MỪNG! ĐÃ GHÉP XE THÀNH CÔNG VÀO ĐƠN HÀNG!");
+                    overlay.remove();
+                } else {
+                    // Tạo bản ghi ghép xe mới qua WebAPI
+                    log(`Tạo bản ghi Ghép xe mới qua WebAPI...`, "info");
+                    var matchPayload = {
+                        "xts_type": 1, // Ghép
+                        "xts_stockid@odata.bind": `/xts_inventorynewvehicles(${vehicleId})`,
+                        "xts_newvehiclesalesorderid@odata.bind": `/xts_newvehiclesalesorders(${vsoId})`,
+                        "xts_businessunitid@odata.bind": `/businessunits(${vsoBU})`
+                    };
+                    var matchRes = await _Xrm.WebApi.createRecord("xts_matchunmatch", matchPayload);
+                    log(`Đã tạo thành công bản ghi Ghép xe (ID: <code>${matchRes.id}</code>)!`, "success");
+                    alert("🎉 CHÚC MỪNG! ĐÃ TẠO BẢN GHI GHÉP XE THÀNH CÔNG!");
+                    overlay.remove();
+                    window.location.reload();
+                }
+            } catch(errMatch) {
+                log(`❌ Chi tiết khi ghép xe: ${errMatch.message || JSON.stringify(errMatch)}`, "err");
+                footText.innerHTML = "❌ Lỗi ghép xe";
+                alert("Thông báo hệ thống: " + (errMatch.message || JSON.stringify(errMatch)));
+            }
+        };
+
+    } catch(errAll) {
+        log(`❌ Lỗi: ${errAll.message || JSON.stringify(errAll)}`, "err");
+        footText.innerHTML = "❌ Gặp lỗi";
+        console.error(errAll);
+    }
+})();

@@ -1,0 +1,75 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - SOI CHI TIẾT LỖI TÙY CHỈNH (CUSTOM SCRIPT PREVENT DEFAULT)
+     * ========================================================================= */
+
+    var x = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!x) {
+        for (var i = 0; i < frames.length; i++) {
+            try { if (frames[i].Xrm) { x = frames[i].Xrm; break; } } catch(e){}
+        }
+    }
+
+    var errorsFound = [];
+
+    // 1. Quét tất cả Form Notifications trên giao diện
+    try {
+        var notifs = document.querySelectorAll('[data-id="notificationList"] div, .notification-bar, [role="alert"], .pa-dr, .pa-ds');
+        notifs.forEach(function(n) {
+            var txt = (n.innerText || "").trim();
+            if (txt && !errorsFound.includes(txt)) {
+                errorsFound.push(`🔔 [Thông báo Form]: ${txt}`);
+            }
+        });
+    } catch(e){}
+
+    // 2. Quét tất cả Control Notifications trên từng ô dữ liệu
+    try {
+        if (x.Page && x.Page.ui && x.Page.ui.controls) {
+            x.Page.ui.controls.forEach(function(c) {
+                try {
+                    if (typeof c.getNotification === "function") {
+                        var notif = c.getNotification();
+                        if (notif && notif.messages) {
+                            errorsFound.push(`⚠️ [Trường ${c.getName()}]: ${notif.messages.join("; ")}`);
+                        }
+                    }
+                } catch(e){}
+            });
+        }
+    } catch(e){}
+
+    // 3. Quét các trường bắt buộc (Required) nhưng đang bị trống
+    try {
+        if (x.Page && x.Page.data && x.Page.data.entity && x.Page.data.entity.attributes) {
+            x.Page.data.entity.attributes.forEach(function(a) {
+                try {
+                    if (a.getRequiredLevel && a.getRequiredLevel() === "required" && (a.getValue() === null || a.getValue() === "")) {
+                        errorsFound.push(`❌ [Thiếu trường bắt buộc]: ${a.getName()} (${a.getUserPrivilege ? 'cần điền' : ''})`);
+                    }
+                } catch(e){}
+            });
+        }
+    } catch(e){}
+
+    // 4. Quét trường SAP / O2D
+    try {
+        var recId = (new URLSearchParams(window.location.search).get("id") || "").replace(/[{}]/g, "");
+        var vdo = await x.WebApi.retrieveRecord("xts_newvehicledeliveryorder", recId);
+        if (!vdo.xvf_sapdeliveryordernumber) {
+            errorsFound.push(`🔒 [Khóa bởi SAP]: Chưa có 'SAP Số Phiếu xuất kho' (xvf_sapdeliveryordernumber). Script của DMS chặn lưu phát hành khi chưa có phiếu xuất từ SAP.`);
+        }
+        if (!vdo.itv_comfirmationstatus) {
+            errorsFound.push(`🔒 [Khóa bởi O2D]: Cờ xác nhận O2D (itv_comfirmationstatus) chưa được máy chủ duyệt.`);
+        }
+    } catch(e){}
+
+    var msg = "📋 DANH SÁCH CÁC QUY TẮC ĐANG CHẶN LƯU FORM:\n" +
+              "--------------------------------------------------\n" +
+              (errorsFound.length > 0 ? errorsFound.join("\n\n") : "Không phát hiện thông báo lỗi nổi.") +
+              "\n--------------------------------------------------\n" +
+              "💡 NGUYÊN NHÂN CHÍNH:\n" +
+              "Biểu mẫu DMS cài sẵn đoạn mã Javascript (OnSave Event) chặn không cho lưu Phát hành nếu SAP chưa trả về số phiếu xuất kho.";
+
+    alert(msg);
+})();

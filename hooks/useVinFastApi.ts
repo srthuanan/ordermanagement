@@ -27,7 +27,9 @@ export const useVinFastApi = (currentUser?: string, isCurrentUserAdmin?: boolean
             try {
                 archivedData = JSON.parse(cachedArchivesRaw);
                 // Loại bỏ những đơn hàng cũ trong cache đã được update lên 'activeData' từ API (để luôn có dữ liệu mới nhất)
-                archivedData = archivedData.filter(o => !activeOrderNumbers.has(o['Số đơn hàng']));
+                archivedData = archivedData
+                    .filter(o => !activeOrderNumbers.has(o['Số đơn hàng']))
+                    .map(o => ({ ...o, 'Kết quả': 'Đã xuất hóa đơn', ket_qua: 'Đã xuất hóa đơn' }));
                 hasArchives = archivedData.length > 0;
             } catch (e) {
                 console.error("Failed to parse cached archives:", e);
@@ -38,8 +40,8 @@ export const useVinFastApi = (currentUser?: string, isCurrentUserAdmin?: boolean
         // 3. Kết hợp: Dữ liệu API (mới nhất) + Dữ liệu lưu trữ (phiên hiện tại)
         return { data: [...activeData, ...archivedData], hasArchives };
     }, {
-        refreshInterval: 60000, // Tăng lên 1 phút vì đã có realtime, refresh này chỉ là backup
-        revalidateOnFocus: true,
+        refreshInterval: 120000, // 2 phút (vì đã có Realtime lắng nghe tự động)
+        revalidateOnFocus: false,
         revalidateOnReconnect: true,
     });
 

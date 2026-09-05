@@ -1,5 +1,6 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
-import { getStorageItem, ApiResult, ADMIN_USER } from './baseService';
+import { getStorageItem, getApi, postApi, ApiResult, ADMIN_USER } from './baseService';
+
 
 export const fetchNotifications = async (): Promise<ApiResult> => {
     try {
@@ -45,7 +46,6 @@ export const fetchNotifications = async (): Promise<ApiResult> => {
         };
     } catch (err: any) {
         const currentUser = getStorageItem("currentConsultant") || ADMIN_USER;
-        const { getApi } = await import('./baseService');
         return getApi({ 
             action: 'getNotifications', 
             currentUser: currentUser, 
@@ -74,7 +74,6 @@ export const markAllNotificationsAsRead = async (): Promise<ApiResult> => {
         if (error) throw error;
         return { status: 'SUCCESS', message: 'Đã đánh dấu tất cả thông báo là đã đọc.' };
     } catch (err: any) {
-        const { postApi } = await import('./baseService');
         return postApi({ action: 'markAllNotificationsAsRead' });
     }
 };
@@ -85,7 +84,6 @@ export const markNotificationAsRead = async (notificationId: string): Promise<Ap
         if (error) throw error;
         return { status: 'SUCCESS', message: 'Đã đánh dấu là đã đọc.' };
     } catch (err) {
-        const { postApi } = await import('./baseService');
         return postApi({ action: 'markNotificationAsRead', notificationId });
     }
 };
@@ -132,7 +130,6 @@ export const getGlobalNotification = async (): Promise<ApiResult> => {
         if (error) throw error;
         return { status: 'SUCCESS', message: 'Fetched global notification from Supabase', data: data.value };
     } catch (err) {
-        const { getApi } = await import('./baseService');
         return getApi({ action: 'getGlobalNotification' });
     }
 };
@@ -144,7 +141,6 @@ export const updateGlobalNotification = async (notification: { content: string; 
         if (error) throw error;
         return { status: 'SUCCESS', message: 'Cập nhật thông báo thành công.' };
     } catch (err) {
-        const { postApi } = await import('./baseService');
         return postApi({ action: 'updateGlobalNotification', ...notification });
     }
 };

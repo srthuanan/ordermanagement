@@ -1,23 +1,37 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
-import { getStorageItem, mapOrderDbToUi, ApiResult, logAction, uploadToSupabase, ADMIN_USER } from './baseService';
+import { getStorageItem, mapOrderDbToUi, ApiResult, logAction, uploadToSupabase, getApi, postApi, ADMIN_USER } from './baseService';
+import { createNotification } from './notificationService';
 import { Order } from '../../types';
+
 
 export const getPaginatedData = async (_?: string[], __?: string, ___?: boolean): Promise<ApiResult> => {
     try {
         let query = supabase.from('donhang').select('*').not('ket_qua', 'ilike', 'Đã hủy%');
-        const { data, error } = await query;
+        const [{ data, error }, { data: yeucauList }] = await Promise.all([
+            query,
+            supabase.from('yeucauxhd').select('so_don_hang, ghi_chu_admin, url_hop_dong, url_de_nghi_xhd')
+        ]);
         if (error) throw error;
-        const formattedData = (data || []).map((order: any) => ({
-            'Tên tư vấn bán hàng': order.ten_tu_van_ban_hang, 'Tên khách hàng': order.ten_khach_hang, 'Dòng xe': order.dong_xe,
-            'Phiên bản': order.phien_ban, 'Ngoại thất': order.ngoai_that, 'Nội thất': order.noi_that,
-            'Số đơn hàng': order.so_don_hang, 'Ngày cọc': order.ngay_coc, 'Thời gian nhập': order.thoi_gian_nhap,
-            'Kết quả': order.ket_qua, 'Trạng thái gửi mail': order.trang_thai_gui_mail, 'VIN': order.vin,
-            'Thời gian ghép': order.thoi_gian_ghep, 'Số ngày ghép': order.so_ngay_ghep, 'Ngày xuất hóa đơn': order.ngay_xuat_hoa_don,
-            'Cảnh báo quá hạn': order.canh_bao_qua_han, 'Cảnh báo sai DMS': order.canh_bao_sai_dms,
-            'LinkHoaDonDaXuat': order.link_hoa_don_da_xuat, 'Trạng thái VC': order.trang_thai_vc,
-            'Ghi chú hủy': order.ghi_chu_huy, 'Thời gian hủy': order.thoi_gian_huy,
-            'CHÍNH SÁCH': order.chinh_sach
-        }));
+        const yeucauMap = new Map((yeucauList || []).map((y: any) => [y.so_don_hang?.trim(), y]));
+
+        const formattedData = (data || []).map((order: any) => {
+            const yc = yeucauMap.get(order.so_don_hang?.trim());
+            return {
+                'Tên tư vấn bán hàng': order.ten_tu_van_ban_hang, 'Tên khách hàng': order.ten_khach_hang, 'Dòng xe': order.dong_xe,
+                'Phiên bản': order.phien_ban, 'Ngoại thất': order.ngoai_that, 'Nội thất': order.noi_that,
+                'Số đơn hàng': order.so_don_hang, 'Ngày cọc': order.ngay_coc, 'Thời gian nhập': order.thoi_gian_nhap,
+                'Kết quả': order.ket_qua, 'Trạng thái gửi mail': order.trang_thai_gui_mail, 'VIN': order.vin,
+                'Thời gian ghép': order.thoi_gian_ghep, 'Số ngày ghép': order.so_ngay_ghep, 'Ngày xuất hóa đơn': order.ngay_xuat_hoa_don,
+                'Cảnh báo quá hạn': order.canh_bao_qua_han, 'Cảnh báo sai DMS': order.canh_bao_sai_dms,
+                'LinkHoaDonDaXuat': order.link_hoa_don_da_xuat, 'Trạng thái VC': order.trang_thai_vc,
+                'Ghi chú hủy': order.ghi_chu_huy, 'Thời gian hủy': order.thoi_gian_huy,
+                'CHÍNH SÁCH': order.chinh_sach,
+                'LinkHopDong': yc?.url_hop_dong || order.link_hop_dong,
+                'LinkDeNghiXHD': yc?.url_de_nghi_xhd || order.link_de_nghi_xhd,
+                'Ghi chú Admin': yc?.ghi_chu_admin || '',
+                'ghi_chu_admin': yc?.ghi_chu_admin || ''
+            };
+        });
         return { status: 'SUCCESS', message: 'Fetched orders from Supabase', data: formattedData };
     } catch (err: any) {
         return { status: 'ERROR', message: err.message };
@@ -39,7 +53,7 @@ export const fetchAllArchivedData = async (): Promise<ApiResult> => {
             'Phiên bản': order.phien_ban, 'Ngoại thất': order.ngoai_that, 'Nội thất': order.noi_that,
             'Số đơn hàng': order.so_don_hang, 'SỐ ĐƠN HÀNG': order.so_don_hang, 'Ngày cọc': order.ngay_coc,
             'VIN': order.vin, 'SỐ VIN': order.vin, 'Ngày xuất hóa đơn': order.ngay_xuat_hoa_don,
-            'NGÀY XUẤT HÓA ĐƠN': order.ngay_xuat_hoa_don, 'Kết quả': order.ket_qua || 'Đã xuất hóa đơn',
+            'NGÀY XUẤT HÓA ĐƠN': order.ngay_xuat_hoa_don, 'Kết quả': 'Đã xuất hóa đơn',
             'Số máy': order.so_may, 'SỐ MÁY': order.so_may, 'LinkHopDong': order.url_hop_dong,
             'LinkDeNghiXHD': order.url_de_nghi_xhd, 'LinkHoaDonDaXuat': order.url_hoa_don_da_xuat, 'Trạng thái VC': order.trang_thai_vc
         }));
@@ -79,7 +93,8 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
         delete payloadData.vin;
     } else {
         try {
-            const { data: availableCars } = await supabase.from('khoxe').select('vin, noi_that, ma_dms').eq('trang_thai', 'Chưa ghép').eq('dong_xe', payloadData.dong_xe).eq('phien_ban', payloadData.phien_ban).eq('ngoai_that', payloadData.ngoai_that).order('ngay_nhap', { ascending: true });
+            // Tầng 1: Khớp tuyệt đối màu chính
+            const { data: availableCars } = await supabase.from('khoxe').select('vin, ngoai_that, noi_that, ma_dms').eq('trang_thai', 'Chưa ghép').eq('dong_xe', payloadData.dong_xe).eq('phien_ban', payloadData.phien_ban).eq('ngoai_that', payloadData.ngoai_that).order('ngay_nhap', { ascending: true });
             if (availableCars && availableCars.length > 0) {
                 const normalize = (str?: string) => (str || '').toLowerCase().trim().normalize('NFC');
                 const orderNoiThat = normalize(payloadData.noi_that);
@@ -91,18 +106,43 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
                 });
                 if (matchedCar) { vinDk = matchedCar.vin; ketQua = "Đã ghép"; pairedTime = new Date().toISOString(); }
             }
+
+            // Tầng 2: Flex-Match nếu không tìm thấy màu chính & is_flex_match = true
+            const isFlex = String(payloadData.is_flex_match) === 'true';
+            if (!vinDk && isFlex) {
+                const flexExt: string[] = Array.isArray(payloadData.ngoai_that_flex) ? payloadData.ngoai_that_flex : typeof payloadData.ngoai_that_flex === 'string' ? JSON.parse(payloadData.ngoai_that_flex || '[]') : [];
+                const flexInt: string[] = Array.isArray(payloadData.noi_that_flex) ? payloadData.noi_that_flex : typeof payloadData.noi_that_flex === 'string' ? JSON.parse(payloadData.noi_that_flex || '[]') : [];
+
+                const { data: allCars } = await supabase.from('khoxe').select('vin, ngoai_that, noi_that, ma_dms').eq('trang_thai', 'Chưa ghép').eq('dong_xe', payloadData.dong_xe).eq('phien_ban', payloadData.phien_ban).order('ngay_nhap', { ascending: true });
+                if (allCars && allCars.length > 0) {
+                    const orderPrefix = payloadData.so_don_hang.substring(0, 6).toUpperCase();
+                    const flexMatchCar = allCars.find(car => {
+                        const carDms = (car.ma_dms || '').toUpperCase();
+                        if (carDms !== orderPrefix) return false;
+
+                        const extOk = flexExt.length === 0 || flexExt.includes('ALL') || flexExt.includes(car.ngoai_that) || car.ngoai_that === payloadData.ngoai_that;
+                        const intOk = flexInt.length === 0 || flexInt.includes('ALL') || flexInt.includes(car.noi_that) || car.noi_that === payloadData.noi_that;
+                        return extOk && intOk;
+                    });
+                    if (flexMatchCar) { vinDk = flexMatchCar.vin; ketQua = "Đã ghép"; pairedTime = new Date().toISOString(); }
+                }
+            }
         } catch (autoMatchErr) {}
     }
 
     const nowISO = new Date().toISOString();
     try {
+        const isFlexMatch = String(payloadData.is_flex_match) === 'true';
+        const ngoaiThatFlex = Array.isArray(payloadData.ngoai_that_flex) ? payloadData.ngoai_that_flex : typeof payloadData.ngoai_that_flex === 'string' ? JSON.parse(payloadData.ngoai_that_flex || '[]') : [];
+        const noiThatFlex = Array.isArray(payloadData.noi_that_flex) ? payloadData.noi_that_flex : typeof payloadData.noi_that_flex === 'string' ? JSON.parse(payloadData.noi_that_flex || '[]') : [];
+
         const insertPayload: Record<string, any> = {
-            ten_tu_van_ban_hang: payloadData.ten_ban_hang, ten_khach_hang: payloadData.ten_khach_hang, dong_xe: payloadData.dong_xe, phien_ban: payloadData.phien_ban, ngoai_that: payloadData.ngoai_that, noi_that: payloadData.noi_that, so_don_hang: payloadData.so_don_hang, ngay_coc: payloadData.ngay_coc || null, thoi_gian_nhap: nowISO, ket_qua: ketQua, vin: vinDk, thoi_gian_ghep: pairedTime
+            ten_tu_van_ban_hang: payloadData.ten_ban_hang, ten_khach_hang: payloadData.ten_khach_hang, dong_xe: payloadData.dong_xe, phien_ban: payloadData.phien_ban, ngoai_that: payloadData.ngoai_that, noi_that: payloadData.noi_that, so_don_hang: payloadData.so_don_hang, ngay_coc: payloadData.ngay_coc || null, thoi_gian_can_xe: payloadData.thoi_gian_can_xe || null, thoi_gian_nhap: nowISO, ket_qua: ketQua, vin: vinDk, thoi_gian_ghep: pairedTime, is_flex_match: isFlexMatch, ngoai_that_flex: ngoaiThatFlex, noi_that_flex: noiThatFlex, chinh_sach: payloadData.chinh_sach || ''
         };
         const { error } = await supabase.from('donhang').upsert(insertPayload, { onConflict: 'so_don_hang' });
         if (error) throw error;
         if (vinDk) {
-            await supabase.from('khoxe').update({ trang_thai: 'Đã ghép', nguoi_giu_xe: payloadData.ten_ban_hang, thoi_gian_het_han_giu: 'Vô thời hạn', is_extension_requested: false }).eq('vin', vinDk);
+            await supabaseAdmin.from('khoxe').update({ trang_thai: 'Đã ghép', nguoi_giu_xe: payloadData.ten_ban_hang, thoi_gian_het_han_giu: 'Vô thời hạn', is_extension_requested: false }).eq('vin', vinDk);
             await supabase.from('car_hold_activities').update({ updated_at: nowISO, status: 'matched' }).eq('vin', vinDk).eq('status', 'active');
             await supabase.from('car_hold_activities').delete().eq('vin', vinDk).eq('type', 'QUEUE');
         }
@@ -144,12 +184,11 @@ export const pairVinToOrder = async (orderNumber: string, vin: string) => {
             if (activeHold) await supabase.from('car_hold_activities').update({ updated_at: pairedTime, status: 'matched' }).eq('id', activeHold.id);
             else await supabase.from('car_hold_activities').insert({ vin: vin, username: orderData.ten_tu_van_ban_hang, tvbh_name: orderData.ten_tu_van_ban_hang, type: 'HOLD', status: 'matched', created_at: pairedTime, updated_at: pairedTime });
         }
-        await supabase.from('khoxe').update({ trang_thai: 'Đã ghép', nguoi_giu_xe: pairedBy, thoi_gian_het_han_giu: 'Vô thời hạn' }).eq('vin', vin);
+        await supabaseAdmin.from('khoxe').update({ trang_thai: 'Đã ghép', nguoi_giu_xe: pairedBy, thoi_gian_het_han_giu: 'Vô thời hạn' }).eq('vin', vin);
         await supabase.from('car_hold_activities').delete().eq('vin', vin).eq('type', 'QUEUE');
         await logAction('PAIR_VIN', { orderNumber, vin }, orderNumber, 'order');
         
         try {
-            const { createNotification } = await import('./notificationService');
             await createNotification({ message: `TVBH ${pairedBy} đã ghép xe ${vin} cho ĐH ${orderNumber}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: orderNumber });
             
             // GỬI EMAIL THÔNG BÁO (match_success)
@@ -170,9 +209,8 @@ export const pairVinToOrder = async (orderNumber: string, vin: string) => {
     }
 };
 
-export const cancelRequest = async (orderNumber: string, reason: string, unmatchType: string = 'Hủy luôn đơn hàng (Hủy đơn)') => {
+export const cancelRequest = async (orderNumber: string, reason: string, unmatchType: string = 'Hủy luôn đơn hàng (Hủy đơn)', _thoiGianCanXe?: string) => {
     try {
-        const { createNotification } = await import('./notificationService');
         const currentUser = getStorageItem("currentConsultant") || "Unknown";
         
         const { data: order } = await supabase.from('donhang').select('vin, ket_qua').eq('so_don_hang', orderNumber).maybeSingle();
@@ -183,7 +221,7 @@ export const cancelRequest = async (orderNumber: string, reason: string, unmatch
         const ketQuaMoi = unmatchType.includes('Chờ xe') ? 'Chưa ghép' : 'Đã hủy';
         
         if (order && order.vin) {
-            await supabase.from('khoxe').update({ trang_thai: 'Chưa ghép', nguoi_giu_xe: null, thoi_gian_het_han_giu: null }).eq('vin', order.vin);
+            await supabaseAdmin.from('khoxe').update({ trang_thai: 'Chưa ghép', nguoi_giu_xe: null, thoi_gian_het_han_giu: null }).eq('vin', order.vin);
             const { data: matchedHold } = await supabase.from('car_hold_activities').select('id').eq('vin', order.vin).in('status', ['matched', 'active']).order('created_at', { ascending: false }).limit(1).single();
             if (matchedHold) await supabase.from('car_hold_activities').update({ status: ketQuaMoi === 'Đã hủy' ? 'order_cancelled' : 'unmatched', reason, updated_at: new Date().toISOString() }).eq('id', matchedHold.id);
             else await supabase.from('car_hold_activities').insert({ vin: order.vin, username: currentUser, tvbh_name: currentUser, type: 'HOLD', status: ketQuaMoi === 'Đã hủy' ? 'order_cancelled' : 'unmatched', reason, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
@@ -245,6 +283,7 @@ export const updateOrderDetails = async (orderNumber: string, details: Partial<O
         if (details["Nội thất"]) updateData.noi_that = details["Nội thất"];
         if (details["Ngày cọc"]) updateData.ngay_coc = details["Ngày cọc"];
         if (details["Tên tư vấn bán hàng"]) updateData.ten_tu_van_ban_hang = details["Tên tư vấn bán hàng"];
+        if (details["CHÍNH SÁCH"] !== undefined || details.chinh_sach !== undefined) updateData.chinh_sach = details["CHÍNH SÁCH"] || details.chinh_sach;
         if (matchedVin) { updateData.vin = matchedVin; updateData.ket_qua = 'Đã ghép'; updateData.thoi_gian_ghep = new Date().toISOString(); }
         if (Object.keys(updateData).length > 0) {
             const { error: donhangError } = await supabase.from('donhang').update(updateData).eq('so_don_hang', orderNumber);
@@ -254,7 +293,7 @@ export const updateOrderDetails = async (orderNumber: string, details: Partial<O
             await supabase.from('yeucauxhd').update(yeuUpdate).eq('so_don_hang', orderNumber);
         }
         if (matchedVin) {
-            await supabase.from('khoxe').update({ trang_thai: 'Đã ghép' }).eq('vin', matchedVin);
+            await supabaseAdmin.from('khoxe').update({ trang_thai: 'Đã ghép' }).eq('vin', matchedVin);
             await supabase.from('car_hold_activities').delete().eq('vin', matchedVin).eq('type', 'QUEUE');
         }
         return { status: 'SUCCESS', message: matchedVin ? `Cập nhật thành công! Mối nối tự động ghép với VIN: ${matchedVin}` : "Cập nhật thông tin đơn hàng thành công.", autoMatched: !!matchedVin, vin: matchedVin };
@@ -305,7 +344,8 @@ export const superUpdateOrderDetails = async (oldOrderNumber: string, details: a
                 ngay_xuat_hoa_don: details['Ngày xuất hóa đơn'] || null, 
                 link_hoa_don_da_xuat: details['LinkHoaDonDaXuat'],
                 so_may: details['Số máy'] || details['SỐ MÁY'],
-                ma_dms: details['Mã DMS']
+                ma_dms: details['Mã DMS'],
+                chinh_sach: details['CHÍNH SÁCH'] || details['chinh_sach']
             },
             yeucauxhd: {
                 so_don_hang: details['Số đơn hàng'],
@@ -320,7 +360,8 @@ export const superUpdateOrderDetails = async (oldOrderNumber: string, details: a
                 ma_dms: details['Mã DMS'],
                 ngay_coc: details['Ngày cọc'] || null, 
                 ngay_xuat_hoa_don: details['Ngày xuất hóa đơn'] || null, 
-                url_hoa_don_da_xuat: details['LinkHoaDonDaXuat']
+                url_hoa_don_da_xuat: details['LinkHoaDonDaXuat'],
+                chinh_sach: details['CHÍNH SÁCH'] || details['chinh_sach']
             },
             yeucauvc: { 
                 so_don_hang: details['Số đơn hàng'],
@@ -342,7 +383,8 @@ export const superUpdateOrderDetails = async (oldOrderNumber: string, details: a
                 ngay_coc: details['Ngày cọc'] || null, 
                 ngay_xuat_hoa_don: details['Ngày xuất hóa đơn'] || details['NGÀY XUẤT HÓA ĐƠN'] || null, 
                 url_hoa_don_da_xuat: details['LinkHoaDonDaXuat'], 
-                trang_thai_vc: details['Trạng thái VC']
+                trang_thai_vc: details['Trạng thái VC'],
+                chinh_sach: details['CHÍNH SÁCH'] || details['chinh_sach']
             }
         };
 
@@ -435,7 +477,7 @@ export const changeOrderConfiguration = async (orderNumber: string, newConfig: P
             throw new Error("Đơn hàng này đã xuất hóa đơn, không thể đổi cấu hình xe được nữa.");
         }
 
-        if (order.vin) await supabase.from('khoxe').update({ trang_thai: 'Chưa ghép', nguoi_giu_xe: null, thoi_gian_het_han_giu: null }).eq('vin', order.vin);
+        if (order.vin) await supabaseAdmin.from('khoxe').update({ trang_thai: 'Chưa ghép', nguoi_giu_xe: null, thoi_gian_het_han_giu: null }).eq('vin', order.vin);
         const updateData: any = { dong_xe: newConfig["Dòng xe"], phien_ban: newConfig["Phiên bản"], ngoai_that: newConfig["Ngoại thất"], noi_that: newConfig["Nội thất"], vin: null, ket_qua: 'Chưa ghép', thoi_gian_ghep: null };
         const { error: updateErr } = await supabase.from('donhang').update(updateData).eq('so_don_hang', orderNumber);
         if (updateErr) throw updateErr;
@@ -446,7 +488,7 @@ export const changeOrderConfiguration = async (orderNumber: string, newConfig: P
         if (matchedCars && matchedCars.length > 0) {
             finalVin = matchedCars[0].vin;
             await supabase.from('donhang').update({ vin: finalVin, ket_qua: 'Đã ghép', thoi_gian_ghep: new Date().toISOString() }).eq('so_don_hang', orderNumber);
-            await supabase.from('khoxe').update({ trang_thai: 'Đã ghép' }).eq('vin', finalVin);
+            await supabaseAdmin.from('khoxe').update({ trang_thai: 'Đã ghép' }).eq('vin', finalVin);
             await supabase.from('car_hold_activities').delete().eq('vin', finalVin).eq('type', 'QUEUE');
             finalMessage += ` Hệ thống đã tự động ghép với xe mới (VIN: ${finalVin})`; autoMatched = true;
         }
@@ -459,13 +501,10 @@ export const changeOrderConfiguration = async (orderNumber: string, newConfig: P
 };
 
 export const getOrderHistory = async (orderNumber: string): Promise<ApiResult> => {
-    const { getApi } = await import('./baseService');
     return getApi({ action: 'getOrderHistory', orderNumber });
 };
 
 export const requestVinClub = async (payload: { orderNumber: string; customerType: string; dmsCode?: string; vin?: string; files?: Record<string, File | null>; }): Promise<ApiResult> => {
-    const { postApi } = await import('./baseService');
-    const { createNotification } = await import('./notificationService');
     try {
         const { orderNumber, customerType, dmsCode, vin, files } = payload;
         const requestedBy = getStorageItem("currentConsultant") || "Unknown User";
@@ -538,7 +577,6 @@ export const globalSearch = async (keyword: string, scope: 'active' | 'archive' 
         await Promise.all(searchPromises);
         return { status: 'SUCCESS', message: 'Search completed via Supabase', data: searchResults };
     } catch (err: any) {
-        const { getApi } = await import('./baseService');
         return getApi({ action: 'searchGlobal', keyword, scope, isAdmin: String(getStorageItem("userRole") === 'Quản trị viên') });
     }
 };
@@ -555,7 +593,6 @@ export const getYeuCauVcData = async (): Promise<ApiResult> => {
         }));
         return { status: 'SUCCESS', message: 'Fetched VC requests from Supabase', data: formattedData };
     } catch (err: any) {
-        const { getApi } = await import('./baseService');
         try {
             return await getApi({ action: 'getYeuCauVcData' });
         } catch (gasErr) {

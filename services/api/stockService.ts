@@ -358,7 +358,7 @@ export const tryAutoMatchWaitingOrder = async (vin: string, config: { dong_xe: s
             const orderNumber = bestMatch.so_don_hang;
             const tvbh = bestMatch.ten_tu_van_ban_hang;
 
-            console.log(`[tryAutoMatchWaitingOrder] Khớp thành công: ĐH ${orderNumber} (TVBH: ${tvbh})`);
+            console.log(`[tryAutoMatchWaitingOrder] Khớp chính xác 100%: ĐH ${orderNumber} (TVBH: ${tvbh})`);
 
             // 2. Cập nhật trạng thái Kho xe
             const { error: khoxeError } = await supabaseAdmin.from('khoxe').update({
@@ -376,7 +376,7 @@ export const tryAutoMatchWaitingOrder = async (vin: string, config: { dong_xe: s
             }).eq('so_don_hang', orderNumber);
             if (orderError) throw orderError;
 
-            // 4. Gửi thông báo & Email (Đồng bộ với logic hệ thống)
+            // 4. Gửi thông báo & Email
             if (tvbh) {
                 await createNotification({
                     message: `Hệ thống tự động ghép xe dự phòng (VIN: ${vin}) cho đơn hàng ${orderNumber} của bạn.`,
@@ -387,7 +387,6 @@ export const tryAutoMatchWaitingOrder = async (vin: string, config: { dong_xe: s
                 });
             }
 
-            // Gửi email match_success
             const { data: fullOrder } = await supabaseAdmin.from('donhang').select('*').eq('so_don_hang', orderNumber).single();
             supabaseAdmin.functions.invoke('send-email', {
                 body: { 
@@ -398,6 +397,69 @@ export const tryAutoMatchWaitingOrder = async (vin: string, config: { dong_xe: s
 
             await logAction('AUTO_MATCH_BACKUP', { orderNumber, vin, config }, orderNumber, 'order');
             return true;
+        }
+
+        // --- TIER 2: FLEX-MATCH (Biên độ mở) ---
+        console.log(`[tryAutoMatchWaitingOrder] Không có đơn khớp 100%, tìm đơn Flex-Match cho VIN: ${vin}`);
+        const { data: flexOrders, error: flexError } = await supabaseAdmin.from('donhang')
+            .select('*')
+            .eq('ket_qua', 'Chưa ghép')
+            .eq('dong_xe', config.dong_xe)
+            .eq('phien_ban', config.phien_ban)
+            .eq('is_flex_match', true)
+            .order('ngay_coc', { ascending: true })
+            .order('thoi_gian_can_xe', { ascending: true, nullsFirst: false })
+            .order('created_at', { ascending: true });
+
+        if (!flexError && flexOrders && flexOrders.length > 0) {
+            const bestFlexMatch = flexOrders.find((order: any) => {
+                const extList = Array.isArray(order.ngoai_that_flex) ? order.ngoai_that_flex : [];
+                const intList = Array.isArray(order.noi_that_flex) ? order.noi_that_flex : [];
+                
+                const extAllowed = extList.length === 0 || extList.includes('ALL') || extList.includes(config.ngoai_that) || order.ngoai_that === config.ngoai_that;
+                const intAllowed = intList.length === 0 || intList.includes('ALL') || intList.includes(config.noi_that) || order.noi_that === config.noi_that;
+                
+                return extAllowed && intAllowed;
+            });
+
+            if (bestFlexMatch) {
+                const orderNumber = bestFlexMatch.so_don_hang;
+                const tvbh = bestFlexMatch.ten_tu_van_ban_hang;
+                console.log(`[tryAutoMatchWaitingOrder] Khớp Flex-Match thành công: ĐH ${orderNumber} (VIN: ${vin}, Ngoại thất: ${config.ngoai_that}, Nội thất: ${config.noi_that})`);
+
+                await supabaseAdmin.from('khoxe').update({
+                    trang_thai: 'Đã ghép',
+                    nguoi_giu_xe: tvbh,
+                    thoi_gian_het_han_giu: 'Vô thời hạn'
+                }).eq('vin', vin);
+
+                await supabaseAdmin.from('donhang').update({
+                    vin: vin,
+                    ket_qua: 'Đã ghép',
+                    thoi_gian_ghep: new Date().toISOString()
+                }).eq('so_don_hang', orderNumber);
+
+                if (tvbh) {
+                    await createNotification({
+                        message: `🔀 Flex-Match: Hệ thống đã tự động ghép xe màu phụ (VIN: ${vin} - ${config.ngoai_that}/${config.noi_that}) cho đơn hàng ${orderNumber} của bạn.`,
+                        type: 'success',
+                        recipient: tvbh,
+                        targetView: 'orders',
+                        targetId: orderNumber
+                    });
+                }
+
+                const { data: fullOrder } = await supabaseAdmin.from('donhang').select('*').eq('so_don_hang', orderNumber).single();
+                supabaseAdmin.functions.invoke('send-email', {
+                    body: { 
+                        actionId: 'match_success', 
+                        record: fullOrder || bestFlexMatch
+                    }
+                }).then();
+
+                await logAction('AUTO_MATCH_FLEX', { orderNumber, vin, config }, orderNumber, 'order');
+                return true;
+            }
         }
 
         return false;

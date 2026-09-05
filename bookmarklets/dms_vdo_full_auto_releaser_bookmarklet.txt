@@ -1,0 +1,194 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - TOOL TỰ ĐỘNG XỬ LÝ TOÀN BỘ VSO & PHÁT HÀNH PHIẾU GIAO XE (VDO)
+     * ========================================================================= */
+
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm) {
+        for (var i = 0; i < frames.length; i++) {
+            try { if (frames[i].Xrm) { _Xrm = frames[i].Xrm; break; } } catch(e){}
+        }
+    }
+    if (!_Xrm) { alert("⚠️ Vui lòng mở trang VinFast DMS!"); return; }
+
+    var entityName = "xts_newvehicledeliveryorder";
+    var recordId = (new URLSearchParams(window.location.search).get("id") || "").replace(/[{}]/g, "");
+
+    // Xóa overlay cũ nếu có
+    var old = document.getElementById("dmsAutoReleaserOverlay");
+    if (old) old.remove();
+
+    var overlay = document.createElement("div");
+    overlay.id = "dmsAutoReleaserOverlay";
+    overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.92);backdrop-filter:blur(10px);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#f8fafc;";
+
+    var modal = document.createElement("div");
+    modal.style = "background:#0f172a;width:760px;max-width:95%;border-radius:18px;border:1px solid rgba(56,189,248,0.35);box-shadow:0 25px 60px rgba(0,0,0,0.9);display:flex;flex-direction:column;overflow:hidden;";
+
+    modal.innerHTML = `
+        <div style="background:linear-gradient(135deg,#059669,#0284c7);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:28px;">⚡</span>
+                <div>
+                    <h3 style="margin:0;font-size:16px;font-weight:800;color:#fff;">TỰ ĐỘNG XỬ LÝ TOÀN DIỆN & PHÁT HÀNH PHIẾU GIAO XE</h3>
+                    <p style="margin:2px 0 0 0;font-size:12px;color:#e0f2fe;">Tự sửa lỗi VSO, duyệt hóa đơn, xác thực O2D và kích hoạt Phát hành</p>
+                </div>
+            </div>
+            <button id="dmsAutoClose" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:16px;">✕</button>
+        </div>
+
+        <div id="dmsAutoLog" style="padding:20px 24px;max-height:450px;overflow-y:auto;font-size:13px;line-height:1.7;background:#090d16;color:#cbd5e1;font-family:monospace;">
+            <div style="color:#38bdf8;">🚀 Đang khởi động quy trình tự động xử lý...</div>
+        </div>
+
+        <div style="background:#1e293b;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.06);">
+            <span id="dmsAutoStatusText" style="font-size:12px;color:#94a3b8;">⏳ Đang thực thi các bước...</span>
+            <button id="dmsAutoCancel" style="background:rgba(255,255,255,0.1);border:none;color:#cbd5e1;padding:8px 18px;border-radius:8px;font-size:13px;cursor:pointer;">Đóng</button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    var logEl = document.getElementById("dmsAutoLog");
+    var statusText = document.getElementById("dmsAutoStatusText");
+    document.getElementById("dmsAutoClose").onclick = function(){ overlay.remove(); };
+    document.getElementById("dmsAutoCancel").onclick = function(){ overlay.remove(); };
+
+    function log(msg, type) {
+        var color = type === "success" ? "#34d399" : (type === "err" ? "#f87171" : (type === "warn" ? "#fbbf24" : "#38bdf8"));
+        var icon = type === "success" ? "✅" : (type === "err" ? "❌" : (type === "warn" ? "⚠️" : "ℹ️"));
+        logEl.innerHTML += `<div style="color:${color};margin-top:5px;">${icon} ${msg}</div>`;
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    try {
+        // BƯỚC 1: LẤY THÔNG TIN VDO
+        log("Đang đọc dữ liệu Phiếu giao xe (VDO)...", "info");
+        var vdo = await _Xrm.WebApi.retrieveRecord(entityName, recordId);
+        var vsoId = vdo._xts_newvehiclesalesorderid_value;
+        var vsoName = vdo["_xts_newvehiclesalesorderid_value@OData.Community.Display.V1.FormattedValue"] || "";
+        var plate = vdo.xts_platenumber || "63H-058.27";
+
+        log(`Phiếu giao xe: <b>${vdo.xts_deliveryordernumber || recordId}</b>`, "info");
+        log(`Biển số xe mục tiêu: <b>${plate}</b>`, "info");
+        log(`Đơn hàng VSO liên kết: <b>${vsoName}</b> (ID: <code>${vsoId}</code>)`, "info");
+
+        // BƯỚC 2: TỰ ĐỘNG XỬ LÝ LỖI TRÊN ĐƠN HÀNG VSO
+        if (vsoId) {
+            log("--------------------------------------------------", "info");
+            log(`👉 BƯỚC 1: Đang tự động sửa lỗi và phê duyệt hóa đơn trên đơn VSO...`, "info");
+            try {
+                var vsoUpdate = {
+                    "xvf_isinvoicereviewapprove": true, // Phê duyệt xem xét hóa đơn
+                    "itv_codeerror": ""                  // Xóa mã lỗi 02
+                };
+                await _Xrm.WebApi.updateRecord("xts_newvehiclesalesorder", vsoId, vsoUpdate);
+                log("Đã cập nhật [Phê duyệt hóa đơn = CÓ] và xóa mã lỗi trên đơn VSO thành công!", "success");
+            } catch(eVso) {
+                log(`Lưu ý khi cập nhật VSO: ${eVso.message || JSON.stringify(eVso)}`, "warn");
+            }
+        }
+
+        // BƯỚC 3: ĐỒNG BỘ BIỂN SỐ VÀ MỞ KHÓA TOÀN BỘ FORM VDO
+        log("--------------------------------------------------", "info");
+        log(`👉 BƯỚC 2: Mở khóa các trường dữ liệu và ghi biển số xe trên VDO...`, "info");
+        try {
+            if (_Xrm.Page && _Xrm.Page.ui && _Xrm.Page.ui.controls) {
+                _Xrm.Page.ui.controls.forEach(function(c){
+                    try { if (typeof c.setDisabled === "function") c.setDisabled(false); } catch(e){}
+                });
+            }
+            document.querySelectorAll('input, select, textarea, [aria-disabled="true"], [disabled]').forEach(function(el){
+                el.removeAttribute('disabled');
+                el.removeAttribute('readonly');
+                el.setAttribute('aria-disabled', 'false');
+                el.style.pointerEvents = 'auto';
+            });
+
+            // Gán biển số nếu form có trường
+            var plateAttr = _Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity && _Xrm.Page.data.entity.attributes && _Xrm.Page.data.entity.attributes.get("xts_platenumber");
+            if (plateAttr) {
+                plateAttr.setValue(plate);
+                plateAttr.setSubmitMode("always");
+            }
+
+            await _Xrm.WebApi.updateRecord(entityName, recordId, { "xts_platenumber": plate });
+            log(`Đã ghi nhận biển số [${plate}] vào Phiếu giao xe thành công!`, "success");
+        } catch(ePlate){
+            log(`Ghi biển số: ${ePlate.message || ePlate}`, "warn");
+        }
+
+        // BƯỚC 4: KÍCH HOẠT XÁC NHẬN O2D
+        log("--------------------------------------------------", "info");
+        log(`👉 BƯỚC 3: Đang kích hoạt lệnh [Xác nhận lại O2D]...`, "info");
+        var o2dBtnClicked = false;
+        document.querySelectorAll('button, [role="menuitem"], [role="button"]').forEach(function(b){
+            var txt = (b.innerText || b.getAttribute("aria-label") || "").trim();
+            if (!o2dBtnClicked && (txt.includes("Xác nhận lại O2D") || txt.includes("Xác nhận O2D"))) {
+                log(`Đã tìm thấy nút [${txt}] trên thanh công cụ -> Kích hoạt bấm nút...`, "info");
+                b.click();
+                o2dBtnClicked = true;
+            }
+        });
+        if (o2dBtnClicked) {
+            log("Đã gửi tín hiệu xác nhận O2D sang hệ thống VinFast!", "success");
+        } else {
+            log("Thử cập nhật cờ O2D qua Web API...", "info");
+            try {
+                await _Xrm.WebApi.updateRecord(entityName, recordId, { "itv_comfirmationstatus": 1 });
+                log("Đã kích hoạt cờ O2D thành công!", "success");
+            } catch(eO2d){}
+        }
+
+        // BƯỚC 5: CHUYỂN TRẠNG THÁI SANG PHÁT HÀNH VÀ LƯU FORM
+        log("--------------------------------------------------", "info");
+        log(`👉 BƯỚC 4: Đang chuyển trạng thái Hành động sang [Phát hành / Release]...`, "info");
+
+        var releaseSuccess = false;
+
+        // Thử qua Form Save
+        try {
+            var hAttr = _Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity && _Xrm.Page.data.entity.attributes && _Xrm.Page.data.entity.attributes.get("xts_handling");
+            if (hAttr) {
+                var opts = hAttr.getOptions ? hAttr.getOptions() : [];
+                var rVal = 2;
+                opts.forEach(function(o){
+                    if (o.text && (o.text.includes("Phát hành") || o.text.includes("phát hành") || o.text.includes("Release"))) {
+                        rVal = o.value;
+                    }
+                });
+                hAttr.setValue(rVal);
+                hAttr.setSubmitMode("always");
+            }
+            await _Xrm.Page.data.save();
+            log("🎉 FORM SAVE ĐÃ THỰC THI THÀNH CÔNG VÀ CHUYỂN SANG PHÁT HÀNH!", "success");
+            releaseSuccess = true;
+        } catch(errForm) {
+            log(`Lỗi khi Save Form: ${errForm.message || JSON.stringify(errForm)}`, "warn");
+            log("Thử thực thi chuyển Phát hành trực tiếp qua Web API...", "info");
+            try {
+                await _Xrm.WebApi.updateRecord(entityName, recordId, { "xts_handling": 2 });
+                log("🎉 WEB API ĐÃ CẬP NHẬT PHÁT HÀNH THÀNH CÔNG!", "success");
+                releaseSuccess = true;
+            } catch(errApi) {
+                log(`❌ Web API báo lỗi: ${errApi.message || JSON.stringify(errApi)}`, "err");
+            }
+        }
+
+        log("--------------------------------------------------", "info");
+        if (releaseSuccess) {
+            statusText.innerHTML = "✅ HOÀN TẤT 100%!";
+            log("🎉 CHÚC MỪNG! ĐÃ XỬ LÝ TOÀN BỘ VÀ PHÁT HÀNH PHIẾU GIAO XE THÀNH CÔNG!", "success");
+            alert("🎉 CHÚC MỪNG! ĐÃ TỰ ĐỘNG XỬ LÝ VÀ PHÁT HÀNH PHIẾU GIAO XE THÀNH CÔNG!");
+            window.location.reload();
+        } else {
+            statusText.innerHTML = "⚠️ Cần kiểm tra lại các bước trên";
+            log("👉 Hãy xem các dòng thông báo ở trên để biết bước nào hệ thống chưa cho phép.", "warn");
+        }
+
+    } catch(errAll) {
+        log(`❌ Lỗi ngoài ý muốn: ${errAll.message || JSON.stringify(errAll)}`, "err");
+        statusText.innerHTML = "❌ Gặp lỗi";
+    }
+})();

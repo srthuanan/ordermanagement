@@ -14,6 +14,36 @@ const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({ onSuccess, onCanc
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [passwordStrength, setPasswordStrength] = useState(0);
+    const [userInfo, setUserInfo] = useState<{ fullName?: string; email?: string; isNewUser?: boolean }>({
+        isNewUser: true
+    });
+
+    useEffect(() => {
+        const checkUser = async () => {
+            try {
+                const { data: { user } } = await authService.supabase.auth.getUser();
+                if (user) {
+                    const metaName = user.user_metadata?.full_name || user.user_metadata?.name;
+                    const isNew = !user.last_sign_in_at || (context === 'invite') || window.location.hash.includes('invite');
+                    
+                    const { data: profile } = await authService.supabase
+                        .from('users')
+                        .select('full_name, role')
+                        .ilike('email', user.email || '')
+                        .maybeSingle();
+
+                    setUserInfo({
+                        fullName: profile?.full_name || metaName || user.email?.split('@')[0],
+                        email: user.email,
+                        isNewUser: isNew
+                    });
+                }
+            } catch (err) {
+                console.warn("Could not fetch user info for reset password view:", err);
+            }
+        };
+        checkUser();
+    }, [context]);
 
     // Password strength logic
     useEffect(() => {
@@ -50,13 +80,10 @@ const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({ onSuccess, onCanc
         setIsSubmitting(false);
 
         if (result.success) {
-            const successMsg = context === 'invite' 
-                ? 'Tài khoản đã được kích hoạt thành công! Bạn có thể bắt đầu làm việc ngay bây giờ.' 
-                : 'Mật khẩu đã được đặt lại thành công! Bạn có thể đăng nhập ngay bây giờ.';
-            showToast('Thành Công', successMsg, 'success');
+            showToast('Thành Công', 'Thiết lập mật khẩu thành công! Bạn có thể bắt đầu làm việc ngay bây giờ.', 'success');
             onSuccess();
         } else {
-            setError(result.message || 'Không thể đặt lại mật khẩu. Vui lòng thử lại.');
+            setError(result.message || 'Không thể thiết lập mật khẩu. Vui lòng thử lại.');
         }
     };
 
@@ -97,12 +124,17 @@ const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({ onSuccess, onCanc
                     <div className="h-[1px] bg-[#1e3a8a] mb-[30px] opacity-20"></div>
                     
                     <div className="text-[13px] text-[#64748b] mb-[5px] font-medium">Thân gửi,</div>
-                    <div className="text-[18px] text-[#0f172a] font-bold mb-5">THÀNH VIÊN HỆ THỐNG</div>
+                    <div className="text-[20px] text-[#0f172a] font-black mb-5 tracking-tight uppercase">
+                        {userInfo.fullName || 'THÀNH VIÊN HỆ THỐNG'}
+                    </div>
 
                     {/* Inner Form Box matching Email Details Box */}
                     <div className="bg-[#f8fafc] border border-[#f1f5f9] rounded-[12px] p-6 mb-6">
-                        <div className="text-[#1e3a8a] text-[15px] font-bold mb-4">
-                            {context === 'invite' ? 'Thiết Lập Mật Khẩu Thành Viên' : 'Yêu Cầu Khôi Phục Mật Khẩu'}
+                        <div className="text-[#1e3a8a] text-[16px] font-bold mb-1">
+                            ✨ Thiết Lập Mật Khẩu
+                        </div>
+                        <div className="text-[#64748b] text-[12px] mb-4">
+                            Vui lòng thiết lập mật khẩu cá nhân của bạn để kích hoạt và truy cập hệ thống.
                         </div>
 
                         <form onSubmit={handleSubmit} className="space-y-5">
@@ -129,8 +161,8 @@ const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({ onSuccess, onCanc
                                     />
                                     <div className="h-0.5 w-full bg-[#f1f5f9] mt-1 rounded-full overflow-hidden">
                                         <div 
-                                            className={`h-full transition-all duration-500 ${getStrengthColor()}`}
-                                            style={{ width: `${passwordStrength}%` }}
+                                             className={`h-full transition-all duration-500 ${getStrengthColor()}`}
+                                             style={{ width: `${passwordStrength}%` }}
                                         ></div>
                                     </div>
                                 </div>
@@ -157,7 +189,7 @@ const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({ onSuccess, onCanc
                                     {isSubmitting ? (
                                         <><i className="fas fa-spinner fa-spin"></i> ĐANG XỬ LÝ...</>
                                     ) : (
-                                        <>{context === 'invite' ? 'HOÀN TẤT KÍCH HOẠT' : 'ĐẶT LẠI MẬT KHẨU'}</>
+                                        <>XÁC NHẬN & ĐĂNG NHẬP</>
                                     )}
                                 </button>
                             </div>

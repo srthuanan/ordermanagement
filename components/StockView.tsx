@@ -6,8 +6,10 @@ import { DropdownFilterConfig } from './ui/Filters';
 import TabbedFilter from './ui/TabbedFilter';
 import MultiSelectDropdown from './ui/MultiSelectDropdown';
 import { includesNormalized } from '../utils/stringUtils';
-import SummerBackground from './ui/SummerBackground';
 import AdminCarEditModal from './modals/AdminCarEditModal';
+import { SwapCarModal } from './modals/SwapCarModal';
+import MapView from './MapView';
+
 
 
 interface StockViewProps {
@@ -61,9 +63,48 @@ const StockView: React.FC<StockViewProps> = ({
     queuedVins,
     canHoldMore,
     onNavigateToInquiry,
-    onViewCarOnMap,
+    onViewCarOnMap: _onViewCarOnMap,
     isReferenceAccount
 }) => {
+    const [selectedSwapVehicle, setSelectedSwapVehicle] = useState<StockVehicle | null>(null);
+    const [stockViewMode, setStockViewMode] = useState<'split' | 'grid' | 'map'>('split');
+    const [targetVinOnMap, setTargetVinOnMap] = useState<string | null>(null);
+    const [highlightedCardVin, setHighlightedCardVin] = useState<string | null>(null);
+
+    const handleSelectVinFromMap = useCallback((vin: string) => {
+        setHighlightedCardVin(vin);
+        const el = document.getElementById(`stock-card-${vin}`);
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        setTimeout(() => {
+            setHighlightedCardVin(null);
+        }, 2500);
+    }, []);
+
+    const handleViewCarOnMapInternal = useCallback((vin: string) => {
+        if (stockViewMode === 'grid') {
+            setStockViewMode('split');
+        }
+        setTargetVinOnMap(null);
+        setTimeout(() => {
+            setTargetVinOnMap(vin);
+        }, 20);
+    }, [stockViewMode]);
+
+    const userOrders = useMemo(() => {
+        return (allOrders || []).filter(o => {
+            // allOrders dùng "Tên tư vấn bán hàng" (từ orderService mapping), currentUser = full_name (currentConsultant)
+            const tvbhName = (
+                o["Tên tư vấn bán hàng"] ||
+                o["Tên TVBH"] ||
+                o.ten_tu_van_ban_hang ||
+                ''
+            ).toString().trim().toLowerCase();
+            return tvbhName === (currentUser || '').trim().toLowerCase();
+        });
+    }, [allOrders, currentUser]);
+
     const [filters, setFilters] = useState({
         keyword: '',
         carModel: [] as string[],
@@ -465,12 +506,15 @@ const StockView: React.FC<StockViewProps> = ({
             currentUser,
             isAdmin,
             showToast,
-            highlightedVins,
+            highlightedVins: highlightedCardVin ? new Set([...Array.from(highlightedVins), highlightedCardVin]) : highlightedVins,
             processingVin: processingVin,
             queuedVins: queuedVins,
             canHoldMore: canHoldMore,
-            onViewCarOnMap: onViewCarOnMap,
+            onViewCarOnMap: handleViewCarOnMapInternal,
             isReferenceAccount: isReferenceAccount,
+            onOpenSwapModal: (vehicle: StockVehicle) => setSelectedSwapVehicle(vehicle),
+            userOrders: userOrders,
+            onRefetchStock: () => refetchStock(true),
             ...(isAdmin ? { onAdminEdit: (vehicle: StockVehicle) => setAdminEditVehicle(vehicle) } : {})
         };
 
@@ -506,25 +550,76 @@ const StockView: React.FC<StockViewProps> = ({
                         ))}
                     </TabbedFilter>
                 </div>
-                <div ref={containerRef} className="flex-1 flex flex-col min-h-0 -mt-2">
-                    <div className="bg-sky-50/70 backdrop-blur-md relative rounded-xl shadow-lg border border-cyan-100 flex flex-col h-full overflow-hidden">
-                        <SummerBackground />
-                        <div className="flex-grow overflow-y-auto relative hidden-scrollbar p-1 z-10">
-                            {isLoading && stockData.length === 0 ? (
-                                <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2 p-1">
-                                    {skeletons}
-                                </div>
-                            ) : (
-                                <StockGridView vehicles={visibleData} {...commonProps} />
-                            )}
+                <div ref={containerRef} className="flex-1 flex flex-col min-h-0 mt-1">
+                    <div className="bg-slate-50 relative rounded-2xl shadow-sm border border-slate-200/70 flex flex-col h-full overflow-hidden transition-all duration-300">
+                        {stockViewMode === 'map' ? (
+                            <div className="w-full h-full relative">
+                                <MapView
+                                    stockData={processedData}
+                                    refetchStock={refetchStock}
+                                    showToast={showToast}
+                                    currentUser={currentUser}
+                                    targetVinOnMap={targetVinOnMap}
+                                    onClearTargetVinOnMap={() => setTargetVinOnMap(null)}
+                                    isReferenceAccount={isReferenceAccount}
+                                    onSelectVin={handleSelectVinFromMap}
+                                    hideSidebar={true}
+                                />
+                            </div>
+                        ) : stockViewMode === 'split' ? (
+                            <div className="flex flex-col lg:flex-row w-full h-full overflow-hidden">
+                                {/* Left Pane: Cards Stream */}
+                                <div className="w-full lg:w-[70%] h-1/2 lg:h-full flex flex-col overflow-y-auto hidden-scrollbar p-1.5 border-b lg:border-b-0 lg:border-r border-slate-200/70 z-10">
+                                    {isLoading && stockData.length === 0 ? (
+                                        <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2 p-1">
+                                            {skeletons}
+                                        </div>
+                                    ) : (
+                                        <StockGridView vehicles={visibleData} {...commonProps} />
+                                    )}
 
-                            {/* Load More Trigger */}
-                            {visibleCount < processedData.length && (
-                                <div ref={loadMoreRef} className="h-10 w-full flex items-center justify-center py-4">
-                                    <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
+                                    {/* Load More Trigger */}
+                                    {visibleCount < processedData.length && (
+                                        <div ref={loadMoreRef} className="h-10 w-full flex items-center justify-center py-4">
+                                            <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
+
+                                {/* Right Pane: Interactive Live Map Radar */}
+                                <div className="w-full lg:w-[30%] h-1/2 lg:h-full relative overflow-hidden">
+                                    <MapView
+                                        stockData={processedData}
+                                        refetchStock={refetchStock}
+                                        showToast={showToast}
+                                        currentUser={currentUser}
+                                        targetVinOnMap={targetVinOnMap}
+                                        onClearTargetVinOnMap={() => setTargetVinOnMap(null)}
+                                        isReferenceAccount={isReferenceAccount}
+                                        onSelectVin={handleSelectVinFromMap}
+                                        hideSidebar={true}
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            /* stockViewMode === 'grid' */
+                            <div className="flex-grow overflow-y-auto relative hidden-scrollbar p-1.5 z-10">
+                                {isLoading && stockData.length === 0 ? (
+                                    <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2 p-1">
+                                        {skeletons}
+                                    </div>
+                                ) : (
+                                    <StockGridView vehicles={visibleData} {...commonProps} />
+                                )}
+
+                                {/* Load More Trigger */}
+                                {visibleCount < processedData.length && (
+                                    <div ref={loadMoreRef} className="h-10 w-full flex items-center justify-center py-4">
+                                        <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -539,6 +634,15 @@ const StockView: React.FC<StockViewProps> = ({
                     isOpen={!!adminEditVehicle}
                     vehicle={adminEditVehicle}
                     onClose={() => setAdminEditVehicle(null)}
+                    showToast={showToast}
+                    onSuccess={() => refetchStock(true)}
+                />
+            )}
+            {selectedSwapVehicle && (
+                <SwapCarModal
+                    targetVehicle={selectedSwapVehicle}
+                    userOrders={userOrders}
+                    onClose={() => setSelectedSwapVehicle(null)}
                     showToast={showToast}
                     onSuccess={() => refetchStock(true)}
                 />

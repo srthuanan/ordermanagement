@@ -17,7 +17,7 @@ interface SuperEditModalProps {
 const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSuccess, showToast, order }) => {
     const [formData, setFormData] = useState<any>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { versionsMap, allPossibleVersions, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
+    const { versionsMap, allPossibleVersions, vehicleLines, vehicleColors, vehicleInteriors, getAllExteriorsForLine, getAllInteriorsForLine } = useVehicleConfig();
     const [availableInteriors, setAvailableInteriors] = useState<string[]>([]);
 
     useEffect(() => {
@@ -37,7 +37,10 @@ const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSucc
                 "Kết quả": order["Kết quả"],
                 "Trạng thái VC": order["Trạng thái VC"],
                 "Ngày xuất hóa đơn": order["Ngày xuất hóa đơn"] ? moment(order["Ngày xuất hóa đơn"], ["DD/MM/YYYY", "YYYY-MM-DD"]).format('YYYY-MM-DD') : '',
-                "LinkHoaDonDaXuat": order["LinkHoaDonDaXuat"] || order["url_hoa_don_da_xuat"] || ''
+                "LinkHoaDonDaXuat": order["LinkHoaDonDaXuat"] || order["url_hoa_don_da_xuat"] || '',
+                "is_flex_match": order.is_flex_match ?? false,
+                "ngoai_that_flex": order.ngoai_that_flex ?? [],
+                "noi_that_flex": order.noi_that_flex ?? []
             });
         }
     }, [order]);
@@ -187,6 +190,78 @@ const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSucc
                                         {availableInteriors.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
+                            </div>
+
+                            {/* FLEX-MATCH ADMIN CONTROL */}
+                            <div className="mt-4 p-4 bg-indigo-50/80 border border-indigo-100 rounded-2xl space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="flex items-center gap-2 cursor-pointer font-bold text-xs text-slate-800 uppercase tracking-wide">
+                                        <input
+                                            type="checkbox"
+                                            checked={!!formData.is_flex_match}
+                                            onChange={(e) => setFormData((prev: any) => ({ ...prev, is_flex_match: e.target.checked }))}
+                                            className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                                        />
+                                        <i className="fas fa-random text-indigo-600"></i> Bật ghép xe biên độ mở (Flex-Match)
+                                    </label>
+                                    <span className="text-[10px] font-bold text-indigo-600 bg-white px-2.5 py-0.5 rounded-full border border-indigo-200">
+                                        Admin Control
+                                    </span>
+                                </div>
+
+                                {formData.is_flex_match && (
+                                    <div className="space-y-3 pt-2 border-t border-indigo-100/70">
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">Màu ngoại thất phụ chấp nhận:</label>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {getAllExteriorsForLine(formData["Dòng xe"]).filter(c => c !== formData["Ngoại thất"]).map(c => {
+                                                    const flexExt: string[] = formData.ngoai_that_flex || [];
+                                                    const isSelected = flexExt.includes(c);
+                                                    return (
+                                                        <button
+                                                            key={c}
+                                                            type="button"
+                                                            onClick={() => setFormData((prev: any) => ({
+                                                                ...prev,
+                                                                ngoai_that_flex: isSelected ? flexExt.filter(x => x !== c) : [...flexExt, c]
+                                                            }))}
+                                                            className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
+                                                                isSelected ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-200'
+                                                            }`}
+                                                        >
+                                                            {c} {isSelected && '✓'}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider block mb-1">Màu nội thất phụ chấp nhận:</label>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {getAllInteriorsForLine(formData["Dòng xe"]).filter(c => c !== formData["Nội thất"]).map(c => {
+                                                    const flexInt: string[] = formData.noi_that_flex || [];
+                                                    const isSelected = flexInt.includes(c);
+                                                    return (
+                                                        <button
+                                                            key={c}
+                                                            type="button"
+                                                            onClick={() => setFormData((prev: any) => ({
+                                                                ...prev,
+                                                                noi_that_flex: isSelected ? flexInt.filter(x => x !== c) : [...flexInt, c]
+                                                            }))}
+                                                            className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
+                                                                isSelected ? 'bg-indigo-600 text-white' : 'bg-white text-slate-600 border border-slate-200'
+                                                            }`}
+                                                        >
+                                                            {c} {isSelected && '✓'}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </section>
 

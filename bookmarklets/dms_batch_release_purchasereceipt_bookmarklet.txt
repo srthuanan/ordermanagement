@@ -1,0 +1,309 @@
+javascript:(function(){
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var frames = window.frames;
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].Xrm && frames[i].Xrm.WebApi) { _Xrm = frames[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert("⚠️ Vui lòng mở trang DMS VinFast (Phiếu nhập kho) trước khi bấm!");
+        return;
+    }
+
+    // Step 1: Loading Overlay
+    var progressDiv = document.createElement('div');
+    progressDiv.id = 'dmsPrLoadProgress';
+    progressDiv.style = 'position:fixed;top:15px;right:15px;background:#0f172a;color:#38bdf8;padding:16px 22px;z-index:9999999;border-radius:12px;font-family:sans-serif;font-size:13px;font-weight:bold;box-shadow:0 12px 30px rgba(0,0,0,0.6);border:1px solid #38bdf840;backdrop-filter:blur(8px);';
+    progressDiv.innerHTML = '🔍 Đang quét danh sách Phiếu nhập kho (PR) trạng thái MỞ...';
+    document.body.appendChild(progressDiv);
+
+    var allOpenPRs = [];
+
+    // Query open PRs (statecode eq 0, xts_status eq 1 / Mở)
+    function fetchOpenPRs(query) {
+        _Xrm.WebApi.retrieveMultipleRecords("xts_purchasereceipt", query).then(function(result) {
+            var entities = result.entities || [];
+            
+            // Filter open PRs (status text contains Mở or xts_status == 1 or handling == 1)
+            entities.forEach(function(item) {
+                var stText = item["xts_status@OData.Community.Display.V1.FormattedValue"] || item["statuscode@OData.Community.Display.V1.FormattedValue"] || "";
+                var isOpen = !stText || stText.toLowerCase().indexOf("mở") !== -1 || stText.toLowerCase().indexOf("open") !== -1 || item.xts_status === 1;
+                
+                if (isOpen) {
+                    allOpenPRs.push({
+                        id: item.xts_purchasereceiptid,
+                        number: item.xts_purchasereceiptnumber || "PR-" + item.xts_purchasereceiptid.slice(0, 8),
+                        date: item["xts_transactiondate@OData.Community.Display.V1.FormattedValue"] || (item.xts_transactiondate ? new Date(item.xts_transactiondate).toLocaleDateString('vi-VN') : ""),
+                        poNumber: item["_xts_purchaseorderid_value@OData.Community.Display.V1.FormattedValue"] || item.xts_purchaseordernumber || "-",
+                        vendor: item["_xts_vendorid_value@OData.Community.Display.V1.FormattedValue"] || "VinFast",
+                        grandTotal: item["xts_grandtotal@OData.Community.Display.V1.FormattedValue"] || (item.xts_grandtotal ? item.xts_grandtotal.toLocaleString('vi-VN') + ' đ' : "0 đ"),
+                        status: stText || "Mở",
+                        bu: item["_owningbusinessunit_value@OData.Community.Display.V1.FormattedValue"] || "",
+                        selected: true,
+                        resultState: 'pending', // 'pending', 'success', 'error'
+                        resultMsg: ''
+                    });
+                }
+            });
+
+            progressDiv.innerHTML = '🔍 Đã tìm thấy <b>' + allOpenPRs.length + '</b> phiếu nhập kho đang mở...';
+
+            var nextLink = result["@odata.nextLink"] || result.nextLink;
+            if (nextLink) {
+                var nextQuery = nextLink.substring(nextLink.indexOf('?'));
+                fetchOpenPRs(nextQuery);
+            } else {
+                progressDiv.remove();
+                if (allOpenPRs.length === 0) {
+                    alert("✅ Không có phiếu nhập kho (PR) nào ở trạng thái MỞ cần phát hành!");
+                    return;
+                }
+                showReleaseModal(allOpenPRs);
+            }
+        }, function(error) {
+            progressDiv.remove();
+            alert("❌ Lỗi khi quét danh sách phiếu nhập kho: " + (error.message || JSON.stringify(error)));
+        });
+    }
+
+    function showReleaseModal(prList) {
+        var old = document.getElementById('dmsPrReleaseOverlay');
+        if (old) old.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'dmsPrReleaseOverlay';
+        overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.85);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:system-ui,-apple-system,sans-serif;backdrop-filter:blur(8px);';
+
+        var modal = document.createElement('div');
+        modal.style = 'background:#0f172a;width:1100px;max-width:96%;height:90vh;border-radius:16px;border:1px solid #334155;box-shadow:0 25px 60px rgba(0,0,0,0.8);display:flex;flex-direction:column;overflow:hidden;color:#e2e8f0;';
+
+        // Header
+        var header = document.createElement('div');
+        header.style = 'background:#1e293b;padding:16px 24px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;';
+        header.innerHTML = `
+            <div>
+                <h3 style="margin:0;color:#38bdf8;font-size:17px;display:flex;align-items:center;gap:8px;">🚀 PHÁT HÀNH HÀNG LOẠT PHIẾU NHẬP KHO (PR)</h3>
+                <p style="margin:4px 0 0 0;font-size:12px;color:#94a3b8;">Tìm thấy <b>${prList.length}</b> phiếu nhập kho đang ở trạng thái <b>Mở</b> cần phát hành vào kho</p>
+            </div>
+            <button id="btnClosePrModal" style="background:transparent;border:none;color:#94a3b8;font-size:22px;cursor:pointer;padding:4px;">✕</button>
+        `;
+
+        // Progress Bar Container (Hidden initially)
+        var progressContainer = document.createElement('div');
+        progressContainer.id = 'prBatchProgressBarBox';
+        progressContainer.style = 'background:#090d16;padding:14px 24px;border-bottom:1px solid #334155;display:none;flex-direction:column;gap:6px;';
+        progressContainer.innerHTML = `
+            <div style="display:flex;justify-content:space-between;font-size:12px;">
+                <span id="prProgressStatusText" style="color:#38bdf8;font-weight:bold;">Đang chuẩn bị phát hành...</span>
+                <span id="prProgressPercentText" style="color:#10b981;font-weight:bold;">0%</span>
+            </div>
+            <div style="width:100%;height:8px;background:#1e293b;border-radius:4px;overflow:hidden;">
+                <div id="prProgressBarFill" style="width:0%;height:100%;background:#10b981;transition:width 0.2s ease;"></div>
+            </div>
+        `;
+
+        // Toolbar
+        var toolbar = document.createElement('div');
+        toolbar.style = 'background:#1e293b80;padding:12px 24px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;';
+        toolbar.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;user-select:none;">
+                    <input type="checkbox" id="chkSelectAllPr" checked style="width:16px;height:16px;accent-color:#10b981;">
+                    <b style="color:#cbd5e1;">Chọn tất cả (<span id="selectedCountDisplay">${prList.length}</span>/${prList.length})</b>
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#eab308;cursor:pointer;margin-left:12px;background:#eab30815;padding:4px 10px;border-radius:6px;border:1px solid #eab30830;">
+                    <input type="checkbox" id="chkAutoCalcTax" checked style="width:15px;height:15px;accent-color:#eab308;">
+                    Tự động tính thuế (Calculate Tax = Yes)
+                </label>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button id="btnStartBatchRelease" style="background:#107c41;color:white;border:none;padding:10px 20px;border-radius:8px;font-weight:bold;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(16,124,65,0.4);">
+                    ⚡ BẮT ĐẦU PHÁT HÀNH TOÀN BỘ
+                </button>
+            </div>
+        `;
+
+        // Table Container
+        var tableContainer = document.createElement('div');
+        tableContainer.style = 'flex-grow:1;overflow-y:auto;padding:16px 24px;';
+        tableContainer.innerHTML = `
+            <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
+                <thead style="background:#1e293b;color:#38bdf8;position:sticky;top:0;z-index:2;">
+                    <tr>
+                        <th style="padding:10px 8px;width:30px;text-align:center;">#</th>
+                        <th style="padding:10px 8px;">Số Phiếu Nhập (PR)</th>
+                        <th style="padding:10px 8px;">Đơn Hàng Mua (PO)</th>
+                        <th style="padding:10px 8px;">Ngày Giao Dịch</th>
+                        <th style="padding:10px 8px;">Tổng Tiền</th>
+                        <th style="padding:10px 8px;">Chi Nhánh</th>
+                        <th style="padding:10px 8px;text-align:center;width:150px;">Kết Quả Xử Lý</th>
+                    </tr>
+                </thead>
+                <tbody id="dmsPrTableBody"></tbody>
+            </table>
+        `;
+
+        modal.appendChild(header);
+        modal.appendChild(progressContainer);
+        modal.appendChild(toolbar);
+        modal.appendChild(tableContainer);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        function renderRows() {
+            var tbody = document.getElementById('dmsPrTableBody');
+            tbody.innerHTML = '';
+
+            prList.forEach(function(item, idx) {
+                var tr = document.createElement('tr');
+                tr.id = 'pr-row-' + item.id;
+                tr.style = 'border-bottom:1px solid #1e293b;transition:background 0.15s;';
+                tr.onmouseover = function() { tr.style.background = '#1e293b80'; };
+                tr.onmouseout = function() { tr.style.background = 'transparent'; };
+
+                var statusBadge = '<span style="color:#f59e0b;background:#f59e0b20;padding:2px 8px;border-radius:4px;font-size:11px;border:1px solid #f59e0b40;">⏳ Chờ phát hành</span>';
+                if (item.resultState === 'running') {
+                    statusBadge = '<span style="color:#38bdf8;background:#38bdf820;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;animation:pulse 1s infinite;">⚙️ Đang xử lý...</span>';
+                } else if (item.resultState === 'success') {
+                    statusBadge = '<span style="color:#10b981;background:#10b98120;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;border:1px solid #10b98140;">✅ ĐÃ PHÁT HÀNH</span>';
+                } else if (item.resultState === 'error') {
+                    statusBadge = '<span style="color:#ef4444;background:#ef444420;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;border:1px solid #ef444440;" title="' + item.resultMsg.replace(/"/g, '&quot;') + '">❌ ' + (item.resultMsg.length > 25 ? item.resultMsg.slice(0, 25) + '...' : item.resultMsg) + '</span>';
+                }
+
+                tr.innerHTML = `
+                    <td style="padding:8px;text-align:center;">
+                        <input type="checkbox" class="pr-item-chk" data-id="${item.id}" ${item.selected ? 'checked' : ''} ${item.resultState === 'success' ? 'disabled' : ''} style="width:15px;height:15px;accent-color:#10b981;cursor:pointer;">
+                    </td>
+                    <td style="padding:8px;font-family:monospace;font-weight:bold;color:#f8fafc;">${item.number}</td>
+                    <td style="padding:8px;color:#38bdf8;font-family:monospace;">${item.poNumber}</td>
+                    <td style="padding:8px;color:#cbd5e1;">${item.date}</td>
+                    <td style="padding:8px;color:#10b981;font-weight:bold;">${item.grandTotal}</td>
+                    <td style="padding:8px;color:#94a3b8;font-size:11.5px;">${item.bu}</td>
+                    <td style="padding:8px;text-align:center;" id="pr-status-${item.id}">${statusBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Bind checkbox events
+            document.querySelectorAll('.pr-item-chk').forEach(function(chk) {
+                chk.onchange = function() {
+                    var id = this.getAttribute('data-id');
+                    var target = prList.find(function(p){ return p.id === id; });
+                    if (target) target.selected = this.checked;
+                    updateSelectedCount();
+                };
+            });
+        }
+
+        function updateSelectedCount() {
+            var selCount = prList.filter(function(p){ return p.selected; }).length;
+            var el = document.getElementById('selectedCountDisplay');
+            if (el) el.textContent = selCount;
+            var masterChk = document.getElementById('chkSelectAllPr');
+            if (masterChk) masterChk.checked = selCount === prList.length;
+        }
+
+        renderRows();
+
+        // Master checkbox
+        document.getElementById('chkSelectAllPr').onchange = function() {
+            var checked = this.checked;
+            prList.forEach(function(p){ if (p.resultState !== 'success') p.selected = checked; });
+            renderRows();
+            updateSelectedCount();
+        };
+
+        document.getElementById('btnClosePrModal').onclick = function() {
+            document.getElementById('dmsPrReleaseOverlay').remove();
+        };
+
+        // Batch Execution Logic
+        document.getElementById('btnStartBatchRelease').onclick = function() {
+            var selectedItems = prList.filter(function(p){ return p.selected && p.resultState !== 'success'; });
+            if (selectedItems.length === 0) {
+                alert("Vui lòng chọn ít nhất 1 phiếu nhập kho cần phát hành!");
+                return;
+            }
+
+            if (!confirm("⚠️ Bạn có chắc chắn muốn PHÁT HÀNH HÀNG LOẠT " + selectedItems.length + " phiếu nhập kho đã chọn vào kho không?")) {
+                return;
+            }
+
+            var btn = document.getElementById('btnStartBatchRelease');
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.innerHTML = '⚙️ Đang phát hành hàng loạt...';
+
+            progressContainer.style.display = 'flex';
+
+            var autoCalcTax = document.getElementById('chkAutoCalcTax').checked;
+            var successCount = 0;
+            var errorCount = 0;
+
+            function processIndex(i) {
+                if (i >= selectedItems.length) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.innerHTML = '✅ HOÀN TẤT PHÁT HÀNH';
+                    document.getElementById('prProgressStatusText').innerHTML = '🎉 Hoàn tất! Thành công: <b>' + successCount + '</b> | Lỗi: <b>' + errorCount + '</b>';
+                    document.getElementById('prProgressBarFill').style.width = '100%';
+                    document.getElementById('prProgressPercentText').textContent = '100%';
+                    alert("🎉 Đã hoàn tất phát hành hàng loạt Phiếu Nhập Kho!\n• Thành công: " + successCount + "\n• Thất bại: " + errorCount);
+                    return;
+                }
+
+                var current = selectedItems[i];
+                current.resultState = 'running';
+                
+                var percent = Math.round((i / selectedItems.length) * 100);
+                document.getElementById('prProgressBarFill').style.width = percent + '%';
+                document.getElementById('prProgressPercentText').textContent = percent + '%';
+                document.getElementById('prProgressStatusText').innerHTML = '⚙️ Đang xử lý phiếu (' + (i + 1) + '/' + selectedItems.length + '): <b>' + current.number + '</b>...';
+
+                var stCell = document.getElementById('pr-status-' + current.id);
+                if (stCell) stCell.innerHTML = '<span style="color:#38bdf8;background:#38bdf820;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;">⚙️ Đang xử lý...</span>';
+
+                // Payload to release PR in Dynamics DMS XTS solution
+                // xts_handling: 2 (Phát hành / Release)
+                // xts_calculatetax: 1 or true (Tự động tính thuế nếu bật)
+                var updatePayload = {
+                    "xts_handling": 2
+                };
+                if (autoCalcTax) {
+                    updatePayload.xts_calculatetax = true;
+                }
+
+                _Xrm.WebApi.updateRecord("xts_purchasereceipt", current.id, updatePayload).then(function() {
+                    current.resultState = 'success';
+                    current.resultMsg = 'Đã phát hành thành công';
+                    successCount++;
+                    if (stCell) stCell.innerHTML = '<span style="color:#10b981;background:#10b98120;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;border:1px solid #10b98140;">✅ ĐÃ PHÁT HÀNH</span>';
+                    
+                    // Delay slightly to prevent server rate limit / concurrency deadlock
+                    setTimeout(function() {
+                        processIndex(i + 1);
+                    }, 600);
+                }, function(err) {
+                    current.resultState = 'error';
+                    current.resultMsg = err.message || JSON.stringify(err);
+                    errorCount++;
+                    if (stCell) stCell.innerHTML = '<span style="color:#ef4444;background:#ef444420;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:bold;border:1px solid #ef444440;" title="' + current.resultMsg.replace(/"/g, '&quot;') + '">❌ Lỗi phát hành</span>';
+                    
+                    setTimeout(function() {
+                        processIndex(i + 1);
+                    }, 600);
+                });
+            }
+
+            processIndex(0);
+        };
+    }
+
+    // Start fetching open PRs
+    fetchOpenPRs("?$filter=statecode eq 0&$orderby=createdon desc");
+
+})();

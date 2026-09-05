@@ -1,0 +1,225 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - TOOL MỞ KHÓA GIAO DIỆN & BẢN GHI SỔ BẢO HÀNH ĐIỆN TỬ
+     * ========================================================================= */
+
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm) {
+        for (var i = 0; i < frames.length; i++) {
+            try {
+                if (frames[i].Xrm) { _Xrm = frames[i].Xrm; break; }
+            } catch (e) {}
+        }
+    }
+
+    if (!_Xrm) {
+        alert("⚠️ Vui lòng mở trang VinFast DMS trước khi bấm!");
+        return;
+    }
+
+    // 1. MỞ KHÓA FORM GIAO DIỆN (Bỏ disabled, readonly, set submit mode)
+    var countUnlocked = 0;
+    try {
+        if (_Xrm.Page && _Xrm.Page.ui && _Xrm.Page.ui.controls) {
+            _Xrm.Page.ui.controls.forEach(function(c) {
+                try {
+                    if (typeof c.setDisabled === "function") {
+                        c.setDisabled(false);
+                        countUnlocked++;
+                    }
+                } catch(e){}
+            });
+        }
+        if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity && _Xrm.Page.data.entity.attributes) {
+            _Xrm.Page.data.entity.attributes.forEach(function(attr) {
+                try {
+                    if (typeof attr.setSubmitMode === "function") {
+                        attr.setSubmitMode("always");
+                    }
+                } catch(e){}
+            });
+        }
+        // Mở khóa toàn bộ thẻ HTML DOM
+        document.querySelectorAll('input, select, textarea, [aria-disabled="true"], [disabled], [readonly]').forEach(function(el) {
+            el.removeAttribute('disabled');
+            el.removeAttribute('readonly');
+            el.setAttribute('aria-disabled', 'false');
+            el.style.pointerEvents = 'auto';
+            el.style.backgroundColor = '#fff';
+            el.style.color = '#000';
+        });
+
+        // Ẩn thanh thông báo cảnh báo màu xanh/vàng trên cùng nếu có
+        var notifBars = document.querySelectorAll('[data-id="notificationList"], .notification-bar, [role="alert"]');
+        notifBars.forEach(function(nb) { nb.style.display = 'none'; });
+
+    } catch(e) {
+        console.warn("Lỗi mở khóa controls:", e);
+    }
+
+    // 2. Lấy thông tin bản ghi
+    var entityName = "itv_electronicwarrantybook";
+    var recordId = "";
+    try {
+        if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity) {
+            entityName = _Xrm.Page.data.entity.getEntityName() || entityName;
+            recordId = (_Xrm.Page.data.entity.getId() || "").replace(/[{}]/g, "");
+        }
+    } catch(e){}
+
+    if (!recordId) {
+        var urlParams = new URLSearchParams(window.location.search);
+        entityName = urlParams.get("etn") || entityName;
+        recordId = (urlParams.get("id") || "").replace(/[{}]/g, "");
+    }
+
+    // Xóa overlay cũ
+    var old = document.getElementById("dmsPhoneDiagOverlay");
+    if (old) old.remove();
+
+    var overlay = document.createElement("div");
+    overlay.id = "dmsPhoneDiagOverlay";
+    overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#f8fafc;";
+
+    var modal = document.createElement("div");
+    modal.style = "background:#0f172a;width:720px;max-width:95%;border-radius:16px;border:1px solid rgba(56,189,248,0.3);box-shadow:0 25px 60px rgba(0,0,0,0.85);display:flex;flex-direction:column;overflow:hidden;";
+
+    modal.innerHTML = `
+        <div style="background:linear-gradient(135deg,#0284c7,#1d4ed8);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:24px;">🔧</span>
+                <div>
+                    <h3 style="margin:0;font-size:15px;font-weight:800;color:#fff;">CÔNG CỤ CẬP NHẬT SỐ ĐIỆN THOẠI DMS</h3>
+                    <p style="margin:2px 0 0 0;font-size:12px;color:#bae6fd;">Entity: <b>${entityName}</b> | Đã mở khóa: <b>${countUnlocked}</b> ô trên màn hình</p>
+                </div>
+            </div>
+            <button id="dmsDiagClose" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:15px;">✕</button>
+        </div>
+
+        <div style="padding:18px 22px;max-height:480px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;background:#090d16;">
+            <div style="display:flex;flex-direction:column;gap:6px;">
+                <label style="font-size:13px;font-weight:700;color:#e2e8f0;">📱 Nhập Số Điện Thoại Mới:</label>
+                <input id="dmsDiagPhoneInput" type="text" value="0948566855" placeholder="Nhập số điện thoại..." style="background:#1e293b;border:1.5px solid #38bdf8;padding:10px 14px;border-radius:8px;color:#fff;font-size:15px;font-weight:600;outline:none;">
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <button id="dmsBtnMethod1" style="background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;padding:12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.3);text-align:left;">
+                    <div style="font-size:14px;">⚡ Cách 1: Ghi vào Form & Save</div>
+                    <div style="font-size:11px;opacity:0.85;font-weight:normal;margin-top:2px;">Điền vào ô và gọi lệnh Save của Form</div>
+                </button>
+                <button id="dmsBtnMethod2" style="background:linear-gradient(135deg,#0284c7,#2563eb);color:#fff;border:none;padding:12px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(37,99,235,0.3);text-align:left;">
+                    <div style="font-size:14px;">🚀 Cách 2: Ghi qua Web API</div>
+                    <div style="font-size:11px;opacity:0.85;font-weight:normal;margin-top:2px;">Gửi trực tiếp vào Server CRM</div>
+                </button>
+            </div>
+
+            <div id="dmsDiagLogBox" style="background:#111827;border:1px solid rgba(255,255,255,0.08);padding:12px;border-radius:8px;font-size:12px;font-family:monospace;max-height:180px;overflow-y:auto;line-height:1.5;color:#94a3b8;">
+                <div style="color:#38bdf8;">👉 Chọn 1 trong 2 cách phía trên để lưu SĐT...</div>
+            </div>
+        </div>
+
+        <div style="background:#1e293b;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.06);">
+            <span style="font-size:12px;color:#94a3b8;">Nếu tắt popup, bạn có thể chỉnh sửa trực tiếp trên màn hình DMS!</span>
+            <button id="dmsDiagCancel" style="background:rgba(255,255,255,0.1);border:none;color:#cbd5e1;padding:8px 16px;border-radius:6px;font-size:12px;cursor:pointer;">Đóng Popup</button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    var closeBtn = document.getElementById("dmsDiagClose");
+    var cancelBtn = document.getElementById("dmsDiagCancel");
+    var logBox = document.getElementById("dmsDiagLogBox");
+    var phoneInput = document.getElementById("dmsDiagPhoneInput");
+
+    function closeModal() { overlay.remove(); }
+    closeBtn.onclick = closeModal;
+    cancelBtn.onclick = closeModal;
+
+    function addLog(msg, type) {
+        var color = type === "success" ? "#34d399" : (type === "err" ? "#f87171" : (type === "warn" ? "#fbbf24" : "#38bdf8"));
+        var icon = type === "success" ? "✅" : (type === "err" ? "❌" : (type === "warn" ? "⚠️" : "ℹ️"));
+        logBox.innerHTML += `<div style="color:${color};margin-top:4px;">${icon} ${msg}</div>`;
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // XỬ LÝ CÁCH 1: Gán dữ liệu lên Form UI và Save
+    document.getElementById("dmsBtnMethod1").onclick = async function() {
+        var phone = (phoneInput.value || "").trim();
+        if (!phone) { alert("Vui lòng nhập SĐT!"); return; }
+        
+        addLog(`Đang gán SĐT [${phone}] vào các thuộc tính Form...`, "info");
+        try {
+            var assignedAttrs = [];
+            if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity && _Xrm.Page.data.entity.attributes) {
+                _Xrm.Page.data.entity.attributes.forEach(function(attr) {
+                    var name = attr.getName().toLowerCase();
+                    if (name.includes("phone") || name.includes("tel") || name.includes("mobile") || name.includes("sdt") || name.includes("dienthoai")) {
+                        try {
+                            attr.setValue(phone);
+                            attr.setSubmitMode("always");
+                            assignedAttrs.push(attr.getName());
+                        } catch(e){}
+                    }
+                });
+            }
+
+            if (assignedAttrs.length > 0) {
+                addLog(`Đã gán vào trường: ${assignedAttrs.join(", ")}`, "success");
+            } else {
+                addLog(`Tìm thử trường itv_mobilephone...`, "warn");
+                try {
+                    var att = _Xrm.Page.data.entity.attributes.get("itv_mobilephone");
+                    if (att) { att.setValue(phone); att.setSubmitMode("always"); addLog("Đã gán vào itv_mobilephone", "success"); }
+                } catch(e){}
+            }
+
+            addLog("Đang gọi _Xrm.Page.data.save()...", "info");
+            await _Xrm.Page.data.save();
+            addLog("🎉 ĐÃ LƯU FORM THÀNH CÔNG!", "success");
+            alert("🎉 ĐÃ LƯU THÀNH CÔNG SỐ ĐIỆN THOẠI!");
+            overlay.remove();
+        } catch(err) {
+            addLog(`Lỗi khi Save Form: ${err.message || JSON.stringify(err)}`, "err");
+        }
+    };
+
+    // XỬ LÝ CÁCH 2: Ghi qua Web API và hiển thị chi tiết lỗi
+    document.getElementById("dmsBtnMethod2").onclick = async function() {
+        var phone = (phoneInput.value || "").trim();
+        if (!phone) { alert("Vui lòng nhập SĐT!"); return; }
+
+        addLog(`Đang gửi yêu cầu Web API Update cho ${entityName} (${recordId})...`, "info");
+        var fieldsToTry = ["itv_mobilephone", "itv_phonenumber", "telephone1", "mobilephone"];
+        var anySuccess = false;
+
+        for (var i = 0; i < fieldsToTry.length; i++) {
+            var field = fieldsToTry[i];
+            try {
+                var payload = {};
+                payload[field] = phone;
+                addLog(`Thử cập nhật trường <b>${field}</b>...`, "info");
+                await _Xrm.WebApi.updateRecord(entityName, recordId, payload);
+                addLog(`✅ CẬP NHẬT THÀNH CÔNG trường [${field}]!`, "success");
+                anySuccess = true;
+                break;
+            } catch(err) {
+                var errDetail = err.message || JSON.stringify(err);
+                addLog(`❌ Thất bại trường [${field}]: ${errDetail}`, "err");
+            }
+        }
+
+        if (anySuccess) {
+            alert("🎉 THÀNH CÔNG! Đã cập nhật SĐT mới vào hệ thống.");
+            if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.refresh) {
+                await _Xrm.Page.data.refresh(false);
+            } else {
+                window.location.reload();
+            }
+            overlay.remove();
+        } else {
+            addLog(`👉 Hãy kiểm tra thông báo lỗi màu đỏ ở trên để biết nguyên nhân phân quyền của tài khoản.`, "warn");
+        }
+    };
+
+})();

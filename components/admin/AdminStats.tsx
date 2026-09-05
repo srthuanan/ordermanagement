@@ -7,9 +7,11 @@ interface AdminStatsProps {
     xuathoadonData: Order[];
     pendingData: Order[];
     pairedData: Order[];
+    teamData?: Record<string, string[]>;
+    viewBy?: 'tvbh' | 'team';
 }
 
-const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pairedData }) => {
+const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pairedData, teamData, viewBy = 'tvbh' }) => {
     // Modal State
     const [detailModal, setDetailModal] = useState<{
         isOpen: boolean;
@@ -32,6 +34,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
     const [copyingTable, setCopyingTable] = useState<string | null>(null);
     const [fallbackImage, setFallbackImage] = useState<string | null>(null);
     const [isCopying, setIsCopying] = useState(false);
+    const [matchingFilter, setMatchingFilter] = useState<'paired' | 'pending' | 'all'>('paired');
 
     const handleCopySpecificTable = async (ref: React.RefObject<HTMLDivElement>, title: string, tableId: string) => {
         if (!ref.current) return;
@@ -104,6 +107,27 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
         }
     };
 
+    const getGroupKey = (tvbhNameRaw: any) => {
+        const tvbh = String(tvbhNameRaw || 'Không rõ').normalize("NFC").trim().toLowerCase().split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+        if (viewBy === 'tvbh') return tvbh;
+        
+        if (!teamData) return 'Chưa phân phòng';
+        
+        const normalizedTvbh = String(tvbh).normalize("NFC").trim().toLowerCase();
+        
+        for (const [leader, members] of Object.entries(teamData)) {
+            const normalizedLeader = String(leader).normalize("NFC").trim().toLowerCase();
+            if (normalizedLeader === normalizedTvbh) return `Phòng ${leader}`;
+            
+            for (const member of members) {
+                if (String(member).normalize("NFC").trim().toLowerCase() === normalizedTvbh) {
+                    return `Phòng ${leader}`;
+                }
+            }
+        }
+        return 'Chưa phân phòng';
+    };
+
     // 1. Thống kê Số lượng Yêu cầu Xuất hóa đơn (XHĐ) 
     const tvbhInvoiceStats = useMemo(() => {
         const stats: Record<string, Record<string, number> & { total: number }> = {};
@@ -111,18 +135,16 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
         const currentInvoices = xuathoadonData || [];
 
         currentInvoices.forEach(order => {
-            const tvbhNameRaw = order['Tên tư vấn bán hàng'] || order['Người YC'] || order['Tư vấn bán hàng'] || 'Không rõ';
-            // Chuẩn hóa tên giống SoldCarsView
-            const tvbh = String(tvbhNameRaw).normalize("NFC").trim().toLowerCase().split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+            const key = getGroupKey(order['Tên tư vấn bán hàng'] || order['Người YC'] || order['Tư vấn bán hàng']);
             const model = order['Dòng xe'] || 'Khác';
 
-            if (!stats[tvbh]) stats[tvbh] = { total: 0 };
-            stats[tvbh][model] = (stats[tvbh][model] || 0) + 1;
-            stats[tvbh].total += 1;
+            if (!stats[key]) stats[key] = { total: 0 };
+            stats[key][model] = (stats[key][model] || 0) + 1;
+            stats[key].total += 1;
         });
 
         return stats;
-    }, [xuathoadonData]);
+    }, [xuathoadonData, getGroupKey]);
 
     // Lọc ra các Dòng xe thực sự có yêu cầu XHĐ > 0 trong tháng này
     const invoiceModels = useMemo(() => {
@@ -165,22 +187,27 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
             .sort();
     }, [currentMonthStats]);
 
-    // 3. Thống kê ghép xe THEO TVBH
+    const matchingDataToUse = useMemo(() => {
+        if (matchingFilter === 'pending') return pendingData;
+        if (matchingFilter === 'all') return [...pairedData, ...pendingData];
+        return pairedData;
+    }, [matchingFilter, pairedData, pendingData]);
+
+    // 3. Thống kê ghép xe THEO TVBH / PHÒNG
     const tvbhMatchingStats = useMemo(() => {
         const stats: Record<string, Record<string, number> & { total: number }> = {};
 
-        pairedData.forEach(order => {
-            const tvbhNameRaw = order['Tên tư vấn bán hàng'] || order['Người YC'] || order['Tư vấn bán hàng'] || 'Không rõ';
-            const tvbh = String(tvbhNameRaw).normalize("NFC").trim().toLowerCase().split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+        matchingDataToUse.forEach(order => {
+            const key = getGroupKey(order['Tên tư vấn bán hàng'] || order['Người YC'] || order['Tư vấn bán hàng']);
             const model = order['Dòng xe'] || 'Khác';
 
-            if (!stats[tvbh]) stats[tvbh] = { total: 0 };
-            stats[tvbh][model] = (stats[tvbh][model] || 0) + 1;
-            stats[tvbh].total += 1;
+            if (!stats[key]) stats[key] = { total: 0 };
+            stats[key][model] = (stats[key][model] || 0) + 1;
+            stats[key].total += 1;
         });
 
         return stats;
-    }, [pairedData]);
+    }, [matchingDataToUse, getGroupKey]);
 
     const matchingTvbhModels = useMemo(() => {
         const models = new Set<string>();
@@ -195,50 +222,50 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
     }, [tvbhMatchingStats]);
 
     // Click handlers
-    const showInvoiceDetails = (tvbh?: string, model?: string) => {
+    const showInvoiceDetails = (groupKey?: string, model?: string) => {
         const filtered = xuathoadonData.filter(order => {
-            const tvbhNameRaw = order['Tên tư vấn bán hàng'] || order['Người YC'] || order['Tư vấn bán hàng'] || 'Không rõ';
-            const orderTvbh = String(tvbhNameRaw).normalize("NFC").trim().toLowerCase().split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+            const orderGroupKey = getGroupKey(order['Tên tư vấn bán hàng'] || order['Người YC'] || order['Tư vấn bán hàng']);
             const orderModel = order['Dòng xe'] || 'Khác';
 
-            if (tvbh && model) return orderTvbh === tvbh && orderModel === model;
-            if (tvbh) return orderTvbh === tvbh;
+            if (groupKey && model) return orderGroupKey === groupKey && orderModel === model;
+            if (groupKey) return orderGroupKey === groupKey;
             if (model) return orderModel === model;
             return true;
         });
 
         setDetailModal({
             isOpen: true,
-            title: `Chi tiết XHĐ: ${tvbh || 'Tất cả'} - ${model || 'Tất cả'}`,
+            title: `Chi tiết XHĐ: ${groupKey || 'Tất cả'} - ${model || 'Tất cả'}`,
             data: filtered
         });
     };
 
-    const showMatchingDetailsTvbh = (tvbh?: string, model?: string) => {
-        const filtered = pairedData.filter(order => {
-            const tvbhNameRaw = order['Tên tư vấn bán hàng'] || order['Người YC'] || order['Tư vấn bán hàng'] || 'Không rõ';
-            const orderTvbh = String(tvbhNameRaw).normalize("NFC").trim().toLowerCase().split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    const showMatchingDetailsTvbh = (groupKey?: string, model?: string) => {
+        const filtered = matchingDataToUse.filter(order => {
+            const orderGroupKey = getGroupKey(order['Tên tư vấn bán hàng'] || order['Người YC'] || order['Tư vấn bán hàng']);
             const orderModel = order['Dòng xe'] || 'Khác';
 
-            if (tvbh && model) return orderTvbh === tvbh && orderModel === model;
-            if (tvbh) return orderTvbh === tvbh;
+            if (groupKey && model) return orderGroupKey === groupKey && orderModel === model;
+            if (groupKey) return orderGroupKey === groupKey;
             if (model) return orderModel === model;
             return true;
         });
 
-        // Sort: đã ghép lâu nhất lên đầu
+        // Sort: đã ghép lâu nhất lên đầu (hoặc ngày YC lâu nhất)
         filtered.sort((a, b) => {
-            const dA = a['Thời gian ghép'] ? moment(a['Thời gian ghép']).valueOf() : 0;
-            const dB = b['Thời gian ghép'] ? moment(b['Thời gian ghép']).valueOf() : 0;
+            const dA = a['Thời gian ghép'] ? moment(a['Thời gian ghép']).valueOf() : (a['Thời gian YC'] ? moment(a['Thời gian YC']).valueOf() : 0);
+            const dB = b['Thời gian ghép'] ? moment(b['Thời gian ghép']).valueOf() : (b['Thời gian YC'] ? moment(b['Thời gian YC']).valueOf() : 0);
             return dA - dB;
         });
 
+        const statusText = matchingFilter === 'pending' ? 'Chờ ghép' : matchingFilter === 'all' ? 'Tất cả (Đã + Chờ ghép)' : 'Đã ghép';
+
         setDetailModal({
             isOpen: true,
-            title: `Chi tiết Xe Ghép: ${tvbh || 'Tất cả'} - ${model || 'Tất cả'}`,
+            title: `Chi tiết Xe (${statusText}): ${groupKey || 'Tất cả'} - ${model || 'Tất cả'}`,
             data: filtered,
-            showDaysColumn: true,
-            isMatchedView: true
+            showDaysColumn: matchingFilter === 'paired',
+            isMatchedView: matchingFilter !== 'pending'
         });
     };
 
@@ -283,20 +310,22 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
     };
 
     return (
-        <div className="flex flex-col h-full bg-slate-50/50 overflow-hidden relative">
-            <div className="flex-1 overflow-auto p-4 md:p-5 custom-scrollbar">
+        <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-50 w-full relative">
+            <div className="flex-1 overflow-auto p-2 custom-scrollbar">
 
                 {/* 5:5 Grid Layout for Desktop */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 h-full lg:min-h-0">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 h-full lg:min-h-0">
 
                     {/* SECTION 1: TVBH INVOICE STATS */}
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col min-h-[400px] lg:min-h-0 overflow-hidden">
-                        <div className="px-5 py-3.5 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+                        <div className="px-3 py-2 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-                                    <i className="fas fa-file-invoice-dollar text-sm"></i>
+                                    <i className={viewBy === 'team' ? "fas fa-users text-sm" : "fas fa-file-invoice text-sm"}></i>
                                 </div>
-                                <h3 className="text-sm font-bold text-slate-800 tracking-tight">XUẤT HÓA ĐƠN THEO TVBH</h3>
+                                <h3 className="text-sm font-bold text-slate-800 tracking-tight">
+                                    {viewBy === 'team' ? "XUẤT HÓA ĐƠN THEO PHÒNG" : "XUẤT HÓA ĐƠN THEO TVBH"}
+                                </h3>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
@@ -315,7 +344,9 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                             <table className="w-full text-left border-collapse min-w-[480px]">
                                 <thead className="sticky top-0 z-40 shadow-sm">
                                     <tr className="bg-slate-50">
-                                        <th className="sticky left-0 z-30 bg-slate-50 px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">Tư Vấn</th>
+                                        <th className="sticky left-0 z-30 bg-slate-50 px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">
+                                            {viewBy === 'team' ? 'Phòng Kinh Doanh' : 'Tư Vấn'}
+                                        </th>
                                         {invoiceModels.map(model => (
                                             <th key={model} className="px-2 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200 text-center">{model}</th>
                                         ))}
@@ -377,10 +408,10 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                     </div>
 
                     {/* SECTION 2 & 3 CONTAINER */}
-                    <div className="flex flex-col gap-5 h-full lg:min-h-0 overflow-hidden">
+                    <div className="flex flex-col gap-1.5 h-full lg:min-h-0 overflow-hidden">
                         {/* SECTION 2: MONTHLY MATCHING STATS */}
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col flex-1 min-h-[250px] overflow-hidden">
-                        <div className="px-5 py-3.5 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+                        <div className="px-3 py-2 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
                                     <i className="fas fa-layer-group text-sm"></i>
@@ -429,10 +460,14 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                                         <button onClick={() => showMatchingDetails(model, 'total')} className="hover:text-emerald-600 transition-colors">{model}</button>
                                                     </td>
                                                     <td className="px-2 py-3 text-xs font-bold text-emerald-600 text-center border border-slate-100">
-                                                        <button onClick={() => showMatchingDetails(model, 'matched')} className="w-full h-full hover:scale-110 transition-transform">{data.matched}</button>
+                                                        {data.matched > 0 ? (
+                                                            <button onClick={() => showMatchingDetails(model, 'matched')} className="w-full h-full hover:scale-110 transition-transform">{data.matched}</button>
+                                                        ) : <span className="text-slate-300 font-normal">-</span>}
                                                     </td>
                                                     <td className="px-2 py-3 text-xs font-bold text-slate-400 text-center border border-slate-100">
-                                                        <button onClick={() => showMatchingDetails(model, 'unmatched')} className="w-full h-full hover:scale-110 transition-transform">{data.unmatched}</button>
+                                                        {data.unmatched > 0 ? (
+                                                            <button onClick={() => showMatchingDetails(model, 'unmatched')} className="w-full h-full hover:scale-110 transition-transform">{data.unmatched}</button>
+                                                        ) : <span className="text-slate-300 font-normal">-</span>}
                                                     </td>
                                                     <td className="px-5 py-3 border border-slate-100">
                                                         <div className="flex items-center gap-2">
@@ -488,25 +523,56 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                         </div>
                     </div>
 
-                        {/* SECTION 3: PAIRED CARS BY TVBH */}
+                        {/* SECTION 3: PAIRED / PENDING CARS BY TVBH OR TEAM */}
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col flex-1 min-h-[250px] overflow-hidden">
-                            <div className="px-5 py-3.5 bg-white border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+                            <div className="px-3 py-2 bg-white border-b border-slate-100 flex flex-wrap items-center justify-between gap-2 flex-shrink-0">
                                 <div className="flex items-center gap-2.5">
-                                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-                                        <i className="fas fa-car-side text-sm"></i>
+                                    <div className={`w-8 h-8 rounded-lg ${matchingFilter === 'pending' ? 'bg-amber-50 text-amber-600' : matchingFilter === 'all' ? 'bg-indigo-50 text-indigo-600' : 'bg-emerald-50 text-emerald-600'} flex items-center justify-center`}>
+                                        <i className={viewBy === 'team' ? "fas fa-users text-sm" : "fas fa-car-side text-sm"}></i>
                                     </div>
-                                    <h3 className="text-sm font-bold text-slate-800 tracking-tight">SỐ LƯỢNG XE GHÉP THEO TVBH</h3>
+                                    <h3 className="text-sm font-bold text-slate-800 tracking-tight">
+                                        {matchingFilter === 'pending'
+                                            ? (viewBy === 'team' ? "SỐ LƯỢNG XE CHỜ GHÉP THEO PHÒNG" : "SỐ LƯỢNG XE CHỜ GHÉP THEO TVBH")
+                                            : matchingFilter === 'all'
+                                            ? (viewBy === 'team' ? "SỐ LƯỢNG XE (ĐÃ + CHỜ GHÉP) THEO PHÒNG" : "SỐ LƯỢNG XE (ĐÃ + CHỜ GHÉP) THEO TVBH")
+                                            : (viewBy === 'team' ? "SỐ LƯỢNG XE GHÉP THEO PHÒNG" : "SỐ LƯỢNG XE GHÉP THEO TVBH")
+                                        }
+                                    </h3>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    {/* Toggle Filter: Đã ghép | Chờ ghép | Tất cả */}
+                                    <div className="flex items-center p-0.5 bg-slate-100 rounded-lg text-[10px] font-bold">
+                                        <button
+                                            onClick={() => setMatchingFilter('paired')}
+                                            className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${matchingFilter === 'paired' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                                        >
+                                            <i className="fas fa-check-circle text-[9px]"></i>
+                                            <span>Đã ghép ({pairedData.length})</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setMatchingFilter('pending')}
+                                            className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${matchingFilter === 'pending' ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                                        >
+                                            <i className="fas fa-clock text-[9px]"></i>
+                                            <span>Chờ ghép ({pendingData.length})</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setMatchingFilter('all')}
+                                            className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${matchingFilter === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                                        >
+                                            <i className="fas fa-layer-group text-[9px]"></i>
+                                            <span>Tất cả ({pairedData.length + pendingData.length})</span>
+                                        </button>
+                                    </div>
+
                                     <button
-                                        onClick={() => handleCopySpecificTable(matchingTvbhTableRef, 'Xe_Ghep_Theo_TVBH', 'matching_tvbh')}
-                                        disabled={copyingTable === 'matching_tvbh'}
+                                        onClick={() => handleCopySpecificTable(matchingTvbhTableRef, `Xe_${matchingFilter}_Theo_${viewBy}`, `matching_${matchingFilter}`)}
+                                        disabled={copyingTable === `matching_${matchingFilter}`}
                                         className="px-3 py-1 bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 hover:border-blue-600 rounded text-[10px] font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50"
                                     >
-                                        {copyingTable === 'matching_tvbh' ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-copy"></i>}
+                                        {copyingTable === `matching_${matchingFilter}` ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-copy"></i>}
                                         Copy Bảng
                                     </button>
-                                    <span className="text-[9px] uppercase font-bold text-slate-400 tracking-widest bg-slate-50 px-2 py-1 rounded">Đã ghép</span>
                                 </div>
                             </div>
 
@@ -514,7 +580,9 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                     <table className="w-full text-left border-collapse min-w-[480px]">
                                         <thead className="sticky top-0 z-40 shadow-sm">
                                             <tr className="bg-slate-50">
-                                                <th className="sticky left-0 z-30 bg-slate-50 px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">Tư Vấn</th>
+                                                <th className="sticky left-0 z-30 bg-slate-50 px-4 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200">
+                                                    {viewBy === 'team' ? 'Phòng Kinh Doanh' : 'Tư Vấn'}
+                                                </th>
                                                 {matchingTvbhModels.map(model => (
                                                     <th key={model} className="px-2 py-2.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border border-slate-200 text-center">{model}</th>
                                                 ))}
@@ -531,7 +599,7 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                                         {matchingTvbhModels.map(model => {
                                                             const count = models[model] || 0;
                                                             return (
-                                                                <td key={model} className={`px-2 py-2 text-xs text-center font-medium border border-slate-100 ${count > 0 ? 'text-slate-900 font-bold bg-emerald-50/5' : 'text-slate-300'}`}>
+                                                                <td key={model} className={`px-2 py-2 text-xs text-center font-medium border border-slate-100 ${count > 0 ? (matchingFilter === 'pending' ? 'text-amber-700 font-bold bg-amber-50/20' : 'text-slate-900 font-bold bg-emerald-50/5') : 'text-slate-300'}`}>
                                                                     {count > 0 ? (
                                                                         <button onClick={() => showMatchingDetailsTvbh(tvbh, model)} className="w-full h-full hover:text-blue-600 hover:scale-110 transition-all">
                                                                             {count}
@@ -547,7 +615,9 @@ const AdminStats: React.FC<AdminStatsProps> = ({ xuathoadonData, pendingData, pa
                                                 ))
                                             ) : (
                                                 <tr>
-                                                    <td colSpan={matchingTvbhModels.length + 2} className="px-5 py-12 text-center text-slate-400 italic text-xs border border-slate-200">Chưa có xe ghép</td>
+                                                    <td colSpan={matchingTvbhModels.length + 2} className="px-5 py-12 text-center text-slate-400 italic text-xs border border-slate-200">
+                                                        Chưa có xe {matchingFilter === 'pending' ? 'chờ ghép' : matchingFilter === 'all' ? 'nào' : 'đã ghép'}
+                                                    </td>
                                                 </tr>
                                             )}
                                         </tbody>

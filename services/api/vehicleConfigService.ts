@@ -44,3 +44,29 @@ export const deleteVehicleConfig = async (id: string) => {
         return { status: 'ERROR', message: err.message };
     }
 };
+
+export const saveColorMappings = async (parentValue: string, exteriorColors: string[], interiorColors: string[]) => {
+    try {
+        // First delete all old mappings for this parent
+        const { error: delError } = await supabase.from('vehicle_configs')
+            .delete()
+            .in('type', ['exterior', 'interior'])
+            .eq('parent_value', parentValue);
+            
+        if (delError) throw delError;
+
+        const inserts = [
+            ...exteriorColors.map(c => ({ type: 'exterior', value: c, parent_value: parentValue })),
+            ...interiorColors.map(c => ({ type: 'interior', value: c, parent_value: parentValue }))
+        ];
+
+        if (inserts.length > 0) {
+            const { error: insError } = await supabase.from('vehicle_configs').insert(inserts);
+            if (insError) throw insError;
+        }
+
+        return { status: 'SUCCESS' };
+    } catch (err: any) {
+        return { status: 'ERROR', message: err.message };
+    }
+};

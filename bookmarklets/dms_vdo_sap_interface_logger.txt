@@ -1,0 +1,65 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - ĐỌC NHẬT KÝ LỖI GIAO TIẾP SAP (INTERFACE LOG / ASYNC JOB)
+     * ========================================================================= */
+    var x = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!x) {
+        for (var i = 0; i < frames.length; i++) {
+            try { if (frames[i].Xrm) { x = frames[i].Xrm; break; } } catch(e){}
+        }
+    }
+
+    var vdoId = (new URLSearchParams(window.location.search).get("id") || "").replace(/[{}]/g, "");
+    var logs = [];
+
+    // 1. Quét bảng Interface Log
+    try {
+        var ifaceRes = await x.WebApi.retrieveMultipleRecords("xts_interfacelog", `?$filter=contains(xts_referencenumber,'0150') or contains(xts_requestpayload,'${vdoId}')&$orderby=createdon desc&$top=5`);
+        if (ifaceRes && ifaceRes.entities && ifaceRes.entities.length > 0) {
+            ifaceRes.entities.forEach(function(l) {
+                logs.push(`📡 [SAP Interface Log - ${l.createdon}]:\n• Trạng thái: ${l["xts_status@OData.Community.Display.V1.FormattedValue"] || l.xts_status}\n• Phản hồi SAP: ${l.xts_responsemessage || l.xts_errormessage || l.xts_responsepayload || "Không có text"}`);
+            });
+        }
+    } catch(e1){}
+
+    try {
+        var ifaceRes2 = await x.WebApi.retrieveMultipleRecords("itv_interfacelog", `?$filter=contains(itv_referencenumber,'0150') or contains(itv_request,'${vdoId}')&$orderby=createdon desc&$top=5`);
+        if (ifaceRes2 && ifaceRes2.entities && ifaceRes2.entities.length > 0) {
+            ifaceRes2.entities.forEach(function(l) {
+                logs.push(`📡 [ITV Interface Log - ${l.createdon}]:\n• Phản hồi: ${l.itv_response || l.itv_errormessage || l.itv_message}`);
+            });
+        }
+    } catch(e2){}
+
+    // 2. Quét AsyncOperation (System Jobs)
+    try {
+        var jobRes = await x.WebApi.retrieveMultipleRecords("asyncoperation", `?$filter=regardingobjectid_xts_newvehicledeliveryorder/xts_newvehicledeliveryorderid eq ${vdoId}&$orderby=createdon desc&$top=5`);
+        if (jobRes && jobRes.entities && jobRes.entities.length > 0) {
+            jobRes.entities.forEach(function(j) {
+                logs.push(`⚙️ [Hàng đợi System Job - ${j.name}]:\n• Trạng thái: ${j["statuscode@OData.Community.Display.V1.FormattedValue"] || j.statuscode}\n• Chi tiết: ${j.message || "Đang xử lý"}`);
+            });
+        }
+    } catch(e3){}
+
+    // 3. Đọc dữ liệu xe kho liên kết
+    var vdo = await x.WebApi.retrieveRecord("xts_newvehicledeliveryorder", vdoId);
+    var stockId = vdo._xts_stockid_value;
+    var stockMsg = "";
+    if (stockId) {
+        try {
+            var st = await x.WebApi.retrieveRecord("xts_inventorynewvehicle", stockId);
+            stockMsg = `\n🚗 KIỂM TRA XE KHO (${st.xts_stocknumber}):\n• Sê-ri PIN: ${st.itv_batteryserial || "❌ TRỐNG PIN"}\n• Trạng thái tồn: ${st["xts_stockstatus@OData.Community.Display.V1.FormattedValue"] || st.xts_stockstatus}\n• Số máy: ${st.xts_enginenumber || "Có"}`;
+        } catch(e4){}
+    }
+
+    var finalReport = `🔍 TÌNH TRẠNG KẾT NỐI VỚI MÁY CHỦ SAP:\n` +
+                      `========================================\n` +
+                      `Phiếu đang ở trạng thái [ĐANG PHÁT HÀNH / KÍCH HOẠT SAP]...\n` +
+                      (logs.length > 0 ? logs.join("\n\n") : "• Chưa ghi nhận lỗi fatal từ interface log.") +
+                      stockMsg +
+                      `\n========================================\n` +
+                      `💡 KẾT LUẬN:\n` +
+                      `Hệ thống DMS đã kích hoạt lệnh và gửi sang SAP. Khi SAP hoàn tất xử lý hàng đợi, phiếu sẽ tự động chốt 'Phát hành'. Nếu bị trả về 'Mở', nguyên nhân là do SAP từ chối ở bước Xe kho/Pin hoặc Hóa đơn.`;
+
+    alert(finalReport);
+})();

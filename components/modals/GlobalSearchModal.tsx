@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { globalSearch } from '../../services/apiService';
 
 interface GlobalSearchModalProps {
@@ -13,6 +13,21 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
     const [results, setResults] = useState<Record<string, any[]> | null>(null);
     const [executionTime, setExecutionTime] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<string>('all');
+    const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+    useEffect(() => {
+        const saved = localStorage.getItem('global_recent_searches');
+        if (saved) {
+            try { setRecentSearches(JSON.parse(saved)); } catch(e){}
+        }
+    }, []);
+
+    const saveRecentSearch = (kw: string) => {
+        if (!kw.trim()) return;
+        const updated = [kw, ...recentSearches.filter(s => s !== kw)].slice(0, 5);
+        setRecentSearches(updated);
+        localStorage.setItem('global_recent_searches', JSON.stringify(updated));
+    };
 
     const filteredCategories = useMemo(() => {
         if (!results) return [];
@@ -40,15 +55,17 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
 
     if (!isOpen) return null;
 
-    const handleSearch = async () => {
-        if (!keyword.trim()) return;
+    const handleSearch = async (searchKeyword = keyword) => {
+        if (typeof searchKeyword !== 'string' || !searchKeyword.trim()) return;
+        if (searchKeyword !== keyword) setKeyword(searchKeyword);
         setIsLoading(true);
         setResults(null);
         setExecutionTime(null);
+        saveRecentSearch(searchKeyword);
 
         try {
             const startTime = performance.now();
-            const response = await globalSearch(keyword, 'all');
+            const response = await globalSearch(searchKeyword, 'all');
             if (response && response.status === "SUCCESS" && response.data) {
                 setResults(response.data);
                 setExecutionTime(Number(((performance.now() - startTime) / 1000).toFixed(2)));
@@ -61,7 +78,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') handleSearch();
+        if (e.key === 'Enter') handleSearch(keyword);
     };
 
     const getStatusStyle = (status: string) => {
@@ -114,76 +131,47 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex flex-col animate-fade-in overflow-hidden font-sans">
-            {/* Backdrop with semi-transparent blur */}
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={onClose}></div>
+        <div className="fixed inset-0 z-[9999] flex font-sans">
+            {/* Backdrop with slight dim */}
+            <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
 
-            {/* Content Container */}
-            <div className="relative flex flex-col w-full h-full md:h-[90%] md:w-[95%] md:max-w-7xl mx-auto md:my-auto bg-white md:rounded-[2rem] shadow-2xl overflow-hidden transition-all duration-500">
+            {/* Content Drawer (Slide in from Right) */}
+            <div className="absolute right-0 top-0 bottom-0 flex flex-col w-full sm:w-[450px] lg:w-[500px] bg-white shadow-[-20px_0_40px_rgba(0,0,0,0.1)] animate-slide-in-right overflow-hidden">
 
-                {/* Header Section */}
-                <div className="flex flex-col flex-shrink-0 bg-white border-b border-slate-100">
-                    {/* Top Row: Logo & Close Button */}
-                    <div className="px-4 md:px-8 py-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-100">
-                                <i className="fas fa-search text-lg md:text-xl"></i>
+                {/* Search Bar Block */}
+                <div className="flex flex-col flex-shrink-0 bg-white border-b border-slate-100 relative z-10 shadow-sm">
+                    {/* Search Input Row (Drawer Style) */}
+                    <div className="relative flex items-center px-6 py-5">
+                        <i className={`fas ${isLoading ? 'fa-spinner fa-spin' : 'fa-search'} text-xl text-indigo-500`}></i>
+                        <input
+                            type="text"
+                            className="w-full pl-4 pr-12 py-2 bg-transparent outline-none transition-all text-slate-800 placeholder:text-slate-300 text-lg font-medium"
+                            placeholder="Nhập từ khóa tìm kiếm..."
+                            value={keyword}
+                            onChange={(e) => setKeyword(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            autoFocus
+                        />
+                        {executionTime !== null && (
+                            <div className="absolute right-16 flex flex-col items-end opacity-40">
+                                <span className="text-[8px] font-black tracking-widest text-slate-400 uppercase">Latency</span>
+                                <span className="text-xs font-black text-slate-600 leading-none">{executionTime}s</span>
                             </div>
-                            <div>
-                                <h2 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight leading-none">TÌM KIẾM</h2>
-                                <p className="text-[10px] font-bold text-slate-400 mt-1 tracking-wider uppercase opacity-70">Toàn Hệ Thống</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 md:gap-4">
-                            {executionTime !== null && (
-                                <div className="hidden sm:flex flex-col items-end opacity-40">
-                                    <span className="text-[9px] font-black tracking-tighter text-slate-400">LATENCY</span>
-                                    <span className="text-xs font-black text-slate-600 leading-none">{executionTime}s</span>
-                                </div>
-                            )}
-                            <button
-                                onClick={onClose}
-                                className="w-10 h-10 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-500 transition-all text-slate-500 flex items-center justify-center border border-transparent active:scale-90"
-                            >
-                                <i className="fas fa-times text-lg"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Search Input Row */}
-                    <div className="px-4 md:px-8 pb-4 md:pb-6">
-                        <div className="relative group">
-                            <input
-                                type="text"
-                                className="w-full pl-12 pr-28 py-4 bg-slate-100/80 border-2 border-transparent rounded-2xl focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all text-slate-800 placeholder:text-slate-400 font-semibold"
-                                placeholder="Mã VIN, Số đơn hàng, Khách hàng..."
-                                value={keyword}
-                                onChange={(e) => setKeyword(e.target.value)}
-                                onKeyDown={handleKeyDown}
-                                autoFocus
-                            />
-                            <div className="absolute left-4 inset-y-0 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500">
-                                <i className={`fas ${isLoading ? 'fa-spinner fa-spin' : 'fa-search'} text-lg`}></i>
-                            </div>
-                            <div className="absolute right-2 inset-y-2 flex items-center">
-                                <button
-                                    onClick={handleSearch}
-                                    disabled={isLoading || keyword.trim().length < 2}
-                                    className="h-full px-4 md:px-6 bg-slate-900 hover:bg-indigo-600 disabled:opacity-30 disabled:hover:bg-slate-900 text-white rounded-xl text-[11px] font-bold tracking-widest transition-all active:scale-95 shadow-sm"
-                                >
-                                    {isLoading ? '...' : 'TÌM'}
-                                </button>
-                            </div>
-                        </div>
+                        )}
+                        <button
+                            onClick={onClose}
+                            className="absolute right-4 w-8 h-8 rounded-full hover:bg-slate-100 transition-all text-slate-400 flex items-center justify-center active:scale-90"
+                        >
+                            <i className="fas fa-times"></i>
+                        </button>
                     </div>
 
                     {/* Filter Tabs */}
                     {results && (
-                        <div className="px-4 md:px-8 py-2 bg-slate-50 flex gap-2 items-center overflow-x-auto no-scrollbar border-t border-slate-50">
+                        <div className="px-6 py-3 bg-slate-50 flex gap-2 items-center overflow-x-auto no-scrollbar border-t border-b border-slate-100">
                             <button
                                 onClick={() => setActiveTab('all')}
-                                className={`px-4 py-2 rounded-xl text-[10px] font-bold tracking-wider whitespace-nowrap transition-all uppercase ${activeTab === 'all' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 bg-white border border-slate-200'}`}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide whitespace-nowrap transition-all ${activeTab === 'all' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200/50'}`}
                             >
                                 Tất cả ({Object.values(results).reduce((a, c) => a + c.length, 0)})
                             </button>
@@ -191,7 +179,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                                 <button
                                     key={cat}
                                     onClick={() => setActiveTab(cat)}
-                                    className={`px-4 py-2 rounded-xl text-[10px] font-bold tracking-wider whitespace-nowrap transition-all uppercase border ${activeTab === cat ? 'bg-slate-900 text-white border-slate-900 shadow-md' : 'text-slate-500 bg-white border-slate-200'}`}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide whitespace-nowrap transition-all ${activeTab === cat ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:bg-slate-200/50'}`}
                                 >
                                     {cat} ({results[cat].length})
                                 </button>
@@ -201,8 +189,8 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                 </div>
 
                 {/* Results Workspace */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50/30">
-                    <div className="max-w-5xl mx-auto space-y-8 md:space-y-12 pb-20">
+                <div className="flex-1 overflow-y-auto">
+                    <div className="p-6 md:p-8 pb-20">
 
                         {isLoading ? (
                             <div className="flex flex-col items-center justify-center py-20 md:py-32">
@@ -212,12 +200,41 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                                 <h3 className="mt-6 text-sm font-bold text-slate-800 tracking-widest uppercase animate-pulse">Đang tìm dữ liệu...</h3>
                             </div>
                         ) : !results ? (
-                            <div className="flex flex-col items-center justify-center py-20 md:py-32 opacity-30">
-                                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-slate-100 flex items-center justify-center mb-6">
-                                    <i className="fas fa-search-plus text-4xl text-slate-400"></i>
+                            <div className="animate-fade-in-up">
+                                <div className="grid grid-cols-1 gap-6 mt-6">
+                                    {/* Recent Searches */}
+                                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
+                                                <i className="fas fa-history"></i>
+                                            </div>
+                                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Tìm kiếm gần đây</h3>
+                                        </div>
+                                        {recentSearches.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {recentSearches.map((rs, i) => (
+                                                    <button key={i} onClick={() => handleSearch(rs)} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left group">
+                                                        <i className="fas fa-clock text-slate-300 group-hover:text-emerald-500 transition-colors"></i>
+                                                        <span className="text-sm font-semibold text-slate-600 flex-grow">{rs}</span>
+                                                        <i className="fas fa-arrow-right text-slate-300 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all"></i>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="h-24 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-2xl">
+                                                <span className="text-xs font-bold text-slate-400">Chưa có lịch sử</span>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <h3 className="text-lg md:text-xl font-bold text-slate-500 uppercase tracking-widest">Sẵn sàng tìm kiếm</h3>
-                                <p className="text-sm font-medium mt-2 text-slate-400 text-center px-4">Nhập từ khóa để tra cứu dữ liệu từ hệ thống</p>
+                                <div className="flex justify-center mt-12 gap-8 opacity-40">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                        <kbd className="px-2 py-1 bg-slate-200 rounded text-slate-600 font-mono shadow-sm">↵</kbd> Tìm kiếm
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                                        <kbd className="px-2 py-1 bg-slate-200 rounded text-slate-600 font-mono shadow-sm">ESC</kbd> Đóng
+                                    </div>
+                                </div>
                             </div>
                         ) : filteredCategories.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20">
@@ -237,34 +254,44 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                                             <div className="h-px bg-slate-200 flex-grow mx-4"></div>
                                             <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-1 rounded-lg uppercase">{results[cat].length} kết quả</span>
                                         </div>
+                                        <div className="flex flex-col gap-8 md:gap-10">
+                                            {results[cat].map((row: any, idx: number) => {
+                                                const keys = Object.keys(row);
+                                                let titleKey = keys.find(k => k.toLowerCase().includes('số đơn') || k.toLowerCase() === 'vin' || k.toLowerCase().includes('khách hàng'));
+                                                if (!titleKey) titleKey = keys[0];
+                                                
+                                                const title = row[titleKey];
+                                                const snippetEntries = Object.entries(row).filter(([k]) => k !== titleKey);
 
-                                        <div className="grid grid-cols-1 gap-3 md:gap-4">
-                                            {results[cat].map((row: any, idx: number) => (
-                                                <div
-                                                    key={idx}
-                                                    onClick={() => onSelectItem?.(row, cat)}
-                                                    className="group bg-white p-4 md:p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer flex items-center gap-4 md:gap-8 relative overflow-hidden"
-                                                >
-                                                    <div className="absolute left-0 inset-y-0 w-1 bg-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-
-                                                    <div className="flex-grow grid grid-cols-2 md:grid-cols-4 gap-x-4 md:gap-x-10 gap-y-4 md:gap-y-6">
-                                                        {Object.entries(row).map(([key, value]) => (
-                                                            <div key={key} className="flex flex-col min-w-0">
-                                                                <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider mb-1 leading-none">{key}</span>
-                                                                <div className="text-[13px] md:text-sm truncate">
-                                                                    {renderValue(key, value)}
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        onClick={() => onSelectItem?.(row, cat)}
+                                                        className="group cursor-pointer flex flex-col gap-1"
+                                                    >
+                                                        {/* Breadcrumb */}
+                                                        <div className="flex items-center gap-2 text-xs text-slate-500 mb-0.5">
+                                                            <i className={`fas ${getIcon(cat)} text-[10px]`}></i>
+                                                            <span className="font-medium">VinFast System <span className="mx-1 text-slate-300">›</span> {cat}</span>
+                                                        </div>
+                                                        
+                                                        {/* Blue Title */}
+                                                        <h3 className="text-lg md:text-[20px] leading-tight font-medium text-[#1a0dab] group-hover:underline truncate mb-1">
+                                                            {titleKey}: {title}
+                                                        </h3>
+                                                        
+                                                        {/* Snippet */}
+                                                        <div className="text-sm text-[#4d5156] flex flex-wrap items-center gap-x-4 gap-y-2">
+                                                            {snippetEntries.map(([k, v]) => (
+                                                                <div key={k} className="flex items-center gap-1.5">
+                                                                    <span className="font-semibold text-slate-600">{k}:</span>
+                                                                    <div className="truncate max-w-[250px]">{renderValue(k, v)}</div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-
-                                                    <div className="flex-shrink-0">
-                                                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white transition-all flex items-center justify-center text-slate-300 border border-slate-100 active:scale-90">
-                                                            <i className="fas fa-chevron-right text-xs"></i>
+                                                            ))}
                                                         </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 ))}
@@ -272,23 +299,18 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                         )}
                     </div>
                 </div>
-
-                {/* Footer Section */}
-                <div className="hidden md:flex px-8 py-3 bg-slate-900 text-indigo-200/40 text-[9px] font-bold tracking-[0.2em] uppercase items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Encrypted Connection Active
-                    </div>
-                    <div className="flex gap-8">
-                        <span>CLUSTER: VN-SOUTH-01</span>
-                        <span className="opacity-60">REF: {Math.random().toString(36).substring(7).toUpperCase()}</span>
-                    </div>
-                </div>
             </div>
 
             <style>{`
                 .no-scrollbar::-webkit-scrollbar { display: none; }
                 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                @keyframes slideInRight {
+                    from { transform: translateX(100%); }
+                    to { transform: translateX(0); }
+                }
+                .animate-slide-in-right {
+                    animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                }
             `}</style>
         </div>
     );

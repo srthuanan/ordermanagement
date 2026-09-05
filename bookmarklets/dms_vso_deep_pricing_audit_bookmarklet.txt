@@ -1,0 +1,414 @@
+javascript:(function(){
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var frames = window.frames;
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].Xrm && frames[i].Xrm.WebApi) { _Xrm = frames[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert("⚠️ Vui lòng mở trang Đơn hàng bán xe (VSO) trên DMS trước khi bấm!");
+        return;
+    }
+
+    var vsoId = "";
+    try {
+        if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity) {
+            vsoId = _Xrm.Page.data.entity.getId();
+        }
+    } catch(e){}
+
+    if (!vsoId) {
+        var urlParams = new URLSearchParams(window.location.search || (window.parent && window.parent.location.search));
+        vsoId = urlParams.get('id') || '';
+    }
+
+    if (!vsoId) {
+        alert("⚠️ Vui lòng mở một bản ghi Đơn hàng bán xe (VSO) cụ thể!");
+        return;
+    }
+
+    vsoId = vsoId.replace(/[{}]/g, "").trim();
+
+    var progressDiv = document.createElement('div');
+    progressDiv.id = 'dmsDeepAuditProgress';
+    progressDiv.style = 'position:fixed;top:15px;right:15px;background:#0f172a;color:#38bdf8;padding:16px 22px;z-index:9999999;border-radius:12px;font-family:sans-serif;font-size:13px;font-weight:bold;box-shadow:0 12px 30px rgba(0,0,0,0.6);border:1px solid #38bdf840;backdrop-filter:blur(8px);';
+    progressDiv.innerHTML = '🔍 Đang quét sâu từng hạng mục con (Khuyến mại, Phụ kiện, Thuế, Giá xe)...';
+    document.body.appendChild(progressDiv);
+
+    // Queries:
+    // 1. Full VSO Record
+    // 2. Applied Promotions
+    // 3. Accessories / Details
+    var p1 = _Xrm.WebApi.retrieveRecord("xts_newvehiclesalesorder", vsoId);
+    var p2 = _Xrm.WebApi.retrieveMultipleRecords("xts_nvsoappliedpromotion", "?$filter=_xts_newvehiclesalesorderid_value eq " + vsoId).catch(function(){ return { entities: [] }; });
+    var p3 = _Xrm.WebApi.retrieveMultipleRecords("xts_newvehiclesalesorderaccessory", "?$filter=_xts_newvehiclesalesorderid_value eq " + vsoId).catch(function(){ return { entities: [] }; });
+
+    Promise.all([p1, p2, p3]).then(function(results) {
+        progressDiv.remove();
+        var vso = results[0];
+        var promos = results[1].entities || [];
+        var accessories = results[2].entities || [];
+        showDeepFinancialAuditModal(vso, promos, accessories);
+    }).catch(function(err) {
+        progressDiv.remove();
+        alert("❌ Lỗi khi quét sâu dữ liệu: " + (err.message || err));
+    });
+
+    function fmt(val) {
+        if (val === undefined || val === null || isNaN(val)) return "0 đ";
+        return Math.round(val).toLocaleString('vi-VN') + " đ";
+    }
+
+    function showDeepFinancialAuditModal(vso, promoList, accList) {
+        var old = document.getElementById('dmsDeepAuditOverlay');
+        if (old) old.remove();
+
+        var vsoNumber = vso.xts_newvehiclesalesordernumber || "VSO-" + vso.xts_newvehiclesalesorderid.slice(0, 8);
+        var customer = vso["_xts_potentialcustomerid_value@OData.Community.Display.V1.FormattedValue"] || vso.xts_potentiallookupname || "Khách hàng";
+        var tvbh = vso["_xts_salespersonid_value@OData.Community.Display.V1.FormattedValue"] || vso["_ownerid_value@OData.Community.Display.V1.FormattedValue"] || "TVBH";
+        var product = vso.xts_productdescription || vso["_xts_productid_value@OData.Community.Display.V1.FormattedValue"] || "Ô tô VinFast";
+        var config = vso["_xts_productconfigurationid_value@OData.Community.Display.V1.FormattedValue"] || vso["_xvf_characteristicconfiguration_value@OData.Community.Display.V1.FormattedValue"] || "Tiêu chuẩn";
+        var extColor = vso.xvf_exteriorcolor || vso["_xts_productexteriorcolorid_value@OData.Community.Display.V1.FormattedValue"] || "Màu tiêu chuẩn";
+        var intColor = vso.xvf_interiorcolor || vso["_xts_productinteriorcolorid_value@OData.Community.Display.V1.FormattedValue"] || "Nội thất tiêu chuẩn";
+        var vin = vso["_xts_chassisid_value@OData.Community.Display.V1.FormattedValue"] || vso.xts_chassisnumber || "Chưa ghép VIN";
+
+        // Financials
+        var baseVehiclePrice = parseFloat(vso.xts_vehicleprice) || parseFloat(vso.xts_totalprice) || 0;
+        var charPrice = parseFloat(vso.xts_characteristicprice) || 0;
+        var charDisc = parseFloat(vso.xts_characteristicpricediscamount) || 0;
+        var totalPrice = parseFloat(vso.xts_totalprice) || baseVehiclePrice;
+        var totalDiscount = parseFloat(vso.xts_totaldiscountamount) || 0;
+        var baseSubsidy = parseFloat(vso.xvf_basepricediscountamount) || 0; // Trợ giá chiết khấu (Base)
+        var netAfterDiscount = parseFloat(vso.xts_netamountaftertax) || parseFloat(vso.xts_totalamount) || (totalPrice - totalDiscount);
+        
+        var taxRate = 0.10;
+        var priceBeforeTax = netAfterDiscount / (1 + taxRate);
+        var vatAmount = netAfterDiscount - priceBeforeTax;
+
+        // Trade-in / Down payment
+        var tradeInAmount = parseFloat(vso.xts_tradeinamount) || 0;
+        var downPayment = parseFloat(vso.xts_downpaymentamount) || 0;
+        var balance = parseFloat(vso.xts_balance) || netAfterDiscount;
+
+        var overlay = document.createElement('div');
+        overlay.id = 'dmsDeepAuditOverlay';
+        overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.9);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:system-ui,-apple-system,sans-serif;backdrop-filter:blur(8px);';
+
+        var modal = document.createElement('div');
+        modal.style = 'background:#0f172a;width:1150px;max-width:96%;height:90vh;border-radius:18px;border:1px solid #334155;box-shadow:0 25px 60px rgba(0,0,0,0.85);display:flex;flex-direction:column;overflow:hidden;color:#e2e8f0;';
+
+        // Header
+        var header = document.createElement('div');
+        header.style = 'background:#1e293b;padding:16px 24px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;';
+        header.innerHTML = `
+            <div>
+                <h3 style="margin:0;color:#38bdf8;font-size:17px;display:flex;align-items:center;gap:8px;">🔬 THANH TRA SÂU TỪNG HẠNG MỤC GIÁ & HÓA ĐƠN VSO</h3>
+                <p style="margin:4px 0 0 0;font-size:12px;color:#94a3b8;">Đơn hàng: <b style="color:#f8fafc;">${vsoNumber}</b> | Khách: <b style="color:#f8fafc;">${customer}</b> | TVBH: <b style="color:#f8fafc;">${tvbh}</b></p>
+            </div>
+            <button id="btnCloseDeepAudit" style="background:transparent;border:none;color:#94a3b8;font-size:22px;cursor:pointer;padding:4px;">✕</button>
+        `;
+
+        // Tab Navigation
+        var navBar = document.createElement('div');
+        navBar.style = 'background:#0f172a;padding:10px 24px;border-bottom:1px solid #1e293b;display:flex;gap:10px;flex-wrap:wrap;';
+        navBar.innerHTML = `
+            <button id="tabBtn1" style="background:#38bdf8;color:#0f172a;border:none;padding:7px 14px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">🚗 1. Giá Xe & Cấu Hình</button>
+            <button id="tabBtn2" style="background:#1e293b;color:#cbd5e1;border:1px solid #334155;padding:7px 14px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">🏷️ 2. Khuyến Mại & Chiết Khấu (${promoList.length})</button>
+            <button id="tabBtn3" style="background:#1e293b;color:#cbd5e1;border:1px solid #334155;padding:7px 14px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">🧾 3. Bóc Tách Thuế VAT 10%</button>
+            <button id="tabBtn4" style="background:#1e293b;color:#cbd5e1;border:1px solid #334155;padding:7px 14px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">🛠️ 4. Phụ Kiện (${accList.length})</button>
+            <button id="tabBtn5" style="background:#1e293b;color:#cbd5e1;border:1px solid #334155;padding:7px 14px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">📋 5. Toàn Bộ Trường OData</button>
+        `;
+
+        // Tab Content Container
+        var contentDiv = document.createElement('div');
+        contentDiv.style = 'flex-grow:1;overflow-y:auto;padding:24px;font-size:13px;';
+
+        // View 1: Vehicle & Specs
+        var view1 = document.createElement('div');
+        view1.id = 'tabView1';
+        view1.innerHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                <div style="background:#1e293b;padding:18px;border-radius:12px;border:1px solid #334155;">
+                    <h4 style="margin:0 0 12px 0;color:#38bdf8;font-size:14px;">🚗 THÔNG TIN XE & CẤU HÌNH GỐC</h4>
+                    <div style="line-height:2.0;">
+                        <div>• Dòng xe: <b style="color:#f8fafc;">${product}</b></div>
+                        <div>• Phiên bản (Configuration): <b style="color:#f8fafc;">${config}</b></div>
+                        <div>• Màu ngoại thất: <b style="color:#38bdf8;">${extColor}</b></div>
+                        <div>• Màu nội thất: <b style="color:#38bdf8;">${intColor}</b></div>
+                        <div>• Số khung (VIN): <b style="color:#f43f5e;font-family:monospace;">${vin}</b></div>
+                    </div>
+                </div>
+
+                <div style="background:#1e293b;padding:18px;border-radius:12px;border:1px solid #334155;">
+                    <h4 style="margin:0 0 12px 0;color:#10b981;font-size:14px;">💰 CƠ CẤU GIÁ NIÊM YẾT (LIST PRICE)</h4>
+                    <div style="line-height:2.0;">
+                        <div style="display:flex;justify-content:space-between;"><span>1. Giá xe cơ sở (Vehicle Price):</span><b style="color:#f8fafc;">${fmt(baseVehiclePrice)}</b></div>
+                        <div style="display:flex;justify-content:space-between;"><span>2. Giá Characteristic / Màu sơn:</span><b style="color:#cbd5e1;">${fmt(charPrice)}</b></div>
+                        <div style="display:flex;justify-content:space-between;"><span>3. Giảm giá Characteristic:</span><b style="color:#ef4444;">- ${fmt(charDisc)}</b></div>
+                        <div style="border-top:1px solid #334155;margin:8px 0;"></div>
+                        <div style="display:flex;justify-content:space-between;font-size:15px;"><span style="color:#38bdf8;font-weight:bold;">👉 TỔNG GIÁ NIÊM YẾT (TOTAL PRICE):</span><b style="color:#38bdf8;">${fmt(totalPrice)}</b></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // View 2: Promotions & Discounts
+        var view2 = document.createElement('div');
+        view2.id = 'tabView2';
+        view2.style.display = 'none';
+
+        var promoTableHtml = '';
+        if (promoList.length === 0) {
+            promoTableHtml = `
+                <div style="background:#1e293b;padding:20px;border-radius:12px;text-align:center;color:#94a3b8;">
+                    Chương trình khuyến mại chính: <b style="color:#f8fafc;">${vso.itv_promotiondetail || vso["_xvf_promotionid_value@OData.Community.Display.V1.FormattedValue"] || 'Chiết khấu trực tiếp trên đơn'}</b><br>
+                    Tổng số tiền chiết khấu ghi nhận: <b style="color:#ef4444;font-size:16px;">${fmt(totalDiscount)}</b>
+                </div>
+            `;
+        } else {
+            promoTableHtml = `
+                <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
+                    <thead style="background:#1e293b;color:#38bdf8;">
+                        <tr>
+                            <th style="padding:10px;">Tên Chương Trình Khuyến Mại</th>
+                            <th style="padding:10px;">Mã Khuyến Mại</th>
+                            <th style="padding:10px;">Số Tiền Chiết Khấu</th>
+                            <th style="padding:10px;">Ngày Áp Dụng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            promoList.forEach(function(p) {
+                var pName = p["_xts_promotionid_value@OData.Community.Display.V1.FormattedValue"] || p.xts_promotionname || "Khuyến mại";
+                var pAmt = parseFloat(p.xts_discountamount) || parseFloat(p.xts_amount) || 0;
+                var pDate = p["createdon@OData.Community.Display.V1.FormattedValue"] || p.createdon || "-";
+                promoTableHtml += `
+                    <tr style="border-bottom:1px solid #1e293b;">
+                        <td style="padding:10px;font-weight:bold;color:#f8fafc;">${pName}</td>
+                        <td style="padding:10px;color:#a78bfa;font-family:monospace;">${p.xts_nvsoappliedpromotionid || '-'}</td>
+                        <td style="padding:10px;color:#ef4444;font-weight:bold;">- ${fmt(pAmt)}</td>
+                        <td style="padding:10px;color:#94a3b8;">${pDate}</td>
+                    </tr>
+                `;
+            });
+            promoTableHtml += `</tbody></table>`;
+        }
+
+        view2.innerHTML = `
+            <div style="background:#1e293b;padding:18px;border-radius:12px;border:1px solid #334155;margin-bottom:16px;">
+                <h4 style="margin:0 0 14px 0;color:#ef4444;font-size:14px;">🏷️ CHI TIẾT TỪNG KHOẢN CHIẾT KHẤU & KHUYẾN MẠI</h4>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+                    <div style="background:#0f172a;padding:12px;border-radius:8px;">
+                        <span style="color:#94a3b8;font-size:11px;">Tổng Chiết Khấu (Total Discount):</span>
+                        <div style="color:#ef4444;font-size:16px;font-weight:bold;margin-top:4px;">- ${fmt(totalDiscount)}</div>
+                    </div>
+                    <div style="background:#0f172a;padding:12px;border-radius:8px;">
+                        <span style="color:#94a3b8;font-size:11px;">Trợ Giá Chiết Khấu (Base Subsidy):</span>
+                        <div style="color:#eab308;font-size:16px;font-weight:bold;margin-top:4px;">${fmt(baseSubsidy)}</div>
+                    </div>
+                    <div style="background:#0f172a;padding:12px;border-radius:8px;">
+                        <span style="color:#94a3b8;font-size:11px;">Tỷ Lệ Giảm Trừ Thực Tế:</span>
+                        <div style="color:#38bdf8;font-size:16px;font-weight:bold;margin-top:4px;">${totalPrice > 0 ? ((totalDiscount/totalPrice)*100).toFixed(2) + '%' : '0%'}</div>
+                    </div>
+                </div>
+                ${promoTableHtml}
+            </div>
+        `;
+
+        // View 3: Tax Calculation
+        var view3 = document.createElement('div');
+        view3.id = 'tabView3';
+        view3.style.display = 'none';
+        view3.innerHTML = `
+            <div style="background:#1e293b;padding:18px;border-radius:12px;border:1px solid #38bdf840;">
+                <h4 style="margin:0 0 14px 0;color:#38bdf8;font-size:14px;">🧾 CÔNG THỨC BÓC TÁCH THUẾ GTGT 10% (VAT-OUT-10% INC)</h4>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                    <div style="background:#0f172a;padding:16px;border-radius:10px;border:1px solid #334155;">
+                        <span style="color:#94a3b8;font-size:12px;">1. Doanh thu trước thuế (Giá chưa VAT):</span>
+                        <div style="color:#f8fafc;font-size:22px;font-weight:bold;margin:6px 0;">${fmt(priceBeforeTax)}</div>
+                        <span style="color:#64748b;font-size:11.5px;">= <code>${fmt(netAfterDiscount)} / 1.10</code></span>
+                    </div>
+
+                    <div style="background:#0f172a;padding:16px;border-radius:10px;border:1px solid #334155;">
+                        <span style="color:#94a3b8;font-size:12px;">2. Tiền thuế GTGT 10% (Số tiền thuế VAT 1):</span>
+                        <div style="color:#eab308;font-size:22px;font-weight:bold;margin:6px 0;">${fmt(vatAmount)}</div>
+                        <span style="color:#64748b;font-size:11.5px;">= <code>${fmt(netAfterDiscount)} - ${fmt(priceBeforeTax)}</code></span>
+                    </div>
+                </div>
+
+                <div style="background:#0f172a;padding:16px;border-radius:10px;border:1px solid #10b981;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <span style="color:#34d399;font-size:12px;font-weight:bold;text-transform:uppercase;">3. TỔNG GIÁ TRỊ GHI TRÊN HÓA ĐƠN ĐỎ (SAP INVOICE AMOUNT):</span>
+                            <div style="color:#10b981;font-size:24px;font-weight:bold;margin-top:4px;">${fmt(netAfterDiscount)}</div>
+                        </div>
+                        <div style="text-align:right;color:#cbd5e1;font-size:12px;">
+                            Bằng chữ: <b>${vso.xts_totalamountinwords || vso.xts_totalamountwords || 'Sáu trăm sáu mươi triệu sáu trăm tám mươi nghìn đồng'}</b>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // View 4: Accessories
+        var view4 = document.createElement('div');
+        view4.id = 'tabView4';
+        view4.style.display = 'none';
+        
+        var accTableHtml = '';
+        if (accList.length === 0) {
+            accTableHtml = '<div style="background:#1e293b;padding:24px;border-radius:12px;text-align:center;color:#94a3b8;">Đơn hàng này không gắn thêm Phụ kiện có tính phí riêng.</div>';
+        } else {
+            accTableHtml = `
+                <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
+                    <thead style="background:#1e293b;color:#38bdf8;">
+                        <tr>
+                            <th style="padding:10px;">Tên Phụ Kiện</th>
+                            <th style="padding:10px;">Số Lượng</th>
+                            <th style="padding:10px;">Đơn Giá</th>
+                            <th style="padding:10px;">Thành Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            accList.forEach(function(a) {
+                var aName = a.xts_accessorydescription || a["_xts_accessoryid_value@OData.Community.Display.V1.FormattedValue"] || "Phụ kiện";
+                var qty = a.xts_quantity || 1;
+                var prc = parseFloat(a.xts_unitprice) || 0;
+                var total = parseFloat(a.xts_totalamount) || (qty * prc);
+                accTableHtml += `
+                    <tr style="border-bottom:1px solid #1e293b;">
+                        <td style="padding:10px;font-weight:bold;color:#f8fafc;">${aName}</td>
+                        <td style="padding:10px;color:#cbd5e1;">${qty}</td>
+                        <td style="padding:10px;color:#cbd5e1;">${fmt(prc)}</td>
+                        <td style="padding:10px;color:#10b981;font-weight:bold;">${fmt(total)}</td>
+                    </tr>
+                `;
+            });
+            accTableHtml += `</tbody></table>`;
+        }
+        view4.innerHTML = accTableHtml;
+
+        // View 5: Raw OData Schema Fields
+        var view5 = document.createElement('div');
+        view5.id = 'tabView5';
+        view5.style.display = 'none';
+        
+        var rawRows = '';
+        Object.keys(vso).sort().forEach(function(k) {
+            if (k.indexOf('@') === -1) {
+                var val = vso[k];
+                var fmtVal = vso[k + "@OData.Community.Display.V1.FormattedValue"] || vso["_" + k + "_value@OData.Community.Display.V1.FormattedValue"] || "";
+                rawRows += `
+                    <tr style="border-bottom:1px solid #1e293b;">
+                        <td style="padding:6px 10px;font-family:monospace;color:#f43f5e;font-weight:bold;">${k}</td>
+                        <td style="padding:6px 10px;color:#cbd5e1;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${String(val)}">${String(val)}</td>
+                        <td style="padding:6px 10px;color:#10b981;">${fmtVal || '-'}</td>
+                    </tr>
+                `;
+            }
+        });
+
+        view5.innerHTML = `
+            <div style="background:#1e293b;border-radius:12px;overflow:hidden;border:1px solid #334155;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;">
+                    <thead style="background:#0f172a;color:#38bdf8;">
+                        <tr>
+                            <th style="padding:10px;">Tên Trường (Field Name)</th>
+                            <th style="padding:10px;">Giá Trị Thô (Raw Value)</th>
+                            <th style="padding:10px;">Giá Trị Hiển Thị (Formatted)</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rawRows}</tbody>
+                </table>
+            </div>
+        `;
+
+        contentDiv.appendChild(view1);
+        contentDiv.appendChild(view2);
+        contentDiv.appendChild(view3);
+        contentDiv.appendChild(view4);
+        contentDiv.appendChild(view5);
+
+        // Footer
+        var footer = document.createElement('div');
+        footer.style = 'padding:14px 24px;background:#1e293b;border-top:1px solid #334155;display:flex;justify-content:space-between;align-items:center;';
+        footer.innerHTML = `
+            <button id="btnCopyDeepReport" style="background:#10b981;color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:bold;font-size:12.5px;cursor:pointer;">
+                📋 Copy Toàn Bộ Báo Cáo Quyết Toán
+            </button>
+            <button id="btnCloseDeepAuditBottom" style="background:#334155;color:white;border:none;padding:8px 18px;border-radius:8px;font-weight:bold;font-size:12.5px;cursor:pointer;">
+                Đóng
+            </button>
+        `;
+
+        modal.appendChild(header);
+        modal.appendChild(navBar);
+        modal.appendChild(contentDiv);
+        modal.appendChild(footer);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        // Tab Switching Logic
+        var tabs = [
+            { btn: document.getElementById('tabBtn1'), view: view1 },
+            { btn: document.getElementById('tabBtn2'), view: view2 },
+            { btn: document.getElementById('tabBtn3'), view: view3 },
+            { btn: document.getElementById('tabBtn4'), view: view4 },
+            { btn: document.getElementById('tabBtn5'), view: view5 }
+        ];
+
+        tabs.forEach(function(t) {
+            t.btn.onclick = function() {
+                tabs.forEach(function(other) {
+                    other.view.style.display = 'none';
+                    other.btn.style.background = '#1e293b';
+                    other.btn.style.color = '#cbd5e1';
+                });
+                t.view.style.display = 'block';
+                t.btn.style.background = '#38bdf8';
+                t.btn.style.color = '#0f172a';
+            };
+        });
+
+        document.getElementById('btnCloseDeepAudit').onclick = function() { overlay.remove(); };
+        document.getElementById('btnCloseDeepAuditBottom').onclick = function() { overlay.remove(); };
+
+        document.getElementById('btnCopyDeepReport').onclick = function() {
+            var rep = `==========================================================\n` +
+                      `BÁO CÁO QUYẾT TOÁN TÀI CHÍNH & HÓA ĐƠN ĐƠN HÀNG VSO: ${vsoNumber}\n` +
+                      `==========================================================\n` +
+                      `1. THÔNG TIN ĐƠN HÀNG & KHÁCH HÀNG:\n` +
+                      `• Khách hàng: ${customer}\n` +
+                      `• TVBH: ${tvbh}\n` +
+                      `• Xe: ${product} | Cấu hình: ${config}\n` +
+                      `• Ngoại thất: ${extColor} | Nội thất: ${intColor}\n` +
+                      `• Số khung (VIN): ${vin}\n\n` +
+                      `2. BẢNG CƠ CẤU GIÁ NIÊM YẾT:\n` +
+                      `• Giá xe cơ sở (Vehicle Price): ${fmt(baseVehiclePrice)}\n` +
+                      `• Giá màu sơn/tùy chọn (Characteristic Price): ${fmt(charPrice)}\n` +
+                      `• TỔNG GIÁ NIÊM YẾT (TOTAL PRICE): ${fmt(totalPrice)}\n\n` +
+                      `3. CHI TIẾT CHIẾT KHẤU & KHUYẾN MẠI:\n` +
+                      `• Chương trình áp dụng: ${vso.itv_promotiondetail || 'Khuyến mại'}\n` +
+                      `• TỔNG TIỀN CHIẾT KHẤU: - ${fmt(totalDiscount)}\n` +
+                      `• Trợ giá chiết khấu (Base Subsidy): ${fmt(baseSubsidy)}\n\n` +
+                      `4. SỐ TIỀN THỰC THU SAU THUẾ: ${fmt(netAfterDiscount)}\n\n` +
+                      `5. BÓC TÁCH HÓA ĐƠN GTGT 10% (SAP INVOICE):\n` +
+                      `• Doanh thu chưa thuế: ${fmt(priceBeforeTax)}\n` +
+                      `• Thuế suất: 10%\n` +
+                      `• Tiền thuế GTGT 10%: ${fmt(vatAmount)}\n` +
+                      `• TỔNG TIỀN GHI TRÊN HÓA ĐƠN: ${fmt(netAfterDiscount)}\n` +
+                      `==========================================================\n`;
+
+            navigator.clipboard.writeText(rep);
+            this.innerText = '✅ Đã copy báo cáo!';
+            var self = this;
+            setTimeout(function(){ self.innerText = '📋 Copy Toàn Bộ Báo Cáo Quyết Toán'; }, 2000);
+        };
+    }
+})();

@@ -36,7 +36,10 @@ async function uploadBase64ToStorage(base64Data: string, mimeType: string, folde
     const timestamp = Date.now();
     const randomSuffix = Math.random().toString(36).substring(2, 8);
     const fileNameOnly = `scan_${timestamp}_${randomSuffix}.${mimeType.split('/')[1] || 'jpg'}`;
-    const filename = folder ? `${folder.replace(/\/$/, '')}/${fileNameOnly}` : fileNameOnly;
+    const cleanFolder = folder ? folder.split('/').map(part => 
+        part.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').replace(/[^a-zA-Z0-9._\-]/g, '_')
+    ).join('/') : '';
+    const filename = cleanFolder ? `${cleanFolder.replace(/\/$/, '')}/${fileNameOnly}` : fileNameOnly;
     
     // Upload lên bucket public 'temp_scans'
     const { error } = await supabaseAdmin.storage.from('temp_scans').upload(filename, blob, {
@@ -197,8 +200,8 @@ export function getGoogleDriveDirectLink(url: string): string {
         
         if (match) {
             const fileId = match[0];
-            // Link download trực tiếp của Google Drive
-            return `https://drive.google.com/uc?export=download&id=${fileId}`;
+            // Thêm confirm=t để tự động vượt qua trang cảnh báo quét virus của Google Drive cho file lớn
+            return `https://drive.google.com/uc?export=download&confirm=t&id=${fileId}`;
         }
     } catch (e) {
         console.error("Lỗi parse link Google Drive:", e);
@@ -214,24 +217,28 @@ export function getGoogleDriveDirectLink(url: string): string {
 export async function scanPdfFromUrl(url: string, orderId: string) {
     try {
         const directUrl = getGoogleDriveDirectLink(url);
-        console.log(`Đang tải file để Audit: ${directUrl === url ? url : 'Drive Link detected -> ' + directUrl}`);
-        
-        // 1. Tải file về dưới dạng Blob
-        const response = await fetch(directUrl);
-        if (!response.ok) throw new Error("Không thể tải file từ URL.");
+        // 1. Sử dụng CORS Proxy của hệ thống để bypass lỗi CORS của Google Drive
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://jwvgxqrkjlbewvpkvucj.supabase.co';
+        const proxiedUrl = `${supabaseUrl}/functions/v1/cors-proxy?url=${encodeURIComponent(directUrl)}`;
+        const response = await fetch(proxiedUrl);
+        if (!response.ok) throw new Error("Không thể tải file từ URL qua proxy.");
         const blob = await response.blob();
         
         let finalFiles: { url?: string; base64Data?: string; mimeType: string }[] = [];
         const scanFolder = `url_scan_${Date.now()}`;
         
-        if (blob.type === 'application/pdf') {
+        // Kiểm tra chính xác xem có phải file PDF không dựa vào Magic Bytes
+        const magicBytes = await blob.slice(0, 10).text();
+        const isPdf = blob.type === 'application/pdf' || directUrl.toLowerCase().includes('.pdf') || magicBytes.includes('PDF');
+
+        if (isPdf) {
             console.log("📄 Đang convert file PDF (từ URL) sang ảnh và Upload...");
             const tempFile = new File([blob], "downloaded.pdf", { type: 'application/pdf' });
             const images = await convertPdfToImages(tempFile);
             for (const img of images) {
                try {
                  const publicUrl = await uploadBase64ToStorage(img.base64Data, img.mimeType, scanFolder);
-                 finalFiles.push({ url: publicUrl, mimeType: img.mimeType, base64Data: img.base64Data });
+                 finalFiles.push({ url: publicUrl, mimeType: img.mimeType });
                } catch {
                  finalFiles.push(img);
                }
@@ -241,29 +248,31 @@ export async function scanPdfFromUrl(url: string, orderId: string) {
             const base64Data = await fileToBase64(blob as any);
             try {
               const publicUrl = await uploadBase64ToStorage(base64Data, blob.type || 'image/jpeg', scanFolder);
-              finalFiles.push({ url: publicUrl, mimeType: blob.type || 'image/jpeg', base64Data: base64Data });
+              finalFiles.push({ url: publicUrl, mimeType: blob.type || 'image/jpeg' });
             } catch {
               finalFiles.push({ base64Data, mimeType: blob.type || 'image/jpeg' });
             }
         }
 
-        // 3. Gọi Edge Function
-        const { data, error } = await supabaseAdmin.functions.invoke('scan-pdf', {
-            body: { files: finalFiles, orderData: orderId } // fallback, should pass true orderData if available
-        });
+        try {
+            // 3. Gọi Edge Function
+            const { data, error } = await supabaseAdmin.functions.invoke('scan-pdf', {
+                body: { files: finalFiles, orderData: orderId }
+            });
 
-        if (error) throw error;
-        if (!data?.success) throw new Error(data?.error || "AI thất bại");
+            if (error) throw error;
+            if (!data?.success) throw new Error(data?.error || "AI phân tích thất bại");
 
-        const aiResult = data.data;
+            const aiResult = data.data;
 
-        // 🎯 [DỌN DẸP TỰ ĐỘNG]
-        const tempUrls = finalFiles.map(f => f.url).filter(Boolean) as string[];
-        if (tempUrls.length > 0) {
-            deleteTempFiles(tempUrls);
+            return aiResult;
+        } finally {
+            // Dọn dẹp ảnh tạm ngay lập tức dù thành công hay lỗi
+            const tempUrls = finalFiles.map(f => f.url).filter(Boolean) as string[];
+            if (tempUrls.length > 0) {
+                deleteTempFiles(tempUrls); // Gọi bất đồng bộ, không cần await để tránh làm chậm UI
+            }
         }
-
-        return aiResult;
     } catch (e: any) {
         console.error("Lỗi scanPdfFromUrl:", e);
         throw e;
@@ -292,20 +301,32 @@ export async function scanMultipleFilesFromUrls(urls: string[], orderData?: any)
         for (const url of urls) {
             try {
                 const directUrl = getGoogleDriveDirectLink(url);
-                console.log(`[AI DEBUG] Đang fetch: ${directUrl === url ? url : 'Drive detected'}`);
+                console.log(`[AI DEBUG] Đang fetch qua CORS proxy: ${directUrl === url ? url : 'Drive detected'}`);
                 
-                const response = await fetch(directUrl);
-                if (!response.ok) continue;
+                // Sử dụng CORS Proxy của hệ thống để bypass lỗi CORS của Google Drive trên trình duyệt
+                const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://jwvgxqrkjlbewvpkvucj.supabase.co';
+                const proxiedUrl = `${supabaseUrl}/functions/v1/cors-proxy?url=${encodeURIComponent(directUrl)}`;
+                const response = await fetch(proxiedUrl);
+                
+                if (!response.ok) {
+                    console.error("❌ Lỗi tải file qua proxy:", response.status);
+                    continue;
+                }
                 const blob = await response.blob();
                 
-                if (blob.type === 'application/pdf') {
+                // Kiểm tra chính xác xem có phải file PDF không dựa vào Magic Bytes
+                const magicBytes = await blob.slice(0, 10).text();
+                const isPdf = blob.type === 'application/pdf' || url.toLowerCase().includes('.pdf') || magicBytes.includes('PDF');
+
+                if (isPdf) {
                     console.log(`📄 [AI DEBUG] Đang convert PDF sang ảnh và Upload: ${url}`);
                     const tempFile = new File([blob], "doc.pdf", { type: 'application/pdf' });
                     const images = await convertPdfToImages(tempFile);
                     for (const img of images) {
                        try {
                          const publicUrl = await uploadBase64ToStorage(img.base64Data, img.mimeType, batchFolder);
-                         files.push({ url: publicUrl, mimeType: img.mimeType, base64Data: img.base64Data });
+                         // CHỈ GỬI URL LÊN SERVER ĐỂ TRÁNH LỖI OVERLOAD PAYLOAD
+                         files.push({ url: publicUrl, mimeType: img.mimeType });
                        } catch {
                          files.push(img);
                        }
@@ -314,7 +335,7 @@ export async function scanMultipleFilesFromUrls(urls: string[], orderData?: any)
                     const base64Data = await fileToBase64Promise(blob);
                     try {
                       const publicUrl = await uploadBase64ToStorage(base64Data, blob.type || 'image/jpeg', batchFolder);
-                      files.push({ url: publicUrl, mimeType: blob.type || 'image/jpeg', base64Data: base64Data });
+                      files.push({ url: publicUrl, mimeType: blob.type || 'image/jpeg' });
                     } catch {
                       files.push({ base64Data, mimeType: blob.type || 'image/jpeg' });
                     }
@@ -328,32 +349,34 @@ export async function scanMultipleFilesFromUrls(urls: string[], orderData?: any)
             throw new Error("Không thể tải hoặc xử lý bất kỳ file nào trong bộ hồ sơ.");
         }
 
-        // 2. Gọi Edge Function
-        console.log("🚀 [AI DEBUG] Đang gửi dữ liệu tới Gemini AI (scan-pdf)...");
-        const { data, error } = await supabaseAdmin.functions.invoke('scan-pdf', {
-            body: { files, orderData }
-        });
+        try {
+            // 2. Gọi Edge Function
+            console.log("🚀 [AI DEBUG] Đang gửi dữ liệu tới Gemini AI (scan-pdf)...");
+            const { data, error } = await supabaseAdmin.functions.invoke('scan-pdf', {
+                body: { files, orderData }
+            });
 
-        if (error) {
-            console.error("❌ [AI DEBUG] Edge Function trả về lỗi:", error);
-            throw error;
+            if (error) {
+                console.error("❌ [AI DEBUG] Edge Function trả về lỗi:", error);
+                throw error;
+            }
+            
+            if (!data?.success) {
+                console.error("❌ [AI DEBUG] AI Phân tích thất bại:", data?.error);
+                throw new Error(data?.error || "AI thất bại");
+            }
+
+            const aiResult = data.data;
+            console.log("🎯 [AI DEBUG] Nhận kết quả từ AI thành công:", aiResult);
+
+            return aiResult;
+        } finally {
+            // 🎯 [DỌN DẸP TỰ ĐỘNG] - Đảm bảo luôn xóa file dù thành công hay thất bại
+            const tempUrls = files.map(f => f.url).filter(Boolean) as string[];
+            if (tempUrls.length > 0) {
+                deleteTempFiles(tempUrls);
+            }
         }
-        
-        if (!data?.success) {
-            console.error("❌ [AI DEBUG] AI Phân tích thất bại:", data?.error);
-            throw new Error(data?.error || "AI thất bại");
-        }
-
-        const aiResult = data.data;
-        console.log("🎯 [AI DEBUG] Nhận kết quả từ AI thành công:", aiResult);
-
-        // 🎯 [DỌN DẸP TỰ ĐỘNG]
-        const tempUrls = files.map(f => f.url).filter(Boolean) as string[];
-        if (tempUrls.length > 0) {
-            deleteTempFiles(tempUrls);
-        }
-
-        return aiResult;
     } catch (e: any) {
         console.error("⛔ [AI DEBUG] Lỗi hệ thống tại scanMultipleFilesFromUrls:", e);
         throw e;
@@ -432,7 +455,34 @@ export function compareDocumentWithOrder(extractedData: any, order: any): { isVa
   // Frontend chỉ thực hiện kiểm tra VIN và Dòng xe cơ bản.
 
   // Cross-reference documents anomaly detection
-  if (extractedData?.canh_bao_sai_lech && extractedData.canh_bao_sai_lech.toLowerCase() !== "không có" && !extractedData.canh_bao_sai_lech.toLowerCase().includes("khong co")) {
+  const isNoMismatchText = (text?: string) => {
+      if (!text) return true;
+      const lower = text.toLowerCase().trim();
+      if (lower === '' || lower === 'không có' || lower === 'khong co' || lower === 'không' || lower === 'none') return true;
+      if (lower.includes('không có sự mâu thuẫn') ||
+          lower.includes('khong co su mau thuan') ||
+          lower.includes('không có mâu thuẫn') ||
+          lower.includes('khong co mau thuan') ||
+          lower.includes('không phát hiện') ||
+          lower.includes('khong phat hien') ||
+          lower.includes('hồ sơ khớp') ||
+          lower.includes('khớp 100%')) {
+          return true;
+      }
+      // Bỏ qua cảnh báo liên quan đến địa chỉ của KH nếu không có vi phạm khác
+      if ((lower.includes('địa chỉ') || lower.includes('dia chi')) &&
+          !lower.includes('tên khách hàng') &&
+          !lower.includes('số vin') &&
+          !lower.includes('màu') &&
+          !lower.includes('phiên bản') &&
+          !lower.includes('dòng xe') &&
+          !lower.includes('giá')) {
+          return true;
+      }
+      return false;
+  };
+
+  if (extractedData?.canh_bao_sai_lech && !isNoMismatchText(extractedData.canh_bao_sai_lech)) {
       result.isValid = false;
       result.mismatches.push(`Mâu thuẫn giấy tờ: ${extractedData.canh_bao_sai_lech}`);
   }

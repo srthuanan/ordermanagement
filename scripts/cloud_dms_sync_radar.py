@@ -100,42 +100,40 @@ def sync_gps_live(dms_headers):
         print("⚠️ Không tìm thấy số VIN hợp lệ nào trong kho xe.")
         return
 
-    print(f"🎯 Tìm thấy {len(vins)} xe trong kho cần quét định vị.")
+    print(f"🎯 Tìm thấy {len(vins)} xe trong kho Supabase.")
 
-    # 2. Quét live từng chiếc qua API DMS
+    # 2. Truy vấn trực tiếp các cột GPS từ bảng kho xe xts_inventorynewvehicles của DMS
+    print("📡 Đang lấy tọa độ GPS trực tiếp từ bảng kho xe xts_inventorynewvehicles của DMS...")
     gps_results = []
-    action_url = f"{DMS_BASE_URL}/api/data/v9.2/itv_trackingvehicleposition"
+    inv_url = f"{DMS_BASE_URL}/api/data/v9.2/xts_inventorynewvehicles?$select=xts_chassisnumber,itv_lastlatitude,itv_lastlongitude,itv_lastlocationupdatetime,itv_lastposition&$filter=itv_lastlatitude ne null"
     
-    for idx, vin in enumerate(vins):
-        payload = {
-            "itv_requestObject": json.dumps({
-                "data": [{"vinCode": vin}],
-                "isUpdate": False
-            })
-        }
-        try:
-            print(f"   🛰️ [{idx+1}/{len(vins)}] Đang gửi tín hiệu quét VIN: {vin}...")
-            res = requests.post(action_url, headers=dms_headers, json=payload, timeout=15)
-            if res.status_code in [200, 204] and res.text:
-                resp_obj = res.json()
-                inner_data = json.loads(resp_obj.get("itv_responseObject", "{}"))
-                lat = inner_data.get("Lat")
-                lng = inner_data.get("Long")
-                
-                if lat and lng:
+    try:
+        while inv_url:
+            res = requests.get(inv_url, headers=dms_headers, timeout=30)
+            if res.status_code != 200:
+                print(f"⚠️ Không truy vấn được kho xe: {res.text[:200]}")
+                break
+            data = res.json()
+            for item in data.get("value", []):
+                vin = (item.get("xts_chassisnumber") or "").strip().upper()
+                lat = item.get("itv_lastlatitude")
+                lng = item.get("itv_lastlongitude")
+                t_val = item.get("itv_lastlocationupdatetime") or datetime.utcnow().isoformat()
+                if vin and lat and lng and float(lat) != 0 and float(lng) != 0:
                     gps_results.append({
                         "vin": vin,
                         "lat": float(lat),
                         "lng": float(lng),
+                        "speed": 0,
+                        "heading": 0,
+                        "captured_at": t_val,
                         "updated_at": datetime.utcnow().isoformat()
                     })
-                    print(f"      ✅ OK: Tọa độ ({lat}, {lng})")
-                else:
-                    print("      ⚠️ Không có phản hồi tọa độ.")
-            else:
-                print(f"      ⚠️ API phản hồi lỗi hoặc không có dữ liệu: {res.status_code}")
-        except Exception as e:
-            print(f"      ❌ Lỗi gửi yêu cầu: {e}")
+            inv_url = data.get("@odata.nextLink")
+        print(f"   ✅ Đã trích xuất {len(gps_results)} xe có sẵn tọa độ GPS từ DMS!")
+    except Exception as e:
+        print(f"❌ Lỗi truy vấn tọa độ kho xe: {e}")
+        return
 
     if not gps_results:
         print("⚠️ Không có tọa độ GPS mới nào được phản hồi thành công từ VinFast.")

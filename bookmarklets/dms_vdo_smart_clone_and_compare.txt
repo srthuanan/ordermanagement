@@ -1,0 +1,97 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - LẤY MẪU TRỰC TIẾP & ĐỒNG BỘ PHIẾU GIAO XE
+     * ========================================================================= */
+    var x = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!x) {
+        for (var i = 0; i < frames.length; i++) {
+            try { if (frames[i].Xrm) { x = frames[i].Xrm; break; } } catch(e){}
+        }
+    }
+    if (!x) { alert("Vui lòng mở trang DMS!"); return; }
+
+    var etn = "xts_newvehicledeliveryorder";
+    var cId = "";
+    try {
+        if (x.Page && x.Page.data && x.Page.data.entity) {
+            cId = (x.Page.data.entity.getId() || "").replace(/[{}]/g, "");
+        }
+    } catch(e){}
+    if (!cId) {
+        cId = (new URLSearchParams(window.location.search).get("id") || "").replace(/[{}]/g, "");
+    }
+
+    try {
+        var rec = await x.WebApi.retrieveRecord(etn, cId);
+        var code = rec.xts_deliveryordernumber || rec.xts_name || cId;
+
+        // Lưu bản ghi hiện tại thành mẫu
+        var snap = {
+            id: cId,
+            code: code,
+            statuscode: rec.statuscode,
+            statecode: rec.statecode,
+            xts_status: rec.xts_status,
+            xts_handling: rec.xts_handling,
+            itv_releaseddate: rec.itv_releaseddate || rec.xts_releaseddate || new Date().toISOString()
+        };
+
+        // Nếu người dùng đang ở 0149 -> Lưu làm mẫu
+        if (code.includes("0149") || window.location.href.includes("d3e128ed")) {
+            localStorage.setItem("DMS_VDO_SNAPSHOT_0149", JSON.stringify(snap));
+            alert(`✅ ĐÃ LƯU MẪU TỪ PHIẾU THÀNH CÔNG [${code}]!\n` +
+                  `----------------------------------------\n` +
+                  `• statuscode: ${rec.statuscode} (${rec["statuscode@OData.Community.Display.V1.FormattedValue"] || ""})\n` +
+                  `• statecode: ${rec.statecode}\n` +
+                  `• xts_status: ${rec.xts_status} (${rec["xts_status@OData.Community.Display.V1.FormattedValue"] || ""})\n\n` +
+                  `👉 BÂY GIỜ HÃY CHUYỂN SANG TAB PHIẾU 0150 VÀ BẤM LẠI BOOKMARKLET!`);
+            return;
+        }
+
+        // Nếu người dùng đang ở 0150 -> Áp dụng từ mẫu 0149
+        var savedRaw = localStorage.getItem("DMS_VDO_SNAPSHOT_0149");
+        if (!savedRaw) {
+            // Nếu chưa lưu thì tự động dùng thông số chuẩn của 0149
+            snap = {
+                statuscode: 2,
+                statecode: 0,
+                xts_status: 2
+            };
+        } else {
+            snap = JSON.parse(savedRaw);
+        }
+
+        var confirmMsg = `🔍 ÁP DỤNG TRẠNG THÁI PHÁT HÀNH CHO PHIẾU [${code}]:\n` +
+                         `----------------------------------------\n` +
+                         `• statuscode: ${snap.statuscode}\n` +
+                         `• statecode: ${snap.statecode}\n` +
+                         `• xts_status: ${snap.xts_status}\n\n` +
+                         `👉 Bấm OK để tự động cập nhật sang Phát hành!`;
+
+        if (confirm(confirmMsg)) {
+            var payload = {
+                "statuscode": snap.statuscode,
+                "statecode": snap.statecode
+            };
+            if (snap.xts_status !== undefined) payload["xts_status"] = snap.xts_status;
+
+            try {
+                await x.WebApi.updateRecord(etn, cId, payload);
+                alert("🎉 CHÚC MỪNG! ĐÃ CẬP NHẬT TRẠNG THÁI PHÁT HÀNH THÀNH CÔNG!");
+                window.location.reload();
+            } catch(eUp) {
+                try {
+                    // Thử gọi update xts_handling
+                    await x.WebApi.updateRecord(etn, cId, { "xts_handling": 2 });
+                    alert("🎉 ĐÃ PHÁT HÀNH QUA HANDLING THÀNH CÔNG!");
+                    window.location.reload();
+                } catch(eH) {
+                    alert("Lỗi cập nhật: " + (eUp.message || JSON.stringify(eUp)));
+                }
+            }
+        }
+
+    } catch(err) {
+        alert("Lỗi: " + (err.message || JSON.stringify(err)));
+    }
+})();

@@ -12,6 +12,7 @@ const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string
     invoices: [
         { type: 'approve', label: 'Phê duyệt', icon: 'fa-check-double' },
         { type: 'supplement', label: 'Y/C Bổ sung', icon: 'fa-exclamation-triangle' },
+        { type: 'rescan', label: 'Y/C Scan lại', icon: 'fa-camera' },
         { type: 'pendingSignature', label: 'Chuyển sang "Chờ ký HĐ"', icon: 'fa-signature' },
     ],
     pending: [
@@ -19,12 +20,12 @@ const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string
     ],
     paired: [],
     matching: [],
+    car_swap: [],
     vc: [],
     phongkd: [],
     stats: [],
     incomplete_cars: [],
     super_edit: [],
-    inquiries: [],
     holds: [],
     policies: [],
     don_ton: [],
@@ -34,9 +35,11 @@ const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string
     inventory: [],
     system: [],
     policy_summary: [],
-    pricing_calculator: [],
     maintenance_fee: [],
     vehicle_config: [],
+    pricing_config: [],
+    super_management: [],
+    live_users: [],
 };
 
 const BulkActionBar: React.FC<BulkActionBarProps> = ({ view, selectedRows, setSelectedRows, setBulkActionModal }) => {

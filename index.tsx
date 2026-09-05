@@ -10,11 +10,13 @@ import Toast from './components/ui/Toast';
 import SuccessAnimation from './components/ui/SuccessAnimation';
 import * as apiService from './services/apiService';
 import * as authService from './services/authService';
+
 import UpdateModal from './components/modals/UpdateModal';
 import ChangePasswordModal from './components/modals/ChangePasswordModal';
 import { PublicLiveMapView } from './components/PublicLiveMapView';
 import { registerSW } from 'virtual:pwa-register';
 import { VehicleConfigProvider } from './hooks/useVehicleConfig';
+import HolidayThemeDecorator from './components/ui/HolidayThemeDecorator';
 
 // Build version from Vite define (timestamp)
 const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
@@ -82,6 +84,39 @@ const checkVersion = () => {
 
 checkVersion();
 
+// 🔒 Global Media & Image Protection: Block Context Menu, Drag & Drop, Copy & Open in New Tab across all UI images
+if (typeof window !== 'undefined') {
+    const isProtectedMedia = (target: EventTarget | null) => {
+        if (!target || !(target instanceof Element)) return false;
+        return (
+            target instanceof HTMLImageElement ||
+            target instanceof SVGElement ||
+            Boolean(target.closest('img, svg, picture, video, canvas, [role="img"]'))
+        );
+    };
+
+    window.addEventListener('contextmenu', (e: MouseEvent) => {
+        if (isProtectedMedia(e.target)) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }, { capture: true });
+
+    window.addEventListener('dragstart', (e: DragEvent) => {
+        if (isProtectedMedia(e.target)) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }, { capture: true });
+
+    window.addEventListener('auxclick', (e: MouseEvent) => {
+        if (e.button === 1 && isProtectedMedia(e.target)) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }, { capture: true });
+}
+
 type ToastItem = {
     id: string;
     title: string;
@@ -91,13 +126,38 @@ type ToastItem = {
 };
 
 const Root = () => {
-    const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('isLoggedIn') === 'true' || localStorage.getItem('isLoggedIn') === 'true');
+    // Kiểm tra ngay lập tức hash và search lúc vừa nạp Root
+    const getInitialAuthFlow = () => {
+        if (typeof window === 'undefined') return { isResetting: false, context: 'recovery' as const };
+        const fullHash = window.location.hash || '';
+        const search = window.location.search || '';
+        const isInvite = fullHash.includes('type=invite') || fullHash.includes('invite') || search.includes('type=invite');
+        const isRecovery = fullHash.includes('type=recovery') || fullHash.includes('recovery') || fullHash.includes('reset-password') || search.includes('type=recovery');
+        return {
+            isResetting: isInvite || isRecovery,
+            context: isInvite ? ('invite' as const) : ('recovery' as const)
+        };
+    };
+
+    const initialFlow = getInitialAuthFlow();
+    if (initialFlow.isResetting && typeof window !== 'undefined') {
+        sessionStorage.clear();
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('token');
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('currentConsultant');
+    }
+
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        if (initialFlow.isResetting) return false;
+        return sessionStorage.getItem('isLoggedIn') === 'true' || localStorage.getItem('isLoggedIn') === 'true';
+    });
     const [toasts, setToasts] = useState<ToastItem[]>([]);
     const [successInfo, setSuccessInfo] = useState<{title: string; message: string} | null>(null);
-    const [isResettingPassword, setIsResettingPassword] = useState(false);
-    const [resetContext, setResetContext] = useState<'recovery' | 'invite'>('recovery');
+    const [isResettingPassword, setIsResettingPassword] = useState(initialFlow.isResetting);
+    const [resetContext, setResetContext] = useState<'recovery' | 'invite'>(initialFlow.context);
     const [directChangePassword, setDirectChangePassword] = useState<{ isOpen: boolean, username: string }>({ isOpen: false, username: '' });
-    const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const [isInitialLoading, setIsInitialLoading] = useState(!initialFlow.isResetting);
 
     useEffect(() => {
         console.log("Checking URL params...", window.location.search, window.location.hash);
@@ -124,33 +184,36 @@ const Root = () => {
             window.history.replaceState({}, document.title, cleanUrl);
             setIsInitialLoading(false);
         } else {
-            // Xử lý Double Hash cho Supabase Auth (VD: #/reset-password#access_token=...)
+            // Xử lý Double Hash cho Supabase Auth (VD: #/reset-password#access_token=... hoặc #type=invite#access_token=...)
             const fullHash = window.location.hash;
-            if (fullHash.includes('access_token=') && fullHash.includes('#/')) {
+            if (fullHash.includes('access_token=') && fullHash.split('#').length > 2) {
                 console.log("[Auth] Detected double hash, cleaning up for Supabase...");
                 const parts = fullHash.split('#').filter(p => p.length > 0);
                 const tokenPart = parts.find(p => p.includes('access_token='));
                 if (tokenPart) {
-                    // Chuyển vị trí token lên đầu hash để Supabase parse được
                     window.location.hash = tokenPart;
                 }
             }
 
-            // Lắng nghe sự kiện Auth để bắt luồng Recovery/Invite nếu hash bị xóa sớm
+            // Lắng nghe sự kiện Auth để bắt luồng Recovery/Invite
             const { data: { subscription } } = authService.supabase.auth.onAuthStateChange(async (event, session) => {
                 console.log("[Root Auth Event]", event);
-                if (event === 'SIGNED_IN' && window.location.hash.includes('type=invite')) {
-                    console.log("[Root] Detected Invitation Flow");
-                    setResetContext('invite');
+                const currentHash = window.location.hash;
+                const isInvite = currentHash.includes('type=invite') || currentHash.includes('invite') || initialFlow.context === 'invite';
+                const isRecovery = event === 'PASSWORD_RECOVERY' || currentHash.includes('type=recovery') || currentHash.includes('recovery');
+
+                if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && (isInvite || isRecovery))) {
+                    console.log("[Root] Detected Password Recovery / Invite Flow in onAuthStateChange");
+                    setResetContext(isInvite ? 'invite' : 'recovery');
                     setIsResettingPassword(true);
-                } else if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && window.location.hash.includes('access_token') && window.location.hash.includes('type=recovery'))) {
-                    console.log("[Root] Detected Password Recovery Flow");
-                    setResetContext('recovery');
-                    setIsResettingPassword(true);
+                    setIsAuthenticated(false);
+                    setIsInitialLoading(false);
                 } else if (event === 'SIGNED_IN' && session) {
-                    if (sessionStorage.getItem('isLoggedIn') !== 'true') {
-                        const restored = await authService.restoreSession();
-                        if (restored) setIsAuthenticated(true);
+                    if (!isResettingPassword && !initialFlow.isResetting) {
+                        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+                            const restored = await authService.restoreSession();
+                            if (restored) setIsAuthenticated(true);
+                        }
                     }
                 }
             });
@@ -158,21 +221,29 @@ const Root = () => {
 
             const initAuth = async () => {
                 const hash = window.location.hash;
-                const isInvite = hash.includes('type=invite') || hash.includes('invite');
+                const isInvite = hash.includes('type=invite') || hash.includes('invite') || initialFlow.context === 'invite';
                 const isRecovery = hash.includes('type=recovery') || 
                                  hash.includes('reset-password') ||
-                                 hash.includes('recovery');
+                                 hash.includes('recovery') ||
+                                 initialFlow.isResetting;
                 const hasAccessToken = hash.includes('access_token');
+
+                if (isInvite || isRecovery) {
+                    console.log("[Root Init] Entering Password Reset View");
+                    setResetContext(isInvite ? 'invite' : 'recovery');
+                    setIsResettingPassword(true);
+                    setIsAuthenticated(false);
+                    setIsInitialLoading(false);
+                    return;
+                }
 
                 const hasSession = await authService.restoreSession();
                 if (hasSession) {
                     console.log("Session restored from Supabase");
-                    if (isInvite) {
-                        setResetContext('invite');
+                    if (hasAccessToken && (hash.includes('recovery') || hash.includes('invite'))) {
+                        setResetContext(hash.includes('invite') ? 'invite' : 'recovery');
                         setIsResettingPassword(true);
-                    } else if (isRecovery || hash.startsWith('#/reset-password') || hasAccessToken) {
-                        setResetContext('recovery');
-                        setIsResettingPassword(true);
+                        setIsAuthenticated(false);
                     } else {
                         setIsAuthenticated(true);
                     }
@@ -206,14 +277,14 @@ const Root = () => {
     // Get tokens immediately from URL
     const getTokens = () => {
         const params = new URLSearchParams(window.location.search);
-        let vin = params.get('shared_vin');
+        let vin = params.get('shared_vin') || params.get('vin');
         let token = params.get('token');
 
         // Fallback to hash
         if ((!vin || !token) && window.location.hash.includes('?')) {
             const hashSearch = window.location.hash.split('?')[1];
             const hashParams = new URLSearchParams(hashSearch);
-            if (!vin) vin = hashParams.get('shared_vin');
+            if (!vin) vin = hashParams.get('shared_vin') || hashParams.get('vin');
             if (!token) token = hashParams.get('token');
         }
         return { vin, token };
@@ -223,6 +294,7 @@ const Root = () => {
 
     useEffect(() => {
         if (isAuthenticated) {
+            apiService.startAutoGpsTracking();
             apiService.recordUserPresence(); 
             const presenceInterval = setInterval(() => apiService.recordUserPresence(), 30 * 1000);
             return () => clearInterval(presenceInterval);
@@ -245,8 +317,8 @@ const Root = () => {
                     onSuccess={() => {
                         setIsResettingPassword(false);
                         setIsAuthenticated(true);
-                        // Clean hash
                         window.location.hash = '';
+                        window.location.reload();
                     }}
                     onCancel={() => {
                         setIsResettingPassword(false);
@@ -286,6 +358,7 @@ const Root = () => {
                 />
                 {toasts.map((t, index) => <Toast key={t.id} {...t} show={true} index={toasts.length - 1 - index} onClose={hideToast} />)}
                 {successInfo && <SuccessAnimation show={true} title={successInfo.title} message={successInfo.message} onClose={() => setSuccessInfo(null)} duration={3000} />}
+                <HolidayThemeDecorator isLoggedIn={isAuthenticated} />
                 <UpdateModal />
             </VehicleConfigProvider>
         </SWRConfig>

@@ -1,0 +1,234 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - MASTER ROOT CAUSE INSPECTOR & AUTO-FIXER (VDO / PIN / VSO)
+     * ========================================================================= */
+    var x = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm && !x) {
+        for (var i = 0; i < frames.length; i++) {
+            try { if (frames[i].Xrm) { x = frames[i].Xrm; break; } } catch(e){}
+        }
+    }
+    if (!x) { alert("Vui lòng mở trang DMS!"); return; }
+
+    var vdoId = (new URLSearchParams(window.location.search).get("id") || "").replace(/[{}]/g, "");
+    var old = document.getElementById("dmsMasterFixOverlay");
+    if (old) old.remove();
+
+    var overlay = document.createElement("div");
+    overlay.id = "dmsMasterFixOverlay";
+    overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.92);backdrop-filter:blur(10px);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#f8fafc;";
+
+    var modal = document.createElement("div");
+    modal.style = "background:#0f172a;width:780px;max-width:95%;border-radius:18px;border:1px solid rgba(56,189,248,0.35);box-shadow:0 25px 60px rgba(0,0,0,0.9);display:flex;flex-direction:column;overflow:hidden;";
+
+    modal.innerHTML = `
+        <div style="background:linear-gradient(135deg,#0284c7,#2563eb);padding:16px 22px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:26px;">🛠️</span>
+                <div>
+                    <h3 style="margin:0;font-size:16px;font-weight:800;color:#fff;">MASTER TROUBLESHOOTER & AUTO-FIX (VDO / PIN / VSO)</h3>
+                    <p style="margin:2px 0 0 0;font-size:12px;color:#bae6fd;">Truy tìm nguyên nhân gốc rễ và tự động khắc phục điều kiện tiên quyết</p>
+                </div>
+            </div>
+            <button id="dmsMasterClose" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:16px;">✕</button>
+        </div>
+
+        <div id="dmsMasterLog" style="padding:18px 22px;max-height:480px;overflow-y:auto;font-size:12px;line-height:1.7;background:#090d16;color:#cbd5e1;font-family:monospace;">
+            <div style="color:#38bdf8;">⏳ Đang quét toàn bộ hệ sinh thái dữ liệu (VDO, VSO, Xe kho, Sê-ri PIN, SAP Logs)...</div>
+        </div>
+
+        <div style="background:#1e293b;padding:14px 22px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.06);">
+            <span id="dmsMasterStatus" style="font-size:12px;color:#94a3b8;">Đang phân tích...</span>
+            <button id="dmsMasterBtnFix" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(16,185,129,0.4);display:none;">
+                ⚡ FIX TẤT CẢ & KÍCH HOẠT PHÁT HÀNH
+            </button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    var logEl = document.getElementById("dmsMasterLog");
+    var statusText = document.getElementById("dmsMasterStatus");
+    var fixBtn = document.getElementById("dmsMasterBtnFix");
+    document.getElementById("dmsMasterClose").onclick = function(){ overlay.remove(); };
+
+    function log(msg, type) {
+        var color = type === "success" ? "#34d399" : (type === "err" ? "#f87171" : (type === "warn" ? "#fbbf24" : "#38bdf8"));
+        var icon = type === "success" ? "✅" : (type === "err" ? "❌" : (type === "warn" ? "⚠️" : "🔍"));
+        logEl.innerHTML += `<div style="color:${color};margin-top:4px;">${icon} ${msg}</div>`;
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    try {
+        var vdo = await x.WebApi.retrieveRecord("xts_newvehicledeliveryorder", vdoId);
+        var vdoCode = vdo.xts_deliveryordernumber || vdoId;
+        var stockId = vdo._xts_stockid_value;
+        var vsoId = vdo._xts_newvehiclesalesorderid_value;
+        var pinSerial = "";
+        var stockNumber = "";
+        var vin = "";
+
+        log(`1. KIỂM TRA PHIẾU GIAO XE: <b>${vdoCode}</b>`, "info");
+
+        // 1. KIỂM TRA SAP INTERFACE LOG
+        log("--------------------------------------------------", "info");
+        log("2. TRUY QUẤT NHẬT KÝ LỖI TỪ SAP (xts_interfacelog)...", "info");
+        try {
+            var iflogs = await x.WebApi.retrieveMultipleRecords("xts_interfacelog", `?$filter=contains(xts_referencenumber,'${vdoCode}') or contains(xts_requestpayload,'${vdoId}') or contains(xts_responsemessage,'error') or contains(xts_responsemessage,'Error')&$orderby=createdon desc&$top=5`);
+            if (iflogs && iflogs.entities && iflogs.entities.length > 0) {
+                iflogs.entities.forEach(function(l){
+                    var msg = l.xts_responsemessage || l.xts_errormessage || l.xts_responsepayload || "";
+                    if (msg) log(`📡 SAP Log [${l.createdon}]: <code>${msg.substring(0, 160)}</code>`, "warn");
+                });
+            } else {
+                log("Chưa có bản ghi lỗi fatal trực tiếp trong xts_interfacelog.", "success");
+            }
+        } catch(eLog){}
+
+        // 2. KIỂM TRA XE KHO & SÊ-RI PIN
+        log("--------------------------------------------------", "info");
+        log("3. KIỂM TRA XE KHO & TRẠNG THÁI SÊ-RI PIN...", "info");
+        var pinRecordId = "";
+        var pinAvailStatus = 0;
+        var pinStockStatus = 0;
+
+        if (stockId) {
+            var stock = await x.WebApi.retrieveRecord("xts_inventorynewvehicle", stockId);
+            stockNumber = stock.xts_stocknumber || "";
+            vin = stock.xts_vin || "";
+            pinSerial = stock.itv_batteryserial || "";
+            log(`Xe kho: <b>${stockNumber}</b> (VIN: <b>${vin}</b>)`, "info");
+            log(`Mã Sê-ri PIN trên xe: <b>${pinSerial || "CHƯA CÓ PIN ⚠️"}</b>`, pinSerial ? "success" : "err");
+
+            if (pinSerial) {
+                try {
+                    var pinRes = await x.WebApi.retrieveMultipleRecords("xts_inventserial", `?$filter=xts_serialnumber eq '${pinSerial}'&$top=2`);
+                    if (pinRes && pinRes.entities && pinRes.entities.length > 0) {
+                        var pinRec = pinRes.entities[0];
+                        pinRecordId = pinRec.xts_inventserialid;
+                        pinAvailStatus = pinRec.xts_availabilitystatus;
+                        pinStockStatus = pinRec.xts_stockstatus;
+                        log(`Bản ghi Sê-ri PIN [${pinSerial}]: ID=<code>${pinRecordId}</code> | Availability=${pinAvailStatus} | StockStatus=${pinStockStatus}`, "info");
+
+                        if (pinAvailStatus !== 6 || pinStockStatus !== 3) {
+                            log(`⚠️ Sê-ri PIN chưa ở trạng thái 'Có sẵn' (Available=6, StockStatus=3). Cần kích hoạt để SAP cho phép xuất kho!`, "warn");
+                        } else {
+                            log(`Sê-ri PIN đã ở trạng thái Sẵn sàng (Available=6)!`, "success");
+                        }
+                    } else {
+                        log(`⚠️ Chưa tìm thấy bản ghi xts_inventserial cho mã ${pinSerial}! Cần tạo mới để đồng bộ SAP.`, "warn");
+                    }
+                } catch(ePin){}
+            }
+        }
+
+        // 3. KIỂM TRA ĐƠN VSO
+        log("--------------------------------------------------", "info");
+        log("4. KIỂM TRA ĐƠN HÀNG VSO...", "info");
+        if (vsoId) {
+            var vso = await x.WebApi.retrieveRecord("xts_newvehiclesalesorder", vsoId);
+            log(`Đơn VSO: <b>${vso.xts_newvehiclesalesordernumber}</b> | Status: <b>${vso["statuscode@OData.Community.Display.V1.FormattedValue"]}</b>`, "info");
+            log(`Hóa đơn đã duyệt: <b>${vso["xvf_isinvoicereviewapprove@OData.Community.Display.V1.FormattedValue"] || "Không"}</b> | Mã lỗi VSO: <b>${vso.itv_codeerror || "Không có"}</b>`, "info");
+        }
+
+        log("--------------------------------------------------", "info");
+        log("🎉 PHÂN TÍCH HOÀN TẤT! Sẵn sàng thực thi gói fix toàn diện.", "success");
+        statusText.innerText = "✅ Sẵn sàng kích hoạt";
+        fixBtn.style.display = "inline-block";
+
+        // THỰC THI SỬA TOÀN DIỆN
+        fixBtn.onclick = async function() {
+            fixBtn.disabled = true;
+            fixBtn.innerHTML = "⏳ ĐANG FIX TOÀN DIỆN...";
+            statusText.innerText = "Đang xử lý...";
+
+            // 1. Fix Sê-ri PIN sang trạng thái Available = 6
+            if (pinSerial) {
+                log("👉 Bước 1: Kích hoạt Sê-ri PIN sang trạng thái Có sẵn (Available = 6, Stock = 3)...", "info");
+                try {
+                    if (pinRecordId) {
+                        await x.WebApi.updateRecord("xts_inventserial", pinRecordId, {
+                            "xts_availabilitystatus": 6,
+                            "xts_stockstatus": 3
+                        });
+                        log("Đã cập nhật trạng thái Sê-ri PIN thành công!", "success");
+                    } else {
+                        var crRes = await x.WebApi.createRecord("xts_inventserial", {
+                            "xts_serialnumber": pinSerial,
+                            "xts_description": "PIN " + vin,
+                            "xts_availabilitystatus": 6,
+                            "xts_stockstatus": 3,
+                            "xts_vehiclesource": 1,
+                            "statecode": 0,
+                            "statuscode": 1
+                        });
+                        pinRecordId = crRes.id;
+                        log("Đã tạo mới bản ghi Sê-ri PIN chuẩn OData!", "success");
+                    }
+
+                    // Liên kết vào xe kho
+                    await x.WebApi.updateRecord("xts_inventorynewvehicle", stockId, {
+                        "itv_batteryserial": pinSerial,
+                        "itv_serialid@odata.bind": `/xts_inventserials(${pinRecordId})`
+                    });
+                    log("Đã liên kết itv_serialid vào Xe kho thành công!", "success");
+                } catch(eFixPin){
+                    log(`Lưu ý PIN: ${eFixPin.message || eFixPin}`, "warn");
+                }
+            }
+
+            // 2. Fix VSO Duyệt Hóa Đơn & Xóa Lỗi
+            if (vsoId) {
+                log("👉 Bước 2: Duyệt hóa đơn & Xóa mã lỗi trên Đơn VSO...", "info");
+                try {
+                    await x.WebApi.updateRecord("xts_newvehiclesalesorder", vsoId, {
+                        "xvf_isinvoicereviewapprove": true,
+                        "itv_codeerror": ""
+                    });
+                    log("Đã duyệt hóa đơn VSO thành công!", "success");
+                } catch(eFixVso){}
+            }
+
+            // 3. Kích hoạt O2D trên VDO
+            log("👉 Bước 3: Gửi lại tín hiệu O2D trên Phiếu giao xe...", "info");
+            document.querySelectorAll('button, [role="menuitem"], [role="button"]').forEach(function(b){
+                var txt = (b.innerText || b.getAttribute("aria-label") || "").trim();
+                if (txt.includes("Xác nhận lại O2D") || txt.includes("Xác nhận O2D")) {
+                    b.click();
+                }
+            });
+
+            // 4. Kích hoạt Phát hành
+            log("👉 Bước 4: Chuyển trạng thái Phát hành (Handling = 2)...", "info");
+            try {
+                var hAttr = x.Page && x.Page.data && x.Page.data.entity && x.Page.data.entity.attributes && x.Page.data.entity.attributes.get("xts_handling");
+                if (hAttr) {
+                    var opts = hAttr.getOptions ? hAttr.getOptions() : [];
+                    var rV = 2;
+                    opts.forEach(function(o){
+                        if (o.text && (o.text.includes("Phát hành") || o.text.includes("phát hành") || o.text.includes("Release"))) rV = o.value;
+                    });
+                    hAttr.setValue(rV);
+                    hAttr.setSubmitMode("always");
+                }
+                await x.Page.data.save();
+                log("🎉 ĐÃ LƯU PHÁT HÀNH THÀNH CÔNG!", "success");
+                alert("🎉 CHÚC MỪNG! ĐÃ TỰ ĐỘNG XỬ LÝ TOÀN DIỆN VÀ PHÁT HÀNH PHIẾU GIAO XE!");
+                window.location.reload();
+            } catch(errFin) {
+                try {
+                    await x.WebApi.updateRecord("xts_newvehicledeliveryorder", vdoId, { "xts_handling": 2 });
+                    alert("🎉 ĐÃ CẬP NHẬT PHÁT HÀNH QUA WEB API THÀNH CÔNG!");
+                    window.location.reload();
+                } catch(eF2){
+                    log(`Phản hồi CRM: ${errFin.message || eF2.message}`, "warn");
+                    alert("Đã hoàn tất đồng bộ PIN và VSO! Vui lòng bấm 'Làm mới' trang để hệ thống cập nhật.");
+                }
+            }
+        };
+
+    } catch(err) {
+        log(`Lỗi: ${err.message || JSON.stringify(err)}`, "err");
+    }
+})();

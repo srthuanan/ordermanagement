@@ -169,15 +169,15 @@ const MaintenanceFeeManager: React.FC<Props> = ({ showToast }) => {
     const totalCollected = fees.filter(f => f.status === 'paid').reduce((acc, f) => acc + Math.floor(Number(f.amount)), 0);
 
     return (
-        <div className="flex flex-col h-full bg-[#f4f7f6] p-1 sm:p-2 overflow-y-auto">
+        <div className="flex flex-col h-full bg-slate-50 p-3 sm:p-4 overflow-y-auto">
             {/* Header & Filters */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-2 rounded-lg shadow-sm border border-slate-200 mb-2">
+            <div className="flex flex-col md:flex-row md:items-center justify-between bg-white p-4 rounded-2xl shadow-2xs border border-slate-200 mb-4">
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
-                        <i className="fas fa-money-bill-wave text-lg"></i>
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
+                        <i className="fas fa-money-bill-wave text-base"></i>
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold text-slate-800">Kinh Phí Web Hàng Tháng</h2>
+                        <h2 className="text-base font-bold text-slate-900">Kinh Phí Web Hàng Tháng</h2>
                         <p className="text-sm text-slate-500">Quản lý đóng góp duy trì hệ thống web của TVBH</p>
                     </div>
                 </div>

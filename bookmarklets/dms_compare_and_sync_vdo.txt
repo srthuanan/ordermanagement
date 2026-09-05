@@ -1,0 +1,66 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - SO SÁNH PHIẾU THÀNH CÔNG (0149) VS PHIẾU LỖI (0150)
+     * ========================================================================= */
+    var x = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!x) {
+        for (var i = 0; i < frames.length; i++) {
+            try { if (frames[i].Xrm) { x = frames[i].Xrm; break; } } catch(e){}
+        }
+    }
+
+    var successId = "d3e128ed-859f-f111-b8dc-70a8a5045a79"; // N31913-VDO-26-08-0149
+    var currentId = (new URLSearchParams(window.location.search).get("id") || "").replace(/[{}]/g, "");
+
+    try {
+        var recSuccess = await x.WebApi.retrieveRecord("xts_newvehicledeliveryorder", successId);
+        console.log("=== BẢN GHI THÀNH CÔNG 0149 ===", recSuccess);
+
+        var report = [];
+        report.push(`📌 BẢN GHI PHÁT HÀNH THÀNH CÔNG (N31913-VDO-26-08-0149):`);
+        report.push(`• xts_status: ${recSuccess["xts_status@OData.Community.Display.V1.FormattedValue"] || recSuccess.xts_status}`);
+        report.push(`• statuscode: ${recSuccess["statuscode@OData.Community.Display.V1.FormattedValue"] || recSuccess.statuscode} (${recSuccess.statuscode})`);
+        report.push(`• statecode: ${recSuccess["statecode@OData.Community.Display.V1.FormattedValue"] || recSuccess.statecode} (${recSuccess.statecode})`);
+        report.push(`• xts_handling: ${recSuccess["xts_handling@OData.Community.Display.V1.FormattedValue"] || recSuccess.xts_handling} (${recSuccess.xts_handling})`);
+        report.push(`• xts_deliverydate: ${recSuccess.xts_deliverydate}`);
+        report.push(`• itv_releaseddate: ${recSuccess.itv_releaseddate || recSuccess.xts_releaseddate}`);
+        report.push(`• itv_comfirmationstatus: ${recSuccess.itv_comfirmationstatus}`);
+        report.push(`• itv_o2dstatus: ${recSuccess.itv_o2dstatus}`);
+
+        // Đơn VSO thành công
+        var vsoSuccessId = recSuccess._xts_newvehiclesalesorderid_value;
+        if (vsoSuccessId) {
+            var vsoS = await x.WebApi.retrieveRecord("xts_newvehiclesalesorder", vsoSuccessId);
+            report.push(`\n🔗 ĐƠN VSO CỦA PHIẾU THÀNH CÔNG (${vsoS.xts_newvehiclesalesordernumber}):`);
+            report.push(`• VSO statuscode: ${vsoS["statuscode@OData.Community.Display.V1.FormattedValue"]} (${vsoS.statuscode})`);
+            report.push(`• VSO xts_status: ${vsoS["xts_status@OData.Community.Display.V1.FormattedValue"]} (${vsoS.xts_status})`);
+            report.push(`• VSO itv_externalstatus: ${vsoS["itv_externalstatus@OData.Community.Display.V1.FormattedValue"] || vsoS.itv_externalstatus}`);
+            report.push(`• VSO itv_codeerror: ${vsoS.itv_codeerror || "Không có"}`);
+        }
+
+        // Sao chép thuộc tính từ phiếu thành công sang phiếu 0150 nếu đang mở
+        var copyPayload = {
+            "statuscode": recSuccess.statuscode, // Trạng thái phát hành
+            "statecode": recSuccess.statecode,
+            "xts_status": recSuccess.xts_status
+        };
+
+        if (currentId && currentId !== successId) {
+            report.push(`\n👉 Bạn có muốn áp dụng cấu hình phát hành từ phiếu thành công sang phiếu ${currentId} không?`);
+            if (confirm(report.join("\n"))) {
+                try {
+                    await x.WebApi.updateRecord("xts_newvehicledeliveryorder", currentId, copyPayload);
+                    alert("🎉 ĐÃ ĐỒNG BỘ TRẠNG THÁI PHÁT HÀNH THÀNH CÔNG!");
+                    window.location.reload();
+                } catch(eUp){
+                    alert("Lỗi update: " + (eUp.message || JSON.stringify(eUp)));
+                }
+            }
+        } else {
+            alert(report.join("\n"));
+        }
+
+    } catch(err) {
+        alert("Lỗi soi phiếu thành công: " + (err.message || JSON.stringify(err)));
+    }
+})();

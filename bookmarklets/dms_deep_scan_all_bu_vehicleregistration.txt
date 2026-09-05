@@ -1,0 +1,319 @@
+javascript:(function(){
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var frames = window.frames;
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].Xrm && frames[i].Xrm.WebApi) { _Xrm = frames[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert("⚠️ Vui lòng mở trang DMS VinFast trước khi chạy!");
+        return;
+    }
+
+    var progressDiv = document.createElement('div');
+    progressDiv.id = 'dmsDeepScanProgress';
+    progressDiv.style = 'position:fixed;top:15px;right:15px;background:#0f172a;color:#38bdf8;padding:16px 22px;z-index:9999999;border-radius:12px;font-family:sans-serif;font-size:13px;font-weight:bold;box-shadow:0 12px 30px rgba(0,0,0,0.6);border:1px solid #38bdf840;backdrop-filter:blur(8px);';
+    progressDiv.innerHTML = '🔍 Đang quét sâu toàn bộ Đăng ký xe (Toàn hệ thống, không lọc BU)...';
+    document.body.appendChild(progressDiv);
+
+    var allRawRecords = [];
+    var pageCount = 0;
+
+    // Deep unbounded query across all Business Units
+    function fetchDeepPages(query) {
+        pageCount++;
+        _Xrm.WebApi.retrieveMultipleRecords("itv_vehicleregistration", query).then(function(result) {
+            allRawRecords = allRawRecords.concat(result.entities);
+            progressDiv.innerHTML = '🔍 Đang quét sâu: Đã nạp <b>' + allRawRecords.length + '</b> hồ sơ (Trang ' + pageCount + ')...';
+            
+            var nextLink = result["@odata.nextLink"] || result.nextLink;
+            if (nextLink) {
+                var nextQuery = nextLink.substring(nextLink.indexOf('?'));
+                fetchDeepPages(nextQuery);
+            } else {
+                progressDiv.innerHTML = '✅ Quét hoàn tất ' + allRawRecords.length + ' hồ sơ từ TẤT CẢ các Chi nhánh / BU! Đang phân tích...';
+                setTimeout(function() {
+                    progressDiv.remove();
+                    processAndDisplayDeep(allRawRecords);
+                }, 400);
+            }
+        }, function(error) {
+            progressDiv.remove();
+            alert("❌ Lỗi quét dữ liệu: " + (error.message || JSON.stringify(error)));
+        });
+    }
+
+    function processAndDisplayDeep(records) {
+        var buCounts = {};
+        
+        var mapped = records.map(function(item) {
+            var vin = item["_itv_vin_value@OData.Community.Display.V1.FormattedValue"] || item.itv_vin || "";
+            var plate = item.itv_plateno || "";
+            var chargingPolicy = item["itv_chargingpolicy@OData.Community.Display.V1.FormattedValue"] || "";
+            if (!chargingPolicy) {
+                if (item.itv_chargingpolicy === 3) chargingPolicy = "Biển vàng";
+                else if (item.itv_chargingpolicy === 2) chargingPolicy = "Các loại biển khác";
+                else chargingPolicy = "Không xác định";
+            }
+            var status = item["itv_status@OData.Community.Display.V1.FormattedValue"] || (item.itv_status === 2 ? "Đã gửi" : "Mở");
+            var batteryRental = item["_itv_batteryrental_value@OData.Community.Display.V1.FormattedValue"] || "";
+            var attachmentName = item.itv_attachment_name || "";
+            var bu = item["_owningbusinessunit_value@OData.Community.Display.V1.FormattedValue"] || "Chưa rõ BU";
+            var purpose = item["itv_purposeofuse@OData.Community.Display.V1.FormattedValue"] || "";
+            var createdOn = item["createdon@OData.Community.Display.V1.FormattedValue"] || (item.createdon ? new Date(item.createdon).toLocaleString('vi-VN') : "");
+            var modifiedOn = item["modifiedon@OData.Community.Display.V1.FormattedValue"] || (item.modifiedon ? new Date(item.modifiedon).toLocaleString('vi-VN') : "");
+            var modifiedBy = item["_modifiedby_value@OData.Community.Display.V1.FormattedValue"] || "";
+            var createdBy = item["_createdby_value@OData.Community.Display.V1.FormattedValue"] || "";
+            var owner = item["_ownerid_value@OData.Community.Display.V1.FormattedValue"] || "";
+
+            buCounts[bu] = (buCounts[bu] || 0) + 1;
+
+            return {
+                id: item.itv_vehicleregistrationid || "",
+                ma_ho_so: item.itv_name || "",
+                so_vin: vin.trim().toUpperCase(),
+                bien_so: plate.trim().toUpperCase(),
+                chinh_sach_sac: chargingPolicy,
+                trang_thai: status,
+                hd_thue_pin: batteryRental,
+                ten_file_dinh_kem: attachmentName,
+                chi_nhanh_bu: bu,
+                nguoi_so_huu: owner,
+                muc_dich: purpose,
+                ngay_tao: createdOn,
+                ngay_sua: modifiedOn,
+                nguoi_sua: modifiedBy,
+                nguoi_tao: createdBy,
+                raw_modified_ts: item.modifiedon ? new Date(item.modifiedon).getTime() : 0
+            };
+        });
+
+        mapped.sort(function(a, b) {
+            return b.raw_modified_ts - a.raw_modified_ts;
+        });
+
+        window._dmsDeepRegData = mapped;
+        showDeepModal(mapped, buCounts);
+    }
+
+    function showDeepModal(items, buMap) {
+        var old = document.getElementById('dmsDeepRegOverlay');
+        if (old) old.remove();
+
+        var buKeys = Object.keys(buMap).sort();
+        var totalCount = items.length;
+        var withPlateCount = items.filter(function(i){ return !!i.bien_so; }).length;
+        var yellowCount = items.filter(function(i){ return i.chinh_sach_sac.indexOf("vàng") !== -1; }).length;
+        var otherCount = items.filter(function(i){ return i.chinh_sach_sac.indexOf("khác") !== -1; }).length;
+        var sentCount = items.filter(function(i){ return i.trang_thai.indexOf("Đã gửi") !== -1; }).length;
+
+        var overlay = document.createElement('div');
+        overlay.id = 'dmsDeepRegOverlay';
+        overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.85);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:system-ui,-apple-system,sans-serif;backdrop-filter:blur(8px);';
+
+        var modal = document.createElement('div');
+        modal.style = 'background:#0f172a;width:1200px;max-width:96%;height:90vh;border-radius:16px;border:1px solid #334155;box-shadow:0 25px 60px rgba(0,0,0,0.8);display:flex;flex-direction:column;overflow:hidden;color:#e2e8f0;';
+
+        // Header
+        var header = document.createElement('div');
+        header.style = 'background:#1e293b;padding:16px 24px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;';
+        header.innerHTML = `
+            <div>
+                <h3 style="margin:0;color:#38bdf8;font-size:17px;display:flex;align-items:center;gap:8px;">🌐 QUÉT SÂU TOÀN BỘ ĐĂNG KÝ XE (TẤT CẢ BUSINESS UNITS / CHI NHÁNH)</h3>
+                <p style="margin:4px 0 0 0;font-size:12px;color:#94a3b8;">Tổng cộng <b>${totalCount}</b> hồ sơ trên <b>${buKeys.length}</b> Business Units khác nhau</p>
+            </div>
+            <button style="background:transparent;border:none;color:#94a3b8;font-size:22px;cursor:pointer;padding:4px;" onclick="document.getElementById('dmsDeepRegOverlay').remove()">✕</button>
+        `;
+
+        // KPI & BU Selector Bar
+        var kpiBar = document.createElement('div');
+        kpiBar.style = 'background:#0f172a;padding:12px 24px;border-bottom:1px solid #1e293b;display:flex;gap:12px;align-items:center;flex-wrap:wrap;';
+        
+        var buOptions = '<option value="">🌐 Tất cả Business Units (' + totalCount + ' xe)</option>';
+        buKeys.forEach(function(bu) {
+            buOptions += '<option value="' + bu + '">🏢 ' + bu + ' (' + buMap[bu] + ' xe)</option>';
+        });
+
+        kpiBar.innerHTML = `
+            <div style="display:flex;align-items:center;gap:8px;margin-right:8px;">
+                <span style="font-size:12px;color:#94a3b8;font-weight:bold;">Lọc Chi nhánh/BU:</span>
+                <select id="selBuFilter" style="background:#1e293b;color:#38bdf8;border:1px solid #334155;padding:6px 10px;border-radius:6px;font-size:12.5px;font-weight:bold;outline:none;cursor:pointer;">${buOptions}</select>
+            </div>
+            <div style="background:#1e293b;padding:5px 12px;border-radius:6px;font-size:12px;border:1px solid #334155;">📋 Tổng: <b style="color:#38bdf8;">${totalCount}</b></div>
+            <div style="background:#1e293b;padding:5px 12px;border-radius:6px;font-size:12px;border:1px solid #334155;">🚘 Có biển: <b style="color:#10b981;">${withPlateCount}</b></div>
+            <div style="background:#1e293b;padding:5px 12px;border-radius:6px;font-size:12px;border:1px solid #334155;">🟡 Biển vàng: <b style="color:#eab308;">${yellowCount}</b></div>
+            <div style="background:#1e293b;padding:5px 12px;border-radius:6px;font-size:12px;border:1px solid #334155;">⚪ Biển khác: <b style="color:#cbd5e1;">${otherCount}</b></div>
+            <div style="background:#1e293b;padding:5px 12px;border-radius:6px;font-size:12px;border:1px solid #334155;">✅ Đã gửi: <b style="color:#10b981;">${sentCount}</b></div>
+        `;
+
+        // Toolbar + Search
+        var toolbar = document.createElement('div');
+        toolbar.style = 'background:#1e293b80;padding:12px 24px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;';
+        toolbar.innerHTML = `
+            <div style="flex-grow:1;max-width:380px;">
+                <input id="dmsDeepSearchInput" type="text" placeholder="🔍 Tìm theo VIN, Biển số, HĐ pin, Người sửa, BU..." style="width:100%;background:#0f172a;border:1px solid #334155;color:white;padding:8px 12px;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;">
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button id="btnDeepExportCsv" style="background:#107c41;color:white;border:none;padding:8px 14px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">📊 Xuất Excel (CSV Tất Cả BU)</button>
+                <button id="btnDeepCopySheet" style="background:#10b981;color:white;border:none;padding:8px 14px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">📋 Copy Bảng</button>
+                <button id="btnDeepCopyVinPlate" style="background:#38bdf8;color:#0f172a;border:none;padding:8px 14px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">📋 Copy VIN ↔ Biển Số</button>
+                <button id="btnDeepExportJson" style="background:#6366f1;color:white;border:none;padding:8px 14px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">📥 Tải JSON</button>
+            </div>
+        `;
+
+        // Table Container
+        var tableContainer = document.createElement('div');
+        tableContainer.style = 'flex-grow:1;overflow-y:auto;padding:16px 24px;';
+        tableContainer.innerHTML = `
+            <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;">
+                <thead style="background:#1e293b;color:#38bdf8;position:sticky;top:0;z-index:2;">
+                    <tr>
+                        <th style="padding:10px 8px;width:35px;">STT</th>
+                        <th style="padding:10px 8px;">Chi Nhánh (BU)</th>
+                        <th style="padding:10px 8px;">Số VIN</th>
+                        <th style="padding:10px 8px;">Biển Số</th>
+                        <th style="padding:10px 8px;">Chính Sách Sạc</th>
+                        <th style="padding:10px 8px;">HĐ Thuê Pin</th>
+                        <th style="padding:10px 8px;">Trạng Thái</th>
+                        <th style="padding:10px 8px;">Cập Nhật Gần Nhất</th>
+                        <th style="padding:10px 8px;">Người Thực Hiện</th>
+                    </tr>
+                </thead>
+                <tbody id="dmsDeepTableBody"></tbody>
+            </table>
+        `;
+
+        modal.appendChild(header);
+        modal.appendChild(kpiBar);
+        modal.appendChild(toolbar);
+        modal.appendChild(tableContainer);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        function renderRows() {
+            var selectedBu = document.getElementById('selBuFilter').value;
+            var searchTxt = (document.getElementById('dmsDeepSearchInput').value || '').toLowerCase().trim();
+            var tbody = document.getElementById('dmsDeepTableBody');
+            tbody.innerHTML = '';
+
+            var filtered = items.filter(function(r) {
+                if (selectedBu && r.chi_nhanh_bu !== selectedBu) return false;
+                if (!searchTxt) return true;
+                return r.so_vin.toLowerCase().indexOf(searchTxt) !== -1 ||
+                       r.bien_so.toLowerCase().indexOf(searchTxt) !== -1 ||
+                       r.chinh_sach_sac.toLowerCase().indexOf(searchTxt) !== -1 ||
+                       r.chi_nhanh_bu.toLowerCase().indexOf(searchTxt) !== -1 ||
+                       r.trang_thai.toLowerCase().indexOf(searchTxt) !== -1 ||
+                       r.hd_thue_pin.toLowerCase().indexOf(searchTxt) !== -1 ||
+                       r.nguoi_sua.toLowerCase().indexOf(searchTxt) !== -1 ||
+                       r.ma_ho_so.toLowerCase().indexOf(searchTxt) !== -1;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#94a3b8;">Không có bản ghi nào khớp bộ lọc.</td></tr>';
+                return;
+            }
+
+            filtered.forEach(function(r, idx) {
+                var tr = document.createElement('tr');
+                tr.style = 'border-bottom:1px solid #1e293b;';
+                tr.onmouseover = function() { tr.style.background = '#1e293b80'; };
+                tr.onmouseout = function() { tr.style.background = 'transparent'; };
+
+                var policyColor = '#cbd5e1';
+                if (r.chinh_sach_sac.indexOf('vàng') !== -1) policyColor = '#eab308';
+                else if (r.chinh_sach_sac.indexOf('khác') !== -1) policyColor = '#38bdf8';
+
+                var stColor = r.trang_thai.indexOf('Đã gửi') !== -1 ? '#10b981' : '#f59e0b';
+
+                tr.innerHTML = `
+                    <td style="padding:8px;color:#64748b;font-size:11px;">${idx + 1}</td>
+                    <td style="padding:8px;color:#a78bfa;font-weight:bold;font-size:11.5px;">${r.chi_nhanh_bu}</td>
+                    <td style="padding:8px;font-family:monospace;color:#f43f5e;font-weight:bold;letter-spacing:0.5px;">${r.so_vin || '-'}</td>
+                    <td style="padding:8px;font-weight:bold;color:#10b981;font-size:13px;">${r.bien_so || '<span style="color:#64748b;font-weight:normal;">(Chưa có)</span>'}</td>
+                    <td style="padding:8px;color:${policyColor};font-weight:500;">${r.chinh_sach_sac}</td>
+                    <td style="padding:8px;color:#38bdf8;font-family:monospace;">${r.hd_thue_pin || '-'}</td>
+                    <td style="padding:8px;"><span style="background:${stColor}20;color:${stColor};padding:2px 8px;border-radius:4px;font-weight:bold;font-size:11px;border:1px solid ${stColor}40;">${r.trang_thai}</span></td>
+                    <td style="padding:8px;color:#94a3b8;font-size:11px;">${r.ngay_sua || r.ngay_tao}</td>
+                    <td style="padding:8px;color:#cbd5e1;font-size:11px;">${r.nguoi_sua || r.nguoi_tao || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        renderRows();
+
+        document.getElementById('selBuFilter').onchange = renderRows;
+        document.getElementById('dmsDeepSearchInput').oninput = renderRows;
+
+        // Button Export CSV
+        document.getElementById('btnDeepExportCsv').onclick = function() {
+            var headers = ["STT", "Business Unit (Chi Nhánh)", "Mã Hồ Sơ", "Số VIN", "Biển Số", "Chính Sách Sạc", "HĐ Thuê Pin", "Trạng Thái", "Chủ Sở Hữu", "Ngày Tạo", "Ngày Sửa Đổi", "Người Sửa Đổi", "File Đính Kèm"];
+            var rows = items.map(function(r, idx) {
+                return [
+                    idx + 1,
+                    '"' + r.chi_nhanh_bu + '"',
+                    '"' + r.ma_ho_so + '"',
+                    '"' + r.so_vin + '"',
+                    '"' + r.bien_so + '"',
+                    '"' + r.chinh_sach_sac + '"',
+                    '"' + r.hd_thue_pin + '"',
+                    '"' + r.trang_thai + '"',
+                    '"' + r.nguoi_so_huu + '"',
+                    '"' + r.ngay_tao + '"',
+                    '"' + r.ngay_sua + '"',
+                    '"' + r.nguoi_sua + '"',
+                    '"' + r.ten_file_dinh_kem + '"'
+                ].join(',');
+            });
+
+            var csvContent = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n');
+            var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'DMS_Dang_Ky_Xe_Toan_Bo_BU_' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+        };
+
+        // Button Copy Sheet
+        document.getElementById('btnDeepCopySheet').onclick = function() {
+            var headers = "STT\tChi Nhánh (BU)\tMã Hồ Sơ\tSố VIN\tBiển Số\tChính Sách Sạc\tHĐ Thuê Pin\tTrạng Thái\tNgày Sửa Đổi\tNgười Sửa Đổi";
+            var textRows = items.map(function(r, idx) {
+                return [idx + 1, r.chi_nhanh_bu, r.ma_ho_so, r.so_vin, r.bien_so, r.chinh_sach_sac, r.hd_thue_pin, r.trang_thai, r.ngay_sua, r.nguoi_sua].join('\t');
+            }).join('\n');
+
+            navigator.clipboard.writeText(headers + '\n' + textRows);
+            this.innerText = '✅ Đã copy!';
+            var self = this;
+            setTimeout(function(){ self.innerText = '📋 Copy Bảng'; }, 2000);
+        };
+
+        // Button Copy VIN ↔ Plate
+        document.getElementById('btnDeepCopyVinPlate').onclick = function() {
+            var text = items.map(function(r) {
+                return r.so_vin + '\t' + r.bien_so + '\t' + r.chi_nhanh_bu + '\t' + r.chinh_sach_sac;
+            }).join('\n');
+
+            navigator.clipboard.writeText(text);
+            this.innerText = '✅ Đã copy!';
+            var self = this;
+            setTimeout(function(){ self.innerText = '📋 Copy VIN ↔ Biển Số'; }, 2000);
+        };
+
+        // Button Export JSON
+        document.getElementById('btnDeepExportJson').onclick = function() {
+            var blob = new Blob([JSON.stringify(items, null, 2)], { type: 'application/json' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'DMS_Dang_Ky_Xe_All_BU_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+        };
+    }
+
+    // Unbounded cross-BU pagination query
+    fetchDeepPages("?$orderby=modifiedon desc");
+})();

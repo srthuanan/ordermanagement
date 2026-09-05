@@ -1,0 +1,525 @@
+/**
+ * ==============================================================================
+ * DMS VSO CREATION PROCESS GUIDE & LIVE INSPECTOR BOOKMARKLET (V3 - BUG FREE)
+ * ==============================================================================
+ * Hoạt động 100% trên mọi màn hình DMS VinFast / Dynamics 365
+ * ==============================================================================
+ */
+
+javascript:(function(){
+    try {
+        // 1. Tìm đối tượng Xrm sâu trong mọi frame của Dynamics 365
+        function findDeepXrm(win) {
+            win = win || window;
+            try {
+                if (win.Xrm && win.Xrm.WebApi) return win.Xrm;
+            } catch(e){}
+            try {
+                if (win.top && win.top.Xrm && win.top.Xrm.WebApi) return win.top.Xrm;
+            } catch(e){}
+            try {
+                if (win.parent && win.parent.Xrm && win.parent.Xrm.WebApi) return win.parent.Xrm;
+            } catch(e){}
+            try {
+                var frames = win.frames;
+                if (frames) {
+                    for (var i = 0; i < frames.length; i++) {
+                        try {
+                            if (frames[i].Xrm && frames[i].Xrm.WebApi) return frames[i].Xrm;
+                        } catch(e){}
+                    }
+                }
+            } catch(e){}
+            return null;
+        }
+
+        var _Xrm = findDeepXrm(window);
+        var isDmsConnected = Boolean(_Xrm && _Xrm.WebApi);
+
+        // 2. Tìm formContext (Form đang mở)
+        var formContext = null;
+        var currentEntityName = "";
+        var currentRecordId = "";
+        var formAttributes = {};
+
+        try {
+            if (_Xrm) {
+                if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity) {
+                    formContext = _Xrm.Page;
+                } else if (_Xrm.Utility && _Xrm.Utility.getPageContext && _Xrm.Utility.getPageContext().input) {
+                    formContext = _Xrm.Utility.getPageContext().input;
+                }
+            }
+            if (!formContext && window.top) {
+                try {
+                    for (var f = 0; f < window.top.frames.length; f++) {
+                        var subWin = window.top.frames[f];
+                        if (subWin.Xrm && subWin.Xrm.Page && subWin.Xrm.Page.data && subWin.Xrm.Page.data.entity) {
+                            formContext = subWin.Xrm.Page;
+                            if (!_Xrm) _Xrm = subWin.Xrm;
+                            break;
+                        }
+                    }
+                } catch(e){}
+            }
+
+            if (formContext && formContext.data && formContext.data.entity) {
+                currentEntityName = formContext.data.entity.getEntityName() || "";
+                currentRecordId = (formContext.data.entity.getId() || "").replace(/[{}]/g, "");
+                if (formContext.data.entity.attributes) {
+                    formContext.data.entity.attributes.forEach(function(attr) {
+                        var name = attr.getName();
+                        var val = attr.getValue();
+                        var textVal = "";
+                        if (attr.getText) textVal = attr.getText();
+                        formAttributes[name] = { value: val, text: textVal };
+                    });
+                }
+            }
+        } catch(e) {
+            console.warn("Lỗi đọc Form Context:", e);
+        }
+
+        function getAttrText(fieldName) {
+            if (formAttributes[fieldName]) {
+                if (formAttributes[fieldName].text) return formAttributes[fieldName].text;
+                var v = formAttributes[fieldName].value;
+                if (v !== null && v !== undefined) {
+                    if (Array.isArray(v) && v[0]) return v[0].name || v[0].id;
+                    return String(v);
+                }
+            }
+            return "";
+        }
+
+        function getAttrVal(fieldName) {
+            return formAttributes[fieldName] ? formAttributes[fieldName].value : null;
+        }
+
+        function formatMoney(num) {
+            if (num === null || num === undefined || isNaN(num)) return "0 đ";
+            return Math.round(Number(num)).toLocaleString('vi-VN') + " đ";
+        }
+
+        // Chọn document root an toàn nhất (window.top hoặc window hiện tại)
+        var targetDoc = (window.top && window.top.document && window.top.document.body) ? window.top.document : document;
+
+        // Xóa Modal cũ nếu có
+        var old = targetDoc.getElementById("dms-vso-guide-modal");
+        if (old) old.remove();
+
+        var isVsoForm = (currentEntityName === "xts_newvehiclesalesorder");
+        var vsoNumber = getAttrText("xts_newvehiclesalesordernumber") || (isVsoForm ? (currentRecordId ? "Đơn hàng VSO" : "Tạo Mới VSO") : "");
+
+        // 3. Tạo Overlay & Modal
+        var overlay = targetDoc.createElement("div");
+        overlay.id = "dms-vso-guide-modal";
+        overlay.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(10,15,28,0.88);backdrop-filter:blur(10px);z-index:2147483647;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#f8fafc;box-sizing:border-box;";
+
+        var modal = targetDoc.createElement("div");
+        modal.style.cssText = "width:94%;max-width:1200px;height:88vh;max-height:840px;background:#0f172a;border-radius:18px;border:1px solid rgba(56,189,248,0.3);box-shadow:0 25px 70px rgba(0,0,0,0.85);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;";
+        overlay.appendChild(modal);
+
+        // --- Header ---
+        var connBadge = isDmsConnected ? 
+            '<span style="background:rgba(16,185,129,0.15);color:#34d399;padding:3px 10px;border-radius:6px;font-weight:700;border:1px solid rgba(16,185,129,0.3);">🟢 Đã kết nối API DMS</span>' : 
+            '<span style="background:rgba(245,158,11,0.15);color:#fbbf24;padding:3px 10px;border-radius:6px;font-weight:700;border:1px solid rgba(245,158,11,0.3);">🌐 Chế độ Cẩm nang Hướng dẫn</span>';
+
+        var header = targetDoc.createElement("div");
+        header.style.cssText = "background:linear-gradient(135deg,#0284c7 0%,#0f172a 100%);padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;";
+        header.innerHTML = 
+            '<div style="display:flex;align-items:center;gap:14px;">' +
+                '<div style="width:40px;height:40px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;">⚡</div>' +
+                '<div>' +
+                    '<h2 style="margin:0;font-size:17px;font-weight:800;color:#fff;">CẨM NANG & QUY TRÌNH TẠO ĐƠN HÀNG VSO (DMS VINFAST)</h2>' +
+                    '<div style="margin-top:4px;display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;">' +
+                        '<span>Entity: <code style="color:#38bdf8;background:rgba(0,0,0,0.3);padding:1px 5px;border-radius:3px;">xts_newvehiclesalesorder</code></span>' +
+                        '<span>•</span>' +
+                        connBadge +
+                        (vsoNumber ? ('<span style="color:#38bdf8;font-weight:bold;">(' + vsoNumber + ')</span>') : '') +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+            '<button id="dms-guide-close-btn" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;font-weight:bold;">✕</button>';
+        modal.appendChild(header);
+
+        // --- Tabs Bar ---
+        var tabsBar = targetDoc.createElement("div");
+        tabsBar.style.cssText = "background:#1e293b;padding:8px 20px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-shrink:0;";
+        tabsBar.innerHTML = 
+            '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+                '<button id="tb-step" style="background:#0284c7;color:#fff;border:none;padding:7px 16px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">📋 1. Sơ Đồ & 6 Bước Tạo VSO</button>' +
+                '<button id="tb-insp" style="background:#334155;color:#94a3b8;border:none;padding:7px 16px;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer;">🔍 2. Thanh Tra Form Đang Mở</button>' +
+                '<button id="tb-dict" style="background:#334155;color:#94a3b8;border:none;padding:7px 16px;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer;">📚 3. Từ Điển Schema OData</button>' +
+                '<button id="tb-recs" style="background:#334155;color:#94a3b8;border:none;padding:7px 16px;border-radius:8px;font-weight:600;font-size:12px;cursor:pointer;">⚡ 4. Danh Sách VSO Mới Nhất</button>' +
+            '</div>' +
+            '<button id="btn-copy-json-all" style="background:rgba(56,189,248,0.15);border:1px solid #38bdf8;color:#38bdf8;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">📋 Copy JSON Form</button>';
+        modal.appendChild(tabsBar);
+
+        // --- Body Content ---
+        var mainBody = targetDoc.createElement("div");
+        mainBody.style.cssText = "flex:1;overflow-y:auto;padding:20px 24px;background:#090d16;font-size:13px;line-height:1.6;";
+        modal.appendChild(mainBody);
+
+        // Gắn Modal vào DOM trước khi gán sự kiện
+        targetDoc.body.appendChild(overlay);
+
+        // Helper an toàn gán sự kiện click
+        function safeClick(id, handler) {
+            var el = modal.querySelector("#" + id);
+            if (el) el.onclick = handler;
+        }
+
+        // ==========================================
+        // TAB 1: SƠ ĐỒ 6 BƯỚC TẠO VSO
+        // ==========================================
+        function showStepTab() {
+            var steps = [
+                {
+                    no: "BƯỚC 1",
+                    title: "Khởi tạo Khách hàng & Hồ sơ VinClub",
+                    icon: "👤",
+                    color: "#38bdf8",
+                    summary: "Tạo hoặc chọn khách hàng cá nhân/doanh nghiệp và đối soát OneID / VinClub.",
+                    points: [
+                        "<b>Entity CRM:</b> <code>account</code> hoặc <code>contact</code>.",
+                        "<b>Trường bắt buộc:</b> Họ tên, Số điện thoại (<code>telephone1</code>), CCCD / MST, Địa chỉ liên hệ.",
+                        "<b>Định danh VinClub:</b> Mã OneID (<code>itv_vgcustomerid</code>), Hồ sơ VinClub (<code>itv_customerexternalprofile</code>), ID VinClub (<code>itv_vclubuserid</code>), Hạng thành viên (<code>itv_vinclubtiercode</code>: Member / Gold / Platinum / Diamond).",
+                        "<b>Nguồn dẫn:</b> Liên kết từ Đơn đặt cọc trước (<code>itv_customerpreorderid</code>) hoặc Cơ hội/Lead (<code>itv_leadid</code>)."
+                    ]
+                },
+                {
+                    no: "BƯỚC 2",
+                    title: "Lập Báo Giá Xe Mới (Vehicle Quote) [Tuỳ chọn]",
+                    icon: "📑",
+                    color: "#818cf8",
+                    summary: "Lập bảng dự toán chi phí chi tiết trước khi chốt hợp đồng đặt mua chính thức.",
+                    points: [
+                        "<b>Entity CRM:</b> <code>xts_newvehiclesalesquote</code>.",
+                        "<b>Nghiệp vụ:</b> Chọn mẫu xe dự kiến, màu sắc, gói bảo hành, phụ kiện và dự toán khuyến mại.",
+                        "<b>Chuyển đổi:</b> Bấm <i>'Tạo Đơn Hàng'</i> trên báo giá $\\rightarrow$ Hệ thống tự động tạo bản ghi VSO kế thừa dữ liệu."
+                    ]
+                },
+                {
+                    no: "BƯỚC 3",
+                    title: "Tạo Đơn Hàng Bán Xe (VSO Form)",
+                    icon: "🚗",
+                    color: "#34d399",
+                    summary: "Điền cấu hình xe, bảng giá và áp dụng khuyến mại trên form xts_newvehiclesalesorder.",
+                    points: [
+                        "<b>Thông tin chung:</b> Khách hàng (<code>xts_potentialcustomerid</code>), TVBH (<code>xts_salespersonid</code>), Chi nhánh (<code>xts_businessunitid</code>), Địa điểm kinh doanh (<code>xts_siteid</code>).",
+                        "<b>Cấu hình xe:</b> Mẫu xe (<code>xts_productid</code>), Phiên bản (<code>xts_productconfigurationid</code>), Màu ngoại thất (<code>xts_productexteriorcolorid</code>), Màu nội thất (<code>xts_productinteriorcolorid</code>), Loại trần (<code>itv_characteristicceilingid</code>).",
+                        "<b>Chính sách pin:</b> Mua kèm pin hoặc Thuê pin.",
+                        "<b>Tài chính:</b> Giá niêm yết (<code>xts_totalprice</code>), Chương trình khuyến mại (<code>xvf_promotionid</code>), Thuế VAT (<code>xts_consumptiontax1amount</code>), Tổng tiền sau chiết khấu (<code>xvf_grandtotal</code> / <code>xts_netamountaftertax</code>).",
+                        "<b>Lưu đơn:</b> Bấm <b>Lưu (Save)</b> $\\rightarrow$ Hệ thống tự cấp mã <code>VSO-xxxxxx</code> và chuyển trạng thái sang <b>Mở (Open / Draft)</b>."
+                    ]
+                },
+                {
+                    no: "BƯỚC 4",
+                    title: "Ghép Xe Kho & Kích Hoạt Sê-ri PIN (Match VIN)",
+                    icon: "⚡",
+                    color: "#f59e0b",
+                    summary: "Gán số khung (VIN) từ kho xe sẵn sàng vào đơn hàng VSO.",
+                    points: [
+                        "<b>Entity CRM:</b> <code>xts_matchunmatch</code> & <code>xts_inventorynewvehicle</code>.",
+                        "<b>Điều kiện:</b> Xe trong kho phải trùng khớp 100% Cấu hình + Màu sắc và ở trạng thái Khả dụng.",
+                        "<b>Kích hoạt PIN:</b> Sê-ri PIN <code>xts_inventserial</code> cần ở trạng thái Sẵn sàng (<code>xts_availabilitystatus = 6</code>, <code>xts_stockstatus = 3</code>) để tránh lỗi <code>SYS000693</code>.",
+                        "<b>Kết quả:</b> Đơn hàng ghi nhận Số VIN 17 ký tự (<code>xts_chassisid</code> / <code>xts_chassisnumber</code>), xe kho chuyển sang <i>'Đã ghép / Đang giữ'</i>."
+                    ]
+                },
+                {
+                    no: "BƯỚC 5",
+                    title: "Thu Tiền Cọc & Thanh Toán Hợp Đồng",
+                    icon: "💳",
+                    color: "#ec4899",
+                    summary: "Ghi nhận phiếu thu cọc và các đợt thanh toán từ khách hàng.",
+                    points: [
+                        "<b>Entity CRM:</b> <code>xts_cashreceipt</code> (Phiếu thu / Biên lai).",
+                        "<b>Đối soát:</b> Kế toán liên kết Phiếu thu vào số đơn VSO $\\rightarrow$ Hệ thống tự động ghi giảm công nợ còn lại (<code>xts_balance</code>)."
+                    ]
+                },
+                {
+                    no: "BƯỚC 6",
+                    title: "Duyệt Đơn & Xuất Hóa Đơn Điện Tử SAP",
+                    icon: "🧾",
+                    color: "#a855f7",
+                    summary: "Hoàn tất phê duyệt và đồng bộ sang SAP ERP để phát hành hóa đơn GTGT.",
+                    points: [
+                        "<b>Phê duyệt:</b> Quản lý duyệt đơn (Chuyển trạng thái sang Approved / Ready for Invoicing).",
+                        "<b>Đồng bộ SAP:</b> Hệ thống tự động đẩy dữ liệu sang SAP ERP $\\rightarrow$ Ghi nhận Ngày xuất hóa đơn (<code>xvf_sapinvoicedate</code>) và Số hóa đơn SAP.",
+                        "<b>Bàn giao:</b> Xuất Biên bản bàn giao xe (Vehicle Delivery Receipt), đóng đơn VSO hoàn tất (Completed)."
+                    ]
+                }
+            ];
+
+            var html = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(350px, 1fr));gap:16px;">';
+            steps.forEach(function(s){
+                html += 
+                    '<div style="background:#1e293b;border:1px solid rgba(255,255,255,0.08);border-left:4px solid ' + s.color + ';border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px;">' +
+                        '<div style="display:flex;align-items:center;gap:8px;">' +
+                            '<span style="font-size:20px;">' + s.icon + '</span>' +
+                            '<span style="background:rgba(255,255,255,0.08);color:' + s.color + ';padding:2px 8px;border-radius:6px;font-size:11px;font-weight:800;">' + s.no + '</span>' +
+                        '</div>' +
+                        '<h3 style="margin:0;color:#fff;font-size:14px;font-weight:700;">' + s.title + '</h3>' +
+                        '<p style="margin:0;color:#94a3b8;font-size:12px;">' + s.summary + '</p>' +
+                        '<div style="border-top:1px solid rgba(255,255,255,0.06);padding-top:8px;display:flex;flex-direction:column;gap:5px;font-size:12px;color:#cbd5e1;">';
+                s.points.forEach(function(p){
+                    html += '<div style="display:flex;gap:6px;"><span style="color:' + s.color + ';">•</span><div>' + p + '</div></div>';
+                });
+                html += '</div></div>';
+            });
+            html += '</div>';
+            mainBody.innerHTML = html;
+        }
+
+        // ==========================================
+        // TAB 2: THANH TRA FORM HIỆN TẠI
+        // ==========================================
+        function showInspectTab() {
+            if (!isVsoForm && Object.keys(formAttributes).length === 0) {
+                mainBody.innerHTML = 
+                    '<div style="text-align:center;padding:40px 20px;background:#1e293b;border-radius:14px;border:1px dashed #475569;">' +
+                        '<div style="font-size:36px;margin-bottom:10px;">📋</div>' +
+                        '<h3 style="color:#f59e0b;margin:0 0 6px 0;font-size:15px;">Chưa phát hiện Form Đơn Hàng VSO đang mở trực tiếp</h3>' +
+                        '<p style="color:#94a3b8;max-width:500px;margin:0 auto 16px auto;font-size:12px;">Khi bạn mở một Đơn hàng VSO (hoặc bấm Tạo mới VSO trên DMS), tab này sẽ tự động phân tích chi tiết tiến độ hoàn thiện trường, cấu hình xe, giá và số VIN.</p>' +
+                        '<button id="btn-goto-step" style="background:#0284c7;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:700;cursor:pointer;">👈 Xem Sơ Đồ Quy Trình</button>' +
+                    '</div>';
+                safeClick("btn-goto-step", function(){ switchTab("step"); });
+                return;
+            }
+
+            var custName = getAttrText("xts_potentialcustomerid") || getAttrText("xts_customerid") || "Chưa chọn khách";
+            var custNumber = getAttrText("xts_customernumber") || "---";
+            var tvbh = getAttrText("xts_salespersonid") || getAttrText("ownerid") || "Chưa gán TVBH";
+            var product = getAttrText("xts_productid") || getAttrText("xts_productdescription") || "Chưa chọn dòng xe";
+            var config = getAttrText("xts_productconfigurationid") || getAttrText("xvf_characteristicconfiguration") || "Chưa chọn phiên bản";
+            var extColor = getAttrText("xts_productexteriorcolorid") || getAttrText("xvf_exteriorcolor") || "Chưa chọn";
+            var intColor = getAttrText("xts_productinteriorcolorid") || getAttrText("xvf_interiorcolor") || "Chưa chọn";
+            var vin = getAttrText("xts_chassisid") || getAttrText("xts_chassisnumber") || "Chưa ghép VIN";
+            var promo = getAttrText("xvf_promotionid") || getAttrText("itv_promotiondetail") || "Không áp dụng";
+            var grandTotal = getAttrVal("xvf_grandtotal") || getAttrVal("xts_netamountaftertax") || getAttrVal("xts_totalprice") || 0;
+            var discount = getAttrVal("xts_totaldiscountamount") || getAttrVal("xts_discountamount") || 0;
+            var status = getAttrText("xts_status") || getAttrText("statuscode") || "Bản nháp (Draft)";
+
+            var checks = [
+                { name: "Khách hàng (xts_potentialcustomerid)", ok: Boolean(custName && custName !== "Chưa chọn khách") },
+                { name: "Tư vấn bán hàng (xts_salespersonid)", ok: Boolean(tvbh && tvbh !== "Chưa gán TVBH") },
+                { name: "Dòng xe (xts_productid)", ok: Boolean(product && product !== "Chưa chọn dòng xe") },
+                { name: "Phiên bản (xts_productconfigurationid)", ok: Boolean(config && config !== "Chưa chọn phiên bản") },
+                { name: "Màu ngoại thất (xts_productexteriorcolorid)", ok: Boolean(extColor && extColor !== "Chưa chọn") },
+                { name: "Màu nội thất (xts_productinteriorcolorid)", ok: Boolean(intColor && intColor !== "Chưa chọn") },
+                { name: "Ghép số VIN kho (xts_chassisid)", ok: Boolean(vin && vin !== "Chưa ghép VIN"), optional: true }
+            ];
+
+            var okCount = checks.filter(function(c){ return c.ok; }).length;
+
+            var html = 
+                '<div style="display:flex;flex-direction:column;gap:14px;">' +
+                    '<div style="background:#1e293b;padding:14px 18px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;">' +
+                        '<div>' +
+                            '<h3 style="margin:0;font-size:15px;color:#38bdf8;font-weight:700;">📊 Tiến độ hoàn thiện trường dữ liệu Form</h3>' +
+                            '<div style="font-size:12px;color:#94a3b8;margin-top:2px;">Đã hoàn tất: <strong style="color:#34d399;">' + okCount + '/' + checks.length + '</strong> tiêu chí</div>' +
+                        '</div>' +
+                        '<div style="width:180px;background:#090d16;height:10px;border-radius:5px;overflow:hidden;">' +
+                            '<div style="width:' + (okCount / checks.length * 100) + '%;height:100%;background:linear-gradient(90deg,#0284c7,#34d399);"></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">' +
+                        '<div style="background:#1e293b;padding:14px;border-radius:12px;display:flex;flex-direction:column;gap:8px;">' +
+                            '<h4 style="margin:0;color:#38bdf8;font-size:12px;text-transform:uppercase;">👤 Khách hàng & Phụ trách</h4>' +
+                            '<div style="display:flex;justify-content:space-between;"><span style="color:#94a3b8;">Khách hàng:</span> <strong>' + custName + '</strong></div>' +
+                            '<div style="display:flex;justify-content:space-between;"><span style="color:#94a3b8;">Mã KH:</span> <code style="color:#38bdf8;">' + custNumber + '</code></div>' +
+                            '<div style="display:flex;justify-content:space-between;"><span style="color:#94a3b8;">TVBH:</span> <strong>' + tvbh + '</strong></div>' +
+                            '<div style="display:flex;justify-content:space-between;"><span style="color:#94a3b8;">Trạng thái:</span> <span style="color:#38bdf8;font-weight:700;">' + status + '</span></div>' +
+                        '</div>' +
+                        '<div style="background:#1e293b;padding:14px;border-radius:12px;display:flex;flex-direction:column;gap:8px;">' +
+                            '<h4 style="margin:0;color:#34d399;font-size:12px;text-transform:uppercase;">🚗 Cấu hình xe & VIN</h4>' +
+                            '<div style="display:flex;justify-content:space-between;"><span style="color:#94a3b8;">Dòng xe:</span> <strong>' + product + '</strong></div>' +
+                            '<div style="display:flex;justify-content:space-between;"><span style="color:#94a3b8;">Phiên bản:</span> <strong>' + config + '</strong></div>' +
+                            '<div style="display:flex;justify-content:space-between;"><span style="color:#94a3b8;">Màu sắc:</span> <span>' + extColor + ' / ' + intColor + '</span></div>' +
+                            '<div style="display:flex;justify-content:space-between;"><span style="color:#94a3b8;">Số VIN:</span> <strong style="color:' + (vin.indexOf('Chưa') === -1 ? '#34d399' : '#f59e0b') + ';">' + vin + '</strong></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div style="background:#1e293b;padding:14px;border-radius:12px;display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;">' +
+                        '<div style="background:#090d16;padding:10px;border-radius:8px;"><div style="color:#94a3b8;font-size:11px;">Khuyến mại</div><strong>' + promo + '</strong></div>' +
+                        '<div style="background:#090d16;padding:10px;border-radius:8px;"><div style="color:#94a3b8;font-size:11px;">Chiết khấu</div><strong style="color:#f43f5e;">' + formatMoney(discount) + '</strong></div>' +
+                        '<div style="background:#090d16;padding:10px;border-radius:8px;border:1px solid rgba(56,189,248,0.3);"><div style="color:#38bdf8;font-size:11px;font-weight:700;">TỔNG TIỀN</div><strong style="color:#38bdf8;font-size:15px;">' + formatMoney(grandTotal) + '</strong></div>' +
+                    '</div>' +
+                '</div>';
+            mainBody.innerHTML = html;
+        }
+
+        // ==========================================
+        // TAB 3: TỪ ĐIỂN SCHEMA ODATA
+        // ==========================================
+        function showDictTab() {
+            var dict = [
+                { f: "xts_newvehiclesalesordernumber", n: "Số Đơn Hàng (VSO)", t: "String", d: "Mã VSO sinh tự động (vd: VSO-26-000123)" },
+                { f: "xts_potentialcustomerid", n: "Khách Hàng Mua Xe", t: "Lookup (account)", d: "Khách hàng cá nhân hoặc doanh nghiệp" },
+                { f: "xts_customernumber", n: "Mã Khách Hàng DMS", t: "String", d: "Mã dạng N319-CT-..." },
+                { f: "xts_salespersonid", n: "Tư Vấn Bán Hàng", t: "Lookup (systemuser)", d: "Nhân viên kinh doanh phụ trách đơn" },
+                { f: "xts_productid", n: "Dòng Xe (Sản phẩm)", t: "Lookup (product)", d: "Mẫu xe (VF 3, VF 5, VF 6, VF 7...)" },
+                { f: "xts_productconfigurationid", n: "Phiên Bản Xe", t: "Lookup", d: "Cấu hình xe (Plus, Eco, Base)" },
+                { f: "xts_productexteriorcolorid", n: "Màu Ngoại Thất", t: "Lookup", d: "Màu sơn ngoại thất xe" },
+                { f: "xts_productinteriorcolorid", n: "Màu Nội Thất", t: "Lookup", d: "Màu nội thất trong xe" },
+                { f: "xts_chassisid / xts_chassisnumber", n: "Số Khung (VIN)", t: "Lookup / String", d: "Số VIN 17 ký tự sau khi Ghép xe kho" },
+                { f: "xvf_promotionid", n: "Chương Trình Khuyến Mại", t: "Lookup", d: "Chương trình ưu đãi giảm giá" },
+                { f: "itv_vinclubtiercode", n: "Hạng VinClub", t: "OptionSet", d: "Member / Gold / Platinum / Diamond" },
+                { f: "xvf_grandtotal", n: "Tổng Tiền Phải Thu", t: "Money", d: "Tổng tiền sau thuế và chiết khấu" },
+                { f: "xvf_sapinvoicedate", n: "Ngày Xuất HĐ SAP", t: "DateTime", d: "Thời điểm SAP ERP xuất hóa đơn điện tử" },
+                { f: "xts_businessunitid", n: "Chi Nhánh", t: "Lookup (businessunit)", d: "Showroom / Chi nhánh trực thuộc" }
+            ];
+
+            var html = 
+                '<div style="display:flex;flex-direction:column;gap:12px;">' +
+                    '<input type="text" id="dict-srch" placeholder="🔍 Tìm kiếm schema (vd: price, customer, vin)..." style="padding:8px 14px;background:#1e293b;border:1px solid #475569;border-radius:8px;color:#fff;font-size:12px;outline:none;" />' +
+                    '<div style="overflow-x:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.08);">' +
+                        '<table id="tbl-dict" style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;">' +
+                            '<thead style="background:#1e293b;color:#94a3b8;">' +
+                                '<tr>' +
+                                    '<th style="padding:10px 12px;">Schema Name</th>' +
+                                    '<th style="padding:10px 12px;">Ý Nghĩa Nghiệp Vụ</th>' +
+                                    '<th style="padding:10px 12px;">Kiểu Dữ Liệu</th>' +
+                                    '<th style="padding:10px 12px;">Mô Tả</th>' +
+                                '</tr>' +
+                            '</thead>' +
+                            '<tbody>';
+            dict.forEach(function(item){
+                html += 
+                    '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:#0f172a;">' +
+                        '<td style="padding:9px 12px;"><code style="color:#38bdf8;background:rgba(56,189,248,0.1);padding:2px 6px;border-radius:4px;">' + item.f + '</code></td>' +
+                        '<td style="padding:9px 12px;color:#fff;font-weight:600;">' + item.n + '</td>' +
+                        '<td style="padding:9px 12px;color:#f59e0b;">' + item.t + '</td>' +
+                        '<td style="padding:9px 12px;color:#cbd5e1;">' + item.d + '</td>' +
+                    '</tr>';
+            });
+            html += '</tbody></table></div></div>';
+            mainBody.innerHTML = html;
+
+            var sInp = modal.querySelector("#dict-srch");
+            if (sInp) {
+                sInp.oninput = function(){
+                    var q = sInp.value.toLowerCase();
+                    var rows = modal.querySelectorAll("#tbl-dict tbody tr");
+                    rows.forEach(function(r){
+                        r.style.display = (r.innerText.toLowerCase().indexOf(q) !== -1) ? "" : "none";
+                    });
+                };
+            }
+        }
+
+        // ==========================================
+        // TAB 4: DANH SÁCH 10 VSO MỚI NHẤT
+        // ==========================================
+        function showRecentTab() {
+            if (!isDmsConnected) {
+                mainBody.innerHTML = '<div style="text-align:center;padding:40px;color:#f59e0b;">⚠️ Chức năng này yêu cầu mở trực tiếp trên tab trình duyệt VinFast DMS (Dynamics 365) để gọi Xrm.WebApi.</div>';
+                return;
+            }
+
+            mainBody.innerHTML = '<div style="text-align:center;padding:40px;color:#38bdf8;">⏳ Đang truy vấn 10 đơn hàng VSO mới nhất...</div>';
+            var query = "?$select=xts_newvehiclesalesordernumber,xts_customernumber,xts_productdescription,xts_chassisnumber,xts_netamountaftertax,xvf_grandtotal,createdon" +
+                        "&$expand=xts_potentialcustomerid($select=name),xts_salespersonid($select=fullname)" +
+                        "&$filter=statecode eq 0&$orderby=createdon desc&$top=10";
+
+            _Xrm.WebApi.retrieveMultipleRecords("xts_newvehiclesalesorder", query).then(function(res){
+                if (!res || !res.entities || res.entities.length === 0) {
+                    mainBody.innerHTML = '<div style="text-align:center;padding:40px;color:#f87171;">Không tìm thấy đơn hàng VSO nào!</div>';
+                    return;
+                }
+
+                var html = 
+                    '<div style="overflow-x:auto;border-radius:10px;border:1px solid rgba(255,255,255,0.08);">' +
+                        '<table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;">' +
+                            '<thead style="background:#1e293b;color:#94a3b8;">' +
+                                '<tr>' +
+                                    '<th style="padding:9px 12px;">Số VSO</th>' +
+                                    '<th style="padding:9px 12px;">Khách Hàng</th>' +
+                                    '<th style="padding:9px 12px;">Dòng Xe</th>' +
+                                    '<th style="padding:9px 12px;">Số Khung (VIN)</th>' +
+                                    '<th style="padding:9px 12px;">Tổng Tiền</th>' +
+                                    '<th style="padding:9px 12px;">TVBH</th>' +
+                                    '<th style="padding:9px 12px;">Ngày Tạo</th>' +
+                                '</tr>' +
+                            '</thead>' +
+                            '<tbody>';
+
+                res.entities.forEach(function(item){
+                    var vsoNum = item.xts_newvehiclesalesordernumber || "---";
+                    var custName = item.xts_potentialcustomerid ? item.xts_potentialcustomerid.name : "---";
+                    var carModel = item.xts_productdescription || "---";
+                    var vin = item.xts_chassisnumber || "Chưa ghép";
+                    var price = item.xvf_grandtotal || item.xts_netamountaftertax || 0;
+                    var tvbh = item.xts_salespersonid ? item.xts_salespersonid.fullname : "---";
+                    var created = item.createdon ? new Date(item.createdon).toLocaleDateString('vi-VN') : "---";
+
+                    html += 
+                        '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);background:#0f172a;">' +
+                            '<td style="padding:9px 12px;color:#38bdf8;font-weight:700;">' + vsoNum + '</td>' +
+                            '<td style="padding:9px 12px;color:#fff;font-weight:600;">' + custName + '</td>' +
+                            '<td style="padding:9px 12px;color:#cbd5e1;">' + carModel + '</td>' +
+                            '<td style="padding:9px 12px;color:' + (vin.indexOf('Chưa') === -1 ? '#34d399' : '#f59e0b') + ';">' + vin + '</td>' +
+                            '<td style="padding:9px 12px;color:#38bdf8;font-weight:700;">' + formatMoney(price) + '</td>' +
+                            '<td style="padding:9px 12px;color:#94a3b8;">' + tvbh + '</td>' +
+                            '<td style="padding:9px 12px;color:#64748b;">' + created + '</td>' +
+                        '</tr>';
+                });
+                html += '</tbody></table></div>';
+                mainBody.innerHTML = html;
+            }).catch(function(err){
+                mainBody.innerHTML = '<div style="text-align:center;padding:40px;color:#f87171;">Lỗi truy vấn WebApi: ' + (err.message || err) + '</div>';
+            });
+        }
+
+        // ==========================================
+        // TAB CONTROLLER
+        // ==========================================
+        function switchTab(t) {
+            var btns = {
+                "step": modal.querySelector("#tb-step"),
+                "insp": modal.querySelector("#tb-insp"),
+                "dict": modal.querySelector("#tb-dict"),
+                "recs": modal.querySelector("#tb-recs")
+            };
+            for (var k in btns) {
+                if (btns[k]) {
+                    btns[k].style.background = (k === t) ? "#0284c7" : "#334155";
+                    btns[k].style.color = (k === t) ? "#fff" : "#94a3b8";
+                    btns[k].style.fontWeight = (k === t) ? "700" : "600";
+                }
+            }
+            if (t === "step") showStepTab();
+            else if (t === "insp") showInspectTab();
+            else if (t === "dict") showDictTab();
+            else if (t === "recs") showRecentTab();
+        }
+
+        safeClick("tb-step", function(){ switchTab("step"); });
+        safeClick("tb-insp", function(){ switchTab("insp"); });
+        safeClick("tb-dict", function(){ switchTab("dict"); });
+        safeClick("tb-recs", function(){ switchTab("recs"); });
+
+        safeClick("dms-guide-close-btn", function(){ overlay.remove(); });
+
+        safeClick("btn-copy-json-all", function(){
+            var d = { entity: currentEntityName, id: currentRecordId, fields: formAttributes };
+            navigator.clipboard.writeText(JSON.stringify(d, null, 2)).then(function(){
+                alert("📋 Đã sao chép dữ liệu JSON Form VSO vào Clipboard!");
+            }).catch(function(){
+                console.log("VSO Data:", d);
+                alert("Đã ghi log dữ liệu ra Console (F12)!");
+            });
+        });
+
+        // Render tab mặc định
+        if (isVsoForm) {
+            switchTab("insp");
+        } else {
+            switchTab("step");
+        }
+
+    } catch(err) {
+        alert("❌ Lỗi thực thi: " + (err.message || err));
+        console.error("VSO Bookmarklet Error:", err);
+    }
+})();

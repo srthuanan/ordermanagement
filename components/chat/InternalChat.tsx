@@ -922,7 +922,6 @@ const InternalChat: React.FC<InternalChatProps> = ({
                             >
                                 <div className="group-hover:scale-105 transition-transform relative">
                                     <Avatar name={u.username} size="sm" />
-                                    <span className="absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-500 border-2 border-white rounded-full"></span>
                                 </div>
                                 <div className="flex-1">
                                     <div className="text-slate-800 font-bold text-xs sm:text-[13px] leading-tight">{u.fullName || u.username}</div>

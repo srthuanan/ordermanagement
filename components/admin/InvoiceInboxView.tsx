@@ -2,13 +2,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import moment from 'moment';
 import { Order, ActionType } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
-import CarImage from '../ui/CarImage';
 import PdfThumbnail from '../ui/PdfThumbnail';
 import Button from '../ui/Button';
 import { toEmbeddableUrl, getDriveFileId, forceDownload, getSanitizedFilename } from '../../utils/imageUtils';
 import AnimatedBackground from '../ui/AnimatedBackground';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import { supabase } from '../../services/supabaseClient';
+import MarqueeText from '../ui/MarqueeText';
 
 interface InvoiceInboxViewProps {
     orders: Order[];
@@ -25,6 +25,15 @@ interface InvoiceInboxViewProps {
     isLoading?: boolean;
 }
 
+
+const toTitleCase = (str: string) => {
+    if (!str) return '';
+    return str
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+};
 
 const CopyableField: React.FC<{ text: string; showToast?: Function; className?: string; label?: string; wrap?: boolean }> = ({ text, className, label, wrap = false }) => {
     const copyWithFeedback = useCopyFeedback();
@@ -187,6 +196,8 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const [isSaving, setIsSaving] = useState(false);
     const [editData, setEditData] = useState({ engineNumber: '', policy: '', commission: '', vpoint: '' });
     const [dbPolicies, setDbPolicies] = useState<{ten_chinh_sach: string, dong_xe: string}[]>([]);
+    const [policySearchQuery, setPolicySearchQuery] = useState('');
+    const [policyFilterModelOnly, setPolicyFilterModelOnly] = useState(true);
     const [isSplitView, setIsSplitView] = useState(true);
     const [activeDocKey, setActiveDocKey] = useState<'LinkHopDong' | 'LinkDeNghiXHD' | 'LinkHoaDonDaXuat'>('LinkDeNghiXHD');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -250,6 +261,44 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
     const selectedOrder = useMemo(() => orders.find(o => o['Số đơn hàng'] === selectedOrderId), [orders, selectedOrderId]);
 
+    const currentCarModel = useMemo(() => {
+        return (selectedOrder?.['Dòng xe'] || selectedOrder?.dong_xe || selectedOrder?.['DÒNG XE'] || '').trim();
+    }, [selectedOrder]);
+
+    const filteredDbPolicies = useMemo(() => {
+        const modelLower = currentCarModel.toLowerCase();
+        const search = policySearchQuery.trim().toLowerCase();
+        const selectedPoliciesList = editData.policy.split('; ').filter(Boolean);
+
+        return dbPolicies.filter(p => {
+            const policyName = p.ten_chinh_sach || '';
+            const policyDongXe = (p.dong_xe || '').trim().toLowerCase();
+            const isChecked = selectedPoliciesList.includes(policyName);
+
+            // Search query filter
+            if (search) {
+                const matchesSearch = policyName.toLowerCase().includes(search) || policyDongXe.includes(search);
+                if (!matchesSearch && !isChecked) return false;
+            }
+
+            // Car model filter (if active and order has a car model)
+            if (policyFilterModelOnly && modelLower && !search) {
+                if (isChecked) return true; // Keep selected policies visible
+
+                // Apply to all models if empty or "tất cả"
+                if (!policyDongXe || policyDongXe === '' || policyDongXe.includes('tất cả')) {
+                    return true;
+                }
+
+                // Match model name (e.g. "VF 3" matches "VF 3" or "VF 3, VF 5")
+                const isModelMatch = policyDongXe.includes(modelLower) || modelLower.includes(policyDongXe);
+                if (!isModelMatch) return false;
+            }
+
+            return true;
+        });
+    }, [dbPolicies, currentCarModel, editData.policy, policyFilterModelOnly, policySearchQuery]);
+
     // Auto-select first order if none selected or folder changes (Robust version)
     useEffect(() => {
         if (filteredOrders.length > 0) {
@@ -312,10 +361,14 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
     const getActions = (status: string) => {
         const s = status.toLowerCase().trim().normalize('NFC');
+        const adminNotes = (selectedOrder?.['Ghi chú Admin'] || selectedOrder?.ghi_chu_admin || (selectedOrder as any)?.ghi_chu_admin || '').toString();
+        const isAlreadyRequestedRescan = adminNotes.includes('[YÊU CẦU SCAN LẠI]');
+
         return [
             { type: 'reScan', label: 'Quét AI', icon: 'fa-sync', variant: 'primary', condition: true },
             { type: 'approve', label: 'Phê Duyệt', icon: 'fa-check-double', variant: 'primary', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
             { type: 'supplement', label: 'Yêu Cầu Bổ Sung', icon: 'fa-exclamation-triangle', variant: 'secondary', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
+            { type: 'rescan', label: 'Y/C Scan Lại', icon: 'fa-camera', variant: 'secondary', condition: s !== 'đã hủy' && !isAlreadyRequestedRescan },
             { type: 'pendingSignature', label: 'Chuyển Chờ Ký', icon: 'fa-signature', variant: 'primary', condition: s === 'đã phê duyệt' },
             {
                 type: 'uploadInvoice',
@@ -416,65 +469,26 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         return (
             <div
                 key={order['Số đơn hàng']}
-                onClick={() => handleOrderSelect(order['Số đơn hàng'])}
-                className={`px-4 py-3 cursor-pointer transition-all duration-300 group relative border-l-2 ${isSelected
-                    ? 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)] border-accent-primary z-10'
-                    : 'bg-transparent border-transparent hover:bg-slate-50/80 hover:border-slate-200'
-                    }`}
+                onClick={(e) => {
+                    handleOrderSelect(order['Số đơn hàng']);
+                    setMobileView('detail');
+                    copyWithFeedback(order['Tên khách hàng'], e);
+                }}
+                className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${
+                    isSelected
+                        ? 'bg-slate-100/90 border-blue-600 font-bold'
+                        : 'border-transparent hover:bg-slate-50'
+                }`}
             >
-                <div className="flex items-center justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                        <div
-                            className={`text-[13px] font-bold truncate mb-1 cursor-pointer transition-colors ${isSelected ? 'text-accent-primary' : 'text-slate-700 group-hover:text-accent-primary'
-                                }`}
-                            title="Click để sao chép tên khách hàng"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                copyWithFeedback(order['Tên khách hàng'], e);
-                            }}
-                        >
-                            {order['Tên khách hàng']}
-                        </div>
-                        <div className="flex flex-col gap-0.5">
-                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5 leading-none">
-                                <span>{order['Dòng xe']}</span>
-                                <span className="w-1 h-1 rounded-full bg-slate-200"></span>
-                                <span className="truncate">{order['Phiên bản']}</span>
-                                {(order['Ghi chú AI'] || (order['CHÍNH SÁCH'] && (order['CHÍNH SÁCH'].includes('✅') || order['CHÍNH SÁCH'].includes('⚠️')))) && (
-                                    <span className="ml-auto flex items-center gap-1 text-[9px] animate-pulse">
-                                        <i className={`fas ${order['Ghi chú AI']?.includes('⚠️') || order['CHÍNH SÁCH']?.includes('⚠️') ? 'fa-exclamation-triangle text-amber-500' : 'fa-robot text-blue-500'} scale-90`}></i>
-                                    </span>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-1 text-[9px] text-slate-400 font-medium mt-0.5">
-                                <i className="fas fa-user-tie text-[8px] opacity-40"></i>
-                                <span>{order['Tên tư vấn bán hàng']}</span>
-                            </div>
-                            <div className="text-[9px] text-slate-300 font-mono mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                {order['Số đơn hàng']}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="w-14 h-11 flex-shrink-0 relative overflow-hidden bg-slate-50 rounded-lg border border-slate-100/50 p-1 group-hover:bg-white transition-colors">
-                        <CarImage
-                            model={order['Dòng xe']}
-                            exteriorColor={order['Ngoại thất']}
-                            className={`w-full h-full object-contain transition-all duration-500 ${isSelected ? 'scale-110 rotate-[-2deg]' : 'opacity-60 scale-95 grayscale-[30%] group-hover:opacity-100 group-hover:scale-105 group-hover:grayscale-0'
-                                }`}
-                        />
-                    </div>
+                <div className="text-xs font-extrabold text-slate-900 mb-1 uppercase overflow-hidden">
+                    <MarqueeText 
+                        text={order['Tên khách hàng'] || '—'} 
+                        className="text-xs font-extrabold text-slate-900 uppercase"
+                    />
                 </div>
-
-                {/* Status indicator on mobile list */}
-                <div className="mt-2.5 flex items-center justify-between md:hidden border-t border-slate-100/50 pt-2">
-                    <StatusBadge status={order['Trạng thái xử lý'] || order['Kết quả'] || ''} size="sm" />
-                    <span className="text-[9px] text-slate-400 font-mono font-medium">{order['Số đơn hàng'].split('-').pop()}</span>
+                <div className="text-[11px] text-slate-600 font-medium truncate">
+                    {order['Dòng xe']} {order['Phiên bản']}
                 </div>
-
-                {/* Desktop subtle status dot */}
-                {!isSelected && (
-                    <div className={`absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full transition-all duration-300 ${order['Trạng thái xử lý'] === 'Cần xử lý' ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]' : 'bg-transparent opacity-0 group-hover:opacity-20 group-hover:bg-slate-300'}`}></div>
-                )}
             </div>
         );
     };
@@ -483,25 +497,34 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-border-primary overflow-hidden animate-fade-in relative z-0">
             <AnimatedBackground />
             {/* Column 1: Folders */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
-                <div className="md:hidden p-3 bg-white border-b border-border-secondary flex items-center justify-center relative">
-                    <span className="font-bold text-sm">Hóa Đơn</span>
-                </div>
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-                    {folders.map(folder => (
-                        <button
-                            key={folder.id}
-                            onClick={() => handleFolderChange(folder.id)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedFolder === folder.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <i className={`fas ${folder.icon} w-5 text-center`}></i>
-                                <span>{folder.label}</span>
-                            </div>
-                            {folder.count > 0 && <span className={`text-xs px-2 py-0.5 rounded-full ${selectedFolder === folder.id ? 'bg-accent-primary text-white' : 'bg-surface-hover text-text-secondary'}`}>{folder.count}</span>}
-                        </button>
-                    ))}
-
+                    {folders.map(folder => {
+                        const isActive = selectedFolder === folder.id;
+                        return (
+                            <button
+                                key={folder.id}
+                                onClick={() => handleFolderChange(folder.id)}
+                                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                                    isActive
+                                        ? 'bg-blue-600 text-white shadow-xs font-bold'
+                                        : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2.5">
+                                    <i className={`fas ${folder.icon} w-4 text-center text-xs opacity-80`}></i>
+                                    <span>{folder.label}</span>
+                                </div>
+                                {folder.count > 0 && (
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                                        isActive ? 'bg-blue-700 text-white' : 'bg-slate-200/80 text-slate-700 border border-slate-200'
+                                    }`}>
+                                        {folder.count}
+                                    </span>
+                                )}
+                            </button>
+                        );
+                    })}
                 </nav>
             </div>
 
@@ -580,30 +603,29 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                             <i className="fas fa-arrow-left text-xs"></i>
                                         </button>
 
-                                        <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50/50 border border-indigo-100/50 flex items-center justify-center text-accent-primary font-black text-lg md:text-xl flex-shrink-0 shadow-sm ring-4 ring-white">
+                                        <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-base font-black shadow-2xs flex-shrink-0">
                                             {selectedOrder['Tên khách hàng'].charAt(0)}
                                         </div>
 
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-2 mb-0.5 overflow-hidden">
-                                                <h2
-                                                    className="text-sm md:text-base font-black text-slate-800 truncate cursor-pointer hover:text-accent-primary transition-colors tracking-tight"
-                                                    title="Click để sao chép tên khách hàng"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        copyWithFeedback(selectedOrder['Tên khách hàng'], e);
-                                                    }}
-                                                >
-                                                    {selectedOrder['Tên khách hàng']}
-                                                </h2>
+                                        <div className="space-y-1 flex-1 min-w-0 overflow-hidden">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="min-w-0 flex-1 overflow-hidden">
+                                                    <MarqueeText 
+                                                        text={selectedOrder['Tên khách hàng'] || '—'}
+                                                        className="font-black text-base text-slate-900 leading-none cursor-pointer hover:text-blue-600 transition-colors uppercase"
+                                                        title="Click để sao chép tên khách hàng"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            copyWithFeedback(selectedOrder['Tên khách hàng'], e);
+                                                        }}
+                                                    />
+                                                </div>
                                                 <StatusBadge status={selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || ''} size="sm" />
                                             </div>
-
-                                            <div className="flex items-center gap-1.5 mb-1.5">
-                                                <div className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-500 border border-slate-200/50">
-                                                    <i className="fas fa-user-tie text-[8px] opacity-60"></i>
-                                                    <span className="uppercase tracking-tighter">TVBH: {selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ'}</span>
-                                                </div>
+                                            <div className="flex items-center gap-2.5 text-xs text-slate-600 font-medium truncate">
+                                                <span>Đơn hàng: <strong className="font-mono text-slate-900">{selectedOrder['Số đơn hàng']}</strong></span>
+                                                <span className="text-slate-300">|</span>
+                                                <span>TVBH: <strong className="text-slate-900">{selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ'}</strong></span>
                                             </div>
                                         </div>
 
@@ -650,6 +672,12 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                         </button>
 
                                         <div className="flex items-center gap-1 p-1 bg-slate-50/80 rounded-xl border border-slate-200/50">
+                                            {((selectedOrder?.['Ghi chú Admin'] || selectedOrder?.ghi_chu_admin || '').toString().includes('[YÊU CẦU SCAN LẠI]')) && (
+                                                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-300 text-amber-800 rounded-lg text-[10px] font-bold shadow-xs" title={(selectedOrder?.['Ghi chú Admin'] || selectedOrder?.ghi_chu_admin || '').toString()}>
+                                                    <i className="fas fa-hourglass-half text-amber-600 animate-pulse text-[9px]"></i>
+                                                    <span>Đang Chờ TVBH Scan Lại</span>
+                                                </div>
+                                            )}
                                             {getActions(selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || '').map(action => {
                                                 let variant: 'primary' | 'success' | 'danger' | 'secondary' = 'primary';
                                                 switch (action.type) {
@@ -769,40 +797,48 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
                                 <div className={`flex flex-col gap-2 min-w-0 ${isSplitView ? 'flex-[1] overflow-y-auto custom-scrollbar pr-1' : 'w-full'}`}>
                                     
-                                    {/* CUSTOMER HEADER & ACTIONS (Only in Split View) */}
+                                    {/* CUSTOMER HEADER & ACTIONS - Clean Modern Integrated Card */}
                                     {isSplitView && (
-                                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col gap-4 animate-in slide-in-from-right-4 duration-300">
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="flex items-center gap-3 min-w-0">
-                                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-50 to-indigo-50 border border-indigo-100 flex items-center justify-center text-accent-primary font-black text-xl flex-shrink-0 shadow-sm">
+                                        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 flex flex-col gap-3.5 animate-in slide-in-from-right-4 duration-300">
+                                            {/* Top Customer Info */}
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex items-center gap-3.5 min-w-0">
+                                                    <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-base font-black shadow-2xs flex-shrink-0">
                                                         {selectedOrder['Tên khách hàng'].charAt(0)}
                                                     </div>
-                                                    <div className="min-w-0">
-                                                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                                                            <h2 className="text-base font-black text-slate-800 truncate leading-tight tracking-tight">
-                                                                {selectedOrder['Tên khách hàng']}
-                                                            </h2>
-                                                            <StatusBadge status={selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || ''} size="sm" />
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <div className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-500 border border-slate-200/50">
-                                                                <i className="fas fa-user-tie text-[8px] opacity-60"></i>
-                                                                <span className="uppercase tracking-tighter">TVBH: {selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ'}</span>
-                                                            </div>
+                                                    <div className="space-y-0.5 min-w-0 flex-1 overflow-hidden">
+                                                        <MarqueeText 
+                                                            text={selectedOrder['Tên khách hàng'] || '—'}
+                                                            className="font-black text-base text-slate-900 leading-tight cursor-pointer hover:text-blue-600 transition-colors uppercase"
+                                                            title="Click để sao chép tên khách hàng"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                copyWithFeedback(selectedOrder['Tên khách hàng'], e);
+                                                            }}
+                                                        />
+                                                        <div className="text-[11px] text-slate-500 font-medium truncate flex items-center gap-1 italic">
+                                                            <i className="fa-solid fa-user-tie text-[9px] text-slate-400 not-italic"></i>
+                                                            <span>TVBH: <span className="text-slate-600 font-medium italic">{toTitleCase(selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ')}</span></span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <button 
                                                     onClick={() => setIsSplitView(false)}
-                                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-all"
+                                                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-all flex-shrink-0"
                                                     title="Đóng Split View"
                                                 >
                                                     <i className="fas fa-times text-xs"></i>
                                                 </button>
                                             </div>
 
-                                            {/* Actions moved here in Split View */}
-                                            <div className="flex flex-wrap items-center gap-1 p-1 bg-slate-50 rounded-xl border border-slate-100">
+                                            {/* Actions */}
+                                            <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-slate-100">
+                                                {((selectedOrder?.['Ghi chú Admin'] || selectedOrder?.ghi_chu_admin || '').toString().includes('[YÊU CẦU SCAN LẠI]')) && (
+                                                    <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-300 text-amber-800 rounded-lg text-xs font-bold w-full shadow-xs" title={(selectedOrder?.['Ghi chú Admin'] || selectedOrder?.ghi_chu_admin || '').toString()}>
+                                                        <i className="fas fa-hourglass-half text-amber-600 animate-pulse text-[10px]"></i>
+                                                        <span>Đang Chờ TVBH Scan Lại</span>
+                                                    </div>
+                                                )}
                                                 {getActions(selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || '').map(action => {
                                                     let variant: 'primary' | 'success' | 'danger' | 'secondary' = 'primary';
                                                     switch (action.type) {
@@ -817,8 +853,8 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                             onClick={action.onClick ? action.onClick : () => onAction(action.type as any, selectedOrder)}
                                                             variant={variant}
                                                             size="sm"
-                                                            leftIcon={<i className={`fas ${action.icon} text-[9px]`}></i>}
-                                                            className="font-bold px-2 py-0.5 h-7 text-[10px] flex-1 justify-center whitespace-nowrap"
+                                                            leftIcon={<i className={`fas ${action.icon} text-[10px]`}></i>}
+                                                            className="font-bold px-3 py-1.5 text-xs flex-1 justify-center whitespace-nowrap"
                                                             isLoading={processingId === selectedOrder['Số đơn hàng'] && processingActionType === action.type}
                                                             disabled={!!processingId}
                                                         >
@@ -845,7 +881,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         <i className="fas fa-car text-blue-500 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Dòng xe / PB</span>
                                                     </div>
-                                                    <span className="text-[10px] font-black text-gray-900 truncate ml-4" title={`${selectedOrder['Dòng xe']} - ${selectedOrder['Phiên bản']}`}>
+                                                    <span className="text-[10px] font-semibold text-slate-800 truncate ml-4" title={`${selectedOrder['Dòng xe']} - ${selectedOrder['Phiên bản']}`}>
                                                         {selectedOrder['Dòng xe']} - {selectedOrder['Phiên bản']}
                                                     </span>
                                                 </div>
@@ -855,7 +891,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         <i className="fas fa-palette text-amber-500 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Màu sắc</span>
                                                     </div>
-                                                    <span className="text-[10px] font-black text-gray-700 truncate ml-4">
+                                                    <span className="text-[10px] font-medium text-slate-700 truncate ml-4">
                                                         {selectedOrder['Ngoại thất'] || 'N/A'} / {selectedOrder['Nội thất'] || 'N/A'}
                                                     </span>
                                                 </div>
@@ -865,7 +901,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         <i className="fas fa-fingerprint text-accent-primary opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số VIN</span>
                                                     </div>
-                                                    <div className="text-sm font-black text-accent-primary truncate ml-4 font-mono tracking-normal bg-accent-primary/5 px-2 py-0.5 rounded border border-accent-primary/10">
+                                                    <div className="text-xs font-bold text-accent-primary truncate ml-4 font-mono tracking-normal bg-accent-primary/5 px-2 py-0.5 rounded border border-accent-primary/10">
                                                         <CopyableField text={selectedOrder.VIN || ''} showToast={showToast} />
                                                     </div>
                                                 </div>
@@ -875,7 +911,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         <i className="fas fa-cogs text-gray-400 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số Máy</span>
                                                     </div>
-                                                    <div className="text-[10px] font-black text-gray-600 truncate ml-4 font-mono">
+                                                    <div className="text-[10px] font-medium text-slate-700 truncate ml-4 font-mono">
                                                         {isEditing ? (
                                                             <input
                                                                 type="text"
@@ -893,18 +929,18 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     <div className="mt-2 pt-2 border-t border-dashed border-amber-200 bg-amber-50/60 rounded-lg px-2 pb-1.5 transition-all animate-fade-in shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
                                                         <div className="flex items-center gap-1.5 mb-1.5">
                                                             <i className="fas fa-gas-pump text-amber-600 text-[10px]"></i>
-                                                            <span className="text-[9px] font-black text-amber-700 uppercase tracking-wider">Thông tin xe xăng thu đổi</span>
+                                                            <span className="text-[9px] font-semibold text-amber-800 uppercase tracking-wider">Thông tin xe xăng thu đổi</span>
                                                         </div>
                                                         <div className="space-y-1">
                                                             <div className="flex justify-between items-center">
-                                                                <span className="text-[9px] text-gray-500 font-bold tracking-wide">Hãng / Model</span>
-                                                                <span className="text-[10px] font-bold text-gray-800">
+                                                                <span className="text-[9px] text-gray-500 font-medium tracking-wide">Hãng / Model</span>
+                                                                <span className="text-[10px] font-medium text-gray-800">
                                                                     {selectedOrder['Xe xăng Hãng'] || '—'} {selectedOrder['Xe xăng Model'] ? `(${selectedOrder['Xe xăng Model']})` : ''}
                                                                 </span>
                                                             </div>
                                                             <div className="flex justify-between items-center border-t border-amber-100/50 pt-1 mt-1">
-                                                                <span className="text-[9px] text-gray-500 font-bold tracking-wide">Số VIN gốc</span>
-                                                                <div className="text-[10px] font-black text-amber-800 font-mono bg-white px-1.5 py-0.5 rounded border border-amber-200 shadow-sm">
+                                                                <span className="text-[9px] text-gray-500 font-medium tracking-wide">Số VIN gốc</span>
+                                                                <div className="text-[10px] font-semibold text-amber-900 font-mono bg-white px-1.5 py-0.5 rounded border border-amber-200 shadow-sm">
                                                                     <CopyableField text={selectedOrder['Xe xăng VIN'] || ''} showToast={showToast} />
                                                                 </div>
                                                             </div>
@@ -929,14 +965,14 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
                                                         return (
                                                             <div className={`flex justify-center bg-gray-50/50 border rounded-xl py-1 pr-8 relative transition-all duration-300 ${hasWarning ? 'border-red-200 bg-red-50/30' : 'border-gray-100 shadow-sm'}`}>
-                                                                <CopyableField text={selectedOrder['Số đơn hàng'] || ''} showToast={showToast} className={`text-[13px] font-black truncate font-mono tracking-tight ${hasWarning ? 'text-red-600' : 'text-accent-primary'}`} />
+                                                                <CopyableField text={selectedOrder['Số đơn hàng'] || ''} showToast={showToast} className={`text-[12px] font-bold truncate font-mono tracking-tight ${hasWarning ? 'text-red-600' : 'text-accent-primary'}`} />
                                                                 {hasWarning && (
                                                                     <div className="absolute right-2 top-1/2 -translate-y-1/2 group/err">
                                                                         <div className="text-red-500 animate-pulse cursor-help">
                                                                             <i className="fas fa-exclamation-triangle text-xs"></i>
                                                                         </div>
-                                                                        <div className="absolute top-full left-0 mt-2 w-72 bg-slate-900 text-white rounded-xl p-3 shadow-2xl opacity-0 group-hover/err:opacity-100 transition-all invisible group-hover/err:visible z-[100] transform scale-95 group-hover/err:scale-100 origin-top-left">
-                                                                            <div className="text-[10px] font-black text-red-400 uppercase mb-2 border-b border-white/10 pb-1">Chi tiết sai lệch (AI)</div>
+                                                                        <div className="absolute top-full right-0 mt-2 w-72 bg-slate-900 text-white rounded-xl p-3 shadow-2xl opacity-0 group-hover/err:opacity-100 transition-all invisible group-hover/err:visible z-[100] transform scale-95 group-hover/err:scale-100 origin-top-right">
+                                                                            <div className="text-[10px] font-bold text-red-400 uppercase mb-2 border-b border-white/10 pb-1">Chi tiết sai lệch (AI)</div>
                                                                             <div className="space-y-2">
                                                                                 {aiNotes.filter((n: string) => !n.includes('✅')).map((note: string, idx: number) => (
                                                                                     <div key={`ai-note-${idx}`} className="flex items-start gap-2">
@@ -945,7 +981,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                                                     </div>
                                                                                 ))}
                                                                             </div>
-                                                                            <div className="absolute top-[-4px] left-3 w-3 h-3 bg-slate-900 rotate-45"></div>
+                                                                            <div className="absolute top-[-4px] right-3 w-3 h-3 bg-slate-900 rotate-45"></div>
                                                                         </div>
                                                                     </div>
                                                                 )}
@@ -955,9 +991,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <div className="flex flex-col">
-                                                        <div className="text-[8px] font-black text-green-600/50 uppercase tracking-tighter mb-0.5 ml-0.5">Hoa hồng ứng</div>
+                                                        <div className="text-[9px] font-medium text-slate-500 uppercase tracking-tighter mb-0.5 ml-0.5">Hoa hồng ứng</div>
                                                         <div className="w-full bg-green-50/50 border border-green-100 rounded-lg px-2 py-1 flex items-baseline justify-center">
-                                                            <span className="text-xs font-black text-green-600">
+                                                            <span className="text-xs font-bold text-green-700">
                                                                 {isEditing ? (
                                                                     <input type="text" value={editData.commission} onChange={e => setEditData({ ...editData, commission: e.target.value })} className="w-full bg-transparent focus:outline-none text-center" />
                                                                 ) : (
@@ -967,9 +1003,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col">
-                                                        <div className="text-[8px] font-black text-blue-600/50 uppercase tracking-tighter mb-0.5 ml-0.5">Vpoint</div>
+                                                        <div className="text-[9px] font-medium text-slate-500 uppercase tracking-tighter mb-0.5 ml-0.5">Vpoint</div>
                                                         <div className="w-full bg-blue-50/50 border border-blue-100 rounded-lg px-2 py-1 flex items-baseline justify-center">
-                                                            <span className="text-xs font-black text-blue-600">
+                                                            <span className="text-xs font-bold text-blue-700">
                                                                 {isEditing ? (
                                                                     <input type="text" value={editData.vpoint} onChange={e => setEditData({ ...editData, vpoint: e.target.value })} className="w-full bg-transparent focus:outline-none text-center" />
                                                                 ) : (
@@ -979,11 +1015,20 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         </div>
                                                     </div>
                                                 </div>
+                                                {selectedOrder['Mã VC'] && (
+                                                    <div className="flex flex-col mt-2">
+                                                        <div className="text-[9px] font-medium text-slate-500 uppercase tracking-tighter mb-0.5 ml-0.5">Mã VC (Voucher)</div>
+                                                        <div className="w-full bg-purple-50/50 border border-purple-100 rounded-lg px-2 py-1 flex items-center gap-2">
+                                                            <i className="fas fa-ticket-alt text-purple-500 text-[10px]"></i>
+                                                            <CopyableField text={selectedOrder['Mã VC'] || ''} showToast={showToast} className="text-xs font-bold text-purple-700 tracking-wide" />
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
 
                                         {/* Column 3: Policy List */}
-                                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
+                                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col min-h-[160px]">
                                             <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex justify-between items-center">
                                                 <div className="flex items-center gap-2">
                                                     <i className="fas fa-shield-alt text-accent-primary text-[10px]"></i>
@@ -1000,25 +1045,82 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className={`p-2.5 overflow-y-auto custom-scrollbar ${isSplitView ? 'max-h-[300px]' : 'flex-1 min-h-[100px]'}`}>
+                                            <div className={`p-2.5 overflow-y-auto custom-scrollbar flex-1 min-h-[120px] ${isSplitView ? 'max-h-[300px]' : ''}`}>
                                                 {isEditing ? (
-                                                    <div className="space-y-2 p-1">
-                                                        {dbPolicies.map((p, idx) => (
-                                                            <label key={idx} className="flex items-start gap-2 px-2 py-1 hover:bg-gray-50 rounded-lg cursor-pointer">
+                                                    <div className="space-y-1.5 p-0.5">
+                                                        {/* Quick Search & Model Filter Header */}
+                                                        <div className="space-y-1 pb-2 mb-1 border-b border-gray-100">
+                                                            <div className="relative">
                                                                 <input 
-                                                                    type="checkbox" 
-                                                                    checked={editData.policy.includes(p.ten_chinh_sach)} 
-                                                                    onChange={() => {
-                                                                        const current = editData.policy.split('; ').filter(Boolean);
-                                                                        const exists = current.includes(p.ten_chinh_sach);
-                                                                        const updated = exists ? current.filter(x => x !== p.ten_chinh_sach) : [...current, p.ten_chinh_sach];
-                                                                        setEditData({...editData, policy: updated.join('; ')});
-                                                                    }}
-                                                                    className="mt-0.5"
+                                                                    type="text" 
+                                                                    value={policySearchQuery} 
+                                                                    onChange={e => setPolicySearchQuery(e.target.value)} 
+                                                                    placeholder="🔍 Tìm chính sách..." 
+                                                                    className="w-full text-[10px] px-2 py-1 bg-gray-50 border border-gray-200 rounded-md focus:outline-none focus:border-indigo-500 focus:bg-white transition-all placeholder:text-gray-400" 
                                                                 />
-                                                                <span className="text-[10px] text-gray-700">{p.ten_chinh_sach}</span>
-                                                            </label>
-                                                        ))}
+                                                                {policySearchQuery && (
+                                                                    <button 
+                                                                        type="button"
+                                                                        onClick={() => setPolicySearchQuery('')} 
+                                                                        className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-[10px] px-1"
+                                                                    >
+                                                                        ✕
+                                                                    </button>
+                                                                )}
+                                                            </div>
+
+                                                            {currentCarModel && (
+                                                                <div className="flex items-center justify-between gap-1 text-[9px] pt-0.5">
+                                                                    <button 
+                                                                        type="button" 
+                                                                        onClick={() => setPolicyFilterModelOnly(!policyFilterModelOnly)} 
+                                                                        className={`px-2 py-0.5 rounded-full font-bold flex items-center gap-1 transition-all ${
+                                                                            policyFilterModelOnly 
+                                                                                ? 'bg-indigo-100 text-indigo-700 border border-indigo-200 shadow-xs' 
+                                                                                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                                                        }`}
+                                                                        title={policyFilterModelOnly ? `Đang lọc theo dòng xe ${currentCarModel}. Click để hiện tất cả.` : 'Click để lọc theo dòng xe.'}
+                                                                    >
+                                                                        <span>🚗</span>
+                                                                        <span>{policyFilterModelOnly ? `Xe: ${currentCarModel}` : 'Tất cả dòng xe'}</span>
+                                                                        <i className={`fas fa-chevron-${policyFilterModelOnly ? 'down' : 'up'} text-[7px] opacity-60`}></i>
+                                                                    </button>
+
+                                                                    <span className="text-[9px] font-semibold text-gray-400">
+                                                                        {filteredDbPolicies.length}/{dbPolicies.length}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Checkbox List */}
+                                                        {filteredDbPolicies.length === 0 ? (
+                                                            <div className="text-center py-4 text-[10px] text-gray-400 italic">
+                                                                Không có chính sách nào {policyFilterModelOnly ? `cho ${currentCarModel}` : ''}
+                                                            </div>
+                                                        ) : (
+                                                            filteredDbPolicies.map((p, idx) => {
+                                                                const isChecked = editData.policy.split('; ').filter(Boolean).includes(p.ten_chinh_sach);
+                                                                return (
+                                                                    <label key={idx} className={`flex items-start justify-between gap-2 px-2 py-1 rounded-md cursor-pointer transition-all ${isChecked ? 'bg-indigo-50/70 border border-indigo-100' : 'hover:bg-gray-50 border border-transparent'}`}>
+                                                                        <div className="flex items-start gap-2 min-w-0">
+                                                                            <input 
+                                                                                type="checkbox" 
+                                                                                checked={isChecked} 
+                                                                                onChange={() => {
+                                                                                    const current = editData.policy.split('; ').filter(Boolean);
+                                                                                    const exists = current.includes(p.ten_chinh_sach);
+                                                                                    const updated = exists ? current.filter(x => x !== p.ten_chinh_sach) : [...current, p.ten_chinh_sach];
+                                                                                    setEditData({...editData, policy: updated.join('; ')});
+                                                                                }}
+                                                                                className="mt-0.5 accent-indigo-600 flex-shrink-0"
+                                                                            />
+                                                                            <span className={`text-[10px] ${isChecked ? 'font-bold text-indigo-950' : 'text-gray-700'}`}>{p.ten_chinh_sach}</span>
+                                                                        </div>
+                                                                    </label>
+                                                                );
+                                                            })
+                                                        )}
                                                     </div>
                                                 ) : (
                                                     <div className="space-y-1.5">

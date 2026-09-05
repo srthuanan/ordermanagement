@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import CarImage from '../ui/CarImage';
 import * as apiService from '../../services/apiService';
 import AnimatedBackground from '../ui/AnimatedBackground';
+import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 
 interface IncompleteCarsViewProps {
     stockData: StockVehicle[];
@@ -12,6 +13,7 @@ interface IncompleteCarsViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRefresh, showToast }) => {
+    const copyWithFeedback = useCopyFeedback();
     const { versionsMap, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
     const [updatingVin, setUpdatingVin] = useState<string | null>(null);
     const [localChanges, setLocalChanges] = useState<Record<string, Partial<StockVehicle>>>({});
@@ -69,47 +71,18 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
 
     const handleFieldChange = (vin: string, field: keyof StockVehicle, value: string) => {
         setLocalChanges(prev => {
-            const next = { ...prev };
-            const currentChanges = { ...(next[vin] || {}), [field]: value };
-            
-            // VF5 version default logic
-            if (field === 'Dòng xe' && (value === 'VF5' || value === 'vf5')) {
-                currentChanges['Phiên bản'] = 'Plus';
+            const carChanges = { ...(prev[vin] || {}), [field]: value };
+            if (field === 'Dòng xe') {
+                const versions = versionsMap[value] || [];
+                if (versions.length === 1) {
+                    carChanges['Phiên bản'] = versions[0];
+                }
             }
-            
-            next[vin] = currentChanges;
-            return next;
+            return {
+                ...prev,
+                [vin]: carChanges
+            };
         });
-    };
-
-    const handleSave = async (vin: string) => {
-        const updates = localChanges[vin];
-        if (!updates || Object.keys(updates).length === 0) return;
-
-        setUpdatingVin(vin);
-        try {
-            const res = await apiService.updateCarInfo(vin, updates);
-            if (res.status === 'SUCCESS') {
-                showToast('Thành công', `Đã cập nhật thông tin cho xe ${vin}`, 'success');
-                onRefresh();
-                setLocalChanges(prev => {
-                    const next = { ...prev };
-                    delete next[vin];
-                    return next;
-                });
-            } else {
-                showToast('Lỗi', res.message, 'error');
-            }
-        } catch (err: any) {
-            showToast('Lỗi', err.message, 'error');
-        } finally {
-            setUpdatingVin(null);
-        }
-    };
-
-    const handleFolderChange = (folderId: string) => {
-        setSelectedFolder(folderId);
-        setMobileView('list');
     };
 
     const handleCarSelect = (vin: string) => {
@@ -117,16 +90,47 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
         setMobileView('detail');
     };
 
-    if (incompleteCars.length === 0) {
+    const handleFolderChange = (folderId: string) => {
+        setSelectedFolder(folderId);
+        setSearchQuery('');
+        setMobileView('list');
+    };
+
+    const handleSaveCar = async (car: StockVehicle) => {
+        const changes = localChanges[car.VIN];
+        if (!changes || Object.keys(changes).length === 0) {
+            showToast('Thông báo', 'Chưa có thay đổi nào để lưu', 'info');
+            return;
+        }
+
+        setUpdatingVin(car.VIN);
+        try {
+            const res = await apiService.updateCarInfo(car.VIN, changes);
+            if (res.status === 'SUCCESS') {
+                showToast('Thành công', `Cập nhật thông tin xe ${car.VIN} thành công`, 'success');
+                setLocalChanges(prev => {
+                    const next = { ...prev };
+                    delete next[car.VIN];
+                    return next;
+                });
+                onRefresh();
+            } else {
+                showToast('Lỗi', res.message || 'Không thể cập nhật thông tin xe', 'error');
+            }
+        } catch (e: any) {
+            showToast('Lỗi', e.message || 'Lỗi khi kết nối máy chủ', 'error');
+        } finally {
+            setUpdatingVin(null);
+        }
+    };
+
+    if (stockData.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center p-12 h-full bg-slate-50/50">
-                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 text-emerald-400 border border-slate-100">
-                    <i className="fas fa-check-circle fa-2x"></i>
-                </div>
-                <h3 className="text-lg font-bold text-slate-700 uppercase tracking-tight">Tuyệt vời!</h3>
-                <p className="text-slate-400 text-sm font-medium">Tất cả xe trong kho đều đã có đầy đủ thông tin.</p>
-                <Button onClick={onRefresh} variant="secondary" size="sm" className="mt-6" leftIcon={<i className="fas fa-sync-alt"></i>}>
-                    Làm mới dữ liệu
+            <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 text-slate-400">
+                <i className="fas fa-car text-4xl mb-3 opacity-30"></i>
+                <p className="text-sm font-semibold">Chưa có dữ liệu kho xe</p>
+                <Button onClick={onRefresh} variant="secondary" size="sm" className="mt-4">
+                    Tải lại dữ liệu
                 </Button>
             </div>
         );
@@ -141,26 +145,29 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
         return (
             <div
                 key={car.VIN}
-                onClick={() => handleCarSelect(car.VIN)}
-                className={`px-4 py-3 cursor-pointer transition-all duration-300 group relative border-l-2 ${isSelected
-                    ? 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)] border-accent-primary z-10'
-                    : 'bg-transparent border-transparent hover:bg-slate-50/80 hover:border-slate-200'
+                onClick={(e) => {
+                    handleCarSelect(car.VIN);
+                    copyWithFeedback(car.VIN, e);
+                }}
+                className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${isSelected
+                    ? 'bg-slate-100/90 border-blue-600 font-semibold'
+                    : 'border-transparent hover:bg-slate-50'
                     }`}
             >
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                        <div className={`text-[13px] font-black truncate mb-0.5 ${isSelected ? 'text-accent-primary' : 'text-slate-700'}`}>
+                        <div className={`text-xs font-bold truncate mb-1 ${isSelected ? 'text-blue-600' : 'text-slate-900'}`}>
                             {car.VIN}
                         </div>
-                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5 leading-none">
-                            <span>{currentModel || 'Chưa có dòng xe'}</span>
+                        <div className="text-[11px] text-slate-500 font-normal truncate">
+                            {currentModel || 'Chưa có dòng xe'}
                         </div>
                     </div>
-                    <div className="w-12 h-9 flex-shrink-0 relative overflow-hidden bg-slate-50 rounded-lg border border-slate-100/50 p-1">
+                    <div className="w-10 h-8 flex-shrink-0 relative overflow-hidden bg-slate-50 rounded-lg border border-slate-100 p-0.5">
                         <CarImage
                             model={currentModel}
                             exteriorColor={currentExt}
-                            className={`w-full h-full object-contain transition-all duration-500 ${isSelected ? 'scale-110' : 'opacity-40 scale-95 grayscale'}`}
+                            className={`w-full h-full object-contain transition-all duration-300 ${isSelected ? 'scale-105' : 'opacity-60 grayscale'}`}
                         />
                     </div>
                 </div>
@@ -169,12 +176,12 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
     };
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-border-primary overflow-hidden animate-fade-in relative z-0">
+        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-slate-200 overflow-hidden animate-fade-in relative z-0">
             <AnimatedBackground />
 
             {/* Column 1: Folders */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
-                <div className="md:hidden p-3 bg-white border-b border-border-secondary flex items-center justify-center relative">
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+                <div className="md:hidden p-3 bg-white border-b border-slate-100 flex items-center justify-center relative">
                     <span className="font-bold text-sm">Bổ Sung Thông Tin</span>
                 </div>
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
@@ -182,17 +189,21 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
                         <button
                             key={folder.id}
                             onClick={() => handleFolderChange(folder.id)}
-                            className={`w-full flex items-center justify-between px-3 py-3 rounded-xl text-xs font-bold transition-all ${selectedFolder === folder.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${selectedFolder === folder.id ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'}`}
                         >
                             <div className="flex items-center gap-3">
-                                <i className={`fas ${folder.icon} w-5 text-center text-sm ${selectedFolder === folder.id ? 'text-accent-primary' : 'text-slate-400'}`}></i>
+                                <i className={`fas ${folder.icon} w-5 text-center text-xs ${selectedFolder === folder.id ? 'text-white' : 'text-slate-400'}`}></i>
                                 <span>{folder.label}</span>
                             </div>
-                            {folder.count > 0 && <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${selectedFolder === folder.id ? 'bg-accent-primary text-white' : 'bg-slate-200 text-slate-500'}`}>{folder.count}</span>}
+                            {folder.count > 0 && (
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${selectedFolder === folder.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                    {folder.count}
+                                </span>
+                            )}
                         </button>
                     ))}
                 </nav>
-                <div className="p-4 border-t border-border-primary">
+                <div className="p-4 border-t border-slate-200">
                     <Button onClick={onRefresh} variant="secondary" size="sm" fullWidth leftIcon={<i className="fas fa-sync-alt"></i>}>
                         Làm mới
                     </Button>
@@ -261,7 +272,7 @@ const IncompleteCarsView: React.FC<IncompleteCarsViewProps> = ({ stockData, onRe
                                 </div>
                             </div>
                             <Button
-                                onClick={() => handleSave(selectedCar.VIN)}
+                                onClick={() => handleSaveCar(selectedCar)}
                                 variant="success"
                                 size="sm"
                                 isLoading={updatingVin === selectedCar.VIN}

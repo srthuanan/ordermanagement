@@ -1,0 +1,100 @@
+javascript:(function(){
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var f = window.frames;
+            for (var i = 0; i < f.length; i++) {
+                if (f[i].Xrm && f[i].Xrm.WebApi) { _Xrm = f[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert("⚠️ Vui lòng mở trang VinFast DMS trước khi bấm!");
+        return;
+    }
+
+    var recordId = "";
+    var entityName = "xts_purchaseorder";
+
+    // 1. Lấy ID từ URL
+    try {
+        var urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("id")) recordId = urlParams.get("id").replace(/[{}]/g, "");
+        if (urlParams.get("etn")) entityName = urlParams.get("etn");
+    } catch(e){}
+
+    // 2. Lấy ID từ Form Xrm
+    try {
+        if (!recordId && _Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity) {
+            recordId = (_Xrm.Page.data.entity.getId() || "").replace(/[{}]/g, "");
+            entityName = _Xrm.Page.data.entity.getEntityName() || entityName;
+        }
+    } catch(e){}
+
+    // 3. Nếu chưa có ID, nhắc người dùng nhập
+    if (!recordId) {
+        recordId = prompt("🔍 Nhập ID (GUID) hoặc Số đơn mua hàng (PO) cần soi mã code:", "94560bac-489d-f111-b8dc-6045bd56eb55");
+        if (!recordId) return;
+        recordId = recordId.trim();
+    }
+
+    var isGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(recordId);
+
+    var overlay = document.createElement('div');
+    overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.85);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:system-ui,-apple-system,sans-serif;backdrop-filter:blur(8px);';
+    overlay.innerHTML = '<div style="background:#0f172a;color:#cbd5e1;padding:24px;border-radius:16px;border:1px solid #38bdf850;width:800px;max-width:94%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 25px 60px rgba(0,0,0,0.8);">' +
+                        '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #334155;padding-bottom:12px;margin-bottom:16px;">' +
+                        '<h3 style="margin:0;color:#38bdf8;font-size:16px;">🔬 KIỂM TRA MÃ CODE TRẠNG THÁI ĐƠN PO (DMS RAW ODATA)</h3>' +
+                        '<button onclick="this.closest(\'#dmsInspectOverlay\').remove()" style="background:transparent;border:none;color:#94a3b8;font-size:20px;cursor:pointer;">✕</button>' +
+                        '</div>' +
+                        '<div id="dmsInspectContent" style="flex:1;overflow-y:auto;font-family:monospace;font-size:12.5px;">⏳ Đang truy vấn OData...</div>' +
+                        '</div>';
+    overlay.id = 'dmsInspectOverlay';
+    document.body.appendChild(overlay);
+
+    var contentEl = document.getElementById('dmsInspectContent');
+
+    var queryPromise = isGuid ? 
+        _Xrm.WebApi.retrieveRecord(entityName, recordId) : 
+        _Xrm.WebApi.retrieveMultipleRecords(entityName, "?$filter=xts_purchaseordernumber eq '" + encodeURIComponent(recordId) + "'").then(function(r){ return r.entities && r.entities[0]; });
+
+    queryPromise.then(function(data) {
+        if (!data) {
+            contentEl.innerHTML = '<div style="color:#f87171;padding:20px;">❌ Không tìm thấy bản ghi đơn mua hàng!</div>';
+            return;
+        }
+
+        var poNum = data.xts_purchaseordernumber || data.xts_purchaseorderid;
+        
+        var getVal = function(key) {
+            var fmt = data[key + "@OData.Community.Display.V1.FormattedValue"] || data["_" + key + "_value@OData.Community.Display.V1.FormattedValue"];
+            var raw = data[key] !== undefined ? data[key] : (data["_" + key + "_value"] !== undefined ? data["_" + key + "_value"] : "null");
+            return { raw: raw, fmt: fmt || "-" };
+        };
+
+        var xts_status = getVal("xts_status");
+        var xts_handling = getVal("xts_handling");
+        var statecode = getVal("statecode");
+        var statuscode = getVal("statuscode");
+
+        var html = '<div style="background:#1e293b;padding:14px;border-radius:10px;margin-bottom:16px;border:1px solid #334155;">' +
+                   '<div style="font-size:14px;color:#f8fafc;font-weight:bold;margin-bottom:8px;">📦 Đơn Mua Hàng: <span style="color:#38bdf8;">' + poNum + '</span> (ID: ' + data.xts_purchaseorderid + ')</div>' +
+                   '<table style="width:100%;border-collapse:collapse;margin-top:10px;text-align:left;">' +
+                   '<thead style="background:#0f172a;color:#38bdf8;"><tr><th style="padding:6px 10px;">Tên Trường (Field)</th><th style="padding:6px 10px;">Giá Trị Số (Raw Code)</th><th style="padding:6px 10px;">Nhãn Hiển Thị (Formatted Text)</th></tr></thead>' +
+                   '<tbody>' +
+                   '<tr style="border-bottom:1px solid #334155;"><td style="padding:6px 10px;color:#fbbf24;font-weight:bold;">xts_status</td><td style="padding:6px 10px;color:#34d399;font-weight:bold;">' + xts_status.raw + '</td><td style="padding:6px 10px;color:#f8fafc;font-weight:bold;">' + xts_status.fmt + '</td></tr>' +
+                   '<tr style="border-bottom:1px solid #334155;"><td style="padding:6px 10px;color:#fbbf24;font-weight:bold;">xts_handling</td><td style="padding:6px 10px;color:#34d399;font-weight:bold;">' + xts_handling.raw + '</td><td style="padding:6px 10px;color:#f8fafc;font-weight:bold;">' + xts_handling.fmt + '</td></tr>' +
+                   '<tr style="border-bottom:1px solid #334155;"><td style="padding:6px 10px;color:#cbd5e1;">statecode</td><td style="padding:6px 10px;color:#38bdf8;">' + statecode.raw + '</td><td style="padding:6px 10px;color:#f8fafc;">' + statecode.fmt + '</td></tr>' +
+                   '<tr style="border-bottom:1px solid #334155;"><td style="padding:6px 10px;color:#cbd5e1;">statuscode</td><td style="padding:6px 10px;color:#38bdf8;">' + statuscode.raw + '</td><td style="padding:6px 10px;color:#f8fafc;">' + statuscode.fmt + '</td></tr>' +
+                   '</tbody></table></div>';
+
+        html += '<div style="margin-top:12px;margin-bottom:6px;color:#38bdf8;font-weight:bold;">📄 TOÀN BỘ DỮ LIỆU GỐC (JSON ODATA):</div>' +
+                '<textarea readonly style="width:100%;height:300px;background:#090d16;color:#34d399;border:1px solid #334155;border-radius:8px;padding:12px;font-family:monospace;font-size:12px;box-sizing:border-box;">' +
+                JSON.stringify(data, null, 2).replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+                '</textarea>';
+
+        contentEl.innerHTML = html;
+    }, function(err) {
+        contentEl.innerHTML = '<div style="color:#f87171;padding:20px;">❌ Lỗi đọc dữ liệu PO: ' + (err.message || JSON.stringify(err)) + '</div>';
+    });
+})();

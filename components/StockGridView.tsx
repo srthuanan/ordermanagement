@@ -24,6 +24,9 @@ interface StockGridViewProps {
   canHoldMore: boolean;
   onViewCarOnMap?: (vin: string) => void;
   isReferenceAccount?: boolean;
+  onOpenSwapModal?: (vehicle: StockVehicle) => void;
+  userOrders?: any[];
+  onRefetchStock?: () => void;
 }
 
 import { useNightMode } from '../hooks/useNightMode';
@@ -56,4 +59,4 @@ const StockGridView: React.FC<StockGridViewProps> = (props) => {
   );
 };
 
-export default StockGridView;
+export default React.memo(StockGridView);

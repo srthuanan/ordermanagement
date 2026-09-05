@@ -14,19 +14,31 @@ interface Message {
 // Memoized Markdown components defined outside to avoid recreation on each render
 const MARKDOWN_COMPONENTS: any = {
     table: ({ children }: any) => (
-        <div className="overflow-x-auto my-2 border rounded-xl border-slate-100 bg-white shadow-sm">
-            <table className="w-full text-[11px] text-left">
-                {children}
-            </table>
+        <div className="overflow-hidden my-3 border rounded-xl border-slate-200 bg-white shadow-sm ring-1 ring-black/5">
+            <div className="overflow-x-auto no-scrollbar">
+                <table className="w-full text-[12.5px] text-left border-collapse">
+                    {children}
+                </table>
+            </div>
         </div>
     ),
-    thead: ({ children }: any) => <thead className="bg-slate-50 text-slate-600 uppercase font-bold">{children}</thead>,
-    th: ({ children }: any) => <th className="px-2 py-2 border-b border-slate-100">{children}</th>,
-    td: ({ children }: any) => <td className="px-2 py-2 border-b border-slate-50">{children}</td>,
+    thead: ({ children }: any) => <thead className="bg-slate-50 text-slate-600 uppercase text-[10px] font-bold tracking-wider">{children}</thead>,
+    th: ({ children }: any) => <th className="px-3 py-2.5 border-b border-slate-200 whitespace-nowrap">{children}</th>,
+    td: ({ children }: any) => <td className="px-3 py-2.5 border-b border-slate-100 last:border-0">{children}</td>,
     strong: ({ children }: any) => <strong className="text-blue-700 font-bold">{children}</strong>,
     p: ({ children }: any) => <p className="mb-1 last:mb-0">{children}</p>,
     ul: ({ children }: any) => <ul className="pl-4 space-y-0.5 mb-1 list-disc">{children}</ul>,
-    li: ({ children }: any) => <li>{children}</li>
+    li: ({ children }: any) => <li>{children}</li>,
+    img: ({ node, ...props }: any) => (
+        <img 
+            {...props} 
+            className="w-full rounded-xl shadow-md my-3 border border-slate-100 object-cover bg-slate-50" 
+            loading="lazy" 
+            onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+            }}
+        />
+    )
 };
 
 // Memoized Message Item component
@@ -35,7 +47,11 @@ const MessageItem = memo(({ m, i, copiedIndex, handleCopy }: any) => {
     
     // Tách phần thought nếu có trong content (đề phòng backend chưa tách)
     const thoughtMatch = m.content.match(/<thought>([\s\S]*?)<\/thought>/);
-    const displayContent = m.content.replace(/<thought>[\s\S]*?<\/thought>/, '').trim();
+    let displayContent = m.content.replace(/<thought>[\s\S]*?<\/thought>/, '').trim();
+    // Fix broken markdown images with line breaks in the URL
+    displayContent = displayContent.replace(/!\[([^\]]*)\]\s*\(\s*([^)]+)\s*\)/g, (_match: string, alt: string, url: string) => {
+        return `![${alt}](${url.replace(/\s+/g, '')})`;
+    });
     const thoughtContent = m.thought || (thoughtMatch ? thoughtMatch[1] : null);
 
     return (
@@ -388,3 +404,5 @@ export const VirtualAssistant: React.FC = () => {
         </div>
     );
 };
+
+export default VirtualAssistant;

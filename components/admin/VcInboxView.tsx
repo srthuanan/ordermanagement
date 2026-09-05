@@ -6,6 +6,7 @@ import Button from '../ui/Button';
 import { toEmbeddableUrl, getDriveFileId, forceDownload, getSanitizedFilename } from '../../utils/imageUtils';
 import AnimatedBackground from '../ui/AnimatedBackground';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
+import MarqueeText from '../ui/MarqueeText';
 
 interface ImageSource {
     src: string;
@@ -298,8 +299,8 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({
         <div className="flex h-full bg-slate-50 rounded-xl shadow-md border border-border-primary overflow-hidden animate-fade-in relative z-0">
             <AnimatedBackground />
             {/* Column 1: Folders */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary bg-surface-ground/90 flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
-                <div className="md:hidden p-3 bg-white border-b border-border-secondary flex items-center justify-center relative">
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
+                <div className="md:hidden p-3 bg-white border-b border-slate-100 flex items-center justify-center relative">
                     <span className="font-bold text-sm">Quản Lý VC</span>
                 </div>
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
@@ -307,23 +308,27 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({
                         <button
                             key={folder.id}
                             onClick={() => handleFolderClick(folder.id)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${selectedFolder === folder.id ? 'bg-accent-primary/10 text-accent-primary' : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'}`}
+                            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${selectedFolder === folder.id ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'}`}
                         >
                             <div className="flex items-center gap-3">
-                                <i className={`fas ${folder.icon} w-5 text-center`}></i>
+                                <i className={`fas ${folder.icon} w-5 text-center text-xs ${selectedFolder === folder.id ? 'text-white' : 'text-slate-400'}`}></i>
                                 <span>{folder.label}</span>
                             </div>
-                            {folder.count > 0 && <span className={`text-xs px-2 py-0.5 rounded-full ${selectedFolder === folder.id ? 'bg-accent-primary text-white' : 'bg-surface-hover text-text-secondary'}`}>{folder.count}</span>}
+                            {folder.count > 0 && (
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${selectedFolder === folder.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                                    {folder.count}
+                                </span>
+                            )}
                         </button>
                     ))}
                 </nav>
             </div>
 
             {/* Column 2: List */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-border-primary flex flex-col bg-white/90 relative z-10 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 flex flex-col bg-white relative z-10 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
                 {/* Mobile Header */}
-                <div className="md:hidden p-2.5 bg-white border-b border-border-secondary flex items-center gap-2">
-                    <button onClick={() => setMobileView('folders')} className="p-1.5 hover:bg-surface-ground rounded-full">
+                <div className="md:hidden p-2.5 bg-white border-b border-slate-100 flex items-center gap-2">
+                    <button onClick={() => setMobileView('folders')} className="p-1.5 hover:bg-slate-100 rounded-full">
                         <i className="fas fa-arrow-left text-gray-500"></i>
                     </button>
                     <span className="font-bold text-sm">
@@ -331,9 +336,9 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({
                     </span>
                 </div>
 
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
                     {isLoading && filteredRequests.length === 0 ? (
-                        <div className="divide-y divide-border-secondary">
+                        <div className="divide-y divide-slate-100">
                             {Array.from({ length: 10 }).map((_, i) => (
                                 <div key={i} className="p-4 md:p-3 space-y-2">
                                     <div className="skeleton-item h-4 w-3/4 rounded-md"></div>
@@ -342,77 +347,32 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({
                             ))}
                         </div>
                     ) : filteredRequests.length === 0 ? (
-                        <div className="p-8 text-center text-text-placeholder text-sm">Không tìm thấy yêu cầu nào.</div>
+                        <div className="p-8 text-center text-slate-400 text-sm">Không tìm thấy yêu cầu nào.</div>
                     ) : (
-                        <div className="divide-y divide-border-secondary">
+                        <div className="divide-y divide-slate-100">
                             {filteredRequests.map(req => {
                                 const isSelected = selectedRequestId === req['Số đơn hàng'];
                                 return (
                                     <div
                                         key={req['Số đơn hàng']}
-                                        onClick={() => handleRequestClick(req['Số đơn hàng'])}
-                                        className={`px-4 py-3 cursor-pointer transition-all duration-300 group relative border-l-2 ${isSelected
-                                            ? 'bg-white shadow-[0_4px_20px_rgba(0,0,0,0.05)] border-accent-primary z-10'
-                                            : 'bg-transparent border-transparent hover:bg-slate-50/80 hover:border-slate-200'
+                                        onClick={(e) => {
+                                            handleRequestClick(req['Số đơn hàng']);
+                                            copyWithFeedback(req['Tên khách hàng'], e);
+                                        }}
+                                        className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${isSelected
+                                            ? 'bg-slate-100/90 border-blue-600 font-semibold'
+                                            : 'border-transparent hover:bg-slate-50'
                                             }`}
                                     >
-                                        <div className="flex items-center justify-between gap-3">
-                                            <div className="flex-1 min-w-0">
-                                                <div
-                                                    className={`text-[13px] font-bold truncate mb-1 cursor-pointer transition-colors ${isSelected ? 'text-accent-primary' : 'text-slate-700 group-hover:text-accent-primary'
-                                                        }`}
-                                                    title="Click để sao chép tên khách hàng"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        copyWithFeedback(req['Tên khách hàng'], e);
-                                                    }}
-                                                >
-                                                    {req['Tên khách hàng']}
-                                                </div>
-                                                <div className="flex flex-col gap-0.5">
-                                                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider flex items-center gap-1.5 leading-none">
-                                                        <span>{req['Loại YC']}</span>
-                                                        <span className="w-1 h-1 rounded-full bg-slate-200"></span>
-                                                        <span className="truncate">{moment(req['Thời gian YC']).format('DD/MM/YY')}</span>
-                                                    </div>
-                                                    <div className="text-[9px] text-slate-300 font-mono mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        {req['Số đơn hàng']}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="flex-shrink-0">
-                                                {(() => {
-                                                    const status = (req['Trạng thái xử lý'] || '').toLowerCase();
-                                                    if (status.includes('chờ')) return (
-                                                        <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center text-amber-500 shadow-sm border border-amber-100/50">
-                                                            <i className="fas fa-clock text-xs"></i>
-                                                        </div>
-                                                    );
-                                                    if (status.includes('duyệt') || status.includes('thành')) return (
-                                                        <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 shadow-sm border border-emerald-100/50">
-                                                            <i className="fas fa-check-circle text-xs"></i>
-                                                        </div>
-                                                    );
-                                                    if (status.includes('từ chối')) return (
-                                                        <div className="w-8 h-8 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 shadow-sm border border-rose-100/50">
-                                                            <i className="fas fa-ban text-xs"></i>
-                                                        </div>
-                                                    );
-                                                    return <i className="fas fa-question-circle text-gray-300 text-sm"></i>;
-                                                })()}
-                                            </div>
+                                        <div className="text-xs font-bold text-slate-900 mb-1 uppercase overflow-hidden">
+                                            <MarqueeText 
+                                                text={req['Tên khách hàng'] || '—'}
+                                                className="text-xs font-bold text-slate-900 uppercase"
+                                            />
                                         </div>
-
-                                        {/* Status on mobile */}
-                                        <div className="mt-2.5 flex items-center justify-between md:hidden border-t border-slate-100/50 pt-2">
-                                            <StatusBadge status={req['Trạng thái xử lý'] || ''} size="sm" />
-                                            <span className="text-[9px] text-slate-400 font-mono font-medium">{req['Số đơn hàng'].split('-').pop()}</span>
+                                        <div className="text-[11px] text-slate-500 font-normal truncate">
+                                            {req['Loại YC']} • {moment(req['Thời gian YC']).format('DD/MM/YY')}
                                         </div>
-
-                                        {/* Desktop subtle status dot */}
-                                        {!isSelected && (req['Trạng thái xử lý'] || '').toLowerCase() === 'chờ duyệt ycvc' && (
-                                            <div className="absolute right-1.5 top-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)] animate-pulse"></div>
-                                        )}
                                     </div>
                                 );
                             })}
@@ -449,16 +409,17 @@ const VcInboxView: React.FC<VcInboxViewProps> = ({
 
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 mb-0.5 overflow-hidden">
-                                            <h2
-                                                className="text-sm md:text-base font-bold text-gray-900 truncate cursor-pointer hover:text-accent-primary transition-colors"
-                                                title="Click để sao chép tên khách hàng"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    copyWithFeedback(selectedRequest['Tên khách hàng'], e);
-                                                }}
-                                            >
-                                                {selectedRequest['Tên khách hàng']}
-                                            </h2>
+                                            <div className="min-w-0 flex-1 overflow-hidden">
+                                                <MarqueeText
+                                                    text={selectedRequest['Tên khách hàng'] || '—'}
+                                                    className="text-sm md:text-base font-bold text-gray-900 cursor-pointer hover:text-accent-primary transition-colors uppercase"
+                                                    title="Click để sao chép tên khách hàng"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        copyWithFeedback(selectedRequest['Tên khách hàng'], e);
+                                                    }}
+                                                />
+                                            </div>
                                             <StatusBadge status={selectedRequest['Trạng thái xử lý'] || ''} size="sm" />
                                         </div>
                                         <div className="flex items-center gap-2 mt-1.5">

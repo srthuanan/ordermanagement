@@ -11,6 +11,7 @@ interface TabbedFilterProps {
     tabs: Tab[];
     activeTab: string;
     onTabChange: (id: string) => void;
+    tabsExtra?: React.ReactNode;
 
     // Search
     searchPlaceholder?: string;
@@ -34,6 +35,7 @@ const TabbedFilter: React.FC<TabbedFilterProps> = ({
     tabs,
     activeTab,
     onTabChange,
+    tabsExtra,
     searchPlaceholder = "Tìm hồ sơ...",
     searchValue,
     onSearchChange,
@@ -73,39 +75,55 @@ const TabbedFilter: React.FC<TabbedFilterProps> = ({
 
     return (
         <div className="w-full mb-1">
-            {/* Main Toolbar Container: Stack vertically on mobile, horizontal on desktop */}
-            <div className={`flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-1.5 p-1.5 lg:p-0.5 ${isNight ? 'bg-slate-900/40 border-slate-700/50' : 'bg-white/40 border-white/50'} backdrop-blur-xl rounded-lg shadow-sm`}>
+            {/* Main Toolbar Container: Glassmorphism header with clean light mode styling */}
+            <div className={`flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-1.5 p-1.5 lg:p-1 border backdrop-blur-xl rounded-xl shadow-sm transition-all duration-300 ${
+                isNight
+                    ? 'bg-slate-900/60 border-slate-700/60 text-slate-100'
+                    : 'bg-white/75 border-slate-200/70 text-slate-800'
+            }`}>
 
                 {/* Header Row on Mobile: Tabs + Filter Toggle */}
                 <div className="flex items-center justify-between gap-2 lg:contents">
-                    {/* 1. Tabs Group - Scrollable on mobile, no wrap */}
-                    <div className={`flex items-center gap-0.5 ${isNight ? 'bg-slate-800/40' : 'bg-gray-50/40'} rounded-md p-0.5 overflow-x-auto no-scrollbar flex-shrink-0 max-w-[calc(100%-100px)] lg:max-w-none`}>
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => onTabChange(tab.id)}
-                                className={`
-                                    flex items-center gap-1.5 px-4 py-2.5 lg:py-1 text-[12px] lg:text-[10px] font-bold rounded-lg transition-all duration-300 outline-none whitespace-nowrap min-h-[36px] lg:min-h-0
-                                    ${activeTab === tab.id
-                                        ? 'bg-gradient-to-r from-sky-400 to-cyan-500 text-white shadow-md shadow-cyan-200 border-0 scale-105'
-                                        : (isNight ? 'text-slate-300 hover:text-cyan-300 hover:bg-slate-700/50' : 'text-gray-500 hover:text-cyan-700 hover:bg-sky-50')}
-                                `}
-                            >
-                                {tab.label}
-                                {tab.count !== undefined && (
-                                    <span className={`text-[9px] px-1 rounded-sm ${activeTab === tab.id ? 'bg-white/20 text-white' : (isNight ? 'bg-slate-700/60 text-slate-300' : 'bg-gray-200/60 text-gray-400')}`}>
-                                        {tab.count}
-                                    </span>
-                                )}
-                            </button>
-                        ))}
+                    {/* 1. Tabs Group - Glassmorphic pills & Extra button */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar flex-shrink-0 max-w-[calc(100%-100px)] lg:max-w-none">
+                        <div className={`flex items-center gap-1 ${isNight ? 'bg-slate-800/60 border border-slate-700/50' : 'bg-slate-100/70 border border-slate-200/50'} rounded-lg p-1`}>
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => onTabChange(tab.id)}
+                                    className={`
+                                        flex items-center gap-1.5 px-3.5 py-1.5 lg:py-1 text-[12px] lg:text-[11px] font-medium rounded-md transition-all duration-200 outline-none whitespace-nowrap min-h-[32px] lg:min-h-0
+                                        ${activeTab === tab.id
+                                            ? 'bg-gradient-to-r from-sky-600 via-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25 scale-[1.02]'
+                                            : (isNight ? 'text-slate-300 hover:text-cyan-300 hover:bg-slate-700/60' : 'text-slate-600 hover:text-sky-700 hover:bg-white/80')}
+                                    `}
+                                >
+                                    {tab.label}
+                                    {tab.count !== undefined && (
+                                        <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${
+                                            activeTab === tab.id
+                                                ? 'bg-white/25 text-white'
+                                                : (isNight ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600')
+                                        }`}>
+                                            {tab.count}
+                                        </span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+
+                        {tabsExtra && (
+                            <div className="flex items-center flex-shrink-0">
+                                {tabsExtra}
+                            </div>
+                        )}
                     </div>
 
                     {/* Mobile Filter Toggle Button */}
                     <div className="lg:hidden flex items-center gap-1">
                         <button
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-bold transition-all border min-h-[40px] ${isMobileMenuOpen ? 'bg-accent-primary text-white border-accent-primary shadow-md' : 'bg-white text-gray-600 border-gray-100'}`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-bold transition-all border min-h-[40px] ${isMobileMenuOpen ? 'bg-sky-600 text-white border-sky-600 shadow-md' : 'bg-white text-slate-700 border-slate-200'}`}
                         >
                             <i className={`fas ${isMobileMenuOpen ? 'fa-times' : 'fa-filter'} text-[11px]`}></i>
                             {isMobileMenuOpen ? 'Đóng' : 'Bộ Lọc'}
@@ -116,22 +134,26 @@ const TabbedFilter: React.FC<TabbedFilterProps> = ({
                 {/* 2. Search & Filters Container - Pushed right on desktop */}
                 <div className={`
                     ${isMobileMenuOpen ? 'flex' : 'hidden lg:flex'} 
-                    flex-col lg:flex-row items-center gap-2 lg:gap-1.5 lg:ml-auto w-full lg:w-auto pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-50 mt-1 lg:mt-0
+                    flex-col lg:flex-row items-center gap-2 lg:gap-1.5 lg:ml-auto w-full lg:w-auto pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 mt-1 lg:mt-0
                 `}>
 
                     {/* Search Field */}
-                    <div className="relative w-full lg:w-auto min-w-[120px] lg:min-w-0">
-                        <i className="fas fa-search absolute left-3 lg:left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[11px] lg:text-[9px]"></i>
+                    <div className="relative w-full lg:w-auto min-w-[140px] lg:min-w-0">
+                        <i className="fas fa-search absolute left-3 lg:left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[11px] lg:text-[10px]"></i>
                         <input
                             type="text"
                             placeholder={searchPlaceholder}
                             value={localSearch}
                             onChange={(e) => handleSearchChange(e.target.value)}
-                            className="pl-9 lg:pl-6 pr-6 py-2.5 lg:py-1 text-[12px] lg:text-[10px] border border-gray-100 rounded-md focus:ring-1 focus:ring-accent-primary/20 focus:border-accent-primary outline-none w-full lg:w-36 bg-gray-100/40 hover:bg-gray-100/60 focus:bg-white text-gray-900 transition-all font-bold placeholder:text-gray-400"
+                            className={`pl-8 lg:pl-7 pr-7 py-2 lg:py-1 text-[12px] lg:text-[11px] border rounded-lg focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none w-full lg:w-40 transition-all font-semibold placeholder:text-slate-400 ${
+                                isNight
+                                    ? 'bg-slate-800/80 border-slate-700 text-slate-100 focus:bg-slate-800'
+                                    : 'bg-white/80 border-slate-200 text-slate-900 focus:bg-white'
+                            }`}
                         />
                         {localSearch && (
-                            <button onClick={handleClearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-300 hover:text-red-500">
-                                <i className="fas fa-times-circle text-[11px] lg:text-[9px]"></i>
+                            <button onClick={handleClearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500">
+                                <i className="fas fa-times-circle text-[11px] lg:text-[10px]"></i>
                             </button>
                         )}
                     </div>

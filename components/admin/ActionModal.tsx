@@ -8,6 +8,7 @@ interface InputConfig {
     type?: 'text' | 'textarea' | 'select' | 'date' | 'number' | 'password' | 'email';
     isVIN?: boolean;
     options?: string[];
+    required?: boolean;
 }
 
 interface ActionModalProps {
@@ -69,9 +70,10 @@ const ActionModal: React.FC<ActionModalProps> = ({
 
     const isFormValid = () => {
         for (const input of inputs) {
+            const isRequired = input.required !== false;
             const value = formData[input.id]?.trim();
-            if (!value) return false;
-            if (input.isVIN && value.length !== 17) return false;
+            if (isRequired && !value) return false;
+            if (input.isVIN && value && value.length !== 17) return false;
         }
         return true;
     };

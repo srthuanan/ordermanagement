@@ -220,15 +220,25 @@ export const convertPdfToImages = async (
         const numPages = pdfDocument.numPages;
 
         const results: { base64Data: string; mimeType: string }[] = [];
+        
+        // TỐI ƯU HÓA: Nếu file PDF quá dài (ví dụ > 8 trang), 
+        // AI sẽ mất rất nhiều thời gian phân tích dẫn đến lỗi Timeout (Http: connection closed).
+        // Giải pháp: Chỉ lấy 4 trang đầu (chứa thông tin KH, xe) và 4 trang cuối (chứa chữ ký)
+        let pagesToProcess = [];
+        if (numPages <= 8) {
+            for (let i = 1; i <= numPages; i++) pagesToProcess.push(i);
+        } else {
+            pagesToProcess = [1, 2, 3, 4, numPages - 3, numPages - 2, numPages - 1, numPages];
+        }
 
-        // Xử lý tuần tự để có thể gọi callback ngay lập tức và tránh quá tải bộ nhớ
-        for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+        // Xử lý tuần tự các trang đã chọn
+        for (const pageNum of pagesToProcess) {
             const page = await pdfDocument.getPage(pageNum);
             
-            // Tính toán scale để giới hạn chiều rộng/cao tối đa 1600px
+            // Giảm độ phân giải xuống 1200px (thay vì 1600px) để file siêu nhẹ, AI đọc siêu nhanh
             const unscaledViewport = page.getViewport({ scale: 1.0 });
-            const maxDimension = 1600;
-            const scale = Math.min(maxDimension / unscaledViewport.width, maxDimension / unscaledViewport.height, 1.2);
+            const maxDimension = 1200;
+            const scale = Math.min(maxDimension / unscaledViewport.width, maxDimension / unscaledViewport.height, 1.0);
             
             const viewport = page.getViewport({ scale });
             const canvas = document.createElement('canvas');
@@ -238,12 +248,13 @@ export const convertPdfToImages = async (
             if (!context) throw new Error('Canvas context error');
             
             await page.render({ canvasContext: context, viewport: viewport, canvas: canvas as any }).promise;
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.5);
+            
+            // Giảm chất lượng JPEG xuống 40% (0.4) - Vẫn đủ nét cho AI đọc chữ nhưng dung lượng giảm một nửa
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.4);
             const img = { base64Data: dataUrl.split(',')[1], mimeType: 'image/jpeg' };
             
             results.push(img);
             
-            // Gọi callback ngay khi xử lý xong một trang
             if (onPageProcessed) {
                 await onPageProcessed(img);
             }

@@ -95,30 +95,30 @@ serve(async (req) => {
     // DANH SÁCH CÁC PROVIDER VÀ MODEL VISION (QUÉT ẢNH/PDF)
     const AI_PROVIDERS = [
       // ── TIER 1: GOOGLE GEMINI FLASH (✅ hoạt động, hỗ trợ PDF trực tiếp) ──
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-3.1-flash-lite-preview" })),
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-3-flash-preview" })),
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.5-flash" })),
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.5-flash-lite" })),
+      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.0-flash" })),
+      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-1.5-flash" })),
+      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-1.5-pro" })),
       
       // ── TIER 2: GITHUB MODELS (GPT-4O - CHỈ DÙNG CHO ẢNH) ──
       { type: "github", apiKey: GITHUB_TOKEN, model: "gpt-4o" },
       { type: "github", apiKey: GITHUB_TOKEN, model: "gpt-4o-mini" },
 
       // ── TIER 3: GROQ VISION MODELS ──
-      { type: "groq", apiKey: GROQ_KEY, model: "meta-llama/llama-4-scout-17b-16e-instruct" },
+      { type: "groq", apiKey: GROQ_KEY, model: "llama-3.2-90b-vision-preview" },
 
       // ── TIER 4: OPENROUTER (DỰ PHÒNG TỔNG HỢP) ──
       { type: "openrouter", apiKey: OPENROUTER_KEY, model: "google/gemini-2.0-flash-001" },
       { type: "openrouter", apiKey: OPENROUTER_KEY, model: "openai/gpt-4o-mini" },
       { type: "openrouter", apiKey: OPENROUTER_KEY, model: "anthropic/claude-3.5-haiku" },
 
-      // ── TIER 5: GOOGLE PRO & LEGACY (hay hết quota, tự phục hồi) ──
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-3-pro-preview" })),
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-3.1-pro-preview" })),
+      // ── TIER 5: GOOGLE FLASH (Các model cực nhanh và ổn định nhất hiện tại) ──
+      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.5-flash" })),
+      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-flash-latest" })),
+
+      // ── TIER 6: GOOGLE PRO & TƯƠNG LAI (Thông minh hơn nhưng dễ hết quota, sẽ tự phục hồi vào hôm sau) ──
       ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.5-pro" })),
       ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.0-flash" })),
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.0-flash-lite" })),
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-flash-latest" })),
+      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-3.1-pro-preview" })),
     ].filter(p => !!p.apiKey);
 
     const googleResponseSchema = action === 'extract-date' 
@@ -244,10 +244,11 @@ Chỉ khi có kết quả nháp ở bước suy luận này, bạn mới điền
 
 QUY TẮC NHẬN DIỆN TỪNG LOẠI GIẤY TỜ:
 
-1. "ĐỀ NGHỊ XUẤT HÓA ĐƠN" (ĐNXHĐ):
+1. NHÓM "ĐỀ NGHỊ XUẤT HÓA ĐƠN" (ĐNXHĐ) (Bao gồm Phiếu đề nghị, ĐNĐKBH, Chứng từ đi kèm):
    - Quét: Tên Khách hàng, Số VIN, Màu sắc, GIÁ ĐỀ NGHỊ XUẤT HÓA ĐƠN.
-   - CHECK 4 CHỮ KÝ NỘI BỘ + TÊN: Bắt buộc tìm đủ 4 chữ ký kèm Tên bên dưới: TVBH, Sale Admin, Kế toán trưởng, Giám đốc (hoặc Phó/Ủy quyền). 
-   - LỖI NẾU: Thiếu chữ ký, thiếu mộc đỏ công ty, hoặc "Giá đề nghị xuất" không khớp với HĐMB/Kho tri thức.
+   - CHECK 4 CHỮ KÝ NỘI BỘ + TÊN: Bắt buộc tìm đủ 4 chữ ký kèm Tên bên dưới: TVBH, Sale Admin, Kế toán trưởng, Giám đốc (hoặc Phó/Ủy quyền) trên phiếu đề nghị.
+   - LỖI NẾU: Thiếu chữ ký của bất kỳ bên nào, hoặc "Giá đề nghị xuất" không khớp với HĐMB/Kho tri thức.
+   - (LƯU Ý QUAN TRỌNG: Toàn bộ các tài liệu thuộc luồng ĐNXHĐ này là chứng từ nội bộ, TUYỆT ĐỐI KHÔNG YÊU CẦU MỘC TRÒN ĐỎ CỦA CÔNG TY. Không được báo lỗi thiếu con dấu).
    - KHÔNG CẦN CHỮ KÝ KHÁCH HÀNG: "co_chu_ky_ben_mua" LUÔN = true.
 
 2. "HỢP ĐỒNG MUA BÁN" (HĐMB):
@@ -283,7 +284,9 @@ QUY TẮC NHẬN DIỆN TỪNG LOẠI GIẤY TỜ:
 LƯU Ý QUAN TRỌNG KHI CÓ NHIỀU GIẤY TỜ TRONG 1 FILE:
 - KIỂM TRA SỰ ĐỒNG NHẤT: Xem xét chéo các thông tin chính yếu (Tên khách hàng, Số VIN, Màu sắc, Phiên bản) GIỮA CÁC TÀI LIỆU VỚI NHAU.
 - TUYỆT ĐỐI KHÔNG TRẢ VỀ MẢNG (ARRAY). CHỈ TRẢ VỀ 1 OBJECT DUY NHẤT. Thông tin lấy theo tài liệu CHÍNH (ĐNXHĐ hoặc HĐMB).
-- Nếu phát hiện mâu thuẫn THỰC SỰ GIỮA CÁC GIẤY TỜ với nhau, ghi rõ nội dung mâu thuẫn vào trường "can_bao_sai_lech". Nếu mọi thứ đồng nhất và khớp nhau, ghi "Không có".
+- TUYỆT ĐỐI BỎ QUA và KHÔNG BẮT LỖI liên quan đến "số tiền bằng con số" trên bất kỳ giấy tờ nào. Nếu số tiền bằng số có vẻ sai lệch, mờ hoặc không khớp, hãy lờ đi và KHÔNG ghi vào cảnh báo sai lệch.
+- TUYỆT ĐỐI BỎ QUA và KHÔNG BẮT LỖI liên quan đến "ĐỊA CHỈ" của khách hàng trên bất kỳ giấy tờ nào (HĐMB, CCCD, ĐNXHĐ, Thông báo tín dụng, v.v.). Các sự khác biệt về địa chỉ (thường trú, tạm trú, địa danh cũ/mới, phường/xã/huyện/quận/thành phố) là bình thường, KHÔNG ĐƯỢC tính là sai lệch và KHÔNG ghi vào trường "canh_bao_sai_lech".
+- Nếu phát hiện mâu thuẫn THỰC SỰ GIỮA CÁC GIẤY TỜ với nhau (ngoại trừ số tiền bằng số và địa chỉ KH), ghi rõ nội dung mâu thuẫn vào trường "canh_bao_sai_lech". Nếu mọi thứ đồng nhất và khớp nhau, ghi "Không có".
 
 TRẢ VỀ ĐỊNH DẠNG JSON DUY NHẤT SAU ĐÂY:
 {
@@ -394,92 +397,88 @@ ${JSON.stringify(orderData || {})}
     // AI TỰ ĐỘNG HỌC KIẾN THỨC (SAVE TO KNOWLEDGE BASE & CONSOLIDATE)
     // ═══════════════════════════════════════════════════════════
     if (finalJsonData.potential_knowledge && Array.isArray(finalJsonData.potential_knowledge)) {
-      try {
-        const supabase = createClient(
-          Deno.env.get('SUPABASE_URL') ?? '',
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        );
+      // CHẠY NGẦM KHÔNG BLOCK LUỒNG CHÍNH ĐỂ TRÁNH LỖI 504 GATEWAY TIMEOUT
+      const autoLearnProcess = async () => {
+        try {
+          const supabase = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+          );
 
-        const touchedCategories = new Set<string>();
+          const touchedCategories = new Set<string>();
 
-        // Bước 1: Lưu tạm kiến thức mới (Batch Upsert để giảm round-trip)
-        const validKnowledge = finalJsonData.potential_knowledge.filter((k: any) => k.category && k.lesson_key && k.content);
-        if (validKnowledge.length > 0) {
-          const batch = validKnowledge.map((k: any) => ({
-            category: k.category,
-            lesson_key: k.lesson_key,
-            content: k.content,
-            importance: k.importance || 3,
-            updated_by: 'AI_AUTO_LEARNING',
-            status: 'PENDING'
-          }));
+          // Bước 1: Lưu tạm kiến thức mới
+          const validKnowledge = finalJsonData.potential_knowledge.filter((k: any) => k.category && k.lesson_key && k.content);
+          if (validKnowledge.length > 0) {
+            const batch = validKnowledge.map((k: any) => ({
+              category: k.category,
+              lesson_key: k.lesson_key,
+              content: k.content,
+              importance: k.importance || 3,
+              updated_by: 'AI_AUTO_LEARNING',
+              status: 'PENDING'
+            }));
 
-          const { error: dbError } = await supabase
-            .from('ai_knowledge_base')
-            .upsert(batch, { onConflict: 'lesson_key' });
-
-          if (!dbError) {
-            validKnowledge.forEach((k: any) => {
-              touchedCategories.add(k.category);
-              log(`📥 Đã lưu tạm kiến thức: ${k.lesson_key}`);
-            });
-          } else {
-            console.error("Lỗi batch upsert:", dbError);
-          }
-        }
-
-        // Bước 2: TỰ ĐỘNG GỘP (Consolidate) các chuyên mục bị ảnh hưởng
-        for (const cat of touchedCategories) {
-          log(`🧹 Bắt đầu gộp và dọn dẹp chuyên mục: ${cat}...`);
-          const { data: catData } = await supabase.from('ai_knowledge_base').select('id, category, lesson_key, content').eq('category', cat);
-          
-          if (catData && catData.length > 1) {
-            const githubKey = Deno.env.get("GITHUB_TOKEN") || Deno.env.get("GITHUB_API_KEY");
-            const promptClean = `
-Bạn là AI Thẩm Định Tri Thức. Hãy GỘP GỌN các mảnh kiến thức thuộc nhóm ${cat} dưới đây.
-Dữ liệu đầu vào: ${JSON.stringify(catData.map(d => ({ content: d.content })))}
-
-QUY TẮC:
-1. LUÔN SỬ DỤNG BẢNG (MARKDOWN TABLE) nếu có số liệu.
-2. Trả về đúng định dạng JSON: {"data": [{"category": "${cat}", "lesson_key": "KNOWLEDGE_${cat}_CONSOLIDATED", "content": "Markdown text here...", "importance": 5, "status": "PENDING"}]}
-`;
-            try {
-              const res = await fetch("https://models.inference.ai.azure.com/chat/completions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${githubKey}` },
-                body: JSON.stringify({
-                  model: "gpt-4o-mini",
-                  messages: [{ role: "user", content: promptClean }],
-                  response_format: { type: "json_object" }
-                })
-              });
-              const aiResult = await res.json();
-              const consolidated = aiResult.choices?.[0]?.message?.content;
-              if (consolidated) {
-                const parsed = JSON.parse(consolidated);
-                const items = parsed.data || [];
-                if (items.length > 0) {
-                  await supabase.from('ai_knowledge_base').delete().eq('category', cat);
-                  for (const item of items) {
-                    await supabase.from('ai_knowledge_base').insert({
-                      category: item.category || cat,
-                      lesson_key: item.lesson_key,
-                      content: item.content,
-                      importance: item.importance || 5,
-                      updated_by: 'AI_CONSOLIDATOR',
-                      status: 'PENDING'
-                    });
-                  }
-                  log(`✅ Đã gộp nhóm ${cat}.`);
-                }
-              }
-            } catch (err) {
-              console.error(`Lỗi gộp nhóm ${cat}:`, err.message);
+            const { error: dbError } = await supabase.from('ai_knowledge_base').upsert(batch, { onConflict: 'lesson_key' });
+            if (!dbError) {
+              validKnowledge.forEach((k: any) => touchedCategories.add(k.category));
             }
           }
+
+          // Bước 2: TỰ ĐỘNG GỘP (Consolidate) các chuyên mục bị ảnh hưởng
+          for (const cat of touchedCategories) {
+            const { data: catData } = await supabase.from('ai_knowledge_base').select('id, category, lesson_key, content').eq('category', cat);
+            
+            if (catData && catData.length > 1) {
+              const githubKey = Deno.env.get("GITHUB_TOKEN") || Deno.env.get("GITHUB_API_KEY");
+              const promptClean = `Bạn là AI Thẩm Định Tri Thức. Hãy GỘP GỌN các mảnh kiến thức thuộc nhóm ${cat} dưới đây.
+Dữ liệu đầu vào: ${JSON.stringify(catData.map(d => ({ content: d.content })))}
+QUY TẮC:
+1. LUÔN SỬ DỤNG BẢNG (MARKDOWN TABLE) nếu có số liệu.
+2. Trả về đúng định dạng JSON: {"data": [{"category": "${cat}", "lesson_key": "KNOWLEDGE_${cat}_CONSOLIDATED", "content": "Markdown text here...", "importance": 5, "status": "PENDING"}]}`;
+              
+              try {
+                const res = await fetch("https://models.inference.ai.azure.com/chat/completions", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "Authorization": `Bearer ${githubKey}` },
+                  body: JSON.stringify({
+                    model: "gpt-4o-mini",
+                    messages: [{ role: "user", content: promptClean }],
+                    response_format: { type: "json_object" }
+                  })
+                });
+                const aiResult = await res.json();
+                const consolidated = aiResult.choices?.[0]?.message?.content;
+                if (consolidated) {
+                  const parsed = JSON.parse(consolidated);
+                  const items = parsed.data || [];
+                  if (items.length > 0) {
+                    await supabase.from('ai_knowledge_base').delete().eq('category', cat);
+                    for (const item of items) {
+                      await supabase.from('ai_knowledge_base').insert({
+                        category: item.category || cat,
+                        lesson_key: item.lesson_key,
+                        content: item.content,
+                        importance: item.importance || 5,
+                        updated_by: 'AI_CONSOLIDATOR',
+                        status: 'PENDING'
+                      });
+                    }
+                  }
+                }
+              } catch (err) {}
+            }
+          }
+        } catch (e) {
+          console.error("Lỗi hệ thống tự học:", e);
         }
-      } catch (e) {
-        console.error("Lỗi hệ thống tự học:", e);
+      };
+
+      // Kích hoạt chạy ngầm (nếu có context.waitUntil thì dùng, nếu không thì dùng Promise fire-and-forget)
+      if (typeof (globalThis as any).EdgeRuntime !== 'undefined' && (globalThis as any).EdgeRuntime.waitUntil) {
+        (globalThis as any).EdgeRuntime.waitUntil(autoLearnProcess());
+      } else {
+        autoLearnProcess().catch(console.error);
       }
     }
 

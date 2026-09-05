@@ -37,14 +37,36 @@ function generateKpiSheet() {
 
   const rawData = JSON.parse(response.getContentText());
   
-  // Danh sách TVBH cố định theo thứ tự ảnh
+  // Danh sách TVBH cố định theo thứ tự 3 Phòng Kinh Doanh
   const tvbhList = [
-    "Tất Bách Tường", "Nguyễn Trần Hoàng Thanh", "Phạm Trọng Huy", "Tống Thành Đạt",
-    "Huỳnh Diệp Thanh Trâm", "Phan Văn Cường", "Lê Thị Hương Trà", "Hà Hữu Huy",
-    "Nguyễn Dư Thuận", "Nguyễn Văn Nghĩa", "Đinh Trọng Nhân", "Đào Minh Ký",
-    "Nguyễn Thanh Cả", "Nguyễn Thiện Thảo", "Thành Ngọc Vinh", "Trần Danh Phương",
-    "Nguyễn Hoàng Phúc", "Nguyễn Anh Tiến", "Phạm Thị Thúy Nga", "Võ Thế Lân",
-    "Nguyễn Thị Yến Vy", "Nguyễn Hoàng Khang Huy", "Phạm Khánh Duy"
+    "Tất Bách Tường",
+    "Phạm Trọng Huy",
+    "Nguyễn Trần Hoàng Thanh",
+    "Tống Thành Đạt",
+    "Huỳnh Diệp Thanh Trâm",
+    "Phan Văn Cường",
+    "Lê Thị Hương Trà",
+    "Hà Hữu Huy",
+    "Nguyễn Văn Nghĩa",
+    "Nguyễn Bá Dũng",
+    "Đinh Trọng Nhân",
+    "Thành Ngọc Vinh",
+    "Nguyễn Thiện Thảo",
+    "Nguyễn Anh Tiến",
+    "Võ Thế Lân",
+    "Phạm Thị Thúy Nga",
+    "Nguyễn Thị Yến Vy",
+    "Nguyễn Hoàng Khang Huy",
+    "Nguyễn Thanh Cả",
+    "Trần Danh Phương",
+    "Nguyễn Hoàng Phúc",
+    "Phạm Khánh Duy",
+    "Nguyễn Dư Thuận",
+    "Đào Minh Ký",
+    "Lê Thanh Hảo",
+    "Lê Thị Huyền Trang",
+    "Lê Thị Thúy Nga",
+    "Sẩm Minh Phát"
   ];
 
   // --- Chuẩn bị dữ liệu để ghi ---

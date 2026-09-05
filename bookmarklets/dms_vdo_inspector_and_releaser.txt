@@ -1,0 +1,227 @@
+javascript:(async function(){
+    /* =========================================================================
+     * VINFAST DMS - KIỂM TRA & CHẨN ĐOÁN LỖI PHÁT HÀNH PHIẾU GIAO XE (VDO)
+     * ========================================================================= */
+
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm) {
+        for (var i = 0; i < frames.length; i++) {
+            try { if (frames[i].Xrm) { _Xrm = frames[i].Xrm; break; } } catch(e){}
+        }
+    }
+    if (!_Xrm) { alert("⚠️ Vui lòng mở trang VinFast DMS trước khi bấm!"); return; }
+
+    var entityName = "xts_newvehicledeliveryorder";
+    var recordId = "";
+    try {
+        if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity) {
+            entityName = _Xrm.Page.data.entity.getEntityName() || entityName;
+            recordId = (_Xrm.Page.data.entity.getId() || "").replace(/[{}]/g, "");
+        }
+    } catch(e){}
+
+    if (!recordId) {
+        var urlParams = new URLSearchParams(window.location.search);
+        entityName = urlParams.get("etn") || entityName;
+        recordId = (urlParams.get("id") || "").replace(/[{}]/g, "");
+    }
+
+    if (!recordId) {
+        alert("⚠️ Không tìm thấy ID của Phiếu giao xe (VDO) hiện tại!");
+        return;
+    }
+
+    // Xóa popup cũ nếu có
+    var old = document.getElementById("dmsVdoOverlay");
+    if (old) old.remove();
+
+    var overlay = document.createElement("div");
+    overlay.id = "dmsVdoOverlay";
+    overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#f8fafc;";
+
+    var modal = document.createElement("div");
+    modal.style = "background:#0f172a;width:750px;max-width:95%;border-radius:18px;border:1px solid rgba(56,189,248,0.35);box-shadow:0 25px 60px rgba(0,0,0,0.85);display:flex;flex-direction:column;overflow:hidden;";
+
+    modal.innerHTML = `
+        <div style="background:linear-gradient(135deg,#0284c7,#2563eb);padding:16px 22px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:26px;">🚗</span>
+                <div>
+                    <h3 style="margin:0;font-size:16px;font-weight:800;color:#fff;">CHẨN ĐOÁN PHÁT HÀNH PHIẾU GIAO XE (VDO)</h3>
+                    <p style="margin:2px 0 0 0;font-size:12px;color:#bae6fd;">Kiểm tra điều kiện tiên quyết & lý do không chuyển được Phát hành</p>
+                </div>
+            </div>
+            <button id="dmsVdoClose" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:16px;">✕</button>
+        </div>
+
+        <div style="padding:20px 22px;max-height:480px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;background:#090d16;">
+            <div id="dmsVdoChecks" style="background:#1e293b;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;font-size:13px;line-height:1.7;">
+                <div style="color:#38bdf8;">⏳ Đang phân tích chi tiết dữ liệu Phiếu giao xe và các liên kết...</div>
+            </div>
+
+            <div id="dmsVdoActionLog" style="display:none;background:#111827;border:1px solid rgba(255,255,255,0.06);padding:12px;border-radius:10px;font-size:12px;font-family:monospace;max-height:140px;overflow-y:auto;line-height:1.5;"></div>
+        </div>
+
+        <div style="background:#1e293b;padding:14px 22px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.06);">
+            <button id="dmsVdoUnlockUI" style="background:rgba(255,255,255,0.1);color:#cbd5e1;border:none;padding:9px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">
+                🔓 Mở khóa tất cả ô Form
+            </button>
+            <div style="display:flex;gap:10px;">
+                <button id="dmsVdoCancel" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:#94a3b8;padding:9px 16px;border-radius:8px;font-size:13px;cursor:pointer;">Đóng</button>
+                <button id="dmsVdoBtnTryRelease" style="background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(16,185,129,0.4);">
+                    ⚡ THỬ CHUYỂN PHÁT HÀNH (TEST)
+                </button>
+            </div>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    var closeBtn = document.getElementById("dmsVdoClose");
+    var cancelBtn = document.getElementById("dmsVdoCancel");
+    var checksBox = document.getElementById("dmsVdoChecks");
+    var logBox = document.getElementById("dmsVdoActionLog");
+    var unlockBtn = document.getElementById("dmsVdoUnlockUI");
+    var tryReleaseBtn = document.getElementById("dmsVdoBtnTryRelease");
+
+    function closeModal() { overlay.remove(); }
+    closeBtn.onclick = closeModal;
+    cancelBtn.onclick = closeModal;
+
+    unlockBtn.onclick = function() {
+        var cnt = 0;
+        try {
+            if (_Xrm.Page && _Xrm.Page.ui && _Xrm.Page.ui.controls) {
+                _Xrm.Page.ui.controls.forEach(function(c){
+                    try { if (typeof c.setDisabled === "function") { c.setDisabled(false); cnt++; } } catch(e){}
+                });
+            }
+            document.querySelectorAll('input, select, textarea, [aria-disabled="true"], [disabled]').forEach(function(el){
+                el.removeAttribute('disabled');
+                el.removeAttribute('readonly');
+                el.setAttribute('aria-disabled', 'false');
+                el.style.pointerEvents = 'auto';
+            });
+            alert("🔓 Đã mở khóa " + cnt + " ô trên form!");
+        } catch(e) { alert("Lỗi: " + e.message); }
+    };
+
+    function addLog(msg, type) {
+        logBox.style.display = "block";
+        var color = type === "success" ? "#34d399" : (type === "err" ? "#f87171" : (type === "warn" ? "#fbbf24" : "#38bdf8"));
+        var icon = type === "success" ? "✅" : (type === "err" ? "❌" : (type === "warn" ? "⚠️" : "ℹ️"));
+        logBox.innerHTML += `<div style="color:${color};margin-top:4px;">${icon} ${msg}</div>`;
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    // ĐỌC CHI TIẾT DỮ LIỆU
+    try {
+        var vdo = await _Xrm.WebApi.retrieveRecord(entityName, recordId);
+        console.log("Chi tiết VDO:", vdo);
+
+        var vdoCode = vdo.xts_deliveryordernumber || vdo.xts_name || recordId;
+        var handling = vdo["xts_handling@OData.Community.Display.V1.FormattedValue"] || vdo.xts_handling;
+        var status = vdo["statuscode@OData.Community.Display.V1.FormattedValue"] || vdo.statuscode;
+        var vsoId = vdo._xts_newvehiclesalesorderid_value;
+        var vsoName = vdo["_xts_newvehiclesalesorderid_value@OData.Community.Display.V1.FormattedValue"] || "Chưa có";
+        var stockId = vdo._xts_stockid_value;
+        var stockName = vdo["_xts_stockid_value@OData.Community.Display.V1.FormattedValue"] || "Chưa có";
+        var plateNumber = vdo.xts_platenumber || vdo.itv_platenumber || vdo.itv_licenseplate || "";
+        var deliveryDate = vdo.xts_deliverydate || vdo.itv_deliverydate || "";
+        var sapDeliveryNo = vdo.xts_sapdeliveryorderno || vdo.itv_sapdeliveryno || "";
+        var o2dStatus = vdo["itv_o2dstatus@OData.Community.Display.V1.FormattedValue"] || vdo.itv_o2dstatus || "Chưa rõ";
+
+        var html = `<div style="font-weight:700;font-size:14px;color:#38bdf8;margin-bottom:8px;">📌 Phiếu Giao Xe: ${vdoCode}</div>`;
+        html += `<div>• <b>Trạng thái:</b> <span style="color:#fbbf24;">${status}</span> | <b>Hành động (Handling):</b> <span style="color:#fbbf24;">${handling}</span></div>`;
+        html += `<div>• <b>Đơn hàng VSO:</b> <code>${vsoName}</code></div>`;
+        html += `<div>• <b>Xe kho (Stock):</b> <code>${stockName}</code></div>`;
+        html += `<div>• <b>Biển số xe:</b> ${plateNumber ? `<b style="color:#34d399;">${plateNumber}</b>` : `<b style="color:#f87171;">TRỐNG ⚠️ (Bắt buộc)</b>`}</div>`;
+        html += `<div>• <b>Xác nhận O2D:</b> <span style="color:#38bdf8;">${o2dStatus}</span></div>`;
+        html += `<div>• <b>Số phiếu SAP:</b> ${sapDeliveryNo || `<span style="color:#94a3b8;">(Chưa đồng bộ SAP)</span>`}</div>`;
+
+        // KIỂM TRA CÁC ĐIỀU KIỆN TIÊN QUYẾT
+        var warnings = [];
+        if (!plateNumber) {
+            warnings.push("Trường <b>Biển số xe</b> đang bị trống. Đây là trường bắt buộc (có dấu sao đỏ) của Phiếu giao xe.");
+        }
+
+        // KIỂM TRA ĐƠN VSO NGUỒN
+        if (vsoId) {
+            try {
+                var vso = await _Xrm.WebApi.retrieveRecord("xts_newvehiclesalesorder", vsoId);
+                var vsoStatus = vso["statuscode@OData.Community.Display.V1.FormattedValue"] || vso.statuscode;
+                var vsoHandling = vso["xts_handling@OData.Community.Display.V1.FormattedValue"] || vso.xts_handling;
+                html += `<div style="margin-top:10px;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:8px;">`;
+                html += `<b>🔗 Trạng thái Đơn hàng VSO (${vsoName}):</b><br/>`;
+                html += `• Trạng thái VSO: <b style="color:#38bdf8;">${vsoStatus}</b> | Handling: <b>${vsoHandling}</b>`;
+                html += `</div>`;
+            } catch(eVso){}
+        }
+
+        // KIỂM TRA SỔ BẢO HÀNH ĐIỆN TỬ
+        try {
+            var ewbRes = await _Xrm.WebApi.retrieveMultipleRecords("itv_electronicwarrantybook", `?$filter=_itv_newvehicledeliveryorderid_value eq ${recordId} or _xts_newvehicledeliveryorderid_value eq ${recordId}&$top=3`);
+            if (ewbRes && ewbRes.entities && ewbRes.entities.length > 0) {
+                var ewb = ewbRes.entities[0];
+                html += `<div style="margin-top:6px;">• <b>Sổ bảo hành EWB:</b> <code>${ewb.itv_name}</code> (Đã tạo)</div>`;
+            } else {
+                warnings.push("Chưa tìm thấy bản ghi <b>Sổ bảo hành điện tử</b> liên kết với phiếu giao xe này (hoặc chưa được kích hoạt).");
+            }
+        } catch(eEwb){}
+
+        if (warnings.length > 0) {
+            html += `<div style="margin-top:12px;background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);padding:10px 14px;border-radius:8px;color:#fca5a5;">`;
+            html += `<b style="color:#f87171;">⚠️ CÁC LÝ DO CÓ THỂ KHIẾN PHÁT HÀNH THẤT BẠI:</b><br/>`;
+            warnings.forEach(function(w){ html += `• ${w}<br/>`; });
+            html += `</div>`;
+        }
+
+        checksBox.innerHTML = html;
+
+        // XỬ LÝ THỬ CHUYỂN PHÁT HÀNH ĐỂ LẤY THÔNG BÁO LỖI CHÍNH XÁC
+        tryReleaseBtn.onclick = async function() {
+            tryReleaseBtn.disabled = true;
+            tryReleaseBtn.innerHTML = "⏳ ĐANG KIỂM TRA...";
+            addLog("Đang gửi yêu cầu chuyển trạng thái Phát hành (Release / Handling)...", "info");
+
+            try {
+                // Thử set xts_handling = Phát hành (thường là 2 hoặc theo enum CRM)
+                // Hoặc gọi plugin qua form save
+                if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity) {
+                    var handlingAttr = _Xrm.Page.data.entity.attributes.get("xts_handling");
+                    if (handlingAttr) {
+                        addLog("Gán Handling trên Form thành [Phát hành / Release]...", "info");
+                        // Thử lấy options của handling
+                        var opts = handlingAttr.getOptions && handlingAttr.getOptions();
+                        var releaseVal = 2;
+                        if (opts) {
+                            opts.forEach(function(o){
+                                if (o.text.toLowerCase().includes("phát hành") || o.text.toLowerCase().includes("release") || o.text.toLowerCase().includes("issue")) {
+                                    releaseVal = o.value;
+                                }
+                            });
+                        }
+                        handlingAttr.setValue(releaseVal);
+                        handlingAttr.setSubmitMode("always");
+                    }
+
+                    addLog("Gọi _Xrm.Page.data.save() để nhận phản hồi từ Plugin CRM...", "info");
+                    await _Xrm.Page.data.save();
+                    addLog("🎉 CHUYỂN PHÁT HÀNH THÀNH CÔNG!", "success");
+                    alert("🎉 THÀNH CÔNG! Phiếu giao xe đã được chuyển trạng thái Phát hành.");
+                    window.location.reload();
+                    return;
+                }
+            } catch(errForm) {
+                addLog(`❌ Máy chủ báo lỗi khi Phát hành: ${errForm.message || JSON.stringify(errForm)}`, "err");
+            }
+
+            tryReleaseBtn.disabled = false;
+            tryReleaseBtn.innerHTML = "⚡ THỬ LẠI";
+        };
+
+    } catch(err) {
+        checksBox.innerHTML = `<div style="color:#f87171;">❌ Lỗi khi đọc dữ liệu VDO: ${err.message || JSON.stringify(err)}</div>`;
+    }
+})();

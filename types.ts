@@ -1,7 +1,7 @@
 // This file now contains the centralized type definitions for the application,
 // resolving numerous "has no exported member" errors.
 
-export type AdminSubView = 'invoices' | 'pending' | 'paired' | 'matching' | 'vc' | 'phongkd' | 'stats' | 'incomplete_cars' | 'super_edit' | 'inquiries' | 'holds' | 'policies' | 'don_ton' | 'ai_knowledge' | 'ai_health' | 'management' | 'inventory' | 'system' | 'policy_summary' | 'pricing_calculator' | 'maintenance_fee' | 'vehicle_config';
+export type AdminSubView = 'invoices' | 'pending' | 'paired' | 'matching' | 'car_swap' | 'vc' | 'phongkd' | 'stats' | 'incomplete_cars' | 'super_edit' | 'holds' | 'policies' | 'don_ton' | 'ai_knowledge' | 'ai_health' | 'management' | 'inventory' | 'system' | 'policy_summary' | 'maintenance_fee' | 'vehicle_config' | 'pricing_config' | 'super_management' | 'live_users';
 
 export interface Order {
   "Số đơn hàng": string;
@@ -32,6 +32,12 @@ export interface Order {
   "BÁO BÁN"?: boolean | string;
   "KẾT QUẢ GỬI MAIL"?: string;
   "Trạng thái VC"?: string;
+  "Mã VC"?: string;
+  is_flex_match?: boolean;
+  ngoai_that_flex?: string[];
+  noi_that_flex?: string[];
+  matched_via_flex?: boolean;
+  matched_flex_color?: string;
   // other potential fields from components
   [key: string]: any; // Allow for other properties
 }
@@ -140,7 +146,7 @@ export interface Notification {
   type: NotificationType;
 }
 
-export type ActionType = 'approve' | 'supplement' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc' | 'vinclub' | 'confirmVc' | 'edit' | 'pair' | 'migrateToDrive' | 'reScan';
+export type ActionType = 'approve' | 'supplement' | 'rescan' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc' | 'vinclub' | 'confirmVc' | 'edit' | 'pair' | 'migrateToDrive' | 'reScan';
 
 export interface LogEntry {
   "Thời gian": string;
@@ -154,7 +160,7 @@ export interface ActiveUser {
   lastSeen: string;
 }
 
-export type User = { name: string, role: string, username: string };
+export type User = { name: string, role: string, username: string, email?: string, manager_id?: string | null };
 
 export interface MaintenanceFee {
   id: string;

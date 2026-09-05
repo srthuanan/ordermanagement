@@ -1,0 +1,28 @@
+javascript:(async function(){
+    try {
+        var x = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+        if (!x) {
+            for (var i = 0; i < frames.length; i++) {
+                try { if (frames[i].Xrm) { x = frames[i].Xrm; break; } } catch(e){}
+            }
+        }
+        var id = (new URLSearchParams(window.location.search).get("id") || "").replace(/[{}]/g, "");
+        var r = await x.WebApi.retrieveRecord("itv_electronicwarrantybook", id);
+        
+        console.log("=== TOÀN BỘ DỮ LIỆU EWB ===", r);
+
+        var lookups = [];
+        for (var k in r) {
+            if (k.startsWith("_") && k.endsWith("_value") && r[k]) {
+                var logical = r[k + "@Microsoft.Dynamics.CRM.lookuplogicalname"] || "";
+                var formatted = r[k + "@OData.Community.Display.V1.FormattedValue"] || r[k];
+                lookups.push(`• ${k.replace(/^_|_value$/g, '')} (${logical}): ${formatted} [ID: ${r[k]}]`);
+            }
+        }
+
+        var text = "🔍 CÁC BẢN GHI NGUỒN LIÊN KẾT VỚI SỔ BẢO HÀNH NÀY:\n\n" + lookups.join("\n\n");
+        alert(text);
+    } catch(e) {
+        alert("Lỗi quét: " + e.message);
+    }
+})();

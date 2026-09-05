@@ -1,0 +1,244 @@
+javascript:(function(){
+    var x = typeof Xrm !== "undefined" ? Xrm : null;
+    if (!x) {
+        for (var i = 0; i < frames.length; i++) {
+            try { if (frames[i].Xrm && frames[i].Xrm.WebApi) { x = frames[i].Xrm; break; } } catch (e) {}
+        }
+    }
+    if (!x && window.top) {
+        try { if (window.top.Xrm && window.top.Xrm.WebApi) x = window.top.Xrm; } catch (e) {}
+    }
+
+    if (!x || !x.WebApi) {
+        alert("❌ Không tìm thấy CRM Xrm.WebApi! Vui lòng đảm bảo bạn đang mở trang VinFast DMS (Dynamics 365).");
+        return;
+    }
+
+    var progressDiv = document.createElement('div');
+    progressDiv.style = 'position:fixed;top:15px;right:15px;background:#0f172a;color:#ffffff;padding:16px 22px;z-index:9999999;border-radius:12px;font-family:system-ui,-apple-system,sans-serif;font-size:14px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);border:1px solid #3b82f6;font-weight:600;display:flex;align-items:center;gap:12px;';
+    progressDiv.innerHTML = '<span style="font-size:20px;">🔍</span> <span>Đang truy vấn dữ liệu Khách hàng VinClub trên DMS...</span>';
+    document.body.appendChild(progressDiv);
+
+    var customerMap = new Map();
+
+    function addOrUpdateCust(cNum, name, oneId, vUserId, tier, vsoNum, source) {
+        if (!cNum) return;
+        cNum = String(cNum).trim();
+        var existing = customerMap.get(cNum) || {
+            ma_kh: cNum,
+            ten_kh: name || "Chưa rõ",
+            one_id: oneId || "",
+            vclub_user_id: vUserId || "",
+            hang_vinclub: tier || "",
+            cac_don_vso: [],
+            nguon_du_lieu: []
+        };
+
+        if (name && (existing.ten_kh === "Chưa rõ" || existing.ten_kh === "")) existing.ten_kh = name;
+        if (oneId && !existing.one_id) existing.one_id = oneId;
+        if (vUserId && !existing.vclub_user_id) existing.vclub_user_id = vUserId;
+        if (tier && (!existing.hang_vinclub || existing.hang_vinclub === "Thành viên")) existing.hang_vinclub = tier;
+        
+        if (vsoNum && existing.cac_don_vso.indexOf(vsoNum) === -1) {
+            existing.cac_don_vso.push(vsoNum);
+        }
+        if (source && existing.nguon_du_lieu.indexOf(source) === -1) {
+            existing.nguon_du_lieu.push(source);
+        }
+
+        customerMap.set(cNum, existing);
+    }
+
+    // 1. Query itv_customerexternalprofile
+    var p1 = x.WebApi.retrieveMultipleRecords("itv_customerexternalprofile", "?$select=itv_vclubuserid,itv_vclubtiercode,itv_customernumber&$filter=statecode eq 0")
+    .then(function(res) {
+        if (res && res.entities) {
+            res.entities.forEach(function(p) {
+                var cNum = p.itv_customernumber;
+                if (cNum) {
+                    addOrUpdateCust(cNum, "", "", p.itv_vclubuserid, p.itv_vclubtiercode, "", "Profile VinClub");
+                }
+            });
+        }
+    }).catch(function(e){ console.warn("Lỗi fetch profiles:", e); });
+
+    // 2. Query account
+    var p2 = x.WebApi.retrieveMultipleRecords("account", "?$select=accountnumber,name,itv_vgcustomerid,_itv_customerexternalprofile_value&$filter=statecode eq 0 and (itv_vgcustomerid ne null or _itv_customerexternalprofile_value ne null)")
+    .then(function(res) {
+        if (res && res.entities) {
+            res.entities.forEach(function(acc) {
+                var cNum = acc.accountnumber;
+                if (cNum) {
+                    addOrUpdateCust(cNum, acc.name, acc.itv_vgcustomerid, "", "", "", "Danh mục KH");
+                }
+            });
+        }
+    }).catch(function(e){ console.warn("Lỗi fetch accounts:", e); });
+
+    // 3. Query xts_newvehiclesalesorder
+    function fetchSalesOrders(query, accumulated) {
+        accumulated = accumulated || [];
+        return x.WebApi.retrieveMultipleRecords("xts_newvehiclesalesorder", query).then(function(res) {
+            var items = accumulated.concat(res.entities || []);
+            var nextLink = res["@odata.nextLink"] || res.nextLink;
+            if (nextLink) {
+                var nextQuery = nextLink.substring(nextLink.indexOf('?'));
+                return fetchSalesOrders(nextQuery, items);
+            }
+            return items;
+        });
+    }
+
+    var orderQuery = "?$select=xts_newvehiclesalesordernumber,xts_customernumber,itv_vinclubtiercode,itv_vinclubinterfacelog&$expand=xts_potentialcustomerid($select=accountnumber,name,itv_vgcustomerid)&$filter=statecode eq 0 and (itv_vinclubtiercode ne null or itv_vinclubinterfacelog ne null)";
+    var p3 = fetchSalesOrders(orderQuery).then(function(orders) {
+        orders.forEach(function(ord) {
+            var cNum = ord.xts_customernumber || (ord.xts_potentialcustomerid ? ord.xts_potentialcustomerid.accountnumber : "");
+            var cName = ord.xts_potentialcustomerid ? ord.xts_potentialcustomerid.name : "";
+            var oneId = ord.xts_potentialcustomerid ? ord.xts_potentialcustomerid.itv_vgcustomerid : "";
+            var vsoNum = ord.xts_newvehiclesalesordernumber;
+            var tier = ord.itv_vinclubtiercode || "";
+            var vUserId = "";
+
+            if (ord.itv_vinclubinterfacelog) {
+                try {
+                    var parsed = JSON.parse(ord.itv_vinclubinterfacelog);
+                    if (parsed && parsed.data) {
+                        if (parsed.data.vclub_user_id) vUserId = String(parsed.data.vclub_user_id);
+                        if (parsed.data.tier && parsed.data.tier.tier_name) {
+                            tier = parsed.data.tier.tier_name;
+                        }
+                    }
+                } catch(e) {}
+            }
+
+            if (cNum) {
+                addOrUpdateCust(cNum, cName, oneId, vUserId, tier, vsoNum, "Đơn hàng VSO");
+            }
+        });
+    }).catch(function(e){ console.warn("Lỗi fetch sales orders:", e); });
+
+    Promise.all([p1, p2, p3]).then(function() {
+        progressDiv.remove();
+
+        var resultList = Array.from(customerMap.values()).filter(function(item) {
+            return item.vclub_user_id || item.hang_vinclub || item.one_id || item.nguon_du_lieu.indexOf("Profile VinClub") !== -1;
+        });
+
+        showExportUI(resultList);
+    }).catch(function(err) {
+        progressDiv.remove();
+        alert("❌ Lỗi quét dữ liệu: " + (err.message || err));
+    });
+
+    function showExportUI(list) {
+        var old = document.getElementById("dms-vinclub-export-overlay");
+        if (old) old.remove();
+
+        var overlay = document.createElement("div");
+        overlay.id = "dms-vinclub-export-overlay";
+        overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.85);backdrop-filter:blur(10px);z-index:9999999;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,sans-serif;";
+
+        var modal = document.createElement("div");
+        modal.style = "width:90%;max-width:1100px;max-height:85vh;background:#1e293b;border-radius:16px;border:1px solid #334155;box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);display:flex;flex-direction:column;overflow:hidden;color:#f8fafc;";
+
+        // Header
+        var header = document.createElement("div");
+        header.style = "padding:20px 24px;background:#0f172a;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;";
+        header.innerHTML = '<div style="display:flex;align-items:center;gap:12px;">' +
+                           '<span style="font-size:28px;">🎖️</span>' +
+                           '<div><h2 style="margin:0;font-size:18px;font-weight:700;color:#38bdf8;">DANH SÁCH KHÁCH HÀNG XÁC THỰC VINCLUB TRÊN DMS</h2>' +
+                           '<p style="margin:4px 0 0 0;font-size:13px;color:#94a3b8;">Tìm thấy <strong>' + list.length + '</strong> Khách hàng có thông tin tài khoản VinClub</p></div>' +
+                           '</div>' +
+                           '<button id="close-vinclub-modal" style="background:transparent;border:none;color:#94a3b8;font-size:24px;cursor:pointer;padding:4px 12px;border-radius:8px;">✕</button>';
+
+        // Action Toolbar
+        var toolbar = document.createElement("div");
+        toolbar.style = "padding:14px 24px;background:#1e293b;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:12px;";
+        toolbar.innerHTML = '<input type="text" id="vinclub-search-input" placeholder="🔍 Tìm theo Mã KH, Tên KH, VinClub User ID..." style="flex:1;background:#0f172a;border:1px solid #475569;border-radius:8px;padding:8px 14px;color:#ffffff;font-size:14px;outline:none;">' +
+                            '<div style="display:flex;gap:10px;">' +
+                            '<button id="btn-copy-csv" style="background:#2563eb;color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">📋 Copy CSV</button>' +
+                            '<button id="btn-download-json" style="background:#059669;color:white;border:none;padding:8px 16px;border-radius:8px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">📥 Tải JSON</button>' +
+                            '</div>';
+
+        // Table Container
+        var contentDiv = document.createElement("div");
+        contentDiv.style = "flex:1;overflow-y:auto;padding:0;";
+        
+        function renderTable(filterText) {
+            filterText = (filterText || "").toLowerCase().trim();
+            var filtered = list.filter(function(item) {
+                if (!filterText) return true;
+                return item.ma_kh.toLowerCase().indexOf(filterText) !== -1 ||
+                       item.ten_kh.toLowerCase().indexOf(filterText) !== -1 ||
+                       item.vclub_user_id.toLowerCase().indexOf(filterText) !== -1 ||
+                       item.one_id.toLowerCase().indexOf(filterText) !== -1 ||
+                       item.hang_vinclub.toLowerCase().indexOf(filterText) !== -1;
+            });
+
+            var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;text-align:left;">' +
+                       '<thead style="position:sticky;top:0;background:#0f172a;color:#94a3b8;border-bottom:1px solid #334155;z-index:2;">' +
+                       '<tr>' +
+                       '<th style="padding:12px 16px;">STT</th>' +
+                       '<th style="padding:12px 16px;">Mã KH DMS</th>' +
+                       '<th style="padding:12px 16px;">Tên Khách Hàng</th>' +
+                       '<th style="padding:12px 16px;">VinClub User ID</th>' +
+                       '<th style="padding:12px 16px;">Hạng VinClub</th>' +
+                       '<th style="padding:12px 16px;">Mã OneID Vingroup</th>' +
+                       '<th style="padding:12px 16px;">Đơn Hàng VSO</th>' +
+                       '</tr>' +
+                       '</thead><tbody>';
+
+            if (filtered.length === 0) {
+                html += '<tr><td colspan="7" style="padding:32px;text-align:center;color:#64748b;">Không tìm thấy kết quả nào phù hợp.</td></tr>';
+            } else {
+                filtered.forEach(function(item, idx) {
+                    var bg = idx % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent";
+                    html += '<tr style="background:' + bg + ';border-bottom:1px solid rgba(255,255,255,0.05);">' +
+                            '<td style="padding:12px 16px;color:#64748b;">' + (idx + 1) + '</td>' +
+                            '<td style="padding:12px 16px;font-weight:600;color:#38bdf8;">' + item.ma_kh + '</td>' +
+                            '<td style="padding:12px 16px;font-weight:600;color:#ffffff;">' + item.ten_kh + '</td>' +
+                            '<td style="padding:12px 16px;font-family:monospace;color:#f59e0b;">' + (item.vclub_user_id || '<span style="color:#64748b;">---</span>') + '</td>' +
+                            '<td style="padding:12px 16px;"><span style="background:rgba(16,185,129,0.15);color:#34d399;padding:3px 8px;border-radius:6px;font-weight:600;border:1px solid rgba(16,185,129,0.3);">' + (item.hang_vinclub || 'Member') + '</span></td>' +
+                            '<td style="padding:12px 16px;color:#cbd5e1;">' + (item.one_id || '<span style="color:#64748b;">---</span>') + '</td>' +
+                            '<td style="padding:12px 16px;color:#94a3b8;font-size:12px;">' + (item.cac_don_vso.join(", ") || "---") + '</td>' +
+                            '</tr>';
+                });
+            }
+
+            html += '</tbody></table>';
+            contentDiv.innerHTML = html;
+        }
+
+        renderTable("");
+
+        modal.appendChild(header);
+        modal.appendChild(toolbar);
+        modal.appendChild(contentDiv);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        // Event Listeners
+        document.getElementById("close-vinclub-modal").onclick = function() { overlay.remove(); };
+        document.getElementById("vinclub-search-input").oninput = function(e) { renderTable(e.target.value); };
+
+        document.getElementById("btn-copy-csv").onclick = function() {
+            var csv = "Mã KH DMS,Tên Khách Hàng,VinClub User ID,Hạng VinClub,Mã OneID Vingroup,Đơn Hàng VSO\n";
+            list.forEach(function(item) {
+                csv += '"' + item.ma_kh + '","' + item.ten_kh + '","' + item.vclub_user_id + '","' + (item.hang_vinclub || "Member") + '","' + item.one_id + '","' + item.cac_don_vso.join("; ") + '"\n';
+            });
+            navigator.clipboard.writeText(csv).then(function() {
+                alert("📋 Đã sao chép danh sách định dạng CSV vào Clipboard!");
+            });
+        };
+
+        document.getElementById("download-json").onclick = function() {
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(list, null, 2));
+            var downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "dms_vinclub_customers.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        };
+    }
+})();

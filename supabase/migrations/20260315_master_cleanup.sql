@@ -17,8 +17,8 @@ BEGIN
         WHERE trang_thai = 'Đang giữ' 
         AND thoi_gian_het_han_giu IS NOT NULL 
         AND thoi_gian_het_han_giu <> 'Vô thời hạn'
-        -- Parse định dạng DD/MM/YYYY HH24:MI:SS
-        AND to_timestamp(thoi_gian_het_han_giu, 'DD/MM/YYYY HH24:MI:SS') < NOW()
+        -- Parse định dạng DD/MM/YYYY HH24:MI:SS và ép về múi giờ Việt Nam để so sánh
+        AND (to_timestamp(thoi_gian_het_han_giu, 'DD/MM/YYYY HH24:MI:SS')::timestamp AT TIME ZONE 'Asia/Ho_Chi_Minh') < NOW()
     ) LOOP
         PERFORM public.rpc_release_car(r.vin, 'expired');
         v_released_count := v_released_count + 1;

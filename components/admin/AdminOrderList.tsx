@@ -3,6 +3,7 @@ import moment from 'moment';
 import { Order, SortConfig, StockVehicle, ActionType } from '../../types';
 import StatusBadge from '../ui/StatusBadge';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
+import MarqueeText from '../ui/MarqueeText';
 
 interface AdminOrderListProps {
     orders: Order[];
@@ -151,9 +152,15 @@ const AdminOrderCard: React.FC<{
                 {/* Header: Customer & Status */}
                 <div className="flex justify-between items-start mb-2">
                     <div className="flex-1 min-w-0 pr-2">
-                        <div className="flex items-center gap-2 mb-0.5">
-                            <h3 className="font-bold text-text-primary truncate" title={order["Tên khách hàng"]}>{order["Tên khách hàng"]}</h3>
-                            <span className="text-[10px] font-mono text-text-secondary bg-surface-ground px-1.5 rounded border border-border-secondary">{index + 1}</span>
+                        <div className="flex items-center gap-2 mb-0.5 min-w-0">
+                            <div className="min-w-0 flex-1 overflow-hidden">
+                                <MarqueeText 
+                                    text={order["Tên khách hàng"] || '—'} 
+                                    className="font-bold text-text-primary uppercase"
+                                    title={order["Tên khách hàng"]}
+                                />
+                            </div>
+                            <span className="text-[10px] font-mono text-text-secondary bg-surface-ground px-1.5 rounded border border-border-secondary shrink-0">{index + 1}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-text-secondary">
                             <CopyableField text={orderNumber} showToast={showToast} className="font-mono hover:text-accent-primary transition-colors" />

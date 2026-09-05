@@ -43,7 +43,10 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
 
   const canCancel = ['chưa ghép', 'đã ghép'].includes(generalStatus);
   const canRequestInvoice = generalStatus === 'đã ghép';
-  const canAddSupplement = generalStatus === 'yêu cầu bổ sung';
+  const isSupplementRequested = generalStatus === 'yêu cầu bổ sung';
+  const adminNotes = (order['Ghi chú Admin'] || order.ghi_chu_admin || '').toString();
+  const isRescanRequested = adminNotes.includes('[YÊU CẦU SCAN LẠI]');
+  const canAddSupplement = (isSupplementRequested || isRescanRequested) && generalStatus !== 'đã hủy';
   const canEdit = !['đã xuất hóa đơn', 'đã hủy', 'chờ ký hóa đơn'].includes(generalStatus);
 
   // Kiểm tra ngày xuất hóa đơn (phải <= 28/02/2026)
@@ -74,7 +77,7 @@ const ActionMenu: React.FC<ActionMenuProps> = ({ order, onViewDetails, onCancel,
     { label: 'Xem chi tiết', icon: 'fa-eye text-accent-primary', action: onViewDetails, condition: true, title: 'Xem chi tiết đơn hàng' },
     { label: 'Chỉnh Sửa', icon: 'fa-pencil-alt text-blue-500', action: onEdit!, condition: !!onEdit && canEdit, title: 'Chỉnh sửa thông tin đơn hàng' },
     { label: 'Yêu cầu Xuất Hóa Đơn', icon: 'fa-file-invoice-dollar text-green-500', action: onRequestInvoice, condition: canRequestInvoice, title: 'Tải lên hợp đồng và đề nghị để xuất hóa đơn' },
-    { label: 'Bổ Sung File', icon: 'fa-edit text-orange-500', action: onSupplement, condition: canAddSupplement, title: 'Bổ sung hoặc thay thế tệp đã gửi' },
+    { label: 'Bổ Sung', icon: 'fa-file-upload text-orange-500', action: onSupplement, condition: canAddSupplement, title: 'Bổ sung hoặc thay thế tệp scan hợp đồng / đề nghị' },
     { label: 'Yêu Cầu Cấp VC', icon: 'fa-id-card text-blue-500', action: onRequestVC!, condition: !!onRequestVC && canRequestVC, title: 'Yêu cầu cấp tài khoản VinClub' },
     { label: 'Xác Thực UNC VC', icon: 'fa-check text-teal-500', action: onConfirmVC!, condition: !!onConfirmVC && canConfirmVC, title: 'Xác thực đã nhận UNC cho VinClub' },
     { 

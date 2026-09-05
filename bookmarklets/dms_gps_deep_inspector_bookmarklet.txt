@@ -1,0 +1,457 @@
+javascript:(async function () {
+    /* =========================================================================
+     * VINFAST DMS - TRÌNH SOI TOÀN BỘ DỮ LIỆU & HẠ TẦNG GPS / TELEMATICS
+     * ========================================================================= */
+
+    function getXrm() {
+        try { if (window.Xrm && window.Xrm.WebApi) return window.Xrm; } catch(e){}
+        try { if (window.parent && window.parent.Xrm && window.parent.Xrm.WebApi) return window.parent.Xrm; } catch(e){}
+        try { if (window.top && window.top.Xrm && window.top.Xrm.WebApi) return window.top.Xrm; } catch(e){}
+        try {
+            var f = window.frames;
+            for (var i = 0; i < f.length; i++) {
+                try { if (f[i].Xrm && f[i].Xrm.WebApi) return f[i].Xrm; } catch(e){}
+            }
+        } catch(e){}
+        return null;
+    }
+
+    var _Xrm = getXrm();
+    if (!_Xrm) {
+        alert("⚠️ Vui lòng mở trang VinFast Dynamics 365 DMS trước khi bấm bookmarklet!");
+        return;
+    }
+
+    // Auto-detect current VIN from open form if any
+    var currentVin = "";
+    try {
+        if (_Xrm.Page && _Xrm.Page.data && _Xrm.Page.data.entity) {
+            var attrs = ["xts_chassisnumber", "itv_vinnumber", "so_vin", "vinCode"];
+            for (var i = 0; i < attrs.length; i++) {
+                var a = _Xrm.Page.getAttribute(attrs[i]);
+                if (a && a.getValue()) {
+                    currentVin = String(a.getValue()).trim().toUpperCase();
+                    break;
+                }
+            }
+        }
+    } catch(e){}
+
+    var old = document.getElementById("dmsGpsInspectorOverlay");
+    if (old) old.remove();
+
+    var overlay = document.createElement("div");
+    overlay.id = "dmsGpsInspectorOverlay";
+    overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.88);backdrop-filter:blur(10px);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#f8fafc;";
+
+    var modal = document.createElement("div");
+    modal.style = "background:#0f172a;width:920px;max-width:96%;height:88vh;max-height:850px;border-radius:18px;border:1px solid rgba(56,189,248,0.3);box-shadow:0 30px 70px rgba(0,0,0,0.85);display:flex;flex-direction:column;overflow:hidden;";
+
+    modal.innerHTML = `
+        <div style="background:linear-gradient(135deg,#0284c7,#2563eb,#1d4ed8);padding:16px 24px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:28px;">🛰️</span>
+                <div>
+                    <h3 style="margin:0;font-size:16px;font-weight:800;color:#fff;letter-spacing:0.5px;">VINFAST DMS GPS & TELEMATICS DEEP INSPECTOR</h3>
+                    <p style="margin:3px 0 0 0;font-size:12px;color:#bae6fd;">Khám phá toàn diện cấu trúc API, Action OData & trường dữ liệu GPS mới nhất trên DMS</p>
+                </div>
+            </div>
+            <button id="dmsGpsCloseBtn" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:16px;">✕</button>
+        </div>
+
+        <div style="display:flex;background:#090d16;border-bottom:1px solid rgba(255,255,255,0.08);padding:6px 16px;gap:8px;flex-shrink:0;">
+            <button class="dms-tab-btn active" data-tab="tab-vf-position" style="padding:8px 14px;border-radius:8px;border:none;background:#0284c7;color:#fff;font-size:12px;font-weight:bold;cursor:pointer;">🎯 Bảng Mới itv_vinfastposition & Code DMS</button>
+            <button class="dms-tab-btn" data-tab="tab-test-live" style="padding:8px 14px;border-radius:8px;border:none;background:transparent;color:#94a3b8;font-size:12px;font-weight:bold;cursor:pointer;">⚡ Test Gói Tin VIN</button>
+            <button class="dms-tab-btn" data-tab="tab-metadata" style="padding:8px 14px;border-radius:8px;border:none;background:transparent;color:#94a3b8;font-size:12px;font-weight:bold;cursor:pointer;">🔍 Quét Bảng & Action CRM</button>
+            <button class="dms-tab-btn" data-tab="tab-inventory-fields" style="padding:8px 14px;border-radius:8px;border:none;background:transparent;color:#94a3b8;font-size:12px;font-weight:bold;cursor:pointer;">🏢 Cột Vị Trí xts_inventory</button>
+        </div>
+
+        <div style="flex-grow:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;background:#0b1120;">
+            <!-- TAB 1: TEST VIN LIVE -->
+            <div id="tab-test-live" class="dms-tab-content" style="display:none;flex-direction:column;gap:14px;">
+                <div style="background:#1e293b;padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:12px;">
+                    <div style="font-size:13px;font-weight:700;color:#38bdf8;">1. NHẬP SỐ VIN ĐỂ GỬI YÊU CẦU TEST API:</div>
+                    <div style="display:flex;gap:10px;align-items:center;">
+                        <input id="dmsInputVin" type="text" placeholder="Nhập 17 ký tự số VIN..." value="${currentVin || 'RLNVSJSE4TH805590'}" style="flex-grow:1;padding:10px 14px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#fff;font-family:monospace;font-size:14px;letter-spacing:1px;outline:none;" />
+                        <button id="btnTestCache" style="background:#0284c7;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap;">📍 Test Cache (isUpdate=false)</button>
+                        <button id="btnTestLive" style="background:#10b981;color:#fff;border:none;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:bold;cursor:pointer;white-space:nowrap;">🚀 Bắn Sóng Live (isUpdate=true)</button>
+                    </div>
+                </div>
+
+                <div id="dmsLiveResultSection" style="display:none;flex-direction:column;gap:12px;">
+                    <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;font-size:12px;">
+                        <div style="background:#1e293b;padding:12px;border-radius:10px;border:1px solid rgba(56,189,248,0.2);">
+                            <div style="color:#94a3b8;font-size:11px;">TỌA ĐỘ VỊ TRÍ</div>
+                            <div id="resCoord" style="color:#38bdf8;font-weight:bold;font-size:14px;margin-top:4px;font-family:monospace;">--</div>
+                        </div>
+                        <div style="background:#1e293b;padding:12px;border-radius:10px;border:1px solid rgba(56,189,248,0.2);">
+                            <div style="color:#94a3b8;font-size:11px;">MỐC THỜI GIAN GPS</div>
+                            <div id="resTime" style="color:#10b981;font-weight:bold;font-size:13px;margin-top:4px;">--</div>
+                        </div>
+                        <div style="background:#1e293b;padding:12px;border-radius:10px;border:1px solid rgba(56,189,248,0.2);">
+                            <div style="color:#94a3b8;font-size:11px;">TỐC ĐỘ / HƯỚNG</div>
+                            <div id="resSpeed" style="color:#f59e0b;font-weight:bold;font-size:13px;margin-top:4px;">--</div>
+                        </div>
+                        <div style="background:#1e293b;padding:12px;border-radius:10px;border:1px solid rgba(56,189,248,0.2);">
+                            <div style="color:#94a3b8;font-size:11px;">MÃ PHẢN HỒI HTTP</div>
+                            <div id="resStatus" style="color:#fff;font-weight:bold;font-size:13px;margin-top:4px;">--</div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div style="font-size:13px;font-weight:700;color:#cbd5e1;">CHI TIẾT TẤT CẢ CÁC TRƯỜNG TRONG GÓI TIN RAW (JSON):</div>
+                        <div style="display:flex;gap:8px;">
+                            <button id="btnOpenGoogleMaps" style="display:none;background:#3b82f6;color:white;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:bold;cursor:pointer;">🗺️ Mở Trên Google Maps</button>
+                            <button id="btnCopyJson" style="background:#334155;color:white;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:bold;cursor:pointer;">📋 Copy JSON</button>
+                        </div>
+                    </div>
+
+                    <pre id="resRawJson" style="background:#050811;padding:16px;border-radius:10px;border:1px solid #1e293b;font-family:monospace;font-size:12px;color:#a5f3fc;overflow-x:auto;max-height:280px;line-height:1.5;"></pre>
+                </div>
+            </div>
+
+            <!-- TAB 2: METADATA SEARCH -->
+            <div id="tab-metadata" class="dms-tab-content" style="display:none;flex-direction:column;gap:14px;">
+                <div style="background:#1e293b;padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <b style="color:#38bdf8;font-size:13px;">QUÉT TOÀN BỘ CÁC THỰC THỂ (BẢNG) & ACTION LIÊN QUAN ĐẾN VỊ TRÍ / TRACKING</b>
+                        <p style="margin:2px 0 0 0;font-size:11px;color:#94a3b8;">Tìm trong Metadata CRM các từ khóa: tracking, position, gps, telematics, tcu, location</p>
+                    </div>
+                    <button id="btnScanEntities" style="background:#0284c7;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;">🔍 Bắt đầu quét</button>
+                </div>
+                <div id="entityScanResults" style="font-family:monospace;font-size:12px;background:#050811;padding:14px;border-radius:10px;border:1px solid #1e293b;min-height:160px;max-height:350px;overflow-y:auto;color:#cbd5e1;">
+                    Chưa quét. Hãy bấm nút "Bắt đầu quét".
+                </div>
+            </div>
+
+            <!-- TAB 3: INVENTORY FIELDS -->
+            <div id="tab-inventory-fields" class="dms-tab-content" style="display:none;flex-direction:column;gap:14px;">
+                <div style="background:#1e293b;padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <b style="color:#38bdf8;font-size:13px;">QUÉT CÁC CỘT DỮ LIỆU CỦA BẢNG KHO XE (xts_inventorynewvehicle)</b>
+                        <p style="margin:2px 0 0 0;font-size:11px;color:#94a3b8;">Kiểm tra xem VinFast có lưu trực tiếp tọa độ / bãi xe / telemetry vào bảng kho xe hay không</p>
+                    </div>
+                    <button id="btnScanInvFields" style="background:#0284c7;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;">🔍 Quét các cột</button>
+                </div>
+                <div id="invFieldsResults" style="font-family:monospace;font-size:12px;background:#050811;padding:14px;border-radius:10px;border:1px solid #1e293b;min-height:160px;max-height:350px;overflow-y:auto;color:#cbd5e1;">
+                    Chưa quét. Hãy bấm nút "Quét các cột".
+                </div>
+            </div>
+
+            <!-- TAB 4: VINFAST POSITION & WEBRESOURCES -->
+            <div id="tab-vf-position" class="dms-tab-content" style="display:flex;flex-direction:column;gap:14px;">
+                <div style="background:#1e293b;padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;">
+                    <div>
+                        <b style="color:#10b981;font-size:13px;">QUÉT THỰC THỂ MỚI itv_vinfastposition & WEBRESOURCES TRACKING CỦA DMS</b>
+                        <p style="margin:2px 0 0 0;font-size:11px;color:#94a3b8;">Khám phá trực tiếp dữ liệu tọa độ mới và code JavaScript định vị của VinFast</p>
+                    </div>
+                    <button id="btnScanVfPosition" style="background:#10b981;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 0 15px rgba(16,185,129,0.5);">🚀 Quét dữ liệu mới</button>
+                </div>
+                <div id="vfPositionResults" style="font-family:monospace;font-size:12px;background:#050811;padding:14px;border-radius:10px;border:1px solid #1e293b;min-height:220px;max-height:400px;overflow-y:auto;color:#cbd5e1;white-space:pre-wrap;line-height:1.5;">
+                    ⏳ Đang tự động kết nối và quét dữ liệu mới...
+                </div>
+            </div>
+        </div>
+
+        <div style="padding:12px 20px;background:#090d16;border-top:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+            <span style="font-size:11px;color:#64748b;">VinFast DMS Diagnostics • Order Management System</span>
+            <button id="btnCopyFullSummary" style="background:#2563eb;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;">📋 Sao chép báo cáo đầy đủ</button>
+        </div>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Tab switcher logic
+    var tabBtns = modal.querySelectorAll(".dms-tab-btn");
+    tabBtns.forEach(function (btn) {
+        btn.onclick = function () {
+            tabBtns.forEach(function (b) {
+                b.classList.remove("active");
+                b.style.background = "transparent";
+                b.style.color = "#94a3b8";
+            });
+            btn.classList.add("active");
+            btn.style.background = "#0284c7";
+            btn.style.color = "#fff";
+
+            modal.querySelectorAll(".dms-tab-content").forEach(function (c) {
+                c.style.display = "none";
+            });
+            var targetId = btn.getAttribute("data-tab");
+            var targetEl = document.getElementById(targetId);
+            if (targetEl) targetEl.style.display = "flex";
+        };
+    });
+
+    // Close logic
+    document.getElementById("dmsGpsCloseBtn").onclick = function () {
+        overlay.remove();
+    };
+
+    var lastTestedData = null;
+
+    // Execute Live Test function
+    async function executeGpsTest(isUpdate) {
+        var vin = (document.getElementById("dmsInputVin").value || "").trim().toUpperCase();
+        if (!vin) {
+            alert("Vui lòng nhập số VIN hợp lệ!");
+            return;
+        }
+
+        var resultSec = document.getElementById("dmsLiveResultSection");
+        resultSec.style.display = "flex";
+        document.getElementById("resCoord").textContent = "⏳ Đang kết nối...";
+        document.getElementById("resTime").textContent = "⏳ Đang chờ...";
+        document.getElementById("resSpeed").textContent = "⏳ Đang đọc...";
+        document.getElementById("resStatus").textContent = "Đang gửi...";
+        document.getElementById("resRawJson").textContent = "// Đang gửi yêu cầu POST đến /api/data/v9.2/itv_trackingvehicleposition (isUpdate=" + isUpdate + ")...";
+
+        var startTime = performance.now();
+        var payload = {
+            itv_requestObject: JSON.stringify({
+                data: [{ vinCode: vin }],
+                isUpdate: isUpdate
+            })
+        };
+
+        try {
+            var res = await fetch("/api/data/v9.2/itv_trackingvehicleposition", {
+                method: "POST",
+                headers: {
+                    "OData-MaxVersion": "4.0",
+                    "OData-Version": "4.0",
+                    "Accept": "application/json",
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            var duration = Math.round(performance.now() - startTime);
+            var statusText = "HTTP " + res.status + " (" + duration + "ms)";
+            document.getElementById("resStatus").textContent = statusText;
+
+            var resJson = await res.json();
+            var innerObj = null;
+            try {
+                innerObj = JSON.parse(resJson.itv_responseObject);
+            } catch (e) {
+                innerObj = resJson.itv_responseObject;
+            }
+
+            lastTestedData = {
+                vin: vin,
+                isUpdate: isUpdate,
+                httpStatus: res.status,
+                latencyMs: duration,
+                response: resJson,
+                parsedResponseObject: innerObj
+            };
+
+            // Analyze extracted data
+            var packet = innerObj;
+            if (innerObj && innerObj.data && Array.isArray(innerObj.data)) packet = innerObj.data[0];
+            else if (Array.isArray(innerObj)) packet = innerObj[0];
+
+            if (packet && typeof packet === "object") {
+                var lat = packet.Lat || packet.lat || packet.latitude || packet.Latitude || "--";
+                var lng = packet.Long || packet.long || packet.Lng || packet.lng || packet.longitude || packet.Longitude || "--";
+                document.getElementById("resCoord").textContent = lat + ", " + lng;
+
+                var tVal = packet.gpsTime || packet.deviceTime || packet.trackingTime || packet.time || packet.timestamp || packet.dateTime || packet.updatedTime || packet.createdDate || "Không có";
+                document.getElementById("resTime").textContent = String(tVal);
+
+                var spd = packet.Speed || packet.speed || packet.Velocity || packet.velocity || 0;
+                var head = packet.Heading || packet.heading || packet.Bearing || packet.bearing || "--";
+                document.getElementById("resSpeed").textContent = spd + " km/h | " + head + "°";
+
+                if (lat !== "--" && lng !== "--") {
+                    var gMapBtn = document.getElementById("btnOpenGoogleMaps");
+                    gMapBtn.style.display = "inline-block";
+                    gMapBtn.onclick = function () {
+                        window.open("https://www.google.com/maps?q=" + lat + "," + lng, "_blank");
+                    };
+                }
+            } else {
+                document.getElementById("resCoord").textContent = "Không tìm thấy";
+                document.getElementById("resTime").textContent = "Không tìm thấy";
+                document.getElementById("resSpeed").textContent = "--";
+            }
+
+            document.getElementById("resRawJson").textContent = JSON.stringify({
+                _metadata: {
+                    testedVin: vin,
+                    isUpdateMode: isUpdate,
+                    latency: duration + "ms",
+                    dmsEndpoint: "/api/data/v9.2/itv_trackingvehicleposition"
+                },
+                rawResponse: resJson,
+                parsedInnerPacket: innerObj
+            }, null, 2);
+
+        } catch (err) {
+            document.getElementById("resStatus").textContent = "Lỗi kết nối";
+            document.getElementById("resCoord").textContent = "Lỗi";
+            document.getElementById("resRawJson").textContent = "❌ Lỗi: " + err.message;
+        }
+    }
+
+    document.getElementById("btnTestCache").onclick = function () { executeGpsTest(false); };
+    document.getElementById("btnTestLive").onclick = function () { executeGpsTest(true); };
+
+    // Copy JSON logic
+    document.getElementById("btnCopyJson").onclick = function () {
+        var txt = document.getElementById("resRawJson").textContent;
+        navigator.clipboard.writeText(txt).then(function () {
+            alert("✅ Đã sao chép toàn bộ gói tin JSON vào bộ nhớ tạm!");
+        });
+    };
+
+    // TAB 2: Scan Entities
+    document.getElementById("btnScanEntities").onclick = async function () {
+        var el = document.getElementById("entityScanResults");
+        el.innerHTML = "⏳ Đang quét Metadata Dynamics CRM qua EntityDefinitions API...";
+        try {
+            var url = "/api/data/v9.2/EntityDefinitions?$select=LogicalName,DisplayName,IsCustomEntity,PrimaryIdAttribute";
+            var res = await fetch(url, { headers: { "Accept": "application/json" } });
+            var data = await res.json();
+            var list = data.value || [];
+
+            var keywords = ["tracking", "position", "gps", "telemat", "tcu", "location", "device", "vehicle"];
+            var matched = list.filter(function (e) {
+                var name = (e.LogicalName || "").toLowerCase();
+                for (var i = 0; i < keywords.length; i++) {
+                    if (name.indexOf(keywords[i]) !== -1) return true;
+                }
+                return false;
+            });
+
+            var html = '<div style="color:#10b981;font-weight:bold;margin-bottom:8px;">✅ Tìm thấy ' + matched.length + ' thực thể liên quan:</div>';
+            matched.forEach(function (e, idx) {
+                var disp = (e.DisplayName && e.DisplayName.UserLocalizedLabel) ? e.DisplayName.UserLocalizedLabel.Label : "N/A";
+                html += '<div style="padding:6px 8px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;">' +
+                    '<span><b style="color:#38bdf8;">' + (idx + 1) + '. ' + e.LogicalName + '</b> (' + disp + ')</span>' +
+                    '<span style="color:#94a3b8;font-size:10px;">' + (e.IsCustomEntity ? 'Tùy chỉnh (Custom)' : 'Gốc (System)') + '</span>' +
+                    '</div>';
+            });
+            el.innerHTML = html;
+        } catch (err) {
+            el.innerHTML = '<span style="color:#ef4444;">❌ Lỗi quét thực thể: ' + err.message + '</span>';
+        }
+    };
+
+    // TAB 3: Scan Inventory Fields
+    document.getElementById("btnScanInvFields").onclick = async function () {
+        var el = document.getElementById("invFieldsResults");
+        el.innerHTML = "⏳ Đang quét danh sách các cột thuộc tính của bảng xts_inventorynewvehicle...";
+        try {
+            var url = "/api/data/v9.2/EntityDefinitions(LogicalName='xts_inventorynewvehicle')/Attributes?$select=LogicalName,DisplayName,AttributeType";
+            var res = await fetch(url, { headers: { "Accept": "application/json" } });
+            var data = await res.json();
+            var list = data.value || [];
+
+            var keywords = ["lat", "long", "gps", "track", "pos", "loc", "site", "yard", "bai", "vi_tri", "tcu", "status"];
+            var matched = list.filter(function (a) {
+                var name = (a.LogicalName || "").toLowerCase();
+                for (var i = 0; i < keywords.length; i++) {
+                    if (name.indexOf(keywords[i]) !== -1) return true;
+                }
+                return false;
+            });
+
+            var html = '<div style="color:#10b981;font-weight:bold;margin-bottom:8px;">✅ Tìm thấy ' + matched.length + ' cột liên quan đến vị trí / tọa độ / bãi xe:</div>';
+            matched.forEach(function (a, idx) {
+                var disp = (a.DisplayName && a.DisplayName.UserLocalizedLabel) ? a.DisplayName.UserLocalizedLabel.Label : "N/A";
+                html += '<div style="padding:6px 8px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;">' +
+                    '<span><b style="color:#38bdf8;">' + (idx + 1) + '. ' + a.LogicalName + '</b> (' + disp + ')</span>' +
+                    '<span style="color:#f59e0b;font-size:11px;">' + a.AttributeType + '</span>' +
+                    '</div>';
+            });
+            el.innerHTML = html;
+        } catch (err) {
+            el.innerHTML = '<span style="color:#ef4444;">❌ Lỗi quét thuộc tính: ' + err.message + '</span>';
+        }
+    };
+
+    // TAB 4: Scan itv_vinfastposition & WebResources
+    document.getElementById("btnScanVfPosition").onclick = async function () {
+        var el = document.getElementById("vfPositionResults");
+        el.textContent = "⏳ Đang quét thực thể itv_vinfastposition và web resources JavaScript...";
+        var report = [];
+
+        // 1. Check itv_vinfastposition records
+        try {
+            var r = await _Xrm.WebApi.retrieveMultipleRecords("itv_vinfastposition", "?$top=15&$orderby=createdon desc");
+            report.push("=== 1. DỮ LIỆU BẢNG itv_vinfastposition (" + (r.entities.length) + " bản ghi gần nhất) ===");
+            if (r.entities.length > 0) {
+                report.push(JSON.stringify(r.entities, null, 2));
+            } else {
+                report.push("⚠️ Bảng itv_vinfastposition hiện đang trống (chưa có bản ghi nào).");
+            }
+        } catch (e) {
+            report.push("❌ Lỗi đọc itv_vinfastposition: " + e.message);
+        }
+
+        // 2. Check attributes of itv_vinfastposition
+        try {
+            var aRes = await fetch("/api/data/v9.2/EntityDefinitions(LogicalName='itv_vinfastposition')/Attributes?$select=LogicalName,DisplayName,AttributeType");
+            var aJson = await aRes.json();
+            var attrs = (aJson.value || []).map(function (a) {
+                var disp = (a.DisplayName && a.DisplayName.UserLocalizedLabel) ? a.DisplayName.UserLocalizedLabel.Label : "";
+                return a.LogicalName + (disp ? " (" + disp + ")" : "");
+            });
+            report.push("\n=== 2. CÁC CỘT CỦA BẢNG itv_vinfastposition (" + attrs.length + " cột) ===\n" + attrs.join(", "));
+        } catch (e) {
+            report.push("\n❌ Lỗi đọc thuộc tính itv_vinfastposition: " + e.message);
+        }
+
+        // 3. Scan WebResources for Tracking JavaScript code
+        try {
+            var wrRes = await _Xrm.WebApi.retrieveMultipleRecords("webresource", "?$select=name,displayname&$filter=contains(name, 'track') or contains(name, 'position') or contains(name, 'location') or contains(name, 'gps')&$top=25");
+            report.push("\n=== 3. CÁC WEBRESOURCE JAVASCRIPT LIÊN QUAN ĐẾN ĐỊNH VỊ (" + wrRes.entities.length + " files) ===");
+            wrRes.entities.forEach(function (w, i) {
+                report.push((i + 1) + ". " + w.name + " (" + (w.displayname || "N/A") + ")");
+            });
+        } catch (e) {
+            report.push("\n❌ Lỗi quét WebResources: " + e.message);
+        }
+
+        // 4. Check device tables
+        try {
+            var devRes = await _Xrm.WebApi.retrieveMultipleRecords("itv_deviceinfomation", "?$top=5");
+            report.push("\n=== 4. BẢNG THIẾT BỊ itv_deviceinfomation (" + devRes.entities.length + " bản ghi) ===");
+            if (devRes.entities.length > 0) {
+                report.push(JSON.stringify(devRes.entities, null, 2));
+            }
+        } catch (e) {}
+
+        el.textContent = report.join("\n");
+    };
+
+    // Copy full summary
+    document.getElementById("btnCopyFullSummary").onclick = function () {
+        var summary = {
+            userAgent: navigator.userAgent,
+            dmsUrl: window.location.href,
+            timestamp: new Date().toISOString(),
+            lastTestedGps: lastTestedData,
+            vfPositionScanText: document.getElementById("vfPositionResults") ? document.getElementById("vfPositionResults").innerText : "",
+            entityScanText: document.getElementById("entityScanResults").innerText,
+            invFieldsScanText: document.getElementById("invFieldsResults").innerText
+        };
+        navigator.clipboard.writeText(JSON.stringify(summary, null, 2)).then(function () {
+            alert("📋 Đã sao chép toàn bộ báo cáo phân tích GPS DMS vào bộ nhớ tạm!\n\nBạn có thể dán (Ctrl + V) trực tiếp vào khung chat.");
+        });
+    };
+
+    // Auto-trigger Tab 4 scan immediately on open
+    setTimeout(function () {
+        var btnVf = document.getElementById("btnScanVfPosition");
+        if (btnVf) btnVf.click();
+    }, 150);
+
+    // Auto-trigger test for current VIN on open
+    if (currentVin) {
+        executeGpsTest(false);
+    }
+})();

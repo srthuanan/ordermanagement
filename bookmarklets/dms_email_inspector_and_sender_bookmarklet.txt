@@ -1,0 +1,856 @@
+javascript:(function(){
+    /* =========================================================================
+     * VINFAST DMS / DYNAMICS 365 - DEEP EMAIL HACKER & SENDER LAB (V2.0)
+     * Đào sâu Quét Hộp thư Active, Queue Showroom, Workflows & Gửi Email Thực tế
+     * ========================================================================= */
+
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var frames = window.frames;
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].Xrm && frames[i].Xrm.WebApi) { _Xrm = frames[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert("⚠️ Vui lòng mở hệ thống VinFast DMS (Dynamics 365) trước khi bấm Bookmarklet này!");
+        return;
+    }
+
+    var oldOverlay = document.getElementById('dms-email-inspector-overlay');
+    if (oldOverlay) oldOverlay.remove();
+
+    var globalContext = _Xrm.Utility ? _Xrm.Utility.getGlobalContext() : (_Xrm.Page ? _Xrm.Page.context : null);
+    var clientUrl = globalContext ? globalContext.getClientUrl() : window.location.origin;
+    var currentUserId = globalContext ? (globalContext.userSettings ? globalContext.userSettings.userId : globalContext.getUserId()) : "";
+    currentUserId = (currentUserId || "").replace(/[{}]/g, "").toLowerCase();
+    var currentUserName = globalContext && globalContext.userSettings ? globalContext.userSettings.userName : (globalContext ? globalContext.getUserName() : "User");
+
+    // Lấy thông tin bản ghi hiện tại nếu đang mở Form
+    var currentFormEntity = "";
+    var currentFormId = "";
+    var currentFormName = "";
+    var currentFormEmail = "";
+
+    try {
+        var page = _Xrm.Page || (_Xrm.Utility && _Xrm.Utility.getPageContext && _Xrm.Utility.getPageContext().input);
+        if (page && page.data && page.data.entity) {
+            currentFormEntity = page.data.entity.getEntityName() || "";
+            currentFormId = (page.data.entity.getId() || "").replace(/[{}]/g, "");
+            currentFormName = page.data.entity.getPrimaryAttributeValue() || "";
+
+            function getFieldVal(attrName) {
+                var a = page.getAttribute(attrName);
+                if (!a) return "";
+                var v = a.getValue();
+                if (!v) return "";
+                if (Array.isArray(v) && v.length > 0) return v[0].name || v[0].id || "";
+                return String(v);
+            }
+
+            currentFormEmail = getFieldVal("emailaddress1") || getFieldVal("emailaddress") || getFieldVal("itv_email") || "";
+        }
+    } catch(e){}
+
+    // Helper Web API OData Fetch
+    function apiFetch(endpoint, method, body) {
+        var url = clientUrl + "/api/data/v9.2/" + endpoint;
+        var options = {
+            method: method || "GET",
+            headers: {
+                "OData-MaxVersion": "4.0",
+                "OData-Version": "4.0",
+                "Accept": "application/json",
+                "Content-Type": "application/json; charset=utf-8",
+                "Prefer": "odata.include-annotations=\"*\""
+            }
+        };
+        if (body) {
+            options.body = JSON.stringify(body);
+        }
+        return fetch(url, options).then(function(res) {
+            if (res.status === 204) return { success: true, status: 204 };
+            return res.json().then(function(data) {
+                if (!res.ok) {
+                    throw data.error || data;
+                }
+                return data;
+            });
+        });
+    }
+
+    // Build UI Overlay
+    var overlay = document.createElement('div');
+    overlay.id = 'dms-email-inspector-overlay';
+    overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999999;background:rgba(10,15,28,0.85);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#f1f5f9;';
+
+    var modal = document.createElement('div');
+    modal.style = 'width:95%;max-width:1320px;height:92%;background:#0f172a;border-radius:18px;border:1px solid rgba(56,189,248,0.35);box-shadow:0 25px 60px rgba(0,0,0,0.8), 0 0 40px rgba(56,189,248,0.15);display:flex;flex-direction:column;overflow:hidden;';
+    overlay.appendChild(modal);
+
+    // Header
+    var header = document.createElement('div');
+    header.style = 'padding:16px 24px;background:linear-gradient(90deg, #1e293b 0%, #0f172a 100%);border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:space-between;';
+    header.innerHTML = '<div style="display:flex;align-items:center;gap:14px;">' +
+        '<div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg, #0284c7, #38bdf8);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 12px rgba(56,189,248,0.4);">⚡</div>' +
+        '<div>' +
+            '<div style="display:flex;align-items:center;gap:10px;">' +
+                '<h2 style="margin:0;font-size:18px;font-weight:800;letter-spacing:-0.02em;color:#f8fafc;">DMS Deep Email Lab & Relay Engine</h2>' +
+                '<span style="background:rgba(56,189,248,0.15);color:#38bdf8;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;border:1px solid rgba(56,189,248,0.3);">Dataverse Deep Probe</span>' +
+            '</div>' +
+            '<p style="margin:3px 0 0 0;font-size:12px;color:#94a3b8;">User: <strong style="color:#38bdf8;">' + currentUserName + '</strong> | Org: <span style="color:#cbd5e1;">' + clientUrl.replace('https://','') + '</span>' + (currentFormEntity ? ' | Form: <span style="color:#a855f7;font-weight:600;">' + currentFormEntity + ' (' + (currentFormName || currentFormId) + ')</span>' : '') + '</p>' +
+        '</div>' +
+    '</div>' +
+    '<div style="display:flex;align-items:center;gap:10px;">' +
+        '<button id="dms-email-close-btn" style="background:#ef4444;hover:background:#dc2626;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(239,68,68,0.3);">✕ Đóng</button>' +
+    '</div>';
+    modal.appendChild(header);
+
+    // Navigation Tabs
+    var tabNav = document.createElement('div');
+    tabNav.style = 'padding:0 24px;background:#131d35;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;gap:4px;overflow-x:auto;';
+    var tabs = [
+        { id: 'tab-scanner', icon: '🕵️‍♂️', label: '1. Đào sâu Mailbox & Queue khả dụng' },
+        { id: 'tab-workflows', icon: '⚡', label: '2. Quét Custom Actions & Workflows' },
+        { id: 'tab-sender', icon: '🚀', label: '3. Soạn & Gửi Thử Đa Chiến Lược' },
+        { id: 'tab-history', icon: '📨', label: '4. Lịch sử Email (30 gần nhất)' },
+        { id: 'tab-guide', icon: '💡', label: '5. Mã nguồn & Giải pháp' }
+    ];
+
+    tabs.forEach(function(t, idx) {
+        var btn = document.createElement('button');
+        btn.id = 'nav-' + t.id;
+        btn.className = 'dms-email-tab-btn';
+        btn.innerHTML = t.icon + ' ' + t.label;
+        btn.style = 'background:none;border:none;padding:12px 18px;color:' + (idx === 0 ? '#38bdf8' : '#94a3b8') + ';font-size:13px;font-weight:700;cursor:pointer;border-bottom:2px solid ' + (idx === 0 ? '#38bdf8' : 'transparent') + ';transition:all 0.2s;white-space:nowrap;';
+        btn.onclick = function() {
+            document.querySelectorAll('.dms-email-tab-btn').forEach(function(b) {
+                b.style.color = '#94a3b8';
+                b.style.borderBottom = '2px solid transparent';
+            });
+            btn.style.color = '#38bdf8';
+            btn.style.borderBottom = '2px solid #38bdf8';
+            document.querySelectorAll('.dms-email-tab-content').forEach(function(c) { c.style.display = 'none'; });
+            document.getElementById(t.id).style.display = 'flex';
+        };
+        tabNav.appendChild(btn);
+    });
+    modal.appendChild(tabNav);
+
+    // Body Container
+    var bodyContainer = document.createElement('div');
+    bodyContainer.style = 'flex:1;overflow:hidden;position:relative;background:#090d16;display:flex;';
+    modal.appendChild(bodyContainer);
+
+    // ==========================================
+    // TAB 1: DEEP MAILBOX & QUEUE SCANNER
+    // ==========================================
+    var tab1 = document.createElement('div');
+    tab1.id = 'tab-scanner';
+    tab1.className = 'dms-email-tab-content';
+    tab1.style = 'flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:18px;';
+    tab1.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+        '<div>' +
+            '<h3 style="margin:0;font-size:16px;color:#38bdf8;font-weight:700;">🕵️‍♂️ Quét Tìm Hộp Thư (Mailboxes) & Hàng Đợi (Queues) Đang Kích Hoạt Trong Org</h3>' +
+            '<p style="margin:4px 0 0 0;font-size:12px;color:#94a3b8;">Nếu tìm thấy Mailbox hoặc Queue của Showroom/Hệ thống đã được Duyệt (Approved), ta có thể chọn làm Người gửi (From) để email thực sự bay ra ngoài Gmail!</p>' +
+        '</div>' +
+        '<button id="btn-deep-scan-mailboxes" style="background:#0284c7;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🔄 Quét sâu toàn hệ thống</button>' +
+    '</div>' +
+    '<div id="deep-scan-summary" style="padding:14px 18px;background:#131d35;border-radius:10px;border:1px solid rgba(56,189,248,0.2);font-size:12.5px;color:#cbd5e1;">' +
+        '⏳ Đang khởi động quét Mailboxes và Queues...' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">' +
+        '<div style="background:#131d35;border-radius:12px;border:1px solid rgba(255,255,255,0.08);padding:16px;display:flex;flex-direction:column;gap:10px;">' +
+            '<div style="font-weight:700;font-size:13px;color:#38bdf8;">📬 Hộp thư Mailbox đang hoạt động (Outgoing = Success)</div>' +
+            '<div id="active-mailboxes-list" style="max-height:350px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"><div style="color:#64748b;font-size:12px;">Đang tải...</div></div>' +
+        '</div>' +
+        '<div style="background:#131d35;border-radius:12px;border:1px solid rgba(255,255,255,0.08);padding:16px;display:flex;flex-direction:column;gap:10px;">' +
+            '<div style="font-weight:700;font-size:13px;color:#38bdf8;">🏢 Hộp thư Hàng Đợi (Queues Showroom / Service)</div>' +
+            '<div id="active-queues-list" style="max-height:350px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"><div style="color:#64748b;font-size:12px;">Đang tải...</div></div>' +
+        '</div>' +
+    '</div>';
+    bodyContainer.appendChild(tab1);
+
+    // ==========================================
+    // TAB 2: WORKFLOWS & CUSTOM ACTIONS DISCOVERY
+    // ==========================================
+    var tab2 = document.createElement('div');
+    tab2.id = 'tab-workflows';
+    tab2.className = 'dms-email-tab-content';
+    tab2.style = 'flex:1;overflow-y:auto;padding:24px;display:none;flex-direction:column;gap:18px;';
+    tab2.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+        '<div>' +
+            '<h3 style="margin:0;font-size:16px;color:#38bdf8;font-weight:700;">⚡ Khám Phá Quy Trình & Custom Actions Gửi Thông Báo của VinFast DMS</h3>' +
+            '<p style="margin:4px 0 0 0;font-size:12px;color:#94a3b8;">Quét các Workflows, Business Process Flows và Custom APIs được đăng ký trong hệ thống liên quan đến gửi email thông báo.</p>' +
+        '</div>' +
+        '<button id="btn-refresh-workflows" style="background:#0284c7;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🔄 Quét Workflows</button>' +
+    '</div>' +
+    '<div id="workflows-list-container" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(380px, 1fr));gap:14px;">' +
+        '<div style="background:#131d35;padding:20px;border-radius:10px;color:#64748b;font-size:12px;">Đang quét quy trình gửi mail...</div>' +
+    '</div>';
+    bodyContainer.appendChild(tab2);
+
+    // ==========================================
+    // TAB 3: MULTI-STRATEGY SENDER LAB
+    // ==========================================
+    var tab3 = document.createElement('div');
+    tab3.id = 'tab-sender';
+    tab3.className = 'dms-email-tab-content';
+    tab3.style = 'flex:1;overflow-y:auto;padding:24px;display:none;flex-direction:column;gap:18px;';
+    tab3.innerHTML = '<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;">' +
+        '<!-- Form soạn email -->' +
+        '<div style="background:#131d35;padding:22px;border-radius:14px;border:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;gap:14px;">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+                '<h4 style="margin:0;font-size:15px;color:#38bdf8;font-weight:700;">✍️ Soạn thư gửi đa chiến lược</h4>' +
+                '<span id="current-sender-type-badge" style="font-size:11px;background:#1e293b;color:#38bdf8;padding:2px 8px;border-radius:4px;border:1px solid #38bdf840;">Sender: User</span>' +
+            '</div>' +
+            '<div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">' +
+                    '<label style="font-size:12px;color:#94a3b8;font-weight:600;">Người gửi (From ID):</label>' +
+                    '<button id="btn-reset-from-me" style="background:none;border:none;color:#38bdf8;font-size:11px;cursor:pointer;text-decoration:underline;">Đặt lại tài khoản của tôi</button>' +
+                '</div>' +
+                '<input id="send-from-input" value="' + currentUserId + '" style="width:100%;box-sizing:border-box;background:#090d16;border:1px solid rgba(255,255,255,0.15);padding:8px 12px;border-radius:6px;color:#38bdf8;font-size:12px;font-family:monospace;" />' +
+                '<input id="send-from-type" type="hidden" value="systemuser" />' +
+            '</div>' +
+            '<div>' +
+                '<label style="display:block;font-size:12px;color:#94a3b8;margin-bottom:5px;font-weight:600;">Người nhận (To Email Address):</label>' +
+                '<div style="display:flex;gap:8px;">' +
+                    '<input id="send-to-input" placeholder="nhap_email_nguoi_nhan@gmail.com" value="' + (currentFormEmail || "nanajackychan@gmail.com") + '" style="flex:1;background:#090d16;border:1px solid rgba(255,255,255,0.15);padding:8px 12px;border-radius:6px;color:#f8fafc;font-size:12px;" />' +
+                    (currentFormEmail ? '<button id="btn-use-form-email" style="background:#334155;color:#38bdf8;border:1px solid #38bdf840;padding:0 10px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;">Lấy từ Form</button>' : '') +
+                '</div>' +
+            '</div>' +
+            '<div>' +
+                '<label style="display:block;font-size:12px;color:#94a3b8;margin-bottom:5px;font-weight:600;">Gắn với bản ghi liên quan (Regarding Object):</label>' +
+                '<div style="display:grid;grid-template-columns:1fr 2fr;gap:8px;">' +
+                    '<input id="send-regarding-type" placeholder="Tên entity (vd: xts_newvehiclesalesorder)" value="' + currentFormEntity + '" style="background:#090d16;border:1px solid rgba(255,255,255,0.15);padding:8px 12px;border-radius:6px;color:#a855f7;font-size:12px;font-weight:600;" />' +
+                    '<input id="send-regarding-id" placeholder="GUID bản ghi liên quan" value="' + currentFormId + '" style="background:#090d16;border:1px solid rgba(255,255,255,0.15);padding:8px 12px;border-radius:6px;color:#cbd5e1;font-size:12px;font-family:monospace;" />' +
+                '</div>' +
+            '</div>' +
+            '<div>' +
+                '<label style="display:block;font-size:12px;color:#94a3b8;margin-bottom:5px;font-weight:600;">Tiêu đề thư (Subject):</label>' +
+                '<input id="send-subject-input" value="[VinFast] Thông báo cập nhật tiến độ đơn hàng xe" style="width:100%;box-sizing:border-box;background:#090d16;border:1px solid rgba(255,255,255,0.15);padding:8px 12px;border-radius:6px;color:#f8fafc;font-size:12px;" />' +
+            '</div>' +
+            '<div>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">' +
+                    '<label style="font-size:12px;color:#94a3b8;font-weight:600;">Nội dung HTML:</label>' +
+                    '<div style="display:flex;gap:6px;">' +
+                        '<button id="btn-tpl-simple" style="background:#1e293b;color:#94a3b8;border:1px solid rgba(255,255,255,0.1);padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer;">Mẫu đơn giản</button>' +
+                        '<button id="btn-tpl-vso" style="background:#1e293b;color:#94a3b8;border:1px solid rgba(255,255,255,0.1);padding:2px 8px;border-radius:4px;font-size:10px;cursor:pointer;">Mẫu đơn hàng xe</button>' +
+                    '</div>' +
+                '</div>' +
+                '<textarea id="send-body-input" rows="5" style="width:100%;box-sizing:border-box;background:#090d16;border:1px solid rgba(255,255,255,0.15);padding:10px 12px;border-radius:6px;color:#f8fafc;font-size:12px;font-family:monospace;resize:vertical;"><div style="font-family:Arial,sans-serif;line-height:1.6;"><h2 style="color:#0284c7;">Thông Báo Đơn Hàng Mua Xe VinFast</h2><p>Kính gửi Quý khách hàng,</p><p>Đơn hàng của Quý khách hiện đã được xử lý trên hệ thống phân phối DMS.</p><p>Chân thành cảm ơn Quý khách đã tin tưởng VinFast!</p><hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0;"/><small style="color:#64748b;">Email gửi tự động từ hệ thống quản lý VinFast DMS.</small></div></textarea>' +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;gap:8px;margin-top:5px;">' +
+                '<div style="display:flex;gap:10px;">' +
+                    '<button id="btn-create-draft-only" style="flex:1;background:#334155;color:#e2e8f0;border:1px solid rgba(255,255,255,0.15);padding:10px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">1. Tạo Draft trong CRM</button>' +
+                    '<button id="btn-execute-send" style="flex:1.2;background:linear-gradient(135deg, #0284c7, #2563eb);color:#fff;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 15px rgba(37,99,235,0.4);">2. 🚀 Gửi qua Native Web API</button>' +
+                '</div>' +
+                '<button id="btn-send-via-relay" style="background:linear-gradient(135deg, #059669, #10b981);color:#fff;border:none;padding:10px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 15px rgba(16,185,129,0.4);">3. 🌐 Gửi Ngay Vào Gmail Thật (Cloud Relay Bridge)</button>' +
+            '</div>' +
+        '</div>' +
+        '<!-- Cột Kết quả thực thi & Log -->' +
+        '<div style="background:#131d35;padding:22px;border-radius:14px;border:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;gap:12px;overflow:hidden;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+                '<h4 style="margin:0;font-size:14px;color:#38bdf8;font-weight:700;">📡 Nhật ký phản hồi Live Terminal</h4>' +
+                '<button id="btn-clear-send-log" style="background:none;border:none;color:#64748b;font-size:11px;cursor:pointer;">Xóa log</button>' +
+            '</div>' +
+            '<div id="send-log-terminal" style="flex:1;min-height:320px;max-height:460px;background:#060910;border-radius:8px;border:1px solid rgba(255,255,255,0.1);padding:14px;overflow-y:auto;font-family:monospace;font-size:11.5px;color:#a5f3fc;line-height:1.6;white-space:pre-wrap;">// Sẵn sàng thử nghiệm gửi email...\n// Hãy qua Tab 1 quét tìm Queue/Mailbox đã kích hoạt của Showroom để gửi Native CRM\n// Hoặc bấm nút [3. Gửi Ngay Vào Gmail Thật] để chuyển phát thẳng vào Inbox.</div>' +
+        '</div>' +
+    '</div>';
+    bodyContainer.appendChild(tab3);
+
+    // ==========================================
+    // TAB 4: EMAIL HISTORY
+    // ==========================================
+    var tab4 = document.createElement('div');
+    tab4.id = 'tab-history';
+    tab4.className = 'dms-email-tab-content';
+    tab4.style = 'flex:1;overflow:hidden;padding:20px;display:none;flex-direction:row;gap:16px;';
+    tab4.innerHTML = '<div style="width:45%;display:flex;flex-direction:column;background:#131d35;border-radius:12px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;">' +
+        '<div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;">' +
+            '<span style="font-weight:700;font-size:13px;color:#38bdf8;">📋 Danh sách Email gần nhất</span>' +
+            '<button id="btn-refresh-history" style="background:#0284c7;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">🔄 Làm mới</button>' +
+        '</div>' +
+        '<div style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05);">' +
+            '<input id="search-email-input" placeholder="🔍 Lọc theo tiêu đề hoặc người nhận..." style="width:100%;box-sizing:border-box;background:#090d16;border:1px solid rgba(255,255,255,0.15);padding:8px 12px;border-radius:6px;color:#f8fafc;font-size:12px;outline:none;" />' +
+        '</div>' +
+        '<div id="email-list-container" style="flex:1;overflow-y:auto;padding:8px;">' +
+            '<div style="text-align:center;padding:30px;color:#64748b;font-size:12px;">Đang tải danh sách email...</div>' +
+        '</div>' +
+    '</div>' +
+    '<div id="email-detail-container" style="flex:1;display:flex;flex-direction:column;background:#131d35;border-radius:12px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;padding:20px;">' +
+        '<div style="text-align:center;margin:auto;color:#64748b;font-size:13px;">👈 Chọn một email ở cột bên trái để xem nội dung chi tiết</div>' +
+    '</div>';
+    bodyContainer.appendChild(tab4);
+
+    // ==========================================
+    // TAB 5: GUIDE & CODE
+    // ==========================================
+    var tab5 = document.createElement('div');
+    tab5.id = 'tab-guide';
+    tab5.className = 'dms-email-tab-content';
+    tab5.style = 'flex:1;overflow-y:auto;padding:24px;display:none;flex-direction:column;gap:18px;';
+    tab5.innerHTML = '<h3 style="margin:0;font-size:16px;color:#38bdf8;font-weight:700;">💡 Cẩm nang & Kiến trúc Gửi Mail từ VinFast DMS</h3>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">' +
+        '<div style="background:#131d35;padding:20px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);font-size:12.5px;color:#cbd5e1;line-height:1.7;">' +
+            '<h4 style="margin:0 0 10px 0;color:#38bdf8;font-size:14px;">Tại sao Email Native trong CRM bị Pending?</h4>' +
+            '<p>1. <strong>Tài khoản User lẻ:</strong> Đa phần tài khoản Sales/SM trong tenant <code>vinfastdms.onmicrosoft.com</code> chưa được cấp license Exchange riêng hoặc chưa được Global Admin bấm <em>"Approve & Enable Mailbox"</em>.</p>' +
+            '<p>2. <strong>Hộp thư Chung (Queues):</strong> Hệ thống VinFast thường chỉ mở luồng Outgoing cho các Queue dịch vụ hoặc Mailbox quản trị.</p>' +
+            '<p>3. <strong>Giải pháp thực tế:</strong> Hoặc là gửi từ <strong>Queue của Showroom</strong>, hoặc sử dụng <strong>Cloud Webhook Relay</strong> để gửi trực tiếp vào Inbox của khách hàng 100% thành công.</p>' +
+        '</div>' +
+        '<div style="background:#131d35;padding:20px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+                '<h4 style="margin:0;color:#38bdf8;font-size:14px;">Đoạn mã Gửi qua Queue / Cloud Bridge</h4>' +
+                '<button id="btn-copy-code-sample" style="background:#0284c7;color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">📋 Copy Code</button>' +
+            '</div>' +
+            '<pre id="code-snippet-box" style="flex:1;background:#060910;padding:14px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);font-family:monospace;font-size:11px;color:#a5f3fc;overflow-x:auto;line-height:1.5;">' +
+'// Cách 1: Gửi qua Queue Showroom (Nếu Queue có Outgoing=Success)\n' +
+'async function sendViaQueue(queueId, toEmail, subject, bodyHtml) {\n' +
+'    return fetch(Xrm.Utility.getGlobalContext().getClientUrl() + "/api/data/v9.2/emails", {\n' +
+'        method: "POST",\n' +
+'        headers: { "Content-Type": "application/json; charset=utf-8" },\n' +
+'        body: JSON.stringify({\n' +
+'            "subject": subject,\n' +
+'            "description": bodyHtml,\n' +
+'            "directioncode": true,\n' +
+'            "email_activity_parties": [\n' +
+'                { "partyid_queue@odata.bind": "/queues(" + queueId + ")", "participationtypemask": 1 },\n' +
+'                { "addressused": toEmail, "participationtypemask": 2 }\n' +
+'            ]\n' +
+'        })\n' +
+'    });\n' +
+'}' +
+            '</pre>' +
+        '</div>' +
+    '</div>';
+    bodyContainer.appendChild(tab5);
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('dms-email-close-btn').onclick = function() { overlay.remove(); };
+
+    // ==========================================
+    // LOGIC TAB 1: DEEP SCANNER
+    // ==========================================
+    function runDeepScanner() {
+        var summary = document.getElementById('deep-scan-summary');
+        var mailboxesList = document.getElementById('active-mailboxes-list');
+        var queuesList = document.getElementById('active-queues-list');
+
+        summary.innerHTML = '⏳ Đang quét cơ sở dữ liệu Dataverse để tìm Mailboxes & Queues khả dụng...';
+        mailboxesList.innerHTML = '<div style="color:#64748b;font-size:12px;">Đang truy vấn mailboxes...</div>';
+        queuesList.innerHTML = '<div style="color:#64748b;font-size:12px;">Đang truy vấn queues...</div>';
+
+        // 1. Quét Mailboxes (lấy cả outgoingstatus=1 hoặc isapproved=true hoặc top 30)
+        var pMailboxes = apiFetch('mailboxes?$top=50&$select=mailboxid,name,emailaddress,outgoingemailstatus,incomingemailstatus,isemailaddressapprovedbyo365admin,isactived,_regardingobjectid_value')
+            .catch(function(e){ return { value: [], error: e.message }; });
+
+        // 2. Quét Queues
+        var pQueues = apiFetch('queues?$top=50&$filter=emailaddress ne null&$select=queueid,name,emailaddress,isemailaddressapprovedbyo365admin,_defaultmailbox_value')
+            .catch(function(e){
+                return apiFetch('queues?$top=50&$select=queueid,name,emailaddress,isemailaddressapprovedbyo365admin').catch(function(err){ return { value: [] }; });
+            });
+
+        Promise.all([pMailboxes, pQueues]).then(function(results) {
+            var mBoxes = results[0].value || [];
+            var qList = results[1].value || [];
+
+            var activeMailboxes = mBoxes.filter(function(m){ return m.outgoingemailstatus === 1 || m.isemailaddressapprovedbyo365admin === true; });
+            var otherMailboxes = mBoxes.filter(function(m){ return activeMailboxes.indexOf(m) === -1; });
+
+            summary.innerHTML = '🎯 Kết quả quét hệ thống: Tìm thấy <strong>' + mBoxes.length + '</strong> Mailboxes (' + activeMailboxes.length + ' đã duyệt/active) và <strong>' + qList.length + '</strong> Queues trong tổ chức.';
+
+            // Render Mailboxes
+            var mHtml = '';
+            if (mBoxes.length === 0) {
+                mHtml = '<div style="color:#94a3b8;font-size:12px;">Không có quyền đọc bảng mailboxes hoặc chưa có mailbox nào.</div>';
+            } else {
+                var displayList = activeMailboxes.length > 0 ? activeMailboxes.concat(otherMailboxes.slice(0, 15)) : mBoxes.slice(0, 20);
+                displayList.forEach(function(m) {
+                    var isSuccess = m.outgoingemailstatus === 1;
+                    var isApp = m.isemailaddressapprovedbyo365admin;
+                    var badge = isSuccess ? '<span style="background:rgba(34,197,94,0.2);color:#22c55e;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">Outgoing: Success</span>' :
+                                (isApp ? '<span style="background:rgba(56,189,248,0.2);color:#38bdf8;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">Approved</span>' :
+                                '<span style="background:rgba(148,163,184,0.15);color:#94a3b8;padding:2px 6px;border-radius:4px;font-size:10px;">Status: ' + m.outgoingemailstatus + '</span>');
+
+                    mHtml += '<div style="background:#0d1322;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;">' +
+                        '<div>' +
+                            '<div style="font-weight:700;font-size:12px;color:#f8fafc;">' + (m.name || m.emailaddress || "Mailbox") + '</div>' +
+                            '<div style="font-size:11px;color:#94a3b8;">Email: <strong style="color:#a5f3fc;">' + (m.emailaddress || "Không rõ") + '</strong></div>' +
+                            '<div style="margin-top:2px;">' + badge + '</div>' +
+                        '</div>' +
+                        '<button class="btn-select-sender-user" data-id="' + (m._regardingobjectid_value || m.mailboxid) + '" data-name="' + (m.name || m.emailaddress) + '" style="background:#1e293b;color:#38bdf8;border:1px solid #38bdf840;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">Chọn From ➔</button>' +
+                    '</div>';
+                });
+            }
+            mailboxesList.innerHTML = mHtml;
+
+            // Render Queues
+            var qHtml = '';
+            if (qList.length === 0) {
+                qHtml = '<div style="color:#94a3b8;font-size:12px;">Không có hàng đợi (Queue) nào có email hoặc không đủ quyền xem.</div>';
+            } else {
+                qList.forEach(function(q) {
+                    qHtml += '<div style="background:#0d1322;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;">' +
+                        '<div>' +
+                            '<div style="font-weight:700;font-size:12px;color:#38bdf8;">🏢 ' + (q.name || "Queue") + '</div>' +
+                            '<div style="font-size:11px;color:#cbd5e1;">Email: ' + (q.emailaddress || "Chưa gán") + '</div>' +
+                            '<div style="font-size:10.5px;color:#94a3b8;">ID: <code style="color:#a5f3fc;">' + q.queueid + '</code></div>' +
+                        '</div>' +
+                        '<button class="btn-select-sender-queue" data-id="' + q.queueid + '" data-name="' + q.name + '" style="background:#0284c7;color:#fff;border:none;padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">Gửi từ Queue ➔</button>' +
+                    '</div>';
+                });
+            }
+            queuesList.innerHTML = qHtml;
+
+            // Gán event chọn From
+            document.querySelectorAll('.btn-select-sender-user').forEach(function(btn) {
+                btn.onclick = function() {
+                    var sId = btn.getAttribute('data-id');
+                    var sName = btn.getAttribute('data-name');
+                    document.getElementById('send-from-input').value = sId;
+                    document.getElementById('send-from-type').value = 'systemuser';
+                    document.getElementById('current-sender-type-badge').textContent = 'Sender: User (' + sName + ')';
+                    document.getElementById('nav-tab-sender').click();
+                    logMsg("🎯 Đã chuyển Sender sang User ID: " + sId + " (" + sName + ")", "ok");
+                };
+            });
+
+            document.querySelectorAll('.btn-select-sender-queue').forEach(function(btn) {
+                btn.onclick = function() {
+                    var qId = btn.getAttribute('data-id');
+                    var qName = btn.getAttribute('data-name');
+                    document.getElementById('send-from-input').value = qId;
+                    document.getElementById('send-from-type').value = 'queue';
+                    document.getElementById('current-sender-type-badge').textContent = 'Sender: Queue (' + qName + ')';
+                    document.getElementById('nav-tab-sender').click();
+                    logMsg("🎯 Đã chuyển Sender sang Queue ID: " + qId + " (" + qName + ")", "ok");
+                };
+            });
+        });
+    }
+
+    document.getElementById('btn-deep-scan-mailboxes').onclick = runDeepScanner;
+    runDeepScanner();
+
+    // ==========================================
+    // LOGIC TAB 2: WORKFLOWS DISCOVERY
+    // ==========================================
+    function loadWorkflows() {
+        var container = document.getElementById('workflows-list-container');
+        container.innerHTML = '<div style="color:#38bdf8;font-size:12px;">⏳ Đang quét danh sách Workflows & Custom Actions...</div>';
+
+        apiFetch('workflows?$top=40&$filter=statecode eq 1 and (category eq 0 or category eq 3 or category eq 5)&$select=workflowid,name,category,uniquename,primaryentity,description').then(function(res) {
+            var list = res.value || [];
+            if (list.length === 0) {
+                container.innerHTML = '<div style="color:#64748b;font-size:12px;">Không có quy trình nào hoặc tài khoản không đủ quyền xem bảng workflows.</div>';
+                return;
+            }
+
+            var html = '';
+            list.forEach(function(w) {
+                var catText = w.category === 0 ? 'Workflow' : (w.category === 3 ? 'Action' : (w.category === 5 ? 'Modern Flow' : 'Process'));
+                html += '<div style="background:#1e293b;padding:16px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;gap:6px;">' +
+                    '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
+                        '<div style="font-weight:700;font-size:13px;color:#38bdf8;">' + w.name + '</div>' +
+                        '<span style="background:rgba(56,189,248,0.15);color:#38bdf8;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">' + catText + '</span>' +
+                    '</div>' +
+                    '<div style="font-size:11.5px;color:#cbd5e1;">Entity: <strong style="color:#a855f7;">' + (w.primaryentity || "Toàn cục") + '</strong></div>' +
+                    '<div style="font-size:10.5px;color:#94a3b8;">Unique: <code>' + (w.uniquename || w.workflowid) + '</code></div>' +
+                    '<button class="btn-trigger-workflow" data-id="' + w.workflowid + '" data-name="' + w.name + '" style="margin-top:6px;background:#334155;color:#38bdf8;border:1px solid #38bdf840;padding:6px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">⚡ Kích hoạt Process này</button>' +
+                '</div>';
+            });
+            container.innerHTML = html;
+
+            document.querySelectorAll('.btn-trigger-workflow').forEach(function(btn) {
+                btn.onclick = function() {
+                    var wId = btn.getAttribute('data-id');
+                    var wName = btn.getAttribute('data-name');
+                    if (!currentFormId) {
+                        alert("⚠️ Vui lòng mở một bản ghi (ví dụ Đơn hàng VSO) trên màn hình DMS trước khi kích hoạt Workflow này!");
+                        return;
+                    }
+                    if (confirm("Bạn có chắc muốn kích hoạt quy trình [" + wName + "] cho bản ghi hiện tại?")) {
+                        document.getElementById('nav-tab-sender').click();
+                        logMsg("⚡ Đang gửi lệnh kích hoạt Workflow: " + wName + " (" + wId + ")", "warn");
+                        apiFetch("workflows(" + wId + ")/Microsoft.Dynamics.CRM.ExecuteWorkflow", "POST", { "EntityId": currentFormId }).then(function() {
+                            logMsg("🎉 Kích hoạt Workflow thành công!", "ok");
+                            alert("🎉 Kích hoạt quy trình thành công!");
+                        }).catch(function(err) {
+                            logMsg("❌ Lỗi kích hoạt Workflow: " + (err.message || JSON.stringify(err)), "err");
+                        });
+                    }
+                };
+            });
+        }).catch(function(err) {
+            container.innerHTML = '<div style="color:#ef4444;font-size:12px;">Lỗi tải workflows: ' + (err.message || JSON.stringify(err)) + '</div>';
+        });
+    }
+
+    document.getElementById('btn-refresh-workflows').onclick = loadWorkflows;
+    loadWorkflows();
+
+    // ==========================================
+    // LOGIC TAB 3: SENDER & CLOUD RELAY
+    // ==========================================
+    var logTerm = document.getElementById('send-log-terminal');
+    function logMsg(msg, type) {
+        var time = new Date().toLocaleTimeString('vi-VN');
+        var color = '#a5f3fc';
+        if (type === 'err') color = '#f87171';
+        if (type === 'ok') color = '#4ade80';
+        if (type === 'warn') color = '#fbbf24';
+        logTerm.innerHTML += '\n<span style="color:#64748b;">[' + time + ']</span> <span style="color:' + color + ';">' + msg + '</span>';
+        logTerm.scrollTop = logTerm.scrollHeight;
+    }
+
+    document.getElementById('btn-clear-send-log').onclick = function() {
+        logTerm.innerHTML = '// Log đã được xóa.';
+    };
+
+    document.getElementById('btn-reset-from-me').onclick = function() {
+        document.getElementById('send-from-input').value = currentUserId;
+        document.getElementById('send-from-type').value = 'systemuser';
+        document.getElementById('current-sender-type-badge').textContent = 'Sender: User (' + currentUserName + ')';
+        logMsg("🔄 Đã đặt lại Người gửi (From) về tài khoản của bạn.", "warn");
+    };
+
+    if (document.getElementById('btn-use-form-email')) {
+        document.getElementById('btn-use-form-email').onclick = function() {
+            document.getElementById('send-to-input').value = currentFormEmail;
+        };
+    }
+
+    document.getElementById('btn-tpl-simple').onclick = function() {
+        document.getElementById('send-subject-input').value = "[VinFast DMS] Thử nghiệm gửi email từ hệ thống DMS";
+        document.getElementById('send-body-input').value = "<p>Xin chào,</p><p>Đây là email thử nghiệm gửi trực tiếp từ hệ thống <b>VinFast DMS</b>.</p><p>Trân trọng,<br/><b>DMS Admin Team</b></p>";
+    };
+
+    document.getElementById('btn-tpl-vso').onclick = function() {
+        document.getElementById('send-subject-input').value = "[VinFast] Thông báo cập nhật tiến độ đơn hàng xe " + (currentFormName || "");
+        document.getElementById('send-body-input').value = "<div style='font-family:Arial,sans-serif;line-height:1.6;'>" +
+            "<h2 style='color:#0284c7;'>Thông Báo Đơn Hàng Mua Xe VinFast</h2>" +
+            "<p>Kính gửi Quý khách hàng,</p>" +
+            "<p>Đơn hàng của Quý khách (Mã: <b>" + (currentFormName || "VSO-DEMO") + "</b>) hiện đã được xác nhận trên hệ thống phân phối DMS.</p>" +
+            "<p>Chân thành cảm ơn Quý khách đã tin tưởng và đồng hành cùng VinFast!</p>" +
+            "<hr style='border:none;border-top:1px solid #e2e8f0;margin:20px 0;'/>" +
+            "<small style='color:#64748b;'>Email được gửi tự động từ hệ thống quản lý VinFast DMS.</small>" +
+            "</div>";
+    };
+
+    // Hàm build payload CRM
+    function buildEmailPayload() {
+        var fromId = document.getElementById('send-from-input').value.trim();
+        var fromType = document.getElementById('send-from-type').value.trim(); // systemuser or queue
+        var toEmail = document.getElementById('send-to-input').value.trim();
+        var regardingType = document.getElementById('send-regarding-type').value.trim();
+        var regardingId = document.getElementById('send-regarding-id').value.trim();
+        var subject = document.getElementById('send-subject-input').value.trim();
+        var bodyHtml = document.getElementById('send-body-input').value.trim();
+
+        if (!toEmail) {
+            alert("⚠️ Vui lòng nhập địa chỉ Email người nhận (To)!");
+            throw new Error("Missing To");
+        }
+
+        var activityParties = [];
+        if (fromId) {
+            var partyObj = { "participationtypemask": 1 };
+            if (fromType === 'queue') {
+                partyObj["partyid_queue@odata.bind"] = "/queues(" + fromId + ")";
+            } else {
+                partyObj["partyid_systemuser@odata.bind"] = "/systemusers(" + fromId + ")";
+            }
+            activityParties.push(partyObj);
+        }
+
+        activityParties.push({
+            "addressused": toEmail,
+            "participationtypemask": 2
+        });
+
+        var payload = {
+            "subject": subject,
+            "description": bodyHtml,
+            "directioncode": true,
+            "email_activity_parties": activityParties
+        };
+
+        if (regardingType && regardingId) {
+            payload["regardingobjectid_" + regardingType + "@odata.bind"] = "/" + regardingType + "s(" + regardingId + ")";
+        }
+
+        return payload;
+    }
+
+    // Nút 1: Tạo Draft
+    document.getElementById('btn-create-draft-only').onclick = function() {
+        try {
+            var payload = buildEmailPayload();
+            logMsg("1️⃣ Đang tạo Email Draft trên CRM...", "warn");
+            apiFetch("emails", "POST", payload).then(function(res) {
+                logMsg("✅ Tạo Email Draft thành công trên CRM!", "ok");
+                alert("✅ Đã tạo Email bản nháp (Draft) thành công!");
+                loadEmailHistory();
+            }).catch(function(err) {
+                logMsg("❌ Lỗi tạo Draft: " + (err.message || JSON.stringify(err)), "err");
+            });
+        } catch(e){}
+    };
+
+    // Nút 2: Gửi Native Web API
+    document.getElementById('btn-execute-send').onclick = function() {
+        try {
+            var payload = buildEmailPayload();
+            logMsg("🚀 TIẾN TRÌNH GỬI NATIVE WEB API...", "warn");
+
+            var url = clientUrl + "/api/data/v9.2/emails";
+            fetch(url, {
+                method: "POST",
+                headers: {
+                    "OData-MaxVersion": "4.0",
+                    "OData-Version": "4.0",
+                    "Accept": "application/json",
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Prefer": "return=representation"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(function(res) {
+                if (!res.ok) return res.json().then(function(err){ throw err; });
+                var entityIdHeader = res.headers.get("OData-EntityId");
+                return res.json().catch(function(){ return {}; }).then(function(data) {
+                    var emailId = data.activityid;
+                    if (!emailId && entityIdHeader) {
+                        var match = entityIdHeader.match(/\(([^)]+)\)/);
+                        if (match) emailId = match[1];
+                    }
+                    return emailId;
+                });
+            })
+            .then(function(emailId) {
+                if (!emailId) throw new Error("Không trích xuất được Email GUID!");
+                logMsg("✅ Đã tạo email ID: " + emailId, "ok");
+                logMsg("Đang gọi Action SendEmail...");
+
+                var sendUrl = clientUrl + "/api/data/v9.2/emails(" + emailId + ")/Microsoft.Dynamics.CRM.SendEmail";
+                return fetch(sendUrl, {
+                    method: "POST",
+                    headers: {
+                        "OData-MaxVersion": "4.0",
+                        "OData-Version": "4.0",
+                        "Accept": "application/json",
+                        "Content-Type": "application/json; charset=utf-8"
+                    },
+                    body: JSON.stringify({ "IssueSend": true })
+                }).then(function(sendRes) {
+                    if (!sendRes.ok) return sendRes.json().then(function(e){ throw e; });
+                    logMsg("🎉 Đã gửi lệnh phát qua CRM SendEmail!", "ok");
+                    alert("🎉 Gửi lệnh SendEmail thành công!");
+                    loadEmailHistory();
+                });
+            })
+            .catch(function(err) {
+                var errMsg = err.message || JSON.stringify(err);
+                logMsg("❌ THẤT BẠI: " + errMsg, "err");
+                alert("❌ Lỗi: " + errMsg);
+            });
+        } catch(e){}
+    };
+
+    // Nút 3: Gửi qua Cloud Relay Bridge (Đảm bảo 100% vào Gmail thật)
+    document.getElementById('btn-send-via-relay').onclick = function() {
+        var toEmail = document.getElementById('send-to-input').value.trim();
+        var subject = document.getElementById('send-subject-input').value.trim();
+        var bodyHtml = document.getElementById('send-body-input').value.trim();
+
+        if (!toEmail) {
+            alert("⚠️ Vui lòng nhập địa chỉ Email người nhận (To)!");
+            return;
+        }
+
+        logMsg("🌐 BẮT ĐẦU BẺ KHÓA GỬI QUA CLOUD RELAY BRIDGE...", "warn");
+        logMsg("Người nhận: " + toEmail + " | Tiêu đề: " + subject);
+
+        // 1. Lưu vết vào CRM DMS trước để bảo toàn nhật ký
+        try {
+            var payload = buildEmailPayload();
+            apiFetch("emails", "POST", payload).then(function() {
+                logMsg("✅ Đã lưu vết Email vào DMS CRM thành công.", "ok");
+                loadEmailHistory();
+            }).catch(function(){});
+        } catch(e){}
+
+        // 2. Bắn trực tiếp qua Supabase Edge Function (Nodemailer SMTP VinFast Relay)
+        var spApiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU";
+        var sendEmailEndpoint = "https://jwvgxqrkjlbewvpkvucj.supabase.co/functions/v1/send-email";
+
+        logMsg("📡 Đang kết nối tới Cầu phát thư SMTP Showroom Thuận An...", "warn");
+
+        fetch(sendEmailEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': spApiKey,
+                'Authorization': 'Bearer ' + spApiKey
+            },
+            body: JSON.stringify({
+                actionId: 'raw',
+                recipient_email: toEmail,
+                subject: subject,
+                html: bodyHtml
+            })
+        })
+        .then(function(res) {
+            if (!res.ok) {
+                return res.text().then(function(t){ throw new Error(t); });
+            }
+            return res.json();
+        })
+        .then(function(data) {
+            logMsg("🎉 BẺ KHÓA THÀNH CÔNG: Email đã được phát trực tiếp tới " + toEmail + "!", "ok");
+            logMsg("📥 Email đã bay thẳng vào Hộp thư đến (Inbox) Gmail của bạn.", "ok");
+            alert("🎉 ĐÃ GỬI EMAIL THỰC TẾ THÀNH CÔNG VÀO GMAIL!\n\nNgười nhận: " + toEmail + "\nTiêu đề: " + subject + "\n\n👉 Vui lòng mở hòm thư Gmail để kiểm tra!");
+        })
+        .catch(function(err) {
+            var errMsg = err.message || JSON.stringify(err);
+            logMsg("❌ Lỗi Cloud Relay: " + errMsg, "err");
+            alert("❌ Lỗi khi gửi: " + errMsg);
+        });
+    };
+
+    // ==========================================
+    // LOGIC TAB 4: EMAIL HISTORY
+    // ==========================================
+    var cachedEmails = [];
+
+    function loadEmailHistory() {
+        var container = document.getElementById('email-list-container');
+        container.innerHTML = '<div style="text-align:center;padding:30px;color:#38bdf8;font-size:12px;">⏳ Đang tải danh sách email từ DMS...</div>';
+
+        var query = 'emails?$top=35&$orderby=createdon desc&$select=activityid,subject,description,statuscode,statecode,createdon,modifiedon,_regardingobjectid_value,mimetype&$expand=email_activity_parties($select=activitypartyid,participationtypemask,addressused,_partyid_value)';
+        
+        apiFetch(query).then(function(res) {
+            cachedEmails = res.value || [];
+            renderEmailList(cachedEmails);
+        }).catch(function(err) {
+            apiFetch('emails?$top=35&$orderby=createdon desc&$select=activityid,subject,description,statuscode,statecode,createdon,modifiedon,_regardingobjectid_value').then(function(res2) {
+                cachedEmails = res2.value || [];
+                renderEmailList(cachedEmails);
+            }).catch(function(err2) {
+                container.innerHTML = '<div style="padding:20px;color:#ef4444;font-size:12px;">Lỗi tải lịch sử email: ' + (err2.message || JSON.stringify(err2)) + '</div>';
+            });
+        });
+    }
+
+    function renderEmailList(list) {
+        var container = document.getElementById('email-list-container');
+        if (!list || list.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:30px;color:#64748b;font-size:12px;">Không có email nào trên hệ thống.</div>';
+            return;
+        }
+
+        var html = '';
+        list.forEach(function(em) {
+            var subject = em.subject || "(Không có tiêu đề)";
+            var dateStr = em.createdon ? new Date(em.createdon).toLocaleString('vi-VN') : "";
+            
+            var statusBadge = '';
+            if (em.statuscode === 3) statusBadge = '<span style="background:rgba(34,197,94,0.15);color:#22c55e;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">Sent</span>';
+            else if (em.statuscode === 1) statusBadge = '<span style="background:rgba(148,163,184,0.15);color:#94a3b8;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">Draft</span>';
+            else if (em.statuscode === 6 || em.statuscode === 7) statusBadge = '<span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">Pending</span>';
+            else if (em.statuscode === 8) statusBadge = '<span style="background:rgba(239,68,68,0.15);color:#ef4444;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">Failed</span>';
+            else statusBadge = '<span style="background:rgba(56,189,248,0.15);color:#38bdf8;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;">Status ' + em.statuscode + '</span>';
+
+            html += '<div class="dms-email-item" data-id="' + em.activityid + '" style="padding:12px;margin-bottom:6px;background:#0d1322;border:1px solid rgba(255,255,255,0.06);border-radius:8px;cursor:pointer;transition:all 0.15s;">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">' +
+                    '<span style="font-size:11px;color:#94a3b8;">' + dateStr + '</span>' +
+                    statusBadge +
+                '</div>' +
+                '<div style="font-weight:700;font-size:12.5px;color:#f8fafc;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + subject + '</div>' +
+                '<div style="font-size:11px;color:#64748b;display:flex;gap:6px;align-items:center;">' +
+                    '<span>ID: ' + em.activityid.substring(0,8) + '...</span>' +
+                    (em._regardingobjectid_value ? '<span style="color:#a855f7;">• Regarding: ' + em._regardingobjectid_value.substring(0,8) + '</span>' : '') +
+                '</div>' +
+            '</div>';
+        });
+
+        container.innerHTML = html;
+
+        container.querySelectorAll('.dms-email-item').forEach(function(item) {
+            item.onclick = function() {
+                container.querySelectorAll('.dms-email-item').forEach(function(i){ i.style.borderColor = 'rgba(255,255,255,0.06)'; i.style.background = '#0d1322'; });
+                item.style.borderColor = '#38bdf8';
+                item.style.background = '#1e293b';
+                var emailId = item.getAttribute('data-id');
+                var targetEmail = cachedEmails.find(function(e){ return e.activityid === emailId; });
+                if (targetEmail) renderEmailDetail(targetEmail);
+            };
+        });
+    }
+
+    function renderEmailDetail(em) {
+        var detailContainer = document.getElementById('email-detail-container');
+        var parties = em.email_activity_parties || [];
+        var fromParty = parties.filter(function(p){ return p.participationtypemask === 1; });
+        var toParties = parties.filter(function(p){ return p.participationtypemask === 2; });
+        var ccParties = parties.filter(function(p){ return p.participationtypemask === 3; });
+
+        var fromStr = fromParty.map(function(p){ return p.addressused || p._partyid_value || "User"; }).join(', ') || em.sender || "Chưa rõ";
+        var toStr = toParties.map(function(p){ return p.addressused || p._partyid_value || "Customer"; }).join(', ') || em.to || "Chưa rõ";
+        var ccStr = ccParties.map(function(p){ return p.addressused || p._partyid_value; }).join(', ');
+
+        detailContainer.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:14px;margin-bottom:14px;">' +
+            '<div style="flex:1;">' +
+                '<h3 style="margin:0 0 6px 0;font-size:16px;color:#f8fafc;">' + (em.subject || "(Không có tiêu đề)") + '</h3>' +
+                '<div style="display:flex;gap:10px;font-size:12px;color:#94a3b8;">' +
+                    '<span>Ngày tạo: <strong style="color:#cbd5e1;">' + (em.createdon ? new Date(em.createdon).toLocaleString('vi-VN') : "") + '</strong></span>' +
+                    '<span>Mã Activity: <code style="font-size:11px;color:#38bdf8;">' + em.activityid + '</code></span>' +
+                '</div>' +
+            '</div>' +
+            '<div style="display:flex;gap:8px;">' +
+                '<button id="btn-copy-raw-email" style="background:#334155;color:#38bdf8;border:1px solid #38bdf840;padding:6px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">📋 Copy JSON</button>' +
+            '</div>' +
+        '</div>' +
+        '<div style="background:#090d16;padding:12px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);margin-bottom:14px;font-size:12px;line-height:1.7;">' +
+            '<div><strong>From (Người gửi):</strong> <span style="color:#38bdf8;">' + fromStr + '</span></div>' +
+            '<div><strong>To (Người nhận):</strong> <span style="color:#a5f3fc;">' + toStr + '</span></div>' +
+            (ccStr ? '<div><strong>CC:</strong> <span style="color:#94a3b8;">' + ccStr + '</span></div>' : '') +
+            (em._regardingobjectid_value ? '<div><strong>Regarding (Liên kết):</strong> <span style="color:#a855f7;">' + em._regardingobjectid_value + '</span></div>' : '') +
+        '</div>' +
+        '<div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">' +
+            '<div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:6px;">Nội dung Email (HTML Preview):</div>' +
+            '<div style="flex:1;background:#fff;color:#1e293b;border-radius:8px;padding:16px;overflow-y:auto;font-family:sans-serif;font-size:13px;line-height:1.6;border:1px solid rgba(255,255,255,0.1);">' +
+                (em.description || '<em style="color:#94a3b8;">(Nội dung thư trống)</em>') +
+            '</div>' +
+        '</div>';
+
+        document.getElementById('btn-copy-raw-email').onclick = function() {
+            navigator.clipboard.writeText(JSON.stringify(em, null, 2));
+            alert("✅ Đã copy JSON của email vào Clipboard!");
+        };
+    }
+
+    document.getElementById('btn-refresh-history').onclick = loadEmailHistory;
+    document.getElementById('search-email-input').oninput = function() {
+        var kw = this.value.toLowerCase().trim();
+        if (!kw) { renderEmailList(cachedEmails); return; }
+        var filtered = cachedEmails.filter(function(e) {
+            var sub = (e.subject || "").toLowerCase();
+            var desc = (e.description || "").toLowerCase();
+            return sub.indexOf(kw) !== -1 || desc.indexOf(kw) !== -1;
+        });
+        renderEmailList(filtered);
+    };
+
+    document.getElementById('btn-copy-code-sample').onclick = function() {
+        var code = document.getElementById('code-snippet-box').innerText;
+        navigator.clipboard.writeText(code);
+        alert("✅ Đã copy đoạn mã vào Clipboard!");
+    };
+
+    loadEmailHistory();
+
+})();

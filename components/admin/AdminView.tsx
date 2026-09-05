@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Order, StockVehicle, AdminSubView } from '../../types';
+import { Order, StockVehicle, AdminSubView, User } from '../../types';
 import InvoiceInboxView from './InvoiceInboxView';
 import MatchingCockpitView from './MatchingCockpitView';
 import VcInboxView from './VcInboxView';
@@ -27,20 +27,19 @@ import { useGlobalNotification } from '../../hooks/useGlobalNotification';
 import AdminStats from './AdminStats';
 import IncompleteCarsView from './IncompleteCarsView';
 import SuperManagementView from './SuperManagementView';
-import InquiryManagementView from './InquiryManagementView';
 import HoldManagementView from './HoldManagementView';
 import PolicyManagementView from './PolicyManagementView';
 import { exportOrderReport, exportAllSavedOrdersToExcel } from '../../utils/excelUtils';
 import DonHangTonView from './DonHangTonView';
 import AIKnowledgeManagement from './AIKnowledgeManagement';
 import PolicySummaryView from './PolicySummaryView';
-import PricingCalculatorView from './PricingCalculatorView';
 import MaintenanceFeeManager from './MaintenanceFeeManager';
 import VehicleConfigManager from './VehicleConfigManager';
+import { AdminSwapManagementView } from './AdminSwapManagementView';
+import PricingCalculatorManager from './PricingCalculatorManager';
+import LiveUserMonitorView from './LiveUserMonitorView';
 
 import * as apiService from '../../services/apiService';
-
-type User = { name: string, role: string, username: string };
 
 interface ImageSource {
     src: string;
@@ -136,6 +135,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
     const [isManageTabsModalOpen, setIsManageTabsModalOpen] = useState(false);
+    
+    const [statsViewBy, setStatsViewBy] = useState<'tvbh' | 'team'>('tvbh');
 
     const handleInvoiceStateChange = (updates: Partial<typeof viewState.invoices>) => {
         setViewState((prev: any) => ({ ...prev, invoices: { ...prev.invoices, ...updates } }));
@@ -156,8 +157,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         handleFilterChange, handleReset,
         invoiceFilters, pendingFilters, pairedFilters, vcFilters, matchingFilters,
         matchingTab, setMatchingTab,
-        targetOrderId, setTargetOrderId,
-        targetInquiryId, setTargetInquiryId
+        targetOrderId, setTargetOrderId
     } = filterState;
 
 
@@ -232,7 +232,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     }, []);
 
     const [currentCategory, setCurrentCategory] = useState<'orders' | 'inventory' | 'system' | 'stats'>(() => {
-        return (localStorage.getItem('adminCurrentCategory') as any) || 'orders';
+        const saved = localStorage.getItem('adminCurrentCategory');
+        if (saved === 'orders' || saved === 'inventory' || saved === 'system' || saved === 'stats') {
+            return saved as any;
+        }
+        return 'orders';
     });
 
     useEffect(() => {
@@ -243,17 +247,17 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         orders: {
             label: 'ĐƠN HÀNG',
             icon: 'fa-file-invoice-dollar',
-            views: ['matching', 'invoices', 'policy_summary', 'pricing_calculator', 'don_ton'] as AdminSubView[]
+            views: ['matching', 'invoices', 'car_swap', 'don_ton'] as AdminSubView[]
         },
         inventory: {
-            label: 'KHO XE',
+            label: 'KHO XE & CS',
             icon: 'fa-car-side',
-            views: ['inquiries', 'holds'] as AdminSubView[]
+            views: ['holds', 'policy_summary', 'incomplete_cars', 'vehicle_config'] as AdminSubView[]
         },
         system: {
             label: 'HỆ THỐNG',
             icon: 'fa-cogs',
-            views: ['super_edit', 'incomplete_cars', 'policies', 'ai_knowledge', 'phongkd', 'maintenance_fee', 'vehicle_config'] as AdminSubView[]
+            views: ['super_edit', 'policies', 'pricing_config', 'live_users', 'ai_knowledge', 'phongkd', 'maintenance_fee'] as AdminSubView[]
         },
         stats: {
             label: 'THỐNG KÊ',
@@ -266,7 +270,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     useEffect(() => {
         if (hiddenTabs.includes(adminView)) {
             // Find first visible tab in current category
-            const visibleInCurrent = categories[currentCategory].views.filter(v => !hiddenTabs.includes(v));
+            const visibleInCurrent = (categories[currentCategory]?.views || categories.orders.views).filter(v => !hiddenTabs.includes(v));
             if (visibleInCurrent.length > 0) {
                 setAdminView(visibleInCurrent[0]);
             } else {
@@ -284,26 +288,27 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         pending: 'CHỜ GHÉP',
         paired: 'ĐÃ GHÉP',
         matching: 'GHÉP XE',
+        car_swap: 'TRAO ĐỔI XE',
         vc: 'XỬ LÝ VC',
         phongkd: 'PHÒNG KD',
         stats: 'THỐNG KÊ',
         incomplete_cars: 'BỔ SUNG PB',
-        inquiries: 'TRA CỨU KHO',
         holds: 'QUẢN LÝ GIỮ',
         super_edit: 'QUẢN LÝ NÂNG CAO',
         policies: 'CHÍNH SÁCH',
         don_ton: 'ĐƠN TỒN DMS',
         policy_summary: 'TỔNG HỢP CS',
-        pricing_calculator: 'CÔNG CỤ TÍNH GIÁ',
         ai_knowledge: 'TRI THỨC AI',
         ai_health: 'SỨC KHỎE AI',
         management: 'QUẢN TRỊ',
         inventory: 'KHO XE',
         system: 'HỆ THỐNG',
         maintenance_fee: 'KINH PHÍ WEB',
-        vehicle_config: 'CẤU HÌNH XE'
+        vehicle_config: 'CẤU HÌNH XE',
+        pricing_config: 'CẤU HÌNH BÁO GIÁ',
+        super_management: 'QUẢN LÝ NÂNG CAO',
+        live_users: 'VỊ TRÍ TRUY CẬP'
     };
-    const [unreadInquiryCount, setUnreadInquiryCount] = useState<number>(0);
 
     useEffect(() => {
         // Tự động chuyển Category khi adminView thay đổi (ví dụ khi bấm Notification)
@@ -313,21 +318,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             }
         });
     }, [adminView]);
-
-    useEffect(() => {
-        const fetchUnreadCount = async () => {
-            try {
-                const data = await apiService.getCarInquiries();
-                const unread = data.filter(i => !i.is_read_by_admin).length;
-                setUnreadInquiryCount(unread);
-            } catch (e) {
-                console.error("Error fetching unread inquiries:", e);
-            }
-        };
-        fetchUnreadCount();
-        const interval = setInterval(fetchUnreadCount, 30000); // 30s once
-        return () => clearInterval(interval);
-    }, []);
 
     const suggestedCount = useMemo(() => {
         const normalizeStr = (str: any) => {
@@ -357,24 +347,26 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         pending: pendingData.length, 
         paired: pairedData.length, 
         matching: pendingData.length + pairedData.length, 
+        car_swap: null,
         vc: vcRequests.length, 
         phongkd: Object.keys(teamData).length, 
         stats: null, 
         incomplete_cars: stockData.filter(car => !car['Phiên bản'] || car['Phiên bản'].trim() === '').length, 
         super_edit: null, 
-        inquiries: unreadInquiryCount || null,
         holds: null,
         policies: null,
         don_ton: null,
         policy_summary: allOrders.filter(o => o['CHÍNH SÁCH'] && o['CHÍNH SÁCH'].trim() !== '' && (o['Kết quả'] === 'Đã ghép' || o['Kết quả'] === 'Chưa ghép')).length,
-        pricing_calculator: null,
         ai_knowledge: null,
         ai_health: null,
         management: null,
         inventory: null,
         system: null,
         maintenance_fee: null,
-        vehicle_config: null
+        vehicle_config: null,
+        pricing_config: null,
+        super_management: null,
+        live_users: null
     };
 
 
@@ -386,6 +378,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         { title: 'Xóa Xe Khỏi Kho', icon: 'fa-trash-alt', action: () => actions.setAdminModal('deleteCar') },
         { title: 'Phục Hồi Xe', icon: 'fa-undo', action: () => actions.setAdminModal('restoreCar') },
         { title: 'Thêm Nhân Viên', icon: 'fa-user-plus', action: () => actions.setAdminModal('addUser') },
+        { title: 'Xóa Nhân Viên', icon: 'fa-user-minus text-red-500', action: () => actions.setAdminModal('deleteUser') },
         { title: 'Xóa Đơn Hàng', icon: 'fa-times-circle', action: () => actions.setAdminModal('deleteOrder') },
         { title: 'Hoàn Tác Trạng Thái', icon: 'fa-history', action: () => actions.setAdminModal('revertOrder') },
         { title: 'Tiến Tới Trạng Thái', icon: 'fa-step-forward', action: () => actions.setAdminModal('advanceOrder') },
@@ -411,16 +404,53 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const deleteOrderInputs = [{ id: 'orderNumber', label: 'Nhập Số đơn hàng để xác nhận', placeholder: 'Ví dụ: SO-123456...' }];
     const revertOrderInputs = [{ id: 'orderNumber', label: 'Nhập Số đơn hàng cần hoàn tác', placeholder: 'Ví dụ: N31913-VSO-25-08-0019' }];
     const advanceOrderInputs = [{ id: 'orderNumber', label: 'Nhập Số đơn hàng cần tiến tới trạng thái', placeholder: 'Ví dụ: N31913-VSO-25-08-0019' }];
-    const addUserInputs = [
-        { id: 'fullName', label: 'Họ và Tên Nhân Viên', placeholder: 'VD: Nguyễn Văn A', type: 'text' as const },
-        { id: 'email', label: 'Email Nhân Viên', placeholder: 'VD: nhanvien@vinfast.vn', type: 'email' as const },
+    const leaderOptions = useMemo(() => {
+        const leaders = (allUsers || []).filter(u => u.role === 'Trưởng Phòng Kinh Doanh');
+        return ['(Không có / Trực thuộc Admin)', ...leaders.map(l => `${l.name} (${l.username})`)];
+    }, [allUsers]);
+
+    const addUserInputs = useMemo(() => [
+        { id: 'fullName', label: 'Họ và Tên Nhân Viên (Tự động in hoa)', placeholder: 'VD: NGUYỄN VĂN A', type: 'text' as const, required: true },
+        { id: 'email', label: 'Email Đăng Nhập', placeholder: 'VD: nhanvien@vinfast.vn', type: 'email' as const, required: true },
         { 
             id: 'role', 
             label: 'Chức Vụ / Vai Trò', 
             type: 'select' as const, 
-            options: ['Tư vấn bán hàng', 'Trưởng Phòng Kinh Doanh', 'Admin', 'Kế Toán', 'Điều Phối'] 
+            options: ['Tư vấn bán hàng', 'Trưởng Phòng Kinh Doanh', 'Admin', 'Kế Toán', 'Điều Phối'],
+            required: true
         },
-    ];
+        {
+            id: 'manager',
+            label: 'Trưởng Phòng Trực Tiếp',
+            type: 'select' as const,
+            options: leaderOptions,
+            required: false
+        }
+    ], [leaderOptions]);
+
+    const userDeleteOptions = useMemo(() => {
+        return (allUsers || [])
+            .filter(u => u.username !== 'admin')
+            .map(u => `${u.name} | ${u.email || u.username} (${u.role})`);
+    }, [allUsers]);
+
+    const deleteUserInputs = useMemo(() => [
+        {
+            id: 'user',
+            label: 'Chọn Nhân Viên từ danh sách',
+            type: 'select' as const,
+            options: userDeleteOptions,
+            placeholder: 'Chọn nhân viên từ danh sách...',
+            required: false
+        },
+        {
+            id: 'email',
+            label: 'Hoặc Nhập trực tiếp Email / Username cần xóa',
+            placeholder: 'VD: nhanvien@gmail.com hoặc ngaltt',
+            type: 'text' as const,
+            required: false
+        }
+    ], [userDeleteOptions]);
     const cancelRequestInputs = [{ id: 'reason', label: 'Lý do hủy (bắt buộc)', placeholder: 'VD: Khách hàng đổi ý, sai thông tin...', type: 'textarea' as const }];
     const unmatchInputs = [
         { id: 'unmatch_type', label: 'Tùy chọn hủy ghép', placeholder: 'Chọn loại...', type: 'select' as const, options: ['Hủy luôn đơn hàng (Hủy đơn)', 'Hủy ghép & Đợi xe khác (Chờ xe)'] },
@@ -471,7 +501,18 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     />
                 </div>
 
-
+                {/* Car Swap Management View for Admin */}
+                <div className={adminView === 'car_swap' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
+                    <AdminSwapManagementView
+                        showToast={showToast}
+                        allOrders={allOrders}
+                        onRefreshAppData={() => {
+                            fetchXuathoadonData();
+                            refetchHistory(true);
+                            refetchStock(true);
+                        }}
+                    />
+                </div>
 
                 {/* VC View */}
                 <div className={adminView === 'vc' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
@@ -505,7 +546,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
                 {/* Stats View */}
                 <div className={adminView === 'stats' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
-                    <AdminStats xuathoadonData={xuathoadonData} pendingData={pendingData} pairedData={pairedData} />
+                    <AdminStats xuathoadonData={xuathoadonData} pendingData={pendingData} pairedData={pairedData} teamData={teamData} viewBy={statsViewBy} />
                 </div>
 
                 {/* Incomplete Cars View */}
@@ -528,16 +569,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         }}
                     />
                 </div>
-
-                {/* Inquiries View */}
-                <div className={adminView === 'inquiries' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
-                    <InquiryManagementView 
-                        showToast={showToast} 
-                        initialInquiryId={targetInquiryId || undefined}
-                        onProcessed={() => setTargetInquiryId(null)}
-                    />
-                </div>
-
                 {/* Hold Management View */}
                 <div className={adminView === 'holds' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
                     <HoldManagementView 
@@ -571,10 +602,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <AIKnowledgeManagement />
                 </div>
 
-                {/* Pricing Calculator View */}
-                <div className={adminView === 'pricing_calculator' ? 'flex-1 flex flex-col min-h-0' : 'hidden'}>
-                    <PricingCalculatorView />
-                </div>
                 {/* Maintenance Fee View */}
                 <div className={adminView === 'maintenance_fee' ? 'flex-1 flex flex-col min-h-0 overflow-y-auto' : 'hidden'}>
                     <MaintenanceFeeManager showToast={showToast} />
@@ -583,6 +610,16 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 {/* Vehicle Config Manager */}
                 <div className={adminView === 'vehicle_config' ? 'flex-1 flex flex-col min-h-0 overflow-y-auto' : 'hidden'}>
                     <VehicleConfigManager showToast={showToast} />
+                </div>
+
+                {/* Pricing Calculator Manager */}
+                <div className={adminView === 'pricing_config' ? 'flex-1 flex flex-col min-h-0 overflow-y-auto' : 'hidden'}>
+                    <PricingCalculatorManager showToast={showToast} />
+                </div>
+
+                {/* Live User & Geolocation Monitor */}
+                <div className={adminView === 'live_users' ? 'flex-1 flex flex-col min-h-0 h-full w-full' : 'hidden'}>
+                    <LiveUserMonitorView showToast={showToast} isActive={adminView === 'live_users'} />
                 </div>
             </>
         );
@@ -659,7 +696,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
                     <div className="flex items-center justify-between px-4 py-1.5 bg-slate-50/50 gap-4">
                         <div className="flex items-center overflow-x-auto no-scrollbar gap-1 flex-1">
-                            {categories[currentCategory].views.filter(view => !hiddenTabs.includes(view)).map(view => {
+                            {(categories[currentCategory]?.views || categories.orders.views).filter(view => !hiddenTabs.includes(view)).map(view => {
                                 const count = counts[view];
                                 const isActive = adminView === view;
                                 return (
@@ -687,7 +724,31 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                             })}
                         </div>
 
-                        <div className="flex-shrink-0 flex items-center">
+                        <div className="flex-shrink-0 flex items-center gap-3">
+                            {adminView === 'stats' && (
+                                <div className="bg-slate-200/50 p-0.5 rounded-lg flex items-center shadow-inner border border-slate-200/60">
+                                    <button 
+                                        onClick={() => setStatsViewBy('tvbh')}
+                                        className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all duration-200 ${
+                                            statsViewBy === 'tvbh' 
+                                                ? 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200/50' 
+                                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/80'
+                                        }`}
+                                    >
+                                        Từng Cá Nhân
+                                    </button>
+                                    <button 
+                                        onClick={() => setStatsViewBy('team')}
+                                        className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all duration-200 ${
+                                            statsViewBy === 'team' 
+                                                ? 'bg-white text-blue-600 shadow-sm ring-1 ring-slate-200/50' 
+                                                : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/80'
+                                        }`}
+                                    >
+                                        Phòng Kinh Doanh
+                                    </button>
+                                </div>
+                            )}
                             <div id="admin-filter-portal-target" className="flex items-center">
                                 <AdminFilterPanel
                                     adminView={adminView}
@@ -777,6 +838,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 {/* Invoice Actions */}
                                 <ActionModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'approve'} onClose={() => actions.setInvoiceModalState(null)} title="Phê Duyệt Yêu Cầu" description="Xác nhận phê duyệt yêu cầu xuất hóa đơn cho đơn hàng:" targetId={actions.invoiceModalState.order['Số đơn hàng']} submitText="Phê Duyệt" submitColor="success" icon="fa-check-double" onSubmit={() => actions.handleAdminSubmit('approveSelectedInvoiceRequest', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]) }, 'Đã phê duyệt yêu cầu.')} />
                                 <RequestWithImageModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'supplement'} onClose={() => actions.setInvoiceModalState(null)} title="Yêu Cầu Bổ Sung" orderNumber={actions.invoiceModalState.order['Số đơn hàng']} reasonLabel="Nội dung yêu cầu (bắt buộc):" onSubmit={(reason: string, images: string[]) => actions.handleAdminSubmit('requestSupplementForInvoice', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu bổ sung.')} icon="fa-exclamation-triangle" theme="warning" />
+                                <RequestWithImageModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'rescan'} onClose={() => actions.setInvoiceModalState(null)} title="Yêu Cầu Scan Lại Hồ Sơ (Không Đổi Trạng Thái)" orderNumber={actions.invoiceModalState.order['Số đơn hàng']} reasonLabel="Nội dung yêu cầu scan lại (bắt buộc):" onSubmit={(reason: string, images: string[]) => actions.handleAdminSubmit('requestRescanForInvoice', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]), reason, pastedImagesBase64: JSON.stringify(images) }, 'Đã gửi yêu cầu scan lại hồ sơ.')} icon="fa-camera" theme="warning" />
                                 <ActionModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'pendingSignature'} onClose={() => actions.setInvoiceModalState(null)} title="Chuyển Trạng Thái" description="Xác nhận chuyển đơn hàng sang 'Chờ Ký Hóa Đơn'. Bạn có thể chọn lùi ngày xuất hóa đơn nếu cần." targetId={actions.invoiceModalState.order['Số đơn hàng']} inputs={pendingSignatureInputs} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={(data) => actions.handleAdminSubmit('markAsPendingSignature', { orderNumbers: JSON.stringify([actions.invoiceModalState!.order['Số đơn hàng']]), ngay_xuat_hoa_don: data.ngay_xuat_hoa_don }, 'Đã chuyển trạng thái.')} />
                                 <UploadInvoiceModal showToast={showToast} isOpen={actions.invoiceModalState.type === 'uploadInvoice'} onClose={() => actions.setInvoiceModalState(null)} order={actions.invoiceModalState.order as Order} onSubmit={async (file: File) => {
 //                                     showToast('Đang xử lý', 'Đang tải lên hóa đơn...', 'loading');
@@ -816,6 +878,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                                 <ActionModal showToast={showToast} isOpen={actions.bulkActionModal.type === 'approve'} onClose={actions.handleCloseBulkActionModal} title="Phê duyệt hàng loạt" description={`Xác nhận phê duyệt ${selectedRows.size} yêu cầu đã chọn?`} submitText="Phê duyệt" submitColor="success" icon="fa-check-double" onSubmit={actions.handleBulkApproveSubmit} />
                                 <ActionModal showToast={showToast} isOpen={actions.bulkActionModal.type === 'pendingSignature'} onClose={actions.handleCloseBulkActionModal} title="Chuyển trạng thái hàng loạt" description={`Chuyển ${selectedRows.size} đơn hàng đã chọn sang "Chờ Ký Hóa Đơn"?`} inputs={pendingSignatureInputs} submitText="Xác Nhận" submitColor="primary" icon="fa-signature" onSubmit={(data) => actions.handleBulkPendingSignatureSubmit(data)} />
                                 <RequestWithImageModal showToast={showToast} isOpen={actions.bulkActionModal.type === 'supplement'} onClose={actions.handleCloseBulkActionModal} title="Y/C Bổ sung hàng loạt" orderNumber={`${selectedRows.size} đơn hàng`} reasonLabel="Nội dung yêu cầu (bắt buộc):" icon="fa-exclamation-triangle" theme="warning" onSubmit={actions.handleBulkSupplementSubmit} />
+                                <RequestWithImageModal showToast={showToast} isOpen={actions.bulkActionModal.type === 'rescan'} onClose={actions.handleCloseBulkActionModal} title="Y/C Scan Lại hàng loạt (Không đổi trạng thái)" orderNumber={`${selectedRows.size} đơn hàng`} reasonLabel="Nội dung yêu cầu scan lại (bắt buộc):" icon="fa-camera" theme="warning" onSubmit={(reason: string, images: string[]) => actions.handleBulkActionSubmit('rescan', { reason, pastedImagesBase64: JSON.stringify(images) })} />
                                 <ActionModal showToast={showToast} isOpen={actions.bulkActionModal.type === 'cancel'} onClose={actions.handleCloseBulkActionModal} title="Hủy hàng loạt" description={`Bạn có chắc muốn hủy ${selectedRows.size} yêu cầu đã chọn? Hành động này sẽ chuyển các mục vào phần "Đã Hủy".`} inputs={cancelRequestInputs} submitText="Xác Nhận Hủy" submitColor="danger" icon="fa-trash-alt" onSubmit={actions.handleBulkCancelSubmit} />
                             </>
                         )
@@ -826,7 +889,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'bulkAddCar'} onClose={actions.handleCloseAdminModal} title="Thêm Xe Hàng Loạt" description="Nhập danh sách các số VIN để thêm hàng loạt vào kho." inputs={bulkAddCarInputs} submitText="Thêm Hàng Loạt" submitColor="primary" icon="fa-layer-group" onSubmit={actions.handleBulkAddCarSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'deleteCar'} onClose={actions.handleCloseAdminModal} title="Xóa Xe Khỏi Kho" description="Xe sẽ bị xóa khỏi trang Kho Xe và thông tin sẽ được lưu vào nhật ký. Có thể phục hồi lại sau bằng chức năng 'Phục Hồi Xe'." inputs={deleteCarInputs} submitText="Xác Nhận Xóa" submitColor="danger" icon="fa-trash-alt" onSubmit={actions.handleDeleteCarSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'restoreCar'} onClose={actions.handleCloseAdminModal} title="Phục Hồi Xe Đã Xóa" description="Dựa vào nhật ký xe đã xóa, hệ thống sẽ thêm xe trở lại Kho Xe với trạng thái 'Chưa ghép'." inputs={restoreCarInputs} submitText="Phục Hồi Xe" submitColor="primary" icon="fa-undo" onSubmit={actions.handleRestoreCarSubmit} />
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'addUser'} onClose={actions.handleCloseAdminModal} title="Mời Nhân Viên Mới" description="Hệ thống sẽ tạo một Link mời riêng biệt. Admin hãy COPY và GỬI Link này cho nhân viên để họ tự đăng ký Email và Mật khẩu." inputs={addUserInputs} submitText="Tạo Link Mời" submitColor="primary" icon="fa-user-plus" onSubmit={actions.handleAddUserSubmit} />
+                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'addUser'} onClose={actions.handleCloseAdminModal} title="Thêm & Mời Nhân Viên Mới" description="Hệ thống sẽ tạo tài khoản, chuẩn hóa Họ Tên in hoa, và gửi Email chứa Link để nhân viên tự kích hoạt & đặt mật khẩu." inputs={addUserInputs} submitText="Tạo & Gửi Lời Mời" submitColor="primary" icon="fa-user-plus" onSubmit={actions.handleAddUserSubmit} />
+                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'deleteUser'} onClose={actions.handleCloseAdminModal} title="Xóa Nhân Viên Khỏi Hệ Thống" description="CẢNH BÁO: Thao tác này sẽ xóa vĩnh viễn tài khoản Auth đăng nhập, xóa hồ sơ nhân viên trong hệ thống và gỡ khỏi các nhóm phòng ban." inputs={deleteUserInputs} submitText="Xác Nhận Xóa Nhân Viên" submitColor="danger" icon="fa-user-times" onSubmit={actions.handleDeleteUserSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'deleteOrder'} onClose={actions.handleCloseAdminModal} title="Xóa Đơn Hàng" description="CẢNH BÁO: Đơn hàng sẽ bị xóa vĩnh viễn và chuyển vào mục 'Đã Hủy'." inputs={deleteOrderInputs} submitText="Tôi hiểu, Xóa Đơn Hàng" submitColor="danger" icon="fa-times-circle" onSubmit={actions.handleDeleteOrderSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'revertOrder'} onClose={actions.handleCloseAdminModal} title="Hoàn Tác Trạng Thái" description="Khôi phục lại trạng thái cuối cùng của đơn hàng." inputs={revertOrderInputs} submitText="Thực Hiện Hoàn Tác" submitColor="primary" icon="fa-history" onSubmit={actions.handleRevertOrderSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'advanceOrder'} onClose={actions.handleCloseAdminModal} title="Tiến Tới Trạng Thái" description="Đẩy đơn hàng này tiến lên trạng thái tiếp theo trong quy trình." inputs={advanceOrderInputs} submitText="Thực Hiện Tiến Tới" submitColor="primary" icon="fa-step-forward" onSubmit={actions.handleAdvanceOrderSubmit} />
@@ -853,6 +917,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         onClose={() => actions.setIsBulkUploadModalOpen(false)}
                         showToast={showToast}
                         hideToast={hideToast}
+                        orders={allOrders}
                         onSuccess={() => {
                             refetchHistory(true);
                             refetchXuathoadon(true);

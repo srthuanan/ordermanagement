@@ -7,6 +7,7 @@ import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import * as apiService from '../../services/apiService';
 import moment from 'moment';
+import MarqueeText from '../ui/MarqueeText';
 
 interface SuperManagementViewProps {
     allOrders: Order[];
@@ -157,7 +158,12 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
     }, []);
 
     const filteredOrders = useMemo(() => {
-        let result = allOrders;
+        let result = allOrders.filter(o => {
+            const statusStr = ((o['Kết quả'] || '') + ' ' + (o['Trạng thái VC'] || '')).toLowerCase().trim().normalize('NFC');
+            const isPendingSig = statusStr.includes('chờ ký');
+            const isInvoiced = statusStr.includes('đã xuất hóa đơn') || statusStr.includes('đã xuất hđ');
+            return !isPendingSig && !isInvoiced;
+        });
 
         if (filterModel) {
             result = result.filter(o => o['Dòng xe'] === filterModel);
@@ -265,8 +271,8 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
         }
     };
 
-    const inputClass = "w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all font-medium text-[13px]";
-    const labelClass = "block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-0.5 shadow-sm";
+    const inputClass = "w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:bg-white transition-all font-medium text-xs";
+    const labelClass = "block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5 ml-0.5 flex items-center justify-between";
 
     return (
         <div className="flex h-full bg-slate-50 rounded-2xl shadow-md border border-border-primary overflow-hidden relative isolate">
@@ -275,23 +281,23 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
             {/* Column 1: List / Search */}
             <div className={`w-full md:w-80 lg:w-[380px] flex-shrink-0 border-r border-border-primary flex flex-col bg-white/90 backdrop-blur-md relative z-10 transition-transform duration-300 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
                 {/* Search & Filters Header */}
-                <div className="shrink-0 p-3 border-b border-border-secondary bg-white space-y-2">
+                <div className="shrink-0 p-3 border-b border-slate-200 bg-white space-y-2">
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <i className="fas fa-search text-slate-400 group-focus-within:text-red-500 transition-colors text-sm"></i>
+                            <i className="fas fa-search text-slate-400 group-focus-within:text-blue-600 transition-colors text-sm"></i>
                         </div>
                         <input
                             type="text"
                             placeholder="Tìm Số ĐH, VIN, Máy, KH..."
                             value={searchTerm}
                             onChange={handleSearchChange}
-                            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-sm font-medium placeholder:text-slate-400"
+                            className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all text-xs font-medium placeholder:text-slate-400 text-slate-900"
                         />
                     </div>
                     
                     <div className="grid grid-cols-2 gap-2">
                         <select 
-                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold outline-none focus:border-red-500"
+                            className="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs font-medium outline-none focus:border-blue-600 text-slate-700"
                             value={filterModel}
                             onChange={(e) => setFilterModel(e.target.value)}
                         >
@@ -299,14 +305,13 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                             {vehicleLines.map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
                         <select 
-                            className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold outline-none focus:border-red-500"
+                            className="bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs font-medium outline-none focus:border-blue-600 text-slate-700"
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
                         >
                             <option value="">Tất cả trạng thái</option>
                             <option value="Đã ghép">Đã ghép</option>
                             <option value="Chưa ghép">Chưa ghép</option>
-                            <option value="Đã xuất hóa đơn">Đã xuất HĐ</option>
                             <option value="Đã hủy">Đã hủy</option>
                         </select>
                     </div>
@@ -387,31 +392,26 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                                 return (
                                     <div
                                         key={order['Số đơn hàng']}
-                                        onClick={() => handleOrderSelect(order['Số đơn hàng'])}
-                                        className={`px-3 py-3 rounded-xl cursor-pointer transition-all duration-300 group relative border ${isSelected
-                                            ? 'bg-white shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-red-200 z-10 scale-[1.02]'
-                                            : 'bg-transparent border-transparent hover:bg-slate-50 hover:border-slate-200'
+                                        onClick={(e) => {
+                                            handleOrderSelect(order['Số đơn hàng']);
+                                            copyWithFeedback(order['Tên khách hàng'] || order['Số đơn hàng'], e);
+                                        }}
+                                        className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${isSelected
+                                            ? 'bg-slate-100/90 border-blue-600 font-semibold'
+                                            : 'border-transparent hover:bg-slate-50'
                                             }`}
                                     >
-                                        <div className="flex justify-between items-start mb-1.5">
-                                            <div className={`text-[9px] font-black font-mono uppercase tracking-widest px-1.5 py-0.5 rounded transition-colors ${isSelected ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
-                                                {order['Số đơn hàng']}
+                                        <div className="flex items-center justify-between mb-1 gap-2">
+                                            <div className="min-w-0 flex-1 overflow-hidden">
+                                                <MarqueeText 
+                                                    text={order['Tên khách hàng'] || '—'}
+                                                    className="text-xs font-bold text-slate-900"
+                                                />
                                             </div>
-                                            <StatusBadge status={order['Kết quả'] || ''} size="sm" />
+                                            <StatusBadge status={order['Kết quả']} size="sm" />
                                         </div>
-                                        
-                                        <div className="flex items-center justify-between gap-3 mt-1.5">
-                                            <div className="flex-1 min-w-0">
-                                                <div className={`text-sm font-bold truncate mb-0.5 transition-colors ${isSelected ? 'text-red-600' : 'text-slate-700 group-hover:text-red-500'}`}>
-                                                    {order['Tên khách hàng']}
-                                                </div>
-                                                <div className="text-[10px] text-slate-500 font-medium flex items-center gap-1.5 truncate">
-                                                    <span>{order['Dòng xe']} - {order['Phiên bản']}</span>
-                                                </div>
-                                                <div className="text-[9px] text-slate-400 font-mono mt-1">
-                                                    VIN: <span className={order['VIN'] ? 'text-slate-600 font-bold' : ''}>{order['VIN'] || 'N/A'}</span>
-                                                </div>
-                                            </div>
+                                        <div className="text-[11px] text-slate-500 font-normal truncate">
+                                            ĐH: {order['Số đơn hàng']} • {order['Dòng xe']} {order['Phiên bản']}
                                         </div>
                                     </div>
                                 );
@@ -421,13 +421,13 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                 </div>
             </div>
 
-            {/* Column 2: Detail / Form Component */}
-            <div className={`flex-1 flex flex-col bg-surface-ground/90 min-w-0 relative z-10 ${mobileView !== 'detail' ? 'hidden md:flex' : 'flex'}`}>
+            {/* Column 2: Detail / Form Component (Zero-Scroll Auto-Fit Layout) */}
+            <div className={`flex-1 flex flex-col bg-slate-50 min-w-0 h-full overflow-hidden relative z-10 ${mobileView !== 'detail' ? 'hidden md:flex' : 'flex'}`}>
                 {selectedOrder ? (
                     <>
-                        {/* Header Details */}
-                        <div className="bg-white border-b border-gray-100/80 z-20 shadow-sm sticky top-0 shrink-0">
-                            <div className="px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        {/* Header Details (Compact Bar) */}
+                        <div className="bg-white border-b border-slate-200 z-20 shadow-2xs shrink-0 px-4 py-2.5">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
                                     <button
                                         onClick={() => setMobileView('list')}
@@ -436,32 +436,38 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                                         <i className="fas fa-arrow-left text-xs"></i>
                                     </button>
 
-                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-50 to-orange-50 border border-red-100/50 flex items-center justify-center text-red-600 font-black text-xl flex-shrink-0 shadow-sm ring-2 ring-white">
+                                    <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold text-base flex items-center justify-center flex-shrink-0 shadow-xs">
                                         {selectedOrder['Tên khách hàng'].charAt(0)}
                                     </div>
 
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h2 className="text-lg font-black text-slate-800 truncate cursor-pointer hover:text-red-600 transition-colors" title="Click để sao chép" onClick={(e) => { e.stopPropagation(); copyWithFeedback(selectedOrder['Tên khách hàng'], e); }}>
-                                                {selectedOrder['Tên khách hàng']}
-                                            </h2>
+                                    <div className="min-w-0 flex-1 overflow-hidden">
+                                        <div className="flex items-center gap-2">
+                                            <div className="min-w-0 flex-1 overflow-hidden">
+                                                <MarqueeText 
+                                                    text={selectedOrder['Tên khách hàng'] || '—'}
+                                                    className="text-sm font-bold text-slate-900 cursor-pointer hover:text-blue-600 transition-colors uppercase"
+                                                    title="Click để sao chép"
+                                                    onClick={(e) => { e.stopPropagation(); copyWithFeedback(selectedOrder['Tên khách hàng'], e); }}
+                                                />
+                                            </div>
                                             <StatusBadge status={selectedOrder['Kết quả'] || ''} size="sm" />
                                         </div>
-                                        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                                            <i className="fas fa-user-tie text-[10px] opacity-60"></i>
-                                            {selectedOrder['Tên tư vấn bán hàng']}
+                                        <div className="flex items-center gap-2 text-[11px] text-slate-500 font-normal">
+                                            <span><i className="fas fa-hashtag text-[9px] text-slate-400 mr-1"></i>{selectedOrder['Số đơn hàng']}</span>
+                                            <span>•</span>
+                                            <span><i className="fas fa-user-tie text-[9px] text-slate-400 mr-1"></i>{selectedOrder['Tên tư vấn bán hàng']}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex-shrink-0 flex items-center gap-2 bg-slate-50/80 p-1.5 rounded-xl border border-slate-100">
+                                <div className="flex-shrink-0 flex items-center gap-2">
                                     {!isInvoiced && (
                                         <Button 
                                             type="submit" 
                                             form="super-edit-form"
                                             variant="primary" 
                                             size="sm"
-                                            className="font-bold shadow-md shadow-red-500/20 bg-red-600 hover:bg-red-700 active:scale-95 transition-all text-white border-none py-2 px-4 whitespace-nowrap"
+                                            className="font-bold shadow-xs bg-blue-600 hover:bg-blue-700 active:scale-95 transition-all text-white border-none py-2 px-4 rounded-xl whitespace-nowrap text-xs flex items-center gap-2"
                                             leftIcon={<i className="fas fa-save text-xs"></i>}
                                             isLoading={isSubmitting}
                                             disabled={isSubmitting}
@@ -473,128 +479,204 @@ const SuperManagementView: React.FC<SuperManagementViewProps> = ({ allOrders, sh
                             </div>
                         </div>
 
-                        {/* Editable Form Content */}
-                        <div className="flex-1 p-3 overflow-y-auto custom-scrollbar">
-                            <div className="max-w-4xl mx-auto space-y-3">
-                                {isInvoiced && (
-                                    <div className="bg-amber-50 text-amber-700 border border-amber-200 p-3 rounded-xl text-xs font-bold flex items-center gap-2 mb-3 shadow-sm">
-                                        <i className="fas fa-lock text-amber-500 text-sm"></i> 
-                                        Đơn hàng này đã hoàn tất xuất hóa đơn. Hệ thống khóa chức năng chỉnh sửa để đảm bảo an toàn dữ liệu.
-                                    </div>
-                                )}
-                                <form id="super-edit-form" onSubmit={handleSubmit} className="space-y-3 pb-8">
-                                    <fieldset disabled={isInvoiced} className="bg-white rounded-xl border border-slate-200/60 shadow-sm p-5 relative overflow-hidden group disabled:opacity-80">
-                                        {/* Subtle background element */}
-                                        <div className="absolute right-0 top-0 w-64 h-64 bg-slate-50 rounded-full blur-3xl opacity-50 -mr-10 -mt-20 pointer-events-none"></div>
-                                        
-                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-x-5 gap-y-4 relative z-10">
-                                            
-                                            {/* Row 1: Core Order Context */}
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Số Đơn Hàng</label>
-                                                <input name="Số đơn hàng" value={formData["Số đơn hàng"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono font-bold`} />
+                        {/* Editable Form Content (Zero-Scroll Canvas) */}
+                        <div className="flex-1 p-3 flex flex-col justify-between overflow-hidden bg-slate-50">
+                            {isInvoiced && (
+                                <div className="bg-amber-50 text-amber-800 border border-amber-200/80 px-3 py-2 rounded-xl text-xs font-medium flex items-center gap-2 shrink-0 mb-2">
+                                    <i className="fas fa-lock text-amber-500 text-sm flex-shrink-0"></i> 
+                                    <span>Đơn hàng đã xuất hóa đơn. Hệ thống khóa chỉnh sửa để bảo vệ dữ liệu.</span>
+                                </div>
+                            )}
+                            <form id="super-edit-form" onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between h-full overflow-hidden">
+                                <fieldset disabled={isInvoiced} className="flex-1 flex flex-col justify-between h-full gap-2.5 disabled:opacity-80">
+                                    
+                                    {/* SECTION 1: CORE ORDER INFORMATION */}
+                                    <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-2xs flex-1 flex flex-col justify-center">
+                                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                                            <div className="flex items-center gap-2">
+                                                <i className="fas fa-clipboard-list text-blue-600 text-xs"></i>
+                                                <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-800">1. Thông Tin Đơn Hàng & Khách Hàng</h3>
                                             </div>
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Tên Khách Hàng</label>
-                                                <input name="Tên khách hàng" value={formData["Tên khách hàng"] || ''} onChange={handleInputChange} className={inputClass} placeholder="Nhập tên..." />
+                                            <span className="text-[9px] font-mono text-slate-400">THÔNG TIN CHÍNH</span>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Số Đơn Hàng</span>
+                                                    <i className="fas fa-hashtag text-[9px] text-slate-400"></i>
+                                                </label>
+                                                <input name="Số đơn hàng" value={formData["Số đơn hàng"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono font-bold text-blue-600`} />
                                             </div>
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Tư Vấn Bán Hàng</label>
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Tên Khách Hàng</span>
+                                                    <i className="fas fa-user text-[9px] text-slate-400"></i>
+                                                </label>
+                                                <input name="Tên khách hàng" value={formData["Tên khách hàng"] || ''} onChange={handleInputChange} className={`${inputClass} font-bold`} placeholder="Tên khách hàng..." />
+                                            </div>
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Tư Vấn Bán Hàng</span>
+                                                    <i className="fas fa-user-tie text-[9px] text-slate-400"></i>
+                                                </label>
                                                 <input name="Tên tư vấn bán hàng" value={formData["Tên tư vấn bán hàng"] || ''} onChange={handleInputChange} className={inputClass} placeholder="Tên TVBH..." />
                                             </div>
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Ngày Cọc</label>
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Ngày Cọc</span>
+                                                    <i className="fas fa-calendar-alt text-[9px] text-slate-400"></i>
+                                                </label>
                                                 <input name="Ngày cọc" type="datetime-local" value={formData["Ngày cọc"] || ''} onChange={handleInputChange} className={inputClass} />
                                             </div>
+                                        </div>
+                                    </div>
 
-                                            {/* Divider */}
-                                            <div className="md:col-span-4 border-b border-slate-100/80 my-0.5"></div>
+                                    {/* SECTION 2: VEHICLE CONFIGURATION */}
+                                    <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-2xs flex-1 flex flex-col justify-center">
+                                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                                            <div className="flex items-center gap-2">
+                                                <i className="fas fa-car text-purple-600 text-xs"></i>
+                                                <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-800">2. Cấu Hình & Màu Sắc Xe</h3>
+                                            </div>
+                                            <span className="text-[9px] font-mono text-slate-400">SẢN PHẨM</span>
+                                        </div>
 
-                                            {/* Row 2: Vehicle Configuration */}
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Dòng Xe</label>
-                                                <select name="Dòng xe" value={formData["Dòng xe"] || ''} onChange={handleInputChange} className={inputClass}>
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Dòng Xe</span>
+                                                    <i className="fas fa-car-side text-[9px] text-slate-400"></i>
+                                                </label>
+                                                <select name="Dòng xe" value={formData["Dòng xe"] || ''} onChange={handleInputChange} className={`${inputClass} font-bold text-slate-800`}>
                                                     <option value="">Chọn dòng xe...</option>
                                                     {vehicleLines.map(v => <option key={v} value={v}>{v}</option>)}
                                                 </select>
                                             </div>
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Phiên Bản</label>
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Phiên Bản</span>
+                                                    <i className="fas fa-layer-group text-[9px] text-slate-400"></i>
+                                                </label>
                                                 <select name="Phiên bản" value={formData["Phiên bản"] || ''} onChange={handleInputChange} className={inputClass}>
                                                     <option value="">Chọn phiên bản...</option>
                                                     {(formData["Dòng xe"] ? versionsMap[formData["Dòng xe"]] || allPossibleVersions : allPossibleVersions).map(v => <option key={v} value={v}>{v}</option>)}
                                                 </select>
                                             </div>
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Ngoại Thất</label>
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Ngoại Thất</span>
+                                                    <i className="fas fa-palette text-[9px] text-slate-400"></i>
+                                                </label>
                                                 <select name="Ngoại thất" value={formData["Ngoại thất"] || ''} onChange={handleInputChange} className={inputClass}>
                                                     <option value="">Màu ngoại thất...</option>
                                                     {vehicleColors.map(c => <option key={c} value={c}>{c}</option>)}
                                                 </select>
                                             </div>
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Nội Thất</label>
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Nội Thất</span>
+                                                    <i className="fas fa-couch text-[9px] text-slate-400"></i>
+                                                </label>
                                                 <select name="Nội thất" value={formData["Nội thất"] || ''} onChange={handleInputChange} className={inputClass}>
                                                     <option value="">Màu nội thất...</option>
                                                     {availableInteriors.map(c => <option key={c} value={c}>{c}</option>)}
                                                 </select>
                                             </div>
+                                        </div>
+                                    </div>
 
-                                            {/* Divider */}
-                                            <div className="md:col-span-4 border-b border-slate-100/80 my-0.5"></div>
+                                    {/* SECTION 3: TECHNICAL IDENTIFICATION & INVOICING */}
+                                    <div className="bg-white rounded-xl border border-slate-200 p-3 shadow-2xs flex-[1.2] flex flex-col justify-center">
+                                        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100">
+                                            <div className="flex items-center gap-2">
+                                                <i className="fas fa-barcode text-emerald-600 text-xs"></i>
+                                                <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-800">3. Số Khung VIN, Số Máy & Hóa Đơn</h3>
+                                            </div>
+                                            <span className="text-[9px] font-mono text-slate-400">ĐỊNH DANH & HÓA ĐƠN</span>
+                                        </div>
 
-                                            {/* Row 3: Technical & Status Details */}
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Số Khung (VIN)</label>
-                                                <input name="VIN" value={formData["VIN"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono`} placeholder="Nhập số khung..." />
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5 mb-2">
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Số Khung (VIN)</span>
+                                                    <i className="fas fa-barcode text-[9px] text-slate-400"></i>
+                                                </label>
+                                                <input name="VIN" value={formData["VIN"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono font-bold`} placeholder="Số khung VIN..." />
                                             </div>
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Số Máy</label>
-                                                <input name="Số máy" value={formData["Số máy"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono`} placeholder="Nhập số máy..." />
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Số Máy</span>
+                                                    <i className="fas fa-cogs text-[9px] text-slate-400"></i>
+                                                </label>
+                                                <input name="Số máy" value={formData["Số máy"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono font-bold`} placeholder="Số máy..." />
                                             </div>
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Mã DMS</label>
-                                                <input name="Mã DMS" value={formData["Mã DMS"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono`} placeholder="Nhập mã DMS..." />
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Mã DMS</span>
+                                                    <i className="fas fa-database text-[9px] text-slate-400"></i>
+                                                </label>
+                                                <input name="Mã DMS" value={formData["Mã DMS"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono`} placeholder="Mã DMS..." />
                                             </div>
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Kết Quả (TT ĐH)</label>
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Kết Quả (TT ĐH)</span>
+                                                    <i className="fas fa-flag text-[9px] text-slate-400"></i>
+                                                </label>
                                                 <input name="Kết quả" value={formData["Kết quả"] || ''} onChange={handleInputChange} className={inputClass} placeholder="Trạng thái..." />
                                             </div>
+                                        </div>
 
-
-                                            {/* Row 4: Invoice specifics */}
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Ngày Xuất HĐ</label>
+                                        <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5">
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Ngày Xuất HĐ</span>
+                                                    <i className="fas fa-calendar-check text-[9px] text-slate-400"></i>
+                                                </label>
                                                 <input name="Ngày xuất hóa đơn" type="date" value={formData["Ngày xuất hóa đơn"] || ''} onChange={handleInputChange} className={inputClass} />
                                             </div>
-                                            <div className="md:col-span-1">
-                                                <label className={labelClass}>Thời gian cần xe</label>
+                                            <div>
+                                                <label className={labelClass}>
+                                                    <span>Thời gian cần xe</span>
+                                                    <i className="fas fa-clock text-[9px] text-slate-400"></i>
+                                                </label>
                                                 <input name="Thời gian cần xe" type="date" value={formData["Thời gian cần xe"] || ''} onChange={handleInputChange} className={inputClass} />
                                             </div>
                                             <div className="md:col-span-2">
-                                                <label className={labelClass}>Link Hóa Đơn (URL)</label>
+                                                <label className={labelClass}>
+                                                    <span>Link Hóa Đơn (URL)</span>
+                                                    <i className="fas fa-link text-[9px] text-slate-400"></i>
+                                                </label>
                                                 <div className="relative">
-                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                        <i className="fas fa-link text-slate-300 text-xs"></i>
-                                                    </div>
-                                                    <input name="LinkHoaDonDaXuat" value={formData["LinkHoaDonDaXuat"] || ''} onChange={handleInputChange} className={`${inputClass} pl-8`} placeholder="https://..." />
+                                                    <input name="LinkHoaDonDaXuat" value={formData["LinkHoaDonDaXuat"] || ''} onChange={handleInputChange} className={`${inputClass} pr-16`} placeholder="https://..." />
+                                                    {formData["LinkHoaDonDaXuat"] && (
+                                                        <a 
+                                                            href={formData["LinkHoaDonDaXuat"]} 
+                                                            target="_blank" 
+                                                            rel="noopener noreferrer" 
+                                                            className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded text-[9px] font-bold flex items-center gap-1 transition-colors"
+                                                        >
+                                                            <span>Mở link</span>
+                                                            <i className="fas fa-external-link-alt text-[7px]"></i>
+                                                        </a>
+                                                    )}
                                                 </div>
                                             </div>
-
                                         </div>
-                                    </fieldset>
-                                </form>
-                            </div>
+                                    </div>
+
+                                </fieldset>
+                            </form>
                         </div>
                     </>
                 ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 text-center min-h-[400px]">
-                        <div className="w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center mb-6">
-                            <i className="fas fa-shield-alt text-4xl opacity-50"></i>
+                        <div className="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mb-4 text-slate-400">
+                            <i className="fas fa-shield-alt text-3xl"></i>
                         </div>
-                        <h3 className="text-lg font-black text-slate-700 mb-2">Chưa chọn đơn hàng</h3>
-                        <p className="text-sm text-slate-400 max-w-sm">
-                            Hãy sử dụng thanh tìm kiếm và chọn một đơn hàng từ danh sách bên trái để can thiệp Siêu Quản Trị.
+                        <h3 className="text-base font-bold text-slate-700 mb-1">Chưa chọn đơn hàng</h3>
+                        <p className="text-xs text-slate-400 max-w-sm">
+                            Sử dụng thanh tìm kiếm và chọn một đơn hàng từ danh sách bên trái để can thiệp Siêu Quản Trị.
                         </p>
                     </div>
                 )}

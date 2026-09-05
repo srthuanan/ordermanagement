@@ -1,0 +1,148 @@
+javascript:(function(){
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var frames = window.frames;
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].Xrm && frames[i].Xrm.WebApi) { _Xrm = frames[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert("⚠️ Vui lòng mở trang DMS VinFast trước khi chạy!");
+        return;
+    }
+
+    // Tự động nhận diện số PO nếu người dùng đang mở trang Đơn mua hàng (PO)
+    var defaultPo = "";
+    try {
+        if (_Xrm.Page && _Xrm.Page.getAttribute) {
+            if (_Xrm.Page.getAttribute("xts_purchaseordernumber")) {
+                defaultPo = _Xrm.Page.getAttribute("xts_purchaseordernumber").getValue() || "";
+            } else if (_Xrm.Page.getAttribute("xts_purchasereceiptnumber")) {
+                var poLookup = _Xrm.Page.getAttribute("xts_purchaseorderid");
+                if (poLookup && poLookup.getValue() && poLookup.getValue()[0]) {
+                    defaultPo = poLookup.getValue()[0].name || "";
+                }
+            }
+        }
+    } catch(e){}
+
+    var inputPrompt = prompt("📦 NHẬP SỐ ĐƠN MUA HÀNG (SỐ PO) ĐỂ TỰ ĐỘNG PHÁT HÀNH PR:\n(Có thể nhập 1 số hoặc dán nhiều số PO cách nhau bằng dấu phẩy / xuống dòng):", defaultPo || "N31913-PO-26-07-0475");
+    if (!inputPrompt || !inputPrompt.trim()) return;
+
+    var poList = inputPrompt.split(/[\n,;]+/).map(function(s){ return s.trim(); }).filter(function(s){ return s.length > 0; });
+    if (poList.length === 0) return;
+
+    var progress = document.createElement('div');
+    progress.style = 'position:fixed;top:15px;right:15px;background:#0f172a;color:#38bdf8;padding:16px 22px;z-index:9999999;border-radius:12px;font-family:sans-serif;font-size:13px;font-weight:bold;box-shadow:0 12px 30px rgba(0,0,0,0.6);border:1px solid #38bdf840;backdrop-filter:blur(8px);';
+    progress.innerHTML = '🔍 Đang tìm kiếm PR & phát hành cho ' + poList.length + ' đơn PO...';
+    document.body.appendChild(progress);
+
+    var successList = [];
+    var failList = [];
+
+    function processPoIndex(idx) {
+        if (idx >= poList.length) {
+            progress.remove();
+            var msg = "🎉 KẾT QUẢ TỰ ĐỘNG TÌM PR & PHÁT HÀNH THEO SỐ PO:\n\n";
+            if (successList.length > 0) {
+                msg += "• THÀNH CÔNG (" + successList.length + "):\n" + successList.map(function(s){ return "  ✅ " + s; }).join("\n") + "\n\n";
+            }
+            if (failList.length > 0) {
+                msg += "• THẤT BẠI / CẦN KIỂM TRA (" + failList.length + "):\n" + failList.map(function(f){ return "  ❌ " + f.po + ": " + f.err; }).join("\n");
+            }
+            alert(msg);
+            try {
+                if (_Xrm.Page && _Xrm.Page.data) _Xrm.Page.data.refresh(true);
+                else location.reload();
+            } catch(e) { location.reload(); }
+            return;
+        }
+
+        var poNum = poList[idx];
+        progress.innerHTML = '⚙️ (' + (idx + 1) + '/' + poList.length + ') Đang tra cứu PO: <b>' + poNum + '</b>...';
+
+        // Sử dụng FetchXML kết nối trực tiếp bảng PR và bảng PO
+        var fetchXml = '<fetch version="1.0" output-format="xml-platform" mapping="logical" distinct="false">' +
+                       '<entity name="xts_purchasereceipt">' +
+                       '<attribute name="xts_purchasereceiptid" />' +
+                       '<attribute name="xts_purchasereceiptnumber" />' +
+                       '<attribute name="xts_status" />' +
+                       '<attribute name="xts_handling" />' +
+                       '<link-entity name="xts_purchaseorder" from="xts_purchaseorderid" to="xts_purchaseorderid" link-type="inner" alias="po">' +
+                       '<filter type="and">' +
+                       '<condition attribute="xts_purchaseordernumber" operator="eq" value="' + poNum.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') + '" />' +
+                       '</filter>' +
+                       '</link-entity>' +
+                       '</entity>' +
+                       '</fetch>';
+
+        _Xrm.WebApi.retrieveMultipleRecords("xts_purchasereceipt", "?fetchXml=" + encodeURIComponent(fetchXml)).then(function(res) {
+            var prEntities = res.entities || [];
+            
+            // Nếu không tìm thấy bằng FetchXml, thử fallback bằng OData query
+            if (prEntities.length === 0) {
+                _Xrm.WebApi.retrieveMultipleRecords("xts_purchaseorder", "?$select=xts_purchaseorderid,xts_purchaseordernumber&$filter=xts_purchaseordernumber eq '" + encodeURIComponent(poNum) + "'").then(function(poRes) {
+                    if (!poRes.entities || poRes.entities.length === 0) {
+                        failList.push({ po: poNum, err: "Không tìm thấy số PO này trên hệ thống DMS." });
+                        setTimeout(function(){ processPoIndex(idx + 1); }, 400);
+                        return;
+                    }
+                    var poId = poRes.entities[0].xts_purchaseorderid;
+                    _Xrm.WebApi.retrieveMultipleRecords("xts_purchasereceipt", "?$filter=_xts_purchaseorderid_value eq " + poId).then(function(directPrRes) {
+                        if (!directPrRes.entities || directPrRes.entities.length === 0) {
+                            failList.push({ po: poNum, err: "Đơn PO này chưa được tạo Phiếu nhập kho (PR) nào." });
+                            setTimeout(function(){ processPoIndex(idx + 1); }, 400);
+                            return;
+                        }
+                        releasePrList(poNum, directPrRes.entities, function(){ processPoIndex(idx + 1); });
+                    }, function(prErr) {
+                        failList.push({ po: poNum, err: "Lỗi tìm PR: " + (prErr.message || prErr) });
+                        setTimeout(function(){ processPoIndex(idx + 1); }, 400);
+                    });
+                }, function(poErr) {
+                    failList.push({ po: poNum, err: "Lỗi tìm PO: " + (poErr.message || poErr) });
+                    setTimeout(function(){ processPoIndex(idx + 1); }, 400);
+                });
+                return;
+            }
+
+            releasePrList(poNum, prEntities, function(){ processPoIndex(idx + 1); });
+
+        }, function(fetchErr) {
+            failList.push({ po: poNum, err: "Lỗi truy vấn hệ thống: " + (fetchErr.message || fetchErr) });
+            setTimeout(function(){ processPoIndex(idx + 1); }, 400);
+        });
+    }
+
+    function releasePrList(poNum, prs, onDone) {
+        var pIdx = 0;
+        function nextPr() {
+            if (pIdx >= prs.length) {
+                onDone();
+                return;
+            }
+            var prItem = prs[pIdx];
+            var prId = prItem.xts_purchasereceiptid;
+            var prNum = prItem.xts_purchasereceiptnumber || "PR-" + prId.slice(0, 8);
+
+            progress.innerHTML = '⚙️ Đang phát hành phiếu PR: <b>' + prNum + '</b> (của đơn PO ' + poNum + ')...';
+
+            // Kích hoạt phát hành: xts_handling = 2, xts_calculatetax = true
+            _Xrm.WebApi.updateRecord("xts_purchasereceipt", prId, { "xts_handling": 2, "xts_calculatetax": true }).then(function() {
+                successList.push("PO: " + poNum + " ➔ Phát hành thành công PR: " + prNum);
+                pIdx++;
+                setTimeout(nextPr, 600);
+            }, function(err) {
+                failList.push({ po: poNum, err: "Lỗi khi phát hành PR (" + prNum + "): " + (err.message || err.description || JSON.stringify(err)) });
+                pIdx++;
+                setTimeout(nextPr, 600);
+            });
+        }
+        nextPr();
+    }
+
+    processPoIndex(0);
+})();

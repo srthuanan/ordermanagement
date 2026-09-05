@@ -45,12 +45,30 @@ export default defineConfig({
   },
   base: '/ordermanagement/',
   build: {
-    chunkSizeWarningLimit: 5000,
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-jspdf': ['jspdf']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react/') || id.includes('react-dom/')) {
+              return 'vendor-react';
+            }
+            if (id.includes('jspdf') || id.includes('pdfjs-dist') || id.includes('html2canvas') || id.includes('react-pdf')) {
+              return 'vendor-pdf';
+            }
+            if (id.includes('exceljs') || id.includes('xlsx')) {
+              return 'vendor-excel';
+            }
+            if (id.includes('@google/genai')) {
+              return 'vendor-ai';
+            }
+            if (id.includes('@supabase')) {
+              return 'vendor-supabase';
+            }
+            if (id.includes('framer-motion') || id.includes('lucide-react')) {
+              return 'vendor-ui';
+            }
+          }
         }
       }
     }

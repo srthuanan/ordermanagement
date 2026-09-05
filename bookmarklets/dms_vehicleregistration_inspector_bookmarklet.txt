@@ -1,0 +1,216 @@
+javascript:(function(){
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var frames = window.frames;
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].Xrm && frames[i].Xrm.WebApi) { _Xrm = frames[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert("⚠️ Không tìm thấy đối tượng Xrm.WebApi! Vui lòng bấm khi đang ở trang DMS VinFast.");
+        return;
+    }
+
+    // Tự động nhận diện Entity Name từ URL (etn=...) hoặc mặc định là itv_vehicleregistration
+    var urlParams = new URLSearchParams(window.location.search || (window.parent && window.parent.location.search));
+    var etn = urlParams.get('etn') || 'itv_vehicleregistration';
+
+    var progressDiv = document.createElement('div');
+    progressDiv.id = 'dmsInspectorProgress';
+    progressDiv.style = 'position:fixed;top:15px;right:15px;background:#0f172a;color:#38bdf8;padding:16px 20px;z-index:9999999;border-radius:12px;font-family:sans-serif;font-size:13px;font-weight:bold;box-shadow:0 12px 30px rgba(0,0,0,0.6);border:1px solid #38bdf840;backdrop-filter:blur(8px);';
+    progressDiv.innerHTML = '🔍 Đang phân tích Schema OData & Dữ liệu thực thể <b>[' + etn + ']</b>...';
+    document.body.appendChild(progressDiv);
+
+    _Xrm.WebApi.retrieveMultipleRecords(etn, "?$top=20").then(function(result) {
+        if (progressDiv) progressDiv.remove();
+        showInspectorModal(etn, result.entities);
+    }, function(err) {
+        if (progressDiv) progressDiv.remove();
+        alert("❌ Lỗi khi truy vấn OData entity [" + etn + "]: " + (err.message || JSON.stringify(err)));
+    });
+
+    function showInspectorModal(entityName, records) {
+        var old = document.getElementById('dmsEntityInspectorModal');
+        if (old) old.remove();
+
+        var sample = records.length > 0 ? records[0] : {};
+        
+        // Collect all unique keys
+        var allKeys = [];
+        var fieldDetails = [];
+        records.forEach(function(rec) {
+            Object.keys(rec).forEach(function(k) {
+                if (allKeys.indexOf(k) === -1) allKeys.push(k);
+            });
+        });
+
+        // Categorize fields
+        var standardFields = [];
+        var formattedFields = {};
+        allKeys.forEach(function(k) {
+            if (k.indexOf('@OData.Community.Display.V1.FormattedValue') !== -1) {
+                var baseKey = k.replace('@OData.Community.Display.V1.FormattedValue', '');
+                formattedFields[baseKey] = sample[k];
+            } else if (k.indexOf('@') === -1) {
+                standardFields.push(k);
+            }
+        });
+
+        standardFields.sort();
+
+        standardFields.forEach(function(key) {
+            var val = sample[key];
+            var type = typeof val;
+            if (val === null) type = 'null';
+            else if (Array.isArray(val)) type = 'array';
+            else if (key.indexOf('_value') !== -1) type = 'lookup (GUID)';
+            else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(val)) type = 'datetime';
+
+            var formatted = formattedFields[key] || formattedFields['_' + key + '_value'] || '';
+
+            fieldDetails.push({
+                name: key,
+                type: type,
+                value: val === null ? 'null' : (typeof val === 'object' ? JSON.stringify(val) : String(val)),
+                formatted: formatted
+            });
+        });
+
+        var overlay = document.createElement('div');
+        overlay.id = 'dmsEntityInspectorModal';
+        overlay.style = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.8);backdrop-filter:blur(8px);z-index:9999999;display:flex;justify-content:center;align-items:center;font-family:sans-serif;';
+
+        var modal = document.createElement('div');
+        modal.style = 'background:#0f172a;width:950px;max-width:92%;height:85vh;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,0.7);border:1px solid #334155;display:flex;flex-direction:column;overflow:hidden;color:#e2e8f0;';
+
+        // Header
+        var header = document.createElement('div');
+        header.style = 'background:#1e293b;padding:16px 24px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;';
+        header.innerHTML = '<div><h3 style="margin:0;color:#38bdf8;font-size:16px;display:flex;align-items:center;gap:8px;">🔬 NGHIÊN CỨU DỮ LIỆU ENTITY: <code style="background:#0f172a;color:#f43f5e;padding:2px 8px;border-radius:6px;font-size:14px;">' + entityName + '</code></h3><p style="margin:4px 0 0 0;font-size:12px;color:#94a3b8;">Tìm thấy <b>' + records.length + '</b> bản ghi mẫu | Tổng số <b>' + fieldDetails.length + '</b> trường dữ liệu</p></div><button style="background:transparent;border:none;color:#94a3b8;font-size:22px;cursor:pointer;padding:4px;" onclick="document.getElementById(\'dmsEntityInspectorModal\').remove()">✕</button>';
+
+        // Toolbar
+        var toolbar = document.createElement('div');
+        toolbar.style = 'background:#1e293b80;padding:10px 24px;border-bottom:1px solid #334155;display:flex;justify-content:space-between;align-items:center;gap:12px;';
+        toolbar.innerHTML = '<div style="display:flex;gap:8px;"><button id="btnTabSchema" style="background:#38bdf8;color:#0f172a;border:none;padding:6px 14px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">📋 Danh sách Trường (' + fieldDetails.length + ')</button><button id="btnTabJson" style="background:#334155;color:white;border:none;padding:6px 14px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">{ } Raw JSON mẫu</button><button id="btnTabCode" style="background:#334155;color:white;border:none;padding:6px 14px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">⚡ Mã JS Query</button></div><div style="display:flex;gap:8px;"><button id="btnCopyFields" style="background:#10b981;color:white;border:none;padding:6px 12px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">📋 Copy Tên Trường</button><button id="btnDownloadJson" style="background:#6366f1;color:white;border:none;padding:6px 12px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;">📥 Tải JSON</button></div>';
+
+        // Content Area
+        var contentDiv = document.createElement('div');
+        contentDiv.style = 'flex-grow:1;overflow-y:auto;padding:20px 24px;';
+
+        // Tab 1: Table
+        var tabSchema = document.createElement('div');
+        tabSchema.id = 'tabSchemaView';
+        
+        var searchBox = document.createElement('input');
+        searchBox.type = 'text';
+        searchBox.placeholder = '🔍 Gõ để lọc tên trường (ví dụ: vin, license, status)...';
+        searchBox.style = 'width:100%;background:#1e293b;border:1px solid #334155;color:white;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;outline:none;box-sizing:border-box;';
+        tabSchema.appendChild(searchBox);
+
+        var table = document.createElement('table');
+        table.style = 'width:100%;border-collapse:collapse;font-size:13px;text-align:left;';
+        table.innerHTML = '<thead style="background:#1e293b;color:#38bdf8;"><tr><th style="padding:10px 12px;border-bottom:1px solid #334155;">Tên Trường (Field Name)</th><th style="padding:10px 12px;border-bottom:1px solid #334155;">Kiểu dữ liệu</th><th style="padding:10px 12px;border-bottom:1px solid #334155;">Giá trị thô (Raw Value)</th><th style="padding:10px 12px;border-bottom:1px solid #334155;">Giá trị hiển thị (Formatted)</th></tr></thead><tbody id="inspectorTableBody"></tbody>';
+        tabSchema.appendChild(table);
+
+        function renderRows(filter) {
+            var tbody = tabSchema.querySelector('#inspectorTableBody');
+            tbody.innerHTML = '';
+            var query = (filter || '').toLowerCase();
+            fieldDetails.forEach(function(f) {
+                if (query && f.name.toLowerCase().indexOf(query) === -1 && f.formatted.toLowerCase().indexOf(query) === -1 && f.value.toLowerCase().indexOf(query) === -1) return;
+                var tr = document.createElement('tr');
+                tr.style = 'border-bottom:1px solid #1e293b;';
+                tr.innerHTML = '<td style="padding:8px 12px;font-family:monospace;color:#f43f5e;font-weight:bold;">' + f.name + '</td><td style="padding:8px 12px;color:#a855f7;">' + f.type + '</td><td style="padding:8px 12px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cbd5e1;" title="' + f.value.replace(/"/g, '&quot;') + '">' + f.value + '</td><td style="padding:8px 12px;color:#10b981;font-weight:500;">' + (f.formatted || '-') + '</td>';
+                tbody.appendChild(tr);
+            });
+        }
+        renderRows('');
+
+        searchBox.oninput = function() { renderRows(this.value); };
+
+        // Tab 2: Raw JSON
+        var tabJson = document.createElement('div');
+        tabJson.id = 'tabJsonView';
+        tabJson.style.display = 'none';
+        tabJson.innerHTML = '<pre style="background:#1e293b;padding:16px;border-radius:8px;color:#38bdf8;font-family:monospace;font-size:12px;overflow-x:auto;max-height:60vh;line-height:1.5;">' + JSON.stringify(sample, null, 2).replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre>';
+
+        // Tab 3: Code Snippet Generator
+        var tabCode = document.createElement('div');
+        tabCode.id = 'tabCodeView';
+        tabCode.style.display = 'none';
+        var topFields = fieldDetails.map(function(f){ return f.name; }).slice(0, 15).join(',');
+        var jsSnippet = `// ⚡ Code mẫu Javascript truy vấn entity [${entityName}]\n` +
+          `_Xrm.WebApi.retrieveMultipleRecords("${entityName}", "?$select=${topFields}&$top=100").then(\n` +
+          `    function success(result) {\n` +
+          `        console.log("✅ Lấy thành công " + result.entities.length + " bản ghi ${entityName}:", result.entities);\n` +
+          `    },\n` +
+          `    function error(err) {\n` +
+          `        console.error("❌ Lỗi truy vấn:", err.message);\n` +
+          `    }\n` +
+          `);`;
+        tabCode.innerHTML = '<p style="color:#cbd5e1;font-size:13px;margin:0 0 10px 0;">Sử dụng đoạn mã này để truy vấn OData WebApi trên Console của trình duyệt hoặc tích hợp vào Tool:</p><pre style="background:#1e293b;padding:16px;border-radius:8px;color:#10b981;font-family:monospace;font-size:12px;overflow-x:auto;">' + jsSnippet + '</pre><button id="btnCopySnippet" style="background:#38bdf8;color:#0f172a;border:none;padding:8px 16px;border-radius:6px;font-weight:bold;font-size:12px;cursor:pointer;margin-top:10px;">📋 Copy Đoạn Mã JS</button>';
+
+        contentDiv.appendChild(tabSchema);
+        contentDiv.appendChild(tabJson);
+        contentDiv.appendChild(tabCode);
+
+        modal.appendChild(header);
+        modal.appendChild(toolbar);
+        modal.appendChild(contentDiv);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        // Tab Switching Logic
+        var bSchema = toolbar.querySelector('#btnTabSchema');
+        var bJson = toolbar.querySelector('#btnTabJson');
+        var bCode = toolbar.querySelector('#btnTabCode');
+
+        bSchema.onclick = function() {
+            tabSchema.style.display = 'block'; tabJson.style.display = 'none'; tabCode.style.display = 'none';
+            bSchema.style.background = '#38bdf8'; bSchema.style.color = '#0f172a';
+            bJson.style.background = '#334155'; bJson.style.color = 'white';
+            bCode.style.background = '#334155'; bCode.style.color = 'white';
+        };
+
+        bJson.onclick = function() {
+            tabSchema.style.display = 'none'; tabJson.style.display = 'block'; tabCode.style.display = 'none';
+            bJson.style.background = '#38bdf8'; bJson.style.color = '#0f172a';
+            bSchema.style.background = '#334155'; bSchema.style.color = 'white';
+            bCode.style.background = '#334155'; bCode.style.color = 'white';
+        };
+
+        bCode.onclick = function() {
+            tabSchema.style.display = 'none'; tabJson.style.display = 'none'; tabCode.style.display = 'block';
+            bCode.style.background = '#38bdf8'; bCode.style.color = '#0f172a';
+            bSchema.style.background = '#334155'; bSchema.style.color = 'white';
+            bJson.style.background = '#334155'; bJson.style.color = 'white';
+        };
+
+        // Actions
+        toolbar.querySelector('#btnCopyFields').onclick = function() {
+            var names = fieldDetails.map(function(f){ return f.name; }).join(', ');
+            navigator.clipboard.writeText(names);
+            this.innerText = 'Đã copy!';
+            var self = this;
+            setTimeout(function(){ self.innerText = '📋 Copy Tên Trường'; }, 2000);
+        };
+
+        toolbar.querySelector('#btnDownloadJson').onclick = function() {
+            var blob = new Blob([JSON.stringify(records, null, 2)], { type: 'application/json' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = entityName + '_schema_sample.json';
+            a.click();
+        };
+
+        tabCode.querySelector('#btnCopySnippet').onclick = function() {
+            navigator.clipboard.writeText(jsSnippet);
+            this.innerText = 'Đã copy mã JS!';
+            var self = this;
+            setTimeout(function(){ self.innerText = '📋 Copy Đoạn Mã JS'; }, 2000);
+        };
+    }
+})();
