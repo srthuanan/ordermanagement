@@ -43,7 +43,7 @@ export default defineConfig({
   define: {
     '__APP_VERSION__': JSON.stringify(new Date().getTime().toString())
   },
-  base: '/ordermanagement/',
+  base: (process.env.GITHUB_PAGES === 'true') ? '/ordermanagement/' : '/',
   build: {
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
