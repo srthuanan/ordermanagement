@@ -83,6 +83,7 @@ const StockView: React.FC<StockViewProps> = ({
     const [filters, setFilters] = useState({
         keyword: '',
         carModel: [] as string[],
+        location: [] as string[],
         version: [] as string[],
         status: [] as string[],
         exterior: [] as string[],
@@ -94,6 +95,7 @@ const StockView: React.FC<StockViewProps> = ({
             setFilters({
                 keyword: forcedSearch,
                 carModel: [],
+                location: [],
                 version: [],
                 status: [],
                 exterior: [],
@@ -258,6 +260,7 @@ const StockView: React.FC<StockViewProps> = ({
         setFilters({
             keyword: '',
             carModel: [],
+            location: [],
             version: [],
             status: [],
             exterior: [],
@@ -304,6 +307,9 @@ const StockView: React.FC<StockViewProps> = ({
         }
         if (filters.carModel.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.carModel.includes(vehicle["Dòng xe"]));
+        }
+        if (filters.location.length > 0) {
+            filteredVehicles = filteredVehicles.filter(vehicle => filters.location.includes(vehicle["Vị trí"]));
         }
         if (filters.version.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.version.includes(vehicle["Phiên bản"]));
@@ -410,6 +416,7 @@ const StockView: React.FC<StockViewProps> = ({
     }, [visibleData.length, calculateBatchSize]);
 
     const uniqueCarModels = useMemo(() => [...new Set(stockData.map(v => v["Dòng xe"]).filter(v => v))].sort(), [stockData]);
+    const uniqueLocations = useMemo(() => [...new Set(stockData.map(v => v["Vị trí"]).filter(v => v && v.trim() !== ''))].sort(), [stockData]);
     const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]).filter(v => v))].sort(), [stockData]);
     const uniqueStatuses = useMemo(() => [...new Set(stockData.map(v => v["Trạng thái"]).filter(v => v))].sort(), [stockData]);
     const uniqueExteriors = useMemo(() => [...new Set(stockData.map(v => v["Ngoại thất"]).filter(v => v))].sort(), [stockData]);
@@ -417,6 +424,7 @@ const StockView: React.FC<StockViewProps> = ({
 
     const dropdownConfigs: DropdownFilterConfig[] = [
         { id: 'stock-filter-car-model', key: 'carModel', label: 'Dòng Xe', options: uniqueCarModels, icon: 'fa-car' },
+        { id: 'stock-filter-location', key: 'location', label: 'Kho', options: uniqueLocations, icon: 'fa-warehouse' },
         { id: 'stock-filter-version', key: 'version', label: 'Phiên Bản', options: uniqueVersions, icon: 'fa-cogs' },
         { id: 'stock-filter-status', key: 'status', label: 'Trạng Thái', options: uniqueStatuses, icon: 'fa-tag' },
         { id: 'stock-filter-exterior', key: 'exterior', label: 'Ngoại Thất', options: uniqueExteriors, icon: 'fa-palette' },
