@@ -1585,7 +1585,7 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
                 "ma_kho_nhan": ma_kho_nhan
             })
 
-        # 5. Insert Header PHDNX
+        # 5. Insert Header PHDNX (Ma_Post = '3' -> Mức xử lý: Lập phiếu (Sale admin))
         sql_ph = f"""
         INSERT INTO PHDNX (
             ma_dvcs, stt_rec, ma_ct, ma_gd, Ma_Post,
@@ -1596,7 +1596,7 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             ty_gia, t_tien_nt, t_tien, Lenh_RO, Lenh_PO,
             Lenh_So, NonVat, user_id, Ma_TTCP_N, MA_TD3_H, MA_HD_H
         ) VALUES (
-            {ph}, {ph}, 'DNX', '4', '9',
+            {ph}, {ph}, 'DNX', '4', '3',
             0, '', {ph}, {ph}, {ph},
             {ph}, '', '', '', '',
             '1900-01-01', '', {ph}, '', {ph},
