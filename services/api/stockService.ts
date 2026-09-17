@@ -600,6 +600,58 @@ export const syncCyberAllocations = async (options: { fromDate?: string; toDate?
 };
 
 /**
+ * Tự động quét và cập nhật vị trí kho thực tế từ sổ cái CyberSoft ERP (CT70BEX) vào khoxe
+ */
+export const syncCyberLocations = async (options: { preview?: boolean; vins?: string[] } = { preview: false }) => {
+    try {
+        const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
+        const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api.onrender.com').trim();
+        const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+        
+        const endpoints = [
+            ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}/api/cyber/sync-locations`] : []),
+            `${currentOrigin}/api/cyber/sync-locations`,
+            'http://localhost:3001/api/cyber/sync-locations'
+        ];
+
+        let response: Response | null = null;
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(options)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    lastErrorMsg = errJson.error || `HTTP ${res.status}`;
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        if (!response) {
+            throw new Error(lastErrorMsg || 'Không thể kết nối dịch vụ đồng bộ vị trí CyberSoft.');
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (err: any) {
+        console.error("Lỗi syncCyberLocations:", err);
+        return {
+            success: false,
+            error: err.message || 'Không thể kết nối dịch vụ đồng bộ vị trí CyberSoft.'
+        };
+    }
+};
+
+/**
  * Hoàn tác các xe phân bổ vừa được nạp vào khoxe
  */
 export const undoCyberAllocations = async (vins: string[]) => {

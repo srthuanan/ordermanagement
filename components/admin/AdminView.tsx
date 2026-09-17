@@ -15,6 +15,7 @@ import EditOrderModal from '../modals/EditOrderModal';
 import ThongTinXeUploadModal from './ThongTinXeUploadModal';
 import ImportStockLocationModal from '../modals/ImportStockLocationModal';
 import { CyberSyncAllocationModal } from '../modals/CyberSyncAllocationModal';
+import { CyberLocationSyncModal } from '../modals/CyberLocationSyncModal';
 
 import { useAdminFilters } from '../../hooks/useAdminFilters';
 import { useAdminActions } from '../../hooks/useAdminActions';
@@ -225,6 +226,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const [showCyberSyncModal, setShowCyberSyncModal] = useState(false);
+    const [showCyberLocationSyncModal, setShowCyberLocationSyncModal] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -376,6 +378,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
     const adminTools = [
         { title: 'Phân Bổ Cyber (K10)', icon: 'fa-bolt text-yellow-500', action: () => setShowCyberSyncModal(true) },
+        { title: 'Vị Trí Kho Cyber', icon: 'fa-map-marker-alt text-emerald-400', action: () => setShowCyberLocationSyncModal(true) },
         { title: 'Hộp thư Xử lý VC', icon: 'fa-file-invoice-dollar text-red-500', action: () => setAdminView('vc') },
         { title: 'Thêm Xe Mới', icon: 'fa-plus-circle', action: () => actions.setAdminModal('addCar') },
         { title: 'Thêm Xe Hàng Loạt', icon: 'fa-layer-group', action: () => actions.setAdminModal('bulkAddCar') },
@@ -832,6 +835,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <CyberSyncAllocationModal
                         isOpen={showCyberSyncModal}
                         onClose={() => setShowCyberSyncModal(false)}
+                        showToast={showToast}
+                        onSuccess={() => refetchStock(true)}
+                    />
+                    <CyberLocationSyncModal
+                        isOpen={showCyberLocationSyncModal}
+                        onClose={() => setShowCyberLocationSyncModal(false)}
                         showToast={showToast}
                         onSuccess={() => refetchStock(true)}
                     />

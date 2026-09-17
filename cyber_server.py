@@ -9,6 +9,8 @@ from datetime import datetime
 from scripts.sync_thuan_an_allocations import (
     fetch_allocations_from_cyber,
     fetch_plan_map,
+    fetch_physical_locations_from_cyber,
+    sync_khoxe_locations_from_cyber,
     map_allocation_to_khoxe,
     upsert_to_supabase_khoxe
 )
@@ -74,7 +76,8 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 raw_cars = fetch_allocations_from_cyber(from_date, to_date)
                 vins = [c.get("vin", "").strip().upper() for c in raw_cars if c.get("vin")]
                 plan_map = fetch_plan_map(vins)
-                mapped_cars = [map_allocation_to_khoxe(c, plan_map) for c in raw_cars if c.get("vin")]
+                cyber_locs = fetch_physical_locations_from_cyber(vins)
+                mapped_cars = [map_allocation_to_khoxe(c, plan_map, cyber_locs) for c in raw_cars if c.get("vin")]
 
                 if preview:
                     result = {
@@ -108,6 +111,35 @@ class CyberApiHandler(BaseHTTPRequestHandler):
 
             except Exception as e:
                 print(f"[CyberSync Cloud Error]: {str(e)}", file=sys.stderr)
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/sync-locations":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            try:
+                data = json.loads(body_str or "{}")
+            except Exception:
+                data = {}
+
+            preview = data.get("preview", False)
+            target_vins = data.get("vins", None)
+
+            print(f"[CyberSync Cloud Locations] Request: preview={preview}, target_vins_count={len(target_vins) if target_vins else 'ALL'}")
+
+            try:
+                result = sync_khoxe_locations_from_cyber(target_vins=target_vins, preview=preview)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync Cloud Locations Error]: {str(e)}", file=sys.stderr)
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()

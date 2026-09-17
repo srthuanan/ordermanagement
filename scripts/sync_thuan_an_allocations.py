@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import requests
+import re
 from datetime import datetime, date
 from decimal import Decimal
 from dotenv import load_dotenv
@@ -172,7 +173,151 @@ def fetch_plan_map(vins: list) -> dict:
             print(f"[Warn] Fetch plan map error: {e}", file=sys.stderr)
     return plan_map
 
-def map_allocation_to_khoxe(car: dict, plan_map: dict = None) -> dict:
+def clean_location_name(name: str) -> str:
+    if not name:
+        return "Đang vận tải"
+    cleaned = re.sub(
+        r'^(Kho xe ô tô Vinfast|Kho xe ô tô Viinfast|Kho xe ô tô|Kho xe SR|Kho xe|Ô tô Vinfast|Ô tô VinFast|Vinfast|VinFast|Showroom|SR|Kho)\s*[-:–—]?\s*',
+        '',
+        name,
+        flags=re.I
+    )
+    cleaned = re.sub(r'^Minh Đạo\s*[-–—:]\s*', '', cleaned, flags=re.I)
+    cleaned = cleaned.strip(' -')
+    return cleaned or "Đang vận tải"
+
+def fetch_physical_locations_from_cyber(vins: list) -> dict:
+    if not vins:
+        return {}
+    
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=30
+        )
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=30)
+
+    c = conn.cursor()
+    CHUNK_SIZE = 150
+    results = {}
+
+    for i in range(0, len(vins), CHUNK_SIZE):
+        chunk = vins[i:i + CHUNK_SIZE]
+        vin_list_str = ','.join([repr(v) for v in chunk])
+        sql = f"""
+            WITH TonSK AS (
+                SELECT So_Khung, ma_kho, SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) AS Ton
+                FROM CT70BEX WITH (NOLOCK)
+                WHERE Ma_Post >= '9' AND So_Khung IN ({vin_list_str})
+                GROUP BY So_Khung, ma_kho
+            ),
+            LatestSK AS (
+                SELECT 
+                    b.So_Khung, 
+                    b.ma_kho, 
+                    k.Ten_kho,
+                    ROW_NUMBER() OVER(PARTITION BY b.So_Khung ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC) AS rn
+                FROM CT70BEX b WITH (NOLOCK)
+                LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
+                WHERE b.nxt = '1' 
+                  AND b.Ma_Post >= '9' 
+                  AND b.So_Khung IN ({vin_list_str})
+                  AND b.So_Khung IN (SELECT So_Khung FROM TonSK WHERE Ton >= 1)
+            )
+            SELECT So_Khung, ma_kho, Ten_kho
+            FROM LatestSK
+            WHERE rn = 1
+        """
+        c.execute(sql)
+        for r in c.fetchall():
+            vin = r[0].strip().upper()
+            ma_kho = (r[1] or "").strip()
+            raw_ten = (r[2] or "").strip()
+            results[vin] = {
+                "ma_kho": ma_kho,
+                "raw_kho": raw_ten,
+                "vi_tri": clean_location_name(raw_ten)
+            }
+
+    conn.close()
+    return results
+
+def sync_khoxe_locations_from_cyber(target_vins: list = None, preview: bool = False) -> dict:
+    url = f"{SUPABASE_URL}/rest/v1/khoxe"
+    params = {
+        "select": "id,vin,dong_xe,phien_ban,ngoai_that,vi_tri,trang_thai",
+        "trang_thai": "neq.Đã bán",
+        "limit": 1000
+    }
+    resp = requests.get(url, headers=HEADERS, params=params, timeout=20)
+    if resp.status_code != 200:
+        return {"success": False, "error": f"Supabase error: {resp.text}"}
+    
+    cars = resp.json()
+    if target_vins:
+        vins_set = set(v.strip().upper() for v in target_vins)
+        cars = [c for c in cars if (c.get("vin") or "").strip().upper() in vins_set]
+
+    vins = [(c.get("vin") or "").strip().upper() for c in cars if c.get("vin")]
+    cyber_locs = fetch_physical_locations_from_cyber(vins)
+
+    changes = []
+    to_update = []
+
+    for c in cars:
+        vin = (c.get("vin") or "").strip().upper()
+        curr_loc = (c.get("vi_tri") or "").strip()
+        loc_info = cyber_locs.get(vin)
+        new_loc = loc_info["vi_tri"] if loc_info else "Đang vận tải"
+        is_changed = (curr_loc != new_loc)
+
+        item = {
+            "vin": vin,
+            "dong_xe": c.get("dong_xe"),
+            "phien_ban": c.get("phien_ban"),
+            "ngoai_that": c.get("ngoai_that"),
+            "current_location": curr_loc,
+            "new_location": new_loc,
+            "cyber_raw_kho": loc_info.get("raw_kho", "") if loc_info else "",
+            "is_changed": is_changed
+        }
+        changes.append(item)
+
+        if is_changed and not preview:
+            to_update.append({"vin": vin, "vi_tri": new_loc})
+
+    updated_count = 0
+    if not preview and to_update:
+        CHUNK = 50
+        for i in range(0, len(to_update), CHUNK):
+            chunk = to_update[i:i + CHUNK]
+            up_res = requests.post(
+                url,
+                headers={**HEADERS, "Prefer": "resolution=merge-duplicates"},
+                params={"on_conflict": "vin"},
+                json=chunk,
+                timeout=30
+            )
+            if 200 <= up_res.status_code < 300:
+                updated_count += len(chunk)
+
+    return {
+        "success": True,
+        "mode": "preview" if preview else "sync",
+        "total_cars": len(cars),
+        "changed_count": sum(1 for x in changes if x["is_changed"]),
+        "updated_count": updated_count,
+        "changes": changes
+    }
+
+def map_allocation_to_khoxe(car: dict, plan_map: dict = None, cyber_locations: dict = None) -> dict:
     ma_kx = (car.get("ma_kx") or "").strip()
     if ma_kx in MODEL_MAP:
         dong_xe, phien_ban = MODEL_MAP[ma_kx]
@@ -197,17 +342,25 @@ def map_allocation_to_khoxe(car: dict, plan_map: dict = None) -> dict:
 
     vin = car.get("vin", "").strip().upper()
     plan = (plan_map or {}).get(vin, {})
+    cyber_loc = (cyber_locations or {}).get(vin, {})
 
     plan_location = (plan.get("vi_tri") or plan.get("raw_kho") or "").strip()
-    cyber_location = (car.get("vi_tri_kho") or "").strip()
+    cyber_phys_location = (cyber_loc.get("vi_tri") or "").strip()
+    cyber_doc_location = (car.get("vi_tri_kho") or "").strip()
 
-    # Ưu tiên lấy vị trí vật lý từ Kế hoạch giao xe nhà máy (Cam Giá, Mê Linh, QL13 - HCM...)
-    if plan_location:
+    # Thứ tự ưu tiên xác định vị trí xe:
+    # 1. Vị trí thực tế đã về kho từ CT70BEX của CyberSoft
+    # 2. Vị trí từ Kế hoạch giao nhà máy
+    # 3. Vị trí trên chứng từ K10 Cyber
+    # 4. Mặc định "Đang vận tải"
+    if cyber_phys_location:
+        vi_tri = cyber_phys_location
+    elif plan_location:
         vi_tri = plan_location
-    elif cyber_location:
-        vi_tri = cyber_location
+    elif cyber_doc_location:
+        vi_tri = clean_location_name(cyber_doc_location)
     else:
-        vi_tri = "Kho Thuận An"
+        vi_tri = "Đang vận tải"
 
     so_may = (car.get("so_may") or "").strip() or (plan.get("so_may") or "").strip()
     ma_dms = (car.get("ma_dms") or "").strip() or (plan.get("ma_dms") or "").strip()
