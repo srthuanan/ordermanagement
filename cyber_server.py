@@ -12,7 +12,9 @@ from scripts.sync_thuan_an_allocations import (
     fetch_physical_locations_from_cyber,
     sync_khoxe_locations_from_cyber,
     map_allocation_to_khoxe,
-    upsert_to_supabase_khoxe
+    upsert_to_supabase_khoxe,
+    get_cyber_plan_filter_options,
+    search_cyber_factory_plan
 )
 
 PORT = int(os.environ.get("PORT", 8080))
@@ -41,6 +43,22 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 "timestamp": datetime.now().isoformat()
             }
             self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/plan-filter-options":
+            try:
+                res = get_cyber_plan_filter_options()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
             return
 
         self.send_response(404)
@@ -140,6 +158,31 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 print(f"[CyberSync Cloud Locations Error]: {str(e)}", file=sys.stderr)
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/search-factory-plan":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            try:
+                data = json.loads(body_str or "{}")
+            except Exception:
+                data = {}
+
+            print(f"[CyberSync Cloud Search] Request: {data}")
+            try:
+                result = search_cyber_factory_plan(data)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync Cloud Search Error]: {str(e)}", file=sys.stderr)
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()

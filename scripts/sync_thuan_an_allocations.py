@@ -402,7 +402,235 @@ def upsert_to_supabase_khoxe(records: list):
             total_fail += len(chunk)
             print(f"[Supabase Error] HTTP {resp.status_code}: {resp.text}", file=sys.stderr)
 
-    return total_ok, total_fail
+def get_cyber_plan_filter_options():
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=30
+        )
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=30)
+
+    c = conn.cursor()
+
+    # 1. Distinct Showrooms (TTCP)
+    c.execute("""
+        SELECT DISTINCT k.Ma_TTCP_I, ISNULL(ttcp.Ten_TTCP, k.Ma_TTCP_I) as Ten_TTCP, COUNT(*) as cnt
+        FROM CTKH k WITH (NOLOCK)
+        LEFT JOIN DmTTCP ttcp WITH (NOLOCK) ON k.Ma_TTCP_I = ttcp.Ma_TTCP
+        WHERE k.Ma_ct = 'K10' AND k.ngay_ct >= '2025-01-01'
+        GROUP BY k.Ma_TTCP_I, ttcp.Ten_TTCP
+        ORDER BY cnt DESC
+    """)
+    ttcp_list = [{"code": r[0].strip(), "name": (r[1] or "").strip(), "count": r[2]} for r in c.fetchall() if r[0] and r[0].strip()]
+
+    # 2. Distinct Colors
+    c.execute("""
+        SELECT DISTINCT mx.ten_mau, COUNT(*) as cnt
+        FROM CTKH k WITH (NOLOCK)
+        JOIN dmMauxe mx WITH (NOLOCK) ON k.Ma_Mau = mx.ma_Mau
+        WHERE k.Ma_ct = 'K10' AND k.ngay_ct >= '2025-01-01'
+        GROUP BY mx.ten_mau
+        ORDER BY cnt DESC
+    """)
+    colors = [r[0].strip() for r in c.fetchall() if r[0] and r[0].strip()]
+
+    conn.close()
+    return {"success": True, "ttcp_list": ttcp_list, "colors": colors}
+
+def search_cyber_factory_plan(params: dict) -> dict:
+    keyword = (params.get("keyword") or "").strip()
+    model = (params.get("model") or "").strip()
+    color = (params.get("color") or "").strip()
+    ttcp = (params.get("ttcp") or "").strip()
+    from_date = (params.get("fromDate") or "").strip()
+    to_date = (params.get("toDate") or "").strip()
+    plan_type = (params.get("planType") or "K10").strip().upper()
+    limit = min(int(params.get("limit", 100)), 500)
+    offset = max(int(params.get("offset", 0)), 0)
+
+    is_pymssql = True
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=30
+        )
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=30)
+        is_pymssql = False
+
+    c = conn.cursor()
+
+    ph = "%s" if is_pymssql else "?"
+    where_clauses = ["k.So_khung IS NOT NULL", "RTRIM(LTRIM(k.So_khung)) <> ''"]
+    sql_params = []
+
+    if plan_type in ['K10', 'K15']:
+        where_clauses.append(f"k.Ma_ct = {ph}")
+        sql_params.append(plan_type)
+    else:
+        where_clauses.append("k.Ma_ct IN ('K10', 'K15')")
+
+    if keyword:
+        where_clauses.append(f"(k.So_khung LIKE {ph} OR k.So_May LIKE {ph} OR k.Ma_XHD LIKE {ph} OR k.Dien_Giai LIKE {ph} OR k.Ma_Kx LIKE {ph} OR kx.ten_kx LIKE {ph} OR mx.ten_mau LIKE {ph} OR ttcp.Ten_TTCP LIKE {ph})")
+        kw_like = f"%{keyword}%"
+        sql_params.extend([kw_like] * 8)
+
+    if model:
+        where_clauses.append(f"(k.Ma_Kx LIKE {ph} OR kx.ten_kx LIKE {ph})")
+        m_like = f"%{model}%"
+        sql_params.extend([m_like, m_like])
+
+    if color:
+        where_clauses.append(f"(k.Ma_Mau LIKE {ph} OR mx.ten_mau LIKE {ph})")
+        c_like = f"%{color}%"
+        sql_params.extend([c_like, c_like])
+
+    if ttcp:
+        where_clauses.append(f"(k.Ma_TTCP_I = {ph} OR k.Ma_TTCP_DMS = {ph})")
+        sql_params.extend([ttcp, ttcp])
+
+    if from_date:
+        where_clauses.append(f"k.ngay_ct >= {ph}")
+        sql_params.append(from_date)
+
+    if to_date:
+        where_clauses.append(f"k.ngay_ct <= {ph}")
+        sql_params.append(to_date)
+
+    where_sql = " AND ".join(where_clauses)
+
+    # 1. Count total
+    count_sql = f"""
+        SELECT COUNT(*)
+        FROM CTKH k WITH (NOLOCK)
+        LEFT JOIN DmKx kx WITH (NOLOCK) ON k.Ma_Kx = kx.ma_kx
+        LEFT JOIN dmMauxe mx WITH (NOLOCK) ON k.Ma_Mau = mx.ma_Mau
+        LEFT JOIN DmTTCP ttcp WITH (NOLOCK) ON k.Ma_TTCP_I = ttcp.Ma_TTCP
+        WHERE {where_sql}
+    """
+    c.execute(count_sql, tuple(sql_params))
+    total_count = c.fetchone()[0]
+
+    # 2. Query page
+    query_sql = f"""
+        SELECT
+            k.So_khung                                  AS vin,
+            k.So_May                                    AS so_may,
+            k.Ma_Kx                                     AS ma_kx,
+            ISNULL(kx.ten_kx, k.Ma_Kx)                  AS ten_kx,
+            ISNULL(kx.Quy_Cach, '')                     AS phien_ban,
+            k.Ma_Mau                                    AS ma_mau,
+            ISNULL(mx.ten_mau, '')                      AS ten_mau,
+            k.Ma_Mau_Nt                                 AS ma_mau_nt,
+            ISNULL(mnt.ten_mau, '')                     AS ten_mau_nt,
+            CAST(k.Nam_Sx AS INT)                       AS nam_sx,
+            k.Ma_XHD                                    AS ma_dms,
+            k.Ma_TTCP_I                                 AS ma_ttcp,
+            ISNULL(ttcp.Ten_TTCP, k.Ma_TTCP_I)          AS ten_ttcp,
+            ISNULL(kho.Ten_kho, '')                     AS vi_tri_kho,
+            k.Dien_Giai                                 AS ghi_chu,
+            k.Invoid_Date                               AS ngay_phan_bo,
+            k.ngay_ct                                   AS ngay_ct,
+            k.ma_ct                                     AS ma_ct
+        FROM CTKH k WITH (NOLOCK)
+        LEFT JOIN DmKx kx WITH (NOLOCK)           ON k.Ma_Kx = kx.ma_kx
+        LEFT JOIN dmMauxe mx WITH (NOLOCK)        ON k.Ma_Mau = mx.ma_Mau
+        LEFT JOIN dmMauxeNt mnt WITH (NOLOCK)    ON k.Ma_Mau_Nt = mnt.Ma_mau_Nt
+        LEFT JOIN DmTTCP ttcp WITH (NOLOCK)       ON k.Ma_TTCP_I = ttcp.Ma_TTCP
+        LEFT JOIN Dmkho kho WITH (NOLOCK)         ON k.Ma_Vitri = kho.Ma_kho
+        WHERE {where_sql}
+        ORDER BY k.ngay_ct DESC, k.stt_rec DESC
+        OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY
+    """
+    c.execute(query_sql, tuple(sql_params))
+    cols = [d[0] for d in c.description]
+    rows = c.fetchall()
+
+    results = []
+    vins = []
+    for r in rows:
+        row_d = dict(zip(cols, r))
+        if row_d.get('ngay_ct'):
+            row_d['ngay_ct'] = str(row_d['ngay_ct'])[:10]
+        if row_d.get('ngay_phan_bo'):
+            pb = str(row_d['ngay_phan_bo'])[:10]
+            row_d['ngay_phan_bo'] = pb if not pb.startswith('1900') else ''
+        
+        # Format model name using MODEL_MAP if applicable
+        ma_kx = (row_d.get('ma_kx') or '').strip()
+        if ma_kx in MODEL_MAP:
+            d_name, p_name = MODEL_MAP[ma_kx]
+            row_d['dong_xe'] = d_name
+            if p_name and not row_d.get('phien_ban'):
+                row_d['phien_ban'] = p_name
+        else:
+            row_d['dong_xe'] = row_d.get('ten_kx') or ma_kx
+
+        results.append(row_d)
+        if row_d.get('vin'):
+            vins.append(row_d['vin'].strip().upper())
+
+    # 3. Lookup physical warehouse from CT70BEX for these VINs
+    if vins:
+        vin_list_str = ','.join([repr(v) for v in vins])
+        bex_sql = f"""
+            WITH TonSK AS (
+                SELECT So_Khung, ma_kho, SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) AS Ton
+                FROM CT70BEX WITH (NOLOCK)
+                WHERE Ma_Post >= '9' AND So_Khung IN ({vin_list_str})
+                GROUP BY So_Khung, ma_kho
+            ),
+            LatestSK AS (
+                SELECT 
+                    b.So_Khung, 
+                    b.ma_kho, 
+                    k.Ten_kho,
+                    ROW_NUMBER() OVER(PARTITION BY b.So_Khung ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC) AS rn
+                FROM CT70BEX b WITH (NOLOCK)
+                LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
+                WHERE b.nxt = '1' 
+                  AND b.Ma_Post >= '9' 
+                  AND b.So_Khung IN ({vin_list_str})
+                  AND b.So_Khung IN (SELECT So_Khung FROM TonSK WHERE Ton >= 1)
+            )
+            SELECT So_Khung, ma_kho, Ten_kho
+            FROM LatestSK
+            WHERE rn = 1
+        """
+        c.execute(bex_sql)
+        wh_map = {r[0].strip().upper(): (r[1], r[2]) for r in c.fetchall()}
+        for item in results:
+            v = item.get('vin', '').strip().upper()
+            if v in wh_map:
+                raw_wh = wh_map[v][1] or ""
+                item['current_physical_warehouse'] = clean_location_name(raw_wh)
+                item['raw_physical_warehouse'] = raw_wh
+            else:
+                item['current_physical_warehouse'] = 'Đang vận tải'
+                item['raw_physical_warehouse'] = ''
+
+    conn.close()
+    return {
+        "success": True,
+        "total": total_count,
+        "count": len(results),
+        "limit": limit,
+        "offset": offset,
+        "cars": results
+    }
 
 def main():
     parser = argparse.ArgumentParser(description="Sync Thuan An car allocations from CyberSoft to Supabase")

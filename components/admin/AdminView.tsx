@@ -16,6 +16,7 @@ import ThongTinXeUploadModal from './ThongTinXeUploadModal';
 import ImportStockLocationModal from '../modals/ImportStockLocationModal';
 import { CyberSyncAllocationModal } from '../modals/CyberSyncAllocationModal';
 import { CyberLocationSyncModal } from '../modals/CyberLocationSyncModal';
+import { CyberFactoryPlanSearchModal } from '../modals/CyberFactoryPlanSearchModal';
 
 import { useAdminFilters } from '../../hooks/useAdminFilters';
 import { useAdminActions } from '../../hooks/useAdminActions';
@@ -227,6 +228,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
     const [showCyberSyncModal, setShowCyberSyncModal] = useState(false);
     const [showCyberLocationSyncModal, setShowCyberLocationSyncModal] = useState(false);
+    const [showCyberPlanSearchModal, setShowCyberPlanSearchModal] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -379,6 +381,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     const adminTools = [
         { title: 'Phân Bổ Cyber (K10)', icon: 'fa-bolt text-yellow-500', action: () => setShowCyberSyncModal(true) },
         { title: 'Vị Trí Kho Cyber', icon: 'fa-map-marker-alt text-emerald-400', action: () => setShowCyberLocationSyncModal(true) },
+        { title: 'Tra Cứu Kế Hoạch Cyber', icon: 'fa-search-location text-indigo-400', action: () => setShowCyberPlanSearchModal(true) },
         { title: 'Hộp thư Xử lý VC', icon: 'fa-file-invoice-dollar text-red-500', action: () => setAdminView('vc') },
         { title: 'Thêm Xe Mới', icon: 'fa-plus-circle', action: () => actions.setAdminModal('addCar') },
         { title: 'Thêm Xe Hàng Loạt', icon: 'fa-layer-group', action: () => actions.setAdminModal('bulkAddCar') },
@@ -843,6 +846,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         onClose={() => setShowCyberLocationSyncModal(false)}
                         showToast={showToast}
                         onSuccess={() => refetchStock(true)}
+                    />
+                    <CyberFactoryPlanSearchModal
+                        isOpen={showCyberPlanSearchModal}
+                        onClose={() => setShowCyberPlanSearchModal(false)}
+                        showToast={showToast}
                     />
                     {actions.suggestionModalState && <SuggestionModal isOpen={!!actions.suggestionModalState} onClose={() => actions.setSuggestionModalState(null)} order={actions.suggestionModalState.order} suggestedCars={actions.suggestionModalState.cars} onConfirm={actions.handleConfirmSuggestion} showToast={showToast} />}
                     <MatchingSuggestionsModal

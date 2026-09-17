@@ -651,6 +651,103 @@ export const syncCyberLocations = async (options: { preview?: boolean; vins?: st
     }
 };
 
+export interface CyberPlanSearchParams {
+    keyword?: string;
+    model?: string;
+    color?: string;
+    ttcp?: string;
+    fromDate?: string;
+    toDate?: string;
+    planType?: 'K10' | 'K15' | 'ALL';
+    limit?: number;
+    offset?: number;
+}
+
+/**
+ * Tra cứu xe theo điều kiện trên toàn bộ dữ liệu kế hoạch nhà máy giao từ CyberSoft
+ */
+export const searchCyberFactoryPlan = async (params: CyberPlanSearchParams) => {
+    try {
+        const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
+        const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api.onrender.com').trim();
+        const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+        
+        const endpoints = [
+            ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}/api/cyber/search-factory-plan`] : []),
+            `${currentOrigin}/api/cyber/search-factory-plan`,
+            'http://localhost:3001/api/cyber/search-factory-plan'
+        ];
+
+        let response: Response | null = null;
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    lastErrorMsg = errJson.error || `HTTP ${res.status}`;
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        if (!response) {
+            throw new Error(lastErrorMsg || 'Không thể kết nối dịch vụ tra cứu CyberSoft.');
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (err: any) {
+        console.error("Lỗi searchCyberFactoryPlan:", err);
+        return {
+            success: false,
+            error: err.message || 'Không thể kết nối dịch vụ tra cứu kế hoạch CyberSoft.'
+        };
+    }
+};
+
+/**
+ * Lấy danh sách tùy chọn lọc (Showroom, Màu sắc) từ CyberSoft
+ */
+export const getCyberPlanFilterOptions = async () => {
+    try {
+        const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
+        const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api.onrender.com').trim();
+        const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+        
+        const endpoints = [
+            ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}/api/cyber/plan-filter-options`] : []),
+            `${currentOrigin}/api/cyber/plan-filter-options`,
+            'http://localhost:3001/api/cyber/plan-filter-options'
+        ];
+
+        let response: Response | null = null;
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint);
+                if (res.ok) {
+                    response = res;
+                    break;
+                }
+            } catch (err) {}
+        }
+
+        if (!response) return { success: false, ttcp_list: [], colors: [] };
+        return await response.json();
+    } catch (err) {
+        return { success: false, ttcp_list: [], colors: [] };
+    }
+};
+
 /**
  * Hoàn tác các xe phân bổ vừa được nạp vào khoxe
  */

@@ -31,7 +31,6 @@ export const CyberLocationSyncModal: React.FC<CyberLocationSyncModalProps> = ({
     const [changes, setChanges] = useState<LocationChangeItem[]>([]);
     const [totalCars, setTotalCars] = useState(0);
     const [changedCount, setChangedCount] = useState(0);
-    const [hasScanned, setHasScanned] = useState(false);
     const [onlyChangedFilter, setOnlyChangedFilter] = useState(true);
     const [searchVin, setSearchVin] = useState('');
 
@@ -40,7 +39,6 @@ export const CyberLocationSyncModal: React.FC<CyberLocationSyncModalProps> = ({
             handleScan();
         } else {
             setChanges([]);
-            setHasScanned(false);
             setSearchVin('');
         }
     }, [isOpen]);
@@ -56,7 +54,6 @@ export const CyberLocationSyncModal: React.FC<CyberLocationSyncModalProps> = ({
                 setChanges(res.changes || []);
                 setTotalCars(res.total_cars || 0);
                 setChangedCount(res.changed_count || 0);
-                setHasScanned(true);
 
                 if (res.changed_count > 0) {
                     showToast(

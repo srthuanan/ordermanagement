@@ -309,7 +309,7 @@ const StockView: React.FC<StockViewProps> = ({
             filteredVehicles = filteredVehicles.filter(vehicle => filters.carModel.includes(vehicle["Dòng xe"]));
         }
         if (filters.location.length > 0) {
-            filteredVehicles = filteredVehicles.filter(vehicle => filters.location.includes(vehicle["Vị trí"]));
+            filteredVehicles = filteredVehicles.filter(vehicle => !!vehicle["Vị trí"] && filters.location.includes(vehicle["Vị trí"]));
         }
         if (filters.version.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.version.includes(vehicle["Phiên bản"]));
@@ -415,11 +415,11 @@ const StockView: React.FC<StockViewProps> = ({
         return () => clearTimeout(timer);
     }, [visibleData.length, calculateBatchSize]);
 
-    const uniqueCarModels = useMemo(() => [...new Set(stockData.map(v => v["Dòng xe"]).filter(v => v))].sort(), [stockData]);
-    const uniqueLocations = useMemo(() => [...new Set(stockData.map(v => v["Vị trí"]).filter(v => v && v.trim() !== ''))].sort(), [stockData]);
-    const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]).filter(v => v))].sort(), [stockData]);
-    const uniqueStatuses = useMemo(() => [...new Set(stockData.map(v => v["Trạng thái"]).filter(v => v))].sort(), [stockData]);
-    const uniqueExteriors = useMemo(() => [...new Set(stockData.map(v => v["Ngoại thất"]).filter(v => v))].sort(), [stockData]);
+    const uniqueCarModels = useMemo(() => [...new Set(stockData.map(v => v["Dòng xe"]).filter((v): v is string => !!v))].sort(), [stockData]);
+    const uniqueLocations = useMemo(() => [...new Set(stockData.map(v => v["Vị trí"]).filter((v): v is string => !!(v && v.trim() !== '')))].sort(), [stockData]);
+    const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]).filter((v): v is string => !!v))].sort(), [stockData]);
+    const uniqueStatuses = useMemo(() => [...new Set(stockData.map(v => v["Trạng thái"]).filter((v): v is string => !!v))].sort(), [stockData]);
+    const uniqueExteriors = useMemo(() => [...new Set(stockData.map(v => v["Ngoại thất"]).filter((v): v is string => !!v))].sort(), [stockData]);
 
 
     const dropdownConfigs: DropdownFilterConfig[] = [
