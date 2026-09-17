@@ -9,7 +9,6 @@ import * as apiService from '../services/apiService';
 import { useVehicleConfig } from '../hooks/useVehicleConfig';
 import { isMidAutumnSeason } from './ui/HolidayThemeDecorator';
 import panoramaBg from '../pictures/stock_card_panorama_trung_thu.webp';
-import { CreateCyberDnxModal } from './modals/CreateCyberDnxModal';
 
 interface StockCardProps {
     vehicle: StockVehicle;
@@ -62,7 +61,6 @@ const StockCard: React.FC<StockCardProps> = ({
     const [confirmAction, setConfirmAction] = useState<{ action: 'hold' | 'release' } | null>(null);
     if (false) showToast?.('', '', 'success');
     const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
-    const [isDnxModalOpen, setIsDnxModalOpen] = useState(false);
 
     // Inline Admin Edit state
     const [isInlineEditing, setIsInlineEditing] = useState(false);
@@ -780,16 +778,6 @@ const StockCard: React.FC<StockCardProps> = ({
                         )}
 
                         <div className="flex items-center gap-1.5">
-                            {isAdmin && vehicle.VIN && vehicle.VIN !== '---' && (
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setIsDnxModalOpen(true); }}
-                                    className="px-2 py-0.5 text-[9.5px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300/80 rounded-full flex items-center gap-1 transition-all shadow-xs"
-                                    title="Lập phiếu đề nghị xuất xe / điều chuyển xe trên Cyber (Dành cho Admin)"
-                                >
-                                    <span>🚚 Chuyển Cyber</span>
-                                </button>
-                            )}
-
                             {vehicle["Ngày vận tải"] && vehicle["Ngày vận tải"] !== '#N/A' && moment(vehicle["Ngày vận tải"], DATE_FORMATS).isValid() && (
                                 <div className="flex items-center gap-1 text-blue-600/80" title={`Ngày vận tải: ${moment(vehicle["Ngày vận tải"], DATE_FORMATS).format('DD/MM/YYYY')}`}>
                                     <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>local_shipping</span>
@@ -804,18 +792,6 @@ const StockCard: React.FC<StockCardProps> = ({
             <div className="border-t border-slate-100 mt-1 pt-1.5 flex items-center justify-center relative z-10">
                 {renderActions()}
             </div>
-
-            {isDnxModalOpen && (
-                <CreateCyberDnxModal
-                    isOpen={isDnxModalOpen}
-                    onClose={() => setIsDnxModalOpen(false)}
-                    vins={vehicle.VIN && vehicle.VIN !== '---' ? [vehicle.VIN] : []}
-                    onSuccess={(res) => {
-                        showToast('Tạo giấy chuyển Cyber', `Đã lập thành công phiếu ${res.so_ct} cho xe ${vehicle.VIN}`, 'success');
-                        setIsDnxModalOpen(false);
-                    }}
-                />
-            )}
         </div>
     );
 };
