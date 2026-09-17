@@ -47,7 +47,10 @@ class CyberApiHandler(BaseHTTPRequestHandler):
 
         elif parsed.path == "/api/cyber/plan-filter-options":
             try:
-                res = get_cyber_plan_filter_options()
+                from urllib.parse import parse_qs
+                qs = parse_qs(parsed.query)
+                model = (qs.get("model", [""])[0] or "").strip()
+                res = get_cyber_plan_filter_options(model=model)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()

@@ -715,9 +715,10 @@ export const searchCyberFactoryPlan = async (params: CyberPlanSearchParams) => {
 /**
  * Lấy danh sách tùy chọn lọc (Showroom, Màu sắc) từ CyberSoft
  */
-export const getCyberPlanFilterOptions = async () => {
+export const getCyberPlanFilterOptions = async (model?: string) => {
     try {
-        const endpoints = getCyberEndpoints('/api/cyber/plan-filter-options');
+        const query = model && model !== 'Tất cả' ? `?model=${encodeURIComponent(model)}` : '';
+        const endpoints = getCyberEndpoints(`/api/cyber/plan-filter-options${query}`);
 
         let response: Response | null = null;
         for (const endpoint of endpoints) {

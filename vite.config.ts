@@ -77,7 +77,11 @@ function cyberSyncPlugin(): Plugin {
 
       server.middlewares.use('/api/cyber/plan-filter-options', (req, res, next) => {
         if (req.method !== 'GET') return next();
-        runPy([scriptPath, '--plan-filter-options'], '', res);
+        const urlObj = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+        const model = urlObj.searchParams.get('model') || '';
+        const args = [scriptPath, '--plan-filter-options'];
+        if (model) args.push('--model', model);
+        runPy(args, '', res);
       });
 
       server.middlewares.use('/api/cyber/search-factory-plan', (req, res, next) => {

@@ -402,7 +402,8 @@ def upsert_to_supabase_khoxe(records: list):
             total_fail += len(chunk)
             print(f"[Supabase Error] HTTP {resp.status_code}: {resp.text}", file=sys.stderr)
 
-def get_cyber_plan_filter_options():
+def get_cyber_plan_filter_options(model: str = ""):
+    is_pymssql = True
     try:
         import pymssql
         conn = pymssql.connect(
@@ -416,29 +417,43 @@ def get_cyber_plan_filter_options():
     except Exception:
         import pyodbc
         conn = pyodbc.connect(CYBER_CONN, timeout=30)
+        is_pymssql = False
 
     c = conn.cursor()
+    ph = "%s" if is_pymssql else "?"
+
+    # Chỉ lấy xe chưa xuất hóa đơn bán (Ngay_HD_Ban trống hoặc 1900-01-01)
+    base_where = "k.Ma_ct IN ('K10', 'K15') AND (k.Ngay_HD_Ban IS NULL OR k.Ngay_HD_Ban <= '1900-01-01') AND k.So_khung IS NOT NULL AND RTRIM(LTRIM(k.So_khung)) <> ''"
 
     # 1. Distinct Showrooms (TTCP)
-    c.execute("""
+    c.execute(f"""
         SELECT DISTINCT k.Ma_TTCP_I, ISNULL(ttcp.Ten_TTCP, k.Ma_TTCP_I) as Ten_TTCP, COUNT(*) as cnt
         FROM CTKH k WITH (NOLOCK)
         LEFT JOIN DmTTCP ttcp WITH (NOLOCK) ON k.Ma_TTCP_I = ttcp.Ma_TTCP
-        WHERE k.Ma_ct = 'K10' AND k.ngay_ct >= '2025-01-01'
+        WHERE {base_where}
         GROUP BY k.Ma_TTCP_I, ttcp.Ten_TTCP
         ORDER BY cnt DESC
     """)
     ttcp_list = [{"code": r[0].strip(), "name": (r[1] or "").strip(), "count": r[2]} for r in c.fetchall() if r[0] and r[0].strip()]
 
-    # 2. Distinct Colors
-    c.execute("""
-        SELECT DISTINCT mx.ten_mau, COUNT(*) as cnt
+    # 2. Distinct Colors (theo dòng xe nếu có)
+    color_where = base_where
+    c_params = []
+    if model and model.strip() and model.strip() != 'Tất cả':
+        m = model.strip()
+        m_compact = m.replace(" ", "")
+        color_where += f" AND (k.Ma_Kx LIKE {ph} OR k.Ma_Kx LIKE {ph} OR kx.ten_kx LIKE {ph} OR kx.ten_kx LIKE {ph})"
+        c_params = [f"%{m}%", f"%{m_compact}%", f"%{m}%", f"%{m_compact}%"]
+
+    c.execute(f"""
+        SELECT DISTINCT ISNULL(mx.ten_mau, k.Ma_Mau) as ten_mau, COUNT(*) as cnt
         FROM CTKH k WITH (NOLOCK)
-        JOIN dmMauxe mx WITH (NOLOCK) ON k.Ma_Mau = mx.ma_Mau
-        WHERE k.Ma_ct = 'K10' AND k.ngay_ct >= '2025-01-01'
-        GROUP BY mx.ten_mau
+        LEFT JOIN DmKx kx WITH (NOLOCK) ON k.Ma_Kx = kx.ma_kx
+        LEFT JOIN dmMauxe mx WITH (NOLOCK) ON k.Ma_Mau = mx.ma_Mau
+        WHERE {color_where}
+        GROUP BY ISNULL(mx.ten_mau, k.Ma_Mau)
         ORDER BY cnt DESC
-    """)
+    """, tuple(c_params))
     colors = [r[0].strip() for r in c.fetchall() if r[0] and r[0].strip()]
 
     conn.close()
@@ -452,7 +467,7 @@ def search_cyber_factory_plan(params: dict) -> dict:
     from_date = (params.get("fromDate") or "").strip()
     to_date = (params.get("toDate") or "").strip()
     plan_type = (params.get("planType") or "K10").strip().upper()
-    limit = min(int(params.get("limit", 100)), 500)
+    limit = min(int(params.get("limit", 150)), 500)
     offset = max(int(params.get("offset", 0)), 0)
 
     is_pymssql = True
@@ -474,7 +489,12 @@ def search_cyber_factory_plan(params: dict) -> dict:
     c = conn.cursor()
 
     ph = "%s" if is_pymssql else "?"
-    where_clauses = ["k.So_khung IS NOT NULL", "RTRIM(LTRIM(k.So_khung)) <> ''"]
+    # Bắt buộc: chỉ lấy xe chưa xuất hóa đơn bán (Ngay_HD_Ban trống)
+    where_clauses = [
+        "k.So_khung IS NOT NULL", 
+        "RTRIM(LTRIM(k.So_khung)) <> ''",
+        "(k.Ngay_HD_Ban IS NULL OR k.Ngay_HD_Ban <= '1900-01-01')"
+    ]
     sql_params = []
 
     if plan_type in ['K10', 'K15']:
@@ -488,17 +508,17 @@ def search_cyber_factory_plan(params: dict) -> dict:
         kw_like = f"%{keyword}%"
         sql_params.extend([kw_like] * 8)
 
-    if model:
-        where_clauses.append(f"(k.Ma_Kx LIKE {ph} OR kx.ten_kx LIKE {ph})")
-        m_like = f"%{model}%"
-        sql_params.extend([m_like, m_like])
+    if model and model != 'Tất cả':
+        m_compact = model.replace(" ", "")
+        where_clauses.append(f"(k.Ma_Kx LIKE {ph} OR k.Ma_Kx LIKE {ph} OR kx.ten_kx LIKE {ph} OR kx.ten_kx LIKE {ph})")
+        sql_params.extend([f"%{model}%", f"%{m_compact}%", f"%{model}%", f"%{m_compact}%"])
 
-    if color:
+    if color and color != 'Tất cả':
         where_clauses.append(f"(k.Ma_Mau LIKE {ph} OR mx.ten_mau LIKE {ph})")
         c_like = f"%{color}%"
         sql_params.extend([c_like, c_like])
 
-    if ttcp:
+    if ttcp and ttcp != 'Tất cả':
         where_clauses.append(f"(k.Ma_TTCP_I = {ph} OR k.Ma_TTCP_DMS = {ph})")
         sql_params.extend([ttcp, ttcp])
 
@@ -640,11 +660,12 @@ def main():
     parser.add_argument("--sync-locations", action="store_true", help="Sync physical locations from CT70BEX into khoxe")
     parser.add_argument("--plan-filter-options", action="store_true", help="Get distinct showrooms and colors for plan search")
     parser.add_argument("--search-plan", action="store_true", help="Search factory delivery plan")
+    parser.add_argument("--model", help="Car model filter for options", default="")
     parser.add_argument("--params", help="JSON string of search parameters", default=None)
     args = parser.parse_args()
 
     if args.plan_filter_options:
-        res = get_cyber_plan_filter_options()
+        res = get_cyber_plan_filter_options(model=args.model or "")
         print(json.dumps(res, ensure_ascii=False))
         return
 
