@@ -731,10 +731,10 @@ export const getCyberPlanFilterOptions = async (model?: string) => {
             } catch (err) {}
         }
 
-        if (!response) return { success: false, ttcp_list: [], colors: [] };
+        if (!response) return { success: false, ttcp_list: [], models: [], colors: [] };
         return await response.json();
     } catch (err) {
-        return { success: false, ttcp_list: [], colors: [] };
+        return { success: false, ttcp_list: [], models: [], colors: [] };
     }
 };
 

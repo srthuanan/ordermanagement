@@ -402,6 +402,59 @@ def upsert_to_supabase_khoxe(records: list):
             total_fail += len(chunk)
             print(f"[Supabase Error] HTTP {resp.status_code}: {resp.text}", file=sys.stderr)
 
+MODEL_SEARCH_ALIASES = {
+    'VF 2': ['%VF 2%', '%VF2%'],
+    'VF 3': ['%VF 3%', '%VF3%'],
+    'VF 5': ['%VF 5%', '%VF5%', '%HERIO%'],
+    'VF 6': ['%VF 6%', '%VF6%'],
+    'VF 7': ['%VF 7%', '%VF7%'],
+    'VF 8': ['%VF 8%', '%VF8%', '%PD1U%'],
+    'VF 9': ['%VF 9%', '%VF9%', '%PE1U%'],
+    'VF e34': ['%VF%e34%', '%VFe34%', '%VF e34%', '%LIMO%'],
+    'VF MPV 7': ['%MPV 7%', '%MPV7%', '%VFMPV7%'],
+    'EC Van': ['%EC%VAN%', '%ECVAN%'],
+    'LIMO': ['%LIMO%'],
+    'MINIO': ['%MINIO%'],
+    'NERIO': ['%NERIO%'],
+    'LẠC HỒNG': ['%LẠC%HỒNG%', '%LAC%HONG%'],
+}
+
+def normalize_model(ma_kx: str, ten_kx: str) -> str:
+    mk = (ma_kx or '').strip().upper()
+    tk = (ten_kx or '').strip().upper()
+    if mk in MODEL_MAP:
+        return MODEL_MAP[mk][0]
+    combined = f"{mk} {tk}"
+    if not combined.strip():
+        return ""
+    if re.search(r'\bVF\s*3\b|VF3', combined):
+        return 'VF 3'
+    if re.search(r'\bVF\s*5\b|VF5|HERIO', combined):
+        return 'VF 5'
+    if re.search(r'\bVF\s*6\b|VF6', combined):
+        return 'VF 6'
+    if re.search(r'\bVF\s*7\b|VF7', combined):
+        return 'VF 7'
+    if re.search(r'\bVF\s*8\b|VF8|PD1U', combined):
+        return 'VF 8'
+    if re.search(r'\bVF\s*9\b|VF9|PE1U', combined):
+        return 'VF 9'
+    if re.search(r'\bVF\s*2\b|VF2', combined):
+        return 'VF 2'
+    if re.search(r'\bVF\s*E34\b|VFE34|LIMO', combined):
+        return 'VF e34'
+    if re.search(r'MPV\s*7', combined):
+        return 'VF MPV 7'
+    if re.search(r'EC\s*VAN', combined):
+        return 'EC Van'
+    if re.search(r'MINIO', combined):
+        return 'MINIO'
+    if re.search(r'NERIO', combined):
+        return 'NERIO'
+    if re.search(r'LẠC\s*HỒNG|LAC\s*HONG', combined):
+        return 'LẠC HỒNG'
+    return tk.split()[0] if tk else mk
+
 def get_cyber_plan_filter_options(model: str = ""):
     is_pymssql = True
     try:
@@ -436,14 +489,34 @@ def get_cyber_plan_filter_options(model: str = ""):
     """)
     ttcp_list = [{"code": r[0].strip(), "name": (r[1] or "").strip(), "count": r[2]} for r in c.fetchall() if r[0] and r[0].strip()]
 
-    # 2. Distinct Colors (theo dòng xe nếu có)
+    # 2. Distinct Models (tất cả dòng xe có xe chưa XHĐ)
+    c.execute(f"""
+        SELECT DISTINCT k.Ma_Kx, ISNULL(kx.ten_kx, '') as ten_kx
+        FROM CTKH k WITH (NOLOCK)
+        LEFT JOIN DmKx kx WITH (NOLOCK) ON k.Ma_Kx = kx.ma_kx
+        WHERE {base_where}
+    """)
+    model_rows = c.fetchall()
+    model_set = set()
+    for r in model_rows:
+        m = normalize_model(r[0], r[1])
+        if m:
+            model_set.add(m)
+
+    order_preference = ['VF 2', 'VF 3', 'VF 5', 'VF 6', 'VF 7', 'VF 8', 'VF 9', 'VF e34', 'VF MPV 7', 'EC Van', 'LIMO', 'MINIO', 'LẠC HỒNG', 'NERIO']
+    models = [m for m in order_preference if m in model_set]
+    models += sorted([m for m in model_set if m not in order_preference])
+
+    # 3. Distinct Colors (theo dòng xe nếu có)
     color_where = base_where
     c_params = []
     if model and model.strip() and model.strip() != 'Tất cả':
-        m = model.strip()
-        m_compact = m.replace(" ", "")
-        color_where += f" AND (k.Ma_Kx LIKE {ph} OR k.Ma_Kx LIKE {ph} OR kx.ten_kx LIKE {ph} OR kx.ten_kx LIKE {ph})"
-        c_params = [f"%{m}%", f"%{m_compact}%", f"%{m}%", f"%{m_compact}%"]
+        m_clean = model.strip()
+        aliases = MODEL_SEARCH_ALIASES.get(m_clean, [f"%{m_clean}%", f"%{m_clean.replace(' ', '')}%"])
+        conds = [f"(k.Ma_Kx LIKE {ph} OR kx.ten_kx LIKE {ph})" for _ in aliases]
+        color_where += f" AND ({ ' OR '.join(conds) })"
+        for a in aliases:
+            c_params.extend([a, a])
 
     c.execute(f"""
         SELECT DISTINCT ISNULL(mx.ten_mau, k.Ma_Mau) as ten_mau, COUNT(*) as cnt
@@ -457,16 +530,13 @@ def get_cyber_plan_filter_options(model: str = ""):
     colors = [r[0].strip() for r in c.fetchall() if r[0] and r[0].strip()]
 
     conn.close()
-    return {"success": True, "ttcp_list": ttcp_list, "colors": colors}
+    return {"success": True, "ttcp_list": ttcp_list, "models": models, "colors": colors}
 
 def search_cyber_factory_plan(params: dict) -> dict:
     keyword = (params.get("keyword") or "").strip()
     model = (params.get("model") or "").strip()
     color = (params.get("color") or "").strip()
     ttcp = (params.get("ttcp") or "").strip()
-    from_date = (params.get("fromDate") or "").strip()
-    to_date = (params.get("toDate") or "").strip()
-    plan_type = (params.get("planType") or "K10").strip().upper()
     limit = min(int(params.get("limit", 150)), 500)
     offset = max(int(params.get("offset", 0)), 0)
 
@@ -489,19 +559,14 @@ def search_cyber_factory_plan(params: dict) -> dict:
     c = conn.cursor()
 
     ph = "%s" if is_pymssql else "?"
-    # Bắt buộc: chỉ lấy xe chưa xuất hóa đơn bán (Ngay_HD_Ban trống)
+    # Bắt buộc: chỉ lấy xe chưa xuất hóa đơn bán (Ngay_HD_Ban trống), toàn bộ K10+K15
     where_clauses = [
-        "k.So_khung IS NOT NULL", 
+        "k.Ma_ct IN ('K10', 'K15')",
+        "k.So_khung IS NOT NULL",
         "RTRIM(LTRIM(k.So_khung)) <> ''",
         "(k.Ngay_HD_Ban IS NULL OR k.Ngay_HD_Ban <= '1900-01-01')"
     ]
     sql_params = []
-
-    if plan_type in ['K10', 'K15']:
-        where_clauses.append(f"k.Ma_ct = {ph}")
-        sql_params.append(plan_type)
-    else:
-        where_clauses.append("k.Ma_ct IN ('K10', 'K15')")
 
     if keyword:
         where_clauses.append(f"(k.So_khung LIKE {ph} OR k.So_May LIKE {ph} OR k.Ma_XHD LIKE {ph} OR k.Dien_Giai LIKE {ph} OR k.Ma_Kx LIKE {ph} OR kx.ten_kx LIKE {ph} OR mx.ten_mau LIKE {ph} OR ttcp.Ten_TTCP LIKE {ph})")
@@ -509,9 +574,12 @@ def search_cyber_factory_plan(params: dict) -> dict:
         sql_params.extend([kw_like] * 8)
 
     if model and model != 'Tất cả':
-        m_compact = model.replace(" ", "")
-        where_clauses.append(f"(k.Ma_Kx LIKE {ph} OR k.Ma_Kx LIKE {ph} OR kx.ten_kx LIKE {ph} OR kx.ten_kx LIKE {ph})")
-        sql_params.extend([f"%{model}%", f"%{m_compact}%", f"%{model}%", f"%{m_compact}%"])
+        m_clean = model.strip()
+        aliases = MODEL_SEARCH_ALIASES.get(m_clean, [f"%{m_clean}%", f"%{m_clean.replace(' ', '')}%"])
+        conds = [f"(k.Ma_Kx LIKE {ph} OR kx.ten_kx LIKE {ph})" for _ in aliases]
+        where_clauses.append(f"({ ' OR '.join(conds) })")
+        for a in aliases:
+            sql_params.extend([a, a])
 
     if color and color != 'Tất cả':
         where_clauses.append(f"(k.Ma_Mau LIKE {ph} OR mx.ten_mau LIKE {ph})")
@@ -521,14 +589,6 @@ def search_cyber_factory_plan(params: dict) -> dict:
     if ttcp and ttcp != 'Tất cả':
         where_clauses.append(f"(k.Ma_TTCP_I = {ph} OR k.Ma_TTCP_DMS = {ph})")
         sql_params.extend([ttcp, ttcp])
-
-    if from_date:
-        where_clauses.append(f"k.ngay_ct >= {ph}")
-        sql_params.append(from_date)
-
-    if to_date:
-        where_clauses.append(f"k.ngay_ct <= {ph}")
-        sql_params.append(to_date)
 
     where_sql = " AND ".join(where_clauses)
 
@@ -589,15 +649,16 @@ def search_cyber_factory_plan(params: dict) -> dict:
             pb = str(row_d['ngay_phan_bo'])[:10]
             row_d['ngay_phan_bo'] = pb if not pb.startswith('1900') else ''
         
-        # Format model name using MODEL_MAP if applicable
+        # Format model name using MODEL_MAP or normalize_model
         ma_kx = (row_d.get('ma_kx') or '').strip()
+        ten_kx = (row_d.get('ten_kx') or '').strip()
         if ma_kx in MODEL_MAP:
             d_name, p_name = MODEL_MAP[ma_kx]
             row_d['dong_xe'] = d_name
             if p_name and not row_d.get('phien_ban'):
                 row_d['phien_ban'] = p_name
         else:
-            row_d['dong_xe'] = row_d.get('ten_kx') or ma_kx
+            row_d['dong_xe'] = normalize_model(ma_kx, ten_kx) or row_d.get('ten_kx') or ma_kx
 
         results.append(row_d)
         if row_d.get('vin'):

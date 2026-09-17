@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as xlsx from 'xlsx';
 import Button from '../ui/Button';
 import { searchCyberFactoryPlan, getCyberPlanFilterOptions, CyberPlanSearchParams } from '../../services/api/stockService';
@@ -33,58 +33,46 @@ interface CyberFactoryPlanSearchModalProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
-const COMMON_MODELS = [
-    'Tất cả',
-    'VF 3',
-    'VF 5',
-    'VF 6',
-    'VF 7',
-    'VF 8',
-    'VF 9',
-    'EC Van',
-    'LIMO'
-];
 
 export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalProps> = ({
     isOpen,
     onClose,
     showToast
 }) => {
-    const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
-    const firstDayOfYear = useMemo(() => `${new Date().getFullYear()}-01-01`, []);
-
     const [keyword, setKeyword] = useState('');
     const [selectedModel, setSelectedModel] = useState('Tất cả');
     const [selectedColor, setSelectedColor] = useState('Tất cả');
     const [selectedTtcp, setSelectedTtcp] = useState('');
-    const [fromDate, setFromDate] = useState(firstDayOfYear);
-    const [toDate, setToDate] = useState(todayStr);
-    const [planType, setPlanType] = useState<'K10' | 'K15' | 'ALL'>('K10');
 
-    const [filterOptions, setFilterOptions] = useState<{ ttcp_list: any[]; colors: string[] }>({
+    const [filterOptions, setFilterOptions] = useState<{ ttcp_list: any[]; models: string[]; colors: string[] }>({
         ttcp_list: [],
+        models: [],
         colors: []
     });
 
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingFilters, setIsLoadingFilters] = useState(false);
     const [isLoadingColors, setIsLoadingColors] = useState(false);
     const [cars, setCars] = useState<CyberPlanCarItem[]>([]);
     const [totalCount, setTotalCount] = useState(0);
     const [hasSearched, setHasSearched] = useState(false);
     const [copiedVin, setCopiedVin] = useState<string | null>(null);
 
-    const loadFilterOptions = async (modelName?: string) => {
+    const loadFilterOptions = async (modelName?: string, isInitial = false) => {
+        if (isInitial) setIsLoadingFilters(true);
         setIsLoadingColors(true);
         try {
             const res = await getCyberPlanFilterOptions(modelName === 'Tất cả' ? '' : modelName);
             if (res && res.success) {
                 setFilterOptions(prev => ({
                     ttcp_list: res.ttcp_list && res.ttcp_list.length > 0 ? res.ttcp_list : prev.ttcp_list,
+                    models: res.models && res.models.length > 0 ? res.models : prev.models,
                     colors: res.colors || []
                 }));
             }
         } finally {
             setIsLoadingColors(false);
+            setIsLoadingFilters(false);
         }
     };
 
@@ -94,7 +82,7 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
             setHasSearched(false);
             setCars([]);
             setTotalCount(0);
-            loadFilterOptions(selectedModel);
+            loadFilterOptions(selectedModel, true);
         }
     }, [isOpen]);
 
@@ -115,9 +103,6 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
                 model: selectedModel === 'Tất cả' ? '' : selectedModel,
                 color: selectedColor === 'Tất cả' ? '' : selectedColor,
                 ttcp: selectedTtcp,
-                fromDate,
-                toDate,
-                planType,
                 limit: 150,
                 offset: 0,
                 ...overrideParams
@@ -142,9 +127,6 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
         setSelectedModel('Tất cả');
         setSelectedColor('Tất cả');
         setSelectedTtcp('');
-        setFromDate(firstDayOfYear);
-        setToDate(todayStr);
-        setPlanType('ALL');
         setHasSearched(false);
         setCars([]);
         setTotalCount(0);
@@ -230,7 +212,7 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
 
                 {/* Filter Toolbar */}
                 <div className="p-4 bg-slate-950/40 border-b border-slate-800/80 space-y-3 shrink-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                         
                         {/* 1. Keyword search */}
                         <div className="lg:col-span-2 relative">
@@ -250,15 +232,22 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
                             </div>
                         </div>
 
-                        {/* 2. Model Filter */}
+                        {/* 2. Model Filter - dynamic from API */}
                         <div>
-                            <label className="block text-[11px] font-semibold text-slate-400 mb-1">Dòng xe</label>
+                            <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                                Dòng xe
+                                {isLoadingFilters && (
+                                    <span className="ml-1.5 text-indigo-400 animate-pulse">đang tải...</span>
+                                )}
+                            </label>
                             <select
                                 value={selectedModel}
                                 onChange={e => handleModelChange(e.target.value)}
-                                className="w-full bg-slate-800/90 border border-slate-700 text-xs rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500 cursor-pointer"
+                                disabled={isLoadingFilters}
+                                className="w-full bg-slate-800/90 border border-slate-700 text-xs rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {COMMON_MODELS.map(m => (
+                                <option value="Tất cả">Tất cả dòng xe</option>
+                                {filterOptions.models.map(m => (
                                     <option key={m} value={m}>{m}</option>
                                 ))}
                             </select>
@@ -285,8 +274,11 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
                             </select>
                         </div>
 
-                        {/* 4. Showroom (TTCP) Filter */}
-                        <div>
+                    </div>
+
+                    {/* Second row: Showroom + Action buttons */}
+                    <div className="flex flex-wrap items-end justify-between gap-2.5 pt-1">
+                        <div className="flex-1 min-w-[200px] max-w-sm">
                             <label className="block text-[11px] font-semibold text-slate-400 mb-1">Đơn vị nhận (Showroom)</label>
                             <select
                                 value={selectedTtcp}
@@ -300,55 +292,6 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
                                     </option>
                                 ))}
                             </select>
-                        </div>
-
-                    </div>
-
-                    {/* Secondary row: Date range + Plan type + Action buttons */}
-                    <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs text-slate-400 font-medium">Từ ngày:</span>
-                            <input
-                                type="date"
-                                value={fromDate}
-                                onChange={e => setFromDate(e.target.value)}
-                                className="bg-slate-800 border border-slate-700 text-xs rounded-lg px-2.5 py-1 text-white focus:outline-none focus:border-indigo-500"
-                            />
-                            <span className="text-xs text-slate-400 font-medium">Đến ngày:</span>
-                            <input
-                                type="date"
-                                value={toDate}
-                                onChange={e => setToDate(e.target.value)}
-                                className="bg-slate-800 border border-slate-700 text-xs rounded-lg px-2.5 py-1 text-white focus:outline-none focus:border-indigo-500"
-                            />
-
-                            {/* Plan type toggle */}
-                            <div className="inline-flex rounded-lg border border-slate-700 bg-slate-800/80 p-0.5 text-xs ml-2">
-                                <button
-                                    onClick={() => setPlanType('K10')}
-                                    className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
-                                        planType === 'K10' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-                                    }`}
-                                >
-                                    K10 (Phân bổ)
-                                </button>
-                                <button
-                                    onClick={() => setPlanType('K15')}
-                                    className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
-                                        planType === 'K15' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-                                    }`}
-                                >
-                                    K15 (Điều chuyển)
-                                </button>
-                                <button
-                                    onClick={() => setPlanType('ALL')}
-                                    className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
-                                        planType === 'ALL' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
-                                    }`}
-                                >
-                                    Tất cả
-                                </button>
-                            </div>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -382,6 +325,7 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
                         </div>
                     </div>
                 </div>
+
 
                 {/* Sub-header / Stats and Export */}
                 <div className="px-5 py-2.5 bg-slate-950/70 border-b border-slate-800/80 flex items-center justify-between gap-3 shrink-0">
