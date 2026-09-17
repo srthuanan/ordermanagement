@@ -1784,11 +1784,26 @@ def main():
 def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=None, to_date=None, limit=200):
     """
     Truy vấn danh sách chứng từ Phiếu Đề Nghị Xuất Xe (DNX) và Phiếu Xe Ra (TD4) từ CyberSoft SQL Server
-    để hiển thị tiến trình duyệt (Ma_Post) trên Web App.
+    để hiển thị tiến trình duyệt (Ma_Post) trên Web App (hỗ trợ pymssql và pyodbc).
     """
-    import pyodbc
-    conn = pyodbc.connect(CYBER_CONN)
-    cursor = conn.cursor()
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=30,
+            appname='CyberAppGolden',
+        )
+        is_pymssql = True
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=30)
+        is_pymssql = False
+
+    cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
     tickets = []
 
     limit_val = int(limit) if limit else 200
@@ -1815,7 +1830,7 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
         query_dnx = f"""
             SELECT TOP {limit_val} 
                 'DNX' AS voucher_type,
-                'Đề Nghị Xuất Xe' AS voucher_name,
+                N'Đề Nghị Xuất Xe' AS voucher_name,
                 p.stt_rec,
                 p.so_ct,
                 p.ngay_ct,
@@ -1832,17 +1847,24 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
                 ISNULL(c.So_may, '') AS so_may,
                 ISNULL(c.ma_Kx, '') AS loai_xe,
                 ISNULL(c.Ma_Mau, '') AS ma_mau
-            FROM PHDNX p
-            LEFT JOIN CTDNX c ON p.stt_rec = c.stt_rec
+            FROM PHDNX p WITH (NOLOCK)
+            LEFT JOIN CTDNX c WITH (NOLOCK) ON p.stt_rec = c.stt_rec
             {where_clause}
             ORDER BY p.ngay_ct DESC, p.so_ct DESC
         """
         cursor.execute(query_dnx)
-        cols = [comp[0] for comp in cursor.description]
-        for r in cursor.fetchall():
-            d = dict(zip(cols, r))
-            d['ngay_ct'] = d['ngay_ct'].strftime('%Y-%m-%d') if d['ngay_ct'] else ''
-            tickets.append(d)
+        if is_pymssql:
+            rows = cursor.fetchall()
+            for d in rows:
+                if d.get('ngay_ct'):
+                    d['ngay_ct'] = d['ngay_ct'].strftime('%Y-%m-%d')
+                tickets.append(d)
+        else:
+            cols = [comp[0] for comp in cursor.description]
+            for r in cursor.fetchall():
+                d = dict(zip(cols, r))
+                d['ngay_ct'] = d['ngay_ct'].strftime('%Y-%m-%d') if d['ngay_ct'] else ''
+                tickets.append(d)
 
     # 2. Fetch TD4 tickets (PHTD)
     if not ma_ct or str(ma_ct).upper() in ['TD4', 'PXR']:
@@ -1850,7 +1872,7 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
         query_td4 = f"""
             SELECT TOP {limit_val} 
                 'TD4' AS voucher_type,
-                'Phiếu Xe Ra Giao KH' AS voucher_name,
+                N'Phiếu Xe Ra Giao KH' AS voucher_name,
                 Stt_Rec AS stt_rec,
                 So_Ct AS so_ct,
                 Ngay_Ct AS ngay_ct,
@@ -1867,16 +1889,23 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
                 ISNULL(So_may, '') AS so_may,
                 ISNULL(Loai_xe, '') AS loai_xe,
                 '' AS ma_mau
-            FROM PHTD
+            FROM PHTD WITH (NOLOCK)
             {where_clause}
             ORDER BY Ngay_Ct DESC, So_Ct DESC
         """
         cursor.execute(query_td4)
-        cols = [comp[0] for comp in cursor.description]
-        for r in cursor.fetchall():
-            d = dict(zip(cols, r))
-            d['ngay_ct'] = d['ngay_ct'].strftime('%Y-%m-%d') if d['ngay_ct'] else ''
-            tickets.append(d)
+        if is_pymssql:
+            rows = cursor.fetchall()
+            for d in rows:
+                if d.get('ngay_ct'):
+                    d['ngay_ct'] = d['ngay_ct'].strftime('%Y-%m-%d')
+                tickets.append(d)
+        else:
+            cols = [comp[0] for comp in cursor.description]
+            for r in cursor.fetchall():
+                d = dict(zip(cols, r))
+                d['ngay_ct'] = d['ngay_ct'].strftime('%Y-%m-%d') if d['ngay_ct'] else ''
+                tickets.append(d)
 
     conn.close()
 
