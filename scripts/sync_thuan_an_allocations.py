@@ -1786,6 +1786,9 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
     Truy vấn danh sách chứng từ Phiếu Đề Nghị Xuất Xe (DNX) và Phiếu Xe Ra (TD4) từ CyberSoft SQL Server
     để hiển thị tiến trình duyệt (Ma_Post) trên Web App (hỗ trợ pymssql và pyodbc).
     """
+    conn = None
+    is_pymssql = False
+
     try:
         import pymssql
         conn = pymssql.connect(
@@ -1798,10 +1801,13 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
             appname='CyberAppGolden',
         )
         is_pymssql = True
-    except Exception:
-        import pyodbc
-        conn = pyodbc.connect(CYBER_CONN, timeout=30)
-        is_pymssql = False
+    except Exception as e_pymssql:
+        try:
+            import pyodbc
+            conn = pyodbc.connect(CYBER_CONN, timeout=30)
+            is_pymssql = False
+        except Exception as e_pyodbc:
+            raise Exception(f"Lỗi kết nối CyberSoft SQL Server: {e_pymssql}")
 
     cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
     tickets = []
