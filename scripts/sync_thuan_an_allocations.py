@@ -1,0 +1,261 @@
+import sys
+import argparse
+import json
+import os
+import pyodbc
+import requests
+from datetime import datetime, date
+from decimal import Decimal
+from dotenv import load_dotenv
+
+load_dotenv()
+
+CYBER_CONN = (
+    "DRIVER={ODBC Driver 17 for SQL Server};"
+    "SERVER=SQLVanDao.Cybersoft.com.vn,7521;"
+    "DATABASE=CyberAppGolden_VanDao;"
+    "UID=cyber_vandao;"
+    "PWD=HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv;"
+    "TrustServerCertificate=yes"
+)
+
+SUPABASE_URL = os.environ.get(
+    "VITE_SUPABASE_URL",
+    "https://jwvgxqrkjlbewvpkvucj.supabase.co"
+)
+SUPABASE_KEY = os.environ.get(
+    "VITE_SUPABASE_SERVICE_KEY",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU"
+)
+HEADERS = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json",
+}
+
+MODEL_MAP = {
+    "VF3":      ("VF 3",   ""),
+    "VF301":    ("VF 3",   "Tiêu chuẩn 1 màu"),
+    "VF302":    ("VF 3",   "Tiêu chuẩn 2 màu"),
+    "VF304":    ("VF 3",   "Nâng cao 2 màu"),
+    "VF305":    ("VF 3",   "Plus tiêu chuẩn 2 màu"),
+    "VF306":    ("VF 3",   "Plus nâng cao 2 màu"),
+    "VF2":      ("VF 2",   "Màu cơ bản"),
+    "VF201":    ("VF 2",   "Màu nâng cao"),
+    "VF5":      ("VF 5",   ""),
+    "VF501":    ("VF 5",   "Plus cơ bản"),
+    "VF503":    ("VF 5",   "Plus nâng cao"),
+    "VF504":    ("VF 5",   "Plus"),
+    "VF6":      ("VF 6",   ""),
+    "VF601":    ("VF 6",   "Eco"),
+    "VF603":    ("VF 6",   "Eco"),
+    "VF604":    ("VF 6",   "Plus"),
+    "VF605":    ("VF 6",   "Plus"),
+    "VF608":    ("VF 6",   "Plus"),
+    "VF609":    ("VF 6",   "Plus nâng cao"),
+    "VF7":      ("VF 7",   ""),
+    "VF706":    ("VF 7",   "Eco Tiêu chuẩn 2"),
+    "VF707":    ("VF 7",   "Plus trần thép 1 cầu"),
+    "VF713":    ("VF 7",   "Eco HUD"),
+    "VF8":      ("VF 8",   ""),
+    "VF8THM":   ("VF 8",   "Thế hệ mới"),
+    "VF8 S":    ("VF 8",   "Eco"),
+    "VF9":      ("VF 9",   ""),
+    "PE1U01":   ("VF 9",   "Eco"),
+    "PE1U06":   ("VF 9",   "Plus 7 chỗ CATL"),
+    "LIMO":     ("VF e34", "Limo Green"),
+    "ECVANNC":  ("EC Van", "Nâng cao"),
+    "MinioGreen": ("Minio", "Green"),
+    "VFMPV7":   ("VF MPV 7", ""),
+}
+
+COLOR_MAP = {
+    "CE11": "Cloudy White (CE11)",
+    "CE12": "Starlight Silver (CE12)",
+    "CE13": "Midnight Black (CE13)",
+    "CE14": "Aurora Blue (CE14)",
+    "CE15": "Brahminy White (CE15)",
+    "CE16": "Sage Green (CE16)",
+    "CE17": "Burgundy (CE17)",
+    "CE18": "Brahminy White (CE18)",
+    "CE19": "Khaki Brown (CE19)",
+    "CE1M": "Brahminy White (CE1M)",
+    "CE1V": "Bạc",
+    "CE1W": "Xanh Lá Nhạt",
+    "CE2Q": "Đỏ Ruby",
+    "181U": "Vàng nóc trắng",
+}
+
+def fetch_allocations_from_cyber(from_date: str, to_date: str, ttcp_code="02.01.08"):
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=30
+        )
+        is_pymssql = True
+    except Exception as e:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=30)
+        is_pymssql = False
+
+    c = conn.cursor()
+
+    sql = """
+        SELECT
+            k.So_khung                                  AS vin,
+            k.So_May                                    AS so_may,
+            k.Ma_Kx                                     AS ma_kx,
+            ISNULL(kx.ten_kx, k.Ma_Kx)                  AS loai_xe_cyber,
+            ISNULL(kx.Quy_Cach, '')                     AS phien_ban_cyber,
+            k.Ma_Mau                                    AS ma_mau_ngoai,
+            ISNULL(mx.ten_mau, '')                      AS ten_mau_ngoai,
+            k.Ma_Mau_Nt                                 AS ma_mau_noi,
+            ISNULL(mnt.ten_mau, '')                     AS ten_mau_noi,
+            CAST(k.Nam_Sx AS INT)                       AS nam_sx,
+            k.Ma_XHD                                    AS ma_dms,
+            ISNULL(kho.Ten_kho, '')                     AS vi_tri_kho,
+            k.Dien_Giai                                 AS ghi_chu,
+            k.Invoid_Date                               AS ngay_phan_bo,
+            k.ngay_ct                                   AS ngay_ct
+        FROM CTKH k WITH (NOLOCK)
+        LEFT JOIN DmKx kx WITH (NOLOCK)           ON k.Ma_Kx = kx.ma_kx
+        LEFT JOIN dmMauxe mx WITH (NOLOCK)        ON k.Ma_Mau = mx.ma_Mau
+        LEFT JOIN dmMauxeNt mnt WITH (NOLOCK)    ON k.Ma_Mau_Nt = mnt.Ma_mau_Nt
+        LEFT JOIN Dmkho kho WITH (NOLOCK)         ON k.Ma_Vitri = kho.Ma_kho
+        WHERE k.ngay_ct BETWEEN ? AND ?
+          AND k.Ma_ct = 'K10'
+          AND (k.Ma_TTCP_I = ? OR k.Ma_TTCP_DMS = ?)
+          AND k.So_khung IS NOT NULL
+          AND RTRIM(LTRIM(k.So_khung)) <> ''
+        ORDER BY k.Invoid_Date DESC, k.So_khung
+    """
+
+    if is_pymssql:
+        sql = sql.replace('?', '%s')
+
+    c.execute(sql, (from_date, to_date, ttcp_code, ttcp_code))
+    cols = [d[0] for d in c.description]
+    rows = c.fetchall()
+    conn.close()
+
+    result = []
+    for r in rows:
+        row_dict = dict(zip(cols, r))
+        result.append(row_dict)
+
+    return result
+
+def map_allocation_to_khoxe(car: dict) -> dict:
+    ma_kx = (car.get("ma_kx") or "").strip()
+    if ma_kx in MODEL_MAP:
+        dong_xe, phien_ban = MODEL_MAP[ma_kx]
+    elif ma_kx.startswith("VF"):
+        dong_xe = "VF " + ma_kx[2:3] if len(ma_kx) >= 3 else ma_kx
+        phien_ban = car.get("phien_ban_cyber") or ""
+    else:
+        dong_xe = car.get("loai_xe_cyber") or ma_kx
+        phien_ban = car.get("phien_ban_cyber") or ""
+
+    ma_mau_ngoai = (car.get("ma_mau_ngoai") or "").strip()
+    ten_mau_ngoai = (car.get("ten_mau_ngoai") or "").strip()
+    ngoai_that = COLOR_MAP.get(ma_mau_ngoai, ten_mau_ngoai if ten_mau_ngoai else ma_mau_ngoai)
+    noi_that = (car.get("ten_mau_noi") or "").strip()
+
+    invoid_dt = car.get("ngay_phan_bo")
+    if isinstance(invoid_dt, (datetime, date)) and invoid_dt.year > 1900:
+        ngay_nhap_str = invoid_dt.isoformat()
+    else:
+        ngay_ct = car.get("ngay_ct")
+        ngay_nhap_str = ngay_ct.isoformat() if isinstance(ngay_ct, (datetime, date)) else datetime.now().isoformat()
+
+    vi_tri = (car.get("vi_tri_kho") or "").strip()
+    if not vi_tri:
+        vi_tri = "Kho Thuận An"
+
+    return {
+        "vin": car.get("vin", "").strip(),
+        "so_may": (car.get("so_may") or "").strip(),
+        "dong_xe": dong_xe,
+        "phien_ban": phien_ban,
+        "ngoai_that": ngoai_that,
+        "noi_that": noi_that,
+        "ma_dms": (car.get("ma_dms") or "").strip(),
+        "vi_tri": vi_tri,
+        "trang_thai": "Trong kho",
+        "ngay_nhap": ngay_nhap_str,
+    }
+
+def upsert_to_supabase_khoxe(records: list):
+    if not records:
+        return 0, 0
+
+    url = f"{SUPABASE_URL}/rest/v1/khoxe"
+    CHUNK_SIZE = 50
+    total_ok = 0
+    total_fail = 0
+
+    for i in range(0, len(records), CHUNK_SIZE):
+        chunk = records[i:i + CHUNK_SIZE]
+        resp = requests.post(
+            url,
+            headers={**HEADERS, "Prefer": "resolution=merge-duplicates"},
+            params={"on_conflict": "vin"},
+            json=chunk,
+            timeout=30
+        )
+        if 200 <= resp.status_code < 300:
+            total_ok += len(chunk)
+        else:
+            total_fail += len(chunk)
+            print(f"[Supabase Error] HTTP {resp.status_code}: {resp.text}", file=sys.stderr)
+
+    return total_ok, total_fail
+
+def main():
+    parser = argparse.ArgumentParser(description="Sync Thuan An car allocations from CyberSoft to Supabase")
+    parser.add_argument("--from", dest="from_date", help="From date (YYYY-MM-DD)", default=None)
+    parser.add_argument("--to", dest="to_date", help="To date (YYYY-MM-DD)", default=None)
+    parser.add_argument("--preview", action="store_true", help="Preview without writing")
+    args = parser.parse_args()
+
+    today = date.today()
+    from_date = args.from_date or today.replace(day=1).strftime("%Y-%m-%d")
+    to_date = args.to_date or today.strftime("%Y-%m-%d")
+
+    raw_cars = fetch_allocations_from_cyber(from_date, to_date)
+    mapped_cars = [map_allocation_to_khoxe(c) for c in raw_cars if c.get("vin")]
+
+    if args.preview:
+        output = {
+            "success": True,
+            "mode": "preview",
+            "from_date": from_date,
+            "to_date": to_date,
+            "total": len(mapped_cars),
+            "cars": mapped_cars
+        }
+        print(json.dumps(output, ensure_ascii=False))
+        return
+
+    ok, fail = upsert_to_supabase_khoxe(mapped_cars)
+
+    output = {
+        "success": fail == 0,
+        "mode": "sync",
+        "from_date": from_date,
+        "to_date": to_date,
+        "total": len(mapped_cars),
+        "success_count": ok,
+        "fail_count": fail,
+        "cars": mapped_cars[:10],
+        "vins": [c["vin"] for c in mapped_cars]
+    }
+    print(json.dumps(output, ensure_ascii=False))
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: cybersync-api
+    runtime: python
+    buildCommand: pip install -r requirements-cyber.txt
+    startCommand: python cyber_server.py
+    plan: free
+    region: singapore
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9

@@ -1,5 +1,5 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
-import { getStorageItem, mapStockDbToUi, ApiResult, ADMIN_USER, uploadToSupabase } from './baseService';
+import { getStorageItem, mapStockDbToUi, ApiResult, uploadToSupabase } from './baseService';
 import { createNotification } from './notificationService';
 import { logAction } from './baseService';
 
@@ -14,8 +14,8 @@ export const getStockData = async (): Promise<ApiResult> => {
 };
 
 export const holdCar = async (vin: string) => {
-    const username = getStorageItem("currentUser") || ADMIN_USER;
-    const fullName = getStorageItem("currentConsultant") || username;
+    const username = getStorageItem("currentUser") || "";
+    const fullName = getStorageItem("currentConsultant") || username || "Chưa xác định";
     try {
         // --- Bắt đầu: Ràng buộc FIFO ---
         if (username !== 'admin') {
@@ -93,8 +93,8 @@ export const releaseCar = async (vin: string, outcome: 'released' | 'expired' | 
 };
 
 export const joinHoldQueue = async (vin: string) => {
-    const username = getStorageItem("currentUser") || ADMIN_USER;
-    const fullName = getStorageItem("currentConsultant") || username;
+    const username = getStorageItem("currentUser") || "";
+    const fullName = getStorageItem("currentConsultant") || username || "Chưa xác định";
     try {
         const { error } = await supabase.from('car_hold_activities').insert({ vin, username, tvbh_name: fullName, type: 'QUEUE', status: 'waiting' });
         if (error) {
@@ -109,7 +109,7 @@ export const joinHoldQueue = async (vin: string) => {
 };
 
 export const leaveHoldQueue = async (vin: string) => {
-    const username = getStorageItem("currentUser") || ADMIN_USER;
+    const username = getStorageItem("currentUser") || "";
     try {
         const { error } = await supabase.rpc('rpc_leave_hold_queue', {
             p_vin: vin,
@@ -398,70 +398,6 @@ export const tryAutoMatchWaitingOrder = async (vin: string, config: { dong_xe: s
             await logAction('AUTO_MATCH_BACKUP', { orderNumber, vin, config }, orderNumber, 'order');
             return true;
         }
-
-        // --- TIER 2: FLEX-MATCH (Biên độ mở) ---
-        console.log(`[tryAutoMatchWaitingOrder] Không có đơn khớp 100%, tìm đơn Flex-Match cho VIN: ${vin}`);
-        const { data: flexOrders, error: flexError } = await supabaseAdmin.from('donhang')
-            .select('*')
-            .eq('ket_qua', 'Chưa ghép')
-            .eq('dong_xe', config.dong_xe)
-            .eq('phien_ban', config.phien_ban)
-            .eq('is_flex_match', true)
-            .order('ngay_coc', { ascending: true })
-            .order('thoi_gian_can_xe', { ascending: true, nullsFirst: false })
-            .order('created_at', { ascending: true });
-
-        if (!flexError && flexOrders && flexOrders.length > 0) {
-            const bestFlexMatch = flexOrders.find((order: any) => {
-                const extList = Array.isArray(order.ngoai_that_flex) ? order.ngoai_that_flex : [];
-                const intList = Array.isArray(order.noi_that_flex) ? order.noi_that_flex : [];
-                
-                const extAllowed = extList.length === 0 || extList.includes('ALL') || extList.includes(config.ngoai_that) || order.ngoai_that === config.ngoai_that;
-                const intAllowed = intList.length === 0 || intList.includes('ALL') || intList.includes(config.noi_that) || order.noi_that === config.noi_that;
-                
-                return extAllowed && intAllowed;
-            });
-
-            if (bestFlexMatch) {
-                const orderNumber = bestFlexMatch.so_don_hang;
-                const tvbh = bestFlexMatch.ten_tu_van_ban_hang;
-                console.log(`[tryAutoMatchWaitingOrder] Khớp Flex-Match thành công: ĐH ${orderNumber} (VIN: ${vin}, Ngoại thất: ${config.ngoai_that}, Nội thất: ${config.noi_that})`);
-
-                await supabaseAdmin.from('khoxe').update({
-                    trang_thai: 'Đã ghép',
-                    nguoi_giu_xe: tvbh,
-                    thoi_gian_het_han_giu: 'Vô thời hạn'
-                }).eq('vin', vin);
-
-                await supabaseAdmin.from('donhang').update({
-                    vin: vin,
-                    ket_qua: 'Đã ghép',
-                    thoi_gian_ghep: new Date().toISOString()
-                }).eq('so_don_hang', orderNumber);
-
-                if (tvbh) {
-                    await createNotification({
-                        message: `🔀 Flex-Match: Hệ thống đã tự động ghép xe màu phụ (VIN: ${vin} - ${config.ngoai_that}/${config.noi_that}) cho đơn hàng ${orderNumber} của bạn.`,
-                        type: 'success',
-                        recipient: tvbh,
-                        targetView: 'orders',
-                        targetId: orderNumber
-                    });
-                }
-
-                const { data: fullOrder } = await supabaseAdmin.from('donhang').select('*').eq('so_don_hang', orderNumber).single();
-                supabaseAdmin.functions.invoke('send-email', {
-                    body: { 
-                        actionId: 'match_success', 
-                        record: fullOrder || bestFlexMatch
-                    }
-                }).then();
-
-                await logAction('AUTO_MATCH_FLEX', { orderNumber, vin, config }, orderNumber, 'order');
-                return true;
-            }
-        }
-
         return false;
     } catch (e) {
         console.error("[tryAutoMatchWaitingOrder] Lỗi hệ thống:", e);
@@ -489,3 +425,234 @@ export const getVehiclesByVins = async (vins: string[]) => {
         return []; 
     }
 };
+
+export interface VehicleStockUpdatePayload {
+    vin: string;
+    vi_tri?: string;
+    ma_dms?: string;
+    so_may?: string;
+}
+
+export const bulkUpdateVehicleLocations = async (updates: VehicleStockUpdatePayload[]): Promise<ApiResult> => {
+    try {
+        if (!updates || updates.length === 0) {
+            return { status: 'SUCCESS', message: 'Không có xe nào cần cập nhật.' };
+        }
+
+        let successCount = 0;
+        const CHUNK_SIZE = 50;
+
+        for (let i = 0; i < updates.length; i += CHUNK_SIZE) {
+            const chunk = updates.slice(i, i + CHUNK_SIZE);
+            await Promise.all(
+                chunk.map(async (u) => {
+                    const payload: Record<string, any> = {};
+                    if (u.vi_tri !== undefined && u.vi_tri !== '') payload.vi_tri = u.vi_tri;
+                    if (u.ma_dms !== undefined && u.ma_dms !== '') payload.ma_dms = u.ma_dms;
+                    if (u.so_may !== undefined && u.so_may !== '') payload.so_may = u.so_may;
+
+                    if (Object.keys(payload).length === 0) return;
+
+                    const { error } = await supabaseAdmin
+                        .from('khoxe')
+                        .update(payload)
+                        .eq('vin', u.vin);
+                    if (!error) successCount++;
+                })
+            );
+        }
+
+        await logAction('BULK_UPDATE_STOCK_LOCATIONS', { updatedCount: successCount, total: updates.length });
+        return { 
+            status: 'SUCCESS', 
+            message: `Đã cập nhật thành công thông tin cho ${successCount}/${updates.length} xe.` 
+        };
+    } catch (err: any) {
+        console.error("Lỗi bulkUpdateVehicleLocations:", err);
+        return { status: 'ERROR', message: err.message || 'Lỗi khi cập nhật thông tin kho xe.' };
+    }
+};
+
+export interface DeliveryPlanItem {
+    vin: string;
+    vi_tri?: string;
+    raw_kho?: string;
+    ma_dms?: string;
+    so_may?: string;
+    dong_xe?: string;
+    phien_ban?: string;
+    ngoai_that?: string;
+    noi_that?: string;
+    ngay_phan_bo?: string;
+    ngay_nhap_kho?: string;
+    ngay_van_tai?: string;
+    don_vi_van_tai?: string;
+    ghi_chu?: string;
+}
+
+export const saveDeliveryPlanToStorage = async (items: DeliveryPlanItem[]): Promise<ApiResult> => {
+    try {
+        if (!items || items.length === 0) {
+            return { status: 'SUCCESS', message: 'Không có dữ liệu kế hoạch giao xe để lưu.' };
+        }
+
+        const CHUNK_SIZE = 100;
+        let totalUpserted = 0;
+
+        for (let i = 0; i < items.length; i += CHUNK_SIZE) {
+            const chunk = items.slice(i, i + CHUNK_SIZE).map(item => ({
+                vin: item.vin.trim().toUpperCase(),
+                vi_tri: item.vi_tri || '',
+                raw_kho: item.raw_kho || '',
+                ma_dms: item.ma_dms || '',
+                so_may: item.so_may || '',
+                dong_xe: item.dong_xe || '',
+                phien_ban: item.phien_ban || '',
+                ngoai_that: item.ngoai_that || '',
+                noi_that: item.noi_that || '',
+                ngay_phan_bo: item.ngay_phan_bo || '',
+                ngay_nhap_kho: item.ngay_nhap_kho || '',
+                ngay_van_tai: item.ngay_van_tai || '',
+                don_vi_van_tai: item.don_vi_van_tai || '',
+                ghi_chu: item.ghi_chu || '',
+                updated_at: new Date().toISOString()
+            }));
+
+            const { error } = await supabaseAdmin
+                .from('kehoach_giaoxe')
+                .upsert(chunk, { onConflict: 'vin' });
+
+            if (error) {
+                console.error("Lỗi lưu kehoach_giaoxe chunk:", error);
+                throw error;
+            }
+            totalUpserted += chunk.length;
+        }
+
+        await logAction('SAVE_DELIVERY_PLAN', { total: totalUpserted });
+        return {
+            status: 'SUCCESS',
+            message: `Đã lưu trữ ${totalUpserted} xe vào Kế hoạch giao xe.`
+        };
+    } catch (err: any) {
+        console.error("Lỗi saveDeliveryPlanToStorage:", err);
+        return { status: 'ERROR', message: err.message || 'Lỗi khi lưu dữ liệu kế hoạch giao xe.' };
+    }
+};
+
+/**
+ * Đồng bộ xe phân bổ cho Showroom Thuận An từ CyberSoft ERP vào khoxe
+ */
+export const syncCyberAllocations = async (options: { fromDate?: string; toDate?: string; preview?: boolean }) => {
+    try {
+        // 1. Nếu đang chạy môi trường Electron Desktop
+        if (typeof window !== 'undefined' && window.electronAPI?.syncCyberAllocations) {
+            const res = await window.electronAPI.syncCyberAllocations(options);
+            return res;
+        }
+
+        // 2. Thử gọi API qua Cloud Server (Render), Web Server hiện tại (Vite), hoặc Server cục bộ (Port 3001)
+        const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
+        const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || '').trim();
+        const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+        
+        const endpoints = [
+            ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}/api/cyber/sync-allocations`] : []),
+            `${currentOrigin}/api/cyber/sync-allocations`,
+            'http://localhost:3001/api/cyber/sync-allocations'
+        ];
+
+        let response: Response | null = null;
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(options)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    lastErrorMsg = errJson.error || `HTTP ${res.status}`;
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        if (!response) {
+            throw new Error(lastErrorMsg || 'Không thể kết nối dịch vụ đồng bộ CyberSoft. Vui lòng mở ứng dụng Desktop (Electron) hoặc chạy lệnh `node server-cyber.mjs`.');
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (err: any) {
+        console.error("Lỗi syncCyberAllocations:", err);
+        return {
+            success: false,
+            error: err.message || 'Không thể kết nối dịch vụ đồng bộ CyberSoft. Vui lòng kiểm tra kết nối mạng nội bộ hoặc ứng dụng Desktop.'
+        };
+    }
+};
+
+/**
+ * Hoàn tác các xe phân bổ vừa được nạp vào khoxe
+ */
+export const undoCyberAllocations = async (vins: string[]) => {
+    try {
+        if (!vins || vins.length === 0) {
+            return { success: false, error: 'Không có danh sách VIN để hoàn tác.' };
+        }
+
+        // Lấy thông tin các xe để kiểm tra trạng thái trước khi xóa
+        const { data: currentStock, error: fetchErr } = await supabaseAdmin
+            .from('khoxe')
+            .select('vin, trang_thai')
+            .in('vin', vins);
+
+        if (fetchErr) throw fetchErr;
+
+        // Chỉ xóa xe chưa bị ghép để đảm bảo an toàn tuyệt đối
+        const deletableVins = (currentStock || [])
+            .filter((c: any) => !c.trang_thai || c.trang_thai === 'Trong kho' || c.trang_thai === 'Chưa ghép')
+            .map((c: any) => c.vin);
+
+        if (deletableVins.length === 0) {
+            return {
+                success: false,
+                error: 'Các xe vừa nạp đã được ghép hoặc không còn tồn tại trong Kho xe.'
+            };
+        }
+
+        const { error: delErr } = await supabaseAdmin
+            .from('khoxe')
+            .delete()
+            .in('vin', deletableVins);
+
+        if (delErr) throw delErr;
+
+        await logAction('UNDO_CYBER_ALLOCATIONS', {
+            totalRequested: vins.length,
+            deletedCount: deletableVins.length,
+            vins: deletableVins
+        }, 'cyber_undo', 'stock');
+
+        return {
+            success: true,
+            deletedCount: deletableVins.length,
+            skippedCount: vins.length - deletableVins.length
+        };
+    } catch (err: any) {
+        console.error("Lỗi undoCyberAllocations:", err);
+        return {
+            success: false,
+            error: err.message || 'Lỗi khi hoàn tác xe trong Kho xe.'
+        };
+    }
+};
+
+
