@@ -9,49 +9,83 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function cyberSyncPlugin(): Plugin {
+  const scriptPath = path.resolve(__dirname, 'scripts', 'sync_thuan_an_allocations.py');
+
+  const runPy = (args: string[], inputBody: string, res: any) => {
+    console.log(`[CyberSync Vite Middleware] Running: python ${args.join(' ')}`);
+    const py = spawn('python', args);
+    let stdout = '';
+    let stderr = '';
+
+    if (inputBody) {
+      py.stdin.write(inputBody);
+      py.stdin.end();
+    }
+
+    py.stdout.on('data', d => { stdout += d.toString(); });
+    py.stderr.on('data', d => { stderr += d.toString(); });
+
+    py.on('close', code => {
+      if (code !== 0) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, error: stderr || `Exit code ${code}` }));
+      }
+      try {
+        const lines = stdout.trim().split('\n');
+        const lastLine = lines[lines.length - 1];
+        const parsed = JSON.parse(lastLine);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(parsed));
+      } catch (e: any) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, raw: stdout, error: e.message }));
+      }
+    });
+  };
+
   return {
     name: 'cyber-sync-middleware',
     configureServer(server) {
       server.middlewares.use('/api/cyber/sync-allocations', (req, res, next) => {
         if (req.method !== 'POST') return next();
-
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
           let options: any = {};
           try { options = JSON.parse(body || '{}'); } catch (e) {}
-
           const { fromDate, toDate, preview } = options;
-          const scriptPath = path.resolve(__dirname, 'scripts', 'sync_thuan_an_allocations.py');
           const args = [scriptPath];
           if (fromDate) args.push('--from', fromDate);
           if (toDate) args.push('--to', toDate);
           if (preview) args.push('--preview');
+          runPy(args, '', res);
+        });
+      });
 
-          console.log(`[CyberSync Vite Middleware] Running: python ${args.join(' ')}`);
-          const py = spawn('python', args);
-          let stdout = '';
-          let stderr = '';
+      server.middlewares.use('/api/cyber/sync-locations', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          let options: any = {};
+          try { options = JSON.parse(body || '{}'); } catch (e) {}
+          const args = [scriptPath, '--sync-locations'];
+          if (options.preview) args.push('--preview');
+          runPy(args, body, res);
+        });
+      });
 
-          py.stdout.on('data', d => { stdout += d.toString(); });
-          py.stderr.on('data', d => { stderr += d.toString(); });
+      server.middlewares.use('/api/cyber/plan-filter-options', (req, res, next) => {
+        if (req.method !== 'GET') return next();
+        runPy([scriptPath, '--plan-filter-options'], '', res);
+      });
 
-          py.on('close', code => {
-            if (code !== 0) {
-              res.writeHead(500, { 'Content-Type': 'application/json' });
-              return res.end(JSON.stringify({ success: false, error: stderr || `Exit code ${code}` }));
-            }
-            try {
-              const lines = stdout.trim().split('\n');
-              const lastLine = lines[lines.length - 1];
-              const parsed = JSON.parse(lastLine);
-              res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify(parsed));
-            } catch (e: any) {
-              res.writeHead(500, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: false, raw: stdout, error: e.message }));
-            }
-          });
+      server.middlewares.use('/api/cyber/search-factory-plan', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          runPy([scriptPath, '--search-plan'], body, res);
         });
       });
     }

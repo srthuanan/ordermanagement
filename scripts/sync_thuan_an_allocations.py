@@ -637,7 +637,43 @@ def main():
     parser.add_argument("--from", dest="from_date", help="From date (YYYY-MM-DD)", default=None)
     parser.add_argument("--to", dest="to_date", help="To date (YYYY-MM-DD)", default=None)
     parser.add_argument("--preview", action="store_true", help="Preview without writing")
+    parser.add_argument("--sync-locations", action="store_true", help="Sync physical locations from CT70BEX into khoxe")
+    parser.add_argument("--plan-filter-options", action="store_true", help="Get distinct showrooms and colors for plan search")
+    parser.add_argument("--search-plan", action="store_true", help="Search factory delivery plan")
+    parser.add_argument("--params", help="JSON string of search parameters", default=None)
     args = parser.parse_args()
+
+    if args.plan_filter_options:
+        res = get_cyber_plan_filter_options()
+        print(json.dumps(res, ensure_ascii=False))
+        return
+
+    def get_input_params():
+        if args.params and args.params.strip() != "-":
+            try:
+                return json.loads(args.params)
+            except Exception:
+                pass
+        if not sys.stdin.isatty():
+            try:
+                stdin_data = sys.stdin.read().strip()
+                if stdin_data:
+                    return json.loads(stdin_data)
+            except Exception:
+                pass
+        return {}
+
+    if args.sync_locations:
+        p = get_input_params()
+        res = sync_khoxe_locations_from_cyber(target_vins=p.get("vins"), preview=args.preview)
+        print(json.dumps(res, ensure_ascii=False))
+        return
+
+    if args.search_plan:
+        p = get_input_params()
+        res = search_cyber_factory_plan(p)
+        print(json.dumps(res, ensure_ascii=False))
+        return
 
     today = date.today()
     from_date = args.from_date or today.replace(day=1).strftime("%Y-%m-%d")

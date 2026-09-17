@@ -11,7 +11,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
 // Client thông thường (anon key) — dùng cho tất cả các thao tác của hệ thống
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
-        detectSessionInUrl: true
+        detectSessionInUrl: true,
+        persistSession: true,
+        autoRefreshToken: true,
+        lock: async (_name: string, _acquireTimeout: number, fn: () => Promise<any>) => fn()
     }
 });
 

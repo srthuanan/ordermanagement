@@ -540,27 +540,40 @@ export const saveDeliveryPlanToStorage = async (items: DeliveryPlanItem[]): Prom
     }
 };
 
-/**
- * Đồng bộ xe phân bổ cho Showroom Thuận An từ CyberSoft ERP vào khoxe
- */
-export const syncCyberAllocations = async (options: { fromDate?: string; toDate?: string; preview?: boolean }) => {
+const getCyberEndpoints = (apiPath: string): string[] => {
+    const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
+    const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api.onrender.com').trim();
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
+    const isLocal = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1' ||
+        window.location.port === '5173'
+    );
+
+    if (isLocal) {
+        return [
+            `${currentOrigin}${apiPath}`,
+            `http://localhost:3001${apiPath}`,
+            ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : [])
+        ];
+    }
+
+    return [
+        ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : []),
+        `${currentOrigin}${apiPath}`,
+        `http://localhost:3001${apiPath}`
+    ];
+};
+
+export const syncCyberAllocations = async (options: { fromDate?: string; toDate?: string; preview?: boolean } = {}) => {
     try {
-        // 1. Nếu đang chạy môi trường Electron Desktop
+        // 1. Thử gọi API qua Electron Desktop Bridge nếu có
         if (typeof window !== 'undefined' && window.electronAPI?.syncCyberAllocations) {
             const res = await window.electronAPI.syncCyberAllocations(options);
             return res;
         }
 
-        // 2. Thử gọi API qua Cloud Server (Render), Web Server hiện tại (Vite), hoặc Server cục bộ (Port 3001)
-        const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
-        const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api.onrender.com').trim();
-        const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
-        
-        const endpoints = [
-            ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}/api/cyber/sync-allocations`] : []),
-            `${currentOrigin}/api/cyber/sync-allocations`,
-            'http://localhost:3001/api/cyber/sync-allocations'
-        ];
+        const endpoints = getCyberEndpoints('/api/cyber/sync-allocations');
 
         let response: Response | null = null;
         let lastErrorMsg = '';
@@ -604,15 +617,7 @@ export const syncCyberAllocations = async (options: { fromDate?: string; toDate?
  */
 export const syncCyberLocations = async (options: { preview?: boolean; vins?: string[] } = { preview: false }) => {
     try {
-        const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
-        const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api.onrender.com').trim();
-        const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
-        
-        const endpoints = [
-            ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}/api/cyber/sync-locations`] : []),
-            `${currentOrigin}/api/cyber/sync-locations`,
-            'http://localhost:3001/api/cyber/sync-locations'
-        ];
+        const endpoints = getCyberEndpoints('/api/cyber/sync-locations');
 
         let response: Response | null = null;
         let lastErrorMsg = '';
@@ -668,15 +673,7 @@ export interface CyberPlanSearchParams {
  */
 export const searchCyberFactoryPlan = async (params: CyberPlanSearchParams) => {
     try {
-        const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
-        const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api.onrender.com').trim();
-        const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
-        
-        const endpoints = [
-            ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}/api/cyber/search-factory-plan`] : []),
-            `${currentOrigin}/api/cyber/search-factory-plan`,
-            'http://localhost:3001/api/cyber/search-factory-plan'
-        ];
+        const endpoints = getCyberEndpoints('/api/cyber/search-factory-plan');
 
         let response: Response | null = null;
         let lastErrorMsg = '';
@@ -720,15 +717,7 @@ export const searchCyberFactoryPlan = async (params: CyberPlanSearchParams) => {
  */
 export const getCyberPlanFilterOptions = async () => {
     try {
-        const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
-        const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api.onrender.com').trim();
-        const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
-        
-        const endpoints = [
-            ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}/api/cyber/plan-filter-options`] : []),
-            `${currentOrigin}/api/cyber/plan-filter-options`,
-            'http://localhost:3001/api/cyber/plan-filter-options'
-        ];
+        const endpoints = getCyberEndpoints('/api/cyber/plan-filter-options');
 
         let response: Response | null = null;
         for (const endpoint of endpoints) {
