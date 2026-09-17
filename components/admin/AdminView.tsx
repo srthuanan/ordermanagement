@@ -13,6 +13,8 @@ import BulkUploadModal from './BulkUploadModal';
 import BulkAddCarExcelModal from './BulkAddCarExcelModal';
 import EditOrderModal from '../modals/EditOrderModal';
 import ThongTinXeUploadModal from './ThongTinXeUploadModal';
+import ImportStockLocationModal from '../modals/ImportStockLocationModal';
+import { CyberSyncAllocationModal } from '../modals/CyberSyncAllocationModal';
 
 import { useAdminFilters } from '../../hooks/useAdminFilters';
 import { useAdminActions } from '../../hooks/useAdminActions';
@@ -135,6 +137,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
     const [isManageTabsModalOpen, setIsManageTabsModalOpen] = useState(false);
+    const [isImportLocationModalOpen, setIsImportLocationModalOpen] = useState(false);
     
     const [statsViewBy, setStatsViewBy] = useState<'tvbh' | 'team'>('tvbh');
 
@@ -221,6 +224,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
     };
 
     const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
+    const [showCyberSyncModal, setShowCyberSyncModal] = useState(false);
     const actionMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -371,9 +375,11 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
 
 
     const adminTools = [
+        { title: 'Phân Bổ Cyber (K10)', icon: 'fa-bolt text-yellow-500', action: () => setShowCyberSyncModal(true) },
         { title: 'Hộp thư Xử lý VC', icon: 'fa-file-invoice-dollar text-red-500', action: () => setAdminView('vc') },
         { title: 'Thêm Xe Mới', icon: 'fa-plus-circle', action: () => actions.setAdminModal('addCar') },
         { title: 'Thêm Xe Hàng Loạt', icon: 'fa-layer-group', action: () => actions.setAdminModal('bulkAddCar') },
+        { title: 'Nhập Vị Trí Kho', icon: 'fa-warehouse text-emerald-600', action: () => setIsImportLocationModalOpen(true) },
         { title: 'Nhập Xe Từ Excel', icon: 'fa-file-excel', action: () => actions.setAdminModal('bulkAddCarExcel') },
         { title: 'Xóa Xe Khỏi Kho', icon: 'fa-trash-alt', action: () => actions.setAdminModal('deleteCar') },
         { title: 'Phục Hồi Xe', icon: 'fa-undo', action: () => actions.setAdminModal('restoreCar') },
@@ -823,6 +829,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             {/* PORTAL FOR ALL ADMIN MODALS: Ensures they work from any tab via the Lightning Bolt menu */}
             {createPortal(
                 <>
+                    <CyberSyncAllocationModal
+                        isOpen={showCyberSyncModal}
+                        onClose={() => setShowCyberSyncModal(false)}
+                        showToast={showToast}
+                        onSuccess={() => refetchStock(true)}
+                    />
                     {actions.suggestionModalState && <SuggestionModal isOpen={!!actions.suggestionModalState} onClose={() => actions.setSuggestionModalState(null)} order={actions.suggestionModalState.order} suggestedCars={actions.suggestionModalState.cars} onConfirm={actions.handleConfirmSuggestion} showToast={showToast} />}
                     <MatchingSuggestionsModal
                         isOpen={showMatchingModal}
@@ -908,6 +920,13 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                             refetchStock(true);
                             refetchHistory(true);
                         }} 
+                    />
+                    <ImportStockLocationModal
+                        isOpen={isImportLocationModalOpen}
+                        onClose={() => setIsImportLocationModalOpen(false)}
+                        stockVehicles={stockData}
+                        showToast={showToast}
+                        onSuccess={() => refetchStock(true)}
                     />
 
                     <OrderTimelineModal isOpen={actions.adminModal === 'timeline'} onClose={() => actions.setAdminModal(null)} />
