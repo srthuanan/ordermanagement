@@ -34,39 +34,78 @@ HEADERS = {
 }
 
 MODEL_MAP = {
-    "VF3":      ("VF 3",   ""),
-    "VF301":    ("VF 3",   "Tiêu chuẩn 1 màu"),
-    "VF302":    ("VF 3",   "Tiêu chuẩn 2 màu"),
-    "VF304":    ("VF 3",   "Nâng cao 2 màu"),
-    "VF305":    ("VF 3",   "Plus tiêu chuẩn 2 màu"),
-    "VF306":    ("VF 3",   "Plus nâng cao 2 màu"),
-    "VF2":      ("VF 2",   "Màu cơ bản"),
-    "VF201":    ("VF 2",   "Màu nâng cao"),
-    "VF5":      ("VF 5",   ""),
-    "VF501":    ("VF 5",   "Plus cơ bản"),
-    "VF503":    ("VF 5",   "Plus nâng cao"),
-    "VF504":    ("VF 5",   "Plus"),
-    "VF6":      ("VF 6",   ""),
-    "VF601":    ("VF 6",   "Eco"),
-    "VF603":    ("VF 6",   "Eco"),
-    "VF604":    ("VF 6",   "Plus"),
-    "VF605":    ("VF 6",   "Plus"),
-    "VF608":    ("VF 6",   "Plus"),
-    "VF609":    ("VF 6",   "Plus nâng cao"),
-    "VF7":      ("VF 7",   ""),
-    "VF706":    ("VF 7",   "Eco Tiêu chuẩn 2"),
-    "VF707":    ("VF 7",   "Plus trần thép 1 cầu"),
-    "VF713":    ("VF 7",   "Eco HUD"),
-    "VF8":      ("VF 8",   ""),
-    "VF8THM":   ("VF 8",   "Thế hệ mới"),
-    "VF8 S":    ("VF 8",   "Eco"),
-    "VF9":      ("VF 9",   ""),
-    "PE1U01":   ("VF 9",   "Eco"),
-    "PE1U06":   ("VF 9",   "Plus 7 chỗ CATL"),
-    "LIMO":     ("VF e34", "Limo Green"),
-    "ECVANNC":  ("EC Van", "Nâng cao"),
-    "MinioGreen": ("Minio", "Green"),
-    "VFMPV7":   ("VF MPV 7", ""),
+    # VF 3
+    "VF3":        ("VF 3",   ""),
+    "VF301":      ("VF 3",   "Tiêu chuẩn 1 màu"),
+    "VF302":      ("VF 3",   "Tiêu chuẩn 2 màu"),
+    "VF304":      ("VF 3",   "Nâng cao 2 màu"),
+    "VF305":      ("VF 3",   "Plus tiêu chuẩn 2 màu"),
+    "VF306":      ("VF 3",   "Plus nâng cao 2 màu"),
+    # VF 2
+    "VF2":        ("VF 2",   "Màu cơ bản"),
+    "VF201":      ("VF 2",   "Màu nâng cao"),
+    # VF 5
+    "VF5":        ("VF 5",   ""),
+    "VF501":      ("VF 5",   "Plus cơ bản"),
+    "VF502":      ("VF 5",   "S"),
+    "VF503":      ("VF 5",   "Plus nâng cao"),
+    "VF504":      ("VF 5",   "Plus"),
+    "HERIO":      ("VF 5",   "Herio Green"),
+    "HERIOTC2":   ("VF 5",   "Herio Green TC2"),
+    # VF 6
+    "VF6":        ("VF 6",   ""),
+    "VF601":      ("VF 6",   "Eco Nâng cấp"),
+    "VF602":      ("VF 6",   "Plus Nâng cấp"),
+    "VF603":      ("VF 6",   "Eco Tiêu chuẩn"),
+    "VF604":      ("VF 6",   "Plus 1 màu"),
+    "VF605":      ("VF 6",   "Plus 2 màu"),
+    "VF607":      ("VF 6",   "Eco nâng cao"),
+    "VF608":      ("VF 6",   "Plus"),
+    "VF609":      ("VF 6",   "Plus 2 màu nâng cao"),
+    # VF 7
+    "VF7":        ("VF 7",   ""),
+    "VF701":      ("VF 7",   "Eco Tiêu chuẩn 1"),
+    "VF702":      ("VF 7",   "Plus trần thép Nâng cấp"),
+    "VF703":      ("VF 7",   "Plus trần kính Nâng cấp"),
+    "VF706":      ("VF 7",   "Eco Tiêu chuẩn 2"),
+    "VF707":      ("VF 7",   "Plus trần thép 1 cầu"),
+    "VF708":      ("VF 7",   "Plus trần kính 1 cầu"),
+    "VF713":      ("VF 7",   "Eco HUD"),
+    "VF784":      ("VF 7",   "Plus trần thép 2 cầu"),
+    "VF793":      ("VF 7",   "Plus trần thép 2 cầu TC3"),
+    "VF794":      ("VF 7",   "Plus trần thép 2 cầu NC"),
+    # VF 8
+    "VF8":        ("VF 8",   ""),
+    "PD1U01":     ("VF 8",   "Eco Tiêu chuẩn"),
+    "PD1U02":     ("VF 8",   "Plus"),
+    "PD1U03":     ("VF 8",   "Lux Plus"),
+    "PD1U05":     ("VF 8",   "Eco Nâng cấp"),
+    "PD1U07":     ("VF 8",   "Plus Limited"),
+    "VF806":      ("VF 8",   "Plus nâng cao"),
+    "VF8THM":     ("VF 8",   "Thế hệ mới"),
+    "VF8THMMNC":  ("VF 8",   "Thế hệ mới nâng cao"),
+    "VF8 S":      ("VF 8",   "Eco"),
+    # VF 9
+    "VF9":        ("VF 9",   ""),
+    "PE1U01":     ("VF 9",   "Eco"),
+    "PE1U06":     ("VF 9",   "Plus 7 chỗ CATL trần thép"),
+    "PE1U08":     ("VF 9",   "Plus 6 chỗ CATL trần kính"),
+    "PE1U09":     ("VF 9",   "Plus 6 chỗ CATL trần thép"),
+    "VF908":      ("VF 9",   "Plus 6 chỗ trần thép"),
+    "VF926":      ("VF 9",   "Plus 7 chỗ trần thép"),
+    # LIMO / EC Van / Khác
+    "LIMO":       ("VF e34", "Limo Green"),
+    "ECVAN":      ("EC Van", "Tiêu chuẩn"),
+    "ECVAN01":    ("EC Van", "Tiêu chuẩn"),
+    "ECVANNC":    ("EC Van", "Nâng cao"),
+    "ECVANNCCT":  ("EC Van", "Nâng cao Cửa trượt"),
+    "MINIOGREEN": ("MINIO",  "Green"),
+    "MINIOMNC8":  ("MINIO",  "Màu nâng cao"),
+    "MinioGreen": ("MINIO",  "Green"),
+    "Nerio":      ("NERIO",  "Green"),
+    "LACHONG":    ("LẠC HỒNG", "Tiêu chuẩn"),
+    "VFMPV7":     ("VF MPV 7", "Tiêu chuẩn"),
+    "VFMPV7MNC":  ("VF MPV 7", "Màu nâng cao"),
 }
 
 COLOR_MAP = {
@@ -507,7 +546,35 @@ def get_cyber_plan_filter_options(model: str = ""):
     models = [m for m in order_preference if m in model_set]
     models += sorted([m for m in model_set if m not in order_preference])
 
-    # 3. Distinct Colors (theo dòng xe nếu có)
+    # 3. Distinct Versions (theo dòng xe nếu có)
+    v_where = base_where
+    v_params = []
+    if model and model.strip() and model.strip() != 'Tất cả':
+        m_clean = model.strip()
+        aliases = MODEL_SEARCH_ALIASES.get(m_clean, [f"%{m_clean}%", f"%{m_clean.replace(' ', '')}%"])
+        conds = [f"(k.Ma_Kx LIKE {ph} OR kx.ten_kx LIKE {ph})" for _ in aliases]
+        v_where += f" AND ({ ' OR '.join(conds) })"
+        for a in aliases:
+            v_params.extend([a, a])
+
+    c.execute(f"""
+        SELECT DISTINCT k.Ma_Kx, ISNULL(kx.ten_kx, '') as ten_kx, ISNULL(kx.Quy_Cach, '') as quy_cach
+        FROM CTKH k WITH (NOLOCK)
+        LEFT JOIN DmKx kx WITH (NOLOCK) ON k.Ma_Kx = kx.ma_kx
+        WHERE {v_where}
+    """, tuple(v_params))
+    v_rows = c.fetchall()
+    v_set = set()
+    for ma_kx, ten_kx, qc in v_rows:
+        ma_kx = (ma_kx or '').strip()
+        qc = (qc or '').strip()
+        if ma_kx in MODEL_MAP and MODEL_MAP[ma_kx][1]:
+            v_set.add(MODEL_MAP[ma_kx][1])
+        elif qc:
+            v_set.add(qc)
+    versions = sorted(list(v_set))
+
+    # 4. Distinct Colors (theo dòng xe nếu có)
     color_where = base_where
     c_params = []
     if model and model.strip() and model.strip() != 'Tất cả':
@@ -530,11 +597,12 @@ def get_cyber_plan_filter_options(model: str = ""):
     colors = [r[0].strip() for r in c.fetchall() if r[0] and r[0].strip()]
 
     conn.close()
-    return {"success": True, "ttcp_list": ttcp_list, "models": models, "colors": colors}
+    return {"success": True, "ttcp_list": ttcp_list, "models": models, "versions": versions, "colors": colors}
 
 def search_cyber_factory_plan(params: dict) -> dict:
     keyword = (params.get("keyword") or "").strip()
     model = (params.get("model") or "").strip()
+    version = (params.get("version") or "").strip()
     color = (params.get("color") or "").strip()
     ttcp = (params.get("ttcp") or "").strip()
     limit = min(int(params.get("limit", 150)), 500)
@@ -581,9 +649,23 @@ def search_cyber_factory_plan(params: dict) -> dict:
         for a in aliases:
             sql_params.extend([a, a])
 
+    if version and version != 'Tất cả':
+        matching_ma_kx = [k for k, v in MODEL_MAP.items() if v[1].lower() == version.lower()]
+        v_conds = []
+        if matching_ma_kx:
+            ph_list = ', '.join([ph] * len(matching_ma_kx))
+            v_conds.append(f"k.Ma_Kx IN ({ph_list})")
+            sql_params.extend(matching_ma_kx)
+        v_conds.append(f"kx.Quy_Cach LIKE {ph}")
+        sql_params.append(f"%{version}%")
+        v_conds.append(f"kx.ten_kx LIKE {ph}")
+        sql_params.append(f"%{version}%")
+        where_clauses.append(f"({ ' OR '.join(v_conds) })")
+
     if color and color != 'Tất cả':
         where_clauses.append(f"(k.Ma_Mau LIKE {ph} OR mx.ten_mau LIKE {ph})")
         c_like = f"%{color}%"
+        sql_params.extend([c_like, c_like])
         sql_params.extend([c_like, c_like])
 
     if ttcp and ttcp != 'Tất cả':

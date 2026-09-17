@@ -659,6 +659,7 @@ export const syncCyberLocations = async (options: { preview?: boolean; vins?: st
 export interface CyberPlanSearchParams {
     keyword?: string;
     model?: string;
+    version?: string;
     color?: string;
     ttcp?: string;
     fromDate?: string;
@@ -731,10 +732,10 @@ export const getCyberPlanFilterOptions = async (model?: string) => {
             } catch (err) {}
         }
 
-        if (!response) return { success: false, ttcp_list: [], models: [], colors: [] };
+        if (!response) return { success: false, ttcp_list: [], models: [], versions: [], colors: [] };
         return await response.json();
     } catch (err) {
-        return { success: false, ttcp_list: [], models: [], colors: [] };
+        return { success: false, ttcp_list: [], models: [], versions: [], colors: [] };
     }
 };
 

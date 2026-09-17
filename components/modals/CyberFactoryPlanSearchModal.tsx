@@ -41,12 +41,14 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
 }) => {
     const [keyword, setKeyword] = useState('');
     const [selectedModel, setSelectedModel] = useState('Tất cả');
+    const [selectedVersion, setSelectedVersion] = useState('Tất cả');
     const [selectedColor, setSelectedColor] = useState('Tất cả');
     const [selectedTtcp, setSelectedTtcp] = useState('');
 
-    const [filterOptions, setFilterOptions] = useState<{ ttcp_list: any[]; models: string[]; colors: string[] }>({
+    const [filterOptions, setFilterOptions] = useState<{ ttcp_list: any[]; models: string[]; versions: string[]; colors: string[] }>({
         ttcp_list: [],
         models: [],
+        versions: [],
         colors: []
     });
 
@@ -67,6 +69,7 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
                 setFilterOptions(prev => ({
                     ttcp_list: res.ttcp_list && res.ttcp_list.length > 0 ? res.ttcp_list : prev.ttcp_list,
                     models: res.models && res.models.length > 0 ? res.models : prev.models,
+                    versions: res.versions || [],
                     colors: res.colors || []
                 }));
             }
@@ -90,6 +93,7 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
 
     const handleModelChange = (newModel: string) => {
         setSelectedModel(newModel);
+        setSelectedVersion('Tất cả');
         setSelectedColor('Tất cả');
         loadFilterOptions(newModel);
     };
@@ -101,6 +105,7 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
             const params: CyberPlanSearchParams = {
                 keyword: keyword.trim(),
                 model: selectedModel === 'Tất cả' ? '' : selectedModel,
+                version: selectedVersion === 'Tất cả' ? '' : selectedVersion,
                 color: selectedColor === 'Tất cả' ? '' : selectedColor,
                 ttcp: selectedTtcp,
                 limit: 150,
@@ -125,6 +130,7 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
     const handleReset = () => {
         setKeyword('');
         setSelectedModel('Tất cả');
+        setSelectedVersion('Tất cả');
         setSelectedColor('Tất cả');
         setSelectedTtcp('');
         setHasSearched(false);
@@ -212,7 +218,7 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
 
                 {/* Filter Toolbar */}
                 <div className="p-4 bg-slate-950/40 border-b border-slate-800/80 space-y-3 shrink-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
                         
                         {/* 1. Keyword search */}
                         <div className="lg:col-span-2 relative">
@@ -253,7 +259,28 @@ export const CyberFactoryPlanSearchModal: React.FC<CyberFactoryPlanSearchModalPr
                             </select>
                         </div>
 
-                        {/* 3. Color Filter */}
+                        {/* 3. Version Filter */}
+                        <div>
+                            <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                                Phiên bản
+                                {isLoadingFilters && (
+                                    <span className="ml-1.5 text-indigo-400 animate-pulse">đang tải...</span>
+                                )}
+                            </label>
+                            <select
+                                value={selectedVersion}
+                                onChange={e => setSelectedVersion(e.target.value)}
+                                disabled={isLoadingFilters}
+                                className="w-full bg-slate-800/90 border border-slate-700 text-xs rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed truncate"
+                            >
+                                <option value="Tất cả">Tất cả phiên bản</option>
+                                {filterOptions.versions.map(v => (
+                                    <option key={v} value={v}>{v}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* 4. Color Filter */}
                         <div>
                             <label className="block text-[11px] font-semibold text-slate-400 mb-1">
                                 Màu ngoại thất
