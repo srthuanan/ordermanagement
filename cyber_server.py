@@ -4,7 +4,7 @@ import json
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
-from datetime import datetime
+from datetime import datetime, timezone
 
 # ─── Auto-sync state (shared, thread-safe via GIL for simple dict writes) ────
 _auto_sync_state = {
@@ -397,7 +397,10 @@ class CyberApiHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps({"error": "Not Found"}).encode("utf-8"))
 
-# ─── Background Auto-Sync (runs every 2 hours, no user interaction needed) ───
+def _now_utc() -> str:
+    """ISO 8601 UTC timestamp với Z suffix để browser parse đúng múi giờ."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
 
 def _run_auto_location_sync():
     """Execute silent location sync and update state. Called by scheduler thread."""
@@ -407,7 +410,7 @@ def _run_auto_location_sync():
     print("[AutoSync] 🔄 Bắt đầu tự động đồng bộ vị trí kho từ CyberSoft...")
     try:
         result = sync_khoxe_locations_from_cyber(preview=False)
-        now = datetime.now().isoformat()
+        now = _now_utc()
         updated = result.get("updated_count", 0)
         total = result.get("total_cars", 0)
         print(f"[AutoSync] ✅ Hoàn thành: cập nhật {updated}/{total} xe | {now}")
@@ -418,7 +421,7 @@ def _run_auto_location_sync():
             _auto_sync_state["last_status"] = "ok"
             _auto_sync_state["last_error"] = None
     except Exception as e:
-        now = datetime.now().isoformat()
+        now = _now_utc()
         print(f"[AutoSync] ❌ Lỗi tự động đồng bộ: {e}", file=sys.stderr)
         with _auto_sync_lock:
             _auto_sync_state["last_run"] = now
@@ -428,21 +431,18 @@ def _run_auto_location_sync():
 
 def _schedule_auto_sync(interval_seconds: int = 7200):
     """Recurring background scheduler thread: fire immediately then repeat every interval."""
-    # Calculate and store next run time
-    from datetime import timedelta
     with _auto_sync_lock:
-        _auto_sync_state["next_run"] = (
-            datetime.now().isoformat()
-        )
+        _auto_sync_state["next_run"] = _now_utc()
 
     def _loop():
+        import time
         while True:
             _run_auto_location_sync()
-            next_dt = datetime.now()
-            from datetime import timedelta as td
-            next_ts = (next_dt.timestamp() + interval_seconds)
-            import time
-            next_run_str = datetime.fromtimestamp(next_ts).isoformat()
+            import calendar
+            next_ts = calendar.timegm(
+                datetime.now(timezone.utc).timetuple()
+            ) + interval_seconds
+            next_run_str = datetime.utcfromtimestamp(next_ts).strftime("%Y-%m-%dT%H:%M:%SZ")
             with _auto_sync_lock:
                 _auto_sync_state["next_run"] = next_run_str
             print(f"[AutoSync] ⏰ Lần tiếp theo: {next_run_str}")

@@ -100,7 +100,7 @@ export const CyberAutoSyncBadge: React.FC<CyberAutoSyncBadgeProps> = ({ onOpenMa
 
             {/* Tooltip */}
             {showTooltip && (
-                <div className="absolute bottom-full right-0 mb-2 z-[9999] min-w-[220px] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-3 text-xs animate-fade-in">
+                <div className="absolute top-full right-0 mt-2 z-[9999] min-w-[220px] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-3 text-xs animate-fade-in">
                     <div className="font-bold text-white mb-2 flex items-center gap-1.5">
                         <span className="text-emerald-400">⚡</span>
                         Đồng Bộ Vị Trí Tự Động
