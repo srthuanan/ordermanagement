@@ -656,6 +656,27 @@ export const syncCyberLocations = async (options: { preview?: boolean; vins?: st
     }
 };
 
+/**
+ * Lấy trạng thái tự động đồng bộ vị trí kho từ background scheduler trên server
+ */
+export const getCyberSyncStatus = async () => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/sync-status');
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, { method: 'GET' });
+                if (res.ok) {
+                    return await res.json();
+                }
+            } catch { /* try next */ }
+        }
+        return null;
+    } catch {
+        return null;
+    }
+};
+
+
 export interface CyberPlanSearchParams {
     keyword?: string;
     model?: string;

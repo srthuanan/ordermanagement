@@ -17,6 +17,7 @@ import ImportStockLocationModal from '../modals/ImportStockLocationModal';
 import { CyberSyncAllocationModal } from '../modals/CyberSyncAllocationModal';
 import { CyberLocationSyncModal } from '../modals/CyberLocationSyncModal';
 import { CyberFactoryPlanView } from './CyberFactoryPlanView';
+import { CyberAutoSyncBadge } from '../ui/CyberAutoSyncBadge';
 
 import { useAdminFilters } from '../../hooks/useAdminFilters';
 import { useAdminActions } from '../../hooks/useAdminActions';
@@ -809,13 +810,18 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             {/* PORTAL: Admin Lightning Action Menu into Global Header */}
             {document.getElementById('admin-portal-target') && createPortal(
                 <div className="relative mr-0.5" ref={actionMenuRef}>
-                    <button
-                        onClick={() => setIsActionMenuOpen(prev => !prev)}
-                        title="Thao Tác Nhanh Quản Trị"
-                        className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all ${isActionMenuOpen ? 'bg-accent-primary text-white shadow-md' : 'bg-transparent text-gray-400 hover:text-accent-primary hover:bg-white hover:shadow-sm'}`}
-                    >
-                        <i className="fas fa-bolt text-[13px]"></i>
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                        {/* Auto-sync status badge — always visible */}
+                        <CyberAutoSyncBadge onOpenManual={() => setShowCyberLocationSyncModal(true)} />
+
+                        <button
+                            onClick={() => setIsActionMenuOpen(prev => !prev)}
+                            title="Thao Tác Nhanh Quản Trị"
+                            className={`w-8 h-8 flex items-center justify-center rounded-xl transition-all ${isActionMenuOpen ? 'bg-accent-primary text-white shadow-md' : 'bg-transparent text-gray-400 hover:text-accent-primary hover:bg-white hover:shadow-sm'}`}
+                        >
+                            <i className="fas fa-bolt text-[13px]"></i>
+                        </button>
+                    </div>
                     {isActionMenuOpen && (
                         <div className="fixed sm:absolute top-[56px] sm:top-full left-2 right-2 sm:left-auto sm:right-0 sm:mt-3 w-auto sm:w-64 bg-white border border-border-primary shadow-[0_10px_40px_rgba(0,0,0,0.12)] rounded-2xl z-[12000] p-1.5 animate-fade-in-scale-up origin-top sm:origin-top-right">
                             <div className="px-3 py-2 border-b border-slate-50 mb-1.5">

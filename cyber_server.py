@@ -1,9 +1,22 @@
 import os
 import sys
 import json
+import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 from datetime import datetime
+
+# ─── Auto-sync state (shared, thread-safe via GIL for simple dict writes) ────
+_auto_sync_state = {
+    "last_run": None,          # ISO timestamp of last completed run
+    "last_updated_count": 0,   # how many cars were updated last run
+    "last_total_cars": 0,      # total cars scanned
+    "last_status": "idle",     # 'idle' | 'running' | 'ok' | 'error'
+    "last_error": None,        # error message if any
+    "interval_hours": 2,
+    "next_run": None,          # ISO timestamp of next scheduled run
+}
+_auto_sync_lock = threading.Lock()
 
 # Import business logic from scripts
 from scripts.sync_thuan_an_allocations import (
@@ -50,6 +63,18 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 "timestamp": datetime.now().isoformat()
             }
             self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/sync-status":
+            # Return current auto-sync state for frontend badge
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self._send_cors_headers()
+            self.end_headers()
+            with _auto_sync_lock:
+                payload = dict(_auto_sync_state)
+            payload["server_time"] = datetime.now().isoformat()
+            self.wfile.write(json.dumps(payload, ensure_ascii=False).encode("utf-8"))
             return
 
         elif parsed.path == "/api/cyber/voucher-tickets":
@@ -372,10 +397,75 @@ class CyberApiHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps({"error": "Not Found"}).encode("utf-8"))
 
+# ─── Background Auto-Sync (runs every 2 hours, no user interaction needed) ───
+
+def _run_auto_location_sync():
+    """Execute silent location sync and update state. Called by scheduler thread."""
+    with _auto_sync_lock:
+        _auto_sync_state["last_status"] = "running"
+
+    print("[AutoSync] 🔄 Bắt đầu tự động đồng bộ vị trí kho từ CyberSoft...")
+    try:
+        result = sync_khoxe_locations_from_cyber(preview=False)
+        now = datetime.now().isoformat()
+        updated = result.get("updated_count", 0)
+        total = result.get("total_cars", 0)
+        print(f"[AutoSync] ✅ Hoàn thành: cập nhật {updated}/{total} xe | {now}")
+        with _auto_sync_lock:
+            _auto_sync_state["last_run"] = now
+            _auto_sync_state["last_updated_count"] = updated
+            _auto_sync_state["last_total_cars"] = total
+            _auto_sync_state["last_status"] = "ok"
+            _auto_sync_state["last_error"] = None
+    except Exception as e:
+        now = datetime.now().isoformat()
+        print(f"[AutoSync] ❌ Lỗi tự động đồng bộ: {e}", file=sys.stderr)
+        with _auto_sync_lock:
+            _auto_sync_state["last_run"] = now
+            _auto_sync_state["last_status"] = "error"
+            _auto_sync_state["last_error"] = str(e)
+
+
+def _schedule_auto_sync(interval_seconds: int = 7200):
+    """Recurring background scheduler thread: fire immediately then repeat every interval."""
+    # Calculate and store next run time
+    from datetime import timedelta
+    with _auto_sync_lock:
+        _auto_sync_state["next_run"] = (
+            datetime.now().isoformat()
+        )
+
+    def _loop():
+        while True:
+            _run_auto_location_sync()
+            next_dt = datetime.now()
+            from datetime import timedelta as td
+            next_ts = (next_dt.timestamp() + interval_seconds)
+            import time
+            next_run_str = datetime.fromtimestamp(next_ts).isoformat()
+            with _auto_sync_lock:
+                _auto_sync_state["next_run"] = next_run_str
+            print(f"[AutoSync] ⏰ Lần tiếp theo: {next_run_str}")
+            time.sleep(interval_seconds)
+
+    t = threading.Thread(target=_loop, name="auto-location-sync", daemon=True)
+    t.start()
+    return t
+
+
 def run():
     server_address = ("0.0.0.0", PORT)
     httpd = HTTPServer(server_address, CyberApiHandler)
     print(f"🚀 CyberSync Cloud API running on port {PORT}...")
+
+    # ── Start auto-sync background thread (runs every 2 hours, daemon so it
+    #    dies automatically when the server process exits)
+    INTERVAL_HOURS = int(os.environ.get("AUTO_SYNC_INTERVAL_HOURS", "2"))
+    with _auto_sync_lock:
+        _auto_sync_state["interval_hours"] = INTERVAL_HOURS
+    print(f"[AutoSync] 🟢 Tự động đồng bộ vị trí kho mỗi {INTERVAL_HOURS} giờ (chạy ngầm)")
+    _schedule_auto_sync(interval_seconds=INTERVAL_HOURS * 3600)
+
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
