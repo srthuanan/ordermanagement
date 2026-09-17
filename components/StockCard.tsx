@@ -780,11 +780,11 @@ const StockCard: React.FC<StockCardProps> = ({
                         )}
 
                         <div className="flex items-center gap-1.5">
-                            {vehicle.VIN && vehicle.VIN !== '---' && (
+                            {isAdmin && vehicle.VIN && vehicle.VIN !== '---' && (
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setIsDnxModalOpen(true); }}
                                     className="px-2 py-0.5 text-[9.5px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300/80 rounded-full flex items-center gap-1 transition-all shadow-xs"
-                                    title="Lập phiếu đề nghị xuất xe / điều chuyển xe trên Cyber"
+                                    title="Lập phiếu đề nghị xuất xe / điều chuyển xe trên Cyber (Dành cho Admin)"
                                 >
                                     <span>🚚 Chuyển Cyber</span>
                                 </button>
