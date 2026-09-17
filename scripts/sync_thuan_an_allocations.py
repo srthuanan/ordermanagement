@@ -1435,7 +1435,7 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
     khach_hang  = (params.get("khach_hang") or params.get("ong_ba") or "").strip()
     ly_do       = (params.get("ly_do") or params.get("dien_giai") or "Điều chuyển xe nội bộ").strip()
     ma_dvcs     = (params.get("ma_dvcs") or "02").strip()
-    ma_ttcp     = (params.get("ma_ttcp") or "02.01.20").strip()
+    ma_ttcp     = (params.get("ma_ttcp") or "02.01.08").strip()
     user_name   = (params.get("user_name") or "02.NHANPT").strip()
 
     if not vins:
@@ -1505,18 +1505,18 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             else:
                 so_ct = f"{prefix}0001"
 
-        # 3. Sinh stt_rec duy nhất: A + 7 số + DNX
-        cursor.execute("SELECT MAX(stt_rec) as max_stt FROM PHDNX WHERE stt_rec LIKE 'A%DNX'")
+        # 3. Sinh stt_rec duy nhất: A + 9 số + DNX (13 ký tự chuẩn CyberSoft)
+        cursor.execute("SELECT stt_rec FROM PHDNX WHERE stt_rec LIKE 'A%DNX' AND LEN(stt_rec) = 13 ORDER BY stt_rec DESC")
         r_stt = cursor.fetchone()
-        max_stt = (r_stt.get('max_stt') if is_pymssql else r_stt[0]) if r_stt else None
-        if max_stt and len(str(max_stt)) >= 13:
+        max_stt = (r_stt.get('stt_rec') if is_pymssql else r_stt[0]) if r_stt else None
+        if max_stt and len(str(max_stt)) == 13:
             try:
-                num = int(str(max_stt)[1:8]) + 1
-                stt_rec = f"A{num:07d}DNX"
+                num = int(str(max_stt)[1:10]) + 1
+                stt_rec = f"A{num:09d}DNX"
             except Exception:
-                stt_rec = f"A{int(datetime.now().timestamp()):07d}"[:8] + "DNX"
+                stt_rec = f"A{int(datetime.now().timestamp()):09d}"[:10] + "DNX"
         else:
-            stt_rec = "A000001628DNX"
+            stt_rec = "A0000000251DNX"
 
         # 4. Tra cứu thông tin từng xe trong CT70BEX / DMKX để chèn vào CTDNX
         cars_detail = []
@@ -1609,6 +1609,12 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             ma_dvcs, stt_rec, today_str, today_str, so_ct,
             ma_ttcp, khach_hang, ly_do, total_qty, user_id
         ))
+
+        # 6. Post DNX Ticket to Inventory Ledger
+        try:
+            cursor.execute(f"EXEC CP_POSTCTDNX 'M', 'DNX', {ph}", (stt_rec,))
+        except Exception as e_post:
+            print(f"[Create DNX warning] CP_POSTCTDNX: {e_post}", file=sys.stderr)
 
         if not is_pymssql:
             conn.commit()
