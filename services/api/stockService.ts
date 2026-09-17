@@ -553,7 +553,7 @@ export const syncCyberAllocations = async (options: { fromDate?: string; toDate?
 
         // 2. Thử gọi API qua Cloud Server (Render), Web Server hiện tại (Vite), hoặc Server cục bộ (Port 3001)
         const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
-        const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || '').trim();
+        const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api.onrender.com').trim();
         const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
         
         const endpoints = [
