@@ -1781,10 +1781,10 @@ def main():
     }
     print(json.dumps(output, default=str, ensure_ascii=False))
 
-def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=None, to_date=None, limit=200):
+def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=None, to_date=None, limit=200, ma_ttcp="02.01.08"):
     """
     Truy vấn danh sách chứng từ Phiếu Đề Nghị Xuất Xe (DNX) và Phiếu Xe Ra (TD4) từ CyberSoft SQL Server
-    để hiển thị tiến trình duyệt (Ma_Post) trên Web App (hỗ trợ pymssql và pyodbc).
+    để hiển thị tiến trình duyệt (Ma_Post) trên Web App (mặc định chỉ lấy dữ liệu của Thuận An 02.01.08).
     """
     conn = None
     is_pymssql = False
@@ -1814,9 +1814,10 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
 
     limit_val = int(limit) if limit else 200
 
-    # Build WHERE conditions
-    where_dnx = []
-    where_td4 = ["Ma_Ct = 'TD4'"]
+    # Build WHERE conditions (Default to Showroom Thuận An: 02.01.08)
+    ttcp_filter = (ma_ttcp or '02.01.08').strip()
+    where_dnx = [f"p.Ma_TTCP_H = '{ttcp_filter}'"]
+    where_td4 = ["Ma_Ct = 'TD4'", f"Ma_TTCP_H = '{ttcp_filter}'"]
 
     if ma_post:
         where_dnx.append(f"p.Ma_Post = '{ma_post}'")

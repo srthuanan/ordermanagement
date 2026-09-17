@@ -62,6 +62,7 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 from_date = (qs.get("fromDate", [""])[0] or "").strip()
                 to_date = (qs.get("toDate", [""])[0] or "").strip()
                 limit = (qs.get("limit", ["200"])[0] or "").strip()
+                ma_ttcp = (qs.get("ma_ttcp", ["02.01.08"])[0] or "02.01.08").strip()
 
                 tickets = get_cyber_voucher_tickets(
                     ma_ct=ma_ct,
@@ -69,7 +70,8 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                     search=search,
                     from_date=from_date,
                     to_date=to_date,
-                    limit=limit
+                    limit=limit,
+                    ma_ttcp=ma_ttcp
                 )
                 res = {"success": True, "data": tickets, "total": len(tickets)}
                 self.send_response(200)

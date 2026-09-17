@@ -1353,6 +1353,7 @@ export interface CyberVoucherTicketParams {
     fromDate?: string;
     toDate?: string;
     limit?: number;
+    ma_ttcp?: string;
 }
 
 export interface CyberVoucherTicketResponse {
@@ -1371,6 +1372,7 @@ export const getCyberVoucherTickets = async (params: CyberVoucherTicketParams = 
         if (params.fromDate) queryParams.set('fromDate', params.fromDate);
         if (params.toDate) queryParams.set('toDate', params.toDate);
         if (params.limit) queryParams.set('limit', String(params.limit));
+        queryParams.set('ma_ttcp', params.ma_ttcp || '02.01.08');
 
         const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
         const endpoints = getCyberEndpoints(`/api/cyber/voucher-tickets${queryString}`);

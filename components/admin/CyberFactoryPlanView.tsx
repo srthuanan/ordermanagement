@@ -280,6 +280,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const [dnxMaKhoNhan, setDnxMaKhoNhan] = useState('K83');
     const [dnxKhachHang, setDnxKhachHang] = useState('');
     const [dnxLyDo, setDnxLyDo] = useState('Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH');
+    const dnxMaTtcp = '02.01.08';
     const [dnxUserName, setDnxUserName] = useState('02.NHANPT');
     const [isSubmittingDnx, setIsSubmittingDnx] = useState(false);
     const [dnxResult, setDnxResult] = useState<any>(null);
@@ -311,7 +312,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 ly_do: dnxLyDo,
                 user_name: dnxUserName,
                 ma_dvcs: '02',
-                ma_ttcp: '02.01.20'
+                ma_ttcp: dnxMaTtcp || '02.01.08'
             });
 
             if (res.success) {
@@ -346,7 +347,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 ma_ct: ticketMaCt,
                 ma_post: ticketMaPost,
                 search: ticketSearch,
-                limit: 250
+                limit: 250,
+                ma_ttcp: '02.01.08'
             });
             if (res && res.success) {
                 setVoucherTickets(res.data || []);
@@ -2968,6 +2970,12 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     <option value="9">🟢 Post = 9 (Đã duyệt / Xe đã ra)</option>
                                     <option value="1">🔴 Post = 1 (Đã hủy phiếu)</option>
                                 </select>
+
+                                {/* Badge: Showroom Thuận An */}
+                                <div className="hidden sm:flex items-center gap-1.5 px-3 h-9 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl text-xs font-bold shrink-0 shadow-2xs">
+                                    <i className="fas fa-location-dot text-blue-600"></i>
+                                    <span>Thuận An (02.01.08)</span>
+                                </div>
                             </div>
 
                             <button
