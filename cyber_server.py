@@ -20,7 +20,8 @@ from scripts.sync_thuan_an_allocations import (
     get_cyber_xep_xe_candidates,
     save_cyber_xep_xe,
     delete_cyber_xep_xe,
-    create_cyber_dnx_ticket
+    create_cyber_dnx_ticket,
+    get_cyber_voucher_tickets
 )
 
 PORT = int(os.environ.get("PORT", 8080))
@@ -51,17 +52,31 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
             return
 
-        elif parsed.path == "/api/cyber/plan-filter-options":
+        elif parsed.path == "/api/cyber/voucher-tickets":
             try:
                 from urllib.parse import parse_qs
                 qs = parse_qs(parsed.query)
-                model = (qs.get("model", [""])[0] or "").strip()
-                res = get_cyber_plan_filter_options(model=model)
+                ma_ct = (qs.get("ma_ct", [""])[0] or "").strip()
+                ma_post = (qs.get("ma_post", [""])[0] or "").strip()
+                search = (qs.get("search", [""])[0] or "").strip()
+                from_date = (qs.get("fromDate", [""])[0] or "").strip()
+                to_date = (qs.get("toDate", [""])[0] or "").strip()
+                limit = (qs.get("limit", ["200"])[0] or "").strip()
+
+                tickets = get_cyber_voucher_tickets(
+                    ma_ct=ma_ct,
+                    ma_post=ma_post,
+                    search=search,
+                    from_date=from_date,
+                    to_date=to_date,
+                    limit=limit
+                )
+                res = {"success": True, "data": tickets, "total": len(tickets)}
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+                self.wfile.write(json.dumps(res, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")

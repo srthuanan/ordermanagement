@@ -1325,5 +1325,85 @@ export const createCyberDnxTicket = async (params: CyberDnxCreateParams): Promis
     }
 };
 
+export interface CyberVoucherTicketItem {
+    voucher_type: 'DNX' | 'TD4';
+    voucher_name: string;
+    stt_rec: string;
+    so_ct: string;
+    ngay_ct: string;
+    ma_post: string;
+    ma_ttcp: string;
+    dien_giai: string;
+    ten_kh: string;
+    so_hd: string;
+    tong_tien: number;
+    da_thanh_toan: number;
+    con_lai: number;
+    nvkd: string;
+    vin: string;
+    so_may: string;
+    loai_xe: string;
+    ma_mau?: string;
+}
+
+export interface CyberVoucherTicketParams {
+    ma_ct?: string;
+    ma_post?: string;
+    search?: string;
+    fromDate?: string;
+    toDate?: string;
+    limit?: number;
+}
+
+export interface CyberVoucherTicketResponse {
+    success: boolean;
+    data?: CyberVoucherTicketItem[];
+    total?: number;
+    error?: string;
+}
+
+export const getCyberVoucherTickets = async (params: CyberVoucherTicketParams = {}): Promise<CyberVoucherTicketResponse> => {
+    try {
+        const queryParams = new URLSearchParams();
+        if (params.ma_ct) queryParams.set('ma_ct', params.ma_ct);
+        if (params.ma_post) queryParams.set('ma_post', params.ma_post);
+        if (params.search) queryParams.set('search', params.search);
+        if (params.fromDate) queryParams.set('fromDate', params.fromDate);
+        if (params.toDate) queryParams.set('toDate', params.toDate);
+        if (params.limit) queryParams.set('limit', String(params.limit));
+
+        const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+        const endpoints = getCyberEndpoints(`/api/cyber/voucher-tickets${queryString}`);
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint);
+                const text = await res.text();
+                let json: any = null;
+                try { json = JSON.parse(text); } catch (_) {}
+
+                if (res.ok && json && json.success) {
+                    return json;
+                } else {
+                    lastErrorMsg = (json && json.error) || (text && !text.startsWith('<') ? text : `HTTP ${res.status}`);
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        throw new Error(lastErrorMsg || 'Không thể kết nối máy chủ tra cứu phiếu CyberSoft.');
+    } catch (err: any) {
+        console.error("Lỗi getCyberVoucherTickets:", err);
+        return {
+            success: false,
+            data: [],
+            error: err.message || 'Lỗi kết nối khi tra cứu danh sách phiếu CyberSoft.'
+        };
+    }
+};
+
+
 
 

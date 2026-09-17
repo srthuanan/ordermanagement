@@ -1781,6 +1781,119 @@ def main():
     }
     print(json.dumps(output, default=str, ensure_ascii=False))
 
+def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=None, to_date=None, limit=200):
+    """
+    Truy vấn danh sách chứng từ Phiếu Đề Nghị Xuất Xe (DNX) và Phiếu Xe Ra (TD4) từ CyberSoft SQL Server
+    để hiển thị tiến trình duyệt (Ma_Post) trên Web App.
+    """
+    import pyodbc
+    conn = pyodbc.connect(CYBER_CONN)
+    cursor = conn.cursor()
+    tickets = []
+
+    limit_val = int(limit) if limit else 200
+
+    # Build WHERE conditions
+    where_dnx = []
+    where_td4 = ["Ma_Ct = 'TD4'"]
+
+    if ma_post:
+        where_dnx.append(f"p.Ma_Post = '{ma_post}'")
+        where_td4.append(f"Ma_Post = '{ma_post}'")
+
+    if from_date:
+        where_dnx.append(f"p.ngay_ct >= '{from_date}'")
+        where_td4.append(f"Ngay_Ct >= '{from_date}'")
+
+    if to_date:
+        where_dnx.append(f"p.ngay_ct <= '{to_date}'")
+        where_td4.append(f"Ngay_Ct <= '{to_date}'")
+
+    # 1. Fetch DNX tickets (PHDNX + CTDNX)
+    if not ma_ct or str(ma_ct).upper() == 'DNX':
+        where_clause = " WHERE " + " AND ".join(where_dnx) if where_dnx else ""
+        query_dnx = f"""
+            SELECT TOP {limit_val} 
+                'DNX' AS voucher_type,
+                'Đề Nghị Xuất Xe' AS voucher_name,
+                p.stt_rec,
+                p.so_ct,
+                p.ngay_ct,
+                p.Ma_Post AS ma_post,
+                p.Ma_TTCP_H AS ma_ttcp,
+                p.dien_giai,
+                p.ong_ba AS ten_kh,
+                p.MA_HD_H AS so_hd,
+                ISNULL(p.t_tien, 0) AS tong_tien,
+                0 AS da_thanh_toan,
+                ISNULL(p.t_tien, 0) AS con_lai,
+                p.Ma_Hs_H AS nvkd,
+                ISNULL(c.So_khung, '') AS vin,
+                ISNULL(c.So_may, '') AS so_may,
+                ISNULL(c.ma_Kx, '') AS loai_xe,
+                ISNULL(c.Ma_Mau, '') AS ma_mau
+            FROM PHDNX p
+            LEFT JOIN CTDNX c ON p.stt_rec = c.stt_rec
+            {where_clause}
+            ORDER BY p.ngay_ct DESC, p.so_ct DESC
+        """
+        cursor.execute(query_dnx)
+        cols = [comp[0] for comp in cursor.description]
+        for r in cursor.fetchall():
+            d = dict(zip(cols, r))
+            d['ngay_ct'] = d['ngay_ct'].strftime('%Y-%m-%d') if d['ngay_ct'] else ''
+            tickets.append(d)
+
+    # 2. Fetch TD4 tickets (PHTD)
+    if not ma_ct or str(ma_ct).upper() in ['TD4', 'PXR']:
+        where_clause = " WHERE " + " AND ".join(where_td4) if where_td4 else ""
+        query_td4 = f"""
+            SELECT TOP {limit_val} 
+                'TD4' AS voucher_type,
+                'Phiếu Xe Ra Giao KH' AS voucher_name,
+                Stt_Rec AS stt_rec,
+                So_Ct AS so_ct,
+                Ngay_Ct AS ngay_ct,
+                Ma_Post AS ma_post,
+                Ma_TTCP_H AS ma_ttcp,
+                Dien_giai AS dien_giai,
+                Ong_ba AS ten_kh,
+                Ma_Hd_H AS so_hd,
+                ISNULL(T_TT, 0) AS tong_tien,
+                ISNULL(T_Da_TT, 0) AS da_thanh_toan,
+                ISNULL(T_CL_TT, 0) AS con_lai,
+                Ma_Hs_H AS nvkd,
+                ISNULL(Ma_Xe, '') AS vin,
+                ISNULL(So_may, '') AS so_may,
+                ISNULL(Loai_xe, '') AS loai_xe,
+                '' AS ma_mau
+            FROM PHTD
+            {where_clause}
+            ORDER BY Ngay_Ct DESC, So_Ct DESC
+        """
+        cursor.execute(query_td4)
+        cols = [comp[0] for comp in cursor.description]
+        for r in cursor.fetchall():
+            d = dict(zip(cols, r))
+            d['ngay_ct'] = d['ngay_ct'].strftime('%Y-%m-%d') if d['ngay_ct'] else ''
+            tickets.append(d)
+
+    conn.close()
+
+    # Apply search query in python if provided
+    if search and search.strip():
+        q = search.strip().lower()
+        filtered = []
+        for t in tickets:
+            full_text = f"{t.get('so_ct','')} {t.get('vin','')} {t.get('so_may','')} {t.get('ten_kh','')} {t.get('so_hd','')} {t.get('dien_giai','')}".lower()
+            if q in full_text:
+                filtered.append(t)
+        return filtered
+
+    return tickets
+
+
 if __name__ == "__main__":
     main()
+
 

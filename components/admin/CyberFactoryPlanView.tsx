@@ -13,6 +13,8 @@ import {
     saveCyberXepXe,
     deleteCyberXepXe,
     createCyberDnxTicket,
+    getCyberVoucherTickets,
+    CyberVoucherTicketItem,
     CyberXepXeContract,
     CyberXepXeCandidate,
     CyberXepXeFilterParams
@@ -267,8 +269,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     showToast,
     isActive = true
 }) => {
-    // Sub-tab switcher: 'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat'
-    const [activeSubTab, setActiveSubTab] = useState<'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat'>('factory_plan');
+    // Sub-tab switcher: 'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat' | 'tra_cuu_phieu'
+    const [activeSubTab, setActiveSubTab] = useState<'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat' | 'tra_cuu_phieu'>('factory_plan');
 
     // -------------------------------------------------------------
     // SUB-TAB 4: LẬP ĐỀ NGHỊ XUẤT XE / ĐIỀU CHUYỂN XE (PHDNX & CTDNX)
@@ -326,6 +328,48 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             setIsSubmittingDnx(false);
         }
     };
+
+    // -------------------------------------------------------------
+    // SUB-TAB 5: TRA CỨU & TIẾN TRÌNH DUYỆT PHIẾU (DNX & TD4)
+    // -------------------------------------------------------------
+    const [voucherTickets, setVoucherTickets] = useState<CyberVoucherTicketItem[]>([]);
+    const [isLoadingTickets, setIsLoadingTickets] = useState(false);
+    const [ticketMaCt, setTicketMaCt] = useState('');
+    const [ticketMaPost, setTicketMaPost] = useState('');
+    const [ticketSearch, setTicketSearch] = useState('');
+    const [selectedTicketModal, setSelectedTicketModal] = useState<CyberVoucherTicketItem | null>(null);
+
+    const executeVoucherTicketsSearch = async () => {
+        setIsLoadingTickets(true);
+        try {
+            const res = await getCyberVoucherTickets({
+                ma_ct: ticketMaCt,
+                ma_post: ticketMaPost,
+                search: ticketSearch,
+                limit: 250
+            });
+            if (res && res.success) {
+                setVoucherTickets(res.data || []);
+            } else {
+                throw new Error(res?.error || 'Lỗi tra cứu chứng từ CyberSoft.');
+            }
+        } catch (err: any) {
+            showToast('Lỗi tra cứu', err.message || 'Không thể lấy dữ liệu chứng từ CyberSoft', 'error');
+        } finally {
+            setIsLoadingTickets(false);
+        }
+    };
+
+    // Lọc tức thì dữ liệu chứng từ trên máy khách khi nhập từ khóa tìm kiếm
+    const displayedVoucherTickets = useMemo(() => {
+        const rawQ = (ticketSearch || '').trim();
+        if (!rawQ) return voucherTickets;
+        const qNoTone = removeVietnameseTones(rawQ);
+        return voucherTickets.filter(t => {
+            const fullText = removeVietnameseTones(`${t.so_ct} ${t.vin} ${t.so_may} ${t.ten_kh} ${t.so_hd} ${t.dien_giai} ${t.voucher_name} ${t.loai_xe}`);
+            return fullText.includes(qNoTone);
+        });
+    }, [voucherTickets, ticketSearch]);
 
     // -------------------------------------------------------------
     // SUB-TAB 1: KẾ HOẠCH GIAO XE (K10/K15 CHƯA XHĐ)
@@ -502,12 +546,12 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         }
     }, [isActive, activeSubTab]);
 
-    // Tự động tải danh sách hợp đồng xếp xe lần đầu khi chuyển sang Sub-tab Xếp xe
+    // Tự động tải danh sách phiếu & tiến trình duyệt khi chuyển sang Sub-tab Tra cứu phiếu
     useEffect(() => {
-        if (isActive && activeSubTab === 'xep_xe' && !hasLoadedXepXe) {
-            executeXepXeSearch();
+        if (isActive && activeSubTab === 'tra_cuu_phieu') {
+            executeVoucherTicketsSearch();
         }
-    }, [isActive, activeSubTab]);
+    }, [isActive, activeSubTab, ticketMaCt, ticketMaPost]);
 
     const handleModelChange = (newModel: string) => {
         setSelectedModel(newModel);
@@ -955,6 +999,25 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-100 text-emerald-800 uppercase border border-emerald-300">
                             Admin
                         </span>
+                    </button>
+
+                    {/* Tab 5: Tiến Trình Duyệt Phiếu (DNX & Xe Ra) */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveSubTab('tra_cuu_phieu')}
+                        className={`relative pb-2.5 px-3 text-xs font-bold transition-all flex items-center gap-2 border-b-2 ${
+                            activeSubTab === 'tra_cuu_phieu'
+                                ? 'text-purple-600 border-purple-600 bg-purple-50/40 rounded-t-lg'
+                                : 'text-slate-500 border-transparent hover:text-slate-800 hover:border-slate-300'
+                        }`}
+                    >
+                        <i className="fas fa-file-invoice text-sm text-purple-600"></i>
+                        <span>Tiến Trình Duyệt Phiếu (DNX & Xe Ra)</span>
+                        {voucherTickets.length > 0 && (
+                            <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-700">
+                                {voucherTickets.length.toLocaleString()}
+                            </span>
+                        )}
                     </button>
                 </div>
 
@@ -2850,6 +2913,312 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     </div>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================================= */}
+            {/* SUB-TAB 5 CONTENT: TRA CỨU & TIẾN TRÌNH DUYỆT PHIẾU (DNX & TD4) */}
+            {/* ============================================================= */}
+            {activeSubTab === 'tra_cuu_phieu' && (
+                <div className="flex-1 flex flex-col min-h-0 bg-slate-50 relative z-10 overflow-hidden">
+                    {/* Toolbar Filters */}
+                    <div className="p-3.5 bg-white border-b border-slate-200 shadow-2xs space-y-3 shrink-0">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
+                                {/* Search input */}
+                                <div className="flex-1 min-w-[220px] max-w-md relative">
+                                    <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 h-9 focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:bg-white transition-all">
+                                        <i className="fas fa-search text-xs text-slate-400 mr-2"></i>
+                                        <input
+                                            type="text"
+                                            placeholder="Tìm theo số VIN, số phiếu, khách hàng, hợp đồng..."
+                                            value={ticketSearch}
+                                            onChange={e => setTicketSearch(e.target.value)}
+                                            className="w-full bg-transparent text-xs text-slate-800 font-semibold placeholder-slate-400 focus:outline-none"
+                                        />
+                                        {ticketSearch && (
+                                            <button type="button" onClick={() => setTicketSearch('')} className="text-slate-400 hover:text-slate-600 text-xs">
+                                                <i className="fas fa-times-circle"></i>
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Filter: Loại chứng từ */}
+                                <select
+                                    value={ticketMaCt}
+                                    onChange={e => setTicketMaCt(e.target.value)}
+                                    className="h-9 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:border-purple-500 cursor-pointer"
+                                >
+                                    <option value="">Tất cả loại phiếu (DNX & TD4)</option>
+                                    <option value="DNX">Đề Nghị Xuất Xe (DNX)</option>
+                                    <option value="TD4">Phiếu Xe Ra Giao KH (TD4)</option>
+                                </select>
+
+                                {/* Filter: Trạng thái duyệt */}
+                                <select
+                                    value={ticketMaPost}
+                                    onChange={e => setTicketMaPost(e.target.value)}
+                                    className="h-9 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:border-purple-500 cursor-pointer"
+                                >
+                                    <option value="">Tất cả trạng thái duyệt</option>
+                                    <option value="3">🟡 Post = 3 (Lập phiếu / Chờ duyệt)</option>
+                                    <option value="9">🟢 Post = 9 (Đã duyệt / Xe đã ra)</option>
+                                    <option value="1">🔴 Post = 1 (Đã hủy phiếu)</option>
+                                </select>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => executeVoucherTicketsSearch()}
+                                disabled={isLoadingTickets}
+                                className="px-3.5 h-9 bg-purple-600 hover:bg-purple-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 shrink-0"
+                            >
+                                <i className={`fas fa-sync-alt ${isLoadingTickets ? 'fa-spin' : ''}`}></i>
+                                <span>Tải lại phiếu</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Table View */}
+                    <div className="flex-1 min-h-0 overflow-auto p-3">
+                        {isLoadingTickets ? (
+                            <div className="h-64 flex flex-col items-center justify-center text-slate-500 gap-3">
+                                <i className="fas fa-circle-notch fa-spin text-3xl text-purple-600"></i>
+                                <span className="text-xs font-semibold">Đang tải danh sách phiếu từ CyberSoft Enterprise...</span>
+                            </div>
+                        ) : displayedVoucherTickets.length === 0 ? (
+                            <div className="h-64 flex flex-col items-center justify-center text-slate-400 gap-2 bg-white rounded-2xl border border-slate-200 shadow-2xs">
+                                <i className="fas fa-folder-open text-4xl text-slate-300"></i>
+                                <span className="text-xs font-bold text-slate-600">Không tìm thấy phiếu nào phù hợp.</span>
+                                <span className="text-[11px] text-slate-400">Thử thay đổi bộ lọc hoặc nhập từ khóa tìm kiếm khác.</span>
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-xs border-collapse">
+                                        <thead>
+                                            <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 uppercase text-[10px] tracking-wider">
+                                                <th className="p-3 text-center w-12">STT</th>
+                                                <th className="p-3">Loại Phiếu</th>
+                                                <th className="p-3">Số Phiếu</th>
+                                                <th className="p-3">Ngày Lập</th>
+                                                <th className="p-3 text-center">Trạng Thái Duyệt (Ma_Post)</th>
+                                                <th className="p-3">Số Khung (VIN)</th>
+                                                <th className="p-3">Số Máy</th>
+                                                <th className="p-3">Khách Hàng / Diễn Giải</th>
+                                                <th className="p-3">Số Hợp Đồng</th>
+                                                <th className="p-3 text-right">Tổng Thanh Toán</th>
+                                                <th className="p-3 text-center">Thao Tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 font-medium">
+                                            {displayedVoucherTickets.map((t, idx) => {
+                                                const isPost3 = String(t.ma_post) === '3';
+                                                const isPost9 = String(t.ma_post) === '9';
+                                                const isPost1 = String(t.ma_post) === '1';
+
+                                                return (
+                                                    <tr key={idx} className="hover:bg-purple-50/40 transition-colors">
+                                                        <td className="p-3 text-center text-slate-400 text-[11px] font-mono">{idx + 1}</td>
+
+                                                        {/* Loại phiếu */}
+                                                        <td className="p-3">
+                                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-extrabold uppercase border ${
+                                                                t.voucher_type === 'DNX' 
+                                                                    ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                                                                    : 'bg-amber-50 text-amber-800 border-amber-200'
+                                                            }`}>
+                                                                <i className={`fas ${t.voucher_type === 'DNX' ? 'fa-file-export' : 'fa-car-side'}`}></i>
+                                                                <span>{t.voucher_type}</span>
+                                                            </span>
+                                                        </td>
+
+                                                        {/* Số phiếu */}
+                                                        <td className="p-3 font-mono font-bold text-slate-900">
+                                                            {t.so_ct}
+                                                        </td>
+
+                                                        {/* Ngày lập */}
+                                                        <td className="p-3 text-slate-600 font-mono text-[11px]">
+                                                            {t.ngay_ct}
+                                                        </td>
+
+                                                        {/* Trạng thái duyệt (Ma_Post) */}
+                                                        <td className="p-3 text-center">
+                                                            {isPost3 && (
+                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                                                                    <span>Lập phiếu (Sale Admin) / Chờ duyệt</span>
+                                                                </span>
+                                                            )}
+                                                            {isPost9 && (
+                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                                    <span>Đã duyệt (QL Kho / Đã xuất xe)</span>
+                                                                </span>
+                                                            )}
+                                                            {isPost1 && (
+                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                                    <span>Đã hủy phiếu</span>
+                                                                </span>
+                                                            )}
+                                                            {!isPost3 && !isPost9 && !isPost1 && (
+                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
+                                                                    <span>Post = {t.ma_post}</span>
+                                                                </span>
+                                                            )}
+                                                        </td>
+
+                                                        {/* VIN */}
+                                                        <td className="p-3 font-mono font-bold text-purple-700">
+                                                            {t.vin || <span className="text-slate-300 italic">Chưa có VIN</span>}
+                                                        </td>
+
+                                                        {/* Số máy */}
+                                                        <td className="p-3 font-mono text-slate-600 text-[11px]">
+                                                            {t.so_may || '-'}
+                                                        </td>
+
+                                                        {/* Khách hàng / Diễn giải */}
+                                                        <td className="p-3 max-w-[200px] truncate">
+                                                            <div className="font-bold text-slate-800 truncate" title={t.ten_kh}>{t.ten_kh || 'Chuyển kho nội bộ'}</div>
+                                                            <div className="text-[10px] text-slate-500 truncate" title={t.dien_giai}>{t.dien_giai}</div>
+                                                        </td>
+
+                                                        {/* Số HĐ */}
+                                                        <td className="p-3 font-mono text-[11px] text-slate-600 max-w-[150px] truncate" title={t.so_hd}>
+                                                            {t.so_hd || '-'}
+                                                        </td>
+
+                                                        {/* Tổng thanh toán */}
+                                                        <td className="p-3 text-right font-mono font-bold text-slate-900">
+                                                            {t.tong_tien > 0 ? t.tong_tien.toLocaleString() + ' đ' : '-'}
+                                                        </td>
+
+                                                        {/* Thao tác */}
+                                                        <td className="p-3 text-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setSelectedTicketModal(t)}
+                                                                className="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 mx-auto"
+                                                            >
+                                                                <i className="fas fa-eye text-[10px]"></i>
+                                                                <span>Xem chi tiết</span>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ============================================================= */}
+            {/* MODAL: XEM CHI TIẾT PHIẾU (DNX / TD4) */}
+            {/* ============================================================= */}
+            {selectedTicketModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+                    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden animate-scale-in">
+                        <div className="px-5 py-3.5 bg-gradient-to-r from-purple-700 to-indigo-800 text-white flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center">
+                                    <i className="fas fa-file-invoice text-white text-sm"></i>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-sm flex items-center gap-2">
+                                        <span>Chi tiết {selectedTicketModal.voucher_name}</span>
+                                        <span className="font-mono bg-white/20 px-2 py-0.5 rounded text-xs">{selectedTicketModal.so_ct}</span>
+                                    </h3>
+                                    <p className="text-[10px] text-white/80">Stt_Rec: {selectedTicketModal.stt_rec}</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedTicketModal(null)}
+                                className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                            >
+                                <i className="fas fa-times text-xs"></i>
+                            </button>
+                        </div>
+
+                        <div className="p-5 text-xs text-slate-700 space-y-4 max-h-[75vh] overflow-y-auto">
+                            {/* Trạng thái duyệt Badge Banner */}
+                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
+                                <span className="font-bold text-slate-600">Trạng thái xử lý (`Ma_Post`):</span>
+                                {String(selectedTicketModal.ma_post) === '3' && (
+                                    <span className="px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-full font-bold text-xs flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                                        <span>Lập phiếu (Sale Admin) / Chờ duyệt</span>
+                                    </span>
+                                )}
+                                {String(selectedTicketModal.ma_post) === '9' && (
+                                    <span className="px-3 py-1 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-full font-bold text-xs flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        <span>Đã duyệt (QL Kho / Đã xuất xe)</span>
+                                    </span>
+                                )}
+                                {String(selectedTicketModal.ma_post) === '1' && (
+                                    <span className="px-3 py-1 bg-rose-100 text-rose-800 border border-rose-300 rounded-full font-bold text-xs flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                                        <span>Đã hủy phiếu</span>
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Thông tin chứng từ */}
+                            <div className="grid grid-cols-2 gap-3 bg-slate-50/70 p-3.5 rounded-xl border border-slate-200">
+                                <div><span className="text-slate-400">Số phiếu:</span> <strong className="font-mono text-purple-700">{selectedTicketModal.so_ct}</strong></div>
+                                <div><span className="text-slate-400">Ngày chứng từ:</span> <strong className="font-mono">{selectedTicketModal.ngay_ct}</strong></div>
+                                <div><span className="text-slate-400">Số khung (VIN):</span> <strong className="font-mono text-purple-700">{selectedTicketModal.vin || '-'}</strong></div>
+                                <div><span className="text-slate-400">Số máy:</span> <strong className="font-mono">{selectedTicketModal.so_may || '-'}</strong></div>
+                                <div><span className="text-slate-400">Dòng xe:</span> <strong>{selectedTicketModal.loai_xe || '-'}</strong></div>
+                                <div><span className="text-slate-400">Showroom (TTCP):</span> <strong>{selectedTicketModal.ma_ttcp || '-'}</strong></div>
+                                <div><span className="text-slate-400">Khách hàng:</span> <strong>{selectedTicketModal.ten_kh || '-'}</strong></div>
+                                <div><span className="text-slate-400">Số hợp đồng:</span> <strong className="font-mono">{selectedTicketModal.so_hd || '-'}</strong></div>
+                            </div>
+
+                            {/* Diễn giải */}
+                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                                <div className="font-bold text-slate-500 text-[11px]">Nội dung / Diễn giải:</div>
+                                <div className="text-slate-800 font-semibold">{selectedTicketModal.dien_giai || 'Không có diễn giải'}</div>
+                            </div>
+
+                            {/* Tiền hàng */}
+                            {selectedTicketModal.tong_tien > 0 && (
+                                <div className="p-3 bg-purple-50/60 rounded-xl border border-purple-200 grid grid-cols-3 gap-2 text-center">
+                                    <div>
+                                        <div className="text-[10px] text-purple-600 font-bold uppercase">Tổng phải thanh toán</div>
+                                        <div className="font-mono font-extrabold text-sm text-purple-900">{selectedTicketModal.tong_tien.toLocaleString()} đ</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] text-emerald-600 font-bold uppercase">Đã thanh toán</div>
+                                        <div className="font-mono font-extrabold text-sm text-emerald-800">{selectedTicketModal.da_thanh_toan.toLocaleString()} đ</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] text-rose-600 font-bold uppercase">Còn lại</div>
+                                        <div className="font-mono font-extrabold text-sm text-rose-800">{selectedTicketModal.con_lai.toLocaleString()} đ</div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedTicketModal(null)}
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold shadow-xs transition-all"
+                            >
+                                Đóng
+                            </button>
                         </div>
                     </div>
                 </div>
