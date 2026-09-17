@@ -1425,6 +1425,271 @@ def main():
         print(json.dumps(res, ensure_ascii=False))
         return
 
+def create_cyber_dnx_ticket(params: dict = {}) -> dict:
+    vins = params.get("vins") or []
+    if not vins and params.get("vin"):
+        vins = [params.get("vin")]
+
+    ma_kho_xuat = (params.get("ma_kho_xuat") or params.get("ma_kho_i") or "K87").strip()
+    ma_kho_nhan = (params.get("ma_kho_nhan") or params.get("ma_khoN_i") or "K83").strip()
+    khach_hang  = (params.get("khach_hang") or params.get("ong_ba") or "").strip()
+    ly_do       = (params.get("ly_do") or params.get("dien_giai") or "Điều chuyển xe nội bộ").strip()
+    ma_dvcs     = (params.get("ma_dvcs") or "02").strip()
+    ma_ttcp     = (params.get("ma_ttcp") or "02.01.20").strip()
+    user_name   = (params.get("user_name") or "02.NHANPT").strip()
+
+    if not vins:
+        return {"success": False, "error": "Vui lòng chọn ít nhất một xe (số VIN) để lập phiếu đề nghị xuất"}
+
+    is_pymssql = True
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=30,
+            autocommit=True
+        )
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=30)
+        is_pymssql = False
+
+    cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
+    ph = "%s" if is_pymssql else "?"
+
+    # 1. Tra cứu user_id từ UserInfo
+    user_id = 289
+    try:
+        cursor.execute(f"SELECT user_id FROM UserInfo WHERE user_name = {ph}", (user_name,))
+        r = cursor.fetchone()
+        if r:
+            user_id = r.get('user_id') if is_pymssql else r[0]
+    except Exception:
+        pass
+
+    # 2. Sinh số chứng từ so_ct bằng CP_SysGetnoVoucherDNX
+    today = datetime.now()
+    today_str = today.strftime("%Y-%m-%d 00:00:00")
+    today_date = today.strftime("%Y%m%d")
+
+    so_ct = ""
+    try:
+        cursor.execute(f"EXEC CP_SysGetnoVoucherDNX 'L', '', '', {ph}, {ph}, 'DNX', {ph}, {ph}, {ph}", (today_date, today_date, ma_ttcp, ma_dvcs, user_name))
+        r_so = cursor.fetchone()
+        if r_so:
+            so_ct = (r_so.get('So_ct') or r_so.get('So_Ct')) if is_pymssql else r_so[0]
+    except Exception as e:
+        print(f"[Create DNX warning] CP_SysGetnoVoucherDNX: {e}", file=sys.stderr)
+
+    if not so_ct:
+        year_two = today.strftime("%y")
+        month_two = today.strftime("%m")
+        ttcp_two = ma_ttcp.split('.')[-1] if '.' in ma_ttcp else ma_ttcp[-2:]
+        prefix = f"{ttcp_two}.DNX{year_two}{month_two}."
+        cursor.execute(f"SELECT MAX(so_ct) as max_so FROM PHDNX WHERE so_ct LIKE {ph}", (f"{prefix}%",))
+        r_max = cursor.fetchone()
+        max_so = (r_max.get('max_so') if is_pymssql else r_max[0]) if r_max else None
+        if max_so and max_so.startswith(prefix):
+            try:
+                num = int(max_so.split('.')[-1]) + 1
+                so_ct = f"{prefix}{num:04d}"
+            except Exception:
+                so_ct = f"{prefix}0001"
+        else:
+            so_ct = f"{prefix}0001"
+
+    # 3. Sinh stt_rec duy nhất: A + 7 số + DNX
+    cursor.execute("SELECT MAX(stt_rec) as max_stt FROM PHDNX WHERE stt_rec LIKE 'A%DNX'")
+    r_stt = cursor.fetchone()
+    max_stt = (r_stt.get('max_stt') if is_pymssql else r_stt[0]) if r_stt else None
+    if max_stt and len(max_stt) >= 13:
+        try:
+            num = int(max_stt[1:8]) + 1
+            stt_rec = f"A{num:07d}DNX"
+        except Exception:
+            stt_rec = f"A{int(datetime.now().timestamp()):07d}"[:8] + "DNX"
+    else:
+        stt_rec = "A000001628DNX"
+
+    # 4. Tra cứu thông tin từng xe trong CT70BEX / DMKX để chèn vào CTDNX
+    cars_detail = []
+    total_qty = 0
+    for idx, vin in enumerate(vins, start=1):
+        vin_clean = vin.strip().upper()
+        cursor.execute(f"""
+            SELECT TOP 1 Ma_Kx, Ma_Mau, So_May, Ma_Kho, Ma_mau_nt
+            FROM CT70BEX
+            WHERE So_Khung = {ph}
+            ORDER BY Ngay_Ct DESC
+        """, (vin_clean,))
+        car_info = cursor.fetchone() or {}
+
+        if is_pymssql:
+            ma_kx = (car_info.get('Ma_Kx') or '').strip()
+            ma_mau = (car_info.get('Ma_Mau') or '').strip()
+            so_may = (car_info.get('So_May') or '').strip()
+            ma_mau_nt = (car_info.get('Ma_mau_nt') or '').strip()
+        else:
+            ma_kx = (car_info[0] if len(car_info) > 0 else '') or ''
+            ma_mau = (car_info[1] if len(car_info) > 1 else '') or ''
+            so_may = (car_info[2] if len(car_info) > 2 else '') or ''
+            ma_mau_nt = (car_info[4] if len(car_info) > 4 else '') or ''
+
+        stt_rec0 = f"{idx:04d}"
+
+        sql_ct = f"""
+        INSERT INTO CTDNX (
+            stt_rec, stt_rec0, ma_ct, ngay_ct, so_ct,
+            ma_Kx, Ma_Mau, So_khung, So_may, Ma_Vitri,
+            Ma_kho_i, tk_vt, ma_nx_i, Ton13, so_luong,
+            dvt1, he_so1, so_luong1, gia_nt, gia,
+            tien_nt, tien, stt_rec_pn, stt_rec0pn, ma_vv_i,
+            ma_hd_i, ma_phi_i, ma_sp_i, MA_Ku_I, Ma_TTLN_I,
+            Ma_TTCP_I, Ma_Bp_I, Ma_Hs_I, Ma_Cd_I, Ma_TD1_I,
+            Ma_TD2_I, Ma_TD3_I, Ma_TD4_I, Ma_TD5_I, sl_td_i,
+            So_Po, So_So, So_Ro, So_Vt, Ma_Lo,
+            Han_Sd, Ma_Db_I, ma_khoN_i, Ma_mau_nt, Ma_TTCP_N_i, Dien_giai_i
+        ) VALUES (
+            {ph}, {ph}, 'DNX', {ph}, {ph},
+            {ph}, {ph}, {ph}, {ph}, '',
+            {ph}, '1561', '1561', 1.0, 1.0,
+            '', 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, '', '', '',
+            '', '', '', '', '',
+            {ph}, '', '', '', '',
+            '', '', '', '', 0.0,
+            '', '', '', '', '',
+            '1900-01-01', '', {ph}, {ph}, {ph}, {ph}
+        )
+        """
+        cursor.execute(sql_ct, (
+            stt_rec, stt_rec0, today_str, so_ct,
+            ma_kx, ma_mau, vin_clean, so_may,
+            ma_kho_xuat, ma_ttcp, ma_kho_nhan, ma_mau_nt, ma_ttcp, ly_do
+        ))
+        total_qty += 1
+        cars_detail.append({
+            "stt_rec0": stt_rec0,
+            "vin": vin_clean,
+            "so_may": so_may,
+            "ma_kx": ma_kx,
+            "ma_mau": ma_mau,
+            "ma_kho_xuat": ma_kho_xuat,
+            "ma_kho_nhan": ma_kho_nhan
+        })
+
+    # 5. Insert Header PHDNX
+    sql_ph = f"""
+    INSERT INTO PHDNX (
+        ma_dvcs, stt_rec, ma_ct, ma_gd, Ma_Post,
+        px_gia_dd, MA_QUYEN, ngay_ct, ngay_lct, so_ct,
+        Ma_TTCP_H, Ma_TTLN_H, Ma_Hs_H, Ma_Bp_H, so_lo,
+        ngay_lo, ma_kh, ong_ba, Dia_Chi, dien_giai,
+        t_so_luong, t_soluong1, Ma_kho, Ma_khoN, ma_nt,
+        ty_gia, t_tien_nt, t_tien, Lenh_RO, Lenh_PO,
+        Lenh_So, NonVat, user_id, Ma_TTCP_N, MA_TD3_H, MA_HD_H
+    ) VALUES (
+        {ph}, {ph}, 'DNX', '4', '9',
+        0, '', {ph}, {ph}, {ph},
+        {ph}, '', '', '', '',
+        '1900-01-01', '', {ph}, '', {ph},
+        {ph}, 0, '', '', 'VND',
+        1.0, 0, 0, '', '',
+        '', 0, {ph}, '', '', ''
+    )
+    """
+    cursor.execute(sql_ph, (
+        ma_dvcs, stt_rec, today_str, today_str, so_ct,
+        ma_ttcp, khach_hang, ly_do, total_qty, user_id
+    ))
+
+    conn.close()
+
+    return {
+        "success": True,
+        "message": f"Đã lập thành công Phiếu Đề Nghị Xuất Xe {so_ct} trên CyberSoft ERP",
+        "so_ct": so_ct,
+        "stt_rec": stt_rec,
+        "user_name": user_name,
+        "user_id": user_id,
+        "total_cars": total_qty,
+        "cars": cars_detail
+    }
+
+def main():
+    parser = argparse.ArgumentParser(description="Sync Thuan An car allocations from CyberSoft to Supabase")
+    parser.add_argument("--from", dest="from_date", help="From date (YYYY-MM-DD)", default=None)
+    parser.add_argument("--to", dest="to_date", help="To date (YYYY-MM-DD)", default=None)
+    parser.add_argument("--preview", action="store_true", help="Preview mode without updating database")
+    parser.add_argument("--sync-locations", action="store_true", help="Sync physical locations from CT70BEX into khoxe")
+    parser.add_argument("--plan-filter-options", action="store_true", help="Get distinct showrooms and colors for plan search")
+    parser.add_argument("--search-plan", action="store_true", help="Search factory delivery plan")
+    parser.add_argument("--ton-kho-report", action="store_true", help="Get Ton Kho Xe report from CyberSoft CP_BETONXE")
+    parser.add_argument("--xep-xe-contracts", action="store_true", help="Get contracts list from CP_BeXepXe")
+    parser.add_argument("--xep-xe-candidates", action="store_true", help="Get candidate cars for a contract from CP_BeXepXe_SK")
+    parser.add_argument("--xep-xe-save", action="store_true", help="Assign vehicle to contract via CP_BeXepXe_SAVE")
+    parser.add_argument("--xep-xe-delete", action="store_true", help="Unassign vehicle from contract via CP_BeXepXe_DELETE")
+    parser.add_argument("--create-dnx", action="store_true", help="Create Cyber Transfer Request document (DNX)")
+    parser.add_argument("--model", help="Car model filter for options", default="")
+    parser.add_argument("--params", help="JSON string of search parameters", default=None)
+    args = parser.parse_args()
+
+    def get_input_params():
+        if args.params:
+            try:
+                return json.loads(args.params)
+            except Exception:
+                pass
+        if not sys.stdin.isatty():
+            try:
+                raw = sys.stdin.buffer.read()
+                if raw:
+                    for enc in ['utf-8-sig', 'utf-8', 'utf-16', 'utf-16-le', 'cp1258']:
+                        try:
+                            text = raw.decode(enc).strip()
+                            if text.startswith('{') or text.startswith('['):
+                                return json.loads(text)
+                        except Exception:
+                            continue
+            except Exception:
+                pass
+            try:
+                stdin_data = sys.stdin.read().strip()
+                if stdin_data:
+                    return json.loads(stdin_data)
+            except Exception:
+                pass
+        return {}
+
+    if args.sync_locations:
+        p = get_input_params()
+        target_vins = p.get("vins") if isinstance(p, dict) and "vins" in p else None
+        preview = p.get("preview", False) if isinstance(p, dict) else args.preview
+        res = sync_khoxe_locations_from_cyber(target_vins=target_vins, preview=preview)
+        print(json.dumps(res, ensure_ascii=False))
+        return
+
+    if args.plan_filter_options:
+        res = get_cyber_plan_filter_options(args.model)
+        print(json.dumps(res, ensure_ascii=False))
+        return
+
+    if args.ton_kho_report:
+        p = get_input_params()
+        res = get_cyber_ton_kho_report(p)
+        print(json.dumps(res, ensure_ascii=False))
+        return
+
+    if args.xep_xe_contracts:
+        p = get_input_params()
+        res = get_cyber_xep_xe_contracts(p)
+        print(json.dumps(res, ensure_ascii=False))
+        return
+
     if args.xep_xe_candidates:
         p = get_input_params()
         res = get_cyber_xep_xe_candidates(p)
@@ -1440,6 +1705,12 @@ def main():
     if args.xep_xe_delete:
         p = get_input_params()
         res = delete_cyber_xep_xe(p)
+        print(json.dumps(res, ensure_ascii=False))
+        return
+
+    if args.create_dnx:
+        p = get_input_params()
+        res = create_cyber_dnx_ticket(p)
         print(json.dumps(res, ensure_ascii=False))
         return
 
@@ -1487,3 +1758,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -144,7 +144,16 @@ const server = http.createServer((req, res) => {
             runPy([scriptPath, '--xep-xe-delete'], body, res);
         });
         return;
-        }
+    }
+
+    if (req.method === 'POST' && pathname === '/api/cyber/create-dnx') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+            runPy([scriptPath, '--create-dnx'], body, res);
+        });
+        return;
+    }
 
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not Found' }));

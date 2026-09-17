@@ -1266,4 +1266,64 @@ export const deleteCyberXepXe = async (params: { ma_hd: string; stt_rec: string;
     }
 };
 
+export interface CyberDnxCreateParams {
+    vins: string[];
+    ma_kho_xuat?: string;
+    ma_kho_nhan?: string;
+    khach_hang?: string;
+    ly_do?: string;
+    ma_dvcs?: string;
+    ma_ttcp?: string;
+    user_name?: string;
+}
+
+export interface CyberDnxCreateResult {
+    success: boolean;
+    message?: string;
+    so_ct?: string;
+    stt_rec?: string;
+    user_name?: string;
+    user_id?: number;
+    total_cars?: number;
+    cars?: any[];
+    error?: string;
+}
+
+export const createCyberDnxTicket = async (params: CyberDnxCreateParams): Promise<CyberDnxCreateResult> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/create-dnx');
+        let response: Response | null = null;
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    lastErrorMsg = errJson.error || `HTTP ${res.status}`;
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        if (!response) throw new Error(lastErrorMsg || 'Không thể kết nối dịch vụ tạo giấy chuyển CyberSoft.');
+        return await response.json();
+    } catch (err: any) {
+        console.error("Lỗi createCyberDnxTicket:", err);
+        return {
+            success: false,
+            error: err.message || 'Lỗi kết nối khi tạo giấy đề nghị xuất xe trên CyberSoft.'
+        };
+    }
+};
+
+
 

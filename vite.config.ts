@@ -137,6 +137,15 @@ function cyberSyncPlugin(): Plugin {
           runPy([scriptPath, '--xep-xe-delete'], body, res);
         });
       });
+
+      server.middlewares.use('/api/cyber/create-dnx', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          runPy([scriptPath, '--create-dnx'], body, res);
+        });
+      });
     }
   };
 }
