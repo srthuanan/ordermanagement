@@ -1292,7 +1292,6 @@ export interface CyberDnxCreateResult {
 export const createCyberDnxTicket = async (params: CyberDnxCreateParams): Promise<CyberDnxCreateResult> => {
     try {
         const endpoints = getCyberEndpoints('/api/cyber/create-dnx');
-        let response: Response | null = null;
         let lastErrorMsg = '';
 
         for (const endpoint of endpoints) {
@@ -1302,20 +1301,21 @@ export const createCyberDnxTicket = async (params: CyberDnxCreateParams): Promis
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(params)
                 });
-                if (res.ok) {
-                    response = res;
-                    break;
+                const text = await res.text();
+                let json: any = null;
+                try { json = JSON.parse(text); } catch (_) {}
+
+                if (res.ok && json && typeof json === 'object') {
+                    return json;
                 } else {
-                    const errJson = await res.json().catch(() => ({}));
-                    lastErrorMsg = errJson.error || `HTTP ${res.status}`;
+                    lastErrorMsg = (json && json.error) || (text && !text.startsWith('<') ? text : `HTTP ${res.status}`);
                 }
             } catch (err: any) {
                 lastErrorMsg = err.message || '';
             }
         }
 
-        if (!response) throw new Error(lastErrorMsg || 'Không thể kết nối dịch vụ tạo giấy chuyển CyberSoft.');
-        return await response.json();
+        throw new Error(lastErrorMsg || 'Không thể kết nối dịch vụ tạo giấy chuyển CyberSoft.');
     } catch (err: any) {
         console.error("Lỗi createCyberDnxTicket:", err);
         return {

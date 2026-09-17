@@ -189,7 +189,7 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 print(f"[CyberSync Cloud Search Error]: {str(e)}", file=sys.stderr)
                 self.send_response(500)
@@ -214,7 +214,7 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 print(f"[CyberSync Cloud Ton Kho Report Error]: {str(e)}", file=sys.stderr)
                 self.send_response(500)
@@ -239,7 +239,7 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 print(f"[CyberSync Cloud Xep Xe Contracts Error]: {str(e)}", file=sys.stderr)
                 self.send_response(500)
@@ -264,7 +264,7 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 print(f"[CyberSync Cloud Xep Xe Candidates Error]: {str(e)}", file=sys.stderr)
                 self.send_response(500)
@@ -289,7 +289,7 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 print(f"[CyberSync Cloud Xep Xe Save Error]: {str(e)}", file=sys.stderr)
                 self.send_response(500)
@@ -314,7 +314,7 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 print(f"[CyberSync Cloud Xep Xe Delete Error]: {str(e)}", file=sys.stderr)
                 self.send_response(500)
@@ -339,7 +339,7 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 print(f"[CyberSync Cloud Create DNX Error]: {str(e)}", file=sys.stderr)
                 self.send_response(500)
