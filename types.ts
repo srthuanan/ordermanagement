@@ -1,7 +1,7 @@
 // This file now contains the centralized type definitions for the application,
 // resolving numerous "has no exported member" errors.
 
-export type AdminSubView = 'invoices' | 'pending' | 'paired' | 'matching' | 'car_swap' | 'vc' | 'phongkd' | 'stats' | 'incomplete_cars' | 'super_edit' | 'holds' | 'policies' | 'don_ton' | 'ai_knowledge' | 'ai_health' | 'management' | 'inventory' | 'system' | 'policy_summary' | 'maintenance_fee' | 'vehicle_config' | 'pricing_config' | 'super_management' | 'live_users';
+export type AdminSubView = 'invoices' | 'pending' | 'paired' | 'matching' | 'cyber_plan' | 'car_swap' | 'vc' | 'phongkd' | 'stats' | 'incomplete_cars' | 'super_edit' | 'holds' | 'policies' | 'don_ton' | 'ai_knowledge' | 'ai_health' | 'management' | 'inventory' | 'system' | 'policy_summary' | 'maintenance_fee' | 'vehicle_config' | 'pricing_config' | 'super_management' | 'live_users';
 
 export interface Order {
   "Số đơn hàng": string;
@@ -208,6 +208,7 @@ declare global {
       minimizeWindow: () => void;
       maximizeWindow: () => void;
       closeWindow: () => void;
+      syncCyberAllocations?: (options: { fromDate?: string; toDate?: string; preview?: boolean }) => Promise<any>;
     };
   }
 }

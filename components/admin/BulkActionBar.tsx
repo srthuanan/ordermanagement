@@ -20,6 +20,7 @@ const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string
     ],
     paired: [],
     matching: [],
+    cyber_plan: [],
     car_swap: [],
     vc: [],
     phongkd: [],
