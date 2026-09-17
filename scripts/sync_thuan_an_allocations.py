@@ -514,8 +514,21 @@ def get_cyber_plan_filter_options(model: str = ""):
     c = conn.cursor()
     ph = "%s" if is_pymssql else "?"
 
-    # Chỉ lấy xe chưa xuất hóa đơn bán (Ngay_HD_Ban trống hoặc 1900-01-01)
-    base_where = "k.Ma_ct IN ('K10', 'K15') AND (k.Ngay_HD_Ban IS NULL OR k.Ngay_HD_Ban <= '1900-01-01') AND k.So_khung IS NOT NULL AND RTRIM(LTRIM(k.So_khung)) <> ''"
+    # Tạo bảng tạm các số khung ĐÃ XUẤT HÓA ĐƠN trên toàn hệ thống Cyber (CTHDC, ct70be HDC, CTKH Ngay_HD_Ban)
+    c.execute("""
+        IF OBJECT_ID('tempdb..#InvoicedVins') IS NOT NULL DROP TABLE #InvoicedVins;
+        SELECT DISTINCT So_khung INTO #InvoicedVins FROM (
+            SELECT So_khung FROM CTHDC WITH (NOLOCK) WHERE So_khung IS NOT NULL AND So_khung <> ''
+            UNION
+            SELECT So_khung FROM ct70be WITH (NOLOCK) WHERE Ma_ct = 'HDC' AND So_khung IS NOT NULL AND So_khung <> ''
+            UNION
+            SELECT So_khung FROM CTKH WITH (NOLOCK) WHERE Ngay_HD_Ban > '1900-01-01' AND So_khung IS NOT NULL AND So_khung <> ''
+        ) x;
+        CREATE CLUSTERED INDEX IX_InvoicedVins ON #InvoicedVins(So_khung);
+    """)
+
+    # Chỉ lấy xe chưa xuất hóa đơn bán (loại bỏ sạch 100% xe đã có HĐ)
+    base_where = "k.Ma_ct IN ('K10', 'K15') AND k.So_khung IS NOT NULL AND RTRIM(LTRIM(k.So_khung)) <> '' AND NOT EXISTS (SELECT 1 FROM #InvoicedVins inv WHERE inv.So_khung = k.So_khung)"
 
     # 1. Distinct Showrooms (TTCP)
     c.execute(f"""
@@ -627,12 +640,26 @@ def search_cyber_factory_plan(params: dict) -> dict:
     c = conn.cursor()
 
     ph = "%s" if is_pymssql else "?"
-    # Bắt buộc: chỉ lấy xe chưa xuất hóa đơn bán (Ngay_HD_Ban trống), toàn bộ K10+K15
+
+    # Tạo bảng tạm các số khung ĐÃ XUẤT HÓA ĐƠN trên toàn hệ thống Cyber (CTHDC, ct70be HDC, CTKH Ngay_HD_Ban)
+    c.execute("""
+        IF OBJECT_ID('tempdb..#InvoicedVins') IS NOT NULL DROP TABLE #InvoicedVins;
+        SELECT DISTINCT So_khung INTO #InvoicedVins FROM (
+            SELECT So_khung FROM CTHDC WITH (NOLOCK) WHERE So_khung IS NOT NULL AND So_khung <> ''
+            UNION
+            SELECT So_khung FROM ct70be WITH (NOLOCK) WHERE Ma_ct = 'HDC' AND So_khung IS NOT NULL AND So_khung <> ''
+            UNION
+            SELECT So_khung FROM CTKH WITH (NOLOCK) WHERE Ngay_HD_Ban > '1900-01-01' AND So_khung IS NOT NULL AND So_khung <> ''
+        ) x;
+        CREATE CLUSTERED INDEX IX_InvoicedVins ON #InvoicedVins(So_khung);
+    """)
+
+    # Bắt buộc: chỉ lấy xe chưa xuất hóa đơn bán (loại bỏ sạch 100% xe đã có HĐ), toàn bộ K10+K15
     where_clauses = [
         "k.Ma_ct IN ('K10', 'K15')",
         "k.So_khung IS NOT NULL",
         "RTRIM(LTRIM(k.So_khung)) <> ''",
-        "(k.Ngay_HD_Ban IS NULL OR k.Ngay_HD_Ban <= '1900-01-01')"
+        "NOT EXISTS (SELECT 1 FROM #InvoicedVins inv WHERE inv.So_khung = k.So_khung)"
     ]
     sql_params = []
 
@@ -795,6 +822,542 @@ def search_cyber_factory_plan(params: dict) -> dict:
         "cars": results
     }
 
+def get_cyber_ton_kho_report(params: dict) -> dict:
+    from_date = (params.get("fromDate") or "2025-07-01").replace("-", "")
+    to_date = (params.get("toDate") or datetime.now().strftime("%Y-%m-%d")).replace("-", "")
+    ma_kho = (params.get("warehouse") or "").strip()
+    ma_kx = (params.get("model") or "").strip()
+    ma_mau = (params.get("color") or "").strip()
+    status = (params.get("status") or "all").strip()
+    keyword = (params.get("keyword") or "").strip().lower()
+
+    is_pymssql = True
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=60
+        )
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=60)
+        is_pymssql = False
+
+    c = conn.cursor()
+    ph = "%s" if is_pymssql else "?"
+
+    sql = f"""
+    EXECUTE [dbo].[CP_BETONXE]
+        @M_Ma_Kho = {ph},
+        @M_Ma_Kx = {ph},
+        @M_Ngay_Ct1 = {ph},
+        @M_Ngay_Ct2 = {ph},
+        @M_Ma_Mau = {ph},
+        @M_Nh_Kx1 = N'',
+        @M_Nh_Kx2 = N'',
+        @M_Nh_Kx3 = N'',
+        @M_Ct_Dc = N'1',
+        @M_Group1 = N'',
+        @M_Group2 = N'',
+        @M_Group3 = N'',
+        @M_Cp_Name = N'CP_BETONXE',
+        @M_Ma_ttcp1 = N'',
+        @M_Ma_ttcp2 = N'',
+        @M_Ma_TTCP = N'',
+        @M_Loai_BC = N'',
+        @M_Ma_Dvcs = N'02',
+        @M_User_Name = N'02.NHANPT'
+    """
+    c.execute(sql, (ma_kho, ma_kx, from_date, to_date, ma_mau))
+    rows = c.fetchall()
+    cols = [d[0] for d in c.description]
+    all_items = [dict(zip(cols, r)) for r in rows]
+    conn.close()
+
+    # Filter detail rows only
+    detail_cars = [d for d in all_items if d.get('So_Khung') and str(d.get('Bold') or '').strip() != '1']
+
+    warehouses_map = {}
+    models_set = set()
+    for d in detail_cars:
+        w_code = (d.get('Ma_kho') or '').strip()
+        w_name = (d.get('Ten_Kho') or d.get('ten_kho') or w_code).strip()
+        if w_code or w_name:
+            warehouses_map[w_code] = w_name
+        m_name = (d.get('Ten_Kx') or d.get('Ma_Kx') or '').strip()
+        if m_name:
+            models_set.add(m_name)
+
+    filtered = []
+    for d in detail_cars:
+        vin = (d.get('So_Khung') or '').strip()
+        so_may = (d.get('So_May') or '').strip()
+        so_hd = (d.get('So_HD') or '').strip()
+        ten_kx = (d.get('Ten_Kx') or d.get('Ma_Kx') or '').strip()
+        tinh_trang = (d.get('Tinh_trang') or '').strip()
+        is_invoiced = bool(tinh_trang)
+
+        if status == 'invoiced' and not is_invoiced:
+            continue
+        if status == 'not_invoiced' and is_invoiced:
+            continue
+
+        if keyword:
+            match = (
+                keyword in vin.lower() or
+                keyword in so_may.lower() or
+                keyword in so_hd.lower() or
+                keyword in ten_kx.lower() or
+                keyword in (d.get('Ten_mau') or '').lower() or
+                keyword in (d.get('Ten_Kho') or d.get('ten_kho') or '').lower() or
+                keyword in (d.get('note') or '').lower()
+            )
+            if not match:
+                continue
+
+        ngay_hd = d.get('Ngay_HD') or d.get('Ngay_Ct')
+        ngay_hd_str = str(ngay_hd)[:10] if ngay_hd and not str(ngay_hd).startswith('1900') else ''
+        thang_hd = (d.get('Thang_HD') or d.get('Thang_ct') or '').strip()
+
+        ngay_ton = 0
+        try:
+            ngay_ton = int(float(d.get('Ngay_Ton') or 0))
+        except Exception:
+            pass
+
+        nam_sx = 0
+        try:
+            nam_sx = int(float(d.get('Nam_SX') or 0))
+        except Exception:
+            pass
+
+        filtered.append({
+            "vin": vin,
+            "so_may": so_may,
+            "so_hd": so_hd,
+            "ngay_hd": ngay_hd_str,
+            "thang_hd": thang_hd,
+            "ma_kx": (d.get('Ma_Kx') or '').strip(),
+            "ten_kx": ten_kx,
+            "ma_mau": (d.get('Ma_Mau') or '').strip(),
+            "ten_mau": (d.get('Ten_Mau') or d.get('Ten_mau') or '').strip(),
+            "ma_mau_nt": (d.get('Ma_MauNT') or '').strip(),
+            "ten_mau_nt": (d.get('Ten_MauNT') or '').strip(),
+            "ma_kho": (d.get('Ma_kho') or '').strip(),
+            "ten_kho": (d.get('Ten_Kho') or d.get('ten_kho') or '').strip(),
+            "ngay_ton": ngay_ton,
+            "nam_sx": nam_sx,
+            "tinh_trang": tinh_trang,
+            "is_invoiced": is_invoiced,
+            "ten_ttcp": (d.get('Ten_TTCP_HDX') or '').strip(),
+            "tvbh": (d.get('Ten_TVBH') or '').strip(),
+            "ghi_chu": (d.get('note') or '').strip()
+        })
+
+    total_cars = len(filtered)
+    invoiced_count = sum(1 for c in filtered if c['is_invoiced'])
+    not_invoiced_count = total_cars - invoiced_count
+
+    return {
+        "success": True,
+        "total": total_cars,
+        "invoiced_count": invoiced_count,
+        "not_invoiced_count": not_invoiced_count,
+        "cars": filtered,
+        "warehouses": [{"code": k, "name": v} for k, v in sorted(warehouses_map.items())],
+        "models": sorted(list(models_set))
+    }
+
+def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
+    today = date.today()
+    thang1 = int(params.get("thang1") or today.month)
+    nam1 = int(params.get("nam1") or today.year)
+    thang2 = int(params.get("thang2") or today.month)
+    nam2 = int(params.get("nam2") or today.year)
+    ma_dvcs = (params.get("ma_dvcs") or "02").strip()
+    user_name = (params.get("user_name") or "02.NHANPT").strip()
+    ma_kx = (params.get("ma_kx") or "").strip()
+    ma_mau = (params.get("ma_mau") or "").strip()
+    ma_kh = (params.get("ma_kh") or "").strip()
+    ma_hd = (params.get("ma_hd") or "").strip()
+    m_all = (params.get("all") or "1").strip()
+    is_xep_xe = (params.get("is_xep_xe") or "").strip()
+
+    is_pymssql = True
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=60,
+            autocommit=True
+        )
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=60)
+        is_pymssql = False
+
+    c = conn.cursor()
+    ph = "%s" if is_pymssql else "?"
+
+    sql = f"""
+    EXECUTE [dbo].[CP_BeXepXe]
+        @M_Load = N'',
+        @M_ALL = {ph},
+        @M_Is_Xep_Xe = {ph},
+        @M_Thang1 = {ph},
+        @M_Nam1 = {ph},
+        @M_Thang2 = {ph},
+        @M_Nam2 = {ph},
+        @M_Stt_Rec = N'',
+        @M_Stt_Rec0 = N'',
+        @M_Ma_KX = {ph},
+        @M_Ma_Mau = {ph},
+        @M_Ma_KH = {ph},
+        @M_Ma_HD = {ph},
+        @M_Nh_HD1 = N'',
+        @M_Nh_HD2 = N'',
+        @M_Nh_HD3 = N'',
+        @M_Ma_DVCS = {ph},
+        @M_User_name = {ph}
+    """
+    c.execute(sql, (
+        m_all,
+        is_xep_xe,
+        thang1,
+        nam1,
+        thang2,
+        nam2,
+        ma_kx,
+        ma_mau,
+        ma_kh,
+        ma_hd,
+        ma_dvcs,
+        user_name
+    ))
+
+    rows = c.fetchall()
+    cols = [d[0] for d in c.description]
+
+    contracts = []
+    status_counts = {}
+    showrooms_set = set()
+    models_set = set()
+
+    for r in rows:
+        d = dict(zip(cols, r))
+
+        def fmt_dt(val):
+            if not val:
+                return ''
+            if isinstance(val, (datetime, date)):
+                return val.strftime('%Y-%m-%d')
+            return str(val).strip()
+
+        def fmt_num(val):
+            if val is None:
+                return 0
+            try:
+                return float(val)
+            except Exception:
+                return 0
+
+        ngay_ct = fmt_dt(d.get('ngay_ct'))
+        ngay_gx = fmt_dt(d.get('Ngay_Gx'))
+        ngay_xep = fmt_dt(d.get('Ngay_Xep'))
+
+        tien_nt = fmt_num(d.get('Tien_Nt'))
+        da_tt = fmt_num(d.get('Da_TT'))
+        con_no = tien_nt - da_tt
+
+        ten_color = (d.get('Ten_Color') or '').strip()
+        back_color = (d.get('BackColor') or '').strip()
+        fore_color = (d.get('ForeColor') or '').strip()
+        bold = bool(d.get('Bold'))
+
+        ten_ttcp = (d.get('Ten_ttcp') or '').strip()
+        if ten_ttcp:
+            showrooms_set.add(ten_ttcp)
+
+        ten_kx = (d.get('ten_Kx') or d.get('Ma_Kx') or '').strip()
+        if ten_kx:
+            models_set.add(ten_kx)
+
+        if ten_color:
+            status_counts[ten_color] = status_counts.get(ten_color, 0) + 1
+
+        contracts.append({
+            "stt_rec": (d.get('stt_rec') or '').strip(),
+            "stt_rec0": (d.get('stt_rec0') or '').strip(),
+            "so_ct": (d.get('so_ct') or '').strip(),
+            "ma_hd": (d.get('ma_hd') or '').strip(),
+            "ma_post": (str(d.get('Ma_Post') or d.get('ma_post') or '')).strip(),
+            "ngay_ct": ngay_ct,
+            "ngay_gx": ngay_gx,
+            "ten_kh": (d.get('Ten_Kh') or '').strip(),
+            "dien_thoai": (d.get('Dien_Thoai') or '').strip(),
+            "ma_kx": (d.get('Ma_Kx') or '').strip(),
+            "ten_kx": ten_kx,
+            "ma_mau": (d.get('ma_mau') or '').strip(),
+            "ten_mau": (d.get('Ten_mau') or '').strip(),
+            "ma_mau_nt": (d.get('Ma_Mau_Nt') or '').strip(),
+            "ten_mau_nt": (d.get('Ten_mau_nt') or '').strip(),
+            "so_khung": (d.get('So_khung') or '').strip(),
+            "ngay_xep": ngay_xep,
+            "tien_nt": tien_nt,
+            "da_tt": da_tt,
+            "con_no": con_no,
+            "ten_ttcp": ten_ttcp,
+            "ma_dvcs": (d.get('ma_dvcs') or '').strip(),
+            "ten_hs": (d.get('Ten_Hs') or '').strip(),
+            "ten_bp": (d.get('Ten_Bp') or '').strip(),
+            "ten_color": ten_color,
+            "ma_color": (d.get('Ma_Color') or '').strip(),
+            "back_color": back_color,
+            "fore_color": fore_color,
+            "bold": bold
+        })
+
+    conn.close()
+
+    # Lọc theo Showroom nếu người dùng yêu cầu (Mặc định tải TVBH tại Showroom Thuận An)
+    target_showroom = (params.get("showroom") or "").strip()
+    if target_showroom and target_showroom.lower() not in ['all', 'tất cả']:
+        import unicodedata
+        def no_accents(s):
+            return "".join(ch for ch in unicodedata.normalize('NFD', s.lower()) if unicodedata.category(ch) != 'Mn')
+        norm_target = no_accents(target_showroom)
+        contracts = [c for c in contracts if norm_target in no_accents(c.get('ten_ttcp', ''))]
+        status_counts = {}
+        for c in contracts:
+            tc = c.get('ten_color')
+            if tc:
+                status_counts[tc] = status_counts.get(tc, 0) + 1
+
+    return {
+        "success": True,
+        "total": len(contracts),
+        "status_counts": status_counts,
+        "showrooms": sorted(list(showrooms_set)),
+        "models": sorted(list(models_set)),
+        "contracts": contracts
+    }
+
+def get_cyber_xep_xe_candidates(params: dict = {}) -> dict:
+    stt_rec = (params.get("stt_rec") or "").strip()
+    stt_rec0 = (params.get("stt_rec0") or "").strip()
+    ma_dvcs = (params.get("ma_dvcs") or "02").strip()
+    user_name = (params.get("user_name") or "02.NHANPT").strip()
+
+    if not stt_rec or not stt_rec0:
+        return {"success": False, "error": "Thiếu stt_rec hoặc stt_rec0", "candidates": []}
+
+    is_pymssql = True
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=30,
+            autocommit=True
+        )
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=30)
+        is_pymssql = False
+
+    c = conn.cursor()
+    ph = "%s" if is_pymssql else "?"
+
+    sql = f"""
+    EXECUTE [dbo].[CP_BeXepXe_SK]
+        @M_Load = N'0',
+        @M_Stt_Rec = {ph},
+        @M_Stt_Rec0 = {ph},
+        @M_Ma_DVCS = {ph},
+        @M_User_name = {ph}
+    """
+    c.execute(sql, (stt_rec, stt_rec0, ma_dvcs, user_name))
+    rows = c.fetchall()
+    cols = [d[0] for d in c.description]
+
+    candidates = []
+    for r in rows:
+        d = dict(zip(cols, r))
+        ngay_ct_val = d.get('Ngay_CT') or d.get('Ngay_Ct')
+        if isinstance(ngay_ct_val, (datetime, date)):
+            ngay_ct_str = ngay_ct_val.strftime('%Y-%m-%d')
+        else:
+            ngay_ct_str = str(ngay_ct_val or '').strip()
+
+        nam_sx_val = 0
+        try:
+            nam_sx_val = int(float(d.get('Nam_SX') or 0))
+        except Exception:
+            pass
+
+        candidates.append({
+            "so_khung": (d.get('So_khung') or '').strip(),
+            "so_may": (d.get('So_May') or '').strip(),
+            "nam_sx": nam_sx_val,
+            "ngay_ct": ngay_ct_str,
+            "dien_giai": (d.get('Dien_Giai') or '').strip(),
+            "ma_kx": (d.get('ma_kx') or '').strip(),
+            "ma_mau_nt": (d.get('Ma_Mau_NT') or '').strip(),
+            "chua_xep": (d.get('Chua_Xep') or '').strip()
+        })
+
+    conn.close()
+    return {
+        "success": True,
+        "total": len(candidates),
+        "candidates": candidates
+    }
+
+def save_cyber_xep_xe(params: dict = {}) -> dict:
+    ma_hd = (params.get("ma_hd") or "").strip()
+    stt_rec = (params.get("stt_rec") or "").strip()
+    stt_rec0 = (params.get("stt_rec0") or "").strip()
+    so_khung = (params.get("so_khung") or "").strip()
+    ma_dvcs = (params.get("ma_dvcs") or "02").strip()
+    user_name = (params.get("user_name") or "SYSTEM").strip()
+
+    if not ma_hd or not stt_rec or not stt_rec0 or not so_khung:
+        return {"success": False, "error": "Thiếu thông tin số HĐ, stt_rec hoặc số khung"}
+
+    is_pymssql = True
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=30,
+            autocommit=True
+        )
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=30)
+        is_pymssql = False
+
+    c = conn.cursor()
+    ph = "%s" if is_pymssql else "?"
+
+    sql = f"""
+    EXECUTE [dbo].[CP_BeXepXe_SAVE]
+        @M_Ma_HD = {ph},
+        @M_Stt_Rec = {ph},
+        @M_Stt_Rec0 = {ph},
+        @M_So_Khung = {ph},
+        @M_Ma_DVCS = {ph},
+        @M_User_name = {ph}
+    """
+    c.execute(sql, (ma_hd, stt_rec, stt_rec0, so_khung, ma_dvcs, user_name))
+    row = c.fetchone()
+    cols = [d[0] for d in c.description]
+    res_dict = dict(zip(cols, row))
+    conn.close()
+
+    status = (res_dict.get('Status') or '').strip().upper()
+    note = (res_dict.get('Note') or '').strip()
+    msg = (res_dict.get('Msg') or '').strip()
+
+    if status == 'Y':
+        return {
+            "success": True,
+            "message": f"Đã ghép thành công xe {so_khung} cho hợp đồng {ma_hd}",
+            "status": status,
+            "note": note,
+            "msg": msg
+        }
+    else:
+        return {
+            "success": False,
+            "error": note or "Không thể ghép xe",
+            "status": status,
+            "note": note,
+            "msg": msg
+        }
+
+def delete_cyber_xep_xe(params: dict = {}) -> dict:
+    ma_hd = (params.get("ma_hd") or "").strip()
+    stt_rec = (params.get("stt_rec") or "").strip()
+    stt_rec0 = (params.get("stt_rec0") or "").strip()
+    so_khung = (params.get("so_khung") or "").strip()
+    ma_dvcs = (params.get("ma_dvcs") or "02").strip()
+    user_name = (params.get("user_name") or "SYSTEM").strip()
+
+    if not ma_hd or not stt_rec0 or not so_khung:
+        return {"success": False, "error": "Thiếu thông tin số HĐ hoặc số khung để hủy ghép"}
+
+    is_pymssql = True
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=30,
+            autocommit=True
+        )
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=30)
+        is_pymssql = False
+
+    c = conn.cursor()
+    ph = "%s" if is_pymssql else "?"
+
+    sql = f"""
+    EXECUTE [dbo].[CP_BeXepXe_DELETE]
+        @M_Ma_HD = {ph},
+        @M_Stt_Rec = {ph},
+        @M_Stt_Rec0 = {ph},
+        @M_So_Khung = {ph},
+        @M_Ma_DVCS = {ph},
+        @M_User_name = {ph}
+    """
+    c.execute(sql, (ma_hd, stt_rec, stt_rec0, so_khung, ma_dvcs, user_name))
+    row = c.fetchone()
+    cols = [d[0] for d in c.description]
+    res_dict = dict(zip(cols, row))
+    conn.close()
+
+    status = (res_dict.get('Status') or '').strip().upper()
+    note = (res_dict.get('Note') or '').strip()
+    msg = (res_dict.get('Msg') or '').strip()
+
+    if status == 'Y':
+        return {
+            "success": True,
+            "message": f"Đã hủy ghép xe {so_khung} khỏi hợp đồng {ma_hd}",
+            "status": status,
+            "note": note,
+            "msg": msg
+        }
+    else:
+        return {
+            "success": False,
+            "error": note or "Không thể hủy ghép xe",
+            "status": status,
+            "note": note,
+            "msg": msg
+        }
+
 def main():
     parser = argparse.ArgumentParser(description="Sync Thuan An car allocations from CyberSoft to Supabase")
     parser.add_argument("--from", dest="from_date", help="From date (YYYY-MM-DD)", default=None)
@@ -803,6 +1366,11 @@ def main():
     parser.add_argument("--sync-locations", action="store_true", help="Sync physical locations from CT70BEX into khoxe")
     parser.add_argument("--plan-filter-options", action="store_true", help="Get distinct showrooms and colors for plan search")
     parser.add_argument("--search-plan", action="store_true", help="Search factory delivery plan")
+    parser.add_argument("--ton-kho-report", action="store_true", help="Get Ton Kho Xe report from CyberSoft CP_BETONXE")
+    parser.add_argument("--xep-xe-contracts", action="store_true", help="Get contracts list from CP_BeXepXe")
+    parser.add_argument("--xep-xe-candidates", action="store_true", help="Get candidate cars for a contract from CP_BeXepXe_SK")
+    parser.add_argument("--xep-xe-save", action="store_true", help="Assign vehicle to contract via CP_BeXepXe_SAVE")
+    parser.add_argument("--xep-xe-delete", action="store_true", help="Unassign vehicle from contract via CP_BeXepXe_DELETE")
     parser.add_argument("--model", help="Car model filter for options", default="")
     parser.add_argument("--params", help="JSON string of search parameters", default=None)
     args = parser.parse_args()
@@ -820,6 +1388,18 @@ def main():
                 pass
         if not sys.stdin.isatty():
             try:
+                raw = sys.stdin.buffer.read()
+                if raw:
+                    for enc in ['utf-8-sig', 'utf-8', 'utf-16', 'utf-16-le', 'cp1258']:
+                        try:
+                            text = raw.decode(enc).strip()
+                            if text.startswith('{') or text.startswith('['):
+                                return json.loads(text)
+                        except Exception:
+                            continue
+            except Exception:
+                pass
+            try:
                 stdin_data = sys.stdin.read().strip()
                 if stdin_data:
                     return json.loads(stdin_data)
@@ -830,6 +1410,36 @@ def main():
     if args.sync_locations:
         p = get_input_params()
         res = sync_khoxe_locations_from_cyber(target_vins=p.get("vins"), preview=args.preview)
+        print(json.dumps(res, ensure_ascii=False))
+        return
+
+    if args.ton_kho_report:
+        p = get_input_params()
+        res = get_cyber_ton_kho_report(p)
+        print(json.dumps(res, ensure_ascii=False))
+        return
+
+    if args.xep_xe_contracts:
+        p = get_input_params()
+        res = get_cyber_xep_xe_contracts(p)
+        print(json.dumps(res, ensure_ascii=False))
+        return
+
+    if args.xep_xe_candidates:
+        p = get_input_params()
+        res = get_cyber_xep_xe_candidates(p)
+        print(json.dumps(res, ensure_ascii=False))
+        return
+
+    if args.xep_xe_save:
+        p = get_input_params()
+        res = save_cyber_xep_xe(p)
+        print(json.dumps(res, ensure_ascii=False))
+        return
+
+    if args.xep_xe_delete:
+        p = get_input_params()
+        res = delete_cyber_xep_xe(p)
         print(json.dumps(res, ensure_ascii=False))
         return
 

@@ -6,10 +6,45 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = 3001;
+const scriptPath = path.resolve(__dirname, 'scripts', 'sync_thuan_an_allocations.py');
+
+function runPy(args, bodyData, res) {
+    console.log(`[CyberSync] Running: python ${args.join(' ')}`);
+    const pyProcess = spawn('python', args);
+
+    let stdout = '';
+    let stderr = '';
+
+    if (bodyData) {
+        pyProcess.stdin.write(bodyData);
+        pyProcess.stdin.end();
+    }
+
+    pyProcess.stdout.on('data', (data) => { stdout += data.toString(); });
+    pyProcess.stderr.on('data', (data) => { stderr += data.toString(); });
+
+    pyProcess.on('close', (code) => {
+        if (code !== 0) {
+            console.error('[CyberSync Error]', stderr);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: false, error: stderr || `Exit code ${code}` }));
+        }
+        try {
+            const lines = stdout.trim().split('\n');
+            const lastLine = lines[lines.length - 1];
+            const parsed = JSON.parse(lastLine);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify(parsed));
+        } catch (e) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, raw: stdout, error: e.message }));
+        }
+    });
+}
 
 const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
     if (req.method === 'OPTIONS') {
@@ -17,50 +52,99 @@ const server = http.createServer((req, res) => {
         return res.end();
     }
 
-    if (req.method === 'POST' && req.url === '/api/cyber/sync-allocations') {
+    const urlObj = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+    const pathname = urlObj.pathname;
+
+    if (req.method === 'POST' && pathname === '/api/cyber/sync-allocations') {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
             let options = {};
             try { options = JSON.parse(body || '{}'); } catch (e) {}
-
             const { fromDate, toDate, preview } = options;
-            const scriptPath = path.resolve(__dirname, 'scripts', 'sync_thuan_an_allocations.py');
-
             const args = [scriptPath];
             if (fromDate) args.push('--from', fromDate);
             if (toDate) args.push('--to', toDate);
             if (preview) args.push('--preview');
-
-            console.log(`[CyberSync] Running: python ${args.join(' ')}`);
-            const pyProcess = spawn('python', args);
-
-            let stdout = '';
-            let stderr = '';
-
-            pyProcess.stdout.on('data', (data) => { stdout += data.toString(); });
-            pyProcess.stderr.on('data', (data) => { stderr += data.toString(); });
-
-            pyProcess.on('close', (code) => {
-                if (code !== 0) {
-                    console.error('[CyberSync Error]', stderr);
-                    res.writeHead(500, { 'Content-Type': 'application/json' });
-                    return res.end(JSON.stringify({ success: false, error: stderr || `Exit code ${code}` }));
-                }
-                try {
-                    const lines = stdout.trim().split('\n');
-                    const lastLine = lines[lines.length - 1];
-                    const parsed = JSON.parse(lastLine);
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify(parsed));
-                } catch (e) {
-                    res.writeHead(500, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ success: false, raw: stdout, error: e.message }));
-                }
-            });
+            runPy(args, '', res);
         });
         return;
     }
+
+    if (req.method === 'POST' && pathname === '/api/cyber/sync-locations') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+            let options = {};
+            try { options = JSON.parse(body || '{}'); } catch (e) {}
+            const args = [scriptPath, '--sync-locations'];
+            if (options.preview) args.push('--preview');
+            runPy(args, body, res);
+        });
+        return;
+    }
+
+    if (req.method === 'GET' && pathname === '/api/cyber/plan-filter-options') {
+        const model = urlObj.searchParams.get('model') || '';
+        const args = [scriptPath, '--plan-filter-options'];
+        if (model) args.push('--model', model);
+        runPy(args, '', res);
+        return;
+    }
+
+    if (req.method === 'POST' && pathname === '/api/cyber/search-factory-plan') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+            runPy([scriptPath, '--search-plan'], body, res);
+        });
+        return;
+    }
+
+    if (req.method === 'POST' && pathname === '/api/cyber/ton-kho-report') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+            runPy([scriptPath, '--ton-kho-report'], body, res);
+        });
+        return;
+    }
+
+    if (req.method === 'POST' && pathname === '/api/cyber/xep-xe-contracts') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+            runPy([scriptPath, '--xep-xe-contracts'], body, res);
+        });
+        return;
+    }
+
+    if (req.method === 'POST' && pathname === '/api/cyber/xep-xe-candidates') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+            runPy([scriptPath, '--xep-xe-candidates'], body, res);
+        });
+        return;
+    }
+
+    if (req.method === 'POST' && pathname === '/api/cyber/xep-xe-save') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+            runPy([scriptPath, '--xep-xe-save'], body, res);
+        });
+        return;
+    }
+
+    if (req.method === 'POST' && pathname === '/api/cyber/xep-xe-delete') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+            runPy([scriptPath, '--xep-xe-delete'], body, res);
+        });
+        return;
+        }
 
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not Found' }));
@@ -69,3 +153,4 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, () => {
     console.log(`CyberSync Local Server running on http://localhost:${PORT}`);
 });
+

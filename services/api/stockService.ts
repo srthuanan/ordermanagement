@@ -795,4 +795,475 @@ export const undoCyberAllocations = async (vins: string[]) => {
     }
 };
 
+export interface CyberTonKhoParams {
+    fromDate?: string;
+    toDate?: string;
+    warehouse?: string;
+    model?: string;
+    color?: string;
+    status?: 'all' | 'invoiced' | 'not_invoiced';
+    keyword?: string;
+}
+
+export interface CyberTonKhoItem {
+    vin: string;
+    so_may: string;
+    so_hd: string;
+    ngay_hd: string;
+    thang_hd: string;
+    ma_kx: string;
+    ten_kx: string;
+    ma_mau: string;
+    ten_mau: string;
+    ma_mau_nt: string;
+    ten_mau_nt: string;
+    ma_kho: string;
+    ten_kho: string;
+    ngay_ton: number;
+    nam_sx: number;
+    tinh_trang: string;
+    is_invoiced: boolean;
+    ten_ttcp: string;
+    tvbh: string;
+    ghi_chu: string;
+}
+
+export interface CyberTonKhoResponse {
+    success: boolean;
+    total: number;
+    invoiced_count: number;
+    not_invoiced_count: number;
+    cars: CyberTonKhoItem[];
+    warehouses: { code: string; name: string }[];
+    models: string[];
+    error?: string;
+}
+
+/**
+ * Lấy báo cáo tồn kho xe từ CyberSoft ERP (CP_BETONXE)
+ */
+export const getCyberTonKhoReport = async (params: CyberTonKhoParams = {}): Promise<CyberTonKhoResponse> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/ton-kho-report');
+
+        let response: Response | null = null;
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    lastErrorMsg = errJson.error || `HTTP ${res.status}`;
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        if (!response) {
+            throw new Error(lastErrorMsg || 'Không thể kết nối dịch vụ báo cáo tồn kho CyberSoft.');
+        }
+
+        return await response.json();
+    } catch (err: any) {
+        console.error("Lỗi getCyberTonKhoReport:", err);
+        return {
+            success: false,
+            total: 0,
+            invoiced_count: 0,
+            not_invoiced_count: 0,
+            cars: [],
+            warehouses: [],
+            models: [],
+            error: err.message || 'Không thể kết nối dịch vụ báo cáo tồn kho CyberSoft.'
+        };
+    }
+};
+
+export interface CyberXepXeContract {
+    stt_rec: string;
+    stt_rec0: string;
+    so_ct: string;
+    ma_hd: string;
+    ngay_ct: string;
+    ngay_gx: string;
+    ten_kh: string;
+    dien_thoai: string;
+    ma_kx: string;
+    ten_kx: string;
+    ma_mau: string;
+    ten_mau: string;
+    ma_mau_nt: string;
+    ten_mau_nt: string;
+    so_khung: string;
+    so_may?: string;
+    ma_post?: string;
+    ngay_xep: string;
+    tien_nt: number;
+    da_tt: number;
+    con_no: number;
+    ten_ttcp: string;
+    ma_dvcs: string;
+    ten_hs: string;
+    ten_bp: string;
+    ten_color: string;
+    ma_color: string;
+    back_color: string;
+    fore_color: string;
+    bold: boolean;
+}
+
+export interface CyberXepXeCandidate {
+    so_khung: string;
+    so_may: string;
+    nam_sx: number;
+    ngay_ct: string;
+    dien_giai: string;
+    ma_kx: string;
+    ma_mau_nt: string;
+    chua_xep: string;
+}
+
+export interface CyberXepXeFilterParams {
+    thang1?: number;
+    nam1?: number;
+    thang2?: number;
+    nam2?: number;
+    ma_dvcs?: string;
+    ma_kx?: string;
+    ma_mau?: string;
+    ma_kh?: string;
+    ma_hd?: string;
+    all?: string;
+    is_xep_xe?: string;
+    showroom?: string;
+}
+
+export interface CyberXepXeContractsResponse {
+    success: boolean;
+    total: number;
+    status_counts: Record<string, number>;
+    showrooms: string[];
+    models: string[];
+    contracts: CyberXepXeContract[];
+    error?: string;
+}
+
+export interface CyberXepXeCandidatesResponse {
+    success: boolean;
+    total: number;
+    candidates: CyberXepXeCandidate[];
+    error?: string;
+}
+
+export interface CyberXepXeActionResult {
+    success: boolean;
+    message?: string;
+    status?: string;
+    note?: string;
+    error?: string;
+}
+
+export interface CyberAssignmentCheckResult {
+    isAssigned: boolean;
+    cyberVin?: string;
+    contract?: CyberXepXeContract;
+    isApprovedYellow?: boolean; // Đã được Giám đốc duyệt (Màu vàng / ma_post = 3)
+    isPendingGreen?: boolean;    // Chưa được Giám đốc duyệt (Màu xanh / ma_post = 2 / Chờ duyệt)
+}
+
+/**
+ * Kiểm tra xem đơn hàng đã được xếp xe trên CyberSoft ERP hay chưa
+ */
+export const isOrderAssignedOnCyber = (order: any, cyberContracts: CyberXepXeContract[]): CyberAssignmentCheckResult => {
+    if (!order || !cyberContracts || cyberContracts.length === 0) {
+        return { isAssigned: false };
+    }
+
+    const removeTones = (str: string) => (str || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/Đ/g, 'd')
+        .toLowerCase()
+        .trim();
+
+    const getApprovalStatus = (c?: CyberXepXeContract) => {
+        if (!c) return { isPendingGreen: false, isApprovedYellow: false };
+        const post = (c.ma_post || '').trim();
+        const tenColor = (c.ten_color || '').trim().toLowerCase();
+        const backColor = (c.back_color || '').trim().toLowerCase();
+        const maColor = (c.ma_color || '').trim();
+
+        const isPending = post === '2' || tenColor === 'chờ duyệt' || maColor === '04' || backColor === 'greenyellow';
+        const isApproved = !isPending && (post === '3' || backColor === 'yellow' || tenColor !== 'chờ duyệt');
+        return { isPendingGreen: isPending, isApprovedYellow: isApproved };
+    };
+
+    const custName = removeTones(order['Tên khách hàng'] || order.ten_khach_hang || '');
+    const orderNo = (order['Số đơn hàng'] || order.so_don_hang || '').toLowerCase().trim();
+    const orderVin = (order.VIN || order.vin || order['SỐ VIN'] || '').toLowerCase().trim();
+    const carModel = removeTones(order['Dòng xe'] || order.dong_xe || order['DÒNG XE'] || '');
+
+    // 1. Nếu đơn hàng có số VIN và trên Cyber đã có hợp đồng chứa số VIN này:
+    if (orderVin) {
+        const vinMatch = cyberContracts.find(c => (c.so_khung || '').toLowerCase().trim() === orderVin);
+        if (vinMatch) {
+            const approval = getApprovalStatus(vinMatch);
+            return {
+                isAssigned: true,
+                cyberVin: vinMatch.so_khung,
+                contract: vinMatch,
+                isApprovedYellow: approval.isApprovedYellow,
+                isPendingGreen: approval.isPendingGreen
+            };
+        }
+    }
+
+    // 2. Tìm theo số đơn hàng (ma_hd hoặc so_ct)
+    if (orderNo) {
+        const orderNoMatch = cyberContracts.find(c => {
+            const cMaHd = (c.ma_hd || '').toLowerCase();
+            const cSoCt = (c.so_ct || '').toLowerCase();
+            return cMaHd.includes(orderNo) || cSoCt.includes(orderNo) || orderNo.includes(cMaHd);
+        });
+        if (orderNoMatch) {
+            const isAssigned = Boolean(orderNoMatch.so_khung && orderNoMatch.so_khung.trim()) ||
+                               orderNoMatch.ten_color === 'Đã ghép SK' ||
+                               orderNoMatch.ten_color === 'Đã xuất HĐ';
+            const approval = getApprovalStatus(orderNoMatch);
+            return {
+                isAssigned,
+                cyberVin: orderNoMatch.so_khung,
+                contract: orderNoMatch,
+                isApprovedYellow: approval.isApprovedYellow,
+                isPendingGreen: approval.isPendingGreen
+            };
+        }
+    }
+
+    // 3. Tìm theo tên khách hàng (kết hợp dòng xe nếu có)
+    if (custName) {
+        const customerMatches = cyberContracts.filter(c => {
+            const cCust = removeTones(c.ten_kh || '');
+            return cCust === custName || cCust.includes(custName) || custName.includes(cCust);
+        });
+
+        if (customerMatches.length > 0) {
+            // Lọc tiếp theo dòng xe nếu có nhiều hơn 1 hợp đồng
+            let candidateMatches = customerMatches;
+            if (candidateMatches.length > 1 && carModel) {
+                const modelFiltered = candidateMatches.filter(c => {
+                    const cModel = removeTones(`${c.ten_kx || ''} ${c.ma_kx || ''}`);
+                    return cModel.includes(carModel) || carModel.includes(cModel);
+                });
+                if (modelFiltered.length > 0) {
+                    candidateMatches = modelFiltered;
+                }
+            }
+
+            // Kiểm tra xem trong các hợp đồng khớp, có hợp đồng nào ĐÃ XẾP XE không
+            const assignedContract = candidateMatches.find(c => {
+                const hasVin = Boolean(c.so_khung && c.so_khung.trim());
+                const status = (c.ten_color || '').trim();
+                return hasVin || status === 'Đã ghép SK' || status === 'Đã xuất HĐ';
+            });
+
+            if (assignedContract) {
+                const approval = getApprovalStatus(assignedContract);
+                return {
+                    isAssigned: true,
+                    cyberVin: assignedContract.so_khung,
+                    contract: assignedContract,
+                    isApprovedYellow: approval.isApprovedYellow,
+                    isPendingGreen: approval.isPendingGreen
+                };
+            }
+
+            // Nếu không có hợp đồng nào đã xếp xe -> hợp đồng đang chờ ghép xe
+            const targetContract = candidateMatches[0];
+            const approval = getApprovalStatus(targetContract);
+            return {
+                isAssigned: false,
+                contract: targetContract,
+                isApprovedYellow: approval.isApprovedYellow,
+                isPendingGreen: approval.isPendingGreen
+            };
+        }
+    }
+
+    return { isAssigned: false };
+};
+
+/**
+ * Lấy danh sách hợp đồng xếp xe từ CyberSoft ERP (CP_BeXepXe)
+ */
+export const getCyberXepXeContracts = async (params: CyberXepXeFilterParams = {}): Promise<CyberXepXeContractsResponse> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/xep-xe-contracts');
+        let response: Response | null = null;
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    lastErrorMsg = errJson.error || `HTTP ${res.status}`;
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        if (!response) throw new Error(lastErrorMsg || 'Không thể kết nối máy chủ CyberSoft Xếp xe.');
+        return await response.json();
+    } catch (err: any) {
+        console.error("Lỗi getCyberXepXeContracts:", err);
+        return {
+            success: false,
+            total: 0,
+            status_counts: {},
+            showrooms: [],
+            models: [],
+            contracts: [],
+            error: err.message || 'Lỗi khi tải danh sách hợp đồng xếp xe CyberSoft.'
+        };
+    }
+};
+
+/**
+ * Tra cứu xe tồn/kế hoạch khớp cấu hình để xếp vào hợp đồng (CP_BeXepXe_SK)
+ */
+export const getCyberXepXeCandidates = async (params: { stt_rec: string; stt_rec0: string; ma_dvcs?: string }): Promise<CyberXepXeCandidatesResponse> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/xep-xe-candidates');
+        let response: Response | null = null;
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    lastErrorMsg = errJson.error || `HTTP ${res.status}`;
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        if (!response) throw new Error(lastErrorMsg || 'Không thể kết nối máy chủ tìm xe ghép.');
+        return await response.json();
+    } catch (err: any) {
+        console.error("Lỗi getCyberXepXeCandidates:", err);
+        return {
+            success: false,
+            total: 0,
+            candidates: [],
+            error: err.message || 'Lỗi khi tìm danh sách xe ghép.'
+        };
+    }
+};
+
+/**
+ * Gán/xếp xe vào hợp đồng trong CyberSoft ERP (CP_BeXepXe_SAVE)
+ */
+export const saveCyberXepXe = async (params: { ma_hd: string; stt_rec: string; stt_rec0: string; so_khung: string; ma_dvcs?: string; user_name?: string }): Promise<CyberXepXeActionResult> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/xep-xe-save');
+        let response: Response | null = null;
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    lastErrorMsg = errJson.error || `HTTP ${res.status}`;
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        if (!response) throw new Error(lastErrorMsg || 'Không thể kết nối máy chủ lưu xếp xe.');
+        return await response.json();
+    } catch (err: any) {
+        console.error("Lỗi saveCyberXepXe:", err);
+        return {
+            success: false,
+            error: err.message || 'Lỗi khi lưu xếp xe vào CyberSoft.'
+        };
+    }
+};
+
+/**
+ * Hủy ghép xe khỏi hợp đồng trong CyberSoft ERP (CP_BeXepXe_DELETE)
+ */
+export const deleteCyberXepXe = async (params: { ma_hd: string; stt_rec: string; stt_rec0: string; so_khung: string; ma_dvcs?: string; user_name?: string }): Promise<CyberXepXeActionResult> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/xep-xe-delete');
+        let response: Response | null = null;
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    lastErrorMsg = errJson.error || `HTTP ${res.status}`;
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        if (!response) throw new Error(lastErrorMsg || 'Không thể kết nối máy chủ hủy xếp xe.');
+        return await response.json();
+    } catch (err: any) {
+        console.error("Lỗi deleteCyberXepXe:", err);
+        return {
+            success: false,
+            error: err.message || 'Lỗi khi hủy xếp xe khỏi CyberSoft.'
+        };
+    }
+};
+
 

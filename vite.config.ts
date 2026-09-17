@@ -92,6 +92,51 @@ function cyberSyncPlugin(): Plugin {
           runPy([scriptPath, '--search-plan'], body, res);
         });
       });
+
+      server.middlewares.use('/api/cyber/ton-kho-report', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          runPy([scriptPath, '--ton-kho-report'], body, res);
+        });
+      });
+
+      server.middlewares.use('/api/cyber/xep-xe-contracts', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          runPy([scriptPath, '--xep-xe-contracts'], body, res);
+        });
+      });
+
+      server.middlewares.use('/api/cyber/xep-xe-candidates', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          runPy([scriptPath, '--xep-xe-candidates'], body, res);
+        });
+      });
+
+      server.middlewares.use('/api/cyber/xep-xe-save', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          runPy([scriptPath, '--xep-xe-save'], body, res);
+        });
+      });
+
+      server.middlewares.use('/api/cyber/xep-xe-delete', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          runPy([scriptPath, '--xep-xe-delete'], body, res);
+        });
+      });
     }
   };
 }
