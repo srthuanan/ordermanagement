@@ -16,7 +16,9 @@ CYBER_CONN = (
     "DATABASE=CyberAppGolden_VanDao;"
     "UID=cyber_vandao;"
     "PWD=HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv;"
-    "TrustServerCertificate=yes"
+    "TrustServerCertificate=yes;"
+    "APP=CyberAppGolden;"
+    "Workstation ID=CyberAppServer-Internal"
 )
 
 SUPABASE_URL = os.environ.get(
@@ -134,7 +136,8 @@ def fetch_allocations_from_cyber(from_date: str, to_date: str, ttcp_code="02.01.
             user='cyber_vandao',
             password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
             database='CyberAppGolden_VanDao',
-            timeout=30
+            timeout=30,
+            appname='CyberAppGolden',
         )
         is_pymssql = True
     except Exception as e:
@@ -237,7 +240,8 @@ def fetch_physical_locations_from_cyber(vins: list) -> dict:
             user='cyber_vandao',
             password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
             database='CyberAppGolden_VanDao',
-            timeout=30
+            timeout=30,
+            appname='CyberAppGolden',
         )
     except Exception:
         import pyodbc
@@ -504,7 +508,8 @@ def get_cyber_plan_filter_options(model: str = ""):
             user='cyber_vandao',
             password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
             database='CyberAppGolden_VanDao',
-            timeout=30
+            timeout=30,
+            appname='CyberAppGolden',
         )
     except Exception:
         import pyodbc
@@ -630,7 +635,8 @@ def search_cyber_factory_plan(params: dict) -> dict:
             user='cyber_vandao',
             password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
             database='CyberAppGolden_VanDao',
-            timeout=30
+            timeout=30,
+            appname='CyberAppGolden',
         )
     except Exception:
         import pyodbc
@@ -1452,7 +1458,8 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
                 password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
                 database='CyberAppGolden_VanDao',
                 timeout=30,
-                autocommit=True
+                appname='CyberAppGolden',
+                    autocommit=True
             )
         except Exception:
             import pyodbc
