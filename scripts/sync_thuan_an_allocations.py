@@ -149,7 +149,30 @@ def fetch_allocations_from_cyber(from_date: str, to_date: str, ttcp_code="02.01.
 
     return result
 
-def map_allocation_to_khoxe(car: dict) -> dict:
+def fetch_plan_map(vins: list) -> dict:
+    if not vins:
+        return {}
+    url = f"{SUPABASE_URL}/rest/v1/kehoach_giaoxe"
+    CHUNK_SIZE = 50
+    plan_map = {}
+    for i in range(0, len(vins), CHUNK_SIZE):
+        chunk = vins[i:i + CHUNK_SIZE]
+        try:
+            params = {
+                "select": "vin,vi_tri,raw_kho,ma_dms,so_may",
+                "vin": f"in.({','.join(chunk)})"
+            }
+            resp = requests.get(url, headers=HEADERS, params=params, timeout=15)
+            if resp.status_code == 200:
+                for item in resp.json():
+                    v = (item.get("vin") or "").strip().upper()
+                    if v:
+                        plan_map[v] = item
+        except Exception as e:
+            print(f"[Warn] Fetch plan map error: {e}", file=sys.stderr)
+    return plan_map
+
+def map_allocation_to_khoxe(car: dict, plan_map: dict = None) -> dict:
     ma_kx = (car.get("ma_kx") or "").strip()
     if ma_kx in MODEL_MAP:
         dong_xe, phien_ban = MODEL_MAP[ma_kx]
@@ -172,18 +195,31 @@ def map_allocation_to_khoxe(car: dict) -> dict:
         ngay_ct = car.get("ngay_ct")
         ngay_nhap_str = ngay_ct.isoformat() if isinstance(ngay_ct, (datetime, date)) else datetime.now().isoformat()
 
-    vi_tri = (car.get("vi_tri_kho") or "").strip()
-    if not vi_tri:
+    vin = car.get("vin", "").strip().upper()
+    plan = (plan_map or {}).get(vin, {})
+
+    plan_location = (plan.get("vi_tri") or plan.get("raw_kho") or "").strip()
+    cyber_location = (car.get("vi_tri_kho") or "").strip()
+
+    # Ưu tiên lấy vị trí vật lý từ Kế hoạch giao xe nhà máy (Cam Giá, Mê Linh, QL13 - HCM...)
+    if plan_location:
+        vi_tri = plan_location
+    elif cyber_location:
+        vi_tri = cyber_location
+    else:
         vi_tri = "Kho Thuận An"
 
+    so_may = (car.get("so_may") or "").strip() or (plan.get("so_may") or "").strip()
+    ma_dms = (car.get("ma_dms") or "").strip() or (plan.get("ma_dms") or "").strip()
+
     return {
-        "vin": car.get("vin", "").strip(),
-        "so_may": (car.get("so_may") or "").strip(),
+        "vin": vin,
+        "so_may": so_may,
         "dong_xe": dong_xe,
         "phien_ban": phien_ban,
         "ngoai_that": ngoai_that,
         "noi_that": noi_that,
-        "ma_dms": (car.get("ma_dms") or "").strip(),
+        "ma_dms": ma_dms,
         "vi_tri": vi_tri,
         "trang_thai": "Trong kho",
         "ngay_nhap": ngay_nhap_str,
@@ -227,7 +263,9 @@ def main():
     to_date = args.to_date or today.strftime("%Y-%m-%d")
 
     raw_cars = fetch_allocations_from_cyber(from_date, to_date)
-    mapped_cars = [map_allocation_to_khoxe(c) for c in raw_cars if c.get("vin")]
+    raw_vins = [c.get("vin", "").strip().upper() for c in raw_cars if c.get("vin")]
+    plan_map = fetch_plan_map(raw_vins)
+    mapped_cars = [map_allocation_to_khoxe(c, plan_map) for c in raw_cars if c.get("vin")]
 
     if args.preview:
         output = {

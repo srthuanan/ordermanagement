@@ -8,6 +8,7 @@ from datetime import datetime
 # Import business logic from scripts
 from scripts.sync_thuan_an_allocations import (
     fetch_allocations_from_cyber,
+    fetch_plan_map,
     map_allocation_to_khoxe,
     upsert_to_supabase_khoxe
 )
@@ -71,7 +72,9 @@ class CyberApiHandler(BaseHTTPRequestHandler):
 
             try:
                 raw_cars = fetch_allocations_from_cyber(from_date, to_date)
-                mapped_cars = [map_allocation_to_khoxe(c) for c in raw_cars if c.get("vin")]
+                vins = [c.get("vin", "").strip().upper() for c in raw_cars if c.get("vin")]
+                plan_map = fetch_plan_map(vins)
+                mapped_cars = [map_allocation_to_khoxe(c, plan_map) for c in raw_cars if c.get("vin")]
 
                 if preview:
                     result = {
