@@ -2,7 +2,6 @@ import sys
 import argparse
 import json
 import os
-import pyodbc
 import requests
 from datetime import datetime, date
 from decimal import Decimal
