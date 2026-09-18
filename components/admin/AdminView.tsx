@@ -17,7 +17,6 @@ import ImportStockLocationModal from '../modals/ImportStockLocationModal';
 import { CyberSyncAllocationModal } from '../modals/CyberSyncAllocationModal';
 import { CyberLocationSyncModal } from '../modals/CyberLocationSyncModal';
 import { CyberFactoryPlanView } from './CyberFactoryPlanView';
-import { CyberAutoSyncBadge } from '../ui/CyberAutoSyncBadge';
 
 import { useAdminFilters } from '../../hooks/useAdminFilters';
 import { useAdminActions } from '../../hooks/useAdminActions';
@@ -811,9 +810,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
             {document.getElementById('admin-portal-target') && createPortal(
                 <div className="relative mr-0.5" ref={actionMenuRef}>
                     <div className="flex items-center gap-1.5">
-                        {/* Auto-sync status badge — always visible */}
-                        <CyberAutoSyncBadge onOpenManual={() => setShowCyberLocationSyncModal(true)} />
-
                         <button
                             onClick={() => setIsActionMenuOpen(prev => !prev)}
                             title="Thao Tác Nhanh Quản Trị"
