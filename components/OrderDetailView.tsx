@@ -16,7 +16,7 @@ import { Policy, policyAdminService } from '../services/api/policyAdminService';
 import { useVehicleConfig } from '../hooks/useVehicleConfig';
 import { changeOrderConfiguration, updateOrderDetails, getOrderAuditLogs, OrderAuditLogItem } from '../services/apiService';
 import { createTransferRequest, getTransferRequestByOrder, updateTransferRequestStatus, syncCyberDnxToInteraction, TransferRequestItem } from '../services/api/transferService';
-import { lookupCyberVinWarehouse } from '../services/api/stockService';
+import { lookupCyberVinWarehouse, getCyberCarStatusFromSupabase, CyberCarStatusRecord } from '../services/api/stockService';
 import { supabase } from '../services/supabaseClient';
 import { CyberDnxPrintModal, CyberDnxPrintData } from './admin/CyberDnxPrintModal';
 import MarqueeText from './ui/MarqueeText';
@@ -230,104 +230,151 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 .catch(err => console.error("Lỗi lấy thông tin chuyển xe:", err))
                 .finally(() => setIsLoadingTransferReq(false));
 
-            // Tự động nhận diện kho thực tế của xe & kiểm tra phiếu DNX / TD4 đã lập từ CyberSoft ERP
-            lookupCyberVinWarehouse([vin])
-                .then(res => {
-                    if (res && res.success) {
-                        // Nếu xe ĐÃ CÓ PHIẾU TD4 (Giấy ra cổng) trên CyberSoft
-                        if (res.has_td4 || (res.cars && res.cars.some(c => c.has_td4))) {
-                            setHasTd4(true);
+            // Hàm cập nhật trạng thái kho & phiếu từ dữ liệu xe
+            const applyCyberCarStatus = (carStatus: CyberCarStatusRecord | any) => {
+                if (!carStatus) return;
+
+                // Nếu xe ĐÃ CÓ PHIẾU TD4 (Giấy ra cổng)
+                if (carStatus.has_td4) {
+                    setHasTd4(true);
+                }
+
+                if (carStatus.ma_kho) {
+                    setTransferFromWarehouse(carStatus.ma_kho);
+                    setTransferFromWarehouseName(shortenWarehouseName(carStatus.ma_kho, carStatus.ten_kho));
+                }
+
+                // Nếu trên Cyber xe này ĐÃ LÀM PHIẾU ĐIỀU CHUYỂN (DNX) VỀ THUẬN AN
+                const dnx = carStatus.dnx_data || carStatus.dnx;
+                if (dnx && dnx.so_ct && (String(dnx.so_ct).startsWith('08.DNX') || dnx.ma_kho_nhan === 'K83')) {
+                    const printData: CyberDnxPrintData = {
+                        so_ct: dnx.so_ct,
+                        stt_rec: dnx.stt_rec || '',
+                        ngay_ct: dnx.ngay_ct || '',
+                        user_name: 'Phạm Thành Nhân',
+                        ma_kho_xuat: dnx.ma_kho_xuat || carStatus.ma_kho || 'K87',
+                        ten_kho_xuat: shortenWarehouseName(dnx.ma_kho_xuat || carStatus.ma_kho || 'K87'),
+                        ma_kho_nhan: dnx.ma_kho_nhan || 'K83',
+                        ten_kho_nhan: shortenWarehouseName(dnx.ma_kho_nhan || 'K83'),
+                        khach_hang: resolvedOrder?.['Tên khách hàng'] || dnx.ten_kh || '',
+                        don_vi: 'Thuận An',
+                        ly_do: dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
+                        total_cars: 1,
+                        cars: [{
+                            stt_rec0: '0001',
+                            vin: vin,
+                            so_may: dnx.so_may || (resolvedOrder as any)?.['Số máy'] || '',
+                            ma_kx: dnx.ma_kx || resolvedOrder?.['Dòng xe'] || '',
+                            ten_kx: `${resolvedOrder?.['Dòng xe'] || ''} ${resolvedOrder?.['Phiên bản'] || ''}`.trim(),
+                            dong_xe: resolvedOrder?.['Dòng xe'] || '',
+                            ma_mau: dnx.ma_mau || resolvedOrder?.['Ngoại thất'] || '',
+                            ten_mau: resolvedOrder?.['Ngoại thất'] || '',
+                            ma_kho_xuat: dnx.ma_kho_xuat || carStatus.ma_kho || 'K87',
+                            ma_kho_nhan: dnx.ma_kho_nhan || 'K83'
+                        }]
+                    };
+
+                    const cyberItem: TransferRequestItem = {
+                        id: `cyber-${dnx.stt_rec || dnx.so_ct}`,
+                        createdAt: dnx.ngay_ct || new Date().toISOString(),
+                        orderNumber: orderNo,
+                        vin: vin,
+                        customerName: resolvedOrder?.['Tên khách hàng'] || dnx.ten_kh || '',
+                        consultantName: resolvedOrder?.['Tên tư vấn bán hàng'] || (resolvedOrder as any)?.['TVBH'] || dnx.nvkd || 'TVBH',
+                        carModel: resolvedOrder?.['Dòng xe'] || '',
+                        trim: resolvedOrder?.['Phiên bản'] || '',
+                        extColor: resolvedOrder?.['Ngoại thất'] || '',
+                        fromWarehouse: dnx.ma_kho_xuat || carStatus.ma_kho || 'K87',
+                        fromWarehouseName: shortenWarehouseName(dnx.ma_kho_xuat || carStatus.ma_kho || 'K87'),
+                        toWarehouse: dnx.ma_kho_nhan || 'K83',
+                        toWarehouseName: shortenWarehouseName(dnx.ma_kho_nhan || 'K83'),
+                        reason: dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
+                        status: 'completed',
+                        soCtDnx: dnx.so_ct,
+                        adminNote: 'Đã hoàn tất phiếu chuyển trên CyberSoft',
+                        printData: printData
+                    };
+
+                    setTransferRequest(prev => {
+                        if (!prev || prev.status !== 'completed' || !prev.soCtDnx) {
+                            return cyberItem;
                         }
+                        return prev;
+                    });
+                    setTransferFromWarehouse(dnx.ma_kho_xuat || 'K87');
+                    setTransferFromWarehouseName(shortenWarehouseName(dnx.ma_kho_xuat || 'K87'));
+                    setTransferReason(dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH');
 
-                        if (res.found && res.ma_kho) {
-                            setTransferFromWarehouse(res.ma_kho);
-                            setTransferFromWarehouseName(shortenWarehouseName(res.ma_kho, res.ten_kho));
-                        }
+                    // Tự động đồng bộ nền về Supabase
+                    syncCyberDnxToInteraction({
+                        orderNumber: orderNo,
+                        vin: vin,
+                        customerName: resolvedOrder?.['Tên khách hàng'] || dnx.ten_kh || '',
+                        consultantName: resolvedOrder?.['Tên tư vấn bán hàng'] || (resolvedOrder as any)?.['TVBH'] || dnx.nvkd || 'TVBH',
+                        carModel: resolvedOrder?.['Dòng xe'] || '',
+                        trim: resolvedOrder?.['Phiên bản'] || '',
+                        extColor: resolvedOrder?.['Ngoại thất'] || '',
+                        fromWarehouse: dnx.ma_kho_xuat || carStatus.ma_kho || 'K87',
+                        fromWarehouseName: shortenWarehouseName(dnx.ma_kho_xuat || carStatus.ma_kho || 'K87'),
+                        toWarehouse: dnx.ma_kho_nhan || 'K83',
+                        toWarehouseName: shortenWarehouseName(dnx.ma_kho_nhan || 'K83'),
+                        reason: dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
+                        soCtDnx: dnx.so_ct,
+                        printData: printData
+                    }).catch(err => console.error("Lỗi đồng bộ phiếu DNX về Supabase:", err));
+                }
+            };
 
-                        // Nếu trên Cyber xe này ĐÃ LÀM PHIẾU ĐIỀU CHUYỂN (DNX) VỀ THUẬN AN
-                        const dnx = res.dnx || (res.cars && res.cars[0]?.dnx);
-                        if (dnx && dnx.so_ct && (String(dnx.so_ct).startsWith('08.DNX') || dnx.ma_kho_nhan === 'K83')) {
-                            const printData: CyberDnxPrintData = {
-                                so_ct: dnx.so_ct,
-                                stt_rec: dnx.stt_rec || '',
-                                ngay_ct: dnx.ngay_ct || '',
-                                user_name: 'Phạm Thành Nhân',
-                                ma_kho_xuat: dnx.ma_kho_xuat || res.ma_kho || 'K87',
-                                ten_kho_xuat: shortenWarehouseName(dnx.ma_kho_xuat || res.ma_kho || 'K87'),
-                                ma_kho_nhan: dnx.ma_kho_nhan || 'K83',
-                                ten_kho_nhan: shortenWarehouseName(dnx.ma_kho_nhan || 'K83'),
-                                khach_hang: resolvedOrder?.['Tên khách hàng'] || dnx.ten_kh || '',
-                                don_vi: 'Thuận An',
-                                ly_do: dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
-                                total_cars: 1,
-                                cars: [{
-                                    stt_rec0: '0001',
-                                    vin: vin,
-                                    so_may: dnx.so_may || (resolvedOrder as any)?.['Số máy'] || '',
-                                    ma_kx: dnx.ma_kx || resolvedOrder?.['Dòng xe'] || '',
-                                    ten_kx: `${resolvedOrder?.['Dòng xe'] || ''} ${resolvedOrder?.['Phiên bản'] || ''}`.trim(),
-                                    dong_xe: resolvedOrder?.['Dòng xe'] || '',
-                                    ma_mau: dnx.ma_mau || resolvedOrder?.['Ngoại thất'] || '',
-                                    ten_mau: resolvedOrder?.['Ngoại thất'] || '',
-                                    ma_kho_xuat: dnx.ma_kho_xuat || res.ma_kho || 'K87',
-                                    ma_kho_nhan: dnx.ma_kho_nhan || 'K83'
-                                }]
-                            };
-
-                            const cyberItem: TransferRequestItem = {
-                                id: `cyber-${dnx.stt_rec || dnx.so_ct}`,
-                                createdAt: dnx.ngay_ct || new Date().toISOString(),
-                                orderNumber: orderNo,
-                                vin: vin,
-                                customerName: resolvedOrder?.['Tên khách hàng'] || dnx.ten_kh || '',
-                                consultantName: resolvedOrder?.['Tên tư vấn bán hàng'] || (resolvedOrder as any)?.['TVBH'] || dnx.nvkd || 'TVBH',
-                                carModel: resolvedOrder?.['Dòng xe'] || '',
-                                trim: resolvedOrder?.['Phiên bản'] || '',
-                                extColor: resolvedOrder?.['Ngoại thất'] || '',
-                                fromWarehouse: dnx.ma_kho_xuat || res.ma_kho || 'K87',
-                                fromWarehouseName: shortenWarehouseName(dnx.ma_kho_xuat || res.ma_kho || 'K87'),
-                                toWarehouse: dnx.ma_kho_nhan || 'K83',
-                                toWarehouseName: shortenWarehouseName(dnx.ma_kho_nhan || 'K83'),
-                                reason: dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
-                                status: 'completed',
-                                soCtDnx: dnx.so_ct,
-                                adminNote: 'Đã hoàn tất phiếu chuyển trên CyberSoft',
-                                printData: printData
-                            };
-
-                            setTransferRequest(prev => {
-                                if (!prev || prev.status !== 'completed' || !prev.soCtDnx) {
-                                    return cyberItem;
+            // 1. TẢI TỨC THÌ TỪ SUPABASE CACHE (cyber_car_status, tốc độ < 50ms)
+            getCyberCarStatusFromSupabase(vin)
+                .then(cached => {
+                    if (cached) {
+                        applyCyberCarStatus(cached);
+                    }
+                    // Nếu chưa có trong cache Supabase hoặc cache quá cũ (> 10 phút), gọi fallback tra cứu trực tiếp Cyber
+                    const isMissingOrOld = !cached || !cached.updated_at || (Date.now() - new Date(cached.updated_at).getTime() > 10 * 60 * 1000);
+                    if (isMissingOrOld) {
+                        lookupCyberVinWarehouse([vin])
+                            .then(res => {
+                                if (res && res.success) {
+                                    const car = res.cars?.[0] || res;
+                                    applyCyberCarStatus({
+                                        vin,
+                                        ma_kho: res.ma_kho || car.ma_kho,
+                                        ten_kho: res.ten_kho || car.ten_kho,
+                                        has_td4: res.has_td4 || car.has_td4,
+                                        td4_data: res.td4 || car.td4,
+                                        has_dnx: res.has_dnx || car.has_dnx,
+                                        dnx_data: res.dnx || car.dnx
+                                    });
                                 }
-                                return prev;
-                            });
-                            setTransferFromWarehouse(dnx.ma_kho_xuat || 'K87');
-                            setTransferFromWarehouseName(shortenWarehouseName(dnx.ma_kho_xuat || 'K87'));
-                            setTransferReason(dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH');
-
-                            // Tự động đồng bộ nền về Supabase
-                            syncCyberDnxToInteraction({
-                                orderNumber: orderNo,
-                                vin: vin,
-                                customerName: resolvedOrder?.['Tên khách hàng'] || dnx.ten_kh || '',
-                                consultantName: resolvedOrder?.['Tên tư vấn bán hàng'] || (resolvedOrder as any)?.['TVBH'] || dnx.nvkd || 'TVBH',
-                                carModel: resolvedOrder?.['Dòng xe'] || '',
-                                trim: resolvedOrder?.['Phiên bản'] || '',
-                                extColor: resolvedOrder?.['Ngoại thất'] || '',
-                                fromWarehouse: dnx.ma_kho_xuat || res.ma_kho || 'K87',
-                                fromWarehouseName: shortenWarehouseName(dnx.ma_kho_xuat || res.ma_kho || 'K87'),
-                                toWarehouse: dnx.ma_kho_nhan || 'K83',
-                                toWarehouseName: shortenWarehouseName(dnx.ma_kho_nhan || 'K83'),
-                                reason: dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
-                                soCtDnx: dnx.so_ct,
-                                printData: printData
-                            }).catch(err => console.error("Lỗi đồng bộ phiếu DNX về Supabase:", err));
-                        }
+                            })
+                            .catch(e => console.error("Lỗi tra cứu fallback Cyber:", e));
                     }
                 })
-                .catch(e => console.error("Lỗi tra cứu kho Cyber:", e));
+                .catch(err => console.error("Lỗi đọc cyber_car_status từ Supabase:", err));
 
-            // Lắng nghe realtime từ Admin khi lập phiếu DNX hoặc duyệt yêu cầu
+            // 2. Lắng nghe Realtime bảng cyber_car_status (cập nhật khi daemon 5 phút đồng bộ)
+            const carStatusChannel = supabase
+                .channel(`cyber-status-${vin}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'cyber_car_status',
+                        filter: `vin=eq.${vin.trim().toUpperCase()}`
+                    },
+                    (payload: any) => {
+                        const newStatus = payload.new;
+                        if (newStatus) {
+                            applyCyberCarStatus(newStatus);
+                        }
+                    }
+                )
+                .subscribe();
+
+            // 3. Lắng nghe realtime từ Admin khi lập phiếu DNX hoặc duyệt yêu cầu
             const channel = supabase
                 .channel(`order-transfer-${orderNo}`)
                 .on(
@@ -357,6 +404,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
             return () => {
                 supabase.removeChannel(channel);
+                supabase.removeChannel(carStatusChannel);
             };
         } else {
             setTransferRequest(null);
@@ -415,10 +463,17 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         if (vin) {
             setIsDetectingWarehouse(true);
             try {
-                const res = await lookupCyberVinWarehouse([vin]);
-                if (res && !transferRequest && res.success && res.found && res.ma_kho) {
-                    setTransferFromWarehouse(res.ma_kho);
-                    setTransferFromWarehouseName(shortenWarehouseName(res.ma_kho, res.ten_kho));
+                // Thử lấy từ cache Supabase trước (< 50ms)
+                const cached = await getCyberCarStatusFromSupabase(vin);
+                if (cached && !transferRequest && cached.ma_kho) {
+                    setTransferFromWarehouse(cached.ma_kho);
+                    setTransferFromWarehouseName(shortenWarehouseName(cached.ma_kho, cached.ten_kho));
+                } else {
+                    const res = await lookupCyberVinWarehouse([vin]);
+                    if (res && !transferRequest && res.success && res.found && res.ma_kho) {
+                        setTransferFromWarehouse(res.ma_kho);
+                        setTransferFromWarehouseName(shortenWarehouseName(res.ma_kho, res.ten_kho));
+                    }
                 }
             } catch (e) {
                 console.error("Lỗi tra cứu kho Cyber cho xe:", e);

@@ -4,7 +4,7 @@ import json
 import os
 import requests
 import re
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from decimal import Decimal
 from dotenv import load_dotenv
 
@@ -1954,6 +1954,12 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
         first_dnx = results[0].get("dnx") if results else None
         first_td4 = results[0].get("td4") if results else None
 
+        # Tự động cập nhật / lưu cache ngay vào bảng cyber_car_status trên Supabase
+        try:
+            upsert_cyber_car_status_records(results)
+        except Exception as e_cache:
+            print(f"[cyber_car_status cache warning] {e_cache}", file=sys.stderr)
+
         return {
             "success": True,
             "found": bool(first_mk),
@@ -1974,6 +1980,101 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
             "found": False,
             "error": f"Lỗi tra cứu kho Cyber: {str(e)}"
         }
+
+def upsert_cyber_car_status_records(cars: list) -> int:
+    """Lưu kết quả tổng hợp trạng thái xe từ Cyber vào bảng cyber_car_status trên Supabase."""
+    if not cars:
+        return 0
+    records = []
+    now_utc = datetime.now(timezone.utc).isoformat()
+    for c in cars:
+        v = (c.get("vin") or "").strip().upper()
+        if not v:
+            continue
+        dnx = c.get("dnx") or {}
+        td4 = c.get("td4") or {}
+        records.append({
+            "vin": v,
+            "ma_kho": c.get("ma_kho", ""),
+            "ten_kho": c.get("ten_kho", ""),
+            "so_may": c.get("so_may", ""),
+            "ma_kx": c.get("ma_kx", ""),
+            "ten_kx": c.get("ten_kx", ""),
+            "ma_mau": c.get("ma_mau", ""),
+            "ten_mau": c.get("ten_mau", ""),
+            "has_dnx": bool(c.get("has_dnx")),
+            "so_ct_dnx": dnx.get("so_ct", "") if c.get("has_dnx") else "",
+            "ngay_ct_dnx": dnx.get("ngay_ct") or None if c.get("has_dnx") else None,
+            "dnx_data": dnx if c.get("has_dnx") else None,
+            "has_td4": bool(c.get("has_td4")),
+            "so_ct_td4": td4.get("so_ct", "") if c.get("has_td4") else "",
+            "ngay_ct_td4": td4.get("ngay_ct") or None if c.get("has_td4") else None,
+            "td4_data": td4 if c.get("has_td4") else None,
+            "updated_at": now_utc
+        })
+    if not records:
+        return 0
+    updated_count = 0
+    CHUNK_SIZE = 50
+    for i in range(0, len(records), CHUNK_SIZE):
+        chunk = records[i:i + CHUNK_SIZE]
+        try:
+            up_res = requests.post(
+                f"{SUPABASE_URL}/rest/v1/cyber_car_status",
+                headers={**HEADERS, "Prefer": "resolution=merge-duplicates"},
+                params={"on_conflict": "vin"},
+                json=chunk,
+                timeout=15
+            )
+            if 200 <= up_res.status_code < 300:
+                updated_count += len(chunk)
+            else:
+                print(f"[Supabase cyber_car_status error] HTTP {up_res.status_code}: {up_res.text}", file=sys.stderr)
+        except Exception as err:
+            print(f"[Supabase cyber_car_status error] {err}", file=sys.stderr)
+    return updated_count
+
+def sync_cyber_car_status_to_supabase(target_vins: list = None) -> dict:
+    """
+    Quét danh sách các xe đang quản lý từ Supabase và nạp trạng thái mới nhất từ CyberSoft
+    vào bảng cyber_car_status (được gọi định kỳ 5 phút/lần từ Render daemon).
+    """
+    vins_to_sync = target_vins or []
+    if not vins_to_sync:
+        try:
+            dh_res = requests.get(
+                f"{SUPABASE_URL}/rest/v1/donhang",
+                headers=HEADERS,
+                params={"select": "vin", "vin": "not.is.null", "limit": "300"},
+                timeout=15
+            )
+            dh_vins = [r['vin'].strip().upper() for r in dh_res.json() if r.get('vin') and len(r['vin'].strip()) >= 8] if dh_res.ok else []
+
+            kx_res = requests.get(
+                f"{SUPABASE_URL}/rest/v1/khoxe",
+                headers=HEADERS,
+                params={"select": "vin", "vin": "not.is.null", "limit": "300"},
+                timeout=15
+            )
+            kx_vins = [r['vin'].strip().upper() for r in kx_res.json() if r.get('vin') and len(r['vin'].strip()) >= 8] if kx_res.ok else []
+
+            vins_to_sync = sorted(list(set(dh_vins + kx_vins)))
+        except Exception as e:
+            print(f"[sync_cyber_car_status_to_supabase] Lỗi lấy danh sách VIN từ Supabase: {e}", file=sys.stderr)
+
+    if not vins_to_sync:
+        return {"success": True, "total": 0, "updated": 0, "message": "Không có xe nào cần đồng bộ"}
+
+    lookup_res = lookup_vin_warehouse({"vins": vins_to_sync})
+    cars = lookup_res.get("cars") or []
+    updated = upsert_cyber_car_status_records(cars)
+    now_utc = datetime.now(timezone.utc).isoformat()
+    return {
+        "success": True,
+        "total": len(cars),
+        "updated": updated,
+        "timestamp": now_utc
+    }
 
 def check_cyber_contract_status(params: dict = {}) -> dict:
     """

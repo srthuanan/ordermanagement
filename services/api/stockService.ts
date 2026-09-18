@@ -1379,6 +1379,47 @@ export interface CyberVinLookupResult {
     error?: string;
 }
 
+export interface CyberCarStatusRecord {
+    vin: string;
+    ma_kho: string;
+    ten_kho: string;
+    so_may?: string;
+    ma_kx?: string;
+    ten_kx?: string;
+    ma_mau?: string;
+    ten_mau?: string;
+    has_dnx: boolean;
+    so_ct_dnx?: string;
+    ngay_ct_dnx?: string;
+    dnx_data?: any;
+    has_td4: boolean;
+    so_ct_td4?: string;
+    ngay_ct_td4?: string;
+    td4_data?: any;
+    updated_at: string;
+}
+
+export const getCyberCarStatusFromSupabase = async (vin: string): Promise<CyberCarStatusRecord | null> => {
+    try {
+        if (!vin) return null;
+        const cleanVin = vin.trim().toUpperCase();
+        const { data, error } = await supabase
+            .from('cyber_car_status')
+            .select('*')
+            .eq('vin', cleanVin)
+            .maybeSingle();
+
+        if (error) {
+            console.warn('[getCyberCarStatusFromSupabase] Error:', error.message);
+            return null;
+        }
+        return data as CyberCarStatusRecord | null;
+    } catch (err) {
+        console.error('[getCyberCarStatusFromSupabase] Unexpected error:', err);
+        return null;
+    }
+};
+
 export const lookupCyberVinWarehouse = async (vinOrVins: string | string[]): Promise<CyberVinLookupResult> => {
     try {
         const endpoints = getCyberEndpoints('/api/cyber/lookup-vin');

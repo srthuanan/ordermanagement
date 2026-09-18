@@ -13,7 +13,7 @@ _auto_sync_state = {
     "last_total_cars": 0,      # total cars scanned
     "last_status": "idle",     # 'idle' | 'running' | 'ok' | 'error'
     "last_error": None,        # error message if any
-    "interval_hours": 2,
+    "interval_minutes": 5,
     "next_run": None,          # ISO timestamp of next scheduled run
 }
 _auto_sync_lock = threading.Lock()
@@ -36,7 +36,9 @@ from scripts.sync_thuan_an_allocations import (
     create_cyber_dnx_ticket,
     get_cyber_voucher_tickets,
     lookup_vin_warehouse,
-    check_cyber_contract_status
+    check_cyber_contract_status,
+    sync_cyber_car_status_to_supabase,
+    upsert_cyber_car_status_records
 )
 
 PORT = int(os.environ.get("PORT", 8080))
@@ -230,6 +232,33 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 print(f"[CyberSync Cloud Locations Error]: {str(e)}", file=sys.stderr)
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/sync-car-status":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            try:
+                data = json.loads(body_str or "{}")
+            except Exception:
+                data = {}
+
+            target_vins = data.get("vins", None)
+            print(f"[CyberSync Car Status] Request: target_vins_count={len(target_vins) if target_vins else 'ALL'}")
+
+            try:
+                result = sync_cyber_car_status_to_supabase(target_vins=target_vins)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync Car Status Error]: {str(e)}", file=sys.stderr)
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -471,17 +500,22 @@ def _now_utc() -> str:
 
 
 def _run_auto_location_sync():
-    """Execute silent location sync and update state. Called by scheduler thread."""
+    """Execute silent cyber_car_status & location sync and update state. Called by scheduler thread."""
     with _auto_sync_lock:
         _auto_sync_state["last_status"] = "running"
 
-    print("[AutoSync] 🔄 Bắt đầu tự động đồng bộ vị trí kho từ CyberSoft...")
+    print("[AutoSync] 🔄 Bắt đầu tự động đồng bộ trạng thái xe (cyber_car_status) & vị trí kho từ CyberSoft...")
     try:
-        result = sync_khoxe_locations_from_cyber(preview=False)
+        # 1. Đồng bộ bảng tổng hợp cyber_car_status cho tất cả VIN trong donhang & khoxe
+        status_res = sync_cyber_car_status_to_supabase()
+        
+        # 2. Cập nhật vị trí kho trong bảng khoxe
+        loc_res = sync_khoxe_locations_from_cyber(preview=False)
+
         now = _now_utc()
-        updated = result.get("updated_count", 0)
-        total = result.get("total_cars", 0)
-        print(f"[AutoSync] ✅ Hoàn thành: cập nhật {updated}/{total} xe | {now}")
+        updated = status_res.get("updated", 0)
+        total = status_res.get("total", 0)
+        print(f"[AutoSync] ✅ Hoàn thành: cập nhật {updated}/{total} xe vào cyber_car_status, {loc_res.get('updated_count', 0)} xe vào khoxe | {now}")
         with _auto_sync_lock:
             _auto_sync_state["last_run"] = now
             _auto_sync_state["last_updated_count"] = updated
@@ -497,8 +531,8 @@ def _run_auto_location_sync():
             _auto_sync_state["last_error"] = str(e)
 
 
-def _schedule_auto_sync(interval_seconds: int = 7200):
-    """Recurring background scheduler thread: fire immediately then repeat every interval."""
+def _schedule_auto_sync(interval_seconds: int = 300):
+    """Recurring background scheduler thread: fire immediately then repeat every interval (default 5m)."""
     with _auto_sync_lock:
         _auto_sync_state["next_run"] = _now_utc()
 
@@ -526,13 +560,12 @@ def run():
     httpd = HTTPServer(server_address, CyberApiHandler)
     print(f"🚀 CyberSync Cloud API running on port {PORT}...")
 
-    # ── Start auto-sync background thread (runs every 2 hours, daemon so it
-    #    dies automatically when the server process exits)
-    INTERVAL_HOURS = int(os.environ.get("AUTO_SYNC_INTERVAL_HOURS", "2"))
+    # ── Start auto-sync background thread (default every 5 minutes = 300 seconds)
+    INTERVAL_MINUTES = int(os.environ.get("AUTO_SYNC_INTERVAL_MINUTES", "5"))
     with _auto_sync_lock:
-        _auto_sync_state["interval_hours"] = INTERVAL_HOURS
-    print(f"[AutoSync] 🟢 Tự động đồng bộ vị trí kho mỗi {INTERVAL_HOURS} giờ (chạy ngầm)")
-    _schedule_auto_sync(interval_seconds=INTERVAL_HOURS * 3600)
+        _auto_sync_state["interval_minutes"] = INTERVAL_MINUTES
+    print(f"[AutoSync] 🟢 Tự động đồng bộ trạng thái xe mỗi {INTERVAL_MINUTES} phút (chạy ngầm)")
+    _schedule_auto_sync(interval_seconds=INTERVAL_MINUTES * 60)
 
     try:
         httpd.serve_forever()
