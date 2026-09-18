@@ -2506,6 +2506,7 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
                 p.stt_rec,
                 p.so_ct,
                 p.ngay_ct,
+                '' AS gio_ct,
                 p.Ma_Post AS ma_post,
                 p.Ma_TTCP_H AS ma_ttcp,
                 p.dien_giai,
@@ -2562,6 +2563,7 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
                 p.Stt_Rec AS stt_rec,
                 p.So_Ct AS so_ct,
                 p.Ngay_Ct AS ngay_ct,
+                ISNULL(p.Gio_CT, '') AS gio_ct,
                 p.Ma_Post AS ma_post,
                 p.Ma_TTCP_H AS ma_ttcp,
                 p.Dien_giai AS dien_giai,
@@ -2627,6 +2629,19 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
                             t['so_hd'] = order_item.get('so_don_hang') or ''
     except Exception as e_supa:
         pass
+
+    # SẮP XẾP TOÀN BỘ DANH SÁCH THEO THỜI GIAN TẠO GIẢM DẦN (KHÔNG PHÂN BIỆT LOẠI PHIẾU DNX / TD4)
+    def get_ticket_sort_key(t):
+        d = t.get('ngay_ct') or t.get('ngay_lct') or '1900-01-01'
+        d_str = str(d)[:10]
+        g = (t.get('gio_ct') or '').strip()
+        if not g:
+            g = '12:00'
+        so_ct = str(t.get('so_ct') or '')
+        stt = str(t.get('stt_rec') or '')
+        return (d_str, g, so_ct, stt)
+
+    tickets.sort(key=get_ticket_sort_key, reverse=True)
 
     # Apply search query in python if provided
     if search and search.strip():

@@ -1465,6 +1465,7 @@ export interface CyberVoucherTicketItem {
     stt_rec: string;
     so_ct: string;
     ngay_ct: string;
+    gio_ct?: string;
     ma_post: string;
     ma_ttcp: string;
     dien_giai: string;

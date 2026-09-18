@@ -641,12 +641,30 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         }
     };
 
-    // Lọc tức thì dữ liệu chứng từ trên máy khách khi nhập từ khóa tìm kiếm
+    // Lọc tức thì dữ liệu chứng từ trên máy khách khi nhập từ khóa tìm kiếm (sắp xếp theo thời gian tạo mới nhất)
     const displayedVoucherTickets = useMemo(() => {
+        let list = [...voucherTickets];
+        // Sắp xếp giảm dần theo thời gian tạo: ngày lập -> giờ lập -> số chứng từ
+        list.sort((a, b) => {
+            const dateA = a.ngay_ct || '';
+            const dateB = b.ngay_ct || '';
+            if (dateA !== dateB) {
+                return dateB.localeCompare(dateA);
+            }
+            const timeA = (a.gio_ct || '').trim() || '12:00';
+            const timeB = (b.gio_ct || '').trim() || '12:00';
+            if (timeA !== timeB) {
+                return timeB.localeCompare(timeA);
+            }
+            const soA = a.so_ct || '';
+            const soB = b.so_ct || '';
+            return soB.localeCompare(soA);
+        });
+
         const rawQ = (ticketSearch || '').trim();
-        if (!rawQ) return voucherTickets;
+        if (!rawQ) return list;
         const qNoTone = removeVietnameseTones(rawQ);
-        return voucherTickets.filter(t => {
+        return list.filter(t => {
             const fullText = removeVietnameseTones(`${t.so_ct} ${t.vin} ${t.so_may} ${t.ten_kh} ${t.ten_tvbh} ${t.nguoi_nhan} ${t.so_hd} ${t.dien_giai} ${t.voucher_name} ${t.loai_xe}`);
             return fullText.includes(qNoTone);
         });
@@ -3523,7 +3541,13 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 
                                                         {/* Ngày lập */}
                                                         <td className="p-3 text-slate-600 font-mono text-[11px]">
-                                                            {t.ngay_ct}
+                                                            <div className="font-semibold text-slate-800">{t.ngay_ct}</div>
+                                                            {t.gio_ct && (
+                                                                <div className="text-[10px] text-slate-400 flex items-center gap-1 font-sans">
+                                                                    <i className="far fa-clock text-[9px] text-slate-400"></i>
+                                                                    <span>{t.gio_ct}</span>
+                                                                </div>
+                                                            )}
                                                         </td>
 
                                                         {/* Trạng thái duyệt (Ma_Post) */}
