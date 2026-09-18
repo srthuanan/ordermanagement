@@ -131,8 +131,23 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
     const formattedPrintDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
     const formattedPrintTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
 
-    const warehouseOutName = data.ten_kho_xuat || WAREHOUSE_NAMES[data.ma_kho_xuat] || data.ma_kho_xuat;
-    const warehouseInName = data.ten_kho_nhan || WAREHOUSE_NAMES[data.ma_kho_nhan] || data.ma_kho_nhan;
+    const getOfficialWarehouseName = (code?: string, name?: string): string => {
+        const cleanCode = (code || '').trim().toUpperCase();
+        if (cleanCode && WAREHOUSE_NAMES[cleanCode]) {
+            return WAREHOUSE_NAMES[cleanCode];
+        }
+        if (name) {
+            // Nếu name bị tiền tố như "K87 - QL13 (HCM)" thì dùng tên chuẩn từ Cyber
+            for (const [k, v] of Object.entries(WAREHOUSE_NAMES)) {
+                if (name.toUpperCase().startsWith(k)) return v;
+            }
+            return name;
+        }
+        return code || '';
+    };
+
+    const warehouseOutName = getOfficialWarehouseName(data.ma_kho_xuat, data.ten_kho_xuat);
+    const warehouseInName = getOfficialWarehouseName(data.ma_kho_nhan, data.ten_kho_nhan);
 
     const handlePrint = () => {
         const printElem = printContentRef.current;
