@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { SIGNATURE_NGUOI_DE_NGHI_BASE64, SIGNATURE_PHU_TRACH_BASE64 } from './signatureAssets';
 
 export interface CyberDnxPrintData {
     so_ct: string;
@@ -111,6 +112,7 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
     data
 }) => {
     const printContentRef = useRef<HTMLDivElement>(null);
+    const [showSignatures, setShowSignatures] = useState(true);
 
     // Đóng modal khi bấm phím ESC
     useEffect(() => {
@@ -303,7 +305,17 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                         font-size: 10.5pt;
                     }
                     .sig-space {
-                        height: 60px;
+                        min-height: 70px;
+                        height: 70px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .sig-img {
+                        max-height: 68px;
+                        max-width: 170px;
+                        object-fit: contain;
+                        display: inline-block;
                     }
                     .sig-name {
                         font-weight: bold;
@@ -464,7 +476,7 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                             </table>
 
                             {/* 6. Chữ ký 2 bên: Người đề nghị (trái) & Phụ trách chi nhánh (phải) */}
-                            <div className="signatures-row flex justify-between mt-8 text-[11pt]">
+                            <div className="signatures-row flex justify-between mt-6 text-[11pt]">
                                 <div className="sig-col w-[45%] text-center">
                                     <div className="sig-date font-bold italic text-[10.5pt] mb-1">
                                         Xuất ngày.....tháng.....năm..........
@@ -472,13 +484,24 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                                     <div className="sig-title font-bold uppercase text-[11pt]">
                                         NGƯỜI ĐỀ NGHỊ
                                     </div>
-                                    <div className="sig-subtitle italic text-[10pt] text-slate-700 mb-2">
+                                    <div className="sig-subtitle italic text-[10pt] text-slate-700 mb-1">
                                         (Ký, ghi rõ họ tên)
                                     </div>
-                                    <div className="sig-space h-16"></div>
-                                    <div className="sig-name font-bold text-[11.5pt] text-black">
-                                        Phạm Thành Nhân
+                                    <div className="sig-space flex items-center justify-center my-0.5" style={{ minHeight: '70px', height: '70px' }}>
+                                        {showSignatures ? (
+                                            <img 
+                                                src={SIGNATURE_NGUOI_DE_NGHI_BASE64} 
+                                                alt="Chữ ký Người đề nghị" 
+                                                className="sig-img"
+                                                style={{ maxHeight: '68px', maxWidth: '170px', objectFit: 'contain', display: 'inline-block' }} 
+                                            />
+                                        ) : null}
                                     </div>
+                                    {!showSignatures && (
+                                        <div className="sig-name font-bold text-[11.5pt] text-black">
+                                            Phạm Thành Nhân
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="sig-col w-[45%] text-center">
@@ -488,13 +511,24 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                                     <div className="sig-title font-bold uppercase text-[11pt]">
                                         PHỤ TRÁCH CHI NHÁNH
                                     </div>
-                                    <div className="sig-subtitle italic text-[10pt] text-slate-700 mb-2">
+                                    <div className="sig-subtitle italic text-[10pt] text-slate-700 mb-1">
                                         (Ký, ghi rõ họ tên)
                                     </div>
-                                    <div className="sig-space h-16"></div>
-                                    <div className="sig-name font-bold text-[11.5pt] text-black">
-                                        Trần Bảo Khôi
+                                    <div className="sig-space flex items-center justify-center my-0.5" style={{ minHeight: '70px', height: '70px' }}>
+                                        {showSignatures ? (
+                                            <img 
+                                                src={SIGNATURE_PHU_TRACH_BASE64} 
+                                                alt="Chữ ký Phụ trách chi nhánh" 
+                                                className="sig-img"
+                                                style={{ maxHeight: '68px', maxWidth: '170px', objectFit: 'contain', display: 'inline-block' }} 
+                                            />
+                                        ) : null}
                                     </div>
+                                    {!showSignatures && (
+                                        <div className="sig-name font-bold text-[11.5pt] text-black">
+                                            Trần Bảo Khôi
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -518,7 +552,17 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                         <span>Số chứng từ:</span>
                         <strong className="font-mono text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{data.so_ct}</strong>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-xs font-semibold text-slate-700 hover:text-blue-600 transition-colors">
+                            <input
+                                type="checkbox"
+                                checked={showSignatures}
+                                onChange={(e) => setShowSignatures(e.target.checked)}
+                                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                            />
+                            <span>Kèm chữ ký điện tử</span>
+                        </label>
+
                         <button
                             type="button"
                             onClick={onClose}
