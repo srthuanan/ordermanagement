@@ -281,8 +281,8 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                     .signatures-row {
                         display: flex;
                         justify-content: space-between;
-                        margin-top: 20px;
-                        margin-bottom: 50px;
+                        margin-top: 10px;
+                        margin-bottom: 20px;
                         page-break-inside: avoid;
                         font-size: 11pt;
                     }
@@ -305,17 +305,24 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                         font-size: 10.5pt;
                     }
                     .sig-space {
-                        min-height: 70px;
-                        height: 70px;
+                        min-height: 135px;
+                        height: 135px;
                         display: flex;
                         align-items: center;
                         justify-content: center;
                     }
                     .sig-img {
-                        max-height: 68px;
-                        max-width: 170px;
                         object-fit: contain;
                         display: inline-block;
+                    }
+                    .sig-img-de-nghi {
+                        max-height: 118px;
+                        max-width: 260px;
+                    }
+                    .sig-img-phu-trach {
+                        max-height: 142px;
+                        max-width: 320px;
+                        width: 250px;
                     }
                     .sig-name {
                         font-weight: bold;
@@ -487,13 +494,13 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                                     <div className="sig-subtitle italic text-[10pt] text-slate-700 mb-1">
                                         (Ký, ghi rõ họ tên)
                                     </div>
-                                    <div className="sig-space flex items-center justify-center my-0.5" style={{ minHeight: '70px', height: '70px' }}>
+                                    <div className="sig-space flex items-center justify-center my-0.5" style={{ minHeight: '135px', height: '135px' }}>
                                         {showSignatures ? (
                                             <img 
                                                 src={SIGNATURE_NGUOI_DE_NGHI_BASE64} 
                                                 alt="Chữ ký Người đề nghị" 
-                                                className="sig-img"
-                                                style={{ maxHeight: '68px', maxWidth: '170px', objectFit: 'contain', display: 'inline-block' }} 
+                                                className="sig-img sig-img-de-nghi"
+                                                style={{ maxHeight: '118px', maxWidth: '260px', objectFit: 'contain', display: 'inline-block' }} 
                                             />
                                         ) : null}
                                     </div>
@@ -514,13 +521,13 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                                     <div className="sig-subtitle italic text-[10pt] text-slate-700 mb-1">
                                         (Ký, ghi rõ họ tên)
                                     </div>
-                                    <div className="sig-space flex items-center justify-center my-0.5" style={{ minHeight: '70px', height: '70px' }}>
+                                    <div className="sig-space flex items-center justify-center my-0.5" style={{ minHeight: '135px', height: '135px' }}>
                                         {showSignatures ? (
                                             <img 
                                                 src={SIGNATURE_PHU_TRACH_BASE64} 
                                                 alt="Chữ ký Phụ trách chi nhánh" 
-                                                className="sig-img"
-                                                style={{ maxHeight: '68px', maxWidth: '170px', objectFit: 'contain', display: 'inline-block' }} 
+                                                className="sig-img sig-img-phu-trach"
+                                                style={{ maxHeight: '142px', maxWidth: '320px', width: '250px', objectFit: 'contain', display: 'inline-block' }} 
                                             />
                                         ) : null}
                                     </div>
