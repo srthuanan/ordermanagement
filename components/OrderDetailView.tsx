@@ -14,7 +14,11 @@ import SelectPolicyModal from './modals/SelectPolicyModal';
 import RequestInvoiceModal from './modals/RequestInvoiceModal';
 import { Policy, policyAdminService } from '../services/api/policyAdminService';
 import { useVehicleConfig } from '../hooks/useVehicleConfig';
-import { changeOrderConfiguration, updateOrderDetails } from '../services/apiService';
+import { changeOrderConfiguration, updateOrderDetails, getOrderAuditLogs, OrderAuditLogItem } from '../services/apiService';
+import { createTransferRequest, getTransferRequestByOrder, updateTransferRequestStatus, syncCyberDnxToInteraction, TransferRequestItem } from '../services/api/transferService';
+import { lookupCyberVinWarehouse } from '../services/api/stockService';
+import { supabase } from '../services/supabaseClient';
+import { CyberDnxPrintModal, CyberDnxPrintData } from './admin/CyberDnxPrintModal';
 import MarqueeText from './ui/MarqueeText';
 
 moment.locale('vi');
@@ -77,15 +81,55 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
 
     // Vehicle config hook for inline edit dropdowns
-    const { versionsMap, vehicleLines } = useVehicleConfig();
+    const { versionsMap, allPossibleVersions, vehicleLines, vehicleColors, vehicleInteriors, getMappedExteriors, getMappedInteriors } = useVehicleConfig();
 
     // Inline Action States
-    const [inlineMode, setInlineMode] = useState<'VIEW' | 'POLICY' | 'CANCEL' | 'INVOICE' | 'EDIT'>('VIEW');
+    const [inlineMode, setInlineMode] = useState<'VIEW' | 'POLICY' | 'CANCEL' | 'INVOICE' | 'EDIT' | 'TRANSFER'>('VIEW');
     const [policies, setPolicies] = useState<Policy[]>([]);
     const [loadingPolicies, setLoadingPolicies] = useState(false);
     const [policySearch, setPolicySearch] = useState('');
     const [selectedPolicyNames, setSelectedPolicyNames] = useState<string[]>([]);
     const [showOnlyMatchModel, setShowOnlyMatchModel] = useState(true);
+
+    // Hàm rút gọn tên kho trực quan
+    const shortenWarehouseName = (code?: string, fullName?: string): string => {
+        const raw = (fullName || code || '').trim();
+        if (!raw) return 'Chưa xác định';
+        let name = raw;
+        name = name.replace(/^[A-Za-z0-9._-]+\s*[-:]\s*/i, '');
+        name = name
+            .replace(/Kho\s+(xe\s+)?(ô\s+tô\s+)?/gi, '')
+            .replace(/VinFast\s+/gi, '')
+            .replace(/Vinfast\s+/gi, '')
+            .replace(/\s*-\s*TPHCM/gi, ' (HCM)')
+            .replace(/\s*-\s*HCM/gi, ' (HCM)')
+            .trim();
+
+        const c = (code || '').trim();
+        if (!c) return name;
+        if (c === 'K83') return 'K83 - Thuận An';
+        if (c === 'K87') return 'K87 - QL13 (HCM)';
+        if (c === 'K86') return 'K86 - Q12 (HCM)';
+        if (c === 'K85') return 'K85 - Dĩ An';
+        if (c === 'KHCM.PVD') return 'PVD - Phạm Văn Đồng';
+        return `${c} - ${name}`;
+    };
+
+    // Inline Transfer Request States
+    const [transferRequest, setTransferRequest] = useState<TransferRequestItem | null>(null);
+    const [isLoadingTransferReq, setIsLoadingTransferReq] = useState(false);
+    const [transferFromWarehouse, setTransferFromWarehouse] = useState('K87');
+    const [transferFromWarehouseName, setTransferFromWarehouseName] = useState('K87 - QL13 (HCM)');
+    const transferToWarehouse = 'K83';
+    const transferToWarehouseName = 'K83 - Thuận An';
+    const [transferReason, setTransferReason] = useState('Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH');
+    const [customTransferReason, setCustomTransferReason] = useState('');
+    const [transferNote, setTransferNote] = useState('');
+    const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
+    const [isDetectingWarehouse, setIsDetectingWarehouse] = useState(false);
+    const [isPrintDnxOpen, setIsPrintDnxOpen] = useState(false);
+    const [printDnxData, setPrintDnxData] = useState<CyberDnxPrintData | null>(null);
+    const [hasTd4, setHasTd4] = useState<boolean>(false);
 
     // Inline Edit States
     const [editFormData, setEditFormData] = useState<Partial<Order>>({});
@@ -122,10 +166,342 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
     const resolvedOrder = order ? (orderList.find(o => o['Số đơn hàng'] === order['Số đơn hàng']) || order) : null;
 
+    // Order Audit Trail States
+    const [activeRightTab, setActiveRightTab] = useState<'MILESTONES' | 'AUDIT_TRAIL'>('MILESTONES');
+    const [auditLogs, setAuditLogs] = useState<OrderAuditLogItem[]>([]);
+    const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+
+    const fetchAuditLogs = React.useCallback(async (orderNo: string) => {
+        if (!orderNo) return;
+        setIsLoadingLogs(true);
+        try {
+            const res = await getOrderAuditLogs(orderNo);
+            if (res.status === 'SUCCESS' && Array.isArray(res.data)) {
+                setAuditLogs(res.data);
+            }
+        } catch (e) {
+            console.error('Failed to load audit logs:', e);
+        } finally {
+            setIsLoadingLogs(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (resolvedOrder?.['Số đơn hàng']) {
+            fetchAuditLogs(resolvedOrder['Số đơn hàng']);
+        } else {
+            setAuditLogs([]);
+        }
+    }, [resolvedOrder?.['Số đơn hàng'], fetchAuditLogs]);
+
     // Reset inline mode when switching to a different order
     useEffect(() => {
         setInlineMode('VIEW');
     }, [order?.['Số đơn hàng']]);
+
+    // Tự động tải thông tin yêu cầu chuyển xe đã gửi & tra cứu kho thực tế từ CyberSoft
+    useEffect(() => {
+        const orderNo = resolvedOrder?.['Số đơn hàng'];
+        const vin = resolvedOrder?.VIN;
+
+        // Kiểm tra xem xe này đã có phiếu TD4 (Giấy ra cổng giao xe KH) hay chưa
+        const isDelivered = Boolean(
+            (resolvedOrder?.['Kết quả'] || '').toLowerCase().includes('đã giao') ||
+            ((resolvedOrder as any)?.['Trạng thái'] || '').toLowerCase().includes('đã giao') ||
+            (resolvedOrder as any)?.['Phiếu TD4'] ||
+            (resolvedOrder as any)?.['Số phiếu TD4'] ||
+            (resolvedOrder as any)?.has_td4 ||
+            (resolvedOrder as any)?.td4
+        );
+        setHasTd4(isDelivered);
+
+        if (orderNo && vin) {
+            setIsLoadingTransferReq(true);
+            getTransferRequestByOrder(orderNo, vin)
+                .then(req => {
+                    setTransferRequest(req);
+                    if (req) {
+                        setTransferFromWarehouse(req.fromWarehouse || 'K87');
+                        setTransferFromWarehouseName(shortenWarehouseName(req.fromWarehouse, req.fromWarehouseName));
+                        setTransferReason(req.reason || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH');
+                        setTransferNote(req.note || '');
+                    }
+                })
+                .catch(err => console.error("Lỗi lấy thông tin chuyển xe:", err))
+                .finally(() => setIsLoadingTransferReq(false));
+
+            // Tự động nhận diện kho thực tế của xe & kiểm tra phiếu DNX / TD4 đã lập từ CyberSoft ERP
+            lookupCyberVinWarehouse([vin])
+                .then(res => {
+                    if (res && res.success) {
+                        // Nếu xe ĐÃ CÓ PHIẾU TD4 (Giấy ra cổng) trên CyberSoft
+                        if (res.has_td4 || (res.cars && res.cars.some(c => c.has_td4))) {
+                            setHasTd4(true);
+                        }
+
+                        if (res.found && res.ma_kho) {
+                            setTransferFromWarehouse(res.ma_kho);
+                            setTransferFromWarehouseName(shortenWarehouseName(res.ma_kho, res.ten_kho));
+                        }
+
+                        // Nếu trên Cyber xe này ĐÃ LÀM PHIẾU ĐIỀU CHUYỂN (DNX) VỀ THUẬN AN
+                        const dnx = res.dnx || (res.cars && res.cars[0]?.dnx);
+                        if (dnx && dnx.so_ct && (String(dnx.so_ct).startsWith('08.DNX') || dnx.ma_kho_nhan === 'K83')) {
+                            const printData: CyberDnxPrintData = {
+                                so_ct: dnx.so_ct,
+                                stt_rec: dnx.stt_rec || '',
+                                ngay_ct: dnx.ngay_ct || '',
+                                user_name: 'Phạm Thành Nhân',
+                                ma_kho_xuat: dnx.ma_kho_xuat || res.ma_kho || 'K87',
+                                ten_kho_xuat: shortenWarehouseName(dnx.ma_kho_xuat || res.ma_kho || 'K87'),
+                                ma_kho_nhan: dnx.ma_kho_nhan || 'K83',
+                                ten_kho_nhan: shortenWarehouseName(dnx.ma_kho_nhan || 'K83'),
+                                khach_hang: resolvedOrder?.['Tên khách hàng'] || dnx.ten_kh || '',
+                                don_vi: 'Thuận An',
+                                ly_do: dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
+                                total_cars: 1,
+                                cars: [{
+                                    stt_rec0: '0001',
+                                    vin: vin,
+                                    so_may: dnx.so_may || (resolvedOrder as any)?.['Số máy'] || '',
+                                    ma_kx: dnx.ma_kx || resolvedOrder?.['Dòng xe'] || '',
+                                    ten_kx: `${resolvedOrder?.['Dòng xe'] || ''} ${resolvedOrder?.['Phiên bản'] || ''}`.trim(),
+                                    dong_xe: resolvedOrder?.['Dòng xe'] || '',
+                                    ma_mau: dnx.ma_mau || resolvedOrder?.['Ngoại thất'] || '',
+                                    ten_mau: resolvedOrder?.['Ngoại thất'] || '',
+                                    ma_kho_xuat: dnx.ma_kho_xuat || res.ma_kho || 'K87',
+                                    ma_kho_nhan: dnx.ma_kho_nhan || 'K83'
+                                }]
+                            };
+
+                            const cyberItem: TransferRequestItem = {
+                                id: `cyber-${dnx.stt_rec || dnx.so_ct}`,
+                                createdAt: dnx.ngay_ct || new Date().toISOString(),
+                                orderNumber: orderNo,
+                                vin: vin,
+                                customerName: resolvedOrder?.['Tên khách hàng'] || dnx.ten_kh || '',
+                                consultantName: resolvedOrder?.['Tên tư vấn bán hàng'] || (resolvedOrder as any)?.['TVBH'] || dnx.nvkd || 'TVBH',
+                                carModel: resolvedOrder?.['Dòng xe'] || '',
+                                trim: resolvedOrder?.['Phiên bản'] || '',
+                                extColor: resolvedOrder?.['Ngoại thất'] || '',
+                                fromWarehouse: dnx.ma_kho_xuat || res.ma_kho || 'K87',
+                                fromWarehouseName: shortenWarehouseName(dnx.ma_kho_xuat || res.ma_kho || 'K87'),
+                                toWarehouse: dnx.ma_kho_nhan || 'K83',
+                                toWarehouseName: shortenWarehouseName(dnx.ma_kho_nhan || 'K83'),
+                                reason: dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
+                                status: 'completed',
+                                soCtDnx: dnx.so_ct,
+                                adminNote: 'Đã hoàn tất phiếu chuyển trên CyberSoft',
+                                printData: printData
+                            };
+
+                            setTransferRequest(prev => {
+                                if (!prev || prev.status !== 'completed' || !prev.soCtDnx) {
+                                    return cyberItem;
+                                }
+                                return prev;
+                            });
+                            setTransferFromWarehouse(dnx.ma_kho_xuat || 'K87');
+                            setTransferFromWarehouseName(shortenWarehouseName(dnx.ma_kho_xuat || 'K87'));
+                            setTransferReason(dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH');
+
+                            // Tự động đồng bộ nền về Supabase
+                            syncCyberDnxToInteraction({
+                                orderNumber: orderNo,
+                                vin: vin,
+                                customerName: resolvedOrder?.['Tên khách hàng'] || dnx.ten_kh || '',
+                                consultantName: resolvedOrder?.['Tên tư vấn bán hàng'] || (resolvedOrder as any)?.['TVBH'] || dnx.nvkd || 'TVBH',
+                                carModel: resolvedOrder?.['Dòng xe'] || '',
+                                trim: resolvedOrder?.['Phiên bản'] || '',
+                                extColor: resolvedOrder?.['Ngoại thất'] || '',
+                                fromWarehouse: dnx.ma_kho_xuat || res.ma_kho || 'K87',
+                                fromWarehouseName: shortenWarehouseName(dnx.ma_kho_xuat || res.ma_kho || 'K87'),
+                                toWarehouse: dnx.ma_kho_nhan || 'K83',
+                                toWarehouseName: shortenWarehouseName(dnx.ma_kho_nhan || 'K83'),
+                                reason: dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
+                                soCtDnx: dnx.so_ct,
+                                printData: printData
+                            }).catch(err => console.error("Lỗi đồng bộ phiếu DNX về Supabase:", err));
+                        }
+                    }
+                })
+                .catch(e => console.error("Lỗi tra cứu kho Cyber:", e));
+
+            // Lắng nghe realtime từ Admin khi lập phiếu DNX hoặc duyệt yêu cầu
+            const channel = supabase
+                .channel(`order-transfer-${orderNo}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'interactions',
+                        filter: `category=eq.TRANSFER_REQUEST`
+                    },
+                    (payload: any) => {
+                        const row = payload.new || {};
+                        const meta = row.metadata || {};
+                        if (row.target_id === orderNo || meta.order_number === orderNo) {
+                            getTransferRequestByOrder(orderNo).then(updated => {
+                                if (updated) {
+                                    setTransferRequest(updated);
+                                    if (updated.status === 'completed' && updated.soCtDnx) {
+                                        showToast?.('Đã có phiếu DNX', `Admin đã lập xong phiếu xuất ${updated.soCtDnx}. File in đã sẵn sàng cho bạn!`, 'success');
+                                    }
+                                }
+                            });
+                        }
+                    }
+                )
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
+        } else {
+            setTransferRequest(null);
+        }
+    }, [resolvedOrder?.['Số đơn hàng'], resolvedOrder?.VIN]);
+
+    const handleOpenPrintDnx = () => {
+        if (!transferRequest && !resolvedOrder?.VIN) return;
+
+        // Nếu Admin đã lưu printData vào interaction, dùng trực tiếp
+        if (transferRequest?.printData) {
+            setPrintDnxData(transferRequest.printData);
+            setIsPrintDnxOpen(true);
+            return;
+        }
+
+        // Tự động tạo dữ liệu in chuẩn phiếu DNX nếu chưa có sẵn printData
+        const fallbackTicket: CyberDnxPrintData = {
+            so_ct: transferRequest?.soCtDnx || 'DNX',
+            stt_rec: '',
+            ngay_ct: transferRequest?.createdAt ? transferRequest.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+            user_name: 'Phạm Thành Nhân',
+            ma_kho_xuat: transferRequest?.fromWarehouse || 'K87',
+            ten_kho_xuat: transferRequest?.fromWarehouseName || 'Kho xe ô tô QL13 - HCM',
+            ma_kho_nhan: transferRequest?.toWarehouse || 'K83',
+            ten_kho_nhan: transferRequest?.toWarehouseName || 'Kho xe ô tô Thuận An',
+            khach_hang: transferRequest?.customerName || resolvedOrder?.['Tên khách hàng'] || '',
+            don_vi: 'Thuận An',
+            ly_do: transferRequest?.reason || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
+            total_cars: 1,
+            cars: [{
+                stt_rec0: '0001',
+                vin: transferRequest?.vin || resolvedOrder?.VIN || '',
+                so_may: (resolvedOrder as any)?.['Số máy'] || '',
+                ma_kx: resolvedOrder?.['Dòng xe'] || '',
+                ten_kx: `${resolvedOrder?.['Dòng xe'] || ''} ${resolvedOrder?.['Phiên bản'] || ''}`.trim(),
+                dong_xe: resolvedOrder?.['Dòng xe'] || '',
+                ma_mau: resolvedOrder?.['Ngoại thất'] || '',
+                ten_mau: resolvedOrder?.['Ngoại thất'] || '',
+                ma_kho_xuat: transferRequest?.fromWarehouse || 'K87',
+                ma_kho_nhan: transferRequest?.toWarehouse || 'K83'
+            }]
+        };
+
+        setPrintDnxData(fallbackTicket);
+        setIsPrintDnxOpen(true);
+    };
+
+    const handleOpenTransferMode = async () => {
+        if (hasTd4) {
+            showToast?.('Không thể chuyển xe', 'Xe đã có Phiếu TD4 (Giấy ra cổng), không thể yêu cầu điều chuyển.', 'warning');
+            return;
+        }
+        setInlineMode('TRANSFER');
+        const vin = resolvedOrder?.VIN;
+        if (vin) {
+            setIsDetectingWarehouse(true);
+            try {
+                const res = await lookupCyberVinWarehouse([vin]);
+                if (res && !transferRequest && res.success && res.found && res.ma_kho) {
+                    setTransferFromWarehouse(res.ma_kho);
+                    setTransferFromWarehouseName(shortenWarehouseName(res.ma_kho, res.ten_kho));
+                }
+            } catch (e) {
+                console.error("Lỗi tra cứu kho Cyber cho xe:", e);
+            } finally {
+                setIsDetectingWarehouse(false);
+            }
+        }
+    };
+
+    const handleSubmitTransferRequest = async () => {
+        const vin = resolvedOrder?.VIN;
+        const orderNo = resolvedOrder?.['Số đơn hàng'];
+        const custName = resolvedOrder?.['Tên khách hàng'] || '';
+        const tvbh = resolvedOrder?.['Tên tư vấn bán hàng'] || (resolvedOrder as any)?.['TVBH'] || '';
+        const finalReason = transferReason === 'Khác' ? (customTransferReason.trim() || 'Điều chuyển xe nội bộ') : transferReason;
+
+        if (!vin || !orderNo) {
+            showToast?.('Thiếu thông tin', 'Đơn hàng chưa có số VIN để yêu cầu chuyển xe.', 'warning');
+            return;
+        }
+
+        setIsSubmittingTransfer(true);
+        try {
+            const res = await createTransferRequest({
+                orderNumber: orderNo,
+                vin: vin,
+                customerName: custName,
+                consultantName: tvbh,
+                carModel: resolvedOrder?.['Dòng xe'] || '',
+                trim: resolvedOrder?.['Phiên bản'] || '',
+                extColor: resolvedOrder?.['Ngoại thất'] || '',
+                fromWarehouse: transferFromWarehouse,
+                fromWarehouseName: transferFromWarehouseName,
+                toWarehouse: transferToWarehouse,
+                toWarehouseName: transferToWarehouseName,
+                reason: finalReason,
+                note: transferNote.trim()
+            });
+
+            if (res.success && res.data) {
+                setTransferRequest(res.data);
+                setInlineMode('VIEW');
+                showToast?.('Đã gửi yêu cầu', `Đã gửi yêu cầu chuyển xe ${vin} tới Admin thành công.`, 'success');
+            } else {
+                throw new Error(res.error || 'Lỗi gửi yêu cầu chuyển xe');
+            }
+        } catch (err: any) {
+            showToast?.('Lỗi gửi yêu cầu', err.message || 'Không thể gửi yêu cầu chuyển xe.', 'error');
+        } finally {
+            setIsSubmittingTransfer(false);
+        }
+    };
+
+    const [isCancellingTransfer, setIsCancellingTransfer] = useState(false);
+
+    const handleCancelTransferRequest = async () => {
+        if (!transferRequest || transferRequest.status !== 'pending') return;
+
+        const confirmed = window.confirm(
+            `Bạn có chắc chắn muốn HỦY yêu cầu chuyển xe VIN ${transferRequest.vin} tới Admin không?`
+        );
+        if (!confirmed) return;
+
+        setIsCancellingTransfer(true);
+        try {
+            const res = await updateTransferRequestStatus(
+                transferRequest.id,
+                'cancelled',
+                undefined,
+                'TVBH tự hủy yêu cầu'
+            );
+            if (res.success) {
+                setTransferRequest(null);
+                showToast?.('Đã hủy yêu cầu', `Đã hủy yêu cầu chuyển xe VIN ${transferRequest.vin}.`, 'info');
+            } else {
+                throw new Error(res.error || 'Lỗi hủy yêu cầu');
+            }
+        } catch (err: any) {
+            showToast?.('Lỗi hủy yêu cầu', err.message || 'Không thể hủy yêu cầu.', 'error');
+        } finally {
+            setIsCancellingTransfer(false);
+        }
+    };
 
     useEffect(() => {
         if (inlineMode === 'EDIT' && resolvedOrder) {
@@ -136,7 +512,6 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 "Phiên bản": resolvedOrder["Phiên bản"] || "",
                 "Ngoại thất": resolvedOrder["Ngoại thất"] || "",
                 "Nội thất": resolvedOrder["Nội thất"] || "",
-                "Ngày cọc": resolvedOrder["Ngày cọc"] ? moment(resolvedOrder["Ngày cọc"]).format('YYYY-MM-DDTHH:mm') : "",
                 "Tên tư vấn bán hàng": resolvedOrder["Tên tư vấn bán hàng"] || "",
             });
             setEditErrorMessage(null);
@@ -192,11 +567,8 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 const newValue = editFormData[formKey];
 
                 if (formKey === 'Ngày cọc') {
-                    const oldDate = originalValue ? moment(originalValue).format('YYYY-MM-DDTHH:mm') : '';
-                    const newDate = newValue ? moment(newValue as string).format('YYYY-MM-DDTHH:mm') : '';
-                    if (oldDate !== newDate) {
-                        changes[formKey] = new Date(newValue as string).toISOString();
-                    }
+                    // Không cho phép chỉnh sửa ngày cọc
+                    return;
                 } else if (String(newValue || '') !== String(originalValue || '')) {
                     changes[formKey] = newValue;
                 }
@@ -753,48 +1125,121 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                         </div>
                                     </div>
 
-                                    <div className="space-y-2 md:space-y-3">
-                                        <h4 className="text-[10.5px] md:text-[11px] font-black text-indigo-600 uppercase tracking-wider">CẤU HÌNH XE</h4>
-                                        
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-4">
-                                            <div>
-                                                <label className="block text-[10px] md:text-[10.5px] font-bold text-slate-500 uppercase tracking-wide mb-1 truncate">DÒNG XE</label>
-                                                <div className="relative">
-                                                    <i className="fas fa-car absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                                                    <select
-                                                        name="Dòng xe"
-                                                        value={editFormData['Dòng xe'] || ''}
-                                                        onChange={handleEditInputChange}
-                                                        className="w-full bg-slate-50 border border-slate-200 text-slate-800 font-bold text-xs rounded-xl pl-8 pr-7 py-2 md:py-2.5 focus:outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer"
-                                                    >
-                                                        <option value="">Chọn dòng xe</option>
-                                                        {vehicleLines.map(line => (
-                                                            <option key={line} value={line}>{line}</option>
-                                                        ))}
-                                                    </select>
-                                                    <i className="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+                                    {(() => {
+                                        const currentLine = editFormData['Dòng xe'] || '';
+                                        const currentVersion = editFormData['Phiên bản'] || '';
+
+                                        const availableVersions = currentLine ? (versionsMap[currentLine] || allPossibleVersions || []) : (allPossibleVersions || []);
+                                        const versionOptions = Array.from(new Set([
+                                            ...(currentVersion ? [currentVersion] : []),
+                                            ...availableVersions
+                                        ])).filter(Boolean);
+
+                                        const mappedExteriors = currentLine && currentVersion && getMappedExteriors
+                                            ? getMappedExteriors(currentLine, currentVersion)
+                                            : (vehicleColors || []);
+                                        const exteriorOptions = Array.from(new Set([
+                                            ...(editFormData['Ngoại thất'] ? [editFormData['Ngoại thất']] : []),
+                                            ...(mappedExteriors && mappedExteriors.length > 0 ? mappedExteriors : (vehicleColors || []))
+                                        ])).filter(Boolean);
+
+                                        const mappedInteriors = currentLine && currentVersion && getMappedInteriors
+                                            ? getMappedInteriors(currentLine, currentVersion)
+                                            : (vehicleInteriors || []);
+                                        const interiorOptions = Array.from(new Set([
+                                            ...(editFormData['Nội thất'] ? [editFormData['Nội thất']] : []),
+                                            ...(mappedInteriors && mappedInteriors.length > 0 ? mappedInteriors : (vehicleInteriors || []))
+                                        ])).filter(Boolean);
+
+                                        return (
+                                            <>
+                                                <div className="space-y-2 md:space-y-3">
+                                                    <h4 className="text-[10.5px] md:text-[11px] font-black text-indigo-600 uppercase tracking-wider">CẤU HÌNH XE</h4>
+                                                    
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 md:gap-4">
+                                                        <div>
+                                                            <label className="block text-[10px] md:text-[10.5px] font-bold text-slate-500 uppercase tracking-wide mb-1 truncate">DÒNG XE</label>
+                                                            <div className="relative">
+                                                                <i className="fas fa-car absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                                                <select
+                                                                    name="Dòng xe"
+                                                                    value={editFormData['Dòng xe'] || ''}
+                                                                    onChange={handleEditInputChange}
+                                                                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 font-bold text-xs rounded-xl pl-8 pr-7 py-2 md:py-2.5 focus:outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer"
+                                                                >
+                                                                    <option value="">Chọn dòng xe</option>
+                                                                    {vehicleLines.map(line => (
+                                                                        <option key={line} value={line}>{line}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <i className="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-[10px] md:text-[10.5px] font-bold text-slate-500 uppercase tracking-wide mb-1 truncate">PHIÊN BẢN</label>
+                                                            <div className="relative">
+                                                                <i className="fas fa-code-branch absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                                                <select
+                                                                    name="Phiên bản"
+                                                                    value={editFormData['Phiên bản'] || ''}
+                                                                    onChange={handleEditInputChange}
+                                                                    disabled={!editFormData['Dòng xe']}
+                                                                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 font-bold text-xs rounded-xl pl-8 pr-7 py-2 md:py-2.5 focus:outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer disabled:opacity-50"
+                                                                >
+                                                                    <option value="">Chọn phiên bản</option>
+                                                                    {versionOptions.map(ver => (
+                                                                        <option key={ver} value={ver}>{ver}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <i className="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <label className="block text-[10px] md:text-[10.5px] font-bold text-slate-500 uppercase tracking-wide mb-1 truncate">MÀU NGOẠI THẤT</label>
+                                                            <div className="relative">
+                                                                <i className="fas fa-palette absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                                                <select
+                                                                    name="Ngoại thất"
+                                                                    value={editFormData['Ngoại thất'] || ''}
+                                                                    onChange={handleEditInputChange}
+                                                                    disabled={!editFormData['Phiên bản']}
+                                                                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 font-bold text-xs rounded-xl pl-8 pr-7 py-2 md:py-2.5 focus:outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer disabled:opacity-50"
+                                                                >
+                                                                    <option value="">Chọn màu ngoại thất</option>
+                                                                    {exteriorOptions.map(color => (
+                                                                        <option key={color} value={color}>{color}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <i className="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <label className="block text-[10px] md:text-[10.5px] font-bold text-slate-500 uppercase tracking-wide mb-1 truncate">MÀU NỘI THẤT</label>
+                                                            <div className="relative">
+                                                                <i className="fas fa-chair absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                                                <select
+                                                                    name="Nội thất"
+                                                                    value={editFormData['Nội thất'] || ''}
+                                                                    onChange={handleEditInputChange}
+                                                                    disabled={!editFormData['Phiên bản']}
+                                                                    className="w-full bg-slate-50 border border-slate-200 text-slate-800 font-bold text-xs rounded-xl pl-8 pr-7 py-2 md:py-2.5 focus:outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer disabled:opacity-50"
+                                                                >
+                                                                    <option value="">Chọn màu nội thất</option>
+                                                                    {interiorOptions.map(color => (
+                                                                        <option key={color} value={color}>{color}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <i className="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div>
-                                                <label className="block text-[10px] md:text-[10.5px] font-bold text-slate-500 uppercase tracking-wide mb-1 truncate">PHIÊN BẢN</label>
-                                                <div className="relative">
-                                                    <i className="fas fa-code-branch absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                                                    <select
-                                                        name="Phiên bản"
-                                                        value={editFormData['Phiên bản'] || ''}
-                                                        onChange={handleEditInputChange}
-                                                        className="w-full bg-slate-50 border border-slate-200 text-slate-800 font-bold text-xs rounded-xl pl-8 pr-7 py-2 md:py-2.5 focus:outline-none focus:border-blue-500 focus:bg-white transition-all appearance-none cursor-pointer"
-                                                    >
-                                                        <option value="">Chọn phiên bản</option>
-                                                        {(versionsMap[editFormData['Dòng xe'] || ''] || []).map(ver => (
-                                                            <option key={ver} value={ver}>{ver}</option>
-                                                        ))}
-                                                    </select>
-                                                    <i className="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+
+                                            </>
+                                        );
+                                    })()}
                                 </form>
                             </div>
 
@@ -896,22 +1341,266 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
                             <div className="pt-2.5 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
                                 <button 
+                                    type="button"
                                     onClick={() => setInlineMode('VIEW')}
                                     className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors shadow-2xs"
                                 >
                                     Đóng
                                 </button>
                                 <button 
+                                    type="button"
                                     onClick={() => {
                                         if (onSelectPolicy) {
                                             onSelectPolicy(resolvedOrder, selectedPolicyNames.join('; '));
                                         }
                                         setInlineMode('VIEW');
                                     }}
-                                    className="px-6 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs shadow-md transition-all"
+                                    className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md transition-all active:scale-95"
                                 >
-                                    Lưu
+                                    Áp dụng ({selectedPolicyNames.length})
                                 </button>
+                            </div>
+                        </div>
+                    ) : inlineMode === 'TRANSFER' ? (
+                        <div className="flex-1 flex flex-col bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs animate-fade-in justify-between">
+                            {/* Tiêu đề gọn gàng */}
+                            <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                                        <i className="fas fa-truck-moving text-sm"></i>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <h3 className="text-xs font-bold text-slate-900 tracking-tight uppercase">Yêu Cầu Chuyển Xe Nội Bộ</h3>
+                                        <p className="text-[11px] text-slate-500 font-medium truncate">
+                                            {resolvedOrder['Dòng xe']} • {resolvedOrder['Tên khách hàng']}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setInlineMode('VIEW')}
+                                    className="px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                                >
+                                    <i className="fas fa-arrow-left text-[11px]"></i>
+                                    <span>Quay lại</span>
+                                </button>
+                            </div>
+
+                            {/* Thân biểu mẫu tinh gọn, không rối */}
+                            <div className="flex-1 flex flex-col justify-center py-3 space-y-3 min-h-0 overflow-y-auto">
+                                {/* Dải VIN & Khách hàng */}
+                                <div className="grid grid-cols-2 gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200/70 text-xs">
+                                    <div>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-0.5">Số khung (VIN)</span>
+                                        <span className="font-mono font-bold text-slate-800 tracking-wider select-all block truncate">
+                                            {resolvedOrder.VIN || '—'}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-0.5">Khách hàng</span>
+                                        <span className="font-bold text-slate-800 truncate block">
+                                            {resolvedOrder['Tên khách hàng'] || '—'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Tuyến đường 1 dòng duy nhất */}
+                                <div className="p-2.5 bg-slate-50/80 border border-slate-200/80 rounded-xl flex items-center justify-between gap-2 text-xs">
+                                    <div className="flex-1 min-w-0">
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Kho xuất (Cyber ERP)</span>
+                                        <div className="font-bold text-xs text-slate-800 truncate" title={transferFromWarehouseName}>
+                                            {isDetectingWarehouse ? (
+                                                <span className="text-indigo-600 font-normal text-[11px] flex items-center gap-1">
+                                                    <i className="fas fa-spinner fa-spin text-[10px]"></i> Đang tra Cyber...
+                                                </span>
+                                            ) : (
+                                                shortenWarehouseName(transferFromWarehouse, transferFromWarehouseName) || 'K87 - QL13 (HCM)'
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="shrink-0 px-2 text-indigo-500 flex items-center justify-center">
+                                        <i className="fas fa-arrow-right text-xs"></i>
+                                    </div>
+
+                                    <div className="flex-1 min-w-0 text-right">
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Kho nhận (Đích đến)</span>
+                                        <div className="font-bold text-xs text-indigo-700 truncate">
+                                            K83 - Thuận An
+                                        </div>
+                                    </div>
+                                </div>
+
+                                 {/* Lý do điều chuyển (Dropdown chuẩn, gọn gàng) */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                        Lý do điều chuyển <span className="text-rose-500">*</span>
+                                    </label>
+                                    <select
+                                        value={transferReason}
+                                        onChange={(e) => setTransferReason(e.target.value)}
+                                        disabled={transferRequest?.status === 'pending' || transferRequest?.status === 'completed'}
+                                        className={`w-full border rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none transition-all ${
+                                            (transferRequest?.status === 'pending' || transferRequest?.status === 'completed')
+                                                ? 'bg-slate-100 border-slate-200 text-slate-600 cursor-not-allowed' 
+                                                : 'bg-white border-slate-300 text-slate-800 focus:border-indigo-500 cursor-pointer shadow-2xs'
+                                        }`}
+                                    >
+                                        <option value="Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH">Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH</option>
+                                        <option value="Lấy xe về PDI giao KH">Lấy xe về PDI giao KH</option>
+                                        <option value="Chuyển về Showroom Thuận An trưng bày / giao xe">Chuyển về Showroom Thuận An trưng bày / giao xe</option>
+                                        <option value="Chuyển xe đi đăng ký / đăng kiểm">Chuyển xe đi đăng ký / đăng kiểm</option>
+                                        <option value="Khác">Lý do khác...</option>
+                                    </select>
+                                    {transferReason === 'Khác' && (
+                                        <input
+                                            type="text"
+                                            value={customTransferReason}
+                                            onChange={(e) => setCustomTransferReason(e.target.value)}
+                                            placeholder="Nhập lý do điều chuyển cụ thể..."
+                                            disabled={transferRequest?.status === 'pending' || transferRequest?.status === 'completed'}
+                                            className={`w-full mt-2 border rounded-xl px-3 py-2 text-xs transition-all ${
+                                                (transferRequest?.status === 'pending' || transferRequest?.status === 'completed')
+                                                    ? 'bg-slate-100 border-slate-200 text-slate-600 cursor-not-allowed' 
+                                                    : 'bg-white border-slate-300 text-slate-800 focus:outline-none focus:border-indigo-500'
+                                            }`}
+                                        />
+                                    )}
+                                </div>
+
+                                {/* Ghi chú thêm cho Admin */}
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                                        Ghi chú cho Admin <span className="text-slate-400 font-normal">(không bắt buộc)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={transferNote}
+                                        onChange={(e) => setTransferNote(e.target.value)}
+                                        placeholder="Ví dụ: Cần xe trước ngày 22/09 để giao khách..."
+                                        disabled={transferRequest?.status === 'pending' || transferRequest?.status === 'completed'}
+                                        className={`w-full border rounded-xl px-3 py-2 text-xs transition-all ${
+                                            (transferRequest?.status === 'pending' || transferRequest?.status === 'completed')
+                                                ? 'bg-slate-100 border-slate-200 text-slate-600 cursor-not-allowed' 
+                                                : 'bg-white border-slate-300 text-slate-800 focus:outline-none focus:border-indigo-500 shadow-2xs'
+                                        }`}
+                                    />
+                                </div>
+
+                                {/* Thông báo trạng thái nếu đã gửi */}
+                                {transferRequest && (
+                                    <div className={`p-2.5 rounded-xl text-xs flex items-center justify-between gap-2.5 ${
+                                        transferRequest.status === 'completed'
+                                            ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
+                                            : transferRequest.status === 'rejected'
+                                            ? 'bg-rose-50 text-rose-900 border border-rose-200'
+                                            : 'bg-amber-50 text-amber-900 border border-amber-200'
+                                    }`}>
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                            <i className={`fas ${
+                                                transferRequest.status === 'completed'
+                                                    ? 'fa-check-circle text-emerald-600'
+                                                    : transferRequest.status === 'rejected'
+                                                    ? 'fa-times-circle text-rose-600'
+                                                    : 'fa-clock text-amber-600'
+                                            } text-sm shrink-0`}></i>
+                                            <div className="flex-1 min-w-0 font-medium">
+                                                {transferRequest.status === 'completed' ? (
+                                                    <div>
+                                                        <span className="font-bold">Đã lập phiếu DNX: {transferRequest.soCtDnx || 'Hoàn tất'}</span>
+                                                        <p className="text-[11px] text-emerald-700 mt-0.5 font-normal">
+                                                            Phiếu xuất đã tạo xong trên CyberSoft. Bạn có thể in phiếu ngay.
+                                                        </p>
+                                                    </div>
+                                                ) : transferRequest.status === 'rejected' ? (
+                                                    <div>
+                                                        <span className="font-bold">Yêu cầu bị từ chối: </span>
+                                                        <span>{transferRequest.adminNote || 'Admin từ chối điều chuyển'}</span>
+                                                        <p className="text-[10.5px] text-rose-600 mt-0.5 font-normal">
+                                                            Bạn có thể chọn lại lý do hoặc bổ sung ghi chú rồi bấm nút "Gửi Lại Yêu Cầu" bên dưới.
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    'Đã gửi yêu cầu — Đang chờ Admin lập phiếu DNX'
+                                                )}
+                                            </div>
+                                        </div>
+                                        {transferRequest.status === 'completed' && (
+                                            <button
+                                                type="button"
+                                                onClick={handleOpenPrintDnx}
+                                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-sm shrink-0 active:scale-95 transition-all cursor-pointer"
+                                                title="Xem và in phiếu chuyển xe DNX"
+                                            >
+                                                <i className="fas fa-print"></i>
+                                                <span>In Phiếu</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Footer Actions */}
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2.5 shrink-0">
+                                {transferRequest && transferRequest.status === 'pending' ? (
+                                    <button
+                                        type="button"
+                                        onClick={handleCancelTransferRequest}
+                                        disabled={isCancellingTransfer}
+                                        className="px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 active:scale-95"
+                                        title="Hủy yêu cầu chuyển xe này tới Admin"
+                                    >
+                                        <i className={`fas ${isCancellingTransfer ? 'fa-spinner fa-spin' : 'fa-ban'} text-[11px]`}></i>
+                                        <span>{isCancellingTransfer ? 'Đang hủy...' : 'Hủy Yêu Cầu'}</span>
+                                    </button>
+                                ) : (
+                                    <div></div>
+                                )}
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setInlineMode('VIEW')}
+                                        className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                                    >
+                                        Đóng
+                                    </button>
+                                    {transferRequest && transferRequest.status === 'completed' ? (
+                                        <button
+                                            type="button"
+                                            onClick={handleOpenPrintDnx}
+                                            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                                            title="Xem và in phiếu DNX chuẩn CyberSoft"
+                                        >
+                                            <i className="fas fa-print text-xs"></i>
+                                            <span>In Phiếu DNX ({transferRequest.soCtDnx || 'DNX'})</span>
+                                        </button>
+                                    ) : transferRequest && transferRequest.status === 'pending' ? (
+                                        <div className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200">
+                                            <i className="fas fa-clock text-amber-600"></i>
+                                            <span>Đang chờ Admin duyệt</span>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={handleSubmitTransferRequest}
+                                            disabled={isSubmittingTransfer}
+                                            className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
+                                        >
+                                            {isSubmittingTransfer ? (
+                                                <>
+                                                    <i className="fas fa-spinner fa-spin text-xs"></i>
+                                                    <span>Đang gửi...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="fas fa-paper-plane text-[11px]"></i>
+                                                    <span>{transferRequest?.status === 'rejected' ? 'Gửi Lại Yêu Cầu' : 'Gửi Yêu Cầu Tới Admin'}</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     ) : (
@@ -1003,198 +1692,368 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 </div>
                             </div>
 
-                            {/* Executive Split Panels (Timeline & Policies) */}
+                            {/* Executive Split Panels (Timeline & Policies OR Audit Trail) */}
                             <div className="flex-1 min-h-0 bg-slate-50/70 backdrop-blur-xl rounded-2xl border border-slate-200/80 p-3 md:p-3.5 flex flex-col justify-between overflow-y-auto">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-2.5 items-stretch flex-1">
-                                    {/* Left: 3 Stacked Frosted Milestone Cards (Phương Án 1) */}
-                                    <div className="flex flex-col justify-between gap-2.5">
-                                        <div className="flex items-center justify-between pb-0.5">
-                                            <h3 className="text-[9.5px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-                                                <i className="fa-solid fa-bars-progress text-indigo-500 text-[10px]"></i> Tiến Độ Xử Lý
-                                            </h3>
-                                            <span className="text-[9px] font-bold text-slate-700 bg-white px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
-                                                Ghép: {daysSincePairedText}
-                                            </span>
-                                        </div>
-
-                                        {(() => {
-                                            const hasInvoiced = Boolean(resolvedOrder["Ngày xuất hóa đơn"] || resolvedOrder.LinkHoaDonDaXuat);
-                                            const isAllCompleted = Boolean(resolvedOrder["Thời gian ghép"] && hasInvoiced);
-
-                                            return (
-                                                <div className="flex flex-col flex-1 justify-around py-0.5">
-                                                    {/* Card 1: Ngày Cọc */}
-                                                    <div className="px-3 py-1.5 md:py-2 bg-white/95 hover:bg-white rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10">
-                                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                            <div className="w-5 h-5 text-amber-500 flex items-center justify-center shrink-0">
-                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                                                                    <rect x="2" y="5" width="20" height="14" rx="2" />
-                                                                    <line x1="2" y1="10" x2="22" y2="10" />
-                                                                    <circle cx="6.5" cy="15" r="1" fill="currentColor" />
-                                                                </svg>
-                                                            </div>
-                                                            <div className="min-w-0 flex-1 flex flex-col justify-center">
-                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">1. Ngày Cọc</p>
-                                                                <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
-                                                                    {formatDateTime(resolvedOrder["Ngày cọc"])}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
-                                                    </div>
-
-                                                    {/* Flowchart Directional Arrow 1 -> 2 */}
-                                                    <div className="flex items-center justify-center py-0.5">
-                                                        <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                                            <line x1="12" y1="4" x2="12" y2="20" />
-                                                            <polyline points="18 14 12 20 6 14" />
-                                                        </svg>
-                                                    </div>
-
-                                                    {/* Card 2: Tạo Yêu Cầu */}
-                                                    <div className={`px-3 py-1.5 md:py-2 rounded-xl border shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10 ${
-                                                        resolvedOrder["Thời gian nhập"]
-                                                            ? 'bg-white/95 hover:bg-white border-slate-200/90'
-                                                            : 'bg-slate-100/70 border-slate-200/50 opacity-60'
-                                                    }`}>
-                                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                            <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${
-                                                                resolvedOrder["Thời gian nhập"] ? 'text-sky-500' : 'text-slate-300'
-                                                            }`}>
-                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                                </svg>
-                                                            </div>
-                                                            <div className="min-w-0 flex-1 flex flex-col justify-center">
-                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">2. Tạo Yêu Cầu</p>
-                                                                <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
-                                                                    {resolvedOrder["Thời gian nhập"] ? formatDateTime(resolvedOrder["Thời gian nhập"]) : 'Đang chờ xử lý'}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        {resolvedOrder["Thời gian nhập"] ? (
-                                                            <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
-                                                        ) : <div className="w-3.5" />}
-                                                    </div>
-
-                                                    {/* Flowchart Directional Arrow 2 -> 3 */}
-                                                    <div className="flex items-center justify-center py-0.5">
-                                                        <svg className={`w-3.5 h-3.5 transition-colors ${resolvedOrder["Thời gian ghép"] ? (isAllCompleted ? 'text-slate-400' : 'text-emerald-500') : 'text-slate-300'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                                            <line x1="12" y1="4" x2="12" y2="20" />
-                                                            <polyline points="18 14 12 20 6 14" />
-                                                        </svg>
-                                                    </div>
-
-                                                    {/* Card 3: Ghép VIN */}
-                                                    <div className={`px-3 py-1.5 md:py-2 rounded-xl border shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10 ${
-                                                        resolvedOrder["Thời gian ghép"]
-                                                            ? isAllCompleted
-                                                                ? 'bg-white/95 hover:bg-white border-slate-200/90'
-                                                                : 'bg-emerald-500/[0.08] hover:bg-emerald-500/[0.12] border-emerald-400/50 shadow-[0_0_15px_rgba(16,185,129,0.12)]'
-                                                            : 'bg-slate-100/70 border-slate-200/50 opacity-60'
-                                                    }`}>
-                                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                            <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${
-                                                                resolvedOrder["Thời gian ghép"] ? 'text-emerald-500' : 'text-slate-300'
-                                                            }`}>
-                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
-                                                                    <circle cx="7" cy="17" r="1.5" />
-                                                                    <circle cx="17" cy="17" r="1.5" />
-                                                                </svg>
-                                                            </div>
-                                                            <div className="min-w-0 flex-1 flex flex-col justify-center">
-                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">3. Ghép VIN</p>
-                                                                <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
-                                                                    {resolvedOrder["Thời gian ghép"] ? formatDateTime(resolvedOrder["Thời gian ghép"]) : 'Chưa ghép xe'}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        {resolvedOrder["Thời gian ghép"] ? (
-                                                            <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
-                                                        ) : <div className="w-3.5" />}
-                                                    </div>
-
-                                                    {/* Flowchart Directional Arrow 3 -> 4 */}
-                                                    <div className="flex items-center justify-center py-0.5">
-                                                        <svg className={`w-3.5 h-3.5 transition-colors ${hasInvoiced ? (isAllCompleted ? 'text-slate-400' : 'text-blue-500') : 'text-slate-300'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                                            <line x1="12" y1="4" x2="12" y2="20" />
-                                                            <polyline points="18 14 12 20 6 14" />
-                                                        </svg>
-                                                    </div>
-
-                                                    {/* Card 4: Xuất Hóa Đơn */}
-                                                    <div className={`px-3 py-1.5 md:py-2 rounded-xl border shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10 ${
-                                                        hasInvoiced
-                                                            ? isAllCompleted
-                                                                ? 'bg-white/95 hover:bg-white border-slate-200/90'
-                                                                : 'bg-blue-500/[0.08] hover:bg-blue-500/[0.12] border-blue-400/50 shadow-[0_0_15px_rgba(59,130,246,0.12)]'
-                                                            : 'bg-slate-100/70 border-slate-200/50 opacity-60'
-                                                    }`}>
-                                                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                            <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${
-                                                                hasInvoiced ? 'text-indigo-500' : 'text-slate-300'
-                                                            }`}>
-                                                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-                                                                </svg>
-                                                            </div>
-                                                            <div className="min-w-0 flex-1 flex flex-col justify-center">
-                                                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">4. Xuất Hóa Đơn</p>
-                                                                <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
-                                                                    {resolvedOrder["Ngày xuất hóa đơn"] ? formatDateTime(resolvedOrder["Ngày xuất hóa đơn"]) : (resolvedOrder.LinkHoaDonDaXuat ? 'Đã xuất HĐ' : 'Chưa xuất HĐ')}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                        {hasInvoiced ? (
-                                                            <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
-                                                        ) : <div className="w-3.5" />}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
+                                {/* Segmented Tab Switcher */}
+                                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200/60 shrink-0">
+                                    <div className="flex items-center p-0.5 bg-slate-200/70 rounded-xl shadow-2xs">
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveRightTab('MILESTONES')}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] md:text-[10.5px] font-bold transition-all cursor-pointer ${
+                                                activeRightTab === 'MILESTONES'
+                                                    ? 'bg-white text-slate-900 shadow-xs'
+                                                    : 'text-slate-500 hover:text-slate-800'
+                                            }`}
+                                        >
+                                            <i className="fa-solid fa-bars-progress text-indigo-500 text-[9.5px]"></i>
+                                            <span>Tiến Độ &amp; Chính Sách</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveRightTab('AUDIT_TRAIL')}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] md:text-[10.5px] font-bold transition-all cursor-pointer ${
+                                                activeRightTab === 'AUDIT_TRAIL'
+                                                    ? 'bg-white text-slate-900 shadow-xs'
+                                                    : 'text-slate-500 hover:text-slate-800'
+                                            }`}
+                                        >
+                                            <i className="fa-solid fa-clock-rotate-left text-amber-500 text-[9.5px]"></i>
+                                            <span>Nhật Ký Thay Đổi</span>
+                                            {auditLogs.length > 0 && (
+                                                <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
+                                                    activeRightTab === 'AUDIT_TRAIL'
+                                                        ? 'bg-amber-100 text-amber-800'
+                                                        : 'bg-slate-300/80 text-slate-700'
+                                                }`}>
+                                                    {auditLogs.length}
+                                                </span>
+                                            )}
+                                        </button>
                                     </div>
 
-                                    {/* Right: Executive Policy Cards */}
-                                    <div className="flex flex-col justify-between gap-2.5 border-t md:border-t-0 md:border-l border-slate-200/80 pt-2 md:pt-0 md:pl-2.5 flex-1">
-                                        <h3 className="text-[9.5px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-                                            <i className="fas fa-gift text-indigo-600 text-[10px]"></i> Chính Sách Ưu Đãi
-                                        </h3>
-                                        
-                                        <div className="flex-1 flex flex-col justify-between bg-white rounded-2xl p-2.5 md:p-3 border border-slate-200/80 shadow-2xs min-h-[110px]">
+                                    {activeRightTab === 'AUDIT_TRAIL' ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => resolvedOrder?.['Số đơn hàng'] && fetchAuditLogs(resolvedOrder['Số đơn hàng'])}
+                                            disabled={isLoadingLogs}
+                                            className="p-1 px-2.5 rounded-lg bg-white hover:bg-slate-100 text-slate-500 hover:text-indigo-600 text-[10px] font-bold transition-all border border-slate-200/80 shadow-2xs flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                            title="Làm mới lịch sử"
+                                        >
+                                            <i className={`fas fa-rotate-right text-[9px] ${isLoadingLogs ? 'animate-spin text-indigo-600' : ''}`}></i>
+                                            <span className="hidden sm:inline">Làm mới</span>
+                                        </button>
+                                    ) : (
+                                        <span className="text-[9px] font-bold text-slate-700 bg-white px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
+                                            Ghép: {daysSincePairedText}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {activeRightTab === 'MILESTONES' ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-2.5 items-stretch flex-1">
+                                        {/* Left: 3 Stacked Frosted Milestone Cards (Phương Án 1) */}
+                                        <div className="flex flex-col justify-between gap-2.5">
+                                            <div className="flex items-center justify-between pb-0.5">
+                                                <h3 className="text-[9.5px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <i className="fa-solid fa-bars-progress text-indigo-500 text-[10px]"></i> Tiến Độ Xử Lý
+                                                </h3>
+                                            </div>
+
                                             {(() => {
-                                                const rawPolicy: string = String(resolvedOrder["CHÍNH SÁCH"] || (resolvedOrder as any).chinh_sach || (resolvedOrder as any)["Chính sách"] || (resolvedOrder as any).policy || '');
-                                                if (!rawPolicy) return <p className="text-[10.5px] font-medium text-slate-400 italic my-auto text-center">Không có chính sách</p>;
-                                                
-                                                const items: string[] = rawPolicy.includes('\n') 
-                                                    ? rawPolicy.split('\n') 
-                                                    : rawPolicy.includes(';') 
-                                                        ? rawPolicy.split(';') 
-                                                        : [rawPolicy];
+                                                const hasInvoiced = Boolean(resolvedOrder["Ngày xuất hóa đơn"] || resolvedOrder.LinkHoaDonDaXuat);
+                                                const isAllCompleted = Boolean(resolvedOrder["Thời gian ghép"] && hasInvoiced);
 
                                                 return (
-                                                    <div className="flex-1 overflow-y-auto pr-0.5 space-y-1.5 mb-1.5">
-                                                        {items.map((s: string) => s.trim()).filter(Boolean).map((item: string, idx: number) => (
-                                                            <div key={idx} className="flex items-start gap-1.5 bg-slate-50/80 px-2 py-1.5 rounded-lg border border-slate-200/60 shadow-2xs">
-                                                                <i className="fas fa-check-circle text-emerald-600 text-[8.5px] mt-0.5 shrink-0"></i>
-                                                                <span className="text-[9.5px] font-medium text-slate-600 leading-snug">{item}</span>
+                                                    <div className="flex flex-col flex-1 justify-around py-0.5">
+                                                        {/* Card 1: Ngày Cọc */}
+                                                        <div className="px-3 py-1.5 md:py-2 bg-white/95 hover:bg-white rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10">
+                                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                                <div className="w-5 h-5 text-amber-500 flex items-center justify-center shrink-0">
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                                                                        <rect x="2" y="5" width="20" height="14" rx="2" />
+                                                                        <line x1="2" y1="10" x2="22" y2="10" />
+                                                                        <circle cx="6.5" cy="15" r="1" fill="currentColor" />
+                                                                    </svg>
+                                                                </div>
+                                                                <div className="min-w-0 flex-1 flex flex-col justify-center">
+                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">1. Ngày Cọc</p>
+                                                                    <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
+                                                                        {formatDateTime(resolvedOrder["Ngày cọc"])}
+                                                                    </p>
+                                                                </div>
                                                             </div>
-                                                        ))}
+                                                            <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
+                                                        </div>
+
+                                                        {/* Flowchart Directional Arrow 1 -> 2 */}
+                                                        <div className="flex items-center justify-center py-0.5">
+                                                            <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                                                <line x1="12" y1="4" x2="12" y2="20" />
+                                                                <polyline points="18 14 12 20 6 14" />
+                                                            </svg>
+                                                        </div>
+
+                                                        {/* Card 2: Tạo Yêu Cầu */}
+                                                        <div className={`px-3 py-1.5 md:py-2 rounded-xl border shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10 ${
+                                                            resolvedOrder["Thời gian nhập"]
+                                                                ? 'bg-white/95 hover:bg-white border-slate-200/90'
+                                                                : 'bg-slate-100/70 border-slate-200/50 opacity-60'
+                                                        }`}>
+                                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                                <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${
+                                                                    resolvedOrder["Thời gian nhập"] ? 'text-sky-500' : 'text-slate-300'
+                                                                }`}>
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                                    </svg>
+                                                                </div>
+                                                                <div className="min-w-0 flex-1 flex flex-col justify-center">
+                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">2. Tạo Yêu Cầu</p>
+                                                                    <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
+                                                                        {resolvedOrder["Thời gian nhập"] ? formatDateTime(resolvedOrder["Thời gian nhập"]) : 'Đang chờ xử lý'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            {resolvedOrder["Thời gian nhập"] ? (
+                                                                <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
+                                                            ) : <div className="w-3.5" />}
+                                                        </div>
+
+                                                        {/* Flowchart Directional Arrow 2 -> 3 */}
+                                                        <div className="flex items-center justify-center py-0.5">
+                                                            <svg className={`w-3.5 h-3.5 transition-colors ${resolvedOrder["Thời gian ghép"] ? (isAllCompleted ? 'text-slate-400' : 'text-emerald-500') : 'text-slate-300'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                                                <line x1="12" y1="4" x2="12" y2="20" />
+                                                                <polyline points="18 14 12 20 6 14" />
+                                                            </svg>
+                                                        </div>
+
+                                                        {/* Card 3: Ghép VIN */}
+                                                        <div className={`px-3 py-1.5 md:py-2 rounded-xl border shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10 ${
+                                                            resolvedOrder["Thời gian ghép"]
+                                                                ? isAllCompleted
+                                                                    ? 'bg-white/95 hover:bg-white border-slate-200/90'
+                                                                    : 'bg-emerald-500/[0.08] hover:bg-emerald-500/[0.12] border-emerald-400/50 shadow-[0_0_15px_rgba(16,185,129,0.12)]'
+                                                                : 'bg-slate-100/70 border-slate-200/50 opacity-60'
+                                                        }`}>
+                                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                                <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${
+                                                                    resolvedOrder["Thời gian ghép"] ? 'text-emerald-500' : 'text-slate-300'
+                                                                }`}>
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                                                                        <circle cx="7" cy="17" r="1.5" />
+                                                                        <circle cx="17" cy="17" r="1.5" />
+                                                                    </svg>
+                                                                </div>
+                                                                <div className="min-w-0 flex-1 flex flex-col justify-center">
+                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">3. Ghép VIN</p>
+                                                                    <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
+                                                                        {resolvedOrder["Thời gian ghép"] ? formatDateTime(resolvedOrder["Thời gian ghép"]) : 'Chưa ghép xe'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            {resolvedOrder["Thời gian ghép"] ? (
+                                                                <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
+                                                            ) : <div className="w-3.5" />}
+                                                        </div>
+
+                                                        {/* Flowchart Directional Arrow 3 -> 4 */}
+                                                        <div className="flex items-center justify-center py-0.5">
+                                                            <svg className={`w-3.5 h-3.5 transition-colors ${hasInvoiced ? (isAllCompleted ? 'text-slate-400' : 'text-blue-500') : 'text-slate-300'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                                                <line x1="12" y1="4" x2="12" y2="20" />
+                                                                <polyline points="18 14 12 20 6 14" />
+                                                            </svg>
+                                                        </div>
+
+                                                        {/* Card 4: Xuất Hóa Đơn */}
+                                                        <div className={`px-3 py-1.5 md:py-2 rounded-xl border shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10 ${
+                                                            hasInvoiced
+                                                                ? isAllCompleted
+                                                                    ? 'bg-white/95 hover:bg-white border-slate-200/90'
+                                                                    : 'bg-blue-500/[0.08] hover:bg-blue-500/[0.12] border-blue-400/50 shadow-[0_0_15px_rgba(59,130,246,0.12)]'
+                                                                : 'bg-slate-100/70 border-slate-200/50 opacity-60'
+                                                        }`}>
+                                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                                <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${
+                                                                    hasInvoiced ? 'text-indigo-500' : 'text-slate-300'
+                                                                }`}>
+                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+                                                                    </svg>
+                                                                </div>
+                                                                <div className="min-w-0 flex-1 flex flex-col justify-center">
+                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">4. Xuất Hóa Đơn</p>
+                                                                    <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
+                                                                        {resolvedOrder["Ngày xuất hóa đơn"] ? formatDateTime(resolvedOrder["Ngày xuất hóa đơn"]) : (resolvedOrder.LinkHoaDonDaXuat ? 'Đã xuất HĐ' : 'Chưa xuất HĐ')}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            {hasInvoiced ? (
+                                                                <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
+                                                            ) : <div className="w-3.5" />}
+                                                        </div>
                                                     </div>
                                                 );
                                             })()}
+                                        </div>
+
+                                        {/* Right: Executive Policy Cards */}
+                                        <div className="flex flex-col justify-between gap-2.5 border-t md:border-t-0 md:border-l border-slate-200/80 pt-2 md:pt-0 md:pl-2.5 flex-1">
+                                            <h3 className="text-[9.5px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                                                <i className="fas fa-gift text-indigo-600 text-[10px]"></i> Chính Sách Ưu Đãi
+                                            </h3>
                                             
-                                            {onSelectPolicy && !isReferenceAccount && ['chưa ghép', 'đã ghép'].includes(generalStatus) && (
-                                                <button 
-                                                    onClick={() => setInlineMode('POLICY')}
-                                                    className="mt-1 text-[9.5px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-900 hover:text-white border border-slate-200 px-3 py-1.5 rounded-xl transition-all w-full text-center shadow-2xs active:scale-95 cursor-pointer"
-                                                >
-                                                    Cập nhật chính sách
-                                                </button>
-                                            )}
+                                            <div className="flex-1 flex flex-col justify-between bg-white rounded-2xl p-2.5 md:p-3 border border-slate-200/80 shadow-2xs min-h-[110px]">
+                                                {(() => {
+                                                    const rawPolicy: string = String(resolvedOrder["CHÍNH SÁCH"] || (resolvedOrder as any).chinh_sach || (resolvedOrder as any)["Chính sách"] || (resolvedOrder as any).policy || '');
+                                                    if (!rawPolicy) return <p className="text-[10.5px] font-medium text-slate-400 italic my-auto text-center">Không có chính sách</p>;
+                                                    
+                                                    const items: string[] = rawPolicy.includes('\n') 
+                                                        ? rawPolicy.split('\n') 
+                                                        : rawPolicy.includes(';') 
+                                                            ? rawPolicy.split(';') 
+                                                            : [rawPolicy];
+
+                                                    return (
+                                                        <div className="flex-1 overflow-y-auto pr-0.5 space-y-1.5 mb-1.5">
+                                                            {items.map((s: string) => s.trim()).filter(Boolean).map((item: string, idx: number) => (
+                                                                <div key={idx} className="flex items-start gap-1.5 bg-slate-50/80 px-2 py-1.5 rounded-lg border border-slate-200/60 shadow-2xs">
+                                                                    <i className="fas fa-check-circle text-emerald-600 text-[8.5px] mt-0.5 shrink-0"></i>
+                                                                    <span className="text-[9.5px] font-medium text-slate-600 leading-snug">{item}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                })()}
+                                                
+                                                {onSelectPolicy && !isReferenceAccount && ['chưa ghép', 'đã ghép'].includes(generalStatus) && (
+                                                    <button 
+                                                        onClick={() => setInlineMode('POLICY')}
+                                                        className="mt-1 text-[9.5px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-900 hover:text-white border border-slate-200 px-3 py-1.5 rounded-xl transition-all w-full text-center shadow-2xs active:scale-95 cursor-pointer"
+                                                    >
+                                                        Cập nhật chính sách
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    /* Audit Trail Timeline View */
+                                    <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+                                        {isLoadingLogs ? (
+                                            <div className="py-12 text-center text-xs font-bold text-slate-400 flex flex-col items-center gap-2 justify-center">
+                                                <i className="fas fa-circle-notch animate-spin text-lg text-indigo-500"></i>
+                                                <span>Đang tải nhật ký thay đổi...</span>
+                                            </div>
+                                        ) : auditLogs.length === 0 ? (
+                                            <div className="py-12 text-center flex flex-col items-center justify-center">
+                                                <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-2">
+                                                    <i className="fa-solid fa-clock-rotate-left text-base"></i>
+                                                </div>
+                                                <p className="text-xs font-bold text-slate-700">Chưa có nhật ký thay đổi</p>
+                                                <p className="text-[10px] text-slate-400 mt-0.5 max-w-[260px] leading-relaxed">
+                                                    Mọi thao tác ghép xe, đổi xe, cập nhật cấu hình hoặc xuất hóa đơn sẽ được ghi nhận tại đây.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="relative pl-5 space-y-2.5 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-200/80">
+                                                {auditLogs.map((log) => (
+                                                    <div key={log.id} className="relative group">
+                                                        {/* Dot marker */}
+                                                        <div className={`absolute -left-5 top-2 w-3.5 h-3.5 rounded-full ring-4 ${log.dotColor} flex items-center justify-center shadow-xs`}>
+                                                            <div className="w-1 h-1 rounded-full bg-white"></div>
+                                                        </div>
+
+                                                        {/* Card item */}
+                                                        <div className="bg-white/95 hover:bg-white rounded-xl p-2.5 border border-slate-200/90 shadow-2xs transition-all">
+                                                            <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
+                                                                <span className={`px-2 py-0.5 rounded-md text-[9.5px] font-bold border flex items-center gap-1 ${log.badgeBg}`}>
+                                                                    <i className={`fas ${log.icon} text-[8.5px]`}></i>
+                                                                    {log.actionTitle}
+                                                                </span>
+                                                                <span className="text-[9px] font-medium text-slate-400 tabular-nums">
+                                                                    {formatDateTime(log.createdAt)}
+                                                                </span>
+                                                            </div>
+
+                                                            <div className="text-[10px] text-slate-600 font-medium flex items-center gap-1.5 mt-1">
+                                                                <i className="fa-regular fa-user text-slate-400 text-[8.5px]"></i>
+                                                                <span>Người thực hiện:</span>
+                                                                <strong className="text-slate-800 font-bold">{log.actorName}</strong>
+                                                            </div>
+
+                                                            {log.vin && (
+                                                                <div className="mt-1 flex items-center gap-1.5 text-[10px]">
+                                                                    <span className="font-bold text-slate-400 uppercase tracking-wider text-[8.5px]">Số VIN:</span>
+                                                                    <span className="font-mono font-black text-indigo-700 bg-indigo-50/80 px-1.5 py-0.5 rounded border border-indigo-100 text-[9.5px] select-all">
+                                                                        {log.vin}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+
+                                                            {log.reason && (
+                                                                <div className="mt-1.5 p-1.5 rounded-lg bg-slate-50 border border-slate-100 text-[9.5px] text-slate-600 leading-snug">
+                                                                    <span className="font-bold text-slate-700">Lý do / Ghi chú: </span>
+                                                                    <span>{log.reason}</span>
+                                                                </div>
+                                                            )}
+
+                                                            {(() => {
+                                                                if (log.type !== 'CHANGE_CONFIG' || !log.metadata?.oldConfig || !log.metadata?.newConfig) return null;
+                                                                const parseCfg = (cfg: any) => {
+                                                                    if (!cfg || typeof cfg !== 'object') return null;
+                                                                    const model = cfg['Dòng xe'] || cfg.dong_xe || cfg.dongXe || cfg.model || '';
+                                                                    const trim = cfg['Phiên bản'] || cfg.phien_ban || cfg.phienBan || cfg.trim || cfg.version || '';
+                                                                    const ext = cfg['Ngoại thất'] || cfg.ngoai_that || cfg.ngoaiThat || cfg.color || cfg.extColor || '';
+                                                                    const interior = cfg['Nội thất'] || cfg.noi_that || cfg.noiThat || cfg.intColor || '';
+                                                                    return {
+                                                                        name: [model, trim].filter(Boolean).join(' - ') || '—',
+                                                                        color: [ext, interior].filter(Boolean).join(' / ') || '—'
+                                                                    };
+                                                                };
+                                                                const oldC = parseCfg(log.metadata.oldConfig);
+                                                                const newC = parseCfg(log.metadata.newConfig);
+                                                                if (!oldC || !newC) return null;
+
+                                                                return (
+                                                                    <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[9px] bg-amber-50/70 p-2 rounded-xl border border-amber-200/80 shadow-2xs">
+                                                                        <div>
+                                                                            <p className="text-slate-400 font-bold uppercase text-[8px] tracking-wider mb-0.5">Trước thay đổi</p>
+                                                                            <p className="text-slate-700 font-bold leading-tight">{oldC.name}</p>
+                                                                            <p className="text-slate-500 text-[8.5px] mt-0.5 font-medium">{oldC.color}</p>
+                                                                        </div>
+                                                                        <div className="border-l border-amber-200/60 pl-2">
+                                                                            <p className="text-amber-800 font-bold uppercase text-[8px] tracking-wider mb-0.5">Sau thay đổi</p>
+                                                                            <p className="text-amber-950 font-black leading-tight">{newC.name}</p>
+                                                                            <p className="text-amber-800 font-bold text-[8.5px] mt-0.5">{newC.color}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })()}
+
+                                                            {log.type === 'SUPER_EDIT' && log.metadata?.details && typeof log.metadata.details === 'object' && (
+                                                                <div className="mt-1.5 p-2 rounded-xl bg-indigo-50/70 border border-indigo-200/80 text-[9px] space-y-1 shadow-2xs">
+                                                                    <p className="text-indigo-800 font-bold uppercase text-[8px] tracking-wider">Thông tin đã chỉnh sửa</p>
+                                                                    <div className="flex flex-wrap gap-1">
+                                                                        {Object.entries(log.metadata.details)
+                                                                            .filter(([k, v]) => v !== undefined && v !== null && v !== '' && k !== 'Số đơn hàng')
+                                                                            .map(([k, v]) => (
+                                                                                <span key={k} className="px-1.5 py-0.5 bg-white rounded border border-indigo-100 text-indigo-900 font-medium text-[8.5px] shadow-2xs">
+                                                                                    <strong className="text-indigo-950 font-bold">{k}:</strong> {String(v)}
+                                                                                </span>
+                                                                            ))
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}
@@ -1280,6 +2139,49 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         </button>
                     )}
 
+                    {/* Nút Điều Chuyển Xe / In Phiếu DNX (Hiển thị 1 nút gọn gàng duy nhất; Xe có phiếu TD4 giấy ra cổng thì ẩn hoàn toàn) */}
+                    {resolvedOrder.VIN && !hasTd4 && !isReferenceAccount && (
+                        transferRequest?.status === 'completed' ? (
+                            <button
+                                type="button"
+                                onClick={handleOpenPrintDnx}
+                                className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10.5px] sm:text-[11px] transition-all flex items-center gap-1.5 shrink-0 shadow-sm active:scale-95 cursor-pointer"
+                                title={`Đã lập phiếu ${transferRequest.soCtDnx || 'DNX'}. Bấm để xem và in phiếu.`}
+                            >
+                                <i className="fas fa-print text-[10px]"></i>
+                                <span>In Phiếu DNX</span>
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={handleOpenTransferMode}
+                                disabled={isLoadingTransferReq}
+                                className={`px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-full font-bold text-[10.5px] sm:text-[11px] transition-all flex items-center gap-1.5 shrink-0 shadow-sm active:scale-95 cursor-pointer ${
+                                    transferRequest?.status === 'pending'
+                                        ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 ring-2 ring-amber-400/20'
+                                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                }`}
+                                title="Yêu cầu Admin lập phiếu điều chuyển xe nội bộ (DNX) về showroom/xưởng PDI"
+                            >
+                                {isLoadingTransferReq ? (
+                                    <i className="fas fa-spinner fa-spin text-[10px]"></i>
+                                ) : (
+                                    <i className="fas fa-truck-moving text-[10px]"></i>
+                                )}
+                                <span>
+                                    {isLoadingTransferReq
+                                        ? 'Kiểm tra...'
+                                        : transferRequest?.status === 'pending'
+                                        ? 'Chờ chuyển'
+                                        : 'Chuyển Xe'}
+                                </span>
+                                {transferRequest?.status === 'pending' && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
+                                )}
+                            </button>
+                        )
+                    )}
+
                     {canAddSupplement && !isReferenceAccount && (
                         <button onClick={() => onSupplement!(resolvedOrder)} className="px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10.5px] sm:text-[11px] transition-all flex items-center gap-1 shrink-0 active:scale-95">
                             <i className="fas fa-file-upload text-[9px]"></i> Bổ Sung
@@ -1308,6 +2210,12 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                     onSelectPolicy?.(resolvedOrder, policyName);
                     setIsPolicyModalOpen(false);
                 }}
+            />
+
+            <CyberDnxPrintModal
+                isOpen={isPrintDnxOpen}
+                onClose={() => setIsPrintDnxOpen(false)}
+                data={printDnxData}
             />
         </div>
     );

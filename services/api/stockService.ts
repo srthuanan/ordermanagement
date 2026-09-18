@@ -1346,6 +1346,78 @@ export const createCyberDnxTicket = async (params: CyberDnxCreateParams): Promis
     }
 };
 
+export interface CyberVinLookupResult {
+    success: boolean;
+    found?: boolean;
+    ma_kho?: string;
+    ten_kho?: string;
+    total_vins?: number;
+    found_count?: number;
+    cars?: Array<{
+        vin: string;
+        ma_kho: string;
+        ten_kho: string;
+        so_may?: string;
+        ma_kx?: string;
+        ten_kx?: string;
+        ma_mau?: string;
+        ten_mau?: string;
+        has_dnx?: boolean;
+        dnx?: any;
+        has_td4?: boolean;
+        td4?: any;
+    }>;
+    has_dnx?: boolean;
+    dnx?: any;
+    has_td4?: boolean;
+    td4?: any;
+    warehouses?: Array<{
+        ma_kho: string;
+        ten_kho: string;
+        label?: string;
+    }>;
+    error?: string;
+}
+
+export const lookupCyberVinWarehouse = async (vinOrVins: string | string[]): Promise<CyberVinLookupResult> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/lookup-vin');
+        let lastErrorMsg = '';
+
+        const payload = typeof vinOrVins === 'string' ? { vin: vinOrVins } : { vins: vinOrVins };
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const text = await res.text();
+                let json: any = null;
+                try { json = JSON.parse(text); } catch (_) {}
+
+                if (res.ok && json && typeof json === 'object') {
+                    return json;
+                } else {
+                    lastErrorMsg = (json && json.error) || (text && !text.startsWith('<') ? text : `HTTP ${res.status}`);
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        throw new Error(lastErrorMsg || 'Không thể kết nối dịch vụ tra cứu kho CyberSoft.');
+    } catch (err: any) {
+        console.error("Lỗi lookupCyberVinWarehouse:", err);
+        return {
+            success: false,
+            found: false,
+            error: err.message || 'Lỗi kết nối khi tra cứu kho xe trên CyberSoft.'
+        };
+    }
+};
+
 export interface CyberVoucherTicketItem {
     voucher_type: 'DNX' | 'TD4';
     voucher_name: string;
@@ -1356,6 +1428,9 @@ export interface CyberVoucherTicketItem {
     ma_ttcp: string;
     dien_giai: string;
     ten_kh: string;
+    ten_tvbh?: string;
+    nguoi_nhan?: string;
+    ong_ba?: string;
     so_hd: string;
     tong_tien: number;
     da_thanh_toan: number;
@@ -1364,7 +1439,9 @@ export interface CyberVoucherTicketItem {
     vin: string;
     so_may: string;
     loai_xe: string;
+    ten_kx?: string;
     ma_mau?: string;
+    ten_mau?: string;
 }
 
 export interface CyberVoucherTicketParams {
@@ -1423,6 +1500,73 @@ export const getCyberVoucherTickets = async (params: CyberVoucherTicketParams = 
             success: false,
             data: [],
             error: err.message || 'Lỗi kết nối khi tra cứu danh sách phiếu CyberSoft.'
+        };
+    }
+};
+
+export interface CheckCyberContractResult {
+    success: boolean;
+    found: boolean;
+    is_approved: boolean;
+    ma_post?: string;
+    ten_post?: string;
+    so_ct?: string;
+    ten_kh?: string;
+    ten_tvbh?: string;
+    ngay_ct?: string;
+    match_by?: string;
+    message?: string;
+    error?: string;
+}
+
+/**
+ * Tra cứu trạng thái phê duyệt hợp đồng trên CyberSoft ERP theo Tên khách hàng & Tên TVBH
+ */
+export const checkCyberContractStatus = async (params: {
+    customer_name?: string;
+    tvbh_name?: string;
+    vin?: string;
+    order_no?: string;
+    ma_ttcp?: string;
+}): Promise<CheckCyberContractResult> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/check-contract-status');
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                const text = await res.text();
+                let json: any = null;
+                try { json = JSON.parse(text); } catch (_) {}
+
+                if (res.ok && json) {
+                    return json;
+                } else {
+                    lastErrorMsg = (json && json.error) || (text && !text.startsWith('<') ? text : `HTTP ${res.status}`);
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        return {
+            success: false,
+            found: false,
+            is_approved: false,
+            error: lastErrorMsg || 'Không thể kết nối máy chủ kiểm tra hợp đồng CyberSoft.'
+        };
+    } catch (err: any) {
+        console.error("Lỗi checkCyberContractStatus:", err);
+        return {
+            success: false,
+            found: false,
+            is_approved: false,
+            error: err.message || 'Lỗi kết nối khi tra cứu trạng thái hợp đồng trên CyberSoft.'
         };
     }
 };

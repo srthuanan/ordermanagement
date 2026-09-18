@@ -1531,16 +1531,22 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
         for idx, vin in enumerate(vins, start=1):
             vin_clean = vin.strip().upper()
             cursor.execute(f"""
-                SELECT TOP 1 Ma_Kx, Ma_Mau, So_May, Ma_Kho, Ma_mau_nt
-                FROM CT70BEX
-                WHERE So_Khung = {ph}
-                ORDER BY Ngay_Ct DESC
+                SELECT TOP 1 c.Ma_Kx, c.Ma_Mau, c.So_May, c.Ma_Kho, c.Ma_mau_nt,
+                       ISNULL(k.Ten_Kx, c.Ma_Kx) AS Ten_Kx,
+                       ISNULL(m.Ten_mau, c.Ma_Mau) AS Ten_mau
+                FROM CT70BEX c
+                LEFT JOIN Dmkx k ON c.Ma_Kx = k.Ma_Kx
+                LEFT JOIN Dmmauxe m ON c.Ma_Mau = m.Ma_mau
+                WHERE c.So_Khung = {ph}
+                ORDER BY c.Ngay_Ct DESC
             """, (vin_clean,))
             car_info = cursor.fetchone() or {}
 
             if is_pymssql:
                 ma_kx = (car_info.get('Ma_Kx') or '').strip()
+                ten_kx = (car_info.get('Ten_Kx') or '').strip()
                 ma_mau = (car_info.get('Ma_Mau') or '').strip()
+                ten_mau = (car_info.get('Ten_mau') or '').strip()
                 so_may = (car_info.get('So_May') or '').strip()
                 ma_mau_nt = (car_info.get('Ma_mau_nt') or '').strip()
             else:
@@ -1548,6 +1554,8 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
                 ma_mau = (car_info[1] if len(car_info) > 1 else '') or ''
                 so_may = (car_info[2] if len(car_info) > 2 else '') or ''
                 ma_mau_nt = (car_info[4] if len(car_info) > 4 else '') or ''
+                ten_kx = (car_info[5] if len(car_info) > 5 else '') or ''
+                ten_mau = (car_info[6] if len(car_info) > 6 else '') or ''
 
             stt_rec0 = f"{idx:04d}"
 
@@ -1587,7 +1595,9 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
                 "vin": vin_clean,
                 "so_may": so_may,
                 "ma_kx": ma_kx,
+                "ten_kx": ten_kx,
                 "ma_mau": ma_mau,
+                "ten_mau": ten_mau,
                 "ma_kho_xuat": ma_kho_xuat,
                 "ma_kho_nhan": ma_kho_nhan
             })
@@ -1645,6 +1655,516 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             "error": f"Lỗi tạo phiếu đề nghị xuất trên CyberSoft: {str(e)}"
         }
 
+def lookup_vin_warehouse(params: dict = {}) -> dict:
+    vin_input = params.get("vin") or ""
+    vins = params.get("vins") or []
+    if not vins and vin_input:
+        tokens = re.findall(r'[A-Za-z0-9]{10,20}', str(vin_input).upper())
+        vins = tokens if tokens else [str(vin_input).strip().upper()]
+
+    vins_clean = [v.strip().upper() for v in vins if v and len(v.strip()) >= 8]
+
+    try:
+        is_pymssql = True
+        try:
+            import pymssql
+            conn = pymssql.connect(
+                server='SQLVanDao.Cybersoft.com.vn',
+                port=7521,
+                user='cyber_vandao',
+                password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+                database='CyberAppGolden_VanDao',
+                timeout=15,
+                appname='CyberAppGolden',
+            )
+        except Exception:
+            import pyodbc
+            conn = pyodbc.connect(CYBER_CONN, timeout=15)
+            is_pymssql = False
+
+        c = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
+
+        # 1. Luôn truy vấn danh mục kho xe thực tế từ Dmkho trên Cyber
+        cyber_warehouses = []
+        try:
+            sql_wh = """
+                SELECT RTRIM(LTRIM(ma_kho)) as ma_kho, RTRIM(LTRIM(ten_kho)) as ten_kho
+                FROM Dmkho WITH (NOLOCK)
+                WHERE (Ten_kho LIKE N'%xe%' OR Ten_kho LIKE N'%ô tô%' OR Ten_kho LIKE N'%Vinfast%' OR Ma_Kho IN ('K83','K85','K86','K87','KHCM.PVD','K103','K106','K58','K65','K66','K36'))
+                  AND Ten_kho NOT LIKE N'%phụ tùng%'
+                  AND Ten_kho NOT LIKE N'%vật tư%'
+                  AND Ten_kho NOT LIKE N'%sạc%'
+                  AND Ten_kho NOT LIKE N'%voucher%'
+                  AND Ten_kho NOT LIKE N'%công cụ%'
+                  AND Ten_kho NOT LIKE N'%thùng%'
+                  AND Ten_kho NOT LIKE N'%xe máy%'
+                  AND Ten_kho NOT LIKE N'%lazang%'
+                  AND Ten_kho NOT LIKE N'%cơ khí%'
+                ORDER BY 
+                  CASE 
+                    WHEN ma_kho = 'K83' THEN 1
+                    WHEN ma_kho = 'K87' THEN 2
+                    WHEN ma_kho = 'K86' THEN 3
+                    WHEN ma_kho = 'K85' THEN 4
+                    WHEN ma_kho = 'KHCM.PVD' THEN 5
+                    WHEN ma_kho = 'K106' THEN 6
+                    ELSE 10 
+                  END, ma_kho
+            """
+            c.execute(sql_wh)
+            wh_rows = c.fetchall()
+            for r in wh_rows:
+                mk = (r.get('ma_kho') if is_pymssql else r[0] or '').strip()
+                tk = (r.get('ten_kho') if is_pymssql else r[1] or '').strip()
+                if mk:
+                    cyber_warehouses.append({"ma_kho": mk, "ten_kho": tk, "label": f"{mk} - {tk}"})
+        except Exception as e_wh:
+            print(f"[Warehouse lookup warning] {e_wh}", file=sys.stderr)
+
+        if not vins_clean:
+            conn.close()
+            return {
+                "success": True,
+                "found": False,
+                "ma_kho": "",
+                "ten_kho": "",
+                "total_vins": 0,
+                "found_count": 0,
+                "cars": [],
+                "warehouses": cyber_warehouses
+            }
+
+        vin_list_str = ','.join([repr(v) for v in vins_clean])
+
+        # 2. Tra cứu kho tồn thực tế từ CT70BEX
+        sql_stock = f"""
+            WITH TonSK AS (
+                SELECT So_Khung, ma_kho, SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) AS Ton
+                FROM CT70BEX WITH (NOLOCK)
+                WHERE Ma_Post >= '9' AND So_Khung IN ({vin_list_str})
+                GROUP BY So_Khung, ma_kho
+            ),
+            LatestSK AS (
+                SELECT 
+                    b.So_Khung, 
+                    b.ma_kho, 
+                    k.Ten_kho,
+                    ROW_NUMBER() OVER(PARTITION BY b.So_Khung ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC) AS rn
+                FROM CT70BEX b WITH (NOLOCK)
+                LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
+                WHERE b.nxt = '1' 
+                  AND b.Ma_Post >= '9' 
+                  AND b.So_Khung IN ({vin_list_str})
+                  AND b.So_Khung IN (SELECT So_Khung FROM TonSK WHERE Ton >= 1)
+            )
+            SELECT So_Khung, ma_kho, Ten_kho
+            FROM LatestSK
+            WHERE rn = 1
+        """
+        c.execute(sql_stock)
+        stock_rows = c.fetchall()
+        stock_map = {}
+        for r in stock_rows:
+            v = (r.get('So_Khung') if is_pymssql else r[0] or "").strip().upper()
+            mk = (r.get('ma_kho') if is_pymssql else r[1] or "").strip()
+            tk = (r.get('Ten_kho') if is_pymssql else r[2] or "").strip()
+            stock_map[v] = {"ma_kho": mk, "ten_kho": tk}
+
+        # 3. Tra cứu chi tiết xe từ CT70BEX & CTKH kết hợp danh mục DmKx & Dmmauxe (đầy đủ tên tiếng Việt)
+        sql_info = f"""
+            WITH BexInfo AS (
+                SELECT 
+                    b.So_Khung, b.So_May, b.Ma_Kx, b.Ma_Mau, b.Ma_Kho,
+                    ROW_NUMBER() OVER(PARTITION BY b.So_Khung ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC) AS rn
+                FROM CT70BEX b WITH (NOLOCK)
+                WHERE b.So_Khung IN ({vin_list_str})
+            )
+            SELECT 
+                COALESCE(b.So_Khung, k.So_khung) AS so_khung,
+                COALESCE(NULLIF(b.So_May, ''), k.So_May, '') AS so_may,
+                COALESCE(NULLIF(b.Ma_Kx, ''), k.Ma_Kx, '') AS ma_kx,
+                COALESCE(NULLIF(kx.Ten_Kx, ''), NULLIF(kx2.Ten_Kx, ''), NULLIF(b.Ma_Kx, ''), k.Ma_Kx, '') AS ten_kx,
+                COALESCE(NULLIF(b.Ma_Mau, ''), k.Ma_Mau, '') AS ma_mau,
+                COALESCE(NULLIF(mx.Ten_mau, ''), NULLIF(mx2.Ten_mau, ''), NULLIF(b.Ma_Mau, ''), k.Ma_Mau, '') AS ten_mau,
+                COALESCE(b.Ma_Kho, kho.Ma_kho, '') AS ctkh_ma_kho,
+                COALESCE(kho_b.Ten_kho, kho.Ten_kho, '') AS ctkh_ten_kho
+            FROM BexInfo b
+            FULL OUTER JOIN CTKH k WITH (NOLOCK) ON b.So_Khung = k.So_khung
+            LEFT JOIN DmKx kx WITH (NOLOCK) ON b.Ma_Kx = kx.ma_kx
+            LEFT JOIN DmKx kx2 WITH (NOLOCK) ON k.Ma_Kx = kx2.ma_kx
+            LEFT JOIN Dmmauxe mx WITH (NOLOCK) ON b.Ma_Mau = mx.ma_Mau
+            LEFT JOIN Dmmauxe mx2 WITH (NOLOCK) ON k.Ma_Mau = mx2.ma_Mau
+            LEFT JOIN Dmkho kho_b WITH (NOLOCK) ON b.Ma_Kho = kho_b.Ma_kho
+            LEFT JOIN Dmkho kho WITH (NOLOCK) ON k.Ma_Vitri = kho.Ma_kho
+            WHERE b.rn = 1 OR b.rn IS NULL
+        """
+        c.execute(sql_info)
+        info_rows = c.fetchall()
+
+        # 4. Tra cứu phiếu Đề nghị xuất xe / Điều chuyển xe (DNX) của Showroom Thuận An đã lập trên CyberSoft
+        sql_dnx = f"""
+            SELECT 
+                c.so_khung,
+                p.so_ct,
+                p.stt_rec,
+                p.ngay_ct,
+                p.dien_giai,
+                p.ong_ba AS ten_kh,
+                p.Ma_Hs_H AS nvkd,
+                ISNULL(c.ma_kho_i, p.Ma_kho) AS ma_kho_xuat,
+                ISNULL(c.ma_khoN_i, p.Ma_khoN) AS ma_kho_nhan,
+                c.so_may,
+                c.ma_Kx,
+                c.Ma_Mau
+            FROM CTDNX c WITH (NOLOCK)
+            JOIN PHDNX p WITH (NOLOCK) ON c.stt_rec = p.stt_rec
+            WHERE c.so_khung IN ({vin_list_str})
+              AND (
+                p.Ma_TTCP_H = '02.01.08'
+                OR p.so_ct LIKE '08.DNX%'
+                OR ISNULL(c.ma_khoN_i, p.Ma_khoN) = 'K83'
+              )
+            ORDER BY p.ngay_ct DESC, p.so_ct DESC
+        """
+        c.execute(sql_dnx)
+        dnx_rows = c.fetchall()
+        if is_pymssql:
+            dnx_raw_list = [r for r in dnx_rows]
+        else:
+            cols_dnx = [comp[0].lower() for comp in c.description]
+            dnx_raw_list = [dict(zip(cols_dnx, r)) for r in dnx_rows]
+
+        # 5. Tra cứu phiếu Phiếu Xe Ra / Giấy ra cổng giao xe (TD4) đã lập trên CyberSoft
+        sql_td4 = f"""
+            SELECT 
+                COALESCE(NULLIF(RTRIM(p.Ma_Xe), ''), bx.So_khung, '') AS so_khung,
+                p.so_ct,
+                p.stt_rec,
+                p.ngay_ct,
+                p.ma_post,
+                p.dien_giai,
+                p.ong_ba AS ten_kh,
+                p.Ma_Hd_H AS so_hd,
+                p.so_may,
+                p.loai_xe
+            FROM PHTD p WITH (NOLOCK)
+            LEFT JOIN BEXEPXE bx WITH (NOLOCK) ON RTRIM(p.Ma_Hd_H) = RTRIM(bx.Ma_Hd)
+            WHERE p.Ma_Ct = 'TD4'
+              AND (
+                RTRIM(p.Ma_Xe) IN ({vin_list_str})
+                OR bx.So_khung IN ({vin_list_str})
+              )
+            ORDER BY p.ngay_ct DESC, p.so_ct DESC
+        """
+        c.execute(sql_td4)
+        td4_rows = c.fetchall()
+        if is_pymssql:
+            td4_raw_list = [r for r in td4_rows]
+        else:
+            cols_td4 = [comp[0].lower() for comp in c.description]
+            td4_raw_list = [dict(zip(cols_td4, r)) for r in td4_rows]
+
+        conn.close()
+
+        td4_map = {}
+        for r in td4_raw_list:
+            rd = {str(k).lower(): (v.strftime('%Y-%m-%d') if isinstance(v, (datetime, date)) else str(v or '').strip()) for k, v in r.items()}
+            v = rd.get('so_khung', '').upper()
+            if v and v not in td4_map:
+                td4_map[v] = {
+                    "so_ct": rd.get('so_ct', ''),
+                    "stt_rec": rd.get('stt_rec', ''),
+                    "ngay_ct": rd.get('ngay_ct', ''),
+                    "ma_post": rd.get('ma_post', ''),
+                    "dien_giai": rd.get('dien_giai', ''),
+                    "ten_kh": rd.get('ten_kh', ''),
+                    "so_hd": rd.get('so_hd', ''),
+                    "so_may": rd.get('so_may', ''),
+                    "loai_xe": rd.get('loai_xe', '')
+                }
+
+        dnx_map = {}
+        for r in dnx_raw_list:
+            rd = {str(k).lower(): (v.strftime('%Y-%m-%d') if isinstance(v, (datetime, date)) else str(v or '').strip()) for k, v in r.items()}
+            v = rd.get('so_khung', '').upper()
+            if v and v not in dnx_map:
+                dnx_map[v] = {
+                    "so_ct": rd.get('so_ct', ''),
+                    "stt_rec": rd.get('stt_rec', ''),
+                    "ngay_ct": rd.get('ngay_ct', ''),
+                    "dien_giai": rd.get('dien_giai', ''),
+                    "ten_kh": rd.get('ten_kh', ''),
+                    "nvkd": rd.get('nvkd', ''),
+                    "ma_kho_xuat": rd.get('ma_kho_xuat', 'K87'),
+                    "ma_kho_nhan": rd.get('ma_kho_nhan', 'K83'),
+                    "so_may": rd.get('so_may', ''),
+                    "ma_kx": rd.get('ma_kx', ''),
+                    "ma_mau": rd.get('ma_mau', '')
+                }
+
+        info_map = {}
+        for r in info_rows:
+            rd = {str(k).lower(): str(v or '').strip() for k, v in r.items()} if isinstance(r, dict) else {}
+            v = rd.get('so_khung', '').upper()
+            sm = rd.get('so_may', '')
+            mkx = rd.get('ma_kx', '')
+            tkx = rd.get('ten_kx', '')
+            mm = rd.get('ma_mau', '')
+            tm = rd.get('ten_mau', '')
+            ck_mk = rd.get('ctkh_ma_kho', '')
+            ck_tk = rd.get('ctkh_ten_kho', '')
+            info_map[v] = {
+                "so_may": sm,
+                "ma_kx": mkx,
+                "ten_kx": tkx,
+                "ma_mau": mm,
+                "ten_mau": tm,
+                "ctkh_ma_kho": ck_mk,
+                "ctkh_ten_kho": ck_tk
+            }
+
+        results = []
+        found_warehouses = []
+        for v in vins_clean:
+            st = stock_map.get(v, {})
+            inf = info_map.get(v, {})
+            ma_kho = st.get("ma_kho") or inf.get("ctkh_ma_kho") or ""
+            ten_kho = st.get("ten_kho") or inf.get("ctkh_ten_kho") or ""
+            if ma_kho:
+                found_warehouses.append({"ma_kho": ma_kho, "ten_kho": ten_kho})
+            dnx_entry = dnx_map.get(v)
+            td4_entry = td4_map.get(v)
+            results.append({
+                "vin": v,
+                "ma_kho": ma_kho,
+                "ten_kho": ten_kho,
+                "so_may": inf.get("so_may", ""),
+                "ma_kx": inf.get("ma_kx", ""),
+                "ten_kx": inf.get("ten_kx", ""),
+                "ma_mau": inf.get("ma_mau", ""),
+                "ten_mau": inf.get("ten_mau", ""),
+                "has_dnx": bool(dnx_entry),
+                "dnx": dnx_entry,
+                "has_td4": bool(td4_entry),
+                "td4": td4_entry
+            })
+
+        first_mk = found_warehouses[0]["ma_kho"] if found_warehouses else ""
+        first_tk = found_warehouses[0]["ten_kho"] if found_warehouses else ""
+        first_dnx = results[0].get("dnx") if results else None
+        first_td4 = results[0].get("td4") if results else None
+
+        return {
+            "success": True,
+            "found": bool(first_mk),
+            "ma_kho": first_mk,
+            "ten_kho": first_tk,
+            "total_vins": len(vins_clean),
+            "found_count": len(found_warehouses),
+            "has_dnx": bool(first_dnx),
+            "dnx": first_dnx,
+            "has_td4": bool(first_td4),
+            "td4": first_td4,
+            "cars": results,
+            "warehouses": cyber_warehouses
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "found": False,
+            "error": f"Lỗi tra cứu kho Cyber: {str(e)}"
+        }
+
+def check_cyber_contract_status(params: dict = {}) -> dict:
+    """
+    Tra cứu hợp đồng trên CyberSoft ERP theo:
+    1. Tên khách hàng (Ten_kh) VÀ Tên tư vấn bán hàng (Ten_Hs via DmHs)
+    2. Fallback theo số VIN (BEXEPXE.So_khung) hoặc số chứng từ / số đơn hàng (PHHDX.so_ct / So_donhang)
+    
+    Quy tắc duyệt:
+    - Ma_Post >= '3': Đã duyệt (is_approved = True)
+    - Ma_Post == '2': Chờ duyệt (is_approved = False)
+    - Ma_Post == '1': Đã hủy (is_approved = False)
+    - Không tìm thấy: is_approved = False
+    """
+    customer_name = (params.get("customer_name") or params.get("ten_kh") or "").strip()
+    tvbh_name = (params.get("tvbh_name") or params.get("ten_tvbh") or "").strip()
+    vin = (params.get("vin") or "").strip().upper()
+    order_no = (params.get("order_no") or params.get("so_don_hang") or "").strip()
+    ma_ttcp = (params.get("ma_ttcp") or "02.01.08").strip()
+
+    if not customer_name and not vin and not order_no:
+        return {
+            "success": True,
+            "found": False,
+            "is_approved": False,
+            "message": "Chưa có thông tin khách hàng hoặc tư vấn bán hàng để tra cứu hợp đồng"
+        }
+
+    conn = None
+    is_pymssql = False
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=20,
+            appname='CyberAppGolden'
+        )
+        is_pymssql = True
+    except Exception:
+        try:
+            import pyodbc
+            conn = pyodbc.connect(CYBER_CONN, timeout=20)
+            is_pymssql = False
+        except Exception as e_odbc:
+            return {
+                "success": False,
+                "found": False,
+                "is_approved": False,
+                "error": f"Lỗi kết nối cơ sở dữ liệu CyberSoft: {e_odbc}"
+            }
+
+    cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
+    ph = "%s" if is_pymssql else "?"
+
+    try:
+        matched_contract = None
+
+        # 1. Tra cứu chính xác theo CẶP TÊN KHÁCH HÀNG & TÊN TƯ VẤN BÁN HÀNG (Ưu tiên số 1)
+        if customer_name and tvbh_name:
+            sql_cus_tvbh = f"""
+                SELECT TOP 1 
+                    p.stt_rec, p.so_ct, p.Ma_Post, p.ngay_ct, p.Ten_kh, p.ong_ba,
+                    p.Ma_Hs_H, ISNULL(h.Ten_Hs, '') AS ten_tvbh,
+                    ISNULL(d.Ten_Post, N'Chưa phân loại') AS ten_post
+                FROM PHHDX p WITH (NOLOCK)
+                LEFT JOIN DmHs h WITH (NOLOCK) ON p.Ma_Hs_H = h.Ma_Hs
+                LEFT JOIN DmPost d WITH (NOLOCK) ON d.Ma_Ct = 'HDX' AND d.Ma_Post = p.Ma_Post
+                WHERE p.Ten_kh COLLATE SQL_Latin1_General_CP1_CI_AI LIKE {ph}
+                  AND h.Ten_Hs COLLATE SQL_Latin1_General_CP1_CI_AI LIKE {ph}
+                ORDER BY p.ngay_ct DESC, p.so_ct DESC
+            """
+            cursor.execute(sql_cus_tvbh, (f"%{customer_name}%", f"%{tvbh_name}%"))
+            r = cursor.fetchone()
+            if r:
+                matched_contract = r if is_pymssql else dict(zip([col[0] for col in cursor.description], r))
+                matched_contract['match_by'] = 'customer_and_tvbh'
+
+        # 2. Nếu chưa ra, thử tra cứu theo Tên khách hàng (tại Showroom Thuận An 02.01.08)
+        if not matched_contract and customer_name:
+            sql_cus = f"""
+                SELECT TOP 1 
+                    p.stt_rec, p.so_ct, p.Ma_Post, p.ngay_ct, p.Ten_kh, p.ong_ba,
+                    p.Ma_Hs_H, ISNULL(h.Ten_Hs, '') AS ten_tvbh,
+                    ISNULL(d.Ten_Post, N'Chưa phân loại') AS ten_post
+                FROM PHHDX p WITH (NOLOCK)
+                LEFT JOIN DmHs h WITH (NOLOCK) ON p.Ma_Hs_H = h.Ma_Hs
+                LEFT JOIN DmPost d WITH (NOLOCK) ON d.Ma_Ct = 'HDX' AND d.Ma_Post = p.Ma_Post
+                WHERE p.Ten_kh COLLATE SQL_Latin1_General_CP1_CI_AI LIKE {ph}
+                  AND p.Ma_TTCP_H = {ph}
+                ORDER BY p.ngay_ct DESC, p.so_ct DESC
+            """
+            cursor.execute(sql_cus, (f"%{customer_name}%", ma_ttcp))
+            r = cursor.fetchone()
+            if r:
+                matched_contract = r if is_pymssql else dict(zip([col[0] for col in cursor.description], r))
+                matched_contract['match_by'] = 'customer_name_showroom'
+
+        # 3. Fallback: Nếu vẫn chưa ra, thử tra cứu theo VIN đã ghép (BEXEPXE)
+        if not matched_contract and vin and len(vin) >= 8:
+            sql_vin = f"""
+                SELECT TOP 1 
+                    p.stt_rec, p.so_ct, p.Ma_Post, p.ngay_ct, p.Ten_kh, p.ong_ba,
+                    p.Ma_Hs_H, ISNULL(h.Ten_Hs, '') AS ten_tvbh,
+                    ISNULL(d.Ten_Post, N'Chưa phân loại') AS ten_post,
+                    b.So_khung
+                FROM BEXEPXE b WITH (NOLOCK)
+                JOIN PHHDX p WITH (NOLOCK) ON b.Ma_Hd = p.so_ct
+                LEFT JOIN DmHs h WITH (NOLOCK) ON p.Ma_Hs_H = h.Ma_Hs
+                LEFT JOIN DmPost d WITH (NOLOCK) ON d.Ma_Ct = 'HDX' AND d.Ma_Post = p.Ma_Post
+                WHERE b.So_khung = {ph}
+                ORDER BY p.ngay_ct DESC
+            """
+            cursor.execute(sql_vin, (vin,))
+            r = cursor.fetchone()
+            if r:
+                matched_contract = r if is_pymssql else dict(zip([col[0] for col in cursor.description], r))
+                matched_contract['match_by'] = 'vin_bexepxe'
+
+        # 4. Fallback: Nếu vẫn chưa ra, thử tra cứu theo số hợp đồng / số đơn hàng (PHHDX.so_ct hoặc So_donhang)
+        if not matched_contract and order_no:
+            sql_ord = f"""
+                SELECT TOP 1 
+                    p.stt_rec, p.so_ct, p.Ma_Post, p.ngay_ct, p.Ten_kh, p.ong_ba,
+                    p.Ma_Hs_H, ISNULL(h.Ten_Hs, '') AS ten_tvbh,
+                    ISNULL(d.Ten_Post, N'Chưa phân loại') AS ten_post
+                FROM PHHDX p WITH (NOLOCK)
+                LEFT JOIN DmHs h WITH (NOLOCK) ON p.Ma_Hs_H = h.Ma_Hs
+                LEFT JOIN DmPost d WITH (NOLOCK) ON d.Ma_Ct = 'HDX' AND d.Ma_Post = p.Ma_Post
+                WHERE p.so_ct = {ph} OR p.So_donhang = {ph}
+                ORDER BY p.ngay_ct DESC
+            """
+            cursor.execute(sql_ord, (order_no, order_no))
+            r = cursor.fetchone()
+            if r:
+                matched_contract = r if is_pymssql else dict(zip([col[0] for col in cursor.description], r))
+                matched_contract['match_by'] = 'order_number'
+
+        conn.close()
+
+        if not matched_contract:
+            return {
+                "success": True,
+                "found": False,
+                "is_approved": False,
+                "message": f"Chưa tìm thấy hợp đồng trên CyberSoft cho khách hàng '{customer_name}' - TVBH '{tvbh_name}'"
+            }
+
+        ma_post = str(matched_contract.get('Ma_Post') or '').strip()
+        so_ct = str(matched_contract.get('so_ct') or '').strip()
+        ten_post = str(matched_contract.get('ten_post') or '').strip()
+        ten_kh = str(matched_contract.get('Ten_kh') or '').strip()
+        ten_tvbh = str(matched_contract.get('ten_tvbh') or '').strip()
+        ngay_ct = matched_contract.get('ngay_ct')
+        if ngay_ct and isinstance(ngay_ct, (datetime, date)):
+            ngay_ct = ngay_ct.strftime('%Y-%m-%d')
+        else:
+            ngay_ct = str(ngay_ct or '')
+
+        # Kiểm tra trạng thái duyệt: Ma_Post >= '3' là đã duyệt
+        is_approved = False
+        try:
+            is_approved = int(ma_post) >= 3
+        except Exception:
+            is_approved = ma_post in ['3', '4', '5', '6', '7', '8', '9']
+
+        return {
+            "success": True,
+            "found": True,
+            "is_approved": is_approved,
+            "ma_post": ma_post,
+            "ten_post": ten_post,
+            "so_ct": so_ct,
+            "ten_kh": ten_kh,
+            "ten_tvbh": ten_tvbh,
+            "ngay_ct": ngay_ct,
+            "match_by": matched_contract.get('match_by')
+        }
+
+    except Exception as e:
+        if conn:
+            conn.close()
+        return {
+            "success": False,
+            "found": False,
+            "is_approved": False,
+            "error": f"Lỗi truy vấn hợp đồng CyberSoft: {e}"
+        }
+
 def main():
     parser = argparse.ArgumentParser(description="Sync Thuan An car allocations from CyberSoft to Supabase")
     parser.add_argument("--from", dest="from_date", help="From date (YYYY-MM-DD)", default=None)
@@ -1659,6 +2179,9 @@ def main():
     parser.add_argument("--xep-xe-save", action="store_true", help="Assign vehicle to contract via CP_BeXepXe_SAVE")
     parser.add_argument("--xep-xe-delete", action="store_true", help="Unassign vehicle from contract via CP_BeXepXe_DELETE")
     parser.add_argument("--create-dnx", action="store_true", help="Create Cyber Transfer Request document (DNX)")
+    parser.add_argument("--lookup-vin", action="store_true", help="Lookup vehicle warehouse and details from Cyber")
+    parser.add_argument("--voucher-tickets", action="store_true", help="Get voucher tickets (DNX / TD4) from Cyber")
+    parser.add_argument("--check-contract-status", action="store_true", help="Check contract approval status on Cyber by customer and TVBH")
     parser.add_argument("--model", help="Car model filter for options", default="")
     parser.add_argument("--params", help="JSON string of search parameters", default=None)
     args = parser.parse_args()
@@ -1736,6 +2259,33 @@ def main():
     if args.create_dnx:
         p = get_input_params()
         res = create_cyber_dnx_ticket(p)
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.lookup_vin:
+        p = get_input_params()
+        res = lookup_vin_warehouse(p)
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.voucher_tickets:
+        p = get_input_params()
+        tickets = get_cyber_voucher_tickets(
+            ma_ct=p.get("ma_ct") or "",
+            ma_post=p.get("ma_post") or "",
+            search=p.get("search") or "",
+            from_date=p.get("fromDate") or "",
+            to_date=p.get("toDate") or "",
+            limit=p.get("limit") or 200,
+            ma_ttcp=p.get("ma_ttcp") or "02.01.08"
+        )
+        res = {"success": True, "data": tickets, "total": len(tickets)}
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.check_contract_status:
+        p = get_input_params()
+        res = check_cyber_contract_status(p)
         print(json.dumps(res, default=str, ensure_ascii=False))
         return
 
@@ -1817,19 +2367,19 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
     # Build WHERE conditions (Default to Showroom Thuận An: 02.01.08)
     ttcp_filter = (ma_ttcp or '02.01.08').strip()
     where_dnx = [f"p.Ma_TTCP_H = '{ttcp_filter}'"]
-    where_td4 = ["Ma_Ct = 'TD4'", f"Ma_TTCP_H = '{ttcp_filter}'"]
+    where_td4 = ["p.Ma_Ct = 'TD4'", f"p.Ma_TTCP_H = '{ttcp_filter}'"]
 
     if ma_post:
         where_dnx.append(f"p.Ma_Post = '{ma_post}'")
-        where_td4.append(f"Ma_Post = '{ma_post}'")
+        where_td4.append(f"p.Ma_Post = '{ma_post}'")
 
     if from_date:
         where_dnx.append(f"p.ngay_ct >= '{from_date}'")
-        where_td4.append(f"Ngay_Ct >= '{from_date}'")
+        where_td4.append(f"p.Ngay_Ct >= '{from_date}'")
 
     if to_date:
         where_dnx.append(f"p.ngay_ct <= '{to_date}'")
-        where_td4.append(f"Ngay_Ct <= '{to_date}'")
+        where_td4.append(f"p.Ngay_Ct <= '{to_date}'")
 
     # 1. Fetch DNX tickets (PHDNX + CTDNX)
     if not ma_ct or str(ma_ct).upper() == 'DNX':
@@ -1844,18 +2394,32 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
                 p.Ma_Post AS ma_post,
                 p.Ma_TTCP_H AS ma_ttcp,
                 p.dien_giai,
-                p.ong_ba AS ten_kh,
-                p.MA_HD_H AS so_hd,
+                p.ong_ba AS nguoi_nhan,
+                p.ong_ba,
+                ISNULL(NULLIF(hdx.Ten_kh, ''), ISNULL(NULLIF(hdx2.Ten_kh, ''), '')) AS ten_kh,
+                ISNULL(NULLIF(hs.Ten_Hs, ''), ISNULL(NULLIF(hs2.Ten_Hs, ''), '')) AS ten_tvbh,
+                ISNULL(NULLIF(bx.Ma_Hd, ''), ISNULL(NULLIF(p.MA_HD_H, ''), '')) AS so_hd,
                 ISNULL(p.t_tien, 0) AS tong_tien,
                 0 AS da_thanh_toan,
                 ISNULL(p.t_tien, 0) AS con_lai,
-                p.Ma_Hs_H AS nvkd,
+                ISNULL(NULLIF(hs.Ten_Hs, ''), ISNULL(NULLIF(hs2.Ten_Hs, ''), p.Ma_Hs_H)) AS nvkd,
                 ISNULL(c.So_khung, '') AS vin,
                 ISNULL(c.So_may, '') AS so_may,
                 ISNULL(c.ma_Kx, '') AS loai_xe,
-                ISNULL(c.Ma_Mau, '') AS ma_mau
+                ISNULL(kx.Ten_Kx, ISNULL(c.ma_Kx, '')) AS ten_kx,
+                ISNULL(c.Ma_Mau, '') AS ma_mau,
+                ISNULL(mx.Ten_mau, ISNULL(c.Ma_Mau, '')) AS ten_mau,
+                ISNULL(c.Ma_kho_i, p.Ma_kho) AS ma_kho_xuat,
+                ISNULL(p.Ma_khoN, 'K83') AS ma_kho_nhan
             FROM PHDNX p WITH (NOLOCK)
             LEFT JOIN CTDNX c WITH (NOLOCK) ON p.stt_rec = c.stt_rec
+            LEFT JOIN Dmkx kx WITH (NOLOCK) ON c.ma_Kx = kx.Ma_Kx
+            LEFT JOIN Dmmauxe mx WITH (NOLOCK) ON c.Ma_Mau = mx.Ma_mau
+            LEFT JOIN BEXEPXE bx WITH (NOLOCK) ON c.So_khung = bx.So_khung
+            LEFT JOIN PHHDX hdx WITH (NOLOCK) ON bx.Ma_Hd = hdx.so_ct
+            LEFT JOIN DmHs hs WITH (NOLOCK) ON hdx.Ma_Hs_H = hs.Ma_Hs
+            LEFT JOIN PHHDX hdx2 WITH (NOLOCK) ON p.MA_HD_H = hdx2.so_ct
+            LEFT JOIN DmHs hs2 WITH (NOLOCK) ON hdx2.Ma_Hs_H = hs2.Ma_Hs
             {where_clause}
             ORDER BY p.ngay_ct DESC, p.so_ct DESC
         """
@@ -1880,25 +2444,30 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
             SELECT TOP {limit_val} 
                 'TD4' AS voucher_type,
                 N'Phiếu Xe Ra Giao KH' AS voucher_name,
-                Stt_Rec AS stt_rec,
-                So_Ct AS so_ct,
-                Ngay_Ct AS ngay_ct,
-                Ma_Post AS ma_post,
-                Ma_TTCP_H AS ma_ttcp,
-                Dien_giai AS dien_giai,
-                Ong_ba AS ten_kh,
-                Ma_Hd_H AS so_hd,
-                ISNULL(T_TT, 0) AS tong_tien,
-                ISNULL(T_Da_TT, 0) AS da_thanh_toan,
-                ISNULL(T_CL_TT, 0) AS con_lai,
-                Ma_Hs_H AS nvkd,
-                ISNULL(Ma_Xe, '') AS vin,
-                ISNULL(So_may, '') AS so_may,
-                ISNULL(Loai_xe, '') AS loai_xe,
+                p.Stt_Rec AS stt_rec,
+                p.So_Ct AS so_ct,
+                p.Ngay_Ct AS ngay_ct,
+                p.Ma_Post AS ma_post,
+                p.Ma_TTCP_H AS ma_ttcp,
+                p.Dien_giai AS dien_giai,
+                p.Ong_ba AS nguoi_nhan,
+                p.Ong_ba,
+                ISNULL(hdx.Ten_kh, '') AS ten_kh,
+                ISNULL(hs.Ten_Hs, '') AS ten_tvbh,
+                p.Ma_Hd_H AS so_hd,
+                ISNULL(p.T_TT, 0) AS tong_tien,
+                ISNULL(p.T_Da_TT, 0) AS da_thanh_toan,
+                ISNULL(p.T_CL_TT, 0) AS con_lai,
+                ISNULL(hs.Ten_Hs, p.Ma_Hs_H) AS nvkd,
+                ISNULL(p.Ma_Xe, '') AS vin,
+                ISNULL(p.So_may, '') AS so_may,
+                ISNULL(p.Loai_xe, '') AS loai_xe,
                 '' AS ma_mau
-            FROM PHTD WITH (NOLOCK)
+            FROM PHTD p WITH (NOLOCK)
+            LEFT JOIN PHHDX hdx WITH (NOLOCK) ON p.Ma_Hd_H = hdx.so_ct
+            LEFT JOIN DmHs hs WITH (NOLOCK) ON (hdx.Ma_Hs_H = hs.Ma_Hs OR p.Ma_Hs_H = hs.Ma_Hs)
             {where_clause}
-            ORDER BY Ngay_Ct DESC, So_Ct DESC
+            ORDER BY p.Ngay_Ct DESC, p.So_Ct DESC
         """
         cursor.execute(query_td4)
         if is_pymssql:
@@ -1916,12 +2485,40 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
 
     conn.close()
 
+    # Bổ sung Tên khách hàng & TVBH từ Supabase donhang cho các xe chưa có thông tin từ Cyber
+    try:
+        missing_vins = [t['vin'].strip() for t in tickets if t.get('vin') and not t.get('ten_kh')]
+        if missing_vins:
+            import urllib.request
+            unique_vins = list(set(missing_vins))[:80]
+            supa_url = f"https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/donhang?select=vin,ten_khach_hang,ten_tu_van_ban_hang,so_don_hang&vin=in.({','.join(unique_vins)})"
+            headers = {
+                'apikey': 'sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX',
+                'Authorization': 'Bearer sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX'
+            }
+            req = urllib.request.Request(supa_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                supa_orders = json.loads(resp.read().decode('utf-8'))
+                supa_map = {o['vin'].strip().upper(): o for o in supa_orders if o.get('vin')}
+                for t in tickets:
+                    vin_key = (t.get('vin') or '').strip().upper()
+                    if vin_key in supa_map:
+                        order_item = supa_map[vin_key]
+                        if not t.get('ten_kh'):
+                            t['ten_kh'] = order_item.get('ten_khach_hang') or ''
+                        if not t.get('ten_tvbh'):
+                            t['ten_tvbh'] = order_item.get('ten_tu_van_ban_hang') or ''
+                        if not t.get('so_hd'):
+                            t['so_hd'] = order_item.get('so_don_hang') or ''
+    except Exception as e_supa:
+        pass
+
     # Apply search query in python if provided
     if search and search.strip():
         q = search.strip().lower()
         filtered = []
         for t in tickets:
-            full_text = f"{t.get('so_ct','')} {t.get('vin','')} {t.get('so_may','')} {t.get('ten_kh','')} {t.get('so_hd','')} {t.get('dien_giai','')}".lower()
+            full_text = f"{t.get('so_ct','')} {t.get('vin','')} {t.get('so_may','')} {t.get('ten_kh','')} {t.get('ten_tvbh','')} {t.get('so_hd','')} {t.get('dien_giai','')}".lower()
             if q in full_text:
                 filtered.append(t)
         return filtered

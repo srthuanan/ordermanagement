@@ -34,7 +34,9 @@ from scripts.sync_thuan_an_allocations import (
     save_cyber_xep_xe,
     delete_cyber_xep_xe,
     create_cyber_dnx_ticket,
-    get_cyber_voucher_tickets
+    get_cyber_voucher_tickets,
+    lookup_vin_warehouse,
+    check_cyber_contract_status
 )
 
 PORT = int(os.environ.get("PORT", 8080))
@@ -104,6 +106,25 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self._send_cors_headers()
                 self.end_headers()
                 self.wfile.write(json.dumps(res, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/check-contract-status":
+            try:
+                from urllib.parse import parse_qs
+                qs = parse_qs(parsed.query)
+                p = {k: (v[0] if v else "") for k, v in qs.items()}
+                result = check_cyber_contract_status(p)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -384,6 +405,53 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 print(f"[CyberSync Cloud Create DNX Error]: {str(e)}", file=sys.stderr)
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+        elif parsed.path == "/api/cyber/lookup-vin":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            try:
+                data = json.loads(body_str or "{}")
+            except Exception:
+                data = {}
+
+            print(f"[CyberSync Cloud Lookup VIN] Request: {data}")
+            try:
+                result = lookup_vin_warehouse(data)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync Cloud Lookup VIN Error]: {str(e)}", file=sys.stderr)
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/check-contract-status":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            try:
+                data = json.loads(body_str or "{}")
+            except Exception:
+                data = {}
+
+            print(f"[CyberSync Cloud Check Contract] Request: {data}")
+            try:
+                result = check_cyber_contract_status(data)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync Cloud Check Contract Error]: {str(e)}", file=sys.stderr)
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()

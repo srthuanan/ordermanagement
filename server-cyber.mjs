@@ -155,6 +155,46 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    if (req.method === 'POST' && pathname === '/api/cyber/lookup-vin') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+            runPy([scriptPath, '--lookup-vin'], body, res);
+        });
+        return;
+    }
+
+    if (pathname === '/api/cyber/voucher-tickets') {
+        const queryParams = Object.fromEntries(parsedUrl.searchParams);
+        if (req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', () => {
+                let bodyObj = {};
+                try { bodyObj = JSON.parse(body || '{}'); } catch (_) {}
+                runPy([scriptPath, '--voucher-tickets'], JSON.stringify({ ...queryParams, ...bodyObj }), res);
+            });
+        } else {
+            runPy([scriptPath, '--voucher-tickets'], JSON.stringify(queryParams), res);
+        }
+        return;
+    }
+    if (pathname === '/api/cyber/check-contract-status') {
+        const queryParams = Object.fromEntries(parsedUrl.searchParams);
+        if (req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', () => {
+                let bodyObj = {};
+                try { bodyObj = JSON.parse(body || '{}'); } catch (_) {}
+                runPy([scriptPath, '--check-contract-status'], JSON.stringify({ ...queryParams, ...bodyObj }), res);
+            });
+        } else {
+            runPy([scriptPath, '--check-contract-status'], JSON.stringify(queryParams), res);
+        }
+        return;
+    }
+
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not Found' }));
 });

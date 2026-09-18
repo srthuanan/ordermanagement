@@ -146,6 +146,55 @@ function cyberSyncPlugin(): Plugin {
           runPy([scriptPath, '--create-dnx'], body, res);
         });
       });
+
+      server.middlewares.use('/api/cyber/lookup-vin', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          runPy([scriptPath, '--lookup-vin'], body, res);
+        });
+      });
+
+      server.middlewares.use('/api/cyber/voucher-tickets', (req, res, next) => {
+        const parsedUrl = new URL(req.url || '', 'http://localhost');
+        const queryParams: Record<string, any> = {};
+        parsedUrl.searchParams.forEach((val, key) => {
+          queryParams[key] = val;
+        });
+
+        if (req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk.toString(); });
+          req.on('end', () => {
+            let bodyObj = {};
+            try { bodyObj = JSON.parse(body || '{}'); } catch (_) {}
+            runPy([scriptPath, '--voucher-tickets'], JSON.stringify({ ...queryParams, ...bodyObj }), res);
+          });
+        } else {
+          runPy([scriptPath, '--voucher-tickets'], JSON.stringify(queryParams), res);
+        }
+      });
+
+      server.middlewares.use('/api/cyber/check-contract-status', (req, res, next) => {
+        const parsedUrl = new URL(req.url || '', 'http://localhost');
+        const queryParams: Record<string, any> = {};
+        parsedUrl.searchParams.forEach((val, key) => {
+          queryParams[key] = val;
+        });
+
+        if (req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk.toString(); });
+          req.on('end', () => {
+            let bodyObj = {};
+            try { bodyObj = JSON.parse(body || '{}'); } catch (_) {}
+            runPy([scriptPath, '--check-contract-status'], JSON.stringify({ ...queryParams, ...bodyObj }), res);
+          });
+        } else {
+          runPy([scriptPath, '--check-contract-status'], JSON.stringify(queryParams), res);
+        }
+      });
     }
   };
 }
