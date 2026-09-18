@@ -1812,12 +1812,21 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
                 p.ong_ba AS ten_kh,
                 p.Ma_Hs_H AS nvkd,
                 ISNULL(c.ma_kho_i, p.Ma_kho) AS ma_kho_xuat,
+                kxuat.Ten_kho AS ten_kho_xuat,
                 ISNULL(c.ma_khoN_i, p.Ma_khoN) AS ma_kho_nhan,
+                knhan.Ten_kho AS ten_kho_nhan,
                 c.so_may,
                 c.ma_Kx,
-                c.Ma_Mau
+                kx.Ten_Kx AS ten_kx,
+                c.Ma_Mau,
+                mx.Ten_mau AS ten_mau,
+                ISNULL(c.Dien_giai_i, p.dien_giai) AS ghi_chu
             FROM CTDNX c WITH (NOLOCK)
             JOIN PHDNX p WITH (NOLOCK) ON c.stt_rec = p.stt_rec
+            LEFT JOIN DmKx kx WITH (NOLOCK) ON c.ma_Kx = kx.ma_kx
+            LEFT JOIN Dmmauxe mx WITH (NOLOCK) ON c.Ma_Mau = mx.ma_Mau
+            LEFT JOIN Dmkho kxuat WITH (NOLOCK) ON ISNULL(c.ma_kho_i, p.Ma_kho) = kxuat.Ma_kho
+            LEFT JOIN Dmkho knhan WITH (NOLOCK) ON ISNULL(c.ma_khoN_i, p.Ma_khoN) = knhan.Ma_kho
             WHERE c.so_khung IN ({vin_list_str})
               AND (
                 p.Ma_TTCP_H = '02.01.08'
@@ -1896,10 +1905,15 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
                     "ten_kh": rd.get('ten_kh', ''),
                     "nvkd": rd.get('nvkd', ''),
                     "ma_kho_xuat": rd.get('ma_kho_xuat', 'K87'),
+                    "ten_kho_xuat": rd.get('ten_kho_xuat', ''),
                     "ma_kho_nhan": rd.get('ma_kho_nhan', 'K83'),
+                    "ten_kho_nhan": rd.get('ten_kho_nhan', ''),
                     "so_may": rd.get('so_may', ''),
                     "ma_kx": rd.get('ma_kx', ''),
-                    "ma_mau": rd.get('ma_mau', '')
+                    "ten_kx": rd.get('ten_kx', ''),
+                    "ma_mau": rd.get('ma_mau', ''),
+                    "ten_mau": rd.get('ten_mau', ''),
+                    "ghi_chu": rd.get('ghi_chu', '')
                 }
 
         info_map = {}
@@ -1928,21 +1942,21 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
         for v in vins_clean:
             st = stock_map.get(v, {})
             inf = info_map.get(v, {})
-            ma_kho = st.get("ma_kho") or inf.get("ctkh_ma_kho") or ""
-            ten_kho = st.get("ten_kho") or inf.get("ctkh_ten_kho") or ""
-            if ma_kho:
-                found_warehouses.append({"ma_kho": ma_kho, "ten_kho": ten_kho})
             dnx_entry = dnx_map.get(v)
             td4_entry = td4_map.get(v)
+            ma_kho = (dnx_entry.get("ma_kho_xuat") if dnx_entry else "") or st.get("ma_kho") or inf.get("ctkh_ma_kho") or ""
+            ten_kho = (dnx_entry.get("ten_kho_xuat") if dnx_entry else "") or st.get("ten_kho") or inf.get("ctkh_ten_kho") or ""
+            if ma_kho:
+                found_warehouses.append({"ma_kho": ma_kho, "ten_kho": ten_kho})
             results.append({
                 "vin": v,
                 "ma_kho": ma_kho,
                 "ten_kho": ten_kho,
-                "so_may": inf.get("so_may", ""),
-                "ma_kx": inf.get("ma_kx", ""),
-                "ten_kx": inf.get("ten_kx", ""),
-                "ma_mau": inf.get("ma_mau", ""),
-                "ten_mau": inf.get("ten_mau", ""),
+                "so_may": (dnx_entry.get("so_may") if dnx_entry else "") or inf.get("so_may", ""),
+                "ma_kx": (dnx_entry.get("ma_kx") if dnx_entry else "") or inf.get("ma_kx", ""),
+                "ten_kx": (dnx_entry.get("ten_kx") if dnx_entry else "") or inf.get("ten_kx", ""),
+                "ma_mau": (dnx_entry.get("ma_mau") if dnx_entry else "") or inf.get("ma_mau", ""),
+                "ten_mau": (dnx_entry.get("ten_mau") if dnx_entry else "") or inf.get("ten_mau", ""),
                 "has_dnx": bool(dnx_entry),
                 "dnx": dnx_entry,
                 "has_td4": bool(td4_entry),

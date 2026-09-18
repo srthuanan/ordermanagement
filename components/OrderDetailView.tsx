@@ -130,6 +130,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     const [isPrintDnxOpen, setIsPrintDnxOpen] = useState(false);
     const [printDnxData, setPrintDnxData] = useState<CyberDnxPrintData | null>(null);
     const [hasTd4, setHasTd4] = useState<boolean>(false);
+    const [cyberCarStatus, setCyberCarStatus] = useState<CyberCarStatusRecord | null>(null);
 
     // Inline Edit States
     const [editFormData, setEditFormData] = useState<Partial<Order>>({});
@@ -233,6 +234,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             // Hàm cập nhật trạng thái kho & phiếu từ dữ liệu xe
             const applyCyberCarStatus = (carStatus: CyberCarStatusRecord | any) => {
                 if (!carStatus) return;
+                setCyberCarStatus(carStatus);
 
                 // Nếu xe ĐÃ CÓ PHIẾU TD4 (Giấy ra cổng)
                 if (carStatus.has_td4) {
@@ -253,24 +255,25 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         ngay_ct: dnx.ngay_ct || '',
                         user_name: 'Phạm Thành Nhân',
                         ma_kho_xuat: dnx.ma_kho_xuat || carStatus.ma_kho || 'K87',
-                        ten_kho_xuat: shortenWarehouseName(dnx.ma_kho_xuat || carStatus.ma_kho || 'K87'),
+                        ten_kho_xuat: shortenWarehouseName(dnx.ma_kho_xuat || carStatus.ma_kho || 'K87', dnx.ten_kho_xuat || carStatus.ten_kho),
                         ma_kho_nhan: dnx.ma_kho_nhan || 'K83',
-                        ten_kho_nhan: shortenWarehouseName(dnx.ma_kho_nhan || 'K83'),
+                        ten_kho_nhan: shortenWarehouseName(dnx.ma_kho_nhan || 'K83', dnx.ten_kho_nhan || 'Kho xe ô tô Thuận An'),
                         khach_hang: resolvedOrder?.['Tên khách hàng'] || dnx.ten_kh || '',
                         don_vi: 'Thuận An',
                         ly_do: dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
                         total_cars: 1,
                         cars: [{
                             stt_rec0: '0001',
-                            vin: vin,
-                            so_may: dnx.so_may || (resolvedOrder as any)?.['Số máy'] || '',
-                            ma_kx: dnx.ma_kx || resolvedOrder?.['Dòng xe'] || '',
-                            ten_kx: `${resolvedOrder?.['Dòng xe'] || ''} ${resolvedOrder?.['Phiên bản'] || ''}`.trim(),
-                            dong_xe: resolvedOrder?.['Dòng xe'] || '',
-                            ma_mau: dnx.ma_mau || resolvedOrder?.['Ngoại thất'] || '',
-                            ten_mau: resolvedOrder?.['Ngoại thất'] || '',
+                            vin: carStatus.vin || vin,
+                            so_may: dnx.so_may || carStatus.so_may || (resolvedOrder as any)?.['Số máy'] || '',
+                            ma_kx: dnx.ma_kx || carStatus.ma_kx || resolvedOrder?.['Dòng xe'] || '',
+                            ten_kx: dnx.ten_kx || carStatus.ten_kx || `${resolvedOrder?.['Dòng xe'] || ''} ${resolvedOrder?.['Phiên bản'] || ''}`.trim(),
+                            dong_xe: dnx.ten_kx || carStatus.ten_kx || resolvedOrder?.['Dòng xe'] || '',
+                            ma_mau: dnx.ma_mau || carStatus.ma_mau || resolvedOrder?.['Ngoại thất'] || '',
+                            ten_mau: dnx.ten_mau || carStatus.ten_mau || resolvedOrder?.['Ngoại thất'] || '',
                             ma_kho_xuat: dnx.ma_kho_xuat || carStatus.ma_kho || 'K87',
-                            ma_kho_nhan: dnx.ma_kho_nhan || 'K83'
+                            ma_kho_nhan: dnx.ma_kho_nhan || 'K83',
+                            ghi_chu: dnx.ghi_chu || dnx.dien_giai || 'Lấy xe về PDI giao KH'
                         }]
                     };
 
@@ -421,31 +424,34 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             return;
         }
 
-        // Tự động tạo dữ liệu in chuẩn phiếu DNX nếu chưa có sẵn printData
+        // Tự động tạo dữ liệu in chuẩn phiếu DNX nếu chưa có sẵn printData (Ưu tiên 100% dữ liệu từ Cyber)
+        const cStatus = cyberCarStatus;
+        const dnxData = cStatus?.dnx_data;
         const fallbackTicket: CyberDnxPrintData = {
-            so_ct: transferRequest?.soCtDnx || 'DNX',
-            stt_rec: '',
-            ngay_ct: transferRequest?.createdAt ? transferRequest.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10),
+            so_ct: dnxData?.so_ct || cStatus?.so_ct_dnx || transferRequest?.soCtDnx || 'DNX',
+            stt_rec: dnxData?.stt_rec || '',
+            ngay_ct: dnxData?.ngay_ct || cStatus?.ngay_ct_dnx || (transferRequest?.createdAt ? transferRequest.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10)),
             user_name: 'Phạm Thành Nhân',
-            ma_kho_xuat: transferRequest?.fromWarehouse || 'K87',
-            ten_kho_xuat: transferRequest?.fromWarehouseName || 'Kho xe ô tô QL13 - HCM',
-            ma_kho_nhan: transferRequest?.toWarehouse || 'K83',
-            ten_kho_nhan: transferRequest?.toWarehouseName || 'Kho xe ô tô Thuận An',
-            khach_hang: transferRequest?.customerName || resolvedOrder?.['Tên khách hàng'] || '',
+            ma_kho_xuat: dnxData?.ma_kho_xuat || cStatus?.ma_kho || transferRequest?.fromWarehouse || 'K87',
+            ten_kho_xuat: shortenWarehouseName(dnxData?.ma_kho_xuat || cStatus?.ma_kho || transferRequest?.fromWarehouse || 'K87', dnxData?.ten_kho_xuat || cStatus?.ten_kho),
+            ma_kho_nhan: dnxData?.ma_kho_nhan || transferRequest?.toWarehouse || 'K83',
+            ten_kho_nhan: shortenWarehouseName(dnxData?.ma_kho_nhan || transferRequest?.toWarehouse || 'K83', dnxData?.ten_kho_nhan || 'Kho xe ô tô Thuận An'),
+            khach_hang: dnxData?.ten_kh || transferRequest?.customerName || resolvedOrder?.['Tên khách hàng'] || '',
             don_vi: 'Thuận An',
-            ly_do: transferRequest?.reason || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
+            ly_do: dnxData?.dien_giai || transferRequest?.reason || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
             total_cars: 1,
             cars: [{
                 stt_rec0: '0001',
-                vin: transferRequest?.vin || resolvedOrder?.VIN || '',
-                so_may: (resolvedOrder as any)?.['Số máy'] || '',
-                ma_kx: resolvedOrder?.['Dòng xe'] || '',
-                ten_kx: `${resolvedOrder?.['Dòng xe'] || ''} ${resolvedOrder?.['Phiên bản'] || ''}`.trim(),
-                dong_xe: resolvedOrder?.['Dòng xe'] || '',
-                ma_mau: resolvedOrder?.['Ngoại thất'] || '',
-                ten_mau: resolvedOrder?.['Ngoại thất'] || '',
-                ma_kho_xuat: transferRequest?.fromWarehouse || 'K87',
-                ma_kho_nhan: transferRequest?.toWarehouse || 'K83'
+                vin: cStatus?.vin || transferRequest?.vin || resolvedOrder?.VIN || '',
+                so_may: dnxData?.so_may || cStatus?.so_may || (resolvedOrder as any)?.['Số máy'] || '',
+                ma_kx: dnxData?.ma_kx || cStatus?.ma_kx || resolvedOrder?.['Dòng xe'] || '',
+                ten_kx: dnxData?.ten_kx || cStatus?.ten_kx || `${resolvedOrder?.['Dòng xe'] || ''} ${resolvedOrder?.['Phiên bản'] || ''}`.trim(),
+                dong_xe: dnxData?.ten_kx || cStatus?.ten_kx || resolvedOrder?.['Dòng xe'] || '',
+                ma_mau: dnxData?.ma_mau || cStatus?.ma_mau || resolvedOrder?.['Ngoại thất'] || '',
+                ten_mau: dnxData?.ten_mau || cStatus?.ten_mau || resolvedOrder?.['Ngoại thất'] || '',
+                ma_kho_xuat: dnxData?.ma_kho_xuat || cStatus?.ma_kho || transferRequest?.fromWarehouse || 'K87',
+                ma_kho_nhan: dnxData?.ma_kho_nhan || transferRequest?.toWarehouse || 'K83',
+                ghi_chu: dnxData?.ghi_chu || dnxData?.dien_giai || transferRequest?.reason || 'Lấy xe về PDI giao KH'
             }]
         };
 
