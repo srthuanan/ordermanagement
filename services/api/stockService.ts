@@ -1469,6 +1469,9 @@ export interface CyberVoucherTicketItem {
     ma_post: string;
     ma_ttcp: string;
     dien_giai: string;
+    ghi_chu?: string;
+    nguoi_bao_lanh?: string;
+    phong_ban?: string;
     ten_kh: string;
     ten_tvbh?: string;
     nguoi_nhan?: string;
@@ -1484,6 +1487,10 @@ export interface CyberVoucherTicketItem {
     ten_kx?: string;
     ma_mau?: string;
     ten_mau?: string;
+    ma_kho_xuat?: string;
+    ma_kho_nhan?: string;
+    ma_kho?: string;
+    ten_kho?: string;
 }
 
 export interface CyberVoucherTicketParams {
@@ -1612,6 +1619,67 @@ export const checkCyberContractStatus = async (params: {
         };
     }
 };
+
+export interface ExportCyberPdfParams {
+    stt_rec: string;
+    voucher_type?: 'TD4' | 'DNX';
+    paper_size?: 'A4' | 'A5';
+    user_name?: string;
+}
+
+export interface ExportCyberPdfResponse {
+    success: boolean;
+    pdf_url?: string;
+    file_path?: string;
+    size?: number;
+    error?: string;
+}
+
+export const exportCyberPdf = async (params: ExportCyberPdfParams): Promise<ExportCyberPdfResponse> => {
+    try {
+        const queryParams = new URLSearchParams();
+        queryParams.set('stt_rec', params.stt_rec);
+        if (params.voucher_type) queryParams.set('voucher_type', params.voucher_type);
+        if (params.paper_size) queryParams.set('paper_size', params.paper_size);
+        if (params.user_name) queryParams.set('user_name', params.user_name);
+
+        const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+        const endpoints = getCyberEndpoints(`/api/cyber/export-pdf${queryString}`);
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const text = await res.text();
+                let json: any = null;
+                try { json = JSON.parse(text); } catch (_) {}
+
+                if (res.ok && json && json.success) {
+                    return json;
+                } else {
+                    lastErrorMsg = (json && json.error) || (text && !text.startsWith('<') ? text : `HTTP ${res.status}`);
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        return {
+            success: false,
+            error: lastErrorMsg || 'Không thể xuất file PDF từ CyberSoft.'
+        };
+    } catch (err: any) {
+        console.error("Lỗi exportCyberPdf:", err);
+        return {
+            success: false,
+            error: err.message || 'Lỗi khi gọi API xuất file PDF CyberSoft.'
+        };
+    }
+};
+
 
 
 

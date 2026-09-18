@@ -21,6 +21,7 @@ import {
     CyberXepXeFilterParams
 } from '../../services/api/stockService';
 import { CyberDnxPrintModal, CyberDnxPrintData } from './CyberDnxPrintModal';
+import { CyberTd4PrintModal } from './CyberTd4PrintModal';
 import { getTransferRequests, updateTransferRequestStatus, TransferRequestItem } from '../../services/api/transferService';
 import { supabase } from '../../services/supabaseClient';
 
@@ -292,6 +293,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const [recentDnxTickets, setRecentDnxTickets] = useState<any[]>([]);
     const [isLoadingRecentTickets, setIsLoadingRecentTickets] = useState(false);
     const [printTicketData, setPrintTicketData] = useState<CyberDnxPrintData | null>(null);
+    const [printTd4Data, setPrintTd4Data] = useState<CyberVoucherTicketItem | null>(null);
 
     // Tự động tải danh sách phiếu DNX gần nhất từ CyberSoft ERP
     const loadRecentDnxTickets = async () => {
@@ -3624,14 +3626,65 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 
                                                         {/* Thao tác */}
                                                         <td className="p-3 text-center">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setSelectedTicketModal(t)}
-                                                                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1 mx-auto"
-                                                            >
-                                                                <i className="fas fa-eye text-[10px]"></i>
-                                                                <span>Xem chi tiết</span>
-                                                            </button>
+                                                            <div className="flex items-center justify-center gap-1.5">
+                                                                {/* Nút In Giấy Ra Cổng - CHỈ DÀNH CHO PHIẾU TD4 */}
+                                                                {t.voucher_type === 'TD4' && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setPrintTd4Data(t)}
+                                                                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-lg text-[11px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                                                                        title="In Giấy Ra Cổng (TD4)"
+                                                                    >
+                                                                        <i className="fas fa-print text-[10px]"></i>
+                                                                        <span>In giấy ra cổng</span>
+                                                                    </button>
+                                                                )}
+
+                                                                {/* Nút In Phiếu DNX - DÀNH CHO PHIẾU DNX */}
+                                                                {t.voucher_type === 'DNX' && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setPrintTicketData({
+                                                                                so_ct: t.so_ct,
+                                                                                stt_rec: t.stt_rec,
+                                                                                ngay_ct: t.ngay_ct,
+                                                                                user_name: t.nvkd || '02.NHANPT',
+                                                                                ma_kho_xuat: t.ma_kho_xuat || 'K87',
+                                                                                ma_kho_nhan: t.ma_kho_nhan || 'K83',
+                                                                                khach_hang: t.ten_kh || '',
+                                                                                don_vi: 'Thuận An',
+                                                                                ly_do: t.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
+                                                                                total_cars: 1,
+                                                                                cars: [{
+                                                                                    vin: t.vin,
+                                                                                    so_may: t.so_may,
+                                                                                    ma_kx: t.loai_xe,
+                                                                                    ten_kx: t.ten_kx || t.loai_xe,
+                                                                                    dong_xe: t.ten_kx || t.loai_xe,
+                                                                                    ma_mau: t.ma_mau || '',
+                                                                                    ten_mau: t.ten_mau || t.ma_mau || ''
+                                                                                }]
+                                                                            });
+                                                                        }}
+                                                                        className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg text-[11px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                                                                        title="In Phiếu Đề Nghị Xuất (DNX)"
+                                                                    >
+                                                                        <i className="fas fa-print text-[10px]"></i>
+                                                                        <span>In DNX</span>
+                                                                    </button>
+                                                                )}
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setSelectedTicketModal(t)}
+                                                                    className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                                                                    title="Xem chi tiết phiếu"
+                                                                >
+                                                                    <i className="fas fa-eye text-[10px]"></i>
+                                                                    <span className="hidden sm:inline">Chi tiết</span>
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 );
@@ -3742,36 +3795,49 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 <span>Mẫu in chuẩn CyberSoft ERP</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setPrintTicketData({
-                                            so_ct: selectedTicketModal.so_ct,
-                                            stt_rec: selectedTicketModal.stt_rec,
-                                            ngay_ct: selectedTicketModal.ngay_ct,
-                                            user_name: selectedTicketModal.nvkd || '02.NHANPT',
-                                            ma_kho_xuat: 'K87',
-                                            ma_kho_nhan: 'K83',
-                                            khach_hang: selectedTicketModal.ten_kh || '',
-                                            don_vi: 'Thuận An',
-                                            ly_do: selectedTicketModal.dien_giai || 'Đề nghị xuất xe điều chuyển',
-                                            total_cars: 1,
-                                            cars: [{
-                                                vin: selectedTicketModal.vin,
-                                                so_may: selectedTicketModal.so_may,
-                                                ma_kx: selectedTicketModal.loai_xe,
-                                                ten_kx: selectedTicketModal.ten_kx || selectedTicketModal.loai_xe,
-                                                dong_xe: selectedTicketModal.ten_kx || selectedTicketModal.loai_xe,
-                                                ma_mau: selectedTicketModal.ma_mau || '',
-                                                ten_mau: selectedTicketModal.ten_mau || selectedTicketModal.ma_mau || ''
-                                            }]
-                                        });
-                                    }}
-                                    className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                                >
-                                    <i className="fas fa-print"></i>
-                                    <span>In Mẫu Cyber</span>
-                                </button>
+                                {selectedTicketModal.voucher_type === 'TD4' ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setPrintTd4Data(selectedTicketModal);
+                                        }}
+                                        className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                        <i className="fas fa-print"></i>
+                                        <span>In Giấy Ra Cổng (TD4)</span>
+                                    </button>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setPrintTicketData({
+                                                so_ct: selectedTicketModal.so_ct,
+                                                stt_rec: selectedTicketModal.stt_rec,
+                                                ngay_ct: selectedTicketModal.ngay_ct,
+                                                user_name: selectedTicketModal.nvkd || '02.NHANPT',
+                                                ma_kho_xuat: 'K87',
+                                                ma_kho_nhan: 'K83',
+                                                khach_hang: selectedTicketModal.ten_kh || '',
+                                                don_vi: 'Thuận An',
+                                                ly_do: selectedTicketModal.dien_giai || 'Đề nghị xuất xe điều chuyển',
+                                                total_cars: 1,
+                                                cars: [{
+                                                    vin: selectedTicketModal.vin,
+                                                    so_may: selectedTicketModal.so_may,
+                                                    ma_kx: selectedTicketModal.loai_xe,
+                                                    ten_kx: selectedTicketModal.ten_kx || selectedTicketModal.loai_xe,
+                                                    dong_xe: selectedTicketModal.ten_kx || selectedTicketModal.loai_xe,
+                                                    ma_mau: selectedTicketModal.ma_mau || '',
+                                                    ten_mau: selectedTicketModal.ten_mau || selectedTicketModal.ma_mau || ''
+                                                }]
+                                            });
+                                        }}
+                                        className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                                    >
+                                        <i className="fas fa-print"></i>
+                                        <span>In Phiếu DNX</span>
+                                    </button>
+                                )}
                                 <button
                                     type="button"
                                     onClick={() => setSelectedTicketModal(null)}
@@ -3851,6 +3917,13 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 isOpen={!!printTicketData}
                 onClose={() => setPrintTicketData(null)}
                 data={printTicketData}
+            />
+
+            {/* MODAL IN GIẤY RA CỔNG CYBERSOFT ERP (PHTD / TD4) */}
+            <CyberTd4PrintModal 
+                isOpen={!!printTd4Data}
+                onClose={() => setPrintTd4Data(null)}
+                data={printTd4Data}
             />
 
             </div>

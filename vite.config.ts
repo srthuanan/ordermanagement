@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { spawn } from 'child_process'
 import path from 'path'
+import fs from 'fs'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url);
@@ -173,6 +174,44 @@ function cyberSyncPlugin(): Plugin {
           });
         } else {
           runPy([scriptPath, '--voucher-tickets'], JSON.stringify(queryParams), res);
+        }
+      });
+
+      server.middlewares.use('/api/cyber/export-pdf', (req, res, next) => {
+        const parsedUrl = new URL(req.url || '', 'http://localhost');
+        const queryParams: Record<string, any> = {};
+        parsedUrl.searchParams.forEach((val, key) => {
+          queryParams[key] = val;
+        });
+
+        if (req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk.toString(); });
+          req.on('end', () => {
+            let bodyObj = {};
+            try { bodyObj = JSON.parse(body || '{}'); } catch (_) {}
+            runPy([scriptPath, '--export-pdf'], JSON.stringify({ ...queryParams, ...bodyObj }), res);
+          });
+        } else {
+          runPy([scriptPath, '--export-pdf'], JSON.stringify(queryParams), res);
+        }
+      });
+
+      server.middlewares.use('/api/cyber/view-pdf', (req, res) => {
+        const parsedUrl = new URL(req.url || '', 'http://localhost');
+        const stt = (parsedUrl.searchParams.get('stt_rec') || '').replace(/[^a-zA-Z0-9_\-]/g, '_');
+        const filePath = path.resolve(__dirname, 'public/cyber_pdfs', `${stt}.pdf`);
+        if (fs.existsSync(filePath)) {
+          const stat = fs.statSync(filePath);
+          res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Length': stat.size,
+            'Content-Disposition': 'inline'
+          });
+          fs.createReadStream(filePath).pipe(res);
+        } else {
+          res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+          res.end('File PDF không tồn tại');
         }
       });
 

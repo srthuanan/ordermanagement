@@ -2296,6 +2296,7 @@ def main():
     parser.add_argument("--create-dnx", action="store_true", help="Create Cyber Transfer Request document (DNX)")
     parser.add_argument("--lookup-vin", action="store_true", help="Lookup vehicle warehouse and details from Cyber")
     parser.add_argument("--voucher-tickets", action="store_true", help="Get voucher tickets (DNX / TD4) from Cyber")
+    parser.add_argument("--export-pdf", action="store_true", help="Export official PDF from CyberSoft Stimulsoft engine")
     parser.add_argument("--check-contract-status", action="store_true", help="Check contract approval status on Cyber by customer and TVBH")
     parser.add_argument("--model", help="Car model filter for options", default="")
     parser.add_argument("--params", help="JSON string of search parameters", default=None)
@@ -2395,6 +2396,16 @@ def main():
             ma_ttcp=p.get("ma_ttcp") or "02.01.08"
         )
         res = {"success": True, "data": tickets, "total": len(tickets)}
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.export_pdf:
+        p = get_input_params()
+        stt_rec = p.get("stt_rec") or "A000033691TD4"
+        voucher_type = p.get("voucher_type") or "TD4"
+        paper_size = p.get("paper_size") or "A4"
+        user_name = p.get("user_name") or "02.NHANPT"
+        res = export_cyber_pdf_via_ps(stt_rec, voucher_type, paper_size, user_name)
         print(json.dumps(res, default=str, ensure_ascii=False))
         return
 
@@ -2569,6 +2580,9 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
                 p.Dien_giai AS dien_giai,
                 p.Ong_ba AS nguoi_nhan,
                 p.Ong_ba,
+                ISNULL(p.Ghi_chu, '') AS ghi_chu,
+                ISNULL(hs_bl.Ten_Hs, '') AS nguoi_bao_lanh,
+                ISNULL(bp.Ten_Bp, 'P. KINH DOANH') AS phong_ban,
                 ISNULL(hdx.Ten_kh, '') AS ten_kh,
                 ISNULL(hs.Ten_Hs, '') AS ten_tvbh,
                 p.Ma_Hd_H AS so_hd,
@@ -2583,6 +2597,8 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
             FROM PHTD p WITH (NOLOCK)
             LEFT JOIN PHHDX hdx WITH (NOLOCK) ON p.Ma_Hd_H = hdx.so_ct
             LEFT JOIN DmHs hs WITH (NOLOCK) ON (hdx.Ma_Hs_H = hs.Ma_Hs OR p.Ma_Hs_H = hs.Ma_Hs)
+            LEFT JOIN DmHs hs_bl WITH (NOLOCK) ON p.Ma_Hs_BL = hs_bl.Ma_Hs
+            LEFT JOIN Dmbp bp WITH (NOLOCK) ON p.Ma_Bp_H = bp.Ma_Bp
             {where_clause}
             ORDER BY p.Ngay_Ct DESC, p.So_Ct DESC
         """
@@ -2654,6 +2670,52 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
         return filtered
 
     return tickets
+
+def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT"):
+    import subprocess
+    import os
+    import re
+    
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    ps_path = os.path.join(script_dir, "render_cyber_pdf.ps1")
+    
+    clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(stt_rec))
+    project_dir = os.path.dirname(script_dir)
+    out_dir = os.path.join(project_dir, "public", "cyber_pdfs")
+    os.makedirs(out_dir, exist_ok=True)
+    out_file = os.path.join(out_dir, f"{clean_stt}.pdf")
+    
+    cmd = [
+        "powershell",
+        "-ExecutionPolicy", "Bypass",
+        "-File", ps_path,
+        "-SttRec", str(stt_rec),
+        "-VoucherType", str(voucher_type),
+        "-PaperSize", str(paper_size),
+        "-UserName", str(user_name),
+        "-OutFile", out_file
+    ]
+    
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=35)
+        if os.path.exists(out_file) and os.path.getsize(out_file) > 1000:
+            import base64
+            with open(out_file, "rb") as f:
+                b64 = base64.b64encode(f.read()).decode("utf-8")
+            return {
+                "success": True,
+                "pdf_url": f"/api/cyber/view-pdf?stt_rec={clean_stt}",
+                "pdf_base64": f"data:application/pdf;base64,{b64}",
+                "file_path": out_file,
+                "size": os.path.getsize(out_file),
+                "stt_rec": stt_rec,
+                "voucher_type": voucher_type
+            }
+        else:
+            err_msg = proc.stderr or proc.stdout or "Không xuất được file PDF từ CyberSoft."
+            return {"success": False, "error": err_msg}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 
 if __name__ == "__main__":

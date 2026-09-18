@@ -38,7 +38,8 @@ from scripts.sync_thuan_an_allocations import (
     lookup_vin_warehouse,
     check_cyber_contract_status,
     sync_cyber_car_status_to_supabase,
-    upsert_cyber_car_status_records
+    upsert_cyber_car_status_records,
+    export_cyber_pdf_via_ps
 )
 
 PORT = int(os.environ.get("PORT", 8080))
@@ -114,6 +115,61 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self._send_cors_headers()
                 self.end_headers()
                 self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/export-pdf":
+            try:
+                from urllib.parse import parse_qs
+                qs = parse_qs(parsed.query)
+                stt_rec = (qs.get("stt_rec", [""])[0] or "").strip()
+                voucher_type = (qs.get("voucher_type", ["TD4"])[0] or "TD4").strip()
+                paper_size = (qs.get("paper_size", ["A4"])[0] or "A4").strip()
+                user_name = (qs.get("user_name", ["02.NHANPT"])[0] or "02.NHANPT").strip()
+
+                result = export_cyber_pdf_via_ps(stt_rec, voucher_type, paper_size, user_name)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/view-pdf":
+            try:
+                from urllib.parse import parse_qs
+                qs = parse_qs(parsed.query)
+                stt_rec = (qs.get("stt_rec", [""])[0] or "").strip()
+                safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', stt_rec) + ".pdf"
+                pdf_path = os.path.join(os.path.dirname(__file__), "public", "cyber_pdfs", safe_name)
+                if os.path.exists(pdf_path):
+                    with open(pdf_path, "rb") as f:
+                        content = f.read()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/pdf")
+                    self.send_header("Content-Length", str(len(content)))
+                    self.send_header("Content-Disposition", f'inline; filename="{safe_name}"')
+                    self.send_header("Cache-Control", "public, max-age=3600")
+                    self._send_cors_headers()
+                    self.end_headers()
+                    self.wfile.write(content)
+                else:
+                    self.send_response(404)
+                    self.send_header("Content-Type", "application/json")
+                    self._send_cors_headers()
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"error": "PDF not found"}).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
             return
 
         elif parsed.path == "/api/cyber/check-contract-status":

@@ -48,3 +48,5 @@ vite.config.ts.timestamp-*
 *.xlsx
 tmp_*.json
 tmp_*.js
+.vercel
+public/cyber_pdfs/

@@ -179,6 +179,42 @@ const server = http.createServer((req, res) => {
         }
         return;
     }
+
+    if (pathname === '/api/cyber/export-pdf') {
+        const queryParams = Object.fromEntries(parsedUrl.searchParams);
+        if (req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', () => {
+                let bodyObj = {};
+                try { bodyObj = JSON.parse(body || '{}'); } catch (_) {}
+                runPy([scriptPath, '--export-pdf'], JSON.stringify({ ...queryParams, ...bodyObj }), res);
+            });
+        } else {
+            runPy([scriptPath, '--export-pdf'], JSON.stringify(queryParams), res);
+        }
+        return;
+    }
+    if (pathname === '/api/cyber/view-pdf') {
+        const stt_rec = (parsedUrl.searchParams.get('stt_rec') || '').trim();
+        const safeName = `${stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
+        const pdfPath = path.resolve(__dirname, 'public/cyber_pdfs', safeName);
+        if (fs.existsSync(pdfPath)) {
+            const stat = fs.statSync(pdfPath);
+            res.writeHead(200, {
+                'Content-Type': 'application/pdf',
+                'Content-Length': stat.size,
+                'Content-Disposition': `inline; filename="${safeName}"`,
+                'Cache-Control': 'public, max-age=3600',
+                'Access-Control-Allow-Origin': '*'
+            });
+            fs.createReadStream(pdfPath).pipe(res);
+        } else {
+            res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+            res.end(JSON.stringify({ error: 'PDF not found' }));
+        }
+        return;
+    }
     if (pathname === '/api/cyber/check-contract-status') {
         const queryParams = Object.fromEntries(parsedUrl.searchParams);
         if (req.method === 'POST') {
