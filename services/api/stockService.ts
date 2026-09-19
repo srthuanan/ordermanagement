@@ -1660,33 +1660,38 @@ export const getCyberVoucherTickets = async (params: CyberVoucherTicketParams = 
             const { data, error } = await query.order('ngay_ct', { ascending: false }).limit(params.limit || 500);
             if (!error && data && data.length > 0) {
                 const tickets: CyberVoucherTicketItem[] = data.map(r => {
+                    const raw = r.raw_data || {};
                     const firstLine = (r.lines && r.lines[0]) || {};
+                    const vType = r.ma_ct || raw.voucher_type || (r.stt_rec && String(r.stt_rec).toUpperCase().includes('DNX') ? 'DNX' : 'TD4');
                     return {
-                        voucher_type: r.ma_ct || 'DNX',
-                        voucher_name: r.ma_ct === 'DNX' ? 'Phiếu đề nghị xuất xe' : 'Phiếu xuất xe bán (TD4)',
+                        voucher_type: vType,
+                        voucher_name: vType === 'DNX' ? 'Phiếu đề nghị xuất xe' : 'Phiếu xuất xe bán (TD4)',
                         stt_rec: r.stt_rec,
                         so_ct: r.so_ct,
                         ngay_ct: r.ngay_ct,
-                        ma_ct: r.ma_ct,
+                        gio_ct: firstLine.gio_ct || raw.gio_ct || '',
+                        so_hd: firstLine.so_hd || raw.so_hd || '',
+                        ma_ct: vType,
                         ma_post: r.ma_post,
-                        ten_kh: r.ten_kh,
+                        ten_kh: r.ten_kh || raw.ten_kh || '',
+                        ten_tvbh: firstLine.ten_tvbh || raw.ten_tvbh || r.user_name || '',
                         dien_giai: r.dien_giai,
-                        tong_tien: Number(r.tien_nt || 0),
-                        da_thanh_toan: Number(r.tien_nt || 0),
-                        con_lai: 0,
-                        vin: firstLine.so_khung || firstLine.vin || '',
-                        so_khung: firstLine.so_khung || firstLine.vin || '',
-                        so_may: firstLine.so_may || '',
-                        loai_xe: firstLine.ten_kx || '',
-                        ten_kx: firstLine.ten_kx || '',
-                        ma_kx: firstLine.ma_kx || '',
-                        ten_mau: firstLine.ten_mau || '',
-                        ma_mau: firstLine.ma_mau || '',
-                        ma_kho_xuat: firstLine.ma_kho || '',
-                        ten_kho_xuat: firstLine.ten_kho || '',
-                        ma_kho_nhan: firstLine.ma_kho_nhan || '',
-                        ten_kho_nhan: firstLine.ten_kho_nhan || '',
-                        nvkd: r.user_name || '',
+                        tong_tien: Number(r.tien_nt || raw.tong_tien || 0),
+                        da_thanh_toan: Number(r.tien_nt || raw.da_thanh_toan || 0),
+                        con_lai: Number(raw.con_lai || 0),
+                        vin: firstLine.so_khung || firstLine.vin || raw.vin || '',
+                        so_khung: firstLine.so_khung || firstLine.vin || raw.vin || '',
+                        so_may: firstLine.so_may || raw.so_may || '',
+                        loai_xe: firstLine.loai_xe || firstLine.ten_kx || raw.loai_xe || raw.ten_kx || '',
+                        ten_kx: firstLine.ten_kx || raw.ten_kx || '',
+                        ma_kx: firstLine.ma_kx || raw.ma_kx || '',
+                        ten_mau: firstLine.ten_mau || raw.ten_mau || '',
+                        ma_mau: firstLine.ma_mau || raw.ma_mau || '',
+                        ma_kho_xuat: firstLine.ma_kho || raw.ma_kho_xuat || '',
+                        ten_kho_xuat: firstLine.ten_kho || raw.ten_kho_xuat || '',
+                        ma_kho_nhan: firstLine.ma_kho_nhan || raw.ma_kho_nhan || '',
+                        ten_kho_nhan: firstLine.ten_kho_nhan || raw.ten_kho_nhan || '',
+                        nvkd: r.user_name || raw.nvkd || raw.ten_tvbh || '',
                         lines: r.lines || []
                     };
                 });

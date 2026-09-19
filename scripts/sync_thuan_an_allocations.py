@@ -2594,11 +2594,30 @@ def sync_cyber_voucher_tickets_to_supabase(tickets: list = None, params: dict = 
         if not stt_rec:
             continue
 
+        v_type = (t.get("voucher_type") or t.get("ma_ct") or ("DNX" if "DNX" in stt_rec else "TD4")).strip()
+        car_info = {
+            "vin": t.get("vin") or "",
+            "so_khung": t.get("vin") or "",
+            "so_may": t.get("so_may") or "",
+            "loai_xe": t.get("loai_xe") or t.get("ten_kx") or "",
+            "ten_kx": t.get("ten_kx") or "",
+            "ma_kx": t.get("ma_kx") or "",
+            "ten_mau": t.get("ten_mau") or "",
+            "ma_mau": t.get("ma_mau") or "",
+            "ma_kho": t.get("ma_kho_xuat") or "",
+            "ten_kho": t.get("ten_kho_xuat") or "",
+            "ma_kho_nhan": t.get("ma_kho_nhan") or "",
+            "ten_kho_nhan": t.get("ten_kho_nhan") or "",
+            "so_hd": t.get("so_hd") or "",
+            "gio_ct": t.get("gio_ct") or "",
+            "ten_tvbh": t.get("ten_tvbh") or t.get("nvkd") or ""
+        }
+
         seen[stt_rec] = {
             "stt_rec": stt_rec,
             "so_ct": (t.get("so_ct") or "").strip(),
             "ngay_ct": safe_date(t.get("ngay_ct")),
-            "ma_ct": (t.get("ma_ct") or "").strip(),
+            "ma_ct": v_type,
             "ma_post": (t.get("ma_post") or "").strip(),
             "ten_post": (t.get("ten_post") or "").strip(),
             "ma_kh": (t.get("ma_kh") or "").strip(),
@@ -2607,8 +2626,9 @@ def sync_cyber_voucher_tickets_to_supabase(tickets: list = None, params: dict = 
             "tien_nt": safe_num(t.get("tien_nt")),
             "ma_ttcp": (t.get("ma_ttcp") or "").strip(),
             "ten_ttcp": (t.get("ten_ttcp") or "").strip(),
-            "user_name": (t.get("user_name") or "").strip(),
-            "lines": t.get("lines") or [],
+            "user_name": (t.get("ten_tvbh") or t.get("nvkd") or t.get("user_name") or "").strip(),
+            "lines": [car_info],
+            "raw_data": t,
             "updated_at": now_utc
         }
 
@@ -2617,12 +2637,13 @@ def sync_cyber_voucher_tickets_to_supabase(tickets: list = None, params: dict = 
     CHUNK_SIZE = 200
     for i in range(0, len(records), CHUNK_SIZE):
         chunk = records[i:i + CHUNK_SIZE]
+        clean_chunk = json.loads(json.dumps(chunk, default=str))
         try:
             up_res = requests.post(
                 f"{SUPABASE_URL}/rest/v1/cyber_voucher_tickets",
                 headers={**HEADERS, "Prefer": "resolution=merge-duplicates"},
                 params={"on_conflict": "stt_rec"},
-                json=chunk,
+                json=clean_chunk,
                 timeout=30
             )
             if 200 <= up_res.status_code < 300:
