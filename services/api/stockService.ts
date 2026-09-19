@@ -1404,6 +1404,8 @@ export interface CyberDnxCreateParams {
     ly_do?: string;
     ma_dvcs?: string;
     ma_ttcp?: string;
+    ma_ttcp_n?: string;
+    ma_gd?: '4' | '9' | string;
     user_name?: string;
 }
 
@@ -1412,6 +1414,8 @@ export interface CyberDnxCreateResult {
     message?: string;
     so_ct?: string;
     stt_rec?: string;
+    ma_gd?: string;
+    ten_gd?: string;
     user_name?: string;
     user_id?: number;
     total_cars?: number;
@@ -1628,6 +1632,8 @@ export interface CyberVoucherTicketItem {
     ma_kho_nhan?: string;
     ma_kho?: string;
     ten_kho?: string;
+    ma_gd?: string;
+    ten_gd?: string;
     [key: string]: any;
 }
 
@@ -1663,6 +1669,11 @@ export const getCyberVoucherTickets = async (params: CyberVoucherTicketParams = 
                     const raw = r.raw_data || {};
                     const firstLine = (r.lines && r.lines[0]) || {};
                     const vType = r.ma_ct || raw.voucher_type || (r.stt_rec && String(r.stt_rec).toUpperCase().includes('DNX') ? 'DNX' : 'TD4');
+                    const mgd = firstLine.ma_gd || raw.ma_gd || (vType === 'DNX' ? '4' : 'TD4');
+                    const defaultTenGd = vType === 'DNX'
+                        ? (String(mgd) === '9' ? 'Điều chuyển xe các điểm KD' : 'Điều chuyển xe nội bộ điểm KD')
+                        : 'Phiếu xuất xe bán (TD4)';
+                    const tgd = firstLine.ten_gd || raw.ten_gd || defaultTenGd;
                     return {
                         voucher_type: vType,
                         voucher_name: vType === 'DNX' ? 'Phiếu đề nghị xuất xe' : 'Phiếu xuất xe bán (TD4)',
@@ -1672,6 +1683,8 @@ export const getCyberVoucherTickets = async (params: CyberVoucherTicketParams = 
                         gio_ct: firstLine.gio_ct || raw.gio_ct || '',
                         so_hd: firstLine.so_hd || raw.so_hd || '',
                         ma_ct: vType,
+                        ma_gd: mgd,
+                        ten_gd: tgd,
                         ma_post: r.ma_post,
                         ten_kh: r.ten_kh || raw.ten_kh || '',
                         ten_tvbh: firstLine.ten_tvbh || raw.ten_tvbh || r.user_name || '',

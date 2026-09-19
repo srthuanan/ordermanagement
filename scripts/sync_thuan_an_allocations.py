@@ -1622,6 +1622,29 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
     ma_ttcp     = (params.get("ma_ttcp") or "02.01.08").strip()
     user_name   = (params.get("user_name") or "02.NHANPT").strip()
 
+    WAREHOUSE_TO_TTCP = {
+        'K83': '02.01.08',
+        'K87': '02.01.08',
+        'K86': '02.01.08',
+        'K106': '02.01.08',
+        'KHCM.PVD': '02.01.08',
+        'K85': '02.01.03',
+        'K65': '02.01.12',
+        'K103': '02.01.05',
+        'K101': '02.01.05',
+        'K58': '02.01.10',
+        'K36': '02.01.09',
+        'K17': '02.01.01',
+    }
+    ma_ttcp_n = (params.get("ma_ttcp_n") or WAREHOUSE_TO_TTCP.get(ma_kho_nhan, "")).strip()
+
+    ma_gd = str(params.get("ma_gd") or "").strip()
+    if ma_gd not in ('4', '9'):
+        if ma_ttcp_n and ma_ttcp_n != ma_ttcp:
+            ma_gd = '9'
+        else:
+            ma_gd = '4'
+
     if not vins:
         return {"success": False, "error": "Vui lòng chọn ít nhất một xe (số VIN) để lập phiếu đề nghị xuất"}
 
@@ -1646,6 +1669,17 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
 
         cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
         ph = "%s" if is_pymssql else "?"
+
+        if not ma_ttcp_n and ma_kho_nhan:
+            try:
+                cursor.execute(f"SELECT TOP 1 ma_ttcp FROM DmKho WHERE ma_kho = {ph}", (ma_kho_nhan,))
+                r_ttcp = cursor.fetchone()
+                if r_ttcp:
+                    ma_ttcp_n = ((r_ttcp.get('ma_ttcp') if is_pymssql else r_ttcp[0]) or "").strip()
+            except Exception:
+                pass
+        if not ma_ttcp_n:
+            ma_ttcp_n = ma_ttcp
 
         # 0. CHẶN TẠO TRÙNG LẶP: Kiểm tra xem các số VIN đã tồn tại phiếu ĐNX hoặc phiếu TD4 chưa
         vins_clean = [v.strip().upper() for v in vins if v and len(v.strip()) >= 8]
@@ -1714,25 +1748,23 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
                     }
                 }
 
-            # Kiểm tra phiếu TD4 đã tồn tại
+            # Kiểm tra xe đã lập phiếu ra cổng / hẹn giao xe (TD4)
             sql_check_td4 = f"""
-                SELECT TOP 1
-                    COALESCE(NULLIF(RTRIM(p.Ma_Xe), ''), bx.So_khung, '') AS so_khung,
+                SELECT TOP 1 
+                    c.so_khung,
                     p.so_ct,
                     p.stt_rec,
                     p.ngay_ct,
                     p.dien_giai,
                     p.ong_ba AS ten_kh,
-                    p.Ma_Hd_H AS so_hd,
-                    p.so_may,
-                    p.loai_xe
-                FROM PHTD p WITH (NOLOCK)
-                LEFT JOIN BEXEPXE bx WITH (NOLOCK) ON RTRIM(p.Ma_Hd_H) = RTRIM(bx.Ma_Hd)
-                WHERE p.Ma_Ct = 'TD4'
-                  AND (
-                    RTRIM(p.Ma_Xe) IN ({vin_list_str})
-                    OR bx.So_khung IN ({vin_list_str})
-                  )
+                    c.so_hd,
+                    c.so_may,
+                    ISNULL(k.Ten_Kx, c.Ma_Kx) AS loai_xe
+                FROM CT70 c WITH (NOLOCK)
+                JOIN PH70 p WITH (NOLOCK) ON c.stt_rec = p.stt_rec
+                LEFT JOIN Dmkx k WITH (NOLOCK) ON c.Ma_Kx = k.Ma_Kx
+                WHERE c.so_khung IN ({vin_list_str})
+                  AND p.Ma_TTCP_H = '02.01.08'
                 ORDER BY p.ngay_ct DESC, p.so_ct DESC
             """
             cursor.execute(sql_check_td4)
@@ -1887,7 +1919,7 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             cursor.execute(sql_ct, (
                 stt_rec, stt_rec0, today_str, so_ct,
                 ma_kx, ma_mau, vin_clean, so_may,
-                ma_kho_xuat, ma_ttcp, ma_kho_nhan, ma_mau_nt, ma_ttcp, ly_do
+                ma_kho_xuat, ma_ttcp, ma_kho_nhan, ma_mau_nt, ma_ttcp_n, ly_do
             ))
             total_qty += 1
             cars_detail.append({
@@ -1913,18 +1945,18 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             ty_gia, t_tien_nt, t_tien, Lenh_RO, Lenh_PO,
             Lenh_So, NonVat, user_id, Ma_TTCP_N, MA_TD3_H, MA_HD_H
         ) VALUES (
-            {ph}, {ph}, 'DNX', '4', '3',
+            {ph}, {ph}, 'DNX', {ph}, '3',
             0, '', {ph}, {ph}, {ph},
             {ph}, '', '', '', '',
             '1900-01-01', '', {ph}, '', {ph},
             {ph}, 0, '', '', 'VND',
             1.0, 0, 0, '', '',
-            '', 0, {ph}, '', '', ''
+            '', 0, {ph}, {ph}, '', ''
         )
         """
         cursor.execute(sql_ph, (
-            ma_dvcs, stt_rec, today_str, today_str, so_ct,
-            ma_ttcp, khach_hang, ly_do, total_qty, user_id
+            ma_dvcs, stt_rec, ma_gd, today_str, today_str, so_ct,
+            ma_ttcp, khach_hang, ly_do, total_qty, user_id, ma_ttcp_n
         ))
 
         # 6. Post DNX Ticket to Inventory Ledger
@@ -2624,7 +2656,9 @@ def sync_cyber_voucher_tickets_to_supabase(tickets: list = None, params: dict = 
             "ten_kho_nhan": t.get("ten_kho_nhan") or "",
             "so_hd": t.get("so_hd") or "",
             "gio_ct": t.get("gio_ct") or "",
-            "ten_tvbh": t.get("ten_tvbh") or t.get("nvkd") or ""
+            "ten_tvbh": t.get("ten_tvbh") or t.get("nvkd") or "",
+            "ma_gd": t.get("ma_gd") or ("4" if v_type == "DNX" else "TD4"),
+            "ten_gd": t.get("ten_gd") or ("Điều chuyển xe nội bộ điểm KD" if str(t.get("ma_gd")) != "9" else "Điều chuyển xe các điểm KD")
         }
 
         seen[stt_rec] = {
@@ -3191,8 +3225,11 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
                 ISNULL(c.Ma_Mau, '') AS ma_mau,
                 ISNULL(mx.Ten_mau, ISNULL(c.Ma_Mau, '')) AS ten_mau,
                 ISNULL(c.Ma_kho_i, p.Ma_kho) AS ma_kho_xuat,
-                ISNULL(p.Ma_khoN, 'K83') AS ma_kho_nhan
+                ISNULL(p.Ma_khoN, 'K83') AS ma_kho_nhan,
+                ISNULL(p.ma_gd, '4') AS ma_gd,
+                ISNULL(gd.ten_gd, N'Điều chuyển xe nội bộ điểm KD') AS ten_gd
             FROM PHDNX p WITH (NOLOCK)
+            LEFT JOIN DmMaGD gd WITH (NOLOCK) ON p.ma_ct = gd.ma_ct AND p.ma_gd = gd.ma_gd
             LEFT JOIN CTDNX c WITH (NOLOCK) ON p.stt_rec = c.stt_rec
             LEFT JOIN Dmkx kx WITH (NOLOCK) ON c.ma_Kx = kx.Ma_Kx
             LEFT JOIN Dmmauxe mx WITH (NOLOCK) ON c.Ma_Mau = mx.Ma_mau
@@ -3247,7 +3284,9 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
                 ISNULL(p.Ma_Xe, '') AS vin,
                 ISNULL(p.So_may, '') AS so_may,
                 ISNULL(p.Loai_xe, '') AS loai_xe,
-                '' AS ma_mau
+                '' AS ma_mau,
+                'TD4' AS ma_gd,
+                N'Phiếu Xe Ra Giao KH' AS ten_gd
             FROM PHTD p WITH (NOLOCK)
             LEFT JOIN PHHDX hdx WITH (NOLOCK) ON p.Ma_Hd_H = hdx.so_ct
             LEFT JOIN DmHs hs WITH (NOLOCK) ON (hdx.Ma_Hs_H = hs.Ma_Hs OR p.Ma_Hs_H = hs.Ma_Hs)

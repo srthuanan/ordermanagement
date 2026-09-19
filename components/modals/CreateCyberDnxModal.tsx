@@ -29,6 +29,7 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
 }) => {
     const [maKhoXuat, setMaKhoXuat] = useState('K87');
     const [maKhoNhan, setMaKhoNhan] = useState('K83');
+    const [maGd, setMaGd] = useState<'4' | '9'>('4');
     const [khachHang, setKhachHang] = useState(initialCustomerName);
     const [lyDo, setLyDo] = useState(initialCustomerName ? `Lấy xe về PDI giao KH ${initialCustomerName}` : 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH');
     const [userName, setUserName] = useState('02.NHANPT');
@@ -104,13 +105,14 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
         try {
             const res = await createCyberDnxTicket({
                 vins,
+                ma_gd: maGd,
                 ma_kho_xuat: maKhoXuat,
                 ma_kho_nhan: maKhoNhan,
                 khach_hang: khachHang,
                 ly_do: lyDo,
                 user_name: userName,
                 ma_dvcs: '02',
-                ma_ttcp: '02.01.20'
+                ma_ttcp: '02.01.08'
             });
 
             if (res.success) {
@@ -213,6 +215,55 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                                 </div>
                             </div>
 
+                            {/* Loại phiếu đề nghị xuất (CyberSoft Loại 4 vs 9) */}
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                                    Loại phiếu đề nghị xuất (CyberSoft):
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <label
+                                        onClick={() => setMaGd('4')}
+                                        className={`p-2 rounded-xl border text-xs font-bold cursor-pointer transition-all flex items-center gap-2 ${
+                                            maGd === '4'
+                                                ? 'bg-emerald-950/40 border-emerald-500 text-emerald-300 ring-1 ring-emerald-500/50'
+                                                : 'bg-slate-950/60 border-slate-700 text-slate-400 hover:text-white'
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="modal_ma_gd"
+                                            checked={maGd === '4'}
+                                            onChange={() => setMaGd('4')}
+                                            className="text-emerald-500 focus:ring-emerald-500"
+                                        />
+                                        <div>
+                                            <div className="text-xs font-bold">4. Điều chuyển nội bộ điểm KD</div>
+                                            <div className="text-[10px] text-slate-400 font-normal">Giữa các kho trong showroom</div>
+                                        </div>
+                                    </label>
+                                    <label
+                                        onClick={() => setMaGd('9')}
+                                        className={`p-2 rounded-xl border text-xs font-bold cursor-pointer transition-all flex items-center gap-2 ${
+                                            maGd === '9'
+                                                ? 'bg-purple-950/40 border-purple-500 text-purple-300 ring-1 ring-purple-500/50'
+                                                : 'bg-slate-950/60 border-slate-700 text-slate-400 hover:text-white'
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="modal_ma_gd"
+                                            checked={maGd === '9'}
+                                            onChange={() => setMaGd('9')}
+                                            className="text-purple-500 focus:ring-purple-500"
+                                        />
+                                        <div>
+                                            <div className="text-xs font-bold">9. Điều chuyển xe các điểm KD</div>
+                                            <div className="text-[10px] text-slate-400 font-normal">Chuyển sang showroom/đại lý khác</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
                             {/* Kho xuất & Kho nhận */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
@@ -236,7 +287,15 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                                     </label>
                                     <select
                                         value={maKhoNhan}
-                                        onChange={(e) => setMaKhoNhan(e.target.value)}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setMaKhoNhan(val);
+                                            if (['K85', 'K65', 'K103', 'K58', 'K36', 'K17', 'KTN.NM', 'KTN.TT'].includes(val)) {
+                                                setMaGd('9');
+                                            } else if (['K83', 'K87', 'K86', 'K106', 'KHCM.PVD'].includes(val)) {
+                                                setMaGd('4');
+                                            }
+                                        }}
                                         className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
                                     >
                                         {CYBER_WAREHOUSES.map(w => (

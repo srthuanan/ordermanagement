@@ -284,6 +284,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     // SUB-TAB 4: LẬP ĐỀ NGHỊ XUẤT XE / ĐIỀU CHUYỂN XE (PHDNX & CTDNX)
     // -------------------------------------------------------------
     const [dnxVinInput, setDnxVinInput] = useState('');
+    const [dnxMaGd, setDnxMaGd] = useState<'4' | '9'>('4');
     const [dnxMaKhoXuat, setDnxMaKhoXuat] = useState('K87');
     const [dnxMaKhoNhan, setDnxMaKhoNhan] = useState('K83');
     const [dnxKhachHang, setDnxKhachHang] = useState('');
@@ -719,6 +720,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         try {
             const res = await createCyberDnxTicket({
                 vins: rawVins,
+                ma_gd: dnxMaGd,
                 ma_kho_xuat: dnxMaKhoXuat,
                 ma_kho_nhan: dnxMaKhoNhan,
                 khach_hang: dnxKhachHang,
@@ -744,6 +746,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 const enrichedTicket: CyberDnxPrintData = {
                     so_ct: res.so_ct || 'DNX',
                     stt_rec: res.stt_rec || '',
+                    ma_gd: res.ma_gd || dnxMaGd,
+                    ten_gd: res.ten_gd || (dnxMaGd === '9' ? 'Điều chuyển xe các điểm KD' : 'Điều chuyển xe nội bộ điểm KD'),
                     user_name: dnxUserName || res.user_name || '02.NHANPT',
                     ma_kho_xuat: dnxMaKhoXuat,
                     ma_kho_nhan: dnxMaKhoNhan,
@@ -824,11 +828,12 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const executeVoucherTicketsSearch = async () => {
         setIsLoadingTickets(true);
         try {
+            const apiMaCt = ticketMaCt.startsWith('DNX') ? 'DNX' : ticketMaCt;
             const res = await getCyberVoucherTickets({
-                ma_ct: ticketMaCt,
+                ma_ct: apiMaCt,
                 ma_post: ticketMaPost,
                 search: ticketSearch,
-                limit: 1000,
+                limit: 1500,
                 ma_ttcp: '02.01.08'
             });
             if (res && res.success) {
@@ -866,14 +871,30 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             return soB.localeCompare(soA);
         });
 
+        // Lọc theo loại chứng từ (hỗ trợ phân biệt DNX mã 4 vs mã 9)
+        if (ticketMaCt === 'DNX') {
+            list = list.filter(t => t.voucher_type === 'DNX');
+        } else if (ticketMaCt === 'DNX_4') {
+            list = list.filter(t => t.voucher_type === 'DNX' && String(t.ma_gd) !== '9');
+        } else if (ticketMaCt === 'DNX_9') {
+            list = list.filter(t => t.voucher_type === 'DNX' && (String(t.ma_gd) === '9' || (t.ten_gd && t.ten_gd.includes('các điểm KD'))));
+        } else if (ticketMaCt === 'TD4') {
+            list = list.filter(t => t.voucher_type === 'TD4');
+        }
+
+        // Lọc theo trạng thái duyệt nếu có
+        if (ticketMaPost) {
+            list = list.filter(t => String(t.ma_post) === String(ticketMaPost));
+        }
+
         const rawQ = (ticketSearch || '').trim();
         if (!rawQ) return list;
         const qNoTone = removeVietnameseTones(rawQ);
         return list.filter(t => {
-            const fullText = removeVietnameseTones(`${t.so_ct} ${t.vin} ${t.so_may} ${t.ten_kh} ${t.ten_tvbh} ${t.nguoi_nhan} ${t.so_hd} ${t.dien_giai} ${t.voucher_name} ${t.loai_xe}`);
+            const fullText = removeVietnameseTones(`${t.so_ct} ${t.vin} ${t.so_may} ${t.ten_kh} ${t.ten_tvbh} ${t.nguoi_nhan} ${t.so_hd} ${t.dien_giai} ${t.voucher_name} ${t.loai_xe} ${t.ten_gd || ''}`);
             return fullText.includes(qNoTone);
         });
-    }, [voucherTickets, ticketSearch]);
+    }, [voucherTickets, ticketSearch, ticketMaCt, ticketMaPost]);
 
     // -------------------------------------------------------------
     // SUB-TAB 1: KẾ HOẠCH GIAO XE (K10/K15 CHƯA XHĐ)
@@ -3740,6 +3761,64 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     </div>
                                 </div>
 
+                                {/* 2.5 Loại phiếu đề nghị xuất (CyberSoft ERP: Loại 4 vs 9) */}
+                                <div className="p-2.5 bg-blue-50/70 rounded-lg border border-blue-200/80 space-y-1.5">
+                                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-800">
+                                        <span className="flex items-center gap-1.5">
+                                            <i className="fas fa-tags text-blue-600 text-[10px]"></i>
+                                            <span>Loại phiếu Đề nghị xuất xe (CyberSoft):</span>
+                                            <span className="text-rose-500">*</span>
+                                        </span>
+                                        <span className={`text-[9.5px] px-2 py-0.5 rounded-full font-extrabold ${
+                                            dnxMaGd === '9' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-100 text-blue-800 border border-blue-200'
+                                        }`}>
+                                            Mã: {dnxMaGd}
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <label
+                                            onClick={() => setDnxMaGd('4')}
+                                            className={`p-2 rounded-lg border text-xs font-bold cursor-pointer transition-all flex items-center gap-2 ${
+                                                dnxMaGd === '4'
+                                                    ? 'bg-white border-blue-500 text-blue-900 shadow-xs ring-2 ring-blue-500/20'
+                                                    : 'bg-slate-50/80 border-slate-200 text-slate-600 hover:bg-white'
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="dnx_loai"
+                                                checked={dnxMaGd === '4'}
+                                                onChange={() => setDnxMaGd('4')}
+                                                className="text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                            />
+                                            <div className="leading-tight">
+                                                <div className="text-[11.5px] font-bold text-blue-950">4. Điều chuyển nội bộ điểm KD</div>
+                                                <div className="text-[9.5px] font-medium text-slate-500 mt-0.5">Giữa các kho trong showroom (K87, K83, K86...)</div>
+                                            </div>
+                                        </label>
+                                        <label
+                                            onClick={() => setDnxMaGd('9')}
+                                            className={`p-2 rounded-lg border text-xs font-bold cursor-pointer transition-all flex items-center gap-2 ${
+                                                dnxMaGd === '9'
+                                                    ? 'bg-white border-purple-500 text-purple-900 shadow-xs ring-2 ring-purple-500/20'
+                                                    : 'bg-slate-50/80 border-slate-200 text-slate-600 hover:bg-white'
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="dnx_loai"
+                                                checked={dnxMaGd === '9'}
+                                                onChange={() => setDnxMaGd('9')}
+                                                className="text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                            />
+                                            <div className="leading-tight">
+                                                <div className="text-[11.5px] font-bold text-purple-950">9. Điều chuyển xe các điểm KD</div>
+                                                <div className="text-[9.5px] font-medium text-slate-500 mt-0.5">Chuyển sang showroom/đại lý khác (Dĩ An, Vũng Tàu...)</div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
                                 {/* 3. Kho Xuất & Kho Nhận */}
                                 <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1.5">
                                     <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 border-b border-slate-200/60 pb-1">
@@ -3791,7 +3870,15 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                             </label>
                                             <select
                                                 value={dnxMaKhoNhan}
-                                                onChange={(e) => setDnxMaKhoNhan(e.target.value)}
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    setDnxMaKhoNhan(val);
+                                                    if (['K85', 'K65', 'K103', 'K58', 'K36', 'K17', 'KTN.NM', 'KTN.TT'].includes(val)) {
+                                                        setDnxMaGd('9');
+                                                    } else if (['K83', 'K87', 'K86', 'K106', 'KHCM.PVD'].includes(val)) {
+                                                        setDnxMaGd('4');
+                                                    }
+                                                }}
                                                 className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-blue-500 bg-white text-slate-800 cursor-pointer h-8"
                                             >
                                                 <option value="K83">K83 - Thuận An (Mặc định)</option>
@@ -4035,7 +4122,9 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     className="h-9 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:border-slate-400 cursor-pointer"
                                 >
                                     <option value="">Tất cả loại phiếu (DNX & TD4)</option>
-                                    <option value="DNX">Đề Nghị Xuất Xe (DNX)</option>
+                                    <option value="DNX">Đề Nghị Xuất Xe (Tất cả DNX)</option>
+                                    <option value="DNX_4">↳ DNX: Điều chuyển nội bộ điểm KD (Mã 4)</option>
+                                    <option value="DNX_9">↳ DNX: Điều chuyển các điểm KD (Mã 9)</option>
                                     <option value="TD4">Phiếu Xe Ra Giao KH (TD4)</option>
                                 </select>
 
@@ -4112,21 +4201,38 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 
                                                         {/* Loại phiếu */}
                                                         <td className="px-3 py-2.5">
-                                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${
-                                                                t.voucher_type === 'DNX'
-                                                                    ? 'bg-slate-100 text-slate-700'
-                                                                    : 'bg-amber-100 text-amber-800'
-                                                            }`}>
-                                                                <i className={`fas ${t.voucher_type === 'DNX' ? 'fa-file-export' : 'fa-car-side'} text-[9px]`}></i>
-                                                                {t.voucher_type}
-                                                            </span>
+                                                            {t.voucher_type === 'DNX' ? (
+                                                                <div>
+                                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-slate-100 text-slate-700">
+                                                                        <i className="fas fa-file-export text-[9px]"></i>
+                                                                        DNX
+                                                                    </span>
+                                                                    <span
+                                                                        className={`block text-[9px] font-bold px-1.5 py-0.5 rounded mt-0.5 whitespace-nowrap ${
+                                                                            String(t.ma_gd) === '9' || (t.ten_gd && t.ten_gd.includes('các điểm KD'))
+                                                                                ? 'text-purple-700 bg-purple-50 border border-purple-200'
+                                                                                : 'text-blue-700 bg-blue-50 border border-blue-200'
+                                                                        }`}
+                                                                        title={t.ten_gd || (String(t.ma_gd) === '9' ? 'Điều chuyển xe các điểm KD' : 'Điều chuyển xe nội bộ điểm KD')}
+                                                                    >
+                                                                        {String(t.ma_gd) === '9' || (t.ten_gd && t.ten_gd.includes('các điểm KD'))
+                                                                            ? 'Các điểm KD (9)'
+                                                                            : 'Nội bộ điểm KD (4)'}
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase bg-amber-100 text-amber-800">
+                                                                    <i className="fas fa-car-side text-[9px]"></i>
+                                                                    TD4
+                                                                </span>
+                                                            )}
                                                         </td>
 
                                                         {/* Số phiếu + số hợp đồng */}
                                                         <td className="px-3 py-2.5">
                                                             <div className="font-bold text-slate-900 font-mono text-[12px]">{t.so_ct}</div>
                                                             {t.so_hd && (
-                                                                <div className="text-[10px] text-slate-400 font-mono truncate max-w-[130px]" title={t.so_hd}>{t.so_hd}</div>
+                                                                 <div className="text-[10px] text-slate-400 font-mono truncate max-w-[130px]" title={t.so_hd}>{t.so_hd}</div>
                                                             )}
                                                         </td>
 
@@ -4216,6 +4322,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                                                 so_ct: t.so_ct,
                                                                                 stt_rec: t.stt_rec,
                                                                                 ngay_ct: t.ngay_ct,
+                                                                                ma_gd: t.ma_gd,
+                                                                                ten_gd: t.ten_gd,
                                                                                 user_name: t.nvkd || '02.NHANPT',
                                                                                 ma_kho_xuat: t.ma_kho_xuat || 'K87',
                                                                                 ma_kho_nhan: t.ma_kho_nhan || 'K83',

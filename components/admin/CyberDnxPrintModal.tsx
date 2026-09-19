@@ -15,6 +15,8 @@ export interface CyberDnxPrintData {
     don_vi?: string;
     dia_chi?: string;
     ly_do?: string;
+    ma_gd?: string;
+    ten_gd?: string;
     total_cars?: number;
     cars: Array<{
         stt_rec0?: string;
@@ -173,6 +175,11 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-600 text-white font-extrabold uppercase">
                                     {data.so_ct}
                                 </span>
+                                {(data.ten_gd || data.ma_gd) && (
+                                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-semibold border border-slate-700">
+                                        {data.ten_gd || (String(data.ma_gd) === '9' ? 'Điều chuyển xe các điểm KD' : 'Điều chuyển xe nội bộ điểm KD')}
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </div>
