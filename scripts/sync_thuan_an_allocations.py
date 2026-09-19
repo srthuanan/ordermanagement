@@ -1171,7 +1171,7 @@ def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
                     @M_Nh_HD1 = N'', @M_Nh_HD2 = N'', @M_Nh_HD3 = N'',
                     @M_Ma_DVCS = {ph}, @M_User_name = {ph}
                 """
-                for sr in stt_recs_direct[:20]:
+                for sr in stt_recs_direct[:5]:
                     c.execute(direct_sql, (sr, ma_dvcs, user_name))
                     d_res = c.fetchall()
                     if d_res:
@@ -1222,6 +1222,11 @@ def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
         ))
         rows = c.fetchall()
         cols = [d[0] for d in c.description]
+
+    try:
+        conn.close()
+    except Exception:
+        pass
 
     contracts = []
     status_counts = {}

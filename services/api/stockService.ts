@@ -998,6 +998,7 @@ export interface CyberXepXeFilterParams {
     is_xep_xe?: string;
     showroom?: string;
     keyword?: string;
+    force?: boolean;
 }
 
 export interface CyberXepXeContractsResponse {

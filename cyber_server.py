@@ -18,6 +18,34 @@ _auto_sync_state = {
 }
 _auto_sync_lock = threading.Lock()
 
+# ─── In-Memory API Response Cache (TTL 2 minutes) ────
+_api_cache = {}
+_api_cache_lock = threading.Lock()
+_CACHE_TTL_SECONDS = 120
+
+def get_from_cache(key: str, force: bool = False):
+    if force:
+        return None
+    with _api_cache_lock:
+        entry = _api_cache.get(key)
+        if entry and (datetime.now(timezone.utc).timestamp() - entry["time"] < _CACHE_TTL_SECONDS):
+            return entry["data"]
+    return None
+
+def set_to_cache(key: str, data):
+    with _api_cache_lock:
+        _api_cache[key] = {
+            "time": datetime.now(timezone.utc).timestamp(),
+            "data": data
+        }
+
+def invalidate_api_cache():
+    with _api_cache_lock:
+        if _api_cache:
+            print(f"[CyberSync Cloud Cache] Cleared {len(_api_cache)} cache entries due to data mutation.")
+            _api_cache.clear()
+
+
 # Import business logic from scripts
 from scripts.sync_thuan_an_allocations import (
     fetch_allocations_from_cyber,
@@ -330,9 +358,23 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             except Exception:
                 data = {}
 
+            is_force = bool(data.get("force") or data.get("refresh"))
+            cache_key = f"search-factory-plan:{body_str}"
+            cached_result = get_from_cache(cache_key, force=is_force)
+            if cached_result is not None:
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("X-Cache", "HIT")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(cached_result, default=str, ensure_ascii=False).encode("utf-8"))
+                return
+
             print(f"[CyberSync Cloud Search] Request: {data}")
             try:
                 result = search_cyber_factory_plan(data)
+                if result and result.get("success") is not False:
+                    set_to_cache(cache_key, result)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -355,9 +397,23 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             except Exception:
                 data = {}
 
+            is_force = bool(data.get("force") or data.get("refresh"))
+            cache_key = f"ton-kho-report:{body_str}"
+            cached_result = get_from_cache(cache_key, force=is_force)
+            if cached_result is not None:
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("X-Cache", "HIT")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(cached_result, default=str, ensure_ascii=False).encode("utf-8"))
+                return
+
             print(f"[CyberSync Cloud Ton Kho Report] Request: {data}")
             try:
                 result = get_cyber_ton_kho_report(data)
+                if result and result.get("success") is not False:
+                    set_to_cache(cache_key, result)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -380,9 +436,23 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             except Exception:
                 data = {}
 
+            is_force = bool(data.get("force") or data.get("refresh"))
+            cache_key = f"xep-xe-contracts:{body_str}"
+            cached_result = get_from_cache(cache_key, force=is_force)
+            if cached_result is not None:
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("X-Cache", "HIT")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(cached_result, default=str, ensure_ascii=False).encode("utf-8"))
+                return
+
             print(f"[CyberSync Cloud Xep Xe Contracts] Request: {data}")
             try:
                 result = get_cyber_xep_xe_contracts(data)
+                if result and result.get("success") is not False:
+                    set_to_cache(cache_key, result)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -433,6 +503,8 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             print(f"[CyberSync Cloud Xep Xe Save] Request: {data}")
             try:
                 result = save_cyber_xep_xe(data)
+                if result and result.get("success") is not False:
+                    invalidate_api_cache()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -458,6 +530,8 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             print(f"[CyberSync Cloud Xep Xe Delete] Request: {data}")
             try:
                 result = delete_cyber_xep_xe(data)
+                if result and result.get("success") is not False:
+                    invalidate_api_cache()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -483,6 +557,8 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             print(f"[CyberSync Cloud Create DNX] Request: {data}")
             try:
                 result = create_cyber_dnx_ticket(data)
+                if result and result.get("success") is not False:
+                    invalidate_api_cache()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()

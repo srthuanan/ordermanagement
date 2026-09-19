@@ -12,7 +12,27 @@ const __dirname = path.dirname(__filename);
 function cyberSyncPlugin(): Plugin {
   const scriptPath = path.resolve(__dirname, 'scripts', 'sync_thuan_an_allocations.py');
 
-  const runPy = (args: string[], inputBody: string, res: any) => {
+  const responseCache = new Map<string, { timestamp: number; payload: any }>();
+  const CACHE_TTL_MS = 2 * 60 * 1000; // 2 phút
+
+  const invalidateCache = () => {
+    if (responseCache.size > 0) {
+      console.log(`[CyberSync Cache] Invaliding ${responseCache.size} cache entries due to data mutation.`);
+      responseCache.clear();
+    }
+  };
+
+  const runPy = (args: string[], inputBody: string, res: any, cacheKey?: string, forceRefresh = false, onComplete?: (success: boolean) => void) => {
+    if (cacheKey && !forceRefresh) {
+      const hit = responseCache.get(cacheKey);
+      if (hit && (Date.now() - hit.timestamp) < CACHE_TTL_MS) {
+        console.log(`[CyberSync Cache HIT] ${cacheKey} (${Date.now() - hit.timestamp}ms old)`);
+        res.writeHead(200, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
+        return res.end(JSON.stringify(hit.payload));
+      }
+    }
+
+    const startTime = Date.now();
     console.log(`[CyberSync Vite Middleware] Running: python ${args.join(' ')}`);
     const py = spawn('python', args);
     let stdout = '';
@@ -28,6 +48,7 @@ function cyberSyncPlugin(): Plugin {
 
     py.on('close', code => {
       if (code !== 0) {
+        if (onComplete) onComplete(false);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: false, error: stderr || `Exit code ${code}` }));
       }
@@ -35,9 +56,15 @@ function cyberSyncPlugin(): Plugin {
         const lines = stdout.trim().split('\n');
         const lastLine = lines[lines.length - 1];
         const parsed = JSON.parse(lastLine);
+        if (cacheKey && parsed && parsed.success !== false) {
+          responseCache.set(cacheKey, { timestamp: Date.now(), payload: parsed });
+        }
+        if (onComplete) onComplete(true);
+        console.log(`[CyberSync Vite Middleware] Completed in ${Date.now() - startTime}ms`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify(parsed));
       } catch (e: any) {
+        if (onComplete) onComplete(false);
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, raw: stdout, error: e.message }));
       }
@@ -59,7 +86,9 @@ function cyberSyncPlugin(): Plugin {
           if (fromDate) args.push('--from', fromDate);
           if (toDate) args.push('--to', toDate);
           if (preview) args.push('--preview');
-          runPy(args, body, res);
+          runPy(args, body, res, undefined, false, success => {
+            if (success && !preview) invalidateCache();
+          });
         });
       });
 
@@ -72,7 +101,9 @@ function cyberSyncPlugin(): Plugin {
           try { options = JSON.parse(body || '{}'); } catch (e) {}
           const args = [scriptPath, '--sync-locations'];
           if (options.preview) args.push('--preview');
-          runPy(args, body, res);
+          runPy(args, body, res, undefined, false, success => {
+            if (success && !options.preview) invalidateCache();
+          });
         });
       });
 
@@ -82,7 +113,7 @@ function cyberSyncPlugin(): Plugin {
         const model = urlObj.searchParams.get('model') || '';
         const args = [scriptPath, '--plan-filter-options'];
         if (model) args.push('--model', model);
-        runPy(args, '', res);
+        runPy(args, '', res, `plan-filter-options:${model}`);
       });
 
       server.middlewares.use('/api/cyber/search-factory-plan', (req, res, next) => {
@@ -90,7 +121,10 @@ function cyberSyncPlugin(): Plugin {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
-          runPy([scriptPath, '--search-plan'], body, res);
+          let options: any = {};
+          try { options = JSON.parse(body || '{}'); } catch (e) {}
+          const isForce = Boolean(options.force || options.refresh);
+          runPy([scriptPath, '--search-plan'], body, res, `search-plan:${body}`, isForce);
         });
       });
 
@@ -99,7 +133,10 @@ function cyberSyncPlugin(): Plugin {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
-          runPy([scriptPath, '--ton-kho-report'], body, res);
+          let options: any = {};
+          try { options = JSON.parse(body || '{}'); } catch (e) {}
+          const isForce = Boolean(options.force || options.refresh);
+          runPy([scriptPath, '--ton-kho-report'], body, res, `ton-kho-report:${body}`, isForce);
         });
       });
 
@@ -108,7 +145,10 @@ function cyberSyncPlugin(): Plugin {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
-          runPy([scriptPath, '--xep-xe-contracts'], body, res);
+          let options: any = {};
+          try { options = JSON.parse(body || '{}'); } catch (e) {}
+          const isForce = Boolean(options.force || options.refresh);
+          runPy([scriptPath, '--xep-xe-contracts'], body, res, `xep-xe-contracts:${body}`, isForce);
         });
       });
 
@@ -117,7 +157,7 @@ function cyberSyncPlugin(): Plugin {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
-          runPy([scriptPath, '--xep-xe-candidates'], body, res);
+          runPy([scriptPath, '--xep-xe-candidates'], body, res, `xep-xe-candidates:${body}`);
         });
       });
 
@@ -126,7 +166,9 @@ function cyberSyncPlugin(): Plugin {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
-          runPy([scriptPath, '--xep-xe-save'], body, res);
+          runPy([scriptPath, '--xep-xe-save'], body, res, undefined, false, success => {
+            if (success) invalidateCache();
+          });
         });
       });
 
@@ -135,7 +177,9 @@ function cyberSyncPlugin(): Plugin {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
-          runPy([scriptPath, '--xep-xe-delete'], body, res);
+          runPy([scriptPath, '--xep-xe-delete'], body, res, undefined, false, success => {
+            if (success) invalidateCache();
+          });
         });
       });
 
@@ -144,7 +188,9 @@ function cyberSyncPlugin(): Plugin {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
-          runPy([scriptPath, '--create-dnx'], body, res);
+          runPy([scriptPath, '--create-dnx'], body, res, undefined, false, success => {
+            if (success) invalidateCache();
+          });
         });
       });
 
@@ -153,7 +199,7 @@ function cyberSyncPlugin(): Plugin {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
-          runPy([scriptPath, '--lookup-vin'], body, res);
+          runPy([scriptPath, '--lookup-vin'], body, res, `lookup-vin:${body}`);
         });
       });
 
@@ -168,12 +214,17 @@ function cyberSyncPlugin(): Plugin {
           let body = '';
           req.on('data', chunk => { body += chunk.toString(); });
           req.on('end', () => {
-            let bodyObj = {};
+            let bodyObj: any = {};
             try { bodyObj = JSON.parse(body || '{}'); } catch (_) {}
-            runPy([scriptPath, '--voucher-tickets'], JSON.stringify({ ...queryParams, ...bodyObj }), res);
+            const combined = { ...queryParams, ...bodyObj };
+            const payloadStr = JSON.stringify(combined);
+            const isForce = Boolean(combined.force || combined.refresh);
+            runPy([scriptPath, '--voucher-tickets'], payloadStr, res, `voucher-tickets:${payloadStr}`, isForce);
           });
         } else {
-          runPy([scriptPath, '--voucher-tickets'], JSON.stringify(queryParams), res);
+          const payloadStr = JSON.stringify(queryParams);
+          const isForce = Boolean(queryParams.force || queryParams.refresh);
+          runPy([scriptPath, '--voucher-tickets'], payloadStr, res, `voucher-tickets:${payloadStr}`, isForce);
         }
       });
 

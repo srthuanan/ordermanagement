@@ -943,6 +943,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     // Modal xác nhận Hủy ghép xe
     const [contractToUnassign, setContractToUnassign] = useState<CyberXepXeContract | null>(null);
     const [isDeletingAssign, setIsDeletingAssign] = useState<boolean>(false);
+    const [xepXePage, setXepXePage] = useState<number>(1);
+    const XEP_XE_PAGE_SIZE = 50;
 
     // Thống kê số lượng xe Đã xuất HĐ theo từng Showroom
     const invoicedShowroomsBreakdown = useMemo(() => {
@@ -1002,6 +1004,21 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 
         return list;
     }, [xepXeContracts, xepXeStatusFilter, xepXeShowroom, xepXeShowroomInvoicedFilter, xepXeModel, xepXeKeyword]);
+
+    const totalXepXePages = useMemo(() => {
+        return Math.max(1, Math.ceil(displayedXepXeContracts.length / XEP_XE_PAGE_SIZE));
+    }, [displayedXepXeContracts.length]);
+
+    const paginatedXepXeContracts = useMemo(() => {
+        const start = (xepXePage - 1) * XEP_XE_PAGE_SIZE;
+        return displayedXepXeContracts.slice(start, start + XEP_XE_PAGE_SIZE);
+    }, [displayedXepXeContracts, xepXePage]);
+
+    useEffect(() => {
+        if (xepXePage > totalXepXePages) {
+            setXepXePage(1);
+        }
+    }, [totalXepXePages, xepXePage]);
 
     // Lọc danh sách candidate cars trong modal
     const displayedCandidateCars = useMemo(() => {
@@ -1261,11 +1278,13 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 ma_dvcs: '02',
                 showroom: currentShowroom || 'ALL',
                 keyword: currentKeyword ? currentKeyword.trim() : undefined,
+                force: overrides?.force ?? false,
                 ...overrides
             };
             const res = await getCyberXepXeContracts(params);
             if (res && res.success) {
                 setXepXeContracts(res.contracts || []);
+                setXepXePage(1);
                 setXepXeStatusCounts(res.status_counts || {});
                 if (res.showrooms && res.showrooms.length > 0) {
                     setXepXeShowrooms(prev => Array.from(new Set([...prev, ...res.showrooms])));
@@ -2443,7 +2462,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     onChange={e => {
                                         const val = e.target.value;
                                         setXepXeShowroom(val);
-                                        executeXepXeSearch({ showroom: val || 'ALL' });
+                                        setXepXePage(1);
+                                        if (xepXeContracts.length === 0) {
+                                            executeXepXeSearch({ showroom: val || 'ALL' });
+                                        }
                                     }}
                                     className="bg-transparent text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer max-w-[170px] truncate"
                                     title="Chọn đơn vị / Showroom"
@@ -2462,7 +2484,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 <i className="fas fa-car text-[11px] text-slate-400 flex-shrink-0"></i>
                                 <select
                                     value={xepXeModel}
-                                    onChange={e => setXepXeModel(e.target.value)}
+                                    onChange={e => {
+                                        setXepXeModel(e.target.value);
+                                        setXepXePage(1);
+                                    }}
                                     className="bg-transparent text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer max-w-[150px] truncate"
                                     title="Chọn dòng xe"
                                 >
@@ -2483,7 +2508,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         type="text"
                                         placeholder="Tìm số khung (VIN), số HĐ, tên KH xem SR xuất HĐ..."
                                         value={xepXeKeyword}
-                                        onChange={e => setXepXeKeyword(e.target.value)}
+                                        onChange={e => {
+                                            setXepXeKeyword(e.target.value);
+                                            setXepXePage(1);
+                                        }}
                                         onKeyDown={e => {
                                             if (e.key === 'Enter' && xepXeKeyword.trim()) {
                                                 executeXepXeSearch({ keyword: xepXeKeyword.trim(), showroom: 'ALL' });
@@ -2506,7 +2534,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     {xepXeKeyword && (
                                         <button
                                             type="button"
-                                            onClick={() => setXepXeKeyword('')}
+                                            onClick={() => {
+                                                setXepXeKeyword('');
+                                                setXepXePage(1);
+                                            }}
                                             className="text-slate-400 hover:text-slate-600 ml-1 p-0.5"
                                             title="Xóa tìm kiếm"
                                         >
@@ -2533,9 +2564,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             {/* 5. Fetch Data Button */}
                             <button
                                 type="button"
-                                onClick={() => executeXepXeSearch()}
+                                onClick={() => executeXepXeSearch({ force: true })}
                                 disabled={isLoadingXepXe}
                                 className="h-9 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 shrink-0"
+                                title="Tải lại dữ liệu mới nhất từ CyberSoft"
                             >
                                 <i className={`fas ${isLoadingXepXe ? 'fa-spinner fa-spin' : 'fa-rotate'} text-xs`}></i>
                                 <span>{isLoadingXepXe ? 'Đang tải...' : 'Lấy dữ liệu'}</span>
@@ -2845,7 +2877,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {displayedXepXeContracts.map((c, idx) => {
+                                            {paginatedXepXeContracts.map((c, idx) => {
+                                                const globalIdx = (xepXePage - 1) * XEP_XE_PAGE_SIZE + idx;
                                                 const badgeInfo = getStatusBadgeStyle(c.ten_color, c.back_color);
                                                 const hasVin = Boolean(c.so_khung && c.so_khung.trim());
                                                 const isInvoiced = c.ten_color === 'Đã xuất HĐ' || (c.back_color || '').toLowerCase() === 'violet';
@@ -2856,7 +2889,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                         className={`transition-colors text-slate-800 hover:bg-blue-50/40 ${badgeInfo.rowClass}`}
                                                     >
                                                         {/* STT */}
-                                                        <td className="px-3 py-2.5 text-center text-slate-400 text-[11px] font-mono">{idx + 1}</td>
+                                                        <td className="px-3 py-2.5 text-center text-slate-400 text-[11px] font-mono">{globalIdx + 1}</td>
 
                                                         {/* Trạng thái */}
                                                         <td className="px-3 py-2.5 whitespace-nowrap">
@@ -2999,6 +3032,72 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                             })}
                                         </tbody>
                                     </table>
+                                </div>
+
+                                {/* Pagination Footer Controls */}
+                                <div className="px-4 py-3 bg-slate-50/90 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+                                    <div className="flex items-center gap-2">
+                                        <span>Hiển thị</span>
+                                        <span className="font-bold text-slate-800 font-mono">
+                                            {displayedXepXeContracts.length === 0 ? 0 : (xepXePage - 1) * XEP_XE_PAGE_SIZE + 1} - {Math.min(xepXePage * XEP_XE_PAGE_SIZE, displayedXepXeContracts.length)}
+                                        </span>
+                                        <span>trên</span>
+                                        <span className="font-bold text-slate-900 font-mono">{displayedXepXeContracts.length}</span>
+                                        <span>hợp đồng</span>
+                                        {displayedXepXeContracts.length < xepXeContracts.length && (
+                                            <span className="text-[11px] text-slate-400">
+                                                (lọc từ {xepXeContracts.length} HĐ tải về)
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {totalXepXePages > 1 && (
+                                        <div className="flex items-center gap-1.5 ml-auto">
+                                            <button
+                                                type="button"
+                                                onClick={() => setXepXePage(1)}
+                                                disabled={xepXePage === 1}
+                                                className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-slate-600 font-bold transition-all shadow-2xs"
+                                                title="Trang đầu"
+                                            >
+                                                <i className="fas fa-angles-left text-[10px]"></i>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setXepXePage(p => Math.max(1, p - 1))}
+                                                disabled={xepXePage === 1}
+                                                className="px-2.5 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 text-slate-600 font-bold transition-all shadow-2xs"
+                                            >
+                                                <i className="fas fa-chevron-left text-[10px]"></i>
+                                                <span>Trước</span>
+                                            </button>
+
+                                            <div className="flex items-center gap-1 px-2.5 text-xs font-semibold">
+                                                <span className="font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md font-mono">{xepXePage}</span>
+                                                <span className="text-slate-400">/</span>
+                                                <span className="text-slate-600 font-mono">{totalXepXePages}</span>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => setXepXePage(p => Math.min(totalXepXePages, p + 1))}
+                                                disabled={xepXePage === totalXepXePages}
+                                                className="px-2.5 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 text-slate-600 font-bold transition-all shadow-2xs"
+                                            >
+                                                <span>Sau</span>
+                                                <i className="fas fa-chevron-right text-[10px]"></i>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setXepXePage(totalXepXePages)}
+                                                disabled={xepXePage === totalXepXePages}
+                                                className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-slate-600 font-bold transition-all shadow-2xs"
+                                                title="Trang cuối"
+                                            >
+                                                <i className="fas fa-angles-right text-[10px]"></i>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
