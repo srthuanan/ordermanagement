@@ -89,8 +89,8 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
 
                 if (!isMounted) return;
 
-                if (res.success && res.pdf_url) {
-                    setCyberPdfUrl(`${res.pdf_url}&t=${Date.now()}`);
+                if (res.success && (res.pdf_base64 || res.pdf_url)) {
+                    setCyberPdfUrl(res.pdf_base64 || `${res.pdf_url}&t=${Date.now()}`);
                 } else {
                     setCyberPdfError(res.error || 'Không thể kết xuất file PDF từ CyberSoft.');
                 }

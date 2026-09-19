@@ -165,7 +165,7 @@ const server = http.createServer((req, res) => {
     }
 
     if (pathname === '/api/cyber/voucher-tickets') {
-        const queryParams = Object.fromEntries(parsedUrl.searchParams);
+        const queryParams = Object.fromEntries(urlObj.searchParams);
         if (req.method === 'POST') {
             let body = '';
             req.on('data', chunk => { body += chunk.toString(); });
@@ -181,7 +181,7 @@ const server = http.createServer((req, res) => {
     }
 
     if (pathname === '/api/cyber/export-pdf') {
-        const queryParams = Object.fromEntries(parsedUrl.searchParams);
+        const queryParams = Object.fromEntries(urlObj.searchParams);
         if (req.method === 'POST') {
             let body = '';
             req.on('data', chunk => { body += chunk.toString(); });
@@ -196,7 +196,7 @@ const server = http.createServer((req, res) => {
         return;
     }
     if (pathname === '/api/cyber/view-pdf') {
-        const stt_rec = (parsedUrl.searchParams.get('stt_rec') || '').trim();
+        const stt_rec = (urlObj.searchParams.get('stt_rec') || '').trim();
         const safeName = `${stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
         const pdfPath = path.resolve(__dirname, 'public/cyber_pdfs', safeName);
         if (fs.existsSync(pdfPath)) {
@@ -216,7 +216,7 @@ const server = http.createServer((req, res) => {
         return;
     }
     if (pathname === '/api/cyber/check-contract-status') {
-        const queryParams = Object.fromEntries(parsedUrl.searchParams);
+        const queryParams = Object.fromEntries(urlObj.searchParams);
         if (req.method === 'POST') {
             let body = '';
             req.on('data', chunk => { body += chunk.toString(); });

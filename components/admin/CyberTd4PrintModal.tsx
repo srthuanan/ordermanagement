@@ -57,8 +57,8 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
 
                 if (!isMounted) return;
 
-                if (res.success && res.pdf_url) {
-                    setPdfUrl(`${res.pdf_url}&t=${Date.now()}`);
+                if (res.success && (res.pdf_base64 || res.pdf_url)) {
+                    setPdfUrl(res.pdf_base64 || `${res.pdf_url}&t=${Date.now()}`);
                 } else {
                     setPdfError(res.error || 'Không thể xuất file PDF từ CyberSoft.');
                 }

@@ -554,14 +554,16 @@ const getCyberEndpoints = (apiPath: string): string[] => {
         return [
             `${currentOrigin}${apiPath}`,
             `http://localhost:3001${apiPath}`,
+            `http://localhost:5173${apiPath}`,
             ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : [])
         ];
     }
 
     return [
+        `http://localhost:3001${apiPath}`,
+        `http://localhost:5173${apiPath}`,
         ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : []),
-        `${currentOrigin}${apiPath}`,
-        `http://localhost:3001${apiPath}`
+        `${currentOrigin}${apiPath}`
     ];
 };
 
@@ -1660,6 +1662,7 @@ export interface ExportCyberPdfParams {
 export interface ExportCyberPdfResponse {
     success: boolean;
     pdf_url?: string;
+    pdf_base64?: string;
     file_path?: string;
     size?: number;
     error?: string;
@@ -1689,6 +1692,12 @@ export const exportCyberPdf = async (params: ExportCyberPdfParams): Promise<Expo
                 try { json = JSON.parse(text); } catch (_) {}
 
                 if (res.ok && json && json.success) {
+                    if (json.pdf_url && json.pdf_url.startsWith('/')) {
+                        try {
+                            const origin = new URL(endpoint).origin;
+                            json.pdf_url = `${origin}${json.pdf_url}`;
+                        } catch (_) {}
+                    }
                     return json;
                 } else {
                     lastErrorMsg = (json && json.error) || (text && !text.startsWith('<') ? text : `HTTP ${res.status}`);
