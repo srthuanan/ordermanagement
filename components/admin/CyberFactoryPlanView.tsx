@@ -292,6 +292,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const [dnxResult, setDnxResult] = useState<any>(null);
     const [dnxError, setDnxError] = useState('');
     const [recentDnxTickets, setRecentDnxTickets] = useState<any[]>([]);
+    const [voucherTickets, setVoucherTickets] = useState<CyberVoucherTicketItem[]>([]);
     const [isLoadingRecentTickets, setIsLoadingRecentTickets] = useState(false);
     const [printTicketData, setPrintTicketData] = useState<CyberDnxPrintData | null>(null);
     const [printTd4Data, setPrintTd4Data] = useState<CyberVoucherTicketItem | null>(null);
@@ -512,6 +513,152 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         return () => clearTimeout(timer);
     }, [extractedVins.join(',')]);
 
+    // Phát hiện phiếu đã tồn tại (DNX hoặc TD4) để ngăn chặn tạo trùng lặp
+    const detectedExistingTicket = useMemo(() => {
+        if (!extractedVins || extractedVins.length === 0) return null;
+
+        // 1. Kiểm tra từ kết quả tra cứu trực tiếp từ CSDL Cyber
+        if (lookupResultInfo?.cars && lookupResultInfo.cars.length > 0) {
+            for (const c of lookupResultInfo.cars) {
+                if (c.has_td4 && c.td4) {
+                    return {
+                        type: 'TD4',
+                        title: 'Phiếu Hẹn Giao Xe / Giấy Ra Cổng (TD4)',
+                        so_ct: c.td4.so_ct || 'TD4',
+                        stt_rec: c.td4.stt_rec || '',
+                        ngay_ct: c.td4.ngay_ct || '',
+                        vin: c.vin,
+                        ten_kh: c.td4.ten_kh || '',
+                        dien_giai: c.td4.dien_giai || '',
+                        so_hd: c.td4.so_hd || '',
+                        so_may: c.td4.so_may || c.so_may || '',
+                        raw: c.td4
+                    };
+                }
+                if (c.has_dnx && c.dnx) {
+                    return {
+                        type: 'DNX',
+                        title: 'Phiếu Đề Nghị Xuất Xe (DNX)',
+                        so_ct: c.dnx.so_ct || 'DNX',
+                        stt_rec: c.dnx.stt_rec || '',
+                        ngay_ct: c.dnx.ngay_ct || '',
+                        vin: c.vin,
+                        ten_kh: c.dnx.ten_kh || '',
+                        dien_giai: c.dnx.dien_giai || '',
+                        ma_kho_xuat: c.dnx.ma_kho_xuat || '',
+                        ten_kho_xuat: c.dnx.ten_kho_xuat || '',
+                        ma_kho_nhan: c.dnx.ma_kho_nhan || '',
+                        ten_kho_nhan: c.dnx.ten_kho_nhan || '',
+                        so_may: c.dnx.so_may || c.so_may || '',
+                        ten_kx: c.dnx.ten_kx || c.ten_kx || '',
+                        ten_mau: c.dnx.ten_mau || c.ten_mau || '',
+                        raw: c.dnx
+                    };
+                }
+            }
+        }
+
+        // 2. Kiểm tra từ danh sách recentDnxTickets
+        for (const t of recentDnxTickets) {
+            if (t.cars && Array.isArray(t.cars)) {
+                const matchCar = t.cars.find((c: any) => extractedVins.includes((c.vin || '').toUpperCase()));
+                if (matchCar) {
+                    return {
+                        type: 'DNX',
+                        title: 'Phiếu Đề Nghị Xuất Xe (DNX)',
+                        so_ct: t.so_ct || 'DNX',
+                        stt_rec: t.stt_rec || '',
+                        ngay_ct: t.ngay_ct || '',
+                        vin: matchCar.vin,
+                        ten_kh: t.khach_hang || '',
+                        dien_giai: t.ly_do || '',
+                        ma_kho_xuat: t.ma_kho_xuat || '',
+                        ten_kho_xuat: t.ten_kho_xuat || '',
+                        ma_kho_nhan: t.ma_kho_nhan || '',
+                        ten_kho_nhan: t.ten_kho_nhan || '',
+                        raw: t
+                    };
+                }
+            }
+        }
+
+        // 3. Kiểm tra từ danh sách voucherTickets
+        for (const t of voucherTickets) {
+            const ticketVin = (t.vin || t.so_khung || '').toUpperCase();
+            if (ticketVin && extractedVins.includes(ticketVin)) {
+                const isTd4 = (t.voucher_type || t.ma_ct || '').toUpperCase() === 'TD4' || (t.so_ct || '').includes('PXR') || (t.so_ct || '').includes('TD');
+                return {
+                    type: isTd4 ? 'TD4' : 'DNX',
+                    title: isTd4 ? 'Phiếu Hẹn Giao Xe / Giấy Ra Cổng (TD4)' : 'Phiếu Đề Nghị Xuất Xe (DNX)',
+                    so_ct: t.so_ct || (isTd4 ? 'TD4' : 'DNX'),
+                    stt_rec: t.stt_rec || '',
+                    ngay_ct: t.ngay_ct || '',
+                    vin: ticketVin,
+                    ten_kh: t.ten_kh || '',
+                    dien_giai: t.dien_giai || '',
+                    raw: t
+                };
+            }
+        }
+
+        return null;
+    }, [extractedVins, lookupResultInfo, recentDnxTickets, voucherTickets]);
+
+    // Mở modal in ấn / xem chi tiết cho phiếu đã tồn tại
+    const handleOpenExistingTicketPrint = (ticket: any) => {
+        if (!ticket) return;
+        if (ticket.type === 'TD4') {
+            const td4Data: CyberVoucherTicketItem = {
+                voucher_type: 'TD4',
+                voucher_name: 'Phiếu Hẹn Giao Xe / Giấy Ra Cổng (TD4)',
+                stt_rec: ticket.stt_rec || '',
+                so_ct: ticket.so_ct || '',
+                ngay_ct: ticket.ngay_ct || '',
+                ma_ct: 'TD4',
+                ma_post: ticket.raw?.ma_post || '3',
+                dien_giai: ticket.dien_giai || '',
+                ten_kh: ticket.ten_kh || '',
+                so_hd: ticket.so_hd || ticket.raw?.so_hd || '',
+                tong_tien: Number(ticket.raw?.tong_tien || 0),
+                da_thanh_toan: Number(ticket.raw?.da_thanh_toan || 0),
+                con_lai: Number(ticket.raw?.con_lai || 0),
+                so_may: ticket.so_may || ticket.raw?.so_may || '',
+                loai_xe: ticket.raw?.loai_xe || '',
+                vin: ticket.vin || '',
+                so_khung: ticket.vin || ''
+            };
+            setPrintTd4Data(td4Data);
+        } else {
+            const dnxData: CyberDnxPrintData = {
+                so_ct: ticket.so_ct || 'DNX',
+                stt_rec: ticket.stt_rec || '',
+                user_name: 'Phạm Thành Nhân',
+                ma_kho_xuat: ticket.ma_kho_xuat || ticket.raw?.ma_kho_xuat || 'K87',
+                ten_kho_xuat: ticket.ten_kho_xuat || ticket.raw?.ten_kho_xuat || '',
+                ma_kho_nhan: ticket.ma_kho_nhan || ticket.raw?.ma_kho_nhan || 'K83',
+                ten_kho_nhan: ticket.ten_kho_nhan || ticket.raw?.ten_kho_nhan || 'Kho xe ô tô Thuận An',
+                khach_hang: ticket.ten_kh || ticket.raw?.khach_hang || '',
+                don_vi: 'Thuận An',
+                ly_do: ticket.dien_giai || ticket.raw?.ly_do || 'Điều chuyển xe nội bộ',
+                total_cars: 1,
+                ngay_ct: ticket.ngay_ct || new Date().toISOString().slice(0, 10),
+                cars: [{
+                    stt_rec0: '0001',
+                    vin: ticket.vin || '',
+                    so_may: ticket.so_may || ticket.raw?.so_may || '',
+                    ma_kx: ticket.raw?.ma_kx || '',
+                    ten_kx: ticket.ten_kx || ticket.raw?.ten_kx || '',
+                    dong_xe: ticket.ten_kx || ticket.raw?.ten_kx || '',
+                    ma_mau: ticket.raw?.ma_mau || '',
+                    ten_mau: ticket.ten_mau || ticket.raw?.ten_mau || '',
+                    ma_kho_xuat: ticket.ma_kho_xuat || ticket.raw?.ma_kho_xuat || 'K87',
+                    ma_kho_nhan: ticket.ma_kho_nhan || ticket.raw?.ma_kho_nhan || 'K83'
+                }]
+            };
+            setPrintTicketData(dnxData);
+        }
+    };
+
     const handleCreateDnxSubmitInAdmin = async (e: React.FormEvent) => {
         e.preventDefault();
         const rawVins = dnxVinInput
@@ -521,6 +668,13 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 
         if (rawVins.length === 0) {
             setDnxError('Vui lòng nhập hoặc dán ít nhất 1 số VIN hợp lệ');
+            return;
+        }
+
+        // CHẶN TẠO TRÙNG LẶP NẾU PHIẾU ĐÃ TỒN TẠI
+        if (detectedExistingTicket) {
+            setDnxError(`Xe có số VIN ${detectedExistingTicket.vin} đã tồn tại ${detectedExistingTicket.title} số ${detectedExistingTicket.so_ct}. Hệ thống chặn tạo phiếu trùng lặp!`);
+            handleOpenExistingTicketPrint(detectedExistingTicket);
             return;
         }
 
@@ -539,6 +693,18 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 ma_dvcs: '02',
                 ma_ttcp: dnxMaTtcp || '02.01.08'
             });
+
+            // Nếu Backend trả về cảnh báo đã tồn tại chứng từ
+            if (!res.success && res.already_exists && res.existing_ticket) {
+                const ex = res.existing_ticket;
+                setDnxError(res.error || `Xe đã có phiếu số ${ex.so_ct}. Hệ thống chặn tạo trùng lặp.`);
+                handleOpenExistingTicketPrint({
+                    type: ex.ticket_type || 'DNX',
+                    title: ex.ticket_type === 'TD4' ? 'Phiếu Hẹn Giao Xe / Giấy Ra Cổng (TD4)' : 'Phiếu Đề Nghị Xuất Xe (DNX)',
+                    ...ex
+                });
+                return;
+            }
 
             if (res.success) {
                 const enrichedTicket: CyberDnxPrintData = {
@@ -615,7 +781,6 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     // -------------------------------------------------------------
     // SUB-TAB 5: TRA CỨU & TIẾN TRÌNH DUYỆT PHIẾU (DNX & TD4)
     // -------------------------------------------------------------
-    const [voucherTickets, setVoucherTickets] = useState<CyberVoucherTicketItem[]>([]);
     const [isLoadingTickets, setIsLoadingTickets] = useState(false);
     const [ticketMaCt, setTicketMaCt] = useState('');
     const [ticketMaPost, setTicketMaPost] = useState('');
@@ -3095,6 +3260,56 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                             <span>Không tìm thấy lịch sử nhập kho của xe này trên Cyber, bạn có thể tự chọn kho xuất bên dưới.</span>
                                         </div>
                                     )}
+
+                                    {/* ⚠️ CẢNH BÁO XE ĐÃ CÓ PHIẾU: Chặn tạo trùng lặp và cung cấp nút xem/in ngay */}
+                                    {detectedExistingTicket && (
+                                        <div className="mt-2 p-3 bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-amber-500/15 border-2 border-amber-500/80 rounded-xl shadow-md">
+                                            <div className="flex items-start gap-2.5">
+                                                <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center text-sm font-black shrink-0 shadow-sm">
+                                                    <i className="fas fa-shield-alt"></i>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-xs">
+                                                            CHẶN TẠO TRÙNG LẶP
+                                                        </span>
+                                                        <span className="text-xs font-bold text-amber-950">
+                                                            Xe đã tồn tại {detectedExistingTicket.title}
+                                                        </span>
+                                                    </div>
+                                                    <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-700 bg-white/90 p-2.5 rounded-lg border border-amber-200 shadow-xs">
+                                                        <div><strong>Số chứng từ:</strong> <span className="font-mono font-bold text-blue-700">{detectedExistingTicket.so_ct}</span></div>
+                                                        <div><strong>Ngày lập:</strong> <span className="font-semibold text-slate-800">{detectedExistingTicket.ngay_ct || 'N/A'}</span></div>
+                                                        <div className="sm:col-span-2"><strong>Số VIN:</strong> <span className="font-mono font-bold text-slate-900">{detectedExistingTicket.vin}</span></div>
+                                                        {detectedExistingTicket.ten_kh && (
+                                                            <div className="sm:col-span-2"><strong>Khách hàng:</strong> <span className="font-medium">{detectedExistingTicket.ten_kh}</span></div>
+                                                        )}
+                                                        {detectedExistingTicket.dien_giai && (
+                                                            <div className="sm:col-span-2"><strong>Diễn giải:</strong> <span className="italic text-slate-600">{detectedExistingTicket.dien_giai}</span></div>
+                                                        )}
+                                                        {detectedExistingTicket.type === 'DNX' && detectedExistingTicket.ma_kho_xuat && (
+                                                            <div className="sm:col-span-2 text-[11px] text-slate-600">
+                                                                <strong>Tuyến kho:</strong> {detectedExistingTicket.ten_kho_xuat || detectedExistingTicket.ma_kho_xuat} ➔ {detectedExistingTicket.ten_kho_nhan || detectedExistingTicket.ma_kho_nhan}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleOpenExistingTicketPrint(detectedExistingTicket)}
+                                                            className="px-3.5 py-1.5 rounded-lg text-xs font-extrabold text-white bg-blue-600 hover:bg-blue-700 shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                                                        >
+                                                            <i className="fas fa-print"></i>
+                                                            <span>Xem & In Phiếu Đã Tạo ({detectedExistingTicket.so_ct})</span>
+                                                        </button>
+                                                        <span className="text-[11px] font-bold text-rose-700">
+                                                            <i className="fas fa-ban mr-1"></i>Hệ thống đã khóa nút tạo mới để tránh trùng chứng từ
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* 2. Quick Reason Chips */}
@@ -3244,13 +3459,22 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 <div className="pt-1">
                                     <button
                                         type="submit"
-                                        disabled={isSubmittingDnx}
-                                        className="w-full h-9 bg-slate-900 hover:bg-slate-800 active:scale-[0.99] disabled:opacity-50 text-white font-bold rounded-lg text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                                        disabled={isSubmittingDnx || Boolean(detectedExistingTicket)}
+                                        className={`w-full h-9 font-bold rounded-lg text-xs shadow-xs transition-all flex items-center justify-center gap-2 shrink-0 ${
+                                            detectedExistingTicket
+                                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed border border-slate-300'
+                                                : 'bg-slate-900 hover:bg-slate-800 active:scale-[0.99] disabled:opacity-50 text-white cursor-pointer'
+                                        }`}
                                     >
                                         {isSubmittingDnx ? (
                                             <>
                                                 <i className="fas fa-spinner fa-spin text-xs"></i>
                                                 <span>Đang ghi nhận chứng từ lên CyberSoft ERP...</span>
+                                            </>
+                                        ) : detectedExistingTicket ? (
+                                            <>
+                                                <i className="fas fa-ban text-rose-600 text-xs"></i>
+                                                <span>Không Thể Tạo: Xe Đã Có Phiếu {detectedExistingTicket.so_ct}</span>
                                             </>
                                         ) : (
                                             <>

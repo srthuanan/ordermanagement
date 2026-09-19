@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { createCyberDnxTicket, CyberDnxCreateResult } from '../../services/api/stockService';
+import React, { useState, useEffect } from 'react';
+import { createCyberDnxTicket, lookupCyberVinWarehouse, CyberDnxCreateResult } from '../../services/api/stockService';
 
 interface CreateCyberDnxModalProps {
     isOpen: boolean;
@@ -35,6 +35,53 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
     const [resultData, setResultData] = useState<CyberDnxCreateResult | null>(null);
+    const [existingTicket, setExistingTicket] = useState<any | null>(null);
+    const [isCheckingVins, setIsCheckingVins] = useState(false);
+
+    useEffect(() => {
+        if (!isOpen || !vins || vins.length === 0) {
+            setExistingTicket(null);
+            return;
+        }
+        let isMounted = true;
+        setIsCheckingVins(true);
+        lookupCyberVinWarehouse(vins)
+            .then(res => {
+                if (!isMounted) return;
+                if (res && res.cars) {
+                    for (const c of res.cars) {
+                        if (c.has_td4 && c.td4) {
+                            setExistingTicket({
+                                type: 'TD4',
+                                title: 'Phiếu Hẹn Giao Xe / Giấy Ra Cổng (TD4)',
+                                so_ct: c.td4.so_ct,
+                                ngay_ct: c.td4.ngay_ct,
+                                vin: c.vin,
+                                ten_kh: c.td4.ten_kh
+                            });
+                            return;
+                        }
+                        if (c.has_dnx && c.dnx) {
+                            setExistingTicket({
+                                type: 'DNX',
+                                title: 'Phiếu Đề Nghị Xuất Xe (DNX)',
+                                so_ct: c.dnx.so_ct,
+                                ngay_ct: c.dnx.ngay_ct,
+                                vin: c.vin,
+                                ten_kh: c.dnx.ten_kh
+                            });
+                            return;
+                        }
+                    }
+                }
+                setExistingTicket(null);
+            })
+            .catch(() => {})
+            .finally(() => {
+                if (isMounted) setIsCheckingVins(false);
+            });
+        return () => { isMounted = false; };
+    }, [isOpen, vins.join(',')]);
 
     if (!isOpen) return null;
 
@@ -42,6 +89,11 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
         e.preventDefault();
         if (!vins || vins.length === 0) {
             setErrorMsg('Vui lòng chọn ít nhất 1 xe để tạo giấy chuyển');
+            return;
+        }
+
+        if (existingTicket) {
+            setErrorMsg(`Xe có số VIN ${existingTicket.vin} đã có ${existingTicket.title} số ${existingTicket.so_ct}. Không thể tạo trùng.`);
             return;
         }
 
@@ -125,6 +177,25 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                                 <div className="p-3 bg-red-950/50 border border-red-500/40 rounded-xl text-red-300 text-xs flex items-center space-x-2">
                                     <span>⚠️</span>
                                     <span>{errorMsg}</span>
+                                </div>
+                            )}
+
+                            {existingTicket && (
+                                <div className="p-3 bg-amber-950/40 border-2 border-amber-500/60 rounded-xl space-y-1.5 shadow-md">
+                                    <div className="flex items-center gap-2">
+                                        <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-rose-600 text-white">
+                                            CHẶN TẠO TRÙNG LẶP
+                                        </span>
+                                        <span className="text-xs font-bold text-amber-300">
+                                            Xe đã tồn tại {existingTicket.title}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-300">
+                                        Xe số VIN <strong className="text-white font-mono">{existingTicket.vin}</strong> đã được lập phiếu số <strong className="text-amber-300 font-mono">{existingTicket.so_ct}</strong> (ngày {existingTicket.ngay_ct || 'N/A'}).
+                                    </p>
+                                    <p className="text-[11px] text-rose-400 font-semibold">
+                                        Hệ thống chặn tạo trùng lặp chứng từ trên cơ sở dữ liệu.
+                                    </p>
                                 </div>
                             )}
 
@@ -228,8 +299,12 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={loading}
-                                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold rounded-xl text-sm shadow-lg shadow-emerald-900/40 transition-all flex items-center space-x-2"
+                                    disabled={loading || isCheckingVins || Boolean(existingTicket)}
+                                    className={`px-5 py-2.5 font-bold rounded-xl text-sm transition-all flex items-center space-x-2 ${
+                                        existingTicket
+                                            ? 'bg-slate-700 text-slate-400 cursor-not-allowed border border-slate-600'
+                                            : 'bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white shadow-lg shadow-emerald-900/40 cursor-pointer'
+                                    }`}
                                 >
                                     {loading ? (
                                         <>
@@ -239,6 +314,8 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                                             </svg>
                                             <span>Đang tạo trên Cyber...</span>
                                         </>
+                                    ) : existingTicket ? (
+                                        <span>⛔ Không thể tạo (Đã có phiếu {existingTicket.so_ct})</span>
                                     ) : (
                                         <>
                                             <span>⚡ Tạo Giấy Chuyển Cyber</span>

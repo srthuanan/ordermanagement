@@ -1339,6 +1339,29 @@ export interface CyberDnxCreateResult {
     total_cars?: number;
     cars?: any[];
     error?: string;
+    already_exists?: boolean;
+    ticket_type?: string;
+    existing_ticket?: {
+        ticket_type?: string;
+        so_ct?: string;
+        stt_rec?: string;
+        ngay_ct?: string;
+        vin?: string;
+        dien_giai?: string;
+        ten_kh?: string;
+        so_hd?: string;
+        so_may?: string;
+        loai_xe?: string;
+        ma_kx?: string;
+        ten_kx?: string;
+        ma_mau?: string;
+        ten_mau?: string;
+        ma_kho_xuat?: string;
+        ten_kho_xuat?: string;
+        ma_kho_nhan?: string;
+        ten_kho_nhan?: string;
+        [key: string]: any;
+    };
 }
 
 export const createCyberDnxTicket = async (params: CyberDnxCreateParams): Promise<CyberDnxCreateResult> => {
@@ -1423,11 +1446,14 @@ export interface CyberCarStatusRecord {
     so_ct_dnx?: string;
     ngay_ct_dnx?: string;
     dnx_data?: any;
+    dnx?: any;
     has_td4: boolean;
     so_ct_td4?: string;
     ngay_ct_td4?: string;
     td4_data?: any;
+    td4?: any;
     updated_at: string;
+    [key: string]: any;
 }
 
 export const getCyberCarStatusFromSupabase = async (vin: string): Promise<CyberCarStatusRecord | null> => {
@@ -1491,30 +1517,32 @@ export const lookupCyberVinWarehouse = async (vinOrVins: string | string[]): Pro
 };
 
 export interface CyberVoucherTicketItem {
-    voucher_type: 'DNX' | 'TD4';
+    voucher_type: 'DNX' | 'TD4' | string;
     voucher_name: string;
     stt_rec: string;
     so_ct: string;
     ngay_ct: string;
     gio_ct?: string;
-    ma_post: string;
-    ma_ttcp: string;
-    dien_giai: string;
+    ma_ct?: string;
+    so_khung?: string;
+    ma_post?: string;
+    ma_ttcp?: string;
+    dien_giai?: string;
     ghi_chu?: string;
     nguoi_bao_lanh?: string;
     phong_ban?: string;
-    ten_kh: string;
+    ten_kh?: string;
     ten_tvbh?: string;
     nguoi_nhan?: string;
     ong_ba?: string;
-    so_hd: string;
+    so_hd?: string;
     tong_tien: number;
     da_thanh_toan: number;
     con_lai: number;
-    nvkd: string;
+    nvkd?: string;
     vin: string;
-    so_may: string;
-    loai_xe: string;
+    so_may?: string;
+    loai_xe?: string;
     ten_kx?: string;
     ma_mau?: string;
     ten_mau?: string;
@@ -1522,6 +1550,7 @@ export interface CyberVoucherTicketItem {
     ma_kho_nhan?: string;
     ma_kho?: string;
     ten_kho?: string;
+    [key: string]: any;
 }
 
 export interface CyberVoucherTicketParams {

@@ -1590,6 +1590,128 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
         cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
         ph = "%s" if is_pymssql else "?"
 
+        # 0. CHẶN TẠO TRÙNG LẶP: Kiểm tra xem các số VIN đã tồn tại phiếu ĐNX hoặc phiếu TD4 chưa
+        vins_clean = [v.strip().upper() for v in vins if v and len(v.strip()) >= 8]
+        if vins_clean:
+            vin_list_str = ', '.join([f"'{v}'" for v in vins_clean])
+            
+            # Kiểm tra phiếu ĐNX đã tồn tại
+            sql_check_dnx = f"""
+                SELECT TOP 1 
+                    c.so_khung,
+                    p.so_ct,
+                    p.stt_rec,
+                    p.ngay_ct,
+                    p.dien_giai,
+                    p.ong_ba AS ten_kh,
+                    ISNULL(c.ma_kho_i, p.Ma_kho) AS ma_kho_xuat,
+                    ISNULL(c.ma_khoN_i, p.Ma_khoN) AS ma_kho_nhan,
+                    c.so_may,
+                    c.ma_Kx,
+                    c.Ma_Mau
+                FROM CTDNX c WITH (NOLOCK)
+                JOIN PHDNX p WITH (NOLOCK) ON c.stt_rec = p.stt_rec
+                WHERE c.so_khung IN ({vin_list_str})
+                  AND (
+                      p.Ma_TTCP_H = '02.01.08'
+                      OR p.so_ct LIKE '08.DNX%'
+                      OR ISNULL(c.ma_khoN_i, p.Ma_khoN) = 'K83'
+                  )
+                ORDER BY p.ngay_ct DESC, p.so_ct DESC
+            """
+            cursor.execute(sql_check_dnx)
+            r_dup_dnx = cursor.fetchone()
+            if r_dup_dnx:
+                rd = {str(k).lower(): (v.strftime('%Y-%m-%d') if isinstance(v, (datetime, date)) else str(v or '').strip()) for k, v in r_dup_dnx.items()} if is_pymssql else {
+                    'so_khung': str(r_dup_dnx[0] or '').strip(),
+                    'so_ct': str(r_dup_dnx[1] or '').strip(),
+                    'stt_rec': str(r_dup_dnx[2] or '').strip(),
+                    'ngay_ct': (r_dup_dnx[3].strftime('%Y-%m-%d') if isinstance(r_dup_dnx[3], (datetime, date)) else str(r_dup_dnx[3] or '')).strip(),
+                    'dien_giai': str(r_dup_dnx[4] or '').strip(),
+                    'ten_kh': str(r_dup_dnx[5] or '').strip(),
+                    'ma_kho_xuat': str(r_dup_dnx[6] or '').strip(),
+                    'ma_kho_nhan': str(r_dup_dnx[7] or '').strip(),
+                    'so_may': str(r_dup_dnx[8] or '').strip() if len(r_dup_dnx) > 8 else '',
+                    'ma_kx': str(r_dup_dnx[9] or '').strip() if len(r_dup_dnx) > 9 else '',
+                    'ma_mau': str(r_dup_dnx[10] or '').strip() if len(r_dup_dnx) > 10 else ''
+                }
+                conn.close()
+                return {
+                    "success": False,
+                    "already_exists": True,
+                    "ticket_type": "DNX",
+                    "error": f"Xe có số VIN {rd.get('so_khung')} đã được lập Phiếu Đề Nghị Xuất Xe số {rd.get('so_ct')} (ngày {rd.get('ngay_ct')}). Hệ thống chặn tạo phiếu trùng lặp!",
+                    "existing_ticket": {
+                        "ticket_type": "DNX",
+                        "so_ct": rd.get('so_ct'),
+                        "stt_rec": rd.get('stt_rec'),
+                        "ngay_ct": rd.get('ngay_ct'),
+                        "vin": rd.get('so_khung'),
+                        "dien_giai": rd.get('dien_giai'),
+                        "ten_kh": rd.get('ten_kh'),
+                        "ma_kho_xuat": rd.get('ma_kho_xuat'),
+                        "ma_kho_nhan": rd.get('ma_kho_nhan'),
+                        "so_may": rd.get('so_may'),
+                        "ma_kx": rd.get('ma_kx'),
+                        "ma_mau": rd.get('ma_mau')
+                    }
+                }
+
+            # Kiểm tra phiếu TD4 đã tồn tại
+            sql_check_td4 = f"""
+                SELECT TOP 1
+                    COALESCE(NULLIF(RTRIM(p.Ma_Xe), ''), bx.So_khung, '') AS so_khung,
+                    p.so_ct,
+                    p.stt_rec,
+                    p.ngay_ct,
+                    p.dien_giai,
+                    p.ong_ba AS ten_kh,
+                    p.Ma_Hd_H AS so_hd,
+                    p.so_may,
+                    p.loai_xe
+                FROM PHTD p WITH (NOLOCK)
+                LEFT JOIN BEXEPXE bx WITH (NOLOCK) ON RTRIM(p.Ma_Hd_H) = RTRIM(bx.Ma_Hd)
+                WHERE p.Ma_Ct = 'TD4'
+                  AND (
+                    RTRIM(p.Ma_Xe) IN ({vin_list_str})
+                    OR bx.So_khung IN ({vin_list_str})
+                  )
+                ORDER BY p.ngay_ct DESC, p.so_ct DESC
+            """
+            cursor.execute(sql_check_td4)
+            r_dup_td4 = cursor.fetchone()
+            if r_dup_td4:
+                rd_td4 = {str(k).lower(): (v.strftime('%Y-%m-%d') if isinstance(v, (datetime, date)) else str(v or '').strip()) for k, v in r_dup_td4.items()} if is_pymssql else {
+                    'so_khung': str(r_dup_td4[0] or '').strip(),
+                    'so_ct': str(r_dup_td4[1] or '').strip(),
+                    'stt_rec': str(r_dup_td4[2] or '').strip(),
+                    'ngay_ct': (r_dup_td4[3].strftime('%Y-%m-%d') if isinstance(r_dup_td4[3], (datetime, date)) else str(r_dup_td4[3] or '')).strip(),
+                    'dien_giai': str(r_dup_td4[4] or '').strip(),
+                    'ten_kh': str(r_dup_td4[5] or '').strip(),
+                    'so_hd': str(r_dup_td4[6] or '').strip(),
+                    'so_may': str(r_dup_td4[7] or '').strip() if len(r_dup_td4) > 7 else '',
+                    'loai_xe': str(r_dup_td4[8] or '').strip() if len(r_dup_td4) > 8 else ''
+                }
+                conn.close()
+                return {
+                    "success": False,
+                    "already_exists": True,
+                    "ticket_type": "TD4",
+                    "error": f"Xe có số VIN {rd_td4.get('so_khung')} đã được lập Phiếu Hẹn Giao Xe / Giấy Ra Cổng số {rd_td4.get('so_ct')} (ngày {rd_td4.get('ngay_ct')}). Không thể tạo thêm phiếu đề nghị xuất xe!",
+                    "existing_ticket": {
+                        "ticket_type": "TD4",
+                        "so_ct": rd_td4.get('so_ct'),
+                        "stt_rec": rd_td4.get('stt_rec'),
+                        "ngay_ct": rd_td4.get('ngay_ct'),
+                        "vin": rd_td4.get('so_khung'),
+                        "dien_giai": rd_td4.get('dien_giai'),
+                        "ten_kh": rd_td4.get('ten_kh'),
+                        "so_hd": rd_td4.get('so_hd'),
+                        "so_may": rd_td4.get('so_may'),
+                        "loai_xe": rd_td4.get('loai_xe')
+                    }
+                }
+
         # 1. Tra cứu user_id từ UserInfo
         user_id = 289
         try:

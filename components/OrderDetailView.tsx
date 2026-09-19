@@ -19,6 +19,8 @@ import { createTransferRequest, getTransferRequestByOrder, updateTransferRequest
 import { lookupCyberVinWarehouse, getCyberCarStatusFromSupabase, CyberCarStatusRecord } from '../services/api/stockService';
 import { supabase } from '../services/supabaseClient';
 import { CyberDnxPrintModal, CyberDnxPrintData } from './admin/CyberDnxPrintModal';
+import { CyberTd4PrintModal } from './admin/CyberTd4PrintModal';
+import { CyberVoucherTicketItem } from '../services/api/stockService';
 import MarqueeText from './ui/MarqueeText';
 
 moment.locale('vi');
@@ -129,6 +131,8 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     const [isDetectingWarehouse, setIsDetectingWarehouse] = useState(false);
     const [isPrintDnxOpen, setIsPrintDnxOpen] = useState(false);
     const [printDnxData, setPrintDnxData] = useState<CyberDnxPrintData | null>(null);
+    const [isPrintTd4Open, setIsPrintTd4Open] = useState(false);
+    const [printTd4Data, setPrintTd4Data] = useState<CyberVoucherTicketItem | null>(null);
     const [hasTd4, setHasTd4] = useState<boolean>(false);
     const [cyberCarStatus, setCyberCarStatus] = useState<CyberCarStatusRecord | null>(null);
 
@@ -237,8 +241,30 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 setCyberCarStatus(carStatus);
 
                 // Nếu xe ĐÃ CÓ PHIẾU TD4 (Giấy ra cổng)
-                if (carStatus.has_td4) {
+                if (carStatus.has_td4 || carStatus.td4_data || carStatus.td4) {
                     setHasTd4(true);
+                    const td = carStatus.td4_data || carStatus.td4;
+                    if (td) {
+                        setPrintTd4Data({
+                            voucher_type: 'TD4',
+                            voucher_name: 'Phiếu Hẹn Giao Xe / Giấy Ra Cổng (TD4)',
+                            stt_rec: td.stt_rec || '',
+                            so_ct: td.so_ct || 'TD4',
+                            ngay_ct: td.ngay_ct || '',
+                            ma_ct: 'TD4',
+                            ma_post: td.ma_post || '3',
+                            dien_giai: td.dien_giai || 'Phiếu giao xe / Giấy ra cổng',
+                            ten_kh: td.ten_kh || resolvedOrder?.['Tên khách hàng'] || '',
+                            so_hd: td.so_hd || resolvedOrder?.['Số hợp đồng'] || '',
+                            so_may: td.so_may || (resolvedOrder as any)?.['Số máy'] || '',
+                            loai_xe: td.loai_xe || resolvedOrder?.['Dòng xe'] || '',
+                            tong_tien: Number(td.tong_tien || 0),
+                            da_thanh_toan: Number(td.da_thanh_toan || 0),
+                            con_lai: Number(td.con_lai || 0),
+                            vin: vin || '',
+                            so_khung: vin || ''
+                        });
+                    }
                 }
 
                 if (carStatus.ma_kho) {
@@ -459,9 +485,41 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         setIsPrintDnxOpen(true);
     };
 
+    const handleOpenPrintTd4 = () => {
+        if (!printTd4Data && (cyberCarStatus?.td4_data || (cyberCarStatus as any)?.td4)) {
+            const td = cyberCarStatus?.td4_data || (cyberCarStatus as any)?.td4;
+            setPrintTd4Data({
+                voucher_type: 'TD4',
+                voucher_name: 'Phiếu Hẹn Giao Xe / Giấy Ra Cổng (TD4)',
+                stt_rec: td.stt_rec || '',
+                so_ct: td.so_ct || 'TD4',
+                ngay_ct: td.ngay_ct || '',
+                ma_ct: 'TD4',
+                ma_post: td.ma_post || '3',
+                dien_giai: td.dien_giai || 'Phiếu giao xe / Giấy ra cổng',
+                ten_kh: td.ten_kh || resolvedOrder?.['Tên khách hàng'] || '',
+                so_hd: td.so_hd || resolvedOrder?.['Số hợp đồng'] || '',
+                so_may: td.so_may || (resolvedOrder as any)?.['Số máy'] || '',
+                loai_xe: td.loai_xe || resolvedOrder?.['Dòng xe'] || '',
+                tong_tien: Number(td.tong_tien || 0),
+                da_thanh_toan: Number(td.da_thanh_toan || 0),
+                con_lai: Number(td.con_lai || 0),
+                vin: resolvedOrder?.VIN || '',
+                so_khung: resolvedOrder?.VIN || ''
+            });
+        }
+        setIsPrintTd4Open(true);
+    };
+
     const handleOpenTransferMode = async () => {
         if (hasTd4) {
-            showToast?.('Không thể chuyển xe', 'Xe đã có Phiếu TD4 (Giấy ra cổng), không thể yêu cầu điều chuyển.', 'warning');
+            showToast?.('Đã có phiếu giao xe', `Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${printTd4Data?.so_ct || 'TD4'}). Không thể yêu cầu điều chuyển.`, 'warning');
+            handleOpenPrintTd4();
+            return;
+        }
+        if (cyberCarStatus?.has_dnx || transferRequest?.status === 'completed') {
+            showToast?.('Đã có phiếu xuất xe', `Xe đã có Phiếu Đề Nghị Xuất Xe (${transferRequest?.soCtDnx || cyberCarStatus?.dnx_data?.so_ct || 'DNX'}).`, 'info');
+            handleOpenPrintDnx();
             return;
         }
         setInlineMode('TRANSFER');
@@ -495,6 +553,18 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         const custName = resolvedOrder?.['Tên khách hàng'] || '';
         const tvbh = resolvedOrder?.['Tên tư vấn bán hàng'] || (resolvedOrder as any)?.['TVBH'] || '';
         const finalReason = transferReason === 'Khác' ? (customTransferReason.trim() || 'Điều chuyển xe nội bộ') : transferReason;
+
+        if (hasTd4) {
+            showToast?.('Không thể chuyển xe', 'Xe đã có Phiếu Giao Xe / Giấy Ra Cổng. Hệ thống chặn tạo trùng lặp.', 'warning');
+            handleOpenPrintTd4();
+            return;
+        }
+
+        if (cyberCarStatus?.has_dnx || (transferRequest && transferRequest.status === 'completed')) {
+            showToast?.('Đã có phiếu xuất xe', 'Xe đã có Phiếu Đề Nghị Xuất Xe hoàn tất.', 'info');
+            handleOpenPrintDnx();
+            return;
+        }
 
         if (!vin || !orderNo) {
             showToast?.('Thiếu thông tin', 'Đơn hàng chưa có số VIN để yêu cầu chuyển xe.', 'warning');
@@ -1626,7 +1696,16 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     >
                                         Đóng
                                     </button>
-                                    {transferRequest && transferRequest.status === 'completed' ? (
+                                    {hasTd4 ? (
+                                        <button
+                                            type="button"
+                                            onClick={handleOpenPrintTd4}
+                                            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-violet-700 hover:bg-violet-800 shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
+                                        >
+                                            <i className="fas fa-file-invoice text-xs"></i>
+                                            <span>Xem Phiếu Giao Xe ({printTd4Data?.so_ct || 'TD4'})</span>
+                                        </button>
+                                    ) : transferRequest && transferRequest.status === 'completed' ? (
                                         <button
                                             type="button"
                                             onClick={handleOpenPrintDnx}
@@ -2200,14 +2279,27 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         </button>
                     )}
 
-                    {/* Nút Điều Chuyển Xe / In Phiếu DNX (Hiển thị 1 nút gọn gàng duy nhất; Xe có phiếu TD4 giấy ra cổng thì ẩn hoàn toàn) */}
+                    {/* Nút Phiếu Ra Cổng (TD4) - Khi xe đã có giấy ra cổng giao xe */}
+                    {resolvedOrder.VIN && hasTd4 && !isReferenceAccount && (
+                        <button
+                            type="button"
+                            onClick={handleOpenPrintTd4}
+                            className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-full bg-violet-700 hover:bg-violet-800 text-white font-bold text-[10.5px] sm:text-[11px] transition-all flex items-center gap-1.5 shrink-0 shadow-sm active:scale-95 cursor-pointer"
+                            title={`Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng ${printTd4Data?.so_ct || 'TD4'}. Bấm để xem và in phiếu.`}
+                        >
+                            <i className="fas fa-file-invoice text-[10px]"></i>
+                            <span>Phiếu Ra Cổng ({printTd4Data?.so_ct || 'TD4'})</span>
+                        </button>
+                    )}
+
+                    {/* Nút Điều Chuyển Xe / In Phiếu DNX (Hiển thị 1 nút gọn gàng; Khi chưa có TD4) */}
                     {resolvedOrder.VIN && !hasTd4 && !isReferenceAccount && (
-                        transferRequest?.status === 'completed' ? (
+                        (transferRequest?.status === 'completed' || cyberCarStatus?.has_dnx) ? (
                             <button
                                 type="button"
                                 onClick={handleOpenPrintDnx}
                                 className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10.5px] sm:text-[11px] transition-all flex items-center gap-1.5 shrink-0 shadow-sm active:scale-95 cursor-pointer"
-                                title={`Đã lập phiếu ${transferRequest.soCtDnx || 'DNX'}. Bấm để xem và in phiếu.`}
+                                title={`Đã lập phiếu ${transferRequest?.soCtDnx || cyberCarStatus?.dnx_data?.so_ct || 'DNX'}. Bấm để xem và in phiếu.`}
                             >
                                 <i className="fas fa-print text-[10px]"></i>
                                 <span>In Phiếu DNX</span>
@@ -2277,6 +2369,12 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 isOpen={isPrintDnxOpen}
                 onClose={() => setIsPrintDnxOpen(false)}
                 data={printDnxData}
+            />
+
+            <CyberTd4PrintModal
+                isOpen={isPrintTd4Open}
+                onClose={() => setIsPrintTd4Open(false)}
+                data={printTd4Data}
             />
         </div>
     );

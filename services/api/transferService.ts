@@ -46,6 +46,23 @@ export const createTransferRequest = async (payload: {
         const username = (getStorageItem("currentUser") || "").toLowerCase();
         const consultant = payload.consultantName || getStorageItem("currentConsultant") || username || "TVBH";
 
+        // 0. CHẶN TRÙNG LẶP: Kiểm tra xem đã có yêu cầu chuyển xe đang chờ duyệt hoặc đã hoàn tất chưa
+        const existingReq = await getTransferRequestByOrder(payload.orderNumber, payload.vin);
+        if (existingReq) {
+            if (existingReq.status === 'completed') {
+                return {
+                    success: false,
+                    error: `Xe VIN ${payload.vin} đã có Phiếu Đề Nghị Xuất Xe (${existingReq.soCtDnx || 'DNX'}) hoàn tất. Hệ thống chặn tạo thêm yêu cầu.`
+                };
+            }
+            if (existingReq.status === 'pending') {
+                return {
+                    success: false,
+                    error: `Xe VIN ${payload.vin} đang có yêu cầu chuyển xe chờ Admin duyệt. Không thể gửi thêm yêu cầu trùng lặp.`
+                };
+            }
+        }
+
         const metadata = {
             order_number: payload.orderNumber,
             vin: payload.vin,
