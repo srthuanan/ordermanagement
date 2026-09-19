@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import moment from 'moment';
 import 'moment/locale/vi';
 import { Order } from '../types';
@@ -170,6 +170,75 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     };
 
     const resolvedOrder = order ? (orderList.find(o => o['Số đơn hàng'] === order['Số đơn hàng']) || order) : null;
+
+    // Tìm thông tin xe trong kho (stockData) khớp với số VIN của đơn hàng
+    const matchedStockVehicle = useMemo(() => {
+        if (!resolvedOrder?.VIN || !Array.isArray(stockData)) return null;
+        const cleanVin = resolvedOrder.VIN.trim().toUpperCase();
+        return stockData.find(s => (s.VIN || s.vin || '').toString().trim().toUpperCase() === cleanVin) || null;
+    }, [resolvedOrder?.VIN, stockData]);
+
+    // Xác định vị trí kho hiện tại của xe (từ kho xe nội bộ hoặc CyberSoft)
+    const currentCarLocation = useMemo(() => {
+        const rawLoc = (
+            matchedStockVehicle?.['Vị trí'] ||
+            matchedStockVehicle?.['vi_tri'] ||
+            matchedStockVehicle?.['Kho'] ||
+            matchedStockVehicle?.['Kho xe'] ||
+            (resolvedOrder as any)?.['Vị trí'] ||
+            (resolvedOrder as any)?.['vi_tri'] ||
+            (resolvedOrder as any)?.['Kho'] ||
+            cyberCarStatus?.current_physical_warehouse ||
+            cyberCarStatus?.current_location ||
+            cyberCarStatus?.ten_kho ||
+            ''
+        );
+        return String(rawLoc || '').trim();
+    }, [matchedStockVehicle, resolvedOrder, cyberCarStatus]);
+
+    // Kiểm tra xe có đang ở vị trí "Đang vận tải" hay không (chưa về kho thực tế)
+    const isCarInTransit = useMemo(() => {
+        // 1. Kiểm tra mã kho tiếp nhận nhà máy (KTN.NM / KTN)
+        const whCode = (
+            cyberCarStatus?.ma_kho ||
+            matchedStockVehicle?.['ma_kho'] ||
+            (resolvedOrder as any)?.['ma_kho'] ||
+            ''
+        ).toString().trim().toUpperCase();
+
+        if (whCode === 'KTN.NM' || whCode === 'KTN') {
+            return true;
+        }
+
+        // 2. Kiểm tra chuỗi vị trí kho
+        const locCandidates = [
+            currentCarLocation,
+            matchedStockVehicle?.['Vị trí'],
+            matchedStockVehicle?.['vi_tri'],
+            (resolvedOrder as any)?.['Vị trí'],
+            (resolvedOrder as any)?.['vi_tri'],
+            cyberCarStatus?.current_physical_warehouse,
+            cyberCarStatus?.current_location,
+            cyberCarStatus?.ten_kho,
+        ];
+
+        for (const raw of locCandidates) {
+            if (!raw) continue;
+            const s = String(raw).trim().toLowerCase();
+            if (
+                s === 'đang vận tải' ||
+                s === 'dang van tai' ||
+                s.includes('vận tải') ||
+                s.includes('van tai') ||
+                s.includes('tiếp nhận nhà máy') ||
+                s.includes('tiep nhan nha may')
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }, [currentCarLocation, cyberCarStatus, matchedStockVehicle, resolvedOrder]);
 
     // Order Audit Trail States
     const [activeRightTab, setActiveRightTab] = useState<'MILESTONES' | 'AUDIT_TRAIL'>('MILESTONES');
@@ -522,6 +591,10 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             handleOpenPrintDnx();
             return;
         }
+        if (isCarInTransit) {
+            showToast?.('Xe đang vận tải', `Xe đang có vị trí "${currentCarLocation || 'Đang vận tải'}" (chưa về kho thực tế). Chỉ có xe có vị trí thực tế mới có thể điều chuyển.`, 'warning');
+            return;
+        }
         setInlineMode('TRANSFER');
         const vin = resolvedOrder?.VIN;
         if (vin) {
@@ -563,6 +636,11 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         if (cyberCarStatus?.has_dnx || (transferRequest && transferRequest.status === 'completed')) {
             showToast?.('Đã có phiếu xuất xe', 'Xe đã có Phiếu Đề Nghị Xuất Xe hoàn tất.', 'info');
             handleOpenPrintDnx();
+            return;
+        }
+
+        if (isCarInTransit) {
+            showToast?.('Xe đang vận tải', `Xe đang có vị trí "${currentCarLocation || 'Đang vận tải'}" (chưa về kho thực tế). Không thể yêu cầu điều chuyển.`, 'warning');
             return;
         }
 
@@ -1519,6 +1597,12 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
                             {/* Thân biểu mẫu tinh gọn, không rối */}
                             <div className="flex-1 flex flex-col justify-center py-3 space-y-3 min-h-0 overflow-y-auto">
+                                {isCarInTransit && (
+                                    <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2">
+                                        <i className="fas fa-truck text-amber-600 shrink-0"></i>
+                                        <span>Xe đang có vị trí <strong>{currentCarLocation || 'Đang vận tải'}</strong> (chưa về kho thực tế). Chỉ có xe có vị trí thực tế mới có thể điều chuyển.</span>
+                                    </div>
+                                )}
                                 {/* Dải VIN & Khách hàng */}
                                 <div className="grid grid-cols-2 gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200/70 text-xs">
                                     <div>
@@ -1720,6 +1804,11 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             <i className="fas fa-clock text-amber-600"></i>
                                             <span>Đang chờ Admin duyệt</span>
                                         </div>
+                                    ) : isCarInTransit ? (
+                                        <div className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200" title="Xe đang ở vị trí 'Đang vận tải'. Chỉ xe đã về kho thực tế mới có thể điều chuyển.">
+                                            <i className="fas fa-truck text-amber-600"></i>
+                                            <span>Đang vận tải — Không thể điều chuyển</span>
+                                        </div>
                                     ) : (
                                         <button
                                             type="button"
@@ -1757,8 +1846,18 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     
                                     <div className="relative z-10 flex flex-col gap-2 md:gap-4">
                                         <div className="text-center">
-                                            <p className="text-[8.5px] md:text-[9.5px] font-bold text-sky-300/90 uppercase tracking-[0.2em] md:tracking-[0.25em] mb-1 md:mb-1.5 flex items-center justify-center gap-1.5">
+                                            <p className="text-[8.5px] md:text-[9.5px] font-bold text-sky-300/90 uppercase tracking-[0.2em] md:tracking-[0.25em] mb-1 md:mb-1.5 flex items-center justify-center gap-1.5 flex-wrap">
                                                 <i className="fas fa-barcode text-[11px] md:text-xs text-sky-400"></i> Số Khung (VIN)
+                                                {currentCarLocation && (
+                                                    <span className={`ml-1.5 px-2 py-0.5 rounded-full text-[8px] md:text-[8.5px] tracking-normal font-bold normal-case flex items-center gap-1 shadow-sm ${
+                                                        isCarInTransit 
+                                                            ? 'bg-amber-500/25 text-amber-200 border border-amber-400/40' 
+                                                            : 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/40'
+                                                    }`}>
+                                                        <i className={`fas ${isCarInTransit ? 'fa-truck' : 'fa-warehouse'} text-[7.5px]`}></i>
+                                                        {currentCarLocation}
+                                                    </span>
+                                                )}
                                             </p>
                                             <div 
                                                 className="cursor-pointer group inline-block py-0.5 relative max-w-full"
@@ -2304,7 +2403,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 <i className="fas fa-print text-[10px]"></i>
                                 <span>In Phiếu DNX</span>
                             </button>
-                        ) : (
+                        ) : !isCarInTransit ? (
                             <button
                                 type="button"
                                 onClick={handleOpenTransferMode}
@@ -2332,7 +2431,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
                                 )}
                             </button>
-                        )
+                        ) : null
                     )}
 
                     {canAddSupplement && !isReferenceAccount && (
