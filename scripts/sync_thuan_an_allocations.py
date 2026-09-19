@@ -1113,6 +1113,7 @@ def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
     ma_hd = (params.get("ma_hd") or "").strip()
     m_all = (params.get("all") or "1").strip()
     is_xep_xe = (params.get("is_xep_xe") or "").strip()
+    keyword = (params.get("keyword") or params.get("so_khung") or "").strip()
 
     is_pymssql = True
     try:
@@ -1134,44 +1135,93 @@ def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
     c = conn.cursor()
     ph = "%s" if is_pymssql else "?"
 
-    sql = f"""
-    EXECUTE [dbo].[CP_BeXepXe]
-        @M_Load = N'',
-        @M_ALL = {ph},
-        @M_Is_Xep_Xe = {ph},
-        @M_Thang1 = {ph},
-        @M_Nam1 = {ph},
-        @M_Thang2 = {ph},
-        @M_Nam2 = {ph},
-        @M_Stt_Rec = N'',
-        @M_Stt_Rec0 = N'',
-        @M_Ma_KX = {ph},
-        @M_Ma_Mau = {ph},
-        @M_Ma_KH = {ph},
-        @M_Ma_HD = {ph},
-        @M_Nh_HD1 = N'',
-        @M_Nh_HD2 = N'',
-        @M_Nh_HD3 = N'',
-        @M_Ma_DVCS = {ph},
-        @M_User_name = {ph}
-    """
-    c.execute(sql, (
-        m_all,
-        is_xep_xe,
-        thang1,
-        nam1,
-        thang2,
-        nam2,
-        ma_kx,
-        ma_mau,
-        ma_kh,
-        ma_hd,
-        ma_dvcs,
-        user_name
-    ))
+    rows = []
+    cols = []
+    direct_matched_stts = set()
 
-    rows = c.fetchall()
-    cols = [d[0] for d in c.description]
+    # 1. Tra cứu trực tiếp theo số khung (VIN), số hợp đồng, mã chứng từ, hoặc tên khách hàng
+    if keyword:
+        try:
+            stt_recs_direct = []
+            # Tra cứu số khung từ BEXEPXE
+            c.execute(f"SELECT TOP 30 Ma_Hd, Stt_Rec0, So_khung FROM dbo.BEXEPXE WITH (NOLOCK) WHERE So_khung LIKE {ph}", ('%' + keyword + '%',))
+            bex_matches = c.fetchall()
+            hd_candidates = [r[0] for r in bex_matches if r and r[0]]
+            if hd_candidates:
+                ph_hd = ', '.join([ph] * len(hd_candidates))
+                c.execute(f"SELECT DISTINCT stt_rec FROM dbo.CT70HDX WITH (NOLOCK) WHERE ma_hd IN ({ph_hd})", tuple(hd_candidates))
+                for sr_row in c.fetchall():
+                    if sr_row and sr_row[0] and sr_row[0] not in stt_recs_direct:
+                        stt_recs_direct.append(sr_row[0])
+
+            # Tra cứu từ CT70HDX theo ma_hd, so_ct, ten_kh
+            c.execute(f"SELECT TOP 30 stt_rec FROM dbo.CT70HDX WITH (NOLOCK) WHERE ma_hd LIKE {ph} OR so_ct LIKE {ph} OR ten_kh LIKE {ph}",
+                      ('%' + keyword + '%', '%' + keyword + '%', '%' + keyword + '%'))
+            for sr_row in c.fetchall():
+                if sr_row and sr_row[0] and sr_row[0] not in stt_recs_direct:
+                    stt_recs_direct.append(sr_row[0])
+
+            if stt_recs_direct:
+                direct_sql = f"""
+                EXECUTE [dbo].[CP_BeXepXe]
+                    @M_Load = N'', @M_ALL = N'1', @M_Is_Xep_Xe = N'',
+                    @M_Thang1 = 0, @M_Nam1 = 0, @M_Thang2 = 0, @M_Nam2 = 0,
+                    @M_Stt_Rec = {ph}, @M_Stt_Rec0 = N'',
+                    @M_Ma_KX = N'', @M_Ma_Mau = N'', @M_Ma_KH = N'', @M_Ma_HD = N'',
+                    @M_Nh_HD1 = N'', @M_Nh_HD2 = N'', @M_Nh_HD3 = N'',
+                    @M_Ma_DVCS = {ph}, @M_User_name = {ph}
+                """
+                for sr in stt_recs_direct[:20]:
+                    c.execute(direct_sql, (sr, ma_dvcs, user_name))
+                    d_res = c.fetchall()
+                    if d_res:
+                        if not cols:
+                            cols = [col[0] for col in c.description]
+                        for dr in d_res:
+                            rows.append(dr)
+                            direct_matched_stts.add(sr)
+        except Exception as ex:
+            print(f"[get_cyber_xep_xe_contracts direct lookup error]: {ex}", file=sys.stderr)
+
+    # 2. Nếu không tìm theo từ khóa hoặc từ khóa chưa có kết quả trực tiếp: chạy SP theo khoảng thời gian
+    if not rows:
+        sql = f"""
+        EXECUTE [dbo].[CP_BeXepXe]
+            @M_Load = N'',
+            @M_ALL = {ph},
+            @M_Is_Xep_Xe = {ph},
+            @M_Thang1 = {ph},
+            @M_Nam1 = {ph},
+            @M_Thang2 = {ph},
+            @M_Nam2 = {ph},
+            @M_Stt_Rec = N'',
+            @M_Stt_Rec0 = N'',
+            @M_Ma_KX = {ph},
+            @M_Ma_Mau = {ph},
+            @M_Ma_KH = {ph},
+            @M_Ma_HD = {ph},
+            @M_Nh_HD1 = N'',
+            @M_Nh_HD2 = N'',
+            @M_Nh_HD3 = N'',
+            @M_Ma_DVCS = {ph},
+            @M_User_name = {ph}
+        """
+        c.execute(sql, (
+            m_all,
+            is_xep_xe,
+            thang1,
+            nam1,
+            thang2,
+            nam2,
+            ma_kx,
+            ma_mau,
+            ma_kh,
+            ma_hd,
+            ma_dvcs,
+            user_name
+        ))
+        rows = c.fetchall()
+        cols = [d[0] for d in c.description]
 
     contracts = []
     status_counts = {}
@@ -1249,7 +1299,8 @@ def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
             "ma_color": (d.get('Ma_Color') or '').strip(),
             "back_color": back_color,
             "fore_color": fore_color,
-            "bold": bold
+            "bold": bold,
+            "is_direct_match": bool((d.get('stt_rec') or '').strip() in direct_matched_stts)
         })
 
     conn.close()
@@ -1261,7 +1312,8 @@ def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
         def no_accents(s):
             return "".join(ch for ch in unicodedata.normalize('NFD', s.lower()) if unicodedata.category(ch) != 'Mn')
         norm_target = no_accents(target_showroom)
-        contracts = [c for c in contracts if norm_target in no_accents(c.get('ten_ttcp', ''))]
+        # Giữ lại các hợp đồng khớp trực tiếp từ từ khóa tìm kiếm (đặc biệt khi tra cứu VIN/HĐ xem SR nào xuất HĐ)
+        contracts = [c for c in contracts if c.get('is_direct_match') or norm_target in no_accents(c.get('ten_ttcp', ''))]
         status_counts = {}
         for c in contracts:
             tc = c.get('ten_color')

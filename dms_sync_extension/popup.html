@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>VinFast DMS Sync</title>
+  <style>
+    body {
+      width: 320px;
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      box-sizing: border-box;
+    }
+    h3 {
+      margin: 0 0 10px 0;
+      font-size: 15px;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .desc {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #0284c7;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #0369a1;
+    }
+    #status {
+      margin-top: 12px;
+      font-size: 12px;
+      text-align: center;
+      min-height: 20px;
+      font-weight: 500;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <h3>⚡ VinFast DMS Sync</h3>
+  <div class="desc">Tự động lấy Cookie từ phiên đăng nhập hiện tại và nạp thẳng vào App máy tính.</div>
+
+  <label for="selDealer">Chọn Đại lý cần đồng bộ:</label>
+  <select id="selDealer">
+    <option value="N31913">N31913 - VinFast Showroom N31913</option>
+    <option value="N31920">N31920 - VinFast Showroom N31920</option>
+    <option value="N31923">N31923 - VinFast Showroom N31923</option>
+  </select>
+
+  <button id="btnSync">🚀 ĐỒNG BỘ VÀO APP NGAY</button>
+  <div id="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

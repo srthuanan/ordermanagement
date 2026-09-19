@@ -913,12 +913,22 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const [xepXeModel, setXepXeModel] = useState<string>('');
     const [xepXeStatusFilter, setXepXeStatusFilter] = useState<string>('approved_and_pending');
     const [xepXeKeyword, setXepXeKeyword] = useState<string>('');
+    const [xepXeShowroomInvoicedFilter, setXepXeShowroomInvoicedFilter] = useState<string>('ALL');
 
     const [isLoadingXepXe, setIsLoadingXepXe] = useState<boolean>(false);
     const [hasLoadedXepXe, setHasLoadedXepXe] = useState<boolean>(false);
     const [xepXeContracts, setXepXeContracts] = useState<CyberXepXeContract[]>([]);
     const [xepXeStatusCounts, setXepXeStatusCounts] = useState<Record<string, number>>({});
-    const [xepXeShowrooms, setXepXeShowrooms] = useState<string[]>([]);
+    const [xepXeShowrooms, setXepXeShowrooms] = useState<string[]>([
+        'Ô tô Vinfast Thuận An',
+        'Ô tô Vinfast Minh Đạo - Nguyễn Trãi',
+        'Ô tô Vinfast Dĩ An',
+        'Ô tô Vinfast Cam Giá',
+        'Ô tô Vinfast Bắc Ninh',
+        'Ô tô Vinfast Times City',
+        'Ô tô Vinfast 03/2',
+        'Ô tô Vinfast Minh Đạo - Tân Thịnh'
+    ]);
     const [xepXeModels, setXepXeModels] = useState<string[]>([]);
     const [xepXeCopiedVin, setXepXeCopiedVin] = useState<string | null>(null);
 
@@ -934,21 +944,42 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const [contractToUnassign, setContractToUnassign] = useState<CyberXepXeContract | null>(null);
     const [isDeletingAssign, setIsDeletingAssign] = useState<boolean>(false);
 
+    // Thống kê số lượng xe Đã xuất HĐ theo từng Showroom
+    const invoicedShowroomsBreakdown = useMemo(() => {
+        const counts: Record<string, number> = {};
+        for (const c of xepXeContracts) {
+            const isInvoiced = c.ten_color === 'Đã xuất HĐ' || (c.back_color || '').toLowerCase() === 'violet';
+            if (isInvoiced) {
+                const sr = (c.ten_ttcp || '').trim() || 'Chưa rõ Showroom';
+                counts[sr] = (counts[sr] || 0) + 1;
+            }
+        }
+        return counts;
+    }, [xepXeContracts]);
+
     // Danh sách hợp đồng hiển thị sau khi lọc trên client
     const displayedXepXeContracts = useMemo(() => {
         let list = xepXeContracts;
 
         // 1. Nếu có từ khóa tìm kiếm (gõ từ khóa hoặc dán nhiều VIN/HĐ từ Excel)
         if (xepXeKeyword.trim()) {
-            // Tìm kiếm ngay trên TOÀN BỘ dữ liệu hợp đồng đã tải về
+            // Tìm kiếm ngay trên TOÀN BỘ dữ liệu hợp đồng đã tải về (bao gồm mọi Showroom)
             list = filterXepXeLocally(list, xepXeKeyword);
 
             // Khi đang tìm kiếm, nếu người dùng bấm chọn 1 trạng thái cụ thể (khác approved_and_pending mặc định và khác all)
             if (xepXeStatusFilter && xepXeStatusFilter !== 'all' && xepXeStatusFilter !== 'approved_and_pending') {
                 list = list.filter(c => (c.ten_color || '').trim().toLowerCase() === xepXeStatusFilter.trim().toLowerCase());
             }
+
+            // Lưu ý: Khi tìm theo VIN/Số HĐ, KHÔNG lọc showroom để tránh ẩn kết quả từ showroom khác!
         } else {
-            // Khi không tìm kiếm: áp dụng lọc trạng thái mặc định (approved_and_pending) hoặc trạng thái được chọn
+            // Khi không tìm kiếm: áp dụng lọc Showroom thông thường
+            if (xepXeShowroom && xepXeShowroom !== 'ALL') {
+                const srLower = xepXeShowroom.toLowerCase();
+                list = list.filter(c => (c.ten_ttcp || '').toLowerCase().includes(srLower) || srLower.includes((c.ten_ttcp || '').toLowerCase()));
+            }
+
+            // Áp dụng lọc trạng thái mặc định (approved_and_pending) hoặc trạng thái được chọn
             if (xepXeStatusFilter === 'approved_and_pending') {
                 list = list.filter(c => {
                     const s = (c.ten_color || '').trim().toLowerCase();
@@ -959,9 +990,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             }
         }
 
-        if (xepXeShowroom) {
-            const srLower = xepXeShowroom.toLowerCase();
-            list = list.filter(c => (c.ten_ttcp || '').toLowerCase().includes(srLower) || srLower.includes((c.ten_ttcp || '').toLowerCase()));
+        // Lọc phụ theo Showroom xuất hóa đơn (nếu đang ở bộ lọc Đã xuất HĐ)
+        if (xepXeStatusFilter === 'Đã xuất HĐ' && xepXeShowroomInvoicedFilter && xepXeShowroomInvoicedFilter !== 'ALL') {
+            const filterSrLower = xepXeShowroomInvoicedFilter.toLowerCase();
+            list = list.filter(c => (c.ten_ttcp || '').toLowerCase().includes(filterSrLower) || filterSrLower.includes((c.ten_ttcp || '').toLowerCase()));
         }
 
         if (xepXeModel) {
@@ -969,7 +1001,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         }
 
         return list;
-    }, [xepXeContracts, xepXeStatusFilter, xepXeShowroom, xepXeModel, xepXeKeyword]);
+    }, [xepXeContracts, xepXeStatusFilter, xepXeShowroom, xepXeShowroomInvoicedFilter, xepXeModel, xepXeKeyword]);
 
     // Lọc danh sách candidate cars trong modal
     const displayedCandidateCars = useMemo(() => {
@@ -1220,26 +1252,42 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         setHasLoadedXepXe(true);
         try {
             const currentShowroom = overrides?.showroom !== undefined ? overrides.showroom : xepXeShowroom;
+            const currentKeyword = overrides?.keyword !== undefined ? overrides.keyword : xepXeKeyword;
             const params: CyberXepXeFilterParams = {
                 thang1: xepXeThang1,
                 nam1: xepXeNam1,
                 thang2: xepXeThang2,
                 nam2: xepXeNam2,
                 ma_dvcs: '02',
-                showroom: currentShowroom,
+                showroom: currentShowroom || 'ALL',
+                keyword: currentKeyword ? currentKeyword.trim() : undefined,
                 ...overrides
             };
             const res = await getCyberXepXeContracts(params);
             if (res && res.success) {
                 setXepXeContracts(res.contracts || []);
                 setXepXeStatusCounts(res.status_counts || {});
-                if (res.showrooms && res.showrooms.length > 0) setXepXeShowrooms(res.showrooms);
+                if (res.showrooms && res.showrooms.length > 0) {
+                    setXepXeShowrooms(prev => Array.from(new Set([...prev, ...res.showrooms])));
+                }
                 if (res.models && res.models.length > 0) setXepXeModels(res.models);
+
+                // Nếu người dùng đang tra cứu số khung/HĐ và tìm thấy xe đã xuất HĐ
+                if (currentKeyword && res.contracts && res.contracts.length > 0) {
+                    const invoicedMatch = res.contracts.find(c => c.ten_color === 'Đã xuất HĐ' || (c.back_color || '').toLowerCase() === 'violet');
+                    if (invoicedMatch) {
+                        showToast(
+                            'Đã tìm thấy xe xuất HĐ',
+                            `Showroom xuất HĐ: ${invoicedMatch.ten_ttcp || 'Không xác định'} • Số HĐ: ${invoicedMatch.ma_hd || invoicedMatch.so_ct}`,
+                            'success'
+                        );
+                    }
+                }
             } else {
                 throw new Error(res?.error || 'Lỗi tải danh sách hợp đồng xếp xe từ CyberSoft.');
             }
         } catch (err: any) {
-            showToast('Lỗi xếp xe Cyber', err.message || 'Không thể tải danh sách hợp đồng', 'error');
+            showToast('Lỗi tra cứu', err.message || 'Không thể tải danh sách hợp đồng', 'error');
         } finally {
             setIsLoadingXepXe(false);
         }
@@ -1250,8 +1298,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         setXepXeModel('');
         setXepXeStatusFilter('approved_and_pending');
         setXepXeKeyword('');
+        setXepXeShowroomInvoicedFilter('ALL');
         executeXepXeSearch({
             showroom: DEFAULT_SHOWROOM,
+            keyword: '',
             ma_kx: '',
             ma_hd: ''
         });
@@ -2393,12 +2443,12 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     onChange={e => {
                                         const val = e.target.value;
                                         setXepXeShowroom(val);
-                                        executeXepXeSearch({ showroom: val });
+                                        executeXepXeSearch({ showroom: val || 'ALL' });
                                     }}
                                     className="bg-transparent text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer max-w-[170px] truncate"
                                     title="Chọn đơn vị / Showroom"
                                 >
-                                    <option value="">Tất cả Showroom (Toàn hệ thống)</option>
+                                    <option value="ALL">🌐 Tất cả Showroom (Toàn hệ thống)</option>
                                     {xepXeShowrooms.map(s => (
                                         <option key={s} value={s}>
                                             {s}{s.toLowerCase().includes('thuận an') ? ' (Mặc định)' : ''}
@@ -2423,33 +2473,31 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 </select>
                             </div>
 
-                            {/* 4. Instant Search / Multi-paste on Downloaded Data */}
-                            <div className="flex-1 min-w-[220px] max-w-sm relative">
-                                <div className={`flex items-center bg-slate-50/90 hover:bg-white border rounded-xl px-2.5 h-9 transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-white shadow-xs ${
-                                    xepXeKeyword ? 'border-indigo-300 ring-1 ring-indigo-200 bg-indigo-50/20' : 'border-slate-200'
+                            {/* 4. Instant Search & Cross-Showroom Lookup */}
+                            <div className="flex-1 min-w-[240px] max-w-md relative">
+                                <div className={`flex items-center bg-slate-50/90 hover:bg-white border rounded-xl px-2.5 h-9 transition-all focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:bg-white shadow-xs ${
+                                    xepXeKeyword ? 'border-purple-300 ring-1 ring-purple-200 bg-purple-50/20' : 'border-slate-200'
                                 }`}>
                                     <i className="fas fa-search text-[11px] text-slate-400 mr-2 flex-shrink-0"></i>
                                     <input
                                         type="text"
-                                        placeholder="Tìm số HĐ, VIN, tên KH, SĐT (dán nhiều từ Excel)..."
+                                        placeholder="Tìm số khung (VIN), số HĐ, tên KH xem SR xuất HĐ..."
                                         value={xepXeKeyword}
                                         onChange={e => setXepXeKeyword(e.target.value)}
                                         onKeyDown={e => {
-                                            if (e.key === 'Enter') {
-                                                if (xepXeContracts.length === 0) {
-                                                    executeXepXeSearch();
-                                                }
+                                            if (e.key === 'Enter' && xepXeKeyword.trim()) {
+                                                executeXepXeSearch({ keyword: xepXeKeyword.trim(), showroom: 'ALL' });
                                             }
                                         }}
                                         className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none font-medium"
-                                        title="Tìm kiếm tức thì trên dữ liệu đã tải: số HĐ, VIN, tên KH (có dấu hoặc không dấu), SĐT hoặc dán nhiều dòng từ Excel"
+                                        title="Nhập số khung (VIN), số HĐ hoặc tên KH rồi bấm Enter để tra cứu xem Showroom nào xuất hóa đơn"
                                     />
 
                                     {/* Instant Match Badge on Downloaded Data */}
                                     {xepXeKeyword && xepXeContracts.length > 0 && (
                                         <span 
-                                            className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 whitespace-nowrap mr-1 shrink-0 animate-fade-in" 
-                                            title={`Khớp ${displayedXepXeContracts.length} / ${xepXeContracts.length} hợp đồng đã tải`}
+                                            className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 whitespace-nowrap mr-1 shrink-0 animate-fade-in" 
+                                            title={`Khớp ${displayedXepXeContracts.length} / ${xepXeContracts.length} hợp đồng`}
                                         >
                                             {displayedXepXeContracts.length}/{xepXeContracts.length}
                                         </span>
@@ -2467,6 +2515,20 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     )}
                                 </div>
                             </div>
+
+                            {/* Nút Tra Cứu Toàn Hệ Thống (Xem Showroom Nào Xuất Hóa Đơn) */}
+                            {xepXeKeyword.trim() && (
+                                <button
+                                    type="button"
+                                    onClick={() => executeXepXeSearch({ keyword: xepXeKeyword.trim(), showroom: 'ALL' })}
+                                    disabled={isLoadingXepXe}
+                                    className="h-9 px-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 shrink-0 animate-fade-in"
+                                    title="Tra cứu số khung/HĐ trên toàn bộ hệ thống các Showroom"
+                                >
+                                    <i className={`fas ${isLoadingXepXe ? 'fa-spinner fa-spin' : 'fa-magnifying-glass'} text-xs`}></i>
+                                    <span>Tra cứu SR xuất HĐ</span>
+                                </button>
+                            )}
 
                             {/* 5. Fetch Data Button */}
                             <button
@@ -2639,7 +2701,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     xepXeStatusFilter === 'Hủy'
                                         ? 'bg-rose-600 text-white border-rose-600 shadow-xs ring-2 ring-rose-300'
                                         : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
-                                }`}
+                                    }`}
                             >
                                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 border border-rose-600"></span>
                                 <span>Hủy</span>
@@ -2648,10 +2710,87 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 </span>
                             </button>
                         </div>
+
+                        {/* Thanh lọc theo Showroom xuất hóa đơn khi đang lọc Đã xuất HĐ */}
+                        {xepXeStatusFilter === 'Đã xuất HĐ' && Object.keys(invoicedShowroomsBreakdown).length > 0 && (
+                            <div className="mt-2.5 pt-2 border-t border-purple-100 bg-purple-50/70 -mx-3 -mb-1 px-3 py-2 rounded-xl flex flex-wrap items-center gap-1.5 text-xs animate-fade-in">
+                                <span className="text-[11px] font-bold text-purple-950 flex items-center gap-1 mr-1">
+                                    <i className="fas fa-file-invoice text-purple-600 text-xs"></i> Showroom xuất HĐ:
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setXepXeShowroomInvoicedFilter('ALL')}
+                                    className={`px-2.5 py-1 rounded-lg text-xs transition-all border font-bold ${
+                                        xepXeShowroomInvoicedFilter === 'ALL'
+                                            ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
+                                            : 'bg-white text-purple-800 border-purple-200 hover:bg-purple-100'
+                                    }`}
+                                >
+                                    Tất cả ({xepXeStatusCounts['Đã xuất HĐ'] || 0})
+                                </button>
+                                {Object.entries(invoicedShowroomsBreakdown).map(([sr, count]) => (
+                                    <button
+                                        key={sr}
+                                        type="button"
+                                        onClick={() => setXepXeShowroomInvoicedFilter(xepXeShowroomInvoicedFilter === sr ? 'ALL' : sr)}
+                                        className={`px-2.5 py-1 rounded-lg text-xs transition-all border flex items-center gap-1.5 ${
+                                            xepXeShowroomInvoicedFilter === sr
+                                                ? 'bg-purple-700 text-white border-purple-700 shadow-xs font-bold'
+                                                : 'bg-white text-slate-700 border-slate-200 hover:border-purple-300 hover:text-purple-700'
+                                        }`}
+                                        title={`Xem ${count} xe đã xuất hóa đơn tại ${sr}`}
+                                    >
+                                        <i className="fas fa-building text-[10px] text-purple-500"></i>
+                                        <span>{sr}</span>
+                                        <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                                            xepXeShowroomInvoicedFilter === sr ? 'bg-white/30 text-white' : 'bg-purple-100 text-purple-800'
+                                        }`}>
+                                            {count}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Table Area for Xếp Xe */}
                     <div className="flex-1 overflow-auto bg-slate-50/50 p-3 sm:p-4 min-h-[300px] relative">
+                        {/* Banner thông báo kết quả tra cứu Showroom xuất HĐ */}
+                        {xepXeKeyword && displayedXepXeContracts.length > 0 && (
+                            <div className="mb-3 p-3 bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 border border-purple-200 rounded-xl flex items-center justify-between gap-3 text-xs shadow-xs animate-fade-in">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                        <i className="fas fa-file-invoice text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-slate-900 flex items-center gap-2">
+                                            <span>Kết quả tra cứu Showroom xuất HĐ: "{xepXeKeyword}"</span>
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-600 text-white">
+                                                {displayedXepXeContracts.length} kết quả
+                                            </span>
+                                        </div>
+                                        <div className="text-slate-600 text-[11px] mt-0.5">
+                                            {displayedXepXeContracts.some(c => c.ten_color === 'Đã xuất HĐ') ? (
+                                                <span className="text-purple-800 font-semibold flex items-center gap-1">
+                                                    <i className="fas fa-check-circle text-emerald-600"></i>
+                                                    Đã tìm thấy thông tin Showroom xuất hóa đơn bên dưới!
+                                                </span>
+                                            ) : (
+                                                <span>Danh sách hợp đồng khớp thông tin trên toàn hệ thống.</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setXepXeKeyword('')}
+                                    className="px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg shrink-0 shadow-2xs hover:bg-slate-50"
+                                >
+                                    <i className="fas fa-times mr-1 text-[10px]"></i> Đóng tra cứu
+                                </button>
+                            </div>
+                        )}
+
                         {isLoadingXepXe ? (
                             <div className="flex flex-col items-center justify-center py-20 text-slate-500">
                                 <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
@@ -2666,16 +2805,27 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         ) : displayedXepXeContracts.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                                 <i className="fas fa-search text-4xl text-slate-300 mb-2"></i>
-                                <span className="font-semibold text-slate-600">Không tìm thấy hợp đồng nào phù hợp với bộ lọc hiện tại</span>
-                                {xepXeKeyword && (
-                                    <button 
-                                        type="button" 
-                                        onClick={() => setXepXeKeyword('')}
-                                        className="mt-2 text-xs text-indigo-600 hover:underline font-medium"
-                                    >
-                                        Xóa từ khóa tìm kiếm "{xepXeKeyword}"
-                                    </button>
-                                )}
+                                <span className="font-semibold text-slate-600 text-sm">Không tìm thấy hợp đồng nào phù hợp với bộ lọc hiện tại</span>
+                                {xepXeKeyword ? (
+                                    <div className="flex flex-col items-center gap-2 mt-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => executeXepXeSearch({ keyword: xepXeKeyword.trim(), showroom: 'ALL' })}
+                                            disabled={isLoadingXepXe}
+                                            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-2"
+                                        >
+                                            <i className={`fas ${isLoadingXepXe ? 'fa-spinner fa-spin' : 'fa-globe'}`}></i>
+                                            <span>Tra cứu "{xepXeKeyword}" trên TOÀN BỘ SHOWROOM & cơ sở dữ liệu</span>
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            onClick={() => setXepXeKeyword('')}
+                                            className="text-xs text-slate-500 hover:text-slate-800 font-medium underline mt-1"
+                                        >
+                                            Xóa từ khóa tìm kiếm "{xepXeKeyword}"
+                                        </button>
+                                    </div>
+                                ) : null}
                             </div>
                         ) : (
                             <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden">
@@ -2684,14 +2834,14 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         <thead>
                                             <tr className="bg-slate-50 border-b-2 border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
                                                 <th className="px-3 py-2.5 text-center w-10">#</th>
-                                                <th className="px-3 py-2.5 w-32">Trạng thái</th>
-                                                <th className="px-3 py-2.5">Số HĐ / Chứng từ</th>
-                                                <th className="px-3 py-2.5 w-24">Ngày HĐ</th>
-                                                <th className="px-3 py-2.5 w-24">Giao xe</th>
-                                                <th className="px-3 py-2.5">Khách hàng</th>
-                                                <th className="px-3 py-2.5">Dòng xe / Màu</th>
-                                                <th className="px-3 py-2.5 min-w-[200px]">Số khung (VIN)</th>
-                                                <th className="px-3 py-2.5 text-center w-36 sticky right-0 bg-slate-50">Thao tác</th>
+                                                <th className="px-3 py-2.5 w-28">Trạng thái</th>
+                                                <th className="px-3 py-2.5 min-w-[210px]">Showroom / Đơn vị xuất HĐ</th>
+                                                <th className="px-3 py-2.5 min-w-[190px]">Số khung (VIN)</th>
+                                                <th className="px-3 py-2.5 min-w-[170px]">Số HĐ / Chứng từ</th>
+                                                <th className="px-3 py-2.5 min-w-[190px]">Khách hàng & TVBH</th>
+                                                <th className="px-3 py-2.5 min-w-[150px]">Dòng xe / Màu</th>
+                                                <th className="px-3 py-2.5 w-28">Ngày HĐ / Giao</th>
+                                                <th className="px-3 py-2.5 text-center w-32 sticky right-0 bg-slate-50">Thao tác</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
@@ -2716,22 +2866,61 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                             </span>
                                                         </td>
 
+                                                        {/* Showroom / Đơn vị xuất HĐ */}
+                                                        <td className="px-3 py-2.5 whitespace-nowrap">
+                                                            {isInvoiced ? (
+                                                                <div className="flex flex-col gap-0.5">
+                                                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-100 text-purple-950 border border-purple-300 font-bold text-[11.5px] shadow-2xs">
+                                                                        <i className="fas fa-file-invoice text-purple-600 text-xs shrink-0"></i>
+                                                                        <span className="truncate max-w-[210px]" title={c.ten_ttcp}>{c.ten_ttcp || 'Không rõ Showroom'}</span>
+                                                                    </div>
+                                                                    <span className="text-[10px] text-purple-700 font-bold pl-1 flex items-center gap-1">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0 animate-pulse"></span>
+                                                                        Đơn vị đã xuất hóa đơn
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-medium">
+                                                                    <i className="fas fa-store text-slate-400 text-[10px] shrink-0"></i>
+                                                                    <span className="truncate max-w-[200px]" title={c.ten_ttcp}>{c.ten_ttcp || '-'}</span>
+                                                                </div>
+                                                            )}
+                                                        </td>
+
+                                                        {/* Số khung (VIN) */}
+                                                        <td className="px-3 py-2.5 whitespace-nowrap">
+                                                            {hasVin ? (
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className={`font-mono font-bold px-2 py-0.5 rounded text-[11.5px] border ${
+                                                                        isInvoiced
+                                                                            ? 'text-purple-800 bg-purple-50 border-purple-200'
+                                                                            : 'text-indigo-700 bg-indigo-50 border-indigo-200'
+                                                                    }`}>
+                                                                        {c.so_khung}
+                                                                    </span>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleXepXeCopyVin(c.so_khung)}
+                                                                        className="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-white"
+                                                                        title="Sao chép số VIN"
+                                                                    >
+                                                                        <i className={`fas ${xepXeCopiedVin === c.so_khung ? 'fa-check text-emerald-600' : 'fa-copy'} text-[11px]`}></i>
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-slate-400 italic text-[11px]">Chưa ghép xe</span>
+                                                            )}
+                                                            {c.ngay_xep && c.ngay_xep !== '1900-01-01' && (
+                                                                <div className="text-[10px] text-slate-400 mt-0.5">Ghép: {c.ngay_xep}</div>
+                                                            )}
+                                                        </td>
+
                                                         {/* Số HĐ / Số chứng từ */}
                                                         <td className="px-3 py-2.5 whitespace-nowrap">
                                                             <div className="font-bold text-slate-900 text-[12px]">{c.ma_hd || c.so_ct}</div>
                                                             {c.so_ct && c.so_ct !== c.ma_hd && (
                                                                 <div className="text-[10px] text-slate-400 font-mono">{c.so_ct}</div>
                                                             )}
-                                                        </td>
-
-                                                        {/* Ngày HĐ */}
-                                                        <td className="px-3 py-2.5 whitespace-nowrap text-[11px] text-slate-600 font-mono">
-                                                            {c.ngay_ct || '-'}
-                                                        </td>
-
-                                                        {/* Ngày giao xe */}
-                                                        <td className="px-3 py-2.5 whitespace-nowrap text-[11px] font-semibold text-slate-700 font-mono">
-                                                            {c.ngay_gx || '-'}
                                                         </td>
 
                                                         {/* Khách hàng + TVBH */}
@@ -2756,28 +2945,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                             <div className="text-[10px] text-slate-500">{c.ten_mau || c.ma_mau || '-'}{c.ten_mau_nt ? <span className="text-slate-400"> · NT: {c.ten_mau_nt}</span> : null}</div>
                                                         </td>
 
-                                                        {/* Số khung (VIN) */}
-                                                        <td className="px-3 py-2.5 whitespace-nowrap">
-                                                            {hasVin ? (
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <span className="font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-[11px]">
-                                                                        {c.so_khung}
-                                                                    </span>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleXepXeCopyVin(c.so_khung)}
-                                                                        className="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-white"
-                                                                        title="Sao chép số VIN"
-                                                                    >
-                                                                        <i className={`fas ${xepXeCopiedVin === c.so_khung ? 'fa-check text-emerald-600' : 'fa-copy'} text-[11px]`}></i>
-                                                                    </button>
-                                                                </div>
-                                                            ) : (
-                                                                <span className="text-slate-400 italic text-[11px]">Chưa ghép xe</span>
-                                                            )}
-                                                            {c.ngay_xep && c.ngay_xep !== '1900-01-01' && (
-                                                                <div className="text-[10px] text-slate-400 mt-0.5">Ghép: {c.ngay_xep}</div>
-                                                            )}
+                                                        {/* Ngày HĐ / Ngày giao xe */}
+                                                        <td className="px-3 py-2.5 whitespace-nowrap text-[11px] font-mono">
+                                                            <div className="text-slate-700 font-semibold">{c.ngay_gx || '-'}</div>
+                                                            <div className="text-[10px] text-slate-400">HĐ: {c.ngay_ct || '-'}</div>
                                                         </td>
 
                                                         {/* Thao tác */}
@@ -2806,8 +2977,9 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                                             <span>Hủy</span>
                                                                         </button>
                                                                     ) : (
-                                                                        <span className="text-[10px] text-purple-700 font-semibold italic bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
-                                                                            Đã viết HĐ
+                                                                        <span className="inline-flex items-center gap-1 text-[10.5px] text-purple-800 font-bold bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-200 shadow-2xs">
+                                                                            <i className="fas fa-check-circle text-purple-600 text-[10px]"></i>
+                                                                            <span>Đã xuất HĐ</span>
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -2830,7 +3002,6 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 </div>
                             </div>
                         )}
-
                     </div>
                 </>
             )}

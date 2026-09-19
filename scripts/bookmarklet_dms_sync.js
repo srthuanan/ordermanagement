@@ -1,0 +1,232 @@
+(function () {
+  var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+  if (!_Xrm || !_Xrm.WebApi) {
+    try {
+      for (var i = 0; i < window.frames.length; i++) {
+        if (window.frames[i].Xrm && window.frames[i].Xrm.WebApi) {
+          _Xrm = window.frames[i].Xrm;
+          break;
+        }
+      }
+    } catch (e) {}
+  }
+  if (!_Xrm || !_Xrm.WebApi) {
+    alert('⚠️ Vui lòng mở trang VinFast DMS trước khi bấm bookmarklet!');
+    return;
+  }
+
+  var sbUrl = 'https://jwvgxqrkjlbewvpkvucj.supabase.co';
+  var sbKey = 'sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX';
+  var sbHeaders = {
+    'apikey': sbKey,
+    'Authorization': 'Bearer ' + sbKey,
+    'Content-Type': 'application/json'
+  };
+
+  var oldBox = document.getElementById('vin-sync-box');
+  if (oldBox) oldBox.remove();
+
+  var box = document.createElement('div');
+  box.id = 'vin-sync-box';
+  box.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:999999;width:440px;background:#0f172a;color:#f8fafc;padding:20px;border-radius:14px;box-shadow:0 20px 30px rgba(0,0,0,0.6);font-family:system-ui,-apple-system,sans-serif;font-size:13px;line-height:1.5;border:1px solid #334155;';
+  box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid #334155;padding-bottom:10px;"><strong style="font-size:15px;color:#38bdf8;display:flex;align-items:center;gap:6px;">⚡ ĐỒNG BỘ KHO XE & CHECK ĐA DÒNG DMS</strong><button onclick="document.getElementById(\'vin-sync-box\').remove()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;line-height:1;">✕</button></div><div id="vin-main-status" style="margin-bottom:12px;"><div style="color:#fbbf24;">⏳ Đang tải kho xe Supabase...</div><div style="width:100%;height:6px;background:#334155;border-radius:3px;overflow:hidden;margin-top:8px;"><div id="vin-pbar" style="width:20%;height:100%;background:#38bdf8;transition:width 0.3s;"></div></div></div><div id="vin-sub-log" style="font-size:12px;color:#94a3b8;max-height:170px;overflow-y:auto;background:#090d16;padding:10px;border-radius:8px;border:1px solid #1e293b;display:none;"></div>';
+  document.body.appendChild(box);
+
+  var mainStatus = document.getElementById('vin-main-status');
+  var pbar = document.getElementById('vin-pbar');
+  var subLog = document.getElementById('vin-sub-log');
+
+  (async function () {
+    try {
+      // 1. Tải kho xe từ Supabase
+      var khoRes = await fetch(sbUrl + '/rest/v1/khoxe?select=id,vin,so_may,ma_dms&trang_thai=not.is.null', { headers: sbHeaders });
+      if (!khoRes.ok) throw new Error('Không thể tải khoxe: ' + (await khoRes.text()));
+      var khoCars = await khoRes.json();
+      var totalKho = khoCars.length;
+
+      pbar.style.width = '40%';
+      mainStatus.innerHTML = '<div style="color:#38bdf8;">🔍 Đang đối soát ' + totalKho + ' xe kho với DMS...</div><div style="width:100%;height:6px;background:#334155;border-radius:3px;overflow:hidden;margin-top:8px;"><div style="width:40%;height:100%;background:#38bdf8;"></div></div>';
+
+      var cleanVins = khoCars.map(function (c) { return (c.vin || '').trim().toUpperCase(); }).filter(function (v) { return v.length > 0; });
+
+      // 2. Quét DMS cho các VIN trong kho bằng _Xrm.WebApi
+      var dmsRecords = [];
+      var batchSize = 15;
+      for (var i = 0; i < cleanVins.length; i += batchSize) {
+        var chunk = cleanVins.slice(i, i + batchSize);
+        var filter = chunk.map(function (v) { return "xts_chassisnumber eq '" + v + "'"; }).join(' or ');
+        try {
+          var res = await _Xrm.WebApi.retrieveMultipleRecords('xts_inventorynewvehicle', '?$select=xts_chassisnumber,xts_enginenumber,_xts_siteid_value,_xts_lastvehicleorderid_value,modifiedon&$filter=' + filter);
+          if (res && res.entities) dmsRecords.push.apply(dmsRecords, res.entities);
+        } catch (e) {
+          console.warn('Lỗi đọc batch DMS:', e);
+        }
+      }
+
+      // Gom theo VIN để kiểm tra đa dòng
+      var dmsByVin = {};
+      dmsRecords.forEach(function (r) {
+        var v = String(r.xts_chassisnumber || '').trim().toUpperCase();
+        if (!v) return;
+        if (!dmsByVin[v]) dmsByVin[v] = [];
+        dmsByVin[v].push(r);
+      });
+
+      var soldVins = [];
+      var updateList = [];
+
+      khoCars.forEach(function (c) {
+        var vin = (c.vin || '').trim().toUpperCase();
+        if (!vin) return;
+        var recs = dmsByVin[vin];
+
+        // Nếu xe chưa có trên DMS -> xe kế hoạch vận tải -> GIỮ NGUYÊN
+        if (!recs || recs.length === 0) return;
+
+        // Nếu BẤT KỲ dòng nào có số đơn hàng cuối cùng -> ĐÃ XHĐ
+        var isSold = recs.some(function (it) { return !!it._xts_lastvehicleorderid_value; });
+        if (isSold) {
+          soldVins.push(vin);
+        } else {
+          var best = recs.find(function (it) { return !!it.xts_enginenumber; }) || recs[0];
+          var siteFormatted = best['_xts_siteid_value@OData.Community.Display.V1.FormattedValue'];
+          var dmsVal = siteFormatted ? siteFormatted.split(' ')[0] : (best._xts_siteid_value || '');
+          var engVal = best.xts_enginenumber ? String(best.xts_enginenumber).trim() : '';
+
+          if (dmsVal || engVal) {
+            updateList.push({
+              vin: vin,
+              ma_dms: dmsVal || c.ma_dms || null,
+              so_may: engVal || c.so_may || null
+            });
+          }
+        }
+      });
+
+      pbar.style.width = '70%';
+
+      // Gỡ xe XHĐ khỏi khoxe (ngầm, an toàn)
+      if (soldVins.length > 0) {
+        await fetch(sbUrl + '/rest/v1/rpc/rpc_auto_remove_sold_cars', {
+          method: 'POST',
+          headers: sbHeaders,
+          body: JSON.stringify({ p_sold_vins: soldVins, p_actor_name: 'DMS Auto Radar' })
+        });
+      }
+
+      // Cập nhật mã DMS và số máy cho khoxe
+      if (updateList.length > 0) {
+        await fetch(sbUrl + '/rest/v1/rpc/rpc_sync_dms_metadata', {
+          method: 'POST',
+          headers: sbHeaders,
+          body: JSON.stringify({ p_cars: updateList })
+        });
+      }
+
+      pbar.style.width = '100%';
+      pbar.style.background = '#10b981';
+      mainStatus.innerHTML = '<div style="color:#10b981;font-weight:bold;font-size:14px;">✅ Kho xe đã đồng bộ thành công!</div><div style="color:#94a3b8;font-size:12px;margin-top:4px;">Xong trong 1 giây. Đã cập nhật <b>' + updateList.length + '</b> xe.</div><div style="margin-top:8px;padding-top:8px;border-top:1px solid #1e293b;font-size:12px;">• Xe kho được cập nhật Mã DMS: <b>' + updateList.length + '</b> xe<br/>• ' + (soldVins.length > 0 ? '<span style="color:#ef4444">• Đã gỡ xe XHĐ khỏi kho: <b>' + soldVins.length + '</b> xe</span>' : '• Tất cả xe trong kho đều chưa xuất HĐ.') + '</div>';
+
+      // 3. Chạy ngầm nạp thongtinxe
+      subLog.style.display = 'block';
+      subLog.innerHTML = '<div style="color:#38bdf8;font-weight:bold;">⏳ Đang tải toàn bộ kho DMS để nạp thongtinxe...</div>';
+      runFastThongtinxe(_Xrm, subLog);
+
+    } catch (err) {
+      console.error(err);
+      mainStatus.innerHTML = '<div style="color:#ef4444;font-weight:bold;">❌ Lỗi: ' + err.message + '</div>';
+    }
+  })();
+
+  function runFastThongtinxe(_xrm, logEl) {
+    var allDms = [];
+    var selectCols = 'xts_chassisnumber,xts_enginenumber,xts_productdescription,_xts_siteid_value,_xts_configurationid_value,xts_productionyear,xts_stocknumber,xts_referencenumber,_xts_productid_value,_xts_lastvehicleorderid_value,modifiedon';
+
+    function fetchPage(query) {
+      _xrm.WebApi.retrieveMultipleRecords('xts_inventorynewvehicle', query).then(async function (res) {
+        if (res && res.entities && res.entities.length > 0) {
+          allDms.push.apply(allDms, res.entities);
+          logEl.innerHTML = '<div>📥 Đang đọc DMS... (đã tải ' + allDms.length + ' bản ghi)</div>';
+        }
+
+        var nextLink = res['@odata.nextLink'] || res.nextLink;
+        if (nextLink) {
+          fetchPage(nextLink.substring(nextLink.indexOf('?')));
+        } else {
+          // Xử lý bóc tách và loại bỏ các xe có dòng đã XHĐ
+          logEl.innerHTML = '<div style="color:#fbbf24;">🔍 Đang phân tích đa dòng cho ' + allDms.length + ' bản ghi DMS...</div>';
+
+          var vinGroups = {};
+          allDms.forEach(function (it) {
+            var vin = String(it.xts_chassisnumber || '').trim().toUpperCase();
+            if (!vin || vin.length !== 17) return;
+            if (!vinGroups[vin]) vinGroups[vin] = [];
+            vinGroups[vin].push(it);
+          });
+
+          var nonSoldCars = [];
+          for (var vin in vinGroups) {
+            var recs = vinGroups[vin];
+            // Nếu BẤT KỲ dòng nào có _xts_lastvehicleorderid_value -> XE ĐÃ XHĐ -> BỎ QUA
+            var isSold = recs.some(function (r) { return !!r._xts_lastvehicleorderid_value; });
+            if (isSold) continue;
+
+            // Xe chưa XHĐ: lấy bản ghi có số máy hoặc bản ghi mới nhất
+            recs.sort(function (a, b) {
+              var tA = a.modifiedon ? new Date(a.modifiedon).getTime() : 0;
+              var tB = b.modifiedon ? new Date(b.modifiedon).getTime() : 0;
+              return tB - tA;
+            });
+            var best = recs.find(function (r) { return !!r.xts_enginenumber; }) || recs[0];
+
+            nonSoldCars.push({
+              vin: vin,
+              so_may: String(best.xts_enginenumber || '').trim(),
+              mo_ta: String(best.xts_productdescription || '').trim(),
+              khu_vuc: String(best['_xts_siteid_value@OData.Community.Display.V1.FormattedValue'] || best._xts_siteid_value || '').trim(),
+              phien_ban: String(best['_xts_configurationid_value@OData.Community.Display.V1.FormattedValue'] || ''),
+              so_ton_kho: String(best.xts_stocknumber || ''),
+              so_tham_chieu: String(best.xts_referencenumber || ''),
+              ma_san_pham: String(best['_xts_productid_value@OData.Community.Display.V1.FormattedValue'] || best._xts_productid_value || ''),
+              nam_san_xuat: best.xts_productionyear ? parseInt(best.xts_productionyear) : null
+            });
+          }
+
+          logEl.innerHTML += '<div style="color:#38bdf8;">💾 Lọc được ' + nonSoldCars.length + ' xe chưa XHĐ. Đang nạp database...</div>';
+
+          // Nạp theo từng lô 500 xe vào RPC rpc_sync_thongtinxe
+          var totalSaved = 0;
+          var batchSize = 500;
+          for (var i = 0; i < nonSoldCars.length; i += batchSize) {
+            var batch = nonSoldCars.slice(i, i + batchSize);
+            try {
+              var rpcRes = await fetch(sbUrl + '/rest/v1/rpc/rpc_sync_thongtinxe', {
+                method: 'POST',
+                headers: sbHeaders,
+                body: JSON.stringify({ p_cars: batch })
+              });
+              if (rpcRes.ok) {
+                var rpcData = await rpcRes.json();
+                totalSaved += (rpcData.count || batch.length);
+                logEl.innerHTML += '<div>💾 Đã nạp lô ' + (Math.floor(i / batchSize) + 1) + ': +' + batch.length + ' xe (Tổng: ' + totalSaved + ')</div>';
+                logEl.scrollTop = logEl.scrollHeight;
+              } else {
+                var errTxt = await rpcRes.text();
+                logEl.innerHTML += '<div style="color:#ef4444;">⚠️ Lỗi lô ' + (Math.floor(i / batchSize) + 1) + ': ' + errTxt + '</div>';
+              }
+            } catch (postErr) {
+              logEl.innerHTML += '<div style="color:#ef4444;">⚠️ Lỗi mạng lô ' + (Math.floor(i / batchSize) + 1) + ': ' + postErr.message + '</div>';
+            }
+          }
+
+          logEl.innerHTML += '<div style="color:#10b981;font-weight:bold;margin-top:6px;border-top:1px solid #1e293b;padding-top:6px;">🎉 Hoàn tất: Đã lưu ' + totalSaved + ' xe chưa XHĐ vào bảng thongtinxe!</div>';
+          logEl.scrollTop = logEl.scrollHeight;
+        }
+      }, function (err) {
+        logEl.innerHTML += '<div style="color:#ef4444;">⚠️ Lỗi đọc DMS: ' + (err ? err.message : '') + '</div>';
+      });
+    }
+
+    fetchPage('?$select=' + selectCols + '&$filter=statecode eq 0');
+  }
+})();

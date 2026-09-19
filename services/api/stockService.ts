@@ -997,6 +997,7 @@ export interface CyberXepXeFilterParams {
     all?: string;
     is_xep_xe?: string;
     showroom?: string;
+    keyword?: string;
 }
 
 export interface CyberXepXeContractsResponse {

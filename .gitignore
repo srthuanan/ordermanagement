@@ -50,3 +50,5 @@ tmp_*.json
 tmp_*.js
 .vercel
 public/cyber_pdfs/
+
+.dms_profiles/

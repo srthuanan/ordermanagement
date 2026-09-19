@@ -1,0 +1,140 @@
+javascript:(function(){
+    var _Xrm = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_Xrm || !_Xrm.WebApi) {
+        try {
+            var frames = window.frames;
+            for (var i = 0; i < frames.length; i++) {
+                if (frames[i].Xrm && frames[i].Xrm.WebApi) { _Xrm = frames[i].Xrm; break; }
+            }
+        } catch(e){}
+    }
+
+    if (!_Xrm || !_Xrm.WebApi) {
+        alert('Vui lòng mở trang DMS VinFast trước khi chạy!');
+        return;
+    }
+
+    var defaultVal = '';
+    try {
+        if (_Xrm.Page && _Xrm.Page.getAttribute) {
+            if (_Xrm.Page.getAttribute('xts_chassisnumber')) {
+                defaultVal = _Xrm.Page.getAttribute('xts_chassisnumber').getValue() || '';
+            } else if (_Xrm.Page.getAttribute('xts_purchaseordernumber')) {
+                defaultVal = _Xrm.Page.getAttribute('xts_purchaseordernumber').getValue() || '';
+            } else if (_Xrm.Page.getAttribute('xts_purchasereceiptnumber')) {
+                var poLookup = _Xrm.Page.getAttribute('xts_purchaseorderid');
+                if (poLookup && poLookup.getValue() && poLookup.getValue()[0]) {
+                    defaultVal = poLookup.getValue()[0].name || '';
+                }
+            }
+        }
+    } catch(e){}
+
+    var inputPrompt = prompt('NHẬP SỐ VIN HOẶC SỐ PO ĐỂ TỰ ĐỘNG PHÁT HÀNH PR (NHẬP KHO):\n(Nhập 1 số hoặc dán nhiều số cách nhau bằng dấu phẩy, khoảng trắng hoặc xuống dòng):', defaultVal || '');
+    if (!inputPrompt || !inputPrompt.trim()) return;
+
+    var rawList = inputPrompt.split(/[\n,;\s]+/).map(function(s){ return s.trim().toUpperCase(); }).filter(function(s){ return s.length > 0; });
+    if (rawList.length === 0) return;
+
+    var progress = document.createElement('div');
+    progress.style = 'position:fixed;top:15px;right:15px;background:#0f172a;color:#38bdf8;padding:16px 22px;z-index:9999999;border-radius:12px;font-family:sans-serif;font-size:13px;font-weight:bold;box-shadow:0 12px 30px rgba(0,0,0,0.6);border:1px solid #38bdf840;backdrop-filter:blur(8px);';
+    progress.innerHTML = 'Đang tra cứu & phát hành PR cho ' + rawList.length + ' mục...';
+    document.body.appendChild(progress);
+
+    var successList = [];
+    var failList = [];
+
+    async function processItem(idx) {
+        if (idx >= rawList.length) {
+            progress.remove();
+            var msg = 'KẾT QUẢ TỰ TÌM & PHÁT HÀNH PR (NHẬP KHO):\n\n';
+            if (successList.length > 0) {
+                msg += '• THÀNH CÔNG (' + successList.length + '):\n' + successList.map(function(s){ return '  ' + s; }).join('\n') + '\n\n';
+            }
+            if (failList.length > 0) {
+                msg += '• THẤT BẠI / BỎ QUA (' + failList.length + '):\n' + failList.map(function(f){ return '  ' + f.key + ': ' + f.err; }).join('\n');
+            }
+            alert(msg);
+            try {
+                if (_Xrm.Page && _Xrm.Page.data) _Xrm.Page.data.refresh(true);
+                else location.reload();
+            } catch(e) { location.reload(); }
+            return;
+        }
+
+        var item = rawList[idx];
+        progress.innerHTML = '(' + (idx + 1) + '/' + rawList.length + ') Đang xử lý: <b>' + item + '</b>...';
+
+        var isVin = (item.length === 17 && !item.includes('-PO-'));
+        var prList = [];
+        var detectedPo = '';
+
+        try {
+            if (isVin) {
+                var prdRes = await _Xrm.WebApi.retrieveMultipleRecords('xts_purchasereceiptdetail', '?=xts_chassisnumberregister eq \'' + item + '\'&=xts_purchasereceiptdetailid,_xts_purchasereceiptid_value');
+                if (prdRes && prdRes.entities && prdRes.entities.length > 0) {
+                    for (var d = 0; d < prdRes.entities.length; d++) {
+                        var pId = prdRes.entities[d]._xts_purchasereceiptid_value;
+                        if (pId) {
+                            var prRec = await _Xrm.WebApi.retrieveRecord('xts_purchasereceipt', pId, '?=xts_purchasereceiptid,xts_purchasereceiptnumber,xts_purchaseordernumber,xts_status');
+                            if (prRec) prList.push(prRec);
+                        }
+                    }
+                }
+
+                if (prList.length === 0) {
+                    var invRes = await _Xrm.WebApi.retrieveMultipleRecords('xts_inventorynewvehicle', '?=xts_chassisnumber eq \'' + item + '\'&=xts_referencenumber');
+                    if (invRes && invRes.entities && invRes.entities.length > 0) {
+                        detectedPo = invRes.entities[0].xts_referencenumber || '';
+                    }
+                }
+            } else {
+                detectedPo = item;
+            }
+
+            if (detectedPo && prList.length === 0) {
+                var cleanPo = encodeURIComponent(detectedPo);
+                var poRes = await _Xrm.WebApi.retrieveMultipleRecords('xts_purchaseorder', '?=xts_purchaseordernumber eq \'' + cleanPo + '\'&=xts_purchaseorderid');
+                if (poRes && poRes.entities && poRes.entities.length > 0) {
+                    var poId = poRes.entities[0].xts_purchaseorderid;
+                    var prRes2 = await _Xrm.WebApi.retrieveMultipleRecords('xts_purchasereceipt', '?=_xts_purchaseorderid_value eq ' + poId);
+                    if (prRes2 && prRes2.entities) prList = prRes2.entities;
+                }
+            }
+
+            if (prList.length === 0) {
+                failList.push({ key: item, err: detectedPo ? ('Tìm thấy PO ' + detectedPo + ' nhưng chưa có phiếu PR') : 'Không tìm thấy xe / PR' });
+                setTimeout(function(){ processItem(idx + 1); }, 300);
+                return;
+            }
+
+            for (var p = 0; p < prList.length; p++) {
+                var targetPr = prList[p];
+                var prId = targetPr.xts_purchasereceiptid;
+                var prNum = targetPr.xts_purchasereceiptnumber || prId;
+                var poNum = targetPr.xts_purchaseordernumber || detectedPo || item;
+
+                if (targetPr.xts_status !== 1) {
+                    failList.push({ key: item, err: 'Phiếu ' + prNum + ' đã phát hành trước đó' });
+                    continue;
+                }
+
+                progress.innerHTML = '(' + (idx + 1) + '/' + rawList.length + ') Đang phát hành PR: <b>' + prNum + '</b>...';
+                await _Xrm.WebApi.updateRecord('xts_purchasereceipt', prId, {
+                    'xts_handling': 2,
+                    'xts_calculatetax': true
+                });
+
+                successList.push((isVin ? ('VIN ' + item + ' -> PO ' + poNum + ' -> ') : '') + 'PR ' + prNum + ' [Đã phát hành]');
+            }
+
+            setTimeout(function(){ processItem(idx + 1); }, 400);
+
+        } catch(err) {
+            failList.push({ key: item, err: err.message || JSON.stringify(err) });
+            setTimeout(function(){ processItem(idx + 1); }, 400);
+        }
+    }
+
+    processItem(0);
+})();
