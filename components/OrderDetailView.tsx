@@ -294,7 +294,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         reason: dnx.dien_giai || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
                         status: 'completed',
                         soCtDnx: dnx.so_ct,
-                        adminNote: 'Đã hoàn tất phiếu chuyển trên CyberSoft',
+                        adminNote: 'Đã hoàn tất phiếu đề nghị xuất xe',
                         printData: printData
                     };
 
@@ -1468,11 +1468,11 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 {/* Tuyến đường 1 dòng duy nhất */}
                                 <div className="p-2.5 bg-slate-50/80 border border-slate-200/80 rounded-xl flex items-center justify-between gap-2 text-xs">
                                     <div className="flex-1 min-w-0">
-                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Kho xuất (Cyber ERP)</span>
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Kho xuất</span>
                                         <div className="font-bold text-xs text-slate-800 truncate" title={transferFromWarehouseName}>
                                             {isDetectingWarehouse ? (
                                                 <span className="text-indigo-600 font-normal text-[11px] flex items-center gap-1">
-                                                    <i className="fas fa-spinner fa-spin text-[10px]"></i> Đang tra Cyber...
+                                                    <i className="fas fa-spinner fa-spin text-[10px]"></i> Đang kiểm tra kho...
                                                 </span>
                                             ) : (
                                                 shortenWarehouseName(transferFromWarehouse, transferFromWarehouseName) || 'K87 - QL13 (HCM)'
@@ -1570,7 +1570,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                     <div>
                                                         <span className="font-bold">Đã lập phiếu DNX: {transferRequest.soCtDnx || 'Hoàn tất'}</span>
                                                         <p className="text-[11px] text-emerald-700 mt-0.5 font-normal">
-                                                            Phiếu xuất đã tạo xong trên CyberSoft. Bạn có thể in phiếu ngay.
+                                                            Phiếu xuất xe đã được tạo hoàn tất. Bạn có thể in phiếu ngay.
                                                         </p>
                                                     </div>
                                                 ) : transferRequest.status === 'rejected' ? (
@@ -1631,7 +1631,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             type="button"
                                             onClick={handleOpenPrintDnx}
                                             className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
-                                            title="Xem và in phiếu DNX chuẩn CyberSoft"
+                                            title="Xem và in phiếu Đề Nghị Xuất Xe (DNX)"
                                         >
                                             <i className="fas fa-print text-xs"></i>
                                             <span>In Phiếu DNX ({transferRequest.soCtDnx || 'DNX'})</span>

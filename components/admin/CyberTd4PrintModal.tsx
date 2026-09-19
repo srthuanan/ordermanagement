@@ -175,7 +175,7 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
                         <div className="flex flex-col items-center justify-center text-white gap-3 p-8 animate-pulse">
                             <i className="fas fa-circle-notch fa-spin text-4xl text-amber-500"></i>
                             <div className="text-sm font-bold text-slate-200">
-                                Đang kết xuất file PDF gốc từ CyberSoft ERP...
+                                Đang kết xuất file PDF gốc...
                             </div>
                             <div className="text-xs text-slate-400 font-mono">
                                 Stt_Rec: {data.stt_rec} • Mẫu TD400.mrt
@@ -220,7 +220,7 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
                                 type="button"
                                 onClick={handleDownloadPdf}
                                 className="px-4 py-2 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                                title="Tải file PDF Cyber về máy tính"
+                                title="Tải file PDF về máy tính"
                             >
                                 <i className="fas fa-download text-xs"></i>
                                 <span>Tải PDF Gốc</span>
@@ -234,7 +234,7 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
                             className="px-5 py-2 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <i className="fas fa-print"></i>
-                            <span>In File PDF Cyber Ngay</span>
+                            <span>In File PDF Ngay</span>
                         </button>
                     </div>
                 </div>

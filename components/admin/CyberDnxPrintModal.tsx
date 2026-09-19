@@ -169,7 +169,7 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                         </span>
                         <div>
                             <div className="text-sm font-bold flex items-center gap-2">
-                                <span>Phiếu Đề Nghị Xuất Xe (CyberSoft ERP)</span>
+                                <span>Phiếu Đề Nghị Xuất Xe</span>
                                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-600 text-white font-extrabold uppercase">
                                     {data.so_ct}
                                 </span>
@@ -207,7 +207,7 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                         <div className="flex flex-col items-center justify-center text-white gap-3 p-8 animate-pulse">
                             <i className="fas fa-circle-notch fa-spin text-4xl text-blue-500"></i>
                             <div className="text-sm font-bold text-slate-200">
-                                Đang kết xuất Phiếu Đề Nghị Xuất Xe từ CyberSoft ERP...
+                                Đang kết xuất Phiếu Đề Nghị Xuất Xe...
                             </div>
                             <div className="text-xs text-slate-400 font-mono">
                                 Stt_Rec: {data.stt_rec || '-'} • Mẫu PXX00.mrt
@@ -231,7 +231,7 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                             ref={pdfIframeRef}
                             src={cyberPdfUrl}
                             className="w-full h-full border-0 bg-white"
-                            title={`Đề Nghị Xuất Xe Cyber - ${data.so_ct}`}
+                            title={`Đề Nghị Xuất Xe - ${data.so_ct}`}
                         />
                     ) : null}
                 </div>
@@ -267,7 +267,7 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                                 type="button"
                                 onClick={handleDownloadPdfCyber}
                                 className="px-4 py-2 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
-                                title="Tải file PDF Cyber gốc về máy"
+                                title="Tải file PDF gốc về máy"
                             >
                                 <i className="fas fa-download text-xs"></i>
                                 <span>Tải PDF Gốc</span>
@@ -280,7 +280,7 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                             className="px-5 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <i className="fas fa-print"></i>
-                            <span>In File PDF Cyber Ngay</span>
+                            <span>In File PDF Ngay</span>
                         </button>
                     </div>
                 </div>

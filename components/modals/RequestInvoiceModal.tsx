@@ -146,7 +146,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 success: false,
                 found: false,
                 is_approved: false,
-                error: 'Không thể kết nối máy chủ CyberSoft'
+                error: 'Không thể kết nối máy chủ đối soát hợp đồng'
             });
         } finally {
             setIsCheckingCyberContract(false);
@@ -619,7 +619,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             <i className="fas fa-circle-notch text-xs"></i>
                         </div>
                         <div className="min-w-0">
-                            <p className="font-bold text-blue-900 uppercase tracking-wider text-[11px]">Đang kiểm tra hợp đồng Cyber...</p>
+                            <p className="font-bold text-blue-900 uppercase tracking-wider text-[11px]">Đang kiểm tra hợp đồng...</p>
                             <p className="text-[9px] text-blue-600 truncate">
                                 KH: {order["Tên khách hàng"] || 'N/A'} - TVBH: {order["Tên tư vấn bán hàng"] || 'N/A'}
                             </p>
@@ -640,8 +640,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             <i className="fas fa-shield-halved text-xs"></i>
                         </div>
                         <div className="min-w-0">
-                            <p className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Kiểm tra hợp đồng Cyber</p>
-                            <p className="text-[9px] text-slate-400 truncate">Nhấn để đối soát trạng thái phê duyệt trên CyberSoft ERP</p>
+                            <p className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Kiểm tra hợp đồng</p>
+                            <p className="text-[9px] text-slate-400 truncate">Nhấn để đối soát trạng thái phê duyệt hợp đồng</p>
                         </div>
                     </div>
                     <span className="text-[10px] font-bold text-blue-600 group-hover:underline flex items-center gap-1 flex-shrink-0">
@@ -660,7 +660,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         </div>
                         <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                                <span className="font-black text-emerald-950 uppercase tracking-wider text-[11px]">Hợp đồng Cyber đã duyệt</span>
+                                <span className="font-black text-emerald-950 uppercase tracking-wider text-[11px]">Hợp đồng đã được duyệt</span>
                                 <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-200 text-emerald-900 border border-emerald-300">
                                     {cyberContractStatus.ten_post || 'Đã duyệt'}
                                 </span>
@@ -673,7 +673,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     <button 
                         type="button" 
                         onClick={(e) => { e.stopPropagation(); recheckCyberContract(); }} 
-                        title="Kiểm tra lại từ Cyber"
+                        title="Kiểm tra lại trạng thái hợp đồng"
                         className="p-1.5 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
                     >
                         <i className="fas fa-arrows-rotate text-xs"></i>
@@ -692,14 +692,14 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-black text-amber-950 uppercase tracking-tight text-[11px]">
-                                Cảnh báo: Hợp đồng Cyber chưa duyệt
+                                Cảnh báo: Hợp đồng chưa được duyệt
                             </span>
                             <span className="px-1.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider bg-amber-200 text-amber-900 border border-amber-400">
                                 {cyberContractStatus.ten_post || (cyberContractStatus.found ? 'Chờ duyệt' : 'Chưa có HĐ')}
                             </span>
                         </div>
                         <p className="text-[10px] text-amber-900 font-bold mt-0.5 truncate">
-                            {cyberContractStatus.so_ct ? `Số HĐ: ${cyberContractStatus.so_ct}` : 'Chưa tìm thấy hợp đồng trên Cyber'}
+                            {cyberContractStatus.so_ct ? `Số HĐ: ${cyberContractStatus.so_ct}` : 'Chưa tìm thấy hợp đồng trên hệ thống'}
                         </p>
                         <p className="text-[9px] text-amber-700 leading-tight">
                             Vui lòng liên hệ Giám đốc để duyệt hợp đồng trước khi gửi XHĐ.
@@ -709,7 +709,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 <button 
                     type="button" 
                     onClick={(e) => { e.stopPropagation(); recheckCyberContract(); }} 
-                    title="Kiểm tra lại từ Cyber"
+                    title="Kiểm tra lại trạng thái hợp đồng"
                     className="flex-shrink-0 px-2.5 py-1.5 rounded-lg bg-white hover:bg-amber-100/60 text-amber-800 border border-amber-300 text-[10px] font-bold shadow-xs hover:shadow-sm transition-all flex items-center gap-1 cursor-pointer ml-2"
                 >
                     <i className="fas fa-arrows-rotate text-[9px]"></i>
@@ -1094,7 +1094,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                 isLoading={isSubmitting || isValidatingContract} 
                                 leftIcon={<i className="fas fa-paper-plane"></i>}
                             >
-                                {isValidatingContract ? 'Đang kiểm tra Cyber...' : 'Gửi Yêu Cầu'}
+                                {isValidatingContract ? 'Đang kiểm tra hợp đồng...' : 'Gửi Yêu Cầu'}
                             </Button>
                         )}
                     </footer>
@@ -1128,7 +1128,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                 Cảnh Báo Hợp Đồng Chưa Được Duyệt
                             </h3>
                             <p className="text-xs text-slate-500 mt-0.5">
-                                Dữ liệu đối soát tự động từ hệ thống CyberSoft ERP
+                                Dữ liệu đối soát tự động từ hệ thống quản lý
                             </p>
                         </div>
                     </div>
@@ -1136,7 +1136,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     {/* Details Card */}
                     <div className="bg-gradient-to-br from-amber-50/70 via-orange-50/40 to-slate-50/50 rounded-2xl border border-amber-200/70 p-4 mb-5 space-y-2.5 text-xs">
                         <div className="flex justify-between items-center pb-2 border-b border-amber-200/40">
-                            <span className="text-slate-500 font-medium">Số hợp đồng Cyber:</span>
+                            <span className="text-slate-500 font-medium">Số hợp đồng:</span>
                             <span className="font-mono font-bold text-slate-800">
                                 {contractWarning.so_ct || 'Chưa tìm thấy hợp đồng'}
                             </span>
@@ -1157,7 +1157,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         </div>
 
                         <div className="flex justify-between items-center pt-0.5">
-                            <span className="text-slate-500 font-medium">Trạng thái trên Cyber:</span>
+                            <span className="text-slate-500 font-medium">Trạng thái hợp đồng:</span>
                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${
                                 contractWarning.found 
                                     ? 'bg-amber-100 text-amber-900 border border-amber-300'
@@ -1173,7 +1173,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 mb-6 text-[11px] text-slate-600 leading-relaxed flex items-start gap-2.5">
                         <i className="fas fa-info-circle text-blue-500 mt-0.5 flex-shrink-0 text-xs"></i>
                         <span>
-                            Hợp đồng của khách hàng <strong>{order["Tên khách hàng"]}</strong> hiện <strong>chưa được phê duyệt</strong> trên hệ thống CyberSoft. Vui lòng liên hệ Giám đốc để duyệt hợp đồng trước khi xuất hóa đơn.
+                            Hợp đồng của khách hàng <strong>{order["Tên khách hàng"]}</strong> hiện <strong>chưa được phê duyệt</strong> trên hệ thống. Vui lòng liên hệ Quản lý/Giám đốc để duyệt hợp đồng trước khi xuất hóa đơn.
                         </span>
                     </div>
 
