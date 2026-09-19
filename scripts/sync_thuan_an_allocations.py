@@ -96,7 +96,7 @@ MODEL_MAP = {
     "VF908":      ("VF 9",   "Plus 6 chỗ trần thép"),
     "VF926":      ("VF 9",   "Plus 7 chỗ trần thép"),
     # LIMO / EC Van / Khác
-    "LIMO":       ("VF e34", "Limo Green"),
+    "LIMO":       ("LIMO",   "LIMO"),
     "ECVAN":      ("EC Van", "Tiêu chuẩn"),
     "ECVAN01":    ("EC Van", "Tiêu chuẩn"),
     "ECVANNC":    ("EC Van", "Nâng cao"),
@@ -110,22 +110,109 @@ MODEL_MAP = {
     "VFMPV7MNC":  ("VF MPV 7", "Màu nâng cao"),
 }
 
-COLOR_MAP = {
-    "CE11": "Cloudy White (CE11)",
-    "CE12": "Starlight Silver (CE12)",
-    "CE13": "Midnight Black (CE13)",
-    "CE14": "Aurora Blue (CE14)",
-    "CE15": "Brahminy White (CE15)",
-    "CE16": "Sage Green (CE16)",
-    "CE17": "Burgundy (CE17)",
+# Bảng ánh xạ chính xác Mã màu Ngoại thất Cyber sang Tên màu chuẩn Web App (constants.ts)
+WEB_EXTERIOR_COLORS = {
+    # 1 màu
+    "CE11": "Jet Black (CE11)",
     "CE18": "Brahminy White (CE18)",
-    "CE19": "Khaki Brown (CE19)",
-    "CE1M": "Brahminy White (CE1M)",
-    "CE1V": "Bạc",
-    "CE1W": "Xanh Lá Nhạt",
-    "CE2Q": "Đỏ Ruby",
-    "181U": "Vàng nóc trắng",
+    "CE17": "Silver (CE17)",
+    "CE2Q": "Solar Ruby (CE2Q)",
+    "CE1W": "Urbant Mint (CE1W)",
+    "CE1V": "Zenith Grey (CE1V)",
+    "CE1U": "Summer Yellow (CE1U)",
+    "CE1M": "Crimson Red (CE1M)",
+    "CE1N": "Vinfast Blue (CE1N)",
+    "CE14": "Neptune Grey (CE14)",
+    "CE1J": "Electric Blue (CE1J)",
+    "CE1H": "Deep Ocean (CE1H)",
+    "CE1A": "Sunset ORB (CE1A)",
+    "CE1X": "Iris Berry (CE1X)",
+    "CE21": "Rose Pink (CE21)",
+    "CE2G": "Sky Blue (CE2G)",
+    "CE2T": "Pebble Beige (CE2T)",
+    "CE2K": "Pink Gold (CE2K)",
+    "CE2J": "Moonlit Ocean (CE2J)",
+    "CE2N": "Introspective Brown (CE2N)",
+    "CE2O": "Mysterioso Purple (CE2O)",
+    "CE22": "Ivy_Green_GNE (CE22)",
+    "CE23": "Champagne_Creme_YLG (CE23)",
+    "CE2B": "Vinbus Green (CE2B)",
+    "CE32": "Vitality Orange (CE32)",
+    "CE33": "Starburst Blue (CE33)",
+
+    # 2 màu (phối nóc)
+    "111U": "Jet Black Roof- Summer Yellow Body (111U)",
+    "181U": "Brahminy White Roof- Summer Yellow Body (181U)",
+    "181Y": "Brahminy White Roof- Aquatic Azure Body (181Y)",
+    "1821": "Brahminy White Roof- Rose Pink Body (1821)",
+    "181X": "Brahminy White Roof - Iris Berry Body (181X)",
+    "111M": "Crimson Red - Jet Black Roof (111M)",
+    "111H": "Deep Ocean_Jet Black Roof (111H)",
+    "112Q": "Solar Ruby Body - Jet Black Roof (112Q)",
+    "1132": "Vitality Orange Body - Jet Black Roof (1132)",
+    "171V": "Zenith Grey-desat Silver Roof (171V)",
+    "171W": "Urbant Mint Green - Desat Silv (171W)",
+    "1722": "Ivy Green-desat Silver Roof (1722)",
+    "1833": "Starburst Blue Body - Infinity Blanc Roof (1833)",
+    "1832": "Vitality Orange Body - Infinity Blanc Roof (1832)",
+    "312O": "Mysterioso Purple Body - Stealth Gray Roof (312O)",
+    "3111": "Jet Black Body - Stealth Gray Roof (3111)",
+    "1V18": "Infinity Blanc_Zenith Grey Roof (1v18)",
+    "1823": "Champagne Creme_Infinity Blanc Roof (1823)",
+    "182G": "Infinity Blanc Roof-Sky Blue (182G)",
+    "2911": "Jet Black_Mystery Bronze Roof (2911)",
+    "2811": "Jet Black - Graphite Roof (2811)",
+    "2523": "Champagne Creme - Matte Champa (2523)",
+    "2418": "Infinity Blanc _ Silky White R (2418)",
+    "2311": "Jet Black-Champagne Creme Roof (2311)",
+    "1Y26": "Atlantic Blue-Aquatic Azure Ro (1Y26)",
+    "2A26": "Alantic Blue_Denim Blue Roof (2A26)",
+    "2927": "Crimson Velvet - Mystery Bronz (2927)",
 }
+
+OFFICIAL_COLOR_NAMES = WEB_EXTERIOR_COLORS
+
+def format_color_by_code(ma_mau: str, ten_mau_cyber: str = "") -> str:
+    code = (ma_mau or "").strip().upper()
+    name = (ten_mau_cyber or "").strip()
+    
+    # 1. Ưu tiên khớp chính xác với danh mục màu trên Web App
+    if code in WEB_EXTERIOR_COLORS:
+        return WEB_EXTERIOR_COLORS[code]
+
+    # 2. Nếu là mã mới chưa có trên Web, dùng tên từ Cyber dmMauxe
+    if name:
+        clean_name = name.title() if name.isupper() else name
+        if clean_name.lower().startswith("màu "):
+            clean_name = clean_name[4:].strip()
+        return f"{clean_name} ({code})" if code else clean_name
+
+    if code:
+        return code
+    return "-"
+
+def format_interior_color_by_code(ma_mau_nt: str, ten_mau_nt_cyber: str = "") -> str:
+    code = (ma_mau_nt or "").strip().upper()
+    name = (ten_mau_nt_cyber or "").strip().lower()
+
+    # Khớp chính xác 4 màu nội thất chuẩn trên Web App: Black, Brown, Beige, Grey
+    if code in ["CI11", "CI1H", "PO21", "PO25"] or "đen" in name or "black" in name:
+        return "Black"
+    if code in ["CI12", "CI18", "PO26"] or "nâu" in name or "brown" in name or "mocha" in name:
+        return "Brown"
+    if code in ["CI13", "PO27"] or "be" in name or "beige" in name:
+        return "Beige"
+    if code in ["CI1M"] or "xám" in name or "grey" in name or "gray" in name:
+        return "Grey"
+
+    if name:
+        clean = name.title()
+        if clean.lower().startswith("màu "):
+            clean = clean[4:].strip()
+        return clean
+    return "Black"
+
+COLOR_MAP = WEB_EXTERIOR_COLORS
 
 def fetch_allocations_from_cyber(from_date: str, to_date: str, ttcp_code="02.01.08"):
     try:
@@ -362,19 +449,28 @@ def sync_khoxe_locations_from_cyber(target_vins: list = None, preview: bool = Fa
 
 def map_allocation_to_khoxe(car: dict, plan_map: dict = None, cyber_locations: dict = None) -> dict:
     ma_kx = (car.get("ma_kx") or "").strip()
-    if ma_kx in MODEL_MAP:
+    loai_xe_cyber = (car.get("loai_xe_cyber") or "").strip()
+    phien_ban_cyber = (car.get("phien_ban_cyber") or "").strip()
+
+    if ma_kx == "LIMO":
+        dong_xe = "LIMO"
+        phien_ban = "LIMO"
+    elif ma_kx in MODEL_MAP:
         dong_xe, phien_ban = MODEL_MAP[ma_kx]
     elif ma_kx.startswith("VF"):
         dong_xe = "VF " + ma_kx[2:3] if len(ma_kx) >= 3 else ma_kx
-        phien_ban = car.get("phien_ban_cyber") or ""
+        phien_ban = phien_ban_cyber or loai_xe_cyber
     else:
-        dong_xe = car.get("loai_xe_cyber") or ma_kx
-        phien_ban = car.get("phien_ban_cyber") or ""
+        dong_xe = loai_xe_cyber or ma_kx
+        phien_ban = phien_ban_cyber
 
-    ma_mau_ngoai = (car.get("ma_mau_ngoai") or "").strip()
+    ma_mau_ngoai = (car.get("ma_mau_ngoai") or "").strip().upper()
     ten_mau_ngoai = (car.get("ten_mau_ngoai") or "").strip()
-    ngoai_that = COLOR_MAP.get(ma_mau_ngoai, ten_mau_ngoai if ten_mau_ngoai else ma_mau_ngoai)
-    noi_that = (car.get("ten_mau_noi") or "").strip()
+    ngoai_that = format_color_by_code(ma_mau_ngoai, ten_mau_ngoai)
+
+    ma_mau_noi = (car.get("ma_mau_noi") or "").strip().upper()
+    ten_mau_noi = (car.get("ten_mau_noi") or "").strip()
+    clean_noi_that = format_interior_color_by_code(ma_mau_noi, ten_mau_noi)
 
     invoid_dt = car.get("ngay_phan_bo")
     if isinstance(invoid_dt, (datetime, date)) and invoid_dt.year > 1900:
@@ -413,13 +509,25 @@ def map_allocation_to_khoxe(car: dict, plan_map: dict = None, cyber_locations: d
         "so_may": so_may,
         "dong_xe": dong_xe,
         "phien_ban": phien_ban,
+        # Giữ đầy đủ các thông tin gốc CyberSoft để kiểm tra & sửa đổi
+        "ma_kx": ma_kx,
+        "ten_kx_cyber": loai_xe_cyber,
+        "ma_mau": ma_mau_ngoai,
+        "ten_mau_cyber": ten_mau_ngoai,
+        "ma_mau_noi": ma_mau_noi,
+        "ten_mau_noi_cyber": ten_mau_noi,
         "ngoai_that": ngoai_that,
-        "noi_that": noi_that,
+        "noi_that": clean_noi_that or ten_mau_noi,
         "ma_dms": ma_dms,
         "vi_tri": vi_tri,
-        "trang_thai": "Trong kho",
+        "trang_thai": "Chưa ghép",
         "ngay_nhap": ngay_nhap_str,
     }
+
+VALID_KHOXE_FIELDS = {
+    "vin", "dong_xe", "phien_ban", "ngoai_that", "noi_that",
+    "so_may", "ma_dms", "vi_tri", "trang_thai", "ngay_nhap"
+}
 
 def upsert_to_supabase_khoxe(records: list):
     if not records:
@@ -430,8 +538,19 @@ def upsert_to_supabase_khoxe(records: list):
     total_ok = 0
     total_fail = 0
 
-    for i in range(0, len(records), CHUNK_SIZE):
-        chunk = records[i:i + CHUNK_SIZE]
+    # Lọc chỉ những cột thực tế tồn tại trong bảng khoxe của Supabase
+    clean_records = []
+    for r in records:
+        rec = {k: v for k, v in r.items() if k in VALID_KHOXE_FIELDS and v is not None}
+        if not rec.get("vin"):
+            continue
+        rec["vin"] = rec["vin"].strip().upper()
+        if not rec.get("trang_thai"):
+            rec["trang_thai"] = "Chưa ghép"
+        clean_records.append(rec)
+
+    for i in range(0, len(clean_records), CHUNK_SIZE):
+        chunk = clean_records[i:i + CHUNK_SIZE]
         resp = requests.post(
             url,
             headers={**HEADERS, "Prefer": "resolution=merge-duplicates"},
@@ -444,6 +563,8 @@ def upsert_to_supabase_khoxe(records: list):
         else:
             total_fail += len(chunk)
             print(f"[Supabase Error] HTTP {resp.status_code}: {resp.text}", file=sys.stderr)
+
+    return total_ok, total_fail
 
 MODEL_SEARCH_ALIASES = {
     'VF 2': ['%VF 2%', '%VF2%'],
@@ -2405,7 +2526,14 @@ def main():
         voucher_type = p.get("voucher_type") or "TD4"
         paper_size = p.get("paper_size") or "A4"
         user_name = p.get("user_name") or "02.NHANPT"
-        res = export_cyber_pdf_via_ps(stt_rec, voucher_type, paper_size, user_name)
+        inc_sig = p.get("include_signatures")
+        if inc_sig is None:
+            inc_sig_str = "true"
+        elif isinstance(inc_sig, bool):
+            inc_sig_str = "true" if inc_sig else "false"
+        else:
+            inc_sig_str = str(inc_sig)
+        res = export_cyber_pdf_via_ps(stt_rec, voucher_type, paper_size, user_name, inc_sig_str)
         print(json.dumps(res, default=str, ensure_ascii=False))
         return
 
@@ -2421,16 +2549,38 @@ def main():
         print(json.dumps(res, default=str, ensure_ascii=False))
         return
 
+    p = {}
+    if not (args.from_date and args.preview):
+        p = get_input_params()
     today = date.today()
-    from_date = args.from_date or today.replace(day=1).strftime("%Y-%m-%d")
-    to_date = args.to_date or today.strftime("%Y-%m-%d")
+    from_date = (p.get("fromDate") if isinstance(p, dict) else None) or args.from_date or today.replace(day=1).strftime("%Y-%m-%d")
+    to_date = (p.get("toDate") if isinstance(p, dict) else None) or args.to_date or today.strftime("%Y-%m-%d")
+    is_preview = args.preview or (isinstance(p, dict) and p.get("preview", False))
+
+    # Nếu người dùng đã chỉnh sửa danh sách xe ngay tại Modal và bấm nạp
+    input_cars = p.get("cars") if isinstance(p, dict) and p.get("cars") else None
+    if input_cars and not is_preview:
+        ok, fail = upsert_to_supabase_khoxe(input_cars)
+        output = {
+            "success": fail == 0,
+            "mode": "sync_custom",
+            "from_date": from_date,
+            "to_date": to_date,
+            "total": len(input_cars),
+            "success_count": ok,
+            "fail_count": fail,
+            "cars": input_cars[:10],
+            "vins": [c.get("vin") for c in input_cars if c.get("vin")]
+        }
+        print(json.dumps(output, default=str, ensure_ascii=False))
+        return
 
     raw_cars = fetch_allocations_from_cyber(from_date, to_date)
     raw_vins = [c.get("vin", "").strip().upper() for c in raw_cars if c.get("vin")]
     plan_map = fetch_plan_map(raw_vins)
     mapped_cars = [map_allocation_to_khoxe(c, plan_map) for c in raw_cars if c.get("vin")]
 
-    if args.preview:
+    if is_preview:
         output = {
             "success": True,
             "mode": "preview",
@@ -2671,7 +2821,7 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
 
     return tickets
 
-def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT"):
+def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT", include_signatures="true"):
     import subprocess
     import os
     import re
@@ -2679,7 +2829,8 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ps_path = os.path.join(script_dir, "render_cyber_pdf.ps1")
     
-    clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(stt_rec))
+    sig_suffix = "_sig" if str(include_signatures).lower() in ["true", "1"] else "_nosig"
+    clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(stt_rec)) + sig_suffix
     project_dir = os.path.dirname(script_dir)
     out_dir = os.path.join(project_dir, "public", "cyber_pdfs")
     os.makedirs(out_dir, exist_ok=True)
@@ -2693,6 +2844,7 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
         "-VoucherType", str(voucher_type),
         "-PaperSize", str(paper_size),
         "-UserName", str(user_name),
+        "-IncludeSignatures", str(include_signatures),
         "-OutFile", out_file
     ]
     

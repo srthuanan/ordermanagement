@@ -29,3 +29,12 @@ export const includesNormalized = (source: string | undefined | null, keyword: s
         return normalizeString(source).includes(normalizedKeyword);
     }
 };
+
+export const formatShortWarehouseName = (name: string | undefined | null): string => {
+    if (!name) return '';
+    return name
+        .replace(/^(Kho xe ô tô Vinfast|Kho xe ô tô|Kho xe SR|Kho xe|Ô tô Vinfast|Ô tô VinFast|Vinfast|VinFast|Showroom|SR)\s*[-:]?\s*/i, '')
+        .replace(/^Minh Đạo\s*[-–—:]\s*/i, '')
+        .replace(/^Minh Đạo\s*/i, '')
+        .trim();
+};

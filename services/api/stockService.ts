@@ -565,7 +565,7 @@ const getCyberEndpoints = (apiPath: string): string[] => {
     ];
 };
 
-export const syncCyberAllocations = async (options: { fromDate?: string; toDate?: string; preview?: boolean } = {}) => {
+export const syncCyberAllocations = async (options: { fromDate?: string; toDate?: string; preview?: boolean; cars?: any[] } = {}) => {
     try {
         // 1. Thử gọi API qua Electron Desktop Bridge nếu có
         if (typeof window !== 'undefined' && window.electronAPI?.syncCyberAllocations) {
@@ -597,12 +597,41 @@ export const syncCyberAllocations = async (options: { fromDate?: string; toDate?
             }
         }
 
-        if (!response) {
-            throw new Error(lastErrorMsg || 'Không thể kết nối dịch vụ đồng bộ CyberSoft. Vui lòng mở ứng dụng Desktop (Electron) hoặc chạy lệnh `node server-cyber.mjs`.');
+        if (response) {
+            const data = await response.json();
+            return data;
         }
 
-        const data = await response.json();
-        return data;
+        // Dự phòng: Nếu là hành động Nạp xe (không phải preview) và có danh sách xe đã chuẩn hóa
+        if (!options.preview && options.cars && options.cars.length > 0) {
+            const VALID_COLS = ['vin', 'dong_xe', 'phien_ban', 'ngoai_that', 'noi_that', 'so_may', 'ma_dms', 'vi_tri', 'trang_thai', 'ngay_nhap'];
+            const cleanCars = options.cars.map(c => {
+                const item: any = {};
+                for (const k of VALID_COLS) {
+                    if (c[k] !== undefined && c[k] !== null) item[k] = c[k];
+                }
+                if (!item.trang_thai) item.trang_thai = 'Chưa ghép';
+                return item;
+            }).filter(c => !!c.vin);
+
+            if (cleanCars.length > 0) {
+                const { error: upsertErr } = await supabaseAdmin
+                    .from('khoxe')
+                    .upsert(cleanCars, { onConflict: 'vin' });
+
+                if (upsertErr) throw upsertErr;
+
+                return {
+                    success: true,
+                    total: cleanCars.length,
+                    success_count: cleanCars.length,
+                    fail_count: 0,
+                    vins: cleanCars.map(c => c.vin)
+                };
+            }
+        }
+
+        throw new Error(lastErrorMsg || 'Không thể kết nối dịch vụ đồng bộ CyberSoft. Vui lòng mở ứng dụng Desktop (Electron) hoặc chạy lệnh `node server-cyber.mjs`.');
     } catch (err: any) {
         console.error("Lỗi syncCyberAllocations:", err);
         return {
@@ -1625,6 +1654,7 @@ export interface ExportCyberPdfParams {
     voucher_type?: 'TD4' | 'DNX';
     paper_size?: 'A4' | 'A5';
     user_name?: string;
+    include_signatures?: boolean;
 }
 
 export interface ExportCyberPdfResponse {
@@ -1642,6 +1672,7 @@ export const exportCyberPdf = async (params: ExportCyberPdfParams): Promise<Expo
         if (params.voucher_type) queryParams.set('voucher_type', params.voucher_type);
         if (params.paper_size) queryParams.set('paper_size', params.paper_size);
         if (params.user_name) queryParams.set('user_name', params.user_name);
+        if (params.include_signatures !== undefined) queryParams.set('include_signatures', params.include_signatures ? 'true' : 'false');
 
         const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
         const endpoints = getCyberEndpoints(`/api/cyber/export-pdf${queryString}`);
@@ -1680,7 +1711,52 @@ export const exportCyberPdf = async (params: ExportCyberPdfParams): Promise<Expo
     }
 };
 
+// Hàm pre-generate PDF nền: gọi khi danh sách TD4 tickets load xong
+// Các phiếu chưa có file PDF sẽ được export âm thầm, không block UI
+// Khi user bấm In → file đã sẵn → mở ngay lập tức (0s)
+export const prewarmTd4Pdfs = (tickets: CyberVoucherTicketItem[]): void => {
+    // Chỉ chạy ở môi trường local/desktop có hỗ trợ CyberSoft Engine nội bộ
+    const isLocal = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1' ||
+        window.location.port === '5173'
+    );
+    if (!isLocal) return;
 
+    const td4Tickets = tickets.filter(t => t.voucher_type === 'TD4' && t.stt_rec);
+    if (!td4Tickets.length) return;
 
+    // Hàng đợi pre-generate: 1 phiếu tại một thời điểm để không làm nặng máy
+    const queue = [...td4Tickets];
+    let running = false;
 
+    const processNext = async () => {
+        if (running || !queue.length) return;
+        running = true;
+        const ticket = queue.shift()!;
+        try {
+            const cleanStt = ticket.stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_');
+            // Kiểm tra xem file đã có chưa
+            const check = await fetch(`/api/cyber/view-pdf?stt_rec=${cleanStt}`, { method: 'HEAD' });
+            if (!check.ok) {
+                // Chưa có → export nền (không await để không block)
+                const endpoints = [`/api/cyber/export-pdf?stt_rec=${encodeURIComponent(ticket.stt_rec)}&voucher_type=TD4&paper_size=A4&user_name=${encodeURIComponent(ticket.nvkd || '02.NHANPT')}`];
+                for (const ep of endpoints) {
+                    try {
+                        await fetch(ep, { method: 'GET', headers: { 'Accept': 'application/json' } });
+                        break; // success
+                    } catch (_) {}
+                }
+            }
+        } catch (_) {}
+        running = false;
+        // Delay nhỏ giữa các phiếu để không spam server
+        if (queue.length > 0) {
+            setTimeout(processNext, 500);
+        }
+    };
+
+    // Bắt đầu sau 3 giây để tránh tranh tài nguyên khi trang vừa load
+    setTimeout(processNext, 3000);
+};
 

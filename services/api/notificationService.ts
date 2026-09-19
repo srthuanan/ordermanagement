@@ -1,13 +1,14 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
-import { getStorageItem, getApi, postApi, ApiResult, ADMIN_USER } from './baseService';
+import { getStorageItem, getApi, postApi, ApiResult } from './baseService';
 
 
 export const fetchNotifications = async (): Promise<ApiResult> => {
     try {
         const currentConsultant = getStorageItem("currentConsultant") || "";
-        const actualUsername = getStorageItem("currentUser") || "";
+        const actualUsername = (getStorageItem("currentUser") || "").toLowerCase();
+        const userEmail = (getStorageItem("userEmail") || "").toLowerCase();
         const userRole = getStorageItem("userRole");
-        const isAdmin = actualUsername.toLowerCase() === 'admin' || userRole === 'Admin' || userRole === 'Quản trị viên';
+        const isAdmin = actualUsername === 'admin' || userEmail === 'showroomthuanan@gmail.com' || userRole === 'Admin' || userRole === 'Quản trị viên';
         
         let filterParts = ['recipient.eq.ALL', 'recipient.eq.ALL_TVBH'];
         if (currentConsultant) filterParts.push(`recipient.eq."${currentConsultant}"`);
@@ -45,21 +46,26 @@ export const fetchNotifications = async (): Promise<ApiResult> => {
             unreadCount
         };
     } catch (err: any) {
-        const currentUser = getStorageItem("currentConsultant") || ADMIN_USER;
+        const currentUser = getStorageItem("currentConsultant") || getStorageItem("currentUser") || "";
+        const actualUsername = (getStorageItem("currentUser") || "").toLowerCase();
+        const userEmail = (getStorageItem("userEmail") || "").toLowerCase();
+        const userRole = getStorageItem("userRole");
+        const isAdmin = actualUsername === 'admin' || userEmail === 'showroomthuanan@gmail.com' || userRole === 'Admin' || userRole === 'Quản trị viên';
         return getApi({ 
             action: 'getNotifications', 
             currentUser: currentUser, 
-            isAdmin: String(currentUser === ADMIN_USER) 
+            isAdmin: String(isAdmin) 
         });
     }
 };
 
 export const markAllNotificationsAsRead = async (): Promise<ApiResult> => {
     try {
-        const currentUser = getStorageItem("currentConsultant") || getStorageItem("currentUser") || ADMIN_USER;
+        const currentUser = getStorageItem("currentConsultant") || getStorageItem("currentUser") || "";
         const userRole = getStorageItem("userRole");
-        const actualUsername = getStorageItem("currentUser") || "";
-        const isAdmin = currentUser === ADMIN_USER || userRole === 'Quản trị viên' || actualUsername.toLowerCase() === 'admin';
+        const actualUsername = (getStorageItem("currentUser") || "").toLowerCase();
+        const userEmail = (getStorageItem("userEmail") || "").toLowerCase();
+        const isAdmin = actualUsername === 'admin' || userEmail === 'showroomthuanan@gmail.com' || userRole === 'Quản trị viên' || userRole === 'Admin';
 
         let query = supabase.from('interactions').update({ is_read: true }).eq('category', 'NOTIFICATION').eq('is_read', false);
 
@@ -136,7 +142,7 @@ export const getGlobalNotification = async (): Promise<ApiResult> => {
 
 export const updateGlobalNotification = async (notification: { content: string; isActive: boolean; type: string }): Promise<ApiResult> => {
     try {
-        const updatedBy = getStorageItem("currentConsultant") || ADMIN_USER;
+        const updatedBy = getStorageItem("currentConsultant") || getStorageItem("currentUser") || "Admin";
         const { error } = await supabase.from('app_settings').update({ value: notification, updated_at: new Date().toISOString(), updated_by: updatedBy }).eq('key', 'global_notification');
         if (error) throw error;
         return { status: 'SUCCESS', message: 'Cập nhật thông báo thành công.' };

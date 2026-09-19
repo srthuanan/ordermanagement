@@ -4,6 +4,9 @@ import { Notification, NotificationType } from '../../types';
 
 import yeucauAnimationUrl from '../../pictures/yeucau.json?url';
 import logoShowroomThuanAn from '../../pictures/logo_showroom_thuan_an.webp';
+import logoShowroomThuanAnTrungThu from '../../pictures/logo_showroom_thuan_an_trung_thu.webp';
+import tabActiveTrungThuBg from '../../pictures/tab_active_trung_thu_bg.webp';
+import { isMidAutumnSeason } from '../ui/HolidayThemeDecorator';
 import Button from '../ui/Button';
 import Avatar from '../ui/Avatar';
 import { SwapInboxModal } from '../modals/SwapInboxModal';
@@ -103,6 +106,10 @@ const Header: React.FC<HeaderProps> = ({
     const [isNotificationHistoryOpen, setIsNotificationHistoryOpen] = React.useState(false);
     const profileMenuRef = React.useRef<HTMLDivElement>(null);
     const [isInternalChatOpen, setIsInternalChatOpen] = React.useState(false);
+
+    // Tự động sử dụng siêu logo Trung Thu đa cảnh (tự chuyển cảnh mượt mà trong 1 ảnh duy nhất)
+    const isMidAutumn = React.useMemo(() => isMidAutumnSeason(), []);
+    const currentLogo = isMidAutumn ? logoShowroomThuanAnTrungThu : logoShowroomThuanAn;
     const [chatUnreadCount, setChatUnreadCount] = React.useState(0);
     const [isSwapInboxOpen, setIsSwapInboxOpen] = React.useState(false);
     const [pendingSwapCount, setPendingSwapCount] = React.useState(0);
@@ -169,12 +176,12 @@ const Header: React.FC<HeaderProps> = ({
                 <div className="flex items-center gap-2 sm:gap-4 relative z-10">
                     <div 
                         className="flex flex-col cursor-default select-none relative" 
-                        title="VinFast Showroom Thuận An"
+                        title={isMidAutumn ? "VinFast Showroom Thuận An - Tết Trung Thu" : "VinFast Showroom Thuận An"}
                         onContextMenu={(e) => e.preventDefault()}
                     >
                         <img 
-                            src={logoShowroomThuanAn} 
-                            alt="VinFast Showroom Thuận An" 
+                            src={currentLogo} 
+                            alt={isMidAutumn ? "VinFast Showroom Thuận An - Tết Trung Thu" : "VinFast Showroom Thuận An"} 
                             draggable={false}
                             onContextMenu={(e) => e.preventDefault()}
                             onDragStart={(e) => e.preventDefault()}
@@ -200,18 +207,38 @@ const Header: React.FC<HeaderProps> = ({
                                     onClick={() => setActiveView(item.id as any)}
                                     title={item.label}
                                     className={`
-                                        relative h-8 rounded-xl font-semibold flex items-center justify-center overflow-visible
-                                        transition-all duration-300 ease-out outline-none group
+                                        relative h-8 rounded-xl font-semibold flex items-center justify-center overflow-hidden
+                                        transition-all duration-300 ease-out outline-none group select-none
                                         ${isActive
-                                            ? 'bg-slate-100 text-slate-900 px-4 gap-2 font-bold shadow-sm'
+                                            ? (isMidAutumn
+                                                ? 'text-slate-800 font-bold shadow-sm border border-amber-200/90'
+                                                : 'bg-slate-100 text-slate-900 px-4 gap-2 font-bold shadow-sm'
+                                              )
                                             : 'text-gray-400 hover:text-gray-700 hover:bg-slate-100/70 w-9'
                                         }
                                     `}
+                                    style={isActive && isMidAutumn ? {
+                                        backgroundImage: `url(${tabActiveTrungThuBg})`,
+                                        backgroundPosition: 'left center',
+                                        backgroundSize: 'auto 100%',
+                                        backgroundRepeat: 'no-repeat',
+                                        paddingLeft: '32px',
+                                        paddingRight: '12px',
+                                    } : {}}
                                 >
-
-                                    <i className={`fas ${item.icon} text-[13px] flex-shrink-0 transition-all duration-300 ${isActive ? 'text-slate-800' : 'group-hover:scale-110'}`}></i>
-                                    {isActive && (
-                                        <span className="text-[11px] font-bold tracking-wide whitespace-nowrap text-slate-800">{item.label}</span>
+                                    {isActive ? (
+                                        isMidAutumn ? (
+                                            <span className="text-[11px] font-bold tracking-wide whitespace-nowrap text-slate-800">
+                                                {item.label}
+                                            </span>
+                                        ) : (
+                                            <>
+                                                <i className={`fas ${item.icon} text-[13px] flex-shrink-0 transition-all duration-300 text-slate-800`}></i>
+                                                <span className="text-[11px] font-bold tracking-wide whitespace-nowrap text-slate-800">{item.label}</span>
+                                            </>
+                                        )
+                                    ) : (
+                                        <i className={`fas ${item.icon} text-[13px] flex-shrink-0 transition-all duration-300 group-hover:scale-110`}></i>
                                     )}
                                 </button>
                             );

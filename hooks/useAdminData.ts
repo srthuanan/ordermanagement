@@ -173,7 +173,7 @@ export const useAdminData = ({
                     "LinkHopDong": isValidUrl(urlHopDongTemp) ? urlHopDongTemp : '',
                     "LinkDeNghiXHD": isValidUrl(urlDeNghiTemp) ? urlDeNghiTemp : '',
                     "LinkHoaDonDaXuat": isValidUrl(bestUrl) ? bestUrl : '',
-                    "Kết quả": correspondingOrder?.["Trạng thái VC"] || correspondingOrder?.["Kết quả"] || invoice['Kết quả'] || 'Chờ phê duyệt',
+                    "Kết quả": invoice['Kết quả'] || correspondingOrder?.["Trạng thái VC"] || correspondingOrder?.["Kết quả"] || 'Chờ phê duyệt',
                 };
                 (mergedOrder as any)['Trạng thái xử lý'] = mergedOrder["Kết quả"];
                 return mergedOrder;

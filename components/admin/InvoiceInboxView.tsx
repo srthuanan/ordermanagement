@@ -9,6 +9,12 @@ import AnimatedBackground from '../ui/AnimatedBackground';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import { supabase } from '../../services/supabaseClient';
 import MarqueeText from '../ui/MarqueeText';
+import CyberAssignVehicleModal from '../modals/CyberAssignVehicleModal';
+import {
+    getCyberXepXeContracts,
+    CyberXepXeContract,
+    isOrderAssignedOnCyber
+} from '../../services/api/stockService';
 
 interface InvoiceInboxViewProps {
     orders: Order[];
@@ -202,6 +208,83 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const [activeDocKey, setActiveDocKey] = useState<'LinkHopDong' | 'LinkDeNghiXHD' | 'LinkHoaDonDaXuat'>('LinkDeNghiXHD');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const copyWithFeedback = useCopyFeedback();
+    const [isCyberAssignModalOpen, setIsCyberAssignModalOpen] = useState(false);
+    const [cyberContracts, setCyberContracts] = useState<CyberXepXeContract[]>(() => {
+        try {
+            const cached = sessionStorage.getItem('cyber_xep_xe_contracts_cache');
+            if (cached) {
+                const parsed = JSON.parse(cached);
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            }
+        } catch (_) {}
+        return [];
+    });
+    const [isLoadingCyberContracts, setIsLoadingCyberContracts] = useState<boolean>(() => {
+        try {
+            const cached = sessionStorage.getItem('cyber_xep_xe_contracts_cache');
+            if (cached && JSON.parse(cached).length > 0) return false;
+        } catch (_) {}
+        return true;
+    });
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadCyber = async () => {
+            try {
+                const now = new Date();
+                const currY = now.getFullYear();
+                const res = await getCyberXepXeContracts({
+                    thang1: 1,
+                    nam1: currY,
+                    thang2: 12,
+                    nam2: currY,
+                    ma_dvcs: '02',
+                    showroom: 'Ô tô Vinfast Thuận An'
+                });
+                if (isMounted && res && res.success && res.contracts) {
+                    setCyberContracts(res.contracts);
+                    try {
+                        sessionStorage.setItem('cyber_xep_xe_contracts_cache', JSON.stringify(res.contracts));
+                    } catch (_) {}
+                }
+            } catch (err) {
+                console.warn('Lỗi tải hợp đồng CyberSoft:', err);
+            } finally {
+                if (isMounted) setIsLoadingCyberContracts(false);
+            }
+        };
+        loadCyber();
+        return () => { isMounted = false; };
+    }, []);
+
+    const handleCyberAssignSuccess = (vin: string, engineNo?: string, assignedContract?: CyberXepXeContract) => {
+        if (selectedOrder) {
+            selectedOrder.VIN = vin;
+            selectedOrder.vin = vin;
+            selectedOrder['SỐ VIN'] = vin;
+            if (engineNo) {
+                selectedOrder['Số máy'] = engineNo;
+                selectedOrder.so_may = engineNo;
+                selectedOrder['SỐ MÁY'] = engineNo;
+                setEditData(prev => ({ ...prev, engineNumber: engineNo }));
+            }
+        }
+        // Cập nhật danh sách hợp đồng Cyber trong state để ẩn ngay nút Ghép xe Cyber
+        setCyberContracts(prev => {
+            const targetMaHd = assignedContract?.ma_hd || selectedOrder?.['Số đơn hàng'];
+            return prev.map(c => {
+                if ((assignedContract && c.stt_rec === assignedContract.stt_rec) || (targetMaHd && c.ma_hd === targetMaHd)) {
+                    return {
+                        ...c,
+                        so_khung: vin,
+                        so_may: engineNo || c.so_may,
+                        ten_color: 'Đã ghép SK'
+                    };
+                }
+                return c;
+            });
+        });
+    };
 
     useEffect(() => {
         const fetchPolicies = async () => {
@@ -260,6 +343,11 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     }, [orders, selectedFolder]);
 
     const selectedOrder = useMemo(() => orders.find(o => o['Số đơn hàng'] === selectedOrderId), [orders, selectedOrderId]);
+
+    // Kiểm tra trạng thái đơn hàng đã được xếp xe trên CyberSoft ERP hay chưa
+    const cyberAssignmentStatus = useMemo(() => {
+        return isOrderAssignedOnCyber(selectedOrder, cyberContracts);
+    }, [selectedOrder, cyberContracts]);
 
     const currentCarModel = useMemo(() => {
         return (selectedOrder?.['Dòng xe'] || selectedOrder?.dong_xe || selectedOrder?.['DÒNG XE'] || '').trim();
@@ -802,21 +890,26 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                         <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 flex flex-col gap-3.5 animate-in slide-in-from-right-4 duration-300">
                                             {/* Top Customer Info */}
                                             <div className="flex items-center justify-between gap-3">
-                                                <div className="flex items-center gap-3.5 min-w-0">
+                                                <div className="flex items-center gap-3.5 min-w-0 flex-1">
                                                     <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-base font-black shadow-2xs flex-shrink-0">
                                                         {selectedOrder['Tên khách hàng'].charAt(0)}
                                                     </div>
                                                     <div className="space-y-0.5 min-w-0 flex-1 overflow-hidden">
-                                                        <MarqueeText 
-                                                            text={selectedOrder['Tên khách hàng'] || '—'}
-                                                            className="font-black text-base text-slate-900 leading-tight cursor-pointer hover:text-blue-600 transition-colors uppercase"
-                                                            title="Click để sao chép tên khách hàng"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                copyWithFeedback(selectedOrder['Tên khách hàng'], e);
-                                                            }}
-                                                        />
-                                                        <div className="text-[11px] text-slate-500 font-medium truncate flex items-center gap-1 italic">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="min-w-0 flex-1 overflow-hidden">
+                                                                <MarqueeText 
+                                                                    text={selectedOrder['Tên khách hàng'] || '—'}
+                                                                    className="font-black text-base text-slate-900 leading-tight cursor-pointer hover:text-blue-600 transition-colors uppercase"
+                                                                    title="Click để sao chép tên khách hàng"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        copyWithFeedback(selectedOrder['Tên khách hàng'], e);
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <StatusBadge status={selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || ''} size="sm" />
+                                                        </div>
+                                                        <div className="text-[11px] text-slate-500 font-medium truncate flex items-center gap-1.5 italic">
                                                             <i className="fa-solid fa-user-tie text-[9px] text-slate-400 not-italic"></i>
                                                             <span>TVBH: <span className="text-slate-600 font-medium italic">{toTitleCase(selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ')}</span></span>
                                                         </div>
@@ -901,8 +994,59 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         <i className="fas fa-fingerprint text-accent-primary opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số VIN</span>
                                                     </div>
-                                                    <div className="text-xs font-bold text-accent-primary truncate ml-4 font-mono tracking-normal bg-accent-primary/5 px-2 py-0.5 rounded border border-accent-primary/10">
-                                                        <CopyableField text={selectedOrder.VIN || ''} showToast={showToast} />
+                                                    <div className="flex items-center gap-1.5 ml-4">
+                                                        <div className="text-xs font-bold text-accent-primary truncate font-mono tracking-normal bg-accent-primary/5 px-2 py-0.5 rounded border border-accent-primary/10">
+                                                            <CopyableField text={selectedOrder.VIN || ''} showToast={showToast} />
+                                                        </div>
+                                                        {cyberAssignmentStatus.isAssigned || (!isLoadingCyberContracts && Boolean(selectedOrder.VIN && selectedOrder.VIN.trim() && cyberContracts.length === 0)) ? (
+                                                             <span 
+                                                                 className="px-2 py-0.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                                                 title={`Đơn hàng đã được xếp xe trên CyberSoft ERP (Số khung: ${cyberAssignmentStatus.cyberVin || selectedOrder.VIN || '—'})`}
+                                                             >
+                                                                 <i className="fas fa-check-circle text-[9px] text-emerald-600"></i>
+                                                                 <span>Đã xếp xe Cyber</span>
+                                                             </span>
+                                                         ) : isLoadingCyberContracts ? (
+                                                             <span 
+                                                                 className="px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1.5 bg-slate-50 text-slate-500 border border-slate-200 animate-pulse"
+                                                                 title="Đang đồng bộ trạng thái xếp xe từ CyberSoft ERP..."
+                                                             >
+                                                                 <i className="fas fa-spinner fa-spin text-[9px] text-blue-500"></i>
+                                                                 <span>Đang kiểm tra Cyber...</span>
+                                                             </span>
+                                                         ) : cyberAssignmentStatus.isPendingGreen ? (
+                                                             selectedOrder['Trạng thái xử lý'] !== 'đã xuất hóa đơn' && selectedOrder['Kết quả'] !== 'đã xuất hóa đơn' && (
+                                                                 <button
+                                                                     type="button"
+                                                                     onClick={() => {
+                                                                         showToast(
+                                                                             'Hợp đồng chưa duyệt',
+                                                                             `Hợp đồng ${cyberAssignmentStatus.contract?.ma_hd || ''} trên Cyber đang ở trạng thái Chờ duyệt (Màu xanh). Theo quy định, Giám đốc phải duyệt chuyển sang Màu vàng mới được ghép xe!`,
+                                                                             'warning',
+                                                                             6000
+                                                                         );
+                                                                         setIsCyberAssignModalOpen(true);
+                                                                     }}
+                                                                     className="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs shrink-0 cursor-pointer bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                                                                     title="Hợp đồng trên Cyber đang Chờ duyệt (Màu xanh) - Cần duyệt sang Màu vàng mới được ghép xe"
+                                                                 >
+                                                                     <i className="fas fa-exclamation-triangle text-[9px]"></i>
+                                                                     <span>HĐ Cyber Chờ Duyệt (Xanh)</span>
+                                                                 </button>
+                                                             )
+                                                         ) : (
+                                                             selectedOrder['Trạng thái xử lý'] !== 'đã xuất hóa đơn' && selectedOrder['Kết quả'] !== 'đã xuất hóa đơn' && (
+                                                                 <button
+                                                                     type="button"
+                                                                     onClick={() => setIsCyberAssignModalOpen(true)}
+                                                                     className="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs shrink-0 cursor-pointer bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
+                                                                     title="Ghép xe trực tiếp từ CyberSoft ERP"
+                                                                 >
+                                                                     <i className="fas fa-car-side text-[9px]"></i>
+                                                                     <span>Ghép xe Cyber</span>
+                                                                 </button>
+                                                             )
+                                                         )}
                                                     </div>
                                                 </div>
 
@@ -1184,6 +1328,16 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                     )
                 }
             </div>
+            {/* Modal Ghép Xe CyberSoft trực tiếp trên Tab Hóa Đơn */}
+            <CyberAssignVehicleModal
+                isOpen={isCyberAssignModalOpen}
+                onClose={() => setIsCyberAssignModalOpen(false)}
+                order={selectedOrder}
+                initialContracts={cyberContracts}
+                showToast={showToast}
+                onSuccess={handleCyberAssignSuccess}
+            />
+
             <input
                 type="file"
                 ref={fileInputRef}

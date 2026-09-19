@@ -137,8 +137,18 @@ export const logout = async () => {
  */
 export const restoreSession = async (): Promise<boolean> => {
     try {
+        // Kiểm tra thực tế với máy chủ Supabase xem phiên có còn hợp lệ hay đã bị thu hồi/xóa
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user?.email) {
+            await logout();
+            return false;
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user?.email) return false;
+        if (!session?.user?.email) {
+            await logout();
+            return false;
+        }
 
         const email = session.user.email;
         const { data: profile } = await supabase
@@ -166,6 +176,7 @@ export const restoreSession = async (): Promise<boolean> => {
         return true;
     } catch (e) {
         console.error("Restore session error:", e);
+        await logout();
         return false;
     }
 };

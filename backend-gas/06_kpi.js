@@ -3,7 +3,14 @@
  */
 
 function generateKpiSheet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let ss;
+  try {
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+  } catch (e) {}
+  if (!ss) {
+    ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  }
+
   let sheet = ss.getSheetByName("KPI");
   if (!sheet) {
     sheet = ss.insertSheet("KPI");
@@ -13,7 +20,7 @@ function generateKpiSheet() {
   sheet.getCharts().forEach(chart => sheet.removeChart(chart));
 
   // --- Cấu hình ---
-  const DONG_XE_LIST = ['VF 3', 'VF 5', 'VF 6', 'VF 7', 'VF 8', 'VF 9', 'Herio', 'Nerio', 'Limo', 'EC Van', 'Minio', 'VF Limo'];
+  const DONG_XE_LIST = ['VF 2', 'VF 3', 'VF 5', 'VF 6', 'VF 7', 'VF 8', 'VF 9', 'Herio', 'Nerio', 'Limo', 'EC Van', 'Minio', 'VF Limo'];
   const BG_COLOR = "#1e293b"; // Slate 800 - Gần với màu trong ảnh
   const HEADER_COLOR = "#052061"; // Dark Blue từ ảnh
   const TEXT_COLOR = "#ffffff";
@@ -31,13 +38,13 @@ function generateKpiSheet() {
   });
 
   if (response.getResponseCode() !== 200) {
-    ss.toast("Lỗi khi tải dữ liệu từ Supabase", "Lỗi KPI", 10);
+    try { ss.toast("Lỗi khi tải dữ liệu từ Supabase", "Lỗi KPI", 10); } catch (e) {}
     return;
   }
 
   const rawData = JSON.parse(response.getContentText());
   
-  // Danh sách TVBH cố định theo thứ tự 3 Phòng Kinh Doanh
+  // Danh sách TVBH cố định theo thứ tự 3 Phòng Kinh Doanh (đã loại bỏ 2 nhân sự khoanh đỏ)
   const tvbhList = [
     "Tất Bách Tường",
     "Phạm Trọng Huy",
@@ -63,37 +70,55 @@ function generateKpiSheet() {
     "Phạm Khánh Duy",
     "Nguyễn Dư Thuận",
     "Đào Minh Ký",
-    "Lê Thanh Hảo",
     "Lê Thị Huyền Trang",
-    "Lê Thị Thúy Nga",
-    "Sẩm Minh Phát"
+    "Lê Thị Thúy Nga"
   ];
+
+  // Helper chuyển đổi chỉ số cột sang chữ cái (1 -> A, 2 -> B, 3 -> C...)
+  function colIndexToLetter(colIndex) {
+    let temp = '';
+    let letter = '';
+    while (colIndex > 0) {
+      temp = (colIndex - 1) % 26;
+      letter = String.fromCharCode(temp + 65) + letter;
+      colIndex = Math.floor((colIndex - temp - 1) / 26);
+    }
+    return letter;
+  }
 
   // --- Chuẩn bị dữ liệu để ghi ---
   const rows = [];
-  const header1 = ["STT", "TVBH", "SỐ LƯỢNG XHĐ", "", "", "", "", "", "", "", "", "", "", "", "Tổng XHĐ"];
-  const header2 = ["", "", "VF 3", "VF 5", "VF 6", "VF 7", "VF 8", "VF 9", "Herio", "Nerio", "Limo", "EC Van", "Minio", "VF Limo", ""];
+  const header1 = ["STT", "TVBH", "SỐ LƯỢNG XHĐ"];
+  for (let i = 1; i < DONG_XE_LIST.length; i++) {
+    header1.push("");
+  }
+  header1.push("Tổng XHĐ");
+
+  const header2 = ["", "", ...DONG_XE_LIST, ""];
   
   rows.push(header1);
   rows.push(header2);
 
   const startRow = 3; // Dòng bắt đầu dữ liệu TVBH
+  const firstCarColLetter = colIndexToLetter(3);
+  const lastCarColLetter = colIndexToLetter(2 + DONG_XE_LIST.length);
+  const totalColLetter = colIndexToLetter(3 + DONG_XE_LIST.length);
+
   tvbhList.forEach((name, index) => {
     const currentRow = startRow + index;
     const row = [index + 1, name];
     
-    // Cột C đến N (Các dòng xe)
+    // Cột C đến O (Các dòng xe)
     for (let i = 0; i < DONG_XE_LIST.length; i++) {
-        // Cột tương ứng trong Excel (C, D, E...)
-        const colLetter = String.fromCharCode(67 + i); 
-        // Công thức: Đếm nếu TVBH khớp và Dòng xe khớp (bỏ qua điều kiện ngày xuất hóa đơn)
+        const colLetter = colIndexToLetter(3 + i); 
+        // Công thức: Đếm nếu TVBH khớp và Dòng xe khớp
         // yeucauxhd!$H:$H là cột TVBH, yeucauxhd!$D:$D là cột Dòng xe
         const formula = `=COUNTIFS(yeucauxhd!$H:$H;$B${currentRow};yeucauxhd!$D:$D;${colLetter}$2)`;
         row.push(formula);
     }
     
-    // Tổng dòng (Cột O)
-    row.push(`=SUM(C${currentRow}:N${currentRow})`);
+    // Tổng dòng (Cột Tổng XHĐ)
+    row.push(`=SUM(${firstCarColLetter}${currentRow}:${lastCarColLetter}${currentRow})`);
     rows.push(row);
   });
 
@@ -103,11 +128,11 @@ function generateKpiSheet() {
   
   // Tổng các cột xe
   for (let i = 0; i < DONG_XE_LIST.length; i++) {
-      const colLetter = String.fromCharCode(67 + i);
+      const colLetter = colIndexToLetter(3 + i);
       totalRow.push(`=SUM(${colLetter}${startRow}:${colLetter}${totalRowIndex - 1})`);
   }
   // Tổng của tổng
-  totalRow.push(`=SUM(O${startRow}:O${totalRowIndex - 1})`);
+  totalRow.push(`=SUM(${totalColLetter}${startRow}:${totalColLetter}${totalRowIndex - 1})`);
   rows.push(totalRow);
 
   // --- Ghi dữ liệu và định dạng ---
@@ -120,14 +145,11 @@ function generateKpiSheet() {
   // Ghi dữ liệu (setValues tự động nhận diện công thức bắt đầu bằng dấu '=')
   sheet.getRange(1, 1, numRows, numCols).setValues(rows);
 
-  // --- Định dạng (Giữ nguyên phần định dạng cũ) ---
-  // ... (Phần code định dạng bên dưới vẫn giữ nguyên)
-
   // Merge Headers
   sheet.getRange("A1:A2").merge().setVerticalAlignment("middle").setHorizontalAlignment("center");
   sheet.getRange("B1:B2").merge().setVerticalAlignment("middle").setHorizontalAlignment("center");
-  sheet.getRange("C1:N1").merge().setVerticalAlignment("middle").setHorizontalAlignment("center");
-  sheet.getRange("O1:O2").merge().setVerticalAlignment("middle").setHorizontalAlignment("center");
+  sheet.getRange(`${firstCarColLetter}1:${lastCarColLetter}1`).merge().setVerticalAlignment("middle").setHorizontalAlignment("center");
+  sheet.getRange(`${totalColLetter}1:${totalColLetter}2`).merge().setVerticalAlignment("middle").setHorizontalAlignment("center");
 
   // Style Headers (Dòng 1 & 2)
   const headerRange = sheet.getRange(1, 1, 2, numCols);
@@ -138,7 +160,7 @@ function generateKpiSheet() {
              .setVerticalAlignment("middle")
              .setBorder(true, true, true, true, true, true, BORDER_COLOR, SpreadsheetApp.BorderStyle.SOLID);
   
-  sheet.getRange("C2:N2").setFontSize(9); // Cho các dòng xe nhỏ lại chút
+  sheet.getRange(`${firstCarColLetter}2:${lastCarColLetter}2`).setFontSize(9); // Cho các dòng xe nhỏ lại chút
 
   // Style Dòng TỔNG (Dòng cuối)
   const lastRowRange = sheet.getRange(numRows, 1, 1, numCols);
@@ -148,7 +170,7 @@ function generateKpiSheet() {
               .setHorizontalAlignment("center")
               .setBorder(true, true, true, true, true, true, BORDER_COLOR, SpreadsheetApp.BorderStyle.SOLID);
   
-  // Merge TỔNG cell
+  // Merge TỔNG cell (cột 1 & 2)
   sheet.getRange(numRows, 1, 1, 2).merge();
 
   // Style Data rows
@@ -175,10 +197,10 @@ function generateKpiSheet() {
   // Điều chỉnh độ rộng cột
   sheet.setColumnWidth(1, 40); // STT
   sheet.setColumnWidth(2, 200); // TVBH
-  for (let c = 3; c <= 14; c++) {
+  for (let c = 3; c <= 2 + DONG_XE_LIST.length; c++) {
     sheet.setColumnWidth(c, 55); // Các cột xe
   }
-  sheet.setColumnWidth(15, 80); // Tổng
+  sheet.setColumnWidth(3 + DONG_XE_LIST.length, 80); // Tổng
 
   // Phông chữ
   sheet.getRange(1, 1, numRows, numCols).setFontFamily("Roboto");
@@ -187,5 +209,7 @@ function generateKpiSheet() {
   sheet.setFrozenColumns(2);
 
   // Thông báo
-  ss.toast("Đã cập nhật KPI Xuất Hóa Đơn!", "Thành công", 5);
+  try {
+    ss.toast("Đã cập nhật KPI Xuất Hóa Đơn!", "Thành công", 5);
+  } catch (e) {}
 }

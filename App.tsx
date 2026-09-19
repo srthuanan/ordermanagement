@@ -32,7 +32,6 @@ import GlobalSearchModal from './components/modals/GlobalSearchModal';
 import OrderGridView from './components/OrderGridView';
 import CustomTitleBar from './components/layout/CustomTitleBar';
 import ReportBacklogModal from './components/modals/ReportBacklogModal';
-import MaintenanceFeeBlocker from './components/MaintenanceFeeBlocker';
 
 import { useAppNavigation } from './hooks/useAppNavigation';
 import { useNotification } from './hooks/useNotification';
@@ -48,7 +47,7 @@ import RealtimeFooterClock from './components/layout/RealtimeFooterClock';
 import StockArrivalPopup from './components/ui/StockArrivalPopup';
 import BroadcastPopup from './components/ui/BroadcastPopup';
 // import LuckyMoneyWidget from './components/ui/LuckyMoneyWidget';
-import { ADMIN_USER } from './constants';
+// import { ADMIN_USER } from './constants';
 import * as apiService from './services/apiService';
 import { supabase } from './services/apiService';
 import { AnalyticsData, Order } from './types';
@@ -71,17 +70,17 @@ const LoadingFallback = () => (
 );
 
 const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
-    const currentUser = localStorage.getItem("currentConsultant") || sessionStorage.getItem("currentConsultant") || ADMIN_USER;
-    const currentUserName = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser") || "User";
-    const userRoleRaw = localStorage.getItem("userRole") || sessionStorage.getItem("userRole");
+    const currentUser = localStorage.getItem("currentConsultant") || sessionStorage.getItem("currentConsultant") || "";
+    const currentUserName = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser") || "";
+    const userRoleRaw = localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "";
+    const userEmail = (localStorage.getItem("userEmail") || sessionStorage.getItem("userEmail") || "").toLowerCase().trim();
 
-    // Nâng cấp logic check Admin: Dựa trên Username, Role hoặc Tên đầy đủ
+    // Bảo mật: Chỉ duy nhất username 'admin', email admin hoặc vai trò Quản trị viên mới được cấp quyền Admin
     const isCurrentUserAdmin = useMemo(() => {
-        const username = currentUserName.toLowerCase();
-        const role = userRoleRaw;
-        const name = currentUser;
-        return username === 'admin' || role === 'Quản trị viên' || name === ADMIN_USER;
-    }, [currentUserName, userRoleRaw, currentUser]);
+        const username = currentUserName.toLowerCase().trim();
+        const role = userRoleRaw.trim();
+        return username === 'admin' || role === 'Quản trị viên' || role === 'Admin' || userEmail === 'showroomthuanan@gmail.com';
+    }, [currentUserName, userRoleRaw, userEmail]);
 
     const userRole = isCurrentUserAdmin ? 'Quản trị viên' : (userRoleRaw || 'Tư vấn bán hàng');
     const isReferenceAccount = userRoleRaw === 'TK Tham khảo';
@@ -873,10 +872,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         <>
             <GlobalNotificationProvider>
                 <CustomTitleBar />
-
-                {!isCurrentUserAdmin && (
-                    <MaintenanceFeeBlocker currentUserName={currentUser || ''} onLogout={onLogout} />
-                )}
 
                 <div id="sidebar-overlay" onClick={() => setIsMobileMenuOpen(false)} className={`fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 lg:hidden ${isMobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}></div>
 

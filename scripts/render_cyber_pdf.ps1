@@ -3,7 +3,8 @@ param(
     [string]$VoucherType = "TD4",
     [string]$UserName = "02.NHANPT",
     [string]$PaperSize = "A4",
-    [string]$OutFile = ""
+    [string]$OutFile = "",
+    [string]$IncludeSignatures = "true"
 )
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
@@ -58,8 +59,13 @@ if ($report.Dictionary.Variables.Contains("M_DIA_CHI")) {
     $report.Dictionary.Variables["M_DIA_CHI"].Value = "Tổ dân phố Cam Giá 2, Phường Gia Sàng, Tỉnh Thái Nguyên, Việt Nam"
 }
 
-$report.RegData("CyberDataSource", $ds)
-$report.Dictionary.Synchronize()
+# Sửa tiêu đề cho phiếu DNX
+if ($VoucherType -eq "DNX") {
+    $titleComp = $report.GetComponentByName("Text2")
+    if ($titleComp) {
+        $titleComp.Text = "ĐỀ NGHỊ XUẤT XE"
+    }
+}
 
 # Xử lý khổ giấy nếu người dùng chọn A5
 if ($PaperSize -eq "A5" -and $report.Pages.Count -gt 0) {
@@ -69,9 +75,59 @@ if ($PaperSize -eq "A5" -and $report.Pages.Count -gt 0) {
     $page.PageHeight = 210
 }
 
+# Chèn chữ ký vào band chứa tương ứng TRƯỚC KHI Render
+if ($IncludeSignatures -eq "true" -or $IncludeSignatures -eq "1" -or $IncludeSignatures -eq $true) {
+    $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+    $projectDir = Split-Path -Parent $scriptDir
+    $sig1Path = Join-Path $projectDir "public\pictures\chu_ky_nguoi_de_nghi.png"
+    $sig2Path = Join-Path $projectDir "public\pictures\chu_ky_phu_trach.png"
+
+    if ($VoucherType -eq "DNX") {
+        $footer = $report.GetComponentByName("FooterBand")
+        if ($footer) {
+            $footer.Height = 2.7
+
+            # Chữ ký 1: Người đề nghị (Căn giữa theo Text28 & Text31: Left=0.3, Width=2.8 => Center=1.70)
+            if (Test-Path $sig1Path) {
+                $img1 = New-Object Stimulsoft.Report.Components.StiImage
+                $img1.Name = "SigImageNguoiDeNghi"
+                $img1.Left = 0.3
+                $img1.Top = 0.88
+                $img1.Width = 2.8
+                $img1.Height = 1.35
+                $img1.File = $sig1Path
+                $img1.Stretch = $true
+                $img1.AspectRatio = $true
+                $img1.HorAlignment = [Stimulsoft.Base.Drawing.StiHorAlignment]::Center
+                $img1.VertAlignment = [Stimulsoft.Base.Drawing.StiVertAlignment]::Top
+                $footer.Components.Add($img1)
+            }
+
+            # Chữ ký 2: Phụ trách chi nhánh - Tăng kích thước lớn hơn
+            if (Test-Path $sig2Path) {
+                $img2 = New-Object Stimulsoft.Report.Components.StiImage
+                $img2.Name = "SigImagePhuTrach"
+                $img2.Left = 6.9
+                $img2.Top = 0.85
+                $img2.Width = 3.8
+                $img2.Height = 1.70
+                $img2.File = $sig2Path
+                $img2.Stretch = $true
+                $img2.AspectRatio = $true
+                $img2.HorAlignment = [Stimulsoft.Base.Drawing.StiHorAlignment]::Center
+                $img2.VertAlignment = [Stimulsoft.Base.Drawing.StiVertAlignment]::Top
+                $footer.Components.Add($img2)
+            }
+        }
+    }
+}
+
+$report.RegData("CyberDataSource", $ds)
+$report.Dictionary.Synchronize()
 $report.Render($false)
 
-$projectDir = Split-Path -Parent $PSScriptRoot
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectDir = Split-Path -Parent $scriptDir
 if (-not $OutFile) {
     $outDir = Join-Path $projectDir "public\cyber_pdfs"
     if (-not (Test-Path $outDir)) {
@@ -79,6 +135,15 @@ if (-not $OutFile) {
     }
     $cleanStt = $SttRec -replace '[^a-zA-Z0-9_\-]', '_'
     $OutFile = Join-Path $outDir "$cleanStt.pdf"
+} else {
+    if (-not [System.IO.Path]::IsPathRooted($OutFile)) {
+        $OutFile = Join-Path $projectDir $OutFile
+    }
+    $OutFile = [System.IO.Path]::GetFullPath($OutFile)
+    $parentDir = Split-Path -Parent $OutFile
+    if (-not (Test-Path $parentDir)) {
+        New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
+    }
 }
 
 $report.ExportDocument([Stimulsoft.Report.StiExportFormat]::Pdf, $OutFile)

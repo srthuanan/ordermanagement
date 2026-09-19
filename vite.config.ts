@@ -59,7 +59,7 @@ function cyberSyncPlugin(): Plugin {
           if (fromDate) args.push('--from', fromDate);
           if (toDate) args.push('--to', toDate);
           if (preview) args.push('--preview');
-          runPy(args, '', res);
+          runPy(args, body, res);
         });
       });
 

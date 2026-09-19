@@ -18,7 +18,8 @@ import {
     CyberVoucherTicketItem,
     CyberXepXeContract,
     CyberXepXeCandidate,
-    CyberXepXeFilterParams
+    CyberXepXeFilterParams,
+    prewarmTd4Pdfs
 } from '../../services/api/stockService';
 import { CyberDnxPrintModal, CyberDnxPrintData } from './CyberDnxPrintModal';
 import { CyberTd4PrintModal } from './CyberTd4PrintModal';
@@ -632,7 +633,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 ma_ttcp: '02.01.08'
             });
             if (res && res.success) {
-                setVoucherTickets(res.data || []);
+                const tickets = res.data || [];
+                setVoucherTickets(tickets);
+                // Pre-generate PDF nền cho tất cả phiếu TD4 → bấm In là mở ngay!
+                prewarmTd4Pdfs(tickets);
             } else {
                 throw new Error(res?.error || 'Lỗi tra cứu chứng từ CyberSoft.');
             }
@@ -2513,21 +2517,16 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-xs border-collapse">
                                         <thead>
-                                            <tr className="bg-slate-100/90 text-slate-700 font-bold border-b border-slate-200 text-[11px] uppercase tracking-wider">
-                                                <th className="py-2.5 px-2 text-center w-10 border-r border-slate-200">STT</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200 whitespace-nowrap">Trạng thái</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200 whitespace-nowrap">Số HĐ / Chứng từ</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200 whitespace-nowrap">Ngày HĐ</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200 whitespace-nowrap">Ngày giao xe</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200 whitespace-nowrap min-w-[150px]">Khách hàng</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200 whitespace-nowrap">Dòng xe / Phiên bản</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200 whitespace-nowrap">Màu xe</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200 whitespace-nowrap min-w-[170px]">Số khung (VIN)</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200 whitespace-nowrap text-right">Tổng tiền</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200 whitespace-nowrap text-right">Đã thanh toán</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200 whitespace-nowrap">Showroom</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200 whitespace-nowrap">Tư vấn bán hàng</th>
-                                                <th className="py-2.5 px-3 text-center whitespace-nowrap sticky right-0 bg-slate-100 z-10">Thao tác</th>
+                                            <tr className="bg-slate-50 border-b-2 border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
+                                                <th className="px-3 py-2.5 text-center w-10">#</th>
+                                                <th className="px-3 py-2.5 w-32">Trạng thái</th>
+                                                <th className="px-3 py-2.5">Số HĐ / Chứng từ</th>
+                                                <th className="px-3 py-2.5 w-24">Ngày HĐ</th>
+                                                <th className="px-3 py-2.5 w-24">Giao xe</th>
+                                                <th className="px-3 py-2.5">Khách hàng</th>
+                                                <th className="px-3 py-2.5">Dòng xe / Màu</th>
+                                                <th className="px-3 py-2.5 min-w-[200px]">Số khung (VIN)</th>
+                                                <th className="px-3 py-2.5 text-center w-36 sticky right-0 bg-slate-50">Thao tác</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
@@ -2537,72 +2536,63 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                 const isInvoiced = c.ten_color === 'Đã xuất HĐ' || (c.back_color || '').toLowerCase() === 'violet';
 
                                                 return (
-                                                    <tr 
+                                                    <tr
                                                         key={`${c.stt_rec}_${c.stt_rec0}_${idx}`}
-                                                        className={`transition-colors text-slate-800 ${badgeInfo.rowClass}`}
+                                                        className={`transition-colors text-slate-800 hover:bg-blue-50/40 ${badgeInfo.rowClass}`}
                                                     >
                                                         {/* STT */}
-                                                        <td className="py-2 px-2 text-center text-slate-500 font-medium border-r border-slate-100/80">
-                                                            {idx + 1}
-                                                        </td>
+                                                        <td className="px-3 py-2.5 text-center text-slate-400 text-[11px] font-mono">{idx + 1}</td>
 
                                                         {/* Trạng thái */}
-                                                        <td className="py-2 px-3 border-r border-slate-100/80 whitespace-nowrap">
-                                                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] border ${badgeInfo.badgeClass}`}>
-                                                                <span className={`w-1.5 h-1.5 rounded-full ${badgeInfo.dotColor}`}></span>
+                                                        <td className="px-3 py-2.5 whitespace-nowrap">
+                                                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeInfo.badgeClass}`}>
+                                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${badgeInfo.dotColor}`}></span>
                                                                 {badgeInfo.label}
                                                             </span>
                                                         </td>
 
                                                         {/* Số HĐ / Số chứng từ */}
-                                                        <td className="py-2 px-3 border-r border-slate-100/80 whitespace-nowrap">
-                                                            <div className="font-bold text-slate-900">{c.ma_hd || c.so_ct}</div>
+                                                        <td className="px-3 py-2.5 whitespace-nowrap">
+                                                            <div className="font-bold text-slate-900 text-[12px]">{c.ma_hd || c.so_ct}</div>
                                                             {c.so_ct && c.so_ct !== c.ma_hd && (
-                                                                <div className="text-[10px] text-slate-500 font-mono">{c.so_ct}</div>
+                                                                <div className="text-[10px] text-slate-400 font-mono">{c.so_ct}</div>
                                                             )}
                                                         </td>
 
                                                         {/* Ngày HĐ */}
-                                                        <td className="py-2 px-3 border-r border-slate-100/80 whitespace-nowrap text-slate-600">
+                                                        <td className="px-3 py-2.5 whitespace-nowrap text-[11px] text-slate-600 font-mono">
                                                             {c.ngay_ct || '-'}
                                                         </td>
 
                                                         {/* Ngày giao xe */}
-                                                        <td className="py-2 px-3 border-r border-slate-100/80 whitespace-nowrap text-slate-600 font-medium">
+                                                        <td className="px-3 py-2.5 whitespace-nowrap text-[11px] font-semibold text-slate-700 font-mono">
                                                             {c.ngay_gx || '-'}
                                                         </td>
 
-                                                        {/* Khách hàng */}
-                                                        <td className="py-2 px-3 border-r border-slate-100/80">
-                                                            <div className="font-bold text-slate-900 truncate max-w-[200px]" title={c.ten_kh}>
-                                                                {c.ten_kh || '-'}
-                                                            </div>
+                                                        {/* Khách hàng + TVBH */}
+                                                        <td className="px-3 py-2.5 max-w-[200px]">
+                                                            <div className="font-semibold text-slate-900 truncate text-[11.5px]" title={c.ten_kh}>{c.ten_kh || '-'}</div>
                                                             {c.dien_thoai && (
-                                                                <div className="text-[10.5px] text-slate-500 font-mono flex items-center gap-1 mt-0.5">
-                                                                    <i className="fas fa-phone text-[9px] text-slate-400"></i>
+                                                                <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                                                                    <i className="fas fa-phone text-[9px]"></i>
                                                                     <span>{c.dien_thoai}</span>
+                                                                </div>
+                                                            )}
+                                                            {c.ten_hs && (
+                                                                <div className="text-[10px] text-slate-500 truncate" title={c.ten_hs}>
+                                                                    <span className="text-slate-400">TVBH: </span>{c.ten_hs}
                                                                 </div>
                                                             )}
                                                         </td>
 
-                                                        {/* Dòng xe / Kiểu xe */}
-                                                        <td className="py-2 px-3 border-r border-slate-100/80 whitespace-nowrap">
-                                                            <div className="font-bold text-slate-900">{c.ten_kx || c.ma_kx}</div>
-                                                            {c.ma_kx && c.ten_kx && c.ma_kx !== c.ten_kx && (
-                                                                <div className="text-[10px] text-slate-500 font-mono">{c.ma_kx}</div>
-                                                            )}
-                                                        </td>
-
-                                                        {/* Màu sắc */}
-                                                        <td className="py-2 px-3 border-r border-slate-100/80 whitespace-nowrap">
-                                                            <div className="font-medium text-slate-800">{c.ten_mau || c.ma_mau || '-'}</div>
-                                                            {c.ten_mau_nt && (
-                                                                <div className="text-[10px] text-slate-500">NT: {c.ten_mau_nt}</div>
-                                                            )}
+                                                        {/* Dòng xe / Màu */}
+                                                        <td className="px-3 py-2.5 whitespace-nowrap">
+                                                            <div className="font-bold text-slate-900 text-[11.5px]">{c.ten_kx || c.ma_kx}</div>
+                                                            <div className="text-[10px] text-slate-500">{c.ten_mau || c.ma_mau || '-'}{c.ten_mau_nt ? <span className="text-slate-400"> · NT: {c.ten_mau_nt}</span> : null}</div>
                                                         </td>
 
                                                         {/* Số khung (VIN) */}
-                                                        <td className="py-2 px-3 border-r border-slate-100/80 whitespace-nowrap">
+                                                        <td className="px-3 py-2.5 whitespace-nowrap">
                                                             {hasVin ? (
                                                                 <div className="flex items-center gap-1.5">
                                                                     <span className="font-mono font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded text-[11px]">
@@ -2621,54 +2611,30 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                                 <span className="text-slate-400 italic text-[11px]">Chưa ghép xe</span>
                                                             )}
                                                             {c.ngay_xep && c.ngay_xep !== '1900-01-01' && (
-                                                                <div className="text-[10px] text-slate-400 mt-0.5">
-                                                                    Ghép: {c.ngay_xep}
-                                                                </div>
+                                                                <div className="text-[10px] text-slate-400 mt-0.5">Ghép: {c.ngay_xep}</div>
                                                             )}
                                                         </td>
 
-                                                        {/* Tổng tiền */}
-                                                        <td className="py-2 px-3 border-r border-slate-100/80 whitespace-nowrap text-right font-semibold text-slate-800">
-                                                            {c.tien_nt ? c.tien_nt.toLocaleString() : '-'}
-                                                        </td>
-
-                                                        {/* Đã thanh toán */}
-                                                        <td className="py-2 px-3 border-r border-slate-100/80 whitespace-nowrap text-right font-semibold text-emerald-700">
-                                                            {c.da_tt ? c.da_tt.toLocaleString() : '0'}
-                                                        </td>
-
-                                                        {/* Showroom */}
-                                                        <td className="py-2 px-3 border-r border-slate-100/80 whitespace-nowrap text-slate-700">
-                                                            {c.ten_ttcp || '-'}
-                                                        </td>
-
-                                                        {/* TVBH */}
-                                                        <td className="py-2 px-3 border-r border-slate-100/80 whitespace-nowrap text-slate-700 font-medium">
-                                                            {c.ten_hs || '-'}
-                                                        </td>
-
-                                                        {/* Actions */}
-                                                        <td className="py-2 px-3 text-center whitespace-nowrap sticky right-0 bg-white/95 backdrop-blur-xs shadow-xs">
+                                                        {/* Thao tác */}
+                                                        <td className="px-3 py-2.5 text-center whitespace-nowrap sticky right-0 bg-white/95 backdrop-blur-xs shadow-xs">
                                                             {hasVin ? (
                                                                 <div className="flex items-center justify-center gap-1">
-                                                                    {/* Nút Đổi xe */}
                                                                     {!isInvoiced && (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => handleOpenAssignModal(c)}
-                                                                            className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 shadow-2xs"
+                                                                            className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1"
                                                                             title="Đổi sang số khung khác"
                                                                         >
                                                                             <i className="fas fa-arrows-rotate text-[10px]"></i>
                                                                             <span>Đổi xe</span>
                                                                         </button>
                                                                     )}
-                                                                    {/* Nút Hủy ghép */}
                                                                     {!isInvoiced ? (
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => setContractToUnassign(c)}
-                                                                            className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1 shadow-2xs"
+                                                                            className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1"
                                                                             title="Hủy ghép xe khỏi hợp đồng"
                                                                         >
                                                                             <i className="fas fa-unlink text-[10px]"></i>
@@ -2681,11 +2647,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                                     )}
                                                                 </div>
                                                             ) : (
-                                                                /* Nút Ghép xe */
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleOpenAssignModal(c)}
-                                                                    className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-xs hover:shadow transition-all flex items-center gap-1.5 mx-auto"
+                                                                    className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all flex items-center gap-1.5 mx-auto"
                                                                 >
                                                                     <i className="fas fa-car-side text-[10px]"></i>
                                                                     <span>Ghép xe</span>
@@ -2700,6 +2665,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 </div>
                             </div>
                         )}
+
                     </div>
                 </>
             )}
@@ -3500,147 +3466,126 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-xs border-collapse">
                                         <thead>
-                                            <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 uppercase text-[10px] tracking-wider">
-                                                <th className="p-3 text-center w-12">STT</th>
-                                                <th className="p-3">Loại Phiếu</th>
-                                                <th className="p-3">Số Phiếu</th>
-                                                <th className="p-3">Ngày Lập</th>
-                                                <th className="p-3 text-center">Trạng Thái Duyệt (Ma_Post)</th>
-                                                <th className="p-3">Số Khung (VIN)</th>
-                                                <th className="p-3">Số Máy</th>
-                                                <th className="p-3">Khách Hàng / TVBH / Diễn Giải</th>
-                                                <th className="p-3">Số Hợp Đồng</th>
-                                                <th className="p-3 text-right">Tổng Thanh Toán</th>
-                                                <th className="p-3 text-center">Thao Tác</th>
+                                            <tr className="bg-slate-50 border-b-2 border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
+                                                <th className="px-3 py-2.5 text-center w-10">#</th>
+                                                <th className="px-3 py-2.5 w-20">Loại</th>
+                                                <th className="px-3 py-2.5">Số Phiếu</th>
+                                                <th className="px-3 py-2.5 w-28">Ngày Lập</th>
+                                                <th className="px-3 py-2.5 text-center w-36">Trạng Thái</th>
+                                                <th className="px-3 py-2.5">Số Khung (VIN)</th>
+                                                <th className="px-3 py-2.5">Khách Hàng / TVBH</th>
+                                                <th className="px-3 py-2.5 text-center w-36">Thao Tác</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-100 font-medium">
+                                        <tbody className="divide-y divide-slate-100">
                                             {displayedVoucherTickets.map((t, idx) => {
                                                 const isPost3 = String(t.ma_post) === '3';
                                                 const isPost9 = String(t.ma_post) === '9';
                                                 const isPost1 = String(t.ma_post) === '1';
 
                                                 return (
-                                                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                                                        <td className="p-3 text-center text-slate-400 text-[11px] font-mono">{idx + 1}</td>
+                                                    <tr key={idx} className="hover:bg-blue-50/40 transition-colors group">
+                                                        {/* STT */}
+                                                        <td className="px-3 py-2.5 text-center text-slate-400 text-[11px] font-mono">{idx + 1}</td>
 
                                                         {/* Loại phiếu */}
-                                                        <td className="p-3">
-                                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-extrabold uppercase border ${
-                                                                t.voucher_type === 'DNX' 
-                                                                    ? 'bg-slate-100 text-slate-800 border-slate-200' 
-                                                                    : 'bg-amber-50 text-amber-800 border-amber-200'
+                                                        <td className="px-3 py-2.5">
+                                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${
+                                                                t.voucher_type === 'DNX'
+                                                                    ? 'bg-slate-100 text-slate-700'
+                                                                    : 'bg-amber-100 text-amber-800'
                                                             }`}>
-                                                                <i className={`fas ${t.voucher_type === 'DNX' ? 'fa-file-export' : 'fa-car-side'}`}></i>
-                                                                <span>{t.voucher_type}</span>
+                                                                <i className={`fas ${t.voucher_type === 'DNX' ? 'fa-file-export' : 'fa-car-side'} text-[9px]`}></i>
+                                                                {t.voucher_type}
                                                             </span>
                                                         </td>
 
-                                                        {/* Số phiếu */}
-                                                        <td className="p-3 font-mono font-bold text-slate-900">
-                                                            {t.so_ct}
+                                                        {/* Số phiếu + số hợp đồng */}
+                                                        <td className="px-3 py-2.5">
+                                                            <div className="font-bold text-slate-900 font-mono text-[12px]">{t.so_ct}</div>
+                                                            {t.so_hd && (
+                                                                <div className="text-[10px] text-slate-400 font-mono truncate max-w-[130px]" title={t.so_hd}>{t.so_hd}</div>
+                                                            )}
                                                         </td>
 
                                                         {/* Ngày lập */}
-                                                        <td className="p-3 text-slate-600 font-mono text-[11px]">
-                                                            <div className="font-semibold text-slate-800">{t.ngay_ct}</div>
+                                                        <td className="px-3 py-2.5">
+                                                            <div className="font-semibold text-slate-700 font-mono text-[11px]">{t.ngay_ct}</div>
                                                             {t.gio_ct && (
-                                                                <div className="text-[10px] text-slate-400 flex items-center gap-1 font-sans">
-                                                                    <i className="far fa-clock text-[9px] text-slate-400"></i>
+                                                                <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                                                                    <i className="far fa-clock text-[9px]"></i>
                                                                     <span>{t.gio_ct}</span>
                                                                 </div>
                                                             )}
                                                         </td>
 
-                                                        {/* Trạng thái duyệt (Ma_Post) */}
-                                                        <td className="p-3 text-center">
+                                                        {/* Trạng thái */}
+                                                        <td className="px-3 py-2.5 text-center">
                                                             {isPost3 && (
-                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                                                                    <span>Lập phiếu (Sale Admin) / Chờ duyệt</span>
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping shrink-0"></span>
+                                                                    Chờ duyệt
                                                                 </span>
                                                             )}
                                                             {isPost9 && (
-                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                                    <span>Đã duyệt (QL Kho / Đã xuất xe)</span>
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                                                                    Đã duyệt
                                                                 </span>
                                                             )}
                                                             {isPost1 && (
-                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                                                    <span>Đã hủy phiếu</span>
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                                                                    Đã hủy
                                                                 </span>
                                                             )}
                                                             {!isPost3 && !isPost9 && !isPost1 && (
-                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
-                                                                    <span>Post = {t.ma_post}</span>
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
+                                                                    Post={t.ma_post}
                                                                 </span>
                                                             )}
                                                         </td>
 
-                                                        {/* VIN */}
-                                                        <td className="p-3 font-mono font-bold text-slate-900">
-                                                            {t.vin || <span className="text-slate-300 italic">Chưa có VIN</span>}
+                                                        {/* VIN + Số máy */}
+                                                        <td className="px-3 py-2.5">
+                                                            <div className="font-mono font-bold text-slate-900 text-[11px]">{t.vin || <span className="text-slate-300 italic font-normal">Chưa có VIN</span>}</div>
+                                                            {t.so_may && (
+                                                                <div className="font-mono text-[10px] text-slate-400">{t.so_may}</div>
+                                                            )}
                                                         </td>
 
-                                                        {/* Số máy */}
-                                                        <td className="p-3 font-mono text-slate-600 text-[11px]">
-                                                            {t.so_may || '-'}
-                                                        </td>
-
-                                                        {/* Khách hàng / TVBH / Diễn giải */}
-                                                        <td className="p-3 max-w-[250px]">
+                                                        {/* Khách hàng / TVBH / diễn giải */}
+                                                        <td className="px-3 py-2.5 max-w-[220px]">
                                                             {t.ten_kh ? (
-                                                                <div className="font-bold text-slate-900 truncate flex items-center gap-1.5" title={t.ten_kh}>
-                                                                    <span className="text-blue-600 font-semibold text-[10px] shrink-0">KH:</span>
-                                                                    <span className="truncate text-[11.5px]">{t.ten_kh}</span>
-                                                                </div>
+                                                                <div className="font-semibold text-slate-900 truncate text-[11.5px]" title={t.ten_kh}>{t.ten_kh}</div>
                                                             ) : (
-                                                                <div className="text-slate-400 font-normal italic text-[11px] truncate flex items-center gap-1">
-                                                                    <span className="text-slate-300 font-medium text-[10px]">KH:</span>
-                                                                    <span>Chuyển kho nội bộ (Chưa có HĐ)</span>
-                                                                </div>
+                                                                <div className="text-slate-400 italic text-[11px]">Chuyển kho nội bộ</div>
                                                             )}
                                                             {t.ten_tvbh && (
-                                                                <div className="text-[10.5px] text-slate-700 truncate flex items-center gap-1 mt-0.5" title={t.ten_tvbh}>
-                                                                    <span className="text-slate-400 font-medium text-[9.5px] shrink-0">TVBH:</span>
-                                                                    <span className="font-semibold text-slate-800 truncate">{t.ten_tvbh}</span>
+                                                                <div className="text-[10px] text-slate-500 truncate" title={t.ten_tvbh}>
+                                                                    <span className="text-slate-400">TVBH: </span>{t.ten_tvbh}
                                                                 </div>
                                                             )}
-                                                            <div className="text-[10px] text-slate-400 truncate mt-0.5" title={`${t.nguoi_nhan || t.ong_ba ? `${t.nguoi_nhan || t.ong_ba}: ` : ''}${t.dien_giai || ''}`}>
-                                                                {t.nguoi_nhan || t.ong_ba ? <span className="text-slate-500 font-medium">{t.nguoi_nhan || t.ong_ba}: </span> : null}
-                                                                <span className="italic">{t.dien_giai || ''}</span>
-                                                            </div>
-                                                        </td>
-
-                                                        {/* Số HĐ */}
-                                                        <td className="p-3 font-mono text-[11px] text-slate-600 max-w-[150px] truncate" title={t.so_hd}>
-                                                            {t.so_hd || '-'}
-                                                        </td>
-
-                                                        {/* Tổng thanh toán */}
-                                                        <td className="p-3 text-right font-mono font-bold text-slate-900">
-                                                            {t.tong_tien > 0 ? t.tong_tien.toLocaleString() + ' đ' : '-'}
+                                                            {t.dien_giai && (
+                                                                <div className="text-[10px] text-slate-400 italic truncate" title={t.dien_giai}>{t.dien_giai}</div>
+                                                            )}
                                                         </td>
 
                                                         {/* Thao tác */}
-                                                        <td className="p-3 text-center">
+                                                        <td className="px-3 py-2.5">
                                                             <div className="flex items-center justify-center gap-1.5">
-                                                                {/* Nút In Giấy Ra Cổng - CHỈ DÀNH CHO PHIẾU TD4 */}
                                                                 {t.voucher_type === 'TD4' && (
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => setPrintTd4Data(t)}
-                                                                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-lg text-[11px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                                                                        className="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-lg text-[11px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer"
                                                                         title="In Giấy Ra Cổng (TD4)"
                                                                     >
                                                                         <i className="fas fa-print text-[10px]"></i>
-                                                                        <span>In giấy ra cổng</span>
+                                                                        <span>In GRC</span>
                                                                     </button>
                                                                 )}
 
-                                                                {/* Nút In Phiếu DNX - DÀNH CHO PHIẾU DNX */}
                                                                 {t.voucher_type === 'DNX' && (
                                                                     <button
                                                                         type="button"
@@ -3667,7 +3612,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                                                 }]
                                                                             });
                                                                         }}
-                                                                        className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg text-[11px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                                                                        className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-lg text-[11px] font-bold shadow-sm transition-all flex items-center gap-1 cursor-pointer"
                                                                         title="In Phiếu Đề Nghị Xuất (DNX)"
                                                                     >
                                                                         <i className="fas fa-print text-[10px]"></i>
@@ -3678,11 +3623,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => setSelectedTicketModal(t)}
-                                                                    className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1 cursor-pointer"
+                                                                    className="w-7 h-7 bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200 rounded-lg transition-all flex items-center justify-center cursor-pointer"
                                                                     title="Xem chi tiết phiếu"
                                                                 >
                                                                     <i className="fas fa-eye text-[10px]"></i>
-                                                                    <span className="hidden sm:inline">Chi tiết</span>
                                                                 </button>
                                                             </div>
                                                         </td>
@@ -3694,6 +3638,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 </div>
                             </div>
                         )}
+
                     </div>
                 </div>
             )}

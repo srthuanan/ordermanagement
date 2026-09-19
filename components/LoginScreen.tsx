@@ -1,5 +1,7 @@
-import React, { useState, FormEvent, useEffect } from 'react';
+import React, { useState, FormEvent, useEffect, useRef } from 'react';
 import * as authService from '../services/authService';
+import { isMidAutumnSeason } from './ui/HolidayThemeDecorator';
+import { MidAutumnLoginView } from './login/MidAutumnLoginView';
 // Import images
 import kepgiay from '../pictures/kepgiay.webp';
 
@@ -18,6 +20,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
     const [invitationDetails, setInvitationDetails] = useState<{ full_name: string, role: string } | null>(null);
     const [inviteToken, setInviteToken] = useState('');
     const [rememberMe, setRememberMe] = useState<boolean>(() => localStorage.getItem('rememberMe') !== 'false');
+
+    // Tự động kích hoạt theo mùa:
+    // Mùa Tết Trung Thu (từ 04/09 đến hết 08/10) tự động hiển thị chủ đề Hội An Đêm Rằm. Hết mùa tự động chuyển về giao diện gốc.
+    const isMidAutumn = isMidAutumnSeason();
 
     // Kiểm tra phiên đăng nhập (từ Link Email) để ẩn ô OTP
     useEffect(() => {
@@ -99,16 +105,24 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
 
     // --- LOGIC GIAO DIỆN MỚI ---
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+    const mouseRafRef = useRef<number | null>(null);
 
     const handleMouseMove = (e: React.MouseEvent) => {
-        // Calculate tilt based on mouse position relative to center
-        const x = (e.clientX / window.innerWidth - 0.5) * 10; // Max 10 deg tilt
-        const y = (e.clientY / window.innerHeight - 0.5) * -10; // Max 10 deg tilt
-        setMousePos({ x, y });
+        // Giao diện Trung Thu sử dụng 100% CSS GPU transform độc lập, không cần re-render React khi di chuột
+        if (isMidAutumn) return;
+        if (mouseRafRef.current) return;
+        const clientX = e.clientX;
+        const clientY = e.clientY;
+        mouseRafRef.current = requestAnimationFrame(() => {
+            mouseRafRef.current = null;
+            const x = (clientX / window.innerWidth - 0.5) * 10; // Max 10 deg tilt
+            const y = (clientY / window.innerHeight - 0.5) * -10; // Max 10 deg tilt
+            setMousePos({ x, y });
+        });
     };
 
     const handleMouseLeave = () => {
-        // Reset tilt on mouse leave
+        if (isMidAutumn) return;
         setMousePos({ x: 0, y: 0 });
     };
 
@@ -195,6 +209,35 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
         }
     };
 
+    // Khi đang trong mùa Tết Trung Thu:
+    if (isMidAutumn) {
+        return (
+            <MidAutumnLoginView
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                username={username}
+                setUsername={setUsername}
+                password={password}
+                setPassword={setPassword}
+                email={email}
+                setEmail={setEmail}
+                rememberMe={rememberMe}
+                setRememberMe={setRememberMe}
+                isSubmitting={isSubmitting}
+                isEmailSent={isEmailSent}
+                invitationDetails={invitationDetails}
+                handleLoginSubmit={handleLoginSubmit}
+                handleForgotPasswordSubmit={handleForgotPasswordSubmit}
+                handleJoinSubmit={handleJoinSubmit}
+                handleBackToLogin={handleBackToLogin}
+                mousePos={mousePos}
+                handleMouseMove={handleMouseMove}
+                handleMouseLeave={handleMouseLeave}
+            />
+        );
+    }
+
+    // Màn hình Đăng Nhập Gốc (Được giữ nguyên 100% - Tự động trở về sau khi hết mùa Trung Thu)
     return (
         <div
             className="relative min-h-screen w-full max-w-full flex items-center justify-center overflow-hidden overflow-x-hidden font-sans bg-slate-50 selection:bg-blue-500 selection:text-white"

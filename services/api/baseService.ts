@@ -144,6 +144,8 @@ export const mapOrderDbToUi = (o: any) => ({
 export const mapStockDbToUi = (s: any) => ({
     "VIN": s.vin, "Dòng xe": s.dong_xe, "Phiên bản": s.phien_ban, "Ngoại thất": s.ngoai_that, "Nội thất": s.noi_that, "Số máy": s.so_may, "Mã DMS": s.ma_dms, "Trạng thái": s.trang_thai, "Người Giữ Xe": s.nguoi_giu_xe, "Thời Gian Hết Hạn Giữ": s.thoi_gian_het_han_giu, "Ghi chú": s.ghi_chu, "Username giữ xe": s.username_giu_xe, "Thời gian nhập": s.ngay_nhap,
     "extension_reason": s.extension_reason,
+    "Vị trí": s.vi_tri || '',
+    vi_tri: s.vi_tri || '',
     id: s.id,
     vin: s.vin,
     dong_xe: s.dong_xe,
@@ -151,7 +153,8 @@ export const mapStockDbToUi = (s: any) => ({
     ngoai_that: s.ngoai_that,
     noi_that: s.noi_that,
     trang_thai: s.trang_thai,
-    ma_dms: s.ma_dms
+    ma_dms: s.ma_dms,
+    so_may: s.so_may
 });
 
 export { ADMIN_USER };

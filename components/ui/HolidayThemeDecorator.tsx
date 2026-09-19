@@ -1,11 +1,4 @@
-import React, { useMemo } from 'react';
-import ribbon29Img from '../../pictures/ribbon_2_9.webp';
-import ribbonTetImg from '../../pictures/ribbon_tet.webp';
-import ribbonChristmasImg from '../../pictures/ribbon_christmas.webp';
-import ribbon304Img from '../../pictures/ribbon_30_4.webp';
-import ribbonNewYearImg from '../../pictures/ribbon_new_year.webp';
-import ribbonWomenDayImg from '../../pictures/ribbon_women_day.webp';
-import ribbonTrungThuImg from '../../pictures/ribbon_trung_thu.webp';
+import React from 'react';
 
 export type HolidaySeason = 
   | 'NONE'
@@ -16,59 +9,6 @@ export type HolidaySeason =
   | 'REUNIFICATION_DAY' // 30/4 & 1/5 (từ 24/04 đến 04/05)
   | 'WOMEN_DAY'         // 8/3 & 20/10
   | 'MID_AUTUMN';       // Trung Thu
-
-interface HolidayConfig {
-  season: HolidaySeason;
-  ribbonText: string;
-  imgSrc: string;
-  altText: string;
-}
-
-const HOLIDAY_CONFIGS: Record<HolidaySeason, HolidayConfig | null> = {
-  NONE: null,
-  NATIONAL_DAY: {
-    season: 'NATIONAL_DAY',
-    ribbonText: '★ 2/9 QUỐC KHÁNH • ĐỘC LẬP & TỰ DO ★',
-    imgSrc: ribbon29Img,
-    altText: '2/9 Quốc Khánh'
-  },
-  LUNAR_NEW_YEAR: {
-    season: 'LUNAR_NEW_YEAR',
-    ribbonText: '🧧 CHÚC MỪNG NĂM MỚI 🧧',
-    imgSrc: ribbonTetImg,
-    altText: 'Chúc Mừng Năm Mới'
-  },
-  CHRISTMAS: {
-    season: 'CHRISTMAS',
-    ribbonText: '🎄 MERRY CHRISTMAS 🎄',
-    imgSrc: ribbonChristmasImg,
-    altText: 'Giáng Sinh Merry Christmas'
-  },
-  NEW_YEAR: {
-    season: 'NEW_YEAR',
-    ribbonText: '✨ HAPPY NEW YEAR ✨',
-    imgSrc: ribbonNewYearImg,
-    altText: 'Happy New Year'
-  },
-  REUNIFICATION_DAY: {
-    season: 'REUNIFICATION_DAY',
-    ribbonText: '★ 30/4 & 1/5 ★',
-    imgSrc: ribbon304Img,
-    altText: '30/4 & 1/5 Giải Phóng'
-  },
-  WOMEN_DAY: {
-    season: 'WOMEN_DAY',
-    ribbonText: '🌸 8/3 & 20/10 🌸',
-    imgSrc: ribbonWomenDayImg,
-    altText: 'Chúc Mừng Ngày Phụ Nữ'
-  },
-  MID_AUTUMN: {
-    season: 'MID_AUTUMN',
-    ribbonText: '🥮 TẾT TRUNG THU 🥮',
-    imgSrc: ribbonTrungThuImg,
-    altText: 'Tết Trung Thu'
-  }
-};
 
 export const detectCurrentHolidaySeason = (): HolidaySeason => {
   const now = new Date();
@@ -105,12 +45,24 @@ export const detectCurrentHolidaySeason = (): HolidaySeason => {
     return 'WOMEN_DAY';
   }
 
-  // 7. Trung Thu (tháng 9 dương lịch từ 15/09 đến 25/09)
-  if (m === 8 && d >= 15 && d <= 25) {
+  // 7. Trung Thu (từ 04/09 đến 08/10)
+  if (isMidAutumnSeason(now)) {
     return 'MID_AUTUMN';
   }
 
   return 'NONE';
+};
+
+/**
+ * Kiểm tra xem thời điểm hiện tại có đang trong mùa Tết Trung Thu hay không.
+ * Mùa Trung Thu kéo dài từ sau Quốc Khánh (04/09) đến hết rằm tháng Tám âm lịch (khoảng 08/10).
+ * Sau thời gian này sẽ tự động kết thúc và hoàn về trạng thái bình thường.
+ */
+export const isMidAutumnSeason = (customDate?: Date): boolean => {
+  const now = customDate || new Date();
+  const m = now.getMonth(); // 0 = Jan, 8 = Sep, 9 = Oct
+  const d = now.getDate();
+  return (m === 8 && d >= 4) || (m === 9 && d <= 8);
 };
 
 interface HolidayThemeDecoratorProps {
@@ -118,36 +70,9 @@ interface HolidayThemeDecoratorProps {
   position?: 'left' | 'right';
 }
 
-export const HolidayThemeDecorator: React.FC<HolidayThemeDecoratorProps> = ({ isLoggedIn = false, position }) => {
-  const currentSeason = useMemo(() => detectCurrentHolidaySeason(), []);
-  const activeConfig = useMemo(() => HOLIDAY_CONFIGS[currentSeason], [currentSeason]);
-
-  const side = position || (isLoggedIn ? 'right' : 'left');
-
-  if (!activeConfig) return null;
-
-  const isLeft = side === 'left';
-
-  return (
-    <div
-      className={`fixed top-0 ${isLeft ? 'left-0' : 'right-0'} w-[195px] sm:w-[220px] md:w-[245px] h-[155px] sm:h-[175px] md:h-[195px] overflow-hidden z-[99999] select-none pointer-events-none`}
-    >
-      <div
-        title={activeConfig.ribbonText}
-        className={`absolute top-[26px] sm:top-[30px] md:top-[34px] ${
-          isLeft 
-            ? '-left-[44px] sm:-left-[50px] md:-left-[56px] -rotate-[37deg]' 
-            : '-right-[44px] sm:-right-[50px] md:-right-[56px] rotate-[37deg]'
-        } w-[245px] sm:w-[275px] md:w-[305px] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 duration-200 pointer-events-auto select-none`}
-      >
-        <img
-          src={activeConfig.imgSrc}
-          alt={activeConfig.altText}
-          className="w-full h-auto drop-shadow-md select-none pointer-events-none"
-        />
-      </div>
-    </div>
-  );
+export const HolidayThemeDecorator: React.FC<HolidayThemeDecoratorProps> = () => {
+  // Đã xóa toàn bộ dải ruy băng theo yêu cầu
+  return null;
 };
 
 export default HolidayThemeDecorator;

@@ -426,18 +426,29 @@ export const LiveUserMonitorView: React.FC<LiveUserMonitorViewProps> = ({ showTo
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      {/* Avatar with Online Dot */}
+                      {/* Avatar with Status Dot */}
                       <div className="relative flex-shrink-0">
                         <Avatar name={u.username} size="md" />
+                        {u.status === 'blocked_fee' ? (
+                          <span className="absolute bottom-0 right-0 w-3 h-3 bg-rose-500 border-2 border-white rounded-full" title="Đang bị chặn: Chưa đóng phí duy trì web" />
+                        ) : (
+                          <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" title="Trực tuyến" />
+                        )}
                       </div>
 
                       {/* User & Info Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-extrabold text-xs text-slate-900 truncate leading-tight group-hover:text-sky-600 transition-colors">
-                            {u.full_name || u.username}
+                        <div className="flex items-center justify-between gap-1">
+                          <h3 className="font-extrabold text-xs text-slate-900 truncate leading-tight group-hover:text-sky-600 transition-colors flex items-center gap-1.5 min-w-0">
+                            <span className="truncate">{u.full_name || u.username}</span>
+                            {u.status === 'blocked_fee' && (
+                              <span className="bg-rose-50 text-rose-600 text-[9px] font-black px-1.5 py-0.5 rounded border border-rose-200 shrink-0 inline-flex items-center gap-1">
+                                <span className="w-1 h-1 rounded-full bg-rose-500 animate-ping"></span>
+                                Chưa đóng phí
+                              </span>
+                            )}
                           </h3>
-                          <span className="text-[9px] font-bold text-slate-400">
+                          <span className="text-[9px] font-bold text-slate-400 shrink-0">
                             {moment(u.last_active_at).fromNow()}
                           </span>
                         </div>

@@ -79,25 +79,60 @@ function cleanUpGhostSheets() {
     
     // Danh sách các sheet rác và các sheet cũ không còn sử dụng cần xóa sạch
     var blackList = [
-      'Mail', 'log', 'lichsu_donhang', 'lichsu_xe', 
+      'ThongBaoWebApp', 'Mail', 'log', 'lichsu_donhang', 'lichsu_xe', 
       'DaGhep', 'ChuaGhep', 'HuyGhep', 'Xuathoadon', 
-      'removed_cars_log', 'NhatKyChinhSua', 'DangKyCho', 
-      'Sheet1', 'TRANG CHỦ', 'DangKy'
+      'removed_cars_log', 'NhatKyChinhSua', 'DangKyCho', 'YeuCauCapVC',
+      'Sheet1', 'TRANG CHỦ', 'DangKy', 'Config', 'Thanhvien', 'Vanchuyen',
+      'Luutru_Donhang', 'Tuvan_Hoidap'
     ];
 
     var count = 0;
     
     // Đảm bảo không xóa nhầm donhang nếu nó là sheet chính
-    if (!ss.getSheetByName("donhang")) { ss.insertSheet("donhang"); }
+    if (!ss.getSheetByName("yeucauxhd")) { 
+      // Giữ nguyên yeucauxhd
+    }
 
-    for (var i = 0; i < sheets.length; i++) {
-       var name = sheets[i].getName();
+    for (var i = sheets.length - 1; i >= 0; i--) {
+       var targetSheet = sheets[i];
+       var name = targetSheet.getName();
        var shouldDelete = (keep.indexOf(name) === -1) || (blackList.indexOf(name) !== -1);
        
-       if (shouldDelete && name !== "donhang" && sheets.length - count > 1) {
-           ss.deleteSheet(sheets[i]);
-           count++;
+       // Không xóa sheet đang đồng bộ dữ liệu thật
+       if (name === "yeucauxhd" || name === "donhang" || name === "khoxe" || name === "KPI" || name === "Backend") {
+           shouldDelete = false;
        }
+
+        if (shouldDelete && sheets.length - count > 1) {
+            try {
+              // 1. Gỡ toàn bộ các lớp khoá (Protection) nếu có
+              var protections = targetSheet.getProtections(SpreadsheetApp.ProtectionType.SHEET);
+              for (var p = 0; p < protections.length; p++) {
+                try { protections[p].remove(); } catch(pErr){}
+              }
+
+              // 2. Thử hủy liên kết Google Form nếu có
+              try {
+                var formUrl = targetSheet.getFormUrl();
+                if (formUrl && typeof FormApp !== 'undefined') {
+                  var form = FormApp.openByUrl(formUrl);
+                  form.removeDestination();
+                }
+              } catch(fErr) {
+                Logger.log("Không thể tự hủy form: " + fErr.message);
+              }
+
+              // 3. Tiến hành xóa sheet
+              ss.deleteSheet(targetSheet);
+              count++;
+            } catch(delErr) {
+              Logger.log("Không thể xóa sheet " + name + ": " + delErr.message);
+              // Nếu bị vướng Google Form hoặc ràng buộc không cho xóa, tự động ẨN sheet đi để sạch thanh tab
+              try {
+                targetSheet.hideSheet();
+              } catch(hideErr) {}
+            }
+        }
     }
     SpreadsheetApp.getActiveSpreadsheet().toast('Đã dọn dẹp thành công ' + count + ' sheet rác!', 'Hoàn tất', 10);
   } catch (e) {

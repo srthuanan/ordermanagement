@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { CyberVoucherTicketItem, exportCyberPdf } from '../../services/api/stockService';
 
 interface CyberTd4PrintModalProps {
@@ -13,19 +14,39 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
     data
 }) => {
     const pdfIframeRef = useRef<HTMLIFrameElement>(null);
-    const [paperSize, setPaperSize] = useState<'A4' | 'A5'>('A4');
     const [isExportingPdf, setIsExportingPdf] = useState(false);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [pdfError, setPdfError] = useState<string | null>(null);
+    const [retryCount, setRetryCount] = useState(0);
+    const paperSize = 'A4'; // Luôn in A4 - đã bỏ selector
 
     // Tự động gọi CyberSoft Engine để xuất file PDF gốc khi mở modal hoặc đổi khổ giấy
     useEffect(() => {
         if (!isOpen || !data || !data.stt_rec) return;
 
+        // Reset trạng thái khi mở modal mới
+        setPdfUrl(null);
+        setPdfError(null);
+
         let isMounted = true;
         const loadOfficialPdf = async () => {
             setIsExportingPdf(true);
             setPdfError(null);
+
+            // Bước 1: Kiểm tra cache - nếu file đã có thì serve ngay (0s chờ!)
+            const cleanStt = data.stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_');
+            const cachedUrl = `/api/cyber/view-pdf?stt_rec=${cleanStt}`;
+            try {
+                const cacheCheck = await fetch(cachedUrl, { method: 'HEAD' });
+                if (cacheCheck.ok && isMounted) {
+                    // File đã có sẵn → hiển thị ngay lập tức!
+                    setPdfUrl(`${cachedUrl}&t=${Date.now()}`);
+                    setIsExportingPdf(false);
+                    return;
+                }
+            } catch (_) { /* bỏ qua lỗi HEAD, tiếp tục export */ }
+
+            // Bước 2: File chưa có → gọi CyberSoft Engine để xuất
             try {
                 const res = await exportCyberPdf({
                     stt_rec: data.stt_rec,
@@ -37,8 +58,7 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
                 if (!isMounted) return;
 
                 if (res.success && res.pdf_url) {
-                    // Thêm timestamp để tránh cache trình duyệt khi đổi khổ giấy
-                    setPdfUrl(`${res.pdf_url}?t=${Date.now()}`);
+                    setPdfUrl(`${res.pdf_url}&t=${Date.now()}`);
                 } else {
                     setPdfError(res.error || 'Không thể xuất file PDF từ CyberSoft.');
                 }
@@ -58,7 +78,7 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
         return () => {
             isMounted = false;
         };
-    }, [isOpen, data?.stt_rec, paperSize]);
+    }, [isOpen, data?.stt_rec, paperSize, retryCount]);
 
     // Đóng khi bấm ESC
     useEffect(() => {
@@ -98,9 +118,9 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
         document.body.removeChild(link);
     };
 
-    return (
+    return ReactDOM.createPortal(
         <div 
-            className="fixed inset-0 z-[9999999] flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-xs animate-fade-in"
+            className="fixed inset-0 z-[2147483647] flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-xs animate-fade-in"
             onClick={(e) => {
                 if (e.target === e.currentTarget) onClose();
             }}
@@ -121,13 +141,6 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
                                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-extrabold uppercase">
                                     {data.so_ct}
                                 </span>
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold flex items-center gap-1">
-                                    <i className="fas fa-check-circle text-[9px]"></i>
-                                    <span>File PDF Cyber Gốc 100%</span>
-                                </span>
-                            </div>
-                            <div className="text-[11px] text-slate-400">
-                                Xuất trực tiếp từ engine Stimulsoft Reports của CyberSoft ERP • Khổ {paperSize}
                             </div>
                         </div>
                     </div>
@@ -156,7 +169,7 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
                     </div>
                 </div>
 
-                {/* PDF Viewer Container (Xem trực tiếp file PDF chính hãng Cyber) */}
+                {/* PDF Viewer Container */}
                 <div className="flex-1 min-h-0 overflow-hidden bg-slate-900/90 flex flex-col justify-center items-center relative">
                     {isExportingPdf ? (
                         <div className="flex flex-col items-center justify-center text-white gap-3 p-8 animate-pulse">
@@ -175,7 +188,7 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
                             <p className="text-xs text-slate-500 mb-4">{pdfError}</p>
                             <button
                                 type="button"
-                                onClick={() => setPaperSize(prev => prev)}
+                                onClick={() => { setPdfError(null); setRetryCount(c => c + 1); }}
                                 className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all"
                             >
                                 Thử lại
@@ -192,33 +205,7 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
                 </div>
 
                 {/* Modal Footer Controls */}
-                <div className="px-5 py-3 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
-                    <div className="text-xs text-slate-600 flex items-center gap-3">
-                        <span className="font-medium">Khổ giấy:</span>
-                        <div className="inline-flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                            <button
-                                type="button"
-                                onClick={() => setPaperSize('A4')}
-                                disabled={isExportingPdf}
-                                className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                                    paperSize === 'A4' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-                                }`}
-                            >
-                                A4 Đứng (Mặc định)
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setPaperSize('A5')}
-                                disabled={isExportingPdf}
-                                className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
-                                    paperSize === 'A5' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
-                                }`}
-                            >
-                                A5 Đứng (Tiết kiệm)
-                            </button>
-                        </div>
-                    </div>
-
+                <div className="px-5 py-3 bg-white border-t border-slate-200 flex flex-wrap items-center justify-end gap-3 shrink-0">
                     <div className="flex items-center gap-2.5">
                         <button
                             type="button"
@@ -253,6 +240,8 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
                 </div>
 
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
+

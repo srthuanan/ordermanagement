@@ -1,5 +1,5 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
-import { getStorageItem, logAction, ApiResult, ADMIN_USER } from './baseService';
+import { getStorageItem, logAction, ApiResult } from './baseService';
 import { createNotification } from './notificationService';
 
 export interface SwapRequestItem {
@@ -186,8 +186,9 @@ export const getSwapRequests = async (): Promise<ApiResult> => {
     try {
         const currentUser = getStorageItem("currentConsultant") || getStorageItem("currentUser") || "Unknown";
         const userRole = getStorageItem("userRole");
-        const actualUsername = getStorageItem("currentUser") || "";
-        const isAdmin = currentUser === ADMIN_USER || userRole === 'Quản trị viên' || actualUsername.toLowerCase() === 'admin';
+        const actualUsername = (getStorageItem("currentUser") || "").toLowerCase();
+        const userEmail = (getStorageItem("userEmail") || "").toLowerCase();
+        const isAdmin = actualUsername === 'admin' || userEmail === 'showroomthuanan@gmail.com' || userRole === 'Quản trị viên' || userRole === 'Admin';
 
         const { data, error } = await supabase
             .from('interactions')

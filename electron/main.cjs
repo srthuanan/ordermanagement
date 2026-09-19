@@ -82,6 +82,45 @@ ipcMain.on('quit-and-install', () => {
     }
 });
 
+// --- CyberSoft Allocation Sync IPC ---
+const { spawn } = require('child_process');
+ipcMain.handle('cyber-sync-allocations', async (event, { fromDate, toDate, preview }) => {
+    return new Promise((resolve, reject) => {
+        const scriptPath = path.resolve(__dirname, '..', 'scripts', 'sync_thuan_an_allocations.py');
+        const args = [scriptPath];
+        if (fromDate) args.push('--from', fromDate);
+        if (toDate) args.push('--to', toDate);
+        if (preview) args.push('--preview');
+
+        const py = spawn('python', args);
+        let stdout = '';
+        let stderr = '';
+
+        try {
+            py.stdin.write(JSON.stringify({ fromDate, toDate, preview, ...(arguments[1] || {}) }));
+            py.stdin.end();
+        } catch (e) {}
+
+        py.stdout.on('data', (d) => { stdout += d.toString(); });
+        py.stderr.on('data', (d) => { stderr += d.toString(); });
+
+        py.on('close', (code) => {
+            if (code !== 0) {
+                return resolve({ success: false, error: stderr || `Process exited with code ${code}` });
+            }
+            try {
+                const lines = stdout.trim().split('\n');
+                const lastLine = lines[lines.length - 1];
+                const res = JSON.parse(lastLine);
+                resolve(res);
+            } catch (err) {
+                resolve({ success: false, error: err.message, raw: stdout });
+            }
+        });
+    });
+});
+
+
 let mainWindow;
 
 function createWindow() {

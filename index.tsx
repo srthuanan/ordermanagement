@@ -16,10 +16,10 @@ import ChangePasswordModal from './components/modals/ChangePasswordModal';
 import { PublicLiveMapView } from './components/PublicLiveMapView';
 import { registerSW } from 'virtual:pwa-register';
 import { VehicleConfigProvider } from './hooks/useVehicleConfig';
-import HolidayThemeDecorator from './components/ui/HolidayThemeDecorator';
+import MaintenanceFeeBlocker from './components/MaintenanceFeeBlocker';
 
 // Build version from Vite define (timestamp)
-const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
+const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '2026.09.12.01';
 
 const CACHE_VERSION_KEY = 'app_version';
 
@@ -330,7 +330,14 @@ const Root = () => {
         }
 
         if (isAuthenticated) {
-            return <App onLogout={handleLogout} showToast={showToast} hideToast={hideAllToasts} />;
+            return (
+                <MaintenanceFeeBlocker 
+                    currentUserName={localStorage.getItem("currentConsultant") || sessionStorage.getItem("currentConsultant") || ""} 
+                    onLogout={handleLogout}
+                >
+                    <App onLogout={handleLogout} showToast={showToast} hideToast={hideAllToasts} />
+                </MaintenanceFeeBlocker>
+            );
         }
 
         if (isInitialLoading) {
@@ -358,7 +365,6 @@ const Root = () => {
                 />
                 {toasts.map((t, index) => <Toast key={t.id} {...t} show={true} index={toasts.length - 1 - index} onClose={hideToast} />)}
                 {successInfo && <SuccessAnimation show={true} title={successInfo.title} message={successInfo.message} onClose={() => setSuccessInfo(null)} duration={3000} />}
-                <HolidayThemeDecorator isLoggedIn={isAuthenticated} />
                 <UpdateModal />
             </VehicleConfigProvider>
         </SWRConfig>

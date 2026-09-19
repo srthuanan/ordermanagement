@@ -1,5 +1,5 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
-import { getStorageItem, mapOrderDbToUi, ApiResult, ADMIN_USER, SOLD_CARS_API_URL, getApi } from './baseService';
+import { getStorageItem, mapOrderDbToUi, ApiResult, SOLD_CARS_API_URL, getApi } from './baseService';
 import { MONTHS } from '../../constants';
 import axios from 'axios';
 
@@ -45,10 +45,11 @@ export const getSoldCarsDataByMonth = async (month: string, year: number): Promi
         
         // --- PHÂN QUYỀN ---
         // 1. Admin/Giám Đốc: Xem được tất cả
+        const userEmail = (getStorageItem("userEmail") || "").toLowerCase();
         const isTrueAdmin = 
-            currentUser === ADMIN_USER || 
-            currentUserName === 'nhanpt' ||
             currentUserName === 'admin' ||
+            currentUserName === 'nhanpt' ||
+            userEmail === 'showroomthuanan@gmail.com' ||
             lowerRole.includes('quản trị') || 
             lowerRole.includes('admin') ||
             lowerRole.includes('giám đốc');
@@ -139,10 +140,11 @@ export const getAllSoldCarsData = async (year: number): Promise<ApiResult> => {
         const userRole = getStorageItem("userRole");
         const lowerRole = String(userRole).toLowerCase();
         
+        const userEmail = (getStorageItem("userEmail") || "").toLowerCase();
         const isTrueAdmin = 
-            currentUser === ADMIN_USER || 
-            currentUserName === 'nhanpt' ||
             currentUserName === 'admin' ||
+            currentUserName === 'nhanpt' ||
+            userEmail === 'showroomthuanan@gmail.com' ||
             lowerRole.includes('quản trị') || 
             lowerRole.includes('admin') ||
             lowerRole.includes('giám đốc');

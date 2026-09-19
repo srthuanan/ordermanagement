@@ -22,7 +22,6 @@ interface MidAutumnLoginViewProps {
     mousePos: { x: number; y: number };
     handleMouseMove: (e: React.MouseEvent) => void;
     handleMouseLeave: () => void;
-    toggleMidAutumnTheme: () => void;
 }
 
 {/* GÓC NẸP HOÀNG GIA CHẠM KHẮC 3D (IMPERIAL 3D CORNER BRACKET) */}
@@ -129,7 +128,7 @@ export const IconTienDo3D: React.FC = () => (
 );
 
 {/* 3. ICON LỊCH SỬ & BÁO CÁO 3D LĂNG KÍNH */}
-const IconBaoCao3D: React.FC = () => (
+export const IconBaoCao3D: React.FC = () => (
     <svg viewBox="0 0 64 64" className="w-12 h-12 shrink-0 drop-shadow-[0_4px_14px_rgba(56,189,248,0.45)] group-hover:scale-105 transition-transform" xmlns="http://www.w3.org/2000/svg">
         <defs>
             <linearGradient id="prismCyan3D" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -176,10 +175,9 @@ export const MidAutumnLoginView: React.FC<MidAutumnLoginViewProps> = ({
     handleForgotPasswordSubmit,
     handleJoinSubmit,
     handleBackToLogin,
-    mousePos,
+    mousePos: _mousePos,
     handleMouseMove,
     handleMouseLeave,
-    toggleMidAutumnTheme,
 }) => {
     const [showPassword, setShowPassword] = useState(false);
 
@@ -268,22 +266,10 @@ export const MidAutumnLoginView: React.FC<MidAutumnLoginViewProps> = ({
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
-            {/* 1. NỀN SVG NÂNG CAO PHONG CÁCH TRUNG THU HOÀNG GIA */}
-            <MidAutumnSvgBackdrop mouseX={mousePos.x} mouseY={mousePos.y} />
+            {/* 1. NỀN SVG HỘI AN ĐÊM RẰM CHÂN THẬT */}
+            <MidAutumnSvgBackdrop />
 
-            {/* 2. NÚT CHUYỂN ĐỔI GIAO DIỆN TRUNG THU / MẶC ĐỊNH Ở GÓC TRÊN BÊN PHẢI */}
-            <div className="fixed top-4 right-4 z-[100] flex items-center gap-2">
-                <button
-                    type="button"
-                    onClick={toggleMidAutumnTheme}
-                    className="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-lg flex items-center gap-2 cursor-pointer backdrop-blur-md bg-slate-950/85 text-amber-200 border border-amber-500/50 hover:bg-amber-950/90 hover:border-amber-400 hover:shadow-amber-500/20 active:scale-95"
-                    title="Sau mùa Trung Thu hệ thống sẽ tự động trở về màn hình mặc định"
-                >
-                    <span className="text-amber-400 text-sm">🏮</span>
-                    <span className="font-extrabold tracking-wide">Tết Trung Thu</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono">Đang Bật</span>
-                </button>
-            </div>
+
 
             {/* CSS Animation & Autofill Override */}
             <style>{`
@@ -313,7 +299,7 @@ export const MidAutumnLoginView: React.FC<MidAutumnLoginViewProps> = ({
                 }
                 .animate-mini-lantern {
                     animation: lantern-mini-swing 4.2s ease-in-out infinite;
-                    transform-origin: 27.5px 0px;
+                    transform-origin: 50% 0;
                 }
 
                 /* CHROME & EDGE AUTOFILL FIX CHO DARK THEME */
@@ -550,34 +536,6 @@ export const MidAutumnLoginView: React.FC<MidAutumnLoginViewProps> = ({
                     <ImperialCornerBracket position="top-right" />
                     <ImperialCornerBracket position="bottom-left" />
                     <ImperialCornerBracket position="bottom-right" />
-
-                    {/* Đèn lồng Đại Đăng 3D treo góc phải thẻ đung đưa */}
-                    <div className="absolute top-[-26px] right-6 z-30 select-none hover:scale-110 transition-all cursor-pointer animate-mini-lantern">
-                        <svg width="50" height="70" viewBox="0 0 55 70" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-[0_6px_20px_rgba(245,158,11,0.65)]">
-                            <defs>
-                                <radialGradient id="miniRuby3D" cx="35%" cy="35%" r="65%">
-                                    <stop offset="0%" stopColor="#fee2e2" />
-                                    <stop offset="30%" stopColor="#ef4444" />
-                                    <stop offset="70%" stopColor="#b91c1c" />
-                                    <stop offset="100%" stopColor="#450a0a" />
-                                </radialGradient>
-                            </defs>
-                            <circle cx="27.5" cy="0" r="3" fill="#f59e0b" stroke="#fef08a" strokeWidth="1" />
-                            <path d="M 27.5,0 L 27.5,14" stroke="#f59e0b" strokeWidth="2.2" strokeLinecap="round" />
-                            <rect x="18" y="13" width="19" height="5.5" rx="1.5" fill="#d97706" stroke="#fef08a" strokeWidth="1" />
-                            <ellipse cx="27.5" cy="34" rx="20" ry="17" fill="url(#miniRuby3D)" />
-                            <path d="M 27.5,17 C 13,22 13,46 27.5,51" stroke="#fef08a" strokeWidth="1.2" fill="none" />
-                            <path d="M 27.5,17 C 42,22 42,46 27.5,51" stroke="#fef08a" strokeWidth="1.2" fill="none" />
-                            <line x1="27.5" y1="17" x2="27.5" y2="51" stroke="#ffffff" strokeWidth="1" opacity="0.75" />
-                            <circle cx="27.5" cy="34" r="5.5" fill="#fef08a" opacity="0.9" />
-                            <circle cx="27.5" cy="34" r="2.5" fill="#ffffff" />
-                            <rect x="19" y="50" width="17" height="5" rx="1.5" fill="#d97706" stroke="#fef08a" strokeWidth="0.8" />
-                            <line x1="27.5" y1="55" x2="27.5" y2="70" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" />
-                            <line x1="23" y1="55" x2="21" y2="66" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" />
-                            <line x1="32" y1="55" x2="34" y2="66" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" />
-                            <circle cx="27.5" cy="69" r="2.5" fill="#fef08a" />
-                        </svg>
-                    </div>
 
                     {/* Huy hiệu Tết Đoàn Viên & Câu thơ chúc mừng tinh tế gói gọn */}
                     <div className="mb-4 text-center">

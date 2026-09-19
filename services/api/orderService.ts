@@ -1,5 +1,5 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
-import { getStorageItem, mapOrderDbToUi, ApiResult, logAction, uploadToSupabase, getApi, postApi, ADMIN_USER } from './baseService';
+import { getStorageItem, mapOrderDbToUi, ApiResult, logAction, uploadToSupabase, getApi, postApi } from './baseService';
 import { createNotification } from './notificationService';
 import { Order } from '../../types';
 
@@ -40,10 +40,11 @@ export const getPaginatedData = async (_?: string[], __?: string, ___?: boolean)
 
 export const fetchAllArchivedData = async (): Promise<ApiResult> => {
     try {
-        const currentUser = getStorageItem("currentConsultant") || "Unknown User";
-        const userRole = getStorageItem("userRole");
-        const actualUsername = getStorageItem("currentUser") || "";
-        const isAdmin = currentUser === ADMIN_USER || userRole === 'Quản trị viên' || actualUsername.toLowerCase() === 'admin';
+        const currentUser = getStorageItem("currentConsultant") || "";
+        const userRole = getStorageItem("userRole") || "";
+        const actualUsername = (getStorageItem("currentUser") || "").toLowerCase().trim();
+        const userEmail = (getStorageItem("userEmail") || "").toLowerCase().trim();
+        const isAdmin = actualUsername === 'admin' || userRole === 'Admin' || userRole === 'Quản trị viên' || userEmail === 'showroomthuanan@gmail.com';
         let query = supabase.from('archived_orders').select('*').order('ngay_xuat_hoa_don', { ascending: false });
         if (!isAdmin) query = query.eq('tvbh', currentUser);
         const { data, error } = await query;
@@ -105,27 +106,6 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
                     return (orderNoiThat.includes(carNoiThat) || carNoiThat.includes(orderNoiThat)) && carDms === orderPrefix;
                 });
                 if (matchedCar) { vinDk = matchedCar.vin; ketQua = "Đã ghép"; pairedTime = new Date().toISOString(); }
-            }
-
-            // Tầng 2: Flex-Match nếu không tìm thấy màu chính & is_flex_match = true
-            const isFlex = String(payloadData.is_flex_match) === 'true';
-            if (!vinDk && isFlex) {
-                const flexExt: string[] = Array.isArray(payloadData.ngoai_that_flex) ? payloadData.ngoai_that_flex : typeof payloadData.ngoai_that_flex === 'string' ? JSON.parse(payloadData.ngoai_that_flex || '[]') : [];
-                const flexInt: string[] = Array.isArray(payloadData.noi_that_flex) ? payloadData.noi_that_flex : typeof payloadData.noi_that_flex === 'string' ? JSON.parse(payloadData.noi_that_flex || '[]') : [];
-
-                const { data: allCars } = await supabase.from('khoxe').select('vin, ngoai_that, noi_that, ma_dms').eq('trang_thai', 'Chưa ghép').eq('dong_xe', payloadData.dong_xe).eq('phien_ban', payloadData.phien_ban).order('ngay_nhap', { ascending: true });
-                if (allCars && allCars.length > 0) {
-                    const orderPrefix = payloadData.so_don_hang.substring(0, 6).toUpperCase();
-                    const flexMatchCar = allCars.find(car => {
-                        const carDms = (car.ma_dms || '').toUpperCase();
-                        if (carDms !== orderPrefix) return false;
-
-                        const extOk = flexExt.length === 0 || flexExt.includes('ALL') || flexExt.includes(car.ngoai_that) || car.ngoai_that === payloadData.ngoai_that;
-                        const intOk = flexInt.length === 0 || flexInt.includes('ALL') || flexInt.includes(car.noi_that) || car.noi_that === payloadData.noi_that;
-                        return extOk && intOk;
-                    });
-                    if (flexMatchCar) { vinDk = flexMatchCar.vin; ketQua = "Đã ghép"; pairedTime = new Date().toISOString(); }
-                }
             }
         } catch (autoMatchErr) {}
     }
@@ -339,6 +319,7 @@ export const superUpdateOrderDetails = async (oldOrderNumber: string, details: a
                 noi_that: details['Nội thất'], 
                 vin: details['VIN'], 
                 ngay_coc: details['Ngày cọc'] || null, 
+                thoi_gian_can_xe: details['Thời gian cần xe'] !== undefined ? (details['Thời gian cần xe'] || null) : undefined,
                 ket_qua: details['Kết quả'], 
                 trang_thai_vc: details['Trạng thái VC'], 
                 ngay_xuat_hoa_don: details['Ngày xuất hóa đơn'] || null, 
@@ -536,10 +517,11 @@ export const requestVinClub = async (payload: { orderNumber: string; customerTyp
 
 export const globalSearch = async (keyword: string, scope: 'active' | 'archive' | 'all' = 'all'): Promise<ApiResult> => {
     try {
-        const currentUser = getStorageItem("currentConsultant") || getStorageItem("currentUser") || ADMIN_USER;
-        const userRole = getStorageItem("userRole");
-        const actualUsername = getStorageItem("currentUser") || "";
-        const isAdmin = currentUser === ADMIN_USER || userRole === 'Quản trị viên' || actualUsername.toLowerCase() === 'admin';
+        const currentUser = getStorageItem("currentConsultant") || getStorageItem("currentUser") || "";
+        const userRole = getStorageItem("userRole") || "";
+        const actualUsername = (getStorageItem("currentUser") || "").toLowerCase().trim();
+        const userEmail = (getStorageItem("userEmail") || "").toLowerCase().trim();
+        const isAdmin = actualUsername === 'admin' || userRole === 'Admin' || userRole === 'Quản trị viên' || userEmail === 'showroomthuanan@gmail.com';
 
         const searchResults: Record<string, any[]> = {};
         const term = `%${keyword}%`;
@@ -615,3 +597,214 @@ export const updateOrderPolicy = async (orderNumber: string, policy: string): Pr
         return { status: 'ERROR', message: e.message || 'Lỗi khi cập nhật chính sách' };
     }
 };
+
+export interface OrderAuditLogItem {
+    id: string;
+    createdAt: string;
+    type: string;
+    actionTitle: string;
+    actorName: string;
+    actorId?: string;
+    message?: string;
+    reason?: string;
+    vin?: string;
+    metadata?: any;
+    icon: string;
+    badgeBg: string;
+    dotColor: string;
+}
+
+/**
+ * Tải danh sách nhật ký thay đổi của một đơn hàng cụ thể (Order Audit Trail)
+ */
+export const getOrderAuditLogs = async (orderNumber: string): Promise<ApiResult> => {
+    try {
+        if (!orderNumber) return { status: 'SUCCESS', message: 'No order number provided', data: [] };
+
+        const { data, error } = await supabase
+            .from('interactions')
+            .select('*')
+            .or(`target_id.eq."${orderNumber}",metadata->>orderNumber.eq."${orderNumber}"`)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Loại bỏ các thông báo đẩy (push notification) gửi chuông để tránh lặp với bản ghi hành động hệ thống (LOG)
+        const filteredRecords = (data || []).filter((item: any) => {
+            if (item.category === 'NOTIFICATION') return false;
+            if (['success', 'info', 'warning', 'danger'].includes((item.type || '').toLowerCase())) return false;
+            return true;
+        });
+
+        const parseActionInfo = (type: string, metadata: any = {}, msg: string = '') => {
+            const rawType = (type || '').toUpperCase();
+            switch (rawType) {
+                case 'MANUAL_MATCH':
+                case 'PAIR_VIN':
+                    return {
+                        title: 'Ghép xe vào đơn hàng',
+                        icon: 'fa-link',
+                        badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                        dotColor: 'bg-emerald-500 ring-emerald-100',
+                        vin: metadata.vin
+                    };
+                case 'AUTO_MATCH_BACKUP':
+                    return {
+                        title: 'Hệ thống tự động ghép xe',
+                        icon: 'fa-wand-magic-sparkles',
+                        badgeBg: 'bg-purple-50 text-purple-700 border-purple-200',
+                        dotColor: 'bg-purple-500 ring-purple-100',
+                        vin: metadata.vin
+                    };
+                case 'UNMATCH_ORDER':
+                    return {
+                        title: 'Hủy ghép xe',
+                        icon: 'fa-link-slash',
+                        badgeBg: 'bg-rose-50 text-rose-700 border-rose-200',
+                        dotColor: 'bg-rose-500 ring-rose-100',
+                        reason: metadata.reason
+                    };
+                case 'REPLACE_VIN':
+                case 'SWAP_VIN_SUCCESS':
+                    return {
+                        title: 'Đổi số VIN khác',
+                        icon: 'fa-arrows-rotate',
+                        badgeBg: 'bg-sky-50 text-sky-700 border-sky-200',
+                        dotColor: 'bg-sky-500 ring-sky-100',
+                        vin: metadata.newVin || metadata.vinB || metadata.vin
+                    };
+                case 'CHANGE_CONFIG':
+                    return {
+                        title: 'Thay đổi cấu hình xe',
+                        icon: 'fa-pen-to-square',
+                        badgeBg: 'bg-amber-50 text-amber-800 border-amber-200',
+                        dotColor: 'bg-amber-500 ring-amber-100'
+                    };
+                case 'SUPER_EDIT':
+                    return {
+                        title: 'Chỉnh sửa toàn bộ đơn hàng (Admin)',
+                        icon: 'fa-sliders',
+                        badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                        dotColor: 'bg-indigo-500 ring-indigo-100'
+                    };
+                case 'CANCEL_REQUEST':
+                    return {
+                        title: 'Yêu cầu hủy đơn hàng',
+                        icon: 'fa-ban',
+                        badgeBg: 'bg-red-50 text-red-700 border-red-200',
+                        dotColor: 'bg-red-500 ring-red-100',
+                        reason: metadata.reason
+                    };
+                case 'REQUEST_INVOICE':
+                    return {
+                        title: 'Yêu cầu xuất hóa đơn',
+                        icon: 'fa-file-invoice-dollar',
+                        badgeBg: 'bg-blue-50 text-blue-700 border-blue-200',
+                        dotColor: 'bg-blue-500 ring-blue-100',
+                        reason: metadata.aiNote
+                    };
+                case 'EDIT_INVOICE_DETAILS':
+                    return {
+                        title: 'Cập nhật thông tin hóa đơn',
+                        icon: 'fa-file-pen',
+                        badgeBg: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+                        dotColor: 'bg-cyan-500 ring-cyan-100'
+                    };
+                case 'UPLOAD_INVOICE':
+                    return {
+                        title: 'Đã xuất hóa đơn thành công',
+                        icon: 'fa-receipt',
+                        badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                        dotColor: 'bg-emerald-500 ring-emerald-100'
+                    };
+                case 'UPDATE_POLICY':
+                    return {
+                        title: 'Cập nhật chính sách ưu đãi',
+                        icon: 'fa-gift',
+                        badgeBg: 'bg-pink-50 text-pink-700 border-pink-200',
+                        dotColor: 'bg-pink-500 ring-pink-100'
+                    };
+                case 'SUPPLEMENT_FILES':
+                case 'REQUEST_SUPPLEMENT':
+                    return {
+                        title: 'Bổ sung hồ sơ / chứng từ',
+                        icon: 'fa-paperclip',
+                        badgeBg: 'bg-amber-50 text-amber-700 border-amber-200',
+                        dotColor: 'bg-amber-500 ring-amber-100',
+                        reason: metadata.reason
+                    };
+                case 'PENDING_SIGNATURE':
+                    return {
+                        title: 'Chờ ký điện tử hóa đơn',
+                        icon: 'fa-signature',
+                        badgeBg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+                        dotColor: 'bg-indigo-500 ring-indigo-100'
+                    };
+                case 'ADVANCE_STATUS':
+                case 'REVERT_STATUS':
+                    return {
+                        title: `Thay đổi trạng thái (${metadata.from || ''} ➔ ${metadata.to || ''})`,
+                        icon: 'fa-arrow-right-arrow-left',
+                        badgeBg: 'bg-slate-50 text-slate-700 border-slate-200',
+                        dotColor: 'bg-slate-500 ring-slate-100'
+                    };
+                case 'REQUEST_VINCLUB':
+                case 'APPROVE_VC':
+                case 'REJECT_VC':
+                case 'CONFIRM_VC_UNC':
+                    return {
+                        title: 'Cập nhật yêu cầu VinClub',
+                        icon: 'fa-crown',
+                        badgeBg: 'bg-amber-50 text-amber-700 border-amber-200',
+                        dotColor: 'bg-amber-500 ring-amber-100'
+                    };
+                case 'CREATE_ORDER':
+                    return {
+                        title: 'Tạo đơn hàng mới',
+                        icon: 'fa-plus-circle',
+                        badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                        dotColor: 'bg-emerald-500 ring-emerald-100'
+                    };
+                default:
+                    return {
+                        title: msg || type,
+                        icon: 'fa-clock-rotate-left',
+                        badgeBg: 'bg-slate-50 text-slate-700 border-slate-200',
+                        dotColor: 'bg-slate-400 ring-slate-100'
+                    };
+            }
+        };
+
+        const logs: OrderAuditLogItem[] = filteredRecords.map((item: any) => {
+            const meta = item.metadata || {};
+            const actionInfo = parseActionInfo(item.type, meta, item.message);
+            const rawActor = (item.actor_name || item.actor_id || '').trim();
+            const isActorAdmin = rawActor.toLowerCase() === 'admin' 
+                || rawActor.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') === 'pham thanh nhan'
+                || rawActor.toLowerCase() === 'showroomthuanan@gmail.com';
+            const actor = isActorAdmin ? 'Admin' : (rawActor || 'Hệ thống');
+
+            return {
+                id: item.id,
+                createdAt: item.created_at,
+                type: item.type,
+                actionTitle: actionInfo.title,
+                actorName: actor,
+                actorId: item.actor_id,
+                message: item.message,
+                reason: actionInfo.reason || meta.reason || meta.ghi_chu_huy || meta.aiNote,
+                vin: actionInfo.vin || meta.vin || meta.VIN || meta.newVin,
+                metadata: meta,
+                icon: actionInfo.icon,
+                badgeBg: actionInfo.badgeBg,
+                dotColor: actionInfo.dotColor
+            };
+        });
+
+        return { status: 'SUCCESS', message: 'Fetched order audit logs', data: logs };
+    } catch (err: any) {
+        console.error('Error fetching order audit logs:', err);
+        return { status: 'ERROR', message: err.message || 'Lỗi khi tải lịch sử đơn hàng', data: [] };
+    }
+};
+

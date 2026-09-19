@@ -68,14 +68,12 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
 
     // Initial estimation based on local clock or fast cache
     const getInitialWeather = (): WeatherData => {
-        const initialHour = new Date().getHours();
-        const initialIsDay = initialHour >= 6 && initialHour < 18;
         const defaultState: WeatherData = {
-            type: initialIsDay ? 'SUNNY' : 'NIGHT',
+            type: 'SUNNY',
             intensity: 'MODERATE',
             temp: 32,
-            description: initialIsDay ? 'Trời nắng' : 'Đêm thanh bình',
-            isDay: initialIsDay,
+            description: 'Trời nắng',
+            isDay: true,
             locationName: 'Đang định vị...',
             lastUpdated: formatNow()
         };
@@ -86,6 +84,8 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
                 if (parsed.data) {
                     return {
                         ...parsed.data,
+                        type: parsed.data.type === 'NIGHT' ? 'SUNNY' : parsed.data.type,
+                        isDay: true,
                         locationName: cleanLocationName(parsed.data.locationName)
                     };
                 }
@@ -175,16 +175,16 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
                     if (data?.current && isMounted) {
                         const current = data.current;
                         const code = Number(current.condition?.code ?? 1000);
-                        const isDay = current.is_day === 1;
+                        const isDay = true; // Tắt chế độ ban đêm theo yêu cầu, luôn hiển thị ban ngày
                         const temp = Math.round(current.temp_c ?? 30);
                         const precip = Number(current.precip_mm ?? 0);
                         const cloud = Number(current.cloud ?? 30);
                         const apiLocationName = locName !== 'Thuận An' && locName !== 'Đang định vị...' 
                             ? locName 
                             : (data.location?.name ? (data.location.name === 'Binh Nham' ? 'Thuận An' : data.location.name) : locName);
-                        let description = current.condition?.text?.trim() || (isDay ? 'Trời nắng' : 'Đêm thanh bình');
+                        let description = current.condition?.text?.trim() || 'Trời nắng';
 
-                        let type: WeatherType = isDay ? 'SUNNY' : 'NIGHT';
+                        let type: WeatherType = 'SUNNY';
                         let intensity: WeatherIntensity = 'MODERATE';
 
                         // Thunderstorm codes (1087, 1273, 1276, 1279, 1282)
@@ -275,10 +275,9 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
                         const cloud = Number(current.cloudcover ?? 30);
                         const precip = Number(current.precipMM ?? 0);
                         const code = Number(current.weatherCode ?? 113);
-                        const hour = new Date().getHours();
-                        const isDay = hour >= 6 && hour < 18;
+                        const isDay = true; // Tắt chế độ ban đêm theo yêu cầu, luôn hiển thị ban ngày
 
-                        let type: WeatherType = isDay ? 'SUNNY' : 'NIGHT';
+                        let type: WeatherType = 'SUNNY';
                         let intensity: WeatherIntensity = 'MODERATE';
 
                         if (code >= 386 || desc.toLowerCase().includes('dông') || desc.toLowerCase().includes('sét')) {
@@ -291,11 +290,11 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
                             type = 'RAIN';
                             intensity = 'LIGHT';
                         } else if (cloud > 75 || desc.toLowerCase().includes('âm u') || desc.toLowerCase().includes('nhiều mây')) {
-                            type = isDay ? 'CLOUDY' : 'NIGHT';
+                            type = 'CLOUDY';
                             intensity = 'MODERATE';
                         } else {
-                            type = isDay ? 'SUNNY' : 'NIGHT';
-                            intensity = isDay ? (temp >= 33 ? 'HEAVY' : 'MODERATE') : 'MODERATE';
+                            type = 'SUNNY';
+                            intensity = (temp >= 33 ? 'HEAVY' : 'MODERATE');
                         }
 
                         const resultData: WeatherData = {
@@ -325,14 +324,14 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
 
                 if (current && isMounted) {
                     let code = Number(current.weather_code ?? 0);
-                    let isDay = current.is_day === 1;
+                    let isDay = true; // Tắt chế độ ban đêm theo yêu cầu, luôn hiển thị ban ngày
                     let temp = Math.round(current.temperature_2m ?? 30);
                     let precip = Number(current.precipitation ?? 0) + Number(current.rain ?? 0) + Number(current.showers ?? 0);
                     let cloud = Number(current.cloud_cover ?? 30);
 
-                    let type: WeatherType = isDay ? 'SUNNY' : 'NIGHT';
+                    let type: WeatherType = 'SUNNY';
                     let intensity: WeatherIntensity = 'MODERATE';
-                    let description = isDay ? 'Trời nắng' : 'Đêm thanh bình';
+                    let description = 'Trời nắng';
 
                     if ([95, 96, 99].includes(code)) {
                         type = 'THUNDERSTORM';
@@ -353,22 +352,22 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
                             intensity = 'LIGHT';
                             description = 'Mưa phùn nhẹ';
                         } else {
-                            type = isDay ? (cloud > 70 ? 'CLOUDY' : 'SUNNY') : 'NIGHT';
+                            type = cloud > 70 ? 'CLOUDY' : 'SUNNY';
                             intensity = 'LIGHT';
-                            description = isDay ? 'Nắng có mây' : 'Trời quang mây';
+                            description = 'Nắng có mây';
                         }
                     } else if ([3, 45, 48].includes(code) || cloud > 75) {
-                        type = isDay ? 'CLOUDY' : 'NIGHT';
+                        type = 'CLOUDY';
                         intensity = 'MODERATE';
-                        description = isDay ? 'Nhiều mây' : 'Đêm nhiều mây';
+                        description = 'Nhiều mây';
                     } else if (code === 2 || (cloud >= 25 && cloud <= 75)) {
-                        type = isDay ? 'SUNNY' : 'NIGHT';
-                        intensity = isDay ? (cloud > 50 ? 'LIGHT' : 'MODERATE') : 'LIGHT';
-                        description = isDay ? 'Nắng nhẹ có mây' : 'Trời quang mây';
+                        type = 'SUNNY';
+                        intensity = cloud > 50 ? 'LIGHT' : 'MODERATE';
+                        description = 'Nắng nhẹ có mây';
                     } else {
-                        type = isDay ? 'SUNNY' : 'NIGHT';
-                        intensity = isDay ? (temp >= 33 ? 'HEAVY' : 'MODERATE') : 'MODERATE';
-                        description = isDay ? (temp >= 33 ? 'Nắng gắt' : 'Nắng đẹp') : 'Trời trong';
+                        type = 'SUNNY';
+                        intensity = temp >= 33 ? 'HEAVY' : 'MODERATE';
+                        description = temp >= 33 ? 'Nắng gắt' : 'Nắng đẹp';
                     }
 
                     const resultData: WeatherData = {

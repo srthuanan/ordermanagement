@@ -1,5 +1,5 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
-import { getStorageItem, logAction, ApiResult, getApi, ADMIN_USER } from './baseService';
+import { getStorageItem, logAction, ApiResult, getApi } from './baseService';
 import { parseUserAgent } from '../../utils/deviceParser';
 
 let cachedGeoLocation: any = null;
@@ -189,11 +189,14 @@ export const getActiveUsers = async (): Promise<ApiResult> => {
     }
 };
 
-export const recordUserPresence = async (): Promise<void> => {
+export const recordUserPresence = async (customStatus?: string): Promise<void> => {
     try {
-        const username = getStorageItem("currentUser") || ADMIN_USER;
-        const fullName = getStorageItem("currentConsultant") || "User";
+        const username = getStorageItem("currentUser") || "";
+        const fullName = getStorageItem("currentConsultant") || "";
         if (!username) return;
+
+        const isFeeBlocked = typeof window !== 'undefined' && sessionStorage.getItem("isFeeBlocked") === "true";
+        const finalStatus = isFeeBlocked ? 'blocked_fee' : (customStatus || 'online');
 
         const [deviceInfo, geo] = await Promise.all([
             Promise.resolve(parseUserAgent()),
@@ -227,7 +230,7 @@ export const recordUserPresence = async (): Promise<void> => {
             username: username,
             full_name: fullName,
             last_active_at: new Date().toISOString(),
-            status: 'online',
+            status: finalStatus,
             metadata: metadata
         }, { onConflict: 'username' });
     } catch (error) {}

@@ -44,6 +44,7 @@ const AdminCarEditModal: React.FC<AdminCarEditModalProps> = ({ isOpen, vehicle, 
     const currentInterior = localChanges['Nội thất'] !== undefined ? localChanges['Nội thất'] : vehicle['Nội thất'];
     const currentSoMay = localChanges['Số máy'] !== undefined ? localChanges['Số máy'] : vehicle['Số máy'];
     const currentMaDMS = localChanges['Mã DMS'] !== undefined ? localChanges['Mã DMS'] : vehicle['Mã DMS'];
+    const currentViTri = localChanges['Vị trí'] !== undefined ? localChanges['Vị trí'] : vehicle['Vị trí'];
     const currentVIN = localChanges.VIN !== undefined ? localChanges.VIN : vehicle.VIN;
 
     const handleFieldChange = (field: keyof StockVehicle, value: string) => {
@@ -249,6 +250,18 @@ const AdminCarEditModal: React.FC<AdminCarEditModalProps> = ({ isOpen, vehicle, 
                                         onChange={(e) => handleFieldChange('Mã DMS', e.target.value)}
                                     />
                                 </div>
+                            </div>
+
+                            {/* Vị trí kho */}
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-400 uppercase ml-1">Vị Trí Kho Xe</label>
+                                <input
+                                    type="text"
+                                    placeholder="Nhập vị trí kho (VD: Hà Huy Giáp, Thuận An...)"
+                                    className="w-full text-xs font-medium border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/10 transition-all bg-emerald-50/20"
+                                    value={currentViTri || ''}
+                                    onChange={(e) => handleFieldChange('Vị trí', e.target.value)}
+                                />
                             </div>
                         </div>
                     ) : (

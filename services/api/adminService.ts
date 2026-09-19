@@ -1,5 +1,5 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
-import { getStorageItem, logAction, ApiResult, postApi, getExteriorColorName, getInteriorColorName, uploadToSupabase, getApi, ADMIN_USER } from './baseService';
+import { getStorageItem, logAction, ApiResult, postApi, getExteriorColorName, getInteriorColorName, uploadToSupabase, getApi } from './baseService';
 import { createNotification } from './notificationService';
 import { StockVehicle } from '../../types';
 import { versionsMap } from '../../constants';
@@ -177,19 +177,32 @@ export const performAdminAction = async (action: string, params: Record<string, 
             const vin = params.vin.trim().toUpperCase();
             if (vin.length !== 17) return { status: 'ERROR', message: 'Số VIN không hợp lệ (phải đủ 17 ký tự).' };
             const { data: master } = await supabaseAdmin.from('thongtinxe').select('*').ilike('vin', vin).maybeSingle();
-            const modelName = master?.mo_ta || '';
+            const { data: plan } = await supabaseAdmin.from('kehoach_giaoxe').select('*').ilike('vin', vin).maybeSingle();
+
+            const modelName = master?.mo_ta || plan?.dong_xe || '';
             const finalModel = modelName.toLowerCase().includes('limo green') ? 'LIMO' : modelName;
-            const { error: insErr } = await supabaseAdmin.from('khoxe').insert([{ vin, dong_xe: finalModel, phien_ban: '', ngoai_that: getExteriorColorName(master?.ngoai_that || ''), noi_that: getInteriorColorName(master?.noi_that || ''), so_may: master?.so_may || '', ma_dms: master?.khu_vuc || '', trang_thai: 'Chưa ghép', ngay_nhap: new Date().toISOString() }]);
+            const finalVersion = master?.phien_ban || plan?.phien_ban || '';
+            const finalExt = getExteriorColorName(master?.ngoai_that || plan?.ngoai_that || '');
+            const finalInt = getInteriorColorName(master?.noi_that || plan?.noi_that || '');
+            const finalSoMay = plan?.so_may || master?.so_may || '';
+            const finalMaDms = plan?.ma_dms || master?.khu_vuc || '';
+            const finalViTri = plan?.vi_tri || '';
+
+            const { error: insErr } = await supabaseAdmin.from('khoxe').insert([{ 
+                vin, 
+                dong_xe: finalModel, 
+                phien_ban: finalVersion, 
+                ngoai_that: finalExt, 
+                noi_that: finalInt, 
+                so_may: finalSoMay, 
+                ma_dms: finalMaDms, 
+                vi_tri: finalViTri,
+                trang_thai: 'Chưa ghép', 
+                ngay_nhap: new Date().toISOString() 
+            }]);
             if (insErr) { if (insErr.code === '23505') return { status: 'ERROR', message: `Xe với VIN ${vin} đã tồn tại trong kho.` }; throw insErr; }
             await logAction('ADD_CAR', { vin }, vin, 'stock');
-            // Chỉ gửi thông báo nhập kho khi xe có đầy đủ thông tin trừ số máy (dòng xe, phiên bản, ngoại thất, nội thất, mã DMS)
-            // Vì khi thêm mới bằng VIN thì phiên bản luôn để trống (''), xe chưa thể đầy đủ thông tin ngay lập tức.
-            // Thông báo sẽ được gửi sau đó khi Admin cập nhật thông tin phiên bản đầy đủ cho xe.
-            const hasCompleteInfo = false;
-            if (hasCompleteInfo) {
-                createNotification({ message: `<b>${finalModel}</b> (${vin}) đã nhập kho. Sẵn sàng giao dịch!`, type: 'stock_hero', targetView: 'stock', targetId: vin });
-            }
-            return { status: 'SUCCESS', message: master ? `Đã thêm xe ${vin} thành công.` : `Đã thêm xe ${vin} (VIN này chưa có trong danh mục thongtinxe - cần bổ sung thông tin).` };
+            return { status: 'SUCCESS', message: (master || plan) ? `Đã thêm xe ${vin} thành công (vị trí: ${finalViTri || 'Chưa rõ'}).` : `Đã thêm xe ${vin} (VIN này chưa có trong danh mục - cần bổ sung thông tin).` };
         }
         if (action === 'bulkAddCarsByVin') {
             const rawLines = (params.vins || '').split(/\r?\n/);
@@ -214,18 +227,39 @@ export const performAdminAction = async (action: string, params: Record<string, 
             if (parsedMap.size === 0) return { status: 'ERROR', message: 'Không tìm thấy số VIN hợp lệ.' };
             const uniqueVins = Array.from(parsedMap.keys());
             const { data: masters } = await supabaseAdmin.from('thongtinxe').select('*').in('vin', uniqueVins);
+            const { data: plans } = await supabaseAdmin.from('kehoach_giaoxe').select('*').in('vin', uniqueVins);
             const masterMap = new Map(); (masters || []).forEach(m => masterMap.set(m.vin.trim().toUpperCase(), m));
+            const planMap = new Map(); (plans || []).forEach(p => planMap.set(p.vin.trim().toUpperCase(), p));
+
             const res = { success: 0, failed: 0, skipped: 0, complete: 0 };
             for (const vin of uniqueVins) {
-                const m = masterMap.get(vin); const model = (m?.mo_ta || '').toLowerCase().includes('limo green') ? 'LIMO' : (m?.mo_ta || '');
-                const version = parsedMap.get(vin) || '';
-                const ext = getExteriorColorName(m?.ngoai_that || '');
-                const int = getInteriorColorName(m?.noi_that || '');
-                const { error: insErr } = await supabaseAdmin.from('khoxe').insert([{ vin, dong_xe: model, phien_ban: version, ngoai_that: ext, noi_that: int, so_may: m?.so_may || '', ma_dms: m?.khu_vuc || '', trang_thai: 'Chưa ghép', ngay_nhap: new Date().toISOString() }]);
+                const m = masterMap.get(vin);
+                const p = planMap.get(vin);
+                const rawModel = p?.dong_xe || m?.mo_ta || '';
+                const model = rawModel.toLowerCase().includes('limo green') ? 'LIMO' : rawModel;
+                const version = parsedMap.get(vin) || p?.phien_ban || m?.phien_ban || '';
+                const ext = getExteriorColorName(p?.ngoai_that || m?.ngoai_that || '');
+                const int = getInteriorColorName(p?.noi_that || m?.noi_that || '');
+                const soMay = p?.so_may || m?.so_may || '';
+                const maDms = p?.ma_dms || m?.khu_vuc || '';
+                const viTri = p?.vi_tri || '';
+
+                const { error: insErr } = await supabaseAdmin.from('khoxe').insert([{ 
+                    vin, 
+                    dong_xe: model, 
+                    phien_ban: version, 
+                    ngoai_that: ext, 
+                    noi_that: int, 
+                    so_may: soMay, 
+                    ma_dms: maDms, 
+                    vi_tri: viTri,
+                    trang_thai: 'Chưa ghép', 
+                    ngay_nhap: new Date().toISOString() 
+                }]);
                 if (insErr) { if (insErr.code === '23505') res.skipped++; else res.failed++; } 
                 else { 
                     res.success++; 
-                    if (model && version && ext && int && (m?.khu_vuc || '')) res.complete++;
+                    if (model && version && ext && int && (maDms || m?.khu_vuc || '')) res.complete++;
                     await logAction('ADD_CAR_BULK', { vin, version }, vin as string, 'stock'); 
                 }
             }
@@ -263,6 +297,11 @@ export const performAdminAction = async (action: string, params: Record<string, 
             const khoxeMap = new Map<string, any>();
             (existingCars || []).forEach((c: any) => khoxeMap.set(c.vin.trim().toUpperCase(), c));
 
+            // 3. Query delivery plan (kehoach_giaoxe) for pre-assigned location and metadata
+            const { data: plans } = await supabaseAdmin.from('kehoach_giaoxe').select('*').in('vin', vins);
+            const planMap = new Map<string, any>();
+            (plans || []).forEach((p: any) => planMap.set(p.vin.trim().toUpperCase(), p));
+
             const khoxeUpserts: any[] = [];
             let newAddedCount = 0;
             let updatedCount = 0;
@@ -271,15 +310,17 @@ export const performAdminAction = async (action: string, params: Record<string, 
                 const vin = car.vin;
                 const master = masterMap.get(vin);
                 const existingInStock = khoxeMap.get(vin);
+                const plan = planMap.get(vin);
 
-                const rawDongXe = car.dong_xe || master?.mo_ta || existingInStock?.dong_xe || '';
-                const rawPhienBan = car.phien_ban || master?.phien_ban || existingInStock?.phien_ban || '';
+                const rawDongXe = car.dong_xe || master?.mo_ta || existingInStock?.dong_xe || plan?.dong_xe || '';
+                const rawPhienBan = car.phien_ban || master?.phien_ban || existingInStock?.phien_ban || plan?.phien_ban || '';
                 const { dong_xe: finalDongXe, phien_ban: finalPhienBan } = normalizeCarModelAndVersion(rawDongXe, rawPhienBan);
 
-                const finalNgoaiThat = getExteriorColorName(car.ngoai_that || master?.ngoai_that || existingInStock?.ngoai_that || '');
-                const finalNoiThat = getInteriorColorName(car.noi_that || master?.noi_that || existingInStock?.noi_that || '');
-                const finalMaDms = car.ma_dms || master?.khu_vuc || existingInStock?.ma_dms || '';
-                const finalSoMay = car.so_may || master?.so_may || existingInStock?.so_may || '';
+                const finalNgoaiThat = getExteriorColorName(car.ngoai_that || master?.ngoai_that || existingInStock?.ngoai_that || plan?.ngoai_that || '');
+                const finalNoiThat = getInteriorColorName(car.noi_that || master?.noi_that || existingInStock?.noi_that || plan?.noi_that || '');
+                const finalMaDms = existingInStock?.ma_dms || car.ma_dms || master?.khu_vuc || plan?.ma_dms || '';
+                const finalSoMay = existingInStock?.so_may || car.so_may || master?.so_may || plan?.so_may || '';
+                const finalViTri = car.vi_tri || existingInStock?.vi_tri || plan?.vi_tri || '';
 
                 if (existingInStock) {
                     updatedCount++;
@@ -296,6 +337,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
                     noi_that: finalNoiThat,
                     so_may: finalSoMay,
                     ma_dms: finalMaDms,
+                    vi_tri: finalViTri,
                     trang_thai: existingInStock?.trang_thai || 'Chưa ghép',
                     ngay_nhap: existingInStock?.ngay_nhap || new Date().toISOString()
                 });
@@ -1266,7 +1308,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
 export const updateCarInfo = async (vin: string, updates: Partial<StockVehicle>): Promise<ApiResult> => {
     try {
         const up: any = {};
-        if (updates['Dòng xe'] !== undefined) up.dong_xe = updates['Dòng xe']; if (updates['Phiên bản'] !== undefined) up.phien_ban = updates['Phiên bản']; if (updates['Ngoại thất'] !== undefined) up.ngoai_that = updates['Ngoại thất']; if (updates['Nội thất'] !== undefined) up.noi_that = updates['Nội thất']; if (updates['Mã DMS'] !== undefined) up.ma_dms = updates['Mã DMS']; if (updates['Số máy'] !== undefined) up.so_may = updates['Số máy']; if (updates.VIN !== undefined) up.vin = updates.VIN;
+        if (updates['Dòng xe'] !== undefined) up.dong_xe = updates['Dòng xe']; if (updates['Phiên bản'] !== undefined) up.phien_ban = updates['Phiên bản']; if (updates['Ngoại thất'] !== undefined) up.ngoai_that = updates['Ngoại thất']; if (updates['Nội thất'] !== undefined) up.noi_that = updates['Nội thất']; if (updates['Mã DMS'] !== undefined) up.ma_dms = updates['Mã DMS']; if (updates['Số máy'] !== undefined) up.so_may = updates['Số máy']; if (updates.VIN !== undefined) up.vin = updates.VIN; if (updates['Vị trí'] !== undefined) up.vi_tri = updates['Vị trí']; if ((updates as any).vi_tri !== undefined) up.vi_tri = (updates as any).vi_tri;
         // [QUAN TRỌNG]: Xóa car_hold_activities trước khi đổi VIN (FK constraint)
         if (updates.VIN !== undefined && updates.VIN !== vin) {
             await supabaseAdmin.from('car_hold_activities').delete().eq('vin', vin);
@@ -1468,7 +1510,7 @@ export const getAppSetting = async (key: string): Promise<ApiResult> => {
 
 export const updateAppSetting = async (key: string, value: any): Promise<ApiResult> => {
     try {
-        const u = getStorageItem("currentConsultant") || ADMIN_USER;
+        const u = getStorageItem("currentConsultant") || getStorageItem("currentUser") || "Admin";
         await supabaseAdmin.from('app_settings').upsert({ key, value, updated_at: new Date().toISOString(), updated_by: u }, { onConflict: 'key' });
         await logAction('UPDATE_SETTING', { key, value }, key, 'SETTINGS');
         return { status: 'SUCCESS', message: `Đã cập nhật ${key} thành công.` };

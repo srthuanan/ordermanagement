@@ -53,9 +53,6 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         vin: '',
         chinh_sach: '',
     });
-    const [isFlexMatch, setIsFlexMatch] = useState(false);
-    const [ngoaiThatFlex, setNgoaiThatFlex] = useState<string[]>([]);
-    const [noiThatFlex, setNoiThatFlex] = useState<string[]>([]);
     const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
     const [chicFile, setChicFile] = useState<File | null>(null);
     const [isProcessingOcr, setIsProcessingOcr] = useState(false);
@@ -64,10 +61,23 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
     const [warningType, setWarningType] = useState<'hot' | 'slow' | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [dmsWarning, setDmsWarning] = useState('');
-    const { versionsMap, allPossibleVersions, vehicleLines, getMappedExteriors, getMappedInteriors, getAllExteriorsForLine, getAllInteriorsForLine } = useVehicleConfig();
+    const { versionsMap, allPossibleVersions, vehicleLines, getMappedExteriors, getMappedInteriors } = useVehicleConfig();
 
     const [availableExteriors, setAvailableExteriors] = useState<string[]>([]);
     const [availableInteriors, setAvailableInteriors] = useState<string[]>([]);
+
+    // --- BỘ SƯU TẬP 5 BỨC TRANH 3D SHOWROOM TONE TRẮNG SÁNG SIÊU SANG ---
+    const [whiteLuxuryBgIndex, setWhiteLuxuryBgIndex] = useState<number>(() => Math.floor(Math.random() * 5));
+
+    // Đổi ngẫu nhiên bức tranh tone trắng sáng khác mỗi khi chọn Dòng xe mới
+    useEffect(() => {
+        if (formData.dong_xe) {
+            setWhiteLuxuryBgIndex(prev => {
+                const choices = [0, 1, 2, 3, 4].filter(i => i !== prev);
+                return choices[Math.floor(Math.random() * choices.length)];
+            });
+        }
+    }, [formData.dong_xe]);
 
     const inputClass = "w-full pl-4 pr-4 py-3.5 bg-white border border-slate-200 rounded-lg text-base font-medium text-slate-800 placeholder-slate-400 outline-none focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/10 transition-all duration-300 shadow-sm hover:border-slate-300";
     const isPreFilled = !!initialVehicle;
@@ -229,9 +239,9 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
             const requestPayload = {
                 ...formData,
                 ten_khach_hang: (formData.ten_khach_hang || '').trim().toUpperCase(),
-                is_flex_match: isFlexMatch ? 'true' : 'false',
-                ngoai_that_flex: JSON.stringify(ngoaiThatFlex),
-                noi_that_flex: JSON.stringify(noiThatFlex)
+                is_flex_match: 'false',
+                ngoai_that_flex: '[]',
+                noi_that_flex: '[]'
             };
             const result = await apiService.addRequest(requestPayload as any, chicFile);
             if (result.status === "SUCCESS" && result.newRecord) { onSuccess(result.newRecord); handleClearForm(); }
@@ -248,7 +258,36 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         'slow': 'bg-green-50 border-green-100 text-green-700 font-bold shadow-sm'
     };
 
+    const isMidAutumnSeason = (): boolean => {
+        if (typeof window !== 'undefined') {
+            const override = localStorage.getItem('THEME_SEASON');
+            if (override === 'trung_thu') return true;
+            if (override === 'normal') return false;
+        }
+        const now = new Date();
+        const month = now.getMonth(); // 0 = Jan ... 7 = Aug, 8 = Sep, 9 = Oct
+        const day = now.getDate();
+        // Mùa lễ hội Trung Thu hàng năm: Từ 15/08 đến 15/10
+        if (month === 7 && day >= 15) return true;
+        if (month === 8) return true;
+        if (month === 9 && day <= 15) return true;
+        return false;
+    };
+
+    const WHITE_LUXURY_SHOWROOMS = [
+        'pictures/showroom_trung_thu_1.webp', // 1. White Luxury Studio
+        'pictures/showroom_trung_thu_2.webp', // 2. Penthouse Sky Studio
+        'pictures/showroom_trung_thu_3.webp', // 3. Cathedral Infinity Terrace
+        'pictures/showroom_trung_thu_4.webp', // 4. Grand Circular Rotunda
+        'pictures/showroom_trung_thu_5.webp', // 5. Modern Zen Bamboo Studio
+    ];
+
     const getShowroomBg = () => {
+        // Trong mùa Trung Thu: Chọn ngẫu nhiên trong bộ sưu tập 5 tranh 3D Tone Trắng Sáng
+        if (isMidAutumnSeason()) {
+            return WHITE_LUXURY_SHOWROOMS[whiteLuxuryBgIndex] || 'pictures/showroom_trung_thu_1.webp';
+        }
+        // Hết mùa Trung Thu -> Tự động quay về hệ thống tranh showroom nguyên bản theo từng dòng xe
         const model = formData.dong_xe?.toLowerCase() || '';
         if (model.includes('vf 3') || model.includes('vf 5')) return 'pictures/showroom_nature.png';
         if (model.includes('vf 6') || model.includes('vf 7') || model.includes('vfe34')) return 'pictures/showroom_city.png';
@@ -266,8 +305,10 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-700 ease-in-out"
                     style={{ backgroundImage: `url('${getShowroomBg()}')` }}
                 >
-                    {/* Soft ambient light to ensure the car pops and blends perfectly */}
-                    <div className="absolute inset-0 bg-white/20"></div>
+                    {/* Soft ambient overlay linh hoạt theo mùa */}
+                    <div className={`absolute inset-0 pointer-events-none transition-all duration-700 ${
+                        isMidAutumnSeason() ? 'bg-gradient-to-t from-white/15 via-transparent to-slate-900/5' : 'bg-white/20'
+                    }`}></div>
                 </div>
 
                 {/* Header */}
@@ -304,9 +345,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                 {/* Intense Grounding Contact Shadow */}
                                 <div className="absolute bottom-[22%] left-1/2 -translate-x-1/2 w-[55%] h-6 bg-black/40 blur-[10px] rounded-[100%] z-10"></div>
                             </div>
-                        ) : (
-                            <div className="text-slate-400 flex flex-col items-center"><i className="fas fa-car text-7xl mb-4 opacity-20"></i><p className="text-sm font-bold tracking-widest uppercase">Chưa chọn xe</p></div>
-                        )}
+                        ) : null}
                         {(isSubmitting || isProcessingOcr) && <div className="absolute inset-0 flex items-center justify-center bg-white/40 backdrop-blur-md z-30"><i className="fas fa-circle-notch fa-spin text-4xl text-accent-primary"></i></div>}
                     </div>
                 </div>
@@ -484,122 +523,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                     </div>
                                 </div>
 
-                                {/* FLEX-MATCH OPTIONS SECTION */}
-                                <div className="mt-4 p-4 bg-gradient-to-r from-indigo-50/80 to-blue-50/80 border border-indigo-100 rounded-xl space-y-3 shadow-xs">
-                                    <div className="flex items-center justify-between">
-                                        <label className="flex items-center gap-2 cursor-pointer select-none">
-                                            <input
-                                                type="checkbox"
-                                                checked={isFlexMatch}
-                                                onChange={(e) => setIsFlexMatch(e.target.checked)}
-                                                className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 cursor-pointer"
-                                            />
-                                            <span className="text-xs font-extrabold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
-                                                <i className="fas fa-random text-indigo-500"></i>
-                                                Ghép xe biên độ mở (Flex-Match)
-                                            </span>
-                                        </label>
-                                        <span className="text-[10px] font-bold text-indigo-600 bg-white px-2 py-0.5 rounded-full border border-indigo-200/80 shadow-2xs">
-                                            Giao xe sớm hơn
-                                        </span>
-                                    </div>
 
-                                    {isFlexMatch && (
-                                        <div className="space-y-3 pt-2 border-t border-indigo-100/70 animate-fade-in">
-                                            {/* Ngoại thất phụ */}
-                                            <div>
-                                                <label className="text-[11px] font-bold text-slate-700 block mb-1.5">Ngoại thất phụ chấp nhận:</label>
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {(() => {
-                                                        if (!formData.dong_xe) return <span className="text-[10px] text-slate-400 italic">Vui lòng chọn Dòng xe trước</span>;
-                                                        const lineExteriors = getAllExteriorsForLine(formData.dong_xe);
-                                                        const extList = lineExteriors.filter(c => c !== formData.ngoai_that);
-                                                        if (extList.length === 0) return <span className="text-[10px] text-slate-400 italic">Dòng xe {formData.dong_xe} chỉ có 1 tùy chọn ngoại thất</span>;
-                                                        
-                                                        const isAllExt = ngoaiThatFlex.includes('ALL');
-                                                        return (
-                                                            <>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setNgoaiThatFlex(prev => prev.includes('ALL') ? [] : ['ALL'])}
-                                                                    className={`px-2.5 py-1 rounded-md text-[10px] font-extrabold transition-all ${
-                                                                        isAllExt ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50'
-                                                                    }`}
-                                                                >
-                                                                    Tất cả ngoại thất {isAllExt && '✓'}
-                                                                </button>
-                                                                {extList.map(color => {
-                                                                    const isSelected = isAllExt || ngoaiThatFlex.includes(color);
-                                                                    return (
-                                                                        <button
-                                                                            key={color}
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                if (isAllExt) setNgoaiThatFlex([color]);
-                                                                                else setNgoaiThatFlex(prev => isSelected ? prev.filter(c => c !== color) : [...prev, color]);
-                                                                            }}
-                                                                            className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
-                                                                                isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                                                                            }`}
-                                                                        >
-                                                                            {color} {isSelected && '✓'}
-                                                                        </button>
-                                                                    );
-                                                                })}
-                                                            </>
-                                                        );
-                                                    })()}
-                                                </div>
-                                            </div>
-
-                                            {/* Nội thất phụ */}
-                                            <div>
-                                                <label className="text-[11px] font-bold text-slate-700 block mb-1.5">Nội thất phụ chấp nhận:</label>
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {(() => {
-                                                        if (!formData.dong_xe) return <span className="text-[10px] text-slate-400 italic">Vui lòng chọn Dòng xe trước</span>;
-                                                        const lineInteriors = getAllInteriorsForLine(formData.dong_xe);
-                                                        const intList = lineInteriors.filter(c => c !== formData.noi_that);
-                                                        if (intList.length === 0) return <span className="text-[10px] text-slate-400 italic">Dòng xe {formData.dong_xe} chỉ có 1 tùy chọn nội thất ({formData.noi_that || lineInteriors[0] || 'Black'})</span>;
-
-                                                        const isAllInt = noiThatFlex.includes('ALL');
-                                                        return (
-                                                            <>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setNoiThatFlex(prev => prev.includes('ALL') ? [] : ['ALL'])}
-                                                                    className={`px-2.5 py-1 rounded-md text-[10px] font-extrabold transition-all ${
-                                                                        isAllInt ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50'
-                                                                    }`}
-                                                                >
-                                                                    Tất cả nội thất {isAllInt && '✓'}
-                                                                </button>
-                                                                {intList.map(color => {
-                                                                    const isSelected = isAllInt || noiThatFlex.includes(color);
-                                                                    return (
-                                                                        <button
-                                                                            key={color}
-                                                                            type="button"
-                                                                            onClick={() => {
-                                                                                if (isAllInt) setNoiThatFlex([color]);
-                                                                                else setNoiThatFlex(prev => isSelected ? prev.filter(c => c !== color) : [...prev, color]);
-                                                                            }}
-                                                                            className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${
-                                                                                isSelected ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                                                                            }`}
-                                                                        >
-                                                                            {color} {isSelected && '✓'}
-                                                                        </button>
-                                                                    );
-                                                                })}
-                                                            </>
-                                                        );
-                                                    })()}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
 
                                 {warningMessage && warningType && <div className={`p-3 rounded-lg border flex items-center gap-2 text-xs ${warningClasses[warningType]}`}><i className={`fas ${warningType === 'hot' ? 'fa-fire' : 'fa-check-circle'}`}></i><span dangerouslySetInnerHTML={{ __html: warningMessage }}></span></div>}
                             </div>

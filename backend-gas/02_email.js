@@ -46,9 +46,8 @@ function sendEmailViaEdge(options_or_recipient, subject, htmlBody_or_body) {
 
 function getNotifications(currentUser, isAdmin) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const NOTIFICATION_HEADERS = SHEET_HEADERS["ThongBaoWebApp"];
-  const sheet = getOrCreateSheet(ss, NOTIFICATION_SHEET_NAME, NOTIFICATION_HEADERS);
-  if (sheet.getLastRow() < 2) {
+  const sheet = ss.getSheetByName(NOTIFICATION_SHEET_NAME);
+  if (!sheet || sheet.getLastRow() < 2) {
     return createJsonResponse({ status: 'SUCCESS', notifications: [], unreadCount: 0 });
   }
 
@@ -1344,8 +1343,8 @@ function markAllNotificationsAsRead(e) {
   }
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const sheet = getOrCreateSheet(ss, NOTIFICATION_SHEET_NAME, SHEET_HEADERS["ThongBaoWebApp"]);
-  if (sheet.getLastRow() < 2) {
+  const sheet = ss.getSheetByName(NOTIFICATION_SHEET_NAME);
+  if (!sheet || sheet.getLastRow() < 2) {
     return createJsonResponse({ status: 'SUCCESS', message: 'Không có thông báo để đánh dấu.' });
   }
 

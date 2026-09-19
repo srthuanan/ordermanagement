@@ -1,6 +1,7 @@
 import React from 'react';
 import { StockVehicle, StockSortConfig } from '../types';
 import StockCard from './StockCard';
+import { useNightMode } from '../hooks/useNightMode';
 
 interface StockGridViewProps {
   vehicles: StockVehicle[];
@@ -28,8 +29,6 @@ interface StockGridViewProps {
   userOrders?: any[];
   onRefetchStock?: () => void;
 }
-
-import { useNightMode } from '../hooks/useNightMode';
 
 const StockGridView: React.FC<StockGridViewProps> = (props) => {
   const isNight = useNightMode();

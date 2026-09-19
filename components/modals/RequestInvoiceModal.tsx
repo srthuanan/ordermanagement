@@ -3,6 +3,7 @@ import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
 import Button from '../ui/Button';
 import * as apiService from '../../services/apiService';
+import { checkCyberContractStatus, CheckCyberContractResult } from '../../services/api/stockService';
 
 interface RequestInvoiceModalProps {
     order: Order;
@@ -122,6 +123,41 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const [maVc, setMaVc] = useState('');
     const [vinCheckError, setVinCheckError] = useState('');
     const [isCheckingVin, setIsCheckingVin] = useState(false);
+    
+    // Cyber contract status warning & Step 3 check
+    const [isValidatingContract, setIsValidatingContract] = useState(false);
+    const [contractWarning, setContractWarning] = useState<CheckCyberContractResult | null>(null);
+    const [cyberContractStatus, setCyberContractStatus] = useState<CheckCyberContractResult | null>(null);
+    const [isCheckingCyberContract, setIsCheckingCyberContract] = useState(false);
+
+    const recheckCyberContract = async () => {
+        setIsCheckingCyberContract(true);
+        try {
+            const res = await checkCyberContractStatus({
+                customer_name: order["Tên khách hàng"],
+                tvbh_name: order["Tên tư vấn bán hàng"],
+                vin: order.VIN,
+                order_no: order["Số đơn hàng"]
+            });
+            setCyberContractStatus(res);
+        } catch (err) {
+            console.error("Lỗi tra cứu hợp đồng Cyber:", err);
+            setCyberContractStatus({
+                success: false,
+                found: false,
+                is_approved: false,
+                error: 'Không thể kết nối máy chủ CyberSoft'
+            });
+        } finally {
+            setIsCheckingCyberContract(false);
+        }
+    };
+
+    useEffect(() => {
+        if (step === 3 && !cyberContractStatus && !isCheckingCyberContract) {
+            recheckCyberContract();
+        }
+    }, [step, order]);
     
     // Background tracking for Google Drive
     const [capturedImages, setCapturedImages] = useState<any[]>([]);
@@ -404,26 +440,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const handleNext = () => setStep((prev: any) => Math.min(prev + 1, 3));
     const handleBack = () => setStep((prev: any) => Math.max(prev - 1, 1));
 
-    const handleSubmit = async () => {
-        if (isSubmittingRef.current) return;
-        
-        if (!isFormValid || !contractFile || !proposalFile) {
-            showToast('Thiếu Thông Tin', "Vui lòng hoàn thành tất cả các bước.", 'warning');
-            return;
-        }
-
-        if (stockData && stockData.length > 0 && order.VIN) {
-            const vehicle = stockData.find(v => v.VIN === order.VIN);
-            if (vehicle) {
-                const dmsCode = vehicle['Mã DMS'] || vehicle['Mã DMS'] || vehicle['DMS Code'] || vehicle['Mã đơn hàng'] || '';
-                const orderPrefix = order["Số đơn hàng"] ? order["Số đơn hàng"].trim().substring(0, 6) : '';
-                if (dmsCode && orderPrefix && dmsCode.trim().toUpperCase() !== orderPrefix.toUpperCase()) {
-                    showToast('Sai Mã DMS', `Anh chị vui lòng tạo lại đơn hàng đúng đầu DMS (${dmsCode})`, 'error', 10000);
-                    return;
-                }
-            }
-        }
-
+    const executeSubmission = async () => {
         isSubmittingRef.current = true;
         setIsSubmitting(true);
         try {
@@ -468,8 +485,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
             await onConfirm(
                 order, 
-                contractFile, 
-                proposalFile, 
+                contractFile!, 
+                proposalFile!, 
                 policy, 
                 getRawValue(commission), 
                 getRawValue(vpoint), 
@@ -489,6 +506,54 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             setIsSubmitting(false);
             setProcessingStage(0);
         }
+    };
+
+    const handleSubmit = async () => {
+        if (isSubmittingRef.current || isValidatingContract) return;
+        
+        if (!isFormValid || !contractFile || !proposalFile) {
+            showToast('Thiếu Thông Tin', "Vui lòng hoàn thành tất cả các bước.", 'warning');
+            return;
+        }
+
+        if (stockData && stockData.length > 0 && order.VIN) {
+            const vehicle = stockData.find(v => v.VIN === order.VIN);
+            if (vehicle) {
+                const dmsCode = vehicle['Mã DMS'] || vehicle['Mã DMS'] || vehicle['DMS Code'] || vehicle['Mã đơn hàng'] || '';
+                const orderPrefix = order["Số đơn hàng"] ? order["Số đơn hàng"].trim().substring(0, 6) : '';
+                if (dmsCode && orderPrefix && dmsCode.trim().toUpperCase() !== orderPrefix.toUpperCase()) {
+                    showToast('Sai Mã DMS', `Anh chị vui lòng tạo lại đơn hàng đúng đầu DMS (${dmsCode})`, 'error', 10000);
+                    return;
+                }
+            }
+        }
+
+        // Kiểm tra tình trạng phê duyệt hợp đồng trên hệ thống CyberSoft
+        let currentStatus = cyberContractStatus;
+        if (!currentStatus) {
+            setIsValidatingContract(true);
+            try {
+                currentStatus = await checkCyberContractStatus({
+                    customer_name: order["Tên khách hàng"],
+                    tvbh_name: order["Tên tư vấn bán hàng"],
+                    vin: order.VIN,
+                    order_no: order["Số đơn hàng"]
+                });
+                setCyberContractStatus(currentStatus);
+            } catch (err) {
+                console.error("Lỗi khi kiểm tra tình trạng hợp đồng trên Cyber:", err);
+            } finally {
+                setIsValidatingContract(false);
+            }
+        }
+
+        // Nếu hợp đồng chưa duyệt (Ma_Post == '2', '1', hoặc chưa tìm thấy): Hiển thị modal cảnh báo xác nhận cho TVBH
+        if (currentStatus && !currentStatus.is_approved) {
+            setContractWarning(currentStatus);
+            return;
+        }
+
+        await executeSubmission();
     };
 
     const ProcessingStep = ({ label, status }: { label: string, status: 'pending' | 'active' | 'completed' }) => {
@@ -544,6 +609,115 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             </div>
         );
     }
+
+    const renderCyberContractStatusCard = () => {
+        if (isCheckingCyberContract) {
+            return (
+                <div className="relative p-3.5 rounded-xl border-2 border-blue-200 bg-blue-50/50 flex items-center justify-between shadow-2xs h-full min-h-[58px]">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0 animate-spin">
+                            <i className="fas fa-circle-notch text-xs"></i>
+                        </div>
+                        <div className="min-w-0">
+                            <p className="font-bold text-blue-900 uppercase tracking-wider text-[11px]">Đang kiểm tra hợp đồng Cyber...</p>
+                            <p className="text-[9px] text-blue-600 truncate">
+                                KH: {order["Tên khách hàng"] || 'N/A'} - TVBH: {order["Tên tư vấn bán hàng"] || 'N/A'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (!cyberContractStatus) {
+            return (
+                <div 
+                    onClick={recheckCyberContract}
+                    className="relative p-3.5 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 hover:bg-slate-100/60 cursor-pointer flex items-center justify-between transition-colors shadow-2xs group h-full min-h-[58px]"
+                >
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center text-slate-400 group-hover:text-blue-600 flex-shrink-0 transition-colors">
+                            <i className="fas fa-shield-halved text-xs"></i>
+                        </div>
+                        <div className="min-w-0">
+                            <p className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Kiểm tra hợp đồng Cyber</p>
+                            <p className="text-[9px] text-slate-400 truncate">Nhấn để đối soát trạng thái phê duyệt trên CyberSoft ERP</p>
+                        </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-blue-600 group-hover:underline flex items-center gap-1 flex-shrink-0">
+                        <i className="fas fa-search text-[9px]"></i> Kiểm tra
+                    </span>
+                </div>
+            );
+        }
+
+        if (cyberContractStatus.is_approved) {
+            return (
+                <div className="relative p-3.5 rounded-xl border-2 border-emerald-300 bg-emerald-50/70 flex items-center justify-between shadow-2xs h-full min-h-[58px]">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                            <i className="fas fa-check-double text-xs"></i>
+                        </div>
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                                <span className="font-black text-emerald-950 uppercase tracking-wider text-[11px]">Hợp đồng Cyber đã duyệt</span>
+                                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-200 text-emerald-900 border border-emerald-300">
+                                    {cyberContractStatus.ten_post || 'Đã duyệt'}
+                                </span>
+                            </div>
+                            <p className="text-[9px] text-emerald-700 font-medium truncate mt-0.5">
+                                Số HĐ: <strong className="font-mono">{cyberContractStatus.so_ct || 'N/A'}</strong> (TVBH: {cyberContractStatus.ten_tvbh || order["Tên tư vấn bán hàng"]})
+                            </p>
+                        </div>
+                    </div>
+                    <button 
+                        type="button" 
+                        onClick={(e) => { e.stopPropagation(); recheckCyberContract(); }} 
+                        title="Kiểm tra lại từ Cyber"
+                        className="p-1.5 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                    >
+                        <i className="fas fa-arrows-rotate text-xs"></i>
+                    </button>
+                </div>
+            );
+        }
+
+        // Trường hợp chưa duyệt hoặc chưa có HĐ: Cảnh báo nổi bật
+        return (
+            <div className="relative p-3 rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50/70 shadow-2xs flex items-center justify-between animate-fade-in h-full min-h-[58px]">
+                <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-600 flex-shrink-0 shadow-inner mt-0.5">
+                        <i className="fas fa-triangle-exclamation text-sm animate-bounce"></i>
+                    </div>
+                    <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-black text-amber-950 uppercase tracking-tight text-[11px]">
+                                Cảnh báo: Hợp đồng Cyber chưa duyệt
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider bg-amber-200 text-amber-900 border border-amber-400">
+                                {cyberContractStatus.ten_post || (cyberContractStatus.found ? 'Chờ duyệt' : 'Chưa có HĐ')}
+                            </span>
+                        </div>
+                        <p className="text-[10px] text-amber-900 font-bold mt-0.5 truncate">
+                            {cyberContractStatus.so_ct ? `Số HĐ: ${cyberContractStatus.so_ct}` : 'Chưa tìm thấy hợp đồng trên Cyber'}
+                        </p>
+                        <p className="text-[9px] text-amber-700 leading-tight">
+                            Vui lòng liên hệ Giám đốc để duyệt hợp đồng trước khi gửi XHĐ.
+                        </p>
+                    </div>
+                </div>
+                <button 
+                    type="button" 
+                    onClick={(e) => { e.stopPropagation(); recheckCyberContract(); }} 
+                    title="Kiểm tra lại từ Cyber"
+                    className="flex-shrink-0 px-2.5 py-1.5 rounded-lg bg-white hover:bg-amber-100/60 text-amber-800 border border-amber-300 text-[10px] font-bold shadow-xs hover:shadow-sm transition-all flex items-center gap-1 cursor-pointer ml-2"
+                >
+                    <i className="fas fa-arrows-rotate text-[9px]"></i>
+                    <span>Tra lại</span>
+                </button>
+            </div>
+        );
+    };
 
     // Shared inner content (header + steps + form)
     const innerContent = (
@@ -878,17 +1052,23 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                             </div>
                                         </div>
 
-                                        {/* Vinclub Confirm */}
-                                        <div className="relative p-4 rounded-xl border-2 border-accent-primary/20 bg-accent-primary/5 hover:bg-accent-primary/10 transition-colors cursor-pointer group flex-shrink-0" onClick={() => setVinClubConfirmed(!vinClubConfirmed)}>
-                                            <div className="flex items-center gap-4">
-                                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${vinClubConfirmed ? 'bg-accent-primary border-accent-primary text-white scale-110' : 'bg-white border-gray-300'}`}>
-                                                    {vinClubConfirmed && <i className="fas fa-check text-[10px]"></i>}
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-text-primary uppercase tracking-wider text-[11px]">Tôi xác nhận khách hàng đã tạo tài khoản Vinclub.</p>
-                                                    <p className="text-[9px] text-accent-primary font-bold opacity-80">Điều kiện bắt buộc để tiếp tục xử lý hồ sơ.</p>
+                                        {/* Row 2: Vinclub Confirm (Left) & Cyber Contract Status (Right) */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 flex-shrink-0">
+                                            {/* Left: Vinclub Confirm */}
+                                            <div className="relative p-3.5 rounded-xl border-2 border-accent-primary/20 bg-accent-primary/5 hover:bg-accent-primary/10 transition-colors cursor-pointer group flex items-center h-full min-h-[58px]" onClick={() => setVinClubConfirmed(!vinClubConfirmed)}>
+                                                <div className="flex items-center gap-3.5">
+                                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${vinClubConfirmed ? 'bg-accent-primary border-accent-primary text-white scale-110' : 'bg-white border-gray-300'}`}>
+                                                        {vinClubConfirmed && <i className="fas fa-check text-[10px]"></i>}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-text-primary uppercase tracking-wider text-[11px]">Tôi xác nhận khách hàng đã tạo tài khoản Vinclub.</p>
+                                                        <p className="text-[9px] text-accent-primary font-bold opacity-80">Điều kiện bắt buộc để tiếp tục xử lý hồ sơ.</p>
+                                                    </div>
                                                 </div>
                                             </div>
+
+                                            {/* Right: Cyber Contract Status & Warning Card */}
+                                            {renderCyberContractStatusCard()}
                                         </div>
                                     </div>
                                 </div>
@@ -906,31 +1086,145 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         {step < 3 ? (
                             <Button onClick={handleNext} disabled={isSubmitting || (step === 1 && !isStep1Valid) || (step === 2 && !isStep2Valid)} variant="primary" size="sm" rightIcon={<i className="fas fa-arrow-right"></i>}>Tiếp theo</Button>
                         ) : (
-                            <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid} variant="success" size="sm" isLoading={isSubmitting} leftIcon={<i className="fas fa-paper-plane"></i>}>Gửi Yêu Cầu</Button>
+                            <Button 
+                                onClick={handleSubmit} 
+                                disabled={isSubmitting || isValidatingContract || !isFormValid} 
+                                variant="success" 
+                                size="sm" 
+                                isLoading={isSubmitting || isValidatingContract} 
+                                leftIcon={<i className="fas fa-paper-plane"></i>}
+                            >
+                                {isValidatingContract ? 'Đang kiểm tra Cyber...' : 'Gửi Yêu Cầu'}
+                            </Button>
                         )}
                     </footer>
         </>
     );
 
-    if (inline) {
-        return (
-            <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
-                {innerContent}
-            </div>
-        );
-    }
+    const contractWarningModal = contractWarning && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 animate-fade-in">
+            {/* Backdrop */}
+            <div 
+                className="absolute inset-0 bg-slate-900/65 backdrop-blur-md transition-opacity" 
+                onClick={() => setContractWarning(null)} 
+            />
+            
+            {/* Dialog Container */}
+            <div 
+                className="relative z-10 w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-amber-200/80 overflow-hidden animate-fade-in-scale-up"
+                onClick={e => e.stopPropagation()}
+            >
+                {/* Accent Top Gradient */}
+                <div className="h-2 bg-gradient-to-r from-amber-400 via-orange-500 to-red-500" />
+                
+                <div className="p-6 md:p-7">
+                    {/* Header */}
+                    <div className="flex items-start gap-4 mb-5">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-100/90 border border-amber-300 flex items-center justify-center text-amber-600 flex-shrink-0 shadow-inner">
+                            <i className="fas fa-triangle-exclamation text-2xl animate-bounce"></i>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="text-base md:text-lg font-black text-slate-800 tracking-tight leading-snug">
+                                Cảnh Báo Hợp Đồng Chưa Được Duyệt
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Dữ liệu đối soát tự động từ hệ thống CyberSoft ERP
+                            </p>
+                        </div>
+                    </div>
 
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in overflow-hidden" onClick={onClose}>
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-slate-800/40">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/20" />
-            </div>
-            <div className="relative z-10 w-full max-w-7xl mx-auto px-2 md:px-4 py-8 flex flex-col justify-center min-h-[100dvh] pointer-events-none">
-                <div className="flex flex-col w-full h-[90vh] animate-fade-in-scale-up pointer-events-auto border border-white/20 rounded-2xl overflow-hidden shadow-2xl bg-white/95 backdrop-blur-3xl relative" onClick={e => e.stopPropagation()}>
-                    {innerContent}
+                    {/* Details Card */}
+                    <div className="bg-gradient-to-br from-amber-50/70 via-orange-50/40 to-slate-50/50 rounded-2xl border border-amber-200/70 p-4 mb-5 space-y-2.5 text-xs">
+                        <div className="flex justify-between items-center pb-2 border-b border-amber-200/40">
+                            <span className="text-slate-500 font-medium">Số hợp đồng Cyber:</span>
+                            <span className="font-mono font-bold text-slate-800">
+                                {contractWarning.so_ct || 'Chưa tìm thấy hợp đồng'}
+                            </span>
+                        </div>
+
+                        <div className="flex justify-between items-center pb-2 border-b border-amber-200/40">
+                            <span className="text-slate-500 font-medium">Khách hàng:</span>
+                            <span className="font-bold text-slate-800 text-right max-w-[240px] truncate">
+                                {order["Tên khách hàng"] || contractWarning.ten_kh || 'N/A'}
+                            </span>
+                        </div>
+
+                        <div className="flex justify-between items-center pb-2 border-b border-amber-200/40">
+                            <span className="text-slate-500 font-medium">Tư vấn bán hàng:</span>
+                            <span className="font-bold text-slate-800">
+                                {order["Tên tư vấn bán hàng"] || contractWarning.ten_tvbh || 'N/A'}
+                            </span>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-0.5">
+                            <span className="text-slate-500 font-medium">Trạng thái trên Cyber:</span>
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${
+                                contractWarning.found 
+                                    ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                                    : 'bg-rose-100 text-rose-900 border border-rose-300'
+                            }`}>
+                                <i className={`fas ${contractWarning.found ? 'fa-clock' : 'fa-circle-xmark'} text-[10px]`}></i>
+                                {contractWarning.ten_post || (contractWarning.found ? 'Hợp đồng chờ duyệt' : 'Chưa có hợp đồng')}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Explanatory Message */}
+                    <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 mb-6 text-[11px] text-slate-600 leading-relaxed flex items-start gap-2.5">
+                        <i className="fas fa-info-circle text-blue-500 mt-0.5 flex-shrink-0 text-xs"></i>
+                        <span>
+                            Hợp đồng của khách hàng <strong>{order["Tên khách hàng"]}</strong> hiện <strong>chưa được phê duyệt</strong> trên hệ thống CyberSoft. Vui lòng liên hệ Giám đốc để duyệt hợp đồng trước khi xuất hóa đơn.
+                        </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setContractWarning(null)}
+                            className="px-4 py-2.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-95 rounded-xl transition-all shadow-xs flex items-center gap-2"
+                        >
+                            <i className="fas fa-arrow-left text-[11px]"></i>
+                            Quay lại kiểm tra
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setContractWarning(null);
+                                executeSubmission();
+                            }}
+                            className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 active:scale-95 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                        >
+                            <i className="fas fa-paper-plane text-[11px]"></i>
+                            Vẫn tiếp tục gửi
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+    );
+
+    return (
+        <>
+            {inline ? (
+                <div className="flex-1 flex flex-col overflow-hidden animate-fade-in">
+                    {innerContent}
+                </div>
+            ) : (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center animate-fade-in overflow-hidden" onClick={onClose}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-slate-800/40">
+                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/20" />
+                    </div>
+                    <div className="relative z-10 w-full max-w-7xl mx-auto px-2 md:px-4 py-8 flex flex-col justify-center min-h-[100dvh] pointer-events-none">
+                        <div className="flex flex-col w-full h-[90vh] animate-fade-in-scale-up pointer-events-auto border border-white/20 rounded-2xl overflow-hidden shadow-2xl bg-white/95 backdrop-blur-3xl relative" onClick={e => e.stopPropagation()}>
+                            {innerContent}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {contractWarningModal}
+        </>
     );
 };
 
