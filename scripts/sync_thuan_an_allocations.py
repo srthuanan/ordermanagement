@@ -2564,7 +2564,9 @@ def sync_cyber_ton_kho_to_supabase(cars: list = None, params: dict = {}) -> dict
 def sync_cyber_voucher_tickets_to_supabase(tickets: list = None, params: dict = {}) -> dict:
     """Đồng bộ danh sách tiến trình phiếu từ CyberSoft sang bảng cyber_voucher_tickets trên Supabase."""
     if tickets is None:
-        tickets = get_cyber_voucher_tickets(**params)
+        p = dict(params)
+        p.setdefault("limit", 1500)
+        tickets = get_cyber_voucher_tickets(**p)
 
     if not tickets:
         return {"success": True, "total": 0, "updated": 0}

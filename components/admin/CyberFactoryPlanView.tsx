@@ -827,7 +827,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 ma_ct: ticketMaCt,
                 ma_post: ticketMaPost,
                 search: ticketSearch,
-                limit: 250,
+                limit: 1000,
                 ma_ttcp: '02.01.08'
             });
             if (res && res.success) {

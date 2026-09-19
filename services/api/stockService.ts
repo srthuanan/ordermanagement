@@ -1657,7 +1657,7 @@ export const getCyberVoucherTickets = async (params: CyberVoucherTicketParams = 
             if (params.ma_ct) {
                 query = query.eq('ma_ct', params.ma_ct);
             }
-            const { data, error } = await query.order('ngay_ct', { ascending: false }).limit(params.limit || 500);
+            const { data, error } = await query.order('ngay_ct', { ascending: false }).limit(params.limit || 1500);
             if (!error && data && data.length > 0) {
                 const tickets: CyberVoucherTicketItem[] = data.map(r => {
                     const raw = r.raw_data || {};
