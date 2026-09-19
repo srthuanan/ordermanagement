@@ -2276,8 +2276,10 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
             inf = info_map.get(v, {})
             dnx_entry = dnx_map.get(v)
             td4_entry = td4_map.get(v)
-            ma_kho = (dnx_entry.get("ma_kho_xuat") if dnx_entry else "") or st.get("ma_kho") or inf.get("ctkh_ma_kho") or ""
-            ten_kho = (dnx_entry.get("ten_kho_xuat") if dnx_entry else "") or st.get("ten_kho") or inf.get("ctkh_ten_kho") or ""
+            # Chỉ gán ma_kho nếu xe thực tế ĐANG CÒN TỒN KHO (Ton >= 1) từ stock_map hoặc có phiếu DNX
+            # Tuyệt đối không fallback sang inf.get("ctkh_ma_kho") nếu xe đã xuất kho hết tồn
+            ma_kho = (dnx_entry.get("ma_kho_xuat") if dnx_entry else "") or st.get("ma_kho") or ""
+            ten_kho = (dnx_entry.get("ten_kho_xuat") if dnx_entry else "") or st.get("ten_kho") or ("Đang vận tải" if not ma_kho else "")
             if ma_kho:
                 found_warehouses.append({"ma_kho": ma_kho, "ten_kho": ten_kho})
             results.append({

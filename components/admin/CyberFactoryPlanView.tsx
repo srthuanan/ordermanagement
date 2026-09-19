@@ -530,9 +530,16 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         cars: res.cars
                     });
                 } else {
+                    const firstCar = res.cars && res.cars[0];
+                    const carDesc = firstCar 
+                        ? [firstCar.ten_kx, firstCar.ten_mau, firstCar.so_may ? `Số máy: ${firstCar.so_may}` : '']
+                            .filter(Boolean).join(' • ')
+                        : '';
                     setLookupResultInfo({
                         found: false,
-                        error: res.error || 'Chưa tìm thấy vị trí kho tồn của xe này trên Cyber'
+                        carInfo: carDesc,
+                        cars: res.cars,
+                        error: res.error || 'Xe chưa có tồn kho thực tế hoặc đang vận tải trên Cyber'
                     });
                 }
             } catch (err: any) {
@@ -3674,9 +3681,28 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     )}
 
                                     {lookupResultInfo && !lookupResultInfo.found && !isLookingUpVin && extractedVins.length > 0 && (
-                                        <div className="mt-1.5 p-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-600 text-[11px] flex items-center gap-1.5">
-                                            <i className="fas fa-info-circle text-slate-400 shrink-0"></i>
-                                            <span>Không tìm thấy lịch sử nhập kho của xe này trên Cyber, bạn có thể tự chọn kho xuất bên dưới.</span>
+                                        <div className="mt-1.5 p-2.5 bg-amber-50 border border-amber-300 rounded-lg text-amber-900 text-xs flex items-center justify-between shadow-xs">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] shrink-0">
+                                                    <i className="fas fa-truck"></i>
+                                                </div>
+                                                <div>
+                                                    <div className="font-bold text-amber-900 flex items-center gap-1.5">
+                                                        <span>Vị trí trên Cyber:</span>
+                                                        <span className="font-extrabold text-amber-800">
+                                                            Đang vận tải (Tồn kho thực tế = 0)
+                                                        </span>
+                                                    </div>
+                                                    {lookupResultInfo.carInfo && (
+                                                        <div className="text-[11px] text-amber-700 font-medium mt-0.5">
+                                                            {lookupResultInfo.carInfo}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-200/80 text-amber-800 rounded-full border border-amber-300 shrink-0">
+                                                🚚 Chưa về kho thực tế
+                                            </span>
                                         </div>
                                     )}
 
