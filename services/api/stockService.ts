@@ -1773,6 +1773,30 @@ export const triggerCyberFullSync = async (): Promise<{ success: boolean; messag
     }
 };
 
+/**
+ * Kích hoạt đồng bộ riêng báo cáo Tồn Kho Xe từ CyberSoft sang Supabase (xóa dữ liệu cũ trước khi lưu mới)
+ */
+export const triggerCyberTonKhoSync = async (): Promise<{ success: boolean; total?: number; updated?: number; error?: string }> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/sync-ton-kho-to-supabase');
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const json = await res.json().catch(() => ({}));
+                if (res.ok && json && json.success) {
+                    return json;
+                }
+            } catch (_) {}
+        }
+        return { success: false, error: 'Không thể kết nối máy chủ đồng bộ tồn kho CyberSoft.' };
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi đồng bộ tồn kho CyberSoft.' };
+    }
+};
+
 export interface CheckCyberContractResult {
     success: boolean;
     found: boolean;

@@ -20,7 +20,8 @@ import {
     CyberXepXeCandidate,
     CyberXepXeFilterParams,
     prewarmTd4Pdfs,
-    triggerCyberFullSync
+    triggerCyberFullSync,
+    triggerCyberTonKhoSync
 } from '../../services/api/stockService';
 import { CyberDnxPrintModal, CyberDnxPrintData } from './CyberDnxPrintModal';
 import { CyberTd4PrintModal } from './CyberTd4PrintModal';
@@ -1244,6 +1245,44 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         }
     };
 
+    const [isSyncingTonKho, setIsSyncingTonKho] = useState(false);
+
+    // Kéo thủ công báo cáo tồn kho xe từ CyberSoft -> Xóa sạch dữ liệu cũ -> Lưu mới vào Supabase
+    const handleManualSyncTonKho = async () => {
+        setIsSyncingTonKho(true);
+        showToast('Đồng bộ tồn kho', 'Đang xóa sạch tồn kho cũ và kéo dữ liệu mới nhất từ CyberSoft...', 'loading');
+        try {
+            const res = await triggerCyberTonKhoSync();
+            if (res.success) {
+                showToast('Đồng bộ thành công', `Đã cập nhật ${res.updated || res.total || 0} xe tồn kho mới nhất từ CyberSoft lên Supabase.`, 'success');
+                await executeTonKhoSearch({ force: true });
+            } else {
+                throw new Error(res.error || 'Không thể đồng bộ tồn kho từ CyberSoft.');
+            }
+        } catch (err: any) {
+            showToast('Lỗi đồng bộ tồn kho', err.message || 'Lỗi khi kéo tồn kho từ CyberSoft', 'error');
+        } finally {
+            setIsSyncingTonKho(false);
+        }
+    };
+
+    // Tự động đồng bộ báo cáo tồn kho mỗi 5 phút (300.000 ms) từ CyberSoft sang Supabase (xóa dữ liệu cũ trước)
+    useEffect(() => {
+        const intervalId = setInterval(async () => {
+            try {
+                console.log('[AutoSync TonKho 5m] 🔄 Đang tự động kéo tồn kho mới từ CyberSoft lên Supabase (xóa cũ nạp mới)...');
+                const res = await triggerCyberTonKhoSync();
+                if (res && res.success && activeSubTab === 'ton_kho') {
+                    executeTonKhoSearch({ force: true });
+                }
+            } catch (err) {
+                console.warn('[AutoSync TonKho 5m] Lỗi tự động kéo tồn kho:', err);
+            }
+        }, 5 * 60 * 1000);
+
+        return () => clearInterval(intervalId);
+    }, [activeSubTab]);
+
     const handleTonKhoReset = () => {
         setTonKhoKeyword('');
         setTonKhoWarehouse('');
@@ -2214,11 +2253,28 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     </button>
                                 )}
 
+                                {/* Nút tải thủ công chuyên biệt cho Tồn Kho: Xóa toàn bộ dữ liệu cũ & Nạp mới từ CyberSoft */}
+                                <button
+                                    type="button"
+                                    onClick={handleManualSyncTonKho}
+                                    disabled={isSyncingTonKho || isLoadingTonKho}
+                                    className={`h-9 px-3.5 rounded-xl text-xs font-bold shadow-xs border transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap active:scale-95 ${
+                                        isSyncingTonKho
+                                            ? 'bg-amber-100 text-amber-800 border-amber-300 cursor-not-allowed'
+                                            : 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white border-transparent'
+                                    }`}
+                                    title="Xóa sạch toàn bộ dữ liệu tồn kho cũ trên Supabase và tải lại dữ liệu tồn kho mới nhất từ CyberSoft ERP"
+                                >
+                                    <i className={`fas ${isSyncingTonKho ? 'fa-arrows-rotate animate-spin' : 'fa-cloud-arrow-down'} text-xs`}></i>
+                                    <span>{isSyncingTonKho ? 'Đang kéo Cyber (Xóa cũ)...' : 'Tải lại tồn kho Cyber'}</span>
+                                </button>
+
                                 <button
                                     type="button"
                                     onClick={() => executeTonKhoSearch()}
                                     disabled={isLoadingTonKho}
-                                    className="h-9 px-4 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-2xs active:scale-95 disabled:opacity-50 transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+                                    className="h-9 px-3.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-2xs active:scale-95 disabled:opacity-50 transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+                                    title="Tra cứu danh sách xe tồn kho"
                                 >
                                     {isLoadingTonKho ? (
                                         <>
@@ -2227,8 +2283,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         </>
                                     ) : (
                                         <>
-                                            <i className="fas fa-rotate text-xs"></i>
-                                            <span>Tải từ Cyber</span>
+                                            <i className="fas fa-search text-xs"></i>
+                                            <span>Lọc xe</span>
                                         </>
                                     )}
                                 </button>

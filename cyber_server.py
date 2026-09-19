@@ -624,6 +624,25 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
             return
 
+        elif parsed.path == "/api/cyber/sync-ton-kho-to-supabase":
+            print("[CyberSync Cloud Sync Ton Kho] Request received. Syncing ton kho to Supabase...")
+            try:
+                result = sync_cyber_ton_kho_to_supabase()
+                invalidate_api_cache()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync Cloud Sync Ton Kho Error]: {str(e)}", file=sys.stderr)
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
         elif parsed.path == "/api/cyber/sync-all-to-supabase":
             print("[CyberSync Cloud Sync All] Request received. Starting full sync to Supabase...")
             try:

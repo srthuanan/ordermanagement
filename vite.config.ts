@@ -286,6 +286,12 @@ function cyberSyncPlugin(): Plugin {
         }
       });
 
+      server.middlewares.use('/api/cyber/sync-ton-kho-to-supabase', (req, res, next) => {
+        runPy([scriptPath, '--sync-ton-kho'], '{}', res, undefined, true, success => {
+          if (success) invalidateCache();
+        });
+      });
+
       server.middlewares.use('/api/cyber/sync-all-to-supabase', (req, res, next) => {
         if (req.method !== 'POST') return next();
         runPy([scriptPath, '--sync-all-cyber'], '{}', res, undefined, true, success => {

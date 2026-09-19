@@ -2539,17 +2539,29 @@ def sync_cyber_ton_kho_to_supabase(cars: list = None, params: dict = {}) -> dict
             "updated_at": now_utc
         }
 
+    # 1. XÓA TOÀN BỘ DỮ LIỆU TỒN KHO CŨ TRƯỚC KHI ĐỒNG BỘ MỚI
+    try:
+        del_res = requests.delete(
+            f"{SUPABASE_URL}/rest/v1/cyber_ton_kho?vin=neq.",
+            headers=HEADERS,
+            timeout=30
+        )
+        print(f"[Supabase cyber_ton_kho] Đã xóa toàn bộ dữ liệu tồn kho cũ trước khi nạp mới (HTTP {del_res.status_code})", file=sys.stderr)
+    except Exception as e_del:
+        print(f"[Supabase cyber_ton_kho delete error] {e_del}", file=sys.stderr)
+
     records = list(seen.values())
     total_ok = 0
     CHUNK_SIZE = 200
     for i in range(0, len(records), CHUNK_SIZE):
         chunk = records[i:i + CHUNK_SIZE]
+        clean_chunk = json.loads(json.dumps(chunk, default=str))
         try:
             up_res = requests.post(
                 f"{SUPABASE_URL}/rest/v1/cyber_ton_kho",
                 headers={**HEADERS, "Prefer": "resolution=merge-duplicates"},
                 params={"on_conflict": "vin,ma_kho"},
-                json=chunk,
+                json=clean_chunk,
                 timeout=30
             )
             if 200 <= up_res.status_code < 300:
