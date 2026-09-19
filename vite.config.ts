@@ -285,6 +285,13 @@ function cyberSyncPlugin(): Plugin {
           runPy([scriptPath, '--check-contract-status'], JSON.stringify(queryParams), res);
         }
       });
+
+      server.middlewares.use('/api/cyber/sync-all-to-supabase', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        runPy([scriptPath, '--sync-all-cyber'], '{}', res, undefined, true, success => {
+          if (success) invalidateCache();
+        });
+      });
     }
   };
 }

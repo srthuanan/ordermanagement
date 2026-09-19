@@ -67,7 +67,11 @@ from scripts.sync_thuan_an_allocations import (
     check_cyber_contract_status,
     sync_cyber_car_status_to_supabase,
     upsert_cyber_car_status_records,
-    export_cyber_pdf_via_ps
+    export_cyber_pdf_via_ps,
+    sync_all_cyber_to_supabase,
+    sync_cyber_xep_xe_to_supabase,
+    sync_cyber_ton_kho_to_supabase,
+    sync_cyber_voucher_tickets_to_supabase
 )
 
 PORT = int(os.environ.get("PORT", 8080))
@@ -620,6 +624,25 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
             return
 
+        elif parsed.path == "/api/cyber/sync-all-to-supabase":
+            print("[CyberSync Cloud Sync All] Request received. Starting full sync to Supabase...")
+            try:
+                result = sync_all_cyber_to_supabase()
+                invalidate_api_cache()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync Cloud Sync All Error]: {str(e)}", file=sys.stderr)
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
         self.send_response(404)
         self.send_header("Content-Type", "application/json")
         self._send_cors_headers()
@@ -632,26 +655,24 @@ def _now_utc() -> str:
 
 
 def _run_auto_location_sync():
-    """Execute silent cyber_car_status & location sync and update state. Called by scheduler thread."""
+    """Execute silent all-cyber modules sync and update state. Called by scheduler thread."""
     with _auto_sync_lock:
         _auto_sync_state["last_status"] = "running"
 
-    print("[AutoSync] 🔄 Bắt đầu tự động đồng bộ trạng thái xe (cyber_car_status) & vị trí kho từ CyberSoft...")
+    print("[AutoSync] 🔄 Bắt đầu tự động đồng bộ tất cả module CyberSoft lên Supabase...")
     try:
-        # 1. Đồng bộ bảng tổng hợp cyber_car_status cho tất cả VIN trong donhang & khoxe
-        status_res = sync_cyber_car_status_to_supabase()
-        
-        # 2. Cập nhật vị trí kho trong bảng khoxe
-        loc_res = sync_khoxe_locations_from_cyber(preview=False)
-
+        sync_res = sync_all_cyber_to_supabase()
         now = _now_utc()
-        updated = status_res.get("updated", 0)
-        total = status_res.get("total", 0)
-        print(f"[AutoSync] ✅ Hoàn thành: cập nhật {updated}/{total} xe vào cyber_car_status, {loc_res.get('updated_count', 0)} xe vào khoxe | {now}")
+        xep_xe_up = sync_res.get("xep_xe", {}).get("updated", 0)
+        ton_kho_up = sync_res.get("ton_kho", {}).get("updated", 0)
+        vouchers_up = sync_res.get("voucher_tickets", {}).get("updated", 0)
+        total_synced = xep_xe_up + ton_kho_up + vouchers_up
+        print(f"[AutoSync] ✅ Hoàn thành đồng bộ: {xep_xe_up} xếp xe, {ton_kho_up} tồn kho, {vouchers_up} phiếu | {now}")
+        invalidate_api_cache()
         with _auto_sync_lock:
             _auto_sync_state["last_run"] = now
-            _auto_sync_state["last_updated_count"] = updated
-            _auto_sync_state["last_total_cars"] = total
+            _auto_sync_state["last_updated_count"] = total_synced
+            _auto_sync_state["last_total_cars"] = ton_kho_up
             _auto_sync_state["last_status"] = "ok"
             _auto_sync_state["last_error"] = None
     except Exception as e:

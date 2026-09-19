@@ -2390,6 +2390,269 @@ def sync_cyber_car_status_to_supabase(target_vins: list = None) -> dict:
         "timestamp": now_utc
     }
 
+def sync_cyber_xep_xe_to_supabase(contracts: list = None, params: dict = {}) -> dict:
+    """Đồng bộ toàn bộ danh sách hợp đồng xếp xe từ CyberSoft sang bảng cyber_xep_xe trên Supabase."""
+    if contracts is None:
+        p = {"all": "1", "thang1": 0, "nam1": 0, "thang2": 0, "nam2": 0}
+        p.update(params)
+        raw_res = get_cyber_xep_xe_contracts(p)
+        contracts = raw_res.get("contracts") or []
+
+    if not contracts:
+        return {"success": True, "total": 0, "updated": 0}
+
+    now_utc = datetime.now(timezone.utc).isoformat()
+    records = []
+
+    def safe_date(val):
+        if not val or val in ('1900-01-01', '0000-00-00'):
+            return None
+        s = str(val).strip()
+        if len(s) >= 10:
+            return s[:10]
+        return None
+
+    def safe_num(val):
+        if val is None:
+            return 0
+        try:
+            return float(val)
+        except Exception:
+            return 0
+
+    seen = {}
+    for c in contracts:
+        stt_rec = (c.get("stt_rec") or "").strip()
+        stt_rec0 = (c.get("stt_rec0") or "").strip()
+        if not stt_rec:
+            continue
+
+        seen[(stt_rec, stt_rec0)] = {
+            "stt_rec": stt_rec,
+            "stt_rec0": stt_rec0,
+            "ma_hd": (c.get("ma_hd") or "").strip(),
+            "so_ct": (c.get("so_ct") or "").strip(),
+            "ngay_ct": safe_date(c.get("ngay_ct")),
+            "ngay_gx": safe_date(c.get("ngay_gx")),
+            "ten_kh": (c.get("ten_kh") or "").strip(),
+            "dien_thoai": (c.get("dien_thoai") or "").strip(),
+            "ma_kx": (c.get("ma_kx") or "").strip(),
+            "ten_kx": (c.get("ten_kx") or "").strip(),
+            "ma_mau": (c.get("ma_mau") or "").strip(),
+            "ten_mau": (c.get("ten_mau") or "").strip(),
+            "ma_mau_nt": (c.get("ma_mau_nt") or "").strip(),
+            "ten_mau_nt": (c.get("ten_mau_nt") or "").strip(),
+            "so_khung": (c.get("so_khung") or "").strip().upper(),
+            "ngay_xep": safe_date(c.get("ngay_xep")),
+            "tien_nt": safe_num(c.get("tien_nt")),
+            "da_tt": safe_num(c.get("da_tt")),
+            "con_no": safe_num(c.get("con_no")),
+            "ma_dvcs": (c.get("ma_dvcs") or "").strip(),
+            "ten_ttcp": (c.get("ten_ttcp") or "").strip(),
+            "ten_hs": (c.get("ten_hs") or "").strip(),
+            "ten_bp": (c.get("ten_bp") or "").strip(),
+            "ten_color": (c.get("ten_color") or "").strip(),
+            "back_color": (c.get("back_color") or "").strip(),
+            "fore_color": (c.get("fore_color") or "").strip(),
+            "bold": bool(c.get("bold")),
+            "updated_at": now_utc
+        }
+
+    records = list(seen.values())
+    total_ok = 0
+    CHUNK_SIZE = 200
+    for i in range(0, len(records), CHUNK_SIZE):
+        chunk = records[i:i + CHUNK_SIZE]
+        try:
+            up_res = requests.post(
+                f"{SUPABASE_URL}/rest/v1/cyber_xep_xe",
+                headers={**HEADERS, "Prefer": "resolution=merge-duplicates"},
+                params={"on_conflict": "stt_rec,stt_rec0"},
+                json=chunk,
+                timeout=30
+            )
+            if 200 <= up_res.status_code < 300:
+                total_ok += len(chunk)
+            else:
+                print(f"[Supabase cyber_xep_xe error] HTTP {up_res.status_code}: {up_res.text[:200]}", file=sys.stderr)
+        except Exception as err:
+            print(f"[Supabase cyber_xep_xe error] {err}", file=sys.stderr)
+
+    return {"success": True, "total": len(records), "updated": total_ok, "timestamp": now_utc}
+
+def sync_cyber_ton_kho_to_supabase(cars: list = None, params: dict = {}) -> dict:
+    """Đồng bộ báo cáo tồn kho xe từ CyberSoft sang bảng cyber_ton_kho trên Supabase."""
+    if cars is None:
+        raw_res = get_cyber_ton_kho_report(params)
+        cars = raw_res.get("cars") or []
+
+    if not cars:
+        return {"success": True, "total": 0, "updated": 0}
+
+    now_utc = datetime.now(timezone.utc).isoformat()
+    records = []
+
+    def safe_date(val):
+        if not val or val in ('1900-01-01', '0000-00-00'):
+            return None
+        s = str(val).strip()
+        if len(s) >= 10:
+            return s[:10]
+        return None
+
+    def safe_int(val):
+        if not val:
+            return 0
+        try:
+            return int(val)
+        except Exception:
+            return 0
+
+    seen = {}
+    for c in cars:
+        vin = (c.get("vin") or "").strip().upper()
+        ma_kho = (c.get("ma_kho") or "").strip() or "CHUA_RO"
+        if not vin:
+            continue
+
+        seen[(vin, ma_kho)] = {
+            "vin": vin,
+            "ma_kho": ma_kho,
+            "so_hd": (c.get("so_hd") or "").strip(),
+            "ngay_hd": safe_date(c.get("ngay_hd")),
+            "thang_hd": (c.get("thang_hd") or "").strip(),
+            "ma_kx": (c.get("ma_kx") or "").strip(),
+            "ten_kx": (c.get("ten_kx") or "").strip(),
+            "so_may": (c.get("so_may") or "").strip(),
+            "ma_mau": (c.get("ma_mau") or "").strip(),
+            "ten_mau": (c.get("ten_mau") or "").strip(),
+            "ma_mau_nt": (c.get("ma_mau_nt") or "").strip(),
+            "ten_mau_nt": (c.get("ten_mau_nt") or "").strip(),
+            "ten_kho": (c.get("ten_kho") or "").strip(),
+            "ngay_ton": safe_int(c.get("ngay_ton")),
+            "nam_sx": safe_int(c.get("nam_sx")) or None,
+            "tinh_trang": (c.get("tinh_trang") or "").strip(),
+            "ten_ttcp": (c.get("ten_ttcp") or "").strip(),
+            "tvbh": (c.get("tvbh") or "").strip(),
+            "ghi_chu": (c.get("ghi_chu") or "").strip(),
+            "is_invoiced": bool(c.get("is_invoiced")),
+            "updated_at": now_utc
+        }
+
+    records = list(seen.values())
+    total_ok = 0
+    CHUNK_SIZE = 200
+    for i in range(0, len(records), CHUNK_SIZE):
+        chunk = records[i:i + CHUNK_SIZE]
+        try:
+            up_res = requests.post(
+                f"{SUPABASE_URL}/rest/v1/cyber_ton_kho",
+                headers={**HEADERS, "Prefer": "resolution=merge-duplicates"},
+                params={"on_conflict": "vin,ma_kho"},
+                json=chunk,
+                timeout=30
+            )
+            if 200 <= up_res.status_code < 300:
+                total_ok += len(chunk)
+            else:
+                print(f"[Supabase cyber_ton_kho error] HTTP {up_res.status_code}: {up_res.text[:200]}", file=sys.stderr)
+        except Exception as err:
+            print(f"[Supabase cyber_ton_kho error] {err}", file=sys.stderr)
+
+    return {"success": True, "total": len(records), "updated": total_ok, "timestamp": now_utc}
+
+def sync_cyber_voucher_tickets_to_supabase(tickets: list = None, params: dict = {}) -> dict:
+    """Đồng bộ danh sách tiến trình phiếu từ CyberSoft sang bảng cyber_voucher_tickets trên Supabase."""
+    if tickets is None:
+        tickets = get_cyber_voucher_tickets(**params)
+
+    if not tickets:
+        return {"success": True, "total": 0, "updated": 0}
+
+    now_utc = datetime.now(timezone.utc).isoformat()
+    records = []
+
+    def safe_date(val):
+        if not val or val in ('1900-01-01', '0000-00-00'):
+            return None
+        s = str(val).strip()
+        if len(s) >= 10:
+            return s[:10]
+        return None
+
+    def safe_num(val):
+        if val is None:
+            return 0
+        try:
+            return float(val)
+        except Exception:
+            return 0
+
+    seen = {}
+    for t in tickets:
+        stt_rec = (t.get("stt_rec") or "").strip()
+        if not stt_rec:
+            continue
+
+        seen[stt_rec] = {
+            "stt_rec": stt_rec,
+            "so_ct": (t.get("so_ct") or "").strip(),
+            "ngay_ct": safe_date(t.get("ngay_ct")),
+            "ma_ct": (t.get("ma_ct") or "").strip(),
+            "ma_post": (t.get("ma_post") or "").strip(),
+            "ten_post": (t.get("ten_post") or "").strip(),
+            "ma_kh": (t.get("ma_kh") or "").strip(),
+            "ten_kh": (t.get("ten_kh") or "").strip(),
+            "dien_giai": (t.get("dien_giai") or "").strip(),
+            "tien_nt": safe_num(t.get("tien_nt")),
+            "ma_ttcp": (t.get("ma_ttcp") or "").strip(),
+            "ten_ttcp": (t.get("ten_ttcp") or "").strip(),
+            "user_name": (t.get("user_name") or "").strip(),
+            "lines": t.get("lines") or [],
+            "updated_at": now_utc
+        }
+
+    records = list(seen.values())
+    total_ok = 0
+    CHUNK_SIZE = 200
+    for i in range(0, len(records), CHUNK_SIZE):
+        chunk = records[i:i + CHUNK_SIZE]
+        try:
+            up_res = requests.post(
+                f"{SUPABASE_URL}/rest/v1/cyber_voucher_tickets",
+                headers={**HEADERS, "Prefer": "resolution=merge-duplicates"},
+                params={"on_conflict": "stt_rec"},
+                json=chunk,
+                timeout=30
+            )
+            if 200 <= up_res.status_code < 300:
+                total_ok += len(chunk)
+            else:
+                print(f"[Supabase cyber_voucher_tickets error] HTTP {up_res.status_code}: {up_res.text[:200]}", file=sys.stderr)
+        except Exception as err:
+            print(f"[Supabase cyber_voucher_tickets error] {err}", file=sys.stderr)
+
+    return {"success": True, "total": len(records), "updated": total_ok, "timestamp": now_utc}
+
+def sync_all_cyber_to_supabase() -> dict:
+    """Đồng bộ toàn diện tất cả các phân hệ từ CyberSoft sang Supabase."""
+    print("[SyncAll] 🔄 Bắt đầu đồng bộ toàn bộ dữ liệu CyberSoft lên Supabase...", file=sys.stderr)
+    res_xep_xe = sync_cyber_xep_xe_to_supabase()
+    res_ton_kho = sync_cyber_ton_kho_to_supabase()
+    res_vouchers = sync_cyber_voucher_tickets_to_supabase()
+    res_car_status = sync_cyber_car_status_to_supabase()
+    res_loc = sync_khoxe_locations_from_cyber(preview=False)
+    
+    return {
+        "success": True,
+        "xep_xe": res_xep_xe,
+        "ton_kho": res_ton_kho,
+        "voucher_tickets": res_vouchers,
+        "car_status": res_car_status,
+        "locations": res_loc,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
 def check_cyber_contract_status(params: dict = {}) -> dict:
     """
     Tra cứu hợp đồng trên CyberSoft ERP theo:
@@ -2598,6 +2861,10 @@ def main():
     parser.add_argument("--voucher-tickets", action="store_true", help="Get voucher tickets (DNX / TD4) from Cyber")
     parser.add_argument("--export-pdf", action="store_true", help="Export official PDF from CyberSoft Stimulsoft engine")
     parser.add_argument("--check-contract-status", action="store_true", help="Check contract approval status on Cyber by customer and TVBH")
+    parser.add_argument("--sync-all-cyber", action="store_true", help="Sync all CyberSoft modules to Supabase (xep xe, ton kho, vouchers, status, locations)")
+    parser.add_argument("--sync-xep-xe", action="store_true", help="Sync xep xe contracts from CyberSoft to Supabase")
+    parser.add_argument("--sync-ton-kho", action="store_true", help="Sync ton kho cars from CyberSoft to Supabase")
+    parser.add_argument("--sync-voucher-tickets", action="store_true", help="Sync voucher tickets from CyberSoft to Supabase")
     parser.add_argument("--model", help="Car model filter for options", default="")
     parser.add_argument("--params", help="JSON string of search parameters", default=None)
     args = parser.parse_args()
@@ -2628,6 +2895,29 @@ def main():
             except Exception:
                 pass
         return {}
+
+    if args.sync_all_cyber:
+        res = sync_all_cyber_to_supabase()
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.sync_xep_xe:
+        p = json.loads(args.params) if args.params else {}
+        res = sync_cyber_xep_xe_to_supabase(params=p)
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.sync_ton_kho:
+        p = json.loads(args.params) if args.params else {}
+        res = sync_cyber_ton_kho_to_supabase(params=p)
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.sync_voucher_tickets:
+        p = json.loads(args.params) if args.params else {}
+        res = sync_cyber_voucher_tickets_to_supabase(params=p)
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
 
     if args.sync_locations:
         p = get_input_params()

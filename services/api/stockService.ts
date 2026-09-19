@@ -855,6 +855,7 @@ export interface CyberTonKhoParams {
     color?: string;
     status?: 'all' | 'invoiced' | 'not_invoiced';
     keyword?: string;
+    force?: boolean;
 }
 
 export interface CyberTonKhoItem {
@@ -895,6 +896,49 @@ export interface CyberTonKhoResponse {
  * Lấy báo cáo tồn kho xe từ CyberSoft ERP (CP_BETONXE)
  */
 export const getCyberTonKhoReport = async (params: CyberTonKhoParams = {}): Promise<CyberTonKhoResponse> => {
+    // 1. Đọc trực tiếp từ bảng Supabase cyber_ton_kho (tốc độ < 50ms) nếu không yêu cầu ép tải lại
+    if (!params.force) {
+        try {
+            let query = supabase.from('cyber_ton_kho').select('*');
+            if (params.status === 'invoiced') {
+                query = query.eq('is_invoiced', true);
+            } else if (params.status === 'not_invoiced') {
+                query = query.eq('is_invoiced', false);
+            }
+            if (params.warehouse) {
+                query = query.eq('ma_kho', params.warehouse);
+            }
+            const { data, error } = await query.order('ngay_ton', { ascending: false }).limit(2000);
+            if (!error && data && data.length > 0) {
+                const cars = data as CyberTonKhoItem[];
+                const whMap = new Map<string, string>();
+                const modelSet = new Set<string>();
+                let invoiced_count = 0;
+                let not_invoiced_count = 0;
+                for (const c of cars) {
+                    if (c.ma_kho && c.ten_kho) whMap.set(c.ma_kho, c.ten_kho);
+                    if (c.ten_kx) modelSet.add(c.ten_kx);
+                    if (c.is_invoiced) invoiced_count++;
+                    else not_invoiced_count++;
+                }
+                const warehouses = Array.from(whMap.entries()).map(([code, name]) => ({ code, name }));
+                const models = Array.from(modelSet);
+                return {
+                    success: true,
+                    total: cars.length,
+                    invoiced_count,
+                    not_invoiced_count,
+                    cars,
+                    warehouses,
+                    models
+                };
+            }
+        } catch (supaErr) {
+            console.warn('[getCyberTonKhoReport] Tạm thời chuyển qua gọi API CyberSoft:', supaErr);
+        }
+    }
+
+    // 2. Dự phòng: gọi API CyberSoft ERP
     try {
         const endpoints = getCyberEndpoints('/api/cyber/ton-kho-report');
 
@@ -1161,6 +1205,38 @@ export const isOrderAssignedOnCyber = (order: any, cyberContracts: CyberXepXeCon
  * Lấy danh sách hợp đồng xếp xe từ CyberSoft ERP (CP_BeXepXe)
  */
 export const getCyberXepXeContracts = async (params: CyberXepXeFilterParams = {}): Promise<CyberXepXeContractsResponse> => {
+    // 1. Đọc trực tiếp từ bảng Supabase cyber_xep_xe (< 50ms) nếu không ép tải từ Cyber
+    if (!params.force) {
+        try {
+            let query = supabase.from('cyber_xep_xe').select('*');
+            if (params.showroom && params.showroom !== 'ALL') {
+                query = query.eq('ten_ttcp', params.showroom);
+            }
+            const { data, error } = await query.order('ngay_ct', { ascending: false }).limit(3000);
+            if (!error && data && data.length > 0) {
+                const contracts = data as CyberXepXeContract[];
+                const showrooms = Array.from(new Set(contracts.map(c => c.ten_ttcp).filter(Boolean)));
+                const models = Array.from(new Set(contracts.map(c => c.ten_kx).filter(Boolean)));
+                const status_counts: Record<string, number> = {};
+                for (const c of contracts) {
+                    const st = c.ten_color || 'Chờ ghép SK';
+                    status_counts[st] = (status_counts[st] || 0) + 1;
+                }
+                return {
+                    success: true,
+                    total: contracts.length,
+                    status_counts,
+                    showrooms,
+                    models,
+                    contracts
+                };
+            }
+        } catch (supaErr) {
+            console.warn('[getCyberXepXeContracts] Tạm thời chuyển qua gọi API CyberSoft:', supaErr);
+        }
+    }
+
+    // 2. Dự phòng: gọi API CyberSoft ERP
     try {
         const endpoints = getCyberEndpoints('/api/cyber/xep-xe-contracts');
         let response: Response | null = null;
@@ -1563,6 +1639,7 @@ export interface CyberVoucherTicketParams {
     toDate?: string;
     limit?: number;
     ma_ttcp?: string;
+    force?: boolean;
 }
 
 export interface CyberVoucherTicketResponse {
@@ -1573,6 +1650,58 @@ export interface CyberVoucherTicketResponse {
 }
 
 export const getCyberVoucherTickets = async (params: CyberVoucherTicketParams = {}): Promise<CyberVoucherTicketResponse> => {
+    // 1. Đọc trực tiếp từ bảng Supabase cyber_voucher_tickets (< 50ms) nếu không yêu cầu ép tải lại
+    if (!params.force) {
+        try {
+            let query = supabase.from('cyber_voucher_tickets').select('*');
+            if (params.ma_ct) {
+                query = query.eq('ma_ct', params.ma_ct);
+            }
+            const { data, error } = await query.order('ngay_ct', { ascending: false }).limit(params.limit || 500);
+            if (!error && data && data.length > 0) {
+                const tickets: CyberVoucherTicketItem[] = data.map(r => {
+                    const firstLine = (r.lines && r.lines[0]) || {};
+                    return {
+                        voucher_type: r.ma_ct || 'DNX',
+                        voucher_name: r.ma_ct === 'DNX' ? 'Phiếu đề nghị xuất xe' : 'Phiếu xuất xe bán (TD4)',
+                        stt_rec: r.stt_rec,
+                        so_ct: r.so_ct,
+                        ngay_ct: r.ngay_ct,
+                        ma_ct: r.ma_ct,
+                        ma_post: r.ma_post,
+                        ten_kh: r.ten_kh,
+                        dien_giai: r.dien_giai,
+                        tong_tien: Number(r.tien_nt || 0),
+                        da_thanh_toan: Number(r.tien_nt || 0),
+                        con_lai: 0,
+                        vin: firstLine.so_khung || firstLine.vin || '',
+                        so_khung: firstLine.so_khung || firstLine.vin || '',
+                        so_may: firstLine.so_may || '',
+                        loai_xe: firstLine.ten_kx || '',
+                        ten_kx: firstLine.ten_kx || '',
+                        ma_kx: firstLine.ma_kx || '',
+                        ten_mau: firstLine.ten_mau || '',
+                        ma_mau: firstLine.ma_mau || '',
+                        ma_kho_xuat: firstLine.ma_kho || '',
+                        ten_kho_xuat: firstLine.ten_kho || '',
+                        ma_kho_nhan: firstLine.ma_kho_nhan || '',
+                        ten_kho_nhan: firstLine.ten_kho_nhan || '',
+                        nvkd: r.user_name || '',
+                        lines: r.lines || []
+                    };
+                });
+                return {
+                    success: true,
+                    total: tickets.length,
+                    data: tickets
+                };
+            }
+        } catch (supaErr) {
+            console.warn('[getCyberVoucherTickets] Tạm thời chuyển qua gọi API CyberSoft:', supaErr);
+        }
+    }
+
+    // 2. Dự phòng: gọi API CyberSoft ERP
     try {
         const queryParams = new URLSearchParams();
         if (params.ma_ct) queryParams.set('ma_ct', params.ma_ct);
@@ -1612,6 +1741,30 @@ export const getCyberVoucherTickets = async (params: CyberVoucherTicketParams = 
             data: [],
             error: err.message || 'Lỗi kết nối khi tra cứu danh sách phiếu CyberSoft.'
         };
+    }
+};
+
+/**
+ * Kích hoạt đồng bộ toàn bộ 5 phân hệ CyberSoft lên cơ sở dữ liệu Supabase
+ */
+export const triggerCyberFullSync = async (): Promise<{ success: boolean; message?: string; error?: string }> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/sync-all-to-supabase');
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const json = await res.json().catch(() => ({}));
+                if (res.ok && json && json.success) {
+                    return { success: true, message: 'Đồng bộ toàn bộ dữ liệu CyberSoft lên Supabase thành công!' };
+                }
+            } catch (_) {}
+        }
+        return { success: false, error: 'Không thể kết nối máy chủ đồng bộ CyberSoft.' };
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi kích hoạt đồng bộ CyberSoft.' };
     }
 };
 

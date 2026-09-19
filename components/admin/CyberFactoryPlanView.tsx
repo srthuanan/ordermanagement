@@ -19,7 +19,8 @@ import {
     CyberXepXeContract,
     CyberXepXeCandidate,
     CyberXepXeFilterParams,
-    prewarmTd4Pdfs
+    prewarmTd4Pdfs,
+    triggerCyberFullSync
 } from '../../services/api/stockService';
 import { CyberDnxPrintModal, CyberDnxPrintData } from './CyberDnxPrintModal';
 import { CyberTd4PrintModal } from './CyberTd4PrintModal';
@@ -296,6 +297,38 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const [isLoadingRecentTickets, setIsLoadingRecentTickets] = useState(false);
     const [printTicketData, setPrintTicketData] = useState<CyberDnxPrintData | null>(null);
     const [printTd4Data, setPrintTd4Data] = useState<CyberVoucherTicketItem | null>(null);
+
+    // Trạng thái đồng bộ toàn bộ CyberSoft -> Supabase
+    const [isFullSyncing, setIsFullSyncing] = useState(false);
+    const [lastSyncTime, setLastSyncTime] = useState<string>('');
+
+    const handleFullSyncCyber = async () => {
+        setIsFullSyncing(true);
+        showToast('Đồng bộ CyberSoft', 'Đang kéo toàn bộ dữ liệu mới nhất từ CyberSoft sang Supabase...', 'loading');
+        try {
+            const res = await triggerCyberFullSync();
+            if (res.success) {
+                const nowStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+                setLastSyncTime(nowStr);
+                showToast('Đồng bộ thành công', 'Dữ liệu CyberSoft đã được cập nhật thành công lên Supabase.', 'success');
+                if (activeSubTab === 'factory_plan') {
+                    executeSearch();
+                } else if (activeSubTab === 'ton_kho') {
+                    executeTonKhoSearch({ force: true });
+                } else if (activeSubTab === 'xep_xe') {
+                    executeXepXeSearch({ force: true });
+                } else if (activeSubTab === 'tra_cuu_phieu') {
+                    executeVoucherTicketsSearch();
+                }
+            } else {
+                throw new Error(res.error || 'Lỗi không xác định khi đồng bộ CyberSoft.');
+            }
+        } catch (err: any) {
+            showToast('Lỗi đồng bộ', err.message || 'Không thể đồng bộ từ CyberSoft ERP', 'error');
+        } finally {
+            setIsFullSyncing(false);
+        }
+    };
 
     // Tự động tải danh sách phiếu DNX gần nhất từ CyberSoft ERP
     const loadRecentDnxTickets = async () => {
@@ -1065,6 +1098,13 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         }
     }, [isActive, activeSubTab]);
 
+    // Tự động tải dữ liệu xếp xe lần đầu khi chuyển sang Sub-tab Xếp xe (< 50ms từ Supabase)
+    useEffect(() => {
+        if (isActive && activeSubTab === 'xep_xe' && !hasLoadedXepXe) {
+            executeXepXeSearch();
+        }
+    }, [isActive, activeSubTab]);
+
     // Tự động tải danh sách phiếu & tiến trình duyệt khi chuyển sang Sub-tab Tra cứu phiếu
     useEffect(() => {
         if (isActive && activeSubTab === 'tra_cuu_phieu') {
@@ -1578,6 +1618,38 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         )}
                     </button>
                 </nav>
+
+                {/* CyberSoft Cloud -> Supabase Instant Sync Panel */}
+                <div className="p-3 border-t border-slate-200/80 bg-slate-50/70">
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 mb-2">
+                        <span className="flex items-center gap-1.5 font-medium">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Supabase Realtime
+                        </span>
+                        <span className="font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.5 rounded text-[10px] border border-emerald-200">
+                            &lt;50ms
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={handleFullSyncCyber}
+                        disabled={isFullSyncing}
+                        className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold shadow-xs border transition-all ${
+                            isFullSyncing
+                                ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                                : 'bg-white hover:bg-emerald-50 text-emerald-700 border-emerald-200 hover:border-emerald-300'
+                        }`}
+                        title="Đồng bộ tất cả dữ liệu từ máy chủ CyberSoft ERP sang Supabase"
+                    >
+                        <i className={`fas fa-arrows-rotate text-xs ${isFullSyncing ? 'animate-spin text-emerald-600' : 'text-emerald-500'}`}></i>
+                        <span>{isFullSyncing ? 'Đang kéo Cyber...' : 'Đồng bộ từ Cyber'}</span>
+                    </button>
+                    {lastSyncTime && (
+                        <p className="text-[10px] text-center text-slate-400 mt-1.5">
+                            Cập nhật lúc: {lastSyncTime}
+                        </p>
+                    )}
+                </div>
             </div>
 
             {/* COLUMN 2: MAIN WORKSPACE AREA */}
