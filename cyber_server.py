@@ -246,6 +246,19 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self._send_cors_headers()
                 self.end_headers()
                 self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+        elif parsed.path == "/api/cyber/diagnose-pdf":
+            import shutil, ctypes.util
+            data = {
+                "os": sys.platform,
+                "chrome": shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser"),
+                "cairo": ctypes.util.find_library("cairo"),
+                "pango": ctypes.util.find_library("pango"),
+            }
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self._send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps(data).encode("utf-8"))
             return
 
         elif parsed.path == "/api/minvoice/fetch-invoice":
