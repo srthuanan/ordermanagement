@@ -15,7 +15,7 @@ import {
     CyberXepXeContract,
     isOrderAssignedOnCyber
 } from '../../services/api/stockService';
-import { fetchMInvoiceByVin, base64ToFile, syncAndNotifyMInvoice } from '../../services/api/mInvoiceService';
+import { syncAndNotifyMInvoice } from '../../services/api/mInvoiceService';
 
 interface InvoiceInboxViewProps {
     orders: Order[];
@@ -323,7 +323,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
             }
 
             showToast('Thành công', res.message || 'Đã lấy HĐ, lưu Supabase và gửi email thành công!', 'success', 6000);
-            onAction('reload', selectedOrder);
+            onAction('uploadInvoice', selectedOrder, { url: res.data?.url });
         } catch (err: any) {
             showToast('Lỗi', err.message || 'Không thể lấy hóa đơn M-Invoice.', 'error');
         } finally {
@@ -359,7 +359,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                 const res = await syncAndNotifyMInvoice(vin, orderNo);
                 if (res.success) {
                     signedCount++;
-                    onAction('reload', order);
+                    onAction('uploadInvoice', order, { url: res.data?.url });
                     await new Promise(r => setTimeout(r, 600));
                 } else if (res.status === 'UNSIGNED') {
                     unsignedCount++;

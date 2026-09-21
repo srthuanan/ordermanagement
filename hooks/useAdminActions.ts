@@ -173,7 +173,13 @@ export const useAdminActions = ({
             } finally {
                 setProcessingState(null);
             }
-        } else if (type === 'uploadInvoice' && data?.file) {
+        } else if (type === 'uploadInvoice') {
+            if (data?.url) {
+                refetchHistory(true);
+                refetchXuathoadon(true);
+                return;
+            }
+            if (!data?.file) return;
             setProcessingState({ id: order['Số đơn hàng'], type });
             try {
                 const file = data.file as File;
