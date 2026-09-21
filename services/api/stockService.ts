@@ -1573,11 +1573,8 @@ export const lookupCyberVinWarehouse = async (vinOrVins: string | string[]): Pro
                 const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 
-                        'Content-Type': 'application/json',
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
-                        'Pragma': 'no-cache'
+                        'Content-Type': 'application/json'
                     },
-                    cache: 'no-store',
                     body: JSON.stringify(payload)
                 });
                 const text = await res.text();
