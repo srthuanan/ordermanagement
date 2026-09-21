@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { CyberVoucherTicketItem, exportCyberPdf, getCyberViewPdfUrl } from '../../services/api/stockService';
+import { CyberVoucherTicketItem, exportCyberPdf } from '../../services/api/stockService';
 
 interface CyberTd4PrintModalProps {
     isOpen: boolean;
@@ -36,20 +36,6 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
         const loadOfficialPdf = async () => {
             setIsExportingPdf(true);
             setPdfError(null);
-
-            const cleanStt = data.stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_');
-            const cachedUrl = getCyberViewPdfUrl(cleanStt);
-            try {
-                const cacheCheck = await fetch(cachedUrl, {
-                    method: 'GET',
-                    signal: AbortSignal.timeout(5000)
-                });
-                if (cacheCheck.ok && isMounted) {
-                    setPdfUrl(`${cachedUrl}&t=${Date.now()}`);
-                    setIsExportingPdf(false);
-                    return;
-                }
-            } catch (_) { /* bỏ qua lỗi network/timeout cache */ }
 
             try {
                 const res = await exportCyberPdf({

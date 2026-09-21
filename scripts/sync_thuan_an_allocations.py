@@ -3386,16 +3386,18 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
     import subprocess
     import os
     import re
+    import tempfile
+    import base64
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ps_path = os.path.join(script_dir, "render_cyber_pdf.ps1")
     
     sig_suffix = "_sig" if str(include_signatures).lower() in ["true", "1"] else "_nosig"
     clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(stt_rec)) + sig_suffix
-    project_dir = os.path.dirname(script_dir)
-    out_dir = os.path.join(project_dir, "public", "cyber_pdfs")
-    os.makedirs(out_dir, exist_ok=True)
-    out_file = os.path.join(out_dir, f"{clean_stt}.pdf")
+    
+    # Sử dụng thư mục tạm của hệ điều hành, không ghi vào thư mục dự án
+    temp_dir = tempfile.gettempdir()
+    out_file = os.path.join(temp_dir, f"cyber_preview_{clean_stt}_{os.getpid()}.pdf")
     
     cmd = [
         "powershell",
@@ -3412,15 +3414,19 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=35)
         if os.path.exists(out_file) and os.path.getsize(out_file) > 1000:
-            import base64
             with open(out_file, "rb") as f:
                 b64 = base64.b64encode(f.read()).decode("utf-8")
+            
+            # Xóa file tạm ngay sau khi nạp vào bộ nhớ để giải phóng hoàn toàn dung lượng ổ cứng
+            try:
+                os.remove(out_file)
+            except Exception:
+                pass
+
             return {
                 "success": True,
-                "pdf_url": f"/api/cyber/view-pdf?stt_rec={clean_stt}",
                 "pdf_base64": f"data:application/pdf;base64,{b64}",
-                "file_path": out_file,
-                "size": os.path.getsize(out_file),
+                "size": len(b64),
                 "stt_rec": stt_rec,
                 "voucher_type": voucher_type
             }

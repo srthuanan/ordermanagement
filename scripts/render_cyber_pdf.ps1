@@ -129,12 +129,9 @@ $report.Render($false)
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectDir = Split-Path -Parent $scriptDir
 if (-not $OutFile) {
-    $outDir = Join-Path $projectDir "public\cyber_pdfs"
-    if (-not (Test-Path $outDir)) {
-        New-Item -ItemType Directory -Path $outDir -Force | Out-Null
-    }
+    $tempDir = [System.IO.Path]::GetTempPath()
     $cleanStt = $SttRec -replace '[^a-zA-Z0-9_\-]', '_'
-    $OutFile = Join-Path $outDir "$cleanStt.pdf"
+    $OutFile = Join-Path $tempDir "cyber_preview_${cleanStt}_$([guid]::NewGuid().ToString().Substring(0,8)).pdf"
 } else {
     if (-not [System.IO.Path]::IsPathRooted($OutFile)) {
         $OutFile = Join-Path $projectDir $OutFile

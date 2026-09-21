@@ -52,3 +52,7 @@ tmp_*.js
 
 .dms_profiles/
 minvoice_cookie.txt
+
+# Do not track cached cyber PDFs
+public/cyber_pdfs/*.pdf
+!public/cyber_pdfs/.gitkeep

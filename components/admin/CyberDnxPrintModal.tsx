@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { exportCyberPdf, getCyberViewPdfUrl } from '../../services/api/stockService';
+import { exportCyberPdf } from '../../services/api/stockService';
 
 export interface CyberDnxPrintData {
     so_ct: string;
@@ -65,29 +65,12 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
         setCyberPdfUrl(null);
         setCyberPdfError(null);
 
-        const sigSuffix = showSignatures ? '_sig' : '_nosig';
-        const cleanStt = data.stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_') + sigSuffix;
-        const cachedUrl = getCyberViewPdfUrl(cleanStt);
-
         let isMounted = true;
         const loadOfficialPdf = async () => {
             setIsCyberLoading(true);
             setCyberPdfError(null);
 
-            // Bước 1: Thử lấy file PDF từ server cache
-            try {
-                const cacheCheck = await fetch(cachedUrl, {
-                    method: 'GET',
-                    signal: AbortSignal.timeout(5000)
-                });
-                if (cacheCheck.ok && isMounted) {
-                    setCyberPdfUrl(`${cachedUrl}&t=${Date.now()}`);
-                    setIsCyberLoading(false);
-                    return;
-                }
-            } catch (_) { /* bỏ qua lỗi network/timeout cache */ }
-
-            // Bước 2: Thử gọi exportCyberPdf từ máy chủ CyberSoft
+            // Xuất trực tiếp từ CyberSoft ERP Engine (trả về Base64 hiển thị ngay, không lưu file)
             try {
                 const res = await exportCyberPdf({
                     stt_rec: data.stt_rec!,
