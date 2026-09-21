@@ -161,7 +161,6 @@ class CyberApiHandler(BaseHTTPRequestHandler):
 
         elif parsed.path == "/api/cyber/voucher-tickets":
             try:
-                from urllib.parse import parse_qs
                 qs = parse_qs(parsed.query)
                 ma_ct = (qs.get("ma_ct", [""])[0] or "").strip()
                 ma_post = (qs.get("ma_post", [""])[0] or "").strip()
@@ -196,7 +195,6 @@ class CyberApiHandler(BaseHTTPRequestHandler):
 
         elif parsed.path == "/api/cyber/export-pdf":
             try:
-                from urllib.parse import parse_qs
                 qs = parse_qs(parsed.query)
                 stt_rec = (qs.get("stt_rec", [""])[0] or "").strip()
                 voucher_type = (qs.get("voucher_type", ["TD4"])[0] or "TD4").strip()
@@ -267,7 +265,6 @@ class CyberApiHandler(BaseHTTPRequestHandler):
 
         elif parsed.path == "/api/cyber/check-contract-status":
             try:
-                from urllib.parse import parse_qs
                 qs = parse_qs(parsed.query)
                 p = {k: (v[0] if v else "") for k, v in qs.items()}
                 result = check_cyber_contract_status(p)
