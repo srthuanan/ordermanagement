@@ -30,18 +30,22 @@ const getEndpoints = (apiPath: string): string[] => {
 
     if (isLocal) {
         return [
-            `http://localhost:3001${apiPath}`,
             `${currentOrigin}${apiPath}`,
+            `http://localhost:3001${apiPath}`,
             `http://localhost:5173${apiPath}`,
             ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : [])
         ];
     }
 
+    // On static hosting like GitHub Pages, currentOrigin has no /api backend
+    const isStaticHosting = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
+    if (isStaticHosting) {
+        return cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : [];
+    }
+
     return [
-        `http://localhost:3001${apiPath}`,
-        `http://localhost:5173${apiPath}`,
-        `${currentOrigin}${apiPath}`,
-        ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : [])
+        ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : []),
+        `${currentOrigin}${apiPath}`
     ];
 };
 

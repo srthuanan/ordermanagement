@@ -49,7 +49,7 @@ function cyberSyncPlugin(): Plugin {
     py.on('close', code => {
       if (code !== 0) {
         if (onComplete) onComplete(false);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         return res.end(JSON.stringify({ success: false, error: stderr || `Exit code ${code}` }));
       }
       try {
@@ -61,11 +61,11 @@ function cyberSyncPlugin(): Plugin {
         }
         if (onComplete) onComplete(true);
         console.log(`[CyberSync Vite Middleware] Completed in ${Date.now() - startTime}ms`);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify(parsed));
       } catch (e: any) {
         if (onComplete) onComplete(false);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.writeHead(500, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ success: false, raw: stdout, error: e.message }));
       }
     });
@@ -74,6 +74,20 @@ function cyberSyncPlugin(): Plugin {
   return {
     name: 'cyber-sync-middleware',
     configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        if (req.url && req.url.startsWith('/api/')) {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, HEAD');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+          res.setHeader('Access-Control-Allow-Private-Network', 'true');
+          if (req.method === 'OPTIONS') {
+            res.statusCode = 204;
+            return res.end();
+          }
+        }
+        next();
+      });
+
       server.middlewares.use('/api/cyber/sync-allocations', (req, res, next) => {
         if (req.method !== 'POST') return next();
         let body = '';
