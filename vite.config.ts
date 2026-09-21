@@ -251,19 +251,32 @@ function cyberSyncPlugin(): Plugin {
 
       server.middlewares.use('/api/cyber/view-pdf', (req, res) => {
         const parsedUrl = new URL(req.url || '', 'http://localhost');
-        const stt = (parsedUrl.searchParams.get('stt_rec') || '').replace(/[^a-zA-Z0-9_\-]/g, '_');
-        const filePath = path.resolve(__dirname, 'public/cyber_pdfs', `${stt}.pdf`);
-        if (fs.existsSync(filePath)) {
-          const stat = fs.statSync(filePath);
+        const rawStt = (parsedUrl.searchParams.get('stt_rec') || '').replace(/\.pdf$/i, '');
+        const stt = rawStt.replace(/[^a-zA-Z0-9_\-]/g, '_');
+        
+        const candidates = [
+          path.resolve(__dirname, 'public/cyber_pdfs', `${stt}.pdf`),
+          path.resolve(__dirname, 'public/cyber_pdfs', `${stt}_sig.pdf`),
+          path.resolve(__dirname, 'public/cyber_pdfs', `${stt}_nosig.pdf`)
+        ];
+        
+        const foundPath = candidates.find(p => fs.existsSync(p));
+        if (foundPath) {
+          const stat = fs.statSync(foundPath);
           res.writeHead(200, {
             'Content-Type': 'application/pdf',
             'Content-Length': stat.size,
-            'Content-Disposition': 'inline'
+            'Content-Disposition': 'inline',
+            'Access-Control-Allow-Origin': '*'
           });
-          fs.createReadStream(filePath).pipe(res);
+          if (req.method === 'HEAD') {
+            res.end();
+            return;
+          }
+          fs.createReadStream(foundPath).pipe(res);
         } else {
-          res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-          res.end('File PDF không tồn tại');
+          res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8', 'Access-Control-Allow-Origin': '*' });
+          res.end(JSON.stringify({ success: false, error: 'File PDF không tồn tại' }));
         }
       });
 

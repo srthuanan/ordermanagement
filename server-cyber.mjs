@@ -196,22 +196,31 @@ const server = http.createServer((req, res) => {
         return;
     }
     if (pathname === '/api/cyber/view-pdf') {
-        const stt_rec = (urlObj.searchParams.get('stt_rec') || '').trim();
-        const safeName = `${stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`;
-        const pdfPath = path.resolve(__dirname, 'public/cyber_pdfs', safeName);
-        if (fs.existsSync(pdfPath)) {
-            const stat = fs.statSync(pdfPath);
+        const rawStt = (urlObj.searchParams.get('stt_rec') || '').trim().replace(/\.pdf$/i, '');
+        const safeName = rawStt.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const candidates = [
+            path.resolve(__dirname, 'public/cyber_pdfs', `${safeName}.pdf`),
+            path.resolve(__dirname, 'public/cyber_pdfs', `${safeName}_sig.pdf`),
+            path.resolve(__dirname, 'public/cyber_pdfs', `${safeName}_nosig.pdf`)
+        ];
+        const foundPath = candidates.find(p => fs.existsSync(p));
+        if (foundPath) {
+            const stat = fs.statSync(foundPath);
             res.writeHead(200, {
                 'Content-Type': 'application/pdf',
                 'Content-Length': stat.size,
-                'Content-Disposition': `inline; filename="${safeName}"`,
+                'Content-Disposition': `inline; filename="${path.basename(foundPath)}"`,
                 'Cache-Control': 'public, max-age=3600',
                 'Access-Control-Allow-Origin': '*'
             });
-            fs.createReadStream(pdfPath).pipe(res);
+            if (req.method === 'HEAD') {
+                res.end();
+                return;
+            }
+            fs.createReadStream(foundPath).pipe(res);
         } else {
             res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-            res.end(JSON.stringify({ error: 'PDF not found' }));
+            res.end(JSON.stringify({ success: false, error: 'PDF not found' }));
         }
         return;
     }
