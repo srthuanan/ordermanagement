@@ -159,6 +159,33 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(payload, ensure_ascii=False).encode("utf-8"))
             return
 
+        elif parsed.path == "/api/cyber/plan-filter-options":
+            try:
+                qs = parse_qs(parsed.query)
+                model = (qs.get("model", [""])[0] or "").strip()
+                cache_key = f"plan_filter_options_{model}"
+                cached = get_from_cache(cache_key)
+                if cached:
+                    res_data = cached
+                else:
+                    res_data = get_cyber_plan_filter_options(model=model)
+                    if res_data and res_data.get("success"):
+                        set_to_cache(cache_key, res_data)
+
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res_data, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync Cloud Plan Filter Options Error]: {str(e)}", file=sys.stderr)
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e), "ttcp_list": [], "models": [], "versions": [], "colors": []}, ensure_ascii=False).encode("utf-8"))
+            return
+
         elif parsed.path == "/api/cyber/voucher-tickets":
             try:
                 qs = parse_qs(parsed.query)
@@ -410,6 +437,29 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self._send_cors_headers()
                 self.end_headers()
                 self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/plan-filter-options":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            try:
+                data = json.loads(body_str or "{}")
+            except Exception:
+                data = {}
+            model = (data.get("model") or "").strip()
+            cache_key = f"plan_filter_options_{model}"
+            cached = get_from_cache(cache_key)
+            if cached:
+                res_data = cached
+            else:
+                res_data = get_cyber_plan_filter_options(model=model)
+                if res_data and res_data.get("success"):
+                    set_to_cache(cache_key, res_data)
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self._send_cors_headers()
+            self.end_headers()
+            self.wfile.write(json.dumps(res_data, default=str, ensure_ascii=False).encode("utf-8"))
             return
 
         elif parsed.path == "/api/cyber/search-factory-plan":
