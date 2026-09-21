@@ -625,9 +625,17 @@ export const getOrderAuditLogs = async (orderNumber: string): Promise<ApiResult>
             .from('interactions')
             .select('*')
             .or(`target_id.eq."${orderNumber}",metadata->>orderNumber.eq."${orderNumber}"`)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(200);
 
-        if (error) throw error;
+        // Bỏ qua lỗi timeout (57014) - trả về mảng rỗng thay vì crash UI
+        if (error) {
+            if (error.code === '57014') {
+                console.warn('[AuditLog] Query timeout - bảng interactions quá lớn, cần index. Trả về rỗng.');
+                return { status: 'SUCCESS', message: 'Timeout - returned empty', data: [] };
+            }
+            throw error;
+        }
 
         // Loại bỏ các thông báo đẩy (push notification) gửi chuông để tránh lặp với bản ghi hành động hệ thống (LOG)
         const filteredRecords = (data || []).filter((item: any) => {

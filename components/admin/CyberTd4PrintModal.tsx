@@ -330,14 +330,18 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
             const cleanStt = data.stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_');
             const cachedUrl = getCyberViewPdfUrl(cleanStt);
             try {
-                const cacheCheck = await fetch(cachedUrl, { method: 'GET' });
+                const cacheCheck = await fetch(cachedUrl, {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(3000)
+                });
                 if (cacheCheck.ok && isMounted) {
                     setPdfUrl(`${cachedUrl}&t=${Date.now()}`);
                     setActiveView('pdf');
                     setIsExportingPdf(false);
                     return;
                 }
-            } catch (_) { /* bỏ qua lỗi */ }
+                // 404/500 từ Render → bỏ qua, chuyển sang HTML print
+            } catch (_) { /* network error hoặc timeout → bỏ qua */ }
 
             try {
                 const res = await exportCyberPdf({

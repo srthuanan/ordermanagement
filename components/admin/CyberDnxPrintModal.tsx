@@ -392,16 +392,20 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
             setIsCyberLoading(true);
             setCyberPdfError(null);
 
-            // Bước 1: Thử lấy file PDF từ cache
+            // Bước 1: Thử lấy file PDF từ cache (timeout nhanh 3s để không treo)
             try {
-                const cacheCheck = await fetch(cachedUrl, { method: 'GET' });
+                const cacheCheck = await fetch(cachedUrl, {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(3000)
+                });
                 if (cacheCheck.ok && isMounted) {
                     setCyberPdfUrl(`${cachedUrl}&t=${Date.now()}`);
                     setActiveView('pdf');
                     setIsCyberLoading(false);
                     return;
                 }
-            } catch (_) { /* bỏ qua lỗi */ }
+                // 404/500 từ Render → bỏ qua, chuyển sang HTML print
+            } catch (_) { /* network error hoặc timeout → bỏ qua */ }
 
             // Bước 2: Thử gọi exportCyberPdf từ server
             try {
