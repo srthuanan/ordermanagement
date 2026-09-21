@@ -28,6 +28,7 @@ import { CyberTd4PrintModal } from './CyberTd4PrintModal';
 import { getTransferRequests, updateTransferRequestStatus, TransferRequestItem } from '../../services/api/transferService';
 import { supabase } from '../../services/supabaseClient';
 import { CYBER_POPULAR_WAREHOUSES, CYBER_OTHER_WAREHOUSES, CYBER_ALL_WAREHOUSES } from '../../constants/cyberWarehouses';
+import { SearchableWarehouseSelect } from '../ui/SearchableWarehouseSelect';
 
 interface CyberPlanCarItem {
     vin: string;
@@ -508,6 +509,21 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 if (res.success && res.found && res.ma_kho) {
                     setDnxMaKhoXuat(res.ma_kho);
                     setDetectedWarehouseName(res.ten_kho || res.ma_kho);
+
+                    // Tự động phân bổ kho nhận: nếu kho xuất là K83 thì kho nhận sang K87 (hoặc giữ khác K83), ngược lại kho nhận là K83
+                    if (res.ma_kho === 'K83') {
+                        setDnxMaKhoNhan(prev => (prev === 'K83' ? 'K87' : prev));
+                    } else {
+                        setDnxMaKhoNhan('K83');
+                    }
+
+                    // Tự động chọn mã giao dịch: 4 nếu là nội bộ điểm KD (K83, K87, K86, K85, K106, KHCM.PVD), 9 nếu là các điểm khác
+                    const noiboList = ['K83', 'K87', 'K86', 'K85', 'K106', 'KHCM.PVD'];
+                    if (noiboList.includes(res.ma_kho)) {
+                        setDnxMaGd('4');
+                    } else {
+                        setDnxMaGd('9');
+                    }
 
                     if (res.cars && res.cars.length > 0) {
                         const map: Record<string, any> = {};
@@ -3750,60 +3766,35 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                 </span>
                                             )}
                                         </div>
-                                        <select
+                                        <SearchableWarehouseSelect
                                             value={dnxMaKhoXuat}
-                                            onChange={(e) => setDnxMaKhoXuat(e.target.value)}
-                                            className={`w-full border rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-blue-500 bg-white text-slate-800 cursor-pointer h-7 transition-colors ${
-                                                lookupResultInfo?.found ? 'border-emerald-500 bg-emerald-50/20' : 'border-slate-300'
-                                            }`}
-                                        >
-                                            {dnxMaKhoXuat && !CYBER_ALL_WAREHOUSES.some(w => w.id === dnxMaKhoXuat) && (
-                                                <option value={dnxMaKhoXuat}>{dnxMaKhoXuat} - {detectedWarehouseName || dnxMaKhoXuat}</option>
-                                            )}
-                                            <optgroup label="⭐ Kho Xe & Điểm Kinh Doanh (Thường Dùng)">
-                                                {CYBER_POPULAR_WAREHOUSES.map((w) => (
-                                                    <option key={`xuat-${w.id}`} value={w.id}>{w.name}</option>
-                                                ))}
-                                            </optgroup>
-                                            <optgroup label="📦 Toàn Bộ Kho Khác Trên CyberSoft">
-                                                {CYBER_OTHER_WAREHOUSES.map((w) => (
-                                                    <option key={`xuat-${w.id}`} value={w.id}>{w.name}</option>
-                                                ))}
-                                            </optgroup>
-                                        </select>
+                                            onChange={(val) => setDnxMaKhoXuat(val)}
+                                            customWarehouseName={detectedWarehouseName}
+                                            isDetected={Boolean(lookupResultInfo?.found)}
+                                            size="sm"
+                                            theme="light"
+                                            placeholder="Chọn kho xuất..."
+                                        />
                                     </div>
 
                                     <div>
                                         <label className="block text-[10.5px] font-bold text-slate-600 mb-0.5">
                                             Kho nhận (Đích đến):
                                         </label>
-                                        <select
+                                        <SearchableWarehouseSelect
                                             value={dnxMaKhoNhan}
-                                            onChange={(e) => {
-                                                const val = e.target.value;
+                                            onChange={(val) => {
                                                 setDnxMaKhoNhan(val);
-                                                if (['K83', 'K87', 'K86', 'K106', 'KHCM.PVD'].includes(val)) {
+                                                if (['K83', 'K87', 'K86', 'K85', 'K106', 'KHCM.PVD'].includes(val)) {
                                                     setDnxMaGd('4');
                                                 } else {
                                                     setDnxMaGd('9');
                                                 }
                                             }}
-                                            className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-blue-500 bg-white text-slate-800 cursor-pointer h-7"
-                                        >
-                                            {dnxMaKhoNhan && !CYBER_ALL_WAREHOUSES.some(w => w.id === dnxMaKhoNhan) && (
-                                                <option value={dnxMaKhoNhan}>{dnxMaKhoNhan} - {dnxMaKhoNhan}</option>
-                                            )}
-                                            <optgroup label="⭐ Kho Xe & Điểm Kinh Doanh (Thường Dùng)">
-                                                {CYBER_POPULAR_WAREHOUSES.map((w) => (
-                                                    <option key={`nhan-${w.id}`} value={w.id}>{w.name}</option>
-                                                ))}
-                                            </optgroup>
-                                            <optgroup label="📦 Toàn Bộ Kho Khác Trên CyberSoft">
-                                                {CYBER_OTHER_WAREHOUSES.map((w) => (
-                                                    <option key={`nhan-${w.id}`} value={w.id}>{w.name}</option>
-                                                ))}
-                                            </optgroup>
-                                        </select>
+                                            size="sm"
+                                            theme="light"
+                                            placeholder="Chọn kho nhận..."
+                                        />
                                     </div>
                                 </div>
 

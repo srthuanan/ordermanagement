@@ -423,34 +423,23 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 }
             };
 
-            // 1. TẢI TỨC THÌ TỪ SUPABASE CACHE (cyber_car_status, tốc độ < 50ms)
-            getCyberCarStatusFromSupabase(vin)
-                .then(cached => {
-                    if (cached) {
-                        applyCyberCarStatus(cached);
-                    }
-                    // Nếu chưa có trong cache Supabase hoặc cache quá cũ (> 10 phút), gọi fallback tra cứu trực tiếp Cyber
-                    const isMissingOrOld = !cached || !cached.updated_at || (Date.now() - new Date(cached.updated_at).getTime() > 10 * 60 * 1000);
-                    if (isMissingOrOld) {
-                        lookupCyberVinWarehouse([vin])
-                            .then(res => {
-                                if (res && res.success) {
-                                    const car = res.cars?.[0] || res;
-                                    applyCyberCarStatus({
-                                        vin,
-                                        ma_kho: res.ma_kho || car.ma_kho,
-                                        ten_kho: res.ten_kho || car.ten_kho,
-                                        has_td4: res.has_td4 || car.has_td4,
-                                        td4_data: res.td4 || car.td4,
-                                        has_dnx: res.has_dnx || car.has_dnx,
-                                        dnx_data: res.dnx || car.dnx
-                                    });
-                                }
-                            })
-                            .catch(e => console.error("Lỗi tra cứu fallback Cyber:", e));
+            // 1. Luôn tra cứu trực tiếp kho xe và chứng từ mới nhất từ CyberSoft ERP (không dùng cache Supabase)
+            lookupCyberVinWarehouse([vin])
+                .then(res => {
+                    if (res && res.success) {
+                        const car = res.cars?.[0] || res;
+                        applyCyberCarStatus({
+                            vin,
+                            ma_kho: res.ma_kho || car.ma_kho,
+                            ten_kho: res.ten_kho || car.ten_kho,
+                            has_td4: res.has_td4 || car.has_td4,
+                            td4_data: res.td4 || car.td4,
+                            has_dnx: res.has_dnx || car.has_dnx,
+                            dnx_data: res.dnx || car.dnx
+                        });
                     }
                 })
-                .catch(err => console.error("Lỗi đọc cyber_car_status từ Supabase:", err));
+                .catch(e => console.error("Lỗi tra cứu trực tiếp Cyber:", e));
 
             // 2. Lắng nghe Realtime bảng cyber_car_status (cập nhật khi daemon 5 phút đồng bộ)
             const carStatusChannel = supabase

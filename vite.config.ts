@@ -199,7 +199,8 @@ function cyberSyncPlugin(): Plugin {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
-          runPy([scriptPath, '--lookup-vin'], body, res, `lookup-vin:${body}`);
+          // Bắt buộc luôn dò kho xe mới nhất trực tiếp từ SQL CyberSoft ERP, tuyệt đối không dùng cache
+          runPy([scriptPath, '--lookup-vin'], body, res, undefined, true);
         });
       });
 

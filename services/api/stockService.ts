@@ -1564,13 +1564,20 @@ export const lookupCyberVinWarehouse = async (vinOrVins: string | string[]): Pro
         const endpoints = getCyberEndpoints('/api/cyber/lookup-vin');
         let lastErrorMsg = '';
 
-        const payload = typeof vinOrVins === 'string' ? { vin: vinOrVins } : { vins: vinOrVins };
+        const payload = typeof vinOrVins === 'string' 
+            ? { vin: vinOrVins, force: true, _t: Date.now() } 
+            : { vins: vinOrVins, force: true, _t: Date.now() };
 
         for (const endpoint of endpoints) {
             try {
                 const res = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache'
+                    },
+                    cache: 'no-store',
                     body: JSON.stringify(payload)
                 });
                 const text = await res.text();

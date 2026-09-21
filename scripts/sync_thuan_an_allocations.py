@@ -347,6 +347,7 @@ def fetch_physical_locations_from_cyber(vins: list) -> dict:
                 FROM CT70BEX WITH (NOLOCK)
                 WHERE Ma_Post >= '9' AND So_Khung IN ({vin_list_str})
                 GROUP BY So_Khung, ma_kho
+                HAVING SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) >= 1
             ),
             LatestSK AS (
                 SELECT 
@@ -355,11 +356,10 @@ def fetch_physical_locations_from_cyber(vins: list) -> dict:
                     k.Ten_kho,
                     ROW_NUMBER() OVER(PARTITION BY b.So_Khung ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC) AS rn
                 FROM CT70BEX b WITH (NOLOCK)
+                INNER JOIN TonSK t ON b.So_Khung = t.So_Khung AND b.ma_kho = t.ma_kho
                 LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
                 WHERE b.nxt = '1' 
-                  AND b.Ma_Post >= '9' 
-                  AND b.So_Khung IN ({vin_list_str})
-                  AND b.So_Khung IN (SELECT So_Khung FROM TonSK WHERE Ton >= 1)
+                  AND b.Ma_Post >= '9'
             )
             SELECT So_Khung, ma_kho, Ten_kho
             FROM LatestSK
@@ -909,6 +909,7 @@ def search_cyber_factory_plan(params: dict) -> dict:
                 FROM CT70BEX WITH (NOLOCK)
                 WHERE Ma_Post >= '9' AND So_Khung IN ({vin_list_str})
                 GROUP BY So_Khung, ma_kho
+                HAVING SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) >= 1
             ),
             LatestSK AS (
                 SELECT 
@@ -917,11 +918,10 @@ def search_cyber_factory_plan(params: dict) -> dict:
                     k.Ten_kho,
                     ROW_NUMBER() OVER(PARTITION BY b.So_Khung ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC) AS rn
                 FROM CT70BEX b WITH (NOLOCK)
+                INNER JOIN TonSK t ON b.So_Khung = t.So_Khung AND b.ma_kho = t.ma_kho
                 LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
                 WHERE b.nxt = '1' 
-                  AND b.Ma_Post >= '9' 
-                  AND b.So_Khung IN ({vin_list_str})
-                  AND b.So_Khung IN (SELECT So_Khung FROM TonSK WHERE Ton >= 1)
+                  AND b.Ma_Post >= '9'
             )
             SELECT So_Khung, ma_kho, Ten_kho
             FROM LatestSK
@@ -2024,8 +2024,11 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
             sql_wh = """
                 SELECT RTRIM(LTRIM(ma_kho)) as ma_kho, RTRIM(LTRIM(ten_kho)) as ten_kho
                 FROM Dmkho WITH (NOLOCK)
-                WHERE (Ten_kho LIKE N'%xe%' OR Ten_kho LIKE N'%ô tô%' OR Ten_kho LIKE N'%Vinfast%' OR Ma_Kho IN ('K83','K85','K86','K87','KHCM.PVD','K103','K106','K58','K65','K66','K36'))
+                WHERE (Ten_kho LIKE N'%xe%' OR Ten_kho LIKE N'%ô tô%' OR Ten_kho LIKE N'%Vinfast%' OR Ma_Kho IN ('K83','K85','K86','K87','KHCM.PVD','K103','K106','K58','K65','K66','K36','K91'))
+                  AND Ma_Kho != 'K39'
                   AND Ten_kho NOT LIKE N'%phụ tùng%'
+                  AND Ten_kho NOT LIKE N'%phụ kiện%'
+                  AND Ten_kho NOT LIKE N'%phụ kiên%'
                   AND Ten_kho NOT LIKE N'%vật tư%'
                   AND Ten_kho NOT LIKE N'%sạc%'
                   AND Ten_kho NOT LIKE N'%voucher%'
@@ -2034,6 +2037,8 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
                   AND Ten_kho NOT LIKE N'%xe máy%'
                   AND Ten_kho NOT LIKE N'%lazang%'
                   AND Ten_kho NOT LIKE N'%cơ khí%'
+                  AND Ten_kho NOT LIKE N'%pin%'
+                  AND Ten_kho NOT LIKE N'%khách sạn%'
                 ORDER BY 
                   CASE 
                     WHEN ma_kho = 'K83' THEN 1
@@ -2042,6 +2047,7 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
                     WHEN ma_kho = 'K85' THEN 4
                     WHEN ma_kho = 'KHCM.PVD' THEN 5
                     WHEN ma_kho = 'K106' THEN 6
+                    WHEN ma_kho = 'K91' THEN 7
                     ELSE 10 
                   END, ma_kho
             """
@@ -2077,6 +2083,7 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
                 FROM CT70BEX WITH (NOLOCK)
                 WHERE Ma_Post >= '9' AND So_Khung IN ({vin_list_str})
                 GROUP BY So_Khung, ma_kho
+                HAVING SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) >= 1
             ),
             LatestSK AS (
                 SELECT 
@@ -2085,11 +2092,10 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
                     k.Ten_kho,
                     ROW_NUMBER() OVER(PARTITION BY b.So_Khung ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC) AS rn
                 FROM CT70BEX b WITH (NOLOCK)
+                INNER JOIN TonSK t ON b.So_Khung = t.So_Khung AND b.ma_kho = t.ma_kho
                 LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
                 WHERE b.nxt = '1' 
-                  AND b.Ma_Post >= '9' 
-                  AND b.So_Khung IN ({vin_list_str})
-                  AND b.So_Khung IN (SELECT So_Khung FROM TonSK WHERE Ton >= 1)
+                  AND b.Ma_Post >= '9'
             )
             SELECT So_Khung, ma_kho, Ten_kho
             FROM LatestSK
@@ -2278,10 +2284,17 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
             inf = info_map.get(v, {})
             dnx_entry = dnx_map.get(v)
             td4_entry = td4_map.get(v)
-            # Chỉ gán ma_kho nếu xe thực tế ĐANG CÒN TỒN KHO (Ton >= 1) từ stock_map hoặc có phiếu DNX
-            # Tuyệt đối không fallback sang inf.get("ctkh_ma_kho") nếu xe đã xuất kho hết tồn
-            ma_kho = (dnx_entry.get("ma_kho_xuat") if dnx_entry else "") or st.get("ma_kho") or ""
-            ten_kho = (dnx_entry.get("ten_kho_xuat") if dnx_entry else "") or st.get("ten_kho") or ("Đang vận tải" if not ma_kho else "")
+            # Ưu tiên số 1: Kho tồn thực tế hiện tại (Ton >= 1) từ CT70BEX
+            if st and st.get("ma_kho"):
+                ma_kho = st.get("ma_kho")
+                ten_kho = st.get("ten_kho") or ma_kho
+            elif dnx_entry and (dnx_entry.get("ma_kho_nhan") or dnx_entry.get("ma_kho_xuat")):
+                # Nếu không còn tồn kho thực tế, xem phiếu DNX điều chuyển gần nhất
+                ma_kho = dnx_entry.get("ma_kho_nhan") or dnx_entry.get("ma_kho_xuat") or ""
+                ten_kho = dnx_entry.get("ten_kho_nhan") or dnx_entry.get("ten_kho_xuat") or ""
+            else:
+                ma_kho = ""
+                ten_kho = "Đang vận tải"
             if ma_kho:
                 found_warehouses.append({"ma_kho": ma_kho, "ten_kho": ten_kho})
             results.append({

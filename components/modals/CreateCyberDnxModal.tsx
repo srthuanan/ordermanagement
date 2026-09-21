@@ -10,6 +10,7 @@ interface CreateCyberDnxModalProps {
 }
 
 import { CYBER_POPULAR_WAREHOUSES, CYBER_OTHER_WAREHOUSES } from '../../constants/cyberWarehouses';
+import { SearchableWarehouseSelect } from '../ui/SearchableWarehouseSelect';
 
 export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
     isOpen,
@@ -40,6 +41,19 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
         lookupCyberVinWarehouse(vins)
             .then(res => {
                 if (!isMounted) return;
+                if (res && res.found && res.ma_kho) {
+                    setMaKhoXuat(res.ma_kho);
+                    if (res.ma_kho === 'K83') {
+                        setMaKhoNhan(prev => (prev === 'K83' ? 'K87' : prev));
+                    } else {
+                        setMaKhoNhan('K83');
+                    }
+                    if (['K83', 'K87', 'K86', 'K85', 'K106', 'KHCM.PVD'].includes(res.ma_kho)) {
+                        setMaGd('4');
+                    } else {
+                        setMaGd('9');
+                    }
+                }
                 if (res && res.cars) {
                     for (const c of res.cars) {
                         if (c.has_td4 && c.td4) {
@@ -261,52 +275,33 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                                     <label className="block text-xs font-semibold text-slate-300 mb-1">
                                         Kho xuất:
                                     </label>
-                                    <select
+                                    <SearchableWarehouseSelect
                                         value={maKhoXuat}
-                                        onChange={(e) => setMaKhoXuat(e.target.value)}
-                                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
-                                    >
-                                        <optgroup label="⭐ Kho Xe & Điểm Kinh Doanh (Thường Dùng)">
-                                            {CYBER_POPULAR_WAREHOUSES.map(w => (
-                                                <option key={`xuat-${w.id}`} value={w.id}>{w.name}</option>
-                                            ))}
-                                        </optgroup>
-                                        <optgroup label="📦 Toàn Bộ Kho Khác Trên CyberSoft">
-                                            {CYBER_OTHER_WAREHOUSES.map(w => (
-                                                <option key={`xuat-${w.id}`} value={w.id}>{w.name}</option>
-                                            ))}
-                                        </optgroup>
-                                    </select>
+                                        onChange={(val) => setMaKhoXuat(val)}
+                                        size="md"
+                                        theme="dark"
+                                        placeholder="Chọn kho xuất..."
+                                    />
                                 </div>
 
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-300 mb-1">
                                         Kho nhận (Đích đến):
                                     </label>
-                                    <select
+                                    <SearchableWarehouseSelect
                                         value={maKhoNhan}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
+                                        onChange={(val) => {
                                             setMaKhoNhan(val);
-                                            if (['K83', 'K87', 'K86', 'K106', 'KHCM.PVD'].includes(val)) {
+                                            if (['K83', 'K87', 'K86', 'K85', 'K106', 'KHCM.PVD'].includes(val)) {
                                                 setMaGd('4');
                                             } else {
                                                 setMaGd('9');
                                             }
                                         }}
-                                        className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
-                                    >
-                                        <optgroup label="⭐ Kho Xe & Điểm Kinh Doanh (Thường Dùng)">
-                                            {CYBER_POPULAR_WAREHOUSES.map(w => (
-                                                <option key={`nhan-${w.id}`} value={w.id}>{w.name}</option>
-                                            ))}
-                                        </optgroup>
-                                        <optgroup label="📦 Toàn Bộ Kho Khác Trên CyberSoft">
-                                            {CYBER_OTHER_WAREHOUSES.map(w => (
-                                                <option key={`nhan-${w.id}`} value={w.id}>{w.name}</option>
-                                            ))}
-                                        </optgroup>
-                                    </select>
+                                        size="md"
+                                        theme="dark"
+                                        placeholder="Chọn kho nhận..."
+                                    />
                                 </div>
                             </div>
 
