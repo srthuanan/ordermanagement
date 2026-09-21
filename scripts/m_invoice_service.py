@@ -2,7 +2,9 @@ import os
 import sys
 import re
 import json
+import time
 import base64
+import unicodedata
 import tempfile
 import subprocess
 import requests
@@ -172,64 +174,203 @@ html, body {
     else:
         clean_html = custom_css + master_page
 
-    browser_exe = get_browser_executable()
-    if not browser_exe:
-        return {"success": False, "status": "NO_BROWSER", "message": "Không tìm thấy Microsoft Edge hoặc Chrome trên máy để xuất file PDF."}
+    file_name = f"{serial}_{so_hd}_{vin}_{safe_buyer}.pdf"
+    pdf_bytes = None
 
-    scratch_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scratch", "temp_invoices"))
-    os.makedirs(scratch_dir, exist_ok=True)
-    html_file = os.path.join(scratch_dir, f"invoice_{vin}.html")
-    pdf_file = os.path.join(scratch_dir, f"invoice_{vin}.pdf")
-
+    # Cách 1: Tải trực tiếp file PDF chính gốc đã ký số từ M-Invoice API (nhanh, chuẩn 100%, không cần cài Chrome trên Cloud)
     try:
-        with open(html_file, "w", encoding="utf-8") as f:
-            f.write(clean_html)
-
-        cmd = [
-            browser_exe,
-            "--headless",
-            "--disable-gpu",
-            "--no-pdf-header-footer",
-            f"--print-to-pdf={pdf_file}",
-            html_file
-        ]
-        res_cmd = subprocess.run(cmd, capture_output=True, timeout=15)
-
-        if not os.path.exists(pdf_file) or os.path.getsize(pdf_file) < 1000:
-            return {"success": False, "status": "PDF_CONVERT_FAIL", "message": "Xuất file PDF thất bại."}
-
-        with open(pdf_file, "rb") as f:
-            pdf_bytes = f.read()
-
-        base64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
-        file_name = f"{serial}_{so_hd}_{vin}_{safe_buyer}.pdf"
-
-        return {
-            "success": True,
-            "status": "SIGNED" if is_signed else "PENDING_SIGN",
-            "message": f"Đã lấy thành công hóa đơn số {so_hd} ({serial}) cho xe {buyer}!",
-            "data": {
-                "vin": vin,
-                "invoiceNumber": so_hd,
-                "serial": serial,
-                "dateSign": date_sign,
-                "isSigned": is_signed,
-                "buyer": buyer,
-                "totalAmount": inv.get("totalAmount", 0),
-                "fileName": file_name,
-                "fileSize": len(pdf_bytes),
-                "base64Pdf": base64_pdf
-            }
-        }
+        url_pdf = f"{DEFAULT_BASE_URL}/api/api/app/invoice/{inv_id}/downloaf-pdf"
+        r_pdf = requests.get(url_pdf, headers=headers, timeout=15)
+        if r_pdf.status_code == 200 and r_pdf.content.startswith(b"%PDF"):
+            pdf_bytes = r_pdf.content
     except Exception as e:
-        return {"success": False, "status": "CONVERT_ERROR", "message": f"Lỗi tạo file PDF: {str(e)}"}
-    finally:
-        # Cleanup
+        print(f"[M-Invoice] Tải trực tiếp PDF thất bại: {e}")
+
+    # Cách 2: Dự phòng dùng Chrome/Edge in headless sang PDF nếu M-Invoice không trả về trực tiếp
+    if not pdf_bytes:
+        browser_exe = get_browser_executable()
+        if browser_exe:
+            scratch_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "scratch", "temp_invoices"))
+            os.makedirs(scratch_dir, exist_ok=True)
+            html_file = os.path.join(scratch_dir, f"invoice_{vin}.html")
+            pdf_file = os.path.join(scratch_dir, f"invoice_{vin}.pdf")
+            try:
+                with open(html_file, "w", encoding="utf-8") as f:
+                    f.write(clean_html)
+                cmd = [
+                    browser_exe,
+                    "--headless",
+                    "--disable-gpu",
+                    "--no-pdf-header-footer",
+                    f"--print-to-pdf={pdf_file}",
+                    html_file
+                ]
+                subprocess.run(cmd, capture_output=True, timeout=15)
+                if os.path.exists(pdf_file) and os.path.getsize(pdf_file) >= 1000:
+                    with open(pdf_file, "rb") as f:
+                        pdf_bytes = f.read()
+            except Exception:
+                pass
+            finally:
+                try:
+                    if os.path.exists(html_file): os.remove(html_file)
+                    if os.path.exists(pdf_file): os.remove(pdf_file)
+                except Exception:
+                    pass
+
+    if not pdf_bytes:
+        return {"success": False, "status": "NO_PDF", "message": "Không tìm thấy Microsoft Edge/Chrome và không tải được PDF từ M-Invoice."}
+
+    base64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+
+    return {
+        "success": True,
+        "status": "SIGNED" if is_signed else "PENDING_SIGN",
+        "message": f"Đã lấy thành công hóa đơn số {so_hd} ({serial}) cho xe {buyer}!",
+        "data": {
+            "vin": vin,
+            "invoiceNumber": so_hd,
+            "serial": serial,
+            "dateSign": date_sign,
+            "isSigned": is_signed,
+            "buyer": buyer,
+            "totalAmount": inv.get("totalAmount", 0),
+            "fileName": file_name,
+            "fileSize": len(pdf_bytes),
+            "base64Pdf": base64_pdf
+        }
+    }
+
+def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
+    vin = (vin or "").strip().upper()
+    order_number = (order_number or "").strip()
+    if not vin and not order_number:
+        return {"success": False, "status": "INVALID_PARAMS", "message": "Cần cung cấp số VIN hoặc số đơn hàng."}
+
+    from scripts.sync_thuan_an_allocations import SUPABASE_URL, SUPABASE_KEY
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    # Nếu chưa có VIN nhưng có order_number, tìm VIN từ đơn hàng
+    order = None
+    if order_number:
         try:
-            if os.path.exists(html_file): os.remove(html_file)
-            if os.path.exists(pdf_file): os.remove(pdf_file)
+            r_ord = requests.get(f"{SUPABASE_URL}/rest/v1/donhang?so_don_hang=eq.{order_number}&select=*", headers=headers, timeout=10)
+            if r_ord.status_code == 200 and r_ord.json():
+                order = r_ord.json()[0]
+                if not vin and order.get("vin"):
+                    vin = order["vin"].strip().upper()
+        except Exception as e:
+            print(f"[M-Invoice Auto] Lỗi tìm đơn hàng {order_number}: {e}")
+
+    if not vin:
+        return {"success": False, "status": "NO_VIN", "message": f"Đơn hàng {order_number} chưa có số VIN."}
+
+    # 1. Tra cứu và lấy PDF từ M-Invoice
+    res = process_single_vin(vin, only_signed=True)
+    if not res.get("success"):
+        return res
+
+    inv_data = res.get("data", {})
+    base64_pdf = inv_data.get("base64Pdf")
+    if not base64_pdf:
+        return {"success": False, "status": "NO_PDF", "message": "Không nhận được nội dung file PDF từ M-Invoice."}
+
+    pdf_bytes = base64.b64decode(base64_pdf)
+    so_hd = inv_data.get("invoiceNumber")
+    serial = inv_data.get("serial")
+    buyer = inv_data.get("buyer")
+
+    # 2. Tìm đơn hàng nếu chưa tìm thấy
+    if not order:
+        try:
+            r_ord = requests.get(f"{SUPABASE_URL}/rest/v1/donhang?vin=eq.{vin}&select=*&order=created_at.desc&limit=1", headers=headers, timeout=10)
+            if r_ord.status_code == 200 and r_ord.json():
+                order = r_ord.json()[0]
         except Exception:
             pass
+
+    if not order:
+        return {
+            "success": False,
+            "status": "ORDER_NOT_FOUND",
+            "message": f"Tìm thấy HĐ số {so_hd} ({serial}) nhưng không tìm thấy đơn hàng tương ứng với số VIN {vin} trong hệ thống.",
+            "data": inv_data
+        }
+
+    exact_order_no = order.get("so_don_hang")
+    c_name = order.get("ten_khach_hang") or buyer or "KH"
+
+    # Chuẩn hóa tên khách hàng an toàn cho tên file
+    c_safe = unicodedata.normalize('NFD', c_name)
+    c_safe = re.sub(r'[\u0300-\u036f]', '', c_safe)
+    c_safe = re.sub(r'[đĐ]', 'd', c_safe)
+    c_safe = re.sub(r'[^a-zA-Z0-9._\-]', '_', c_safe).upper()
+    c_safe = re.sub(r'_+', '_', c_safe).strip('_')
+
+    ts = int(time.time() * 1000)
+    file_path = f"{exact_order_no}/HOADON_{c_safe}_{ts}.pdf"
+
+    # 3. Tải file lên Supabase Storage bucket 'yeucauxhd-files'
+    upload_url = f"{SUPABASE_URL}/storage/v1/object/yeucauxhd-files/{file_path}"
+    up_headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/pdf",
+        "x-upsert": "true"
+    }
+    r_up = requests.post(upload_url, headers=up_headers, data=pdf_bytes, timeout=15)
+    if r_up.status_code not in (200, 201):
+        return {"success": False, "status": "STORAGE_ERROR", "message": f"Lỗi tải file lên Supabase Storage: HTTP {r_up.status_code}"}
+
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/yeucauxhd-files/{file_path}"
+
+    # 4. Cập nhật database: yeucauxhd & donhang
+    patch_hd = {"url_hoa_don_da_xuat": public_url, "ket_qua_gui_mail": "Đang gửi mail..."}
+    requests.patch(f"{SUPABASE_URL}/rest/v1/yeucauxhd?so_don_hang=eq.{exact_order_no}", headers=headers, json=patch_hd, timeout=10)
+
+    patch_dh = {"ket_qua": "Đã xuất hóa đơn", "link_hoa_don_da_xuat": public_url}
+    requests.patch(f"{SUPABASE_URL}/rest/v1/donhang?so_don_hang=eq.{exact_order_no}", headers=headers, json=patch_dh, timeout=10)
+
+    if vin:
+        requests.patch(f"{SUPABASE_URL}/rest/v1/car_hold_activities?vin=eq.{vin}&status=eq.matched", headers=headers, json={"status": "invoiced"}, timeout=10)
+
+    # 5. Gửi email qua Edge Function 'send-email'
+    mail_status = "Đã gửi mail"
+    try:
+        ef_url = f"{SUPABASE_URL}/functions/v1/send-email"
+        mail_payload = {
+            "actionId": "invoice_issued",
+            "record": {
+                **order,
+                "link_hoa_don_da_xuat": public_url,
+                "invoice_ext": "pdf"
+            }
+        }
+        r_mail = requests.post(ef_url, headers=headers, json=mail_payload, timeout=15)
+        if r_mail.status_code not in (200, 201):
+            mail_status = f"Lỗi gửi mail: HTTP {r_mail.status_code}"
+    except Exception as em:
+        mail_status = f"Lỗi gửi mail: {str(em)}"
+
+    requests.patch(f"{SUPABASE_URL}/rest/v1/yeucauxhd?so_don_hang=eq.{exact_order_no}", headers=headers, json={"ket_qua_gui_mail": mail_status}, timeout=10)
+
+    return {
+        "success": True,
+        "status": "COMPLETED",
+        "message": f"Đã xuất HĐ số {so_hd} ({serial}), lưu file vào Supabase và {mail_status.lower()} thành công!",
+        "data": {
+            "orderNumber": exact_order_no,
+            "invoiceNumber": so_hd,
+            "serial": serial,
+            "buyer": buyer,
+            "url": public_url,
+            "mailStatus": mail_status
+        }
+    }
 
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == "--vin":
@@ -263,6 +404,11 @@ def main():
         for v in vins:
             results.append(process_single_vin(v, only_signed=payload.get("only_signed", True)))
         print(json.dumps({"success": True, "results": results}, ensure_ascii=False))
+    elif action == "sync_and_notify":
+        vin = payload.get("vin", "")
+        order_number = payload.get("orderNumber") or payload.get("order_number")
+        res = auto_fetch_upload_and_notify(vin, order_number=order_number)
+        print(json.dumps(res, ensure_ascii=False))
     else:
         vin = payload.get("vin", "")
         only_signed = payload.get("only_signed", True)

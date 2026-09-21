@@ -364,6 +364,20 @@ function cyberSyncPlugin(): Plugin {
         }
       });
 
+      server.middlewares.use('/api/minvoice/sync-and-notify', (req, res, next) => {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          try {
+            const parsed = JSON.parse(body || '{}');
+            parsed.action = 'sync_and_notify';
+            runPy([minvoiceScript], JSON.stringify(parsed), res);
+          } catch (e) {
+            runPy([minvoiceScript], body, res);
+          }
+        });
+      });
+
       server.middlewares.use('/api/minvoice/batch-fetch', (req, res, next) => {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });

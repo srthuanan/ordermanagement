@@ -15,7 +15,7 @@ import {
     CyberXepXeContract,
     isOrderAssignedOnCyber
 } from '../../services/api/stockService';
-import { fetchMInvoiceByVin, base64ToFile } from '../../services/api/mInvoiceService';
+import { fetchMInvoiceByVin, base64ToFile, syncAndNotifyMInvoice } from '../../services/api/mInvoiceService';
 
 interface InvoiceInboxViewProps {
     orders: Order[];
@@ -308,7 +308,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         showToast('Đang tra cứu M-Invoice', `Đang kiểm tra hóa đơn cho số VIN: ${vin}...`, 'info');
 
         try {
-            const res = await fetchMInvoiceByVin(vin, true);
+            const orderNo = (selectedOrder['Số đơn hàng'] || selectedOrder.so_don_hang || '').trim();
+            const res = await syncAndNotifyMInvoice(vin, orderNo);
+
             if (!res.success) {
                 if (res.status === 'UNSIGNED') {
                     showToast('Hóa đơn chưa ký', res.message, 'warning', 6000);
@@ -320,16 +322,8 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                 return;
             }
 
-            const invoiceData = res.data;
-            if (!invoiceData?.base64Pdf) {
-                showToast('Lỗi dữ liệu', 'Không nhận được nội dung file PDF từ M-Invoice.', 'error');
-                return;
-            }
-
-            showToast('Đang xuất hóa đơn', `Tìm thấy HĐ số ${invoiceData.invoiceNumber} (${invoiceData.serial}) ĐÃ KÝ! Đang tự động đính kèm vào đơn hàng...`, 'info');
-
-            const file = base64ToFile(invoiceData.base64Pdf, invoiceData.fileName, 'application/pdf');
-            onAction('uploadInvoice', selectedOrder, { file });
+            showToast('Thành công', res.message || 'Đã lấy HĐ, lưu Supabase và gửi email thành công!', 'success', 6000);
+            onAction('reload', selectedOrder);
         } catch (err: any) {
             showToast('Lỗi', err.message || 'Không thể lấy hóa đơn M-Invoice.', 'error');
         } finally {
@@ -358,14 +352,14 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         for (let i = 0; i < pendingOrders.length; i++) {
             const order = pendingOrders[i];
             const vin = (order.VIN || order.vin || order['SỐ VIN'] || order['Số VIN'] || '').trim().toUpperCase();
+            const orderNo = (order['Số đơn hàng'] || order.so_don_hang || '').trim();
             if (!vin) continue;
 
             try {
-                const res = await fetchMInvoiceByVin(vin, true);
-                if (res.success && res.data?.base64Pdf) {
+                const res = await syncAndNotifyMInvoice(vin, orderNo);
+                if (res.success) {
                     signedCount++;
-                    const file = base64ToFile(res.data.base64Pdf, res.data.fileName, 'application/pdf');
-                    onAction('uploadInvoice', order, { file });
+                    onAction('reload', order);
                     await new Promise(r => setTimeout(r, 600));
                 } else if (res.status === 'UNSIGNED') {
                     unsignedCount++;

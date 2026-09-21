@@ -75,7 +75,7 @@ from scripts.sync_thuan_an_allocations import (
     sync_cyber_ton_kho_to_supabase,
     sync_cyber_voucher_tickets_to_supabase
 )
-from scripts.m_invoice_service import process_single_vin
+from scripts.m_invoice_service import process_single_vin, auto_fetch_upload_and_notify
 
 PORT = int(os.environ.get("PORT", 8080))
 
@@ -891,6 +891,31 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self._send_cors_headers()
                 self.end_headers()
                 self.wfile.write(json.dumps({"success": False, "status": "ERROR", "message": f"Lỗi xử lý M-Invoice: {str(e)}"}).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/minvoice/sync-and-notify":
+            try:
+                content_len = int(self.headers.get("Content-Length", 0))
+                body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+                try:
+                    payload = json.loads(body_str) if body_str.strip() else {}
+                except Exception:
+                    payload = {}
+                vin = (payload.get("vin", "") or "").strip()
+                order_number = (payload.get("orderNumber", "") or payload.get("order_number", "") or "").strip()
+                res = auto_fetch_upload_and_notify(vin, order_number=order_number)
+                res_output = json.dumps(res, ensure_ascii=False)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(res_output.encode("utf-8"))
+            except Exception as e:
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "status": "ERROR", "message": f"Lỗi tự động xuất HĐ: {str(e)}"}).encode("utf-8"))
             return
 
         elif parsed.path == "/api/minvoice/batch-fetch":

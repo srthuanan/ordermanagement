@@ -102,6 +102,51 @@ export const fetchMInvoiceByVin = async (vin: string, onlySigned = true): Promis
     };
 };
 
+export const syncAndNotifyMInvoice = async (
+    vin: string,
+    orderNumber?: string
+): Promise<{ success: boolean; status?: string; message: string; data?: any }> => {
+    const cleanVin = (vin || '').trim().toUpperCase();
+    const cleanOrderNo = (orderNumber || '').trim();
+    if (!cleanVin && !cleanOrderNo) {
+        return { success: false, status: 'NO_VIN', message: 'Cần cung cấp số VIN hoặc số đơn hàng.' };
+    }
+
+    const endpoints = getEndpoints('/api/minvoice/sync-and-notify');
+    let lastErrorMsg = '';
+
+    for (const endpoint of endpoints) {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ vin: cleanVin, orderNumber: cleanOrderNo }),
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
+                const data = await res.json();
+                return data;
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                lastErrorMsg = errData.message || errData.error || `HTTP ${res.status}`;
+            }
+        } catch (err: any) {
+            lastErrorMsg = err.name === 'AbortError' ? 'Hết thời gian kết nối (Timeout)' : (err.message || 'Lỗi kết nối máy chủ');
+        }
+    }
+
+    return {
+        success: false,
+        status: 'SERVER_UNAVAILABLE',
+        message: `Không thể kết nối máy chủ xuất hóa đơn: ${lastErrorMsg}`
+    };
+};
+
 export const autoFetchAndUploadInvoice = async (
     order: any, 
     onProgress?: (msg: string) => void
@@ -109,10 +154,28 @@ export const autoFetchAndUploadInvoice = async (
     const vin = (order.VIN || order.vin || order['SỐ VIN'] || order['Số VIN'] || '').trim().toUpperCase();
     const orderNo = (order['Số đơn hàng'] || order.so_don_hang || '').trim();
 
-    if (!vin) {
-        return { success: false, message: `Đơn hàng ${orderNo} chưa có số VIN!` };
+    if (!vin && !orderNo) {
+        return { success: false, message: `Đơn hàng chưa có thông tin số đơn hàng hoặc số VIN!` };
     }
 
+    onProgress?.(`Đang tự động lấy hóa đơn M-Invoice, lưu Supabase và gửi email...`);
+    
+    // Ưu tiên 1: Gọi server Python (Render / Local) thực hiện trọn gói end-to-end
+    const syncRes = await syncAndNotifyMInvoice(vin, orderNo);
+    if (syncRes.success) {
+        return {
+            success: true,
+            message: syncRes.message,
+            invoiceNumber: syncRes.data?.invoiceNumber
+        };
+    }
+
+    // Nếu M-Invoice phản hồi trạng thái nghiệp vụ (chưa ký, không tìm thấy...), trả về ngay
+    if (syncRes.status && syncRes.status !== 'SERVER_UNAVAILABLE') {
+        return { success: false, message: syncRes.message };
+    }
+
+    // Ưu tiên 2 (Dự phòng): Quy trình client tải file và upload thông thường
     onProgress?.(`Đang tra cứu số VIN ${vin} trên M-Invoice...`);
     const res = await fetchMInvoiceByVin(vin, true);
 
