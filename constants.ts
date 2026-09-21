@@ -158,3 +158,5 @@ export const getAvailableInteriors = (model?: string, version?: string): string[
 
     return defaultInteriors;
 };
+
+export * from './constants/cyberWarehouses';

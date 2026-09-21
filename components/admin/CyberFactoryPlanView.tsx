@@ -27,6 +27,7 @@ import { CyberDnxPrintModal, CyberDnxPrintData } from './CyberDnxPrintModal';
 import { CyberTd4PrintModal } from './CyberTd4PrintModal';
 import { getTransferRequests, updateTransferRequestStatus, TransferRequestItem } from '../../services/api/transferService';
 import { supabase } from '../../services/supabaseClient';
+import { CYBER_POPULAR_WAREHOUSES, CYBER_OTHER_WAREHOUSES, CYBER_ALL_WAREHOUSES } from '../../constants/cyberWarehouses';
 
 interface CyberPlanCarItem {
     vin: string;
@@ -3756,22 +3757,19 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                 lookupResultInfo?.found ? 'border-emerald-500 bg-emerald-50/20' : 'border-slate-300'
                                             }`}
                                         >
-                                            {dnxMaKhoXuat && !['K87', 'K86', 'K83', 'K85', 'KHCM.PVD', 'K106', 'K103', 'K58', 'K65', 'K36', 'K17', 'KTN.NM', 'KTN.TT'].includes(dnxMaKhoXuat) && (
+                                            {dnxMaKhoXuat && !CYBER_ALL_WAREHOUSES.some(w => w.id === dnxMaKhoXuat) && (
                                                 <option value={dnxMaKhoXuat}>{dnxMaKhoXuat} - {detectedWarehouseName || dnxMaKhoXuat}</option>
                                             )}
-                                            <option value="K87">K87 - QL13 (HCM)</option>
-                                            <option value="K86">K86 - Q12 (HCM)</option>
-                                            <option value="K83">K83 - Thuận An</option>
-                                            <option value="K85">K85 - Dĩ An</option>
-                                            <option value="KHCM.PVD">KHCM.PVD - Phạm Văn Đồng</option>
-                                            <option value="K106">K106 - Hà Huy Giáp</option>
-                                            <option value="K103">K103 - Lĩnh Nam</option>
-                                            <option value="K58">K58 - Lê Văn Việt</option>
-                                            <option value="K65">K65 - Vũng Tàu</option>
-                                            <option value="K36">K36 - Hải Phòng</option>
-                                            <option value="K17">K17 - Cam Giá</option>
-                                            <option value="KTN.NM">KTN.NM - NM Thái Nguyên</option>
-                                            <option value="KTN.TT">KTN.TT - Tân Thịnh (TN)</option>
+                                            <optgroup label="⭐ Kho Xe & Điểm Kinh Doanh (Thường Dùng)">
+                                                {CYBER_POPULAR_WAREHOUSES.map((w) => (
+                                                    <option key={`xuat-${w.id}`} value={w.id}>{w.name}</option>
+                                                ))}
+                                            </optgroup>
+                                            <optgroup label="📦 Toàn Bộ Kho Khác Trên CyberSoft">
+                                                {CYBER_OTHER_WAREHOUSES.map((w) => (
+                                                    <option key={`xuat-${w.id}`} value={w.id}>{w.name}</option>
+                                                ))}
+                                            </optgroup>
                                         </select>
                                     </div>
 
@@ -3784,25 +3782,27 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                             onChange={(e) => {
                                                 const val = e.target.value;
                                                 setDnxMaKhoNhan(val);
-                                                if (['K85', 'K65', 'K103', 'K58', 'K36', 'K17', 'KTN.NM', 'KTN.TT'].includes(val)) {
-                                                    setDnxMaGd('9');
-                                                } else if (['K83', 'K87', 'K86', 'K106', 'KHCM.PVD'].includes(val)) {
+                                                if (['K83', 'K87', 'K86', 'K106', 'KHCM.PVD'].includes(val)) {
                                                     setDnxMaGd('4');
+                                                } else {
+                                                    setDnxMaGd('9');
                                                 }
                                             }}
                                             className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-blue-500 bg-white text-slate-800 cursor-pointer h-7"
                                         >
-                                            <option value="K83">K83 - Thuận An (Mặc định)</option>
-                                            <option value="K87">K87 - QL13 (HCM)</option>
-                                            <option value="K86">K86 - Q12 (HCM)</option>
-                                            <option value="K85">K85 - Dĩ An</option>
-                                            <option value="KHCM.PVD">KHCM.PVD - Phạm Văn Đồng</option>
-                                            <option value="K106">K106 - Hà Huy Giáp</option>
-                                            <option value="K103">K103 - Lĩnh Nam</option>
-                                            <option value="K58">K58 - Lê Văn Việt</option>
-                                            <option value="K65">K65 - Vũng Tàu</option>
-                                            <option value="K17">K17 - Cam Giá</option>
-                                            <option value="KTN.TT">KTN.TT - Tân Thịnh (TN)</option>
+                                            {dnxMaKhoNhan && !CYBER_ALL_WAREHOUSES.some(w => w.id === dnxMaKhoNhan) && (
+                                                <option value={dnxMaKhoNhan}>{dnxMaKhoNhan} - {dnxMaKhoNhan}</option>
+                                            )}
+                                            <optgroup label="⭐ Kho Xe & Điểm Kinh Doanh (Thường Dùng)">
+                                                {CYBER_POPULAR_WAREHOUSES.map((w) => (
+                                                    <option key={`nhan-${w.id}`} value={w.id}>{w.name}</option>
+                                                ))}
+                                            </optgroup>
+                                            <optgroup label="📦 Toàn Bộ Kho Khác Trên CyberSoft">
+                                                {CYBER_OTHER_WAREHOUSES.map((w) => (
+                                                    <option key={`nhan-${w.id}`} value={w.id}>{w.name}</option>
+                                                ))}
+                                            </optgroup>
                                         </select>
                                     </div>
                                 </div>

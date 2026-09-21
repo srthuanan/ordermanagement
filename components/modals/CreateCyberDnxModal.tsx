@@ -9,16 +9,7 @@ interface CreateCyberDnxModalProps {
     onSuccess?: (result: CyberDnxCreateResult) => void;
 }
 
-const CYBER_WAREHOUSES = [
-    { id: 'K83', name: 'K83 - Kho xe ô tô Thuận An (Bình Dương)' },
-    { id: 'K87', name: 'K87 - Kho xe ô tô QL13 - HCM' },
-    { id: 'K86', name: 'K86 - Kho xe ô tô VinFast Q12 - HCM' },
-    { id: 'K106', name: 'K106 - Kho xe ô tô Hà Huy Giáp' },
-    { id: 'K103', name: 'K103 - Kho xe ô tô Lĩnh Nam' },
-    { id: 'K17', name: 'K17 - Kho xe SR Cam Giá' },
-    { id: 'KTN.NM', name: 'KTN.NM - Kho xe Nhà máy SXLR - Thái Nguyên' },
-    { id: 'KTN.TT', name: 'KTN.TT - Kho xe Tân Thịnh - Thái Nguyên' }
-];
+import { CYBER_POPULAR_WAREHOUSES, CYBER_OTHER_WAREHOUSES } from '../../constants/cyberWarehouses';
 
 export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
     isOpen,
@@ -275,9 +266,16 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                                         onChange={(e) => setMaKhoXuat(e.target.value)}
                                         className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
                                     >
-                                        {CYBER_WAREHOUSES.map(w => (
-                                            <option key={w.id} value={w.id}>{w.name}</option>
-                                        ))}
+                                        <optgroup label="⭐ Kho Xe & Điểm Kinh Doanh (Thường Dùng)">
+                                            {CYBER_POPULAR_WAREHOUSES.map(w => (
+                                                <option key={`xuat-${w.id}`} value={w.id}>{w.name}</option>
+                                            ))}
+                                        </optgroup>
+                                        <optgroup label="📦 Toàn Bộ Kho Khác Trên CyberSoft">
+                                            {CYBER_OTHER_WAREHOUSES.map(w => (
+                                                <option key={`xuat-${w.id}`} value={w.id}>{w.name}</option>
+                                            ))}
+                                        </optgroup>
                                     </select>
                                 </div>
 
@@ -290,17 +288,24 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                                         onChange={(e) => {
                                             const val = e.target.value;
                                             setMaKhoNhan(val);
-                                            if (['K85', 'K65', 'K103', 'K58', 'K36', 'K17', 'KTN.NM', 'KTN.TT'].includes(val)) {
-                                                setMaGd('9');
-                                            } else if (['K83', 'K87', 'K86', 'K106', 'KHCM.PVD'].includes(val)) {
+                                            if (['K83', 'K87', 'K86', 'K106', 'KHCM.PVD'].includes(val)) {
                                                 setMaGd('4');
+                                            } else {
+                                                setMaGd('9');
                                             }
                                         }}
                                         className="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-emerald-500"
                                     >
-                                        {CYBER_WAREHOUSES.map(w => (
-                                            <option key={w.id} value={w.id}>{w.name}</option>
-                                        ))}
+                                        <optgroup label="⭐ Kho Xe & Điểm Kinh Doanh (Thường Dùng)">
+                                            {CYBER_POPULAR_WAREHOUSES.map(w => (
+                                                <option key={`nhan-${w.id}`} value={w.id}>{w.name}</option>
+                                            ))}
+                                        </optgroup>
+                                        <optgroup label="📦 Toàn Bộ Kho Khác Trên CyberSoft">
+                                            {CYBER_OTHER_WAREHOUSES.map(w => (
+                                                <option key={`nhan-${w.id}`} value={w.id}>{w.name}</option>
+                                            ))}
+                                        </optgroup>
                                     </select>
                                 </div>
                             </div>
