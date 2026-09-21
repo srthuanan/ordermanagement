@@ -51,7 +51,6 @@ const formatDisplayDate = (dStr?: string) => {
 
 // Hàm xuất HTML chuẩn in ấn A4
 const generateDnxHtml = (data: CyberDnxPrintData, showSignatures: boolean): string => {
-    const formattedDate = formatDisplayDate(data.ngay_ct);
     const dateObj = data.ngay_ct ? new Date(data.ngay_ct) : new Date();
     const day = String(dateObj.getDate()).padStart(2, '0');
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -366,7 +365,7 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
     
     // PDF kết xuất trực tiếp từ CyberSoft ERP Engine
     const [cyberPdfUrl, setCyberPdfUrl] = useState<string | null>(null);
-    const [cyberPdfError, setCyberPdfError] = useState<string | null>(null);
+    const [_cyberPdfError, setCyberPdfError] = useState<string | null>(null);
     const [isCyberLoading, setIsCyberLoading] = useState(false);
     const [retryCount, setRetryCount] = useState(0);
     const [activeView, setActiveView] = useState<'pdf' | 'html'>('html');

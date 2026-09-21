@@ -19,7 +19,6 @@ const formatDisplayDate = (dStr?: string) => {
 
 // Hàm xuất HTML chuẩn in ấn A4 cho Giấy Ra Cổng TD4
 const generateTd4Html = (data: CyberVoucherTicketItem): string => {
-    const formattedDate = formatDisplayDate(data.ngay_ct);
     const dateObj = data.ngay_ct ? new Date(data.ngay_ct) : new Date();
     const day = String(dateObj.getDate()).padStart(2, '0');
     const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -306,7 +305,7 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
     const pdfIframeRef = useRef<HTMLIFrameElement>(null);
     const [isExportingPdf, setIsExportingPdf] = useState(false);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-    const [pdfError, setPdfError] = useState<string | null>(null);
+    const [_pdfError, setPdfError] = useState<string | null>(null);
     const [retryCount, setRetryCount] = useState(0);
     const [activeView, setActiveView] = useState<'pdf' | 'html'>('html');
     const paperSize = 'A4';
