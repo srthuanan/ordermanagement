@@ -3382,6 +3382,66 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
 
     return tickets
 
+def upload_pdf_to_supabase_storage(file_bytes, remote_filename):
+    """Tải file PDF lên Supabase Storage bucket yeucauxhd-files/cyber_pdfs/"""
+    import requests
+    supabase_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co").strip().rstrip('/')
+    supabase_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU").strip()
+    bucket = "yeucauxhd-files"
+    url = f"{supabase_url}/storage/v1/object/{bucket}/cyber_pdfs/{remote_filename}"
+    headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+        "Content-Type": "application/pdf",
+        "x-upsert": "true"
+    }
+    try:
+        res = requests.post(url, headers=headers, data=file_bytes, timeout=15)
+        if res.status_code in [200, 201]:
+            public_url = f"{supabase_url}/storage/v1/object/public/{bucket}/cyber_pdfs/{remote_filename}"
+            return public_url
+        else:
+            print(f"[Supabase Storage Error]: {res.status_code} - {res.text}", file=sys.stderr)
+            return None
+    except Exception as e:
+        print(f"[Supabase Storage Upload Exception]: {str(e)}", file=sys.stderr)
+        return None
+
+
+def cleanup_old_cyber_pdfs_from_supabase(max_days=30):
+    """Tự động dọn dẹp xóa các file PDF quá max_days ngày trên Supabase Storage để tiết kiệm dung lượng"""
+    import requests
+    from datetime import datetime, timezone, timedelta
+    supabase_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co").strip().rstrip('/')
+    supabase_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU").strip()
+    bucket = "yeucauxhd-files"
+    list_url = f"{supabase_url}/storage/v1/object/list/{bucket}"
+    headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+        "Content-Type": "application/json"
+    }
+    try:
+        res = requests.post(list_url, headers=headers, json={"prefix": "cyber_pdfs/", "limit": 500}, timeout=15)
+        if res.status_code != 200:
+            return {"success": False, "error": res.text}
+        files = res.json()
+        now = datetime.now(timezone.utc)
+        cutoff = now - timedelta(days=max_days)
+        deleted_count = 0
+        for f in files:
+            created_at_str = f.get("created_at") or f.get("updated_at")
+            if created_at_str:
+                dt = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                if dt < cutoff:
+                    del_url = f"{supabase_url}/storage/v1/object/{bucket}/cyber_pdfs/{f['name']}"
+                    requests.delete(del_url, headers=headers, timeout=10)
+                    deleted_count += 1
+        return {"success": True, "deleted_count": deleted_count}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+
 def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT", include_signatures="true"):
     import subprocess
     import os
@@ -3415,16 +3475,21 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=35)
         if os.path.exists(out_file) and os.path.getsize(out_file) > 1000:
             with open(out_file, "rb") as f:
-                b64 = base64.b64encode(f.read()).decode("utf-8")
+                pdf_bytes = f.read()
+            b64 = base64.b64encode(pdf_bytes).decode("utf-8")
             
-            # Xóa file tạm ngay sau khi nạp vào bộ nhớ để giải phóng hoàn toàn dung lượng ổ cứng
+            # Xóa file tạm ngay lập tức để giải phóng hoàn toàn dung lượng ổ cứng máy tính
             try:
                 os.remove(out_file)
             except Exception:
                 pass
 
+            # Tự động đẩy file lên Supabase Storage (đám mây) để xem được từ GitHub Pages & Mobile
+            storage_url = upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_stt}.pdf")
+
             return {
                 "success": True,
+                "pdf_url": storage_url or f"/api/cyber/view-pdf?stt_rec={clean_stt}",
                 "pdf_base64": f"data:application/pdf;base64,{b64}",
                 "size": len(b64),
                 "stt_rec": stt_rec,

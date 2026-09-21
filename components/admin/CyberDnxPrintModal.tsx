@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { exportCyberPdf } from '../../services/api/stockService';
+import { exportCyberPdf, getCyberStoragePdfUrl } from '../../services/api/stockService';
 
 export interface CyberDnxPrintData {
     so_ct: string;
@@ -65,12 +65,26 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
         setCyberPdfUrl(null);
         setCyberPdfError(null);
 
+        const sigSuffix = showSignatures ? '_sig' : '_nosig';
+        const cleanStt = data.stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_') + sigSuffix;
+        const storagePdfUrl = getCyberStoragePdfUrl(cleanStt);
+
         let isMounted = true;
         const loadOfficialPdf = async () => {
             setIsCyberLoading(true);
             setCyberPdfError(null);
 
-            // Xuất trực tiếp từ CyberSoft ERP Engine (trả về Base64 hiển thị ngay, không lưu file)
+            // Bước 1: Kiểm tra xem file đã có sẵn trên Supabase Storage Cloud chưa
+            try {
+                const checkRes = await fetch(storagePdfUrl, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
+                if (checkRes.ok && isMounted) {
+                    setCyberPdfUrl(`${storagePdfUrl}?t=${Date.now()}`);
+                    setIsCyberLoading(false);
+                    return;
+                }
+            } catch (_) {}
+
+            // Bước 2: Nếu chưa có trên Cloud, gọi exportCyberPdf (từ máy nội bộ xuất và tự động upload lên Supabase Storage)
             try {
                 const res = await exportCyberPdf({
                     stt_rec: data.stt_rec!,
@@ -82,14 +96,24 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
 
                 if (!isMounted) return;
 
-                if (res.success && (res.pdf_base64 || res.pdf_url)) {
-                    setCyberPdfUrl(res.pdf_base64 || `${res.pdf_url}&t=${Date.now()}`);
+                if (res.success && (res.pdf_url || res.pdf_base64)) {
+                    setCyberPdfUrl(res.pdf_url || res.pdf_base64 || null);
                 } else {
-                    setCyberPdfError(res.error || 'Chưa tìm thấy file PDF CyberSoft gốc của phiếu này trên máy chủ.');
+                    const isCloud = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
+                    if (isCloud) {
+                        setCyberPdfError('Phiếu này chưa được lưu trên hệ thống đám mây. Vui lòng mở xem phiếu trên máy tính văn phòng một lần để lưu tự động lên hệ thống.');
+                    } else {
+                        setCyberPdfError(res.error || 'Chưa tìm thấy file PDF CyberSoft gốc của phiếu này trên máy chủ.');
+                    }
                 }
             } catch (err: any) {
                 if (isMounted) {
-                    setCyberPdfError(err.message || 'Lỗi kết nối khi trích xuất file PDF CyberSoft.');
+                    const isCloud = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
+                    if (isCloud) {
+                        setCyberPdfError('Phiếu này chưa được lưu trên hệ thống đám mây. Vui lòng mở xem phiếu trên máy tính văn phòng một lần để lưu tự động lên hệ thống.');
+                    } else {
+                        setCyberPdfError(err.message || 'Lỗi kết nối khi trích xuất file PDF CyberSoft.');
+                    }
                 }
             } finally {
                 if (isMounted) {

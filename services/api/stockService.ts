@@ -1954,6 +1954,11 @@ export const exportCyberPdf = async (params: ExportCyberPdfParams): Promise<Expo
     }
 };
 
+export const getCyberStoragePdfUrl = (cleanStt: string): string => {
+    const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://jwvgxqrkjlbewvpkvucj.supabase.co';
+    return `${supabaseUrl.replace(/\/+$/, '')}/storage/v1/object/public/yeucauxhd-files/cyber_pdfs/${cleanStt}.pdf`;
+};
+
 export const getCyberViewPdfUrl = (cleanStt: string): string => {
     const isLocal = typeof window !== 'undefined' && (
         window.location.hostname === 'localhost' || 

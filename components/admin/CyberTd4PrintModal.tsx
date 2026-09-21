@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { CyberVoucherTicketItem, exportCyberPdf } from '../../services/api/stockService';
+import { CyberVoucherTicketItem, exportCyberPdf, getCyberStoragePdfUrl } from '../../services/api/stockService';
 
 interface CyberTd4PrintModalProps {
     isOpen: boolean;
@@ -32,11 +32,25 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
         setPdfUrl(null);
         setPdfError(null);
 
+        const cleanStt = data.stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_') + '_sig';
+        const storagePdfUrl = getCyberStoragePdfUrl(cleanStt);
+
         let isMounted = true;
         const loadOfficialPdf = async () => {
             setIsExportingPdf(true);
             setPdfError(null);
 
+            // Bước 1: Kiểm tra xem file đã có sẵn trên Supabase Storage Cloud chưa
+            try {
+                const checkRes = await fetch(storagePdfUrl, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
+                if (checkRes.ok && isMounted) {
+                    setPdfUrl(`${storagePdfUrl}?t=${Date.now()}`);
+                    setIsExportingPdf(false);
+                    return;
+                }
+            } catch (_) {}
+
+            // Bước 2: Nếu chưa có trên Cloud, gọi exportCyberPdf (từ máy nội bộ xuất và tự động upload lên Supabase Storage)
             try {
                 const res = await exportCyberPdf({
                     stt_rec: data.stt_rec,
@@ -47,14 +61,24 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
 
                 if (!isMounted) return;
 
-                if (res.success && (res.pdf_base64 || res.pdf_url)) {
-                    setPdfUrl(res.pdf_base64 || `${res.pdf_url}&t=${Date.now()}`);
+                if (res.success && (res.pdf_url || res.pdf_base64)) {
+                    setPdfUrl(res.pdf_url || res.pdf_base64 || null);
                 } else {
-                    setPdfError(res.error || 'Chưa tìm thấy file PDF Giấy Ra Cổng gốc của phiếu này trên máy chủ.');
+                    const isCloud = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
+                    if (isCloud) {
+                        setPdfError('Phiếu này chưa được lưu trên hệ thống đám mây. Vui lòng mở xem phiếu trên máy tính văn phòng một lần để lưu tự động lên hệ thống.');
+                    } else {
+                        setPdfError(res.error || 'Chưa tìm thấy file PDF Giấy Ra Cổng gốc của phiếu này trên máy chủ.');
+                    }
                 }
             } catch (err: any) {
                 if (isMounted) {
-                    setPdfError(err.message || 'Lỗi kết nối khi trích xuất PDF từ máy chủ.');
+                    const isCloud = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
+                    if (isCloud) {
+                        setPdfError('Phiếu này chưa được lưu trên hệ thống đám mây. Vui lòng mở xem phiếu trên máy tính văn phòng một lần để lưu tự động lên hệ thống.');
+                    } else {
+                        setPdfError(err.message || 'Lỗi kết nối khi trích xuất PDF từ máy chủ.');
+                    }
                 }
             } finally {
                 if (isMounted) {
