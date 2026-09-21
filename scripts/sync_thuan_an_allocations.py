@@ -2429,7 +2429,8 @@ def sync_cyber_car_status_to_supabase(target_vins: list = None) -> dict:
 def sync_cyber_xep_xe_to_supabase(contracts: list = None, params: dict = {}) -> dict:
     """Đồng bộ toàn bộ danh sách hợp đồng xếp xe từ CyberSoft sang bảng cyber_xep_xe trên Supabase."""
     if contracts is None:
-        p = {"all": "1", "thang1": 0, "nam1": 0, "thang2": 0, "nam2": 0}
+        curr_year = datetime.now().year
+        p = {"all": "1", "thang1": 1, "nam1": curr_year, "thang2": 12, "nam2": curr_year}
         p.update(params)
         raw_res = get_cyber_xep_xe_contracts(p)
         contracts = raw_res.get("contracts") or []

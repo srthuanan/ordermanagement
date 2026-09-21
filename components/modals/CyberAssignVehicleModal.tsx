@@ -114,19 +114,19 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
 
             // Mặc định trong tab Hóa đơn: các hợp đồng cần ghép xe đều là CHƯA XẾP XE trên CyberSoft
             // (Trạng thái 'Chờ duyệt', 'Chờ ghép SK' hoặc chưa có số khung)
-            const unassignedContracts = contractsList.filter(c => {
+            let unassignedContracts = contractsList.filter(c => {
                 const s = (c.ten_color || '').trim().toLowerCase();
                 return !c.so_khung || s === 'chờ duyệt' || s === 'chờ ghép sk' || s === 'đã ghép sk';
             });
 
             setAllCyberContracts(unassignedContracts);
 
-                const custNameClean = removeVietnameseTones(targetOrder['Tên khách hàng'] || '');
-                const orderNoClean = (targetOrder['Số đơn hàng'] || '').toLowerCase().trim();
-                const existingVin = (targetOrder.VIN || '').toLowerCase().trim();
+            const custNameClean = removeVietnameseTones(targetOrder['Tên khách hàng'] || '');
+            const orderNoClean = (targetOrder['Số đơn hàng'] || '').toLowerCase().trim();
+            const existingVin = (targetOrder.VIN || '').toLowerCase().trim();
 
-                // Lọc hợp đồng khớp theo tên khách hàng, số đơn hàng hoặc số VIN
-                const matched = unassignedContracts.filter(c => {
+            const findMatched = (list: CyberXepXeContract[]) => {
+                return list.filter(c => {
                     const cCust = removeVietnameseTones(c.ten_kh || '');
                     const cMaHd = (c.ma_hd || '').toLowerCase();
                     const cSoCt = (c.so_ct || '').toLowerCase();
@@ -138,22 +138,87 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
 
                     return false;
                 });
+            };
 
-                if (matched.length === 1) {
-                    // Tự động chọn nếu chỉ có duy nhất 1 hợp đồng khớp
-                    setActiveContract(matched[0]);
-                    loadCandidates(matched[0]);
-                } else if (matched.length > 1) {
-                    // Nếu có nhiều hợp đồng, tự động ưu tiên HĐ chưa có số khung
-                    const pendingMatch = matched.find(m => !m.so_khung) || matched[0];
-                    setActiveContract(pendingMatch);
-                    loadCandidates(pendingMatch);
-                } else {
-                    // Không tìm thấy tự động, để người dùng tự chọn/tìm kiếm
-                    setActiveContract(null);
+            let matched = findMatched(unassignedContracts);
+
+            // Nếu không tìm thấy trong initialContracts (ví dụ cache cũ), tự động kéo dữ liệu mới nhất
+            if (matched.length === 0 && initialContracts && initialContracts.length > 0) {
+                const now = new Date();
+                const currY = now.getFullYear();
+                const freshRes = await getCyberXepXeContracts({
+                    thang1: 1,
+                    nam1: currY,
+                    thang2: 12,
+                    nam2: currY,
+                    ma_dvcs: '02',
+                    showroom: 'Ô tô Vinfast Thuận An',
+                    force: true
+                });
+                if (freshRes?.success && freshRes.contracts) {
+                    contractsList = freshRes.contracts;
+                    unassignedContracts = contractsList.filter(c => {
+                        const s = (c.ten_color || '').trim().toLowerCase();
+                        return !c.so_khung || s === 'chờ duyệt' || s === 'chờ ghép sk' || s === 'đã ghép sk';
+                    });
+                    setAllCyberContracts(unassignedContracts);
+                    matched = findMatched(unassignedContracts);
                 }
+            }
+
+            if (matched.length === 1) {
+                // Tự động chọn nếu chỉ có duy nhất 1 hợp đồng khớp
+                setActiveContract(matched[0]);
+                loadCandidates(matched[0]);
+            } else if (matched.length > 1) {
+                // Nếu có nhiều hợp đồng, tự động ưu tiên HĐ chưa có số khung
+                const pendingMatch = matched.find(m => !m.so_khung) || matched[0];
+                setActiveContract(pendingMatch);
+                loadCandidates(pendingMatch);
+            } else {
+                // Không tìm thấy tự động, để người dùng tự chọn/tìm kiếm
+                setActiveContract(null);
+            }
         } catch (err: any) {
             showToast('Tra cứu CyberSoft', err.message || 'Lỗi khi tìm kiếm hợp đồng', 'warning');
+        } finally {
+            setIsLoadingContracts(false);
+        }
+    };
+
+    // Tải lại hợp đồng từ CyberSoft / Supabase mới nhất
+    const handleReloadContracts = async (showToastNotify = true) => {
+        setIsLoadingContracts(true);
+        try {
+            sessionStorage.removeItem('cyber_xep_xe_contracts_cache');
+            const now = new Date();
+            const currY = now.getFullYear();
+            const res = await getCyberXepXeContracts({
+                thang1: 1,
+                nam1: currY,
+                thang2: 12,
+                nam2: currY,
+                ma_dvcs: '02',
+                showroom: 'Ô tô Vinfast Thuận An',
+                force: true
+            });
+
+            if (res && res.success && res.contracts) {
+                const unassigned = res.contracts.filter(c => {
+                    const s = (c.ten_color || '').trim().toLowerCase();
+                    return !c.so_khung || s === 'chờ duyệt' || s === 'chờ ghép sk' || s === 'đã ghép sk';
+                });
+                setAllCyberContracts(unassigned);
+                if (showToastNotify) {
+                    showToast('Đã tải lại', `Đã cập nhật ${unassigned.length} hợp đồng chờ ghép từ CyberSoft`, 'success');
+                }
+            } else {
+                throw new Error(res?.error || 'Không nhận được dữ liệu hợp đồng');
+            }
+        } catch (err: any) {
+            if (showToastNotify) {
+                showToast('Lỗi tải lại', err.message || 'Không thể tải lại hợp đồng', 'error');
+            }
         } finally {
             setIsLoadingContracts(false);
         }
@@ -398,9 +463,21 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                                 <i className="fas fa-clock text-amber-500"></i>
                                 <span>Hợp đồng chưa xếp xe trên CyberSoft (Thuận An):</span>
                             </span>
-                            <span className="text-[11px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
-                                {allCyberContracts.length} hợp đồng chờ ghép
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => handleReloadContracts(true)}
+                                    disabled={isLoadingContracts}
+                                    className="text-[11px] text-indigo-600 hover:text-indigo-800 flex items-center gap-1 font-semibold hover:underline cursor-pointer disabled:opacity-50"
+                                    title="Tải lại danh sách hợp đồng mới nhất từ CyberSoft"
+                                >
+                                    <i className={`fas fa-sync-alt ${isLoadingContracts ? 'fa-spin' : ''} text-[10px]`}></i>
+                                    <span>Làm mới</span>
+                                </button>
+                                <span className="text-[11px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
+                                    {allCyberContracts.length} hợp đồng chờ ghép
+                                </span>
+                            </div>
                         </div>
                         <div className="relative">
                             <i className="fas fa-search text-[11px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
@@ -414,8 +491,17 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                         </div>
                         <div className="max-h-36 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
                             {displayedContracts.length === 0 ? (
-                                <div className="text-xs text-slate-400 py-3 text-center">
-                                    Không tìm thấy hợp đồng CyberSoft nào khớp với từ khóa
+                                <div className="text-xs text-slate-500 py-3 text-center flex flex-col items-center gap-2">
+                                    <div>Không tìm thấy hợp đồng CyberSoft nào khớp với từ khóa "{contractSearchQuery}"</div>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleReloadContracts(true)}
+                                        disabled={isLoadingContracts}
+                                        className="px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                                    >
+                                        <i className={`fas fa-sync-alt ${isLoadingContracts ? 'fa-spin' : ''}`}></i>
+                                        <span>Tải lại dữ liệu mới nhất từ CyberSoft</span>
+                                    </button>
                                 </div>
                             ) : (
                                 displayedContracts.map(c => {
