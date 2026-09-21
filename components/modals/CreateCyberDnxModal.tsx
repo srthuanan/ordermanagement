@@ -9,7 +9,6 @@ interface CreateCyberDnxModalProps {
     onSuccess?: (result: CyberDnxCreateResult) => void;
 }
 
-import { CYBER_POPULAR_WAREHOUSES, CYBER_OTHER_WAREHOUSES } from '../../constants/cyberWarehouses';
 import { SearchableWarehouseSelect } from '../ui/SearchableWarehouseSelect';
 
 export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({

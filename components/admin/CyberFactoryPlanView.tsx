@@ -27,7 +27,6 @@ import { CyberDnxPrintModal, CyberDnxPrintData } from './CyberDnxPrintModal';
 import { CyberTd4PrintModal } from './CyberTd4PrintModal';
 import { getTransferRequests, updateTransferRequestStatus, TransferRequestItem } from '../../services/api/transferService';
 import { supabase } from '../../services/supabaseClient';
-import { CYBER_POPULAR_WAREHOUSES, CYBER_OTHER_WAREHOUSES, CYBER_ALL_WAREHOUSES } from '../../constants/cyberWarehouses';
 import { SearchableWarehouseSelect } from '../ui/SearchableWarehouseSelect';
 
 interface CyberPlanCarItem {
