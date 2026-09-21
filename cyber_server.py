@@ -230,8 +230,9 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 voucher_type = (qs.get("voucher_type", ["TD4"])[0] or "TD4").strip()
                 paper_size = (qs.get("paper_size", ["A4"])[0] or "A4").strip()
                 user_name = (qs.get("user_name", ["02.NHANPT"])[0] or "02.NHANPT").strip()
+                include_signatures = (qs.get("include_signatures", ["true"])[0] or "true").strip()
 
-                result = export_cyber_pdf_via_ps(stt_rec, voucher_type, paper_size, user_name)
+                result = export_cyber_pdf_via_ps(stt_rec, voucher_type, paper_size, user_name, include_signatures)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -255,13 +256,29 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', clean_stt) + ".pdf"
                 pdf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "cyber_pdfs")
 
-                candidates = [
-                    safe_name,
-                    f"{safe_base}_nosig.pdf" if "_nosig" in clean_stt.lower() else f"{safe_base}_sig.pdf",
-                    f"{safe_base}_sig.pdf",
-                    f"{safe_base}_nosig.pdf",
-                    f"{safe_base}.pdf"
-                ]
+                is_nosig = "_nosig" in clean_stt.lower()
+                is_sig = "_sig" in clean_stt.lower()
+
+                if is_nosig:
+                    # Khi người dùng chọn không chèn chữ ký, TUYỆT ĐỐI không fallback sang file _sig.pdf
+                    candidates = [
+                        safe_name,
+                        f"{safe_base}_nosig.pdf"
+                    ]
+                elif is_sig:
+                    candidates = [
+                        safe_name,
+                        f"{safe_base}_sig.pdf",
+                        f"{safe_base}.pdf"
+                    ]
+                else:
+                    candidates = [
+                        safe_name,
+                        f"{safe_base}_sig.pdf",
+                        f"{safe_base}_nosig.pdf",
+                        f"{safe_base}.pdf"
+                    ]
+
                 found_path = None
                 found_name = safe_name
                 for c in candidates:

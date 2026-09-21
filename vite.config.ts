@@ -256,12 +256,30 @@ function cyberSyncPlugin(): Plugin {
         const safeBase = baseStt.replace(/[^a-zA-Z0-9_\-]/g, '_');
         const stt = rawStt.replace(/[^a-zA-Z0-9_\-]/g, '_');
         
-        const candidates = [
-          path.resolve(__dirname, 'public/cyber_pdfs', `${stt}.pdf`),
-          path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}_nosig.pdf`),
-          path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}_sig.pdf`),
-          path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}.pdf`)
-        ];
+        const isNosig = /_nosig$/i.test(rawStt);
+        const isSig = /_sig$/i.test(rawStt);
+
+        let candidates: string[] = [];
+        if (isNosig) {
+          // Khi người dùng chọn không chèn chữ ký, TUYỆT ĐỐI không fallback sang file _sig.pdf
+          candidates = [
+            path.resolve(__dirname, 'public/cyber_pdfs', `${stt}.pdf`),
+            path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}_nosig.pdf`)
+          ];
+        } else if (isSig) {
+          candidates = [
+            path.resolve(__dirname, 'public/cyber_pdfs', `${stt}.pdf`),
+            path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}_sig.pdf`),
+            path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}.pdf`)
+          ];
+        } else {
+          candidates = [
+            path.resolve(__dirname, 'public/cyber_pdfs', `${stt}.pdf`),
+            path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}_sig.pdf`),
+            path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}_nosig.pdf`),
+            path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}.pdf`)
+          ];
+        }
         
         const foundPath = candidates.find(p => fs.existsSync(p));
         if (foundPath) {
