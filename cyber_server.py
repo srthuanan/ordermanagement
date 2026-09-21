@@ -1,9 +1,10 @@
 import os
 import sys
 import json
+import re
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 from datetime import datetime, timezone
 
 # ─── Auto-sync state (shared, thread-safe via GIL for simple dict writes) ────
@@ -91,16 +92,29 @@ class CyberApiHandler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/api/cyber/view-pdf":
             try:
-                import re
-                from urllib.parse import parse_qs
                 qs = parse_qs(parsed.query)
                 stt_rec = (qs.get("stt_rec", [""])[0] or "").strip()
-                safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', stt_rec) + ".pdf"
-                pdf_path = os.path.join(os.path.dirname(__file__), "public", "cyber_pdfs", safe_name)
-                if os.path.exists(pdf_path):
+                clean_stt = re.sub(r'\.pdf$', '', stt_rec, flags=re.IGNORECASE)
+                safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', clean_stt) + ".pdf"
+                pdf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "cyber_pdfs")
+                
+                candidates = [
+                    safe_name,
+                    f"{clean_stt}_sig.pdf",
+                    f"{clean_stt}_nosig.pdf",
+                    f"{clean_stt}.pdf"
+                ]
+                found_path = None
+                for c in candidates:
+                    p = os.path.join(pdf_dir, c)
+                    if os.path.isfile(p):
+                        found_path = p
+                        break
+
+                if found_path:
                     self.send_response(200)
                     self.send_header("Content-Type", "application/pdf")
-                    self.send_header("Content-Length", str(os.path.getsize(pdf_path)))
+                    self.send_header("Content-Length", str(os.path.getsize(found_path)))
                     self._send_cors_headers()
                     self.end_headers()
                 else:
@@ -109,7 +123,8 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                     self._send_cors_headers()
                     self.end_headers()
             except Exception:
-                self.send_response(500)
+                self.send_response(404)
+                self.send_header("Content-Type", "application/json")
                 self._send_cors_headers()
                 self.end_headers()
             return
@@ -204,34 +219,50 @@ class CyberApiHandler(BaseHTTPRequestHandler):
 
         elif parsed.path == "/api/cyber/view-pdf":
             try:
-                from urllib.parse import parse_qs
                 qs = parse_qs(parsed.query)
                 stt_rec = (qs.get("stt_rec", [""])[0] or "").strip()
-                safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', stt_rec) + ".pdf"
-                pdf_path = os.path.join(os.path.dirname(__file__), "public", "cyber_pdfs", safe_name)
-                if os.path.exists(pdf_path):
-                    with open(pdf_path, "rb") as f:
+                clean_stt = re.sub(r'\.pdf$', '', stt_rec, flags=re.IGNORECASE)
+                safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', clean_stt) + ".pdf"
+                pdf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "cyber_pdfs")
+
+                candidates = [
+                    safe_name,
+                    f"{clean_stt}_sig.pdf",
+                    f"{clean_stt}_nosig.pdf",
+                    f"{clean_stt}.pdf"
+                ]
+                found_path = None
+                found_name = safe_name
+                for c in candidates:
+                    p = os.path.join(pdf_dir, c)
+                    if os.path.isfile(p):
+                        found_path = p
+                        found_name = c
+                        break
+
+                if found_path:
+                    with open(found_path, "rb") as f:
                         content = f.read()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/pdf")
                     self.send_header("Content-Length", str(len(content)))
-                    self.send_header("Content-Disposition", f'inline; filename="{safe_name}"')
+                    self.send_header("Content-Disposition", f'inline; filename="{found_name}"')
                     self.send_header("Cache-Control", "public, max-age=3600")
                     self._send_cors_headers()
                     self.end_headers()
                     self.wfile.write(content)
                 else:
                     self.send_response(404)
-                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
                     self._send_cors_headers()
                     self.end_headers()
-                    self.wfile.write(json.dumps({"error": "PDF not found"}).encode("utf-8"))
+                    self.wfile.write(json.dumps({"success": False, "error": "PDF not found on server", "stt_rec": stt_rec}, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
-                self.send_response(500)
-                self.send_header("Content-Type", "application/json")
+                self.send_response(404)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
             return
 
         elif parsed.path == "/api/cyber/check-contract-status":
@@ -691,6 +722,46 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
             return
+
+        elif parsed.path == "/api/cyber/upload-pdf":
+            try:
+                content_len = int(self.headers.get("Content-Length", 0))
+                body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+                data = json.loads(body_str or "{}")
+                filename = data.get("filename", "").strip()
+                b64_content = data.get("pdf_base64", "")
+                if b64_content.startswith("data:application/pdf;base64,"):
+                    b64_content = b64_content.split(",", 1)[1]
+                
+                if filename and b64_content:
+                    import base64
+                    clean_name = re.sub(r'[^a-zA-Z0-9_\-.]', '_', filename)
+                    pdf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "cyber_pdfs")
+                    os.makedirs(pdf_dir, exist_ok=True)
+                    out_path = os.path.join(pdf_dir, clean_name)
+                    with open(out_path, "wb") as f:
+                        f.write(base64.b64decode(b64_content))
+                    
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self._send_cors_headers()
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"success": True, "filename": clean_name}, ensure_ascii=False).encode("utf-8"))
+                    return
+                else:
+                    self.send_response(400)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self._send_cors_headers()
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"success": False, "error": "Missing filename or pdf_base64"}, ensure_ascii=False).encode("utf-8"))
+                    return
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+                return
 
         self.send_response(404)
         self.send_header("Content-Type", "application/json")

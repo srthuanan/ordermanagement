@@ -49,7 +49,6 @@ vite.config.ts.timestamp-*
 tmp_*.json
 tmp_*.js
 .vercel
-public/cyber_pdfs/
 
 .dms_profiles/
 minvoice_cookie.txt
