@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { exportCyberPdf } from '../../services/api/stockService';
+import { exportCyberPdf, getCyberViewPdfUrl } from '../../services/api/stockService';
 
 export interface CyberDnxPrintData {
     so_ct: string;
@@ -62,7 +62,7 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
 
         const sigSuffix = showSignatures ? '_sig' : '_nosig';
         const cleanStt = data.stt_rec!.replace(/[^a-zA-Z0-9_-]/g, '_') + sigSuffix;
-        const cachedUrl = `/api/cyber/view-pdf?stt_rec=${cleanStt}`;
+        const cachedUrl = getCyberViewPdfUrl(cleanStt);
 
         let isMounted = true;
         const loadOfficialPdf = async () => {

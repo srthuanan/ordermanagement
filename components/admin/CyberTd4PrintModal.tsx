@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { CyberVoucherTicketItem, exportCyberPdf } from '../../services/api/stockService';
+import { CyberVoucherTicketItem, exportCyberPdf, getCyberViewPdfUrl } from '../../services/api/stockService';
 
 interface CyberTd4PrintModalProps {
     isOpen: boolean;
@@ -35,7 +35,7 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
 
             // Bước 1: Kiểm tra cache - nếu file đã có thì serve ngay (0s chờ!)
             const cleanStt = data.stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_');
-            const cachedUrl = `/api/cyber/view-pdf?stt_rec=${cleanStt}`;
+            const cachedUrl = getCyberViewPdfUrl(cleanStt);
             try {
                 const cacheCheck = await fetch(cachedUrl, { method: 'HEAD' });
                 if (cacheCheck.ok && isMounted) {

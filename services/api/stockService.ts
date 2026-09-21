@@ -560,8 +560,6 @@ const getCyberEndpoints = (apiPath: string): string[] => {
     }
 
     return [
-        `http://localhost:3001${apiPath}`,
-        `http://localhost:5173${apiPath}`,
         ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : []),
         `${currentOrigin}${apiPath}`
     ];
@@ -1948,6 +1946,20 @@ export const exportCyberPdf = async (params: ExportCyberPdfParams): Promise<Expo
             error: err.message || 'Lỗi khi gọi API xuất file PDF CyberSoft.'
         };
     }
+};
+
+export const getCyberViewPdfUrl = (cleanStt: string): string => {
+    const isLocal = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1' ||
+        window.location.port === '5173'
+    );
+    if (isLocal) {
+        return `/api/cyber/view-pdf?stt_rec=${cleanStt}`;
+    }
+    const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
+    const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api.onrender.com').trim().replace(/\/+$/, '');
+    return `${cloudApiUrl}/api/cyber/view-pdf?stt_rec=${cleanStt}`;
 };
 
 // Hàm pre-generate PDF nền: gọi khi danh sách TD4 tickets load xong
