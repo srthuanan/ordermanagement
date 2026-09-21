@@ -6,23 +6,6 @@ let cachedGeoLocation: any = null;
 let isGpsWatcherStarted = false;
 
 async function fetchAddressFromCoords(lat: number, lng: number) {
-    try {
-        const bdcUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=vi`;
-        const res = await fetch(bdcUrl);
-        if (res.ok) {
-            const data = await res.json();
-            const city = data.city || data.locality || 'Hồ Chí Minh';
-            const region = data.principalSubdivision || 'Bình Dương';
-            const displayName = [data.locality, data.city, data.principalSubdivision].filter(Boolean).join(', ');
-            return {
-                city,
-                region,
-                displayName: displayName || 'Vị trí GPS',
-                country: data.countryName || 'Việt Nam',
-                countryCode: (data.countryCode || 'VN').toUpperCase()
-            };
-        }
-    } catch (e) {}
 
     try {
         const photonUrl = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`;

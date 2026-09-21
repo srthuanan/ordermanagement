@@ -402,17 +402,18 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
 
                         try {
                             const geoRes = await fetch(
-                                `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=vi`,
-                                { signal: AbortSignal.timeout(2000) }
+                                `https://photon.komoot.io/reverse?lat=${lat}&lon=${lon}`,
+                                { signal: AbortSignal.timeout(2500) }
                             );
                             if (geoRes.ok) {
-                                const geo = await geoRes.json();
-                                const loc = cleanLocationName(geo.locality || '');
-                                const city = cleanLocationName(geo.city || geo.principalSubdivision || '');
-                                if (loc && city && loc !== city) {
-                                    locName = `${loc}, ${city}`;
+                                const geoData = await geoRes.json();
+                                const feat = geoData.features?.[0]?.properties || {};
+                                const district = cleanLocationName(feat.district || feat.county || '');
+                                const city = cleanLocationName(feat.city || feat.state || '');
+                                if (district && city && district !== city) {
+                                    locName = `${district}, ${city}`;
                                 } else {
-                                    locName = loc || city || lastLocName;
+                                    locName = district || city || lastLocName;
                                 }
                             }
                         } catch (e) {}

@@ -11,35 +11,7 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string> 
         return 'Tọa độ không hợp lệ';
     }
 
-    // Provider 1: BigDataCloud Reverse Geocoding (designed for web clients, zero CORS block, rich Vietnamese naming)
-    try {
-        const bdcUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=vi`;
-        const res = await fetch(bdcUrl);
-        if (res.ok) {
-            const data = await res.json();
-            const parts: string[] = [];
-
-            // Check detailed administrative components (ward, district, province)
-            if (data.localityInfo?.administrative) {
-                const adminList = data.localityInfo.administrative;
-                // Find street or neighborhood if present
-                const ward = adminList.find((a: any) => a.order >= 5 && a.name);
-                if (ward && ward.name) parts.push(ward.name);
-            }
-
-            if (data.locality && !parts.includes(data.locality)) parts.push(data.locality);
-            if (data.city && !parts.includes(data.city)) parts.push(data.city);
-            if (data.principalSubdivision && !parts.includes(data.principalSubdivision)) parts.push(data.principalSubdivision);
-
-            if (parts.length > 0) {
-                return parts.join(', ');
-            }
-        }
-    } catch (e) {
-        // Continue to fallback
-    }
-
-    // Provider 2: Photon Komoot (OpenStreetMap global mirror with open CORS)
+    // Provider 1: Photon Komoot (OpenStreetMap global mirror with open CORS)
     try {
         const photonUrl = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`;
         const res = await fetch(photonUrl);

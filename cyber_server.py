@@ -87,6 +87,36 @@ class CyberApiHandler(BaseHTTPRequestHandler):
         self._send_cors_headers()
         self.end_headers()
 
+    def do_HEAD(self):
+        parsed = urlparse(self.path)
+        if parsed.path == "/api/cyber/view-pdf":
+            try:
+                import re
+                from urllib.parse import parse_qs
+                qs = parse_qs(parsed.query)
+                stt_rec = (qs.get("stt_rec", [""])[0] or "").strip()
+                safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', stt_rec) + ".pdf"
+                pdf_path = os.path.join(os.path.dirname(__file__), "public", "cyber_pdfs", safe_name)
+                if os.path.exists(pdf_path):
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/pdf")
+                    self.send_header("Content-Length", str(os.path.getsize(pdf_path)))
+                    self._send_cors_headers()
+                    self.end_headers()
+                else:
+                    self.send_response(404)
+                    self.send_header("Content-Type", "application/json")
+                    self._send_cors_headers()
+                    self.end_headers()
+            except Exception:
+                self.send_response(500)
+                self._send_cors_headers()
+                self.end_headers()
+            return
+        self.send_response(200)
+        self._send_cors_headers()
+        self.end_headers()
+
     def do_GET(self):
         parsed = urlparse(self.path)
         if parsed.path in ["/", "/health", "/api/health"]:

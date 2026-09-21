@@ -559,6 +559,12 @@ const getCyberEndpoints = (apiPath: string): string[] => {
         ];
     }
 
+    // On static hosting like GitHub Pages, currentOrigin has no /api backend
+    const isStaticHosting = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
+    if (isStaticHosting) {
+        return cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : [];
+    }
+
     return [
         ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : []),
         `${currentOrigin}${apiPath}`
