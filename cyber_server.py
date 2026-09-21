@@ -3,6 +3,7 @@ import sys
 import json
 import re
 import threading
+import subprocess
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 from datetime import datetime, timezone
@@ -74,6 +75,7 @@ from scripts.sync_thuan_an_allocations import (
     sync_cyber_ton_kho_to_supabase,
     sync_cyber_voucher_tickets_to_supabase
 )
+from scripts.m_invoice_service import process_single_vin
 
 PORT = int(os.environ.get("PORT", 8080))
 
@@ -250,23 +252,20 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             try:
                 qs = parse_qs(parsed.query)
                 vin = (qs.get("vin", [""])[0] or "").strip()
-                payload = json.dumps({"vin": vin})
-                script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts", "m_invoice_service.py")
-                proc = subprocess.run([sys.executable, script_path], input=payload, text=True, capture_output=True, timeout=30)
-                res_output = proc.stdout.strip()
-                if not res_output and proc.stderr:
-                    res_output = json.dumps({"success": False, "error": proc.stderr})
+                only_signed = (qs.get("only_signed", ["true"])[0] or "").lower() not in ("false", "0", "no")
+                res = process_single_vin(vin, only_signed=only_signed)
+                res_output = json.dumps(res, ensure_ascii=False)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write((res_output or "{}").encode("utf-8"))
+                self.wfile.write(res_output.encode("utf-8"))
             except Exception as e:
-                self.send_response(500)
+                self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
+                self.wfile.write(json.dumps({"success": False, "status": "ERROR", "message": f"Lỗi xử lý M-Invoice: {str(e)}"}).encode("utf-8"))
             return
 
         elif parsed.path == "/api/cyber/view-pdf":
@@ -860,44 +859,52 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             try:
                 content_len = int(self.headers.get("Content-Length", 0))
                 body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
-                script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts", "m_invoice_service.py")
-                proc = subprocess.run([sys.executable, script_path], input=body_str, text=True, capture_output=True, timeout=30)
-                res_output = proc.stdout.strip()
-                if not res_output and proc.stderr:
-                    res_output = json.dumps({"success": False, "error": proc.stderr})
+                try:
+                    payload = json.loads(body_str) if body_str.strip() else {}
+                except Exception:
+                    payload = {}
+                vin = (payload.get("vin", "") or "").strip()
+                only_signed = payload.get("only_signed", True)
+                res = process_single_vin(vin, only_signed=only_signed)
+                res_output = json.dumps(res, ensure_ascii=False)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write((res_output or "{}").encode("utf-8"))
+                self.wfile.write(res_output.encode("utf-8"))
             except Exception as e:
-                self.send_response(500)
+                self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
+                self.wfile.write(json.dumps({"success": False, "status": "ERROR", "message": f"Lỗi xử lý M-Invoice: {str(e)}"}).encode("utf-8"))
             return
 
         elif parsed.path == "/api/minvoice/batch-fetch":
             try:
                 content_len = int(self.headers.get("Content-Length", 0))
                 body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
-                script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts", "m_invoice_service.py")
-                proc = subprocess.run([sys.executable, script_path], input=body_str, text=True, capture_output=True, timeout=60)
-                res_output = proc.stdout.strip()
-                if not res_output and proc.stderr:
-                    res_output = json.dumps({"success": False, "error": proc.stderr})
+                try:
+                    payload = json.loads(body_str) if body_str.strip() else {}
+                except Exception:
+                    payload = {}
+                vins = payload.get("vins", [])
+                only_signed = payload.get("only_signed", True)
+                results = []
+                for v in vins:
+                    results.append(process_single_vin(v, only_signed=only_signed))
+                res_output = json.dumps({"success": True, "results": results}, ensure_ascii=False)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write((res_output or "{}").encode("utf-8"))
+                self.wfile.write(res_output.encode("utf-8"))
             except Exception as e:
-                self.send_response(500)
+                self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
+                self.wfile.write(json.dumps({"success": False, "status": "ERROR", "message": f"Lỗi xử lý M-Invoice: {str(e)}"}).encode("utf-8"))
             return
 
         self.send_response(404)

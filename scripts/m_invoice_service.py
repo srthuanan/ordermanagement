@@ -34,6 +34,17 @@ def get_cookie():
         except Exception:
             pass
 
+    # 4. Supabase Storage (Cloud Render fallback)
+    try:
+        from scripts.sync_thuan_an_allocations import SUPABASE_URL, SUPABASE_KEY
+        supa_url = f"{SUPABASE_URL}/storage/v1/object/authenticated/yeucauxhd-files/config/minvoice_cookie.txt"
+        headers = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"}
+        r = requests.get(supa_url, headers=headers, timeout=5)
+        if r.status_code == 200 and r.text.strip():
+            return r.text.strip()
+    except Exception:
+        pass
+
     return ""
 
 def get_browser_executable():
@@ -41,11 +52,19 @@ def get_browser_executable():
         r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
         r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
         r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        "/usr/bin/google-chrome",
+        "/usr/bin/google-chrome-stable",
+        "/usr/bin/chromium",
+        "/usr/bin/chromium-browser"
     ]
     for p in paths:
         if os.path.exists(p):
             return p
+    import shutil
+    for cmd in ["google-chrome", "chromium", "chromium-browser", "msedge"]:
+        which = shutil.which(cmd)
+        if which: return which
     return None
 
 def process_single_vin(vin: str, only_signed: bool = True):
@@ -209,7 +228,6 @@ html, body {
         try:
             if os.path.exists(html_file): os.remove(html_file)
             if os.path.exists(pdf_file): os.remove(pdf_file)
-            if os.path.exists(temp_dir): os.rmdir(temp_dir)
         except Exception:
             pass
 
