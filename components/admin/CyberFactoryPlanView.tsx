@@ -3462,7 +3462,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                     <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 overflow-hidden">
                         
                         {/* Left Form Column */}
-                        <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-2xs p-3.5 flex flex-col justify-between min-h-0 overflow-hidden">
+                        <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-2xs p-2.5 sm:p-3 flex flex-col justify-between min-h-0 overflow-y-auto custom-scrollbar">
                             
                             <div className="flex items-center justify-between border-b border-slate-100 pb-2 shrink-0">
                                 <h3 className="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
@@ -3475,29 +3475,91 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             </div>
 
                             {/* Yêu cầu chuyển xe từ TVBH (Pending Requests Banner) */}
-                            <div className={`p-2.5 rounded-xl border space-y-1.5 shrink-0 my-1 transition-all ${
-                                pendingTransferRequests.length > 0
-                                    ? 'bg-gradient-to-r from-indigo-50/90 to-purple-50/90 border-indigo-200 shadow-2xs'
-                                    : 'bg-slate-50/80 border-slate-200'
-                            }`}>
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        {pendingTransferRequests.length > 0 ? (
+                            {pendingTransferRequests.length > 0 ? (
+                                <div className="p-2 rounded-lg border bg-gradient-to-r from-indigo-50/90 to-purple-50/90 border-indigo-200 shrink-0 my-0.5 space-y-1">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
                                             <span className="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></span>
-                                        ) : (
-                                            <i className="fas fa-inbox text-slate-400 text-xs"></i>
-                                        )}
-                                        <h4 className="font-extrabold text-xs text-slate-800 flex items-center gap-1.5">
-                                            <i className="fas fa-truck-moving text-indigo-600"></i>
-                                            <span>Yêu cầu chuyển xe từ TVBH</span>
-                                        </h4>
-                                        <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                                            pendingTransferRequests.length > 0
-                                                ? 'bg-indigo-600 text-white animate-pulse'
-                                                : 'bg-slate-200 text-slate-600'
-                                        }`}>
-                                            {pendingTransferRequests.length} yêu cầu
-                                        </span>
+                                            <h4 className="font-extrabold text-[11px] text-slate-800 flex items-center gap-1">
+                                                <i className="fas fa-truck-moving text-indigo-600"></i>
+                                                <span>Yêu cầu chuyển xe từ TVBH</span>
+                                            </h4>
+                                            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-indigo-600 text-white animate-pulse">
+                                                {pendingTransferRequests.length} yêu cầu
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={loadPendingTransferRequests}
+                                            disabled={isLoadingTransferRequests}
+                                            className="text-[9.5px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <i className={`fas fa-sync-alt ${isLoadingTransferRequests ? 'fa-spin' : ''}`}></i>
+                                            <span>Làm mới</span>
+                                        </button>
+                                    </div>
+                                    <div className="space-y-1 max-h-24 overflow-y-auto pr-1 custom-scrollbar">
+                                        {pendingTransferRequests.map((req) => {
+                                            const isSelected = activeTransferRequestId === req.id;
+                                            return (
+                                                <div
+                                                    key={req.id}
+                                                    className={`p-1.5 rounded-lg border text-xs flex items-center justify-between gap-1.5 transition-all ${
+                                                        isSelected
+                                                            ? 'bg-emerald-50 border-emerald-400 ring-1 ring-emerald-400/20'
+                                                            : 'bg-white border-indigo-100 hover:border-indigo-300'
+                                                    }`}
+                                                >
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            <span className="font-mono font-bold text-slate-900 text-[11px] select-all">{req.vin}</span>
+                                                            <span className="text-[10px] text-slate-500 font-medium truncate">
+                                                                {req.carModel} • KH: <strong className="text-slate-800">{req.customerName}</strong>
+                                                            </span>
+                                                            <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">
+                                                                {req.consultantName}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-600 truncate flex items-center gap-1">
+                                                            <strong className="text-indigo-700">{req.fromWarehouseName || req.fromWarehouse} ➔ {req.toWarehouseName || req.toWarehouse}</strong>
+                                                            <span className="text-slate-300">•</span>
+                                                            <span className="italic text-slate-500 truncate">{req.reason}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 shrink-0">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRejectTransferRequest(req)}
+                                                            className="px-1.5 py-0.5 rounded text-[10px] font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-all flex items-center gap-0.5 cursor-pointer"
+                                                            title="Từ chối yêu cầu"
+                                                        >
+                                                            <i className="fas fa-times text-[9px]"></i>
+                                                            <span>Từ chối</span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleApplyTransferRequest(req)}
+                                                            className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all flex items-center gap-0.5 shrink-0 cursor-pointer ${
+                                                                isSelected
+                                                                    ? 'bg-emerald-600 text-white'
+                                                                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                                            }`}
+                                                        >
+                                                            <i className={`fas ${isSelected ? 'fa-check' : 'fa-arrow-down'} text-[9px]`}></i>
+                                                            <span>{isSelected ? 'Đã nạp' : 'Nạp form'}</span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="px-2.5 py-1 rounded-lg border border-slate-200/80 bg-slate-50/80 flex items-center justify-between shrink-0 my-0.5 text-[10.5px]">
+                                    <div className="flex items-center gap-1.5 text-slate-500">
+                                        <i className="fas fa-truck-moving text-indigo-500 text-[10px]"></i>
+                                        <span className="font-bold text-slate-700">Yêu cầu TVBH:</span>
+                                        <span className="italic text-slate-400">Không có yêu cầu mới</span>
                                     </div>
                                     <button
                                         type="button"
@@ -3505,426 +3567,248 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         disabled={isLoadingTransferRequests}
                                         className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
                                     >
-                                        <i className={`fas fa-sync-alt ${isLoadingTransferRequests ? 'fa-spin' : ''}`}></i>
+                                        <i className={`fas fa-sync-alt ${isLoadingTransferRequests ? 'fa-spin' : ''} text-[9px]`}></i>
                                         <span>Làm mới</span>
                                     </button>
                                 </div>
-
-                                {pendingTransferRequests.length > 0 ? (
-                                    <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1 custom-scrollbar">
-                                        {pendingTransferRequests.map((req) => {
-                                            const isSelected = activeTransferRequestId === req.id;
-                                            return (
-                                                <div
-                                                    key={req.id}
-                                                    className={`p-2 rounded-lg border text-xs flex items-center justify-between gap-2 transition-all ${
-                                                        isSelected
-                                                            ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-400/20'
-                                                            : 'bg-white border-indigo-100 hover:border-indigo-300'
-                                                    }`}
-                                                >
-                                                    <div className="min-w-0 flex-1">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <span className="font-mono font-bold text-slate-900 text-[11.5px] select-all">{req.vin}</span>
-                                                            <span className="text-[10px] text-slate-500 font-semibold truncate">
-                                                                {req.carModel} • KH: <strong className="text-slate-800">{req.customerName}</strong>
-                                                            </span>
-                                                            <span className="text-[9.5px] px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">
-                                                                TVBH: {req.consultantName}
-                                                            </span>
-                                                        </div>
-                                                        <div className="text-[10.5px] text-slate-600 truncate mt-0.5 flex items-center gap-1.5">
-                                                            <span className="text-slate-400 font-medium">Tuyến:</span>
-                                                            <strong className="text-indigo-700">{req.fromWarehouseName || req.fromWarehouse} ➔ {req.toWarehouseName || req.toWarehouse}</strong>
-                                                            <span className="text-slate-300">•</span>
-                                                            <span className="italic text-slate-500 truncate" title={req.reason}>{req.reason}</span>
-                                                            {req.note && <span className="text-rose-600 font-medium" title={req.note}>({req.note})</span>}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-1.5 shrink-0">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRejectTransferRequest(req)}
-                                                            className="px-2 py-1 rounded-lg text-[10.5px] font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-all flex items-center gap-1 cursor-pointer active:scale-95"
-                                                            title="Từ chối / Hủy yêu cầu chuyển xe này"
-                                                        >
-                                                            <i className="fas fa-times text-[10px]"></i>
-                                                            <span>Từ chối</span>
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleApplyTransferRequest(req)}
-                                                            className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all flex items-center gap-1 shrink-0 cursor-pointer ${
-                                                                isSelected
-                                                                    ? 'bg-emerald-600 text-white shadow-xs'
-                                                                    : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs active:scale-95'
-                                                            }`}
-                                                        >
-                                                            <i className={`fas ${isSelected ? 'fa-check' : 'fa-arrow-down'}`}></i>
-                                                            <span>{isSelected ? 'Đang nạp vào form' : 'Nạp vào phiếu (1-Chạm)'}</span>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                ) : (
-                                    <div className="py-2 text-center text-[11px] text-slate-400 font-medium italic">
-                                        Hiện chưa có yêu cầu chuyển xe mới. Khi TVBH gửi yêu cầu, danh sách sẽ tự động xuất hiện tại đây kèm nút 1-chạm nạp thẳng vào form lập phiếu.
-                                    </div>
-                                )}
-                            </div>
+                            )}
 
                             {dnxError && (
-                                <div className="p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs flex items-center gap-2 shrink-0 my-1">
+                                <div className="px-2.5 py-1 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs flex items-center gap-2 shrink-0 my-0.5">
                                     <i className="fas fa-exclamation-circle text-rose-500 text-xs shrink-0"></i>
-                                    <span className="font-medium">{dnxError}</span>
+                                    <span className="font-medium text-[11px]">{dnxError}</span>
                                 </div>
                             )}
 
                             {dnxResult && (
-                                <div className="p-2.5 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-900 space-y-1.5 text-xs shrink-0 my-1">
-                                    <div className="flex items-center justify-between">
-                                        <div className="font-bold text-xs text-emerald-800 flex items-center gap-1.5">
-                                            <i className="fas fa-check-circle text-emerald-600 text-sm"></i>
-                                            <span>Đã ghi nhận thành công phiếu {dnxResult.so_ct}!</span>
-                                        </div>
+                                <div className="px-2.5 py-1 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-900 text-xs shrink-0 my-0.5 flex items-center justify-between gap-2 shadow-2xs">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                        <i className="fas fa-check-circle text-emerald-600 text-xs shrink-0"></i>
+                                        <span className="font-bold text-[11px] text-emerald-900 truncate">
+                                            Đã lập phiếu: <span className="font-mono text-blue-700">{dnxResult.so_ct}</span> ({dnxResult.total_cars} VIN)
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
                                         <button
                                             type="button"
                                             onClick={() => setPrintTicketData(dnxResult)}
-                                            className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold rounded-md text-[11px] flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                                            className="px-2 py-0.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold rounded text-[10px] flex items-center gap-1 shadow-xs cursor-pointer"
                                         >
-                                            <i className="fas fa-print text-[10px]"></i>
+                                            <i className="fas fa-print text-[9px]"></i>
                                             <span>In Phiếu DNX</span>
                                         </button>
-                                    </div>
-                                    <div className="font-mono text-slate-700 flex flex-wrap gap-x-4 gap-y-0.5 text-[10.5px] pl-5">
-                                        <span>• Số CT: <strong className="text-emerald-900">{dnxResult.so_ct}</strong></span>
-                                        <span>• Mã: <strong>{dnxResult.stt_rec}</strong></span>
-                                        <span>• Tổng số xe: <strong>{dnxResult.total_cars} VIN</strong></span>
+                                        <button
+                                            type="button"
+                                            onClick={() => setDnxResult(null)}
+                                            className="w-5 h-5 rounded flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-emerald-100/60 cursor-pointer"
+                                            title="Đóng"
+                                        >
+                                            <i className="fas fa-times text-[10px]"></i>
+                                        </button>
                                     </div>
                                 </div>
                             )}
 
-                            <form onSubmit={handleCreateDnxSubmitInAdmin} className="flex-1 flex flex-col justify-between space-y-2.5 min-h-0 pt-1.5">
+                            <form onSubmit={handleCreateDnxSubmitInAdmin} className="flex-1 flex flex-col justify-between space-y-1.5 min-h-0 pt-1">
                                 
                                 {/* 1. VIN Input & Counters */}
-                                <div className="space-y-1">
-                                    <div className="flex items-center justify-between">
-                                        <label className="text-[11.5px] font-bold text-slate-800 flex items-center gap-1">
+                                <div>
+                                    <div className="flex items-center justify-between mb-0.5">
+                                        <label className="text-[11px] font-bold text-slate-800 flex items-center gap-1">
                                             <i className="fas fa-barcode text-slate-400"></i>
                                             <span>Danh sách số VIN:</span>
                                             <span className="text-rose-500">*</span>
                                         </label>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1.5">
                                             {isLookingUpVin && (
-                                                <span className="text-[10.5px] text-blue-600 font-bold flex items-center gap-1 animate-pulse">
+                                                <span className="text-[10px] text-blue-600 font-bold flex items-center gap-1 animate-pulse">
                                                     <i className="fas fa-circle-notch fa-spin text-blue-500"></i>
-                                                    <span>Đang tra kho Cyber...</span>
+                                                    <span>Tra kho Cyber...</span>
                                                 </span>
                                             )}
                                             {dnxVinInput && (
                                                 <button
                                                     type="button"
                                                     onClick={() => setDnxVinInput('')}
-                                                    className="text-[10px] font-bold text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-1.5 py-0.5 rounded cursor-pointer"
+                                                    className="text-[9.5px] font-bold text-rose-600 hover:text-rose-800 hover:bg-rose-50 px-1 py-0.2 rounded cursor-pointer"
                                                 >
-                                                    <i className="fas fa-times mr-1"></i>Xóa VIN
+                                                    <i className="fas fa-times mr-0.5"></i>Xóa
                                                 </button>
                                             )}
-                                            <span className="text-[10.5px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                                            <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                                                 Đã nhận diện: {extractedVins.length} VIN
                                             </span>
                                         </div>
                                     </div>
                                     <textarea
-                                        rows={3}
+                                        rows={2}
                                         value={dnxVinInput}
                                         onChange={(e) => setDnxVinInput(e.target.value)}
-                                        placeholder="Nhập/dán danh sách số VIN từ Excel (VD: RLLVFPNT1TH829896)..."
-                                        className="w-full font-mono text-xs border border-slate-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50/70 uppercase text-slate-900 font-semibold h-20 resize-none"
+                                        placeholder="NHẬP/DÁN DANH SÁCH SỐ VIN TỪ EXCEL (VD: RLLVFPNT1TH829896)..."
+                                        className="w-full font-mono text-[11px] border border-slate-300 rounded-lg p-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500/20 focus:border-blue-500 bg-slate-50/70 uppercase text-slate-900 font-semibold h-11 resize-none"
                                     />
 
                                     {/* Auto-detected warehouse banner from Cyber */}
-                                    {isLookingUpVin && (
-                                        <div className="mt-1.5 p-2 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-[11.5px] flex items-center gap-2 animate-pulse">
-                                            <i className="fas fa-circle-notch fa-spin text-blue-600"></i>
-                                            <span>Đang kết nối ẩn danh CyberSoft để tra cứu vị trí kho tồn của xe...</span>
-                                        </div>
-                                    )}
-
                                     {lookupResultInfo?.found && !isLookingUpVin && (
-                                        <div className="mt-1.5 p-2.5 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-900 text-xs flex items-center justify-between shadow-xs">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px] shrink-0">
-                                                    <i className="fas fa-check"></i>
-                                                </div>
-                                                <div>
-                                                    <div className="font-bold text-emerald-900 flex items-center gap-1.5">
-                                                        <span>Vị trí kho trên Cyber:</span>
-                                                        <span className="font-extrabold text-emerald-800 underline">
-                                                            {lookupResultInfo.ma_kho} - {lookupResultInfo.ten_kho}
-                                                        </span>
-                                                    </div>
-                                                    {lookupResultInfo.carInfo && (
-                                                        <div className="text-[11px] text-emerald-700 font-medium mt-0.5">
-                                                            {lookupResultInfo.carInfo}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                        <div className="mt-1 px-2 py-1 bg-emerald-50 border border-emerald-300 rounded-md text-emerald-900 text-[11px] flex items-center justify-between">
+                                            <div className="flex items-center gap-1.5 truncate">
+                                                <i className="fas fa-check-circle text-emerald-600 text-[10px] shrink-0"></i>
+                                                <span className="font-bold text-emerald-800 truncate">
+                                                    Kho Cyber: {lookupResultInfo.ma_kho} - {lookupResultInfo.ten_kho}
+                                                </span>
+                                                {lookupResultInfo.carInfo && (
+                                                    <span className="text-[10px] text-emerald-700 truncate">
+                                                        ({lookupResultInfo.carInfo})
+                                                    </span>
+                                                )}
                                             </div>
-                                            <span className="text-[10px] font-extrabold px-2 py-0.5 bg-emerald-200/80 text-emerald-800 rounded-full border border-emerald-300 shrink-0">
-                                                ✓ Đã tự chọn kho xuất
+                                            <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-emerald-200 text-emerald-800 rounded shrink-0">
+                                                ✓ Tự nhận kho
                                             </span>
                                         </div>
                                     )}
 
                                     {lookupResultInfo && !lookupResultInfo.found && !isLookingUpVin && extractedVins.length > 0 && (
-                                        <div className="mt-1.5 p-2.5 bg-amber-50 border border-amber-300 rounded-lg text-amber-900 text-xs flex items-center justify-between shadow-xs">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] shrink-0">
-                                                    <i className="fas fa-truck"></i>
-                                                </div>
-                                                <div>
-                                                    <div className="font-bold text-amber-900 flex items-center gap-1.5">
-                                                        <span>Vị trí trên Cyber:</span>
-                                                        <span className="font-extrabold text-amber-800">
-                                                            Đang vận tải (Tồn kho thực tế = 0)
-                                                        </span>
-                                                    </div>
-                                                    {lookupResultInfo.carInfo && (
-                                                        <div className="text-[11px] text-amber-700 font-medium mt-0.5">
-                                                            {lookupResultInfo.carInfo}
-                                                        </div>
-                                                    )}
-                                                </div>
+                                        <div className="mt-1 px-2 py-1 bg-amber-50 border border-amber-300 rounded-md text-amber-900 text-[11px] flex items-center justify-between">
+                                            <div className="flex items-center gap-1.5 truncate">
+                                                <i className="fas fa-truck text-amber-600 text-[10px] shrink-0"></i>
+                                                <span className="font-bold text-amber-800">
+                                                    Vị trí: Đang vận tải (Tồn kho = 0)
+                                                </span>
                                             </div>
-                                            <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-200/80 text-amber-800 rounded-full border border-amber-300 shrink-0">
-                                                🚚 Chưa về kho thực tế
+                                            <span className="text-[9px] font-bold px-1.5 py-0.2 bg-amber-200 text-amber-800 rounded shrink-0">
+                                                🚚 Chưa về kho
                                             </span>
                                         </div>
                                     )}
 
-                                    {/* ⚠️ CẢNH BÁO XE ĐÃ CÓ PHIẾU: Chặn tạo trùng lặp và cung cấp nút xem/in ngay */}
+                                    {/* ⚠️ CẢNH BÁO XE ĐÃ CÓ PHIẾU */}
                                     {detectedExistingTicket && (
-                                        <div className="mt-2 p-3 bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-amber-500/15 border-2 border-amber-500/80 rounded-xl shadow-md">
-                                            <div className="flex items-start gap-2.5">
-                                                <div className="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center text-sm font-black shrink-0 shadow-sm">
-                                                    <i className="fas fa-shield-alt"></i>
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-rose-600 text-white shadow-xs">
-                                                            CHẶN TẠO TRÙNG LẶP
-                                                        </span>
-                                                        <span className="text-xs font-bold text-amber-950">
-                                                            Xe đã tồn tại {detectedExistingTicket.title}
-                                                        </span>
-                                                    </div>
-                                                    <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-700 bg-white/90 p-2.5 rounded-lg border border-amber-200 shadow-xs">
-                                                        <div><strong>Số chứng từ:</strong> <span className="font-mono font-bold text-blue-700">{detectedExistingTicket.so_ct}</span></div>
-                                                        <div><strong>Ngày lập:</strong> <span className="font-semibold text-slate-800">{detectedExistingTicket.ngay_ct || 'N/A'}</span></div>
-                                                        <div className="sm:col-span-2"><strong>Số VIN:</strong> <span className="font-mono font-bold text-slate-900">{detectedExistingTicket.vin}</span></div>
-                                                        {detectedExistingTicket.ten_kh && (
-                                                            <div className="sm:col-span-2"><strong>Khách hàng:</strong> <span className="font-medium">{detectedExistingTicket.ten_kh}</span></div>
-                                                        )}
-                                                        {detectedExistingTicket.dien_giai && (
-                                                            <div className="sm:col-span-2"><strong>Diễn giải:</strong> <span className="italic text-slate-600">{detectedExistingTicket.dien_giai}</span></div>
-                                                        )}
-                                                        {detectedExistingTicket.type === 'DNX' && detectedExistingTicket.ma_kho_xuat && (
-                                                            <div className="sm:col-span-2 text-[11px] text-slate-600">
-                                                                <strong>Tuyến kho:</strong> {detectedExistingTicket.ten_kho_xuat || detectedExistingTicket.ma_kho_xuat} ➔ {detectedExistingTicket.ten_kho_nhan || detectedExistingTicket.ma_kho_nhan}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="mt-2.5 flex items-center gap-2 flex-wrap">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleOpenExistingTicketPrint(detectedExistingTicket)}
-                                                            className="px-3.5 py-1.5 rounded-lg text-xs font-extrabold text-white bg-blue-600 hover:bg-blue-700 shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
-                                                        >
-                                                            <i className="fas fa-print"></i>
-                                                            <span>Xem & In Phiếu Đã Tạo ({detectedExistingTicket.so_ct})</span>
-                                                        </button>
-                                                        <span className="text-[11px] font-bold text-rose-700">
-                                                            <i className="fas fa-ban mr-1"></i>Hệ thống đã khóa nút tạo mới để tránh trùng chứng từ
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                        <div className="mt-1 p-2 bg-amber-50 border border-amber-300 rounded-lg text-xs space-y-1">
+                                            <div className="flex items-center justify-between text-amber-950 font-bold text-[11px]">
+                                                <span>⚠️ Xe đã tồn tại {detectedExistingTicket.title} ({detectedExistingTicket.so_ct})</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleOpenExistingTicketPrint(detectedExistingTicket)}
+                                                    className="px-2 py-0.5 rounded text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    <i className="fas fa-print text-[9px]"></i>
+                                                    <span>Xem & In Phiếu</span>
+                                                </button>
                                             </div>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* 2. Quick Reason Chips */}
-                                <div className="space-y-1">
-                                    <span className="text-[10.5px] font-bold text-slate-400 block">
-                                        Gợi ý lý do xuất nhanh:
-                                    </span>
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                        <button
-                                            type="button"
-                                            onClick={() => setDnxLyDo('Lấy xe từ Kho QL13 về Kho Thuận An làm PDI giao KH')}
-                                            className="px-2 py-0.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 border border-slate-200 rounded-md text-[10.5px] font-medium transition-all"
-                                        >
-                                            + Lấy xe PDI giao KH
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setDnxLyDo('Điều chuyển xe nội bộ giữa các kho showroom')}
-                                            className="px-2 py-0.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 border border-slate-200 rounded-md text-[10.5px] font-medium transition-all"
-                                        >
-                                            + Điều chuyển nội bộ
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setDnxLyDo('Lấy xe từ bãi Q12 về Thuận An làm thủ tục giao xe')}
-                                            className="px-2 py-0.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 border border-slate-200 rounded-md text-[10.5px] font-medium transition-all"
-                                        >
-                                            + Lấy xe bãi Q12 về PDI
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* 2.5 Loại phiếu đề nghị xuất (CyberSoft ERP: Loại 4 vs 9) */}
-                                <div className="p-2.5 bg-blue-50/70 rounded-lg border border-blue-200/80 space-y-1.5">
-                                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-800">
-                                        <span className="flex items-center gap-1.5">
-                                            <i className="fas fa-tags text-blue-600 text-[10px]"></i>
-                                            <span>Loại phiếu Đề nghị xuất xe (CyberSoft):</span>
-                                            <span className="text-rose-500">*</span>
-                                        </span>
-                                        <span className={`text-[9.5px] px-2 py-0.5 rounded-full font-extrabold ${
-                                            dnxMaGd === '9' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-100 text-blue-800 border border-blue-200'
-                                        }`}>
-                                            Mã: {dnxMaGd}
-                                        </span>
-                                    </div>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <label
-                                            onClick={() => setDnxMaGd('4')}
-                                            className={`p-2 rounded-lg border text-xs font-bold cursor-pointer transition-all flex items-center gap-2 ${
-                                                dnxMaGd === '4'
-                                                    ? 'bg-white border-blue-500 text-blue-900 shadow-xs ring-2 ring-blue-500/20'
-                                                    : 'bg-slate-50/80 border-slate-200 text-slate-600 hover:bg-white'
-                                            }`}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name="dnx_loai"
-                                                checked={dnxMaGd === '4'}
-                                                onChange={() => setDnxMaGd('4')}
-                                                className="text-blue-600 focus:ring-blue-500 cursor-pointer"
-                                            />
-                                            <div className="leading-tight">
-                                                <div className="text-[11.5px] font-bold text-blue-950">4. Điều chuyển nội bộ điểm KD</div>
-                                                <div className="text-[9.5px] font-medium text-slate-500 mt-0.5">Giữa các kho trong showroom (K87, K83, K86...)</div>
-                                            </div>
-                                        </label>
-                                        <label
-                                            onClick={() => setDnxMaGd('9')}
-                                            className={`p-2 rounded-lg border text-xs font-bold cursor-pointer transition-all flex items-center gap-2 ${
-                                                dnxMaGd === '9'
-                                                    ? 'bg-white border-purple-500 text-purple-900 shadow-xs ring-2 ring-purple-500/20'
-                                                    : 'bg-slate-50/80 border-slate-200 text-slate-600 hover:bg-white'
-                                            }`}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name="dnx_loai"
-                                                checked={dnxMaGd === '9'}
-                                                onChange={() => setDnxMaGd('9')}
-                                                className="text-purple-600 focus:ring-purple-500 cursor-pointer"
-                                            />
-                                            <div className="leading-tight">
-                                                <div className="text-[11.5px] font-bold text-purple-950">9. Điều chuyển xe các điểm KD</div>
-                                                <div className="text-[9.5px] font-medium text-slate-500 mt-0.5">Chuyển sang showroom/đại lý khác (Dĩ An, Vũng Tàu...)</div>
-                                            </div>
-                                        </label>
-                                    </div>
+                                {/* 2. Loại phiếu đề nghị xuất (CyberSoft ERP: Loại 4 vs 9) */}
+                                <div className="grid grid-cols-2 gap-1.5">
+                                    <label
+                                        onClick={() => setDnxMaGd('4')}
+                                        className={`px-2 py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
+                                            dnxMaGd === '4'
+                                                ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-2xs ring-1 ring-blue-500/20'
+                                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="dnx_loai"
+                                            checked={dnxMaGd === '4'}
+                                            onChange={() => setDnxMaGd('4')}
+                                            className="text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                        />
+                                        <span className="truncate">4. Nội bộ điểm KD (K87, K83, K86...)</span>
+                                    </label>
+                                    <label
+                                        onClick={() => setDnxMaGd('9')}
+                                        className={`px-2 py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
+                                            dnxMaGd === '9'
+                                                ? 'bg-purple-50 border-purple-500 text-purple-900 shadow-2xs ring-1 ring-purple-500/20'
+                                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="dnx_loai"
+                                            checked={dnxMaGd === '9'}
+                                            onChange={() => setDnxMaGd('9')}
+                                            className="text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                        />
+                                        <span className="truncate">9. Các điểm KD (Dĩ An, Vũng Tàu...)</span>
+                                    </label>
                                 </div>
 
                                 {/* 3. Kho Xuất & Kho Nhận */}
-                                <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-1.5">
-                                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 border-b border-slate-200/60 pb-1">
-                                        <span className="flex items-center gap-1">
-                                            <i className="fas fa-route text-blue-600 text-[10px]"></i>
-                                            <span>Tuyến kho xe xuất - nhận:</span>
-                                        </span>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <div className="flex items-center justify-between text-[10.5px] font-bold text-slate-600 mb-0.5">
+                                            <span>Kho xuất xe:</span>
+                                            {lookupResultInfo?.found && (
+                                                <span className="text-[9px] text-emerald-600 font-bold flex items-center gap-0.5">
+                                                    <i className="fas fa-check-circle text-[8.5px]"></i> Tự nhận từ Cyber
+                                                </span>
+                                            )}
+                                        </div>
+                                        <select
+                                            value={dnxMaKhoXuat}
+                                            onChange={(e) => setDnxMaKhoXuat(e.target.value)}
+                                            className={`w-full border rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-blue-500 bg-white text-slate-800 cursor-pointer h-7 transition-colors ${
+                                                lookupResultInfo?.found ? 'border-emerald-500 bg-emerald-50/20' : 'border-slate-300'
+                                            }`}
+                                        >
+                                            {dnxMaKhoXuat && !['K87', 'K86', 'K83', 'K85', 'KHCM.PVD', 'K106', 'K103', 'K58', 'K65', 'K36', 'K17', 'KTN.NM', 'KTN.TT'].includes(dnxMaKhoXuat) && (
+                                                <option value={dnxMaKhoXuat}>{dnxMaKhoXuat} - {detectedWarehouseName || dnxMaKhoXuat}</option>
+                                            )}
+                                            <option value="K87">K87 - QL13 (HCM)</option>
+                                            <option value="K86">K86 - Q12 (HCM)</option>
+                                            <option value="K83">K83 - Thuận An</option>
+                                            <option value="K85">K85 - Dĩ An</option>
+                                            <option value="KHCM.PVD">KHCM.PVD - Phạm Văn Đồng</option>
+                                            <option value="K106">K106 - Hà Huy Giáp</option>
+                                            <option value="K103">K103 - Lĩnh Nam</option>
+                                            <option value="K58">K58 - Lê Văn Việt</option>
+                                            <option value="K65">K65 - Vũng Tàu</option>
+                                            <option value="K36">K36 - Hải Phòng</option>
+                                            <option value="K17">K17 - Cam Giá</option>
+                                            <option value="KTN.NM">KTN.NM - NM Thái Nguyên</option>
+                                            <option value="KTN.TT">KTN.TT - Tân Thịnh (TN)</option>
+                                        </select>
                                     </div>
-                                    
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        <div>
-                                            <label className="flex items-center justify-between text-[10.5px] font-bold text-slate-600 mb-0.5">
-                                                <span>Kho xuất xe:</span>
-                                                {lookupResultInfo?.found && (
-                                                    <span className="text-[9.5px] text-emerald-600 font-bold flex items-center gap-1">
-                                                        <i className="fas fa-check-circle text-[9px]"></i> Tự nhận từ Cyber
-                                                    </span>
-                                                )}
-                                            </label>
-                                            <select
-                                                value={dnxMaKhoXuat}
-                                                onChange={(e) => setDnxMaKhoXuat(e.target.value)}
-                                                className={`w-full border rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-blue-500 bg-white text-slate-800 cursor-pointer h-8 transition-colors ${
-                                                    lookupResultInfo?.found ? 'border-emerald-500 bg-emerald-50/20' : 'border-slate-300'
-                                                }`}
-                                            >
-                                                {dnxMaKhoXuat && !['K87', 'K86', 'K83', 'K85', 'KHCM.PVD', 'K106', 'K103', 'K58', 'K65', 'K36', 'K17', 'KTN.NM', 'KTN.TT'].includes(dnxMaKhoXuat) && (
-                                                    <option value={dnxMaKhoXuat}>{dnxMaKhoXuat} - {detectedWarehouseName || dnxMaKhoXuat}</option>
-                                                )}
-                                                <option value="K87">K87 - QL13 (HCM)</option>
-                                                <option value="K86">K86 - Q12 (HCM)</option>
-                                                <option value="K83">K83 - Thuận An</option>
-                                                <option value="K85">K85 - Dĩ An</option>
-                                                <option value="KHCM.PVD">KHCM.PVD - Phạm Văn Đồng</option>
-                                                <option value="K106">K106 - Hà Huy Giáp</option>
-                                                <option value="K103">K103 - Lĩnh Nam</option>
-                                                <option value="K58">K58 - Lê Văn Việt</option>
-                                                <option value="K65">K65 - Vũng Tàu</option>
-                                                <option value="K36">K36 - Hải Phòng</option>
-                                                <option value="K17">K17 - Cam Giá</option>
-                                                <option value="KTN.NM">KTN.NM - NM Thái Nguyên</option>
-                                                <option value="KTN.TT">KTN.TT - Tân Thịnh (TN)</option>
-                                            </select>
-                                        </div>
 
-                                        <div>
-                                            <label className="block text-[10.5px] font-bold text-slate-600 mb-0.5">
-                                                Kho nhận (Đích đến):
-                                            </label>
-                                            <select
-                                                value={dnxMaKhoNhan}
-                                                onChange={(e) => {
-                                                    const val = e.target.value;
-                                                    setDnxMaKhoNhan(val);
-                                                    if (['K85', 'K65', 'K103', 'K58', 'K36', 'K17', 'KTN.NM', 'KTN.TT'].includes(val)) {
-                                                        setDnxMaGd('9');
-                                                    } else if (['K83', 'K87', 'K86', 'K106', 'KHCM.PVD'].includes(val)) {
-                                                        setDnxMaGd('4');
-                                                    }
-                                                }}
-                                                className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-blue-500 bg-white text-slate-800 cursor-pointer h-8"
-                                            >
-                                                <option value="K83">K83 - Thuận An (Mặc định)</option>
-                                                <option value="K87">K87 - QL13 (HCM)</option>
-                                                <option value="K86">K86 - Q12 (HCM)</option>
-                                                <option value="K85">K85 - Dĩ An</option>
-                                                <option value="KHCM.PVD">KHCM.PVD - Phạm Văn Đồng</option>
-                                                <option value="K106">K106 - Hà Huy Giáp</option>
-                                                <option value="K103">K103 - Lĩnh Nam</option>
-                                                <option value="K58">K58 - Lê Văn Việt</option>
-                                                <option value="K65">K65 - Vũng Tàu</option>
-                                                <option value="K17">K17 - Cam Giá</option>
-                                                <option value="KTN.TT">KTN.TT - Tân Thịnh (TN)</option>
-                                            </select>
-                                        </div>
+                                    <div>
+                                        <label className="block text-[10.5px] font-bold text-slate-600 mb-0.5">
+                                            Kho nhận (Đích đến):
+                                        </label>
+                                        <select
+                                            value={dnxMaKhoNhan}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                setDnxMaKhoNhan(val);
+                                                if (['K85', 'K65', 'K103', 'K58', 'K36', 'K17', 'KTN.NM', 'KTN.TT'].includes(val)) {
+                                                    setDnxMaGd('9');
+                                                } else if (['K83', 'K87', 'K86', 'K106', 'KHCM.PVD'].includes(val)) {
+                                                    setDnxMaGd('4');
+                                                }
+                                            }}
+                                            className="w-full border border-slate-300 rounded-lg px-2 py-1 text-xs font-bold focus:outline-none focus:border-blue-500 bg-white text-slate-800 cursor-pointer h-7"
+                                        >
+                                            <option value="K83">K83 - Thuận An (Mặc định)</option>
+                                            <option value="K87">K87 - QL13 (HCM)</option>
+                                            <option value="K86">K86 - Q12 (HCM)</option>
+                                            <option value="K85">K85 - Dĩ An</option>
+                                            <option value="KHCM.PVD">KHCM.PVD - Phạm Văn Đồng</option>
+                                            <option value="K106">K106 - Hà Huy Giáp</option>
+                                            <option value="K103">K103 - Lĩnh Nam</option>
+                                            <option value="K58">K58 - Lê Văn Việt</option>
+                                            <option value="K65">K65 - Vũng Tàu</option>
+                                            <option value="K17">K17 - Cam Giá</option>
+                                            <option value="KTN.TT">KTN.TT - Tân Thịnh (TN)</option>
+                                        </select>
                                     </div>
                                 </div>
 
                                 {/* 4. Tài khoản & Khách hàng */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <div className="grid grid-cols-2 gap-2">
                                     <div>
                                         <label className="block text-[10.5px] font-bold text-slate-600 mb-0.5">
                                             Tài khoản (`User_Name`):
@@ -3934,7 +3818,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                             value={dnxUserName}
                                             onChange={(e) => setDnxUserName(e.target.value)}
                                             placeholder="02.NHANPT"
-                                            className="w-full font-mono text-xs border border-slate-300 rounded-lg px-2.5 py-1 focus:outline-none focus:border-blue-500 bg-white text-slate-900 font-bold h-8"
+                                            className="w-full font-mono text-xs border border-slate-300 rounded-lg px-2 py-0.5 focus:outline-none focus:border-blue-500 bg-white text-slate-900 font-bold h-7"
                                         />
                                     </div>
 
@@ -3947,31 +3831,54 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                             value={dnxKhachHang}
                                             onChange={(e) => setDnxKhachHang(e.target.value)}
                                             placeholder="VD: Ngô Trí Dũng"
-                                            className="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-1 focus:outline-none focus:border-blue-500 bg-white text-slate-800 font-medium h-8"
+                                            className="w-full text-xs border border-slate-300 rounded-lg px-2 py-0.5 focus:outline-none focus:border-blue-500 bg-white text-slate-800 font-medium h-7"
                                         />
                                     </div>
                                 </div>
 
-                                {/* 5. Lý do */}
+                                {/* 5. Lý do xuất + Quick Chips inline */}
                                 <div>
-                                    <label className="block text-[10.5px] font-bold text-slate-600 mb-0.5">
-                                        Lý do xuất / điều chuyển:
-                                    </label>
+                                    <div className="flex items-center justify-between text-[10.5px] font-bold text-slate-600 mb-0.5">
+                                        <span>Lý do xuất / điều chuyển:</span>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => setDnxLyDo('Lấy xe từ Kho QL13 về Kho Thuận An làm PDI giao KH')}
+                                                className="px-1.5 py-0.2 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border border-slate-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
+                                            >
+                                                + PDI giao KH
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setDnxLyDo('Điều chuyển xe nội bộ giữa các kho showroom')}
+                                                className="px-1.5 py-0.2 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border border-slate-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
+                                            >
+                                                + Nội bộ
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setDnxLyDo('Lấy xe từ bãi Q12 về Thuận An làm thủ tục giao xe')}
+                                                className="px-1.5 py-0.2 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border border-slate-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
+                                            >
+                                                + Bãi Q12
+                                            </button>
+                                        </div>
+                                    </div>
                                     <input
                                         type="text"
                                         value={dnxLyDo}
                                         onChange={(e) => setDnxLyDo(e.target.value)}
                                         placeholder="VD: Lấy xe về PDI giao KH Ngô Trí Dũng"
-                                        className="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-1 focus:outline-none focus:border-blue-500 bg-white text-slate-800 font-medium h-8"
+                                        className="w-full text-xs border border-slate-300 rounded-lg px-2 py-0.5 focus:outline-none focus:border-blue-500 bg-white text-slate-800 font-medium h-7"
                                     />
                                 </div>
 
                                 {/* 6. Submit Button */}
-                                <div className="pt-1">
+                                <div>
                                     <button
                                         type="submit"
                                         disabled={isSubmittingDnx || Boolean(detectedExistingTicket)}
-                                        className={`w-full h-9 font-bold rounded-lg text-xs shadow-xs transition-all flex items-center justify-center gap-2 shrink-0 ${
+                                        className={`w-full h-8 font-bold rounded-lg text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${
                                             detectedExistingTicket
                                                 ? 'bg-slate-300 text-slate-500 cursor-not-allowed border border-slate-300'
                                                 : 'bg-slate-900 hover:bg-slate-800 active:scale-[0.99] disabled:opacity-50 text-white cursor-pointer'
