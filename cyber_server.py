@@ -95,14 +95,17 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 qs = parse_qs(parsed.query)
                 stt_rec = (qs.get("stt_rec", [""])[0] or "").strip()
                 clean_stt = re.sub(r'\.pdf$', '', stt_rec, flags=re.IGNORECASE)
+                base_stt = re.sub(r'(_sig|_nosig)$', '', clean_stt, flags=re.IGNORECASE)
+                safe_base = re.sub(r'[^a-zA-Z0-9_-]', '_', base_stt)
                 safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', clean_stt) + ".pdf"
                 pdf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "cyber_pdfs")
                 
                 candidates = [
                     safe_name,
-                    f"{clean_stt}_sig.pdf",
-                    f"{clean_stt}_nosig.pdf",
-                    f"{clean_stt}.pdf"
+                    f"{safe_base}_nosig.pdf" if "_nosig" in clean_stt.lower() else f"{safe_base}_sig.pdf",
+                    f"{safe_base}_sig.pdf",
+                    f"{safe_base}_nosig.pdf",
+                    f"{safe_base}.pdf"
                 ]
                 found_path = None
                 for c in candidates:
@@ -247,14 +250,17 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 qs = parse_qs(parsed.query)
                 stt_rec = (qs.get("stt_rec", [""])[0] or "").strip()
                 clean_stt = re.sub(r'\.pdf$', '', stt_rec, flags=re.IGNORECASE)
+                base_stt = re.sub(r'(_sig|_nosig)$', '', clean_stt, flags=re.IGNORECASE)
+                safe_base = re.sub(r'[^a-zA-Z0-9_-]', '_', base_stt)
                 safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', clean_stt) + ".pdf"
                 pdf_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public", "cyber_pdfs")
 
                 candidates = [
                     safe_name,
-                    f"{clean_stt}_sig.pdf",
-                    f"{clean_stt}_nosig.pdf",
-                    f"{clean_stt}.pdf"
+                    f"{safe_base}_nosig.pdf" if "_nosig" in clean_stt.lower() else f"{safe_base}_sig.pdf",
+                    f"{safe_base}_sig.pdf",
+                    f"{safe_base}_nosig.pdf",
+                    f"{safe_base}.pdf"
                 ]
                 found_path = None
                 found_name = safe_name

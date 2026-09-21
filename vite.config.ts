@@ -252,12 +252,15 @@ function cyberSyncPlugin(): Plugin {
       server.middlewares.use('/api/cyber/view-pdf', (req, res) => {
         const parsedUrl = new URL(req.url || '', 'http://localhost');
         const rawStt = (parsedUrl.searchParams.get('stt_rec') || '').replace(/\.pdf$/i, '');
+        const baseStt = rawStt.replace(/(_sig|_nosig)$/i, '');
+        const safeBase = baseStt.replace(/[^a-zA-Z0-9_\-]/g, '_');
         const stt = rawStt.replace(/[^a-zA-Z0-9_\-]/g, '_');
         
         const candidates = [
           path.resolve(__dirname, 'public/cyber_pdfs', `${stt}.pdf`),
-          path.resolve(__dirname, 'public/cyber_pdfs', `${stt}_sig.pdf`),
-          path.resolve(__dirname, 'public/cyber_pdfs', `${stt}_nosig.pdf`)
+          path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}_nosig.pdf`),
+          path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}_sig.pdf`),
+          path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}.pdf`)
         ];
         
         const foundPath = candidates.find(p => fs.existsSync(p));

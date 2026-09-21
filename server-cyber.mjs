@@ -197,11 +197,14 @@ const server = http.createServer((req, res) => {
     }
     if (pathname === '/api/cyber/view-pdf') {
         const rawStt = (urlObj.searchParams.get('stt_rec') || '').trim().replace(/\.pdf$/i, '');
+        const baseStt = rawStt.replace(/(_sig|_nosig)$/i, '');
+        const safeBase = baseStt.replace(/[^a-zA-Z0-9_-]/g, '_');
         const safeName = rawStt.replace(/[^a-zA-Z0-9_-]/g, '_');
         const candidates = [
             path.resolve(__dirname, 'public/cyber_pdfs', `${safeName}.pdf`),
-            path.resolve(__dirname, 'public/cyber_pdfs', `${safeName}_sig.pdf`),
-            path.resolve(__dirname, 'public/cyber_pdfs', `${safeName}_nosig.pdf`)
+            path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}_nosig.pdf`),
+            path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}_sig.pdf`),
+            path.resolve(__dirname, 'public/cyber_pdfs', `${safeBase}.pdf`)
         ];
         const foundPath = candidates.find(p => fs.existsSync(p));
         if (foundPath) {
