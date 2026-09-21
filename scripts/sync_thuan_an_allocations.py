@@ -1971,6 +1971,19 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             conn.commit()
         conn.close()
 
+        # Tự động xuất và tải sẵn cả 2 bản PDF (có chữ ký & không chữ ký) lên Supabase Storage trong nền
+        def _async_pregenerate_dnx_pdfs(stt, usr):
+            try:
+                print(f"[Auto DNX Pre-generation] Bắt đầu xuất và tải PDF cho {stt} lên Supabase Storage...", file=sys.stderr)
+                export_cyber_pdf_via_ps(stt, voucher_type="DNX", paper_size="A4", user_name=usr, include_signatures="true")
+                export_cyber_pdf_via_ps(stt, voucher_type="DNX", paper_size="A4", user_name=usr, include_signatures="false")
+                print(f"[Auto DNX Pre-generation] Đã tải hoàn tất cả 2 bản PDF cho {stt} lên Supabase Storage!", file=sys.stderr)
+            except Exception as ex:
+                print(f"[Auto DNX Pre-generation Warning]: {ex}", file=sys.stderr)
+
+        import threading
+        threading.Thread(target=_async_pregenerate_dnx_pdfs, args=(str(stt_rec), str(user_name)), daemon=True).start()
+
         return {
             "success": True,
             "message": f"Đã lập thành công Phiếu Đề Nghị Xuất Xe {so_ct} trên CyberSoft ERP",
