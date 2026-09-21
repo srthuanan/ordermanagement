@@ -246,6 +246,29 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
             return
 
+        elif parsed.path == "/api/minvoice/fetch-invoice":
+            try:
+                qs = parse_qs(parsed.query)
+                vin = (qs.get("vin", [""])[0] or "").strip()
+                payload = json.dumps({"vin": vin})
+                script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts", "m_invoice_service.py")
+                proc = subprocess.run([sys.executable, script_path], input=payload, text=True, capture_output=True, timeout=30)
+                res_output = proc.stdout.strip()
+                if not res_output and proc.stderr:
+                    res_output = json.dumps({"success": False, "error": proc.stderr})
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write((res_output or "{}").encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
+            return
+
         elif parsed.path == "/api/cyber/view-pdf":
             try:
                 qs = parse_qs(parsed.query)
@@ -832,6 +855,50 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
                 return
+
+        elif parsed.path == "/api/minvoice/fetch-invoice":
+            try:
+                content_len = int(self.headers.get("Content-Length", 0))
+                body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+                script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts", "m_invoice_service.py")
+                proc = subprocess.run([sys.executable, script_path], input=body_str, text=True, capture_output=True, timeout=30)
+                res_output = proc.stdout.strip()
+                if not res_output and proc.stderr:
+                    res_output = json.dumps({"success": False, "error": proc.stderr})
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write((res_output or "{}").encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/minvoice/batch-fetch":
+            try:
+                content_len = int(self.headers.get("Content-Length", 0))
+                body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+                script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts", "m_invoice_service.py")
+                proc = subprocess.run([sys.executable, script_path], input=body_str, text=True, capture_output=True, timeout=60)
+                res_output = proc.stdout.strip()
+                if not res_output and proc.stderr:
+                    res_output = json.dumps({"success": False, "error": proc.stderr})
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write((res_output or "{}").encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
+            return
 
         self.send_response(404)
         self.send_header("Content-Type", "application/json")

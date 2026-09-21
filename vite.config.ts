@@ -333,6 +333,30 @@ function cyberSyncPlugin(): Plugin {
           if (success) invalidateCache();
         });
       });
+
+      const minvoiceScript = path.resolve(__dirname, 'scripts', 'm_invoice_service.py');
+
+      server.middlewares.use('/api/minvoice/fetch-invoice', (req, res, next) => {
+        if (req.method === 'POST') {
+          let body = '';
+          req.on('data', chunk => { body += chunk.toString(); });
+          req.on('end', () => {
+            runPy([minvoiceScript], body, res);
+          });
+        } else {
+          const parsedUrl = new URL(req.url || '', 'http://localhost');
+          const vin = parsedUrl.searchParams.get('vin') || '';
+          runPy([minvoiceScript], JSON.stringify({ vin }), res);
+        }
+      });
+
+      server.middlewares.use('/api/minvoice/batch-fetch', (req, res, next) => {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          runPy([minvoiceScript], body, res);
+        });
+      });
     }
   };
 }
