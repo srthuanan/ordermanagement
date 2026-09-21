@@ -177,12 +177,19 @@ html, body {
     file_name = f"{serial}_{so_hd}_{vin}_{safe_buyer}.pdf"
     pdf_bytes = None
 
-    # Cách 1: Tải trực tiếp file PDF chính gốc đã ký số từ M-Invoice API (nhanh, chuẩn 100%, không cần cài Chrome trên Cloud)
+    # Cách 1: Tải trực tiếp file PDF Hóa đơn chuyển đổi (downloaf-swich-pdf) hoặc PDF gốc (downloaf-pdf)
     try:
-        url_pdf = f"{DEFAULT_BASE_URL}/api/api/app/invoice/{inv_id}/downloaf-pdf"
-        r_pdf = requests.get(url_pdf, headers=headers, timeout=15)
+        url_swich_pdf = f"{DEFAULT_BASE_URL}/api/api/app/invoice/{inv_id}/downloaf-swich-pdf"
+        r_pdf = requests.get(url_swich_pdf, headers=headers, timeout=15)
         if r_pdf.status_code == 200 and r_pdf.content.startswith(b"%PDF"):
             pdf_bytes = r_pdf.content
+            print(f"[M-Invoice] Đã tải thành công HÓA ĐƠN CHUYỂN ĐỔI PDF ({len(pdf_bytes)} bytes)")
+        else:
+            url_pdf = f"{DEFAULT_BASE_URL}/api/api/app/invoice/{inv_id}/downloaf-pdf"
+            r_pdf = requests.get(url_pdf, headers=headers, timeout=15)
+            if r_pdf.status_code == 200 and r_pdf.content.startswith(b"%PDF"):
+                pdf_bytes = r_pdf.content
+                print(f"[M-Invoice] Đã tải thành công HÓA ĐƠN ĐIỆN TỬ PDF ({len(pdf_bytes)} bytes)")
     except Exception as e:
         print(f"[M-Invoice] Tải trực tiếp PDF thất bại: {e}")
 
