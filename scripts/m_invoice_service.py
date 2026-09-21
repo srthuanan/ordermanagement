@@ -9,6 +9,23 @@ import tempfile
 import subprocess
 import requests
 
+# Ensure project root and scripts dir are in sys.path
+_BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if _BASE_DIR not in sys.path:
+    sys.path.insert(0, _BASE_DIR)
+_SCRIPTS_DIR = os.path.abspath(os.path.dirname(__file__))
+if _SCRIPTS_DIR not in sys.path:
+    sys.path.insert(0, _SCRIPTS_DIR)
+
+try:
+    from scripts.sync_thuan_an_allocations import SUPABASE_URL, SUPABASE_KEY
+except ImportError:
+    try:
+        from sync_thuan_an_allocations import SUPABASE_URL, SUPABASE_KEY
+    except ImportError:
+        SUPABASE_URL = "https://jwvgxqrkjlbewvpkvucj.supabase.co"
+        SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MDIzODIzNywiZXhwIjoyMDU1ODE0MjM3fQ.2P-f8Y6wY8nO6uVl0o8Z_e3hOQyZ_oR6bL7XbW7B2aQ"
+
 DEFAULT_BASE_URL = "https://4600260039.minvoice.net"
 
 def get_cookie():
@@ -38,7 +55,6 @@ def get_cookie():
 
     # 4. Supabase Storage (Cloud Render fallback)
     try:
-        from scripts.sync_thuan_an_allocations import SUPABASE_URL, SUPABASE_KEY
         supa_url = f"{SUPABASE_URL}/storage/v1/object/authenticated/yeucauxhd-files/config/minvoice_cookie.txt"
         headers = {"apikey": SUPABASE_KEY, "Authorization": f"Bearer {SUPABASE_KEY}"}
         r = requests.get(supa_url, headers=headers, timeout=5)
@@ -183,15 +199,15 @@ html, body {
         r_pdf = requests.get(url_swich_pdf, headers=headers, timeout=15)
         if r_pdf.status_code == 200 and r_pdf.content.startswith(b"%PDF"):
             pdf_bytes = r_pdf.content
-            print(f"[M-Invoice] Đã tải thành công HÓA ĐƠN CHUYỂN ĐỔI PDF ({len(pdf_bytes)} bytes)")
+            print(f"[M-Invoice] Đã tải thành công HÓA ĐƠN CHUYỂN ĐỔI PDF ({len(pdf_bytes)} bytes)", file=sys.stderr)
         else:
             url_pdf = f"{DEFAULT_BASE_URL}/api/api/app/invoice/{inv_id}/downloaf-pdf"
             r_pdf = requests.get(url_pdf, headers=headers, timeout=15)
             if r_pdf.status_code == 200 and r_pdf.content.startswith(b"%PDF"):
                 pdf_bytes = r_pdf.content
-                print(f"[M-Invoice] Đã tải thành công HÓA ĐƠN ĐIỆN TỬ PDF ({len(pdf_bytes)} bytes)")
+                print(f"[M-Invoice] Đã tải thành công HÓA ĐƠN ĐIỆN TỬ PDF ({len(pdf_bytes)} bytes)", file=sys.stderr)
     except Exception as e:
-        print(f"[M-Invoice] Tải trực tiếp PDF thất bại: {e}")
+        print(f"[M-Invoice] Tải trực tiếp PDF thất bại: {e}", file=sys.stderr)
 
     # Cách 2: Dự phòng dùng Chrome/Edge in headless sang PDF nếu M-Invoice không trả về trực tiếp
     if not pdf_bytes:
@@ -254,7 +270,6 @@ def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
     if not vin and not order_number:
         return {"success": False, "status": "INVALID_PARAMS", "message": "Cần cung cấp số VIN hoặc số đơn hàng."}
 
-    from scripts.sync_thuan_an_allocations import SUPABASE_URL, SUPABASE_KEY
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
@@ -399,7 +414,10 @@ def main():
         if not raw_input.strip():
             print(json.dumps({"success": False, "error": "No JSON input provided"}))
             return
-        payload = json.loads(raw_input)
+        clean_input = raw_input.strip()
+        if clean_input.startswith('\ufeff'):
+            clean_input = clean_input[1:]
+        payload = json.loads(clean_input)
     except Exception as e:
         print(json.dumps({"success": False, "error": f"Invalid JSON stdin: {str(e)}"}))
         return
