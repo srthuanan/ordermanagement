@@ -1998,17 +1998,17 @@ export const prewarmTd4Pdfs = (tickets: CyberVoucherTicketItem[]): void => {
         const ticket = queue.shift()!;
         try {
             const cleanStt = ticket.stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_');
-            // Kiểm tra xem file đã có chưa
-            const check = await fetch(`/api/cyber/view-pdf?stt_rec=${cleanStt}`, { method: 'HEAD' });
+            const storageUrl = getCyberStoragePdfUrl(cleanStt + '_sig');
+            // Kiểm tra xem file đã có trên Supabase Storage chưa
+            const check = await fetch(storageUrl, { method: 'HEAD' });
             if (!check.ok) {
-                // Chưa có → export nền (không await để không block)
-                const endpoints = [`/api/cyber/export-pdf?stt_rec=${encodeURIComponent(ticket.stt_rec)}&voucher_type=TD4&paper_size=A4&user_name=${encodeURIComponent(ticket.nvkd || '02.NHANPT')}`];
-                for (const ep of endpoints) {
-                    try {
-                        await fetch(ep, { method: 'GET', headers: { 'Accept': 'application/json' } });
-                        break; // success
-                    } catch (_) {}
-                }
+                // Chưa có → gọi exportCyberPdf nền để render và upload lên Supabase Storage
+                exportCyberPdf({
+                    stt_rec: ticket.stt_rec,
+                    voucher_type: 'TD4',
+                    paper_size: 'A4',
+                    user_name: ticket.nvkd || '02.NHANPT'
+                }).catch(() => {});
             }
         } catch (_) {}
         running = false;
