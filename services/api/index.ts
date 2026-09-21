@@ -13,5 +13,4 @@ export * from './policyAdminService';
 export * from './vehicleConfigService';
 export * from './chatService';
 export * from './swapService';
-
-
+export * from './mInvoiceService';

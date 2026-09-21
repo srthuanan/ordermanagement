@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { toEmbeddableUrl, toViewableUrl, getDriveFileId, getSanitizedFilename, forceDownload } from '../../utils/imageUtils';
+import { toEmbeddableUrl, getDriveFileId, getSanitizedFilename, forceDownload } from '../../utils/imageUtils';
 
 interface ImageSource {
     src: string;
@@ -208,19 +208,14 @@ const ImagePreviewModal: React.FC<ImagePreviewModalProps> = ({ isOpen, onClose, 
                         onLoad={() => setIsLoading(false)}
                         onError={() => {
                             if (currentImage) {
-                                if (retryCount === 0) {
-                                    setRetryCount(1);
-                                    const fallback = toViewableUrl(currentImage.src);
-                                    if (fallback !== displayUrl) {
-                                        setDisplayUrl(fallback);
-                                        return;
-                                    }
-                                }
                                 const fileId = getDriveFileId(currentImage.src);
-                                if (fileId && !isIframeMode) {
-                                    setIsIframeMode(true);
-                                    setDisplayUrl(`https://drive.google.com/file/d/${fileId}/preview`);
-                                    setIsLoading(false);
+                                if (retryCount === 0 && fileId) {
+                                    setRetryCount(1);
+                                    setDisplayUrl(`https://lh3.googleusercontent.com/d/${fileId}=w1920`);
+                                    return;
+                                } else if (retryCount === 1 && fileId) {
+                                    setRetryCount(2);
+                                    setDisplayUrl(`https://drive.google.com/thumbnail?id=${fileId}&sz=w1920`);
                                     return;
                                 }
                             }

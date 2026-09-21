@@ -93,6 +93,7 @@ const FilePreviewModal: React.FC<FilePreviewModalProps> = ({ isOpen, onClose, fi
                             alt={fileLabel} 
                             className="max-w-full max-h-full object-contain p-4 shadow-xl"
                         />
+
                     ) : iframeFailed ? (
                         <div className="flex flex-col items-center justify-center p-6 text-center max-w-md bg-slate-900/90 rounded-2xl border border-slate-800 shadow-2xl">
                             <div className="w-16 h-16 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-3xl mb-4 border border-blue-500/30">

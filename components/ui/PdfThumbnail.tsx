@@ -41,13 +41,7 @@ const PdfThumbnail: React.FC<PdfThumbnailProps> = ({ url, width, height, classNa
         return url;
     }, [url, fileId]);
 
-    // Google Drive preview URL for iframe fallback
-    const drivePreviewUrl = useMemo(() => {
-        if (fileId) {
-            return `https://drive.google.com/file/d/${fileId}/preview`;
-        }
-        return null;
-    }, [fileId]);
+
 
     function onDocumentLoadSuccess() {
         setLoading(false);
@@ -76,18 +70,19 @@ const PdfThumbnail: React.FC<PdfThumbnailProps> = ({ url, width, height, classNa
         );
     }
 
-    // Use iframe fallback for Google Drive PDFs when direct loading fails
-    if (useIframeFallback && drivePreviewUrl) {
+    // Use image thumbnail fallback for Google Drive PDFs when direct loading fails
+    if (useIframeFallback && fileId) {
         return (
-            <div className={`relative overflow-hidden ${className}`} style={{ width: width || '100%', height: height || '100%' }}>
-                <iframe
-                    src={drivePreviewUrl}
-                    className="w-full h-full border-0 pointer-events-none scale-[2] origin-top-left"
-                    title="PDF Preview"
-                    tabIndex={-1}
+            <div className={`relative overflow-hidden flex items-center justify-center bg-gray-50 ${className}`} style={{ width: width || '100%', height: height || '100%' }}>
+                <img
+                    src={`https://drive.google.com/thumbnail?id=${fileId}&sz=w${width ? Math.round(width * 2) : 400}`}
+                    alt="PDF Preview"
+                    className="w-full h-full object-cover object-top"
+                    onError={() => {
+                        setUseIframeFallback(false);
+                        setError(true);
+                    }}
                 />
-                {/* Overlay to prevent interaction */}
-                <div className="absolute inset-0 bg-transparent"></div>
             </div>
         );
     }

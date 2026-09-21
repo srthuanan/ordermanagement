@@ -52,3 +52,4 @@ tmp_*.js
 public/cyber_pdfs/
 
 .dms_profiles/
+minvoice_cookie.txt

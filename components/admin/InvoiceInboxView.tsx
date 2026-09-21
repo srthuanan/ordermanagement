@@ -15,6 +15,7 @@ import {
     CyberXepXeContract,
     isOrderAssignedOnCyber
 } from '../../services/api/stockService';
+import { fetchMInvoiceByVin, base64ToFile } from '../../services/api/mInvoiceService';
 
 interface InvoiceInboxViewProps {
     orders: Order[];
@@ -68,7 +69,6 @@ const DocumentThumbnail: React.FC<{
     const [imgSrc, setImgSrc] = useState<string | null>(null);
     const [hasError, setHasError] = useState(false);
     const [retryStage, setRetryStage] = useState(0);
-    const [useIframe, setUseIframe] = useState(false);
 
     const fileType = useMemo(() => {
         if (!url) return 'unknown';
@@ -82,7 +82,6 @@ const DocumentThumbnail: React.FC<{
     useEffect(() => {
         setHasError(false);
         setRetryStage(0);
-        setUseIframe(false);
         if (fileType === 'drive' && url) {
             setImgSrc(toEmbeddableUrl(url, 500));
         } else if (fileType === 'image' && url) {
@@ -109,19 +108,11 @@ const DocumentThumbnail: React.FC<{
             setImgSrc(`https://lh3.googleusercontent.com/d/${fileId}=w500`);
         } else if (retryStage === 1) {
             setRetryStage(2);
-            setUseIframe(true);
+            setImgSrc(`https://drive.google.com/thumbnail?id=${fileId}&sz=w500`);
         } else {
             setHasError(true);
         }
     };
-
-    const drivePreviewUrl = useMemo(() => {
-        if (fileType === 'drive' && url) {
-            const fileId = getDriveFileId(url);
-            if (fileId) return `https://drive.google.com/file/d/${fileId}/preview`;
-        }
-        return null;
-    }, [url, fileType]);
 
     return (
         <div
@@ -131,16 +122,6 @@ const DocumentThumbnail: React.FC<{
             <div className={`flex-1 min-h-0 flex items-center justify-center overflow-hidden relative ${url ? 'bg-white' : 'bg-gray-50'}`}>
                 {(fileType === 'pdf' || (fileType === 'drive' && label.toLowerCase().includes('pdf'))) && url ? (
                     <PdfThumbnail url={url} width={400} className="w-full h-full object-cover object-top transition-transform duration-500 scale-[1.3] group-hover:scale-[1.6]" />
-                ) : useIframe && drivePreviewUrl ? (
-                    <>
-                        <iframe
-                            src={drivePreviewUrl}
-                            className="w-full h-full border-0 pointer-events-none scale-[1.5] origin-top-left"
-                            title={label}
-                            tabIndex={-1}
-                        />
-                        <div className="absolute inset-0 bg-transparent z-10"></div>
-                    </>
                 ) : imgSrc && !hasError ? (
                     <img
                         src={imgSrc}
@@ -207,6 +188,8 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const [isSplitView, setIsSplitView] = useState(true);
     const [activeDocKey, setActiveDocKey] = useState<'LinkHopDong' | 'LinkDeNghiXHD' | 'LinkHoaDonDaXuat'>('LinkDeNghiXHD');
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const [isAutoFetching, setIsAutoFetching] = useState(false);
+    const [isBatchFetching, setIsBatchFetching] = useState(false);
     const copyWithFeedback = useCopyFeedback();
     const [isCyberAssignModalOpen, setIsCyberAssignModalOpen] = useState(false);
     const [cyberContracts, setCyberContracts] = useState<CyberXepXeContract[]>(() => {
@@ -311,6 +294,95 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         }
         // Reset input value to allow selecting the same file again
         if (event.target) event.target.value = '';
+    };
+
+    const handleAutoFetchMInvoice = async () => {
+        if (!selectedOrder) return;
+        const vin = (selectedOrder.VIN || selectedOrder.vin || selectedOrder['SỐ VIN'] || selectedOrder['Số VIN'] || '').trim().toUpperCase();
+        if (!vin) {
+            showToast('Chưa có số VIN', 'Đơn hàng này chưa có thông tin số VIN (số khung) để tra cứu M-Invoice.', 'error');
+            return;
+        }
+
+        setIsAutoFetching(true);
+        showToast('Đang tra cứu M-Invoice', `Đang kiểm tra hóa đơn cho số VIN: ${vin}...`, 'info');
+
+        try {
+            const res = await fetchMInvoiceByVin(vin, true);
+            if (!res.success) {
+                if (res.status === 'UNSIGNED') {
+                    showToast('Hóa đơn chưa ký', res.message, 'warning', 6000);
+                } else if (res.status === 'NOT_FOUND') {
+                    showToast('Không tìm thấy', res.message, 'warning', 6000);
+                } else {
+                    showToast('Thông báo M-Invoice', res.message, 'error', 6000);
+                }
+                return;
+            }
+
+            const invoiceData = res.data;
+            if (!invoiceData?.base64Pdf) {
+                showToast('Lỗi dữ liệu', 'Không nhận được nội dung file PDF từ M-Invoice.', 'error');
+                return;
+            }
+
+            showToast('Đang xuất hóa đơn', `Tìm thấy HĐ số ${invoiceData.invoiceNumber} (${invoiceData.serial}) ĐÃ KÝ! Đang tự động đính kèm vào đơn hàng...`, 'info');
+
+            const file = base64ToFile(invoiceData.base64Pdf, invoiceData.fileName, 'application/pdf');
+            onAction('uploadInvoice', selectedOrder, { file });
+        } catch (err: any) {
+            showToast('Lỗi', err.message || 'Không thể lấy hóa đơn M-Invoice.', 'error');
+        } finally {
+            setIsAutoFetching(false);
+        }
+    };
+
+    const handleBatchFetchMInvoice = async () => {
+        const pendingOrders = filteredOrders.filter(o => {
+            const s = (o['Trạng thái xử lý'] || o['Kết quả'] || '').toLowerCase().trim().normalize('NFC');
+            return s === 'chờ ký hóa đơn' || s === 'chờ ký hóa đơn';
+        });
+
+        if (pendingOrders.length === 0) {
+            showToast('Thông báo', 'Không có đơn hàng nào đang ở trạng thái Chờ Ký Hóa Đơn.', 'info');
+            return;
+        }
+
+        setIsBatchFetching(true);
+        showToast('Bắt đầu quét hàng loạt', `Đang quét kiểm tra M-Invoice cho ${pendingOrders.length} xe đang chờ ký...`, 'info');
+
+        let signedCount = 0;
+        let unsignedCount = 0;
+        let notFoundCount = 0;
+
+        for (let i = 0; i < pendingOrders.length; i++) {
+            const order = pendingOrders[i];
+            const vin = (order.VIN || order.vin || order['SỐ VIN'] || order['Số VIN'] || '').trim().toUpperCase();
+            if (!vin) continue;
+
+            try {
+                const res = await fetchMInvoiceByVin(vin, true);
+                if (res.success && res.data?.base64Pdf) {
+                    signedCount++;
+                    const file = base64ToFile(res.data.base64Pdf, res.data.fileName, 'application/pdf');
+                    onAction('uploadInvoice', order, { file });
+                    await new Promise(r => setTimeout(r, 600));
+                } else if (res.status === 'UNSIGNED') {
+                    unsignedCount++;
+                } else {
+                    notFoundCount++;
+                }
+            } catch (_) {
+                notFoundCount++;
+            }
+        }
+
+        setIsBatchFetching(false);
+        if (signedCount > 0) {
+            showToast('Hoàn tất quét M-Invoice', `Đã tự động lấy và xuất hóa đơn cho ${signedCount} xe! (${unsignedCount} xe chưa ký số)`, 'success', 6000);
+        } else {
+            showToast('Kết quả quét M-Invoice', `Đã kiểm tra ${pendingOrders.length} xe: ${unsignedCount} xe CHƯA KÝ SỐ, ${notFoundCount} xe chưa có HĐ trên M-Invoice.`, 'warning', 6000);
+        }
     };
 
     // 1. Filter Orders by Folder
@@ -459,11 +531,19 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
             { type: 'rescan', label: 'Y/C Scan Lại', icon: 'fa-camera', variant: 'secondary', condition: s !== 'đã hủy' && !isAlreadyRequestedRescan },
             { type: 'pendingSignature', label: 'Chuyển Chờ Ký', icon: 'fa-signature', variant: 'primary', condition: s === 'đã phê duyệt' },
             {
+                type: 'autoMInvoice',
+                label: isAutoFetching ? 'Đang Lấy M-Invoice...' : '⚡ Lấy HĐ M-Invoice',
+                icon: isAutoFetching ? 'fa-spinner fa-spin' : 'fa-bolt',
+                variant: 'primary',
+                condition: s === 'chờ ký hóa đơn' || s === 'chờ ký hóa đơn',
+                onClick: handleAutoFetchMInvoice
+            },
+            {
                 type: 'uploadInvoice',
                 label: 'Tải Lên Hóa Đơn',
                 icon: 'fa-upload',
                 variant: 'success',
-                condition: s === 'chờ ký hóa đơn',
+                condition: s === 'chờ ký hóa đơn' || s === 'chờ ký hóa đơn',
                 onClick: () => fileInputRef.current?.click()
             },
             { type: 'resend', label: 'Gửi Lại Email', icon: 'fa-paper-plane', variant: 'secondary', condition: s === 'yêu cầu bổ sung' || s === 'đã xuất hóa đơn' },
@@ -627,6 +707,21 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                         {folders.find(f => f.id === selectedFolder)?.label || 'Danh sách'}
                     </span>
                 </div>
+
+                {/* Batch M-Invoice button for Pending Signature folder */}
+                {selectedFolder === 'pending_signature' && filteredOrders.length > 0 && (
+                    <div className="p-2 border-b border-border-secondary bg-gradient-to-r from-blue-50 to-indigo-50/60">
+                        <button
+                            onClick={handleBatchFetchMInvoice}
+                            disabled={isBatchFetching}
+                            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.99] text-white rounded-lg text-xs font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                            title="Tự động kiểm tra trên M-Invoice và tải lên tất cả các xe đã ký số"
+                        >
+                            <i className={`fas ${isBatchFetching ? 'fa-spinner fa-spin' : 'fa-bolt'} text-[11px]`}></i>
+                            <span>{isBatchFetching ? 'Đang Quét HĐ...' : `⚡ Quét HĐ Tất Cả Xe (${filteredOrders.length})`}</span>
+                        </button>
+                    </div>
+                )}
 
                 <div className="flex-1 overflow-y-auto">
                     {isLoading && filteredOrders.length === 0 ? (
@@ -844,15 +939,17 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                             {selectedOrder[activeDocKey] ? (
                                                 (() => {
                                                     const url = selectedOrder[activeDocKey] as string;
-                                                    const isPdf = url.toLowerCase().includes('.pdf') || (url.toLowerCase().includes('drive.google.com') && activeDocKey.toLowerCase().includes('pdf'));
                                                     const isDrive = url.toLowerCase().includes('drive.google.com');
+                                                    const fileId = isDrive ? getDriveFileId(url) : null;
+                                                    const isPdf = url.toLowerCase().includes('.pdf');
                                                     
-                                                    if (isDrive) {
+                                                    if (isDrive && fileId) {
                                                         return (
                                                             <iframe 
-                                                                src={toEmbeddableUrl(url)} 
+                                                                src={`https://drive.google.com/file/d/${fileId}/preview`}
                                                                 className="w-full h-full border-0"
-                                                                title="Document Preview"
+                                                                title="Xem toàn bộ tài liệu"
+                                                                allow="autoplay"
                                                             />
                                                         );
                                                     }

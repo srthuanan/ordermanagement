@@ -231,6 +231,31 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    if (pathname === '/api/minvoice/fetch-invoice') {
+        const minvoiceScript = path.resolve(__dirname, 'scripts', 'm_invoice_service.py');
+        if (req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => { body += chunk.toString(); });
+            req.on('end', () => {
+                runPy([minvoiceScript], body, res);
+            });
+        } else {
+            const vin = urlObj.searchParams.get('vin') || '';
+            runPy([minvoiceScript], JSON.stringify({ vin }), res);
+        }
+        return;
+    }
+
+    if (pathname === '/api/minvoice/batch-fetch') {
+        const minvoiceScript = path.resolve(__dirname, 'scripts', 'm_invoice_service.py');
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+            runPy([minvoiceScript], body, res);
+        });
+        return;
+    }
+
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ error: 'Not Found' }));
 });

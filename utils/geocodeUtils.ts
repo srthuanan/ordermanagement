@@ -65,19 +65,5 @@ export async function reverseGeocode(lat: number, lng: number): Promise<string> 
         // Continue to fallback
     }
 
-    // Provider 3: Nominatim (without illegal User-Agent header)
-    try {
-        const nomUrl = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=vi`;
-        const res = await fetch(nomUrl);
-        if (res.ok) {
-            const data = await res.json();
-            if (data.display_name) {
-                return data.display_name;
-            }
-        }
-    } catch (e) {
-        // Fallback to coordinates
-    }
-
     return `Vị trí: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 }

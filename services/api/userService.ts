@@ -5,6 +5,53 @@ import { parseUserAgent } from '../../utils/deviceParser';
 let cachedGeoLocation: any = null;
 let isGpsWatcherStarted = false;
 
+async function fetchAddressFromCoords(lat: number, lng: number) {
+    try {
+        const bdcUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=vi`;
+        const res = await fetch(bdcUrl);
+        if (res.ok) {
+            const data = await res.json();
+            const city = data.city || data.locality || 'Hồ Chí Minh';
+            const region = data.principalSubdivision || 'Bình Dương';
+            const displayName = [data.locality, data.city, data.principalSubdivision].filter(Boolean).join(', ');
+            return {
+                city,
+                region,
+                displayName: displayName || 'Vị trí GPS',
+                country: data.countryName || 'Việt Nam',
+                countryCode: (data.countryCode || 'VN').toUpperCase()
+            };
+        }
+    } catch (e) {}
+
+    try {
+        const photonUrl = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`;
+        const res = await fetch(photonUrl);
+        if (res.ok) {
+            const data = await res.json();
+            const feat = data.features?.[0]?.properties || {};
+            const city = feat.city || feat.county || 'Hồ Chí Minh';
+            const region = feat.state || 'Bình Dương';
+            const displayName = [feat.street, feat.district, feat.city, feat.state].filter(Boolean).join(', ');
+            return {
+                city,
+                region,
+                displayName: displayName || 'Vị trí GPS',
+                country: feat.country || 'Việt Nam',
+                countryCode: 'VN'
+            };
+        }
+    } catch (e) {}
+
+    return {
+        city: 'Hồ Chí Minh',
+        region: 'Bình Dương',
+        displayName: `Tọa độ: ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
+        country: 'Việt Nam',
+        countryCode: 'VN'
+    };
+}
+
 export const startAutoGpsTracking = (): void => {
     if (isGpsWatcherStarted || typeof navigator === 'undefined' || !navigator.geolocation) return;
     isGpsWatcherStarted = true;
@@ -18,36 +65,23 @@ export const startAutoGpsTracking = (): void => {
 
                     if (!cachedGeoLocation || cachedGeoLocation.source !== 'gps' || Math.abs(cachedGeoLocation.lat - lat) > 0.001) {
                         try {
-                            const nomRes = await fetch(
-                                `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=vi`,
-                                { headers: { 'Accept': 'application/json' } }
-                            );
-                            if (nomRes.ok) {
-                                const nomData = await nomRes.json();
-                                const addr = nomData.address || {};
-                                const city = addr.city || addr.town || addr.county || addr.state_district || 'Hồ Chí Minh';
-                                const region = addr.suburb || addr.neighbourhood || addr.state || 'Bình Dương';
-                                const displayName = [addr.suburb || addr.neighbourhood, addr.city || addr.town || addr.county, addr.state]
-                                    .filter(Boolean)
-                                    .join(', ');
-
-                                cachedGeoLocation = {
-                                    ip: 'GPS Trực tiếp',
-                                    city: city,
-                                    region: region,
-                                    displayName: displayName || nomData.display_name || 'Vị trí GPS',
-                                    country: addr.country || 'Việt Nam',
-                                    countryCode: (addr.country_code || 'VN').toUpperCase(),
-                                    lat: lat,
-                                    lng: lng,
-                                    isp: 'GPS Thiết bị (Độ chính xác cao)',
-                                    source: 'gps'
-                                };
-                                sessionStorage.setItem('client_geo_location_v2', JSON.stringify(cachedGeoLocation));
-                                recordUserPresence();
-                            }
+                            const addrInfo = await fetchAddressFromCoords(lat, lng);
+                            cachedGeoLocation = {
+                                ip: 'GPS Trực tiếp',
+                                city: addrInfo.city,
+                                region: addrInfo.region,
+                                displayName: addrInfo.displayName,
+                                country: addrInfo.country,
+                                countryCode: addrInfo.countryCode,
+                                lat: lat,
+                                lng: lng,
+                                isp: 'GPS Thiết bị (Độ chính xác cao)',
+                                source: 'gps'
+                            };
+                            sessionStorage.setItem('client_geo_location_v2', JSON.stringify(cachedGeoLocation));
+                            recordUserPresence();
                         } catch (e) {
-                            // Silently ignore geocoding failure
+                            // Silently ignore
                         }
                     }
                 }
@@ -91,36 +125,23 @@ const fetchClientGeoLocation = async (): Promise<any> => {
     const gps = await getBrowserGpsCoordinates();
     if (gps && gps.lat && gps.lng) {
         try {
-            const nomRes = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?lat=${gps.lat}&lon=${gps.lng}&format=json&accept-language=vi`,
-                { headers: { 'Accept': 'application/json' } }
-            );
-            if (nomRes.ok) {
-                const nomData = await nomRes.json();
-                const addr = nomData.address || {};
-                const city = addr.city || addr.town || addr.county || addr.state_district || 'Hồ Chí Minh';
-                const region = addr.suburb || addr.neighbourhood || addr.state || 'Bình Dương';
-                const displayName = [addr.suburb || addr.neighbourhood, addr.city || addr.town || addr.county, addr.state]
-                    .filter(Boolean)
-                    .join(', ');
-
-                cachedGeoLocation = {
-                    ip: 'GPS Trực tiếp',
-                    city: city,
-                    region: region,
-                    displayName: displayName || nomData.display_name || 'Vị trí GPS',
-                    country: addr.country || 'Việt Nam',
-                    countryCode: (addr.country_code || 'VN').toUpperCase(),
-                    lat: gps.lat,
-                    lng: gps.lng,
-                    isp: 'GPS Thiết bị (Độ chính xác cao)',
-                    source: 'gps'
-                };
-                try {
-                    sessionStorage.setItem('client_geo_location_v2', JSON.stringify(cachedGeoLocation));
-                } catch (e) {}
-                return cachedGeoLocation;
-            }
+            const addrInfo = await fetchAddressFromCoords(gps.lat, gps.lng);
+            cachedGeoLocation = {
+                ip: 'GPS Trực tiếp',
+                city: addrInfo.city,
+                region: addrInfo.region,
+                displayName: addrInfo.displayName,
+                country: addrInfo.country,
+                countryCode: addrInfo.countryCode,
+                lat: gps.lat,
+                lng: gps.lng,
+                isp: 'GPS Thiết bị (Độ chính xác cao)',
+                source: 'gps'
+            };
+            try {
+                sessionStorage.setItem('client_geo_location_v2', JSON.stringify(cachedGeoLocation));
+            } catch (e) {}
+            return cachedGeoLocation;
         } catch (err) {
             // Silently fallback
         }

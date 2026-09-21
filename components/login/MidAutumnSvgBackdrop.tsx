@@ -9395,7 +9395,7 @@ const MidAutumnSvgBackdropComponent: React.FC<MidAutumnSvgBackdropProps> = () =>
         <path d="M -11,-6 Q 0,-7.8 11,-6 L 0,-18 Z" fill="#fef08a" stroke="#b45309" strokeWidth="0.7" />
         <path d="M -8.8,-9 Q 0,-10.2 8.8,-9" stroke="#d97706" strokeWidth="0.5" fill="none" opacity="0.8" />
         <path d="M -6.050000000000001,-12.600000000000001 Q 0,-13.600000000000001 6.050000000000001,-12.600000000000001" stroke="#d97706" strokeWidth="0.45" fill="none" opacity="0.8" />
-        <path d="M -3.3,-15.600000000000001 Q 0,-16.400000000000002 3.3,-15.600000000000001,-15.600000000000001" stroke="#d97706" strokeWidth="0.4" fill="none" opacity="0.8" />
+        <path d="M -3.3,-15.600000000000001 Q 0,-16.400000000000002 3.3,-15.600000000000001" stroke="#d97706" strokeWidth="0.4" fill="none" opacity="0.8" />
         <path d="M -6.6,-6 Q 0,-1 6.6,-6" stroke="#e11d48" strokeWidth="0.8" fill="none" />
     
             
@@ -9569,7 +9569,7 @@ const MidAutumnSvgBackdropComponent: React.FC<MidAutumnSvgBackdropProps> = () =>
         <path d="M -11,-6 Q 0,-7.8 11,-6 L 0,-18 Z" fill="#fef08a" stroke="#b45309" strokeWidth="0.7" />
         <path d="M -8.8,-9 Q 0,-10.2 8.8,-9" stroke="#d97706" strokeWidth="0.5" fill="none" opacity="0.8" />
         <path d="M -6.050000000000001,-12.600000000000001 Q 0,-13.600000000000001 6.050000000000001,-12.600000000000001" stroke="#d97706" strokeWidth="0.45" fill="none" opacity="0.8" />
-        <path d="M -3.3,-15.600000000000001 Q 0,-16.400000000000002 3.3,-15.600000000000001,-15.600000000000001" stroke="#d97706" strokeWidth="0.4" fill="none" opacity="0.8" />
+        <path d="M -3.3,-15.600000000000001 Q 0,-16.400000000000002 3.3,-15.600000000000001" stroke="#d97706" strokeWidth="0.4" fill="none" opacity="0.8" />
         <path d="M -6.6,-6 Q 0,-1 6.6,-6" stroke="#e11d48" strokeWidth="0.8" fill="none" />
     
             
@@ -10244,7 +10244,7 @@ const MidAutumnSvgBackdropComponent: React.FC<MidAutumnSvgBackdropProps> = () =>
         <path d="M -11,-6 Q 0,-7.8 11,-6 L 0,-18 Z" fill="#fef08a" stroke="#b45309" strokeWidth="0.7" />
         <path d="M -8.8,-9 Q 0,-10.2 8.8,-9" stroke="#d97706" strokeWidth="0.5" fill="none" opacity="0.8" />
         <path d="M -6.050000000000001,-12.600000000000001 Q 0,-13.600000000000001 6.050000000000001,-12.600000000000001" stroke="#d97706" strokeWidth="0.45" fill="none" opacity="0.8" />
-        <path d="M -3.3,-15.600000000000001 Q 0,-16.400000000000002 3.3,-15.600000000000001,-15.600000000000001" stroke="#d97706" strokeWidth="0.4" fill="none" opacity="0.8" />
+        <path d="M -3.3,-15.600000000000001 Q 0,-16.400000000000002 3.3,-15.600000000000001" stroke="#d97706" strokeWidth="0.4" fill="none" opacity="0.8" />
         <path d="M -6.6,-6 Q 0,-1 6.6,-6" stroke="#e11d48" strokeWidth="0.8" fill="none" />
     
             
