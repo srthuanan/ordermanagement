@@ -20,6 +20,8 @@ price
 *.exe
 *.msi
 *.zip
+*.eml
+*.bak
 LuanChuyenKeyCodex.bat
 vf-kim-son-trang-dai/LuanChuyenKeyCodex.bat
 
@@ -52,6 +54,7 @@ tmp_*.js
 
 .dms_profiles/
 minvoice_cookie.txt
+bookmarklets/
 
 # Do not track cached cyber PDFs
 public/cyber_pdfs/*.pdf

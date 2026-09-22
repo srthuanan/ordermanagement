@@ -8,7 +8,11 @@ from datetime import datetime, date, timezone
 from decimal import Decimal
 from dotenv import load_dotenv
 
-load_dotenv()
+_env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
+if os.path.exists(_env_path):
+    load_dotenv(_env_path)
+else:
+    load_dotenv()
 
 CYBER_CONN = (
     "DRIVER={ODBC Driver 17 for SQL Server};"
@@ -25,10 +29,7 @@ SUPABASE_URL = os.environ.get(
     "VITE_SUPABASE_URL",
     "https://jwvgxqrkjlbewvpkvucj.supabase.co"
 )
-SUPABASE_KEY = os.environ.get(
-    "VITE_SUPABASE_SERVICE_KEY",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU"
-)
+SUPABASE_KEY = os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY", "")
 HEADERS = {
     "apikey": SUPABASE_KEY,
     "Authorization": f"Bearer {SUPABASE_KEY}",
@@ -3348,12 +3349,8 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
         if missing_vins:
             import urllib.request
             unique_vins = list(set(missing_vins))[:80]
-            supa_url = f"https://jwvgxqrkjlbewvpkvucj.supabase.co/rest/v1/donhang?select=vin,ten_khach_hang,ten_tu_van_ban_hang,so_don_hang&vin=in.({','.join(unique_vins)})"
-            headers = {
-                'apikey': 'sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX',
-                'Authorization': 'Bearer sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX'
-            }
-            req = urllib.request.Request(supa_url, headers=headers)
+            supa_url = f"{SUPABASE_URL}/rest/v1/donhang?select=vin,ten_khach_hang,ten_tu_van_ban_hang,so_don_hang&vin=in.({','.join(unique_vins)})"
+            req = urllib.request.Request(supa_url, headers=HEADERS)
             with urllib.request.urlopen(req, timeout=5) as resp:
                 supa_orders = json.loads(resp.read().decode('utf-8'))
                 supa_map = {o['vin'].strip().upper(): o for o in supa_orders if o.get('vin')}
@@ -3399,7 +3396,7 @@ def upload_pdf_to_supabase_storage(file_bytes, remote_filename):
     """Tải file PDF lên Supabase Storage bucket yeucauxhd-files/cyber_pdfs/"""
     import requests
     supabase_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co").strip().rstrip('/')
-    supabase_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU").strip()
+    supabase_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY", os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY", "")).strip()
     bucket = "yeucauxhd-files"
     url = f"{supabase_url}/storage/v1/object/{bucket}/cyber_pdfs/{remote_filename}"
     headers = {
@@ -3426,7 +3423,7 @@ def cleanup_old_cyber_pdfs_from_supabase(max_days=30):
     import requests
     from datetime import datetime, timezone, timedelta
     supabase_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co").strip().rstrip('/')
-    supabase_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU").strip()
+    supabase_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY", os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY", "")).strip()
     bucket = "yeucauxhd-files"
     list_url = f"{supabase_url}/storage/v1/object/list/{bucket}"
     headers = {

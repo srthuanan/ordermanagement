@@ -1,15 +1,12 @@
 """
 Tìm hiểu tại sao 18 VIN trong khoxe không khớp với thongtinxe
 """
-import urllib.request, urllib.parse, json
+import urllib.request, urllib.parse, json, os
+from dotenv import load_dotenv
+load_dotenv(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env")))
 
-SUPABASE_URL = "https://jwvgxqrkjlbewvpkvucj.supabase.co"
-SERVICE_KEY  = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-    ".eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6"
-    "InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ"
-    ".R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU"
-)
+SUPABASE_URL = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co")
+SERVICE_KEY  = os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY", "")
 HEADERS = {"apikey": SERVICE_KEY, "Authorization": f"Bearer {SERVICE_KEY}", "Content-Type": "application/json"}
 
 def get(table, select="*", filters=None, limit=10000):

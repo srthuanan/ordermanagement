@@ -23,8 +23,8 @@ except ImportError:
     try:
         from sync_thuan_an_allocations import SUPABASE_URL, SUPABASE_KEY
     except ImportError:
-        SUPABASE_URL = "https://jwvgxqrkjlbewvpkvucj.supabase.co"
-        SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MDIzODIzNywiZXhwIjoyMDU1ODE0MjM3fQ.2P-f8Y6wY8nO6uVl0o8Z_e3hOQyZ_oR6bL7XbW7B2aQ"
+        SUPABASE_URL = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co")
+        SUPABASE_KEY = os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY", "")
 
 DEFAULT_BASE_URL = "https://4600260039.minvoice.net"
 

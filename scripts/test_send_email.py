@@ -2,7 +2,7 @@ import requests
 import json
 
 SUPABASE_URL = "https://jwvgxqrkjlbewvpkvucj.supabase.co"
-ANON_KEY = "sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX"
+ANON_KEY = os.environ.get("VITE_SUPABASE_ANON_KEY", "")
 
 headers = {
     "apikey": ANON_KEY,

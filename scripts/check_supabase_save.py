@@ -1,11 +1,14 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
 import urllib.request
 import urllib.error
 import json
 import os
 
 SUPABASE_URL = "https://jwvgxqrkjlbewvpkvucj.supabase.co"
-ANON_KEY = "sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX"
-SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU"
+ANON_KEY = os.environ.get("VITE_SUPABASE_ANON_KEY", "")
+SERVICE_KEY = os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY", "")
 
 def test_supabase_write(key_name, api_key):
     print(f"\n--- TESTING WITH {key_name} ---")

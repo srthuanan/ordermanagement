@@ -16,7 +16,7 @@
   }
 
   var sbUrl = 'https://jwvgxqrkjlbewvpkvucj.supabase.co';
-  var sbKey = 'sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX';
+  var sbKey = process.env.VITE_SUPABASE_ANON_KEY || "";
   var sbHeaders = {
     'apikey': sbKey,
     'Authorization': 'Bearer ' + sbKey,
