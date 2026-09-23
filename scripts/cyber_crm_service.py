@@ -3,7 +3,6 @@ import sys
 import json
 import re
 from datetime import datetime
-import pyodbc
 from dotenv import load_dotenv
 
 # Ensure project root is in sys.path and load environment variables
@@ -22,8 +21,37 @@ else:
 
 from scripts.sync_thuan_an_allocations import CYBER_CONN
 
+CYBER_SERVER = os.environ.get("CYBER_SERVER", "SQLVanDao.Cybersoft.com.vn")
+CYBER_PORT = int(os.environ.get("CYBER_PORT", 7521))
+CYBER_USER = os.environ.get("CYBER_USER", "cyber_vandao")
+CYBER_PWD = os.environ.get("CYBER_PWD", "HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv")
+CYBER_DB = os.environ.get("CYBER_DB", "CyberAppGolden_VanDao")
+
 def get_db_connection():
-    return pyodbc.connect(CYBER_CONN, timeout=15)
+    """
+    Kết nối tới cơ sở dữ liệu Cyber SQL Server.
+    Ưu tiên pymssql (tương thích Linux / Render không cần cài ODBC driver),
+    fallback sang pyodbc (cho Windows nếu pymssql không khả dụng).
+    """
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server=CYBER_SERVER,
+            port=CYBER_PORT,
+            user=CYBER_USER,
+            password=CYBER_PWD,
+            database=CYBER_DB,
+            timeout=25,
+            appname='CyberAppGolden',
+        )
+        return conn, True
+    except Exception as e:
+        try:
+            import pyodbc
+            conn = pyodbc.connect(CYBER_CONN, timeout=25)
+            return conn, False
+        except Exception as odbc_err:
+            raise Exception(f"Không thể kết nối SQL Server (pymssql: {e}, pyodbc: {odbc_err})")
 
 import unicodedata
 
@@ -43,7 +71,7 @@ def clean_phone(raw):
 
 def get_crm_metadata():
     """Lấy danh sách TVBH, dòng xe, nguồn tiếp cận, trạng thái khách từ Cyber."""
-    conn = get_db_connection()
+    conn, is_pymssql = get_db_connection()
     cursor = conn.cursor()
     try:
         # 1. TVBH chi nhánh 02
@@ -163,16 +191,17 @@ def check_duplicates(phone_list):
     if not cleaned:
         return {"success": True, "duplicates": {}}
 
-    conn = get_db_connection()
+    conn, is_pymssql = get_db_connection()
     cursor = conn.cursor()
     try:
         # Tìm trong CRQLKHTN
         dups = {}
         target_phones = list(cleaned.keys())
         chunk_size = 50
+        ph = "%s" if is_pymssql else "?"
         for i in range(0, len(target_phones), chunk_size):
             chunk = target_phones[i:i + chunk_size]
-            placeholders = ",".join(["?"] * len(chunk))
+            placeholders = ",".join([ph] * len(chunk))
             query = f"""
                 SELECT RTRIM(DT1), RTRIM(Id_Kh), RTRIM(Ten_kh), RTRIM(User_Name), Ngay_tao 
                 FROM dbo.CRQLKHTN 
@@ -197,20 +226,22 @@ def check_duplicates(phone_list):
     finally:
         conn.close()
 
-def generate_id_kh(cursor, user_name, ma_dvcs="02"):
+def generate_id_kh(cursor, user_name, ma_dvcs="02", is_pymssql=True):
     """Gọi thủ tục CP_SysListGencodeCRQLKHTN để lấy mã Id_Kh tự động tuần tự."""
-    cursor.execute("""
+    ph = "%s" if is_pymssql else "?"
+    cursor.execute(f"""
+        SET NOCOUNT ON;
         DECLARE @Status NVARCHAR(1), @Msg NVARCHAR(1), @Note NVARCHAR(200), @Value NVARCHAR(400);
         EXEC dbo.CP_SysListGencodeCRQLKHTN 
             @M_strField = N'Id_Kh',
             @M_strValue = N'',
             @M_Mode = N'M',
-            @M_Ma_Dvcs = ?,
-            @M_User_Name = ?;
+            @M_Ma_Dvcs = {ph},
+            @M_User_Name = {ph};
     """, (ma_dvcs, user_name))
     row = cursor.fetchone()
-    if row and row[3]:
-        return row[3].strip()
+    if row and len(row) > 3 and row[3]:
+        return str(row[3]).strip()
     return None
 
 def import_bulk_khtn(user_name, leads, ma_dvcs="02", ma_ttcp="02.01.08"):
@@ -226,7 +257,7 @@ def import_bulk_khtn(user_name, leads, ma_dvcs="02", ma_ttcp="02.01.08"):
     if not leads:
         return {"success": False, "message": "Danh sách khách hàng trống."}
 
-    conn = get_db_connection()
+    conn, is_pymssql = get_db_connection()
     cursor = conn.cursor()
     now = datetime.now()
 
@@ -301,7 +332,7 @@ def import_bulk_khtn(user_name, leads, ma_dvcs="02", ma_ttcp="02.01.08"):
                 gio_tao = f"{h:02d}:{m:02d}"
 
             # Sinh Id_Kh
-            id_kh = generate_id_kh(cursor, user_name, ma_dvcs=ma_dvcs)
+            id_kh = generate_id_kh(cursor, user_name, ma_dvcs=ma_dvcs, is_pymssql=is_pymssql)
             if not id_kh:
                 errors.append({"index": idx, "name": c_name, "error": "Không thể sinh mã ID từ Cyber"})
                 continue
@@ -338,7 +369,8 @@ def import_bulk_khtn(user_name, leads, ma_dvcs="02", ma_ttcp="02.01.08"):
 
             lead_ttcp = (lead.get("businessLocation") or lead.get("maTtcp") or lead.get("ma_ttcp") or ma_ttcp or "02.01.08").strip()
 
-            sql_insert = """
+            ph = "%s" if is_pymssql else "?"
+            sql_insert = f"""
                 INSERT INTO dbo.CRQLKHTN (
                     Ma_Dvcs, Ngay_tao, Gio_Tao, Id_Kh, Ong_Ba,
                     Ngay_Sinh, NS_Xac_Dinh, Ngay_DKKH,
@@ -357,22 +389,22 @@ def import_bulk_khtn(user_name, leads, ma_dvcs="02", ma_ttcp="02.01.08"):
                     Noi_Cap_Cmt_Kh, Ngay_Cmt_Kh,
                     User_Name, Acti, Ma_TTCP, TK_Nh_Kh, Ten_Nh_Kh
                 ) VALUES (
-                    ?, ?, ?, ?, ?,
-                    '1900-01-01 00:00:00', '0', ?,
-                    ?, ?, ?, ?,
-                    ?, ?, ?, '',
+                    {ph}, {ph}, {ph}, {ph}, {ph},
+                    '1900-01-01 00:00:00', '0', {ph},
+                    {ph}, {ph}, {ph}, {ph},
+                    {ph}, {ph}, {ph}, '',
                     '', '', '', '',
                     '', '', 0, '',
                     '', '', '',
                     '', '', '',
                     '', '', '',
-                    ?, '0',
-                    '01', '02', '01', '01', ?,
+                    {ph}, '0',
+                    '01', '02', '01', '01', {ph},
                     '', '', '',
-                    ?, ?, ?, '01', '',
-                    ?, 0, 0, 0,
+                    {ph}, {ph}, {ph}, '01', '',
+                    {ph}, 0, 0, 0,
                     '', '1900-01-01 00:00:00',
-                    ?, 1, ?, '', ''
+                    {ph}, 1, {ph}, '', ''
                 )
             """
 
