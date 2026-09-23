@@ -75,6 +75,11 @@ from scripts.sync_thuan_an_allocations import (
     sync_cyber_ton_kho_to_supabase,
     sync_cyber_voucher_tickets_to_supabase
 )
+from scripts.cyber_crm_service import (
+    get_crm_metadata,
+    check_duplicates,
+    import_bulk_khtn
+)
 from scripts.m_invoice_service import process_single_vin, auto_fetch_upload_and_notify
 
 PORT = int(os.environ.get("PORT", 8080))
@@ -358,6 +363,30 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self._send_cors_headers()
                 self.end_headers()
                 self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/crm-metadata":
+            try:
+                qs = parse_qs(parsed.query)
+                force = (qs.get("force", ["false"])[0] or "").lower() == "true"
+                cached = get_from_cache("crm-metadata", force=force)
+                if cached:
+                    res = cached
+                else:
+                    res = get_crm_metadata()
+                    if res.get("success"):
+                        set_to_cache("crm-metadata", res)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -943,6 +972,71 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self._send_cors_headers()
                 self.end_headers()
                 self.wfile.write(json.dumps({"success": False, "status": "ERROR", "message": f"Lỗi xử lý M-Invoice: {str(e)}"}).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/crm-metadata":
+            try:
+                res = get_crm_metadata()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/crm-check-duplicates":
+            try:
+                content_len = int(self.headers.get("Content-Length", 0))
+                body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+                try:
+                    payload = json.loads(body_str) if body_str.strip() else {}
+                except Exception:
+                    payload = {}
+                phones = payload.get("phones", [])
+                res = check_duplicates(phones)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/crm-import-khtn":
+            try:
+                content_len = int(self.headers.get("Content-Length", 0))
+                body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+                try:
+                    payload = json.loads(body_str) if body_str.strip() else {}
+                except Exception:
+                    payload = {}
+                user_name = payload.get("userName") or payload.get("user_name")
+                leads = payload.get("leads", [])
+                ma_dvcs = payload.get("maDvcs", "02")
+                ma_ttcp = payload.get("maTtcp") or payload.get("ma_ttcp") or "02.01.08"
+                res = import_bulk_khtn(user_name, leads, ma_dvcs=ma_dvcs, ma_ttcp=ma_ttcp)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
             return
 
         self.send_response(404)

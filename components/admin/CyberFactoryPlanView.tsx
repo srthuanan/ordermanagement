@@ -26,7 +26,8 @@ import {
 import { CyberDnxPrintModal, CyberDnxPrintData } from './CyberDnxPrintModal';
 import { CyberTd4PrintModal } from './CyberTd4PrintModal';
 import { getTransferRequests, updateTransferRequestStatus, TransferRequestItem } from '../../services/api/transferService';
-import { supabase } from '../../services/supabaseClient';
+import { supabase, supabaseAdmin } from '../../services/supabaseClient';
+import { formatShortWarehouseName } from '../../utils/stringUtils';
 import { SearchableWarehouseSelect } from '../ui/SearchableWarehouseSelect';
 
 interface CyberPlanCarItem {
@@ -801,6 +802,17 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 setDnxVinInput('');
                 // Mở cửa sổ xem trước & in phiếu chuẩn CyberSoft ngay lập tức
                 setPrintTicketData(enrichedTicket);
+
+                // Tự động cập nhật vị trí mới vào bảng khoxe cho các số VIN trong phiếu DNX sang kho nhận
+                try {
+                    const toLoc = formatShortWarehouseName(dnxMaKhoNhan) || dnxMaKhoNhan;
+                    for (const v of rawVins) {
+                        const cleanVin = v.trim().toUpperCase();
+                        await supabaseAdmin.from('khoxe').update({ vi_tri: toLoc }).eq('vin', cleanVin);
+                    }
+                } catch (eKhoxe) {
+                    console.warn('[handleCreateDnxSubmit] Lỗi cập nhật vị trí khoxe:', eKhoxe);
+                }
 
                 // Nếu đang xử lý yêu cầu chuyển xe từ TVBH, hoặc có yêu cầu khớp VIN, cập nhật trạng thái completed kèm dữ liệu in phiếu
                 const matchingReqs = pendingTransferRequests.filter(r => 

@@ -17,8 +17,8 @@ function runPy(args, bodyData, res) {
 
     if (bodyData) {
         pyProcess.stdin.write(bodyData);
-        pyProcess.stdin.end();
     }
+    pyProcess.stdin.end();
 
     pyProcess.stdout.on('data', (data) => { stdout += data.toString(); });
     pyProcess.stderr.on('data', (data) => { stderr += data.toString(); });

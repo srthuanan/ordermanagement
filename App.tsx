@@ -10,6 +10,7 @@ import StockView from './components/StockView';
 import SoldCarsView from './components/SoldCarsView';
 import AdminView from './components/admin/AdminView';
 import PricingCalculatorIframeView from './components/PricingCalculatorIframeView';
+import CrmLeadImporterView from './components/crm/CrmLeadImporterView';
 const TestDriveForm = React.lazy(() => import('./components/testdrive/TestDriveForm'));
 const VirtualAssistant = React.lazy(() => import('./components/VirtualAssistant'));
 
@@ -415,7 +416,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             'stock': 'Kho Xe',
             'sold': 'Lịch Sử',
             'admin': 'Quản Trị',
-            'laithu': 'Lái Thử'
+            'laithu': 'Lái Thử',
+            'crm': 'Khách Hàng Tiềm Năng'
         };
 
         const title = baseTitles[activeView] || 'Order Management';
@@ -1035,6 +1037,15 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         </div>
                         <div hidden={activeView !== 'pricing'} className="h-full">
                             <PricingCalculatorIframeView />
+                        </div>
+                        <div hidden={activeView !== 'crm'} className="h-full">
+                            <CrmLeadImporterView
+                                currentUser={currentUser}
+                                currentUserName={currentUserName}
+                                userRole={userRole}
+                                isAdmin={isCurrentUserAdmin}
+                                showToast={showToast}
+                            />
                         </div>
                         <div hidden={activeView !== 'admin'} className="h-full">
                             {isCurrentUserAdmin &&

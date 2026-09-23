@@ -161,6 +161,7 @@ const Header: React.FC<HeaderProps> = ({
     const navItems = [
         { id: 'orders', label: 'Đơn Hàng', icon: 'fa-car-side' },
         ...(isStockEnabled || isCurrentUserAdmin ? [{ id: 'stock', label: 'Kho xe', icon: 'fa-warehouse' }] : []),
+        { id: 'crm', label: 'KHTN Cyber', icon: 'fa-user-plus' },
         { id: 'laithu', label: 'Lái Thử', icon: 'fa-gauge-high' },
         { id: 'pricing', label: 'Báo Giá', icon: 'fa-calculator' },
         { id: 'sold', label: 'Lịch Sử', icon: 'fa-receipt' },

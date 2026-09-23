@@ -42,12 +42,72 @@ serve(async (req) => {
       });
     }
 
-    const content = payload.content.toUpperCase();
-    const amount = payload.transferAmount;
+    const content = ((payload.content || payload.description || '') + '').toUpperCase();
+    const amount = Number(payload.transferAmount || 0);
 
     console.log(`Received payment: ${amount} VND. Content: ${content}`);
 
-    // Parse the content: (optional SEVQR) WEB T{month} {username}
+    // Initialize Supabase Admin client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Missing Supabase credentials");
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // CASE 1: Check if it's CRM Lead Import payment
+    // E.g., NAPCRM QUAN.ND 61K or SEVQR NAPCRM NGUYENVANNHA 61K
+    const crmMatch = content.match(/(?:SEVQR\s*)?(?:NAPCRM|CRM)\s*([A-Z0-9_.]+)(?:\s*(\d+)K?)?/i);
+    if (crmMatch) {
+      const rawUser = crmMatch[1];
+      const leadCount = crmMatch[2] ? parseInt(crmMatch[2]) : 61;
+      console.log(`Processing CRM lead payment for ${rawUser}, leadCount: ${leadCount}, amount: ${amount}`);
+
+      // Find pending order for this user (or create a paid order)
+      const { data: pendingOrders } = await supabase
+        .from('crm_lead_orders')
+        .select('*')
+        .eq('status', 'pending')
+        .ilike('ten_tvbh', `%${rawUser}%`)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (pendingOrders && pendingOrders.length > 0) {
+        const order = pendingOrders[0];
+        await supabase
+          .from('crm_lead_orders')
+          .update({
+            status: 'paid',
+            paid_at: new Date().toISOString(),
+            amount: amount,
+            sepay_transaction_id: String(payload.id || payload.referenceCode || '')
+          })
+          .eq('id', order.id);
+        console.log(`Updated pending CRM order ${order.id} to paid`);
+      } else {
+        // Insert a new paid order directly
+        await supabase
+          .from('crm_lead_orders')
+          .insert({
+            ten_tvbh: rawUser,
+            lead_count: leadCount,
+            amount: amount,
+            status: 'paid',
+            paid_at: new Date().toISOString(),
+            sepay_transaction_id: String(payload.id || payload.referenceCode || '')
+          });
+        console.log(`Created new paid CRM order for ${rawUser}`);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: 'CRM Lead Payment processed successfully' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // CASE 2: Parse the content: (optional SEVQR) WEB T{month} {username}
     // E.g., SEVQR WEB T5 NGUYENVANNHA
     const match = content.match(/(?:SEVQR\s*)?WEB\s*T(\d+)\s*([A-Z0-9_]+)/i);
 
@@ -60,16 +120,6 @@ serve(async (req) => {
 
     const month = parseInt(match[1]);
     const username = match[2];
-
-    // Initialize Supabase Admin client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-    
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error("Missing Supabase credentials");
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch all pending fees for the month
     const { data: pendingFees, error: fetchError } = await supabase

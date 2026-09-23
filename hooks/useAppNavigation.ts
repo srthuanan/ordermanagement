@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Order, AdminSubView } from '../types';
 
-export type ActiveView = 'orders' | 'stock' | 'sold' | 'admin' | 'laithu' | 'inquiry' | 'map' | 'pricing';
+export type ActiveView = 'orders' | 'stock' | 'sold' | 'admin' | 'laithu' | 'inquiry' | 'map' | 'pricing' | 'crm';
 
 export const useAppNavigation = () => {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);

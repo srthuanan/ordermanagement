@@ -29,7 +29,12 @@ SUPABASE_URL = os.environ.get(
     "VITE_SUPABASE_URL",
     "https://jwvgxqrkjlbewvpkvucj.supabase.co"
 )
-SUPABASE_KEY = os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY", "")
+SUPABASE_KEY = (
+    os.environ.get("VITE_SUPABASE_SERVICE_KEY") or 
+    os.environ.get("SUPABASE_SERVICE_KEY") or 
+    os.environ.get("SUPABASE_KEY") or 
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU"
+)
 HEADERS = {
     "apikey": SUPABASE_KEY,
     "Authorization": f"Bearer {SUPABASE_KEY}",
@@ -306,10 +311,30 @@ def fetch_plan_map(vins: list) -> dict:
 def clean_location_name(name: str) -> str:
     if not name:
         return "Đang vận tải"
+    CODE_MAP = {
+        'K83': 'Thuận An',
+        'K87': 'QL13 - HCM',
+        'K86': 'Q12 - HCM',
+        'K85': 'Dĩ An',
+        'KHCM.PVD': 'Phạm Văn Đồng',
+        'K106': 'Hà Huy Giáp',
+        'K91': 'OCP 2',
+        'K65': 'Bình Phước',
+        'K36': 'Thái Nguyên',
+        'K17': 'Cam Giá',
+        'K103': 'Lĩnh Nam',
+        'K101': 'Nguyễn Trãi',
+        'KTN.NM': 'Nhà máy SXLR',
+        'KTN.CK': 'Xưởng cơ khí',
+    }
+    raw_clean = str(name).strip()
+    if raw_clean in CODE_MAP:
+        return CODE_MAP[raw_clean]
+
     cleaned = re.sub(
         r'^(Kho xe ô tô Vinfast|Kho xe ô tô Viinfast|Kho xe ô tô|Kho xe SR|Kho xe|Ô tô Vinfast|Ô tô VinFast|Vinfast|VinFast|Showroom|SR|Kho)\s*[-:–—]?\s*',
         '',
-        name,
+        raw_clean,
         flags=re.I
     )
     cleaned = re.sub(r'^Minh Đạo\s*[-–—:]\s*', '', cleaned, flags=re.I)
@@ -342,6 +367,8 @@ def fetch_physical_locations_from_cyber(vins: list) -> dict:
     for i in range(0, len(vins), CHUNK_SIZE):
         chunk = vins[i:i + CHUNK_SIZE]
         vin_list_str = ','.join([repr(v) for v in chunk])
+        
+        # 1. Tra cứu sổ cái kho xe thực tế CT70BEX (các xe đang có tồn kho >= 1)
         sql = f"""
             WITH TonSK AS (
                 SELECT So_Khung, ma_kho, SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) AS Ton
@@ -373,9 +400,43 @@ def fetch_physical_locations_from_cyber(vins: list) -> dict:
             raw_ten = (r[2] or "").strip()
             results[vin] = {
                 "ma_kho": ma_kho,
-                "raw_kho": raw_ten,
-                "vi_tri": clean_location_name(raw_ten)
+                "raw_kho": raw_ten or ma_kho,
+                "vi_tri": clean_location_name(raw_ten or ma_kho)
             }
+
+        # 2. Đối với các xe chưa có tồn kho CT70BEX, kiểm tra phiếu điều chuyển xe gần nhất (CTDNX)
+        missing_vins = [v for v in chunk if v not in results]
+        if missing_vins:
+            missing_str = ','.join([repr(v) for v in missing_vins])
+            sql_dnx = f"""
+                WITH LatestDNX AS (
+                    SELECT 
+                        c.So_khung,
+                        ISNULL(c.ma_khoN_i, p.Ma_khoN) AS ma_kho_nhan,
+                        kn.Ten_kho AS Ten_kho_nhan,
+                        ROW_NUMBER() OVER(PARTITION BY c.So_khung ORDER BY p.ngay_ct DESC, p.stt_rec DESC) AS rn
+                    FROM CTDNX c WITH (NOLOCK)
+                    JOIN PHDNX p WITH (NOLOCK) ON c.stt_rec = p.stt_rec
+                    LEFT JOIN Dmkho kn WITH (NOLOCK) ON ISNULL(c.ma_khoN_i, p.Ma_khoN) = kn.Ma_kho
+                    WHERE c.So_khung IN ({missing_str})
+                )
+                SELECT So_khung, ma_kho_nhan, Ten_kho_nhan
+                FROM LatestDNX
+                WHERE rn = 1 AND ma_kho_nhan IS NOT NULL AND ma_kho_nhan <> ''
+            """
+            try:
+                c.execute(sql_dnx)
+                for r in c.fetchall():
+                    vin = r[0].strip().upper()
+                    ma_kho = (r[1] or "").strip()
+                    raw_ten = (r[2] or "").strip()
+                    results[vin] = {
+                        "ma_kho": ma_kho,
+                        "raw_kho": raw_ten or ma_kho,
+                        "vi_tri": clean_location_name(raw_ten or ma_kho)
+                    }
+            except Exception as e_dnx:
+                print(f"[fetch_physical_locations warning DNX fallback]: {e_dnx}", file=sys.stderr)
 
     conn.close()
     return results
@@ -406,7 +467,18 @@ def sync_khoxe_locations_from_cyber(target_vins: list = None, preview: bool = Fa
         vin = (c.get("vin") or "").strip().upper()
         curr_loc = (c.get("vi_tri") or "").strip()
         loc_info = cyber_locs.get(vin)
-        new_loc = loc_info["vi_tri"] if loc_info else "Đang vận tải"
+
+        if loc_info and loc_info.get("vi_tri"):
+            new_loc = loc_info["vi_tri"]
+        else:
+            # Nếu CyberSoft chưa có bản ghi tồn kho thực tế cho xe này (chưa nhập sổ hoặc mới tạo):
+            # Nếu xe ĐÃ CÓ vị trí hợp lệ trong kho xe (không rỗng và không phải Đang vận tải),
+            # GIỮ NGUYÊN vị trí hiện tại thay vì xóa đè thành "Đang vận tải"!
+            if curr_loc and curr_loc != "Đang vận tải":
+                new_loc = curr_loc
+            else:
+                new_loc = "Đang vận tải"
+
         is_changed = (curr_loc != new_loc)
 
         item = {
@@ -438,6 +510,8 @@ def sync_khoxe_locations_from_cyber(target_vins: list = None, preview: bool = Fa
             )
             if 200 <= up_res.status_code < 300:
                 updated_count += len(chunk)
+            else:
+                print(f"[Supabase sync locations error] HTTP {up_res.status_code}: {up_res.text[:200]}", file=sys.stderr)
 
     return {
         "success": True,
@@ -1542,73 +1616,6 @@ def delete_cyber_xep_xe(params: dict = {}) -> dict:
             "note": note,
             "msg": msg
         }
-
-def main():
-    parser = argparse.ArgumentParser(description="Sync Thuan An car allocations from CyberSoft to Supabase")
-    parser.add_argument("--from", dest="from_date", help="From date (YYYY-MM-DD)", default=None)
-    parser.add_argument("--to", dest="to_date", help="To date (YYYY-MM-DD)", default=None)
-    parser.add_argument("--preview", action="store_true", help="Preview without writing")
-    parser.add_argument("--sync-locations", action="store_true", help="Sync physical locations from CT70BEX into khoxe")
-    parser.add_argument("--plan-filter-options", action="store_true", help="Get distinct showrooms and colors for plan search")
-    parser.add_argument("--search-plan", action="store_true", help="Search factory delivery plan")
-    parser.add_argument("--ton-kho-report", action="store_true", help="Get Ton Kho Xe report from CyberSoft CP_BETONXE")
-    parser.add_argument("--xep-xe-contracts", action="store_true", help="Get contracts list from CP_BeXepXe")
-    parser.add_argument("--xep-xe-candidates", action="store_true", help="Get candidate cars for a contract from CP_BeXepXe_SK")
-    parser.add_argument("--xep-xe-save", action="store_true", help="Assign vehicle to contract via CP_BeXepXe_SAVE")
-    parser.add_argument("--xep-xe-delete", action="store_true", help="Unassign vehicle from contract via CP_BeXepXe_DELETE")
-    parser.add_argument("--model", help="Car model filter for options", default="")
-    parser.add_argument("--params", help="JSON string of search parameters", default=None)
-    args = parser.parse_args()
-
-    if args.plan_filter_options:
-        res = get_cyber_plan_filter_options(model=args.model or "")
-        print(json.dumps(res, ensure_ascii=False))
-        return
-
-    def get_input_params():
-        if args.params and args.params.strip() != "-":
-            try:
-                return json.loads(args.params)
-            except Exception:
-                pass
-        if not sys.stdin.isatty():
-            try:
-                raw = sys.stdin.buffer.read()
-                if raw:
-                    for enc in ['utf-8-sig', 'utf-8', 'utf-16', 'utf-16-le', 'cp1258']:
-                        try:
-                            text = raw.decode(enc).strip()
-                            if text.startswith('{') or text.startswith('['):
-                                return json.loads(text)
-                        except Exception:
-                            continue
-            except Exception:
-                pass
-            try:
-                stdin_data = sys.stdin.read().strip()
-                if stdin_data:
-                    return json.loads(stdin_data)
-            except Exception:
-                pass
-        return {}
-
-    if args.sync_locations:
-        p = get_input_params()
-        res = sync_khoxe_locations_from_cyber(target_vins=p.get("vins"), preview=args.preview)
-        print(json.dumps(res, ensure_ascii=False))
-        return
-
-    if args.ton_kho_report:
-        p = get_input_params()
-        res = get_cyber_ton_kho_report(p)
-        print(json.dumps(res, ensure_ascii=False))
-        return
-
-    if args.xep_xe_contracts:
-        p = get_input_params()
-        res = get_cyber_xep_xe_contracts(p)
-        print(json.dumps(res, ensure_ascii=False))
-        return
 
 def create_cyber_dnx_ticket(params: dict = {}) -> dict:
     vins = params.get("vins") or []

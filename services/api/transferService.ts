@@ -1,6 +1,7 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
 import { createNotification } from './notificationService';
 import { getStorageItem } from './baseService';
+import { formatShortWarehouseName } from '../../utils/stringUtils';
 
 export interface TransferRequestItem {
     id: string;
@@ -254,6 +255,21 @@ export const syncCyberDnxToInteraction = async (payload: {
                 })
                 .eq('id', rowId);
 
+            // Tự động cập nhật vị trí mới vào bảng khoxe cho xe được lập phiếu DNX
+            if (payload.vin) {
+                const cleanVin = String(payload.vin).trim().toUpperCase();
+                const targetWarehouse = (metadata.to_warehouse_name || metadata.to_warehouse || payload.toWarehouseName || payload.toWarehouse || 'Thuận An').trim();
+                const cleanedLoc = formatShortWarehouseName(targetWarehouse) || targetWarehouse;
+                try {
+                    await supabaseAdmin
+                        .from('khoxe')
+                        .update({ vi_tri: cleanedLoc })
+                        .eq('vin', cleanVin);
+                } catch (errKhoxe) {
+                    console.warn('[syncCyberDnxToInteraction] Lỗi cập nhật vị trí khoxe:', errKhoxe);
+                }
+            }
+
             return {
                 id: rowId,
                 createdAt: existing[0].created_at,
@@ -290,6 +306,21 @@ export const syncCyberDnxToInteraction = async (payload: {
             }]).select().single();
 
             if (insErr) throw insErr;
+
+            // Tự động cập nhật vị trí mới vào bảng khoxe cho xe được lập phiếu DNX
+            if (payload.vin) {
+                const cleanVin = String(payload.vin).trim().toUpperCase();
+                const targetWarehouse = (metadata.to_warehouse_name || metadata.to_warehouse || payload.toWarehouseName || payload.toWarehouse || 'Thuận An').trim();
+                const cleanedLoc = formatShortWarehouseName(targetWarehouse) || targetWarehouse;
+                try {
+                    await supabaseAdmin
+                        .from('khoxe')
+                        .update({ vi_tri: cleanedLoc })
+                        .eq('vin', cleanVin);
+                } catch (errKhoxe) {
+                    console.warn('[syncCyberDnxToInteraction] Lỗi cập nhật vị trí khoxe:', errKhoxe);
+                }
+            }
 
             return {
                 id: inserted.id,
@@ -428,6 +459,21 @@ export const updateTransferRequestStatus = async (
             .eq('id', id);
 
         if (error) throw error;
+
+        // Tự động cập nhật vị trí mới vào bảng khoxe khi yêu cầu chuyển xe hoàn tất (status === 'completed')
+        if (status === 'completed' && currentMetadata.vin) {
+            const cleanVin = String(currentMetadata.vin).trim().toUpperCase();
+            const targetWarehouse = (currentMetadata.to_warehouse_name || currentMetadata.to_warehouse || 'Thuận An').trim();
+            const cleanedLoc = formatShortWarehouseName(targetWarehouse) || targetWarehouse;
+            try {
+                await supabaseAdmin
+                    .from('khoxe')
+                    .update({ vi_tri: cleanedLoc })
+                    .eq('vin', cleanVin);
+            } catch (errKhoxe) {
+                console.warn('[updateTransferRequestStatus] Lỗi cập nhật vị trí khoxe:', errKhoxe);
+            }
+        }
 
         // Thông báo
         const tvbhName = currentMetadata.consultant_name || existing.actor_name;

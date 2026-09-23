@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createCyberDnxTicket, lookupCyberVinWarehouse, CyberDnxCreateResult } from '../../services/api/stockService';
+import { supabaseAdmin } from '../../services/supabaseClient';
+import { formatShortWarehouseName } from '../../utils/stringUtils';
+import { SearchableWarehouseSelect } from '../ui/SearchableWarehouseSelect';
 
 interface CreateCyberDnxModalProps {
     isOpen: boolean;
@@ -8,8 +11,6 @@ interface CreateCyberDnxModalProps {
     initialCustomerName?: string;
     onSuccess?: (result: CyberDnxCreateResult) => void;
 }
-
-import { SearchableWarehouseSelect } from '../ui/SearchableWarehouseSelect';
 
 export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
     isOpen,
@@ -121,6 +122,16 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
 
             if (res.success) {
                 setResultData(res);
+                // Tự động cập nhật vị trí mới vào bảng khoxe cho các số VIN trong phiếu DNX sang kho nhận
+                try {
+                    const toLoc = formatShortWarehouseName(maKhoNhan) || maKhoNhan;
+                    for (const v of vins) {
+                        const cleanVin = v.trim().toUpperCase();
+                        await supabaseAdmin.from('khoxe').update({ vi_tri: toLoc }).eq('vin', cleanVin);
+                    }
+                } catch (eKhoxe) {
+                    console.warn('[CreateCyberDnxModal] Lỗi cập nhật vị trí khoxe:', eKhoxe);
+                }
                 if (onSuccess) onSuccess(res);
             } else {
                 setErrorMsg(res.error || 'Không thể ghi nhận giấy chuyển lên Cyber. Vui lòng thử lại.');

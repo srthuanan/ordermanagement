@@ -14,3 +14,4 @@ export * from './vehicleConfigService';
 export * from './chatService';
 export * from './swapService';
 export * from './mInvoiceService';
+export * from './crmService';

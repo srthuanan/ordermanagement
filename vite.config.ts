@@ -40,8 +40,8 @@ function cyberSyncPlugin(): Plugin {
 
     if (inputBody) {
       py.stdin.write(inputBody);
-      py.stdin.end();
     }
+    py.stdin.end();
 
     py.stdout.on('data', d => { stdout += d.toString(); });
     py.stderr.on('data', d => { stderr += d.toString(); });
@@ -383,6 +383,38 @@ function cyberSyncPlugin(): Plugin {
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
           runPy([minvoiceScript], body, res);
+        });
+      });
+
+      const crmScript = path.resolve(__dirname, 'scripts', 'cyber_crm_service.py');
+
+      server.middlewares.use('/api/cyber/crm-metadata', (req, res, next) => {
+        const parsedUrl = new URL(req.url || '', 'http://localhost');
+        const isForce = parsedUrl.searchParams.get('force') === 'true';
+        runPy([crmScript, '--metadata'], '', res, 'crm-metadata', isForce);
+      });
+
+      server.middlewares.use('/api/cyber/crm-check-duplicates', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          let bodyObj: any = {};
+          try { bodyObj = JSON.parse(body || '{}'); } catch (_) {}
+          bodyObj.action = 'check_duplicates';
+          runPy([crmScript], JSON.stringify(bodyObj), res);
+        });
+      });
+
+      server.middlewares.use('/api/cyber/crm-import-khtn', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          let bodyObj: any = {};
+          try { bodyObj = JSON.parse(body || '{}'); } catch (_) {}
+          bodyObj.action = 'import_khtn';
+          runPy([crmScript], JSON.stringify(bodyObj), res);
         });
       });
     }
