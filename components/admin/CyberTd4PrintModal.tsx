@@ -34,13 +34,15 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
 
         const cleanStt = data.stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_') + '_sig';
         const storagePdfUrl = getCyberStoragePdfUrl(cleanStt);
+        const cleanSoCt = data.so_ct ? data.so_ct.replace(/[^a-zA-Z0-9_-]/g, '_') + '_sig' : null;
+        const storagePdfUrlBySoCt = cleanSoCt ? getCyberStoragePdfUrl(cleanSoCt) : null;
 
         let isMounted = true;
         const loadOfficialPdf = async () => {
             setIsExportingPdf(true);
             setPdfError(null);
 
-            // Bước 1: Kiểm tra xem file đã có sẵn trên Supabase Storage Cloud chưa
+            // Bước 1: Kiểm tra xem file đã có sẵn trên Supabase Storage Cloud chưa (theo stt_rec hoặc so_ct)
             try {
                 const checkRes = await fetch(storagePdfUrl, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
                 if (checkRes.ok && isMounted) {
@@ -50,10 +52,22 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
                 }
             } catch (_) {}
 
-            // Bước 2: Nếu chưa có trên Cloud, gọi exportCyberPdf (từ máy nội bộ xuất và tự động upload lên Supabase Storage)
+            if (storagePdfUrlBySoCt) {
+                try {
+                    const checkRes2 = await fetch(storagePdfUrlBySoCt, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
+                    if (checkRes2.ok && isMounted) {
+                        setPdfUrl(`${storagePdfUrlBySoCt}?t=${Date.now()}`);
+                        setIsExportingPdf(false);
+                        return;
+                    }
+                } catch (_) {}
+            }
+
+            // Bước 2: Nếu chưa có trên Cloud, gọi exportCyberPdf (truyền cả stt_rec và so_ct để backend tự chữa lỗi nếu lệch)
             try {
                 const res = await exportCyberPdf({
                     stt_rec: data.stt_rec,
+                    so_ct: data.so_ct,
                     voucher_type: 'TD4',
                     paper_size: paperSize,
                     user_name: data.nvkd || '02.NHANPT'

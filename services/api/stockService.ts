@@ -2018,6 +2018,7 @@ export const checkCyberContractStatus = async (params: {
 
 export interface ExportCyberPdfParams {
     stt_rec: string;
+    so_ct?: string;
     voucher_type?: 'TD4' | 'DNX';
     paper_size?: 'A4' | 'A5';
     user_name?: string;
@@ -2037,6 +2038,7 @@ export const exportCyberPdf = async (params: ExportCyberPdfParams): Promise<Expo
     try {
         const queryParams = new URLSearchParams();
         queryParams.set('stt_rec', params.stt_rec);
+        if (params.so_ct) queryParams.set('so_ct', params.so_ct);
         if (params.voucher_type) queryParams.set('voucher_type', params.voucher_type);
         if (params.paper_size) queryParams.set('paper_size', params.paper_size);
         if (params.user_name) queryParams.set('user_name', params.user_name);

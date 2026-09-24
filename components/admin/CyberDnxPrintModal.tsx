@@ -68,13 +68,15 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
         const sigSuffix = showSignatures ? '_sig' : '_nosig';
         const cleanStt = data.stt_rec.replace(/[^a-zA-Z0-9_-]/g, '_') + sigSuffix;
         const storagePdfUrl = getCyberStoragePdfUrl(cleanStt);
+        const cleanSoCt = data.so_ct ? data.so_ct.replace(/[^a-zA-Z0-9_-]/g, '_') + sigSuffix : null;
+        const storagePdfUrlBySoCt = cleanSoCt ? getCyberStoragePdfUrl(cleanSoCt) : null;
 
         let isMounted = true;
         const loadOfficialPdf = async () => {
             setIsCyberLoading(true);
             setCyberPdfError(null);
 
-            // Bước 1: Kiểm tra xem file đã có sẵn trên Supabase Storage Cloud chưa
+            // Bước 1: Kiểm tra xem file đã có sẵn trên Supabase Storage Cloud chưa (theo stt_rec hoặc theo so_ct)
             try {
                 const checkRes = await fetch(storagePdfUrl, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
                 if (checkRes.ok && isMounted) {
@@ -84,10 +86,22 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                 }
             } catch (_) {}
 
-            // Bước 2: Nếu chưa có trên Cloud, gọi exportCyberPdf (từ máy nội bộ xuất và tự động upload lên Supabase Storage)
+            if (storagePdfUrlBySoCt) {
+                try {
+                    const checkRes2 = await fetch(storagePdfUrlBySoCt, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
+                    if (checkRes2.ok && isMounted) {
+                        setCyberPdfUrl(`${storagePdfUrlBySoCt}?t=${Date.now()}`);
+                        setIsCyberLoading(false);
+                        return;
+                    }
+                } catch (_) {}
+            }
+
+            // Bước 2: Nếu chưa có trên Cloud, gọi exportCyberPdf (truyền cả stt_rec và so_ct để backend tự động chữa lỗi nếu lệch mã)
             try {
                 const res = await exportCyberPdf({
                     stt_rec: data.stt_rec!,
+                    so_ct: data.so_ct,
                     voucher_type: 'DNX',
                     paper_size: 'A4',
                     user_name: data.user_name || '02.NHANPT',

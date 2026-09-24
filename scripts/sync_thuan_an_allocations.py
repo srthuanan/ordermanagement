@@ -1854,18 +1854,29 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             else:
                 so_ct = f"{prefix}0001"
 
-        # 3. Sinh stt_rec duy nhất: A + 9 số + DNX (13 ký tự chuẩn CyberSoft)
-        cursor.execute("SELECT stt_rec FROM PHDNX WHERE stt_rec LIKE 'A%DNX' AND LEN(stt_rec) = 13 ORDER BY stt_rec DESC")
-        r_stt = cursor.fetchone()
-        max_stt = (r_stt.get('stt_rec') if is_pymssql else r_stt[0]) if r_stt else None
-        if max_stt and len(str(max_stt)) == 13:
-            try:
-                num = int(str(max_stt)[1:10]) + 1
-                stt_rec = f"A{num:09d}DNX"
-            except Exception:
-                stt_rec = f"A{int(datetime.now().timestamp()):09d}"[:10] + "DNX"
-        else:
-            stt_rec = "A0000000251DNX"
+# 3. Sinh stt_rec duy nhất: Sử dụng Stored Procedure gốc của CyberSoft CP_SysGetSttRec
+        stt_rec = ""
+        try:
+            cursor.execute("EXEC CP_SysGetSttRec 'DNX'")
+            r_stt_sp = cursor.fetchone()
+            if r_stt_sp:
+                stt_rec = (r_stt_sp.get('Stt_Rec') if is_pymssql else r_stt_sp[0]) or ""
+                stt_rec = str(stt_rec).strip()
+        except Exception as e_sp:
+            print(f"[Warning] CP_SysGetSttRec failed: {e_sp}", file=sys.stderr)
+
+        if not stt_rec or len(stt_rec) != 13:
+            cursor.execute("SELECT stt_rec FROM PHDNX WHERE stt_rec LIKE 'A%DNX' AND LEN(stt_rec) = 13 ORDER BY stt_rec DESC")
+            r_stt = cursor.fetchone()
+            max_stt = (r_stt.get('stt_rec') if is_pymssql else r_stt[0]) if r_stt else None
+            if max_stt and len(str(max_stt)) == 13:
+                try:
+                    num = int(str(max_stt)[1:10]) + 1
+                    stt_rec = f"A{num:09d}DNX"
+                except Exception:
+                    stt_rec = f"A{int(datetime.now().timestamp()):09d}"[:10] + "DNX"
+            else:
+                stt_rec = "A0000000251DNX"
 
         # 4. Tra cứu thông tin từng xe trong CT70BEX / DMKX để chèn vào CTDNX
         cars_detail = []
@@ -1979,6 +1990,17 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             conn.commit()
         except Exception:
             pass
+
+        # 7. HẬU KIỂM BẮT BUỘC: Kiểm tra lại xem bản ghi đã thực sự tồn tại trong CSDL chưa
+        cursor.execute(f"SELECT TOP 1 stt_rec, so_ct FROM PHDNX WITH (NOLOCK) WHERE stt_rec = {ph} AND so_ct = {ph}", (stt_rec, so_ct))
+        verified_ticket = cursor.fetchone()
+        if not verified_ticket:
+            conn.close()
+            return {
+                "success": False,
+                "error": f"Lỗi xác thực hệ thống: Phiếu {so_ct} ({stt_rec}) chưa được ghi nhận vào CyberSoft SQL Server. Vui lòng thử lại!"
+            }
+
         conn.close()
 
         # Tự động xuất và tải sẵn cả 2 bản PDF (có chữ ký & không chữ ký) lên Supabase Storage trong nền
@@ -3461,7 +3483,7 @@ def cleanup_old_cyber_pdfs_from_supabase(max_days=30):
         return {"success": False, "error": str(e)}
 
 
-def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT", include_signatures="true"):
+def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT", include_signatures="true", so_ct=None):
     import subprocess
     import os
     import re
@@ -3473,8 +3495,31 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ps_path = os.path.join(script_dir, "render_cyber_pdf.ps1")
     
+    # 0. Tự động kiểm tra và chữa lỗi stt_rec nếu có so_ct
+    if so_ct and str(so_ct).strip():
+        try:
+            import pymssql
+            conn_heal = pymssql.connect(
+                server='SQLVanDao.Cybersoft.com.vn', port=7521, user='cyber_vandao',
+                password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+                database='CyberAppGolden_VanDao', timeout=8, appname='CyberAppGolden', autocommit=True
+            )
+            cur_h = conn_heal.cursor(as_dict=True)
+            tbl = "PHDNX" if str(voucher_type).upper() == "DNX" else "PHTD"
+            cur_h.execute(f"SELECT TOP 1 stt_rec FROM {tbl} WITH (NOLOCK) WHERE so_ct = %s ORDER BY ngay_ct DESC", (str(so_ct).strip(),))
+            r_heal = cur_h.fetchone()
+            conn_heal.close()
+            if r_heal and r_heal.get('stt_rec'):
+                correct_stt = str(r_heal['stt_rec']).strip()
+                if correct_stt and correct_stt != str(stt_rec).strip():
+                    print(f"[Self-Healing] Tự động sửa stt_rec từ '{stt_rec}' sang '{correct_stt}' theo số chứng từ {so_ct}", file=sys.stderr)
+                    stt_rec = correct_stt
+        except Exception as e_h:
+            print(f"[Self-Healing Warning]: {e_h}", file=sys.stderr)
+
     sig_suffix = "_sig" if str(include_signatures).lower() in ["true", "1"] else "_nosig"
     clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(stt_rec)) + sig_suffix
+    clean_so_ct = (re.sub(r'[^a-zA-Z0-9_\-]', '_', str(so_ct)) + sig_suffix) if so_ct else None
 
     # 1. Kiểm tra xem file đã có sẵn trên Supabase Storage Cloud chưa
     supabase_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co").strip().rstrip('/')
@@ -3532,6 +3577,8 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
 
             # Tự động đẩy file lên Supabase Storage (đám mây) để xem được từ GitHub Pages & Mobile
             storage_url = upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_stt}.pdf")
+            if clean_so_ct and clean_so_ct != clean_stt:
+                upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_so_ct}.pdf")
 
             return {
                 "success": True,

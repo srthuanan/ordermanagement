@@ -229,7 +229,8 @@ class DMSErrorFixerApp:
             qlog(f"   - Contact liên kết: {contact_id}")
             qlog(f"   - Opportunity liên kết: {opp_id}")
 
-            # 2. Xử lý Account nếu bị Inactive
+            # 2. Xử lý Account nếu bị Inactive & Tự động tìm Contact nếu Quote bị thiếu Contact
+            primary_contact_from_acc = None
             if account_id:
                 acc_url = f"{BASE_API_URL}/accounts({account_id})"
                 r_acc = requests.get(acc_url, headers=headers)
@@ -238,6 +239,7 @@ class DMSErrorFixerApp:
                     state = acc_data.get('statecode')
                     status = acc_data.get('statuscode')
                     name = acc_data.get('name')
+                    primary_contact_from_acc = acc_data.get('_primarycontactid_value')
                     qlog(f"📋 Trạng thái Account '{name}': statecode={state}, statuscode={status}")
                     
                     if state != 0:
@@ -249,27 +251,104 @@ class DMSErrorFixerApp:
                         else:
                             qlog(f"❌ Không thể kích hoạt Account: {r_act.status_code} - {r_act.text[:200]}")
 
+            # Nếu Báo giá chưa có Người liên hệ (Contact ID == None), tự động tìm từ Account hoặc Contact theo Parent Account
+            if not contact_id:
+                if primary_contact_from_acc:
+                    contact_id = primary_contact_from_acc
+                    qlog(f"🔍 Phát hiện Người liên hệ từ Account: {contact_id}")
+                elif account_id:
+                    r_cts = requests.get(f"{BASE_API_URL}/contacts?$filter=_parentcustomerid_value eq {account_id}&$top=1", headers=headers)
+                    if r_cts.status_code == 200 and r_cts.json().get('value'):
+                        contact_id = r_cts.json()['value'][0]['contactid']
+                        qlog(f"🔍 Tìm thấy Người liên hệ liên kết: {contact_id}")
+
+                if contact_id:
+                    qlog(f"🛠️ Đang tự động gán Người liên hệ vào Báo giá {quote_code}...")
+                    r_bind_q = requests.patch(f"{BASE_API_URL}/xts_newvehiclesalesquotes({quote_id})", headers=headers, json={
+                        "xts_potentialcontactid@odata.bind": f"/contacts({contact_id})"
+                    })
+                    qlog(f"   - Kết quả gán Contact vào Quote: {r_bind_q.status_code} (204 = Chuẩn)")
+
             # 3. Đồng bộ Navigation Links (Primary Contact & Parent Customer)
             if account_id and contact_id:
                 qlog("🛠️ Đang đồng bộ liên kết Khách hàng (Account <-> Contact)...")
-                # Bind Account primarycontactid
                 r1 = requests.patch(f"{BASE_API_URL}/accounts({account_id})", headers=headers, json={
                     "primarycontactid@odata.bind": f"/contacts({contact_id})"
                 })
-                # Bind Contact parentcustomerid_account
                 r2 = requests.patch(f"{BASE_API_URL}/contacts({contact_id})", headers=headers, json={
                     "parentcustomerid_account@odata.bind": f"/accounts({account_id})"
                 })
                 qlog(f"   - Kết quả đồng bộ Contact/Account: {r1.status_code}/{r2.status_code} (204 = Chuẩn)")
 
-            # 4. Đồng bộ Opportunity
+            # 4. Đồng bộ Opportunity (cả Account và Contact)
             if opp_id and account_id:
                 qlog("🛠️ Đang đồng bộ Opportunity liên kết...")
-                r3 = requests.patch(f"{BASE_API_URL}/opportunities({opp_id})", headers=headers, json={
+                opp_payload = {
                     "customerid_account@odata.bind": f"/accounts({account_id})",
                     "parentaccountid@odata.bind": f"/accounts({account_id})"
-                })
-                qlog(f"   - Kết quả đồng bộ Opportunity: {r3.status_code}")
+                }
+                if contact_id:
+                    opp_payload["parentcontactid@odata.bind"] = f"/contacts({contact_id})"
+                r3 = requests.patch(f"{BASE_API_URL}/opportunities({opp_id})", headers=headers, json=opp_payload)
+                qlog(f"   - Kết quả đồng bộ Opportunity: {r3.status_code} (204 = Chuẩn)")
+
+            # 5. Kiểm tra phân quyền Lead gốc (Tránh lỗi ReadAccess chéo Showroom khi Tạo Thành SO)
+            originating_lead_id = None
+            if account_id and acc_data:
+                originating_lead_id = acc_data.get('_originatingleadid_value')
+
+            if originating_lead_id:
+                qlog(f"🔍 Kiểm tra quyền đọc hồ sơ Lead gốc ({originating_lead_id[:8]}...)...")
+                r_lead_chk = requests.get(f"{BASE_API_URL}/leads({originating_lead_id})?$select=fullname", headers=headers)
+                if r_lead_chk.status_code == 200:
+                    qlog("   - Quyền đọc Lead gốc: ✅ HỢP LỆ (Đã có đầy đủ quyền)")
+                elif r_lead_chk.status_code == 403:
+                    qlog("⚠️ PHÁT HIỆN LỖI PHÂN QUYỀN CHÉO ĐẠI LÝ (403 ReadAccess)!")
+                    qlog("   Lead gốc thuộc Showroom khác -> Sẽ gây lỗi chặn 'Tạo Thành SO'!")
+                    qlog("🛠️ Đang tự động dò tìm tài khoản chủ sở hữu để cấp quyền (GrantAccess)...")
+
+                    r_who = requests.get(f"{BASE_API_URL}/WhoAmI", headers=headers)
+                    current_user_id = r_who.json().get('UserId') if r_who.status_code == 200 else None
+
+                    granted = False
+                    if current_user_id:
+                        for other_dealer in self.dealers:
+                            o_code = other_dealer.get('dealer_code')
+                            if o_code == self.current_dealer.get('dealer_code'):
+                                continue
+                            o_headers = {
+                                "Cookie": other_dealer.get('cookie', ''),
+                                "OData-MaxVersion": "4.0",
+                                "OData-Version": "4.0",
+                                "Accept": "application/json",
+                                "Content-Type": "application/json; charset=utf-8"
+                            }
+                            r_chk_o = requests.get(f"{BASE_API_URL}/leads({originating_lead_id})?$select=fullname", headers=o_headers)
+                            if r_chk_o.status_code == 200:
+                                qlog(f"   - Tìm thấy Đại lý sở hữu Lead: {o_code}! Đang thực hiện GrantAccess...")
+                                payload_grant = {
+                                    "Target": {
+                                        "leadid": originating_lead_id,
+                                        "@odata.type": "Microsoft.Dynamics.CRM.lead"
+                                    },
+                                    "PrincipalAccess": {
+                                        "Principal": {
+                                            "systemuserid": current_user_id,
+                                            "@odata.type": "Microsoft.Dynamics.CRM.systemuser"
+                                        },
+                                        "AccessMask": "ReadAccess,WriteAccess,AppendAccess,AppendToAccess,ShareAccess"
+                                    }
+                                }
+                                r_g = requests.post(f"{BASE_API_URL}/GrantAccess", headers=o_headers, json=payload_grant)
+                                if r_g.status_code in [200, 204]:
+                                    qlog(f"   ✅ ĐÃ CẤP QUYỀN ĐỌC LEAD CHO {self.current_dealer.get('dealer_code')} THÀNH CÔNG!", "green")
+                                    granted = True
+                                    break
+                                else:
+                                    qlog(f"   ❌ GrantAccess thất bại: HTTP {r_g.status_code}")
+
+                    if not granted:
+                        qlog("   ⚠️ Chưa thể tự động chia sẻ quyền Lead qua các tài khoản hiện có trong cấu hình.", "yellow")
 
             qlog("\n🎉 HOÀN TẤT QUÁ TRÌNH SỬA LỖI!")
             qlog("👉 Vui lòng nhấn F5 (Tải lại) trang Báo giá trên trình duyệt DMS và thực hiện Lưu / Tạo Thành SO.")

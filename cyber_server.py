@@ -234,12 +234,13 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             try:
                 qs = parse_qs(parsed.query)
                 stt_rec = (qs.get("stt_rec", [""])[0] or "").strip()
+                so_ct = (qs.get("so_ct", [""])[0] or "").strip()
                 voucher_type = (qs.get("voucher_type", ["TD4"])[0] or "TD4").strip()
                 paper_size = (qs.get("paper_size", ["A4"])[0] or "A4").strip()
                 user_name = (qs.get("user_name", ["02.NHANPT"])[0] or "02.NHANPT").strip()
                 include_signatures = (qs.get("include_signatures", ["true"])[0] or "true").strip()
 
-                result = export_cyber_pdf_via_ps(stt_rec, voucher_type, paper_size, user_name, include_signatures)
+                result = export_cyber_pdf_via_ps(stt_rec, voucher_type, paper_size, user_name, include_signatures, so_ct=so_ct)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
