@@ -2054,7 +2054,14 @@ export const exportCyberPdf = async (params: ExportCyberPdfParams): Promise<Expo
                 });
                 const text = await res.text();
                 let json: any = null;
-                try { json = JSON.parse(text); } catch (_) {}
+                try {
+                    json = JSON.parse(text);
+                } catch (_) {
+                    const match = text.match(/\{[\s\S]*\}/);
+                    if (match) {
+                        try { json = JSON.parse(match[0]); } catch (_) {}
+                    }
+                }
 
                 if (res.ok && json && json.success) {
                     if (json.pdf_url && json.pdf_url.startsWith('/')) {
@@ -2066,6 +2073,9 @@ export const exportCyberPdf = async (params: ExportCyberPdfParams): Promise<Expo
                     return json;
                 } else {
                     lastErrorMsg = (json && json.error) || (text && !text.startsWith('<') ? text : `HTTP ${res.status}`);
+                    if (lastErrorMsg.includes('powershell') || lastErrorMsg.includes('Errno 2') || lastErrorMsg.includes('BaseHTTP')) {
+                        lastErrorMsg = 'Phiếu này chưa được lưu trên hệ thống đám mây. Vui lòng mở xem phiếu trên máy tính văn phòng một lần để lưu tự động lên hệ thống.';
+                    }
                 }
             } catch (err: any) {
                 lastErrorMsg = err.message || '';
@@ -2151,5 +2161,46 @@ export const prewarmTd4Pdfs = (tickets: CyberVoucherTicketItem[]): void => {
 
     // Bắt đầu sau 3 giây để tránh tranh tài nguyên khi trang vừa load
     setTimeout(processNext, 3000);
+};
+
+export const prewarmDnxPdfs = (tickets: Array<{ stt_rec?: string; user_name?: string }>): void => {
+    const isLocal = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1' ||
+        window.location.port === '5173'
+    );
+    if (!isLocal) return;
+
+    const dnxTickets = tickets.filter(t => t.stt_rec);
+    if (!dnxTickets.length) return;
+
+    const queue = [...dnxTickets];
+    let running = false;
+
+    const processNext = async () => {
+        if (running || !queue.length) return;
+        running = true;
+        const ticket = queue.shift()!;
+        try {
+            const cleanStt = (ticket.stt_rec || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+            const storageUrl = getCyberStoragePdfUrl(cleanStt + '_sig');
+            const check = await fetch(storageUrl, { method: 'HEAD' });
+            if (!check.ok) {
+                exportCyberPdf({
+                    stt_rec: ticket.stt_rec!,
+                    voucher_type: 'DNX',
+                    paper_size: 'A4',
+                    user_name: ticket.user_name || '02.NHANPT',
+                    include_signatures: true
+                }).catch(() => {});
+            }
+        } catch (_) {}
+        running = false;
+        if (queue.length > 0) {
+            setTimeout(processNext, 600);
+        }
+    };
+
+    setTimeout(processNext, 2000);
 };
 

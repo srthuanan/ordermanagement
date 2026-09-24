@@ -20,6 +20,7 @@ import {
     CyberXepXeCandidate,
     CyberXepXeFilterParams,
     prewarmTd4Pdfs,
+    prewarmDnxPdfs,
     triggerCyberFullSync,
     triggerCyberTonKhoSync
 } from '../../services/api/stockService';
@@ -345,6 +346,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             });
             if (res && res.success && Array.isArray(res.data)) {
                 setRecentDnxTickets(res.data);
+                prewarmDnxPdfs(res.data);
             }
         } catch (err) {
             console.error("Lỗi tải danh sách phiếu DNX gần nhất:", err);

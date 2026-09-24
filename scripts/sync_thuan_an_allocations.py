@@ -3465,14 +3465,41 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
     import re
     import tempfile
     import base64
+    import sys
+    import requests
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ps_path = os.path.join(script_dir, "render_cyber_pdf.ps1")
     
     sig_suffix = "_sig" if str(include_signatures).lower() in ["true", "1"] else "_nosig"
     clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(stt_rec)) + sig_suffix
+
+    # 1. Kiểm tra xem file đã có sẵn trên Supabase Storage Cloud chưa
+    supabase_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co").strip().rstrip('/')
+    bucket = "yeucauxhd-files"
+    public_url = f"{supabase_url}/storage/v1/object/public/{bucket}/cyber_pdfs/{clean_stt}.pdf"
+
+    try:
+        head_res = requests.head(public_url, timeout=5)
+        if head_res.status_code == 200:
+            return {
+                "success": True,
+                "pdf_url": public_url,
+                "stt_rec": stt_rec,
+                "voucher_type": voucher_type,
+                "from_storage": True
+            }
+    except Exception:
+        pass
+
+    # 2. Nếu đang chạy trên Linux (Cloud/Render):
+    if sys.platform != "win32":
+        return {
+            "success": False,
+            "error": "Phiếu này chưa được lưu trên hệ thống đám mây. Vui lòng mở xem phiếu trên máy tính văn phòng một lần để lưu tự động lên hệ thống."
+        }
     
-    # Sử dụng thư mục tạm của hệ điều hành, không ghi vào thư mục dự án
+    # 3. Sử dụng thư mục tạm của hệ điều hành, không ghi vào thư mục dự án
     temp_dir = tempfile.gettempdir()
     out_file = os.path.join(temp_dir, f"cyber_preview_{clean_stt}_{os.getpid()}.pdf")
     

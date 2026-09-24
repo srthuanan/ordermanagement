@@ -99,8 +99,12 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                 if (res.success && (res.pdf_url || res.pdf_base64)) {
                     setCyberPdfUrl(res.pdf_url || res.pdf_base64 || null);
                 } else {
-                    const isCloud = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
-                    if (isCloud) {
+                    const isCloud = typeof window !== 'undefined' && (
+                        window.location.hostname.endsWith('github.io') ||
+                        !['localhost', '127.0.0.1'].includes(window.location.hostname)
+                    );
+                    const rawError = res.error || '';
+                    if (isCloud || rawError.includes('powershell') || rawError.includes('Errno 2') || rawError.includes('đám mây')) {
                         setCyberPdfError('Phiếu này chưa được lưu trên hệ thống đám mây. Vui lòng mở xem phiếu trên máy tính văn phòng một lần để lưu tự động lên hệ thống.');
                     } else {
                         setCyberPdfError(res.error || 'Chưa tìm thấy file PDF CyberSoft gốc của phiếu này trên máy chủ.');
@@ -108,8 +112,12 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                 }
             } catch (err: any) {
                 if (isMounted) {
-                    const isCloud = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
-                    if (isCloud) {
+                    const isCloud = typeof window !== 'undefined' && (
+                        window.location.hostname.endsWith('github.io') ||
+                        !['localhost', '127.0.0.1'].includes(window.location.hostname)
+                    );
+                    const rawError = err.message || '';
+                    if (isCloud || rawError.includes('powershell') || rawError.includes('Errno 2') || rawError.includes('đám mây')) {
                         setCyberPdfError('Phiếu này chưa được lưu trên hệ thống đám mây. Vui lòng mở xem phiếu trên máy tính văn phòng một lần để lưu tự động lên hệ thống.');
                     } else {
                         setCyberPdfError(err.message || 'Lỗi kết nối khi trích xuất file PDF CyberSoft.');

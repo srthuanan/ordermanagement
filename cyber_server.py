@@ -251,6 +251,8 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self._send_cors_headers()
                 self.end_headers()
                 self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
         elif parsed.path == "/api/cyber/diagnose-pdf":
             import shutil, ctypes.util
             data = {
