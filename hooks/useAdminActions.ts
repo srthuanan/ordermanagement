@@ -182,7 +182,9 @@ export const useAdminActions = ({
             if (!data?.file) return;
             setProcessingState({ id: order['Số đơn hàng'], type });
             try {
-                const file = data.file as File;
+                let file = data.file as File;
+                const { compressFileIfNeeded } = await import('../services/ocrService');
+                file = await compressFileIfNeeded(file);
                 const fileToBase64 = (f: File): Promise<string> => new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(f); r.onload = () => res((r.result as string).split(',')[1]); r.onerror = e => rej(e); });
 
                 const base64Data = await fileToBase64(file);

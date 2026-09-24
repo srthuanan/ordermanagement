@@ -231,14 +231,18 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ isOpen, onClose, onSu
         setIsUploading(true);
 
         try {
+            const { compressFileIfNeeded } = await import('../../services/ocrService');
             const filesData = await Promise.all(
-                validFiles.map(async ({ file, orderNumber }) => ({
-                    orderNumber: orderNumber!,
-                    base64Data: await fileToBase64(file),
-                    mimeType: file.type,
-                    fileName: file.name,
-                    fileObject: file
-                }))
+                validFiles.map(async ({ file, orderNumber }) => {
+                    const processedFile = await compressFileIfNeeded(file);
+                    return {
+                        orderNumber: orderNumber!,
+                        base64Data: await fileToBase64(processedFile),
+                        mimeType: processedFile.type,
+                        fileName: processedFile.name,
+                        fileObject: processedFile
+                    };
+                })
             );
 
             const result = await apiService.uploadBulkInvoices(filesData);

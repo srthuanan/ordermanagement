@@ -64,21 +64,22 @@ const SimpleFileUpload: React.FC<SimpleFileUploadProps> = ({ id, label, onFileSe
       try {
         let processedFile: File = file;
         
-        // 1. Nén nếu là ảnh
-        if (file.type.startsWith('image/')) {
-          if (!disableCompression) {
-            setProcessingStatus('Đang nén ảnh...');
+        const THREE_MB = 3 * 1024 * 1024;
+        const fileSizeMb = (file.size / (1024 * 1024)).toFixed(2);
+
+        // Quy tắc: File <= 3MB không cần nén lại. File > 3MB nén lại tầm 50%.
+        if (file.size > THREE_MB && !disableCompression) {
+          if (file.type.startsWith('image/')) {
+            setProcessingStatus(`Đang nén ảnh (${fileSizeMb}MB > 3MB)...`);
             processedFile = await compressImage(file);
-          }
-        } 
-        // 2. Tối ưu PDF
-        else if (file.type === 'application/pdf') {
-          if (!disableCompression) {
-            setProcessingStatus('Đang tối ưu file...');
+          } else if (file.type === 'application/pdf') {
+            setProcessingStatus(`Đang nén PDF (${fileSizeMb}MB > 3MB)...`);
             processedFile = await compressPdf(file, (p) => {
-              setProcessingStatus(`Đang tối ưu (${p}%)`);
+              setProcessingStatus(`Đang nén PDF (${p}%)`);
             });
           }
+        } else {
+          console.log(`[SimpleFileUpload] File ${file.name} (${fileSizeMb}MB) <= 3MB, giữ nguyên gốc không nén.`);
         }
 
         setSelectedFile(processedFile);

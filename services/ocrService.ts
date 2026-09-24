@@ -13,13 +13,22 @@ export const compressImage = (
     file: File,
     options: { maxWidth?: number; maxHeight?: number; quality?: number } = {}
 ): Promise<File> => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         // Only compress images, return other file types as-is
         if (!file.type.startsWith('image/')) {
             return resolve(file);
         }
 
-        const { maxWidth = 1920, maxHeight = 1920, quality = 0.8 } = options;
+        // Quy tắc: File <= 3MB không cần nén lại
+        const THREE_MB = 3 * 1024 * 1024;
+        if (file.size <= THREE_MB) {
+            console.log(`[compressImage] File ảnh ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB) <= 3MB, giữ nguyên gốc.`);
+            return resolve(file);
+        }
+
+        // File > 3MB: Nén lại tầm 50%
+        // Target: giảm ~50% dung lượng mà vẫn giữ độ nét chữ trên văn bản/hợp đồng
+        const { maxWidth = 2048, maxHeight = 2048, quality = 0.65 } = options;
         const reader = new FileReader();
 
         reader.onload = (event) => {
@@ -46,7 +55,7 @@ export const compressImage = (
                 const ctx = canvas.getContext('2d');
 
                 if (!ctx) {
-                    return reject(new Error('Không thể lấy context của canvas.'));
+                    return resolve(file);
                 }
 
                 ctx.drawImage(img, 0, 0, width, height);
@@ -55,26 +64,33 @@ export const compressImage = (
                 canvas.toBlob(
                     (blob) => {
                         if (!blob) {
-                            return reject(new Error('Tạo blob từ canvas thất bại.'));
+                            return resolve(file);
                         }
-                        // Create a new file with a .jpg extension to reflect the compression format
+                        // Create a new file with a .jpg extension
                         const newFileName = file.name.substring(0, file.name.lastIndexOf('.')) + '.jpg';
                         const newFile = new File([blob], newFileName, {
                             type: 'image/jpeg',
                             lastModified: Date.now(),
                         });
-                        resolve(newFile);
+
+                        // Nếu file nén nhỏ hơn file gốc thì dùng file nén, ngược lại giữ file gốc
+                        if (newFile.size < file.size) {
+                            console.log(`[compressImage] Đã nén ${file.name}: ${(file.size / 1024 / 1024).toFixed(2)} MB -> ${(newFile.size / 1024 / 1024).toFixed(2)} MB (giảm ${Math.round((1 - newFile.size / file.size) * 100)}%)`);
+                            resolve(newFile);
+                        } else {
+                            resolve(file);
+                        }
                     },
                     'image/jpeg',
                     quality
                 );
             };
 
-            img.onerror = (error) => reject(error);
+            img.onerror = () => resolve(file);
             img.src = event.target?.result as string;
         };
 
-        reader.onerror = (error) => reject(error);
+        reader.onerror = () => resolve(file);
         reader.readAsDataURL(file);
     });
 };
@@ -94,6 +110,13 @@ declare var jspdf: any;
  * @returns A promise that resolves to the compressed PDF as a new File object.
  */
 export const compressPdf = async (file: File, onProgress?: (percent: number) => void): Promise<File> => {
+    // Quy tắc: File <= 3MB không cần nén lại
+    const THREE_MB = 3 * 1024 * 1024;
+    if (file.size <= THREE_MB) {
+        console.log(`[compressPdf] File PDF ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB) <= 3MB, giữ nguyên gốc.`);
+        return file;
+    }
+
     // Check if jsPDF is loaded
     if (typeof jspdf === 'undefined') {
         console.error('jsPDF library not found. Skipping compression.');
@@ -101,7 +124,7 @@ export const compressPdf = async (file: File, onProgress?: (percent: number) => 
     }
 
     try {
-        console.log(`Starting PDF compression for: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+        console.log(`[compressPdf] Bắt đầu nén PDF > 3MB: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
 
         // 1. Load the PDF document using pdfjs
         const arrayBuffer = await file.arrayBuffer();
@@ -112,16 +135,13 @@ export const compressPdf = async (file: File, onProgress?: (percent: number) => 
         console.log(`PDF has ${numPages} pages.`);
 
         // 2. Initialize jsPDF
-        // Default to A4, but we will adjust page size per page if needed or scale content
         const { jsPDF } = jspdf;
         const newPdf = new jsPDF();
 
-        // We'll delete the initial default page added by new jsPDF() or just add pages as we go.
-        // jsPDF usually starts with one page.
-
-        // OPTIMIZATION: Scale 1.5 and Quality 0.5 for aggressive compression
-        const scale = 1.5;
-        const quality = 0.5;
+        // Nén tầm ~50%: Scale 1.3 và Quality 0.62
+        // Giữ chữ ký và con dấu sắc nét nhưng giảm ~50% - 60% dung lượng
+        const scale = 1.3;
+        const quality = 0.62;
 
         // Mobile-safe canvas limits (iOS Safari has stricter limits)
         const MAX_CANVAS_AREA = 16777216; // ~16MP
@@ -148,7 +168,6 @@ export const compressPdf = async (file: File, onProgress?: (percent: number) => 
                 // Reduce scale step-wise until it fits safely
                 currentScale *= 0.8;
                 viewport = page.getViewport({ scale: currentScale });
-                console.warn(`Page ${i} is too large for canvas. Reduced scale to ${currentScale.toFixed(2)}`);
             }
 
             // Create canvas
@@ -187,13 +206,14 @@ export const compressPdf = async (file: File, onProgress?: (percent: number) => 
             lastModified: Date.now()
         });
 
-        console.log(`Compression complete. New size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+        console.log(`[compressPdf] Nén xong ${file.name}: ${(file.size / 1024 / 1024).toFixed(2)} MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
 
         // Return compressed file if it is smaller, otherwise original
         if (compressedFile.size < file.size) {
+            console.log(`[compressPdf] Tiết kiệm: ${Math.round((1 - compressedFile.size / file.size) * 100)}% dung lượng.`);
             return compressedFile;
         } else {
-            console.log('Compressed file is larger than original. Keeping original.');
+            console.log('[compressPdf] File nén không nhỏ hơn file gốc, giữ nguyên file gốc.');
             return file;
         }
 
@@ -201,6 +221,28 @@ export const compressPdf = async (file: File, onProgress?: (percent: number) => 
         console.error('Error during PDF compression:', error);
         return file;
     }
+};
+
+/**
+ * Tiện ích kiểm tra và tự động nén tệp nếu dung lượng > 3MB (giảm ~50%).
+ * Nếu tệp <= 3MB, giữ nguyên gốc 100% không nén.
+ */
+export const compressFileIfNeeded = async (
+    file: File,
+    onProgress?: (percent: number) => void
+): Promise<File> => {
+    if (!file) return file;
+    const THREE_MB = 3 * 1024 * 1024;
+    if (file.size <= THREE_MB) {
+        return file;
+    }
+    if (file.type.startsWith('image/')) {
+        return compressImage(file);
+    }
+    if (file.type === 'application/pdf') {
+        return compressPdf(file, onProgress);
+    }
+    return file;
 };
 
 /**
