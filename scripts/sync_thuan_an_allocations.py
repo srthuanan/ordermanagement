@@ -1975,8 +1975,10 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
         except Exception as e_post:
             print(f"[Create DNX warning] CP_POSTCTDNX: {e_post}", file=sys.stderr)
 
-        if not is_pymssql:
+        try:
             conn.commit()
+        except Exception:
+            pass
         conn.close()
 
         # Tự động xuất và tải sẵn cả 2 bản PDF (có chữ ký & không chữ ký) lên Supabase Storage trong nền
