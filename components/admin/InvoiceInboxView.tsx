@@ -14,7 +14,8 @@ import {
     getCyberXepXeContracts,
     deleteCyberXepXe,
     CyberXepXeContract,
-    isOrderAssignedOnCyber
+    isOrderAssignedOnCyber,
+    checkOrderCyberAssignmentDirect
 } from '../../services/api/stockService';
 import { syncAndNotifyMInvoice } from '../../services/api/mInvoiceService';
 
@@ -276,9 +277,38 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const handleRefreshCyber = async () => {
         setIsLoadingCyberContracts(true);
         try {
+            sessionStorage.removeItem('cyber_xep_xe_contracts_cache');
             const now = new Date();
             const currY = now.getFullYear();
+
+            // 1. Nếu đang chọn đơn hàng cụ thể, tra cứu realtime trước theo VIN / Số đơn hàng / Tên KH trực tiếp từ CyberSoft
+            let directResult: any = null;
+            if (selectedOrder) {
+                try {
+                    directResult = await checkOrderCyberAssignmentDirect(selectedOrder);
+                    if (directResult?.contract) {
+                        const dc = directResult.contract;
+                        if (dc.so_khung && dc.so_khung.trim()) {
+                            selectedOrder.VIN = dc.so_khung.trim();
+                            selectedOrder.vin = dc.so_khung.trim();
+                            selectedOrder['SỐ VIN'] = dc.so_khung.trim();
+                        }
+                        if (dc.so_may && dc.so_may.trim()) {
+                            selectedOrder['Số máy'] = dc.so_may.trim();
+                            selectedOrder.so_may = dc.so_may.trim();
+                            selectedOrder['SỐ MÁY'] = dc.so_may.trim();
+                            setEditData(prev => ({ ...prev, engineNumber: dc.so_may!.trim() }));
+                        }
+                    }
+                } catch (dErr) {
+                    console.warn('[handleRefreshCyber] Direct order check error:', dErr);
+                }
+            }
+
+            // 2. Tải toàn bộ danh sách hợp đồng xếp xe TRỰC TIẾP từ CyberSoft ERP (bỏ qua Supabase bằng force: true, refresh: true)
             const res = await getCyberXepXeContracts({
+                force: true,
+                refresh: true,
                 thang1: 1,
                 nam1: currY,
                 thang2: 12,
@@ -286,15 +316,32 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                 ma_dvcs: '02',
                 showroom: 'Ô tô Vinfast Thuận An'
             });
+
             if (res && res.success && res.contracts) {
-                setCyberContracts(res.contracts);
+                let updatedContracts = res.contracts;
+                if (directResult?.contract) {
+                    const dc = directResult.contract;
+                    const exists = updatedContracts.some(c => c.stt_rec === dc.stt_rec && c.stt_rec0 === dc.stt_rec0);
+                    if (exists) {
+                        updatedContracts = updatedContracts.map(c => 
+                            (c.stt_rec === dc.stt_rec && c.stt_rec0 === dc.stt_rec0) ? { ...c, ...dc } : c
+                        );
+                    } else {
+                        updatedContracts = [dc, ...updatedContracts];
+                    }
+                }
+
+                setCyberContracts(updatedContracts);
                 try {
-                    sessionStorage.setItem('cyber_xep_xe_contracts_cache', JSON.stringify(res.contracts));
+                    sessionStorage.setItem('cyber_xep_xe_contracts_cache', JSON.stringify(updatedContracts));
                 } catch (_) {}
-                showToast('Đã làm mới', 'Đã cập nhật trạng thái ghép xe từ CyberSoft ERP.', 'success');
+
+                showToast('Đã tải từ Cyber', 'Đã tải dữ liệu mới nhất trực tiếp từ máy chủ CyberSoft ERP!', 'success');
+            } else {
+                throw new Error(res?.error || 'Không nhận được dữ liệu hợp đồng từ máy chủ CyberSoft ERP');
             }
         } catch (err: any) {
-            showToast('Lỗi làm mới', err.message || 'Không thể đồng bộ dữ liệu CyberSoft.', 'error');
+            showToast('Lỗi tải từ Cyber', err.message || 'Không thể đồng bộ dữ liệu trực tiếp từ CyberSoft.', 'error');
         } finally {
             setIsLoadingCyberContracts(false);
         }

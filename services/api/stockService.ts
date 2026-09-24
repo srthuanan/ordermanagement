@@ -1048,6 +1048,7 @@ export interface CyberXepXeFilterParams {
     showroom?: string;
     keyword?: string;
     force?: boolean;
+    refresh?: boolean;
 }
 
 export interface CyberXepXeContractsResponse {
@@ -1383,7 +1384,31 @@ export const getCyberXepXeContracts = async (params: CyberXepXeFilterParams = {}
         }
 
         if (!response) throw new Error(lastErrorMsg || 'Không thể kết nối máy chủ CyberSoft Xếp xe.');
-        return await response.json();
+        const result: CyberXepXeContractsResponse = await response.json();
+        if (result && result.success && result.contracts && result.contracts.length > 0) {
+            try {
+                const upsertRows = result.contracts.slice(0, 1000).map(c => ({
+                    stt_rec: c.stt_rec,
+                    stt_rec0: c.stt_rec0 || '',
+                    so_ct: c.so_ct || '',
+                    ngay_ct: c.ngay_ct || null,
+                    ma_hd: c.ma_hd || '',
+                    ten_kh: c.ten_kh || '',
+                    ten_ttcp: c.ten_ttcp || '',
+                    ma_kx: c.ma_kx || '',
+                    ten_kx: c.ten_kx || '',
+                    ma_mau: c.ma_mau || '',
+                    ten_mau: c.ten_mau || '',
+                    so_khung: c.so_khung || '',
+                    ten_color: c.ten_color || '',
+                    back_color: c.back_color || '',
+                    fore_color: c.fore_color || '',
+                    updated_at: new Date().toISOString()
+                }));
+                supabase.from('cyber_xep_xe').upsert(upsertRows, { onConflict: 'stt_rec,stt_rec0' }).then(() => {});
+            } catch (_) {}
+        }
+        return result;
     } catch (err: any) {
         console.error("Lỗi getCyberXepXeContracts:", err);
         return {
