@@ -495,13 +495,8 @@ export const performAdminAction = async (action: string, params: Record<string, 
 
             if (error) throw error;
 
-            // Kích hoạt Archival ngay lập tức cho các đơn đã phê duyệt
-            if (Array.isArray(nos)) {
-                nos.forEach((no: string) => {
-                    postApi({ action: 'archiveOrderNow', orderNumber: no }).catch(e => console.warn(`Silent error triggering archive for ${no}:`, e));
-                });
-            }
-
+            // LƯU Ý: Không bốc sang Drive ở bước Phê duyệt!
+            // Quy định: Chỉ khi chuyển sang "Chờ ký hóa đơn" mới đẩy về Drive, trước đó file PDF vẫn lưu ở Supabase.
             return data;
         }
         if (action === 'markAsPendingSignature') {
@@ -518,6 +513,14 @@ export const performAdminAction = async (action: string, params: Record<string, 
             });
 
             if (error) throw error;
+
+            // Đẩy file PDF về Google Drive khi đơn hàng đã ở trạng thái "Chờ ký hóa đơn"
+            if (Array.isArray(nos)) {
+                nos.forEach((no: string) => {
+                    postApi({ action: 'archiveOrderNow', orderNumber: no }).catch(e => console.warn(`Silent error triggering archive for ${no}:`, e));
+                });
+            }
+
             return data;
         }
         if (action === 'requestSupplementForInvoice') {

@@ -1019,6 +1019,7 @@ export interface CyberXepXeContract {
     back_color: string;
     fore_color: string;
     bold: boolean;
+    ong_ba?: string;
 }
 
 export interface CyberXepXeCandidate {
@@ -1077,6 +1078,7 @@ export interface CyberXepXeActionResult {
 export interface CyberAssignmentCheckResult {
     isAssigned: boolean;
     cyberVin?: string;
+    cyberSoMay?: string;
     contract?: CyberXepXeContract;
     isApprovedYellow?: boolean; // Đã được Giám đốc duyệt (Màu vàng / ma_post = 3)
     isPendingGreen?: boolean;    // Chưa được Giám đốc duyệt (Màu xanh / ma_post = 2 / Chờ duyệt)
@@ -1090,12 +1092,19 @@ export const isOrderAssignedOnCyber = (order: any, cyberContracts: CyberXepXeCon
         return { isAssigned: false };
     }
 
-    const removeTones = (str: string) => (str || '')
+    const normalizeName = (str: string) => (str || '')
+        .normalize('NFC')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const removeTonesStrict = (str: string) => (str || '')
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/đ/g, 'd')
         .replace(/Đ/g, 'd')
         .toLowerCase()
+        .replace(/\s+/g, ' ')
         .trim();
 
     const getApprovalStatus = (c?: CyberXepXeContract) => {
@@ -1106,31 +1115,35 @@ export const isOrderAssignedOnCyber = (order: any, cyberContracts: CyberXepXeCon
         const maColor = (c.ma_color || '').trim();
 
         const isPending = post === '2' || tenColor === 'chờ duyệt' || maColor === '04' || backColor === 'greenyellow';
-        const isApproved = !isPending && (post === '3' || backColor === 'yellow' || tenColor !== 'chờ duyệt');
+        const isApproved = !isPending && (post === '3' || backColor === 'yellow' || backColor === 'violet' || tenColor !== 'chờ duyệt');
         return { isPendingGreen: isPending, isApprovedYellow: isApproved };
     };
 
-    const custName = removeTones(order['Tên khách hàng'] || order.ten_khach_hang || '');
+    const isCarModelMatch = (orderModel: string, cyberModel: string) => {
+        if (!orderModel || !cyberModel) return true;
+        const o = removeTonesStrict(orderModel).replace(/\s+/g, '');
+        const c = removeTonesStrict(cyberModel).replace(/\s+/g, '');
+        if (o.includes(c) || c.includes(o)) return true;
+        if (o.includes('limo') && c.includes('limo')) return true;
+        if (o.includes('vf3') && c.includes('vf3')) return true;
+        if (o.includes('vf5') && c.includes('vf5')) return true;
+        if (o.includes('vf6') && c.includes('vf6')) return true;
+        if (o.includes('vf7') && c.includes('vf7')) return true;
+        if (o.includes('vf8') && c.includes('vf8')) return true;
+        if (o.includes('vf9') && c.includes('vf9')) return true;
+        if (o.includes('minio') && c.includes('minio')) return true;
+        if (o.includes('ecvan') && c.includes('ecvan')) return true;
+        return false;
+    };
+
+    const custNameExact = normalizeName(order['Tên khách hàng'] || order.ten_khach_hang || '');
+    const custNameNoTone = removeTonesStrict(order['Tên khách hàng'] || order.ten_khach_hang || '');
     const orderNo = (order['Số đơn hàng'] || order.so_don_hang || '').toLowerCase().trim();
-    const orderVin = (order.VIN || order.vin || order['SỐ VIN'] || '').toLowerCase().trim();
-    const carModel = removeTones(order['Dòng xe'] || order.dong_xe || order['DÒNG XE'] || '');
+    const orderVin = (order.VIN || order.vin || order['SỐ VIN'] || '').toUpperCase().trim();
+    const carModel = (order['Dòng xe'] || order.dong_xe || order['DÒNG XE'] || '').trim();
+    const orderNgayCoc = (order.ngay_coc || order['Ngày đặt cọc'] || order['Thời gian nhập'] || '').split('T')[0];
 
-    // 1. Nếu đơn hàng có số VIN và trên Cyber đã có hợp đồng chứa số VIN này:
-    if (orderVin) {
-        const vinMatch = cyberContracts.find(c => (c.so_khung || '').toLowerCase().trim() === orderVin);
-        if (vinMatch) {
-            const approval = getApprovalStatus(vinMatch);
-            return {
-                isAssigned: true,
-                cyberVin: vinMatch.so_khung,
-                contract: vinMatch,
-                isApprovedYellow: approval.isApprovedYellow,
-                isPendingGreen: approval.isPendingGreen
-            };
-        }
-    }
-
-    // 2. Tìm theo số đơn hàng (ma_hd hoặc so_ct)
+    // 1. Nếu trên Cyber có hợp đồng khớp đúng Số đơn hàng (ma_hd hoặc so_ct)
     if (orderNo) {
         const orderNoMatch = cyberContracts.find(c => {
             const cMaHd = (c.ma_hd || '').toLowerCase();
@@ -1138,13 +1151,13 @@ export const isOrderAssignedOnCyber = (order: any, cyberContracts: CyberXepXeCon
             return cMaHd.includes(orderNo) || cSoCt.includes(orderNo) || orderNo.includes(cMaHd);
         });
         if (orderNoMatch) {
-            const isAssigned = Boolean(orderNoMatch.so_khung && orderNoMatch.so_khung.trim()) ||
-                               orderNoMatch.ten_color === 'Đã ghép SK' ||
-                               orderNoMatch.ten_color === 'Đã xuất HĐ';
+            const hasVin = Boolean(orderNoMatch.so_khung && orderNoMatch.so_khung.trim());
+            const isAssigned = hasVin || orderNoMatch.ten_color === 'Đã ghép SK' || orderNoMatch.ten_color === 'Đã xuất HĐ';
             const approval = getApprovalStatus(orderNoMatch);
             return {
                 isAssigned,
                 cyberVin: orderNoMatch.so_khung,
+                cyberSoMay: orderNoMatch.so_may,
                 contract: orderNoMatch,
                 isApprovedYellow: approval.isApprovedYellow,
                 isPendingGreen: approval.isPendingGreen
@@ -1152,54 +1165,158 @@ export const isOrderAssignedOnCyber = (order: any, cyberContracts: CyberXepXeCon
         }
     }
 
-    // 3. Tìm theo tên khách hàng (kết hợp dòng xe nếu có)
-    if (custName) {
-        const customerMatches = cyberContracts.filter(c => {
-            const cCust = removeTones(c.ten_kh || '');
-            return cCust === custName || cCust.includes(custName) || custName.includes(cCust);
-        });
+    // 2. Nếu đơn hàng có số VIN và trên Cyber có hợp đồng chứa ĐÚNG số VIN này:
+    if (orderVin) {
+        const vinMatch = cyberContracts.find(c => (c.so_khung || '').toUpperCase().trim() === orderVin);
+        if (vinMatch) {
+            const cName = normalizeName(vinMatch.ten_kh);
+            const cModel = `${vinMatch.ten_kx || ''} ${vinMatch.ma_kx || ''}`;
+            const isCustCompatible = !custNameExact || cName === custNameExact || cName.includes(custNameExact) || custNameExact.includes(cName);
+            const isModelCompatible = isCarModelMatch(carModel, cModel);
 
-        if (customerMatches.length > 0) {
-            // Lọc tiếp theo dòng xe nếu có nhiều hơn 1 hợp đồng
-            let candidateMatches = customerMatches;
-            if (candidateMatches.length > 1 && carModel) {
-                const modelFiltered = candidateMatches.filter(c => {
-                    const cModel = removeTones(`${c.ten_kx || ''} ${c.ma_kx || ''}`);
-                    return cModel.includes(carModel) || carModel.includes(cModel);
-                });
-                if (modelFiltered.length > 0) {
-                    candidateMatches = modelFiltered;
-                }
-            }
-
-            // Kiểm tra xem trong các hợp đồng khớp, có hợp đồng nào ĐÃ XẾP XE không
-            const assignedContract = candidateMatches.find(c => {
-                const hasVin = Boolean(c.so_khung && c.so_khung.trim());
-                const status = (c.ten_color || '').trim();
-                return hasVin || status === 'Đã ghép SK' || status === 'Đã xuất HĐ';
-            });
-
-            if (assignedContract) {
-                const approval = getApprovalStatus(assignedContract);
+            if (isCustCompatible || isModelCompatible) {
+                const approval = getApprovalStatus(vinMatch);
                 return {
                     isAssigned: true,
-                    cyberVin: assignedContract.so_khung,
-                    contract: assignedContract,
+                    cyberVin: vinMatch.so_khung,
+                    cyberSoMay: vinMatch.so_may,
+                    contract: vinMatch,
                     isApprovedYellow: approval.isApprovedYellow,
                     isPendingGreen: approval.isPendingGreen
                 };
             }
+        }
+    }
 
-            // Nếu không có hợp đồng nào đã xếp xe -> hợp đồng đang chờ ghép xe
-            const targetContract = candidateMatches[0];
-            const approval = getApprovalStatus(targetContract);
+    // 3. Tìm hợp đồng trên Cyber theo Tên khách hàng & Dòng xe
+    if (custNameExact) {
+        // 3a. Ưu tiên 1: Tên chính xác có dấu tiếng Việt (NFC)
+        let matches = cyberContracts.filter(c => normalizeName(c.ten_kh) === custNameExact);
+
+        // 3b. Ưu tiên 2: Tên không dấu nếu và chỉ nếu không có hợp đồng có dấu trùng khớp
+        if (matches.length === 0 && custNameNoTone) {
+            matches = cyberContracts.filter(c => removeTonesStrict(c.ten_kh) === custNameNoTone);
+        }
+
+        // BẮT BUỘC: Lọc theo dòng xe (xe LIMO không thể gán vào HĐ của VF3 hay VF5)
+        if (carModel && matches.length > 0) {
+            const modelMatched = matches.filter(c => isCarModelMatch(carModel, `${c.ten_kx || ''} ${c.ma_kx || ''}`));
+            if (modelMatched.length > 0) {
+                matches = modelMatched;
+            } else {
+                matches = [];
+            }
+        }
+
+        if (matches.length > 0) {
+            let targetContract: CyberXepXeContract | null = null;
+
+            // a) Khớp theo ngày cọc nếu có (ngay_coc trùng ngay_ct)
+            if (orderNgayCoc) {
+                const dateMatched = matches.find(c => (c.ngay_ct || '').startsWith(orderNgayCoc));
+                if (dateMatched) targetContract = dateMatched;
+            }
+
+            // b) Nếu đơn hàng ĐÃ CÓ số VIN nội bộ nhưng hợp đồng cũ trên Cyber mang số VIN KHÁC và đã xuất HĐ -> hợp đồng cũ đó là của xe khác!
+            //    -> Chọn hợp đồng đang CHỜ GHÉP XE (chưa có số khung)
+            if (!targetContract && orderVin) {
+                const unassignedContract = matches.find(c => !(c.so_khung && c.so_khung.trim()));
+                if (unassignedContract) targetContract = unassignedContract;
+            }
+
+            // c) Mặc định: sắp xếp theo ngày hợp đồng mới nhất, ưu tiên hợp đồng chưa xuất HĐ / chưa xếp xe
+            if (!targetContract) {
+                const sorted = [...matches].sort((a, b) => new Date(b.ngay_ct || 0).getTime() - new Date(a.ngay_ct || 0).getTime());
+                const pending = sorted.find(c => !(c.so_khung && c.so_khung.trim()) || c.ten_color !== 'Đã xuất HĐ');
+                targetContract = pending || sorted[0];
+            }
+
+            if (targetContract) {
+                const hasVin = Boolean(targetContract.so_khung && targetContract.so_khung.trim());
+                let isAssigned = false;
+                
+                // Nếu hợp đồng trên Cyber đã có VIN:
+                if (hasVin) {
+                    if (orderVin) {
+                        // Nếu đơn hàng đã có VIN, bắt buộc VIN trên Cyber phải TRÙNG với VIN đơn hàng mới tính là đã xếp xe!
+                        isAssigned = targetContract.so_khung.toUpperCase().trim() === orderVin;
+                    } else {
+                        isAssigned = targetContract.ten_color === 'Đã ghép SK' || targetContract.ten_color === 'Đã xuất HĐ';
+                    }
+                }
+
+                const approval = getApprovalStatus(targetContract);
+                return {
+                    isAssigned,
+                    cyberVin: targetContract.so_khung,
+                    cyberSoMay: targetContract.so_may,
+                    contract: targetContract,
+                    isApprovedYellow: approval.isApprovedYellow,
+                    isPendingGreen: approval.isPendingGreen
+                };
+            }
+        }
+    }
+
+    return { isAssigned: false };
+};
+
+/**
+ * Tra cứu Real-time trạng thái xếp xe trực tiếp trên CyberSoft ERP cho 1 đơn hàng cụ thể
+ * Bỏ qua cache, gửi keyword là VIN, Số đơn hàng hoặc Tên KH tới API CyberSoft
+ */
+export const checkOrderCyberAssignmentDirect = async (order: any): Promise<CyberAssignmentCheckResult & { contracts?: CyberXepXeContract[] }> => {
+    if (!order) return { isAssigned: false };
+
+    const vin = (order.VIN || order.vin || order['SỐ VIN'] || order['Số VIN'] || '').trim().toUpperCase();
+    const orderNo = (order['Số đơn hàng'] || order.so_don_hang || '').trim();
+    const custName = (order['Tên khách hàng'] || order.ten_khach_hang || '').trim();
+
+    // Tìm từ khóa đặc trưng nhất: ưu tiên VIN -> Số đơn hàng -> Tên KH
+    const keyword = vin || orderNo || custName;
+    if (!keyword) return { isAssigned: false };
+
+    try {
+        // Gọi thẳng CyberSoft với force: true và keyword để SQL Server chạy TOP 30 trong ~200-400ms
+        const res = await getCyberXepXeContracts({
+            force: true,
+            keyword,
+            ma_dvcs: '02',
+            showroom: 'Ô tô Vinfast Thuận An'
+        });
+
+        if (res && res.success && res.contracts && res.contracts.length > 0) {
+            const check = isOrderAssignedOnCyber(order, res.contracts);
+            // Lưu/cập nhật ngay vào bảng cyber_xep_xe trên Supabase để đồng bộ toàn hệ thống
+            try {
+                const upsertRows = res.contracts.map(c => ({
+                    stt_rec: c.stt_rec,
+                    stt_rec0: c.stt_rec0 || '',
+                    so_ct: c.so_ct || '',
+                    ngay_ct: c.ngay_ct || null,
+                    ma_hd: c.ma_hd || '',
+                    ten_kh: c.ten_kh || '',
+                    ten_ttcp: c.ten_ttcp || '',
+                    ma_kx: c.ma_kx || '',
+                    ten_kx: c.ten_kx || '',
+                    ma_mau: c.ma_mau || '',
+                    ten_mau: c.ten_mau || '',
+                    so_khung: c.so_khung || '',
+                    ten_color: c.ten_color || '',
+                    back_color: c.back_color || '',
+                    fore_color: c.fore_color || '',
+                    updated_at: new Date().toISOString()
+                }));
+                supabase.from('cyber_xep_xe').upsert(upsertRows, { onConflict: 'stt_rec,stt_rec0' }).then(() => {});
+            } catch (_) {}
+
             return {
-                isAssigned: false,
-                contract: targetContract,
-                isApprovedYellow: approval.isApprovedYellow,
-                isPendingGreen: approval.isPendingGreen
+                ...check,
+                contracts: res.contracts
             };
         }
+    } catch (err) {
+        console.warn('[checkOrderCyberAssignmentDirect] Lỗi tra cứu trực tiếp Cyber:', err);
     }
 
     return { isAssigned: false };
@@ -1464,12 +1581,26 @@ export const createCyberDnxTicket = async (params: CyberDnxCreateParams): Promis
                 });
                 const text = await res.text();
                 let json: any = null;
-                try { json = JSON.parse(text); } catch (_) {}
+                try { 
+                    json = JSON.parse(text); 
+                } catch (_) {
+                    // Trích xuất JSON hợp lệ nếu phản hồi bị dính trailing HTTP headers
+                    const match = text.match(/(\{[\s\S]*?"success"\s*:\s*(?:true|false)[\s\S]*?\})(?:HTTP\/|\s*$)/i) || text.match(/^(\{[\s\S]*?\})/);
+                    if (match) {
+                        try { json = JSON.parse(match[1]); } catch (_) {}
+                    }
+                }
 
-                if (res.ok && json && typeof json === 'object') {
-                    return json;
+                if (json && typeof json === 'object') {
+                    if (json.success || json.so_ct || json.already_exists) {
+                        return json;
+                    }
+                    if (res.ok) {
+                        return json;
+                    }
+                    lastErrorMsg = json.error || json.message || `HTTP ${res.status}`;
                 } else {
-                    lastErrorMsg = (json && json.error) || (text && !text.startsWith('<') ? text : `HTTP ${res.status}`);
+                    lastErrorMsg = (text && !text.startsWith('<') ? text : `HTTP ${res.status}`);
                 }
             } catch (err: any) {
                 lastErrorMsg = err.message || '';

@@ -23,6 +23,8 @@ export interface TransferRequestItem {
     soCtDnx?: string;
     adminNote?: string;
     printData?: any;
+    hasTd4?: boolean;
+    soCtTd4?: string;
 }
 
 /**
@@ -61,6 +63,67 @@ export const createTransferRequest = async (payload: {
                     success: false,
                     error: `Xe VIN ${payload.vin} đang có yêu cầu chuyển xe chờ Admin duyệt. Không thể gửi thêm yêu cầu trùng lặp.`
                 };
+            }
+        }
+
+        // 0.1. CHẶN NẾU XE ĐÃ CÓ PHIẾU TD4 HOẶC DNX TRÊN CYBERSOFT ERP
+        const cleanVin = payload.vin ? payload.vin.trim().toUpperCase() : '';
+        if (cleanVin) {
+            // Bước 1: Tra cứu nhanh từ bảng cyber_car_status trên Supabase
+            try {
+                const { data: carStatus } = await supabaseAdmin
+                    .from('cyber_car_status')
+                    .select('has_td4, so_ct_td4, td4_data, has_dnx, so_ct_dnx, dnx_data')
+                    .eq('vin', cleanVin)
+                    .maybeSingle();
+
+                if (carStatus) {
+                    if (carStatus.has_td4 || carStatus.so_ct_td4) {
+                        const tdSoCt = carStatus.so_ct_td4 || carStatus.td4_data?.so_ct || 'TD4';
+                        return {
+                            success: false,
+                            error: `Xe VIN ${cleanVin} đã tồn tại Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${tdSoCt}) trên CyberSoft. Không thể yêu cầu điều chuyển.`
+                        };
+                    }
+                    if (carStatus.has_dnx || carStatus.so_ct_dnx) {
+                        const dnxSoCt = carStatus.so_ct_dnx || carStatus.dnx_data?.so_ct || 'DNX';
+                        return {
+                            success: false,
+                            error: `Xe VIN ${cleanVin} đã có Phiếu Đề Nghị Xuất Xe (${dnxSoCt}) trên CyberSoft. Không thể tạo thêm yêu cầu.`
+                        };
+                    }
+                }
+            } catch (eCache) {
+                console.warn('[createTransferRequest] Kiểm tra cyber_car_status cache lỗi:', eCache);
+            }
+
+            // Bước 2: Kiểm tra trực tiếp qua API lookup-vin CyberSoft ERP để chắc chắn
+            try {
+                const lookupResp = await fetch('/api/cyber/lookup-vin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ vins: [cleanVin] })
+                });
+                if (lookupResp.ok) {
+                    const lookupData = await lookupResp.json();
+                    const car = lookupData.cars?.[0] || lookupData;
+                    if (car && (car.has_td4 || car.td4)) {
+                        const tdSoCt = car.td4?.so_ct || car.so_ct_td4 || 'TD4';
+                        return {
+                            success: false,
+                            error: `Xe VIN ${cleanVin} đã tồn tại Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${tdSoCt}) trên CyberSoft. Không thể yêu cầu điều chuyển.`
+                        };
+                    }
+                    if (car && (car.has_dnx || car.dnx)) {
+                        const dnxSoCt = car.dnx?.so_ct || car.so_ct_dnx || 'DNX';
+                        return {
+                            success: false,
+                            error: `Xe VIN ${cleanVin} đã có Phiếu Đề Nghị Xuất Xe (${dnxSoCt}) trên CyberSoft. Không thể tạo thêm yêu cầu.`
+                        };
+                    }
+                }
+            } catch (eLive) {
+                console.warn('[createTransferRequest] Tra cứu CyberSoft trực tiếp thất bại, bỏ qua fallback:', eLive);
             }
         }
 

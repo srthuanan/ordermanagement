@@ -236,7 +236,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             .subscribe((status) => {
                 console.log('App Settings Subscription Status:', status);
                 if (status === 'CHANNEL_ERROR') {
-                    console.error("Realtime connection error. Polling will handle updates.");
+                    console.warn("Realtime connection temporary drop. Reconnecting & polling will handle updates.");
                 }
             });
 

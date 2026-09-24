@@ -265,7 +265,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                 // Auto-match current TVBH user
                 autoMatchUser(res.data.users);
             } else {
-                setMetaError(res.error || 'Không thể tải danh mục CRM từ CyberSoft');
+                setMetaError(res.error || 'Không thể tải danh mục CRM');
             }
         };
         loadMeta();
@@ -342,7 +342,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         localStorage.setItem(storageKey, userName);
         setIsManualUserSelection(false);
         setUserSearchQuery('');
-        showToast?.('Đã lưu tài khoản Cyber', `Khách hàng sẽ được nạp trực tiếp cho TVBH: ${userName}`, 'success');
+        showToast?.('Đã lưu tài khoản CRM', `Khách hàng sẽ được nhập trực tiếp cho TVBH: ${userName}`, 'success');
     };
 
     // Close user dropdown on outside click
@@ -503,7 +503,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
             }
 
             setLeadRows(parsed);
-            showToast?.('Nhập file thành công', `Đã nhập ${parsed.length} khách hàng từ file ${file.name}. Đang kiểm tra trùng Cyber...`, 'success', 3000);
+            showToast?.('Nhập file thành công', `Đã nhập ${parsed.length} khách hàng từ file ${file.name}. Đang kiểm tra trùng...`, 'success', 3000);
             runDuplicateCheck(parsed);
         } catch (err: any) {
             console.error('File upload error:', err);
@@ -596,7 +596,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         setLeadRows(combined);
         setShowPasteModal(false);
         setRawPasteText('');
-        showToast?.('Đã thêm thành công', `Đã thêm ${parsed.length} khách hàng vào danh sách. Đang kiểm tra trùng Cyber...`, 'success', 3000);
+        showToast?.('Đã thêm thành công', `Đã thêm ${parsed.length} khách hàng vào danh sách. Đang kiểm tra trùng...`, 'success', 3000);
         runDuplicateCheck(combined);
     };
 
@@ -633,9 +633,9 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
 
                 const dupCount = Object.keys(dups).length;
                 if (dupCount > 0) {
-                    showToast?.('Kiểm tra trùng', `Phát hiện ${dupCount} số điện thoại đã tồn tại trên Cyber. Đã tự động bỏ chọn các số này.`, 'warning', 4000);
+                    showToast?.('Kiểm tra trùng', `Phát hiện ${dupCount} số điện thoại đã tồn tại trên hệ thống. Đã tự động bỏ chọn các số này.`, 'warning', 4000);
                 } else {
-                    showToast?.('Kiểm tra trùng', 'Tuyệt vời! Toàn bộ số điện thoại đều mới, không trùng trên Cyber.', 'success', 3000);
+                    showToast?.('Kiểm tra trùng', 'Tuyệt vời! Toàn bộ số điện thoại đều mới, không trùng trên hệ thống.', 'success', 3000);
                 }
             } else if (res.error) {
                 showToast?.('Cảnh báo', `Lỗi kiểm tra trùng SĐT: ${res.error}`, 'warning');
@@ -723,12 +723,12 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
 
         // Sheet 2: Bảng Hướng dẫn & Danh mục chuẩn
         const guideRows = [
-            { 'HƯỚNG DẪN DÀNH CHO TVBH': 'QUY TẮC NHẬP DỮ LIỆU VÀO CYBERSOFT CRM THUẬN AN' },
+            { 'HƯỚNG DẪN DÀNH CHO TVBH': 'QUY TẮC NHẬP DỮ LIỆU KHTN THUẬN AN' },
             { 'HƯỚNG DẪN DÀNH CHO TVBH': '1. Hai cột bắt buộc phải có thông tin: [Họ và tên] và [Số điện thoại].' },
             { 'HƯỚNG DẪN DÀNH CHO TVBH': '2. Số điện thoại có thể để 9 số (ví dụ: 981112233) hoặc 10 số (0981112233), web sẽ tự động chuẩn hóa.' },
             { 'HƯỚNG DẪN DÀNH CHO TVBH': '3. Các cột còn lại (Dòng xe, Màu xe, Nguồn, Hình thức TT) nếu để trống hệ thống sẽ tự động áp dụng giá trị mặc định trên web.' },
             { 'HƯỚNG DẪN DÀNH CHO TVBH': '4. Bạn có thể copy các cột từ file này rồi dán trực tiếp vào tab "Dán Từ Excel", hoặc tải file này lên tab "Tải Lên File Excel".' },
-            { 'HƯỚNG DẪN DÀNH CHO TVBH': '5. Dữ liệu khi nạp sẽ được cấp mã KHTN và ghi trực tiếp vào tài khoản Cyber của TVBH đang đăng nhập.' },
+            { 'HƯỚNG DẪN DÀNH CHO TVBH': '5. Dữ liệu khi nhập sẽ được cấp mã KHTN và ghi trực tiếp vào tài khoản của TVBH đang đăng nhập.' },
             { 'HƯỚNG DẪN DÀNH CHO TVBH': '' },
             { 'HƯỚNG DẪN DÀNH CHO TVBH': '--- DANH MỤC DÒNG XE THAM KHẢO ---' },
             ...(metadata?.models.slice(0, 10).map(m => ({ 'HƯỚNG DẪN DÀNH CHO TVBH': `• ${m.tenKx} (${m.maKx})` })) || []),
@@ -745,7 +745,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         const wb = xlsx.utils.book_new();
         xlsx.utils.book_append_sheet(wb, wsData, 'Nhap_Khach_Hang');
         xlsx.utils.book_append_sheet(wb, wsGuide, 'Huong_Dan_Va_Danh_Muc');
-        xlsx.writeFile(wb, 'Mau_Nhap_KHTN_CyberSoft_ThuanAn.xlsx');
+        xlsx.writeFile(wb, 'Mau_Nhap_KHTN_ThuanAn.xlsx');
         showToast?.('Tải mẫu thành công', 'File mẫu Excel chuẩn đã được tải xuống máy của bạn.', 'success');
     };
 
@@ -959,7 +959,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         const selectedDups = selectedToImport.filter(r => !!r.duplicateInfo);
         if (selectedDups.length > 0) {
             const confirmed = window.confirm(
-                `Cảnh báo: Bạn đang chọn ${selectedDups.length} khách hàng TRÙNG SỐ ĐIỆN THOẠI trên CyberSoft!\n\n` +
+                `Cảnh báo: Bạn đang chọn ${selectedDups.length} khách hàng TRÙNG SỐ ĐIỆN THOẠI trên hệ thống!\n\n` +
                 `Bạn có chắc chắn vẫn muốn import thêm các khách hàng này cho tài khoản [${selectedUser}] không?`
             );
             if (!confirmed) return;
@@ -987,7 +987,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         }
 
         setIsImporting(true);
-        showToast?.('Đang import vào Cyber...', `Đang xử lý ${selectedToImport.length} khách hàng, vui lòng không tắt trang...`, 'loading');
+        showToast?.('Đang import KHTN...', `Đang xử lý ${selectedToImport.length} khách hàng, vui lòng không tắt trang...`, 'loading');
 
         try {
             const payloadLeads = selectedToImport.map(r => ({
@@ -1048,15 +1048,15 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                 setFilterTab('imported');
 
                 showToast?.(
-                    'Import Cyber thành công!',
-                    `Đã import thành công ${res.data.createdCount} khách hàng trực tiếp vào CyberSoft!`,
+                    'Import thành công!',
+                    `Đã import thành công ${res.data.createdCount} khách hàng vào hệ thống!`,
                     'success',
                     5000
                 );
             } else {
                 showToast?.(
-                    'Import Cyber thất bại',
-                    res.error || res.message || 'Hệ thống Cyber phản hồi lỗi.',
+                    'Import thất bại',
+                    res.error || res.message || 'Hệ thống phản hồi lỗi.',
                     'error',
                     6000
                 );
@@ -1075,13 +1075,13 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
             : leadRows.filter(r => r.isImported).map(r => ({ idKh: r.cyberId || '', tenKh: r.fullName, phone: r.phone }));
 
         if (!importedItems || importedItems.length === 0) {
-            showToast?.('Chưa có dữ liệu', 'Chưa có khách hàng nào được import thành công vào Cyber để xuất!', 'info');
+            showToast?.('Chưa có dữ liệu', 'Chưa có khách hàng nào được import thành công để xuất!', 'info');
             return;
         }
 
         const exportData = importedItems.map((item, idx) => ({
             'STT': idx + 1,
-            'Mã Khách Hàng (Cyber ID)': item.idKh,
+            'Mã Khách Hàng': item.idKh,
             'Họ và tên': item.tenKh,
             'Số điện thoại': item.phone,
             'TVBH Phụ trách': selectedUserInfo ? `${selectedUserInfo.fullName} (${selectedUserInfo.userName})` : selectedUser,
@@ -1091,8 +1091,8 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         const ws = xlsx.utils.json_to_sheet(exportData);
         ws['!cols'] = [{ wch: 8 }, { wch: 24 }, { wch: 26 }, { wch: 16 }, { wch: 32 }, { wch: 22 }];
         const wb = xlsx.utils.book_new();
-        xlsx.utils.book_append_sheet(wb, ws, 'KetQuaImportCyber');
-        xlsx.writeFile(wb, `Ket_Qua_Import_KHTN_Cyber_${selectedUser}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        xlsx.utils.book_append_sheet(wb, ws, 'KetQuaImportKHTN');
+        xlsx.writeFile(wb, `Ket_Qua_Import_KHTN_${selectedUser}_${new Date().toISOString().slice(0, 10)}.xlsx`);
     };
 
     // Tự động kiểm tra ting-ting SePay khi mở Modal Thanh Toán
@@ -1191,7 +1191,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                     <div className="flex items-center gap-2">
                         <i className="fas fa-circle-check text-emerald-200"></i>
                         <span>
-                            Đã import thành công <strong>{lastImportStats.count}</strong> khách hàng trực tiếp vào CyberSoft CRM cho TVBH: <strong>{lastImportStats.user}</strong> ({lastImportStats.time})
+                            Đã import thành công <strong>{lastImportStats.count}</strong> khách hàng cho TVBH: <strong>{lastImportStats.user}</strong> ({lastImportStats.time})
                         </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -1281,7 +1281,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                 });
                             }}
                             className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded border border-slate-200 transition-colors cursor-pointer"
-                            title="Làm mới danh mục Cyber"
+                            title="Làm mới danh mục"
                         >
                             <i className={`fas fa-rotate-right text-xs ${isLoadingMeta ? 'animate-spin text-blue-600' : ''}`}></i>
                         </button>
@@ -1349,10 +1349,10 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                             onClick={handleImport}
                             disabled={counts.selected === 0 || isImporting || !selectedUser}
                             className="h-7 px-3.5 text-[11px] font-bold text-white bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 disabled:opacity-50 rounded shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all shrink-0"
-                            title="Thanh toán phí dịch vụ và import vào CyberSoft CRM"
+                            title="Thanh toán phí dịch vụ và import KHTN"
                         >
                             <i className={`fas ${isImporting ? 'fa-spinner fa-spin' : 'fa-qrcode'} text-[10px]`}></i>
-                            <span>Import Vào Cyber ({counts.selected} Khách - {calculateLeadPrice(counts.selected).toLocaleString('vi-VN')}₫)</span>
+                            <span>Import ({counts.selected} Khách - {calculateLeadPrice(counts.selected).toLocaleString('vi-VN')}₫)</span>
                         </button>
                     </div>
                 </div>
@@ -1399,9 +1399,6 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                         </span>
                         <span className="font-bold text-[11px] text-white tracking-tight drop-shadow-xs">
                             Quản lý khách hàng tiềm năng - Ô tô VinFast Thuận An
-                        </span>
-                        <span className="text-[9px] text-blue-100 bg-blue-900/30 px-1 py-0.2 rounded border border-blue-300/30 ml-1">
-                            CyberSoft CRM
                         </span>
                     </div>
                     <div className="flex items-center gap-0.5">
@@ -1515,7 +1512,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                             type="button"
                             onClick={() => runDuplicateCheck()}
                             className="px-2 py-0.5 bg-white hover:bg-slate-100 border border-[#B5B5B5] rounded-xs shadow-2xs flex items-center gap-1 font-semibold text-blue-700 cursor-pointer"
-                            title="Kiểm tra trùng số điện thoại trên Cyber CRM"
+                            title="Kiểm tra trùng số điện thoại"
                         >
                             <i className={`fas fa-rotate text-[9px] ${isCheckingDuplicates ? 'animate-spin' : ''}`}></i>
                             <span>Kiểm tra</span>
@@ -1663,7 +1660,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                             <>
                                 <span>•</span>
                                 <span className="text-emerald-700 font-extrabold bg-emerald-100 px-2 py-0.2 rounded border border-emerald-300">
-                                    🟢 Đã import Cyber thành công: {counts.imported} khách
+                                    🟢 Đã import thành công: {counts.imported} khách
                                 </span>
                             </>
                         )}
@@ -1740,7 +1737,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
 
                         <div className="flex items-center justify-between pt-1">
                             <span className="text-[11px] text-slate-500 hidden sm:inline">
-                                💡 Hệ thống tự động bóc tách số điện thoại và tên để nạp vào CyberSoft.
+                                💡 Hệ thống tự động bóc tách số điện thoại và tên để nhập vào CRM.
                             </span>
                             <div className="flex items-center gap-2 ml-auto">
                                 <button
@@ -1780,7 +1777,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                             Thanh Toán Phí Dịch Vụ Nhập Liệu
                                         </h2>
                                         <p className="text-slate-500 text-[11px] leading-relaxed">
-                                            Hỗ trợ chuẩn hóa, kiểm tra trùng và import vào CyberSoft CRM
+                                            Hỗ trợ chuẩn hóa, kiểm tra trùng và import KHTN
                                         </p>
                                     </div>
                                 </div>
@@ -1826,12 +1823,12 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                             Đã Nhận Tiền Thành Công!
                                         </h4>
                                         <p className="text-xs text-slate-500 mt-1">
-                                            Đang tự động import {counts.selected} khách hàng vào Cyber CRM...
+                                            Đang tự động import {counts.selected} khách hàng vào CRM...
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200/60">
                                         <i className="fas fa-spinner fa-spin text-emerald-600"></i>
-                                        <span>Đang import dữ liệu vào hệ thống Cyber...</span>
+                                        <span>Đang import dữ liệu vào hệ thống...</span>
                                     </div>
                                 </div>
                             ) : (

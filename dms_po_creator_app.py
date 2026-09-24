@@ -4,7 +4,7 @@ import json
 import time
 import threading
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
@@ -156,7 +156,6 @@ class SyncServerHandler(BaseHTTPRequestHandler):
 DEFAULT_VEHICLES = {
     "VF 3": {
         "shared_code": "EI13_1024",
-        "product_id": "e3aea14a-4104-f111-8407-000d3a8018f2",
         "packages": [
             {
                 "name": "VF 3 PLUS",
@@ -175,30 +174,206 @@ DEFAULT_VEHICLES = {
                 "c_cfg_id": "310a2c4e-3aaa-f011-bbd2-6045bd568f89"
             },
             {
-                "name": "BASE (Tiêu chuẩn)",
-                "id": "9c24c043-7f0e-ef11-9f89-0022481798f2",
-                "code": "EI13_2024_GI10V_20240303",
-                "cfg_name": "VF 3",
-                "cfg_id": "153cfbed-31d1-ee11-9079-6045bd55e245",
-                "c_cfg_id": "39ee882a-d3e5-ee11-904d-000d3a80527e"
+                "name": "VF 3 Facelift PLUS",
+                "id": "bbdf2c56-7a89-f111-8076-002248ec2303",
+                "code": "EI13_1024_TI1DV_270726",
+                "cfg_name": "VF 3 PLUS",
+                "cfg_id": "76a97378-39aa-f011-bbd2-6045bd568f89"
+            },
+            {
+                "name": "VF 3 Facelift ECO",
+                "id": "bad54b86-7a89-f111-8076-002248ec2303",
+                "code": "EI13_1024_TI1EV_270726",
+                "cfg_name": "VF 3 ECO",
+                "cfg_id": "1b5c5072-39aa-f011-bbd2-6045bd568f89"
+            },
+            {
+                "name": "VF 3 Base (Tiêu chuẩn)",
+                "id": "fbae6ed2-7a72-f011-b4cd-00224816507b",
+                "code": "Ei13_1024_TI10V_20250101",
+                "cfg_name": "BASE"
             }
         ],
         "ext_colors": [
-            {"name": "Màu Trắng", "code": "CE18", "id": "4d3285a1-3589-f011-b4cc-000d3a85b30e", "c_id": "a1c51753-d871-f011-b4cd-00224817e379"},
-            {"name": "Màu Xám", "code": "CE14", "id": "9ea0718f-2c89-f011-b4cc-000d3a85b30e", "c_id": "afc51753-d871-f011-b4cd-00224817e379"},
-            {"name": "Màu Vàng", "code": "CE1V", "id": "436170f7-2c89-f011-b4cc-000d3a85b30e", "c_id": "a3c51753-d871-f011-b4cd-00224817e379"},
-            {"name": "Màu Xanh Lá Nhạt", "code": "CE15", "id": "63b4699b-2c89-f011-b4cc-000d3a85b30e", "c_id": "b1c51753-d871-f011-b4cd-00224817e379"},
-            {"name": "Màu Đỏ Ruby", "code": "CE13", "id": "0b4b88f1-fde1-f011-8406-70a8a5013371", "c_id": "a286e0b9-01e2-f011-8406-70a8a5013371"},
-            {"name": "Màu Hồng Phấn", "code": "CE16", "id": "15fc7803-2d89-f011-b4cc-000d3a85b30e", "c_id": "a7c51753-d871-f011-b4cd-00224817e379"},
-            {"name": "Màu Đen", "code": "CE11", "id": "23f96650-7a0e-ef11-9f8a-6045bd5754ce", "c_id": "afc51753-d871-f011-b4cd-00224817e379"}
+            {
+                "name": "Màu Trắng (Brahminy White)",
+                "code": "CE18",
+                "id": "4d3285a1-3589-f011-b4cc-000d3a85b30e",
+                "c_id": "a1c51753-d871-f011-b4cd-00224817e379"
+            },
+            {
+                "name": "Màu Đen (Jet Black)",
+                "code": "CE11",
+                "id": "abe8ab61-2c89-f011-b4cc-000d3a85b30e",
+                "c_id": "afc51753-d871-f011-b4cd-00224817e379"
+            },
+            {
+                "name": "Màu Xám (Zenith Grey)",
+                "code": "CE1V",
+                "id": "9ea0718f-2c89-f011-b4cc-000d3a85b30e",
+                "c_id": "afc51753-d871-f011-b4cd-00224817e379"
+            },
+            {
+                "name": "Màu Vàng (Summer Yellow)",
+                "code": "CE1U",
+                "id": "b3316689-2c89-f011-b4cc-000d3a85b30e"
+            },
+            {
+                "name": "Màu Vàng Nóc Trắng",
+                "code": "181U",
+                "id": "436170f7-2c89-f011-b4cc-000d3a85b30e",
+                "c_id": "a3c51753-d871-f011-b4cd-00224817e379"
+            },
+            {
+                "name": "Màu Xanh Lá Nhạt (Urban Mint)",
+                "code": "CE1W",
+                "id": "63b4699b-2c89-f011-b4cc-000d3a85b30e",
+                "c_id": "b1c51753-d871-f011-b4cd-00224817e379"
+            },
+            {
+                "name": "Màu Xanh Lá Nóc Trắng",
+                "code": "181Y",
+                "id": "b29680fd-2c89-f011-b4cc-000d3a85b30e"
+            },
+            {
+                "name": "Màu Hồng Phấn Nóc Trắng",
+                "code": "1821",
+                "id": "15fc7803-2d89-f011-b4cc-000d3a85b30e",
+                "c_id": "a7c51753-d871-f011-b4cd-00224817e379"
+            },
+            {
+                "name": "Màu Đỏ Ruby (Solar Ruby)",
+                "code": "CE2Q",
+                "id": "0b4b88f1-fde1-f011-8406-70a8a5013371",
+                "c_id": "a286e0b9-01e2-f011-8406-70a8a5013371"
+            },
+            {
+                "name": "Màu Đỏ Cờ (Crimson Red)",
+                "code": "CE1M",
+                "id": "764a0aa8-3589-f011-b4cc-000d3a85b30e"
+            },
+            {
+                "name": "Màu Xanh Aqua (Aqua Blue)",
+                "code": "CE1P",
+                "id": "4a6c9282-2c89-f011-b4cc-000d3a85b30e"
+            },
+            {
+                "name": "Màu Xanh Dương Đậm (VinFast Blue)",
+                "code": "CE1J",
+                "id": "1b33e56f-2c89-f011-b4cc-000d3a85b30e"
+            },
+            {
+                "name": "Màu Hồng Tím (Iris Berry)",
+                "code": "CE1X",
+                "id": "8092e870-d8bd-f011-bbd3-00224817e49f"
+            }
         ],
         "int_colors": [
-            {"name": "Màu Đen", "code": "CI11", "id": "6d9891ba-2c89-f011-b4cc-000d3a85b30e", "c_id": "bac51753-d871-f011-b4cd-00224817e379"}
+            {
+                "name": "Màu Đen",
+                "code": "CI11",
+                "id": "6d9891ba-2c89-f011-b4cc-000d3a85b30e",
+                "c_id": "bac51753-d871-f011-b4cd-00224817e379"
+            }
+        ]
+    },
+    "VF 2": {
+        "shared_code": "EI23_2025",
+        "packages": [
+            {
+                "name": "VF 2",
+                "id": "5cacbba8-687b-f111-ab0f-002248ee5474",
+                "code": "EI23_2025_TH14V_090726",
+                "cfg_name": "VF 2",
+                "cfg_id": "7b48661d-657b-f111-ab0f-002248ee5474",
+                "c_cfg_id": "880b103e-667b-f111-ab0f-002248ee5474"
+            },
+            {
+                "name": "Minio Green",
+                "id": "9c215ba4-7a89-f111-8076-002248ec2303",
+                "code": "EI23_2025_TH13V_270726",
+                "cfg_name": "Minio Green",
+                "cfg_id": "7b48661d-657b-f111-ab0f-002248ee5474"
+            },
+            {
+                "name": "VF 2 BCO2",
+                "id": "cf01182b-ee9a-f111-b8dc-70a8a5055894",
+                "code": "EI23_2025_TH15V",
+                "cfg_name": "VF 2"
+            }
+        ],
+        "ext_colors": [
+            {
+                "name": "Màu Trắng",
+                "code": "CE18",
+                "id": "f9453715-e9d3-f011-8544-000d3a85a224",
+                "c_id": "68ffb14b-e9d3-f011-8544-000d3a85a224"
+            },
+            {
+                "name": "Màu Đỏ Ruby",
+                "code": "CE13",
+                "id": "40b356f8-603c-f111-88b5-7ced8dfee225",
+                "c_id": "c5b66e55-f632-f111-88b5-000d3a829dfa"
+            },
+            {
+                "name": "Urban Mint (Xanh Lá Nhạt)",
+                "code": "CE15",
+                "id": "590c2998-657b-f111-ab0f-002248ee5474",
+                "c_id": "e1b2a504-677b-f111-ab0f-002248ee5474"
+            },
+            {
+                "name": "Màu Bạc",
+                "code": "CE12",
+                "id": "4555ca6b-d202-f011-bae2-6045bd572ca9",
+                "c_id": "f4659965-5f02-f011-bae4-00224816cf50"
+            },
+            {
+                "name": "Màu Vàng",
+                "code": "CE1V",
+                "id": "b4000372-d202-f011-bae2-6045bd572ca9"
+            },
+            {
+                "name": "Màu Hồng Phấn",
+                "code": "CE16",
+                "id": "7e88c1c2-657b-f111-ab0f-002248ee5474"
+            },
+            {
+                "name": "Màu Vàng Nóc Đen",
+                "code": "1U11",
+                "id": "f5e9856a-23ae-f011-bbd2-000d3a8030c4"
+            },
+            {
+                "name": "Màu Đỏ Nóc Trắng",
+                "code": "181M",
+                "id": "a5830871-23ae-f011-bbd2-000d3a8030c4"
+            },
+            {
+                "name": "Màu Vàng Nóc Trắng",
+                "code": "181U",
+                "id": "8bd1ff82-23ae-f011-bbd2-000d3a8030c4"
+            },
+            {
+                "name": "Màu Bạc Nóc Đen",
+                "code": "1117",
+                "id": "b2e00077-23ae-f011-bbd2-000d3a8030c4"
+            }
+        ],
+        "int_colors": [
+            {
+                "name": "Màu Xám Đen",
+                "code": "CI12",
+                "id": "d2310476-9c10-f011-998a-002248ec75b4",
+                "c_id": "fc659965-5f02-f011-bae4-00224816cf50"
+            },
+            {
+                "name": "Màu Đen",
+                "code": "CI11",
+                "id": "d97cdd08-d402-f011-bae2-6045bd572ca9"
+            }
         ]
     },
     "VF 5": {
         "shared_code": "EA15_2023",
-        "product_id": "5d2fba02-730a-f111-8406-000d3a8024a0",
         "packages": [
             {
                 "name": "VF 5 PLUS",
@@ -215,23 +390,98 @@ DEFAULT_VEHICLES = {
                 "cfg_name": "VF 5 ECO",
                 "cfg_id": "02952077-5a71-ed11-81ac-000d3a85630d",
                 "c_cfg_id": "267b4301-6f1e-f011-998a-6045bd5b2bd6"
+            },
+            {
+                "name": "Herio Green",
+                "id": "2bf064a9-dcf4-f011-8407-7ced8dfee221",
+                "code": "EA15_2023_GA1XV_190126",
+                "cfg_name": "Herio Green"
             }
         ],
         "ext_colors": [
-            {"name": "Màu Trắng", "code": "CE18", "id": "59c93983-5a71-ed11-81ac-000d3a85630d", "c_id": "ad6c9873-b96f-ed11-81ac-000d3a856184"},
-            {"name": "Màu Đỏ", "code": "CE13", "id": "6ec93983-5a71-ed11-81ac-000d3a85630d", "c_id": "b16c9873-b96f-ed11-81ac-000d3a856184"},
-            {"name": "Màu Xám", "code": "CE14", "id": "93b700f9-dd1e-ee11-9cbd-6045bd55e32f", "c_id": "e5db1d9a-df1e-ee11-9cbd-6045bd55e32f"},
-            {"name": "Màu Xanh Lá Nhạt", "code": "CE15", "id": "f8be360d-2f35-ef11-8e4e-002248ecc5a2", "c_id": "175e0374-3035-ef11-8e4e-6045bd5754c8"},
-            {"name": "Màu Vàng", "code": "CE1V", "id": "9a0479b8-7835-ef11-a317-002248ec8105", "c_id": "0f5e0374-3035-ef11-8e4e-6045bd5754c8"},
-            {"name": "Màu Đen", "code": "CE11", "id": "53c93983-5a71-ed11-81ac-000d3a85630d", "c_id": "b56c9873-b96f-ed11-81ac-000d3a856184"}
+            {
+                "name": "Màu Trắng",
+                "code": "CE18",
+                "id": "59c93983-5a71-ed11-81ac-000d3a85630d",
+                "c_id": "ad6c9873-b96f-ed11-81ac-000d3a856184"
+            },
+            {
+                "name": "Màu Đỏ",
+                "code": "CE13",
+                "id": "6ec93983-5a71-ed11-81ac-000d3a85630d",
+                "c_id": "b16c9873-b96f-ed11-81ac-000d3a856184"
+            },
+            {
+                "name": "Màu Xám",
+                "code": "CE14",
+                "id": "93b700f9-dd1e-ee11-9cbd-6045bd55e32f",
+                "c_id": "e5db1d9a-df1e-ee11-9cbd-6045bd55e32f"
+            },
+            {
+                "name": "Màu Xanh Lá Nhạt",
+                "code": "CE15",
+                "id": "f8be360d-2f35-ef11-8e4e-002248ecc5a2",
+                "c_id": "175e0374-3035-ef11-8e4e-6045bd5754c8"
+            },
+            {
+                "name": "Màu Vàng",
+                "code": "CE1V",
+                "id": "9a0479b8-7835-ef11-a317-002248ec8105",
+                "c_id": "0f5e0374-3035-ef11-8e4e-6045bd5754c8"
+            },
+            {
+                "name": "Màu Đen",
+                "code": "CE11",
+                "id": "53c93983-5a71-ed11-81ac-000d3a85630d",
+                "c_id": "b56c9873-b96f-ed11-81ac-000d3a856184"
+            },
+            {
+                "name": "Màu Đỏ Ruby Nóc Trắng",
+                "code": "182Q",
+                "id": "ad8afad9-0be2-f011-8406-70a8a5013371"
+            },
+            {
+                "name": "Màu Vàng Nóc Trắng",
+                "code": "181U",
+                "id": "509713c6-882f-ef11-840a-6045bd55e9fe"
+            },
+            {
+                "name": "Màu Trắng Nóc Đen",
+                "code": "1118",
+                "id": "7f298be6-dd1e-ee11-9cbd-6045bd55e32f"
+            },
+            {
+                "name": "Màu Xám Nóc Trắng",
+                "code": "1814",
+                "id": "71fbd3f2-dd1e-ee11-9cbd-6045bd55e32f"
+            },
+            {
+                "name": "Màu Đỏ Nóc Đen",
+                "code": "111M",
+                "id": "d45c26cd-dd1e-ee11-9cbd-6045bd55e32f"
+            },
+            {
+                "name": "Màu Xanh Dương Nóc Đen",
+                "code": "111N",
+                "id": "6cc582d3-dd1e-ee11-9cbd-6045bd55e32f"
+            },
+            {
+                "name": "Màu Cam Nóc Trắng",
+                "code": "181A",
+                "id": "1f667bd9-dd1e-ee11-9cbd-6045bd55e32f"
+            }
         ],
         "int_colors": [
-            {"name": "Màu Đen", "code": "CI11", "id": "01952077-5a71-ed11-81ac-000d3a85630d", "c_id": "b56c9873-b96f-ed11-81ac-000d3a856184"}
+            {
+                "name": "Màu Đen",
+                "code": "CI11",
+                "id": "01952077-5a71-ed11-81ac-000d3a85630d",
+                "c_id": "b56c9873-b96f-ed11-81ac-000d3a856184"
+            }
         ]
     },
     "VF 6": {
         "shared_code": "EB15_2023",
-        "product_id": "7c7a8bef-2ced-f011-8406-000d3a8018f2",
         "packages": [
             {
                 "name": "VF 6 PLUS",
@@ -248,24 +498,74 @@ DEFAULT_VEHICLES = {
                 "cfg_name": "Bản ECO",
                 "cfg_id": "c6ce677f-37e4-ef11-9342-6045bd5a7f3e",
                 "c_cfg_id": "3bcb8da5-37e4-ef11-9342-6045bd5a7f3e"
+            },
+            {
+                "name": "VF 6 PLUS Pin CKD",
+                "id": "bc963972-5a9d-ee11-be37-000d3a85d629",
+                "code": "EB15_2023_CB12V_20232110",
+                "cfg_name": "Bản Plus Pin CKD"
+            },
+            {
+                "name": "VF 6 Base Pin CKD",
+                "id": "086fbdea-599d-ee11-be37-000d3a85d629",
+                "code": "EB15_2023_CB10V_20232110",
+                "cfg_name": "Bản Base Pin CKD"
             }
         ],
         "ext_colors": [
-            {"name": "Màu Đen", "code": "CE11", "id": "566f97d3-10cf-ed11-a7c7-000d3a85ca88", "c_id": "73d42b14-d984-ed11-81ad-000d3a85c8c0"},
-            {"name": "Màu Trắng", "code": "CE18", "id": "162257ac-03c7-ed11-b597-002248ebf6a1", "c_id": "70d42b14-d984-ed11-81ad-000d3a85c8c0"},
-            {"name": "Màu Xám", "code": "CE14", "id": "6dee4768-0bf5-ef11-be20-6045bd590b24", "c_id": "2bc66dbc-8cd2-ef11-8ee9-002248edbb12"},
-            {"name": "Màu Đỏ Ruby", "code": "CE13", "id": "763b7200-fee1-f011-8406-70a8a5013371", "c_id": "8f41e140-02e2-f011-8406-70a8a5013371"},
-            {"name": "Màu Xanh Lá Nhạt", "code": "CE15", "id": "d6012673-e4d2-ef11-8ee9-000d3a82ca77"}
+            {
+                "name": "Màu Đen",
+                "code": "CE11",
+                "id": "566f97d3-10cf-ed11-a7c7-000d3a85ca88",
+                "c_id": "73d42b14-d984-ed11-81ad-000d3a85c8c0"
+            },
+            {
+                "name": "Màu Trắng",
+                "code": "CE18",
+                "id": "162257ac-03c7-ed11-b597-002248ebf6a1",
+                "c_id": "70d42b14-d984-ed11-81ad-000d3a85c8c0"
+            },
+            {
+                "name": "Màu Xám",
+                "code": "CE14",
+                "id": "6dee4768-0bf5-ef11-be20-6045bd590b24",
+                "c_id": "2bc66dbc-8cd2-ef11-8ee9-002248edbb12"
+            },
+            {
+                "name": "Màu Đỏ Ruby",
+                "code": "CE13",
+                "id": "763b7200-fee1-f011-8406-70a8a5013371",
+                "c_id": "8f41e140-02e2-f011-8406-70a8a5013371"
+            },
+            {
+                "name": "Màu Xanh Lá Nhạt",
+                "code": "CE15",
+                "id": "d6012673-e4d2-ef11-8ee9-000d3a82ca77"
+            }
         ],
         "int_colors": [
-            {"name": "Màu Mocha Nâu", "code": "CI1M", "id": "ea2176fe-b666-ee11-9ae7-000d3a85ca88", "c_id": "d80d4ea0-b266-ee11-9ae7-002248ebf578"},
-            {"name": "Màu Đen", "code": "CI11", "id": "5c5b4004-04c7-ed11-b597-002248ebf6a1", "c_id": "6ad42b14-d984-ed11-81ad-000d3a85c8c0"},
-            {"name": "Màu Be", "code": "CI13", "id": "b8dad710-04c7-ed11-b597-002248ebf6a1", "c_id": "ebe3afb0-1d6e-f011-b4cc-002248177f2a"}
+            {
+                "name": "Màu Mocha Nâu",
+                "code": "CI1M",
+                "id": "ea2176fe-b666-ee11-9ae7-000d3a85ca88",
+                "c_id": "d80d4ea0-b266-ee11-9ae7-002248ebf578"
+            },
+            {
+                "name": "Màu Đen",
+                "code": "CI11",
+                "id": "5c5b4004-04c7-ed11-b597-002248ebf6a1",
+                "c_id": "6ad42b14-d984-ed11-81ad-000d3a85c8c0"
+            },
+            {
+                "name": "Màu Be",
+                "code": "CI13",
+                "id": "b8dad710-04c7-ed11-b597-002248ebf6a1",
+                "c_id": "ebe3afb0-1d6e-f011-b4cc-002248177f2a"
+            }
         ]
     },
     "VF 7": {
         "shared_code": "EC15_2023",
-        "product_id": "782a23a5-cedf-f011-8406-000d3a8018f2",
         "packages": [
             {
                 "name": "VF 7 ECO BCO3",
@@ -288,40 +588,116 @@ DEFAULT_VEHICLES = {
                 "code": "EC15_2023_GC12V_20250101",
                 "cfg_name": "PLUS Trần Thép",
                 "cfg_id": "f2103ebb-ba9a-f011-b41c-000d3a8119d2"
+            },
+            {
+                "name": "VF 7 Eco Tiêu chuẩn",
+                "id": "ff8f737a-3f5a-f111-a825-000d3a827ff2",
+                "code": "EC15_2023_HC1DV_280526"
             }
         ],
         "ext_colors": [
-            {"name": "Màu Xám (Zenith Grey)", "code": "CE14", "id": "70ff53fb-bf0a-f011-bae3-002248ebb2e7", "c_id": "d6779c1a-91d2-ef11-8ee9-002248edbb12"},
-            {"name": "Màu Đen", "code": "CE11", "id": "981b0e68-14cf-ed11-a7c7-000d3a85630d", "c_id": "74d42b14-d984-ed11-81ad-000d3a85c8c0"},
-            {"name": "Màu Trắng", "code": "CE18", "id": "e5d019d9-03c7-ed11-b597-002248ebf6a1"},
-            {"name": "Màu Đỏ Ruby", "code": "CE13", "id": "e04cc55a-366e-ec11-8941-000d3a801a58"}
+            {
+                "name": "Màu Xám (Zenith Grey)",
+                "code": "CE14",
+                "id": "70ff53fb-bf0a-f011-bae3-002248ebb2e7",
+                "c_id": "d6779c1a-91d2-ef11-8ee9-002248edbb12"
+            },
+            {
+                "name": "Màu Đen",
+                "code": "CE11",
+                "id": "981b0e68-14cf-ed11-a7c7-000d3a85630d",
+                "c_id": "74d42b14-d984-ed11-81ad-000d3a85c8c0"
+            },
+            {
+                "name": "Màu Trắng",
+                "code": "CE18",
+                "id": "e5d019d9-03c7-ed11-b597-002248ebf6a1"
+            },
+            {
+                "name": "Màu Đỏ Ruby",
+                "code": "CE13",
+                "id": "e04cc55a-366e-ec11-8941-000d3a801a58"
+            }
         ],
         "int_colors": [
-            {"name": "Màu Đen", "code": "CI11", "id": "c5a3f91d-04c7-ed11-b597-002248ebf6a1", "c_id": "e02a241a-d984-ed11-81ad-000d3a85c8c0"},
-            {"name": "Màu Mocha Nâu", "code": "CI1M", "id": "e017a7a3-e4d2-ef11-8ee9-000d3a82ca77"}
+            {
+                "name": "Màu Đen",
+                "code": "CI11",
+                "id": "c5a3f91d-04c7-ed11-b597-002248ebf6a1",
+                "c_id": "e02a241a-d984-ed11-81ad-000d3a85c8c0"
+            },
+            {
+                "name": "Màu Mocha Nâu",
+                "code": "CI1M",
+                "id": "e017a7a3-e4d2-ef11-8ee9-000d3a82ca77"
+            }
         ]
     },
     "VF 8": {
         "shared_code": "PD1U_2023",
-        "product_id": "fada4c5d-e7de-f011-8406-000d3a8018f2",
         "packages": [
-            {"name": "PLUS Pin CATL", "id": "158ea12c-578c-ef11-8a69-0022481962de", "code": "PD1U_2023_ND42V_20241807", "cfg_name": "PLUS"},
-            {"name": "ECO Pin CATL", "id": "821f41e7-568c-ef11-8a69-0022481962de", "code": "PD1U_2023_ND41V_20241807", "cfg_name": "ECO"}
+            {
+                "name": "PLUS Pin CATL",
+                "id": "158ea12c-578c-ef11-8a69-0022481962de",
+                "code": "PD1U_2023_ND42V_20241807",
+                "cfg_name": "PLUS"
+            },
+            {
+                "name": "ECO Pin CATL",
+                "id": "821f41e7-568c-ef11-8a69-0022481962de",
+                "code": "PD1U_2023_ND41V_20241807",
+                "cfg_name": "ECO"
+            },
+            {
+                "name": "PLUS Limited",
+                "id": "f7cad1f8-7b72-f011-b4cd-00224816507b",
+                "code": "PD1U_2023_HD14V_20250101",
+                "cfg_name": "PLUS"
+            },
+            {
+                "name": "ECO Limited",
+                "id": "098928df-7b72-f011-b4cd-00224816507b",
+                "code": "PD1U_2023_HD13V_20250101",
+                "cfg_name": "ECO"
+            }
         ],
         "ext_colors": [
-            {"name": "Màu Đen", "code": "CE11", "id": "d4f22276-eb65-ef11-a670-6045bd575473"},
-            {"name": "Màu Trắng", "code": "CE18", "id": "90f02276-eb65-ef11-a670-6045bd575473"},
-            {"name": "Màu Xám", "code": "CE14", "id": "62535cd2-0882-ef11-ac21-6045bd579d7a"},
-            {"name": "Màu Đỏ Ruby", "code": "CE13", "id": "ebcd8612-fee1-f011-8406-70a8a5013371"}
+            {
+                "name": "Màu Đen",
+                "code": "CE11",
+                "id": "d4f22276-eb65-ef11-a670-6045bd575473"
+            },
+            {
+                "name": "Màu Trắng",
+                "code": "CE18",
+                "id": "90f02276-eb65-ef11-a670-6045bd575473"
+            },
+            {
+                "name": "Màu Xám",
+                "code": "CE14",
+                "id": "62535cd2-0882-ef11-ac21-6045bd579d7a"
+            },
+            {
+                "name": "Màu Đỏ Ruby",
+                "code": "CE13",
+                "id": "ebcd8612-fee1-f011-8406-70a8a5013371"
+            }
         ],
         "int_colors": [
-            {"name": "Màu Nâu", "code": "CI1M", "id": "692c760e-486e-ec11-8941-000d3a80a1bd"},
-            {"name": "Màu Đen", "code": "CI11", "id": "672c760e-486e-ec11-8941-000d3a80a1bd"}
+            {
+                "name": "Màu Nâu",
+                "code": "CI1M",
+                "id": "692c760e-486e-ec11-8941-000d3a80a1bd"
+            },
+            {
+                "name": "Màu Đen",
+                "code": "CI11",
+                "id": "672c760e-486e-ec11-8941-000d3a80a1bd"
+            }
         ]
     },
     "VF 9": {
         "shared_code": "PE1U_2023",
-        "product_id": "fbda4c5d-e7de-f011-8406-000d3a8018f2",
         "packages": [
             {
                 "name": "PLUS 7 Chỗ PIN CATL Trần Thép CPDU 3 Vùng ĐH",
@@ -347,89 +723,120 @@ DEFAULT_VEHICLES = {
             }
         ],
         "ext_colors": [
-            {"name": "Màu Đen", "code": "CE11", "id": "39fca12e-366e-ec11-8941-000d3a801d3c", "c_id": "63a560a5-326e-ec11-8943-000d3a817558"},
-            {"name": "Màu Trắng", "code": "CE18", "id": "c711b17e-366e-ec11-8941-000d3a801a58"},
-            {"name": "Màu Xám", "code": "CE14", "id": "eaf0a38a-366e-ec11-8941-000d3a801a58"},
-            {"name": "Màu Đỏ", "code": "CE13", "id": "e04cc55a-366e-ec11-8941-000d3a801a58"},
-            {"name": "Màu Xanh Dương", "code": "CE17", "id": "d17348eb-3c99-ec11-b400-000d3a853a2a"},
-            {"name": "Màu Đỏ Ruby", "code": "CE13", "id": "27567406-fee1-f011-8406-70a8a5013371"}
-        ],
-        "int_colors": [
-            {"name": "Màu Nâu", "code": "CI1M", "id": "5b880511-376e-ec11-8942-000d3a8018a4", "c_id": "70a560a5-326e-ec11-8943-000d3a817558"},
-            {"name": "Màu Be", "code": "CI13", "id": "3902e076-376e-ec11-8941-000d3a80a1bd"},
-            {"name": "Màu Đen", "code": "CI11", "id": "59c90ea1-366e-ec11-8941-000d3a80acd3"},
-            {"name": "Màu Xanh", "code": "CI15", "id": "3e1067e0-376e-ec11-8941-000d3a80acd3"}
-        ]
-    },
-    "VF 2": {
-        "shared_code": "EI23_2025",
-        "product_id": "5b870167-2edf-f011-8406-000d3a8018f2",
-        "packages": [
             {
-                "name": "VF 2",
-                "id": "5cacbba8-687b-f111-ab0f-002248ee5474",
-                "code": "EI23_2025_TH14V_090726",
-                "cfg_name": "VF 2",
-                "cfg_id": "7b48661d-657b-f111-ab0f-002248ee5474",
-                "c_cfg_id": "880b103e-667b-f111-ab0f-002248ee5474"
+                "name": "Màu Đen",
+                "code": "CE11",
+                "id": "39fca12e-366e-ec11-8941-000d3a801d3c",
+                "c_id": "63a560a5-326e-ec11-8943-000d3a817558"
             },
             {
-                "name": "Minio Green",
-                "id": "2c008696-5805-f011-bae2-002248eb27b9",
-                "code": "EI23_2025_TH12V_20251703",
-                "cfg_name": "Minio Green",
-                "cfg_id": "7b48661d-657b-f111-ab0f-002248ee5474"
+                "name": "Màu Trắng",
+                "code": "CE18",
+                "id": "c711b17e-366e-ec11-8941-000d3a801a58"
+            },
+            {
+                "name": "Màu Xám",
+                "code": "CE14",
+                "id": "eaf0a38a-366e-ec11-8941-000d3a801a58"
+            },
+            {
+                "name": "Màu Đỏ",
+                "code": "CE13",
+                "id": "e04cc55a-366e-ec11-8941-000d3a801a58"
+            },
+            {
+                "name": "Màu Xanh Dương",
+                "code": "CE17",
+                "id": "d17348eb-3c99-ec11-b400-000d3a853a2a"
+            },
+            {
+                "name": "Màu Đỏ Ruby",
+                "code": "CE13",
+                "id": "27567406-fee1-f011-8406-70a8a5013371"
+            }
+        ],
+        "int_colors": [
+            {
+                "name": "Màu Nâu",
+                "code": "CI1M",
+                "id": "5b880511-376e-ec11-8942-000d3a8018a4",
+                "c_id": "70a560a5-326e-ec11-8943-000d3a817558"
+            },
+            {
+                "name": "Màu Be",
+                "code": "CI13",
+                "id": "3902e076-376e-ec11-8941-000d3a80a1bd"
+            },
+            {
+                "name": "Màu Đen",
+                "code": "CI11",
+                "id": "59c90ea1-366e-ec11-8941-000d3a80acd3"
+            },
+            {
+                "name": "Màu Xanh",
+                "code": "CI15",
+                "id": "3e1067e0-376e-ec11-8941-000d3a80acd3"
+            }
+        ]
+    },
+    "VF e34": {
+        "shared_code": "EB15_2020",
+        "packages": [
+            {
+                "name": "VF e34 Tiêu chuẩn",
+                "id": "028d4005-f8af-f011-bbd2-6045bd584ccf",
+                "code": "EB15_2020_GK1DI_20250101",
+                "cfg_name": "VF e34"
+            },
+            {
+                "name": "VF e34 Base",
+                "id": "089576b9-b0a5-f011-bbd2-6045bd5a9de5",
+                "code": "EB15_2020_GK1DI_20243112",
+                "cfg_name": "VF e34"
             }
         ],
         "ext_colors": [
-            {"name": "Màu Đỏ Ruby", "code": "CE13", "id": "40b356f8-603c-f111-88b5-7ced8dfee225", "c_id": "c5b66e55-f632-f111-88b5-000d3a829dfa"},
-            {"name": "Màu Trắng", "code": "CE18", "id": "f9453715-e9d3-f011-8544-000d3a85a224", "c_id": "68ffb14b-e9d3-f011-8544-000d3a85a224"},
-            {"name": "Urban Mint (Xanh Lá Nhạt)", "code": "CE15", "id": "590c2998-657b-f111-ab0f-002248ee5474", "c_id": "e1b2a504-677b-f111-ab0f-002248ee5474"},
-            {"name": "Màu Bạc", "code": "CE12", "id": "4555ca6b-d202-f011-bae2-6045bd572ca9", "c_id": "f4659965-5f02-f011-bae4-00224816cf50"},
-            {"name": "Màu Vàng", "code": "CE1V", "id": "b4000372-d202-f011-bae2-6045bd572ca9"},
-            {"name": "Màu Hồng Phấn", "code": "CE16", "id": "7e88c1c2-657b-f111-ab0f-002248ee5474"}
-        ],
-        "int_colors": [
-            {"name": "Màu Xám Đen", "code": "CI12", "id": "d2310476-9c10-f011-998a-002248ec75b4", "c_id": "fc659965-5f02-f011-bae4-00224816cf50"},
-            {"name": "Màu Đen", "code": "CI11", "id": "d97cdd08-d402-f011-bae2-6045bd572ca9"}
-        ]
-    },
-    "Limo Green": {
-        "shared_code": "EC1V_2025",
-        "product_id": "49b971a6-dbf2-f011-8407-000d3a8018f2",
-        "packages": [
             {
-                "name": "MPV 7 (VF Limo)",
-                "id": "667d1e9b-c260-f011-bec2-6045bd572ca9",
-                "code": "EC1V_2025_SL1WV_20253010",
-                "cfg_name": "MPV 7",
-                "cfg_id": "71bb60df-be60-f011-bec2-6045bd572ca9",
-                "c_cfg_id": "69728997-bf60-f011-bec2-6045bd572ca9"
+                "name": "Màu Trắng",
+                "code": "CE18",
+                "id": "162257ac-03c7-ed11-b597-002248ebf6a1"
             },
             {
-                "name": "Limo Green",
-                "id": "9342e99d-6302-f011-bae2-002248167dee",
-                "code": "EC1V_2025_SL1VV_20251703",
-                "cfg_name": "Limo Green",
-                "cfg_id": "b943e905-5102-f011-bae2-002248167dee",
-                "c_cfg_id": "1db2a4e9-6202-f011-bae2-002248167dee"
+                "name": "Màu Đen",
+                "code": "CE11",
+                "id": "566f97d3-10cf-ed11-a7c7-000d3a85ca88"
+            },
+            {
+                "name": "Màu Xám",
+                "code": "CE14",
+                "id": "6dee4768-0bf5-ef11-be20-6045bd590b24"
+            },
+            {
+                "name": "Màu Đỏ Ruby",
+                "code": "CE13",
+                "id": "763b7200-fee1-f011-8406-70a8a5013371"
+            },
+            {
+                "name": "Màu Xanh Dương",
+                "code": "CE1J",
+                "id": "1b33e56f-2c89-f011-b4cc-000d3a85b30e"
             }
         ],
-        "ext_colors": [
-            {"name": "Màu Trắng", "code": "CE18", "id": "1bcb9cd7-5a8c-f011-b4cc-000d3a864302", "c_id": "9a5613f8-c060-f011-bec2-6045bd572ca9"},
-            {"name": "Màu Đen", "code": "CE11", "id": "0b08a7fb-d102-f011-bae2-6045bd572ca9", "c_id": "e6659965-5f02-f011-bae4-00224816cf50"},
-            {"name": "Màu Bạc", "code": "CE12", "id": "fc17e201-d202-f011-bae2-6045bd572ca9", "c_id": "ea659965-5f02-f011-bae4-00224816cf50"},
-            {"name": "Màu Đỏ Ruby", "code": "CE13", "id": "d5759418-fee1-f011-8406-70a8a5013371", "c_id": "d272fcdb-02e2-f011-8406-70a8a5013371"},
-            {"name": "Màu Xanh Mai Linh", "code": "CE15", "id": "d6f6411e-b99a-f011-b41c-000d3a8119d2"}
-        ],
         "int_colors": [
-            {"name": "Màu Đen", "code": "CI11", "id": "002ae8de-9c10-f011-998a-002248ec75b4", "c_id": "ee659965-5f02-f011-bae4-00224816cf50"},
-            {"name": "Màu Mocha Nâu", "code": "CI1M", "id": "d74101e7-c7bf-f011-bbd3-000d3a80e26b", "c_id": "0a163c9e-c160-f011-bec2-6045bd572ca9"}
+            {
+                "name": "Màu Đen",
+                "code": "CI11",
+                "id": "5c5b4004-04c7-ed11-b597-002248ebf6a1"
+            },
+            {
+                "name": "Màu Be",
+                "code": "CI13",
+                "id": "b8dad710-04c7-ed11-b597-002248ebf6a1"
+            }
         ]
     },
     "EC Van": {
         "shared_code": "EM1V_2025",
-        "product_id": "d7581ff1-c5fd-f011-8407-000d3a8018f2",
         "packages": [
             {
                 "name": "Bản Nâng Cao",
@@ -456,13 +863,184 @@ DEFAULT_VEHICLES = {
             }
         ],
         "ext_colors": [
-            {"name": "Màu Trắng", "code": "CE18", "id": "16c1b316-9f30-f011-8c4d-6045bd594565", "c_id": "fd6f7063-a030-f011-8c4d-6045bd594565"},
-            {"name": "Màu Xanh Lá Nhạt", "code": "CE15", "id": "b83375d3-3540-f011-877a-6045bd59e228", "c_id": "82701982-a030-f011-8c4d-6045bd594565"},
-            {"name": "Màu Vàng", "code": "CE1V", "id": "2c6cae1c-9f30-f011-8c4d-6045bd594565"},
-            {"name": "Màu Đỏ Ruby", "code": "CE13", "id": "99769418-fee1-f011-8406-70a8a5013371"}
+            {
+                "name": "Màu Trắng",
+                "code": "CE18",
+                "id": "16c1b316-9f30-f011-8c4d-6045bd594565",
+                "c_id": "fd6f7063-a030-f011-8c4d-6045bd594565"
+            },
+            {
+                "name": "Màu Xanh Lá Nhạt",
+                "code": "CE15",
+                "id": "b83375d3-3540-f011-877a-6045bd59e228",
+                "c_id": "82701982-a030-f011-8c4d-6045bd594565"
+            },
+            {
+                "name": "Màu Vàng",
+                "code": "CE1V",
+                "id": "2c6cae1c-9f30-f011-8c4d-6045bd594565"
+            },
+            {
+                "name": "Màu Đỏ Ruby",
+                "code": "CE13",
+                "id": "99769418-fee1-f011-8406-70a8a5013371"
+            }
         ],
         "int_colors": [
-            {"name": "Màu Đen", "code": "CI11", "id": "f2ea7909-9f30-f011-8c4d-6045bd594565", "c_id": "282ff6cc-a030-f011-8c4d-6045bd594565"}
+            {
+                "name": "Màu Đen",
+                "code": "CI11",
+                "id": "f2ea7909-9f30-f011-8c4d-6045bd594565",
+                "c_id": "282ff6cc-a030-f011-8c4d-6045bd594565"
+            }
+        ]
+    },
+    "Limo Green": {
+        "shared_code": "EC1V_2025",
+        "packages": [
+            {
+                "name": "MPV 7 (VF Limo)",
+                "id": "667d1e9b-c260-f011-bec2-6045bd572ca9",
+                "code": "EC1V_2025_SL1WV_20253010",
+                "cfg_name": "MPV 7",
+                "cfg_id": "71bb60df-be60-f011-bec2-6045bd572ca9",
+                "c_cfg_id": "69728997-bf60-f011-bec2-6045bd572ca9"
+            },
+            {
+                "name": "Limo Green",
+                "id": "9342e99d-6302-f011-bae2-002248167dee",
+                "code": "EC1V_2025_SL1VV_20251703",
+                "cfg_name": "Limo Green",
+                "cfg_id": "b943e905-5102-f011-bae2-002248167dee",
+                "c_cfg_id": "1db2a4e9-6202-f011-bae2-002248167dee"
+            }
+        ],
+        "ext_colors": [
+            {
+                "name": "Màu Trắng",
+                "code": "CE18",
+                "id": "1bcb9cd7-5a8c-f011-b4cc-000d3a864302",
+                "c_id": "9a5613f8-c060-f011-bec2-6045bd572ca9"
+            },
+            {
+                "name": "Màu Đen",
+                "code": "CE11",
+                "id": "0b08a7fb-d102-f011-bae2-6045bd572ca9",
+                "c_id": "e6659965-5f02-f011-bae4-00224816cf50"
+            },
+            {
+                "name": "Màu Bạc",
+                "code": "CE12",
+                "id": "fc17e201-d202-f011-bae2-6045bd572ca9",
+                "c_id": "ea659965-5f02-f011-bae4-00224816cf50"
+            },
+            {
+                "name": "Màu Đỏ Ruby",
+                "code": "CE13",
+                "id": "d5759418-fee1-f011-8406-70a8a5013371",
+                "c_id": "d272fcdb-02e2-f011-8406-70a8a5013371"
+            },
+            {
+                "name": "Màu Xanh Mai Linh",
+                "code": "CE15",
+                "id": "d6f6411e-b99a-f011-b41c-000d3a8119d2"
+            }
+        ],
+        "int_colors": [
+            {
+                "name": "Màu Đen",
+                "code": "CI11",
+                "id": "002ae8de-9c10-f011-998a-002248ec75b4",
+                "c_id": "ee659965-5f02-f011-bae4-00224816cf50"
+            },
+            {
+                "name": "Màu Mocha Nâu",
+                "code": "CI1M",
+                "id": "d74101e7-c7bf-f011-bbd3-000d3a80e26b",
+                "c_id": "0a163c9e-c160-f011-bec2-6045bd572ca9"
+            }
+        ]
+    },
+    "Lạc Hồng LX 900": {
+        "shared_code": "EE1U_2025",
+        "packages": [
+            {
+                "name": "Lạc Hồng LX 900",
+                "id": "d605f92c-9579-f011-b4cc-002248eaff6e",
+                "code": "EE1U_2025_NF1SV_20250108",
+                "cfg_name": "LAC_HONG_LX_900"
+            },
+            {
+                "name": "Lạc Hồng LX 900 Armored",
+                "id": "727a0433-9579-f011-b4cc-002248eaff6e",
+                "code": "EE1U_2025_NF1TV_20250108",
+                "cfg_name": "LAC_HONG_LX_900_ARMORED"
+            }
+        ],
+        "ext_colors": [
+            {
+                "name": "Màu Đen",
+                "code": "CE11",
+                "id": "39fca12e-366e-ec11-8941-000d3a801d3c"
+            },
+            {
+                "name": "Màu Trắng",
+                "code": "CE18",
+                "id": "c711b17e-366e-ec11-8941-000d3a801a58"
+            }
+        ],
+        "int_colors": [
+            {
+                "name": "Màu Nâu",
+                "code": "CI1M",
+                "id": "5b880511-376e-ec11-8942-000d3a8018a4"
+            },
+            {
+                "name": "Màu Đen",
+                "code": "CI11",
+                "id": "59c90ea1-366e-ec11-8941-000d3a80acd3"
+            }
+        ]
+    },
+    "VF Wild": {
+        "shared_code": "MP1C_2026",
+        "packages": [
+            {
+                "name": "VF Wild Base Comfort",
+                "id": "3259b1a4-b1b0-f111-aaad-70a8a5045bcf",
+                "code": "MP1C_2026_HJ01V_150926",
+                "cfg_name": "VF_WILD_BASE_Comfort"
+            },
+            {
+                "name": "VF Wild High Premium",
+                "id": "02c9da00-b2b0-f111-aaad-70a8a5045bcf",
+                "code": "MP1C_2026_HJ03V_150926",
+                "cfg_name": "VF_WILD_HIGH_Premium_2026"
+            }
+        ],
+        "ext_colors": [
+            {
+                "name": "Màu Xám",
+                "code": "CE14",
+                "id": "9ea0718f-2c89-f011-b4cc-000d3a85b30e"
+            },
+            {
+                "name": "Màu Đen",
+                "code": "CE11",
+                "id": "abe8ab61-2c89-f011-b4cc-000d3a85b30e"
+            },
+            {
+                "name": "Màu Trắng",
+                "code": "CE18",
+                "id": "4d3285a1-3589-f011-b4cc-000d3a85b30e"
+            }
+        ],
+        "int_colors": [
+            {
+                "name": "Màu Đen",
+                "code": "CI11",
+                "id": "6d9891ba-2c89-f011-b4cc-000d3a85b30e"
+            }
         ]
     }
 }
@@ -1079,11 +1657,15 @@ class POCreatorApp(tk.Tk):
         ws.append(headers)
 
         sample_rows = [
-            ["N31913", "EI13_1024", "TI1BV", "CE18", "CI11", "Có", 2026, "Dự trữ", "Có", "Bảo lãnh thanh toán", 227328000],
-            ["N31913", "EA15_2023", "GA1RV", "CE18", "CI11", "Có", 2026, "Khẩn", "Có", "Bảo lãnh thanh toán", 683240000],
+            ["N31913", "EI13_1024", "TI1BV", "CE18", "CI11", "Có", 2026, "Dự trữ", "Có", "Bảo lãnh thanh toán", 0],
+            ["N31913", "EI23_2025", "VF 2", "CE18", "CI12", "Có", 2026, "Dự trữ", "Có", "Bảo lãnh thanh toán", 0],
+            ["N31913", "EA15_2023", "GA1RV", "CE18", "CI11", "Có", 2026, "Khẩn", "Có", "Bảo lãnh thanh toán", 0],
             ["N31913", "EB15_2023", "HB14V", "CE11", "CI1M", "Có", 2026, "Tiêu chuẩn", "Có", "Công nợ trả sau", 0],
+            ["N31913", "EB15_2020", "VF e34 Tiêu chuẩn", "CE18", "CI11", "Có", 2026, "Dự trữ", "Có", "Công nợ trả sau", 0],
             ["N31913", "EC15_2023", "GC15V", "CE14", "CI11", "Có", 2026, "Dự trữ", "Có", "Công nợ trả sau", 0],
-            ["N31913", "PE1U_2023", "NE3MV", "CE11", "CI1M", "Có", 2026, "Dự trữ", "Có", "Công nợ trả sau", 0]
+            ["N31913", "PD1U_2023", "ND42V", "CE18", "CI1M", "Có", 2026, "Dự trữ", "Có", "Công nợ trả sau", 0],
+            ["N31913", "PE1U_2023", "NE3MV", "CE11", "CI1M", "Có", 2026, "Dự trữ", "Có", "Công nợ trả sau", 0],
+            ["N31913", "EM1V_2025", "Bản Nâng Cao", "CE18", "CI11", "Có", 2026, "Dự trữ", "Có", "Công nợ trả sau", 0]
         ]
         for r in sample_rows:
             ws.append(r)
@@ -1900,6 +2482,20 @@ def create_po_on_dms(p):
             return False, None, f"Không tìm thấy Site kho của showroom {dealer_code}", None
         DMS_CACHE["site"][dealer_code] = site_id
 
+    # 3. Look up Vehicle Warehouse ({dealer_code}_VHC) with Caching
+    wh_key = f"{dealer_code}_VHC"
+    if wh_key in DMS_CACHE.setdefault("warehouse", {}):
+        warehouse_id = DMS_CACHE["warehouse"][wh_key]
+    else:
+        warehouse_id = None
+        try:
+            r_wh = requests.get(f"{BASE_API_URL}/xts_warehouses", headers=headers, params={"$filter": f"xts_warehouse eq '{wh_key}' and statecode eq 0", "$select": "xts_warehouseid"}, timeout=10)
+            if r_wh.status_code == 200 and r_wh.json().get('value'):
+                warehouse_id = r_wh.json()['value'][0]['xts_warehouseid']
+                DMS_CACHE["warehouse"][wh_key] = warehouse_id
+        except Exception:
+            pass
+
     # Fixed Standard Identifiers on DMS
     vendor_id = "6ce4c6f8-409e-ef11-8a6b-6045bd5754ce"   # VinFast
     tax_id = "7f957c74-be62-ea11-a811-000d3a851c32"      # VAT 10% (xts_consumptiontax)
@@ -1920,7 +2516,7 @@ def create_po_on_dms(p):
             year_id = "d1c0e351-ccea-f011-8406-7ced8dfee127"
         DMS_CACHE["year"][year_str] = year_id
 
-    # 1. Vehicle model lookup (Supports DMS Code e.g. EI13_1024, Name e.g. VF 3, or Full Code e.g. EC25_2025_HC11V)
+    # 4. Vehicle model lookup
     raw_model = str(p['model']).strip()
     norm_model = normalize_vietnamese(raw_model)
     model_name = None
@@ -1941,27 +2537,37 @@ def create_po_on_dms(p):
                 break
 
     if not model_name:
-        model_name = "VF 3"
+        return False, None, f"Không tìm thấy dòng xe '{raw_model}' trong danh mục VinFast DMS!", None
 
     model_cfg = DEFAULT_VEHICLES.get(model_name, {})
     shared_code = model_cfg.get("shared_code") or raw_model
-    product_id = model_cfg.get("product_id")
 
-    # Dynamic lookup xts_productid with Caching
-    if shared_code in DMS_CACHE["product"]:
-        product_id = DMS_CACHE["product"][shared_code]
+    # Dynamic lookup xts_productid using BU company code & xts_locking
+    company = dealer_code[:4] if len(dealer_code) >= 4 else "N319"
+    locking_key = f"{company}{shared_code}"
+
+    if locking_key in DMS_CACHE["product"]:
+        product_id = DMS_CACHE["product"][locking_key]
     else:
+        product_id = None
         try:
-            r_prod = requests.get(f"{BASE_API_URL}/xts_products", headers=headers, params={"$filter": f"xts_product eq '{shared_code}'", "$select": "xts_productid"}, timeout=8)
+            r_prod = requests.get(f"{BASE_API_URL}/xts_products", headers=headers, params={"$filter": f"xts_locking eq '{locking_key}' and statecode eq 0", "$select": "xts_productid"}, timeout=10)
             if r_prod.status_code == 200 and r_prod.json().get('value'):
                 product_id = r_prod.json()['value'][0]['xts_productid']
         except Exception:
             pass
         if not product_id:
-            product_id = "e3aea14a-4104-f111-8407-000d3a8018f2"
-        DMS_CACHE["product"][shared_code] = product_id
+            try:
+                r_prod = requests.get(f"{BASE_API_URL}/xts_products", headers=headers, params={"$filter": f"xts_product eq '{shared_code}' and statecode eq 0", "$select": "xts_productid"}, timeout=10)
+                if r_prod.status_code == 200 and r_prod.json().get('value'):
+                    product_id = r_prod.json()['value'][0]['xts_productid']
+            except Exception:
+                pass
+        if not product_id:
+            return False, None, f"Không tìm thấy mã sản phẩm (Product) {shared_code} cho đại lý {dealer_code} trên DMS!", None
+        DMS_CACHE["product"][locking_key] = product_id
 
-    # 2. Match package (Supports DMS short code e.g. TI1BV, full code e.g. EI13_1024_TI1BV_20250101, or name e.g. VF 3 PLUS)
+    # 5. Match package
     pkg_str = str(p.get('package', '')).strip()
     norm_pkg = normalize_vietnamese(pkg_str)
     pkg_match = None
@@ -1987,9 +2593,9 @@ def create_po_on_dms(p):
         pkg_match = model_cfg["packages"][0]
         pkg_id = pkg_match["id"]
     else:
-        pkg_id = "9c24c043-7f0e-ef11-9f89-0022481798f2"
+        return False, None, f"Không tìm thấy phiên bản xe '{pkg_str}' cho dòng {model_name}!", None
 
-    # 3. Match exterior color (Supports short code e.g. CE18, CE1V, CE11, CE14, CE13, CE16, CE15, or name e.g. Màu Trắng)
+    # 6. Match exterior color
     ext_col_str = str(p.get('ext_color', '')).strip()
     norm_ext = normalize_vietnamese(ext_col_str)
     ext_col_match = None
@@ -2005,15 +2611,14 @@ def create_po_on_dms(p):
         if normalize_vietnamese(c_name) in norm_ext or norm_ext in normalize_vietnamese(c_name):
             ext_col_match = c
             break
+
+    if not ext_col_match:
         ext_upper = ext_col_str.upper()
-        if ("CE18" in ext_upper and ("trang" in normalize_vietnamese(c_name) or "white" in c_name.lower())) or \
-           ("CE1V" in ext_upper and ("vang" in normalize_vietnamese(c_name) or "yellow" in c_name.lower())) or \
-           ("CE11" in ext_upper and ("den" in normalize_vietnamese(c_name) or "black" in c_name.lower())) or \
-           ("CE14" in ext_upper and ("xam" in normalize_vietnamese(c_name) or "grey" in c_name.lower())) or \
-           ("CE13" in ext_upper and ("do" in normalize_vietnamese(c_name) or "red" in c_name.lower())) or \
-           ("CE16" in ext_upper and ("hong" in normalize_vietnamese(c_name) or "pink" in c_name.lower())):
-            ext_col_match = c
-            break
+        for c in model_cfg.get("ext_colors", []):
+            c_name = c.get("name", "")
+            if ("CE18" in ext_upper and ("trang" in normalize_vietnamese(c_name) or "white" in c_name.lower())) or                ("CE11" in ext_upper and ("den" in normalize_vietnamese(c_name) or "black" in c_name.lower())) or                ("CE1V" in ext_upper and ("xam" in normalize_vietnamese(c_name) or "grey" in c_name.lower())) or                ("CE1U" in ext_upper and ("vang" in normalize_vietnamese(c_name) or "yellow" in c_name.lower())) or                ("181U" in ext_upper and "noc trang" in normalize_vietnamese(c_name)) or                ("CE13" in ext_upper and ("do" in normalize_vietnamese(c_name) or "red" in c_name.lower())) or                ("CE1W" in ext_upper and ("xanh" in normalize_vietnamese(c_name) or "mint" in c_name.lower())) or                ("1821" in ext_upper and ("hong" in normalize_vietnamese(c_name) or "pink" in c_name.lower())):
+                ext_col_match = c
+                break
 
     if ext_col_match:
         ext_col_id = ext_col_match["id"]
@@ -2021,9 +2626,9 @@ def create_po_on_dms(p):
         ext_col_match = model_cfg["ext_colors"][0]
         ext_col_id = ext_col_match["id"]
     else:
-        ext_col_id = "23f96650-7a0e-ef11-9f8a-6045bd5754ce"
+        return False, None, f"Không tìm thấy màu ngoại thất '{ext_col_str}' cho xe {model_name}!", None
 
-    # 4. Match interior color (Supports short code e.g. CI11, CI1M, CI12, CI13, or name e.g. Màu Đen)
+    # 7. Match interior color
     int_col_str = str(p.get('int_color', '')).strip()
     norm_int = normalize_vietnamese(int_col_str)
     int_col_match = None
@@ -2039,13 +2644,14 @@ def create_po_on_dms(p):
         if normalize_vietnamese(c_name) in norm_int or norm_int in normalize_vietnamese(c_name):
             int_col_match = c
             break
+
+    if not int_col_match:
         int_upper = int_col_str.upper()
-        if ("CI11" in int_upper and ("den" in normalize_vietnamese(c_name) or "black" in c_name.lower())) or \
-           ("CI1M" in int_upper and ("nau" in normalize_vietnamese(c_name) or "mocha" in c_name.lower())) or \
-           ("CI12" in int_upper and ("xam" in normalize_vietnamese(c_name) or "grey" in c_name.lower())) or \
-           ("CI13" in int_upper and ("be" in normalize_vietnamese(c_name) or "beige" in c_name.lower())):
-            int_col_match = c
-            break
+        for c in model_cfg.get("int_colors", []):
+            c_name = c.get("name", "")
+            if ("CI11" in int_upper and ("den" in normalize_vietnamese(c_name) or "black" in c_name.lower())) or                ("CI1M" in int_upper and ("nau" in normalize_vietnamese(c_name) or "mocha" in c_name.lower())) or                ("CI12" in int_upper and ("xam" in normalize_vietnamese(c_name) or "grey" in c_name.lower())) or                ("CI13" in int_upper and ("be" in normalize_vietnamese(c_name) or "beige" in c_name.lower())):
+                int_col_match = c
+                break
 
     if int_col_match:
         int_col_id = int_col_match["id"]
@@ -2053,9 +2659,9 @@ def create_po_on_dms(p):
         int_col_match = model_cfg["int_colors"][0]
         int_col_id = int_col_match["id"]
     else:
-        int_col_id = "9d757f14-250e-ef11-9f8a-6045bd5754c8"
+        return False, None, f"Không tìm thấy màu nội thất '{int_col_str}' cho xe {model_name}!", None
 
-    # Xử lý Hình thức thanh toán (itv_methodofpayment) và Số tiền thanh toán
+    # Payment Method & Amount
     pm_str = p.get('payment_method', '')
     if "Deferred liability" in pm_str or "Công nợ" in pm_str:
         method_code = 4
@@ -2070,7 +2676,7 @@ def create_po_on_dms(p):
 
     payment_amt = float(p.get('payment_amount', 0) or 0)
     priority_val = p.get('priority', 3)
-    today_iso = datetime.utcnow().strftime("%Y-%m-%dT00:00:00Z")
+    today_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT00:00:00Z") if hasattr(datetime, "UTC") else datetime.utcnow().strftime("%Y-%m-%dT00:00:00Z")
 
     # Step 1: Create PO Header
     header_payload = {
@@ -2091,7 +2697,7 @@ def create_po_on_dms(p):
         "xts_handling": 1
     }
 
-    # Chỉ có Bảo lãnh thanh toán (method_code == 2) mới điền Số tiền thanh toán
+    # Với Bảo lãnh thanh toán, chỉ điền số tiền bảo lãnh nếu người dùng chỉ định > 0
     if method_code == 2 and payment_amt > 0:
         header_payload["itv_financialguaranteeamount"] = payment_amt
 
@@ -2130,15 +2736,22 @@ def create_po_on_dms(p):
         "xts_purchasefor": 5
     }
 
+    if warehouse_id:
+        line_payload["xts_warehouseid@odata.bind"] = f"/xts_warehouses({warehouse_id})"
+
     url_create_line = f"{BASE_API_URL}/xts_purchaseorderdetails"
     r_line = requests.post(url_create_line, headers=headers, json=line_payload, timeout=20)
     if r_line.status_code not in (200, 201, 204):
+        # Thu hồi PO Header vừa tạo nếu tạo Line lỗi
+        try:
+            requests.delete(f"{BASE_API_URL}/xts_purchaseorders({po_id})", headers=headers, timeout=5)
+        except Exception:
+            pass
         return False, None, f"Lỗi tạo chi tiết xe PO Line: {r_line.text}", None
 
     line_entity_url = r_line.headers.get("OData-EntityId")
     if line_entity_url:
         line_id = line_entity_url.split("(")[1].split(")")[0]
-        # Step 2b: Cập nhật Tên cấu hình, Màu sắc và Đặc tính (hiển thị đầy đủ trên giao diện DMS)
         patch_line = {}
         if pkg_match and pkg_match.get("cfg_name"):
             patch_line["xvf_configurationname"] = pkg_match["cfg_name"]

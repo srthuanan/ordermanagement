@@ -257,9 +257,12 @@ export const useAdminActions = ({
             try {
                 const res = await apiService.forceMigrateToDrive(order['Số đơn hàng']);
                 if (res.status === 'SUCCESS') {
-                    showToast('Thành công!', 'Đã gửi yêu cầu bốc HS sang Drive. Vui lòng chờ vài giây để hệ thống xử lý.', 'success');
-                    // Refetch sau vài giây để cập nhật Link
-                    setTimeout(() => refetchXuathoadon(true), 3000);
+                    if ((res as any).result?.status === 'SKIP') {
+                        showToast('Thông báo', (res as any).result?.message || 'Đơn hàng chưa ở trạng thái Chờ ký hóa đơn. File PDF tiếp tục được lưu ở Supabase.', 'info', 5000);
+                    } else {
+                        showToast('Thành công!', 'Đã gửi yêu cầu bốc HS sang Drive. Vui lòng chờ vài giây để hệ thống xử lý.', 'success');
+                        setTimeout(() => refetchXuathoadon(true), 3000);
+                    }
                 } else {
                     showToast('Lỗi', res.message, 'error');
                 }

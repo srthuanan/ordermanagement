@@ -37,6 +37,41 @@ function _processSingleOrder(serviceKey, soDonHang, parentFolder = null) {
     const record = records[0];
     const customerName = (record.ten_khach_hang || 'KH vãng lai').trim();
 
+    // KIỂM TRA ĐIỀU KIỆN TRẠNG THÁI:
+    // Quy định: Đơn hàng TVBH yêu cầu XHĐ nếu CHƯA có trạng thái "Chờ ký hóa đơn" thì các file PDF vẫn lưu ở Supabase.
+    // Chỉ khi đơn hàng đã có trạng thái "Chờ ký hóa đơn" (hoặc "Đã xuất hóa đơn") thì mới đẩy về Drive.
+    let currentStatus = '';
+    try {
+      const dhUrl = `${SUPABASE_URL}/rest/v1/donhang?so_don_hang=eq.${encodeURIComponent(cleanOrderNo)}&select=ket_qua`;
+      const dhRes = UrlFetchApp.fetch(dhUrl, {
+        headers: { "apikey": serviceKey, "Authorization": "Bearer " + serviceKey },
+        muteHttpExceptions: true
+      });
+      if (dhRes.getResponseCode() === 200) {
+        const dhData = JSON.parse(dhRes.getContentText());
+        if (dhData && dhData.length > 0 && dhData[0].ket_qua) {
+          currentStatus = String(dhData[0].ket_qua).toLowerCase().trim();
+        }
+      }
+    } catch (e) {
+      logAction("Status Check Warning", `Không thể lấy trạng thái donhang: ${e.message}`);
+    }
+
+    if (!currentStatus && record.trang_thai_vc) {
+      currentStatus = String(record.trang_thai_vc).toLowerCase().trim();
+    }
+
+    const isReadyForDrive = currentStatus === 'chờ ký hóa đơn' || currentStatus === 'chờ ký hóa đơn' ||
+                            currentStatus === 'đã xuất hóa đơn' || currentStatus === 'đã xuất hóa đơn';
+
+    if (!isReadyForDrive) {
+      logAction("Migration Skip", `Đơn [${cleanOrderNo}] đang ở trạng thái "${currentStatus || 'Chưa xác định'}", chưa phải "Chờ ký hóa đơn". Các file PDF vẫn được giữ trên Supabase.`);
+      return { 
+        status: "SKIP", 
+        message: `Đơn hàng đang ở trạng thái '${currentStatus || 'Chưa xác định'}', chưa chuyển sang 'Chờ ký hóa đơn'. File PDF tiếp tục được lưu trữ tại Supabase.` 
+      };
+    }
+
     // 1. CHUẨN BỊ THƯ MỤC CÔNG PHU (Dựa trên Ngày yêu cầu của Đơn hàng)
     const root = parentFolder || _getOrCreateArchiveFolder();
     if (!root) throw new Error("Thư mục gốc Drive không hợp lệ.");

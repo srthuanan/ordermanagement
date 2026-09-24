@@ -6,7 +6,8 @@ import {
     CyberXepXeCandidate,
     getCyberXepXeContracts,
     getCyberXepXeCandidates,
-    saveCyberXepXe
+    saveCyberXepXe,
+    deleteCyberXepXe
 } from '../../services/api/stockService';
 import { supabase, supabaseAdmin } from '../../services/supabaseClient';
 
@@ -53,6 +54,7 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
     const [selectedCandidateCar, setSelectedCandidateCar] = useState<CyberXepXeCandidate | null>(null);
     const [candidateSearchQuery, setCandidateSearchQuery] = useState<string>('');
     const [isSaving, setIsSaving] = useState<boolean>(false);
+    const [isUnassigning, setIsUnassigning] = useState<boolean>(false);
 
     // Initial setup on open
     useEffect(() => {
@@ -121,42 +123,81 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
 
             setAllCyberContracts(unassignedContracts);
 
-            const custNameClean = removeVietnameseTones(targetOrder['Tên khách hàng'] || '');
-            const orderNoClean = (targetOrder['Số đơn hàng'] || '').toLowerCase().trim();
-            const existingVin = (targetOrder.VIN || '').toLowerCase().trim();
+            const custNameRaw = (targetOrder['Tên khách hàng'] || (targetOrder as any).ten_khach_hang || '').normalize('NFC').trim();
+            const custNameExact = custNameRaw.toLowerCase();
+            const custNameClean = removeVietnameseTones(custNameRaw);
+            const orderNoClean = (targetOrder['Số đơn hàng'] || (targetOrder as any).so_don_hang || '').toLowerCase().trim();
+            const existingVin = (targetOrder.VIN || (targetOrder as any).vin || '').toUpperCase().trim();
+            const orderModelClean = removeVietnameseTones(targetOrder['Dòng xe'] || (targetOrder as any).dong_xe || targetOrder['DÒNG XE'] || '').replace(/\s+/g, '');
+            const orderNgayCoc = (targetOrder.ngay_coc || (targetOrder as any)['Ngày đặt cọc'] || '').split('T')[0];
+
+            const isModelCompatible = (c: CyberXepXeContract) => {
+                if (!orderModelClean) return true;
+                const cModel = removeVietnameseTones(`${c.ten_kx || ''} ${c.ma_kx || ''}`).replace(/\s+/g, '');
+                if (cModel.includes(orderModelClean) || orderModelClean.includes(cModel)) return true;
+                if (orderModelClean.includes('limo') && cModel.includes('limo')) return true;
+                if (orderModelClean.includes('vf3') && cModel.includes('vf3')) return true;
+                if (orderModelClean.includes('vf5') && cModel.includes('vf5')) return true;
+                if (orderModelClean.includes('vf6') && cModel.includes('vf6')) return true;
+                if (orderModelClean.includes('vf7') && cModel.includes('vf7')) return true;
+                if (orderModelClean.includes('vf8') && cModel.includes('vf8')) return true;
+                if (orderModelClean.includes('vf9') && cModel.includes('vf9')) return true;
+                if (orderModelClean.includes('minio') && cModel.includes('minio')) return true;
+                if (orderModelClean.includes('ecvan') && cModel.includes('ecvan')) return true;
+                return false;
+            };
 
             const findMatched = (list: CyberXepXeContract[]) => {
-                return list.filter(c => {
-                    const cCust = removeVietnameseTones(c.ten_kh || '');
-                    const cMaHd = (c.ma_hd || '').toLowerCase();
-                    const cSoCt = (c.so_ct || '').toLowerCase();
-                    const cVin = (c.so_khung || '').toLowerCase();
+                // 1. Khớp theo Số đơn hàng
+                if (orderNoClean) {
+                    const byOrderNo = list.filter(c => {
+                        const cMaHd = (c.ma_hd || '').toLowerCase();
+                        const cSoCt = (c.so_ct || '').toLowerCase();
+                        return cMaHd.includes(orderNoClean) || cSoCt.includes(orderNoClean);
+                    });
+                    if (byOrderNo.length > 0) return byOrderNo;
+                }
 
-                    if (existingVin && cVin && cVin === existingVin) return true;
-                    if (custNameClean && cCust && (cCust === custNameClean || cCust.includes(custNameClean) || custNameClean.includes(cCust))) return true;
-                    if (orderNoClean && (cMaHd.includes(orderNoClean) || cSoCt.includes(orderNoClean))) return true;
+                // 2. Khớp theo VIN
+                if (existingVin) {
+                    const byVin = list.filter(c => (c.so_khung || '').toUpperCase().trim() === existingVin);
+                    if (byVin.length > 0) return byVin;
+                }
 
-                    return false;
-                });
+                // 3. Khớp theo Tên KH + Dòng xe
+                if (custNameExact) {
+                    // Ưu tiên trùng chính xác có dấu tiếng Việt
+                    let byName = list.filter(c => (c.ten_kh || '').normalize('NFC').toLowerCase().trim() === custNameExact);
+                    if (byName.length === 0 && custNameClean) {
+                        byName = list.filter(c => removeVietnameseTones(c.ten_kh || '') === custNameClean);
+                    }
+                    if (byName.length > 0) {
+                        const byModel = byName.filter(isModelCompatible);
+                        const candidates = byModel.length > 0 ? byModel : byName;
+                        if (orderNgayCoc) {
+                            const byDate = candidates.filter(c => (c.ngay_ct || '').startsWith(orderNgayCoc));
+                            if (byDate.length > 0) return byDate;
+                        }
+                        return candidates;
+                    }
+                }
+
+                return [];
             };
 
             let matched = findMatched(unassignedContracts);
 
-            // Nếu không tìm thấy trong initialContracts (ví dụ cache cũ), tự động kéo dữ liệu mới nhất
-            if (matched.length === 0 && initialContracts && initialContracts.length > 0) {
-                const now = new Date();
-                const currY = now.getFullYear();
+            // Nếu không tìm thấy trong initialContracts (ví dụ cache cũ), tự động kéo dữ liệu mới nhất trực tiếp bằng keyword
+            if (matched.length === 0) {
+                const keyword = existingVin || orderNoClean || custNameClean;
                 const freshRes = await getCyberXepXeContracts({
-                    thang1: 1,
-                    nam1: currY,
-                    thang2: 12,
-                    nam2: currY,
+                    force: true,
+                    keyword,
                     ma_dvcs: '02',
-                    showroom: 'Ô tô Vinfast Thuận An',
-                    force: true
+                    showroom: 'Ô tô Vinfast Thuận An'
                 });
-                if (freshRes?.success && freshRes.contracts) {
-                    contractsList = freshRes.contracts;
+                if (freshRes?.success && freshRes.contracts && freshRes.contracts.length > 0) {
+                    contractsList = [...freshRes.contracts, ...contractsList];
                     unassignedContracts = contractsList.filter(c => {
                         const s = (c.ten_color || '').trim().toLowerCase();
                         return !c.so_khung || s === 'chờ duyệt' || s === 'chờ ghép sk' || s === 'đã ghép sk';
@@ -404,6 +445,58 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
         }
     };
 
+    // Hủy ghép / Gỡ xe khỏi hợp đồng trên CyberSoft ERP
+    const handleUnassignCurrentContract = async () => {
+        if (!activeContract || !activeContract.so_khung) return;
+        const confirmMsg = `Bạn có chắc chắn muốn hủy ghép xe ${activeContract.so_khung} khỏi hợp đồng (${activeContract.ma_hd}) trên CyberSoft ERP không?`;
+        if (!window.confirm(confirmMsg)) return;
+
+        setIsUnassigning(true);
+        try {
+            const res = await deleteCyberXepXe({
+                ma_hd: activeContract.ma_hd,
+                stt_rec: activeContract.stt_rec,
+                stt_rec0: activeContract.stt_rec0,
+                so_khung: activeContract.so_khung,
+                ma_dvcs: activeContract.ma_dvcs || '02',
+                user_name: 'SYSTEM'
+            });
+
+            if (!res || !res.success) {
+                throw new Error(res?.error || res?.note || 'Không thể hủy ghép xe trên CyberSoft ERP');
+            }
+
+            const unassignedVin = activeContract.so_khung;
+
+            // Cập nhật bảng cyber_xep_xe trên Supabase để phản ánh trạng thái trên Cyber
+            if (activeContract.stt_rec) {
+                supabase
+                    .from('cyber_xep_xe')
+                    .update({ so_khung: '', ten_color: 'Chờ ghép SK', updated_at: new Date().toISOString() })
+                    .match({ stt_rec: activeContract.stt_rec, stt_rec0: activeContract.stt_rec0 })
+                    .then(() => {});
+            }
+
+            showToast('Hủy ghép thành công', `Đã gỡ số khung ${unassignedVin} khỏi HĐ ${activeContract.ma_hd} trên CyberSoft ERP! (Dữ liệu Supabase được giữ nguyên)`, 'success');
+
+            // Cập nhật lại state activeContract và allCyberContracts
+            setActiveContract(prev => prev ? { ...prev, so_khung: '', so_may: '', ten_color: 'Chờ ghép SK' } : null);
+            setAllCyberContracts(prev => prev.map(c => 
+                c.stt_rec === activeContract.stt_rec && c.stt_rec0 === activeContract.stt_rec0 
+                    ? { ...c, so_khung: '', so_may: '', ten_color: 'Chờ ghép SK' } 
+                    : c
+            ));
+
+            if (onSuccess) {
+                onSuccess(order?.VIN || '', order?.['Số máy'] || '', { ...activeContract, so_khung: '', so_may: '' });
+            }
+        } catch (err: any) {
+            showToast('Lỗi hủy ghép xe', err.message || 'Không thể gỡ xe trên Cyber', 'error');
+        } finally {
+            setIsUnassigning(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     const modalContent = (
@@ -603,9 +696,23 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                             </div>
                             <div>
                                 <span className="text-slate-400 text-[11px] block">VIN hiện tại (Cyber):</span>
-                                <span className="font-mono font-bold text-slate-900 block truncate">
-                                    {activeContract.so_khung || <span className="text-slate-400 italic font-normal">Chưa ghép</span>}
-                                </span>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                    <span className="font-mono font-bold text-slate-900 block truncate">
+                                        {activeContract.so_khung || <span className="text-slate-400 italic font-normal">Chưa ghép</span>}
+                                    </span>
+                                    {activeContract.so_khung && (
+                                        <button
+                                            type="button"
+                                            onClick={handleUnassignCurrentContract}
+                                            disabled={isUnassigning || isSaving}
+                                            className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-all flex items-center gap-1 shrink-0 cursor-pointer disabled:opacity-50"
+                                            title="Hủy ghép xe này trên CyberSoft ERP"
+                                        >
+                                            <i className={`fas ${isUnassigning ? 'fa-spinner fa-spin' : 'fa-trash-alt'} text-[8px]`}></i>
+                                            <span>Gỡ</span>
+                                        </button>
+                                    )}
+                                </div>
                                 {(order?.VIN || (order as any)?.vin || order?.['SỐ VIN']) && (
                                     <span className="text-[10px] text-indigo-600 font-mono block mt-0.5 truncate" title="VIN trên đơn hàng">
                                         Đơn hàng: <strong>{(order?.VIN || (order as any)?.vin || order?.['SỐ VIN'] || '').trim()}</strong>
@@ -781,10 +888,22 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                         )}
                     </div>
                     <div className="flex items-center gap-2">
+                        {activeContract?.so_khung && (
+                            <button
+                                type="button"
+                                onClick={handleUnassignCurrentContract}
+                                disabled={isSaving || isUnassigning}
+                                className="px-3 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                title="Hủy ghép số khung này khỏi hợp đồng trên CyberSoft ERP"
+                            >
+                                <i className={`fas ${isUnassigning ? 'fa-spinner fa-spin' : 'fa-trash-alt'} text-xs`}></i>
+                                <span>{isUnassigning ? 'Đang gỡ...' : 'Gỡ xe khỏi HĐ'}</span>
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={onClose}
-                            disabled={isSaving}
+                            disabled={isSaving || isUnassigning}
                             className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all shadow-2xs"
                         >
                             Đóng

@@ -248,15 +248,23 @@ function handleSupabaseWebhook(e) {
        logAction("Webhook Auto-Delete", `Đã xóa vĩnh viễn đơn ${orderNo}: ${deleteOk}`);
     }
     
-    // LOGIC 2: TỰ ĐỘNG BỐC FILE SANG DRIVE (Bảng yeucauxhd)
-    // Khi Admin duyệt đơn hoặc có link mới từ Supabase
-    if (tableName === 'yeucauxhd' && (type === 'UPDATE' || type === 'INSERT')) {
-       if ((record.url_hop_dong && record.url_hop_dong.includes("supabase.co") && !record.url_hop_dong.includes("drive.google.com")) ||
-           (record.url_de_nghi_xhd && record.url_de_nghi_xhd.includes("supabase.co") && !record.url_de_nghi_xhd.includes("drive.google.com")) ||
-           (record.url_hoa_don_da_xuat && record.url_hoa_don_da_xuat.includes("supabase.co") && !record.url_hoa_don_da_xuat.includes("drive.google.com"))) {
-          
-          logAction("Auto-Migration", `Tự động bốc hồ sơ Đơn ${orderNo} sang Drive...`);
+    // LOGIC 2: TỰ ĐỘNG BỐC FILE SANG DRIVE (Chỉ bốc khi đơn hàng ở trạng thái "Chờ ký hóa đơn" hoặc "Đã xuất hóa đơn")
+    if (tableName === 'donhang' && type === 'UPDATE') {
+       const status = (record.ket_qua || '').toLowerCase().trim();
+       if (status === 'chờ ký hóa đơn' || status === 'chờ ký hóa đơn') {
+          logAction("Auto-Migration", `Đơn ${orderNo} chuyển sang Chờ ký hóa đơn -> Tự động bốc hồ sơ sang Drive...`);
           archiveOrderNow(orderNo);
+       }
+    }
+    if (tableName === 'yeucauxhd' && type === 'UPDATE') {
+       const status = (record.trang_thai_vc || '').toLowerCase().trim();
+       if (status === 'chờ ký hóa đơn' || status === 'chờ ký hóa đơn' || status === 'đã xuất hóa đơn' || status === 'đã xuất hóa đơn') {
+          if ((record.url_hop_dong && record.url_hop_dong.includes("supabase.co") && !record.url_hop_dong.includes("drive.google.com")) ||
+              (record.url_de_nghi_xhd && record.url_de_nghi_xhd.includes("supabase.co") && !record.url_de_nghi_xhd.includes("drive.google.com")) ||
+              (record.url_hoa_don_da_xuat && record.url_hoa_don_da_xuat.includes("supabase.co") && !record.url_hoa_don_da_xuat.includes("drive.google.com"))) {
+             logAction("Auto-Migration", `Đơn ${orderNo} có file mới và đang ở trạng thái ${status} -> Tự động bốc hồ sơ sang Drive...`);
+             archiveOrderNow(orderNo);
+          }
        }
     }
 

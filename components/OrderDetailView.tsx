@@ -240,6 +240,65 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         return false;
     }, [currentCarLocation, cyberCarStatus, matchedStockVehicle, resolvedOrder]);
 
+    // Trạng thái phiếu TD4 (Giấy ra cổng / hẹn giao xe)
+    const hasTd4Effective = useMemo(() => {
+        return Boolean(
+            hasTd4 ||
+            cyberCarStatus?.has_td4 ||
+            cyberCarStatus?.so_ct_td4 ||
+            cyberCarStatus?.td4_data ||
+            (resolvedOrder?.['Kết quả'] || '').toLowerCase().includes('đã giao') ||
+            ((resolvedOrder as any)?.['Trạng thái'] || '').toLowerCase().includes('đã giao') ||
+            (resolvedOrder as any)?.['Phiếu TD4'] ||
+            (resolvedOrder as any)?.['Số phiếu TD4'] ||
+            (resolvedOrder as any)?.has_td4 ||
+            (resolvedOrder as any)?.td4
+        );
+    }, [hasTd4, cyberCarStatus, resolvedOrder]);
+
+    // Kiểm tra xe có ở kho thực tế hay chưa (phải có kho/vị trí cụ thể và không phải đang vận tải)
+    const isCarInWarehouse = useMemo(() => {
+        if (!resolvedOrder?.VIN) return false;
+        if (isCarInTransit) return false;
+
+        const whCode = (
+            cyberCarStatus?.ma_kho ||
+            matchedStockVehicle?.['ma_kho'] ||
+            (resolvedOrder as any)?.['ma_kho'] ||
+            ''
+        ).toString().trim().toUpperCase();
+
+        if (whCode === 'KTN.NM' || whCode === 'KTN') {
+            return false;
+        }
+
+        const loc = currentCarLocation.trim().toLowerCase();
+        if (!loc || loc === '—' || loc === '-' || loc === 'n/a') {
+            if (whCode && whCode !== '') return true;
+            if (matchedStockVehicle) return true;
+            return false;
+        }
+
+        if (
+            loc.includes('chưa có') ||
+            loc.includes('chua co') ||
+            loc.includes('chưa về') ||
+            loc.includes('chua ve') ||
+            loc.includes('đang về') ||
+            loc.includes('dang ve') ||
+            loc.includes('vận chuyển') ||
+            loc.includes('van chuyen') ||
+            loc.includes('vận tải') ||
+            loc.includes('van tai') ||
+            loc.includes('tiếp nhận nhà máy') ||
+            loc.includes('tiep nhan nha may')
+        ) {
+            return false;
+        }
+
+        return true;
+    }, [resolvedOrder?.VIN, isCarInTransit, cyberCarStatus?.ma_kho, matchedStockVehicle, currentCarLocation]);
+
     // Order Audit Trail States
     const [activeRightTab, setActiveRightTab] = useState<'MILESTONES' | 'AUDIT_TRAIL'>('MILESTONES');
     const [auditLogs, setAuditLogs] = useState<OrderAuditLogItem[]>([]);
@@ -268,10 +327,16 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         }
     }, [resolvedOrder?.['Số đơn hàng'], fetchAuditLogs]);
 
-    // Reset inline mode when switching to a different order
+    // Reset inline mode when switching to a different order hoặc khi xe có TD4 / không ở kho
     useEffect(() => {
         setInlineMode('VIEW');
     }, [order?.['Số đơn hàng']]);
+
+    useEffect(() => {
+        if (inlineMode === 'TRANSFER' && (hasTd4Effective || !isCarInWarehouse)) {
+            setInlineMode('VIEW');
+        }
+    }, [inlineMode, hasTd4Effective, isCarInWarehouse]);
 
     // Tự động tải thông tin yêu cầu chuyển xe đã gửi & tra cứu kho thực tế từ CyberSoft
     useEffect(() => {
@@ -570,9 +635,12 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     };
 
     const handleOpenTransferMode = async () => {
-        if (hasTd4) {
-            showToast?.('Đã có phiếu giao xe', `Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${printTd4Data?.so_ct || 'TD4'}). Không thể yêu cầu điều chuyển.`, 'warning');
-            handleOpenPrintTd4();
+        if (hasTd4Effective) {
+            showToast?.('Không thể chuyển xe', 'Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng. Hệ thống chặn yêu cầu chuyển xe.', 'warning');
+            return;
+        }
+        if (!isCarInWarehouse) {
+            showToast?.('Xe chưa ở kho', `Xe đang có vị trí "${currentCarLocation || 'Chưa về kho'}" (chưa ở kho thực tế). Chỉ xe có ở kho mới có thể điều chuyển.`, 'warning');
             return;
         }
         if (cyberCarStatus?.has_dnx || transferRequest?.status === 'completed') {
@@ -580,25 +648,36 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             handleOpenPrintDnx();
             return;
         }
-        if (isCarInTransit) {
-            showToast?.('Xe đang vận tải', `Xe đang có vị trí "${currentCarLocation || 'Đang vận tải'}" (chưa về kho thực tế). Chỉ có xe có vị trí thực tế mới có thể điều chuyển.`, 'warning');
-            return;
-        }
-        setInlineMode('TRANSFER');
+
         const vin = resolvedOrder?.VIN;
         if (vin) {
             setIsDetectingWarehouse(true);
             try {
                 // Thử lấy từ cache Supabase trước (< 50ms)
                 const cached = await getCyberCarStatusFromSupabase(vin);
-                if (cached && !transferRequest && cached.ma_kho) {
-                    setTransferFromWarehouse(cached.ma_kho);
-                    setTransferFromWarehouseName(shortenWarehouseName(cached.ma_kho, cached.ten_kho));
+                if (cached) {
+                    if (cached.has_td4) {
+                        setHasTd4(true);
+                        showToast?.('Không thể chuyển xe', `Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${cached.so_ct_td4 || cached.td4_data?.so_ct || 'TD4'}). Không thể điều chuyển.`, 'warning');
+                        return;
+                    }
+                    if (!transferRequest && cached.ma_kho) {
+                        setTransferFromWarehouse(cached.ma_kho);
+                        setTransferFromWarehouseName(shortenWarehouseName(cached.ma_kho, cached.ten_kho));
+                    }
                 } else {
                     const res = await lookupCyberVinWarehouse([vin]);
-                    if (res && !transferRequest && res.success && res.found && res.ma_kho) {
-                        setTransferFromWarehouse(res.ma_kho);
-                        setTransferFromWarehouseName(shortenWarehouseName(res.ma_kho, res.ten_kho));
+                    if (res && res.success) {
+                        const car = res.cars?.[0] || res;
+                        if (car.has_td4 || car.td4) {
+                            setHasTd4(true);
+                            showToast?.('Không thể chuyển xe', `Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${car.td4?.so_ct || 'TD4'}). Không thể điều chuyển.`, 'warning');
+                            return;
+                        }
+                        if (!transferRequest && res.found && res.ma_kho) {
+                            setTransferFromWarehouse(res.ma_kho);
+                            setTransferFromWarehouseName(shortenWarehouseName(res.ma_kho, res.ten_kho));
+                        }
                     }
                 }
             } catch (e) {
@@ -607,6 +686,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 setIsDetectingWarehouse(false);
             }
         }
+        setInlineMode('TRANSFER');
     };
 
     const handleSubmitTransferRequest = async () => {
@@ -616,8 +696,8 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         const tvbh = resolvedOrder?.['Tên tư vấn bán hàng'] || (resolvedOrder as any)?.['TVBH'] || '';
         const finalReason = transferReason === 'Khác' ? (customTransferReason.trim() || 'Điều chuyển xe nội bộ') : transferReason;
 
-        if (hasTd4) {
-            showToast?.('Không thể chuyển xe', 'Xe đã có Phiếu Giao Xe / Giấy Ra Cổng. Hệ thống chặn tạo trùng lặp.', 'warning');
+        if (hasTd4 || cyberCarStatus?.has_td4) {
+            showToast?.('Không thể chuyển xe', 'Xe đã có Phiếu Giao Xe / Giấy Ra Cổng. Hệ thống chặn tạo yêu cầu điều chuyển.', 'warning');
             handleOpenPrintTd4();
             return;
         }
@@ -2367,21 +2447,8 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         </button>
                     )}
 
-                    {/* Nút Phiếu Ra Cổng (TD4) - Khi xe đã có giấy ra cổng giao xe */}
-                    {resolvedOrder.VIN && hasTd4 && !isReferenceAccount && (
-                        <button
-                            type="button"
-                            onClick={handleOpenPrintTd4}
-                            className="px-3 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-full bg-violet-700 hover:bg-violet-800 text-white font-bold text-[10.5px] sm:text-[11px] transition-all flex items-center gap-1.5 shrink-0 shadow-sm active:scale-95 cursor-pointer"
-                            title={`Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng ${printTd4Data?.so_ct || 'TD4'}. Bấm để xem và in phiếu.`}
-                        >
-                            <i className="fas fa-file-invoice text-[10px]"></i>
-                            <span>Phiếu Ra Cổng ({printTd4Data?.so_ct || 'TD4'})</span>
-                        </button>
-                    )}
-
-                    {/* Nút Điều Chuyển Xe / In Phiếu DNX (Hiển thị 1 nút gọn gàng; Khi chưa có TD4) */}
-                    {resolvedOrder.VIN && !hasTd4 && !isReferenceAccount && (
+                    {/* Nút Điều Chuyển Xe / In Phiếu DNX (Ràng buộc: Xe có ở kho thì mới hiển thị nút Chuyển xe; Nếu có TD4 thì không hiển thị gì) */}
+                    {resolvedOrder.VIN && !hasTd4Effective && !isReferenceAccount && isCarInWarehouse && (
                         (transferRequest?.status === 'completed' || cyberCarStatus?.has_dnx) ? (
                             <button
                                 type="button"
@@ -2392,7 +2459,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 <i className="fas fa-print text-[10px]"></i>
                                 <span>In Phiếu DNX</span>
                             </button>
-                        ) : !isCarInTransit ? (
+                        ) : (
                             <button
                                 type="button"
                                 onClick={handleOpenTransferMode}
@@ -2420,7 +2487,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
                                 )}
                             </button>
-                        ) : null
+                        )
                     )}
 
                     {canAddSupplement && !isReferenceAccount && (

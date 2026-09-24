@@ -12,6 +12,7 @@ import MarqueeText from '../ui/MarqueeText';
 import CyberAssignVehicleModal from '../modals/CyberAssignVehicleModal';
 import {
     getCyberXepXeContracts,
+    deleteCyberXepXe,
     CyberXepXeContract,
     isOrderAssignedOnCyber
 } from '../../services/api/stockService';
@@ -187,6 +188,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const [policyFilterModelOnly, setPolicyFilterModelOnly] = useState(true);
     const [isSplitView, setIsSplitView] = useState(true);
     const [activeDocKey, setActiveDocKey] = useState<'LinkHopDong' | 'LinkDeNghiXHD' | 'LinkHoaDonDaXuat'>('LinkDeNghiXHD');
+    const [docZoom, setDocZoom] = useState<number>(100);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [isAutoFetching, setIsAutoFetching] = useState(false);
     const [isBatchFetching, setIsBatchFetching] = useState(false);
@@ -267,6 +269,83 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                 return c;
             });
         });
+    };
+
+    const [isUnassigning, setIsUnassigning] = useState(false);
+
+    const handleRefreshCyber = async () => {
+        setIsLoadingCyberContracts(true);
+        try {
+            const now = new Date();
+            const currY = now.getFullYear();
+            const res = await getCyberXepXeContracts({
+                thang1: 1,
+                nam1: currY,
+                thang2: 12,
+                nam2: currY,
+                ma_dvcs: '02',
+                showroom: 'Ô tô Vinfast Thuận An'
+            });
+            if (res && res.success && res.contracts) {
+                setCyberContracts(res.contracts);
+                try {
+                    sessionStorage.setItem('cyber_xep_xe_contracts_cache', JSON.stringify(res.contracts));
+                } catch (_) {}
+                showToast('Đã làm mới', 'Đã cập nhật trạng thái ghép xe từ CyberSoft ERP.', 'success');
+            }
+        } catch (err: any) {
+            showToast('Lỗi làm mới', err.message || 'Không thể đồng bộ dữ liệu CyberSoft.', 'error');
+        } finally {
+            setIsLoadingCyberContracts(false);
+        }
+    };
+
+    const handleUnassignCyberCar = async () => {
+        const contract = cyberAssignmentStatus.contract;
+        const vinToUnassign = cyberAssignmentStatus.cyberVin || selectedOrder?.VIN;
+        if (!contract || !vinToUnassign) {
+            showToast('Không tìm thấy xe', 'Không có thông tin xe ghép trên CyberSoft ERP.', 'warning');
+            return;
+        }
+        const confirmMsg = `Bạn có chắc chắn muốn hủy ghép xe ${vinToUnassign} khỏi hợp đồng (${contract.ma_hd}) trên CyberSoft ERP không?`;
+        if (!window.confirm(confirmMsg)) return;
+
+        setIsUnassigning(true);
+        try {
+            const res = await deleteCyberXepXe({
+                ma_hd: contract.ma_hd,
+                stt_rec: contract.stt_rec,
+                stt_rec0: contract.stt_rec0,
+                so_khung: vinToUnassign,
+                ma_dvcs: contract.ma_dvcs || '02',
+                user_name: 'SYSTEM'
+            });
+
+            if (!res || !res.success) {
+                throw new Error(res?.error || res?.note || 'Không thể hủy ghép xe trên CyberSoft ERP');
+            }
+
+            // Cập nhật bảng cyber_xep_xe trên Supabase
+            if (contract.stt_rec) {
+                await supabase
+                    .from('cyber_xep_xe')
+                    .update({ so_khung: '', ten_color: 'Chờ ghép SK', updated_at: new Date().toISOString() })
+                    .match({ stt_rec: contract.stt_rec, stt_rec0: contract.stt_rec0 });
+            }
+
+            showToast('Hủy ghép thành công', `Đã gỡ số khung ${vinToUnassign} khỏi HĐ ${contract.ma_hd} trên CyberSoft ERP!`, 'success');
+
+            // Cập nhật lại state cyberContracts
+            setCyberContracts(prev => prev.map(c => 
+                c.stt_rec === contract.stt_rec && c.stt_rec0 === contract.stt_rec0 
+                    ? { ...c, so_khung: '', so_may: '', ten_color: 'Chờ ghép SK' } 
+                    : c
+            ));
+        } catch (err: any) {
+            showToast('Lỗi hủy ghép xe', err.message || 'Không thể gỡ xe trên Cyber', 'error');
+        } finally {
+            setIsUnassigning(false);
+        }
     };
 
     useEffect(() => {
@@ -884,7 +963,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                             </div>
 
                             {/* Main Content Area - Split View Support */}
-                            <div className={`flex-1 p-1.5 md:p-2 flex ${isSplitView ? 'flex-row' : 'flex-col'} gap-1.5 md:gap-2 min-h-0 overflow-y-auto bg-gray-50/30 lg:overflow-hidden`}>
+                            <div className={`flex-1 p-1.5 md:p-2 flex ${isSplitView ? 'flex-row overflow-hidden' : 'flex-col overflow-y-auto'} gap-1.5 md:gap-2 min-h-0 bg-gray-50/30`}>
                                 
                                 {isSplitView && (
                                     <div className="hidden lg:flex flex-[2] flex-col bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden min-h-0 relative">
@@ -905,62 +984,152 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </button>
                                                 ))}
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-1.5">
                                                 {selectedOrder[activeDocKey] && (
-                                                    <button 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const url = selectedOrder[activeDocKey] as string;
-                                                            const labels: any = {
-                                                                LinkDeNghiXHD: 'Đề nghị XHĐ',
-                                                                LinkHopDong: 'Hợp đồng MB',
-                                                                LinkHoaDonDaXuat: 'Hóa Đơn Red'
-                                                            };
-                                                            forceDownload(url, getSanitizedFilename(selectedOrder["Tên khách hàng"], labels[activeDocKey], url));
-                                                        }}
-                                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-accent-primary hover:border-accent-primary transition-all shadow-sm group"
-                                                        title="Tải xuống tài liệu này"
-                                                    >
-                                                        <i className="fas fa-download text-[10px] group-hover:bounce"></i>
-                                                    </button>
-                                                )}
-                                                
+                                                    <>
+                                                        {/* Zoom Controls: [-] [100%] [+] */}
+                                                        <div className="flex items-center bg-white border border-gray-200 rounded-lg p-0.5 shadow-2xs">
+                                                            <button 
+                                                                type="button"
+                                                                onClick={() => setDocZoom(prev => Math.max(prev - 20, 60))}
+                                                                className="w-6 h-6 flex items-center justify-center rounded text-gray-500 hover:text-accent-primary hover:bg-gray-100 transition-colors"
+                                                                title="Thu nhỏ (-20%)"
+                                                            >
+                                                                <i className="fas fa-minus text-[9px]"></i>
+                                                            </button>
+                                                            <button 
+                                                                type="button"
+                                                                onClick={() => setDocZoom(100)}
+                                                                className="px-1.5 h-6 flex items-center justify-center text-[10px] font-bold text-gray-700 hover:text-accent-primary hover:bg-gray-100 rounded transition-colors min-w-[42px]"
+                                                                title="Nhấn để đưa về kích thước chuẩn (100%)"
+                                                            >
+                                                                {docZoom}%
+                                                            </button>
+                                                            <button 
+                                                                type="button"
+                                                                onClick={() => setDocZoom(prev => Math.min(prev + 20, 250))}
+                                                                className="w-6 h-6 flex items-center justify-center rounded text-gray-500 hover:text-accent-primary hover:bg-gray-100 transition-colors"
+                                                                title="Phóng to (+20%)"
+                                                            >
+                                                                <i className="fas fa-plus text-[9px]"></i>
+                                                            </button>
+                                                        </div>
 
+                                                        {/* Fullscreen Modal Preview */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const url = selectedOrder[activeDocKey] as string;
+                                                                const labels: any = {
+                                                                    LinkDeNghiXHD: 'Đề nghị XHĐ',
+                                                                    LinkHopDong: 'Hợp đồng MB',
+                                                                    LinkHoaDonDaXuat: 'Hóa Đơn Red'
+                                                                };
+                                                                onOpenFilePreview(url, `${labels[activeDocKey]} - ${selectedOrder['Tên khách hàng']}`);
+                                                            }}
+                                                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-accent-primary hover:border-accent-primary transition-all shadow-2xs"
+                                                            title="Xem toàn màn hình"
+                                                        >
+                                                            <i className="fas fa-expand text-[10px]"></i>
+                                                        </button>
+
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const url = selectedOrder[activeDocKey] as string;
+                                                                const labels: any = {
+                                                                    LinkDeNghiXHD: 'Đề nghị XHĐ',
+                                                                    LinkHopDong: 'Hợp đồng MB',
+                                                                    LinkHoaDonDaXuat: 'Hóa Đơn Red'
+                                                                };
+                                                                forceDownload(url, getSanitizedFilename(selectedOrder["Tên khách hàng"], labels[activeDocKey], url));
+                                                            }}
+                                                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-accent-primary hover:border-accent-primary transition-all shadow-2xs group"
+                                                            title="Tải xuống tài liệu này"
+                                                        >
+                                                            <i className="fas fa-download text-[10px] group-hover:bounce"></i>
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                         
-                                        <div className="flex-1 bg-slate-100 relative">
+                                        <div className="flex-1 bg-slate-100 relative overflow-hidden">
                                             {selectedOrder[activeDocKey] ? (
                                                 (() => {
-                                                    const url = selectedOrder[activeDocKey] as string;
-                                                    const isDrive = url.toLowerCase().includes('drive.google.com');
-                                                    const fileId = isDrive ? getDriveFileId(url) : null;
-                                                    const isPdf = url.toLowerCase().includes('.pdf');
-                                                    
-                                                    if (isDrive && fileId) {
+                                                    const rawUrl = (selectedOrder[activeDocKey] as string) || '';
+                                                    const lowerUrl = rawUrl.toLowerCase();
+                                                    const fileId = getDriveFileId(rawUrl);
+                                                    const isDrive = Boolean(fileId || lowerUrl.includes('drive.google.com') || lowerUrl.includes('docs.google.com'));
+                                                    const isPureImage = !isDrive && (/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/i.test(lowerUrl) || rawUrl.startsWith('data:image'));
+                                                    const scale = docZoom / 100;
+
+                                                    if (!isPureImage) {
+                                                        const iframeSrc = (isDrive && fileId) 
+                                                            ? `https://drive.google.com/file/d/${fileId}/preview`
+                                                            : `${rawUrl}${rawUrl.includes('#') ? '&' : '#'}toolbar=0&navpanes=0`;
+                                                        
+                                                        if (docZoom === 100) {
+                                                            return (
+                                                                <div className="w-full h-full overflow-hidden p-0 relative">
+                                                                    <iframe 
+                                                                        src={iframeSrc}
+                                                                        className="w-[calc(100%+24px)] max-w-none h-full border-0 block"
+                                                                        title="Document Preview"
+                                                                    />
+                                                                </div>
+                                                            );
+                                                        }
+                                                        
                                                         return (
-                                                            <iframe 
-                                                                src={`https://drive.google.com/file/d/${fileId}/preview`}
-                                                                className="w-full h-full border-0"
-                                                                title="Xem toàn bộ tài liệu"
-                                                                allow="autoplay"
-                                                            />
-                                                        );
-                                                    }
-                                                    
-                                                    if (isPdf) {
-                                                        return (
-                                                            <iframe 
-                                                                src={url} 
-                                                                className="w-full h-full border-0"
-                                                                title="PDF Preview"
-                                                            />
+                                                            <div className="w-full h-full overflow-auto p-2 bg-slate-200/90 custom-scrollbar flex items-start justify-center">
+                                                                <div 
+                                                                    style={{ 
+                                                                        width: scale > 1 ? `${scale * 100}%` : '100%',
+                                                                        height: scale > 1 ? `${scale * 100}%` : '100%',
+                                                                        minWidth: scale > 1 ? `${scale * 100}%` : 'auto',
+                                                                        minHeight: scale > 1 ? `${scale * 100}%` : 'auto',
+                                                                        position: 'relative',
+                                                                        flexShrink: 0
+                                                                    }}
+                                                                    className="shadow-md rounded bg-white overflow-hidden"
+                                                                >
+                                                                    <div 
+                                                                        style={{ 
+                                                                            width: scale > 1 ? `${100 / scale}%` : '100%',
+                                                                            height: scale > 1 ? `${100 / scale}%` : '100%',
+                                                                            transform: `scale(${scale})`,
+                                                                            transformOrigin: scale > 1 ? 'top left' : 'top center',
+                                                                            position: scale > 1 ? 'absolute' : 'relative',
+                                                                            top: 0,
+                                                                            left: 0
+                                                                        }}
+                                                                        className="w-full h-full overflow-hidden"
+                                                                    >
+                                                                        <iframe 
+                                                                            src={iframeSrc}
+                                                                            className="w-[calc(100%+24px)] max-w-none h-full border-0 block"
+                                                                            title="Document Preview"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
                                                         );
                                                     }
                                                     
                                                     return (
-                                                        <div className="w-full h-full overflow-auto flex items-start justify-center p-4 bg-slate-200">
-                                                            <img src={url} alt="Large Preview" className="max-w-full shadow-2xl rounded-sm" />
+                                                        <div className="w-full h-full overflow-auto flex items-start justify-center p-4 bg-slate-200 custom-scrollbar">
+                                                            <img 
+                                                                src={rawUrl} 
+                                                                alt="Preview" 
+                                                                style={{ 
+                                                                    transform: docZoom === 100 ? 'none' : `scale(${scale})`,
+                                                                    transformOrigin: 'top center',
+                                                                    transition: 'transform 0.15s ease-out',
+                                                                    maxWidth: docZoom <= 100 ? '100%' : 'none'
+                                                                }}
+                                                                className="shadow-2xl rounded-sm" 
+                                                            />
                                                         </div>
                                                     );
                                                 })()
@@ -974,15 +1143,15 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                     </div>
                                 )}
 
-                                <div className={`flex flex-col gap-2 min-w-0 ${isSplitView ? 'flex-[1] overflow-y-auto custom-scrollbar pr-1' : 'w-full'}`}>
+                                <div className={`flex flex-col min-w-0 ${isSplitView ? 'flex-[1] h-full overflow-hidden justify-between gap-2' : 'w-full gap-2'}`}>
                                     
                                     {/* CUSTOMER HEADER & ACTIONS - Clean Modern Integrated Card */}
                                     {isSplitView && (
-                                        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 flex flex-col gap-3.5 animate-in slide-in-from-right-4 duration-300">
+                                        <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs p-3 flex flex-col gap-2 flex-shrink-0 animate-in slide-in-from-right-4 duration-300">
                                             {/* Top Customer Info */}
                                             <div className="flex items-center justify-between gap-3">
-                                                <div className="flex items-center gap-3.5 min-w-0 flex-1">
-                                                    <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-base font-black shadow-2xs flex-shrink-0">
+                                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                    <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-sm font-black shadow-2xs flex-shrink-0">
                                                         {selectedOrder['Tên khách hàng'].charAt(0)}
                                                     </div>
                                                     <div className="space-y-0.5 min-w-0 flex-1 overflow-hidden">
@@ -990,7 +1159,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                             <div className="min-w-0 flex-1 overflow-hidden">
                                                                 <MarqueeText 
                                                                     text={selectedOrder['Tên khách hàng'] || '—'}
-                                                                    className="font-black text-base text-slate-900 leading-tight cursor-pointer hover:text-blue-600 transition-colors uppercase"
+                                                                    className="font-black text-sm text-slate-900 leading-tight cursor-pointer hover:text-blue-600 transition-colors uppercase"
                                                                     title="Click để sao chép tên khách hàng"
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
@@ -1016,9 +1185,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                             </div>
 
                                             {/* Actions */}
-                                            <div className="flex flex-wrap items-center gap-2 pt-2.5 border-t border-slate-100">
+                                            <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100">
                                                 {((selectedOrder?.['Ghi chú Admin'] || selectedOrder?.ghi_chu_admin || '').toString().includes('[YÊU CẦU SCAN LẠI]')) && (
-                                                    <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-300 text-amber-800 rounded-lg text-xs font-bold w-full shadow-xs" title={(selectedOrder?.['Ghi chú Admin'] || selectedOrder?.ghi_chu_admin || '').toString()}>
+                                                    <div className="flex items-center justify-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-300 text-amber-800 rounded-lg text-xs font-bold w-full shadow-xs" title={(selectedOrder?.['Ghi chú Admin'] || selectedOrder?.ghi_chu_admin || '').toString()}>
                                                         <i className="fas fa-hourglass-half text-amber-600 animate-pulse text-[10px]"></i>
                                                         <span>Đang Chờ TVBH Scan Lại</span>
                                                     </div>
@@ -1038,7 +1207,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                             variant={variant}
                                                             size="sm"
                                                             leftIcon={<i className={`fas ${action.icon} text-[10px]`}></i>}
-                                                            className="font-bold px-3 py-1.5 text-xs flex-1 justify-center whitespace-nowrap"
+                                                            className="font-bold px-2.5 py-1 h-7 text-xs flex-1 justify-center whitespace-nowrap"
                                                             isLoading={processingId === selectedOrder['Số đơn hàng'] && processingActionType === action.type}
                                                             disabled={!!processingId}
                                                         >
@@ -1050,17 +1219,17 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                         </div>
                                     )}
 
-                                    <div className={`grid grid-cols-1 ${isSplitView ? 'grid-cols-1' : 'md:grid-cols-3'} gap-2 flex-shrink-0`}>
+                                    <div className={`grid grid-cols-1 ${isSplitView ? 'flex-1 min-h-0 justify-between' : 'md:grid-cols-3'} gap-2`}>
                                         {/* Column 1: Vehicle & Specs */}
-                                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-full">
-                                            <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center justify-between">
+                                        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col ${isSplitView ? 'flex-1 min-h-0 justify-between' : 'h-full'}`}>
+                                            <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
                                                 <div className="flex items-center gap-2">
                                                     <i className="fas fa-car text-accent-primary text-[10px]"></i>
                                                     <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Thông tin xe</h3>
                                                 </div>
                                             </div>
-                                            <div className="p-2 space-y-0.5">
-                                                <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-lg transition-colors group">
+                                            <div className={`p-2 space-y-0.5 ${isSplitView ? 'flex-1 flex flex-col justify-evenly' : ''}`}>
+                                                <div className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded-lg transition-colors group">
                                                     <div className="flex items-center gap-2.5">
                                                         <i className="fas fa-car text-blue-500 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Dòng xe / PB</span>
@@ -1070,7 +1239,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </span>
                                                 </div>
 
-                                                <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-lg transition-colors group border-t border-gray-50 mt-0.5">
+                                                <div className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded-lg transition-colors group border-t border-gray-50 mt-0.5">
                                                     <div className="flex items-center gap-2.5">
                                                         <i className="fas fa-palette text-amber-500 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Màu sắc</span>
@@ -1080,68 +1249,112 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </span>
                                                 </div>
 
-                                                <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-lg transition-colors group border-t border-gray-50 mt-0.5 pt-1">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <i className="fas fa-fingerprint text-accent-primary opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
-                                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số VIN</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 ml-4">
-                                                        <div className="text-xs font-bold text-accent-primary truncate font-mono tracking-normal bg-accent-primary/5 px-2 py-0.5 rounded border border-accent-primary/10">
-                                                            <CopyableField text={selectedOrder.VIN || ''} showToast={showToast} />
+                                                <div className="flex flex-col py-1 px-2 hover:bg-gray-50/60 rounded-lg transition-colors group border-t border-gray-50 mt-0.5 pt-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <i className="fas fa-fingerprint text-accent-primary opacity-50 group-hover:opacity-100 text-[10px] transition-opacity"></i>
+                                                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số VIN</span>
                                                         </div>
-                                                        {cyberAssignmentStatus.isAssigned || (!isLoadingCyberContracts && Boolean(selectedOrder.VIN && selectedOrder.VIN.trim() && cyberContracts.length === 0)) ? (
-                                                             <span 
-                                                                 className="px-2 py-0.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                                                 title={`Đơn hàng đã được xếp xe trên CyberSoft ERP (Số khung: ${cyberAssignmentStatus.cyberVin || selectedOrder.VIN || '—'})`}
-                                                             >
-                                                                 <i className="fas fa-check-circle text-[9px] text-emerald-600"></i>
-                                                                 <span>Đã xếp xe Cyber</span>
-                                                             </span>
-                                                         ) : isLoadingCyberContracts ? (
-                                                             <span 
-                                                                 className="px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1.5 bg-slate-50 text-slate-500 border border-slate-200 animate-pulse"
-                                                                 title="Đang đồng bộ trạng thái xếp xe từ CyberSoft ERP..."
-                                                             >
-                                                                 <i className="fas fa-spinner fa-spin text-[9px] text-blue-500"></i>
-                                                                 <span>Đang kiểm tra Cyber...</span>
-                                                             </span>
-                                                         ) : cyberAssignmentStatus.isPendingGreen ? (
-                                                             selectedOrder['Trạng thái xử lý'] !== 'đã xuất hóa đơn' && selectedOrder['Kết quả'] !== 'đã xuất hóa đơn' && (
-                                                                 <button
-                                                                     type="button"
-                                                                     onClick={() => {
-                                                                         showToast(
-                                                                             'Hợp đồng chưa duyệt',
-                                                                             `Hợp đồng ${cyberAssignmentStatus.contract?.ma_hd || ''} trên Cyber đang ở trạng thái Chờ duyệt (Màu xanh). Theo quy định, Giám đốc phải duyệt chuyển sang Màu vàng mới được ghép xe!`,
-                                                                             'warning',
-                                                                             6000
-                                                                         );
-                                                                         setIsCyberAssignModalOpen(true);
-                                                                     }}
-                                                                     className="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs shrink-0 cursor-pointer bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
-                                                                     title="Hợp đồng trên Cyber đang Chờ duyệt (Màu xanh) - Cần duyệt sang Màu vàng mới được ghép xe"
-                                                                 >
-                                                                     <i className="fas fa-exclamation-triangle text-[9px]"></i>
-                                                                     <span>HĐ Cyber Chờ Duyệt (Xanh)</span>
-                                                                 </button>
-                                                             )
-                                                         ) : (
-                                                             selectedOrder['Trạng thái xử lý'] !== 'đã xuất hóa đơn' && selectedOrder['Kết quả'] !== 'đã xuất hóa đơn' && (
-                                                                 <button
-                                                                     type="button"
-                                                                     onClick={() => setIsCyberAssignModalOpen(true)}
-                                                                     className="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs shrink-0 cursor-pointer bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
-                                                                     title="Ghép xe trực tiếp từ CyberSoft ERP"
-                                                                 >
-                                                                     <i className="fas fa-car-side text-[9px]"></i>
-                                                                     <span>Ghép xe Cyber</span>
-                                                                 </button>
-                                                             )
-                                                         )}
+                                                        
+                                                        {/* Right action group: Status Badge, Gỡ xe, Refresh */}
+                                                        <div className="flex items-center gap-1.5">
+                                                            {cyberAssignmentStatus.isAssigned ? (
+                                                                <>
+                                                                    <span 
+                                                                        className="px-2 py-0.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                                                        title={`Đơn hàng đã được xếp xe trên CyberSoft ERP (Số khung: ${cyberAssignmentStatus.cyberVin || selectedOrder.VIN || '—'})`}
+                                                                    >
+                                                                        <i className="fas fa-check-circle text-[9px] text-emerald-600"></i>
+                                                                        <span>Đã xếp xe</span>
+                                                                    </span>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={handleUnassignCyberCar}
+                                                                        disabled={isUnassigning}
+                                                                        className="px-2 py-0.5 rounded-lg text-[10px] font-semibold flex items-center gap-1 bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 transition-colors cursor-pointer"
+                                                                        title="Hủy ghép / Gỡ xe khỏi hợp đồng trên CyberSoft ERP"
+                                                                    >
+                                                                        <i className={`fas fa-link-slash text-[9px] text-rose-500 ${isUnassigning ? 'animate-spin' : ''}`}></i>
+                                                                        <span>{isUnassigning ? 'Đang gỡ...' : 'Gỡ xe'}</span>
+                                                                    </button>
+                                                                </>
+                                                            ) : isLoadingCyberContracts ? (
+                                                                <span 
+                                                                    className="px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1.5 bg-slate-50 text-slate-500 border border-slate-200 animate-pulse"
+                                                                    title="Đang đồng bộ trạng thái xếp xe từ CyberSoft ERP..."
+                                                                >
+                                                                    <i className="fas fa-spinner fa-spin text-[9px] text-blue-500"></i>
+                                                                    <span>Đang kiểm tra...</span>
+                                                                </span>
+                                                            ) : cyberAssignmentStatus.isPendingGreen ? (
+                                                                selectedOrder['Trạng thái xử lý'] !== 'đã xuất hóa đơn' && selectedOrder['Kết quả'] !== 'đã xuất hóa đơn' && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            showToast(
+                                                                                'Hợp đồng chưa duyệt',
+                                                                                `Hợp đồng ${cyberAssignmentStatus.contract?.ma_hd || ''} trên Cyber đang ở trạng thái Chờ duyệt (Màu xanh). Cần duyệt sang Màu vàng mới được ghép xe!`,
+                                                                                'warning',
+                                                                                6000
+                                                                            );
+                                                                            setIsCyberAssignModalOpen(true);
+                                                                        }}
+                                                                        className="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
+                                                                        title="Hợp đồng trên Cyber đang Chờ duyệt (Màu xanh) - Cần duyệt sang Màu vàng mới được ghép xe"
+                                                                    >
+                                                                        <i className="fas fa-exclamation-triangle text-[9px]"></i>
+                                                                        <span>HĐ Cyber Chờ Duyệt</span>
+                                                                    </button>
+                                                                )
+                                                            ) : (
+                                                                selectedOrder['Trạng thái xử lý'] !== 'đã xuất hóa đơn' && selectedOrder['Kết quả'] !== 'đã xuất hóa đơn' && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setIsCyberAssignModalOpen(true)}
+                                                                        className="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
+                                                                        title="Ghép xe trực tiếp từ CyberSoft ERP"
+                                                                    >
+                                                                        <i className="fas fa-car-side text-[9px]"></i>
+                                                                        <span>Ghép xe Cyber</span>
+                                                                    </button>
+                                                                )
+                                                            )}
+
+                                                            {/* Refresh Button */}
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleRefreshCyber}
+                                                                disabled={isLoadingCyberContracts}
+                                                                className="w-6 h-6 rounded-lg text-[10px] flex items-center justify-center border border-gray-200 text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+                                                                title="Đồng bộ / Làm mới dữ liệu CyberSoft ERP"
+                                                            >
+                                                                <i className={`fas fa-sync-alt text-[9px] ${isLoadingCyberContracts ? 'fa-spin text-blue-500' : ''}`}></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Full width VIN display pill card */}
+                                                    <div className="mt-1 w-full bg-blue-50/40 border border-blue-200/80 rounded-xl px-2.5 py-1 flex items-center justify-between group/vin">
+                                                        <span className="font-mono font-bold text-xs text-blue-700 tracking-wider select-all">
+                                                            {selectedOrder.VIN || '—'}
+                                                        </span>
+                                                        {selectedOrder.VIN && (
+                                                            <button 
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    copyWithFeedback(selectedOrder.VIN || '', e);
+                                                                }}
+                                                                className="text-blue-500 hover:text-blue-700 transition-colors cursor-pointer p-0.5"
+                                                                title="Sao chép số VIN"
+                                                            >
+                                                                <i className="fas fa-copy text-xs"></i>
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-lg transition-colors group">
+                                                <div className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded-lg transition-colors group">
                                                     <div className="flex items-center gap-2.5">
                                                         <i className="fas fa-cogs text-gray-400 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số Máy</span>
@@ -1161,19 +1374,19 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                 </div>
 
                                                 {selectedOrder['Xe xăng VIN'] && (
-                                                    <div className="mt-2 pt-2 border-t border-dashed border-amber-200 bg-amber-50/60 rounded-lg px-2 pb-1.5 transition-all animate-fade-in shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
-                                                        <div className="flex items-center gap-1.5 mb-1.5">
+                                                    <div className="mt-1 pt-1 border-t border-dashed border-amber-200 bg-amber-50/60 rounded-lg px-2 pb-1 transition-all animate-fade-in shadow-[inset_0_1px_2px_rgba(0,0,0,0.02)]">
+                                                        <div className="flex items-center gap-1.5 mb-1">
                                                             <i className="fas fa-gas-pump text-amber-600 text-[10px]"></i>
                                                             <span className="text-[9px] font-semibold text-amber-800 uppercase tracking-wider">Thông tin xe xăng thu đổi</span>
                                                         </div>
-                                                        <div className="space-y-1">
+                                                        <div className="space-y-0.5">
                                                             <div className="flex justify-between items-center">
                                                                 <span className="text-[9px] text-gray-500 font-medium tracking-wide">Hãng / Model</span>
                                                                 <span className="text-[10px] font-medium text-gray-800">
                                                                     {selectedOrder['Xe xăng Hãng'] || '—'} {selectedOrder['Xe xăng Model'] ? `(${selectedOrder['Xe xăng Model']})` : ''}
                                                                 </span>
                                                             </div>
-                                                            <div className="flex justify-between items-center border-t border-amber-100/50 pt-1 mt-1">
+                                                            <div className="flex justify-between items-center border-t border-amber-100/50 pt-0.5 mt-0.5">
                                                                 <span className="text-[9px] text-gray-500 font-medium tracking-wide">Số VIN gốc</span>
                                                                 <div className="text-[10px] font-semibold text-amber-900 font-mono bg-white px-1.5 py-0.5 rounded border border-amber-200 shadow-sm">
                                                                     <CopyableField text={selectedOrder['Xe xăng VIN'] || ''} showToast={showToast} />
@@ -1186,12 +1399,12 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                         </div>
 
                                         {/* Column 2: Transaction Details */}
-                                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-full overflow-visible relative">
-                                            <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center gap-2 rounded-t-xl">
+                                        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col ${isSplitView ? 'flex-1 min-h-0 justify-between' : 'h-full'} overflow-visible relative`}>
+                                            <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center gap-2 rounded-t-xl flex-shrink-0">
                                                 <i className="fas fa-receipt text-accent-primary text-[10px]"></i>
                                                 <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Giao dịch</h3>
                                             </div>
-                                            <div className="p-2.5 space-y-2 relative">
+                                            <div className={`p-2.5 space-y-2 relative ${isSplitView ? 'flex-1 flex flex-col justify-evenly' : ''}`}>
                                                 <div className="text-left relative">
                                                     <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 ml-0.5">Số đơn hàng</div>
                                                     {(() => {
@@ -1251,7 +1464,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </div>
                                                 </div>
                                                 {selectedOrder['Mã VC'] && (
-                                                    <div className="flex flex-col mt-2">
+                                                    <div className="flex flex-col mt-1">
                                                         <div className="text-[9px] font-medium text-slate-500 uppercase tracking-tighter mb-0.5 ml-0.5">Mã VC (Voucher)</div>
                                                         <div className="w-full bg-purple-50/50 border border-purple-100 rounded-lg px-2 py-1 flex items-center gap-2">
                                                             <i className="fas fa-ticket-alt text-purple-500 text-[10px]"></i>
@@ -1263,8 +1476,8 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                         </div>
 
                                         {/* Column 3: Policy List */}
-                                        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col min-h-[160px]">
-                                            <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex justify-between items-center">
+                                        <div className={`bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col ${isSplitView ? 'flex-1 min-h-0 justify-between' : 'min-h-[160px]'}`}>
+                                            <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex justify-between items-center flex-shrink-0">
                                                 <div className="flex items-center gap-2">
                                                     <i className="fas fa-shield-alt text-accent-primary text-[10px]"></i>
                                                     <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Chính sách</h3>
@@ -1280,7 +1493,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className={`p-2.5 overflow-y-auto custom-scrollbar flex-1 min-h-[120px] ${isSplitView ? 'max-h-[300px]' : ''}`}>
+                                            <div className={`p-2.5 overflow-y-auto no-scrollbar ${isSplitView ? 'flex-1 min-h-0 flex flex-col justify-center' : 'flex-1 min-h-[120px]'}`}>
                                                 {isEditing ? (
                                                     <div className="space-y-1.5 p-0.5">
                                                         {/* Quick Search & Model Filter Header */}
@@ -1295,7 +1508,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                                 />
                                                                 {policySearchQuery && (
                                                                     <button 
-                                                                        type="button"
+                                                                        type="button" 
                                                                         onClick={() => setPolicySearchQuery('')} 
                                                                         className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-[10px] px-1"
                                                                     >
@@ -1358,10 +1571,10 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    <div className="space-y-1.5">
+                                                    <div className="space-y-1.5 my-auto">
                                                         {(selectedOrder['CHÍNH SÁCH'] || '').split(/; |, /).filter(Boolean).map((item, idx) => (
                                                             <div key={idx} className="flex items-start gap-2">
-                                                                <div className="w-1 h-1 rounded-full bg-accent-primary mt-1.5 flex-shrink-0"></div>
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-accent-primary mt-1 flex-shrink-0"></div>
                                                                 <span className="text-[10px] font-semibold text-gray-600 leading-tight">{item}</span>
                                                             </div>
                                                         ))}

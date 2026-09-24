@@ -41,11 +41,24 @@ interface LightningBolt {
     alpha: number;
 }
 
-const CACHE_KEY = 'live_weather_cache_v2';
+const CACHE_KEY = 'live_weather_cache_v3';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes real-time synchronization
 
+const DEFAULT_LAT = 10.925;
+const DEFAULT_LON = 106.705;
+const DEFAULT_LOC_NAME = 'Thuận An';
+
+// Chỉ chấp nhận tọa độ trong phạm vi lãnh thổ Việt Nam
+const isWithinVietnam = (lat: number, lon: number): boolean => {
+    return typeof lat === 'number' && typeof lon === 'number' && lat >= 8.0 && lat <= 24.0 && lon >= 102.0 && lon <= 110.0;
+};
+
 const cleanLocationName = (name: string): string => {
-    if (!name) return '';
+    if (!name) return DEFAULT_LOC_NAME;
+    // Lọc bỏ các từ tiếng nước ngoài hoặc chuỗi lỗi do VPN/định vị ngoại quốc
+    if (/municipality|ward\s+\d+|district\s+\d+|polokwane|south africa|province|county|state/i.test(name)) {
+        return DEFAULT_LOC_NAME;
+    }
     return name
         .replace(/Thành phố Hồ Chí Minh|Thành phố HCM/gi, 'TP.HCM')
         .replace(/Thành phố Hà Nội/gi, 'Hà Nội')
@@ -58,7 +71,7 @@ const cleanLocationName = (name: string): string => {
         .replace(/Quận /gi, 'Q. ')
         .replace(/Huyện /gi, 'H. ')
         .replace(/Thị xã /gi, 'TX. ')
-        .trim();
+        .trim() || DEFAULT_LOC_NAME;
 };
 
 export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className = '' }) => {
@@ -74,14 +87,18 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
             temp: 32,
             description: 'Trời nắng',
             isDay: true,
-            locationName: 'Đang định vị...',
+            locationName: DEFAULT_LOC_NAME,
             lastUpdated: formatNow()
         };
         try {
+            // Dọn sạch cache cũ (nếu có cache Polokwane hoặc tọa độ cũ)
+            localStorage.removeItem('live_weather_cache_v2');
+            localStorage.removeItem('live_weather_cache');
+
             const raw = localStorage.getItem(CACHE_KEY);
             if (raw) {
                 const parsed = JSON.parse(raw);
-                if (parsed.data) {
+                if (parsed.data && parsed.lat && parsed.lon && isWithinVietnam(parsed.lat, parsed.lon)) {
                     return {
                         ...parsed.data,
                         type: parsed.data.type === 'NIGHT' ? 'SUNNY' : parsed.data.type,
@@ -100,15 +117,15 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
     
     useEffect(() => {
         let isMounted = true;
-        let lastLat = 10.925;
-        let lastLon = 106.705;
-        let lastLocName = 'Thuận An';
+        let lastLat = DEFAULT_LAT;
+        let lastLon = DEFAULT_LON;
+        let lastLocName = DEFAULT_LOC_NAME;
 
         try {
             const raw = localStorage.getItem(CACHE_KEY);
             if (raw) {
                 const parsed = JSON.parse(raw);
-                if (parsed.lat && parsed.lon) {
+                if (parsed.lat && parsed.lon && isWithinVietnam(parsed.lat, parsed.lon)) {
                     lastLat = parsed.lat;
                     lastLon = parsed.lon;
                     if (parsed.data?.locationName) {
@@ -119,6 +136,7 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
         } catch (e) {}
 
         const saveToCache = (data: WeatherData, lat: number, lon: number) => {
+            if (!isWithinVietnam(lat, lon)) return;
             try {
                 localStorage.setItem(CACHE_KEY, JSON.stringify({
                     data,
@@ -130,13 +148,14 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
         };
 
         const loadFromCache = (lat: number, lon: number): WeatherData | null => {
+            if (!isWithinVietnam(lat, lon)) return null;
             try {
                 const raw = localStorage.getItem(CACHE_KEY);
                 if (!raw) return null;
                 const parsed = JSON.parse(raw);
                 const isFresh = Date.now() - parsed.timestamp < CACHE_TTL_MS;
                 const isSameLocation = Math.abs(parsed.lat - lat) < 0.005 && Math.abs(parsed.lon - lon) < 0.005;
-                if (isFresh && isSameLocation && parsed.data) {
+                if (isFresh && isSameLocation && parsed.data && isWithinVietnam(parsed.lat, parsed.lon)) {
                     return parsed.data;
                 }
             } catch (e) {}
@@ -144,9 +163,14 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
         };
 
         const fetchLiveWeather = async (lat = lastLat, lon = lastLon, locName = lastLocName, force = false) => {
+            if (!isWithinVietnam(lat, lon)) {
+                lat = DEFAULT_LAT;
+                lon = DEFAULT_LON;
+                locName = DEFAULT_LOC_NAME;
+            }
             lastLat = lat;
             lastLon = lon;
-            lastLocName = locName;
+            lastLocName = cleanLocationName(locName);
 
             // Don't waste API calls if browser tab is hidden/minimized
             if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
@@ -398,6 +422,13 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
                     async (pos) => {
                         const lat = pos.coords.latitude;
                         const lon = pos.coords.longitude;
+                        if (!isWithinVietnam(lat, lon)) {
+                            // Tọa độ ngoài Việt Nam (do proxy/VPN/mạng lỗi), fallback về Thuận An
+                            if (isMounted) {
+                                await fetchLiveWeather(DEFAULT_LAT, DEFAULT_LON, DEFAULT_LOC_NAME, false);
+                            }
+                            return;
+                        }
                         let locName = lastLocName;
 
                         try {
@@ -408,12 +439,17 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
                             if (geoRes.ok) {
                                 const geoData = await geoRes.json();
                                 const feat = geoData.features?.[0]?.properties || {};
-                                const district = cleanLocationName(feat.district || feat.county || '');
-                                const city = cleanLocationName(feat.city || feat.state || '');
-                                if (district && city && district !== city) {
-                                    locName = `${district}, ${city}`;
+                                const country = feat.country || '';
+                                if (country && !/vietnam|việt nam/i.test(country)) {
+                                    locName = DEFAULT_LOC_NAME;
                                 } else {
-                                    locName = district || city || lastLocName;
+                                    const district = cleanLocationName(feat.district || feat.county || '');
+                                    const city = cleanLocationName(feat.city || feat.state || '');
+                                    if (district && city && district !== city) {
+                                        locName = `${district}, ${city}`;
+                                    } else {
+                                        locName = district || city || lastLocName;
+                                    }
                                 }
                             }
                         } catch (e) {}
@@ -429,8 +465,12 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
                             if (ipRes.ok) {
                                 const ipData = await ipRes.json();
                                 if (ipData && ipData.success && ipData.latitude && ipData.longitude && isMounted) {
-                                    const cityName = cleanLocationName(ipData.city || ipData.region || 'Thuận An');
-                                    await fetchLiveWeather(ipData.latitude, ipData.longitude, cityName, force);
+                                    if (isWithinVietnam(ipData.latitude, ipData.longitude) && ipData.country_code === 'VN') {
+                                        const cityName = cleanLocationName(ipData.city || ipData.region || DEFAULT_LOC_NAME);
+                                        await fetchLiveWeather(ipData.latitude, ipData.longitude, cityName, force);
+                                    } else {
+                                        await fetchLiveWeather(DEFAULT_LAT, DEFAULT_LON, DEFAULT_LOC_NAME, force);
+                                    }
                                 }
                             }
                         } catch (e) {}
@@ -1026,22 +1066,25 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
             {/* Particle, Lighting & Lightning Bolt Canvas (z-[35] - Rơi và bắn nước trực tiếp trên nóc xe và thân xe) */}
             <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-[35]" />
 
-            {/* Apple Dynamic Island SF Symbols Minimalist Weather Capsule (100% Realtime GPS - Static Display) */}
+            {/* Apple Dynamic Island SF Symbols Minimalist Weather Capsule (Thời tiết thực tế khu vực Showroom / Vị trí người dùng) */}
             <div className="absolute top-1.5 right-1.5 md:top-2.5 md:right-3 z-[40] pointer-events-none select-none">
                 <div
-                    title={`Thời tiết thực tế theo GPS\n• Giờ cập nhật: ${weather.lastUpdated}\n• Vị trí: ${weather.locationName || 'Tọa độ GPS'}`}
+                    title={`Thời tiết thực tế: ${weather.description}, ${weather.temp}°C tại ${weather.locationName || 'Thuận An'}\n• Giờ cập nhật: ${weather.lastUpdated}\n(Hiệu ứng mô phỏng thời tiết không gian xe)`}
                     className="flex items-center gap-1 md:gap-1.5 px-2 py-0.5 md:px-2.5 md:py-1 bg-white/90 backdrop-blur-xl border border-slate-200/80 rounded-full shadow-2xs text-[9px] md:text-[11px] select-none cursor-default max-w-[170px] sm:max-w-[220px] md:max-w-none"
                 >
                     <span className="flex items-center justify-center shrink-0">
                         {renderSfSymbol(activeType)}
                     </span>
-                    <span className="font-bold text-slate-800 tracking-tight">{weather.temp}°</span>
+                    <span className="font-bold text-slate-800 tracking-tight">{weather.temp}°C</span>
                     <span className="text-slate-300 text-[9px] md:text-[10px]">•</span>
                     <span className="text-slate-600 font-medium text-[8.5px] sm:text-[9.5px] md:text-[10.5px] tracking-tight truncate">{weather.description}</span>
                     {weather.locationName && (
                         <>
                             <span className="text-slate-300 text-[10px] hidden md:inline">•</span>
-                            <span className="text-slate-500 font-medium text-[10px] hidden md:inline">{weather.locationName}</span>
+                            <span className="text-slate-500 font-medium text-[10px] hidden md:inline flex items-center gap-1">
+                                <i className="fas fa-location-dot text-[8.5px] text-slate-400"></i>
+                                <span>{weather.locationName}</span>
+                            </span>
                         </>
                     )}
                 </div>

@@ -367,6 +367,27 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         setIsLoadingTransferRequests(true);
         try {
             const list = await getTransferRequests('pending');
+            if (list.length > 0) {
+                const vins = list.map(r => r.vin?.trim().toUpperCase()).filter(Boolean);
+                try {
+                    const { data: statuses } = await supabaseAdmin
+                        .from('cyber_car_status')
+                        .select('vin, has_td4, so_ct_td4, td4_data, has_dnx, so_ct_dnx')
+                        .in('vin', vins);
+                    if (statuses && statuses.length > 0) {
+                        const statusMap = new Map(statuses.map(s => [s.vin, s]));
+                        list.forEach((item: any) => {
+                            const st = statusMap.get(item.vin?.trim().toUpperCase());
+                            if (st) {
+                                item.hasTd4 = Boolean(st.has_td4 || st.so_ct_td4);
+                                item.soCtTd4 = st.so_ct_td4 || st.td4_data?.so_ct || '';
+                            }
+                        });
+                    }
+                } catch (eStatus) {
+                    console.warn('[loadPendingTransferRequests] Lỗi tra cứu status TD4:', eStatus);
+                }
+            }
             setPendingTransferRequests(list);
         } catch (e) {
             console.error("Lỗi tải yêu cầu chuyển xe từ TVBH:", e);
@@ -386,9 +407,12 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     };
 
     const handleRejectTransferRequest = async (req: TransferRequestItem) => {
+        const defaultReason = req.hasTd4 
+            ? `Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${req.soCtTd4 || 'TD4'}) trên CyberSoft`
+            : 'Admin từ chối điều chuyển';
         const reason = window.prompt(
             `Hủy/Từ chối yêu cầu chuyển xe VIN ${req.vin} của TVBH ${req.consultantName}?\nNhập lý do từ chối (hoặc để trống):`,
-            'Admin từ chối điều chuyển'
+            defaultReason
         );
         if (reason === null) return; // Người dùng bấm Hủy
 
@@ -397,7 +421,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 req.id, 
                 'rejected', 
                 undefined, 
-                reason.trim() || 'Admin từ chối điều chuyển'
+                reason.trim() || defaultReason
             );
             if (res.success) {
                 if (activeTransferRequestId === req.id) {
@@ -3547,6 +3571,12 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                             <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">
                                                                 {req.consultantName}
                                                             </span>
+                                                            {req.hasTd4 && (
+                                                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-50 text-rose-700 font-bold border border-rose-200 flex items-center gap-1 shadow-2xs animate-pulse" title="Xe đã tồn tại Phiếu Giao Xe / Giấy Ra Cổng TD4 trên CyberSoft">
+                                                                    <i className="fas fa-exclamation-triangle text-[8.5px]"></i>
+                                                                    <span>Đã có TD4 {req.soCtTd4 ? `(${req.soCtTd4})` : ''}</span>
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <div className="text-[10px] text-slate-600 truncate flex items-center gap-1">
                                                             <strong className="text-indigo-700">{req.fromWarehouseName || req.fromWarehouse} ➔ {req.toWarehouseName || req.toWarehouse}</strong>

@@ -769,6 +769,8 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
         elif parsed.path == "/api/cyber/lookup-vin":
             content_len = int(self.headers.get("Content-Length", 0))
             body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
