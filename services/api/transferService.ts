@@ -102,7 +102,7 @@ export const createTransferRequest = async (payload: {
             try {
                 const lookupData = await lookupCyberVinWarehouse(cleanVin);
                 if (lookupData) {
-                    const car = (lookupData.cars && lookupData.cars[0]) || lookupData;
+                    const car: any = (lookupData.cars && lookupData.cars[0]) || lookupData;
                     if (car && (car.has_td4 || car.td4)) {
                         const tdSoCt = car.td4?.so_ct || car.so_ct_td4 || 'TD4';
                         return {
