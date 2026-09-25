@@ -255,12 +255,37 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             return
 
         elif parsed.path == "/api/cyber/diagnose-pdf":
-            import shutil, ctypes.util
+            import shutil, ctypes.util, subprocess
+            node_path = shutil.which("node")
+            node_ver = None
+            if node_path:
+                try:
+                    node_ver = subprocess.run(["node", "-v"], capture_output=True, text=True, timeout=5).stdout.strip()
+                except Exception as e_nv:
+                    node_ver = str(e_nv)
+            
+            db_status = "untested"
+            try:
+                import pymssql
+                c = pymssql.connect(
+                    server='SQLVanDao.Cybersoft.com.vn', port=7521, user='cyber_vandao',
+                    password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+                    database='CyberAppGolden_VanDao', timeout=5, appname='CyberAppGolden'
+                )
+                c.close()
+                db_status = "connected_ok"
+            except Exception as e_db:
+                db_status = f"failed: {e_db}"
+
             data = {
                 "os": sys.platform,
-                "chrome": shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser"),
-                "cairo": ctypes.util.find_library("cairo"),
-                "pango": ctypes.util.find_library("pango"),
+                "node_path": node_path,
+                "node_ver": node_ver,
+                "db_status": db_status,
+                "templates_exist": {
+                    "PXX00.mrt": os.path.exists("scripts/cyber_templates/PXX00.mrt"),
+                    "TD400.mrt": os.path.exists("scripts/cyber_templates/TD400.mrt")
+                }
             }
             self.send_response(200)
             self.send_header("Content-Type", "application/json")

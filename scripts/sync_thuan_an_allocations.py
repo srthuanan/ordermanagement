@@ -3765,9 +3765,10 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
 
     # 3. Nếu đang chạy trên Linux (Cloud/Render) và Stimulsoft JS chưa thành công:
     if sys.platform != "win32":
+        err_msg = (js_res.get("error") if isinstance(js_res, dict) else None) or "Lỗi kết xuất PDF từ Render Cloud qua Stimulsoft.JS"
         return {
             "success": False,
-            "error": "Lỗi kết xuất PDF từ Render Cloud qua Stimulsoft.JS. Đang thử lại..."
+            "error": err_msg
         }
     
     # 4. Fallback chạy PowerShell cục bộ nếu đang trên Windows văn phòng:
