@@ -77,27 +77,49 @@ export const CyberTd4PrintModal: React.FC<CyberTd4PrintModalProps> = ({
 
                 if (res.success && (res.pdf_url || res.pdf_base64)) {
                     setPdfUrl(res.pdf_url || res.pdf_base64 || null);
-                } else {
-                    const isCloud = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
-                    if (isCloud) {
-                        setPdfError('Phiếu này chưa được lưu trên hệ thống đám mây. Vui lòng mở xem phiếu trên máy tính văn phòng một lần để lưu tự động lên hệ thống.');
-                    } else {
-                        setPdfError(res.error || 'Chưa tìm thấy file PDF Giấy Ra Cổng gốc của phiếu này trên máy chủ.');
-                    }
+                    return;
                 }
             } catch (err: any) {
-                if (isMounted) {
-                    const isCloud = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
-                    if (isCloud) {
-                        setPdfError('Phiếu này chưa được lưu trên hệ thống đám mây. Vui lòng mở xem phiếu trên máy tính văn phòng một lần để lưu tự động lên hệ thống.');
-                    } else {
-                        setPdfError(err.message || 'Lỗi kết nối khi trích xuất PDF từ máy chủ.');
+                console.warn("[CyberTd4Modal] exportCyberPdf initial call error, will poll storage:", err);
+            }
+
+            // Bước 3: Thăm dò (polling) Supabase Storage phòng khi daemon ở máy văn phòng đang vừa hoàn tất tải lên
+            for (let attempt = 1; attempt <= 4; attempt++) {
+                if (!isMounted) return;
+                await new Promise(r => setTimeout(r, 2500));
+                if (!isMounted) return;
+
+                try {
+                    const retryCheck = await fetch(storagePdfUrl, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
+                    if (retryCheck.ok && isMounted) {
+                        setPdfUrl(`${storagePdfUrl}?t=${Date.now()}`);
+                        setIsExportingPdf(false);
+                        return;
                     }
+                } catch (_) {}
+
+                if (storagePdfUrlBySoCt) {
+                    try {
+                        const retryCheck2 = await fetch(storagePdfUrlBySoCt, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
+                        if (retryCheck2.ok && isMounted) {
+                            setPdfUrl(`${storagePdfUrlBySoCt}?t=${Date.now()}`);
+                            setIsExportingPdf(false);
+                            return;
+                        }
+                    } catch (_) {}
                 }
-            } finally {
-                if (isMounted) {
-                    setIsExportingPdf(false);
-                }
+            }
+
+            if (!isMounted) return;
+
+            const isCloud = typeof window !== 'undefined' && (
+                window.location.hostname.endsWith('github.io') ||
+                !['localhost', '127.0.0.1'].includes(window.location.hostname)
+            );
+            if (isCloud) {
+                setPdfError('Phiếu này chưa kịp đồng bộ lên hệ thống đám mây. Vui lòng bật tiến trình đồng bộ ngầm trên máy tính văn phòng hoặc bấm Thử tải lại sau ít giây.');
+            } else {
+                setPdfError('Chưa tìm thấy file PDF Giấy Ra Cổng gốc của phiếu này trên máy chủ.');
             }
         };
 

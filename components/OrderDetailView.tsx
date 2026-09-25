@@ -488,7 +488,14 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 }
             };
 
-            // 1. Luôn tra cứu trực tiếp kho xe và chứng từ mới nhất từ CyberSoft ERP (không dùng cache Supabase)
+            // 0. Cache-First: Tải tức thì từ Supabase cache (~50ms) để hiển thị ngay vị trí kho & nút In Phiếu DNX
+            getCyberCarStatusFromSupabase(vin).then(cached => {
+                if (cached) {
+                    applyCyberCarStatus(cached);
+                }
+            }).catch(err => console.warn("[Cache-First] Lỗi đọc cyber_car_status Supabase:", err));
+
+            // 1. Chạy ngầm tra cứu trực tiếp kho xe và chứng từ mới nhất từ CyberSoft ERP (đồng bộ nền)
             lookupCyberVinWarehouse([vin])
                 .then(res => {
                     if (res && res.success) {
@@ -1942,7 +1949,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             >
                                                 <div className="px-1 py-0.5 sm:px-2 sm:py-1 md:px-3 md:py-1.5 transition-all duration-300 group-hover:scale-[1.02] group-active:scale-[0.98]">
                                                     <p 
-                                                        className={`text-[19px] sm:text-2xl md:text-[36px] lg:text-[38px] font-black tracking-[0.06em] sm:tracking-[0.12em] md:tracking-[0.16em] leading-none select-all inline-block truncate max-w-full ${
+                                                        className={`text-[17px] sm:text-[21px] md:text-[28px] lg:text-[29px] font-black tracking-[0.05em] sm:tracking-[0.08em] md:tracking-[0.10em] leading-tight select-all inline-block whitespace-nowrap max-w-full ${
                                                             resolvedOrder.VIN 
                                                                 ? 'drop-shadow-[0_2px_12px_rgba(255,255,255,0.5)] drop-shadow-[0_6px_22px_rgba(0,0,0,0.9)]' 
                                                                 : 'text-slate-500'

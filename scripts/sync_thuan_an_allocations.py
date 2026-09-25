@@ -2766,6 +2766,84 @@ def sync_cyber_voucher_tickets_to_supabase(tickets: list = None, params: dict = 
 
     return {"success": True, "total": len(records), "updated": total_ok, "timestamp": now_utc}
 
+def sync_missing_cyber_voucher_pdfs(limit: int = 60, max_export: int = 30) -> dict:
+    """
+    Quét danh sách phiếu mới trong CyberSoft (DNX, TD4),
+    kiểm tra xem file PDF đã tồn tại trên Supabase Storage chưa.
+    Nếu chưa, tự động kết xuất cả 2 bản (_sig và _nosig) qua Stimulsoft
+    và đẩy trực tiếp lên Supabase Storage để mọi người dùng đều xem được ngay.
+    """
+    import re
+    print(f"[PDF-Sync] 🔍 Đang quét {limit} phiếu gần nhất từ CyberSoft để kiểm tra PDF...", file=sys.stderr)
+    tickets = get_cyber_voucher_tickets(limit=limit)
+    if not tickets:
+        return {"success": True, "scanned": 0, "missing": 0, "exported": 0}
+
+    # Lấy danh sách các file PDF đã có trên Supabase Storage
+    existing_files = set()
+    try:
+        bucket = "yeucauxhd-files"
+        list_url = f"{SUPABASE_URL}/storage/v1/object/list/{bucket}"
+        res = requests.post(list_url, headers=HEADERS, json={"prefix": "cyber_pdfs/", "limit": 1000}, timeout=15)
+        if res.status_code == 200:
+            for item in res.json():
+                name = item.get("name")
+                if name:
+                    existing_files.add(name.lower())
+    except Exception as e:
+        print(f"[PDF-Sync Warning] Không thể lấy danh sách từ Supabase Storage: {e}", file=sys.stderr)
+
+    missing_tickets = []
+    for t in tickets:
+        stt_rec = (t.get("stt_rec") or "").strip()
+        if not stt_rec:
+            continue
+        clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', stt_rec)
+        sig_file = f"{clean_stt}_sig.pdf".lower()
+        nosig_file = f"{clean_stt}_nosig.pdf".lower()
+        if sig_file not in existing_files or nosig_file not in existing_files:
+            missing_tickets.append(t)
+
+    print(f"[PDF-Sync] 📊 Tìm thấy {len(missing_tickets)}/{len(tickets)} phiếu chưa có đủ file PDF trên Supabase Storage.", file=sys.stderr)
+    exported_count = 0
+    errors = []
+
+    for t in missing_tickets[:max_export]:
+        stt_rec = t.get("stt_rec")
+        so_ct = t.get("so_ct")
+        v_type = "DNX" if "DNX" in stt_rec or t.get("ma_ct") == "DNX" else "TD4"
+        usr = t.get("user_name") or t.get("nvkd") or "02.NHANPT"
+        clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', stt_rec)
+
+        print(f"[PDF-Sync] ⚙️ Đang kết xuất PDF cho phiếu {so_ct} ({stt_rec})...", file=sys.stderr)
+        try:
+            # 1. Kết xuất bản có chữ ký (_sig)
+            if f"{clean_stt}_sig.pdf".lower() not in existing_files:
+                r1 = export_cyber_pdf_via_ps(stt_rec, voucher_type=v_type, paper_size="A4", user_name=usr, include_signatures="true", so_ct=so_ct)
+                if r1.get("success"):
+                    existing_files.add(f"{clean_stt}_sig.pdf".lower())
+            
+            # 2. Kết xuất bản không chữ ký (_nosig)
+            if f"{clean_stt}_nosig.pdf".lower() not in existing_files:
+                r2 = export_cyber_pdf_via_ps(stt_rec, voucher_type=v_type, paper_size="A4", user_name=usr, include_signatures="false", so_ct=so_ct)
+                if r2.get("success"):
+                    existing_files.add(f"{clean_stt}_nosig.pdf".lower())
+
+            exported_count += 1
+            print(f"[PDF-Sync] ✅ Đã đẩy PDF phiếu {so_ct} ({stt_rec}) lên Supabase Storage!", file=sys.stderr)
+        except Exception as ex:
+            print(f"[PDF-Sync Error] Lỗi khi xuất PDF cho {so_ct}: {ex}", file=sys.stderr)
+            errors.append({"stt_rec": stt_rec, "so_ct": so_ct, "error": str(ex)})
+
+    return {
+        "success": True,
+        "scanned": len(tickets),
+        "missing_found": len(missing_tickets),
+        "exported": exported_count,
+        "errors": errors,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
 def sync_all_cyber_to_supabase() -> dict:
     """Đồng bộ toàn diện tất cả các phân hệ từ CyberSoft sang Supabase."""
     print("[SyncAll] 🔄 Bắt đầu đồng bộ toàn bộ dữ liệu CyberSoft lên Supabase...", file=sys.stderr)
@@ -2774,6 +2852,7 @@ def sync_all_cyber_to_supabase() -> dict:
     res_vouchers = sync_cyber_voucher_tickets_to_supabase()
     res_car_status = sync_cyber_car_status_to_supabase()
     res_loc = sync_khoxe_locations_from_cyber(preview=False)
+    res_pdfs = sync_missing_cyber_voucher_pdfs(limit=30, max_export=10)
     
     return {
         "success": True,
@@ -2782,6 +2861,7 @@ def sync_all_cyber_to_supabase() -> dict:
         "voucher_tickets": res_vouchers,
         "car_status": res_car_status,
         "locations": res_loc,
+        "voucher_pdfs": res_pdfs,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
@@ -2992,6 +3072,7 @@ def main():
     parser.add_argument("--lookup-vin", action="store_true", help="Lookup vehicle warehouse and details from Cyber")
     parser.add_argument("--voucher-tickets", action="store_true", help="Get voucher tickets (DNX / TD4) from Cyber")
     parser.add_argument("--export-pdf", action="store_true", help="Export official PDF from CyberSoft Stimulsoft engine")
+    parser.add_argument("--sync-voucher-pdfs", action="store_true", help="Scan and sync missing voucher PDFs to Supabase Storage")
     parser.add_argument("--check-contract-status", action="store_true", help="Check contract approval status on Cyber by customer and TVBH")
     parser.add_argument("--sync-all-cyber", action="store_true", help="Sync all CyberSoft modules to Supabase (xep xe, ton kho, vouchers, status, locations)")
     parser.add_argument("--sync-xep-xe", action="store_true", help="Sync xep xe contracts from CyberSoft to Supabase")
@@ -3134,7 +3215,15 @@ def main():
             inc_sig_str = "true" if inc_sig else "false"
         else:
             inc_sig_str = str(inc_sig)
-        res = export_cyber_pdf_via_ps(stt_rec, voucher_type, paper_size, user_name, inc_sig_str)
+        res = export_cyber_pdf_via_ps(stt_rec, voucher_type, paper_size, user_name, inc_sig_str, so_ct=p.get("so_ct"))
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.sync_voucher_pdfs:
+        p = get_input_params()
+        limit = int(p.get("limit", 50)) if isinstance(p, dict) else 50
+        max_export = int(p.get("max_export", 30)) if isinstance(p, dict) else 30
+        res = sync_missing_cyber_voucher_pdfs(limit=limit, max_export=max_export)
         print(json.dumps(res, default=str, ensure_ascii=False))
         return
 
@@ -3427,7 +3516,7 @@ def upload_pdf_to_supabase_storage(file_bytes, remote_filename):
     """Tải file PDF lên Supabase Storage bucket yeucauxhd-files/cyber_pdfs/"""
     import requests
     supabase_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co").strip().rstrip('/')
-    supabase_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY", os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY", "")).strip()
+    supabase_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY", os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY") or SUPABASE_KEY).strip()
     bucket = "yeucauxhd-files"
     url = f"{supabase_url}/storage/v1/object/{bucket}/cyber_pdfs/{remote_filename}"
     headers = {
@@ -3481,6 +3570,131 @@ def cleanup_old_cyber_pdfs_from_supabase(max_days=30):
         return {"success": True, "deleted_count": deleted_count}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+
+def export_cyber_pdf_via_stimulsoft_js(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT", include_signatures="true", so_ct=None):
+    """Kết xuất PDF chính thức từ template MRT bằng thư viện Stimulsoft Reports.JS (chạy được trên Render Linux và Windows)"""
+    import subprocess
+    import os
+    import sys
+    import json
+    import tempfile
+    import decimal
+    import datetime
+    import re
+    import pymssql
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    renderer_script = os.path.join(script_dir, "render_cyber_mrt.cjs")
+    
+    v_type = str(voucher_type).upper()
+    template_name = "PXX00.mrt" if v_type == "DNX" else "TD400.mrt"
+    mrt_path = os.path.join(script_dir, "cyber_templates", template_name)
+
+    if not os.path.exists(mrt_path):
+        cyber_path_mrt = os.path.join(r"D:\CyberSoft\CYBNET9_VANDAO\Repo", template_name)
+        if os.path.exists(cyber_path_mrt):
+            mrt_path = cyber_path_mrt
+        else:
+            return {"success": False, "error": f"Không tìm thấy template {template_name}"}
+
+    # 1. Kết nối SQL Server lấy dữ liệu thực tế
+    try:
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn', port=7521, user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao', timeout=12, appname='CyberAppGolden', autocommit=True
+        )
+        cur = conn.cursor(as_dict=True)
+        sp_name = "CP_PrintDNX" if v_type == "DNX" else "CP_PrintTD4"
+        cur.execute(f"EXEC {sp_name} @M_Stt_Rec = %s, @M_Id = %s, @M_User_Name = %s", (str(stt_rec), '1', str(user_name)))
+        
+        t0 = []
+        t1 = []
+        sets = []
+        while True:
+            rows = cur.fetchall()
+            if rows is not None:
+                sets.append(rows)
+            if not cur.nextset():
+                break
+        conn.close()
+
+        if len(sets) >= 3:
+            t0 = sets[1]
+            t1 = sets[2]
+        elif len(sets) >= 2:
+            t0 = sets[0]
+            t1 = sets[1]
+        elif len(sets) == 1:
+            t0 = sets[0]
+            t1 = []
+    except Exception as ex:
+        print(f"[Stimulsoft JS SQL Error]: {ex}", file=sys.stderr)
+        return {"success": False, "error": f"Lỗi truy vấn dữ liệu từ CyberSoft SQL: {ex}"}
+
+    def default_serializer(o):
+        if isinstance(o, (datetime.date, datetime.datetime)):
+            return o.strftime('%Y-%m-%dT%H:%M:%S')
+        if isinstance(o, decimal.Decimal):
+            return float(o)
+        return str(o)
+
+    data_payload = {"Table0": t0, "Table1": t1}
+    temp_dir = tempfile.gettempdir()
+    data_tmp = os.path.join(temp_dir, f"mrt_data_{stt_rec}_{os.getpid()}.json")
+    with open(data_tmp, "w", encoding="utf-8") as f:
+        json.dump(data_payload, f, default=default_serializer, ensure_ascii=False)
+
+    sig_suffix = "_sig" if str(include_signatures).lower() in ["true", "1"] else "_nosig"
+    clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(stt_rec)) + sig_suffix
+    clean_so_ct = (re.sub(r'[^a-zA-Z0-9_\-]', '_', str(so_ct)) + sig_suffix) if so_ct else None
+    out_pdf = os.path.join(temp_dir, f"cyber_preview_{clean_stt}_{os.getpid()}.pdf")
+
+    cmd = [
+        "node", renderer_script,
+        "--mrt", mrt_path,
+        "--data", data_tmp,
+        "--voucher-type", v_type,
+        "--paper-size", str(paper_size),
+        "--signatures", "true" if "_sig" in sig_suffix else "false",
+        "--out", out_pdf
+    ]
+
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=25)
+        try:
+            os.remove(data_tmp)
+        except Exception:
+            pass
+
+        if os.path.exists(out_pdf) and os.path.getsize(out_pdf) > 1000:
+            with open(out_pdf, "rb") as f:
+                pdf_bytes = f.read()
+
+            try:
+                os.remove(out_pdf)
+            except Exception:
+                pass
+
+            storage_url = upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_stt}.pdf")
+            if clean_so_ct and clean_so_ct != clean_stt:
+                upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_so_ct}.pdf")
+
+            return {
+                "success": True,
+                "pdf_url": storage_url or f"{SUPABASE_URL}/storage/v1/object/public/yeucauxhd-files/cyber_pdfs/{clean_stt}.pdf",
+                "stt_rec": stt_rec,
+                "voucher_type": voucher_type,
+                "from_storage": False,
+                "engine": "stimulsoft-js"
+            }
+        else:
+            err_msg = proc.stderr or proc.stdout or "Kết xuất PDF thất bại"
+            print(f"[Stimulsoft JS Render Fail]: {err_msg}", file=sys.stderr)
+            return {"success": False, "error": err_msg}
+    except Exception as e_proc:
+        return {"success": False, "error": str(e_proc)}
 
 
 def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT", include_signatures="true", so_ct=None):
@@ -3539,14 +3753,24 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
     except Exception:
         pass
 
-    # 2. Nếu đang chạy trên Linux (Cloud/Render):
+    # 2. Thử kết xuất qua Stimulsoft Reports.JS (chạy được cả trên Render Linux và Windows không cần mở máy)
+    try:
+        js_res = export_cyber_pdf_via_stimulsoft_js(stt_rec, voucher_type, paper_size, user_name, include_signatures, so_ct)
+        if js_res.get("success"):
+            return js_res
+        else:
+            print(f"[Stimulsoft JS Fallback]: {js_res.get('error')}", file=sys.stderr)
+    except Exception as e_js:
+        print(f"[Stimulsoft JS Error]: {e_js}", file=sys.stderr)
+
+    # 3. Nếu đang chạy trên Linux (Cloud/Render) và Stimulsoft JS chưa thành công:
     if sys.platform != "win32":
         return {
             "success": False,
-            "error": "Phiếu này chưa được lưu trên hệ thống đám mây. Vui lòng mở xem phiếu trên máy tính văn phòng một lần để lưu tự động lên hệ thống."
+            "error": "Lỗi kết xuất PDF từ Render Cloud qua Stimulsoft.JS. Đang thử lại..."
         }
     
-    # 3. Sử dụng thư mục tạm của hệ điều hành, không ghi vào thư mục dự án
+    # 4. Fallback chạy PowerShell cục bộ nếu đang trên Windows văn phòng:
     temp_dir = tempfile.gettempdir()
     out_file = os.path.join(temp_dir, f"cyber_preview_{clean_stt}_{os.getpid()}.pdf")
     

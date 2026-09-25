@@ -2,7 +2,7 @@ services:
   - type: web
     name: cybersync-api
     runtime: python
-    buildCommand: pip install -r requirements-cyber.txt
+    buildCommand: pip install -r requirements-cyber.txt && npm install --omit=dev stimulsoft-reports-js
     startCommand: python cyber_server.py
     plan: free
     region: singapore

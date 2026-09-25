@@ -1,6 +1,7 @@
 import { defineConfig, Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import viteCompression from 'vite-plugin-compression'
 import { spawn } from 'child_process'
 import path from 'path'
 import fs from 'fs'
@@ -213,8 +214,11 @@ function cyberSyncPlugin(): Plugin {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
         req.on('end', () => {
-          // Bắt buộc luôn dò kho xe mới nhất trực tiếp từ SQL CyberSoft ERP, tuyệt đối không dùng cache
-          runPy([scriptPath, '--lookup-vin'], body, res, undefined, true);
+          let options: any = {};
+          try { options = JSON.parse(body || '{}'); } catch (e) {}
+          const isForce = Boolean(options.forceRefresh || options.refresh);
+          const cacheKey = `lookup-vin:${options.vin || (options.vins || []).join(',') || body}`;
+          runPy([scriptPath, '--lookup-vin'], body, res, cacheKey, isForce);
         });
       });
 
@@ -433,6 +437,16 @@ export default defineConfig({
         compact: true
       }
     }),
+    viteCompression({
+      verbose: false,
+      algorithm: 'gzip',
+      ext: '.gz',
+    }),
+    viteCompression({
+      verbose: false,
+      algorithm: 'brotliCompress',
+      ext: '.br',
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
@@ -462,11 +476,14 @@ export default defineConfig({
       workbox: {
         clientsClaim: true,
         skipWaiting: true,
-        globPatterns: ['**/*.{js,css,html,png,svg,ico}'],
-        maximumFileSizeToCacheInBytes: 20 * 1024 * 1024 // 20MB
+        globPatterns: ['**/*.{js,css,html,png,svg,ico,webp,woff2}'],
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024 // 10MB
       }
     })
   ],
+  esbuild: {
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
+  },
   base: (process.env.IS_ELECTRON || process.env.IS_MOBILE)
     ? './'
     : (process.env.VERCEL === '1' || process.env.VERCEL === 'true')
@@ -495,6 +512,12 @@ export default defineConfig({
             }
             if (id.includes('framer-motion') || id.includes('lucide-react')) {
               return 'vendor-ui';
+            }
+            if (id.includes('moment') || id.includes('axios') || id.includes('swr')) {
+              return 'vendor-utils';
+            }
+            if (id.includes('three')) {
+              return 'vendor-three';
             }
           }
         }

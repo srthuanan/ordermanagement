@@ -17,8 +17,6 @@
     },
     "dependencies": {
         "@google/genai": "^1.22.0",
-        "@splinetool/react-spline": "^4.1.0",
-        "@splinetool/runtime": "^2.0.41",
         "@supabase/supabase-js": "^2.99.2",
         "@types/react-virtualized-auto-sizer": "^1.0.4",
         "@types/react-window": "^1.8.8",
@@ -43,6 +41,7 @@
         "react-window": "^2.2.4",
         "remark-gfm": "^4.0.1",
         "sharp": "^0.34.5",
+        "stimulsoft-reports-js": "^2026.3.4",
         "supabase": "^2.76.16",
         "swr": "^2.4.1",
         "three": "^0.185.1",
