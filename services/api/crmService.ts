@@ -81,7 +81,11 @@ export interface CrmImportResponse {
 }
 
 const getEndpoints = (apiPath: string): string[] => {
-    const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
+    let customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
+    if (customUrl && customUrl.includes('cybersync-api.onrender.com') && !customUrl.includes('cybersync-api-4k4j')) {
+        try { localStorage.removeItem('cyber_api_url'); } catch (_) {}
+        customUrl = '';
+    }
     const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api-4k4j.onrender.com').trim();
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
     const isLocal = typeof window !== 'undefined' && (
