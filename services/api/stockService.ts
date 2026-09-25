@@ -542,7 +542,7 @@ export const saveDeliveryPlanToStorage = async (items: DeliveryPlanItem[]): Prom
 
 const getCyberEndpoints = (apiPath: string): string[] => {
     const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
-    const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api.onrender.com').trim();
+    const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api-4k4j.onrender.com').trim();
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
     const isLocal = typeof window !== 'undefined' && (
         window.location.hostname === 'localhost' || 
@@ -2137,7 +2137,7 @@ export const getCyberViewPdfUrl = (cleanStt: string): string => {
         return `/api/cyber/view-pdf?stt_rec=${cleanStt}`;
     }
     const customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
-    const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api.onrender.com').trim().replace(/\/+$/, '');
+    const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api-4k4j.onrender.com').trim().replace(/\/+$/, '');
     return `${cloudApiUrl}/api/cyber/view-pdf?stt_rec=${cleanStt}`;
 };
 
