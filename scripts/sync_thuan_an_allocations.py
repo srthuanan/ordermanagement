@@ -3662,7 +3662,7 @@ def export_cyber_pdf_via_stimulsoft_js(stt_rec, voucher_type="TD4", paper_size="
     ]
 
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=25)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=90)
         try:
             os.remove(data_tmp)
         except Exception:
