@@ -2,6 +2,7 @@ import { supabase, supabaseAdmin } from '../supabaseClient';
 import { createNotification } from './notificationService';
 import { getStorageItem } from './baseService';
 import { formatShortWarehouseName } from '../../utils/stringUtils';
+import { lookupCyberVinWarehouse } from './stockService';
 
 export interface TransferRequestItem {
     id: string;
@@ -99,14 +100,9 @@ export const createTransferRequest = async (payload: {
 
             // Bước 2: Kiểm tra trực tiếp qua API lookup-vin CyberSoft ERP để chắc chắn
             try {
-                const lookupResp = await fetch('/api/cyber/lookup-vin', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ vins: [cleanVin] })
-                });
-                if (lookupResp.ok) {
-                    const lookupData = await lookupResp.json();
-                    const car = lookupData.cars?.[0] || lookupData;
+                const lookupData = await lookupCyberVinWarehouse(cleanVin);
+                if (lookupData) {
+                    const car = (lookupData.cars && lookupData.cars[0]) || lookupData;
                     if (car && (car.has_td4 || car.td4)) {
                         const tdSoCt = car.td4?.so_ct || car.so_ct_td4 || 'TD4';
                         return {
