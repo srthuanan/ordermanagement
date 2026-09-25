@@ -540,13 +540,21 @@ export const saveDeliveryPlanToStorage = async (items: DeliveryPlanItem[]): Prom
     }
 };
 
-const getCyberEndpoints = (apiPath: string): string[] => {
+export const getResolvedCyberApiUrl = (): string => {
     let customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
     if (customUrl && customUrl.includes('cybersync-api.onrender.com') && !customUrl.includes('cybersync-api-4k4j')) {
         try { localStorage.removeItem('cyber_api_url'); } catch (_) {}
         customUrl = '';
     }
-    const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api-4k4j.onrender.com').trim();
+    let envUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || '').trim();
+    if (envUrl && envUrl.includes('cybersync-api.onrender.com') && !envUrl.includes('cybersync-api-4k4j')) {
+        envUrl = '';
+    }
+    return (customUrl || envUrl || 'https://cybersync-api-4k4j.onrender.com').trim().replace(/\/+$/, '');
+};
+
+const getCyberEndpoints = (apiPath: string): string[] => {
+    const cloudApiUrl = getResolvedCyberApiUrl();
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
     const isLocal = typeof window !== 'undefined' && (
         window.location.hostname === 'localhost' || 
@@ -2140,12 +2148,7 @@ export const getCyberViewPdfUrl = (cleanStt: string): string => {
     if (isLocal) {
         return `/api/cyber/view-pdf?stt_rec=${cleanStt}`;
     }
-    let customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
-    if (customUrl && customUrl.includes('cybersync-api.onrender.com') && !customUrl.includes('cybersync-api-4k4j')) {
-        try { localStorage.removeItem('cyber_api_url'); } catch (_) {}
-        customUrl = '';
-    }
-    const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api-4k4j.onrender.com').trim().replace(/\/+$/, '');
+    const cloudApiUrl = getResolvedCyberApiUrl();
     return `${cloudApiUrl}/api/cyber/view-pdf?stt_rec=${cleanStt}`;
 };
 

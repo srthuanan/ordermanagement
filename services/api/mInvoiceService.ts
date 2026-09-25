@@ -24,7 +24,11 @@ const getEndpoints = (apiPath: string): string[] => {
         try { localStorage.removeItem('cyber_api_url'); } catch (_) {}
         customUrl = '';
     }
-    const cloudApiUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || customUrl || 'https://cybersync-api-4k4j.onrender.com').trim();
+    let envUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || '').trim();
+    if (envUrl && envUrl.includes('cybersync-api.onrender.com') && !envUrl.includes('cybersync-api-4k4j')) {
+        envUrl = '';
+    }
+    const cloudApiUrl = (customUrl || envUrl || 'https://cybersync-api-4k4j.onrender.com').trim();
     const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
     const isLocal = typeof window !== 'undefined' && (
         window.location.hostname === 'localhost' || 
