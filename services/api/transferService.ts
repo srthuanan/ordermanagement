@@ -98,28 +98,39 @@ export const createTransferRequest = async (payload: {
                 console.warn('[createTransferRequest] Kiểm tra cyber_car_status cache lỗi:', eCache);
             }
 
-            // Bước 2: Kiểm tra trực tiếp qua API lookup-vin CyberSoft ERP để chắc chắn
-            try {
-                const lookupData = await lookupCyberVinWarehouse(cleanVin);
-                if (lookupData) {
-                    const car: any = (lookupData.cars && lookupData.cars[0]) || lookupData;
-                    if (car && (car.has_td4 || car.td4)) {
-                        const tdSoCt = car.td4?.so_ct || car.so_ct_td4 || 'TD4';
-                        return {
-                            success: false,
-                            error: `Xe VIN ${cleanVin} đã tồn tại Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${tdSoCt}) trên CyberSoft. Không thể yêu cầu điều chuyển.`
-                        };
+            // Bước 2: Chỉ tra cứu bổ sung qua CyberSoft nội bộ khi chạy ở môi trường local có kết nối mạng LAN (tối đa 2s)
+            const isLocal = typeof window !== 'undefined' && (
+                window.location.hostname === 'localhost' || 
+                window.location.hostname === '127.0.0.1' ||
+                window.location.port === '5173'
+            );
+            if (isLocal) {
+                try {
+                    const lookupTimeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000));
+                    const lookupData = await Promise.race([
+                        lookupCyberVinWarehouse(cleanVin),
+                        lookupTimeout
+                    ]);
+                    if (lookupData) {
+                        const car: any = (lookupData.cars && lookupData.cars[0]) || lookupData;
+                        if (car && (car.has_td4 || car.td4)) {
+                            const tdSoCt = car.td4?.so_ct || car.so_ct_td4 || 'TD4';
+                            return {
+                                success: false,
+                                error: `Xe VIN ${cleanVin} đã tồn tại Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${tdSoCt}) trên CyberSoft. Không thể yêu cầu điều chuyển.`
+                            };
+                        }
+                        if (car && (car.has_dnx || car.dnx)) {
+                            const dnxSoCt = car.dnx?.so_ct || car.so_ct_dnx || 'DNX';
+                            return {
+                                success: false,
+                                error: `Xe VIN ${cleanVin} đã có Phiếu Đề Nghị Xuất Xe (${dnxSoCt}) trên CyberSoft. Không thể tạo thêm yêu cầu.`
+                            };
+                        }
                     }
-                    if (car && (car.has_dnx || car.dnx)) {
-                        const dnxSoCt = car.dnx?.so_ct || car.so_ct_dnx || 'DNX';
-                        return {
-                            success: false,
-                            error: `Xe VIN ${cleanVin} đã có Phiếu Đề Nghị Xuất Xe (${dnxSoCt}) trên CyberSoft. Không thể tạo thêm yêu cầu.`
-                        };
-                    }
+                } catch (eLive) {
+                    console.warn('[createTransferRequest] Tra cứu CyberSoft trực tiếp thất bại, bỏ qua fallback:', eLive);
                 }
-            } catch (eLive) {
-                console.warn('[createTransferRequest] Tra cứu CyberSoft trực tiếp thất bại, bỏ qua fallback:', eLive);
             }
         }
 
