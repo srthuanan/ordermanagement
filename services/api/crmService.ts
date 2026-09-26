@@ -79,43 +79,20 @@ export interface CrmImportResponse {
     message?: string;
     error?: string;
 }
+import { cyberFetch } from './cyberBridge';
+
+const cyberLocalFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const urlStr = typeof input === 'string' ? input : input.toString();
+    if (urlStr.startsWith('/api/cyber') || urlStr.startsWith('/api/minvoice')) {
+        return await cyberFetch(urlStr, init);
+    }
+    return await window.fetch(input, init);
+};
+
+const fetch = cyberLocalFetch;
 
 const getEndpoints = (apiPath: string): string[] => {
-    let customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
-    if (customUrl && customUrl.includes('cybersync-api.onrender.com') && !customUrl.includes('cybersync-api-4k4j')) {
-        try { localStorage.removeItem('cyber_api_url'); } catch (_) {}
-        customUrl = '';
-    }
-    let envUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || '').trim();
-    if (envUrl && envUrl.includes('cybersync-api.onrender.com') && !envUrl.includes('cybersync-api-4k4j')) {
-        envUrl = '';
-    }
-    const cloudApiUrl = (customUrl || envUrl || 'https://cybersync-api-4k4j.onrender.com').trim();
-    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
-    const isLocal = typeof window !== 'undefined' && (
-        window.location.hostname === 'localhost' || 
-        window.location.hostname === '127.0.0.1' ||
-        window.location.port === '5173'
-    );
-
-    if (isLocal) {
-        return [
-            `${currentOrigin}${apiPath}`,
-            `http://localhost:3001${apiPath}`,
-            `http://localhost:5173${apiPath}`,
-            ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : [])
-        ];
-    }
-
-    const isStaticHosting = typeof window !== 'undefined' && window.location.hostname.endsWith('github.io');
-    if (isStaticHosting) {
-        return cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : [];
-    }
-
-    return [
-        ...(cloudApiUrl ? [`${cloudApiUrl.replace(/\/+$/, '')}${apiPath}`] : []),
-        `${currentOrigin}${apiPath}`
-    ];
+    return [apiPath];
 };
 
 /**

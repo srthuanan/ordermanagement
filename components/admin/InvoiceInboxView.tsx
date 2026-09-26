@@ -460,11 +460,12 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const handleBatchFetchMInvoice = async () => {
         const pendingOrders = filteredOrders.filter(o => {
             const s = (o['Trạng thái xử lý'] || o['Kết quả'] || '').toLowerCase().trim().normalize('NFC');
-            return s === 'chờ ký hóa đơn' || s === 'chờ ký hóa đơn';
+            const hasInvoice = !!(o['Link hóa đơn đã xuất'] || o.link_hoa_don_da_xuat || o.url_hoa_don_da_xuat);
+            return (s === 'chờ ký hóa đơn' || s === 'chờ ký hóa đơn') && !hasInvoice;
         });
 
         if (pendingOrders.length === 0) {
-            showToast('Thông báo', 'Không có đơn hàng nào đang ở trạng thái Chờ Ký Hóa Đơn.', 'info');
+            showToast('Thông báo', 'Không có đơn hàng nào đang ở trạng thái Chờ Ký Hóa Đơn (chưa có hóa đơn).', 'info');
             return;
         }
 
@@ -484,7 +485,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
             try {
                 const res = await syncAndNotifyMInvoice(vin, orderNo);
                 if (res.success) {
-                    signedCount++;
+                    if (res.status !== 'ALREADY_COMPLETED') {
+                        signedCount++;
+                    }
                     onAction('uploadInvoice', order, { url: res.data?.url });
                     await new Promise(r => setTimeout(r, 600));
                 } else if (res.status === 'UNSIGNED') {

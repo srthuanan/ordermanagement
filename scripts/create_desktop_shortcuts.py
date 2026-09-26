@@ -4,16 +4,26 @@ import subprocess
 desktop = os.path.join(os.environ['USERPROFILE'], 'Desktop')
 proj_dir = r'C:\Users\USER\Documents\ordermanagement'
 
+# Xóa các shortcut cũ nếu có
+old_shortcuts = ['Dong Bo PDF CyberSoft.lnk', 'Cai Dat Tu Khoi Dong PDF.lnk']
+for old in old_shortcuts:
+    old_p = os.path.join(desktop, old)
+    if os.path.exists(old_p):
+        try:
+            os.remove(old_p)
+        except Exception:
+            pass
+
 shortcuts = [
     (
-        'Dong Bo PDF CyberSoft.lnk',
-        os.path.join(proj_dir, 'chay_dong_bo_pdf_ngam.bat'),
-        'Chay tien trinh dong bo PDF CyberSoft'
+        'CyberSync Local & Bridge.lnk',
+        os.path.join(proj_dir, 'start-cyber-sync.bat'),
+        'Chay dich vu Cyber Local Server, Supabase Bridge va PDF Sync'
     ),
     (
-        'Cai Dat Tu Khoi Dong PDF.lnk',
+        'Cai Dat Tu Khoi Dong Cyber.lnk',
         os.path.join(proj_dir, 'cai_dat_tu_khoi_dong.bat'),
-        'Cai dat tu dong dong bo PDF khi mo may'
+        'Cai dat tu dong khoi dong cung Windows'
     )
 ]
 

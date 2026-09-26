@@ -10,6 +10,7 @@ function onOpen() {
       .addItem('📊 Báo cáo KPI (Xuất HĐ)', 'generateKpiSheet')
       .addItem('📑 Báo Cáo Ghép Xe - Dự XHĐ (Chạy ngay)', 'generateBcGhepXeDuXhd')
       .addItem('⚡ Cài đặt Sheet Ghép Xe REAL-TIME (0ms)', 'setupRealtimeBcGhepXeFormula')
+      .addItem('🎯 Tự động điền Ký Mới (Cọc trong tháng)', 'tuDongDienKyMoi')
       .addSeparator()
       .addItem('🔑 Cập nhật Mã kết nối DMS (Token)', 'saveDmsToken')
       .addItem('📍 Đồng bộ GPS Live tức thì', 'syncDmsGpsToSupabase')

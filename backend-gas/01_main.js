@@ -87,6 +87,10 @@ function doPost(e) {
         response = createJsonResponse({ status: formulaOk ? "SUCCESS" : "ERROR" });
         break;
 
+      case 'tuDongDienKyMoi':
+        response = createJsonResponse(tuDongDienKyMoi());
+        break;
+
       case 'fetchSheetData':
         response = handleFetchSheetData(e);
         break;

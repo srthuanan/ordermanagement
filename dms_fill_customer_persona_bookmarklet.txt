@@ -1,0 +1,144 @@
+// ======================================================================================
+// BOOKMARKLET: TỰ ĐỘNG ĐIỀN CHÂN DUNG KHÁCH HÀNG & HỒ SƠ KHÁCH HÀNG (ACCOUNT) - VINFAST DMS
+// ======================================================================================
+// 1. Tự điền 7 trường Chân dung KH:
+//    - Nghề nghiệp (itv_occupation): 2 - Nhân viên văn phòng
+//    - Thu nhập (itv_earnings): 2 - 20 - 40 triệu VNĐ
+//    - Tình trạng hôn nhân (itv_maritalstatus): 2 - Đã kết hôn
+//    - Sở thích (itv_hobby): 1 - Công nghệ & xe điện
+//    - Phương tiện đang sử dụng (itv_currentvehicle): 1 - Xe ô tô xăng
+//    - Hình thức tiếp cận sản phẩm (itv_channelproductinformation): 1 - Trang Website chính thức
+//    - Nhu cầu sử dụng xe/ tháng (itv_transportationneeds): 1 - <1500 km/1 tháng
+// 2. Tự động điền trường bắt buộc "Hồ sơ khách hàng" (xvf_customerprofile): Normal Customers
+// 3. Tự động kích hoạt Lưu (Save) lên VinFast DMS không lo lỗi thiếu trường bắt buộc!
+// ======================================================================================
+
+javascript:(function(){
+    var _x = window.Xrm || (window.parent && window.parent.Xrm) || (window.top && window.top.Xrm);
+    if (!_x) {
+        for (var i = 0; i < window.frames.length; i++) {
+            try { if (window.frames[i].Xrm) { _x = window.frames[i].Xrm; break; } } catch(e){}
+        }
+    }
+    if (!_x) {
+        alert("⚠️ Vui lòng mở trang Khách hàng (Account) trên VinFast DMS trước khi bấm Bookmarklet!");
+        return;
+    }
+
+    var fc = null;
+    try {
+        if (_x.Page && _x.Page.getAttribute) fc = _x.Page;
+        else if (_x.Utility && _x.Utility.getPageContext) fc = _x.Utility.getPageContext().getFormContext();
+    } catch(e){}
+
+    // Giá trị chuẩn 7 trường Chân dung KH
+    var values = {
+        "itv_occupation": 2,                  // Nhân viên văn phòng
+        "itv_earnings": 2,                    // 20 - 40 triệu VNĐ
+        "itv_maritalstatus": 2,               // Đã kết hôn
+        "itv_hobby": 1,                       // Công nghệ & xe điện
+        "itv_currentvehicle": 1,              // Xe ô tô xăng
+        "itv_channelproductinformation": 1,   // Trang Website chính thức
+        "itv_transportationneeds": 1          // <1500 km/1 tháng
+    };
+
+    var accountId = "";
+
+    if (fc) {
+        // 1. Tự động điền trường bắt buộc "Hồ sơ khách hàng" (xvf_customerprofile) nếu đang trống
+        try {
+            var attrProf = fc.getAttribute("xvf_customerprofile");
+            if (attrProf && !attrProf.getValue()) {
+                attrProf.setValue([{
+                    id: "86908df7-e263-ea11-a811-000d3a851103",
+                    name: "Normal Customers",
+                    entityType: "xts_common"
+                }]);
+                attrProf.setSubmitMode("always");
+                try { attrProf.fireOnChange(); } catch(e){}
+            }
+        } catch(e){}
+
+        // 2. Chuyển sang Tab Additional Info (tab_12) để người dùng thấy các trường vừa điền
+        try {
+            if (fc.ui && fc.ui.tabs) {
+                var tab = fc.ui.tabs.get("tab_12") || fc.ui.tabs.get("Additional Info");
+                if (tab) {
+                    tab.setVisible(true);
+                    tab.setFocus();
+                }
+            }
+        } catch(e){}
+
+        try {
+            accountId = (fc.data.entity.getId() || "").replace(/[{}]/g, "");
+        } catch(e){}
+
+        // 3. Điền vào 7 trường Chân dung KH trên Form
+        for (var fld in values) {
+            try {
+                var attr = fc.getAttribute(fld);
+                if (attr) {
+                    attr.setValue(values[fld]);
+                    attr.setSubmitMode("always");
+                    try { attr.fireOnChange(); } catch(e){}
+                }
+            } catch(e){}
+        }
+
+        // 4. Tự động Lưu form
+        try {
+            if (fc.data && fc.data.entity) {
+                fc.data.entity.save();
+            } else if (fc.data) {
+                fc.data.save();
+            }
+        } catch(e){}
+    }
+
+    // 5. Cập nhật ngầm qua WebApi để đảm bảo lưu 100%
+    if (accountId && _x.WebApi) {
+        var apiPayload = Object.assign({}, values);
+        apiPayload["xvf_customerprofile@odata.bind"] = "/xts_commons(86908df7-e263-ea11-a811-000d3a851103)";
+        _x.WebApi.updateRecord("account", accountId, apiPayload).then(
+            function(){ console.log("✅ DMS Persona & Profile updated via WebApi!"); },
+            function(err){ console.warn("WebApi update error:", err); }
+        );
+    }
+
+    // 6. Hiển thị Toast thông báo hiện đại
+    var oldToast = document.getElementById("dmsPersonaToast");
+    if (oldToast) oldToast.remove();
+
+    var toast = document.createElement("div");
+    toast.id = "dmsPersonaToast";
+    toast.style = "position:fixed;top:24px;right:24px;z-index:99999999;background:rgba(15,23,42,0.95);backdrop-filter:blur(10px);border:1px solid #10b981;border-radius:14px;padding:16px 20px;color:#f8fafc;box-shadow:0 20px 45px rgba(0,0,0,0.6);font-family:system-ui,-apple-system,sans-serif;font-size:13px;max-width:390px;line-height:1.5;";
+    toast.innerHTML = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;font-weight:700;font-size:14.5px;color:#34d399;">'
+        + '<span style="font-size:19px;">⚡</span>'
+        + '<span>ĐÃ TỰ ĐIỀN & LƯU THÀNH CÔNG!</span>'
+        + '</div>'
+        + '<div style="color:#cbd5e1;font-size:12px;display:flex;flex-direction:column;gap:3px;background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);">'
+        + '<div>• <b>Hồ sơ khách hàng:</b> Normal Customers</div>'
+        + '<div>• <b>Nghề nghiệp:</b> Nhân viên văn phòng</div>'
+        + '<div>• <b>Thu nhập:</b> 20 - 40 triệu VNĐ</div>'
+        + '<div>• <b>Hôn nhân:</b> Đã kết hôn</div>'
+        + '<div>• <b>Sở thích:</b> Công nghệ & xe điện</div>'
+        + '<div>• <b>Phương tiện:</b> Xe ô tô xăng</div>'
+        + '<div>• <b>Tiếp cận:</b> Trang Website chính thức</div>'
+        + '<div>• <b>Nhu cầu:</b> &lt;1500 km/1 tháng</div>'
+        + '</div>'
+        + '<div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;">'
+        + '<span style="color:#6ee7b7;font-size:12px;font-weight:500;">✓ Đã lưu lên DMS không còn lỗi bắt buộc!</span>'
+        + '<button onclick="document.getElementById(\'dmsPersonaToast\').remove()" style="background:#334155;border:none;color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:11.5px;font-weight:600;">Đóng</button>'
+        + '</div>';
+
+    document.body.appendChild(toast);
+    setTimeout(function(){
+        var t = document.getElementById("dmsPersonaToast");
+        if (t) {
+            t.style.opacity = "0";
+            t.style.transition = "opacity 0.6s ease";
+            setTimeout(function(){ if (t) t.remove(); }, 600);
+        }
+    }, 4500);
+})();

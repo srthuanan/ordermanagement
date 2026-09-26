@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getCyberSyncStatus } from '../../services/api/stockService';
+import { subscribeDaemonStatus, getDaemonStatus } from '../../services/api/cyberBridge';
 
 interface CyberSyncStatus {
     last_run: string | null;
@@ -31,6 +32,7 @@ function timeAgo(isoString: string | null): string {
 
 export const CyberAutoSyncBadge: React.FC<CyberAutoSyncBadgeProps> = ({ onOpenManual }) => {
     const [status, setStatus] = useState<CyberSyncStatus | null>(null);
+    const [daemonStatus, setDaemonStatus] = useState(getDaemonStatus());
     const [isLoading, setIsLoading] = useState(true);
     const [showTooltip, setShowTooltip] = useState(false);
 
@@ -38,6 +40,13 @@ export const CyberAutoSyncBadge: React.FC<CyberAutoSyncBadgeProps> = ({ onOpenMa
         const data = await getCyberSyncStatus();
         if (data) setStatus(data as CyberSyncStatus);
         setIsLoading(false);
+    }, []);
+
+    useEffect(() => {
+        const unsubscribe = subscribeDaemonStatus((dStatus) => {
+            setDaemonStatus(dStatus);
+        });
+        return () => unsubscribe();
     }, []);
 
     useEffect(() => {
@@ -89,7 +98,7 @@ export const CyberAutoSyncBadge: React.FC<CyberAutoSyncBadgeProps> = ({ onOpenMa
                 <span className={`text-[10px] font-semibold tracking-tight ${labelColor}`}>
                     {isRunning ? 'Đang sync...'
                         : isError ? 'Lỗi sync'
-                        : `Sync • ${timeAgo(status.last_run)}`}
+                        : `${daemonStatus.isOnline ? '🟢 Máy VP' : '☁️ Cloud'} • ${timeAgo(status.last_run)}`}
                 </span>
 
                 {/* Clock icon */}
@@ -100,12 +109,27 @@ export const CyberAutoSyncBadge: React.FC<CyberAutoSyncBadgeProps> = ({ onOpenMa
 
             {/* Tooltip */}
             {showTooltip && (
-                <div className="absolute top-full right-0 mt-2 z-[9999] min-w-[220px] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-3 text-xs animate-fade-in">
-                    <div className="font-bold text-white mb-2 flex items-center gap-1.5">
-                        <span className="text-emerald-400">⚡</span>
-                        Đồng Bộ Vị Trí Tự Động
+                <div className="absolute top-full right-0 mt-2 z-[9999] min-w-[240px] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-3 text-xs animate-fade-in">
+                    <div className="font-bold text-white mb-2 flex items-center justify-between gap-1.5 border-b border-slate-800 pb-2">
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-emerald-400">⚡</span>
+                            <span>Đồng Bộ Vị Trí Tự Động</span>
+                        </div>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
+                            daemonStatus.isOnline
+                                ? 'bg-emerald-950 text-emerald-300 border border-emerald-700/50'
+                                : 'bg-slate-800 text-slate-400 border border-slate-700'
+                        }`}>
+                            {daemonStatus.isOnline ? 'Máy VP (Local)' : 'Cloud Render'}
+                        </span>
                     </div>
                     <div className="space-y-1.5 text-slate-300">
+                        <div className="flex justify-between gap-3 text-[11px] pb-1 border-b border-slate-800/80">
+                            <span className="text-slate-400">Nguồn API:</span>
+                            <span className={daemonStatus.isOnline ? 'text-emerald-400 font-semibold' : 'text-amber-400 font-medium'}>
+                                {daemonStatus.isOnline ? '🟢 Máy tính văn phòng (0 Render)' : '☁️ Cloud Render (Dự phòng)'}
+                            </span>
+                        </div>
                         <div className="flex justify-between gap-3">
                             <span className="text-slate-500">Trạng thái:</span>
                             <span className={`font-semibold ${labelColor}`}>

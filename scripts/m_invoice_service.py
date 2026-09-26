@@ -326,6 +326,25 @@ def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
     exact_order_no = order.get("so_don_hang")
     c_name = order.get("ten_khach_hang") or buyer or "KH"
 
+    # CHỐNG GỬI TRÙNG LẶP: Nếu đơn hàng đã ở trạng thái 'Đã xuất hóa đơn' và đã có link HĐ
+    existing_url = order.get("link_hoa_don_da_xuat") or order.get("url_hoa_don_da_xuat")
+    existing_status = str(order.get("ket_qua") or order.get("trang_thai_xu_ly") or "").strip().lower()
+    if existing_status == "đã xuất hóa đơn" and existing_url:
+        print(f"[M-Invoice Auto] Đơn hàng {exact_order_no} đã có hóa đơn và đã gửi mail trước đó. Bỏ qua gửi trùng!")
+        return {
+            "success": True,
+            "status": "ALREADY_COMPLETED",
+            "message": f"Đơn hàng {exact_order_no} đã xuất HĐ ({so_hd}) và gửi mail trước đó rồi!",
+            "data": {
+                "orderNumber": exact_order_no,
+                "invoiceNumber": so_hd,
+                "serial": serial,
+                "buyer": buyer,
+                "url": existing_url,
+                "mailStatus": "Đã gửi mail trước đó"
+            }
+        }
+
     # Chuẩn hóa tên khách hàng an toàn cho tên file
     c_safe = unicodedata.normalize('NFD', c_name)
     c_safe = re.sub(r'[\u0300-\u036f]', '', c_safe)
@@ -344,9 +363,23 @@ def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
         "Content-Type": "application/pdf",
         "x-upsert": "true"
     }
-    r_up = requests.post(upload_url, headers=up_headers, data=pdf_bytes, timeout=15)
-    if r_up.status_code not in (200, 201):
-        return {"success": False, "status": "STORAGE_ERROR", "message": f"Lỗi tải file lên Supabase Storage: HTTP {r_up.status_code}"}
+    
+    upload_success = False
+    last_up_err = ""
+    for attempt in range(1, 4):
+        try:
+            r_up = requests.post(upload_url, headers=up_headers, data=pdf_bytes, timeout=(15, 60))
+            if r_up.status_code in (200, 201):
+                upload_success = True
+                break
+            else:
+                last_up_err = f"HTTP {r_up.status_code}: {r_up.text[:120]}"
+        except Exception as ex:
+            last_up_err = str(ex)
+            time.sleep(1.5)
+
+    if not upload_success:
+        return {"success": False, "status": "STORAGE_ERROR", "message": f"Lỗi tải file lên Supabase Storage: {last_up_err}"}
 
     public_url = f"{SUPABASE_URL}/storage/v1/object/public/yeucauxhd-files/{file_path}"
 
@@ -422,23 +455,26 @@ def main():
         print(json.dumps({"success": False, "error": f"Invalid JSON stdin: {str(e)}"}))
         return
 
-    action = payload.get("action", "fetch_single")
-    if action == "batch_fetch":
-        vins = payload.get("vins", [])
-        results = []
-        for v in vins:
-            results.append(process_single_vin(v, only_signed=payload.get("only_signed", True)))
-        print(json.dumps({"success": True, "results": results}, ensure_ascii=False))
-    elif action == "sync_and_notify":
-        vin = payload.get("vin", "")
-        order_number = payload.get("orderNumber") or payload.get("order_number")
-        res = auto_fetch_upload_and_notify(vin, order_number=order_number)
-        print(json.dumps(res, ensure_ascii=False))
-    else:
-        vin = payload.get("vin", "")
-        only_signed = payload.get("only_signed", True)
-        res = process_single_vin(vin, only_signed=only_signed)
-        print(json.dumps(res, ensure_ascii=False))
+    try:
+        action = payload.get("action", "fetch_single")
+        if action == "batch_fetch":
+            vins = payload.get("vins", [])
+            results = []
+            for v in vins:
+                results.append(process_single_vin(v, only_signed=payload.get("only_signed", True)))
+            print(json.dumps({"success": True, "results": results}, ensure_ascii=False))
+        elif action == "sync_and_notify":
+            vin = payload.get("vin", "")
+            order_number = payload.get("orderNumber") or payload.get("order_number")
+            res = auto_fetch_upload_and_notify(vin, order_number=order_number)
+            print(json.dumps(res, ensure_ascii=False))
+        else:
+            vin = payload.get("vin", "")
+            only_signed = payload.get("only_signed", True)
+            res = process_single_vin(vin, only_signed=only_signed)
+            print(json.dumps(res, ensure_ascii=False))
+    except Exception as ex:
+        print(json.dumps({"success": False, "status": "ERROR", "message": str(ex)}, ensure_ascii=False))
 
 if __name__ == "__main__":
     main()

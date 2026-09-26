@@ -100,7 +100,24 @@ class DMSMatchPinFixer:
         if is_vin:
             r = requests.get(f"{BASE_API_URL}/xts_inventorynewvehicles?$filter=xts_chassisnumber eq '{query}'", headers=headers)
             if r.status_code == 200 and r.json().get('value'):
-                veh = r.json()['value'][0]
+                vehs = r.json()['value']
+                if len(vehs) == 1:
+                    veh = vehs[0]
+                else:
+                    # Nếu có nhiều bản ghi tồn kho cho cùng 1 số VIN, ưu tiên bản ghi có VSO/MU hoặc thuộc đại lý hiện tại
+                    for v_cand in vehs:
+                        cand_id = v_cand.get('xts_inventorynewvehicleid')
+                        cand_wh = v_cand.get('_xts_warehouseid_value@OData.Community.Display.V1.FormattedValue') or ''
+                        if self.dealer_code and self.dealer_code in cand_wh:
+                            veh = v_cand
+                            break
+                        r_v = requests.get(f"{BASE_API_URL}/xts_newvehiclesalesorders?$filter=_xts_stockid_value eq {cand_id}&$top=1", headers=headers)
+                        if r_v.status_code == 200 and r_v.json().get('value'):
+                            veh = v_cand
+                            vso = r_v.json()['value'][0]
+                            break
+                    if not veh:
+                        veh = vehs[-1] # Bản ghi mới nhất
         elif "-SN-" in query:
             r = requests.get(f"{BASE_API_URL}/xts_inventorynewvehicles?$filter=xts_stocknumber eq '{query}'", headers=headers)
             if r.status_code == 200 and r.json().get('value'):
@@ -182,15 +199,22 @@ class DMSMatchPinFixer:
         wh_veh_name = veh.get('_xts_warehouseid_value@OData.Community.Display.V1.FormattedValue') or ""
 
         # Tự động nhận diện Dealer từ Kho xe nếu chưa chỉ định rõ
-        if wh_veh_name and "_" in wh_veh_name and not self.dealer_code:
+        if wh_veh_name and "_" in wh_veh_name:
             wh_prefix = wh_veh_name.split("_")[0]
+            if not self.dealer_code:
+                self.dealer_code = wh_prefix
             if wh_prefix != self.dealer.get('dealer_code'):
                 matched_d = next((d for d in self.dealers if d.get('dealer_code') == wh_prefix), None)
                 if matched_d:
-                    self.dealer = matched_d
-                    self.dealer_code = wh_prefix
-                    headers = self.get_headers()
-                    log_fn(f"📌 Nhận diện Đại lý sở hữu xe: {wh_prefix} (từ kho xe {wh_veh_name})")
+                    test_cookie = matched_d.get('cookie')
+                    # Kiểm tra xem cookie của đại lý này có còn hiệu lực không
+                    r_chk = requests.get(f"{BASE_API_URL}/xts_warehouses?$top=1", headers={"Cookie": test_cookie, "Accept": "application/json"})
+                    if r_chk.status_code == 200:
+                        self.dealer = matched_d
+                        headers = self.get_headers()
+                        log_fn(f"📌 Chuyển phiên xác thực sang Đại lý: {wh_prefix} (từ kho {wh_veh_name})")
+                    else:
+                        log_fn(f"📌 Nhận diện Đại lý: {wh_prefix} (giữ phiên xác thực hiện tại do token {wh_prefix} hết hạn)")
 
         # Tìm VSO nếu chưa có (sau khi đã cập nhật headers đại lý đúng)
         if veh and not vso:
@@ -369,12 +393,19 @@ class DMSMatchPinFixer:
         if r_dev.status_code == 200 and r_dev.json().get('value'):
             for dev in r_dev.json()['value']:
                 dev_id = dev.get('itv_deviceinfomationid')
-                if dev.get('itv_devicestatus') != 2 or dev.get('itv_usestatus') != 1:
-                    requests.patch(f"{BASE_API_URL}/itv_deviceinfomations({dev_id})", headers=headers, json={
-                        "itv_devicestatus": 2, # Stock
-                        "itv_usestatus": 1     # Good
-                    })
-                    log_fn("✅ Đã cập nhật thiết bị PIN (Device Info) về trạng thái Tồn kho / Sử dụng tốt.")
+                patch_dev = {}
+                if dev.get('itv_devicestatus') not in [2, 3]:
+                    patch_dev["itv_devicestatus"] = 2  # Stock
+                if dev.get('itv_usestatus') != 1:
+                    patch_dev["itv_usestatus"] = 1  # Good
+                # Chuẩn hóa sê-ri PIN nếu bị rút gọn gây lỗi 'Thông tin pin không tồn tại trong Device Information'
+                if bat_serial and dev.get('itv_serialno') != bat_serial:
+                    log_fn(f"    👉 PHÁT HIỆN SÊ-RI TRONG DEVICE INFO BỊ RÚT GỌN: '{dev.get('itv_serialno')}' -> Chuẩn hóa theo PIN xe '{bat_serial}'")
+                    patch_dev["itv_serialno"] = bat_serial
+                    patch_dev["itv_name"] = bat_serial
+                if patch_dev:
+                    requests.patch(f"{BASE_API_URL}/itv_deviceinfomations({dev_id})", headers=headers, json=patch_dev)
+                    log_fn("✅ Đã cập nhật thiết bị PIN (Device Info) về trạng thái chuẩn.")
 
         # ---------------- 4. SỬA LỖI PHỤ KIỆN PIN TRÊN ĐƠN HÀNG (NVSO Accessories) ----------------
         if vso:

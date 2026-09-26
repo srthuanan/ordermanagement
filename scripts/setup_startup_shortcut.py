@@ -2,8 +2,8 @@ import os
 import subprocess
 
 startup_dir = os.path.join(os.environ['APPDATA'], r'Microsoft\Windows\Start Menu\Programs\Startup')
-shortcut_path = os.path.join(startup_dir, 'CyberSoft_PDF_AutoSync.lnk')
-target_bat = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'chay_dong_bo_pdf_ngam.bat'))
+shortcut_path = os.path.join(startup_dir, 'CyberSoft_Sync_Daemon.lnk')
+target_bat = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'start-cyber-sync.bat'))
 working_dir = os.path.dirname(target_bat)
 
 ps_code = f"""
@@ -12,7 +12,7 @@ $s = $ws.CreateShortcut('{shortcut_path}')
 $s.TargetPath = '{target_bat}'
 $s.WorkingDirectory = '{working_dir}'
 $s.WindowStyle = 7
-$s.Description = 'CyberSoft PDF AutoSync Daemon'
+$s.Description = 'CyberSoft Local Server & Bridge Daemon'
 $s.Save()
 """
 
