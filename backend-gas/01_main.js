@@ -77,6 +77,16 @@ function doPost(e) {
         response = createJsonResponse({ status: syncOk ? "SUCCESS" : "ERROR" });
         break;
 
+      case 'generateBcGhepXe':
+        const bcOk = generateBcGhepXeDuXhd();
+        response = createJsonResponse({ status: bcOk ? "SUCCESS" : "ERROR" });
+        break;
+
+      case 'setupRealtimeBcGhepXeFormula':
+        const formulaOk = setupRealtimeBcGhepXeFormula();
+        response = createJsonResponse({ status: formulaOk ? "SUCCESS" : "ERROR" });
+        break;
+
       case 'fetchSheetData':
         response = createJsonResponse(handleFetchSheetData(e));
         break;
