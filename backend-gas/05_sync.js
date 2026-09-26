@@ -8,6 +8,7 @@ function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('🚀 VINFO SYNC 2.0')
       .addItem('📊 Báo cáo KPI (Xuất HĐ)', 'generateKpiSheet')
+      .addItem('📑 Báo Cáo Ghép Xe - Dự XHĐ', 'generateBcGhepXeDuXhd')
       .addSeparator()
       .addItem('🔑 Cập nhật Mã kết nối DMS (Token)', 'saveDmsToken')
       .addItem('📍 Đồng bộ GPS Live tức thì', 'syncDmsGpsToSupabase')
@@ -74,8 +75,8 @@ function cleanUpGhostSheets() {
     var sheets = ss.getSheets();
     
     var keep = TABLES_TO_SYNC.map(function(t) { return t.sheet; });
-    // Chỉ giữ lại sheet Backend và KPI
-    keep = keep.concat(['Backend', 'KPI']);
+    // Chỉ giữ lại sheet Backend, KPI và BC GHÉP XE-DỰ XHĐ
+    keep = keep.concat(['Backend', 'KPI', 'BC GHÉP XE-DỰ XHĐ']);
     
     // Danh sách các sheet rác và các sheet cũ không còn sử dụng cần xóa sạch
     var blackList = [
@@ -99,7 +100,7 @@ function cleanUpGhostSheets() {
        var shouldDelete = (keep.indexOf(name) === -1) || (blackList.indexOf(name) !== -1);
        
        // Không xóa sheet đang đồng bộ dữ liệu thật
-       if (name === "yeucauxhd" || name === "donhang" || name === "khoxe" || name === "KPI" || name === "Backend") {
+       if (name === "yeucauxhd" || name === "donhang" || name === "khoxe" || name === "KPI" || name === "Backend" || name === "BC GHÉP XE-DỰ XHĐ") {
            shouldDelete = false;
        }
 
@@ -231,6 +232,13 @@ function syncAllFromSupabase() {
       }
     }
     
+    // Tự động cập nhật sheet Báo cáo Ghép xe - Dự XHĐ
+    try {
+      generateBcGhepXeDuXhd();
+    } catch(errGhep) {
+      Logger.log("Lỗi cập nhật BC Ghép Xe: " + errGhep.message);
+    }
+
     SpreadsheetApp.flush();
     var msg = 'Đồng bộ ' + successCount + '/' + TABLES_TO_SYNC.length + ' bảng lúc ' + timestamp;
     if (failedTables.length > 0) msg += ' | Bỏ qua: ' + failedTables.join(', ');
