@@ -282,6 +282,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 }) => {
     // Sub-tab switcher: 'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat' | 'tra_cuu_phieu'
     const [activeSubTab, setActiveSubTab] = useState<'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat' | 'tra_cuu_phieu'>('factory_plan');
+    const [mobileDnxView, setMobileDnxView] = useState<'form' | 'history'>('form');
 
     // -------------------------------------------------------------
     // SUB-TAB 4: LẬP ĐỀ NGHỊ XUẤT XE / ĐIỀU CHUYỂN XE (PHDNX & CTDNX)
@@ -826,6 +827,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 showToast('Tạo giấy chuyển Cyber', `Đã tạo thành công phiếu ${res.so_ct} cho ${res.total_cars} xe`, 'success');
                 setRecentDnxTickets(prev => [enrichedTicket, ...prev]);
                 setDnxVinInput('');
+                setMobileDnxView('history');
                 // Mở cửa sổ xem trước & in phiếu chuẩn CyberSoft ngay lập tức
                 setPrintTicketData(enrichedTicket);
 
@@ -1617,11 +1619,127 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     };
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-slate-200 overflow-hidden animate-fade-in relative z-0 font-sans">
+        <div className="flex flex-col md:flex-row h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-slate-200 overflow-hidden animate-fade-in relative z-0 font-sans">
             <AnimatedBackground />
 
-            {/* COLUMN 1: LEFT SUB-TAB FOLDER SIDEBAR */}
-            <div className="w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10">
+            {/* MOBILE TOP SUB-TAB NAVIGATION BAR (Only on mobile: block md:hidden) */}
+            <div className="block md:hidden shrink-0 bg-white border-b border-slate-200 shadow-2xs relative z-20">
+                <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span className="text-[11px] font-extrabold text-slate-800">Kế Hoạch Cyber</span>
+                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200">&lt;50ms</span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={handleFullSyncCyber}
+                        disabled={isFullSyncing}
+                        className="px-2 py-0.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] font-bold flex items-center gap-1 active:scale-95 transition-all cursor-pointer"
+                        title="Đồng bộ tất cả dữ liệu từ máy chủ CyberSoft ERP"
+                    >
+                        <i className={`fas fa-arrows-rotate text-[9.5px] ${isFullSyncing ? 'animate-spin text-emerald-600' : 'text-emerald-500'}`}></i>
+                        <span>{isFullSyncing ? 'Đang kéo...' : 'Đồng bộ'}</span>
+                    </button>
+                </div>
+                <div className="flex items-center gap-1 px-1.5 py-1.5 overflow-x-auto no-scrollbar scroll-smooth">
+                    <button
+                        type="button"
+                        onClick={() => setActiveSubTab('factory_plan')}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                            activeSubTab === 'factory_plan'
+                                ? 'bg-blue-600 text-white font-bold shadow-xs'
+                                : 'bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 border border-slate-200/50'
+                        }`}
+                    >
+                        <i className="fas fa-truck-ramp-box text-[11px]"></i>
+                        <span>Kế Hoạch</span>
+                        {totalCount > 0 && (
+                            <span className={`text-[9.5px] px-1.5 py-0.2 rounded-full font-bold ${
+                                activeSubTab === 'factory_plan' ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-800'
+                            }`}>
+                                {totalCount.toLocaleString()}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveSubTab('ton_kho')}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                            activeSubTab === 'ton_kho'
+                                ? 'bg-blue-600 text-white font-bold shadow-xs'
+                                : 'bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 border border-slate-200/50'
+                        }`}
+                    >
+                        <i className="fas fa-warehouse text-[11px]"></i>
+                        <span>Tồn Kho</span>
+                        {(tonKhoNotInvoiced > 0 || tonKhoCars.length > 0) && (
+                            <span className={`text-[9.5px] px-1.5 py-0.2 rounded-full font-bold ${
+                                activeSubTab === 'ton_kho' ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-800'
+                            }`}>
+                                {(tonKhoNotInvoiced || tonKhoCars.length).toLocaleString()}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveSubTab('xep_xe')}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                            activeSubTab === 'xep_xe'
+                                ? 'bg-blue-600 text-white font-bold shadow-xs'
+                                : 'bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 border border-slate-200/50'
+                        }`}
+                    >
+                        <i className="fas fa-car-side text-[11px]"></i>
+                        <span>Xếp Xe</span>
+                        {xepXeContracts.length > 0 && (
+                            <span className={`text-[9.5px] px-1.5 py-0.2 rounded-full font-bold ${
+                                activeSubTab === 'xep_xe' ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-800'
+                            }`}>
+                                {xepXeContracts.length.toLocaleString()}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveSubTab('de_nghi_xuat')}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                            activeSubTab === 'de_nghi_xuat'
+                                ? 'bg-blue-600 text-white font-bold shadow-xs'
+                                : 'bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 border border-slate-200/50'
+                        }`}
+                    >
+                        <i className="fas fa-truck text-[11px]"></i>
+                        <span>Lập Phiếu DNX</span>
+                        {pendingTransferRequests.length > 0 && (
+                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-full font-bold bg-amber-500 text-white animate-pulse">
+                                {pendingTransferRequests.length} YC
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveSubTab('tra_cuu_phieu')}
+                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                            activeSubTab === 'tra_cuu_phieu'
+                                ? 'bg-blue-600 text-white font-bold shadow-xs'
+                                : 'bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 border border-slate-200/50'
+                        }`}
+                    >
+                        <i className="fas fa-file-invoice text-[11px]"></i>
+                        <span>Tiến Trình Phiếu</span>
+                        {voucherTickets.length > 0 && (
+                            <span className={`text-[9.5px] px-1.5 py-0.2 rounded-full font-bold ${
+                                activeSubTab === 'tra_cuu_phieu' ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-800'
+                            }`}>
+                                {voucherTickets.length.toLocaleString()}
+                            </span>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* COLUMN 1: LEFT SUB-TAB FOLDER SIDEBAR (Desktop Only) */}
+            <div className="w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white hidden md:flex flex-col relative z-10">
                 {/* Sub-tab Folder List */}
                 <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
                     {/* Tab 1: Kế Hoạch */}
@@ -2058,7 +2176,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         ) : (
                             <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-xs border-collapse">
+                                    <table className="w-full min-w-[850px] text-left text-xs border-collapse">
                                         <thead>
                                             <tr className="sticky top-0 z-10 bg-slate-50 text-slate-600 font-bold border-b border-slate-200 uppercase tracking-wider text-[10.5px]">
                                                 <th className="py-3 px-3.5 border-r border-slate-100 text-center w-12">STT</th>
@@ -2452,7 +2570,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         ) : (
                             <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-xs border-collapse font-sans">
+                                    <table className="w-full min-w-[850px] text-left text-xs border-collapse font-sans">
                                         <thead>
                                             <tr className="sticky top-0 z-10 bg-slate-100 text-slate-700 font-bold border-b border-slate-200 uppercase tracking-wider text-[10.5px]">
                                                 <th className="py-3 px-3 border-r border-slate-200 text-center w-11">STT</th>
@@ -3072,7 +3190,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         ) : (
                             <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden">
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-xs border-collapse">
+                                    <table className="w-full min-w-[950px] text-left text-xs border-collapse">
                                         <thead>
                                             <tr className="bg-slate-50 border-b-2 border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
                                                 <th className="px-3 py-2.5 text-center w-10">#</th>
@@ -3406,8 +3524,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     Không khớp với từ khóa tìm kiếm "{candidateSearchQuery}"
                                 </div>
                             ) : (
-                                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-                                    <table className="w-full text-left text-xs border-collapse">
+                                <div className="border border-slate-200 rounded-xl overflow-x-auto shadow-2xs">
+                                    <table className="w-full min-w-[700px] text-left text-xs border-collapse">
                                         <thead>
                                             <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 text-[11px] uppercase">
                                                 <th className="py-2.5 px-3 text-center w-10 border-r border-slate-200">Chọn</th>
@@ -3510,13 +3628,51 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             {/* SUB-TAB 4 CONTENT: LẬP ĐỀ NGHỊ XUẤT XE / ĐIỀU CHUYỂN XE (PHDNX & CTDNX) */}
             {/* ============================================================= */}
             {activeSubTab === 'de_nghi_xuat' && (
-                <div className="flex-1 flex flex-col min-h-0 p-3 space-y-2.5 bg-slate-50 overflow-hidden">
+                <div className="flex-1 flex flex-col min-h-0 p-2 sm:p-3 space-y-2 bg-slate-50 overflow-hidden">
                     
-                    {/* Main Form & Presets Grid (Single Screen No Scroll) */}
+                    {/* Mobile View Switcher (Only visible on lg:hidden) */}
+                    <div className="flex lg:hidden items-center p-1 bg-slate-200/80 rounded-xl shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => setMobileDnxView('form')}
+                            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                                mobileDnxView === 'form'
+                                    ? 'bg-white text-blue-700 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            <i className="fas fa-edit text-xs"></i>
+                            <span>Lập Phiếu DNX</span>
+                            {pendingTransferRequests.length > 0 && (
+                                <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-indigo-600 text-white font-bold animate-pulse">
+                                    {pendingTransferRequests.length} YC
+                                </span>
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMobileDnxView('history')}
+                            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                                mobileDnxView === 'history'
+                                    ? 'bg-white text-blue-700 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            <i className="fas fa-history text-xs"></i>
+                            <span>Phiếu Gần Nhất</span>
+                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-700 font-bold">
+                                {recentDnxTickets.length}
+                            </span>
+                        </button>
+                    </div>
+
+                    {/* Main Form & Presets Grid (Single Screen No Scroll on Desktop, Responsive on Mobile) */}
                     <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-3 overflow-hidden">
                         
                         {/* Left Form Column */}
-                        <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-2xs p-2.5 sm:p-3 flex flex-col justify-between min-h-0 overflow-y-auto custom-scrollbar">
+                        <div className={`lg:col-span-7 bg-white rounded-xl border border-slate-200 shadow-2xs p-2.5 sm:p-3 flex-col justify-between min-h-0 overflow-y-auto custom-scrollbar ${
+                            mobileDnxView === 'form' ? 'flex' : 'hidden lg:flex'
+                        }`}>
                             
                             <div className="flex items-center justify-between border-b border-slate-100 pb-2 shrink-0">
                                 <h3 className="font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
@@ -3761,10 +3917,10 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 </div>
 
                                 {/* 2. Loại phiếu đề nghị xuất (CyberSoft ERP: Loại 4 vs 9) */}
-                                <div className="grid grid-cols-2 gap-1.5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                                     <label
                                         onClick={() => setDnxMaGd('4')}
-                                        className={`px-2 py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
+                                        className={`px-2 py-1.5 sm:py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
                                             dnxMaGd === '4'
                                                 ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-2xs ring-1 ring-blue-500/20'
                                                 : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -3781,7 +3937,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     </label>
                                     <label
                                         onClick={() => setDnxMaGd('9')}
-                                        className={`px-2 py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
+                                        className={`px-2 py-1.5 sm:py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
                                             dnxMaGd === '9'
                                                 ? 'bg-purple-50 border-purple-500 text-purple-900 shadow-2xs ring-1 ring-purple-500/20'
                                                 : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -3799,7 +3955,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 </div>
 
                                 {/* 3. Kho Xuất & Kho Nhận */}
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <div>
                                         <div className="flex items-center justify-between text-[10.5px] font-bold text-slate-600 mb-0.5">
                                             <span>Kho xuất xe:</span>
@@ -3842,7 +3998,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 </div>
 
                                 {/* 4. Tài khoản & Khách hàng */}
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     <div>
                                         <label className="block text-[10.5px] font-bold text-slate-600 mb-0.5">
                                             Tài khoản (`User_Name`):
@@ -3872,9 +4028,9 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 
                                 {/* 5. Lý do xuất + Quick Chips inline */}
                                 <div>
-                                    <div className="flex items-center justify-between text-[10.5px] font-bold text-slate-600 mb-0.5">
+                                    <div className="flex flex-wrap items-center justify-between text-[10.5px] font-bold text-slate-600 mb-0.5 gap-1">
                                         <span>Lý do xuất / điều chuyển:</span>
-                                        <div className="flex items-center gap-1">
+                                        <div className="flex flex-wrap items-center gap-1">
                                             <button
                                                 type="button"
                                                 onClick={() => setDnxLyDo('Lấy xe từ Kho QL13 về Kho Thuận An làm PDI giao KH')}
@@ -3912,7 +4068,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     <button
                                         type="submit"
                                         disabled={isSubmittingDnx || Boolean(detectedExistingTicket)}
-                                        className={`w-full h-8 font-bold rounded-lg text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${
+                                        className={`w-full min-h-[34px] py-1.5 px-3 font-bold rounded-lg text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${
                                             detectedExistingTicket
                                                 ? 'bg-slate-300 text-slate-500 cursor-not-allowed border border-slate-300'
                                                 : 'bg-slate-900 hover:bg-slate-800 active:scale-[0.99] disabled:opacity-50 text-white cursor-pointer'
@@ -3931,7 +4087,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         ) : (
                                             <>
                                                 <i className="fas fa-bolt text-amber-400 text-xs"></i>
-                                                <span>Ghi Nhận Giấy Đề Nghị Xuất Xe Trực Tiếp Lên Cyber</span>
+                                                <span className="text-center">Ghi Nhận Giấy Đề Nghị Xuất Xe Trực Tiếp Lên Cyber</span>
                                             </>
                                         )}
                                     </button>
@@ -3940,7 +4096,9 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         </div>
 
                         {/* Right Recent Tickets Column (Full Height) */}
-                        <div className="lg:col-span-5 flex flex-col min-h-0 overflow-hidden">
+                        <div className={`lg:col-span-5 flex-col min-h-0 overflow-hidden ${
+                            mobileDnxView === 'history' ? 'flex' : 'hidden lg:flex'
+                        }`}>
                             
                             {/* Recent Created Tickets History Card */}
                             <div className="flex-1 min-h-0 bg-white rounded-xl border border-slate-200 shadow-2xs p-3.5 flex flex-col overflow-hidden">
@@ -4142,7 +4300,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         ) : (
                             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-xs border-collapse">
+                                    <table className="w-full min-w-[850px] text-left text-xs border-collapse">
                                         <thead>
                                             <tr className="bg-slate-50 border-b-2 border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
                                                 <th className="px-3 py-2.5 text-center w-10">#</th>
