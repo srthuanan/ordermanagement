@@ -2003,18 +2003,18 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
 
         conn.close()
 
-        # Tự động xuất và tải sẵn cả 2 bản PDF (có chữ ký & không chữ ký) lên Supabase Storage trong nền
-        def _async_pregenerate_dnx_pdfs(stt, usr):
+        # 8. XUẤT VÀ TẢI NGAY LẬP TỨC 2 BẢN PDF (CÓ CHỮ KÝ & KHÔNG CHỮ KÝ) LÊN SUPABASE CLOUD
+        pdf_sig_url = None
+        if sys.platform == "win32":
             try:
-                print(f"[Auto DNX Pre-generation] Bắt đầu xuất và tải PDF cho {stt} lên Supabase Storage...", file=sys.stderr)
-                export_cyber_pdf_via_ps(stt, voucher_type="DNX", paper_size="A4", user_name=usr, include_signatures="true")
-                export_cyber_pdf_via_ps(stt, voucher_type="DNX", paper_size="A4", user_name=usr, include_signatures="false")
-                print(f"[Auto DNX Pre-generation] Đã tải hoàn tất cả 2 bản PDF cho {stt} lên Supabase Storage!", file=sys.stderr)
-            except Exception as ex:
-                print(f"[Auto DNX Pre-generation Warning]: {ex}", file=sys.stderr)
-
-        import threading
-        threading.Thread(target=_async_pregenerate_dnx_pdfs, args=(str(stt_rec), str(user_name)), daemon=True).start()
+                print(f"[Instant PDF Export] Đang tự động kết xuất PDF chuẩn cho phiếu {so_ct} ({stt_rec})...", file=sys.stderr)
+                r_sig = export_cyber_pdf_via_ps(str(stt_rec), voucher_type="DNX", paper_size="A4", user_name=str(user_name), include_signatures="true", so_ct=str(so_ct))
+                r_nosig = export_cyber_pdf_via_ps(str(stt_rec), voucher_type="DNX", paper_size="A4", user_name=str(user_name), include_signatures="false", so_ct=str(so_ct))
+                if r_sig.get("success"):
+                    pdf_sig_url = r_sig.get("pdf_url")
+                print(f"[Instant PDF Export] ✅ Đã hoàn tất và tải 2 bản PDF của {so_ct} lên Supabase Cloud!", file=sys.stderr)
+            except Exception as ex_pdf:
+                print(f"[Instant PDF Export Warning]: {ex_pdf}", file=sys.stderr)
 
         return {
             "success": True,
@@ -2024,6 +2024,7 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             "user_name": str(user_name),
             "user_id": int(user_id),
             "total_cars": int(total_qty),
+            "pdf_url": pdf_sig_url,
             "cars": cars_detail
         }
     except Exception as e:
