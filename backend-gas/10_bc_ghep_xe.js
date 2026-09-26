@@ -171,7 +171,7 @@ function generateBcGhepXeDuXhd() {
       if (existingUserInputs[cleanVin].duXhd) userDuXhd = existingUserInputs[cleanVin].duXhd;
       if (existingUserInputs[cleanVin].tinhTrang) userTinhTrang = existingUserInputs[cleanVin].tinhTrang;
     } else if (p.ket_qua && p.ket_qua !== "Đã ghép") {
-      userTinhTrang = p.ket_qua; // Hiển thị rõ trạng thái nếu TVBH đã yêu cầu XHĐ (VD: Yêu cầu bổ sung, Chờ phê duyệt)
+      userTinhTrang = "Đã đủ hồ sơ"; // Các TH TVBH gửi yêu cầu XHĐ note: Đã đủ hồ sơ
     }
 
     rows.push([
@@ -335,8 +335,8 @@ function setupRealtimeBcGhepXeFormula() {
   // Cột H: Ngày dự XHĐ mặc định theo tháng
   sheet.getRange("H2").setFormula('=ARRAYFORMULA(IF(A2:A<>"", "Tháng " & MONTH(TODAY()), ""))');
 
-  // Cột I: Tình trạng (Hiển thị trạng thái nếu TVBH đã yêu cầu XHĐ, trống nếu là Đã ghép thông thường)
-  sheet.getRange("I2").setFormula('=IFERROR(FILTER(IF(donhang!L2:L="Đã ghép", "", donhang!L2:L), ' + cond + '), "")');
+  // Cột I: Tình trạng (Các trường hợp TVBH đã yêu cầu XHĐ thì note "Đã đủ hồ sơ", trống nếu là Đã ghép thông thường)
+  sheet.getRange("I2").setFormula('=IFERROR(FILTER(IF(donhang!L2:L="Đã ghép", "", "Đã đủ hồ sơ"), ' + cond + '), "")');
 
   sheet.setFrozenRows(1);
 
