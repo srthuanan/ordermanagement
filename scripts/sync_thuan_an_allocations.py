@@ -2826,10 +2826,19 @@ def sync_missing_cyber_voucher_pdfs(limit: int = 60, max_export: int = 30) -> di
         if not has_active_car:
             continue  # Bỏ qua phiếu của xe không có trong khoxe, donhang, yeucauxhd
 
-        clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', stt_rec)
-        sig_file = f"{clean_stt}_sig.pdf".lower()
-        nosig_file = f"{clean_stt}_nosig.pdf".lower()
-        if sig_file not in existing_files or nosig_file not in existing_files:
+        clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', stt_rec).lower()
+        clean_so = re.sub(r'[^a-zA-Z0-9_\-]', '_', so_ct).lower() if so_ct else ""
+
+        # Phiếu coi như ĐÃ CÓ nếu bất kỳ định dạng nào (theo stt_rec hoặc theo so_ct) đã tồn tại trên Supabase Storage
+        has_pdf = (
+            f"{clean_stt}.pdf" in existing_files or
+            f"{clean_stt}_sig.pdf" in existing_files or
+            f"{clean_stt}_nosig.pdf" in existing_files or
+            (clean_so and f"{clean_so}.pdf" in existing_files) or
+            (clean_so and f"{clean_so}_sig.pdf" in existing_files) or
+            (clean_so and f"{clean_so}_nosig.pdf" in existing_files)
+        )
+        if not has_pdf:
             missing_tickets.append(t)
 
     print(f"[PDF-Sync] 📊 Tìm thấy {len(missing_tickets)}/{len(tickets)} phiếu thuộc Thuận An cần xuất PDF lên Cloud.", file=sys.stderr)
@@ -2842,23 +2851,20 @@ def sync_missing_cyber_voucher_pdfs(limit: int = 60, max_export: int = 30) -> di
         v_type = "DNX" if "DNX" in stt_rec or t.get("ma_ct") == "DNX" else "TD4"
         usr = t.get("user_name") or t.get("nvkd") or "02.NHANPT"
         clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', stt_rec)
+        clean_so = re.sub(r'[^a-zA-Z0-9_\-]', '_', so_ct) if so_ct else ""
 
         print(f"[PDF-Sync] ⚙️ Đang kết xuất PDF cho phiếu {so_ct} ({stt_rec})...", file=sys.stderr)
         try:
-            # 1. Kết xuất bản có chữ ký (_sig)
-            if f"{clean_stt}_sig.pdf".lower() not in existing_files:
-                r1 = export_cyber_pdf_via_ps(stt_rec, voucher_type=v_type, paper_size="A4", user_name=usr, include_signatures="true", so_ct=so_ct)
-                if r1.get("success"):
-                    existing_files.add(f"{clean_stt}_sig.pdf".lower())
-            
-            # 2. Kết xuất bản không chữ ký (_nosig)
-            if f"{clean_stt}_nosig.pdf".lower() not in existing_files:
-                r2 = export_cyber_pdf_via_ps(stt_rec, voucher_type=v_type, paper_size="A4", user_name=usr, include_signatures="false", so_ct=so_ct)
-                if r2.get("success"):
-                    existing_files.add(f"{clean_stt}_nosig.pdf".lower())
-
-            exported_count += 1
-            print(f"[PDF-Sync] ✅ Đã đẩy PDF phiếu {so_ct} ({stt_rec}) lên Supabase Storage!", file=sys.stderr)
+            # Kết xuất bản chính thức có chữ ký đầy đủ
+            r1 = export_cyber_pdf_via_ps(stt_rec, voucher_type=v_type, paper_size="A4", user_name=usr, include_signatures="true", so_ct=so_ct)
+            if r1.get("success"):
+                exported_count += 1
+                existing_files.add(f"{clean_stt.lower()}.pdf")
+                existing_files.add(f"{clean_stt.lower()}_sig.pdf")
+                if clean_so:
+                    existing_files.add(f"{clean_so.lower()}.pdf")
+                    existing_files.add(f"{clean_so.lower()}_sig.pdf")
+                print(f"[PDF-Sync] ✅ Đã đẩy PDF phiếu {so_ct} ({stt_rec}) lên Supabase Storage!", file=sys.stderr)
         except Exception as ex:
             print(f"[PDF-Sync Error] Lỗi khi xuất PDF cho {so_ct}: {ex}", file=sys.stderr)
             errors.append({"stt_rec": stt_rec, "so_ct": so_ct, "error": str(ex)})
@@ -3568,128 +3574,14 @@ def upload_pdf_to_supabase_storage(file_bytes, remote_filename):
 
 def cleanup_old_cyber_pdfs_from_supabase(max_days=30):
     """
-    Tự động dọn dẹp Supabase Storage thông minh theo đúng nghiệp vụ:
-    CHỈ GIỮ LẠI các file PDF liên quan đến các xe đang có trong:
-      1. khoxe (xe đang tồn tại showroom/kho Thuận An)
-      2. donhang (xe đang có đơn hàng của TVBH)
-      3. yeucauxhd (xe đang xử lý hồ sơ xuất hóa đơn)
-      4. Các phiếu Đề nghị xuất xe của Showroom Thuận An (08.DNX)
-    Tất cả các file PDF rác của các chi nhánh khác hoặc xe cũ đã giao xong không liên quan sẽ tự động bị xóa bỏ.
+    Bảo lưu toàn bộ file PDF phiếu CyberSoft trên Supabase Storage để phục vụ tra cứu lịch sử đơn hàng.
+    Không xóa file để tránh tình trạng hệ thống phải kết xuất lại nhiều lần gây nghẽn tiến trình.
     """
-    import requests
-    import re
-    from datetime import datetime, timezone, timedelta
-
-    supabase_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co").strip().rstrip('/')
-    supabase_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY", os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY", "")).strip()
-    bucket = "yeucauxhd-files"
-    headers = {
-        "apikey": supabase_key,
-        "Authorization": f"Bearer {supabase_key}",
-        "Content-Type": "application/json"
+    return {
+        "success": True,
+        "message": "Đã bảo lưu an toàn toàn bộ file PDF phiếu CyberSoft trên Cloud.",
+        "deleted_count": 0
     }
-
-    try:
-        # Bước 1: Lấy danh sách VIN đang hoạt động từ khoxe, donhang, yeucauxhd
-        active_vins = set()
-        for tbl in ['khoxe', 'donhang', 'yeucauxhd']:
-            try:
-                r_act = requests.get(f"{supabase_url}/rest/v1/{tbl}?select=vin", headers=headers, timeout=8)
-                if r_act.status_code == 200:
-                    for row in r_act.json():
-                        v = (row.get('vin') or '').strip().upper()
-                        if v: active_vins.add(v)
-            except Exception:
-                pass
-
-        # Bước 2: Thu thập các định danh phiếu (stt_rec, so_ct) gắn với các VIN này
-        keep_patterns = set()
-        for v in active_vins:
-            keep_patterns.add(re.sub(r'[^a-zA-Z0-9_\-]', '_', v).lower())
-
-        # Lấy từ cyber_car_status
-        try:
-            r_st = requests.get(f"{supabase_url}/rest/v1/cyber_car_status?select=vin,stt_rec,so_ct_dnx,so_ct_td4", headers=headers, timeout=10)
-            if r_st.status_code == 200:
-                for row in r_st.json():
-                    if (row.get('vin') or '').strip().upper() in active_vins:
-                        for k in ['stt_rec', 'so_ct_dnx', 'so_ct_td4']:
-                            val = (row.get(k) or '').strip()
-                            if val:
-                                keep_patterns.add(re.sub(r'[^a-zA-Z0-9_\-]', '_', val).lower())
-        except Exception:
-            pass
-
-        # Lấy từ cyber_voucher_tickets
-        try:
-            r_t = requests.get(f"{supabase_url}/rest/v1/cyber_voucher_tickets?select=stt_rec,so_ct,lines,raw_data", headers=headers, timeout=10)
-            if r_t.status_code == 200:
-                for row in r_t.json():
-                    lines = row.get('lines') or []
-                    t_vin = ((row.get('raw_data') or {}).get('vin') or '').strip().upper()
-                    vins_in_t = {t_vin} if t_vin else set()
-                    for line in lines:
-                        l_vin = (line.get('vin') or line.get('so_khung') or '').strip().upper()
-                        if l_vin:
-                            vins_in_t.add(l_vin)
-                    if any(v in active_vins for v in vins_in_t):
-                        for k in ['stt_rec', 'so_ct']:
-                            val = (row.get(k) or '').strip()
-                            if val:
-                                keep_patterns.add(re.sub(r'[^a-zA-Z0-9_\-]', '_', val).lower())
-        except Exception:
-            pass
-
-        # Bước 3: Quét kho Supabase Storage và xóa các file không liên quan đến xe đang hoạt động
-        list_url = f"{supabase_url}/storage/v1/object/list/{bucket}"
-        res = requests.post(list_url, headers=headers, json={"prefix": "cyber_pdfs/", "limit": 1000}, timeout=15)
-        if res.status_code != 200:
-            return {"success": False, "error": res.text}
-
-        files = res.json()
-        prefixes_to_delete = []
-
-        for f in files:
-            fname = f.get('name', '')
-            if not fname:
-                continue
-            fname_lower = fname.lower()
-            base_name = fname_lower.replace('_sig.pdf', '').replace('_nosig.pdf', '').replace('.pdf', '')
-
-            # Chỉ giữ file nếu thuộc về xe đang có trong khoxe, donhang, yeucauxhd
-            is_active_vehicle = any(p in base_name or base_name in p for p in keep_patterns if len(p) >= 4)
-
-            if not is_active_vehicle:
-                prefixes_to_delete.append(f"cyber_pdfs/{fname}")
-
-        # Bước 4: Xóa nhanh theo từng lô (Batch Delete API của Supabase Storage)
-        deleted_count = 0
-        batch_size = 50
-        for i in range(0, len(prefixes_to_delete), batch_size):
-            chunk = prefixes_to_delete[i:i + batch_size]
-            try:
-                del_url = f"{supabase_url}/storage/v1/object/{bucket}"
-                del_res = requests.delete(del_url, headers=headers, json={"prefixes": chunk}, timeout=15)
-                if del_res.status_code in [200, 204]:
-                    deleted_count += len(chunk)
-                else:
-                    # Fallback xóa từng file nếu batch gặp lỗi
-                    for pfx in chunk:
-                        single_url = f"{supabase_url}/storage/v1/object/{bucket}/{pfx}"
-                        if requests.delete(single_url, headers=headers, timeout=5).status_code in [200, 204]:
-                            deleted_count += 1
-            except Exception as e_del:
-                print(f"[Storage Cleanup Error] {e_del}", file=sys.stderr)
-
-        return {
-            "success": True,
-            "total_files": len(files),
-            "kept_files": len(files) - deleted_count,
-            "deleted_count": deleted_count,
-            "active_vins_count": len(active_vins)
-        }
-    except Exception as e:
-        return {"success": False, "error": str(e)}
 
 
 def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT", include_signatures="true", so_ct=None):
@@ -3786,8 +3678,12 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
                 pass
 
             # Tự động đẩy file lên Supabase Storage (đám mây) để xem được từ GitHub Pages & Mobile
-            storage_url = upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_stt}.pdf")
-            if clean_so_ct and clean_so_ct != clean_stt:
+            raw_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(stt_rec))
+            storage_url = upload_pdf_to_supabase_storage(pdf_bytes, f"{raw_stt}.pdf")
+            upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_stt}.pdf")
+            if clean_so_ct:
+                raw_so = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(so_ct))
+                upload_pdf_to_supabase_storage(pdf_bytes, f"{raw_so}.pdf")
                 upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_so_ct}.pdf")
 
             return {

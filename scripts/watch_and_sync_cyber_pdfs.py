@@ -28,7 +28,7 @@ from scripts.sync_thuan_an_allocations import (
 
 _cycle_count = 0
 
-def run_sync_cycle(limit=60, max_export=30, cleanup_days=30):
+def run_sync_cycle(limit=30, max_export=5):
     global _cycle_count
     _cycle_count += 1
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -53,27 +53,14 @@ def run_sync_cycle(limit=60, max_export=30, cleanup_days=30):
     except Exception as ex:
         print(f"[{now_str}] ❌ Lỗi kết xuất PDF: {ex}", file=sys.stderr)
 
-    # 3. Tự động dọn dẹp các file PDF cũ quá hạn trên Supabase Storage (chạy định kỳ mỗi 50 chu kỳ ~ 12-15 phút)
-    if _cycle_count % 50 == 1:
-        try:
-            res_clean = cleanup_old_cyber_pdfs_from_supabase(max_days=cleanup_days)
-            deleted = res_clean.get("deleted_count", 0)
-            if deleted > 0:
-                print(f"[{now_str}] 🧹 Tự động dọn dẹp: Đã xóa {deleted} file PDF cũ hơn {cleanup_days} ngày trên Supabase Storage.", file=sys.stderr)
-            else:
-                print(f"[{now_str}] 🧹 Kiểm tra dọn dẹp: Không có file PDF nào cũ hơn {cleanup_days} ngày.", file=sys.stderr)
-        except Exception as ex_clean:
-            print(f"[{now_str}] ⚠️ Lỗi dọn dẹp file cũ: {ex_clean}", file=sys.stderr)
-
     print(f"[{now_str}] ✅ Chu kỳ hoàn tất!\n", file=sys.stderr)
 
 def main():
     parser = argparse.ArgumentParser(description="CyberSoft Voucher PDF Auto-Sync Watcher")
     parser.add_argument("--once", action="store_true", help="Chạy một lần rồi thoát thay vì lặp vô tận")
-    parser.add_argument("--interval", type=int, default=15, help="Thời gian chờ giữa các lần quét (giây, mặc định 15s)")
+    parser.add_argument("--interval", type=int, default=60, help="Thời gian chờ giữa các lần quét (giây, mặc định 60s)")
     parser.add_argument("--limit", type=int, default=30, help="Số lượng phiếu gần nhất cần quét (mặc định 30)")
-    parser.add_argument("--max-export", type=int, default=10, help="Số lượng phiếu tối đa kết xuất trong một lần quét (mặc định 10)")
-    parser.add_argument("--cleanup-days", type=int, default=30, help="Số ngày tối đa giữ file PDF trên Supabase Storage trước khi tự xóa dọn dẹp (mặc định 30 ngày)")
+    parser.add_argument("--max-export", type=int, default=5, help="Số lượng phiếu tối đa kết xuất trong một lần quét (mặc định 5)")
     args = parser.parse_args()
 
     print("==================================================================", file=sys.stderr)
@@ -82,12 +69,12 @@ def main():
     print(f"Interval: {args.interval}s | Quét: {args.limit} phiếu gần nhất | Tối đa xuất: {args.max_export} phiếu/lần\n", file=sys.stderr)
 
     if args.once:
-        run_sync_cycle(limit=args.limit, max_export=args.max_export, cleanup_days=args.cleanup_days)
+        run_sync_cycle(limit=args.limit, max_export=args.max_export)
         return
 
     while True:
         try:
-            run_sync_cycle(limit=args.limit, max_export=args.max_export, cleanup_days=args.cleanup_days)
+            run_sync_cycle(limit=args.limit, max_export=args.max_export)
         except KeyboardInterrupt:
             print("\n[Watcher] ⏹️ Đã dừng tiến trình theo yêu cầu người dùng.", file=sys.stderr)
             break
