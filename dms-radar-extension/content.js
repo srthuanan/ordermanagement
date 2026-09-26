@@ -67,7 +67,9 @@
 
   async function runSync(xrm) {
     var sbUrl = 'https://jwvgxqrkjlbewvpkvucj.supabase.co';
-    var sbKey = process.env.VITE_SUPABASE_ANON_KEY || "";
+    var sbKey = (typeof process !== 'undefined' && process.env && process.env.VITE_SUPABASE_ANON_KEY)
+      ? process.env.VITE_SUPABASE_ANON_KEY
+      : 'sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX';
     var sbHeaders = {
       'apikey': sbKey,
       'Authorization': 'Bearer ' + sbKey,
