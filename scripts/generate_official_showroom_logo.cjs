@@ -389,7 +389,7 @@ async function main() {
   for (let f = 0; f < FRAMES; f++) {
     const svg = renderSlenderChromeVinFastLogo(f);
     const frameWebp = await sharp(Buffer.from(svg))
-      .webp({ quality: 100, alphaQuality: 100, lossless: false })
+      .webp({ quality: 82, alphaQuality: 85, effort: 6, lossless: false })
       .toBuffer();
     frameBuffers.push(frameWebp);
   }

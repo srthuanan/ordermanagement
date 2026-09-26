@@ -3677,17 +3677,24 @@ def export_cyber_pdf_via_stimulsoft_js(stt_rec, voucher_type="TD4", paper_size="
             except Exception:
                 pass
 
-            storage_url = upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_stt}.pdf")
-            if clean_so_ct and clean_so_ct != clean_stt:
-                upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_so_ct}.pdf")
+            # LƯU Ý QUAN TRỌNG: Stimulsoft JS trên Render Cloud là bản Trial (chưa có license key),
+            # sẽ sinh ra watermark chữ "Trial" to và thiếu chữ ký chuẩn.
+            # TUYỆT ĐỐI KHÔNG upload file Trial này lên Supabase Storage để tránh đè hỏng file chuẩn của CyberSoft.
+            # File chính thức sạch sẽ do máy tính văn phòng (PowerShell engine) xuất và đẩy lên.
+            print(f"[Stimulsoft JS Info] Đã tạo file xem tạm thời {clean_stt}, không upload Trial lên Supabase Storage.", file=sys.stderr)
+
+            with open(out_pdf, "rb") as f_b64:
+                b64_preview = base64.b64encode(f_b64.read()).decode("utf-8")
 
             return {
                 "success": True,
-                "pdf_url": storage_url or f"{SUPABASE_URL}/storage/v1/object/public/yeucauxhd-files/cyber_pdfs/{clean_stt}.pdf",
+                "pdf_url": None,
+                "pdf_base64": f"data:application/pdf;base64,{b64_preview}",
                 "stt_rec": stt_rec,
                 "voucher_type": voucher_type,
                 "from_storage": False,
-                "engine": "stimulsoft-js"
+                "engine": "stimulsoft-js-trial",
+                "warning": "Bản xem trước tạm thời từ Cloud Render"
             }
         else:
             err_msg = proc.stderr or proc.stdout or "Kết xuất PDF thất bại"
@@ -3753,25 +3760,21 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
     except Exception:
         pass
 
-    # 2. Thử kết xuất qua Stimulsoft Reports.JS (chạy được cả trên Render Linux và Windows không cần mở máy)
-    try:
-        js_res = export_cyber_pdf_via_stimulsoft_js(stt_rec, voucher_type, paper_size, user_name, include_signatures, so_ct)
-        if js_res.get("success"):
-            return js_res
-        else:
-            print(f"[Stimulsoft JS Fallback]: {js_res.get('error')}", file=sys.stderr)
-    except Exception as e_js:
-        print(f"[Stimulsoft JS Error]: {e_js}", file=sys.stderr)
-
-    # 3. Nếu đang chạy trên Linux (Cloud/Render) và Stimulsoft JS chưa thành công:
+    # 2. Nếu đang chạy trên Linux/Cloud (Render) → dùng Stimulsoft JS
     if sys.platform != "win32":
-        err_msg = (js_res.get("error") if isinstance(js_res, dict) else None) or "Lỗi kết xuất PDF từ Render Cloud qua Stimulsoft.JS"
-        return {
-            "success": False,
-            "error": err_msg
-        }
-    
-    # 4. Fallback chạy PowerShell cục bộ nếu đang trên Windows văn phòng:
+        js_res = {}
+        try:
+            js_res = export_cyber_pdf_via_stimulsoft_js(stt_rec, voucher_type, paper_size, user_name, include_signatures, so_ct)
+            if js_res.get("success"):
+                return js_res
+            else:
+                print(f"[Stimulsoft JS Fallback]: {js_res.get('error')}", file=sys.stderr)
+        except Exception as e_js:
+            print(f"[Stimulsoft JS Error]: {e_js}", file=sys.stderr)
+        err_msg = js_res.get("error") or "Lỗi kết xuất PDF từ Render Cloud qua Stimulsoft.JS"
+        return {"success": False, "error": err_msg}
+
+    # 3. Trên Windows văn phòng → ưu tiên PowerShell CyberSoft (.NET engine, chất lượng cao, có chữ ký, không watermark)
     temp_dir = tempfile.gettempdir()
     out_file = os.path.join(temp_dir, f"cyber_preview_{clean_stt}_{os.getpid()}.pdf")
     

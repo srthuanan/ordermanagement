@@ -59,3 +59,6 @@ bookmarklets/
 # Do not track cached cyber PDFs
 public/cyber_pdfs/*.pdf
 !public/cyber_pdfs/.gitkeep
+
+# Backups
+backups/

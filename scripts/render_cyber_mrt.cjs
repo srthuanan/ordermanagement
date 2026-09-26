@@ -73,8 +73,10 @@ async function main() {
     setVar("M_TEN_CTY", "CÔNG TY TNHH MINH ĐẠO PHÁT");
     setVar("M_DIA_CHI", "Tổ dân phố Cam Giá 2, Phường Gia Sàng, Tỉnh Thái Nguyên, Việt Nam");
 
-    // 3. Tiêu đề riêng cho DNX
+    // 3. Tiêu đề riêng cho DNX (template PXX00.mrt dùng biến M_TITLE1, mặc định là 'DANH MỤC BỘ PHẬN')
     if (voucherType === 'DNX') {
+        setVar("M_TITLE1", "ĐỀ NGHỊ XUẤT XE");
+        setVar("M_TITLE2", "VEHICLE DELIVERY REQUEST");
         const titleComp = report.getComponentByName("Text2");
         if (titleComp && titleComp.text) {
             titleComp.text.value = "ĐỀ NGHỊ XUẤT XE";
