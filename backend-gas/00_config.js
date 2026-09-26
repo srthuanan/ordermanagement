@@ -2,7 +2,7 @@ const SPREADSHEET_ID = "1CzYUfDAcwt4D64UIZIUC77lZ2lOYQ257xlmVXy2nZG0";
 
 // ===== CẤU HÌNH SUPABASE =====
 var SUPABASE_URL = PropertiesService.getScriptProperties().getProperty('SUPABASE_URL') || "https://jwvgxqrkjlbewvpkvucj.supabase.co";
-var SUPABASE_SERVICE_KEY = PropertiesService.getScriptProperties().getProperty('SUPABASE_SERVICE_KEY') || "";
+var SUPABASE_SERVICE_KEY = PropertiesService.getScriptProperties().getProperty('SUPABASE_SERVICE_KEY') || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU";
 
 const DRIVE_FOLDER_ID = "1eLbuAfT349u0D5hF6aJgTzS7cmKUs0ab";
 const ADMIN_EMAIL = "showroomthuanan@gmail.com";

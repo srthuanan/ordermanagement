@@ -27,6 +27,23 @@ function generateBcGhepXeDuXhd() {
     sheet = ss.insertSheet(sheetName);
   }
 
+  // 0. Lưu lại dữ liệu người dùng đã tự tay điền (Ngày dự XHĐ, Tình trạng) theo VIN để không bị ghi đè
+  var existingUserInputs = {};
+  if (sheet.getLastRow() > 1) {
+    try {
+      var oldData = sheet.getRange(2, 1, sheet.getLastRow() - 1, Math.min(sheet.getLastColumn(), 9)).getValues();
+      for (var o = 0; o < oldData.length; o++) {
+        var oldVin = String(oldData[o][4] || "").trim(); // Cột E (index 4) là VIN
+        if (oldVin) {
+          existingUserInputs[oldVin] = {
+            duXhd: oldData[o][7] || "",     // Cột H
+            tinhTrang: oldData[o][8] || ""  // Cột I
+          };
+        }
+      }
+    } catch (eOld) {}
+  }
+
   sheet.clear();
   sheet.clearFormats();
 
@@ -133,6 +150,15 @@ function generateBcGhepXeDuXhd() {
       }
     }
 
+    // Giữ nguyên ghi chú hoặc ngày dự kiến XHĐ nếu người dùng đã từng điền trước đó
+    var userDuXhd = currentMonth;
+    var userTinhTrang = "";
+    var cleanVin = (p.vin || "").trim();
+    if (cleanVin && existingUserInputs[cleanVin]) {
+      if (existingUserInputs[cleanVin].duXhd) userDuXhd = existingUserInputs[cleanVin].duXhd;
+      if (existingUserInputs[cleanVin].tinhTrang) userTinhTrang = existingUserInputs[cleanVin].tinhTrang;
+    }
+
     rows.push([
       maSr,
       showroom,
@@ -141,8 +167,8 @@ function generateBcGhepXeDuXhd() {
       p.vin || "",
       p.ten_khach_hang || "",
       ngayGhepStr,
-      currentMonth,
-      "" // Tình trạng
+      userDuXhd,
+      userTinhTrang
     ]);
   }
 
@@ -220,3 +246,99 @@ function generateBcGhepXeDuXhd() {
 
   return true;
 }
+
+/**
+ * Chế độ CÔNG THỨC TRỰC TIẾP (0ms - 100% Real-time tự động ngay trong Google Sheets)
+ * Sử dụng công thức ARRAYFORMULA & FILTER liên kết trực tiếp sang sheet 'donhang'.
+ * Bất cứ khi nào dữ liệu bảng 'donhang' thay đổi (qua webhook hoặc sửa tay),
+ * Google Sheets tự động nhảy số tức thì mà không cần chạy bất kỳ đoạn mã script nào!
+ */
+function setupRealtimeBcGhepXeFormula() {
+  var ss;
+  try {
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+  } catch (e) {}
+  if (!ss) {
+    ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  }
+
+  var sheetName = "BC GHÉP XE-DỰ XHĐ";
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    sheet = ss.insertSheet(sheetName);
+  }
+
+  // Tiêu đề
+  var headers = [
+    ["MÃ SR\nKHÔNG SỬA", "Showroom", "Loại xe", "Ngoại thất", "Số khung (vin)", "Tên khách hàng", "Ngày ghép", "Ngày dự XHĐ\n(BẮT BUỘC PHẢI ĐIỀN)", "Tình trạng"]
+  ];
+
+  sheet.getRange(1, 1, 1, 9).setValues(headers);
+
+  // Định dạng Header
+  var headerRange = sheet.getRange(1, 1, 1, 9);
+  headerRange.setFontWeight("bold").setFontSize(10).setVerticalAlignment("middle").setWrap(true);
+  sheet.getRange(1, 1).setBackground("#ff9900").setHorizontalAlignment("center");
+  sheet.getRange(1, 2).setBackground("#ffff00").setHorizontalAlignment("center");
+  sheet.getRange(1, 3).setBackground("#ffff00").setHorizontalAlignment("center");
+  sheet.getRange(1, 4).setBackground("#ffff00").setHorizontalAlignment("center");
+  sheet.getRange(1, 5).setBackground("#ffff00").setHorizontalAlignment("center");
+  sheet.getRange(1, 6).setBackground("#ffff00").setHorizontalAlignment("center");
+  sheet.getRange(1, 7).setBackground("#ffff00").setHorizontalAlignment("center");
+  sheet.getRange(1, 8).setBackground("#ff9900").setHorizontalAlignment("center");
+  sheet.getRange(1, 9).setBackground("#ffff00").setHorizontalAlignment("center");
+
+  // Xóa nội dung cũ từ dòng 2
+  if (sheet.getLastRow() > 1) {
+    sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).clearContent();
+  }
+
+  // Thiết lập công thức Real-time:
+  // Cột A: Tự sinh mã TA1, TA2... theo số lượng xe đã ghép
+  sheet.getRange("A2").setFormula('=ARRAYFORMULA(IF(ROW(A2:A)-1<=COUNTA(IFERROR(FILTER(donhang!M2:M, donhang!L2:L="Đã ghép"))), "TA" & (ROW(A2:A)-1), ""))');
+
+  // Cột B: Showroom "Thuận An"
+  sheet.getRange("B2").setFormula('=ARRAYFORMULA(IF(A2:A<>"", "Thuận An", ""))');
+
+  // Cột C: Loại xe (Kết hợp Dòng xe & Phiên bản)
+  sheet.getRange("C2").setFormula('=IFERROR(FILTER(IF(donhang!F2:F="", donhang!E2:E, IF(ISNUMBER(SEARCH(donhang!E2:E, donhang!F2:F)), donhang!F2:F, donhang!E2:E & " " & donhang!F2:F)), donhang!L2:L="Đã ghép"), "")');
+
+  // Cột D: Ngoại thất
+  sheet.getRange("D2").setFormula('=IFERROR(FILTER(donhang!G2:G, donhang!L2:L="Đã ghép"), "")');
+
+  // Cột E: Số khung (vin)
+  sheet.getRange("E2").setFormula('=IFERROR(FILTER(donhang!M2:M, donhang!L2:L="Đã ghép"), "")');
+
+  // Cột F: Tên khách hàng
+  sheet.getRange("F2").setFormula('=IFERROR(FILTER(donhang!D2:D, donhang!L2:L="Đã ghép"), "")');
+
+  // Cột G: Ngày ghép (Định dạng ngày)
+  sheet.getRange("G2").setFormula('=IFERROR(FILTER(IF(donhang!N2:N<>"", TEXT(DATEVALUE(LEFT(donhang!N2:N, 10)), "dd/mm/yyyy"), ""), donhang!L2:L="Đã ghép"), "")');
+
+  // Cột H: Ngày dự XHĐ mặc định theo tháng
+  sheet.getRange("H2").setFormula('=ARRAYFORMULA(IF(A2:A<>"", "Tháng " & MONTH(TODAY()), ""))');
+
+  sheet.setFrozenRows(1);
+
+  // Kẻ viền và độ rộng
+  sheet.getRange("A1:I50").setBorder(true, true, true, true, true, true, "#434343", SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange("A2:I50").setHorizontalAlignment("center");
+  sheet.getRange("E2:E50").setFontFamily("Courier New");
+
+  sheet.setColumnWidth(1, 95);
+  sheet.setColumnWidth(2, 100);
+  sheet.setColumnWidth(3, 140);
+  sheet.setColumnWidth(4, 180);
+  sheet.setColumnWidth(5, 170);
+  sheet.setColumnWidth(6, 230);
+  sheet.setColumnWidth(7, 100);
+  sheet.setColumnWidth(8, 140);
+  sheet.setColumnWidth(9, 100);
+
+  try {
+    ss.toast("Đã kích hoạt chế độ CÔNG THỨC REAL-TIME cho sheet BC GHÉP XE-DỰ XHĐ!", "Thành công", 5);
+  } catch (tErr) {}
+
+  return true;
+}
+

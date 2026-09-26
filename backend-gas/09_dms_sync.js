@@ -274,6 +274,12 @@ function createSyncTriggers() {
            .timeBased()
            .everyHours(4)
            .create();
+
+  // Tạo trigger lặp định kỳ mỗi 15 phút cập nhật Báo Cáo Ghép Xe - Dự XHĐ
+  ScriptApp.newTrigger("generateBcGhepXeDuXhd")
+           .timeBased()
+           .everyMinutes(15)
+           .create();
            
   SpreadsheetApp.getUi().alert("🚀 Hoàn tất", "Đã khởi tạo thành công lịch trình tự động đám mây 24/7 của Google!", SpreadsheetApp.getUi().ButtonSet.OK);
 }

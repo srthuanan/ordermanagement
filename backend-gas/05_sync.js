@@ -8,7 +8,8 @@ function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('🚀 VINFO SYNC 2.0')
       .addItem('📊 Báo cáo KPI (Xuất HĐ)', 'generateKpiSheet')
-      .addItem('📑 Báo Cáo Ghép Xe - Dự XHĐ', 'generateBcGhepXeDuXhd')
+      .addItem('📑 Báo Cáo Ghép Xe - Dự XHĐ (Chạy ngay)', 'generateBcGhepXeDuXhd')
+      .addItem('⚡ Cài đặt Sheet Ghép Xe REAL-TIME (0ms)', 'setupRealtimeBcGhepXeFormula')
       .addSeparator()
       .addItem('🔑 Cập nhật Mã kết nối DMS (Token)', 'saveDmsToken')
       .addItem('📍 Đồng bộ GPS Live tức thì', 'syncDmsGpsToSupabase')

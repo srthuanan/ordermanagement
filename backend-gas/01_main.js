@@ -276,6 +276,15 @@ function handleSupabaseWebhook(e) {
     if (tablesToSyncNames.indexOf(tableName) !== -1) {
        logAction("Auto-Sync", `Tín hiệu ${type} bảng ${tableName} -> Đang cập nhật dòng thay đổi...`);
        syncOneRecordToSheet(tableName, record || oldRecord, type);
+
+       // REAL-TIME: Tự động cập nhật tức thì Báo Cáo Ghép Xe - Dự XHĐ khi bảng donhang thay đổi
+       if (tableName === 'donhang') {
+         try {
+           generateBcGhepXeDuXhd();
+         } catch (bcErr) {
+           logAction("Auto-Sync BC Ghép Xe", "Lỗi: " + bcErr.message);
+         }
+       }
     }
 
     return { success: true };
