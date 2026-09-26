@@ -2794,18 +2794,45 @@ def sync_missing_cyber_voucher_pdfs(limit: int = 60, max_export: int = 30) -> di
     except Exception as e:
         print(f"[PDF-Sync Warning] Không thể lấy danh sách từ Supabase Storage: {e}", file=sys.stderr)
 
+    # Thu thập danh sách VIN đang hoạt động của Thuận An (khoxe, donhang, yeucauxhd)
+    active_vins = set()
+    for tbl in ['khoxe', 'donhang', 'yeucauxhd']:
+        try:
+            r_act = requests.get(f"{SUPABASE_URL}/rest/v1/{tbl}?select=vin", headers=HEADERS, timeout=8)
+            if r_act.status_code == 200:
+                for row in r_act.json():
+                    v_str = (row.get('vin') or '').strip().upper()
+                    if v_str: active_vins.add(v_str)
+        except Exception:
+            pass
+
     missing_tickets = []
     for t in tickets:
         stt_rec = (t.get("stt_rec") or "").strip()
+        so_ct = (t.get("so_ct") or "").strip()
         if not stt_rec:
             continue
+
+        # Chỉ xử lý các phiếu của xe đang có tại khoxe, donhang, yeucauxhd
+        lines = t.get("lines") or []
+        t_vin = ((t.get("raw_data") or {}).get("vin") or t.get("vin") or "").strip().upper()
+        vins_in_t = {t_vin} if t_vin else set()
+        for l in lines:
+            l_vin = (l.get("vin") or l.get("so_khung") or "").strip().upper()
+            if l_vin:
+                vins_in_t.add(l_vin)
+
+        has_active_car = any(v in active_vins for v in vins_in_t)
+        if not has_active_car:
+            continue  # Bỏ qua phiếu của xe không có trong khoxe, donhang, yeucauxhd
+
         clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', stt_rec)
         sig_file = f"{clean_stt}_sig.pdf".lower()
         nosig_file = f"{clean_stt}_nosig.pdf".lower()
         if sig_file not in existing_files or nosig_file not in existing_files:
             missing_tickets.append(t)
 
-    print(f"[PDF-Sync] 📊 Tìm thấy {len(missing_tickets)}/{len(tickets)} phiếu chưa có đủ file PDF trên Supabase Storage.", file=sys.stderr)
+    print(f"[PDF-Sync] 📊 Tìm thấy {len(missing_tickets)}/{len(tickets)} phiếu thuộc Thuận An cần xuất PDF lên Cloud.", file=sys.stderr)
     exported_count = 0
     errors = []
 
@@ -3540,35 +3567,127 @@ def upload_pdf_to_supabase_storage(file_bytes, remote_filename):
 
 
 def cleanup_old_cyber_pdfs_from_supabase(max_days=30):
-    """Tự động dọn dẹp xóa các file PDF quá max_days ngày trên Supabase Storage để tiết kiệm dung lượng"""
+    """
+    Tự động dọn dẹp Supabase Storage thông minh theo đúng nghiệp vụ:
+    CHỈ GIỮ LẠI các file PDF liên quan đến các xe đang có trong:
+      1. khoxe (xe đang tồn tại showroom/kho Thuận An)
+      2. donhang (xe đang có đơn hàng của TVBH)
+      3. yeucauxhd (xe đang xử lý hồ sơ xuất hóa đơn)
+      4. Các phiếu Đề nghị xuất xe của Showroom Thuận An (08.DNX)
+    Tất cả các file PDF rác của các chi nhánh khác hoặc xe cũ đã giao xong không liên quan sẽ tự động bị xóa bỏ.
+    """
     import requests
+    import re
     from datetime import datetime, timezone, timedelta
+
     supabase_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co").strip().rstrip('/')
     supabase_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY", os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_KEY", "")).strip()
     bucket = "yeucauxhd-files"
-    list_url = f"{supabase_url}/storage/v1/object/list/{bucket}"
     headers = {
         "apikey": supabase_key,
         "Authorization": f"Bearer {supabase_key}",
         "Content-Type": "application/json"
     }
+
     try:
-        res = requests.post(list_url, headers=headers, json={"prefix": "cyber_pdfs/", "limit": 500}, timeout=15)
+        # Bước 1: Lấy danh sách VIN đang hoạt động từ khoxe, donhang, yeucauxhd
+        active_vins = set()
+        for tbl in ['khoxe', 'donhang', 'yeucauxhd']:
+            try:
+                r_act = requests.get(f"{supabase_url}/rest/v1/{tbl}?select=vin", headers=headers, timeout=8)
+                if r_act.status_code == 200:
+                    for row in r_act.json():
+                        v = (row.get('vin') or '').strip().upper()
+                        if v: active_vins.add(v)
+            except Exception:
+                pass
+
+        # Bước 2: Thu thập các định danh phiếu (stt_rec, so_ct) gắn với các VIN này
+        keep_patterns = set()
+        for v in active_vins:
+            keep_patterns.add(re.sub(r'[^a-zA-Z0-9_\-]', '_', v).lower())
+
+        # Lấy từ cyber_car_status
+        try:
+            r_st = requests.get(f"{supabase_url}/rest/v1/cyber_car_status?select=vin,stt_rec,so_ct_dnx,so_ct_td4", headers=headers, timeout=10)
+            if r_st.status_code == 200:
+                for row in r_st.json():
+                    if (row.get('vin') or '').strip().upper() in active_vins:
+                        for k in ['stt_rec', 'so_ct_dnx', 'so_ct_td4']:
+                            val = (row.get(k) or '').strip()
+                            if val:
+                                keep_patterns.add(re.sub(r'[^a-zA-Z0-9_\-]', '_', val).lower())
+        except Exception:
+            pass
+
+        # Lấy từ cyber_voucher_tickets
+        try:
+            r_t = requests.get(f"{supabase_url}/rest/v1/cyber_voucher_tickets?select=stt_rec,so_ct,lines,raw_data", headers=headers, timeout=10)
+            if r_t.status_code == 200:
+                for row in r_t.json():
+                    lines = row.get('lines') or []
+                    t_vin = ((row.get('raw_data') or {}).get('vin') or '').strip().upper()
+                    vins_in_t = {t_vin} if t_vin else set()
+                    for line in lines:
+                        l_vin = (line.get('vin') or line.get('so_khung') or '').strip().upper()
+                        if l_vin:
+                            vins_in_t.add(l_vin)
+                    if any(v in active_vins for v in vins_in_t):
+                        for k in ['stt_rec', 'so_ct']:
+                            val = (row.get(k) or '').strip()
+                            if val:
+                                keep_patterns.add(re.sub(r'[^a-zA-Z0-9_\-]', '_', val).lower())
+        except Exception:
+            pass
+
+        # Bước 3: Quét kho Supabase Storage và xóa các file không liên quan đến xe đang hoạt động
+        list_url = f"{supabase_url}/storage/v1/object/list/{bucket}"
+        res = requests.post(list_url, headers=headers, json={"prefix": "cyber_pdfs/", "limit": 1000}, timeout=15)
         if res.status_code != 200:
             return {"success": False, "error": res.text}
+
         files = res.json()
-        now = datetime.now(timezone.utc)
-        cutoff = now - timedelta(days=max_days)
-        deleted_count = 0
+        prefixes_to_delete = []
+
         for f in files:
-            created_at_str = f.get("created_at") or f.get("updated_at")
-            if created_at_str:
-                dt = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
-                if dt < cutoff:
-                    del_url = f"{supabase_url}/storage/v1/object/{bucket}/cyber_pdfs/{f['name']}"
-                    requests.delete(del_url, headers=headers, timeout=10)
-                    deleted_count += 1
-        return {"success": True, "deleted_count": deleted_count}
+            fname = f.get('name', '')
+            if not fname:
+                continue
+            fname_lower = fname.lower()
+            base_name = fname_lower.replace('_sig.pdf', '').replace('_nosig.pdf', '').replace('.pdf', '')
+
+            # Chỉ giữ file nếu thuộc về xe đang có trong khoxe, donhang, yeucauxhd
+            is_active_vehicle = any(p in base_name or base_name in p for p in keep_patterns if len(p) >= 4)
+
+            if not is_active_vehicle:
+                prefixes_to_delete.append(f"cyber_pdfs/{fname}")
+
+        # Bước 4: Xóa nhanh theo từng lô (Batch Delete API của Supabase Storage)
+        deleted_count = 0
+        batch_size = 50
+        for i in range(0, len(prefixes_to_delete), batch_size):
+            chunk = prefixes_to_delete[i:i + batch_size]
+            try:
+                del_url = f"{supabase_url}/storage/v1/object/{bucket}"
+                del_res = requests.delete(del_url, headers=headers, json={"prefixes": chunk}, timeout=15)
+                if del_res.status_code in [200, 204]:
+                    deleted_count += len(chunk)
+                else:
+                    # Fallback xóa từng file nếu batch gặp lỗi
+                    for pfx in chunk:
+                        single_url = f"{supabase_url}/storage/v1/object/{bucket}/{pfx}"
+                        if requests.delete(single_url, headers=headers, timeout=5).status_code in [200, 204]:
+                            deleted_count += 1
+            except Exception as e_del:
+                print(f"[Storage Cleanup Error] {e_del}", file=sys.stderr)
+
+        return {
+            "success": True,
+            "total_files": len(files),
+            "kept_files": len(files) - deleted_count,
+            "deleted_count": deleted_count,
+            "active_vins_count": len(active_vins)
+        }
     except Exception as e:
         return {"success": False, "error": str(e)}
 
