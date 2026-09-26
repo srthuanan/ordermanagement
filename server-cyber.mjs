@@ -273,7 +273,7 @@ const cyberDir = 'D:\\CyberSoft\\CYBNET9_VANDAO';
 if (fs.existsSync(cyberDir) && process.env.ENABLE_PDF_SYNC !== 'false') {
     console.log(`[CyberSync] Đã tìm thấy CyberSoft tại ${cyberDir}.`);
     console.log('[CyberSync] Đang kích hoạt tiến trình tự động xuất PDF gốc (DNX, TD4) lên Supabase...');
-    const pdfSyncProc = spawn('python', ['scripts/watch_and_sync_cyber_pdfs.py', '--interval', '60', '--limit', '20', '--max-export', '5'], {
+    const pdfSyncProc = spawn('python', ['scripts/watch_and_sync_cyber_pdfs.py', '--interval', '15', '--limit', '20', '--max-export', '5'], {
         cwd: __dirname,
         stdio: 'inherit'
     });

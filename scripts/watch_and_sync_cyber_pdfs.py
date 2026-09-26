@@ -58,7 +58,7 @@ def run_sync_cycle(limit=30, max_export=5):
 def main():
     parser = argparse.ArgumentParser(description="CyberSoft Voucher PDF Auto-Sync Watcher")
     parser.add_argument("--once", action="store_true", help="Chạy một lần rồi thoát thay vì lặp vô tận")
-    parser.add_argument("--interval", type=int, default=60, help="Thời gian chờ giữa các lần quét (giây, mặc định 60s)")
+    parser.add_argument("--interval", type=int, default=15, help="Thời gian chờ giữa các lần quét (giây, mặc định 15s)")
     parser.add_argument("--limit", type=int, default=30, help="Số lượng phiếu gần nhất cần quét (mặc định 30)")
     parser.add_argument("--max-export", type=int, default=5, help="Số lượng phiếu tối đa kết xuất trong một lần quét (mặc định 5)")
     args = parser.parse_args()
