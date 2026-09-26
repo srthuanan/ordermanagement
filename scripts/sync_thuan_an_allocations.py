@@ -3572,139 +3572,8 @@ def cleanup_old_cyber_pdfs_from_supabase(max_days=30):
         return {"success": False, "error": str(e)}
 
 
-def export_cyber_pdf_via_stimulsoft_js(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT", include_signatures="true", so_ct=None):
-    """Kết xuất PDF chính thức từ template MRT bằng thư viện Stimulsoft Reports.JS (chạy được trên Render Linux và Windows)"""
-    import subprocess
-    import os
-    import sys
-    import json
-    import tempfile
-    import decimal
-    import datetime
-    import re
-    import pymssql
-
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    renderer_script = os.path.join(script_dir, "render_cyber_mrt.cjs")
-    
-    v_type = str(voucher_type).upper()
-    template_name = "PXX00.mrt" if v_type == "DNX" else "TD400.mrt"
-    mrt_path = os.path.join(script_dir, "cyber_templates", template_name)
-
-    if not os.path.exists(mrt_path):
-        cyber_path_mrt = os.path.join(r"D:\CyberSoft\CYBNET9_VANDAO\Repo", template_name)
-        if os.path.exists(cyber_path_mrt):
-            mrt_path = cyber_path_mrt
-        else:
-            return {"success": False, "error": f"Không tìm thấy template {template_name}"}
-
-    # 1. Kết nối SQL Server lấy dữ liệu thực tế
-    try:
-        conn = pymssql.connect(
-            server='SQLVanDao.Cybersoft.com.vn', port=7521, user='cyber_vandao',
-            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
-            database='CyberAppGolden_VanDao', timeout=12, appname='CyberAppGolden', autocommit=True
-        )
-        cur = conn.cursor(as_dict=True)
-        sp_name = "CP_PrintDNX" if v_type == "DNX" else "CP_PrintTD4"
-        cur.execute(f"EXEC {sp_name} @M_Stt_Rec = %s, @M_Id = %s, @M_User_Name = %s", (str(stt_rec), '1', str(user_name)))
-        
-        t0 = []
-        t1 = []
-        sets = []
-        while True:
-            rows = cur.fetchall()
-            if rows is not None:
-                sets.append(rows)
-            if not cur.nextset():
-                break
-        conn.close()
-
-        if len(sets) >= 3:
-            t0 = sets[1]
-            t1 = sets[2]
-        elif len(sets) >= 2:
-            t0 = sets[0]
-            t1 = sets[1]
-        elif len(sets) == 1:
-            t0 = sets[0]
-            t1 = []
-    except Exception as ex:
-        print(f"[Stimulsoft JS SQL Error]: {ex}", file=sys.stderr)
-        return {"success": False, "error": f"Lỗi truy vấn dữ liệu từ CyberSoft SQL: {ex}"}
-
-    def default_serializer(o):
-        if isinstance(o, (datetime.date, datetime.datetime)):
-            return o.strftime('%Y-%m-%dT%H:%M:%S')
-        if isinstance(o, decimal.Decimal):
-            return float(o)
-        return str(o)
-
-    data_payload = {"Table0": t0, "Table1": t1}
-    temp_dir = tempfile.gettempdir()
-    data_tmp = os.path.join(temp_dir, f"mrt_data_{stt_rec}_{os.getpid()}.json")
-    with open(data_tmp, "w", encoding="utf-8") as f:
-        json.dump(data_payload, f, default=default_serializer, ensure_ascii=False)
-
-    sig_suffix = "_sig" if str(include_signatures).lower() in ["true", "1"] else "_nosig"
-    clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(stt_rec)) + sig_suffix
-    clean_so_ct = (re.sub(r'[^a-zA-Z0-9_\-]', '_', str(so_ct)) + sig_suffix) if so_ct else None
-    out_pdf = os.path.join(temp_dir, f"cyber_preview_{clean_stt}_{os.getpid()}.pdf")
-
-    cmd = [
-        "node", renderer_script,
-        "--mrt", mrt_path,
-        "--data", data_tmp,
-        "--voucher-type", v_type,
-        "--paper-size", str(paper_size),
-        "--signatures", "true" if "_sig" in sig_suffix else "false",
-        "--out", out_pdf
-    ]
-
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=90)
-        try:
-            os.remove(data_tmp)
-        except Exception:
-            pass
-
-        if os.path.exists(out_pdf) and os.path.getsize(out_pdf) > 1000:
-            with open(out_pdf, "rb") as f:
-                pdf_bytes = f.read()
-
-            try:
-                os.remove(out_pdf)
-            except Exception:
-                pass
-
-            # LƯU Ý QUAN TRỌNG: Stimulsoft JS trên Render Cloud là bản Trial (chưa có license key),
-            # sẽ sinh ra watermark chữ "Trial" to và thiếu chữ ký chuẩn.
-            # TUYỆT ĐỐI KHÔNG upload file Trial này lên Supabase Storage để tránh đè hỏng file chuẩn của CyberSoft.
-            # File chính thức sạch sẽ do máy tính văn phòng (PowerShell engine) xuất và đẩy lên.
-            print(f"[Stimulsoft JS Info] Đã tạo file xem tạm thời {clean_stt}, không upload Trial lên Supabase Storage.", file=sys.stderr)
-
-            with open(out_pdf, "rb") as f_b64:
-                b64_preview = base64.b64encode(f_b64.read()).decode("utf-8")
-
-            return {
-                "success": True,
-                "pdf_url": None,
-                "pdf_base64": f"data:application/pdf;base64,{b64_preview}",
-                "stt_rec": stt_rec,
-                "voucher_type": voucher_type,
-                "from_storage": False,
-                "engine": "stimulsoft-js-trial",
-                "warning": "Bản xem trước tạm thời từ Cloud Render"
-            }
-        else:
-            err_msg = proc.stderr or proc.stdout or "Kết xuất PDF thất bại"
-            print(f"[Stimulsoft JS Render Fail]: {err_msg}", file=sys.stderr)
-            return {"success": False, "error": err_msg}
-    except Exception as e_proc:
-        return {"success": False, "error": str(e_proc)}
-
-
 def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT", include_signatures="true", so_ct=None):
+    """Kết xuất PDF chính thức bằng PowerShell CyberSoft (.NET Engine) và đẩy lên Supabase Storage"""
     import subprocess
     import os
     import re
@@ -3760,21 +3629,14 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
     except Exception:
         pass
 
-    # 2. Nếu đang chạy trên Linux/Cloud (Render) → dùng Stimulsoft JS
+    # 2. Nếu đang chạy trên Linux/Render Cloud:
     if sys.platform != "win32":
-        js_res = {}
-        try:
-            js_res = export_cyber_pdf_via_stimulsoft_js(stt_rec, voucher_type, paper_size, user_name, include_signatures, so_ct)
-            if js_res.get("success"):
-                return js_res
-            else:
-                print(f"[Stimulsoft JS Fallback]: {js_res.get('error')}", file=sys.stderr)
-        except Exception as e_js:
-            print(f"[Stimulsoft JS Error]: {e_js}", file=sys.stderr)
-        err_msg = js_res.get("error") or "Lỗi kết xuất PDF từ Render Cloud qua Stimulsoft.JS"
-        return {"success": False, "error": err_msg}
+        return {
+            "success": False,
+            "error": "Phiếu này chưa kịp đồng bộ lên Cloud. Vui lòng mở file 'chay_dong_bo_pdf_ngam.bat' trên máy tính văn phòng để hệ thống tự động tạo và đẩy file PDF gốc CyberSoft lên Cloud."
+        }
 
-    # 3. Trên Windows văn phòng → ưu tiên PowerShell CyberSoft (.NET engine, chất lượng cao, có chữ ký, không watermark)
+    # 3. Trên Windows văn phòng → dùng PowerShell CyberSoft (.NET engine chính thức có bản quyền)
     temp_dir = tempfile.gettempdir()
     out_file = os.path.join(temp_dir, f"cyber_preview_{clean_stt}_{os.getpid()}.pdf")
     
