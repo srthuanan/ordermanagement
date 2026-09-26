@@ -163,15 +163,18 @@ function generateBcGhepXeDuXhd() {
       }
     }
 
-    // Giữ nguyên ghi chú hoặc ngày dự kiến XHĐ nếu người dùng đã từng điền trước đó
     var userDuXhd = currentMonth;
-    var userTinhTrang = "";
     var cleanVin = (p.vin || "").trim();
-    if (cleanVin && existingUserInputs[cleanVin]) {
-      if (existingUserInputs[cleanVin].duXhd) userDuXhd = existingUserInputs[cleanVin].duXhd;
-      if (existingUserInputs[cleanVin].tinhTrang) userTinhTrang = existingUserInputs[cleanVin].tinhTrang;
-    } else if (p.ket_qua && p.ket_qua !== "Đã ghép") {
-      userTinhTrang = "Đã đủ hồ sơ"; // Các TH TVBH gửi yêu cầu XHĐ note: Đã đủ hồ sơ
+    if (cleanVin && existingUserInputs[cleanVin] && existingUserInputs[cleanVin].duXhd) {
+      userDuXhd = existingUserInputs[cleanVin].duXhd;
+    }
+
+    var userTinhTrang = "";
+    // Tình trạng: Các trường hợp TVBH gửi yêu cầu XHĐ luôn note "Đã đủ hồ sơ"
+    if (p.ket_qua && p.ket_qua !== "Đã ghép") {
+      userTinhTrang = "Đã đủ hồ sơ";
+    } else if (cleanVin && existingUserInputs[cleanVin] && existingUserInputs[cleanVin].tinhTrang) {
+      userTinhTrang = existingUserInputs[cleanVin].tinhTrang;
     }
 
     rows.push([

@@ -88,7 +88,7 @@ function doPost(e) {
         break;
 
       case 'fetchSheetData':
-        response = createJsonResponse(handleFetchSheetData(e));
+        response = handleFetchSheetData(e);
         break;
       
       case 'notifyInvoiceUploaded':
@@ -341,7 +341,9 @@ function createJsonResponse(payload) {
 function handleFetchSheetData(e) {
   try {
     const sheetName = e.parameter.sheetName || 'yeucauxhd';
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss;
+    try { ss = SpreadsheetApp.getActiveSpreadsheet(); } catch(e){}
+    if (!ss) ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const sheet = ss.getSheetByName(sheetName);
     if (!sheet) throw new Error("Không tìm thấy sheet: " + sheetName);
     
