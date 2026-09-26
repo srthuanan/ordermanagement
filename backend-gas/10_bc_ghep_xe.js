@@ -47,10 +47,11 @@ function generateBcGhepXeDuXhd() {
   sheet.clear();
   sheet.clearFormats();
 
-  // 1. Lấy dữ liệu xe đã ghép từ Supabase (bảng donhang)
+  // 1. Lấy dữ liệu xe đã ghép và các xe TVBH đã yêu cầu XHĐ nhưng CHƯA có trạng thái Chờ ký hóa đơn (vẫn tính là Dự XHĐ)
   var pairedOrders = [];
   try {
-    var url = SUPABASE_URL + "/rest/v1/donhang?ket_qua=eq.%C4%90%C3%A3%20gh%C3%A9p&select=vin,ten_khach_hang,dong_xe,phien_ban,ngoai_that,thoi_gian_ghep,thoi_gian_can_xe&order=thoi_gian_ghep.desc";
+    // Điều kiện: Có VIN, và ket_qua CHƯA Chờ ký hóa đơn, CHƯA Đã xuất hóa đơn, CHƯA Đã hủy, CHƯA Chưa ghép
+    var url = SUPABASE_URL + "/rest/v1/donhang?and=(vin.not.is.null,vin.neq.,ket_qua.neq.Ch%E1%BB%9D%20k%C3%BD%20h%C3%B3a%20%C4%91%C6%A1n,ket_qua.neq.%C4%90%C3%A3%20xu%E1%BA%A5t%20h%C3%B3a%20%C4%91%C6%A1n,ket_qua.neq.%C4%90%C3%A3%20h%E1%BB%A7y,ket_qua.neq.Ch%C6%B0a%20gh%C3%A9p)&select=vin,ten_khach_hang,dong_xe,phien_ban,ngoai_that,thoi_gian_ghep,thoi_gian_can_xe,ket_qua&order=thoi_gian_ghep.desc";
     var response = UrlFetchApp.fetch(url, {
       method: "get",
       headers: {
@@ -82,16 +83,28 @@ function generateBcGhepXeDuXhd() {
         var idxNgoaiThat = h.indexOf("ngoai_that");
         var idxTgGhep = h.indexOf("thoi_gian_ghep");
 
+        var excludedStatuses = [
+          "chờ ký hóa đơn", "chờ ký hóa đơn", 
+          "đã xuất hóa đơn", "đã xuất hóa đơn", 
+          "đã hủy", "đã hủy", 
+          "chưa ghép", "chưa ghép"
+        ];
+
         for (var i = 1; i < data.length; i++) {
           var row = data[i];
-          if (row[idxKetQua] === "Đã ghép") {
+          var vinVal = String(row[idxVin] || "").trim();
+          var kqVal = String(row[idxKetQua] || "").trim().toLowerCase();
+
+          // Có số VIN và chưa sang Chờ ký hóa đơn / Đã xuất hóa đơn -> Tính là Dự XHĐ
+          if (vinVal && excludedStatuses.indexOf(kqVal) === -1) {
             pairedOrders.push({
-              vin: row[idxVin] || "",
+              vin: vinVal,
               ten_khach_hang: row[idxKh] || "",
               dong_xe: row[idxDongXe] || "",
               phien_ban: row[idxPhienBan] || "",
               ngoai_that: row[idxNgoaiThat] || "",
-              thoi_gian_ghep: row[idxTgGhep] || ""
+              thoi_gian_ghep: row[idxTgGhep] || "",
+              ket_qua: row[idxKetQua] || ""
             });
           }
         }
@@ -157,6 +170,8 @@ function generateBcGhepXeDuXhd() {
     if (cleanVin && existingUserInputs[cleanVin]) {
       if (existingUserInputs[cleanVin].duXhd) userDuXhd = existingUserInputs[cleanVin].duXhd;
       if (existingUserInputs[cleanVin].tinhTrang) userTinhTrang = existingUserInputs[cleanVin].tinhTrang;
+    } else if (p.ket_qua && p.ket_qua !== "Đã ghép") {
+      userTinhTrang = p.ket_qua; // Hiển thị rõ trạng thái nếu TVBH đã yêu cầu XHĐ (VD: Yêu cầu bổ sung, Chờ phê duyệt)
     }
 
     rows.push([
@@ -293,30 +308,35 @@ function setupRealtimeBcGhepXeFormula() {
     sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).clearContent();
   }
 
-  // Thiết lập công thức Real-time:
-  // Cột A: Tự sinh mã TA1, TA2... theo số lượng xe đã ghép
-  sheet.getRange("A2").setFormula('=ARRAYFORMULA(IF(ROW(A2:A)-1<=COUNTA(IFERROR(FILTER(donhang!M2:M, donhang!L2:L="Đã ghép"))), "TA" & (ROW(A2:A)-1), ""))');
+  // Thiết lập công thức Real-time (Bao gồm xe Đã ghép & xe TVBH đã yêu cầu XHĐ chưa sang Chờ ký hóa đơn):
+  var cond = 'donhang!M2:M<>"", donhang!L2:L<>"Chờ ký hóa đơn", donhang!L2:L<>"chờ ký hóa đơn", donhang!L2:L<>"Đã xuất hóa đơn", donhang!L2:L<>"đã xuất hóa đơn", donhang!L2:L<>"Đã hủy", donhang!L2:L<>"Chưa ghép"';
+
+  // Cột A: Tự sinh mã TA1, TA2... theo số lượng xe dự XHĐ
+  sheet.getRange("A2").setFormula('=ARRAYFORMULA(IF(ROW(A2:A)-1<=COUNTA(IFERROR(FILTER(donhang!M2:M, ' + cond + '))), "TA" & (ROW(A2:A)-1), ""))');
 
   // Cột B: Showroom "Thuận An"
   sheet.getRange("B2").setFormula('=ARRAYFORMULA(IF(A2:A<>"", "Thuận An", ""))');
 
   // Cột C: Loại xe (Kết hợp Dòng xe & Phiên bản)
-  sheet.getRange("C2").setFormula('=IFERROR(FILTER(IF(donhang!F2:F="", donhang!E2:E, IF(ISNUMBER(SEARCH(donhang!E2:E, donhang!F2:F)), donhang!F2:F, donhang!E2:E & " " & donhang!F2:F)), donhang!L2:L="Đã ghép"), "")');
+  sheet.getRange("C2").setFormula('=IFERROR(FILTER(IF(donhang!F2:F="", donhang!E2:E, IF(ISNUMBER(SEARCH(donhang!E2:E, donhang!F2:F)), donhang!F2:F, donhang!E2:E & " " & donhang!F2:F)), ' + cond + '), "")');
 
   // Cột D: Ngoại thất
-  sheet.getRange("D2").setFormula('=IFERROR(FILTER(donhang!G2:G, donhang!L2:L="Đã ghép"), "")');
+  sheet.getRange("D2").setFormula('=IFERROR(FILTER(donhang!G2:G, ' + cond + '), "")');
 
   // Cột E: Số khung (vin)
-  sheet.getRange("E2").setFormula('=IFERROR(FILTER(donhang!M2:M, donhang!L2:L="Đã ghép"), "")');
+  sheet.getRange("E2").setFormula('=IFERROR(FILTER(donhang!M2:M, ' + cond + '), "")');
 
   // Cột F: Tên khách hàng
-  sheet.getRange("F2").setFormula('=IFERROR(FILTER(donhang!D2:D, donhang!L2:L="Đã ghép"), "")');
+  sheet.getRange("F2").setFormula('=IFERROR(FILTER(donhang!D2:D, ' + cond + '), "")');
 
   // Cột G: Ngày ghép (Định dạng ngày)
-  sheet.getRange("G2").setFormula('=IFERROR(FILTER(IF(donhang!N2:N<>"", TEXT(DATEVALUE(LEFT(donhang!N2:N, 10)), "dd/mm/yyyy"), ""), donhang!L2:L="Đã ghép"), "")');
+  sheet.getRange("G2").setFormula('=IFERROR(FILTER(IF(donhang!N2:N<>"", TEXT(DATEVALUE(LEFT(donhang!N2:N, 10)), "dd/mm/yyyy"), ""), ' + cond + '), "")');
 
   // Cột H: Ngày dự XHĐ mặc định theo tháng
   sheet.getRange("H2").setFormula('=ARRAYFORMULA(IF(A2:A<>"", "Tháng " & MONTH(TODAY()), ""))');
+
+  // Cột I: Tình trạng (Hiển thị trạng thái nếu TVBH đã yêu cầu XHĐ, trống nếu là Đã ghép thông thường)
+  sheet.getRange("I2").setFormula('=IFERROR(FILTER(IF(donhang!L2:L="Đã ghép", "", donhang!L2:L), ' + cond + '), "")');
 
   sheet.setFrozenRows(1);
 
