@@ -112,8 +112,6 @@ const StockView: React.FC<StockViewProps> = ({
 
     // Admin Edit Modal
     const [adminEditVehicle, setAdminEditVehicle] = useState<StockVehicle | null>(null);
-    const [isSyncingLocations, setIsSyncingLocations] = useState(false);
-
     // Tự động kiểm tra và đồng bộ vị trí kho ngầm (Cách 2: Cooldown 2 giờ, tiết kiệm 100% tài nguyên Render)
     useEffect(() => {
         let isMounted = true;
@@ -130,29 +128,6 @@ const StockView: React.FC<StockViewProps> = ({
         });
         return () => { isMounted = false; };
     }, []);
-
-    const handleManualLocationSync = async () => {
-        if (isSyncingLocations) return;
-        setIsSyncingLocations(true);
-        showToast('Đang đối chiếu Cyber', 'Đang kiểm tra vị trí kho xe từ sổ cái CyberSoft...', 'loading', 3000);
-        try {
-            const res = await autoSyncCyberLocationsIfNeeded(true);
-            if (res.result?.success) {
-                const changed = res.result.changed_count || 0;
-                if (changed > 0) {
-                    showToast('Hoàn tất đồng bộ', `Đã cập nhật vị trí mới cho ${changed} xe trong kho!`, 'success', 4000);
-                } else {
-                    showToast('Đã đồng bộ', 'Tất cả vị trí xe đã trùng khớp với CyberSoft ERP!', 'success', 3000);
-                }
-            } else {
-                showToast('Thông báo', res.reason || res.result?.error || 'Không thể đồng bộ vị trí từ Cyber.', 'info');
-            }
-        } catch (e: any) {
-            showToast('Lỗi', e.message || 'Lỗi khi đồng bộ vị trí', 'error');
-        } finally {
-            setIsSyncingLocations(false);
-        }
-    };
 
     // Stock Welcome Video/Popup Tracker
     const [showStockWelcome, setShowStockWelcome] = useState(false);
@@ -572,24 +547,6 @@ const StockView: React.FC<StockViewProps> = ({
                                 />
                             </div>
                         ))}
-
-                        {/* Nút Đồng Bộ Vị Trí Kho Cyber */}
-                        <div className="flex items-center">
-                            <button
-                                type="button"
-                                onClick={handleManualLocationSync}
-                                disabled={isSyncingLocations}
-                                title="Đồng bộ vị trí kho thực tế từ sổ cái CyberSoft ERP"
-                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all shadow-sm ${
-                                    isSyncingLocations 
-                                        ? 'bg-emerald-50 text-emerald-600 border-emerald-300 cursor-not-allowed' 
-                                        : 'bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border-slate-200 hover:border-emerald-300 active:scale-95'
-                                }`}
-                            >
-                                <i className={`fas fa-sync-alt text-emerald-500 text-[11px] ${isSyncingLocations ? 'fa-spin' : ''}`}></i>
-                                <span className="hidden sm:inline">Vị trí Cyber</span>
-                            </button>
-                        </div>
                     </TabbedFilter>
                 </div>
                 <div ref={containerRef} className="flex-1 flex flex-col min-h-0 mt-1">
