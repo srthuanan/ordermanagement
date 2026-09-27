@@ -161,12 +161,44 @@ export const calculateLeadPrice = (count: number): number => {
     return Math.round(count * 1500);
 };
 
+export interface CrmLeadOrder {
+    id: string;
+    ten_tvbh: string;
+    lead_count: number;
+    amount: number;
+    status: 'pending' | 'paid' | 'completed';
+    sepay_transaction_id?: string | null;
+    paid_at?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface TvbhUsageStats {
+    tenTvbh: string;
+    fullName: string;
+    userCyber: string;
+    totalOrders: number;
+    completedOrdersCount: number;
+    pendingOrdersCount: number;
+    totalLeads: number;
+    totalSpent: number;
+    lastUsedAt: string | null;
+    orders: CrmLeadOrder[];
+}
+
 export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
     currentUser = '',
     currentUserName = '',
     isAdmin = false,
     showToast
 }) => {
+    // Modal Admin xem danh sách TVBH đã sử dụng dịch vụ (chỉ dành cho Admin)
+    const [showAdminTvbhModal, setShowAdminTvbhModal] = useState<boolean>(false);
+    const [selectedTvbhDetail, setSelectedTvbhDetail] = useState<TvbhUsageStats | null>(null);
+    const [ordersList, setOrdersList] = useState<CrmLeadOrder[]>([]);
+    const [isLoadingOrders, setIsLoadingOrders] = useState<boolean>(false);
+    const [ordersSearchQuery, setOrdersSearchQuery] = useState<string>('');
+
     // Metadata state
     const [metadata, setMetadata] = useState<CrmMetadata | null>(null);
     const [isLoadingMeta, setIsLoadingMeta] = useState<boolean>(true);
@@ -235,6 +267,43 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
         };
         loadBankInfo();
     }, []);
+
+    // Load orders history from crm_lead_orders (chỉ khi là Admin)
+    const loadOrders = async () => {
+        if (!isAdmin) return;
+        setIsLoadingOrders(true);
+        try {
+            const { data, error } = await supabase
+                .from('crm_lead_orders')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (data && !error) {
+                setOrdersList(data as CrmLeadOrder[]);
+            }
+        } catch (err) {
+            console.error('Error fetching crm_lead_orders:', err);
+        } finally {
+            setIsLoadingOrders(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!isAdmin) return;
+        loadOrders();
+        const channel = supabase
+            .channel('crm_lead_orders_admin_sub')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'crm_lead_orders' },
+                () => {
+                    loadOrders();
+                }
+            )
+            .subscribe();
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [isAdmin]);
 
     const handleCopy = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
@@ -371,6 +440,194 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
     const selectedUserInfo = useMemo(() => {
         return metadata?.users.find(u => u.userName === selectedUser);
     }, [metadata?.users, selectedUser]);
+
+    // Helper: Định dạng thời gian tương đối tiếng Việt
+    const formatRelativeTime = (dateStr?: string | null): string => {
+        if (!dateStr) return 'Chưa có';
+        const d = new Date(dateStr);
+        const now = new Date();
+        const diffMs = now.getTime() - d.getTime();
+        const diffMins = Math.floor(diffMs / (60 * 1000));
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMins < 1) return 'Vừa xong';
+        if (diffMins < 60) return `${diffMins} phút trước`;
+        if (diffHours < 24) return `${diffHours} giờ trước`;
+        if (diffDays < 30) return `${diffDays} ngày trước`;
+        return d.toLocaleDateString('vi-VN');
+    };
+
+    // Helper: Lấy 2 chữ cái viết tắt cho avatar
+    const getInitials = (name: string): string => {
+        if (!name) return 'TV';
+        const words = name.trim().split(/\s+/).filter(Boolean);
+        if (words.length === 1) return words[0].substring(0, 2).toUpperCase();
+        return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+    };
+
+    // Helper: Tạo dải màu gradient ngẫu nhiên cố định theo tên
+    const getAvatarGradient = (str: string): string => {
+        const gradients = [
+            'from-blue-600 to-indigo-700',
+            'from-emerald-600 to-teal-700',
+            'from-violet-600 to-purple-700',
+            'from-amber-600 to-orange-700',
+            'from-rose-600 to-pink-700',
+            'from-cyan-600 to-blue-700'
+        ];
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const idx = Math.abs(hash) % gradients.length;
+        return gradients[idx];
+    };
+
+    // Thống kê sử dụng dịch vụ gom nhóm theo từng TVBH
+    const tvbhUsageStatsList = useMemo<TvbhUsageStats[]>(() => {
+        const userMap = new Map<string, {
+            tenTvbh: string;
+            fullName: string;
+            userCyber: string;
+            orders: CrmLeadOrder[];
+        }>();
+
+        ordersList.forEach(order => {
+            const rawCode = (order.ten_tvbh || '').replace(/^02\./i, '').toUpperCase().trim();
+            if (!rawCode) return;
+
+            if (!userMap.has(rawCode)) {
+                // Khớp họ tên từ danh mục Cyber users
+                const matchedUser = metadata?.users.find(u => {
+                    const cleanU = u.userName.replace(/^02\./i, '').toUpperCase().trim();
+                    return cleanU === rawCode;
+                });
+
+                userMap.set(rawCode, {
+                    tenTvbh: rawCode,
+                    fullName: matchedUser?.fullName || rawCode,
+                    userCyber: matchedUser?.userName || `02.${rawCode}`,
+                    orders: []
+                });
+            }
+
+            userMap.get(rawCode)!.orders.push(order);
+        });
+
+        const list = Array.from(userMap.values()).map(item => {
+            const completedOrders = item.orders.filter(o => o.status === 'completed' || o.status === 'paid');
+            const pendingOrders = item.orders.filter(o => o.status === 'pending');
+            const totalLeads = completedOrders.reduce((sum, o) => sum + (o.lead_count || 0), 0);
+            const totalSpent = completedOrders.reduce((sum, o) => sum + Number(o.amount || 0), 0);
+
+            const sortedOrders = [...item.orders].sort((a, b) => 
+                new Date(b.paid_at || b.created_at).getTime() - new Date(a.paid_at || a.created_at).getTime()
+            );
+            const lastOrder = sortedOrders[0];
+            const lastUsedAt = lastOrder ? (lastOrder.paid_at || lastOrder.created_at) : null;
+
+            return {
+                tenTvbh: item.tenTvbh,
+                fullName: item.fullName,
+                userCyber: item.userCyber,
+                totalOrders: item.orders.length,
+                completedOrdersCount: completedOrders.length,
+                pendingOrdersCount: pendingOrders.length,
+                totalLeads,
+                totalSpent,
+                lastUsedAt,
+                orders: sortedOrders
+            };
+        });
+
+        // Sắp xếp ưu tiên: Tổng số khách nạp nhiều nhất -> Lượt nạp nhiều nhất -> Thời gian mới nhất
+        return list.sort((a, b) => {
+            if (b.totalLeads !== a.totalLeads) return b.totalLeads - a.totalLeads;
+            if (b.completedOrdersCount !== a.completedOrdersCount) return b.completedOrdersCount - a.completedOrdersCount;
+            return (new Date(b.lastUsedAt || 0).getTime()) - (new Date(a.lastUsedAt || 0).getTime());
+        });
+    }, [ordersList, metadata?.users]);
+
+    // Tổng hợp KPI toàn hệ thống
+    const overallStats = useMemo(() => {
+        const completedList = tvbhUsageStatsList.filter(s => s.completedOrdersCount > 0);
+        const totalTvbhUsed = completedList.length;
+        const totalLeadsImported = completedList.reduce((sum, s) => sum + s.totalLeads, 0);
+        const totalRevenue = completedList.reduce((sum, s) => sum + s.totalSpent, 0);
+
+        const allCompletedOrders = ordersList
+            .filter(o => o.status === 'completed' || o.status === 'paid')
+            .sort((a, b) => new Date(b.paid_at || b.created_at).getTime() - new Date(a.paid_at || a.created_at).getTime());
+
+        const latestOrder = allCompletedOrders[0] || null;
+
+        return {
+            totalTvbhUsed,
+            totalLeadsImported,
+            totalRevenue,
+            latestOrder
+        };
+    }, [tvbhUsageStatsList, ordersList]);
+
+    // Lọc danh sách TVBH đã sử dụng dịch vụ thành công
+    const filteredTvbhList = useMemo(() => {
+        return tvbhUsageStatsList.filter(item => {
+            if (item.completedOrdersCount === 0) return false;
+            if (ordersSearchQuery.trim()) {
+                const q = removeVietnameseTones(ordersSearchQuery.toLowerCase());
+                const matchName = removeVietnameseTones(item.fullName.toLowerCase()).includes(q);
+                const matchCode = item.tenTvbh.toLowerCase().includes(q);
+                const matchCyber = item.userCyber.toLowerCase().includes(q);
+                if (!matchName && !matchCode && !matchCyber) return false;
+            }
+            return true;
+        });
+    }, [tvbhUsageStatsList, ordersSearchQuery]);
+
+    // Xuất báo cáo danh sách TVBH đã sử dụng dịch vụ ra Excel
+    const handleExportTvbhUsageExcel = () => {
+        if (filteredTvbhList.length === 0) {
+            showToast?.('Chưa có dữ liệu', 'Chưa có TVBH nào phù hợp điều kiện để xuất báo cáo!', 'info');
+            return;
+        }
+
+        const exportData = filteredTvbhList.map((item, idx) => ({
+            'STT': idx + 1,
+            'Họ và Tên TVBH': item.fullName,
+            'Tài khoản Cyber': item.userCyber,
+            'Mã TVBH': item.tenTvbh,
+            'Lượt nạp thành công': item.completedOrdersCount,
+            'Tổng hồ sơ KHTN đã nạp': item.totalLeads,
+            'Tổng phí dịch vụ (VNĐ)': item.totalSpent,
+            'Lần nạp gần nhất': item.lastUsedAt ? new Date(item.lastUsedAt).toLocaleString('vi-VN') : '—'
+        }));
+
+        const ws = xlsx.utils.json_to_sheet(exportData);
+        ws['!cols'] = [
+            { wch: 6 },
+            { wch: 28 },
+            { wch: 18 },
+            { wch: 14 },
+            { wch: 20 },
+            { wch: 24 },
+            { wch: 24 },
+            { wch: 24 }
+        ];
+        const wb = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(wb, ws, 'DS_TVBH_SuDungDichVu');
+        xlsx.writeFile(wb, `DS_TVBH_Su_Dung_Dich_Vu_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        showToast?.('Đã xuất Excel', 'Đã tải xuống danh sách TVBH đã sử dụng dịch vụ thành công.', 'success');
+    };
+
+    // Chọn TVBH từ danh sách để Admin nạp thay
+    const handleSelectTvbhForImport = (userCyber: string) => {
+        setSelectedUser(userCyber);
+        const storageKey = `cyber_crm_account_${currentUserName || currentUser || 'default'}`;
+        localStorage.setItem(storageKey, userCyber);
+        setShowAdminTvbhModal(false);
+        showToast?.('Đã chọn TVBH', `Đã chọn TVBH: ${userCyber} để import KHTN`, 'info');
+    };
 
     // Xử lý chọn tệp Excel từ máy tính
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1053,6 +1310,7 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                     'success',
                     5000
                 );
+                loadOrders();
             } else {
                 showToast?.(
                     'Import thất bại',
@@ -1258,15 +1516,32 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                         </div>
 
                         {isAdmin && (
-                            <button
-                                type="button"
-                                onClick={() => setIsManualUserSelection(!isManualUserSelection)}
-                                className="px-2 py-0.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded transition-all cursor-pointer"
-                                title="Admin đổi TVBH cần nạp thay"
-                            >
-                                <i className="fas fa-user-gear text-[10px] mr-1"></i>
-                                <span>{isManualUserSelection ? 'Đóng' : 'Đổi TVBH'}</span>
-                            </button>
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAdminTvbhModal(true)}
+                                    className="px-2 py-0.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition-all cursor-pointer flex items-center gap-1"
+                                    title="Danh sách TVBH đã sử dụng dịch vụ nạp KHTN (Chỉ Admin)"
+                                >
+                                    <i className="fas fa-users text-[10px]"></i>
+                                    <span>DS TVBH Đã Dùng</span>
+                                    {overallStats.totalTvbhUsed > 0 && (
+                                        <span className="bg-blue-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">
+                                            {overallStats.totalTvbhUsed}
+                                        </span>
+                                    )}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setIsManualUserSelection(!isManualUserSelection)}
+                                    className="px-2 py-0.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded transition-all cursor-pointer"
+                                    title="Admin đổi TVBH cần nạp thay"
+                                >
+                                    <i className="fas fa-user-gear text-[10px] mr-1"></i>
+                                    <span>{isManualUserSelection ? 'Đóng' : 'Đổi TVBH'}</span>
+                                </button>
+                            </>
                         )}
 
                         <button
@@ -1323,8 +1598,6 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                             <i className="fas fa-file-excel text-emerald-600"></i>
                             <span className="hidden sm:inline">Mẫu Excel</span>
                         </button>
-
-
 
                         <div className="h-4 w-[1px] bg-slate-200 mx-0.5 hidden sm:block"></div>
 
@@ -1917,6 +2190,387 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
                                     </div>
                                 </>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal: Danh Sách TVBH Đã Sử Dụng Dịch Vụ Nạp KHTN (Chỉ Admin) */}
+            {isAdmin && showAdminTvbhModal && (
+                <div className="fixed inset-0 z-[1240] bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+                    <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] animate-fade-in-up">
+                        {/* Modal Header */}
+                        <div className="px-5 py-4 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white flex items-center justify-between shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-xs text-white flex items-center justify-center text-lg shadow-inner">
+                                    <i className="fas fa-users-gear"></i>
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-base font-bold tracking-tight text-white">
+                                            Danh Sách TVBH Đã Sử Dụng Dịch Vụ
+                                        </h3>
+                                        <span className="text-[10px] font-bold bg-amber-400 text-slate-900 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                            Chỉ Admin
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-blue-100/80 mt-0.5">
+                                        Thống kê tư vấn bán hàng nạp KHTN qua hệ thống SePay
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowAdminTvbhModal(false)}
+                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-sm cursor-pointer transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Summary KPI Cards */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 bg-slate-50 border-b border-slate-200 shrink-0">
+                            <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block truncate">TVBH Đã Nạp</span>
+                                <div className="flex items-baseline gap-1 mt-0.5">
+                                    <span className="text-lg font-black text-slate-800 font-mono">{overallStats.totalTvbhUsed}</span>
+                                    <span className="text-[11px] text-slate-500">nhân sự</span>
+                                </div>
+                            </div>
+                            <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
+                                <span className="text-[10px] uppercase font-bold text-emerald-600 block truncate">Tổng Khách Nạp</span>
+                                <div className="flex items-baseline gap-1 mt-0.5">
+                                    <span className="text-lg font-black text-emerald-700 font-mono">{overallStats.totalLeadsImported}</span>
+                                    <span className="text-[11px] text-emerald-600">khách</span>
+                                </div>
+                            </div>
+                            <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
+                                <span className="text-[10px] uppercase font-bold text-blue-600 block truncate">Tổng Phí Đã Thu</span>
+                                <div className="flex items-baseline gap-1 mt-0.5">
+                                    <span className="text-lg font-black text-blue-700 font-mono">{overallStats.totalRevenue.toLocaleString('vi-VN')}</span>
+                                    <span className="text-[11px] text-blue-600 font-bold">₫</span>
+                                </div>
+                            </div>
+                            <div className="bg-white p-3 rounded-xl border border-slate-200/80 shadow-2xs">
+                                <span className="text-[10px] uppercase font-bold text-purple-600 block truncate">Giao Dịch Gần Nhất</span>
+                                <div className="mt-0.5 truncate">
+                                    {overallStats.latestOrder ? (
+                                        <span className="text-xs font-bold text-slate-800 font-mono">
+                                            {formatRelativeTime(overallStats.latestOrder.paid_at || overallStats.latestOrder.created_at)}
+                                        </span>
+                                    ) : (
+                                        <span className="text-xs text-slate-400 italic">Chưa có</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Search & Actions Bar */}
+                        <div className="px-4 py-2.5 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                            <div className="relative flex-1 min-w-[200px] max-w-sm">
+                                <i className="fas fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                                <input
+                                    type="text"
+                                    value={ordersSearchQuery}
+                                    onChange={e => setOrdersSearchQuery(e.target.value)}
+                                    placeholder="Tìm theo tên hoặc mã TVBH..."
+                                    className="w-full h-8 pl-8 pr-7 text-xs bg-slate-50 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white text-slate-800"
+                                />
+                                {ordersSearchQuery && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setOrdersSearchQuery('')}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-1.5 ml-auto">
+                                <button
+                                    type="button"
+                                    onClick={handleExportTvbhUsageExcel}
+                                    className="h-8 px-3 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-bold shadow-2xs flex items-center gap-1.5 cursor-pointer transition-all"
+                                    title="Xuất danh sách TVBH ra tệp Excel"
+                                >
+                                    <i className="fas fa-file-excel text-emerald-600"></i>
+                                    <span>Xuất Excel</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => loadOrders()}
+                                    disabled={isLoadingOrders}
+                                    className="h-8 px-2.5 bg-white hover:bg-slate-100 text-slate-600 border border-slate-300 rounded-lg text-xs font-semibold shadow-2xs flex items-center gap-1 cursor-pointer transition-all"
+                                    title="Làm mới dữ liệu từ hệ thống"
+                                >
+                                    <i className={`fas fa-rotate-right ${isLoadingOrders ? 'animate-spin text-blue-600' : ''}`}></i>
+                                    <span className="hidden sm:inline">Làm mới</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* TVBH List Table */}
+                        <div className="flex-1 min-h-0 overflow-auto p-4 bg-slate-50/50">
+                            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+                                <table className="w-full text-left border-collapse text-xs">
+                                    <thead className="sticky top-0 bg-slate-100 text-slate-700 border-b border-slate-200 font-bold uppercase text-[10px] tracking-wider">
+                                        <tr>
+                                            <th className="py-2.5 px-3 w-10 text-center">STT</th>
+                                            <th className="py-2.5 px-3">Tư Vấn Bán Hàng</th>
+                                            <th className="py-2.5 px-3 text-center">Lượt Nạp</th>
+                                            <th className="py-2.5 px-3 text-center">Tổng Khách</th>
+                                            <th className="py-2.5 px-3 text-right">Tổng Tiền</th>
+                                            <th className="py-2.5 px-3">Gần Nhất</th>
+                                            <th className="py-2.5 px-3 text-center w-36">Thao Tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                                        {isLoadingOrders && ordersList.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={7} className="py-12 text-center text-slate-400">
+                                                    <i className="fas fa-spinner fa-spin text-2xl text-blue-500 mb-2 block"></i>
+                                                    Đang tải dữ liệu...
+                                                </td>
+                                            </tr>
+                                        ) : filteredTvbhList.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={7} className="py-12 text-center text-slate-400">
+                                                    <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2 text-xl">
+                                                        <i className="fas fa-users-slash"></i>
+                                                    </div>
+                                                    <p className="font-semibold text-slate-600">Chưa có TVBH nào phù hợp</p>
+                                                    <p className="text-[11px] text-slate-400 mt-0.5">Dữ liệu sẽ hiển thị khi có TVBH hoàn tất thanh toán nạp KHTN</p>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredTvbhList.map((tvbh, idx) => {
+                                                const avatarGrad = getAvatarGradient(tvbh.fullName);
+                                                const initials = getInitials(tvbh.fullName);
+                                                return (
+                                                    <tr key={tvbh.tenTvbh} className="hover:bg-blue-50/40 transition-colors">
+                                                        <td className="py-2.5 px-3 text-center font-mono text-slate-400 text-[11px]">
+                                                            {idx + 1}
+                                                        </td>
+                                                        <td className="py-2.5 px-3">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className={`w-8 h-8 rounded-full bg-gradient-to-tr ${avatarGrad} text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0`}>
+                                                                    {initials}
+                                                                </div>
+                                                                <div>
+                                                                    <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                                                                        <span>{tvbh.fullName}</span>
+                                                                        {selectedUser.replace(/^02\./i, '').toUpperCase() === tvbh.tenTvbh && (
+                                                                            <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.2 rounded font-semibold">Đang chọn</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                                                                        {tvbh.userCyber}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-2.5 px-3 text-center">
+                                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                                                                {tvbh.completedOrdersCount} lượt
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-2.5 px-3 text-center">
+                                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                                {tvbh.totalLeads} khách
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900 text-xs">
+                                                            {tvbh.totalSpent.toLocaleString('vi-VN')}₫
+                                                        </td>
+                                                        <td className="py-2.5 px-3">
+                                                            {tvbh.lastUsedAt ? (
+                                                                <div>
+                                                                    <span className="font-semibold text-slate-800 block text-xs">
+                                                                        {formatRelativeTime(tvbh.lastUsedAt)}
+                                                                    </span>
+                                                                    <span className="text-[10px] text-slate-400 font-mono">
+                                                                        {new Date(tvbh.lastUsedAt).toLocaleDateString('vi-VN')}
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-slate-400 italic text-[11px]">—</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-2.5 px-3 text-center">
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setSelectedTvbhDetail(tvbh)}
+                                                                    className="px-2 py-1 bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 rounded text-[11px] font-semibold cursor-pointer transition-colors"
+                                                                    title="Xem chi tiết lịch sử từng lần nạp"
+                                                                >
+                                                                    <i className="fas fa-list-ul mr-1"></i> Chi tiết
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleSelectTvbhForImport(tvbh.userCyber)}
+                                                                    className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded text-[11px] font-bold cursor-pointer transition-colors"
+                                                                    title="Chọn TVBH này và nạp KHTN thay"
+                                                                >
+                                                                    <i className="fas fa-file-import mr-0.5"></i> Nạp
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+                            <span className="text-xs text-slate-500">
+                                Hiển thị <strong>{filteredTvbhList.length}</strong> TVBH đã dùng dịch vụ
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setShowAdminTvbhModal(false)}
+                                className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                            >
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Chi Tiết Lịch Sử Nạp KHTN của TVBH */}
+            {isAdmin && selectedTvbhDetail && (
+                <div className="fixed inset-0 z-[1250] bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
+                    <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh] animate-fade-in-up">
+                        {/* Modal Header */}
+                        <div className="px-5 py-4 bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white flex items-center justify-between shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-xs text-white flex items-center justify-center font-bold text-sm shadow-inner">
+                                    {getInitials(selectedTvbhDetail.fullName)}
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
+                                        <span>{selectedTvbhDetail.fullName}</span>
+                                        <span className="text-[10px] font-mono font-semibold bg-white/20 px-1.5 py-0.5 rounded">
+                                            {selectedTvbhDetail.userCyber}
+                                        </span>
+                                    </h3>
+                                    <p className="text-xs text-blue-100/80 mt-0.5">
+                                        Chi tiết lịch sử sử dụng dịch vụ nạp KHTN
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setSelectedTvbhDetail(null)}
+                                className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs cursor-pointer transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Quick Stats in Modal */}
+                        <div className="grid grid-cols-3 gap-3 p-4 bg-slate-50 border-b border-slate-200 shrink-0 text-center">
+                            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Số Lượt Nạp Thành Công</span>
+                                <span className="text-base font-black text-slate-800 font-mono">{selectedTvbhDetail.completedOrdersCount}</span>
+                            </div>
+                            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                                <span className="text-[10px] uppercase font-bold text-emerald-600 block">Tổng Khách Đã Nạp</span>
+                                <span className="text-base font-black text-emerald-700 font-mono">{selectedTvbhDetail.totalLeads} khách</span>
+                            </div>
+                            <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                                <span className="text-[10px] uppercase font-bold text-blue-600 block">Tổng Tiền Dịch Vụ</span>
+                                <span className="text-base font-black text-blue-700 font-mono">{selectedTvbhDetail.totalSpent.toLocaleString('vi-VN')}₫</span>
+                            </div>
+                        </div>
+
+                        {/* Orders Table */}
+                        <div className="flex-1 min-h-0 overflow-auto p-4">
+                            <table className="w-full text-left border-collapse text-xs">
+                                <thead className="sticky top-0 bg-slate-100 text-slate-700 border-b border-slate-200 font-bold uppercase text-[10px]">
+                                    <tr>
+                                        <th className="py-2 px-2.5 text-center w-10">STT</th>
+                                        <th className="py-2 px-2.5">Thời Gian</th>
+                                        <th className="py-2 px-2.5 text-center">Số Lượng</th>
+                                        <th className="py-2 px-2.5 text-right">Số Tiền</th>
+                                        <th className="py-2 px-2.5">Mã GD SePay</th>
+                                        <th className="py-2 px-2.5 text-center">Trạng Thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {selectedTvbhDetail.orders.map((ord, idx) => {
+                                        const isPaid = ord.status === 'completed' || ord.status === 'paid';
+                                        return (
+                                            <tr key={ord.id} className="hover:bg-slate-50">
+                                                <td className="py-2.5 px-2.5 text-center font-mono text-slate-400 text-[11px]">{idx + 1}</td>
+                                                <td className="py-2.5 px-2.5 font-mono text-slate-700 text-[11px]">
+                                                    {new Date(ord.paid_at || ord.created_at).toLocaleString('vi-VN')}
+                                                </td>
+                                                <td className="py-2.5 px-2.5 text-center">
+                                                    <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                        {ord.lead_count} khách
+                                                    </span>
+                                                </td>
+                                                <td className="py-2.5 px-2.5 text-right font-mono font-bold text-slate-800">
+                                                    {Number(ord.amount || 0).toLocaleString('vi-VN')}₫
+                                                </td>
+                                                <td className="py-2.5 px-2.5">
+                                                    {ord.sepay_transaction_id ? (
+                                                        <span className="font-mono text-[11px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                                                            {ord.sepay_transaction_id}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-slate-400 text-[11px] italic">Không có</span>
+                                                    )}
+                                                </td>
+                                                <td className="py-2.5 px-2.5 text-center">
+                                                    {isPaid ? (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                                            <i className="fas fa-check text-[9px]"></i> {ord.status === 'completed' ? 'Hoàn tất' : 'Đã thanh toán'}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                                            <i className="fas fa-clock text-[9px]"></i> Đang chờ
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between shrink-0">
+                            <span className="text-[11px] text-slate-500">
+                                Tổng cộng: <strong>{selectedTvbhDetail.orders.length}</strong> lần thao tác
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedTvbhDetail(null)}
+                                    className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                                >
+                                    Đóng
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const u = selectedTvbhDetail.userCyber;
+                                        setSelectedTvbhDetail(null);
+                                        handleSelectTvbhForImport(u);
+                                    }}
+                                    className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 active:scale-95 transition-all"
+                                >
+                                    <i className="fas fa-file-import"></i>
+                                    <span>Nạp KHTN Cho TVBH Này</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
