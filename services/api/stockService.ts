@@ -682,6 +682,38 @@ export const syncCyberLocations = async (options: { preview?: boolean; vins?: st
 };
 
 /**
+ * Tự động kiểm tra và đồng bộ vị trí kho xe thông minh (Cách 2):
+ * - Cooldown 2 giờ (7200s): Tránh gọi dồn dập, bảo vệ 100% hạn ngạch Render
+ * - Ưu tiên File BAT văn phòng (0% Render). Nếu BAT tắt mới fallback sang Cloud Render
+ * - Hỗ trợ force=true khi người dùng chủ động bấm nút
+ */
+export const autoSyncCyberLocationsIfNeeded = async (force: boolean = false): Promise<{ triggered: boolean; reason?: string; result?: any }> => {
+    try {
+        const now = Date.now();
+        const lastSyncStr = typeof window !== 'undefined' ? localStorage.getItem('last_cyber_loc_auto_sync_ts') || '0' : '0';
+        const lastSync = parseInt(lastSyncStr, 10) || 0;
+        const COOLDOWN_MS = 2 * 60 * 60 * 1000; // 2 giờ cooldown
+
+        if (!force && (now - lastSync < COOLDOWN_MS)) {
+            const remainingMin = Math.max(1, Math.round((COOLDOWN_MS - (now - lastSync)) / 60000));
+            return { triggered: false, reason: `Vị trí kho vừa được cập nhật gần đây (lần quét tiếp theo sau ${remainingMin} phút)` };
+        }
+
+        // Đặt timestamp ngay lập tức để chặn các request kế tiếp gọi trùng
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('last_cyber_loc_auto_sync_ts', String(now));
+        }
+
+        console.log('[AutoLocationSync] 📍 Bắt đầu đối chiếu vị trí kho xe từ CyberSoft (Local/Render)...');
+        const res = await syncCyberLocations({ preview: false });
+        return { triggered: true, result: res };
+    } catch (err: any) {
+        console.warn('[AutoLocationSync] Lỗi tự động đồng bộ vị trí kho:', err);
+        return { triggered: false, reason: err.message };
+    }
+};
+
+/**
  * Lấy trạng thái tự động đồng bộ vị trí kho từ background scheduler trên server
  */
 export const getCyberSyncStatus = async () => {
