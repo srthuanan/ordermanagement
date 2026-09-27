@@ -1,9 +1,9 @@
 @echo off
-title CyberSync Local Server & Supabase Bridge
+title CyberSync Local Server ^& Supabase Bridge
 chcp 65001 > nul
 cd /d "%~dp0"
 echo ==================================================================
-echo   DANG KHOI CHAY DICH VU CYBERSYNC LOCAL SERVER & SUPABASE BRIDGE
+echo   DANG KHOI CHAY DICH VU CYBERSYNC LOCAL SERVER ^& SUPABASE BRIDGE
 echo ==================================================================
 echo   - Local HTTP Port: 3001
 echo   - Cloud Bridge:    Supabase Realtime Channel 'cyber-realtime-bridge'
