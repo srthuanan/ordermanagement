@@ -30,7 +30,7 @@ INSERT INTO public.vehicle_configs (type, value, parent_value) VALUES
 
 ('line', 'VF 6', null),
 ('version', 'Eco Tiêu chuẩn', 'VF 6'),
-('version', 'Plus Tiêu chuẩn 2', 'VF 6'),
+('version', 'Plus', 'VF 6'),
 
 ('line', 'VF 7', null),
 ('version', 'Eco', 'VF 7'),
