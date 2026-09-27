@@ -1,171 +1,89 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { getCyberSyncStatus } from '../../services/api/stockService';
-import { subscribeDaemonStatus, getDaemonStatus } from '../../services/api/cyberBridge';
+import React, { useState, useEffect } from 'react';
+import { subscribeDaemonStatus, getDaemonStatus, pingLocalDaemon } from '../../services/api/cyberBridge';
 
-interface CyberSyncStatus {
-    last_run: string | null;
-    last_updated_count: number;
-    last_total_cars: number;
-    last_status: 'idle' | 'running' | 'ok' | 'error';
-    last_error: string | null;
-    interval_hours: number;
-    next_run: string | null;
-    server_time: string;
-}
-
-interface CyberAutoSyncBadgeProps {
-    /** Khi click badge → mở modal thủ công */
-    onOpenManual?: () => void;
-}
-
-/** Format khoảng cách thời gian sang dạng thân thiện tiếng Việt */
-function timeAgo(isoString: string | null): string {
-    if (!isoString) return 'Chưa chạy';
-    const diffMs = Date.now() - new Date(isoString).getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-    if (diffMin < 1) return 'Vừa xong';
-    if (diffMin < 60) return `${diffMin} phút trước`;
-    const diffH = Math.floor(diffMin / 60);
-    if (diffH < 24) return `${diffH} giờ trước`;
-    return `${Math.floor(diffH / 24)} ngày trước`;
-}
-
-export const CyberAutoSyncBadge: React.FC<CyberAutoSyncBadgeProps> = ({ onOpenManual }) => {
-    const [status, setStatus] = useState<CyberSyncStatus | null>(null);
+export const CyberAutoSyncBadge: React.FC = () => {
     const [daemonStatus, setDaemonStatus] = useState(getDaemonStatus());
-    const [isLoading, setIsLoading] = useState(true);
     const [showTooltip, setShowTooltip] = useState(false);
-
-    const fetchStatus = useCallback(async () => {
-        const data = await getCyberSyncStatus();
-        if (data) setStatus(data as CyberSyncStatus);
-        setIsLoading(false);
-    }, []);
 
     useEffect(() => {
         const unsubscribe = subscribeDaemonStatus((dStatus) => {
             setDaemonStatus(dStatus);
         });
-        return () => unsubscribe();
+        pingLocalDaemon();
+        const interval = setInterval(() => {
+            pingLocalDaemon();
+        }, 10000);
+        return () => {
+            unsubscribe();
+            clearInterval(interval);
+        };
     }, []);
 
-    useEffect(() => {
-        fetchStatus();
-        // Poll every 5 minutes to stay fresh
-        const interval = setInterval(fetchStatus, 5 * 60 * 1000);
-        return () => clearInterval(interval);
-    }, [fetchStatus]);
-
-    // Đang load hoặc server chưa sẵn sàng → ẩn hoàn toàn
-    if (isLoading) return null;
-
-
-    // Không kết nối được server → ẩn badge (không làm rối header)
-    if (!status) return null;
-
-
-    const isRunning = status.last_status === 'running';
-    const isError   = status.last_status === 'error';
-    const isOk      = status.last_status === 'ok';
-
-    const labelColor = isRunning ? 'text-blue-300'
-        : isError   ? 'text-red-300'
-        : isOk      ? 'text-emerald-300'
-        : 'text-slate-400';
-
-    const borderColor = isRunning ? 'border-blue-700/50 bg-blue-950/40'
-        : isError   ? 'border-red-700/50 bg-red-950/30'
-        : isOk      ? 'border-emerald-700/40 bg-emerald-950/30'
-        : 'border-slate-700/50 bg-slate-800/60';
-
+    const isOnline = daemonStatus.isOnline;
 
     return (
-        <div className="relative">
+        <div className="relative flex items-center">
             <button
-                onClick={onOpenManual}
+                type="button"
                 onMouseEnter={() => setShowTooltip(true)}
                 onMouseLeave={() => setShowTooltip(false)}
-                title="Đồng bộ vị trí kho tự động từ CyberSoft"
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all hover:scale-105 active:scale-95 cursor-pointer ${borderColor}`}
+                onClick={() => pingLocalDaemon()}
+                className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                    isOnline
+                        ? 'hover:bg-emerald-50'
+                        : 'hover:bg-rose-50'
+                }`}
+                title={isOnline ? 'Máy VP: Đang kết nối trực tiếp' : 'Máy VP: Mất kết nối (Dùng Cloud Render)'}
             >
-                {/* Pulsing dot */}
-                <span className="relative flex h-2 w-2">
-                    <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${isRunning ? 'animate-ping bg-blue-400' : ''}`} />
-                    <span className={`relative inline-flex rounded-full h-2 w-2 ${isRunning ? 'bg-blue-400' : isError ? 'bg-red-400' : isOk ? 'bg-emerald-400' : 'bg-slate-500'}`} />
+                <span className="relative flex h-2.5 w-2.5">
+                    <span
+                        className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                            isOnline ? 'animate-ping bg-emerald-400' : 'bg-rose-400 opacity-40'
+                        }`}
+                    />
+                    <span
+                        className={`relative inline-flex rounded-full h-2.5 w-2.5 shadow-xs ${
+                            isOnline
+                                ? 'bg-emerald-500 ring-2 ring-emerald-200'
+                                : 'bg-rose-500 ring-2 ring-rose-200'
+                        }`}
+                    />
                 </span>
-
-                {/* Label */}
-                <span className={`text-[10px] font-semibold tracking-tight ${labelColor}`}>
-                    {isRunning ? 'Đang sync...'
-                        : isError ? 'Lỗi sync'
-                        : `${daemonStatus.isOnline ? '🟢 Máy VP' : '☁️ Cloud'} • ${timeAgo(status.last_run)}`}
-                </span>
-
-                {/* Clock icon */}
-                <svg className="w-3 h-3 text-slate-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
             </button>
 
-            {/* Tooltip */}
+            {/* Tooltip giải thích chi tiết khi rê chuột vào */}
             {showTooltip && (
-                <div className="absolute top-full right-0 mt-2 z-[9999] min-w-[240px] bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-3 text-xs animate-fade-in">
-                    <div className="font-bold text-white mb-2 flex items-center justify-between gap-1.5 border-b border-slate-800 pb-2">
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-emerald-400">⚡</span>
-                            <span>Đồng Bộ Vị Trí Tự Động</span>
-                        </div>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
-                            daemonStatus.isOnline
-                                ? 'bg-emerald-950 text-emerald-300 border border-emerald-700/50'
-                                : 'bg-slate-800 text-slate-400 border border-slate-700'
-                        }`}>
-                            {daemonStatus.isOnline ? 'Máy VP (Local)' : 'Cloud Render'}
+                <div className="absolute top-full right-0 mt-2 z-[9999] min-w-[240px] bg-slate-900/95 backdrop-blur-md border border-slate-700/80 rounded-xl shadow-2xl p-3 text-xs text-white animate-fade-in pointer-events-none">
+                    <div className="font-bold flex items-center justify-between pb-2 border-b border-slate-800">
+                        <span className="text-slate-200">Đồng Bộ CyberSoft</span>
+                        <span
+                            className={`text-[9.5px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                                isOnline
+                                    ? 'bg-emerald-950 text-emerald-300 border border-emerald-600/50'
+                                    : 'bg-rose-950 text-rose-300 border border-rose-600/50'
+                            }`}
+                        >
+                            {isOnline ? '🟢 Máy VP Online' : '🔴 Máy VP Offline'}
                         </span>
                     </div>
-                    <div className="space-y-1.5 text-slate-300">
-                        <div className="flex justify-between gap-3 text-[11px] pb-1 border-b border-slate-800/80">
-                            <span className="text-slate-400">Nguồn API:</span>
-                            <span className={daemonStatus.isOnline ? 'text-emerald-400 font-semibold' : 'text-amber-400 font-medium'}>
-                                {daemonStatus.isOnline ? '🟢 Máy tính văn phòng (0 Render)' : '☁️ Cloud Render (Dự phòng)'}
+
+                    <div className="mt-2 space-y-1.5 text-slate-300 text-[11px]">
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">Trạng thái:</span>
+                            <span className={isOnline ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
+                                {isOnline ? 'Kết nối trực tiếp máy VP' : 'Mất kết nối máy VP'}
                             </span>
                         </div>
-                        <div className="flex justify-between gap-3">
-                            <span className="text-slate-500">Trạng thái:</span>
-                            <span className={`font-semibold ${labelColor}`}>
-                                {isRunning ? '🔄 Đang chạy' : isError ? '❌ Lỗi' : isOk ? '✅ Thành công' : '⏸ Chờ'}
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">Nguồn xử lý:</span>
+                            <span className="text-slate-200 font-medium">
+                                {isOnline ? 'Local Port 3001 (0 Render)' : 'Cloud Render (Dự phòng)'}
                             </span>
                         </div>
-                        <div className="flex justify-between gap-3">
-                            <span className="text-slate-500">Lần cuối:</span>
-                            <span>{timeAgo(status.last_run)}</span>
-                        </div>
-                        {isOk && (
-                            <div className="flex justify-between gap-3">
-                                <span className="text-slate-500">Đã cập nhật:</span>
-                                <span className="text-emerald-300 font-semibold">
-                                    {status.last_updated_count}/{status.last_total_cars} xe
-                                </span>
-                            </div>
-                        )}
-                        {isError && status.last_error && (
-                            <div className="text-red-400 text-[10px] mt-1 border border-red-800/40 rounded p-1.5 bg-red-950/30">
-                                {status.last_error.slice(0, 80)}
-                            </div>
-                        )}
-                        <div className="flex justify-between gap-3">
-                            <span className="text-slate-500">Chu kỳ:</span>
-                            <span>Mỗi {status.interval_hours} giờ</span>
-                        </div>
-                        {status.next_run && (
-                            <div className="flex justify-between gap-3">
-                                <span className="text-slate-500">Lần sau:</span>
-                                <span>{timeAgo(status.next_run).replace('trước', 'nữa').replace('Vừa xong', 'Sắp tới')}</span>
-                            </div>
-                        )}
                     </div>
-                    <div className="mt-2.5 pt-2 border-t border-slate-700/60 text-[10px] text-slate-500 text-center">
-                        Click để xem chi tiết hoặc sync thủ công
+
+                    <div className="mt-2 pt-2 border-t border-slate-800 text-[10px] text-slate-400 text-center">
+                        {isOnline ? 'Toàn bộ Web đang chạy trực tiếp trên máy VP' : 'Nhấp đúp start-cyber-sync.bat trên máy VP để kết nối lại'}
                     </div>
                 </div>
             )}

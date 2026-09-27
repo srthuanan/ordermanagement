@@ -9,6 +9,7 @@ import tabActiveTrungThuBg from '../../pictures/tab_active_trung_thu_bg.webp';
 import { isMidAutumnSeason } from '../ui/HolidayThemeDecorator';
 import Button from '../ui/Button';
 import Avatar from '../ui/Avatar';
+import { CyberAutoSyncBadge } from '../ui/CyberAutoSyncBadge';
 import { SwapInboxModal } from '../modals/SwapInboxModal';
 import { getSwapRequests } from '../../services/api/swapService';
 
@@ -279,6 +280,13 @@ const Header: React.FC<HeaderProps> = ({
 
                         {/* Portal for Admin Actions or View-specific actions */}
                         <div id="admin-portal-target" className="flex items-center"></div>
+
+                        {/* Huy hiệu trạng thái kết nối máy VP / Cloud Render */}
+                        {isCurrentUserAdmin && (
+                            <div className="hidden sm:flex items-center mx-1">
+                                <CyberAutoSyncBadge />
+                            </div>
+                        )}
 
                         <div className="flex items-center gap-1 relative">
                             {isCurrentUserAdmin && (
