@@ -5,34 +5,36 @@ import { DropdownFilterConfig } from './components/ui/Filters';
 import TabbedFilter from './components/ui/TabbedFilter';
 import MultiSelectDropdown from './components/ui/MultiSelectDropdown';
 
-// Lazy Load Components
-import StockView from './components/StockView';
-import SoldCarsView from './components/SoldCarsView';
-import AdminView from './components/admin/AdminView';
-import PricingCalculatorIframeView from './components/PricingCalculatorIframeView';
-import CrmLeadImporterView from './components/crm/CrmLeadImporterView';
+// Lazy Load Views & Heavy Components
+const StockView = React.lazy(() => import('./components/StockView'));
+const SoldCarsView = React.lazy(() => import('./components/SoldCarsView'));
+const AdminView = React.lazy(() => import('./components/admin/AdminView'));
+const PricingCalculatorIframeView = React.lazy(() => import('./components/PricingCalculatorIframeView'));
+const CrmLeadImporterView = React.lazy(() => import('./components/crm/CrmLeadImporterView'));
 const TestDriveForm = React.lazy(() => import('./components/testdrive/TestDriveForm'));
 const VirtualAssistant = React.lazy(() => import('./components/VirtualAssistant'));
 
-// Eager imports for modals (lightweight enough or critical)
+// Lazy Load Modals (loaded on demand)
+const CancelRequestModal = React.lazy(() => import('./components/modals/CancelRequestModal'));
+const RequestInvoiceModal = React.lazy(() => import('./components/modals/RequestInvoiceModal'));
+const SupplementaryFileModal = React.lazy(() => import('./components/modals/SupplementaryFileModal'));
+const CreateRequestModal = React.lazy(() => import('./components/modals/CreateRequestModal'));
+const SuperEditModal = React.lazy(() => import('./components/modals/SuperEditModal'));
+const ChangePasswordModal = React.lazy(() => import('./components/modals/ChangePasswordModal'));
+const ImagePreviewModal = React.lazy(() => import('./components/modals/ImagePreviewModal'));
+const ActionModal = React.lazy(() => import('./components/admin/ActionModal'));
+const RequestVcModal = React.lazy(() => import('./components/modals/RequestVcModal'));
+const FilePreviewModal = React.lazy(() => import('./components/modals/FilePreviewModal'));
+const PendingStatsModal = React.lazy(() => import('./components/modals/PendingStatsModal'));
+const HoldExtensionModal = React.lazy(() => import('./components/modals/HoldExtensionModal'));
+const FifoAlertModal = React.lazy(() => import('./components/modals/FifoAlertModal'));
+const GlobalSearchModal = React.lazy(() => import('./components/modals/GlobalSearchModal'));
+const ReportBacklogModal = React.lazy(() => import('./components/modals/ReportBacklogModal'));
+
+// Eager imports for core components
 import { OrderDetailView } from './components/OrderDetailView';
-import CancelRequestModal from './components/modals/CancelRequestModal';
-import RequestInvoiceModal from './components/modals/RequestInvoiceModal';
-import SupplementaryFileModal from './components/modals/SupplementaryFileModal';
-import CreateRequestModal from './components/modals/CreateRequestModal';
-import SuperEditModal from './components/modals/SuperEditModal';
-import ChangePasswordModal from './components/modals/ChangePasswordModal';
-import ImagePreviewModal from './components/modals/ImagePreviewModal';
-import ActionModal from './components/admin/ActionModal';
-import RequestVcModal from './components/modals/RequestVcModal';
-import FilePreviewModal from './components/modals/FilePreviewModal';
-import PendingStatsModal from './components/modals/PendingStatsModal';
-import HoldExtensionModal from './components/modals/HoldExtensionModal';
-import FifoAlertModal from './components/modals/FifoAlertModal';
-import GlobalSearchModal from './components/modals/GlobalSearchModal';
 import OrderGridView from './components/OrderGridView';
 import CustomTitleBar from './components/layout/CustomTitleBar';
-import ReportBacklogModal from './components/modals/ReportBacklogModal';
 
 import { useAppNavigation } from './hooks/useAppNavigation';
 import { useNotification } from './hooks/useNotification';
@@ -976,48 +978,52 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <StockView
-                                        stockData={stockData}
-                                        queuedVins={queuedVins}
-                                        isLoading={isLoadingStock}
-                                        error={errorStock}
-                                        refetchStock={refetchStock}
-                                        highlightedVins={highlightedVins}
-                                        showToast={showToast}
-                                        currentUser={currentUser}
-                                        isAdmin={isCurrentUserAdmin}
-                                        canHoldMore={canHoldMore}
-                                        onCreateRequestForVehicle={handleCreateRequestForVehicle}
-                                        onHoldCar={handleHoldCar}
-                                        onReleaseCar={handleReleaseCar}
-                                        onJoinQueue={handleJoinQueue}
-                                        onLeaveQueue={handleLeaveQueue}
-                                        onOpenExtensionModal={setExtensionVehicle}
-                                        processingVin={processingVin}
-                                        isSidebarCollapsed={isSidebarCollapsed}
-                                        allOrders={allHistoryData}
-                                        showOrderInAdmin={isCurrentUserAdmin ? showOrderInAdmin : undefined}
-                                        showAdminTab={isCurrentUserAdmin ? showAdminTab : undefined}
-                                        forcedSearch={stockSearch}
-                                        isReferenceAccount={isReferenceAccount}
-                                        onNavigateToInquiry={() => {
-                                            setActiveView('inquiry');
-                                        }}
-                                        onViewCarOnMap={() => {
-                                            setActiveView('stock');
-                                        }}
-                                    />
+                                    <Suspense fallback={<LoadingFallback />}>
+                                        <StockView
+                                            stockData={stockData}
+                                            queuedVins={queuedVins}
+                                            isLoading={isLoadingStock}
+                                            error={errorStock}
+                                            refetchStock={refetchStock}
+                                            highlightedVins={highlightedVins}
+                                            showToast={showToast}
+                                            currentUser={currentUser}
+                                            isAdmin={isCurrentUserAdmin}
+                                            canHoldMore={canHoldMore}
+                                            onCreateRequestForVehicle={handleCreateRequestForVehicle}
+                                            onHoldCar={handleHoldCar}
+                                            onReleaseCar={handleReleaseCar}
+                                            onJoinQueue={handleJoinQueue}
+                                            onLeaveQueue={handleLeaveQueue}
+                                            onOpenExtensionModal={setExtensionVehicle}
+                                            processingVin={processingVin}
+                                            isSidebarCollapsed={isSidebarCollapsed}
+                                            allOrders={allHistoryData}
+                                            showOrderInAdmin={isCurrentUserAdmin ? showOrderInAdmin : undefined}
+                                            showAdminTab={isCurrentUserAdmin ? showAdminTab : undefined}
+                                            forcedSearch={stockSearch}
+                                            isReferenceAccount={isReferenceAccount}
+                                            onNavigateToInquiry={() => {
+                                                setActiveView('inquiry');
+                                            }}
+                                            onViewCarOnMap={() => {
+                                                setActiveView('stock');
+                                            }}
+                                        />
+                                    </Suspense>
                                 )}
                             </div>
                         </div>
                         <div hidden={activeView !== 'sold'} className="h-full">
-                            <SoldCarsView
-                                showToast={showToast}
-                                isSidebarCollapsed={isSidebarCollapsed}
-                                showOrderInAdmin={isCurrentUserAdmin ? showOrderInAdmin : undefined}
-                                showAdminTab={isCurrentUserAdmin ? showAdminTab : undefined}
-                                isAdmin={isCurrentUserAdmin}
-                            />
+                            <Suspense fallback={<LoadingFallback />}>
+                                <SoldCarsView
+                                    showToast={showToast}
+                                    isSidebarCollapsed={isSidebarCollapsed}
+                                    showOrderInAdmin={isCurrentUserAdmin ? showOrderInAdmin : undefined}
+                                    showAdminTab={isCurrentUserAdmin ? showAdminTab : undefined}
+                                    isAdmin={isCurrentUserAdmin}
+                                />
+                            </Suspense>
                         </div>
                         <div hidden={activeView !== 'laithu'} className="h-full">
                             <Suspense fallback={<LoadingFallback />}>
@@ -1036,42 +1042,48 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             </Suspense>
                         </div>
                         <div hidden={activeView !== 'pricing'} className="h-full">
-                            <PricingCalculatorIframeView />
+                            <Suspense fallback={<LoadingFallback />}>
+                                <PricingCalculatorIframeView />
+                            </Suspense>
                         </div>
                         <div hidden={activeView !== 'crm'} className="h-full">
-                            <CrmLeadImporterView
-                                currentUser={currentUser}
-                                currentUserName={currentUserName}
-                                userRole={userRole}
-                                isAdmin={isCurrentUserAdmin}
-                                showToast={showToast}
-                            />
+                            <Suspense fallback={<LoadingFallback />}>
+                                <CrmLeadImporterView
+                                    currentUser={currentUser}
+                                    currentUserName={currentUserName}
+                                    userRole={userRole}
+                                    isAdmin={isCurrentUserAdmin}
+                                    showToast={showToast}
+                                />
+                            </Suspense>
                         </div>
                         <div hidden={activeView !== 'admin'} className="h-full">
-                            {isCurrentUserAdmin &&
-                                <AdminView
-                                    showToast={showToast}
-                                    hideToast={hideToast}
-                                    refetchHistory={refetchHistory}
-                                    refetchStock={refetchStock}
-                                    allOrders={allHistoryData}
-                                    xuathoadonData={xuathoadonData}
-                                    refetchXuathoadon={refetchXuathoadon}
-                                    stockData={stockData}
-                                    isLoadingXuathoadon={isLoadingXuathoadon}
-                                    isLoadingHistory={isLoadingHistory}
-                                    errorXuathoadon={errorXuathoadon}
-                                    onOpenImagePreview={openImagePreviewModal}
-                                    onOpenFilePreview={openFilePreviewModal}
-                                    teamData={teamData}
-                                    allUsers={allUsers}
-                                    refetchAdminData={fetchAdminData}
-                                    isSidebarCollapsed={isSidebarCollapsed}
-                                    initialState={initialAdminState}
-                                    clearInitialState={clearInitialState}
-                                    isReferenceAccount={isReferenceAccount}
-                                />
-                            }
+                            {isCurrentUserAdmin && (
+                                <Suspense fallback={<LoadingFallback />}>
+                                    <AdminView
+                                        showToast={showToast}
+                                        hideToast={hideToast}
+                                        refetchHistory={refetchHistory}
+                                        refetchStock={refetchStock}
+                                        allOrders={allHistoryData}
+                                        xuathoadonData={xuathoadonData}
+                                        refetchXuathoadon={refetchXuathoadon}
+                                        stockData={stockData}
+                                        isLoadingXuathoadon={isLoadingXuathoadon}
+                                        isLoadingHistory={isLoadingHistory}
+                                        errorXuathoadon={errorXuathoadon}
+                                        onOpenImagePreview={openImagePreviewModal}
+                                        onOpenFilePreview={openFilePreviewModal}
+                                        teamData={teamData}
+                                        allUsers={allUsers}
+                                        refetchAdminData={fetchAdminData}
+                                        isSidebarCollapsed={isSidebarCollapsed}
+                                        initialState={initialAdminState}
+                                        clearInitialState={clearInitialState}
+                                        isReferenceAccount={isReferenceAccount}
+                                    />
+                                </Suspense>
+                            )}
                         </div>
                     </main >
                     <footer className="hidden lg:flex flex-shrink-0 h-7 px-5 bg-transparent items-center justify-between text-[10px] select-none">
@@ -1096,98 +1108,114 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     onRefresh={fetchNotificationsInternal}
                 />
 
-                <CreateRequestModal
-                    isOpen={createRequestData.isOpen}
-                    onClose={handleCreateRequestClose}
-                    onSuccess={handleFormSuccess}
-                    showToast={showToast}
-                    hideToast={hideToast}
-                    existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
-                    initialVehicle={createRequestData.initialVehicle}
-                    currentUser={currentUser}
-                    vehicleAnalyticsData={vehicleAnalyticsData}
-                    onOpenImagePreview={openImagePreviewModal}
-                />
-
-                <HoldExtensionModal
-                    isOpen={!!extensionVehicle}
-                    onClose={() => setExtensionVehicle(null)}
-                    vehicle={extensionVehicle}
-                    onRequestExtension={handleRequestExtension}
-                />
-                <ChangePasswordModal
-                    isOpen={isChangePasswordModalOpen}
-                    onClose={() => setIsChangePasswordModalOpen(false)}
-                    showToast={showToast}
-                    username={currentUserName}
-                />
-
-
-                <SuperEditModal
-                    isOpen={!!orderToSuperEdit}
-                    onClose={() => setOrderToSuperEdit(null)}
-                    onSuccess={handleSuperEditSuccess}
-                    order={orderToSuperEdit}
-                    showToast={showToast}
-                />
-                {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}
-                {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} stockData={stockData} showToast={showToast} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}
-                {orderToSupplement && <SupplementaryFileModal order={orderToSupplement} onClose={() => setOrderToSupplement(null)} onConfirm={handleSupplementFiles} showToast={showToast} />}
-                <RequestVcModal
-                    order={orderToRequestVC}
-                    onClose={() => setOrderToRequestVC(null)}
-                    onSubmit={handleConfirmRequestVC}
-                />
-                {orderToConfirmVC && <ActionModal isOpen={!!orderToConfirmVC} onClose={() => setOrderToConfirmVC(null)} title="Xác Thực UNC VinClub" description="Xác nhận bạn đã nhận được UNC cho yêu cầu VinClub của đơn hàng:" targetId={orderToConfirmVC['Số đơn hàng']} submitText="Đã Nhận UNC" submitColor="success" icon="fa-check-circle" onSubmit={handleConfirmVC} />}
-                <ImagePreviewModal
-                    isOpen={!!imagePreview}
-                    onClose={() => setImagePreview(null)}
-                    images={imagePreview?.images || []}
-                    startIndex={imagePreview?.startIndex}
-                    customerName={imagePreview?.customerName}
-                />
-                {
-                    filePreview && (
-                        <FilePreviewModal
-                            isOpen={!!filePreview}
-                            onClose={() => setFilePreview(null)}
-                            fileUrl={filePreview.url}
-                            fileLabel={filePreview.label}
+                <Suspense fallback={null}>
+                    {createRequestData.isOpen && (
+                        <CreateRequestModal
+                            isOpen={createRequestData.isOpen}
+                            onClose={handleCreateRequestClose}
+                            onSuccess={handleFormSuccess}
+                            showToast={showToast}
+                            hideToast={hideToast}
+                            existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
+                            initialVehicle={createRequestData.initialVehicle}
+                            currentUser={currentUser}
+                            vehicleAnalyticsData={vehicleAnalyticsData}
+                            onOpenImagePreview={openImagePreviewModal}
                         />
-                    )
-                }
-                <PendingStatsModal
-                    isOpen={isPendingStatsModalOpen}
-                    onClose={() => setIsPendingStatsModalOpen(false)}
-                    stats={groupedPendingStats}
-                />
-                <GlobalSearchModal
-                    isOpen={isGlobalSearchOpen}
-                    onClose={() => setIsGlobalSearchOpen(false)}
-                    onSelectItem={(item, category) => {
-                        setIsGlobalSearchOpen(false);
-                        if (category === 'Đơn hàng' || category === 'Dữ liệu lưu trữ') {
-                            setSelectedOrder(item);
-                            setActiveView(category === 'Đơn hàng' ? 'orders' : 'sold');
-                        } else if (category === 'Kho xe') {
-                            setActiveView('stock');
-                        } else if (category === 'Yêu cầu hóa đơn' || category === 'Yêu cầu VinClub') {
-                            // Link to specific status or request if possible
-                            setActiveView('admin');
-                        }
-                    }}
-                />
+                    )}
 
+                    {extensionVehicle && (
+                        <HoldExtensionModal
+                            isOpen={!!extensionVehicle}
+                            onClose={() => setExtensionVehicle(null)}
+                            vehicle={extensionVehicle}
+                            onRequestExtension={handleRequestExtension}
+                        />
+                    )}
+                    {isChangePasswordModalOpen && (
+                        <ChangePasswordModal
+                            isOpen={isChangePasswordModalOpen}
+                            onClose={() => setIsChangePasswordModalOpen(false)}
+                            showToast={showToast}
+                            username={currentUserName}
+                        />
+                    )}
 
+                    {orderToSuperEdit && (
+                        <SuperEditModal
+                            isOpen={!!orderToSuperEdit}
+                            onClose={() => setOrderToSuperEdit(null)}
+                            onSuccess={handleSuperEditSuccess}
+                            order={orderToSuperEdit}
+                            showToast={showToast}
+                        />
+                    )}
+                    {orderToCancel && <CancelRequestModal order={orderToCancel} onClose={() => setOrderToCancel(null)} onConfirm={handleCancelOrder} />}
+                    {orderToRequestInvoice && <RequestInvoiceModal order={orderToRequestInvoice} stockData={stockData} showToast={showToast} onClose={() => setOrderToRequestInvoice(null)} onConfirm={handleRequestInvoice} />}
+                    {orderToSupplement && <SupplementaryFileModal order={orderToSupplement} onClose={() => setOrderToSupplement(null)} onConfirm={handleSupplementFiles} showToast={showToast} />}
+                    {orderToRequestVC && (
+                        <RequestVcModal
+                            order={orderToRequestVC}
+                            onClose={() => setOrderToRequestVC(null)}
+                            onSubmit={handleConfirmRequestVC}
+                        />
+                    )}
+                    {orderToConfirmVC && <ActionModal isOpen={!!orderToConfirmVC} onClose={() => setOrderToConfirmVC(null)} title="Xác Thực UNC VinClub" description="Xác nhận bạn đã nhận được UNC cho yêu cầu VinClub của đơn hàng:" targetId={orderToConfirmVC['Số đơn hàng']} submitText="Đã Nhận UNC" submitColor="success" icon="fa-check-circle" onSubmit={handleConfirmVC} />}
+                    {imagePreview && (
+                        <ImagePreviewModal
+                            isOpen={!!imagePreview}
+                            onClose={() => setImagePreview(null)}
+                            images={imagePreview?.images || []}
+                            startIndex={imagePreview?.startIndex}
+                            customerName={imagePreview?.customerName}
+                        />
+                    )}
+                    {
+                        filePreview && (
+                            <FilePreviewModal
+                                isOpen={!!filePreview}
+                                onClose={() => setFilePreview(null)}
+                                fileUrl={filePreview.url}
+                                fileLabel={filePreview.label}
+                            />
+                        )
+                    }
+                    {isPendingStatsModalOpen && (
+                        <PendingStatsModal
+                            isOpen={isPendingStatsModalOpen}
+                            onClose={() => setIsPendingStatsModalOpen(false)}
+                            stats={groupedPendingStats}
+                        />
+                    )}
+                    {isGlobalSearchOpen && (
+                        <GlobalSearchModal
+                            isOpen={isGlobalSearchOpen}
+                            onClose={() => setIsGlobalSearchOpen(false)}
+                            onSelectItem={(item, category) => {
+                                setIsGlobalSearchOpen(false);
+                                if (category === 'Đơn hàng' || category === 'Dữ liệu lưu trữ') {
+                                    setSelectedOrder(item);
+                                    setActiveView(category === 'Đơn hàng' ? 'orders' : 'sold');
+                                } else if (category === 'Kho xe') {
+                                    setActiveView('stock');
+                                } else if (category === 'Yêu cầu hóa đơn' || category === 'Yêu cầu VinClub') {
+                                    // Link to specific status or request if possible
+                                    setActiveView('admin');
+                                }
+                            }}
+                        />
+                    )}
 
-                {!isReferenceAccount && (
-                    <ReportBacklogModal
-                        isOpen={isBacklogModalOpen}
-                        onClose={() => setIsBacklogModalOpen(false)}
-                        showToast={showToast}
-                        currentUser={currentUser}
-                    />
-                )}
+                    {!isReferenceAccount && isBacklogModalOpen && (
+                        <ReportBacklogModal
+                            isOpen={isBacklogModalOpen}
+                            onClose={() => setIsBacklogModalOpen(false)}
+                            showToast={showToast}
+                            currentUser={currentUser}
+                        />
+                    )}
+                    <FifoAlertModal />
+                </Suspense>
 
                 {isChatEnabled && (
                     <Suspense fallback={null}>
@@ -1210,7 +1238,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     onOpenGlobalSearch={() => setIsGlobalSearchOpen(true)}
                 />
                 {/* {new Date() >= new Date('2026-01-05T00:00:00') && <LuckyMoneyWidget />} */}
-                <FifoAlertModal />
             </GlobalNotificationProvider>
         </>
     );

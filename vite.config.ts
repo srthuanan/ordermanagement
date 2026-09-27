@@ -519,6 +519,15 @@ export default defineConfig({
             if (id.includes('three')) {
               return 'vendor-three';
             }
+            if (id.includes('react-window') || id.includes('react-virtualized')) {
+              return 'vendor-virtual';
+            }
+            if (id.includes('react-markdown') || id.includes('remark-gfm')) {
+              return 'vendor-markdown';
+            }
+            if (id.includes('qrcode')) {
+              return 'vendor-qrcode';
+            }
           }
         }
       }

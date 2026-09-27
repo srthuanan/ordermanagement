@@ -11,6 +11,14 @@ echo   - Tinh nang:       Tự động ưu tiên xử lý trực tiếp trên m�
 echo                      Web GitHub Pages KHÔNG CẦN DÙNG RENDER!
 echo   - PDF Daemon:      Tự động xuất và đồng bộ PDF phiếu Cyber gốc lên Cloud
 echo ==================================================================
-echo.
+:loop
+echo [%date% %time%] Dang khoi chay dich vu CyberSync...
 node server-cyber.mjs
-pause
+echo.
+echo ==================================================================
+echo [%date% %time%] CANH BAO: Dich vu da dung lai.
+echo He thong se tu dong khoi dong lai sau 5 giay...
+echo Nhan Ctrl+C de dung han.
+echo ==================================================================
+timeout /t 5 > nul
+goto loop
