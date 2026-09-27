@@ -23,13 +23,15 @@ if PROJECT_DIR not in sys.path:
 from scripts.sync_thuan_an_allocations import (
     sync_missing_cyber_voucher_pdfs,
     sync_cyber_voucher_tickets_to_supabase,
-    cleanup_old_cyber_pdfs_from_supabase
+    cleanup_old_cyber_pdfs_from_supabase,
+    sync_khoxe_locations_from_cyber
 )
 
 _cycle_count = 0
+_last_location_sync_time = 0
 
 def run_sync_cycle(limit=30, max_export=5):
-    global _cycle_count
+    global _cycle_count, _last_location_sync_time
     _cycle_count += 1
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"\n=======================================================", file=sys.stderr)
@@ -52,6 +54,22 @@ def run_sync_cycle(limit=30, max_export=5):
         print(f"[{now_str}] 📄 Kết quả kiểm tra PDF: Đã quét {scanned} phiếu | Thiếu {missing} | Đã xuất thành công {exported} phiếu lên Cloud.", file=sys.stderr)
     except Exception as ex:
         print(f"[{now_str}] ❌ Lỗi kết xuất PDF: {ex}", file=sys.stderr)
+
+    # 3. Tự động đối chiếu và cập nhật vị trí kho thực tế cho toàn bộ xe trong Kho xe (chạy ngay lần đầu và mỗi 5 phút)
+    now_ts = time.time()
+    if now_ts - _last_location_sync_time >= 300:
+        try:
+            print(f"[{now_str}] 📍 Đang tự động đối chiếu vị trí kho xe thực tế từ CyberSoft...", file=sys.stderr)
+            res_loc = sync_khoxe_locations_from_cyber(preview=False)
+            changed = res_loc.get('changed_count', 0)
+            total = res_loc.get('total_cars', 0)
+            if changed > 0:
+                print(f"[{now_str}] 📍 Đã tự động cập nhật vị trí cho {changed}/{total} xe trong Kho xe!", file=sys.stderr)
+            else:
+                print(f"[{now_str}] 📍 Vị trí {total} xe trong Kho xe đã đồng bộ chuẩn xác với CyberSoft.", file=sys.stderr)
+            _last_location_sync_time = now_ts
+        except Exception as ex_loc:
+            print(f"[{now_str}] ⚠️ Lỗi đồng bộ vị trí kho xe: {ex_loc}", file=sys.stderr)
 
     print(f"[{now_str}] ✅ Chu kỳ hoàn tất!\n", file=sys.stderr)
 

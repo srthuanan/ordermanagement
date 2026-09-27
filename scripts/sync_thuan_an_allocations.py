@@ -498,20 +498,20 @@ def sync_khoxe_locations_from_cyber(target_vins: list = None, preview: bool = Fa
 
     updated_count = 0
     if not preview and to_update:
-        CHUNK = 50
-        for i in range(0, len(to_update), CHUNK):
-            chunk = to_update[i:i + CHUNK]
-            up_res = requests.post(
-                url,
-                headers={**HEADERS, "Prefer": "resolution=merge-duplicates"},
-                params={"on_conflict": "vin"},
-                json=chunk,
-                timeout=30
-            )
-            if 200 <= up_res.status_code < 300:
-                updated_count += len(chunk)
-            else:
-                print(f"[Supabase sync locations error] HTTP {up_res.status_code}: {up_res.text[:200]}", file=sys.stderr)
+        for item in to_update:
+            v = item.get("vin")
+            new_loc = item.get("vi_tri")
+            try:
+                patch_res = requests.patch(
+                    f"{SUPABASE_URL}/rest/v1/khoxe?vin=eq.{v}",
+                    headers=HEADERS,
+                    json={"vi_tri": new_loc},
+                    timeout=10
+                )
+                if 200 <= patch_res.status_code < 300:
+                    updated_count += 1
+            except Exception as e_p:
+                print(f"[Supabase sync locations error for {v}]: {e_p}", file=sys.stderr)
 
     return {
         "success": True,
