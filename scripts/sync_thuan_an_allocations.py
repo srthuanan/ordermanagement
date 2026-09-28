@@ -1186,9 +1186,15 @@ def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
     ma_mau = (params.get("ma_mau") or "").strip()
     ma_kh = (params.get("ma_kh") or "").strip()
     ma_hd = (params.get("ma_hd") or "").strip()
+    so_ct = (params.get("so_ct") or "").strip()
+    so_khung = (params.get("so_khung") or "").strip().upper()
+    ten_kh = (params.get("ten_kh") or "").strip()
+    dien_thoai = (params.get("dien_thoai") or "").strip()
+    so_don_hang = (params.get("so_don_hang") or params.get("order_no") or "").strip()
+    keyword = (params.get("keyword") or "").strip()
+    direct_only = bool(params.get("direct_only") or params.get("fast"))
     m_all = (params.get("all") or "1").strip()
     is_xep_xe = (params.get("is_xep_xe") or "").strip()
-    keyword = (params.get("keyword") or params.get("so_khung") or "").strip()
 
     is_pymssql = True
     try:
@@ -1214,28 +1220,79 @@ def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
     cols = []
     direct_matched_stts = set()
 
-    # 1. Tra cứu trực tiếp theo số khung (VIN), số hợp đồng, mã chứng từ, hoặc tên khách hàng
-    if keyword:
+    # 1. Tra cứu trực tiếp theo số khung (VIN), số điện thoại, tên khách hàng, số HĐ, hoặc từ khóa
+    is_targeted = bool(so_khung or ten_kh or dien_thoai or ma_hd or so_ct or so_don_hang or keyword)
+    if is_targeted:
         try:
             stt_recs_direct = []
-            # Tra cứu số khung từ BEXEPXE
-            c.execute(f"SELECT TOP 30 Ma_Hd, Stt_Rec0, So_khung FROM dbo.BEXEPXE WITH (NOLOCK) WHERE So_khung LIKE {ph}", ('%' + keyword + '%',))
-            bex_matches = c.fetchall()
-            hd_candidates = [r[0] for r in bex_matches if r and r[0]]
-            if hd_candidates:
-                ph_hd = ', '.join([ph] * len(hd_candidates))
-                c.execute(f"SELECT DISTINCT stt_rec FROM dbo.CT70HDX WITH (NOLOCK) WHERE ma_hd IN ({ph_hd})", tuple(hd_candidates))
+
+            # a. Tra cứu theo số khung (VIN) từ dbo.BEXEPXE
+            vin_target = so_khung or (keyword if len(keyword) >= 7 and not keyword.isdigit() else "")
+            if vin_target:
+                c.execute(f"SELECT DISTINCT TOP 20 Ma_Hd, Stt_Rec0, So_khung FROM dbo.BEXEPXE WITH (NOLOCK) WHERE So_khung LIKE {ph}", ('%' + vin_target + '%',))
+                bex_matches = c.fetchall()
+                hd_candidates = [r[0] for r in bex_matches if r and r[0]]
+                if hd_candidates:
+                    ph_hd = ', '.join([ph] * len(hd_candidates))
+                    c.execute(f"SELECT DISTINCT stt_rec FROM dbo.CT70HDX WITH (NOLOCK) WHERE ma_hd IN ({ph_hd})", tuple(hd_candidates))
+                    for sr_row in c.fetchall():
+                        if sr_row and sr_row[0] and sr_row[0] not in stt_recs_direct:
+                            stt_recs_direct.append(sr_row[0])
+
+            # b. Tra cứu theo số điện thoại từ dbo.CT70HDX (Ưu tiên cực cao vì SĐT là định danh duy nhất)
+            phone_target = dien_thoai or (keyword if keyword.isdigit() and len(keyword) >= 8 else "")
+            if phone_target:
+                phone_clean = ''.join(ch for ch in phone_target if ch.isdigit())
+                if len(phone_clean) >= 7:
+                    c.execute(f"""
+                        SELECT TOP 10 stt_rec FROM dbo.CT70HDX WITH (NOLOCK)
+                        WHERE dien_thoai LIKE {ph} OR fax LIKE {ph} OR dt_lx LIKE {ph}
+                        ORDER BY ngay_ct DESC, stt_rec DESC
+                    """, ('%' + phone_clean[-9:] + '%', '%' + phone_clean[-9:] + '%', '%' + phone_clean[-9:] + '%'))
+                    for sr_row in c.fetchall():
+                        if sr_row and sr_row[0] and sr_row[0] not in stt_recs_direct:
+                            stt_recs_direct.append(sr_row[0])
+
+            # c. Tra cứu theo mã HĐ, số chứng từ, số đơn hàng từ dbo.CT70HDX
+            hd_target = ma_hd or so_ct or so_don_hang
+            if hd_target:
+                c.execute(f"""
+                    SELECT TOP 10 stt_rec FROM dbo.CT70HDX WITH (NOLOCK)
+                    WHERE ma_hd LIKE {ph} OR so_ct LIKE {ph} OR dien_giai LIKE {ph} OR ma_td1 LIKE {ph} OR ma_td3 LIKE {ph}
+                    ORDER BY ngay_ct DESC, stt_rec DESC
+                """, ('%' + hd_target + '%', '%' + hd_target + '%', '%' + hd_target + '%', '%' + hd_target + '%', '%' + hd_target + '%'))
                 for sr_row in c.fetchall():
                     if sr_row and sr_row[0] and sr_row[0] not in stt_recs_direct:
                         stt_recs_direct.append(sr_row[0])
 
-            # Tra cứu từ CT70HDX theo ma_hd, so_ct, ten_kh
-            c.execute(f"SELECT TOP 30 stt_rec FROM dbo.CT70HDX WITH (NOLOCK) WHERE ma_hd LIKE {ph} OR so_ct LIKE {ph} OR ten_kh LIKE {ph}",
-                      ('%' + keyword + '%', '%' + keyword + '%', '%' + keyword + '%'))
-            for sr_row in c.fetchall():
-                if sr_row and sr_row[0] and sr_row[0] not in stt_recs_direct:
-                    stt_recs_direct.append(sr_row[0])
+            # d. Tra cứu theo tên khách hàng từ dbo.CT70HDX (Sắp xếp mới nhất trước)
+            name_target = ten_kh or (keyword if not keyword.isdigit() and len(keyword) >= 3 else "")
+            if name_target:
+                name_words = [w for w in name_target.split() if w]
+                name_like = '%' + '%'.join(name_words) + '%'
+                c.execute(f"""
+                    SELECT TOP 10 stt_rec FROM dbo.CT70HDX WITH (NOLOCK)
+                    WHERE ten_kh LIKE {ph} OR ten_khvat LIKE {ph}
+                    ORDER BY ngay_ct DESC, stt_rec DESC
+                """, (name_like, name_like))
+                for sr_row in c.fetchall():
+                    if sr_row and sr_row[0] and sr_row[0] not in stt_recs_direct:
+                        stt_recs_direct.append(sr_row[0])
 
+            # e. Nếu có keyword chung mà các tiêu chí trên chưa tìm thấy:
+            if keyword and not stt_recs_direct:
+                kw_words = [w for w in keyword.split() if w]
+                kw_like = '%' + '%'.join(kw_words) + '%'
+                c.execute(f"""
+                    SELECT TOP 10 stt_rec FROM dbo.CT70HDX WITH (NOLOCK)
+                    WHERE ma_hd LIKE {ph} OR so_ct LIKE {ph} OR ten_kh LIKE {ph} OR dien_thoai LIKE {ph}
+                    ORDER BY ngay_ct DESC, stt_rec DESC
+                """, (kw_like, kw_like, kw_like, kw_like))
+                for sr_row in c.fetchall():
+                    if sr_row and sr_row[0] and sr_row[0] not in stt_recs_direct:
+                        stt_recs_direct.append(sr_row[0])
+
+            # Chạy SP [dbo].[CP_BeXepXe] trực tiếp theo từng @M_Stt_Rec (< 200ms mỗi HĐ)
             if stt_recs_direct:
                 direct_sql = f"""
                 EXECUTE [dbo].[CP_BeXepXe]
@@ -1246,7 +1303,7 @@ def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
                     @M_Nh_HD1 = N'', @M_Nh_HD2 = N'', @M_Nh_HD3 = N'',
                     @M_Ma_DVCS = {ph}, @M_User_name = {ph}
                 """
-                for sr in stt_recs_direct[:5]:
+                for sr in stt_recs_direct[:10]:
                     c.execute(direct_sql, (sr, ma_dvcs, user_name))
                     d_res = c.fetchall()
                     if d_res:
@@ -1258,7 +1315,22 @@ def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
         except Exception as ex:
             print(f"[get_cyber_xep_xe_contracts direct lookup error]: {ex}", file=sys.stderr)
 
-    # 2. Nếu không tìm theo từ khóa hoặc từ khóa chưa có kết quả trực tiếp: chạy SP theo khoảng thời gian
+    # 2. Nếu là tìm kiếm nhanh (direct_only / fast): trả về ngay kết quả trực tiếp, KHÔNG quét toàn bộ năm (tránh đơ 30s)
+    if direct_only and not rows:
+        try:
+            conn.close()
+        except Exception:
+            pass
+        return {
+            "success": True,
+            "total": 0,
+            "status_counts": {},
+            "showrooms": [],
+            "models": [],
+            "contracts": []
+        }
+
+    # 3. Nếu không tìm theo từ khóa hoặc từ khóa chưa có kết quả trực tiếp (và không phải direct_only): chạy SP theo khoảng thời gian
     if not rows:
         sql = f"""
         EXECUTE [dbo].[CP_BeXepXe]
@@ -1367,6 +1439,7 @@ def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
             "ma_mau_nt": (d.get('Ma_Mau_Nt') or '').strip(),
             "ten_mau_nt": (d.get('Ten_mau_nt') or '').strip(),
             "so_khung": (d.get('So_khung') or '').strip(),
+            "so_may": (d.get('So_May') or d.get('so_may') or '').strip(),
             "ngay_xep": ngay_xep,
             "tien_nt": tien_nt,
             "da_tt": da_tt,
@@ -1383,7 +1456,10 @@ def get_cyber_xep_xe_contracts(params: dict = {}) -> dict:
             "is_direct_match": bool((d.get('stt_rec') or '').strip() in direct_matched_stts)
         })
 
-    conn.close()
+    try:
+        conn.close()
+    except Exception:
+        pass
 
     # Lọc theo Showroom nếu người dùng yêu cầu (Mặc định tải TVBH tại Showroom Thuận An)
     target_showroom = (params.get("showroom") or "").strip()

@@ -1065,12 +1065,19 @@ export interface CyberXepXeFilterParams {
     ma_mau?: string;
     ma_kh?: string;
     ma_hd?: string;
+    so_ct?: string;
+    so_khung?: string;
+    ten_kh?: string;
+    dien_thoai?: string;
+    so_don_hang?: string;
     all?: string;
     is_xep_xe?: string;
     showroom?: string;
     keyword?: string;
     force?: boolean;
     refresh?: boolean;
+    fast?: boolean;
+    direct_only?: boolean;
 }
 
 export interface CyberXepXeContractsResponse {
@@ -1103,7 +1110,7 @@ export interface CyberAssignmentCheckResult {
     cyberVin?: string;
     cyberSoMay?: string;
     contract?: CyberXepXeContract;
-    isApprovedYellow?: boolean; // Đã được Giám đốc duyệt (Màu vàng / ma_post = 3)
+    isApprovedYellow?: boolean; // Đã được Giám đốc duyệt (Màu vàng / ma_post = 3 / Chờ ghép SK)
     isPendingGreen?: boolean;    // Chưa được Giám đốc duyệt (Màu xanh / ma_post = 2 / Chờ duyệt)
 }
 
@@ -1137,8 +1144,21 @@ export const isOrderAssignedOnCyber = (order: any, cyberContracts: CyberXepXeCon
         const backColor = (c.back_color || '').trim().toLowerCase();
         const maColor = (c.ma_color || '').trim();
 
+        // 1. Pending (Chờ duyệt / Màu xanh / GreenYellow / ma_post = 2 / ma_color = 04)
         const isPending = post === '2' || tenColor === 'chờ duyệt' || maColor === '04' || backColor === 'greenyellow';
-        const isApproved = !isPending && (post === '3' || backColor === 'yellow' || backColor === 'violet' || tenColor !== 'chờ duyệt');
+        
+        // 2. Approved (Đã duyệt / Màu vàng / ma_post = 3 / Chờ ghép SK / Đã ghép SK / Đã xuất HĐ / ma_color = 06)
+        const isApproved = !isPending && (
+            post === '3' || 
+            tenColor === 'chờ ghép sk' || 
+            tenColor === 'đã ghép sk' || 
+            tenColor === 'đã xuất hđ' ||
+            maColor === '06' ||
+            backColor === 'yellow' || 
+            backColor === 'violet' || 
+            backColor === 'cyan' || 
+            tenColor !== 'chờ duyệt'
+        );
         return { isPendingGreen: isPending, isApprovedYellow: isApproved };
     };
 
@@ -1162,11 +1182,70 @@ export const isOrderAssignedOnCyber = (order: any, cyberContracts: CyberXepXeCon
     const custNameExact = normalizeName(order['Tên khách hàng'] || order.ten_khach_hang || '');
     const custNameNoTone = removeTonesStrict(order['Tên khách hàng'] || order.ten_khach_hang || '');
     const orderNo = (order['Số đơn hàng'] || order.so_don_hang || '').toLowerCase().trim();
-    const orderVin = (order.VIN || order.vin || order['SỐ VIN'] || '').toUpperCase().trim();
+    const orderVin = (order.VIN || order.vin || order['SỐ VIN'] || order['Số VIN'] || '').toUpperCase().trim();
     const carModel = (order['Dòng xe'] || order.dong_xe || order['DÒNG XE'] || '').trim();
     const orderNgayCoc = (order.ngay_coc || order['Ngày đặt cọc'] || order['Thời gian nhập'] || '').split('T')[0];
+    const orderPhone = (order['Số điện thoại'] || order.dien_thoai || order.so_dien_thoai || '').replace(/\D/g, '');
+    const orderContractNo = (order['Số hợp đồng'] || order.so_hop_dong || order['Hợp đồng số'] || '').toLowerCase().trim();
 
-    // 1. Nếu trên Cyber có hợp đồng khớp đúng Số đơn hàng (ma_hd hoặc so_ct)
+    // 0. Khớp theo Số điện thoại nếu có (Định danh chuẩn nhất của khách hàng)
+    if (orderPhone && orderPhone.length >= 8) {
+        const phoneMatch = cyberContracts.find(c => {
+            const cPhone = (c.dien_thoai || '').replace(/\D/g, '');
+            return cPhone && (cPhone.includes(orderPhone.slice(-9)) || orderPhone.includes(cPhone.slice(-9)));
+        });
+        if (phoneMatch) {
+            const hasVin = Boolean(phoneMatch.so_khung && phoneMatch.so_khung.trim());
+            let isAssigned = false;
+            if (hasVin) {
+                if (orderVin) {
+                    isAssigned = phoneMatch.so_khung.toUpperCase().trim() === orderVin;
+                } else {
+                    isAssigned = phoneMatch.ten_color === 'Đã ghép SK' || phoneMatch.ten_color === 'Đã xuất HĐ';
+                }
+            }
+            const approval = getApprovalStatus(phoneMatch);
+            return {
+                isAssigned,
+                cyberVin: phoneMatch.so_khung,
+                cyberSoMay: phoneMatch.so_may,
+                contract: phoneMatch,
+                isApprovedYellow: approval.isApprovedYellow,
+                isPendingGreen: approval.isPendingGreen
+            };
+        }
+    }
+
+    // 0b. Khớp theo Số hợp đồng nếu có (VD: 02.0975 hoặc 02.0975/09/2026/HĐMB-MDP)
+    if (orderContractNo && orderContractNo.length >= 4) {
+        const contractMatch = cyberContracts.find(c => {
+            const cMaHd = (c.ma_hd || '').toLowerCase();
+            const cSoCt = (c.so_ct || '').toLowerCase();
+            return cMaHd.includes(orderContractNo) || cSoCt.includes(orderContractNo) || orderContractNo.includes(cMaHd);
+        });
+        if (contractMatch) {
+            const hasVin = Boolean(contractMatch.so_khung && contractMatch.so_khung.trim());
+            let isAssigned = false;
+            if (hasVin) {
+                if (orderVin) {
+                    isAssigned = contractMatch.so_khung.toUpperCase().trim() === orderVin;
+                } else {
+                    isAssigned = contractMatch.ten_color === 'Đã ghép SK' || contractMatch.ten_color === 'Đã xuất HĐ';
+                }
+            }
+            const approval = getApprovalStatus(contractMatch);
+            return {
+                isAssigned,
+                cyberVin: contractMatch.so_khung,
+                cyberSoMay: contractMatch.so_may,
+                contract: contractMatch,
+                isApprovedYellow: approval.isApprovedYellow,
+                isPendingGreen: approval.isPendingGreen
+            };
+        }
+    }
+
+    // 1. Khớp theo Số đơn hàng (ma_hd hoặc so_ct)
     if (orderNo) {
         const orderNoMatch = cyberContracts.find(c => {
             const cMaHd = (c.ma_hd || '').toLowerCase();
@@ -1175,7 +1254,14 @@ export const isOrderAssignedOnCyber = (order: any, cyberContracts: CyberXepXeCon
         });
         if (orderNoMatch) {
             const hasVin = Boolean(orderNoMatch.so_khung && orderNoMatch.so_khung.trim());
-            const isAssigned = hasVin || orderNoMatch.ten_color === 'Đã ghép SK' || orderNoMatch.ten_color === 'Đã xuất HĐ';
+            let isAssigned = false;
+            if (hasVin) {
+                if (orderVin) {
+                    isAssigned = orderNoMatch.so_khung.toUpperCase().trim() === orderVin;
+                } else {
+                    isAssigned = orderNoMatch.ten_color === 'Đã ghép SK' || orderNoMatch.ten_color === 'Đã xuất HĐ';
+                }
+            }
             const approval = getApprovalStatus(orderNoMatch);
             return {
                 isAssigned,
@@ -1188,7 +1274,7 @@ export const isOrderAssignedOnCyber = (order: any, cyberContracts: CyberXepXeCon
         }
     }
 
-    // 2. Nếu đơn hàng có số VIN và trên Cyber có hợp đồng chứa ĐÚNG số VIN này:
+    // 2. Khớp theo số VIN đã xếp trên Cyber:
     if (orderVin) {
         const vinMatch = cyberContracts.find(c => (c.so_khung || '').toUpperCase().trim() === orderVin);
         if (vinMatch) {
@@ -1286,7 +1372,7 @@ export const isOrderAssignedOnCyber = (order: any, cyberContracts: CyberXepXeCon
 
 /**
  * Tra cứu Real-time trạng thái xếp xe trực tiếp trên CyberSoft ERP cho 1 đơn hàng cụ thể
- * Bỏ qua cache, gửi keyword là VIN, Số đơn hàng hoặc Tên KH tới API CyberSoft
+ * Truy vấn đa tiêu chí có index (Số ĐT, Hợp đồng, Tên KH, VIN) với tốc độ ~1-2s
  */
 export const checkOrderCyberAssignmentDirect = async (order: any): Promise<CyberAssignmentCheckResult & { contracts?: CyberXepXeContract[] }> => {
     if (!order) return { isAssigned: false };
@@ -1294,16 +1380,25 @@ export const checkOrderCyberAssignmentDirect = async (order: any): Promise<Cyber
     const vin = (order.VIN || order.vin || order['SỐ VIN'] || order['Số VIN'] || '').trim().toUpperCase();
     const orderNo = (order['Số đơn hàng'] || order.so_don_hang || '').trim();
     const custName = (order['Tên khách hàng'] || order.ten_khach_hang || '').trim();
+    const phone = (order['Số điện thoại'] || order.dien_thoai || order.so_dien_thoai || '').trim();
+    const contractNo = (order['Số hợp đồng'] || order.so_hop_dong || order['Hợp đồng số'] || '').trim();
 
-    // Tìm từ khóa đặc trưng nhất: ưu tiên VIN -> Số đơn hàng -> Tên KH
-    const keyword = vin || orderNo || custName;
-    if (!keyword) return { isAssigned: false };
+    if (!custName && !phone && !contractNo && !orderNo && !vin) {
+        return { isAssigned: false };
+    }
 
     try {
-        // Gọi thẳng CyberSoft với force: true và keyword để SQL Server chạy TOP 30 trong ~200-400ms
+        // Gọi thẳng CyberSoft với force: true, fast: true, direct_only: true và truyền đủ các định danh
         const res = await getCyberXepXeContracts({
             force: true,
-            keyword,
+            fast: true,
+            direct_only: true,
+            so_khung: vin,
+            ten_kh: custName,
+            dien_thoai: phone,
+            ma_hd: contractNo,
+            so_don_hang: orderNo,
+            keyword: custName || phone || contractNo || orderNo || vin,
             ma_dvcs: '02',
             showroom: 'Ô tô Vinfast Thuận An'
         });
@@ -1319,12 +1414,14 @@ export const checkOrderCyberAssignmentDirect = async (order: any): Promise<Cyber
                     ngay_ct: c.ngay_ct || null,
                     ma_hd: c.ma_hd || '',
                     ten_kh: c.ten_kh || '',
+                    dien_thoai: c.dien_thoai || phone || '',
                     ten_ttcp: c.ten_ttcp || '',
                     ma_kx: c.ma_kx || '',
                     ten_kx: c.ten_kx || '',
                     ma_mau: c.ma_mau || '',
                     ten_mau: c.ten_mau || '',
                     so_khung: c.so_khung || '',
+                    so_may: c.so_may || '',
                     ten_color: c.ten_color || '',
                     back_color: c.back_color || '',
                     fore_color: c.fore_color || '',

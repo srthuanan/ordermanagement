@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.42.0"
 import nodemailer from "npm:nodemailer@6.9.13"
 import { Buffer } from "node:buffer"
+import { generateDeliveryNoticeDocx } from "./deliveryNoticeTemplate.ts"
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -380,7 +381,40 @@ Deno.serve(async (req: Request) => {
         "Thời gian ghép": formatDate(record.thoi_gian_ghep || new Date().toISOString()),
         "VIN": record.vin || "N/A",
       };
-      htmlBody = buildHtml("Đơn hàng của Anh/Chị đã được ghép VIN thành công:", tenTVBH, details, "Vui lòng kiểm tra và xác nhận thông tin. Trân trọng.", "#1e3a8a");
+      htmlBody = buildHtml("Đơn hàng của Anh/Chị đã được ghép VIN thành công:", tenTVBH, details, "Vui lòng kiểm tra và xác nhận thông tin. File Thông báo sẵn sàng giao xe (Word) đã được đính kèm để Anh/Chị hoàn tất số tiền cọc/hạn thanh toán và gửi khách hàng.", "#1e3a8a");
+
+      // Tự động tạo và đính kèm file Thông báo sẵn sàng giao xe (.docx)
+      try {
+        let sttNumber = 1;
+        try {
+          const pairedTime = record.thoi_gian_ghep || new Date().toISOString();
+          const d = new Date(pairedTime);
+          const startOfMonth = new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
+          const { count, error } = await supabase
+            .from('donhang')
+            .select('*', { count: 'exact', head: true })
+            .not('vin', 'is', null)
+            .gte('thoi_gian_ghep', startOfMonth)
+            .lte('thoi_gian_ghep', pairedTime);
+
+          if (!error && count && count > 0) {
+            sttNumber = count;
+          }
+        } catch (cntErr) {
+          console.warn("Lỗi tính STT trong tháng:", cntErr);
+        }
+
+        const docxBytes = await generateDeliveryNoticeDocx(record, sttNumber);
+        const safeCustName = normalizeString(record.ten_khach_hang || 'KH').replace(/\s+/g, '_');
+        const docxFilename = `Thong_bao_san_sang_giao_xe_${record.so_don_hang}_${safeCustName}.docx`;
+        attachments.push({
+          filename: docxFilename,
+          content: docxBytes
+        });
+        console.log(`📎 Đã đính kèm file Word Thông báo giao xe: ${docxFilename} (${docxBytes.byteLength} bytes, STT: ${sttNumber})`);
+      } catch (docxErr: any) {
+        console.warn(`⚠️ Lỗi tạo file docx Thông báo giao xe cho đơn ${record.so_don_hang}:`, docxErr);
+      }
     }
     // ============================================================
     // 2. CHỜ GHÉP XE (match_request_pending) 

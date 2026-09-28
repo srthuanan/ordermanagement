@@ -22,6 +22,7 @@ import { CyberDnxPrintModal, CyberDnxPrintData } from './admin/CyberDnxPrintModa
 import { CyberTd4PrintModal } from './admin/CyberTd4PrintModal';
 import { CyberVoucherTicketItem } from '../services/api/stockService';
 import MarqueeText from './ui/MarqueeText';
+import { downloadDeliveryNoticeDocx } from '../services/deliveryNoticeService';
 
 moment.locale('vi');
 
@@ -2412,6 +2413,22 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                             className="px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-full bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-[10.5px] sm:text-[11px] border border-sky-200 transition-all flex items-center gap-1 shrink-0 active:scale-95"
                         >
                             <i className="fas fa-download text-[9px]"></i> Hóa Đơn
+                        </button>
+                    )}
+                    {resolvedOrder.VIN && (
+                        <button
+                            onClick={async () => {
+                                try {
+                                    await downloadDeliveryNoticeDocx(resolvedOrder);
+                                    showToast?.('Thành công', 'Đã tải Thông báo sẵn sàng giao xe (Word)!', 'success');
+                                } catch (e: any) {
+                                    showToast?.('Lỗi', `Lỗi tải file: ${e.message}`, 'error');
+                                }
+                            }}
+                            className="px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10.5px] sm:text-[11px] border border-indigo-200 transition-all flex items-center gap-1 shrink-0 active:scale-95"
+                            title="Tải file Word Thông báo sẵn sàng giao xe"
+                        >
+                            <i className="fas fa-file-word text-[9px] text-indigo-600"></i> TB Giao Xe
                         </button>
                     )}
                     {canEdit && !isReferenceAccount && (

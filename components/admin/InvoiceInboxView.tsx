@@ -281,7 +281,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
             const now = new Date();
             const currY = now.getFullYear();
 
-            // 1. Nếu đang chọn đơn hàng cụ thể, tra cứu realtime trước theo VIN / Số đơn hàng / Tên KH trực tiếp từ CyberSoft
+            // 1. Nếu đang chọn đơn hàng cụ thể, tra cứu realtime trước theo VIN / Số ĐT / Tên KH / Số HĐ trực tiếp từ CyberSoft
             let directResult: any = null;
             if (selectedOrder) {
                 try {
@@ -299,41 +299,45 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                             selectedOrder['SỐ MÁY'] = dc.so_may.trim();
                             setEditData(prev => ({ ...prev, engineNumber: dc.so_may!.trim() }));
                         }
+
+                        // Cập nhật ngay hợp đồng mới nhất vào state & sessionStorage
+                        setCyberContracts(prev => {
+                            const exists = prev.some(c => c.stt_rec === dc.stt_rec && c.stt_rec0 === dc.stt_rec0);
+                            const updatedContracts = exists 
+                                ? prev.map(c => (c.stt_rec === dc.stt_rec && c.stt_rec0 === dc.stt_rec0) ? { ...c, ...dc } : c)
+                                : [dc, ...prev];
+                            try {
+                                sessionStorage.setItem('cyber_xep_xe_contracts_cache', JSON.stringify(updatedContracts));
+                            } catch (_) {}
+                            return updatedContracts;
+                        });
+
+                        const stDesc = dc.so_khung ? `Đã xếp xe (${dc.so_khung})` : (dc.ten_color || 'Chờ ghép SK');
+                        showToast('Đã tải từ Cyber', `HĐ ${dc.ma_hd || ''}: ${stDesc} (Trực tiếp CyberSoft ERP)`, 'success');
+                        return; // Hoàn tất tra cứu siêu tốc trong ~1s!
                     }
                 } catch (dErr) {
                     console.warn('[handleRefreshCyber] Direct order check error:', dErr);
                 }
             }
 
-            // 2. Tải toàn bộ danh sách hợp đồng xếp xe TRỰC TIẾP từ CyberSoft ERP (bỏ qua Supabase bằng force: true, refresh: true)
+            // 2. Nếu không tìm thấy HĐ trực tiếp hoặc không có đơn hàng đang chọn, tải 2 tháng gần nhất (thay vì 12 tháng)
+            const currM = now.getMonth() + 1;
             const res = await getCyberXepXeContracts({
                 force: true,
                 refresh: true,
-                thang1: 1,
+                thang1: Math.max(1, currM - 1),
                 nam1: currY,
-                thang2: 12,
+                thang2: currM,
                 nam2: currY,
                 ma_dvcs: '02',
                 showroom: 'Ô tô Vinfast Thuận An'
             });
 
             if (res && res.success && res.contracts) {
-                let updatedContracts = res.contracts;
-                if (directResult?.contract) {
-                    const dc = directResult.contract;
-                    const exists = updatedContracts.some(c => c.stt_rec === dc.stt_rec && c.stt_rec0 === dc.stt_rec0);
-                    if (exists) {
-                        updatedContracts = updatedContracts.map(c => 
-                            (c.stt_rec === dc.stt_rec && c.stt_rec0 === dc.stt_rec0) ? { ...c, ...dc } : c
-                        );
-                    } else {
-                        updatedContracts = [dc, ...updatedContracts];
-                    }
-                }
-
-                setCyberContracts(updatedContracts);
+                setCyberContracts(res.contracts);
                 try {
-                    sessionStorage.setItem('cyber_xep_xe_contracts_cache', JSON.stringify(updatedContracts));
+                    sessionStorage.setItem('cyber_xep_xe_contracts_cache', JSON.stringify(res.contracts));
                 } catch (_) {}
 
                 showToast('Đã tải từ Cyber', 'Đã tải dữ liệu mới nhất trực tiếp từ máy chủ CyberSoft ERP!', 'success');
@@ -590,6 +594,31 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedFolder]);
+
+    // Tự động kiểm tra nhanh trực tiếp Cyber ERP cho đơn hàng đang chọn (< 1s) nếu chưa ghép xe hoặc cần cập nhật
+    useEffect(() => {
+        if (!selectedOrder) return;
+        const currentCheck = isOrderAssignedOnCyber(selectedOrder, cyberContracts);
+        if (currentCheck.isAssigned) return;
+
+        let isCancelled = false;
+        checkOrderCyberAssignmentDirect(selectedOrder).then(res => {
+            if (isCancelled || !res?.contract) return;
+            const dc = res.contract;
+            setCyberContracts(prev => {
+                const exists = prev.some(c => c.stt_rec === dc.stt_rec && c.stt_rec0 === dc.stt_rec0);
+                const updated = exists 
+                    ? prev.map(c => (c.stt_rec === dc.stt_rec && c.stt_rec0 === dc.stt_rec0) ? { ...c, ...dc } : c)
+                    : [dc, ...prev];
+                try {
+                    sessionStorage.setItem('cyber_xep_xe_contracts_cache', JSON.stringify(updated));
+                } catch (_) {}
+                return updated;
+            });
+        }).catch(() => {});
+
+        return () => { isCancelled = true; };
+    }, [selectedOrderId]);
 
     // Sync edit data
     useEffect(() => {

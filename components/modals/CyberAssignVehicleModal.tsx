@@ -11,7 +11,7 @@ import {
 } from '../../services/api/stockService';
 import { supabase, supabaseAdmin } from '../../services/supabaseClient';
 
-// Hàm chuẩn hóa loại bỏ dấu tiếng Việt
+// Hàm chuẩn hóa loại bỏ dấu tiếng Việt và chuẩn hóa khoảng trắng
 const removeVietnameseTones = (str: string): string => {
     return (str || '')
         .normalize('NFD')
@@ -19,6 +19,7 @@ const removeVietnameseTones = (str: string): string => {
         .replace(/đ/g, 'd')
         .replace(/Đ/g, 'd')
         .toLowerCase()
+        .replace(/\s+/g, ' ')
         .trim();
 };
 
@@ -71,7 +72,7 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
             setActiveContract(contract);
             loadCandidates(contract);
         } else if (order) {
-            const customerName = order['Tên khách hàng'] || '';
+            const customerName = (order['Tên khách hàng'] || (order as any).ten_khach_hang || '').replace(/\s+/g, ' ').trim();
             setContractSearchQuery(customerName);
             searchAndResolveContractForOrder(order);
         }
@@ -123,7 +124,7 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
 
             setAllCyberContracts(unassignedContracts);
 
-            const custNameRaw = (targetOrder['Tên khách hàng'] || (targetOrder as any).ten_khach_hang || '').normalize('NFC').trim();
+            const custNameRaw = (targetOrder['Tên khách hàng'] || (targetOrder as any).ten_khach_hang || '').normalize('NFC').replace(/\s+/g, ' ').trim();
             const custNameExact = custNameRaw.toLowerCase();
             const custNameClean = removeVietnameseTones(custNameRaw);
             const orderNoClean = (targetOrder['Số đơn hàng'] || (targetOrder as any).so_don_hang || '').toLowerCase().trim();
@@ -165,11 +166,20 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                 }
 
                 // 3. Khớp theo Tên KH + Dòng xe
-                if (custNameExact) {
-                    // Ưu tiên trùng chính xác có dấu tiếng Việt
-                    let byName = list.filter(c => (c.ten_kh || '').normalize('NFC').toLowerCase().trim() === custNameExact);
-                    if (byName.length === 0 && custNameClean) {
+                if (custNameClean) {
+                    const custWords = custNameClean.split(' ').filter(Boolean);
+                    // 3a. Ưu tiên trùng chính xác có dấu tiếng Việt (sau khi chuẩn hóa khoảng trắng)
+                    let byName = list.filter(c => (c.ten_kh || '').normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim() === custNameExact);
+                    // 3b. Trùng không dấu
+                    if (byName.length === 0) {
                         byName = list.filter(c => removeVietnameseTones(c.ten_kh || '') === custNameClean);
+                    }
+                    // 3c. Trùng từng từ trong tên (hỗ trợ cách biệt khoảng trắng hoặc sai lệch dấu cách)
+                    if (byName.length === 0 && custWords.length > 0) {
+                        byName = list.filter(c => {
+                            const cClean = removeVietnameseTones(c.ten_kh || '');
+                            return custWords.every(w => cClean.includes(w));
+                        });
                     }
                     if (byName.length > 0) {
                         const byModel = byName.filter(isModelCompatible);
@@ -187,12 +197,18 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
 
             let matched = findMatched(unassignedContracts);
 
-            // Nếu không tìm thấy trong initialContracts (ví dụ cache cũ), tự động kéo dữ liệu mới nhất trực tiếp bằng keyword
+            // Nếu không tìm thấy trong initialContracts (ví dụ cache cũ), tự động kéo dữ liệu mới nhất trực tiếp bằng multi-field query
             if (matched.length === 0) {
-                const keyword = existingVin || orderNoClean || custNameClean;
                 const freshRes = await getCyberXepXeContracts({
                     force: true,
-                    keyword,
+                    fast: true,
+                    direct_only: true,
+                    so_khung: existingVin,
+                    ten_kh: custNameRaw || custNameClean,
+                    dien_thoai: ((targetOrder as any)['Số điện thoại'] || (targetOrder as any).dien_thoai || (targetOrder as any).so_dien_thoai || '').trim(),
+                    ma_hd: (targetOrder as any)['Số hợp đồng'] || (targetOrder as any).so_hop_dong || '',
+                    so_don_hang: orderNoClean,
+                    keyword: custNameClean || orderNoClean || existingVin,
                     ma_dvcs: '02',
                     showroom: 'Ô tô Vinfast Thuận An'
                 });
@@ -234,6 +250,39 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
             sessionStorage.removeItem('cyber_xep_xe_contracts_cache');
             const now = new Date();
             const currY = now.getFullYear();
+
+            // Nếu đang có từ khóa tìm kiếm (tên khách hàng, SĐT, số HĐ...), thực hiện fast direct search trực tiếp để có kết quả ngay tức thì (< 1s)
+            const queryTrimmed = contractSearchQuery.trim();
+            if (queryTrimmed) {
+                const fastRes = await getCyberXepXeContracts({
+                    force: true,
+                    fast: true,
+                    direct_only: true,
+                    ten_kh: queryTrimmed,
+                    keyword: queryTrimmed,
+                    ma_dvcs: '02',
+                    showroom: 'Ô tô Vinfast Thuận An'
+                });
+                if (fastRes?.success && fastRes.contracts && fastRes.contracts.length > 0) {
+                    const unassignedFast = fastRes.contracts.filter(c => {
+                        const s = (c.ten_color || '').trim().toLowerCase();
+                        return !c.so_khung || s === 'chờ duyệt' || s === 'chờ ghép sk' || s === 'đã ghép sk';
+                    });
+                    if (unassignedFast.length > 0) {
+                        setAllCyberContracts(prev => {
+                            const existingKeys = new Set(unassignedFast.map(f => `${f.stt_rec}_${f.stt_rec0}`));
+                            return [...unassignedFast, ...prev.filter(p => !existingKeys.has(`${p.stt_rec}_${p.stt_rec0}`))];
+                        });
+                        setActiveContract(unassignedFast[0]);
+                        loadCandidates(unassignedFast[0]);
+                        if (showToastNotify) {
+                            showToast('Đã tải hợp đồng', `Tìm thấy hợp đồng của ${unassignedFast[0].ten_kh} từ CyberSoft!`, 'success');
+                        }
+                        return;
+                    }
+                }
+            }
+
             const res = await getCyberXepXeContracts({
                 thang1: 1,
                 nam1: currY,
@@ -322,9 +371,11 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
     const displayedContracts = useMemo(() => {
         const q = removeVietnameseTones(contractSearchQuery);
         if (!q) return allCyberContracts.slice(0, 15);
+        const words = q.split(' ').filter(Boolean);
+        if (words.length === 0) return allCyberContracts.slice(0, 15);
         return allCyberContracts.filter(c => {
-            const full = removeVietnameseTones(`${c.ma_hd} ${c.so_ct} ${c.ten_kh} ${c.dien_thoai} ${c.ten_kx} ${c.ten_mau} ${c.so_khung}`);
-            return full.includes(q);
+            const full = removeVietnameseTones(`${c.ma_hd || ''} ${c.so_ct || ''} ${c.ten_kh || ''} ${c.dien_thoai || ''} ${c.ten_kx || ''} ${c.ten_mau || ''} ${c.so_khung || ''}`);
+            return words.every(w => full.includes(w));
         }).slice(0, 30);
     }, [allCyberContracts, contractSearchQuery]);
 

@@ -344,6 +344,26 @@ class DMSMatchPinFixer:
 
         if not pin_records:
             log_fn("⚠️ Không tìm thấy bản ghi tồn kho sê-ri PIN cho xe này trên hệ thống!")
+            if bat_serial:
+                log_fn(f"➕ Đang tự động tạo mới bản ghi Tồn kho Sê-ri PIN cho xe ({bat_serial})...")
+                new_pin_payload = {
+                    "xts_serialnumber": f"{dealer_code}-SN-PIN-{int(time.time()) % 1000000:06d}",
+                    "itv_serialnumber": bat_serial,
+                    "itv_vinnoofbattery": vin,
+                    "itv_vehicelmodelofbattery": veh.get('xts_productdescription') or "VF 3",
+                    "xts_availabilitystatus": 6,  # Có sẵn (6)
+                    "xts_stockstatus": 3,         # Tồn kho (3)
+                    "xts_vehiclesource": 960810000, # Battery
+                    "itv_warehouseid@odata.bind": f"/xts_warehouses({wh_p01a_id})",
+                    "xts_businessunitid@odata.bind": f"/businessunits({bu_id})",
+                    "xts_productid@odata.bind": f"/xts_products({prod_pin_id})",
+                    "itv_inventorynewvehicleid@odata.bind": f"/xts_inventorynewvehicles({veh_id})"
+                }
+                r_create_pin = requests.post(f"{BASE_API_URL}/xts_inventserials", headers=headers, json=new_pin_payload)
+                if r_create_pin.status_code in [200, 201, 204]:
+                    log_fn("    ✅ ĐÃ TẠO MỚI BẢN GHI TỒN KHO SÊ-RI PIN THÀNH CÔNG!")
+                else:
+                    log_fn(f"    ❌ Lỗi tạo bản ghi PIN: {r_create_pin.status_code} - {r_create_pin.text[:200]}")
         else:
             log_fn(f"📋 Tìm thấy {len(pin_records)} bản ghi tồn kho sê-ri PIN:")
             for p in pin_records:
