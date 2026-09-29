@@ -17,6 +17,25 @@ interface UseOrderOperationsProps {
     isReferenceAccount?: boolean;
 }
 
+const parseSafeIsoDate = (val?: any): string | undefined => {
+    if (!val || val === 'null' || val === 'undefined' || val === '—' || val === '-') return undefined;
+    try {
+        const d = new Date(val);
+        if (!isNaN(d.getTime())) return d.toISOString();
+        if (typeof val === 'string' && val.includes('/')) {
+            const parts = val.split(/[/ -]/);
+            if (parts.length === 3) {
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1;
+                const year = parseInt(parts[2], 10);
+                const parsedD = new Date(year, month, day);
+                if (!isNaN(parsedD.getTime())) return parsedD.toISOString();
+            }
+        }
+    } catch (_) {}
+    return typeof val === 'string' ? val : undefined;
+};
+
 export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refetchStock, setAllHistoryData, isReferenceAccount }: UseOrderOperationsProps) => {
     // --- STATE ---
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -189,7 +208,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
                     phien_ban: order["Phiên bản"],
                     ngoai_that: order["Ngoại thất"],
                     noi_that: order["Nội thất"],
-                    ngay_coc: order["Ngày cọc"] ? new Date(order["Ngày cọc"]).toISOString() : undefined,
+                    ngay_coc: parseSafeIsoDate(order["Ngày cọc"]),
                 },
                 aiNote,
                 xeXangVin,

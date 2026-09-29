@@ -102,6 +102,15 @@ const Stepper: React.FC<{ currentStep: number, hasVinClub?: boolean }> = ({ curr
     );
 };
 
+const formatNumber = (value: string) => {
+    const cleanValue = (value || '').replace(/\D/g, '');
+    if (!cleanValue) return '';
+    const normalized = cleanValue.length > 1 ? cleanValue.replace(/^0+/, '') || '0' : cleanValue;
+    return normalized.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
+const getRawValue = (value: string) => (value || '').replace(/\./g, '');
+
 const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClose, onConfirm, stockData, showToast, inline = false }) => {
     const [step, setStep] = useState(1);
     const [contractFile, setContractFile] = useState<File | null>(null);
@@ -115,8 +124,18 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         }
         return [];
     });
-    const [commission, setCommission] = useState('');
-    const [vpoint, setVpoint] = useState('');
+    const [commission, setCommission] = useState(() => {
+        if (order && (order["Hoa hồng ứng"] || (order as any).hoa_hong_ung)) {
+            return formatNumber(String(order["Hoa hồng ứng"] || (order as any).hoa_hong_ung));
+        }
+        return '';
+    });
+    const [vpoint, setVpoint] = useState(() => {
+        if (order && (order["Điểm Vpoint sử dụng"] || order.vpoint)) {
+            return formatNumber(String(order["Điểm Vpoint sử dụng"] || order.vpoint));
+        }
+        return '0';
+    });
     const [xeXangVin, setXeXangVin] = useState('');
     const [xeXangHang, setXeXangHang] = useState('');
     const [xeXangModel, setXeXangModel] = useState('');
@@ -300,16 +319,9 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
     const [processingStage, setProcessingStage] = useState(0); 
 
-    const formatNumber = (value: string) => {
-        const cleanValue = value.replace(/\D/g, '');
-        return cleanValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    };
-
     const handleNumberChange = (setter: (value: string) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
         setter(formatNumber(e.target.value));
     };
-
-    const getRawValue = (value: string) => value.replace(/\./g, '');
 
     const isGasToElectricPolicy = useMemo(() => {
         return policy.some(p => {
@@ -367,8 +379,17 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         return () => clearTimeout(timeoutId);
     }, [xeXangVin, isGasToElectricPolicy]);
 
-    const isStep1Valid = policy.length > 0 && commission && parseFloat(getRawValue(commission)) >= 0 && vpoint && parseFloat(getRawValue(vpoint)) >= 0 && (!isGasToElectricPolicy || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError)) && (!isVinFastGasCarAppreciationPolicy || maVc.trim() !== '');
-    const isStep2Valid = contractFile && proposalFile;
+    const rawCommission = getRawValue(commission);
+    const rawVpoint = getRawValue(vpoint);
+    const isCommissionValid = rawCommission === '' || (!isNaN(Number(rawCommission)) && Number(rawCommission) >= 0);
+    const isVpointValid = rawVpoint === '' || (!isNaN(Number(rawVpoint)) && Number(rawVpoint) >= 0);
+
+    const isStep1Valid = policy.length > 0 && 
+        isCommissionValid && 
+        isVpointValid && 
+        (!isGasToElectricPolicy || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError)) && 
+        (!isVinFastGasCarAppreciationPolicy || maVc.trim() !== '');
+    const isStep2Valid = Boolean(contractFile && proposalFile);
     const isStep3Valid = vinClubConfirmed;
     const isFormValid = isStep1Valid && isStep2Valid && isStep3Valid;
 
@@ -378,8 +399,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             try {
                 const parsed = JSON.parse(savedData);
                 if (parsed.policy && parsed.policy.length > 0) setPolicy(parsed.policy);
-                if (parsed.commission) setCommission(parsed.commission);
-                if (parsed.vpoint) setVpoint(parsed.vpoint);
+                if (parsed.commission !== undefined && parsed.commission !== null) setCommission(parsed.commission);
+                if (parsed.vpoint !== undefined && parsed.vpoint !== null) setVpoint(parsed.vpoint);
                 if (parsed.maVc) setMaVc(parsed.maVc);
             } catch (e) { console.error(e); }
         }
@@ -488,8 +509,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 contractFile!, 
                 proposalFile!, 
                 policy, 
-                getRawValue(commission), 
-                getRawValue(vpoint), 
+                getRawValue(commission) || '0', 
+                getRawValue(vpoint) || '0', 
                 '', 
                 payloadsRef.current,
                 xeXangVin.trim() || undefined,
@@ -835,9 +856,12 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
                                             <div className="group">
-                                                <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center gap-2">
-                                                    <i className="fas fa-money-bill-wave text-emerald-500"></i>
-                                                    Hoa hồng ứng trước (VND) *
+                                                <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center justify-between">
+                                                    <span className="flex items-center gap-2">
+                                                        <i className="fas fa-money-bill-wave text-emerald-500"></i>
+                                                        Hoa hồng ứng trước (VND)
+                                                    </span>
+                                                    <span className="text-[9px] font-normal text-slate-400 lowercase">(để trống = 0đ)</span>
                                                 </label>
                                                 <div className="relative">
                                                     <input 
@@ -851,9 +875,12 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                                 </div>
                                             </div>
                                             <div className="group">
-                                                <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center gap-2">
-                                                    <i className="fas fa-star text-purple-500"></i>
-                                                    Số điểm Vpoint sử dụng *
+                                                <label className="block text-[10px] font-bold text-text-primary mb-1 uppercase tracking-wider flex items-center justify-between">
+                                                    <span className="flex items-center gap-2">
+                                                        <i className="fas fa-star text-purple-500"></i>
+                                                        Số điểm Vpoint sử dụng
+                                                    </span>
+                                                    <span className="text-[9px] font-normal text-slate-400 lowercase">(để trống = 0 điểm)</span>
                                                 </label>
                                                 <div className="relative">
                                                     <input 
@@ -1084,7 +1111,31 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         )}
 
                         {step < 3 ? (
-                            <Button onClick={handleNext} disabled={isSubmitting || (step === 1 && !isStep1Valid) || (step === 2 && !isStep2Valid)} variant="primary" size="sm" rightIcon={<i className="fas fa-arrow-right"></i>}>Tiếp theo</Button>
+                            <Button 
+                                onClick={() => {
+                                    if (step === 1 && !isStep1Valid) {
+                                        if (policy.length === 0) {
+                                            showToast('Chưa chọn chính sách', 'Vui lòng chọn ít nhất 1 chính sách bán hàng áp dụng.', 'warning');
+                                        } else if (isGasToElectricPolicy && (!xeXangVin.trim() || !xeXangHang.trim() || !xeXangModel.trim() || vinCheckError)) {
+                                            showToast('Thông tin xe xăng cũ', vinCheckError || 'Vui lòng nhập đầy đủ VIN, hãng và model xe xăng thu cũ đổi mới.', 'warning');
+                                        } else if (isVinFastGasCarAppreciationPolicy && !maVc.trim()) {
+                                            showToast('Thiếu mã Voucher', 'Vui lòng nhập mã Voucher tri ân xe xăng.', 'warning');
+                                        }
+                                        return;
+                                    }
+                                    if (step === 2 && !isStep2Valid) {
+                                        showToast('Thiếu hồ sơ chứng từ', 'Vui lòng tải lên cả Hợp đồng mua bán và Đề nghị xuất hóa đơn.', 'warning');
+                                        return;
+                                    }
+                                    handleNext();
+                                }} 
+                                disabled={isSubmitting} 
+                                variant="primary" 
+                                size="sm" 
+                                rightIcon={<i className="fas fa-arrow-right"></i>}
+                            >
+                                Tiếp theo
+                            </Button>
                         ) : (
                             <Button 
                                 onClick={handleSubmit} 
