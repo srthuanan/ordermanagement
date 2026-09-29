@@ -157,11 +157,14 @@ interface RequestCyberOptions {
  *    - Nếu OFFLINE -> Tự động chuyển hướng gọi sang Render Cloud.
  */
 export async function executeCyberApi<T = any>(pathname: string, options: RequestCyberOptions = {}): Promise<T> {
+    const isMinvoiceOrHeavy = pathname.startsWith('/api/minvoice/') || pathname.includes('sync-') || pathname.includes('export-pdf');
+    const defaultTimeout = isMinvoiceOrHeavy ? 60000 : 15000;
+
     const {
         method = 'POST',
         body,
         queryParams = {},
-        timeoutMs = 12000,
+        timeoutMs = defaultTimeout,
         forceCloud = false
     } = options;
 
@@ -182,7 +185,7 @@ export async function executeCyberApi<T = any>(pathname: string, options: Reques
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: method === 'POST' ? (typeof body === 'string' ? body : JSON.stringify(body || {})) : undefined,
-                signal: AbortSignal.timeout(4000)
+                signal: AbortSignal.timeout(isMinvoiceOrHeavy ? 45000 : 4000)
             });
             if (res.ok) {
                 return await res.json();
@@ -195,10 +198,10 @@ export async function executeCyberApi<T = any>(pathname: string, options: Reques
     // ─── 2. Ưu tiên máy tính văn phòng qua Supabase Realtime Bridge (hoạt động tốt trên GitHub Pages) ───
     let isBridgeOnline = daemonStatus.isOnline && (Date.now() - daemonStatus.lastHeartbeat < 15000);
 
-    // Nếu vừa nạp trang (chưa nhận heartbeat), gửi ping nhanh chờ tối đa 600ms để bắt tín hiệu file BAT
+    // Nếu vừa nạp trang (chưa nhận heartbeat), gửi ping nhanh chờ tối đa 1200ms để bắt tín hiệu file BAT
     if (!forceCloud && !isBridgeOnline && daemonStatus.lastHeartbeat === 0 && bridgeChannel) {
         pingLocalDaemon();
-        await new Promise(r => setTimeout(r, 600));
+        await new Promise(r => setTimeout(r, 1200));
         isBridgeOnline = daemonStatus.isOnline && (Date.now() - daemonStatus.lastHeartbeat < 15000);
     }
 
@@ -240,11 +243,10 @@ export async function executeCyberApi<T = any>(pathname: string, options: Reques
             return result;
         } catch (bridgeErr: any) {
             if (bridgeErr?.message === 'TIMEOUT_BRIDGE') {
-                console.warn(`[CyberBridge] Máy tính văn phòng quá thời gian phản hồi cho ${pathname}, tự động fallback sang Render...`);
-                daemonStatus.isOnline = false;
-                notifyStatusChange();
+                console.warn(`[CyberBridge] Thao tác ${pathname} quá thời gian xử lý qua bridge (${Math.round(timeoutMs / 1000)}s).`);
+                throw new Error(`Quá thời gian xử lý (${Math.round(timeoutMs / 1000)}s) khi gửi yêu cầu đến máy tính văn phòng.`);
             } else {
-                console.warn(`[CyberBridge] Lỗi qua bridge, thử chuyển sang Render:`, bridgeErr);
+                console.warn(`[CyberBridge] Lỗi qua bridge, thử chuyển sang Cloud:`, bridgeErr);
             }
         }
     }
@@ -256,19 +258,26 @@ export async function executeCyberApi<T = any>(pathname: string, options: Reques
         : '';
     const targetUrl = `${cloudApiUrl}${pathname}${queryStr}`;
 
-    const res = await fetch(targetUrl, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: method === 'POST' ? (typeof body === 'string' ? body : JSON.stringify(body || {})) : undefined,
-        signal: AbortSignal.timeout(timeoutMs + 5000)
-    });
+    try {
+        const res = await fetch(targetUrl, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: method === 'POST' ? (typeof body === 'string' ? body : JSON.stringify(body || {})) : undefined,
+            signal: AbortSignal.timeout(timeoutMs + 5000)
+        });
 
-    if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || `HTTP ${res.status}: Lỗi máy chủ Cyber Cloud`);
+        if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            throw new Error(errJson.error || errJson.message || `HTTP ${res.status}: Lỗi máy chủ Cyber Cloud`);
+        }
+
+        return await res.json();
+    } catch (netErr: any) {
+        if (netErr?.name === 'TypeError' || (netErr?.message && netErr.message.includes('fetch'))) {
+            throw new Error(`Không thể kết nối máy chủ Cyber / M-Invoice (Vui lòng đảm bảo máy tính văn phòng đã bật 'start-cyber-sync.bat').`);
+        }
+        throw netErr;
     }
-
-    return await res.json();
 }
 
 /**
@@ -283,7 +292,10 @@ export async function cyberFetch(apiPath: string, init?: RequestInit): Promise<R
         new URLSearchParams(search).forEach((v, k) => { queryParams[k] = v; });
     }
     const method = (init?.method?.toUpperCase() || 'GET') as 'GET' | 'POST';
-    const body = init?.body;
+    let body = init?.body;
+    if (body && typeof body === 'string') {
+        try { body = JSON.parse(body); } catch (_) {}
+    }
 
     try {
         const result = await executeCyberApi(pathname, {
@@ -296,7 +308,7 @@ export async function cyberFetch(apiPath: string, init?: RequestInit): Promise<R
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (err: any) {
-        return new Response(JSON.stringify({ success: false, error: err.message }), {
+        return new Response(JSON.stringify({ success: false, error: err.message, message: err.message }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });

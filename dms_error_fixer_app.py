@@ -275,6 +275,28 @@ class DMSErrorFixerApp:
                     })
                     qlog(f"   - Kết quả gán Contact vào Quote: {r_bind_q.status_code} (204 = Chuẩn)")
 
+            # 2.1 Kiểm tra & tự động kích hoạt xác thực SĐT khách hàng (Tránh lỗi chặn Phát hành / Tạo SO)
+            if contact_id:
+                r_ct_chk = requests.get(f"{BASE_API_URL}/contacts({contact_id})?$select=fullname,mobilephone,xto_verifiedmobilephone,itv_phoneisverified", headers=headers)
+                if r_ct_chk.status_code == 200:
+                    ct_info = r_ct_chk.json()
+                    c_phone = ct_info.get("mobilephone")
+                    c_ver = ct_info.get("xto_verifiedmobilephone")
+                    if not c_ver:
+                        qlog(f"⚠️ Phát hiện SĐT {c_phone} của khách hàng chưa được xác thực (xto_verifiedmobilephone=False)!")
+                        qlog("🛠️ Đang tự động kích hoạt xác thực số điện thoại...")
+                        r_ver = requests.patch(f"{BASE_API_URL}/contacts({contact_id})", headers=headers, json={
+                            "xto_verifiedmobilephone": True,
+                            "adx_identity_mobilephoneconfirmed": True,
+                            "itv_phoneisverified": True
+                        })
+                        if r_ver.status_code in [200, 204]:
+                            qlog(f"   ✅ ĐÃ KÍCH HOẠT XÁC THỰC SĐT {c_phone} THÀNH CÔNG!")
+                        else:
+                            qlog(f"   ❌ Không thể kích hoạt xác thực SĐT: HTTP {r_ver.status_code}")
+                    else:
+                        qlog(f"   ✅ Số điện thoại {c_phone} đã ở trạng thái xác thực hợp lệ.")
+
             # 3. Đồng bộ Navigation Links (Primary Contact & Parent Customer)
             if account_id and contact_id:
                 qlog("🛠️ Đang đồng bộ liên kết Khách hàng (Account <-> Contact)...")

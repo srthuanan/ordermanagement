@@ -62,3 +62,10 @@ public/cyber_pdfs/*.pdf
 
 # Backups
 backups/
+
+# VNPT temp & config
+vnpt_config.json
+vnpt_invoices_cache.json
+downloads_vnpt/
+*.pdf
+!public/cyber_pdfs/.gitkeep
