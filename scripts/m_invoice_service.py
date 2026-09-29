@@ -384,10 +384,20 @@ def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
     public_url = f"{SUPABASE_URL}/storage/v1/object/public/yeucauxhd-files/{file_path}"
 
     # 4. Cập nhật database: yeucauxhd & donhang
-    patch_hd = {"url_hoa_don_da_xuat": public_url, "ket_qua_gui_mail": "Đang gửi mail..."}
+    now_iso = time.strftime('%Y-%m-%dT%H:%M:%S+07:00')
+    patch_hd = {
+        "url_hoa_don_da_xuat": public_url,
+        "trang_thai": "Đã xuất hóa đơn",
+        "ngay_xuat_hoa_don": now_iso,
+        "ket_qua_gui_mail": "Đang gửi mail..."
+    }
     requests.patch(f"{SUPABASE_URL}/rest/v1/yeucauxhd?so_don_hang=eq.{exact_order_no}", headers=headers, json=patch_hd, timeout=10)
 
-    patch_dh = {"ket_qua": "Đã xuất hóa đơn", "link_hoa_don_da_xuat": public_url}
+    patch_dh = {
+        "ket_qua": "Đã xuất hóa đơn",
+        "link_hoa_don_da_xuat": public_url,
+        "ngay_xuat_hoa_don": now_iso
+    }
     requests.patch(f"{SUPABASE_URL}/rest/v1/donhang?so_don_hang=eq.{exact_order_no}", headers=headers, json=patch_dh, timeout=10)
 
     if vin:

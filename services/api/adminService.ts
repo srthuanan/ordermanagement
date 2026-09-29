@@ -686,9 +686,11 @@ export const performAdminAction = async (action: string, params: Record<string, 
             const files = params.filesData ? JSON.parse(params.filesData) : [];
             for (let f of files) {
                 const tr = f.orderNumber.trim(); const { data: o } = await supabaseAdmin.from('donhang').select('ten_tu_van_ban_hang, vin').eq('so_don_hang', tr).limit(1).maybeSingle();
-                const up: any = {}; if (f.invoiceUrl) up.url_hoa_don_da_xuat = f.invoiceUrl;
+                const nowIso = new Date().toISOString();
+                const up: any = { trang_thai: 'Đã xuất hóa đơn', ngay_xuat_hoa_don: nowIso }; 
+                if (f.invoiceUrl) up.url_hoa_don_da_xuat = f.invoiceUrl;
                 await supabaseAdmin.from('yeucauxhd').update(up).eq('so_don_hang', tr);
-                await supabaseAdmin.from('donhang').update({ ket_qua: 'Đã xuất hóa đơn' }).eq('so_don_hang', tr);
+                await supabaseAdmin.from('donhang').update({ ket_qua: 'Đã xuất hóa đơn', ngay_xuat_hoa_don: nowIso }).eq('so_don_hang', tr);
                 if (o && (o as any).vin) await supabaseAdmin.from('car_hold_activities').update({ status: 'invoiced' }).eq('vin', (o as any).vin).eq('status', 'matched');
                 if (o && (o as any).ten_tu_van_ban_hang) await createNotification({ message: `Đã có hóa đơn cho ĐH ${tr}.`, type: 'success', recipient: (o as any).ten_tu_van_ban_hang, targetView: 'sold', targetId: tr });
                 
@@ -1421,12 +1423,22 @@ export const uploadBulkInvoices = async (files: any[]): Promise<ApiResult> => {
             }
 
             if (url) {
+                const nowIso = new Date().toISOString();
                 const { error: e1 } = await supabaseAdmin.from('yeucauxhd')
-                    .update({ ket_qua_gui_mail: '', url_hoa_don_da_xuat: url })
+                    .update({ 
+                        ket_qua_gui_mail: '', 
+                        url_hoa_don_da_xuat: url,
+                        trang_thai: 'Đã xuất hóa đơn',
+                        ngay_xuat_hoa_don: nowIso
+                    })
                     .eq('so_don_hang', exactOrderNo);
                 
                 const { error: e2 } = await supabaseAdmin.from('donhang')
-                    .update({ ket_qua: 'Đã xuất hóa đơn', link_hoa_don_da_xuat: url })
+                    .update({ 
+                        ket_qua: 'Đã xuất hóa đơn', 
+                        link_hoa_don_da_xuat: url,
+                        ngay_xuat_hoa_don: nowIso
+                    })
                     .eq('so_don_hang', exactOrderNo); 
                 
                 if (e1 || e2) throw new Error(`Lỗi cập nhật ${trimmedOrderNo}: ${e1?.message || e2?.message}`);

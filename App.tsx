@@ -747,7 +747,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     >
                         {/* Render Secondary Filters */}
                         {dropdownConfigs.map(dropdown => (
-                            <div key={dropdown.id} className="min-w-[110px]">
+                            <div key={dropdown.id} className="min-w-[76px] xl:min-w-[85px] flex-shrink-0">
                                 <MultiSelectDropdown
                                     id={dropdown.id}
                                     label={dropdown.label}

@@ -582,7 +582,7 @@ const TestDriveForm: React.FC<TestDriveFormProps> = ({ showToast, hideToast, onO
                         }
                     >
                         {/* Secondary Filters */}
-                        <div className="min-w-[110px] hidden lg:block">
+                        <div className="min-w-[80px] xl:min-w-[90px] flex-shrink-0 hidden lg:block">
                             <MultiSelectDropdown
                                 id="car-filter"
                                 label="Dòng xe"

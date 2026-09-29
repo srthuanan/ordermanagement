@@ -314,7 +314,7 @@ const SoldCarsView: React.FC<SoldCarsViewProps> = ({ showOrderInAdmin, showAdmin
                     }
                 >
                     {activeDropdowns.map(dropdown => (
-                        <div key={dropdown.id} className="min-w-[100px]">
+                        <div key={dropdown.id} className="min-w-[76px] xl:min-w-[85px] flex-shrink-0">
                             <MultiSelectDropdown
                                 id={dropdown.id}
                                 label={dropdown.label}

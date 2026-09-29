@@ -18,6 +18,12 @@ BASE_API_URL = "https://vinfastdms.crm5.dynamics.com/api/data/v9.0"
 SYNC_PORT = 28888
 
 TARGET_CONFIG_PATHS = [
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "dms_dealers_config.json"),
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ordermanagement", "dms_dealers_config.json"),
+    r"D:\CÁC DỰ ÁN\BIỂN SỐ\dms_dealers_config.json",
+    r"D:\CÁC DỰ ÁN\ordermanagement\dms_dealers_config.json",
+    os.path.expanduser(r"~\Documents\BIỂN SỐ\dms_dealers_config.json"),
+    os.path.expanduser(r"~\Documents\ordermanagement\dms_dealers_config.json"),
     r"c:\Users\USER\Documents\BIỂN SỐ\dms_dealers_config.json",
     r"c:\Users\USER\Documents\ordermanagement\dms_dealers_config.json"
 ]

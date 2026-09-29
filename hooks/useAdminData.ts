@@ -84,6 +84,8 @@ export const useAdminData = ({
             'Điểm Vpoint sử dụng': row.vpoint,
             'LinkHopDong': row.url_hop_dong,
             'LinkDeNghiXHD': row.url_de_nghi_xhd,
+            'LinkHoaDonDaXuat': row.url_hoa_don_da_xuat || '',
+            'url_hoa_don_da_xuat': row.url_hoa_don_da_xuat || '',
             'Ngày xuất hóa đơn': row.ngay_xuat_hoa_don,
             'SỐ ĐƠN HÀNG': row.so_don_hang,
             'TÊN KHÁCH HÀNG': row.ten_khach_hang,

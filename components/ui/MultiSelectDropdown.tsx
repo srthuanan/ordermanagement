@@ -105,10 +105,10 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
     const disabledClass = disabled ? 'opacity-60 cursor-not-allowed bg-gray-50' : 'cursor-pointer';
 
     if (variant === 'modern') {
-      const sizeClass = isCompact ? 'px-3 lg:px-2 h-8 lg:h-7 text-[11px] lg:text-[10px]' : 'px-4 lg:px-3 h-10 lg:h-8 text-[13px] lg:text-[12px]';
+      const sizeClass = isCompact ? 'px-2 lg:px-1.5 h-7 lg:h-6 text-[10.5px] lg:text-[10px]' : 'px-4 lg:px-3 h-10 lg:h-8 text-[13px] lg:text-[12px]';
       const activeState = !disabled && (isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple'))
         ? 'bg-white text-accent-primary ring-1 ring-accent-primary/20 shadow-sm'
-        : 'bg-transparent text-slate-400 hover:text-slate-700 hover:bg-white/50';
+        : 'bg-transparent text-slate-500 hover:text-slate-800 hover:bg-white/60';
       return `${base} rounded-lg ${sizeClass} ${activeState} ${disabledClass} font-semibold lg:font-medium transition-all duration-200`;
     }
 
@@ -223,14 +223,14 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         disabled={disabled}
         className={buttonClasses}
       >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple') ? 'bg-accent-primary/10 text-accent-primary' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'}`}>
-            <i className={`fas ${icon} text-[10px]`}></i>
+        <div className={`flex items-center ${isCompact ? 'gap-1.5 lg:gap-1' : 'gap-2.5'} min-w-0`}>
+          <div className={`${isCompact ? 'w-4.5 h-4.5 lg:w-4 lg:h-4 text-[8.5px]' : 'w-6 h-6 text-[10px]'} rounded-md flex items-center justify-center transition-all ${isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple') ? 'bg-accent-primary/10 text-accent-primary' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'}`}>
+            <i className={`fas ${icon} ${isCompact ? 'text-[8px]' : 'text-[10px]'}`}></i>
           </div>
           <span className="truncate font-medium text-slate-800">{displayLabel}</span>
         </div>
-        <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${isOpen ? 'bg-slate-100 text-slate-900' : 'text-slate-300'}`}>
-          <i className={`fas fa-chevron-down text-[7px] transition-transform duration-500 ${isOpen ? 'rotate-180' : ''}`}></i>
+        <div className={`${isCompact ? 'w-4 h-4' : 'w-5 h-5'} rounded-full flex items-center justify-center transition-all ${isOpen ? 'bg-slate-100 text-slate-900' : 'text-slate-300'}`}>
+          <i className={`fas fa-chevron-down ${isCompact ? 'text-[6.5px]' : 'text-[7px]'} transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}></i>
         </div>
       </button>
 

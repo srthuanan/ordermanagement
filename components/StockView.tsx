@@ -531,7 +531,7 @@ const StockView: React.FC<StockViewProps> = ({
                     >
                         {/* Render Secondary Filters */}
                         {activeDropdowns.map(dropdown => (
-                            <div key={dropdown.id} className="min-w-[110px]">
+                            <div key={dropdown.id} className="min-w-[76px] xl:min-w-[85px] flex-shrink-0">
                                 <MultiSelectDropdown
                                     id={dropdown.id}
                                     label={dropdown.label}

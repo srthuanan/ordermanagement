@@ -2,7 +2,7 @@ import os
 import subprocess
 
 desktop = os.path.join(os.environ['USERPROFILE'], 'Desktop')
-proj_dir = r'C:\Users\USER\Documents\ordermanagement'
+proj_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 # Xóa các shortcut cũ nếu có
 old_shortcuts = ['Dong Bo PDF CyberSoft.lnk', 'Cai Dat Tu Khoi Dong PDF.lnk']
