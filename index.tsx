@@ -23,30 +23,30 @@ const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '
 
 const CACHE_VERSION_KEY = 'app_version';
 
-const clearCacheAndReload = () => {
-    localStorage.clear();
-    sessionStorage.clear();
-    if ('caches' in window) {
-        caches.keys().then((names) => {
-            names.forEach((name) => {
-                caches.delete(name);
+// Quản lý dọn dẹp cache asset khi phát hiện phiên bản mới
+// BẢO VỆ 100% PHIÊN ĐĂNG NHẬP: TUYỆT ĐỐI KHÔNG XÓA localStorage hay sessionStorage!
+const handleVersionUpgrade = () => {
+    const storedVersion = localStorage.getItem(CACHE_VERSION_KEY);
+    const currentVersion = APP_VERSION;
+
+    if (storedVersion && storedVersion !== currentVersion) {
+        // Chỉ dọn dẹp CacheStorage cũ của trình duyệt (chứa các file JS/CSS cũ)
+        if ('caches' in window) {
+            caches.keys().then((names) => {
+                names.forEach((name) => {
+                    caches.delete(name);
+                });
             });
-        });
+        }
+        localStorage.setItem(CACHE_VERSION_KEY, currentVersion);
+    } else if (!storedVersion) {
+        localStorage.setItem(CACHE_VERSION_KEY, currentVersion);
     }
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then((registrations) => {
-            registrations.forEach((registration) => {
-                registration.unregister();
-            });
-        });
-    }
-    localStorage.setItem(CACHE_VERSION_KEY, APP_VERSION);
-    setTimeout(() => {
-        window.location.reload();
-    }, 500);
 };
 
-// Khởi tạo tự động reload khi có bản PWA mới
+handleVersionUpgrade();
+
+// Khởi tạo tự động nạp bản cập nhật mới ngầm qua PWA Service Worker
 const initPWA = () => {
     if ('serviceWorker' in navigator) {
         let refreshing = false;
@@ -71,18 +71,6 @@ const initPWA = () => {
 };
 
 initPWA();
-
-const checkVersion = () => {
-    const storedVersion = localStorage.getItem(CACHE_VERSION_KEY);
-    const currentVersion = APP_VERSION;
-    if (storedVersion && storedVersion !== currentVersion) {
-        clearCacheAndReload();
-    } else if (!storedVersion) {
-        localStorage.setItem(CACHE_VERSION_KEY, currentVersion);
-    }
-};
-
-checkVersion();
 
 // 🔒 Global Media & Image Protection: Block Context Menu, Drag & Drop, Copy & Open in New Tab across all UI images
 if (typeof window !== 'undefined') {
