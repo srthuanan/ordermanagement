@@ -264,13 +264,6 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
             if (override === 'trung_thu') return true;
             if (override === 'normal') return false;
         }
-        const now = new Date();
-        const month = now.getMonth(); // 0 = Jan ... 7 = Aug, 8 = Sep, 9 = Oct
-        const day = now.getDate();
-        // Mùa lễ hội Trung Thu hàng năm: Từ 15/08 đến 15/10
-        if (month === 7 && day >= 15) return true;
-        if (month === 8) return true;
-        if (month === 9 && day <= 15) return true;
         return false;
     };
 

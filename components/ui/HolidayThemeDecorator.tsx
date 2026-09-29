@@ -55,14 +55,15 @@ export const detectCurrentHolidaySeason = (): HolidaySeason => {
 
 /**
  * Kiểm tra xem thời điểm hiện tại có đang trong mùa Tết Trung Thu hay không.
- * Mùa Trung Thu kéo dài từ sau Quốc Khánh (04/09) đến hết rằm tháng Tám âm lịch (khoảng 08/10).
- * Sau thời gian này sẽ tự động kết thúc và hoàn về trạng thái bình thường.
+ * Đã tắt theo yêu cầu người dùng.
  */
-export const isMidAutumnSeason = (customDate?: Date): boolean => {
-  const now = customDate || new Date();
-  const m = now.getMonth(); // 0 = Jan, 8 = Sep, 9 = Oct
-  const d = now.getDate();
-  return (m === 8 && d >= 4) || (m === 9 && d <= 8);
+export const isMidAutumnSeason = (_customDate?: Date): boolean => {
+  if (typeof window !== 'undefined') {
+    const override = localStorage.getItem('THEME_SEASON');
+    if (override === 'trung_thu') return true;
+    if (override === 'normal') return false;
+  }
+  return false;
 };
 
 interface HolidayThemeDecoratorProps {
