@@ -14,11 +14,15 @@ $s.WorkingDirectory = '{working_dir}'
 $s.WindowStyle = 7
 $s.Description = 'CyberSoft Local Server & Bridge Daemon'
 $s.Save()
+Unblock-File -Path '{target_bat}' -ErrorAction SilentlyContinue
+Unblock-File -Path '{shortcut_path}' -ErrorAction SilentlyContinue
 """
 
 res = subprocess.run(['powershell', '-NoProfile', '-Command', ps_code], capture_output=True, text=True)
 if os.path.exists(shortcut_path):
     print(f"SUCCESS: Đã tạo shortcut tự khởi động tại:\n{shortcut_path}")
     print(f"Target: {target_bat}")
+    print("Đã tự động gỡ cờ cảnh báo bảo mật (Unblock-File) của Windows.")
 else:
     print(f"ERROR: {res.stderr}")
+

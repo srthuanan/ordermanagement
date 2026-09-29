@@ -407,7 +407,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
             const { data: matchedOrders } = await supabaseAdmin.from('donhang').select('so_don_hang').ilike('vin', vin);
             if (matchedOrders && matchedOrders.length > 0) {
                 const orderNumbers = matchedOrders.map((o: any) => o.so_don_hang);
-                await supabaseAdmin.from('donhang').update({ ket_qua: 'Chưa ghép', vin: null, thoi_gian_ghep: null }).in('so_don_hang', orderNumbers);
+                await supabaseAdmin.from('donhang').update({ ket_qua: 'Chưa ghép', vin: null, so_may: null, thoi_gian_ghep: null }).in('so_don_hang', orderNumbers);
             }
 
             // Dọn dẹp hàng đợi & hoạt động giữ xe liên quan
@@ -760,7 +760,13 @@ export const performAdminAction = async (action: string, params: Record<string, 
             const tr = params.orderNumber; const vin = params.vin;
             const { data: o } = await supabaseAdmin.from('donhang').select('ten_tu_van_ban_hang').eq('so_don_hang', tr).limit(1).maybeSingle();
             await supabaseAdmin.from('khoxe').update({ trang_thai: 'Đã ghép', nguoi_giu_xe: currentUser, thoi_gian_het_han_giu: 'Vô thời hạn' }).eq('vin', vin);
-            await supabaseAdmin.from('donhang').update({ vin, ket_qua: 'Đã ghép', thoi_gian_ghep: new Date().toISOString() }).eq('so_don_hang', tr);
+            const { data: cInfo } = await supabaseAdmin.from('thongtinxe').select('so_may').eq('vin', vin).maybeSingle();
+            let matchedSoMay = cInfo?.so_may;
+            if (!matchedSoMay) {
+                const { data: kInfo } = await supabaseAdmin.from('khoxe').select('so_may').eq('vin', vin).maybeSingle();
+                matchedSoMay = kInfo?.so_may;
+            }
+            await supabaseAdmin.from('donhang').update({ vin, so_may: matchedSoMay || null, ket_qua: 'Đã ghép', thoi_gian_ghep: new Date().toISOString() }).eq('so_don_hang', tr);
             
             // Thêm ghi nhận uy tín cho TVBH (tính như khớp xe)
             const tvbh = o && (o as any).ten_tu_van_ban_hang;
@@ -856,7 +862,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
                         if (o.vin) {
                             await supabaseAdmin.from('khoxe').update({ trang_thai: 'Chưa ghép', nguoi_giu_xe: null, thoi_gian_het_han_giu: null }).eq('vin', o.vin);
                         }
-                        await supabaseAdmin.from('donhang').update({ ket_qua: 'Chưa ghép', vin: null, thoi_gian_ghep: null }).eq('so_don_hang', tr); 
+                        await supabaseAdmin.from('donhang').update({ ket_qua: 'Chưa ghép', vin: null, so_may: null, thoi_gian_ghep: null }).eq('so_don_hang', tr); 
                         await logAction('REVERT_STATUS', { orderNumber: tr, from: o.ket_qua, to: 'Chưa ghép' }, tr, 'order'); 
                         break; 
                     case 'Đã hủy': 

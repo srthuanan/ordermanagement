@@ -173,26 +173,16 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
     }, [fetchAdminData]);
 
     const mergedAllHistoryData = useMemo(() => {
-        const engineMapByOrder = new Map();
-        if (xuathoadonRes) {
-            xuathoadonRes.forEach((row: any) => {
-                if (row['Số đơn hàng'] && row['Số máy']) {
-                    engineMapByOrder.set(row['Số đơn hàng'], row['Số máy']);
-                }
-            });
-        }
-
         const vinMap: Record<string, { engine?: string; dms?: string }> = {};
 
-        // 1. Overlay from stock data (more accurate for current inventory)
+        // 1. Overlay from stock data (most accurate for current inventory)
         if (stockData) {
             stockData.forEach((car: any) => {
                 if (car.VIN) {
                     const vin = car.VIN.trim().toUpperCase();
-                    const carEngine = car['Số máy'] || '';
-                    const carDms = car['Mã DMS'] || '';
+                    const carEngine = car['Số máy'] || car.so_may || '';
+                    const carDms = car['Mã DMS'] || car.ma_dms || '';
                     vinMap[vin] = {
-                        // Giữ lại giá trị cũ nếu khoxe không có số máy/mã DMS
                         engine: carEngine || vinMap[vin]?.engine,
                         dms: carDms || vinMap[vin]?.dms
                     };
@@ -200,25 +190,43 @@ export const useAppData = ({ currentUser, userRole, isCurrentUserAdmin, showToas
             });
         }
 
+        // 2. Map from xuathoadonRes (by VIN, NOT blindly by order number)
+        if (xuathoadonRes) {
+            xuathoadonRes.forEach((row: any) => {
+                const vin = (row.vin || row.VIN || row['Số khung (vin)'] || '').trim().toUpperCase();
+                const sm = row['Số máy'] || row.so_may || '';
+                const dms = row['Mã DMS'] || row.ma_dms || '';
+                if (vin) {
+                    vinMap[vin] = {
+                        engine: sm || vinMap[vin]?.engine,
+                        dms: dms || vinMap[vin]?.dms
+                    };
+                }
+            });
+        }
+
         return allHistoryData.map((order: Order) => {
-            let engineNum = engineMapByOrder.get(order['Số đơn hàng']);
-            let dmsCode = order['Mã DMS'];
+            let engineNum = order['Số máy'] || '';
+            let dmsCode = order['Mã DMS'] || '';
 
             if (order.VIN) {
                 const vin = order.VIN.trim().toUpperCase();
                 const matchedInfo = vinMap[vin];
                 if (matchedInfo) {
-                    if (!engineNum) engineNum = matchedInfo.engine;
-                    if (!dmsCode) dmsCode = matchedInfo.dms;
+                    if (matchedInfo.engine) engineNum = matchedInfo.engine;
+                    if (matchedInfo.dms) dmsCode = matchedInfo.dms;
                 }
+            } else {
+                // Đơn hàng chưa ghép xe thì không có số máy
+                engineNum = '';
             }
 
-            if (engineNum || dmsCode) {
+            if (engineNum !== order['Số máy'] || dmsCode !== order['Mã DMS']) {
                 return {
                     ...order,
-                    'Số máy': engineNum || order['Số máy'],
-                    'SỐ MÁY': engineNum || order['Số máy'],
-                    'Mã DMS': dmsCode || order['Mã DMS']
+                    'Số máy': engineNum,
+                    'SỐ MÁY': engineNum,
+                    'Mã DMS': dmsCode
                 };
             }
             return order;

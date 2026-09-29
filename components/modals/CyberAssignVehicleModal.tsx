@@ -460,6 +460,7 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                         .from('donhang')
                         .update({
                             vin: selectedCandidateVin,
+                            ...(engineNo ? { so_may: engineNo } : {}),
                             thoi_gian_ghep: pairedTime
                         })
                         .eq('so_don_hang', orderNo);

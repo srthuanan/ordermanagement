@@ -1115,7 +1115,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
                     {/* Floating Specs Pill */}
                     <div className="absolute bottom-0.5 md:bottom-2 left-1/2 -translate-x-1/2 w-max max-w-[98%] md:max-w-full z-40 pointer-events-auto">
-                        <div className="relative overflow-hidden bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-700/80 shadow-xl shadow-slate-900/10 rounded-xl md:rounded-3xl p-1 md:p-3 flex items-center gap-0.5 sm:gap-1.5 md:gap-6 backdrop-blur-md select-none group hover:scale-[1.02] transition-transform duration-300">
+                        <div className="relative overflow-hidden bg-white/95 border border-slate-200/90 shadow-lg shadow-slate-200/60 rounded-xl md:rounded-2xl p-1 md:p-2.5 flex items-center gap-0.5 sm:gap-1.5 md:gap-5 backdrop-blur-md select-none group hover:scale-[1.02] transition-transform duration-300 divide-x divide-slate-100">
 
                             <div className="relative z-10 px-1 sm:px-2 md:px-4 text-center max-w-[85px] sm:max-w-[110px] md:max-w-none">
                                 <p className="text-[7.5px] md:text-[9px] font-bold text-slate-500 uppercase tracking-wide md:tracking-widest mb-0.5 md:mb-1 truncate">Ngoại thất</p>

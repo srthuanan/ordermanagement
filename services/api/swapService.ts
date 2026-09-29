@@ -330,9 +330,30 @@ export const adminApproveSwapRequest = async (requestId: string): Promise<ApiRes
 
         const swapTime = new Date().toISOString();
 
+        // Tra cứu số máy của 2 xe để đồng bộ chuẩn xác
+        let soMayA: string | null = null;
+        let soMayB: string | null = null;
+        if (vinA) {
+            const { data: tA } = await supabaseAdmin.from('thongtinxe').select('so_may').eq('vin', vinA).maybeSingle();
+            soMayA = tA?.so_may || null;
+            if (!soMayA) {
+                const { data: kA } = await supabaseAdmin.from('khoxe').select('so_may').eq('vin', vinA).maybeSingle();
+                soMayA = kA?.so_may || null;
+            }
+        }
+        if (vinB) {
+            const { data: tB } = await supabaseAdmin.from('thongtinxe').select('so_may').eq('vin', vinB).maybeSingle();
+            soMayB = tB?.so_may || null;
+            if (!soMayB) {
+                const { data: kB } = await supabaseAdmin.from('khoxe').select('so_may').eq('vin', vinB).maybeSingle();
+                soMayB = kB?.so_may || null;
+            }
+        }
+
         // 1. Cập nhật Đơn hàng A (Nhận VIN B)
         await supabaseAdmin.from('donhang').update({
             vin: vinB,
+            so_may: soMayB,
             ket_qua: 'Đã ghép',
             thoi_gian_ghep: swapTime
         }).eq('so_don_hang', orderA);
@@ -342,6 +363,7 @@ export const adminApproveSwapRequest = async (requestId: string): Promise<ApiRes
             const newStatusB = vinA ? 'Đã ghép' : 'Chưa ghép';
             await supabaseAdmin.from('donhang').update({
                 vin: vinA || null,
+                so_may: vinA ? soMayA : null,
                 ket_qua: newStatusB,
                 thoi_gian_ghep: vinA ? swapTime : null
             }).eq('so_don_hang', orderB);
@@ -533,15 +555,37 @@ export const adminDirectSwap = async (payload: {
 
         const swapTime = new Date().toISOString();
 
-        // 1. Swap VINs in donhang table
+        // Tra cứu số máy của 2 xe để đồng bộ chuẩn xác
+        let soMayA: string | null = null;
+        let soMayB: string | null = null;
+        if (vinA) {
+            const { data: tA } = await supabaseAdmin.from('thongtinxe').select('so_may').eq('vin', vinA).maybeSingle();
+            soMayA = tA?.so_may || null;
+            if (!soMayA) {
+                const { data: kA } = await supabaseAdmin.from('khoxe').select('so_may').eq('vin', vinA).maybeSingle();
+                soMayA = kA?.so_may || null;
+            }
+        }
+        if (vinB) {
+            const { data: tB } = await supabaseAdmin.from('thongtinxe').select('so_may').eq('vin', vinB).maybeSingle();
+            soMayB = tB?.so_may || null;
+            if (!soMayB) {
+                const { data: kB } = await supabaseAdmin.from('khoxe').select('so_may').eq('vin', vinB).maybeSingle();
+                soMayB = kB?.so_may || null;
+            }
+        }
+
+        // 1. Swap VINs and so_may in donhang table
         await Promise.all([
             supabaseAdmin.from('donhang').update({
                 vin: vinB || null,
+                so_may: vinB ? soMayB : null,
                 ket_qua: vinB ? 'Đã ghép' : 'Chưa ghép',
                 thoi_gian_ghep: vinB ? swapTime : null
             }).eq('so_don_hang', orderA),
             supabaseAdmin.from('donhang').update({
                 vin: vinA || null,
+                so_may: vinA ? soMayA : null,
                 ket_qua: vinA ? 'Đã ghép' : 'Chưa ghép',
                 thoi_gian_ghep: vinA ? swapTime : null
             }).eq('so_don_hang', orderB)
