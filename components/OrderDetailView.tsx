@@ -2378,175 +2378,181 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             )}
             </main>
 
-            {/* Minimalist Refined Action Dock Footer */}
+            {/* Segmented Action Toolbar Dock Footer */}
             {inlineMode === 'VIEW' && (
-            <footer className="flex-shrink-0 px-3.5 py-2.5 sm:px-5 sm:py-3 bg-white/95 backdrop-blur-md border-t border-slate-200/70 flex items-center justify-between gap-2 relative z-20 rounded-b-2xl">
+            <footer className="flex-shrink-0 px-3.5 py-2.5 sm:px-5 sm:py-2.5 bg-slate-50/90 backdrop-blur-xl border-t border-slate-200/80 flex items-center justify-between gap-2 relative z-20 rounded-b-2xl">
                 {onClose ? (
                     <button 
                         type="button" 
                         onClick={onClose} 
-                        className="h-8 px-3 rounded-full text-slate-500 hover:text-slate-800 hover:bg-slate-100 font-medium text-xs transition-all active:scale-95 cursor-pointer inline-flex items-center gap-1.5 shrink-0"
+                        className="h-8 px-3 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 font-medium text-xs transition-colors cursor-pointer inline-flex items-center gap-1.5 shrink-0"
                     >
-                        <i className="fas fa-times text-[11px]"></i>
+                        <i className="fas fa-arrow-left text-[10px] text-slate-400"></i>
                         <span>Đóng</span>
                     </button>
                 ) : <div />}
 
-                <div className="flex items-center justify-end gap-1.5 sm:gap-2 flex-wrap">
+                <div className="flex items-center justify-end gap-2 flex-wrap">
                     {isReferenceAccount && (
-                        <div className="h-8 flex items-center gap-1.5 px-3 rounded-full bg-slate-800 text-slate-200 text-[11px] font-semibold shrink-0">
-                            <i className="fa-solid fa-eye text-[10px] text-slate-400"></i>
-                            <span className="uppercase tracking-wider text-[10px]">Chỉ xem</span>
+                        <div className="h-8 flex items-center gap-1.5 px-3 rounded-xl bg-slate-200/80 text-slate-600 text-[10.5px] font-semibold shrink-0 border border-slate-300/60">
+                            <i className="fa-solid fa-eye text-[9px] text-slate-500"></i>
+                            <span className="uppercase tracking-wider">Chỉ xem</span>
                         </div>
                     )}
-                    {canDownloadInvoice && (
-                        <button
-                            onClick={() => {
-                                let url = resolvedOrder.LinkHoaDonDaXuat;
-                                if (url) {
-                                    if (url.includes('drive.google.com') && url.includes('/file/d/')) {
-                                        const match = url.match(/\/file\/d\/([^/]+)/);
-                                        if (match) url = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+
+                    {/* Dải phím liền khối (Segmented Action Toolbar) */}
+                    <div className="inline-flex items-stretch bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-xl shadow-xs divide-x divide-slate-200/80 overflow-hidden">
+                        {canDownloadInvoice && (
+                            <button
+                                onClick={() => {
+                                    let url = resolvedOrder.LinkHoaDonDaXuat;
+                                    if (url) {
+                                        if (url.includes('drive.google.com') && url.includes('/file/d/')) {
+                                            const match = url.match(/\/file\/d\/([^/]+)/);
+                                            if (match) url = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+                                        }
+                                        window.open(url, '_blank');
                                     }
-                                    window.open(url, '_blank');
-                                }
-                            }}
-                            className="h-8 px-3 rounded-full bg-sky-500/10 hover:bg-sky-500/15 text-sky-700 border border-sky-500/20 font-medium text-xs transition-all active:scale-95 inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
-                        >
-                            <i className="fas fa-file-invoice text-[11px] text-sky-500"></i>
-                            <span>Hóa Đơn</span>
-                        </button>
-                    )}
-                    {resolvedOrder.VIN && (
-                        <button
-                            onClick={async () => {
-                                try {
-                                    await downloadDeliveryNoticeDocx(resolvedOrder);
-                                    showToast?.('Thành công', 'Đã tải Thông báo sẵn sàng giao xe (Word)!', 'success');
-                                } catch (e: any) {
-                                    showToast?.('Lỗi', `Lỗi tải file: ${e.message}`, 'error');
-                                }
-                            }}
-                            className="h-8 px-3 rounded-full bg-indigo-500/10 hover:bg-indigo-500/15 text-indigo-700 border border-indigo-500/20 font-medium text-xs transition-all active:scale-95 inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
-                            title="Tải file Word Thông báo sẵn sàng giao xe"
-                        >
-                            <i className="fas fa-file-word text-[11px] text-indigo-500"></i>
-                            <span>TB Giao Xe</span>
-                        </button>
-                    )}
-                    {canEdit && !isReferenceAccount && (
-                        <button 
-                            onClick={() => setInlineMode('EDIT')} 
-                            className="h-8 px-3 rounded-full bg-slate-500/10 hover:bg-slate-500/15 text-slate-700 border border-slate-500/20 font-medium text-xs transition-all active:scale-95 inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
-                        >
-                            <i className="fas fa-pencil-alt text-[10px] text-slate-500"></i>
-                            <span>Sửa</span>
-                        </button>
-                    )}
-                    {canCancel && !isReferenceAccount && (
-                        <button
-                            onClick={() => {
-                                if (onCancelConfirm) {
-                                    setCancelReason('');
-                                    setCancelUnmatchType('Hủy luôn đơn hàng (Hủy đơn)');
-                                    setCancelThoiGianCanXe(resolvedOrder['Thời gian cần xe'] || '');
-                                    setInlineMode('CANCEL');
-                                } else {
-                                    onCancel?.(resolvedOrder);
-                                }
-                            }}
-                            className="h-8 px-3 rounded-full bg-rose-500/10 hover:bg-rose-500/15 text-rose-600 border border-rose-500/20 font-medium text-xs transition-all active:scale-95 inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
-                        >
-                            <i className="fas fa-trash-alt text-[10px] text-rose-500"></i>
-                            <span>Hủy</span>
-                        </button>
-                    )}
-                    {canRequestInvoice && !isReferenceAccount && (
-                        <button 
-                            onClick={() => {
-                                if (onInvoiceConfirm || showToast) {
-                                    setInlineMode('INVOICE');
-                                } else if (onRequestInvoice) {
-                                    onRequestInvoice(resolvedOrder);
-                                }
-                            }} 
-                            className="h-8 px-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs shadow-blue-500/25 transition-all active:scale-95 inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
-                        >
-                            <i className="fas fa-file-invoice-dollar text-[11px] text-blue-200"></i>
-                            <span>Xuất Hóa Đơn</span>
-                        </button>
-                    )}
-
-                    {/* Nút Điều Chuyển Xe / In Phiếu DNX (Ràng buộc: Xe có ở kho thì mới hiển thị nút Chuyển xe; Nếu có TD4 thì không hiển thị gì) */}
-                    {resolvedOrder.VIN && !hasTd4Effective && !isReferenceAccount && isCarInWarehouse && (
-                        (transferRequest?.status === 'completed' || cyberCarStatus?.has_dnx) ? (
-                            <button
-                                type="button"
-                                onClick={handleOpenPrintDnx}
-                                className="h-8 px-3.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs shadow-emerald-500/25 transition-all active:scale-95 inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
-                                title={`Đã lập phiếu ${transferRequest?.soCtDnx || cyberCarStatus?.dnx_data?.so_ct || 'DNX'}. Bấm để xem và in phiếu.`}
+                                }}
+                                className="h-8 px-3 inline-flex items-center gap-1.5 text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium text-xs transition-colors cursor-pointer shrink-0"
                             >
-                                <i className="fas fa-print text-[11px] text-emerald-200"></i>
-                                <span>In Phiếu DNX</span>
+                                <i className="fas fa-file-invoice text-[10px] text-slate-400"></i>
+                                <span>Hóa Đơn</span>
                             </button>
-                        ) : (
+                        )}
+                        {resolvedOrder.VIN && (
                             <button
-                                type="button"
-                                onClick={handleOpenTransferMode}
-                                disabled={isLoadingTransferReq}
-                                className={`h-8 px-3.5 rounded-full font-semibold text-xs transition-all active:scale-95 inline-flex items-center gap-1.5 shrink-0 cursor-pointer ${
-                                    transferRequest?.status === 'pending'
-                                        ? 'bg-amber-500/10 hover:bg-amber-500/15 text-amber-800 border border-amber-500/30'
-                                        : 'bg-violet-600 hover:bg-violet-700 text-white shadow-xs shadow-violet-500/25'
-                                }`}
-                                title="Yêu cầu Admin lập phiếu điều chuyển xe nội bộ (DNX) về showroom/xưởng PDI"
+                                onClick={async () => {
+                                    try {
+                                        await downloadDeliveryNoticeDocx(resolvedOrder);
+                                        showToast?.('Thành công', 'Đã tải Thông báo sẵn sàng giao xe (Word)!', 'success');
+                                    } catch (e: any) {
+                                        showToast?.('Lỗi', `Lỗi tải file: ${e.message}`, 'error');
+                                    }
+                                }}
+                                className="h-8 px-3 inline-flex items-center gap-1.5 text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium text-xs transition-colors cursor-pointer shrink-0"
+                                title="Tải file Word Thông báo sẵn sàng giao xe"
                             >
-                                {isLoadingTransferReq ? (
-                                    <i className="fas fa-spinner fa-spin text-[11px]"></i>
-                                ) : (
-                                    <i className={`fas fa-truck-moving text-[11px] ${transferRequest?.status === 'pending' ? 'text-amber-600' : 'text-violet-200'}`}></i>
-                                )}
-                                <span>
-                                    {isLoadingTransferReq
-                                        ? 'Kiểm tra...'
-                                        : transferRequest?.status === 'pending'
-                                        ? 'Chờ chuyển'
-                                        : 'Chuyển Xe'}
-                                </span>
-                                {transferRequest?.status === 'pending' && (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>
-                                )}
+                                <i className="fas fa-file-word text-[10.5px] text-slate-400"></i>
+                                <span>TB Giao Xe</span>
                             </button>
-                        )
-                    )}
+                        )}
+                        {canEdit && !isReferenceAccount && (
+                            <button 
+                                onClick={() => setInlineMode('EDIT')} 
+                                className="h-8 px-3 inline-flex items-center gap-1.5 text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium text-xs transition-colors cursor-pointer shrink-0"
+                            >
+                                <i className="fas fa-pen text-[9.5px] text-slate-400"></i>
+                                <span>Sửa</span>
+                            </button>
+                        )}
+                        {canCancel && !isReferenceAccount && (
+                            <button
+                                onClick={() => {
+                                    if (onCancelConfirm) {
+                                        setCancelReason('');
+                                        setCancelUnmatchType('Hủy luôn đơn hàng (Hủy đơn)');
+                                        setCancelThoiGianCanXe(resolvedOrder['Thời gian cần xe'] || '');
+                                        setInlineMode('CANCEL');
+                                    } else {
+                                        onCancel?.(resolvedOrder);
+                                    }
+                                }}
+                                className="h-8 px-3 inline-flex items-center gap-1.5 text-slate-700 hover:text-rose-600 hover:bg-rose-50/70 font-medium text-xs transition-colors cursor-pointer shrink-0"
+                            >
+                                <i className="fas fa-trash-alt text-[9.5px] text-slate-400"></i>
+                                <span>Hủy</span>
+                            </button>
+                        )}
 
-                    {canAddSupplement && !isReferenceAccount && (
-                        <button 
-                            onClick={() => onSupplement!(resolvedOrder)} 
-                            className="h-8 px-3 rounded-full bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs shadow-xs shadow-amber-500/20 transition-all active:scale-95 inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
-                        >
-                            <i className="fas fa-file-upload text-[11px] text-amber-100"></i>
-                            <span>Bổ Sung</span>
-                        </button>
-                    )}
-                    {canRequestVC && !isReferenceAccount && (
-                        <button 
-                            onClick={() => onRequestVC!(resolvedOrder)} 
-                            className="h-8 px-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-medium text-xs shadow-xs shadow-purple-500/20 transition-all active:scale-95 inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
-                        >
-                            <i className="fas fa-id-card text-[11px] text-purple-100"></i>
-                            <span>VinClub</span>
-                        </button>
-                    )}
-                    {canConfirmVC && !isReferenceAccount && (
-                        <button 
-                            onClick={() => onConfirmVC!(resolvedOrder)} 
-                            className="h-8 px-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-xs shadow-emerald-500/20 transition-all active:scale-95 inline-flex items-center gap-1.5 shrink-0 cursor-pointer"
-                        >
-                            <i className="fas fa-check text-[11px] text-emerald-100"></i>
-                            <span>Xác Thực</span>
-                        </button>
-                    )}
+                        {/* Nút Điều Chuyển Xe / In Phiếu DNX (Ràng buộc: Xe có ở kho thì mới hiển thị nút Chuyển xe; Nếu có TD4 thì không hiển thị gì) */}
+                        {resolvedOrder.VIN && !hasTd4Effective && !isReferenceAccount && isCarInWarehouse && (
+                            (transferRequest?.status === 'completed' || cyberCarStatus?.has_dnx) ? (
+                                <button
+                                    type="button"
+                                    onClick={handleOpenPrintDnx}
+                                    className="h-8 px-3.5 inline-flex items-center gap-1.5 text-slate-800 hover:text-slate-900 hover:bg-slate-100 font-medium text-xs transition-colors cursor-pointer shrink-0"
+                                    title={`Đã lập phiếu ${transferRequest?.soCtDnx || cyberCarStatus?.dnx_data?.so_ct || 'DNX'}. Bấm để xem và in phiếu.`}
+                                >
+                                    <i className="fas fa-print text-[10px] text-slate-400"></i>
+                                    <span>In Phiếu DNX</span>
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={handleOpenTransferMode}
+                                    disabled={isLoadingTransferReq}
+                                    className={`h-8 px-3.5 inline-flex items-center gap-1.5 font-medium text-xs transition-colors cursor-pointer shrink-0 ${
+                                        transferRequest?.status === 'pending'
+                                            ? 'bg-amber-50/80 text-amber-900 hover:bg-amber-100/80'
+                                            : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                                    }`}
+                                    title="Yêu cầu Admin lập phiếu điều chuyển xe nội bộ (DNX) về showroom/xưởng PDI"
+                                >
+                                    {isLoadingTransferReq ? (
+                                        <i className="fas fa-spinner fa-spin text-[10px] text-slate-400"></i>
+                                    ) : (
+                                        <i className={`fas fa-truck text-[10px] ${transferRequest?.status === 'pending' ? 'text-amber-600' : 'text-slate-400'}`}></i>
+                                    )}
+                                    <span>
+                                        {isLoadingTransferReq
+                                            ? 'Kiểm tra...'
+                                            : transferRequest?.status === 'pending'
+                                            ? 'Chờ chuyển'
+                                            : 'Chuyển Xe'}
+                                    </span>
+                                    {transferRequest?.status === 'pending' && (
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                    )}
+                                </button>
+                            )
+                        )}
+
+                        {canAddSupplement && !isReferenceAccount && (
+                            <button 
+                                onClick={() => onSupplement!(resolvedOrder)} 
+                                className="h-8 px-3 inline-flex items-center gap-1.5 text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium text-xs transition-colors cursor-pointer shrink-0"
+                            >
+                                <i className="fas fa-file-upload text-[10px] text-slate-400"></i>
+                                <span>Bổ Sung</span>
+                            </button>
+                        )}
+                        {canRequestVC && !isReferenceAccount && (
+                            <button 
+                                onClick={() => onRequestVC!(resolvedOrder)} 
+                                className="h-8 px-3 inline-flex items-center gap-1.5 text-slate-700 hover:text-slate-900 hover:bg-slate-100 font-medium text-xs transition-colors cursor-pointer shrink-0"
+                            >
+                                <i className="fas fa-id-card text-[10px] text-slate-400"></i>
+                                <span>VinClub</span>
+                            </button>
+                        )}
+                        {canConfirmVC && !isReferenceAccount && (
+                            <button 
+                                onClick={() => onConfirmVC!(resolvedOrder)} 
+                                className="h-8 px-3.5 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white font-medium text-xs transition-colors cursor-pointer shrink-0"
+                            >
+                                <i className="fas fa-check text-[10px] text-slate-300"></i>
+                                <span>Xác Thực</span>
+                            </button>
+                        )}
+
+                        {/* Nút Xuất Hóa Đơn (Hero CTA) - Điểm chốt sang trọng phía góc phải của dải phím */}
+                        {canRequestInvoice && !isReferenceAccount && (
+                            <button 
+                                onClick={() => {
+                                    if (onInvoiceConfirm || showToast) {
+                                        setInlineMode('INVOICE');
+                                    } else if (onRequestInvoice) {
+                                        onRequestInvoice(resolvedOrder);
+                                    }
+                                }} 
+                                className="h-8 px-4 inline-flex items-center gap-1.5 bg-slate-900 hover:bg-black text-white font-semibold text-xs transition-colors cursor-pointer shrink-0"
+                            >
+                                <i className="fas fa-file-invoice text-[10px] text-slate-300"></i>
+                                <span>Xuất Hóa Đơn</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
             </footer>
             )}
