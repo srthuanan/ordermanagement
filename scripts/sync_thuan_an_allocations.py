@@ -2842,13 +2842,104 @@ def sync_cyber_car_status_to_supabase(target_vins: list = None) -> dict:
     lookup_res = lookup_vin_warehouse({"vins": vins_to_sync})
     cars = lookup_res.get("cars") or []
     updated = upsert_cyber_car_status_records(cars)
+
+    # Tự động dọn dẹp các đơn đã XHĐ tháng trước còn tồn ở donhang khi xe đã về Thuận An hoặc có TD4
+    cleaned = auto_cleanup_retained_orders()
+    if cleaned > 0:
+        print(f"[auto_cleanup_retained_orders] Đã tự động lưu trữ và xóa {cleaned} đơn khỏi donhang.", file=sys.stderr)
+
     now_utc = datetime.now(timezone.utc).isoformat()
     return {
         "success": True,
         "total": len(cars),
         "updated": updated,
+        "cleaned_retained_orders": cleaned,
         "timestamp": now_utc
     }
+
+def auto_cleanup_retained_orders() -> int:
+    """
+    Tự động kiểm tra và dọn dẹp các đơn hàng đã XHĐ tháng trước còn tồn ở bảng donhang:
+    Hễ xe đã có phiếu TD4 HOẶC vị trí xe đã về Thuận An (K83) thì tự động lưu trữ và xóa khỏi donhang.
+    """
+    try:
+        now = datetime.now()
+        first_of_month = f"{now.year}-{str(now.month).zfill(2)}-01"
+        r = requests.get(
+            f"{SUPABASE_URL}/rest/v1/donhang",
+            headers=HEADERS,
+            params={
+                "select": "*",
+                "not.ngay_xuat_hoa_don": "is.null",
+                "ngay_xuat_hoa_don": f"lt.{first_of_month}"
+            },
+            timeout=10
+        )
+        if r.status_code != 200 or not r.json():
+            return 0
+        old_orders = r.json()
+        target_vins = list(set([o.get("vin", "").strip().upper() for o in old_orders if o.get("vin")]))
+        if not target_vins:
+            return 0
+
+        # Tra cứu cyber_car_status
+        r_cs = requests.get(
+            f"{SUPABASE_URL}/rest/v1/cyber_car_status",
+            headers=HEADERS,
+            params={"select": "vin,ma_kho,has_td4,so_ct_td4", "vin": f"in.({','.join(target_vins)})"},
+            timeout=10
+        )
+        cs_map = {c.get("vin", "").strip().upper(): c for c in (r_cs.json() if r_cs.status_code == 200 else [])}
+
+        to_delete_sdh = []
+        archive_payload = []
+        for o in old_orders:
+            v = o.get("vin", "").strip().upper()
+            cs = cs_map.get(v, {})
+            has_td4 = bool(cs.get("has_td4") or cs.get("so_ct_td4"))
+            is_at_thuan_an = (cs.get("ma_kho") or "").strip().upper() == "K83"
+
+            if has_td4 or is_at_thuan_an:
+                to_delete_sdh.append(o.get("so_don_hang"))
+                archive_payload.append({
+                    "so_don_hang": o.get("so_don_hang"),
+                    "ten_khach_hang": o.get("ten_khach_hang"),
+                    "dong_xe": o.get("dong_xe"),
+                    "phien_ban": o.get("phien_ban"),
+                    "ngoai_that": o.get("ngoai_that"),
+                    "noi_that": o.get("noi_that"),
+                    "tvbh": o.get("ten_tu_van_ban_hang"),
+                    "vin": o.get("vin"),
+                    "so_may": o.get("so_may"),
+                    "ma_dms": o.get("ma_dms") or "",
+                    "ngay_coc": o.get("ngay_coc"),
+                    "ngay_xuat_hoa_don": o.get("ngay_xuat_hoa_don"),
+                    "chinh_sach": o.get("chinh_sach"),
+                    "ket_qua": "Đã xuất hóa đơn",
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                })
+
+        if archive_payload:
+            requests.post(
+                f"{SUPABASE_URL}/rest/v1/archived_orders",
+                headers={**HEADERS, "Prefer": "resolution=merge-duplicates"},
+                params={"on_conflict": "so_don_hang"},
+                json=archive_payload,
+                timeout=10
+            )
+        if to_delete_sdh:
+            for i in range(0, len(to_delete_sdh), 50):
+                chunk = to_delete_sdh[i:i+50]
+                requests.delete(
+                    f"{SUPABASE_URL}/rest/v1/donhang",
+                    headers=HEADERS,
+                    params={"so_don_hang": f"in.({','.join(chunk)})"},
+                    timeout=10
+                )
+        return len(to_delete_sdh)
+    except Exception as e:
+        print(f"[auto_cleanup_retained_orders] Lỗi: {e}", file=sys.stderr)
+        return 0
 
 def sync_cyber_xep_xe_to_supabase(contracts: list = None, params: dict = {}) -> dict:
     """Đồng bộ toàn bộ danh sách hợp đồng xếp xe từ CyberSoft sang bảng cyber_xep_xe trên Supabase."""

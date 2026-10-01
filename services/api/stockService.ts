@@ -2149,6 +2149,37 @@ export const triggerCyberFullSync = async (): Promise<{ success: boolean; messag
 };
 
 /**
+ * Kích hoạt đồng bộ đơn hàng cọc tồn từ CyberSoft sang Supabase (Showroom Thuận An từ 01/07/2026)
+ */
+export const triggerCyberDonHangTonSync = async (): Promise<{ success: boolean; total?: number; message?: string; error?: string }> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/sync-donhang-ton');
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const json = await res.json().catch(() => ({}));
+                if (res.ok && json && json.success) {
+                    return {
+                        success: true,
+                        total: json.total || 0,
+                        message: json.message || `Đồng bộ thành công ${json.total || 0} đơn cọc tồn từ Cyber!`
+                    };
+                }
+                if (json && json.error) {
+                    return { success: false, error: json.error, message: json.message };
+                }
+            } catch (_) {}
+        }
+        return { success: false, error: 'Không thể kết nối máy chủ đồng bộ Cyber. Hãy đảm bảo Cyber Service đang bật.' };
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi khi kích hoạt đồng bộ đơn tồn Cyber.' };
+    }
+};
+
+/**
  * Kích hoạt đồng bộ riêng báo cáo Tồn Kho Xe từ CyberSoft sang Supabase (xóa dữ liệu cũ trước khi lưu mới)
  */
 export const triggerCyberTonKhoSync = async (): Promise<{ success: boolean; total?: number; updated?: number; error?: string }> => {

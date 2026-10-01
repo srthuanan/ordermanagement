@@ -304,7 +304,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         holds: 'QUẢN LÝ GIỮ',
         super_edit: 'QUẢN LÝ NÂNG CAO',
         policies: 'CHÍNH SÁCH',
-        don_ton: 'ĐƠN TỒN DMS',
+        don_ton: 'ĐƠN HÀNG TỒN',
         policy_summary: 'TỔNG HỢP CS',
         ai_knowledge: 'TRI THỨC AI',
         ai_health: 'SỨC KHỎE AI',
@@ -919,7 +919,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                         )
                     }
 
-                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'archive'} onClose={actions.handleCloseAdminModal} title="Lưu Trữ Hóa Đơn" description="Chuyển các đơn hàng đã xuất hóa đơn của tháng trước từ bảng yeucauxhd sang kho lưu trữ (archived_orders). Đồng thời dọn dẹp dữ liệu cũ khỏi bảng donhang." submitText="Xác Nhận Lưu Trữ" submitColor="primary" icon="fa-archive" onSubmit={actions.handleArchiveSubmit} />
+                    <ActionModal showToast={showToast} isOpen={actions.adminModal === 'archive'} onClose={actions.handleCloseAdminModal} title="Lưu Trữ Hóa Đơn" description="Lưu trữ toàn bộ đơn xuất hóa đơn tháng trước từ bảng yeucauxhd sang kho lưu trữ để sẵn sàng cho tháng mới. Bảng donhang chỉ xóa các đơn mà xe đã ở Thuận An VÀ đã có phiếu TD4; các đơn còn lại tiếp tục cho tồn để TVBH theo dõi và sẽ tự động lưu trữ khi xe về Thuận An hoặc có phiếu TD4." submitText="Xác Nhận Lưu Trữ" submitColor="primary" icon="fa-archive" onSubmit={actions.handleArchiveSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'addCar'} onClose={actions.handleCloseAdminModal} title="Thêm Xe Mới vào Kho" description="Hệ thống sẽ tự động tra cứu thông tin xe từ số VIN." inputs={addCarInputs} submitText="Thêm Xe" submitColor="primary" icon="fa-plus-circle" onSubmit={actions.handleAddCarSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'bulkAddCar'} onClose={actions.handleCloseAdminModal} title="Thêm Xe Hàng Loạt" description="Nhập danh sách các số VIN để thêm hàng loạt vào kho." inputs={bulkAddCarInputs} submitText="Thêm Hàng Loạt" submitColor="primary" icon="fa-layer-group" onSubmit={actions.handleBulkAddCarSubmit} />
                     <ActionModal showToast={showToast} isOpen={actions.adminModal === 'deleteCar'} onClose={actions.handleCloseAdminModal} title="Xóa Xe Khỏi Kho" description="Xe sẽ bị xóa khỏi trang Kho Xe và thông tin sẽ được lưu vào nhật ký. Có thể phục hồi lại sau bằng chức năng 'Phục Hồi Xe'." inputs={deleteCarInputs} submitText="Xác Nhận Xóa" submitColor="danger" icon="fa-trash-alt" onSubmit={actions.handleDeleteCarSubmit} />

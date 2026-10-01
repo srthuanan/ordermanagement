@@ -16,6 +16,7 @@ const PORT = parseInt(process.env.CYBER_LOCAL_PORT || '3001', 10);
 const scriptPath = path.resolve(__dirname, 'scripts', 'sync_thuan_an_allocations.py');
 const crmScript = path.resolve(__dirname, 'scripts', 'cyber_crm_service.py');
 const minvoiceScript = path.resolve(__dirname, 'scripts', 'm_invoice_service.py');
+const donHangTonScript = path.resolve(__dirname, 'scripts', 'sync_cyber_donhang_ton.py');
 
 /**
  * Thực thi lệnh python và trả về Promise JSON
@@ -137,6 +138,18 @@ async function handleCyberAction(pathname, method, body, queryParams = {}) {
 
         case '/api/cyber/sync-ton-kho-to-supabase':
             return await executePython([scriptPath, '--sync-ton-kho'], '{}');
+
+        case '/api/cyber/sync-donhang-ton': {
+            console.log(`\n==================================================================`);
+            console.log(`[CyberSync Đơn Tồn] 🔄 [${new Date().toLocaleTimeString('vi-VN')}] NHẬN LỆNH ĐỒNG BỘ ĐƠN CỌC TỒN TỪ WEB...`);
+            console.log(`[CyberSync Đơn Tồn] ⏳ Đang kết nối SQL CyberSoft (SQLVanDao) truy vấn dữ liệu...`);
+            const startTime = Date.now();
+            const res = await executePython([donHangTonScript], '{}');
+            const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+            console.log(`[CyberSync Đơn Tồn] ✅ [${new Date().toLocaleTimeString('vi-VN')}] ${res?.message || 'Đồng bộ thành công'} (hoàn tất trong ${duration}s)`);
+            console.log(`==================================================================\n`);
+            return res;
+        }
 
         case '/api/cyber/sync-all-to-supabase':
             return await executePython([scriptPath, '--sync-all-cyber'], '{}');
@@ -359,6 +372,7 @@ const server = http.createServer(async (req, res) => {
     req.on('data', chunk => { body += chunk.toString(); });
     req.on('end', async () => {
         try {
+            console.log(`[HTTP Local] 📥 [${new Date().toLocaleTimeString('vi-VN')}] Nhận yêu cầu: ${req.method} ${pathname}`);
             const result = await handleCyberAction(pathname, req.method, body, queryParams);
             res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
             res.end(JSON.stringify(result));
@@ -376,5 +390,21 @@ server.listen(PORT, () => {
     console.log(`  - Local Port:       http://localhost:${PORT}`);
     console.log(`  - Supabase Bridge:  Kênh 'cyber-realtime-bridge' (Đang lắng nghe)`);
     console.log(`  - Web GitHub Pages: Sẽ tự động ưu tiên máy tính này, KHÔNG dùng Render!`);
+    console.log(`  - AutoSync Đơn Tồn: Chạy ngầm định kỳ mỗi 3 tiếng/lần`);
     console.log('==================================================================');
+
+    // ── Tự động đồng bộ ngầm đơn hàng cọc tồn từ Cyber mỗi 3 tiếng (3 * 3600 * 1000 ms)
+    const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+    setTimeout(() => {
+        executePython([donHangTonScript], '{}')
+            .then(res => console.log(`[AutoSync DonHangTon] ✅ Đồng bộ ngầm đơn cọc tồn Cyber hoàn tất:`, res?.message || 'Thành công'))
+            .catch(err => console.error(`[AutoSync DonHangTon Error]:`, err.message));
+
+        setInterval(() => {
+            console.log(`[AutoSync DonHangTon] 🔄 [${new Date().toLocaleString('vi-VN')}] Đang chạy ngầm đồng bộ đơn cọc tồn Cyber (chu kỳ 3h)...`);
+            executePython([donHangTonScript], '{}')
+                .then(res => console.log(`[AutoSync DonHangTon] ✅ Đồng bộ ngầm đơn cọc tồn Cyber hoàn tất:`, res?.message || 'Thành công'))
+                .catch(err => console.error(`[AutoSync DonHangTon Error]:`, err.message));
+        }, THREE_HOURS_MS);
+    }, 15000);
 });

@@ -1040,7 +1040,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
 
             if (fetchErr) throw fetchErr;
 
-            const ordersToArchive = invoicedOrders?.filter(o => {
+            const ordersEligibleByDate = invoicedOrders?.filter(o => {
                 if (!o.ngay_xuat_hoa_don) return false;
                 let date = new Date(o.ngay_xuat_hoa_don);
                 if (isNaN(date.getTime())) {
@@ -1052,21 +1052,62 @@ export const performAdminAction = async (action: string, params: Record<string, 
                 return date && !isNaN(date.getTime()) && date < firstOfMonth;
             }) || [];
 
-            let archivedCount = 0;
-            if (ordersToArchive.length > 0) {
-                const parseDateSafe = (d: any) => {
-                    if (!d) return null;
-                    const parsed = new Date(d);
-                    if (!isNaN(parsed.getTime())) return parsed.toISOString();
-                    const parts = String(d).split('/');
-                    if (parts.length === 3) {
-                        const parsedVi = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                        if (!isNaN(parsedVi.getTime())) return parsedVi.toISOString();
-                    }
-                    return null;
-                };
+            // Thu thập danh sách số VIN duy nhất để kiểm tra vị trí xe và trạng thái giao xe (TD4)
+            const targetVins = Array.from(new Set(
+                ordersEligibleByDate
+                    .map(o => (o.vin || '').trim().toUpperCase())
+                    .filter(Boolean)
+            ));
 
-                const archivePayload = ordersToArchive.map(y => ({
+            const carStatusMap = new Map<string, any>();
+            const khoxeMap = new Map<string, any>();
+
+            if (targetVins.length > 0) {
+                // 1. Kiểm tra cache trạng thái xe CyberSoft (cyber_car_status) - chia nhỏ 40 VIN/request
+                for (let i = 0; i < targetVins.length; i += 40) {
+                    const chunk = targetVins.slice(i, i + 40);
+                    const { data: statusRows } = await supabaseAdmin
+                        .from('cyber_car_status')
+                        .select('vin, ma_kho, ten_kho, has_td4, so_ct_td4, has_dnx, so_ct_dnx')
+                        .in('vin', chunk);
+                    if (statusRows) {
+                        statusRows.forEach((r: any) => {
+                            if (r.vin) carStatusMap.set(r.vin.trim().toUpperCase(), r);
+                        });
+                    }
+                }
+
+                // 2. Kiểm tra bổ sung từ bảng kho xe nội bộ (khoxe: có cột vi_tri, trang_thai)
+                for (let i = 0; i < targetVins.length; i += 40) {
+                    const chunk = targetVins.slice(i, i + 40);
+                    const { data: khoxeRows } = await supabaseAdmin
+                        .from('khoxe')
+                        .select('vin, vi_tri, trang_thai')
+                        .in('vin', chunk);
+                    if (khoxeRows) {
+                        khoxeRows.forEach((r: any) => {
+                            if (r.vin) khoxeMap.set(r.vin.trim().toUpperCase(), r);
+                        });
+                    }
+                }
+            }
+
+            const parseDateSafe = (d: any) => {
+                if (!d) return null;
+                const parsed = new Date(d);
+                if (!isNaN(parsed.getTime())) return parsed.toISOString();
+                const parts = String(d).split('/');
+                if (parts.length === 3) {
+                    const parsedVi = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                    if (!isNaN(parsedVi.getTime())) return parsedVi.toISOString();
+                }
+                return null;
+            };
+
+            // 1. BẢNG yeucauxhd: Lưu trữ HẾT sang archived_orders để lưu dữ liệu tháng mới
+            let archivedCount = 0;
+            if (ordersEligibleByDate.length > 0) {
+                const archivePayload = ordersEligibleByDate.map(y => ({
                     so_don_hang: y.so_don_hang,
                     ten_khach_hang: y.ten_khach_hang,
                     dong_xe: y.dong_xe,
@@ -1076,6 +1117,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
                     tvbh: y.tvbh,
                     vin: y.vin,
                     so_may: y.so_may,
+                    ma_dms: y.ma_dms || '',
                     ngay_coc: parseDateSafe(y.ngay_coc),
                     ngay_yeu_cau: parseDateSafe(y.ngay_yeu_cau),
                     ngay_xuat_hoa_don: parseDateSafe(y.ngay_xuat_hoa_don),
@@ -1094,18 +1136,61 @@ export const performAdminAction = async (action: string, params: Record<string, 
                 if (insertErr) throw insertErr;
 
                 archivedCount = archivePayload.length;
-                const soDonHangs = archivePayload.map(o => o.so_don_hang);
+                const soDonHangsXhd = archivePayload.map(o => o.so_don_hang);
 
-                // Use bulk delete to avoid large parameter lists (batch 100 at a time)
-                for (let i = 0; i < soDonHangs.length; i += 100) {
-                    const batch = soDonHangs.slice(i, i + 100);
+                // Xóa HẾT toàn bộ các đơn XHĐ tháng trước khỏi yeucauxhd để sẵn sàng cho tháng mới
+                for (let i = 0; i < soDonHangsXhd.length; i += 100) {
+                    const batch = soDonHangsXhd.slice(i, i + 100);
                     await supabaseAdmin.from('yeucauxhd').delete().in('so_don_hang', batch);
-                    await supabaseAdmin.from('donhang').delete().in('so_don_hang', batch);
                 }
             }
 
-            postApi({ action, ...params }).catch(e => console.warn('GAS archive backup error:', e));
-            return { status: 'SUCCESS', message: `Đã lưu trữ ${archivedCount} đơn hàng thành công.` };
+            // 2. BẢNG donhang:
+            // - Điều kiện LƯU TRỮ & XÓA KHỎI donhang: Xe không có VIN HOẶC (Xe có vị trí ở Thuận An K83 VÀ đã có phiếu TD4)
+            // - Còn lại (chưa về Thuận An HOẶC chưa có TD4): CHO TỒN Ở BẢNG donhang để TVBH tiếp tục theo dõi
+            const donhangOrdersToDelete: string[] = [];
+            const donhangOrdersToRetain: any[] = [];
+
+            for (const o of ordersEligibleByDate) {
+                const vin = (o.vin || '').trim().toUpperCase();
+                if (!vin) {
+                    donhangOrdersToDelete.push(o.so_don_hang);
+                    continue;
+                }
+
+                const cStatus = carStatusMap.get(vin);
+                const kCar = khoxeMap.get(vin);
+
+                const hasTd4 = Boolean(cStatus?.has_td4 || cStatus?.so_ct_td4);
+                const maKhoCyber = (cStatus?.ma_kho || '').trim().toUpperCase();
+                const viTriKhoxe = (kCar?.vi_tri || '').toLowerCase();
+                const isAtThuanAn = 
+                    maKhoCyber === 'K83' || 
+                    viTriKhoxe.includes('k83') || 
+                    viTriKhoxe.includes('thuận an') || 
+                    viTriKhoxe.includes('thuan an');
+
+                // ĐIỀU KIỆN QUY ĐỊNH: Phải ở Thuận An VÀ đã có TD4 mới xóa khỏi donhang
+                if (isAtThuanAn && hasTd4) {
+                    donhangOrdersToDelete.push(o.so_don_hang);
+                } else {
+                    donhangOrdersToRetain.push(o);
+                }
+            }
+
+            // Xóa khỏi bảng donhang những đơn đã đủ điều kiện (ở Thuận An VÀ có TD4)
+            for (let i = 0; i < donhangOrdersToDelete.length; i += 100) {
+                const batch = donhangOrdersToDelete.slice(i, i + 100);
+                await supabaseAdmin.from('donhang').delete().in('so_don_hang', batch);
+            }
+
+            let resultMsg = `Đã lưu trữ ${archivedCount} đơn từ bảng yeucauxhd.`;
+            if (donhangOrdersToRetain.length > 0) {
+                resultMsg += ` Đã giữ lại ${donhangOrdersToRetain.length} đơn trên bảng donhang (chưa về Thuận An hoặc chưa có TD4) để TVBH tiếp tục theo dõi.`;
+            } else if (archivedCount === 0) {
+                resultMsg = 'Không có đơn hàng nào đủ điều kiện lưu trữ.';
+            }
+            return { status: 'SUCCESS', message: resultMsg };
         } catch (err: any) {
             console.error('Archive error:', err);
             return { status: 'ERROR', message: `Lỗi lưu trữ: ${err.message}` };
@@ -1581,4 +1666,136 @@ export const updateBacklogStatus = async (id: string, status: string, ghi_chu_ad
         return { status: 'ERROR', message: err.message || 'Lỗi khi cập nhật trạng thái đơn hàng tồn' };
     }
 };
+
+/**
+ * Tự động kiểm tra và dọn dẹp các đơn hàng đã XHĐ tháng trước còn tồn ở bảng donhang:
+ * Hễ xe đã có phiếu TD4 HOẶC vị trí xe đã về Thuận An (K83) thì tự động lưu trữ và xóa khỏi donhang.
+ */
+export const autoCleanupRetainedOrders = async (): Promise<{ cleanedCount: number }> => {
+    try {
+        const now = new Date();
+        const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        // 1. Lấy các đơn hàng trong donhang có ngay_xuat_hoa_don
+        const { data: oldOrders, error } = await supabaseAdmin
+            .from('donhang')
+            .select('*')
+            .not('ngay_xuat_hoa_don', 'is', null);
+
+        if (error || !oldOrders || oldOrders.length === 0) return { cleanedCount: 0 };
+
+        const parseDateSafe = (d: any) => {
+            if (!d) return null;
+            let date = new Date(d);
+            if (isNaN(date.getTime())) {
+                const parts = String(d).split('/');
+                if (parts.length === 3) date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+            }
+            return date && !isNaN(date.getTime()) ? date : null;
+        };
+
+        const pastMonthOrders = oldOrders.filter(o => {
+            const d = parseDateSafe(o.ngay_xuat_hoa_don);
+            return d && d < firstOfMonth;
+        });
+
+        if (pastMonthOrders.length === 0) return { cleanedCount: 0 };
+
+        const targetVins = Array.from(new Set(
+            pastMonthOrders.map(o => (o.vin || '').trim().toUpperCase()).filter(Boolean)
+        ));
+
+        const carStatusMap = new Map<string, any>();
+        const khoxeMap = new Map<string, any>();
+
+        if (targetVins.length > 0) {
+            for (let i = 0; i < targetVins.length; i += 40) {
+                const chunk = targetVins.slice(i, i + 40);
+                const { data: statusRows } = await supabaseAdmin
+                    .from('cyber_car_status')
+                    .select('vin, ma_kho, ten_kho, has_td4, so_ct_td4')
+                    .in('vin', chunk);
+                if (statusRows) {
+                    statusRows.forEach((r: any) => {
+                        if (r.vin) carStatusMap.set(r.vin.trim().toUpperCase(), r);
+                    });
+                }
+            }
+
+            for (let i = 0; i < targetVins.length; i += 40) {
+                const chunk = targetVins.slice(i, i + 40);
+                const { data: khoxeRows } = await supabaseAdmin
+                    .from('khoxe')
+                    .select('vin, vi_tri, trang_thai')
+                    .in('vin', chunk);
+                if (khoxeRows) {
+                    khoxeRows.forEach((r: any) => {
+                        if (r.vin) khoxeMap.set(r.vin.trim().toUpperCase(), r);
+                    });
+                }
+            }
+        }
+
+        const ordersToDeleteFromDonhang: string[] = [];
+        const archiveUpsertPayload: any[] = [];
+
+        for (const o of pastMonthOrders) {
+            const vin = (o.vin || '').trim().toUpperCase();
+            if (!vin) {
+                ordersToDeleteFromDonhang.push(o.so_don_hang);
+                continue;
+            }
+
+            const cStatus = carStatusMap.get(vin);
+            const kCar = khoxeMap.get(vin);
+
+            const hasTd4 = Boolean(cStatus?.has_td4 || cStatus?.so_ct_td4);
+            const maKhoCyber = (cStatus?.ma_kho || '').trim().toUpperCase();
+            const viTriKhoxe = (kCar?.vi_tri || '').toLowerCase();
+            const isAtThuanAn = 
+                maKhoCyber === 'K83' || 
+                viTriKhoxe.includes('k83') || 
+                viTriKhoxe.includes('thuận an') || 
+                viTriKhoxe.includes('thuan an');
+
+            // ĐIỀU KIỆN TỰ ĐỘNG LƯU TRỮ VÀ XÓA KHỎI DONHANG:
+            // Nếu có đủ phiếu TD4 HOẶC vị trí xe về Thuận An rồi
+            if (hasTd4 || isAtThuanAn) {
+                ordersToDeleteFromDonhang.push(o.so_don_hang);
+                archiveUpsertPayload.push({
+                    so_don_hang: o.so_don_hang,
+                    ten_khach_hang: o.ten_khach_hang,
+                    dong_xe: o.dong_xe,
+                    phien_ban: o.phien_ban,
+                    ngoai_that: o.ngoai_that,
+                    noi_that: o.noi_that,
+                    tvbh: o.ten_tu_van_ban_hang,
+                    vin: o.vin,
+                    so_may: o.so_may,
+                    ma_dms: o.ma_dms || '',
+                    ngay_coc: o.ngay_coc ? new Date(o.ngay_coc).toISOString() : null,
+                    ngay_xuat_hoa_don: o.ngay_xuat_hoa_don ? new Date(o.ngay_xuat_hoa_don).toISOString() : null,
+                    chinh_sach: o.chinh_sach,
+                    ket_qua: 'Đã xuất hóa đơn',
+                    updated_at: new Date().toISOString()
+                });
+            }
+        }
+
+        if (archiveUpsertPayload.length > 0) {
+            await supabaseAdmin.from('archived_orders').upsert(archiveUpsertPayload, { onConflict: 'so_don_hang' });
+        }
+
+        for (let i = 0; i < ordersToDeleteFromDonhang.length; i += 100) {
+            const batch = ordersToDeleteFromDonhang.slice(i, i + 100);
+            await supabaseAdmin.from('donhang').delete().in('so_don_hang', batch);
+        }
+
+        return { cleanedCount: ordersToDeleteFromDonhang.length };
+    } catch (e) {
+        console.warn('Lỗi autoCleanupRetainedOrders:', e);
+        return { cleanedCount: 0 };
+    }
+};
+
 

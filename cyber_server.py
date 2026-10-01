@@ -83,6 +83,7 @@ from scripts.cyber_crm_service import (
     import_bulk_khtn
 )
 from scripts.m_invoice_service import process_single_vin, auto_fetch_upload_and_notify
+from scripts.sync_cyber_donhang_ton import run_sync_donhang_ton
 
 PORT = int(os.environ.get("PORT", 8080))
 
@@ -249,6 +250,24 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+        
+        elif parsed.path == "/api/cyber/sync-donhang-ton":
+            try:
+                print(f"[CyberSync DonHangTon] Nhận yêu cầu đồng bộ đơn cọc tồn từ Cyber...")
+                res = run_sync_donhang_ton()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync DonHangTon Error]: {e}", file=sys.stderr)
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -522,6 +541,24 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(result, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 print(f"[CyberSync Cloud Locations Error]: {str(e)}", file=sys.stderr)
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/sync-donhang-ton":
+            try:
+                print(f"[CyberSync DonHangTon] Nhận yêu cầu POST đồng bộ đơn cọc tồn từ Cyber...")
+                res = run_sync_donhang_ton()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync DonHangTon Error]: {e}", file=sys.stderr)
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -1190,6 +1227,28 @@ def _schedule_auto_sync(interval_seconds: int = 300):
     return t
 
 
+def _schedule_auto_sync_donhang_ton(interval_seconds: int = 10800):
+    """Tự động đồng bộ hợp đồng cọc tồn từ Cyber Soft chạy ngầm mỗi 3 tiếng (10800s)."""
+    def _loop():
+        import time
+        # Đợi 15s khi server vừa bật để tránh nghẽn khởi động, sau đó chạy chu kỳ 3 tiếng
+        time.sleep(15)
+        while True:
+            try:
+                now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                print(f"[AutoSync DonHangTon] 🔄 [{now_str}] Đang chạy ngầm đồng bộ đơn cọc tồn từ Cyber...")
+                res = run_sync_donhang_ton()
+                print(f"[AutoSync DonHangTon] ✅ {res.get('message')}")
+            except Exception as e:
+                print(f"[AutoSync DonHangTon Error]: {e}", file=sys.stderr)
+            time.sleep(interval_seconds)
+
+    t = threading.Thread(target=_loop, name="auto-donhang-ton-sync", daemon=True)
+    t.start()
+    print(f"[AutoSync DonHangTon] 🟢 Tự động đồng bộ đơn cọc tồn Cyber mỗi {interval_seconds // 3600} tiếng (chạy ngầm)")
+    return t
+
+
 def run():
     server_address = ("0.0.0.0", PORT)
     httpd = HTTPServer(server_address, CyberApiHandler)
@@ -1201,6 +1260,10 @@ def run():
         _auto_sync_state["interval_minutes"] = INTERVAL_MINUTES
     print(f"[AutoSync] 🟢 Tự động đồng bộ trạng thái xe mỗi {INTERVAL_MINUTES} phút (chạy ngầm)")
     _schedule_auto_sync(interval_seconds=INTERVAL_MINUTES * 60)
+
+    # ── Start auto-sync don hang ton (mỗi 3 tiếng chạy ngầm 1 lần)
+    DON_TON_HOURS = int(os.environ.get("AUTO_SYNC_DON_TON_HOURS", "3"))
+    _schedule_auto_sync_donhang_ton(interval_seconds=DON_TON_HOURS * 3600)
 
     try:
         httpd.serve_forever()

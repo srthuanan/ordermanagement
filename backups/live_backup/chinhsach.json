@@ -1,35 +1,27 @@
 [
   {
-    "id": "69ae20db-cb69-4cae-83e8-b779eb3d6ce0",
-    "created_at": "2026-03-22T06:02:52.613531+00:00",
-    "ten_chinh_sach": "Chương trình tặng Voucher giờ Trái Đất - 10Tr",
+    "id": "dcf1528f-fb14-42a5-ab50-fd5f986f7b14",
+    "created_at": "2026-03-05T13:05:29.427415+00:00",
+    "ten_chinh_sach": "VinClub hạng Diamond 1,5% X3",
     "trang_thai": "Hoạt động",
-    "han_su_dung": "Đặt cọc trong giai đoạn 20-22/03/2026 và 26-30/03/2026, xuất hóa đơn đến 30/06/2026",
-    "dong_xe": "Limo, VF 6, VF LIMO"
+    "han_su_dung": "31/10/2026",
+    "dong_xe": "Tất cả các dòng xe"
   },
   {
-    "id": "ddb3146f-38bf-4daf-a1e5-08399fdc9f61",
-    "created_at": "2026-03-22T06:02:53.684911+00:00",
-    "ten_chinh_sach": "Chương trình tặng Voucher giờ Trái Đất - 20Tr",
+    "id": "1ff2929e-aa67-4552-9ef7-5baba6aa8254",
+    "created_at": "2026-03-05T13:05:29.427415+00:00",
+    "ten_chinh_sach": "VinClub hạng Gold 0,5% X3",
     "trang_thai": "Hoạt động",
-    "han_su_dung": "Đặt cọc trong giai đoạn 20-22/03/2026 và 26-30/03/2026, xuất hóa đơn đến 30/06/2026",
-    "dong_xe": "VF 9"
+    "han_su_dung": "31/10/2026",
+    "dong_xe": "Tất cả các dòng xe"
   },
   {
-    "id": "ab4b69c1-bce1-4fe5-b414-b3810f6d56e7",
-    "created_at": "2026-03-22T06:02:51.335116+00:00",
-    "ten_chinh_sach": "Chương trình tặng Voucher giờ Trái Đất - 5Tr",
+    "id": "a99e1f21-9a3f-4926-8be2-74fb9d39344d",
+    "created_at": "2026-03-05T13:05:29.427415+00:00",
+    "ten_chinh_sach": "VinClub hạng Platinum 1% X3",
     "trang_thai": "Hoạt động",
-    "han_su_dung": "Đặt cọc trong giai đoạn 20-22/03/2026 và 26-30/03/2026, xuất hóa đơn đến 30/06/2026",
-    "dong_xe": "EC Van, Minio, VF 3"
-  },
-  {
-    "id": "43b276ba-244a-4ae8-852a-732bc1b6156e",
-    "created_at": "2026-03-22T06:02:52.019396+00:00",
-    "ten_chinh_sach": "Chương trình tặng Voucher giờ Trái Đất - 7Tr",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": "Đặt cọc trong giai đoạn 20-22/03/2026 và 26-30/03/2026, xuất hóa đơn đến 30/06/2026",
-    "dong_xe": "Herio, VF 5"
+    "han_su_dung": "31/10/2026",
+    "dong_xe": "Tất cả các dòng xe"
   },
   {
     "id": "ef1831f0-fbb5-4b5a-9a4a-5d83e1986943",
@@ -40,156 +32,44 @@
     "dong_xe": "VF LIMO"
   },
   {
-    "id": "31d3d0c2-f5c3-4544-aeb8-57a0cc2f5862",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "Chính sách ưu đãi cho Nerio Green VIN 2025",
+    "id": "c8181d64-0fc7-4ae8-a00c-ca0bd29b879d",
+    "created_at": "2026-08-04T09:38:26.7386+00:00",
+    "ten_chinh_sach": "VinClub hạng Gold 0,5% (Member)",
     "trang_thai": "Hoạt động",
-    "han_su_dung": null,
-    "dong_xe": "Nerio"
-  },
-  {
-    "id": "6f844f3d-fbaf-4b5e-a17e-bb66e44bc3a2",
-    "created_at": "2026-03-22T06:02:55.358054+00:00",
-    "ten_chinh_sach": "Chương trình Mãnh liệt vì tương lai xanh - Trừ vào giá (6%)",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": "23/01/2026 đến 31/12/2026",
-    "dong_xe": "EC Van, Minio, Limo, Nerio, Herio, VF 3, VF 5, VF 6, VF 7, VF LIMO"
-  },
-  {
-    "id": "426e3b9e-b9b2-4100-ab58-4cee8c119a7b",
-    "created_at": "2026-03-22T06:02:56.020164+00:00",
-    "ten_chinh_sach": "Chương trình Mãnh liệt vì tương lai xanh - Trừ vào giá (10%)",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": "23/01/2026 đến 31/12/2026",
-    "dong_xe": "VF 8, VF 9"
-  },
-  {
-    "id": "b62d2ba4-3f4e-4cfa-91e5-285b469a3ca6",
-    "created_at": "2026-03-22T06:03:00.364535+00:00",
-    "ten_chinh_sach": "Chính sách ưu đãi [VF7 Plus Nâng cấp] - 50Tr",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": "Không quy định cụ thể",
-    "dong_xe": "VF 7"
-  },
-  {
-    "id": "6a17b581-99fa-4f92-b0b3-72ef3d0ff78c",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "Quà tặng VF 3 Nông thôn (HH nội bộ)",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": null,
-    "dong_xe": "VF 3"
-  },
-  {
-    "id": "df394011-9062-47da-8575-06b445417314",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "Quy đổi 2 năm BHVC cho các xe VF 6 Eco và Limo Green Vin 2025",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": null,
-    "dong_xe": "Limo, VF 6"
-  },
-  {
-    "id": "9ed6edc2-c541-40ff-9d27-727756734bd5",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "Tặng 2 năm BHVC cho các xe VF 6 Eco và Limo Green Vin 2025",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": null,
-    "dong_xe": "Limo, VF 6"
-  },
-  {
-    "id": "f7d07936-aee3-484b-b00c-9abecaa78ef9",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "Chính sách ưu đãi cho VF 3 VIN 2025",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": null,
-    "dong_xe": "VF 3"
-  },
-  {
-    "id": "c834b019-3b3b-4784-a968-0a5ccc7f7227",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "Chính sách ưu đãi cho VF 5 VIN 2025",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": null,
-    "dong_xe": "VF 5"
-  },
-  {
-    "id": "d3b454b4-0802-449b-b1b0-44038e2ec419",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "Chính sách ưu đãi cho VF 6 Plus VIN 2025",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": null,
-    "dong_xe": "VF 6"
-  },
-  {
-    "id": "2478e9a8-8c7e-4991-8862-20be4e0dffa1",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "Chính sách ưu đãi cho VF 7 VIN 2025",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": null,
-    "dong_xe": "VF 7"
-  },
-  {
-    "id": "a30d1f42-78f9-4793-bdf4-206712bc29b3",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "Chính sách ưu đãi cho VF 8 VIN 2025",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": null,
-    "dong_xe": "VF 8"
-  },
-  {
-    "id": "20f04561-cd02-4af3-9455-cac1457e5e1f",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "Chính sách ưu đãi cho VF 9 VIN 2025",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": null,
-    "dong_xe": "VF 9"
-  },
-  {
-    "id": "1ff2929e-aa67-4552-9ef7-5baba6aa8254",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "VinClub hạng Gold 0,5%",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": null,
+    "han_su_dung": "31/10/2026",
     "dong_xe": "Tất cả các dòng xe"
   },
   {
-    "id": "a99e1f21-9a3f-4926-8be2-74fb9d39344d",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "VinClub hạng Platinum 1%",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": null,
-    "dong_xe": "Tất cả các dòng xe"
-  },
-  {
-    "id": "dcf1528f-fb14-42a5-ab50-fd5f986f7b14",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "VinClub hạng Diamond 1,5%",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": null,
-    "dong_xe": "Tất cả các dòng xe"
-  },
-  {
-    "id": "13d82797-77b1-4de5-8822-838f08bc01ba",
-    "created_at": "2026-03-22T06:02:56.563743+00:00",
-    "ten_chinh_sach": "Chương trình Mãnh liệt vì tương lai xanh - Hỗ trợ lãi suất (7%)",
-    "trang_thai": "Hoạt động",
-    "han_su_dung": "23/01/2026 đến 31/12/2026",
-    "dong_xe": "EC Van, Herio, Limo, Minio, Nerio, VF 3, VF 5, VF 6, VF 7, VF LIMO"
-  },
-  {
-    "id": "f9373773-1121-4f2b-8b0f-ab3e6048880f",
-    "created_at": "2026-03-05T13:05:29.427415+00:00",
-    "ten_chinh_sach": "Chính sách ưu đãi cho Herio Green VIN 2025",
+    "id": "01ad3108-c0c4-441c-8751-f892dd19c4a5",
+    "created_at": "2026-09-07T06:12:12.431726+00:00",
+    "ten_chinh_sach": "Cọc sỉ",
     "trang_thai": "Hoạt động",
     "han_su_dung": "",
-    "dong_xe": "Herio"
+    "dong_xe": null
   },
   {
-    "id": "718f639a-4316-43ad-bb57-43e0be77a69a",
-    "created_at": "2026-03-27T04:47:50.692926+00:00",
-    "ten_chinh_sach": "Chính sách ưu đãi Tiên phong VF LIMO - 15Tr",
+    "id": "7b3b99b5-74c2-438b-b73d-ee1eebe2c494",
+    "created_at": "2026-09-23T01:07:49.256118+00:00",
+    "ten_chinh_sach": "VTLX2 - 3%",
     "trang_thai": "Hoạt động",
-    "han_su_dung": "Đặt cọc 20/1/2026 đến hết 28/2/2026 hoặc xuất hóa đơn không muộn hơn 30/4/2026",
+    "han_su_dung": "19/09/2026 - 19/12/2026",
+    "dong_xe": "VF 2, VF 3, Minio"
+  },
+  {
+    "id": "97f773e7-cab1-4ed8-bde4-d19e3f84c4f4",
+    "created_at": "2026-05-23T06:51:36.089882+00:00",
+    "ten_chinh_sach": "Quy đổi 2 năm BHVC cho xe VF LIMO",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "31/05/2026",
     "dong_xe": "VF LIMO"
+  },
+  {
+    "id": "5d1c733d-806e-436d-a426-ad623406f8dc",
+    "created_at": "2026-07-25T06:34:44.529639+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [VIN 2023] - 100Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 6, VFe34, Nerio"
   },
   {
     "id": "d0460e4a-bce6-4530-bb82-2ebfad4d9789",
@@ -200,20 +80,68 @@
     "dong_xe": "Tất cả các dòng xe"
   },
   {
-    "id": "cb41880e-7be4-4ce8-bdb4-23e3cca17363",
-    "created_at": "2026-03-22T06:02:54.732741+00:00",
-    "ten_chinh_sach": "Chương trình thu xăng đổi điện",
+    "id": "0f1a871c-f8a0-499f-871f-fee8dbf32052",
+    "created_at": "2026-07-25T06:34:47.13171+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Eco/Plus - VIN 2023] - 340Tr",
     "trang_thai": "Hoạt động",
-    "han_su_dung": "11/3/2026 đến hết 31/03/2026",
-    "dong_xe": "Tất cả các dòng xe, Tất cả các dòng xe điện VinFast"
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 9"
   },
   {
-    "id": "a294767c-09a3-4327-b811-ec1b74369768",
-    "created_at": "2026-03-22T06:02:57.135323+00:00",
-    "ten_chinh_sach": "Chương trình Mãnh liệt vì tương lai xanh - Hỗ trợ lãi suất (5%)",
+    "id": "da3873ed-3a82-42fa-88c0-3e38d205ab9d",
+    "created_at": "2026-07-25T06:34:43.02393+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [VIN 2024] - 20Tr",
     "trang_thai": "Hoạt động",
-    "han_su_dung": "23/01/2026 đến 31/12/2026",
-    "dong_xe": "VF 8, VF 9"
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 3"
+  },
+  {
+    "id": "4885e339-39b3-4612-a8d8-11f75d88e343",
+    "created_at": "2026-07-25T06:34:43.777157+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [VIN 2024] - 50Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 5"
+  },
+  {
+    "id": "cb2af4e1-f1b2-4d9b-b07f-bb8c0bc9229b",
+    "created_at": "2026-07-25T06:34:47.654157+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Eco] kèm pin CATL - 104Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 8"
+  },
+  {
+    "id": "2b9ce095-2f8e-4e71-b4a1-2bd413a5da17",
+    "created_at": "2026-07-25T06:34:48.042437+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Eco] kèm pin CATL - 125Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 9"
+  },
+  {
+    "id": "f3d801d5-cee3-4dbb-8c8b-3478b716bf0a",
+    "created_at": "2026-07-25T06:34:48.250863+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Plus] kèm pin CATL - 135Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 9"
+  },
+  {
+    "id": "7aa3c5dc-31c6-49a8-b692-6b8a7d1f05f6",
+    "created_at": "2026-07-25T06:34:48.638775+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi màu xanh VinFast - 20Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 7"
+  },
+  {
+    "id": "b62d2ba4-3f4e-4cfa-91e5-285b469a3ca6",
+    "created_at": "2026-03-22T06:03:00.364535+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [VF7 Plus Nâng cấp] - 50Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định cụ thể",
+    "dong_xe": "VF 7"
   },
   {
     "id": "a525f122-68d6-42c5-ac98-1f8fe6c72cd6",
@@ -264,6 +192,182 @@
     "dong_xe": "Tất cả các dòng xe"
   },
   {
+    "id": "82f129d3-7323-43e1-9ba9-2d51e1ea8a8b",
+    "created_at": "2026-07-11T04:08:59.517762+00:00",
+    "ten_chinh_sach": "CSBH Tháng 9",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "",
+    "dong_xe": ""
+  },
+  {
+    "id": "5cdf7933-1097-4611-9b50-76e5bc61c89e",
+    "created_at": "2026-07-08T01:13:07.085088+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi tháng 9- 35Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "7/7/2026 đến hết 30/9/2026",
+    "dong_xe": "Limo"
+  },
+  {
+    "id": "78a0b1a5-090a-4901-b495-17b8f279cf77",
+    "created_at": "2026-09-23T01:07:49.450686+00:00",
+    "ten_chinh_sach": "VTLX2 - 5%",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "19/09/2026 - 19/12/2026",
+    "dong_xe": "VF 7, VF 9, VF 8 All New, EC Van, VF Wild"
+  },
+  {
+    "id": "89b40cbb-99dc-47c0-af80-30ea81ffd0c3",
+    "created_at": "2026-07-25T06:28:07.345577+00:00",
+    "ten_chinh_sach": "Ưu đãi  EC Van Tiêu chuẩn - 20Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "31/07/2026",
+    "dong_xe": "EC Van"
+  },
+  {
+    "id": "d17da5e4-1cd2-4e5b-b11b-caae1527a8b4",
+    "created_at": "2026-07-08T01:13:07.473774+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi tháng 8 - 20Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "7/7/2026 đến hết 30/8/2026",
+    "dong_xe": "VF LIMO"
+  },
+  {
+    "id": "01a7a8fb-2354-4192-9a9b-e1c0973eb52e",
+    "created_at": "2026-09-23T01:07:49.667976+00:00",
+    "ten_chinh_sach": "VTLX2 - 9%",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "19/09/2026 - 19/12/2026",
+    "dong_xe": "VF 5, VF 6, LIMO, VF LIMO"
+  },
+  {
+    "id": "19ce1479-dfe6-4827-ab3a-7ff41e332071",
+    "created_at": "2026-05-26T08:54:45.858673+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi Tiên phong [VF 8 Thế hệ mới] - 51Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "27/05/2026 - 03/06/2026",
+    "dong_xe": "VF 8"
+  },
+  {
+    "id": "8e44498a-4d4f-4f54-923d-f68320060243",
+    "created_at": "2026-07-25T06:34:43.198134+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [VIN 2025] - 10Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "EC Van, Minio"
+  },
+  {
+    "id": "188d0eb4-575f-4e59-9071-33f667b20811",
+    "created_at": "2026-07-25T06:34:43.614862+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [VIN 2023] - 80Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 5"
+  },
+  {
+    "id": "a92c9b87-3f38-4153-966e-8dd1a7d065a8",
+    "created_at": "2026-07-25T06:34:43.948008+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [VIN 2025] - 15Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "Herio"
+  },
+  {
+    "id": "2ff78595-f920-4c98-a86c-fbcd5ede59d1",
+    "created_at": "2026-07-25T06:34:44.700973+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [VIN 2024] - 70Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 7"
+  },
+  {
+    "id": "33aea13b-7489-462f-a1e3-e9eae52dffd0",
+    "created_at": "2026-07-25T06:34:44.370606+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [VIN 2025] - 20Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 7"
+  },
+  {
+    "id": "9a61dcdb-d570-4ead-8cd4-206c2d64dc1d",
+    "created_at": "2026-07-25T06:34:46.93184+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Plus/Lux Plus - VIN 2025] - 85Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 8"
+  },
+  {
+    "id": "81e33489-af08-460b-9f19-c7d250fe5b06",
+    "created_at": "2026-07-25T06:34:47.859539+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Plus] kèm pin CATL - 110Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 8"
+  },
+  {
+    "id": "45694a33-61bd-413f-b60c-2cf44ceefa96",
+    "created_at": "2026-07-25T06:34:48.469419+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Eco/Plus] điều hòa 3 vùng - 15Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 9"
+  },
+  {
+    "id": "db1563a2-60b8-4b7e-957b-656988a91a3a",
+    "created_at": "2026-09-23T01:07:49.851734+00:00",
+    "ten_chinh_sach": "VTLX2  (Đặc biệt) - 6%",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "19/09/2026 - 19/12/2026",
+    "dong_xe": "VF 2, VF 3, Minio"
+  },
+  {
+    "id": "b00722cd-082a-4847-bfb4-23bf7f5d5355",
+    "created_at": "2026-07-25T06:34:45.698941+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Eco/S Lux - VIN 2022] - 250Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 8"
+  },
+  {
+    "id": "268de739-2b8e-456a-94c1-5ae28cb4c1f8",
+    "created_at": "2026-07-25T06:34:46.069599+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Eco/S Lux - VIN 2024] - 150Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 8"
+  },
+  {
+    "id": "6017a588-e7e9-49b6-9f69-ac9801ee90d2",
+    "created_at": "2026-07-25T06:34:46.415218+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Plus/Lux Plus - VIN 2022] - 300Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 8"
+  },
+  {
+    "id": "ea7d1b70-d0cd-48ad-bfb4-cf08e1d56f28",
+    "created_at": "2026-07-25T06:34:46.736277+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Plus/Lux Plus - VIN 2024] - 180Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 8"
+  },
+  {
+    "id": "95a0f175-bf37-4308-b95e-e47f0a9bd934",
+    "created_at": "2026-07-25T06:34:47.319351+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Eco/Plus - VIN 2024] - 250Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 9"
+  },
+  {
+    "id": "ac4fb1aa-fe87-410e-85b0-542d0170f7ab",
+    "created_at": "2026-09-23T01:07:50.073363+00:00",
+    "ten_chinh_sach": "VTLX2  (Đặc biệt) - 7%",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "19/09/2026 - 19/12/2026",
+    "dong_xe": "VF 7, VF 9, VF 8 Thế hệ mới, Lạc Hồng 900 LX, EC Van, VF Wild"
+  },
+  {
     "id": "4810b98d-824f-4e00-ab4c-6985fa15a008",
     "created_at": "2026-03-27T04:47:52.965489+00:00",
     "ten_chinh_sach": "Ưu đãi [Eco/Plus] - Miễn phí màu nâng cao",
@@ -272,19 +376,91 @@
     "dong_xe": "VF 3"
   },
   {
-    "id": "d5434380-64a4-4c2e-936b-ea86158a30f2",
-    "created_at": "2026-03-27T04:47:54.420054+00:00",
-    "ten_chinh_sach": "Chính sách ưu đãi xe công vụ",
+    "id": "4ec63347-8f0b-4eb6-bd82-2861b2f03a90",
+    "created_at": "2026-07-14T04:11:24.68608+00:00",
+    "ten_chinh_sach": "Chính sách cọc tiên phong - 8Tr",
     "trang_thai": "Hoạt động",
-    "han_su_dung": "Từ 15/07/2025 (O2O) và 13/08/2025 (Đại lý) đến khi có thông báo mới",
+    "han_su_dung": "15/7/2026 - 17/7/2026",
+    "dong_xe": "VF 2"
+  },
+  {
+    "id": "c3d79271-dce1-4907-b8f9-536e0f883ccc",
+    "created_at": "2026-07-08T01:13:08.21662+00:00",
+    "ten_chinh_sach": "Tri ân khách hàng xe xăng [Fadil] - 30Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Đến hết 31/12/2026",
     "dong_xe": "Tất cả các dòng xe"
   },
   {
-    "id": "73287eee-6a87-4f68-906f-df9da114df43",
-    "created_at": "2026-03-22T06:02:53.181063+00:00",
-    "ten_chinh_sach": "Chương trình tặng Voucher giờ Trái Đất - 15Tr",
+    "id": "38124585-569b-4174-8d11-3728b9162281",
+    "created_at": "2026-07-25T06:34:45.880198+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Eco/S Lux - VIN 2023] - 200Tr",
     "trang_thai": "Hoạt động",
-    "han_su_dung": "Đặt cọc trong giai đoạn 20-22/03/2026 và 26-30/03/2026, xuất hóa đơn đến 30/06/2026",
-    "dong_xe": "VF 7, VF 8"
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 8"
+  },
+  {
+    "id": "aec94426-f82c-4251-a385-b9e8233227e0",
+    "created_at": "2026-07-25T06:34:46.246465+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Eco/S Lux - VIN 2025] - 70Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 8"
+  },
+  {
+    "id": "c246fc18-586f-45a7-9f5e-8ec51a1087c9",
+    "created_at": "2026-07-25T06:34:46.58024+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Plus/Lux Plus - VIN 2023] - 240Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 8"
+  },
+  {
+    "id": "b881f7f5-ed53-42af-9315-3fb16f99ef47",
+    "created_at": "2026-07-25T06:34:47.488325+00:00",
+    "ten_chinh_sach": "Chính sách ưu đãi [Eco/Plus - VIN 2025] - 110Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Không quy định",
+    "dong_xe": "VF 9"
+  },
+  {
+    "id": "dfc1509f-9f0a-462e-9d51-b12caa20ed92",
+    "created_at": "2026-09-23T01:07:50.296959+00:00",
+    "ten_chinh_sach": "VTLX2  (Đặc biệt) - 9%",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "19/09/2026 - 19/12/2026",
+    "dong_xe": "VF 5, VF 6, LIMO, VF LIMO"
+  },
+  {
+    "id": "c6dcffdd-fc9e-490e-b282-15ef4833aa73",
+    "created_at": "2026-07-14T04:11:24.875477+00:00",
+    "ten_chinh_sach": "Ưu đãi CBNV Bưu điện VN Post (CBNV) - 3%",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Đến hết 31/12/2026",
+    "dong_xe": "Tất cả các dòng xe"
+  },
+  {
+    "id": "4720acd2-00e1-4345-9e56-630ecd9a13b0",
+    "created_at": "2026-07-14T04:11:25.065125+00:00",
+    "ten_chinh_sach": "Ưu đãi CBNV Bưu điện VN Post (CBLĐ) - 5%",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Đến hết 31/12/2026",
+    "dong_xe": "Tất cả các dòng xe"
+  },
+  {
+    "id": "f240d95f-7aab-4df6-82ff-80d0be2e7dd6",
+    "created_at": "2026-07-08T01:13:08.40801+00:00",
+    "ten_chinh_sach": "Tri ân khách hàng xe xăng [Lux A] - 60Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Đến hết 31/12/2026",
+    "dong_xe": "Tất cả các dòng xe"
+  },
+  {
+    "id": "9a37a6c0-9ba5-4753-9dfd-3f60e0c89ba2",
+    "created_at": "2026-07-08T01:13:08.607107+00:00",
+    "ten_chinh_sach": "Tri ân khách hàng xe xăng [Lux SA] - 80Tr",
+    "trang_thai": "Hoạt động",
+    "han_su_dung": "Đến hết 31/12/2026",
+    "dong_xe": "Tất cả các dòng xe"
   }
 ]

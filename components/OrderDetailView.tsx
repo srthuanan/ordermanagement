@@ -705,33 +705,51 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             return;
         }
 
+        // 1. Điền ngay mã kho từ cache sẵn có nếu có
+        const cachedMk = cyberCarStatus?.ma_kho || matchedStockVehicle?.['ma_kho'] || (resolvedOrder as any)?.['ma_kho'];
+        if (cachedMk && !transferRequest) {
+            setTransferFromWarehouse(cachedMk);
+            setTransferFromWarehouseName(shortenWarehouseName(cachedMk, cyberCarStatus?.ten_kho || matchedStockVehicle?.['ten_kho'] || (resolvedOrder as any)?.['ten_kho']));
+        }
+
+        // 2. Chuyển sang giao diện yêu cầu lập phiếu NGAY LẬP TỨC (0ms) để TVBH không phải chờ đợi
+        setInlineMode('TRANSFER');
+
+        // 3. Chạy tra cứu CyberSoft trong nền (Background) kèm timeout 2.5s để cập nhật thông tin kho mới nhất
         const vin = resolvedOrder?.VIN;
         if (vin) {
             setIsDetectingWarehouse(true);
             try {
-                // Kiểm tra trực tiếp thời gian thực trên CyberSoft (< 500ms)
-                const res = await lookupCyberVinWarehouse([vin]);
+                const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
+                const res = await Promise.race([
+                    lookupCyberVinWarehouse([vin]),
+                    timeoutPromise
+                ]);
                 if (res && res.success) {
                     const car = res.cars?.[0] || res;
                     if (car.has_td4 || car.td4) {
                         setHasTd4(true);
                         showToast?.('Không thể chuyển xe', `Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${car.td4?.so_ct || 'TD4'}) trên CyberSoft.`, 'warning');
                         handleOpenPrintTd4();
+                        setInlineMode('VIEW');
                         return;
                     }
                     if (car.has_dnx || car.dnx) {
                         const dnxInfo = car.dnx;
                         showToast?.('Đã có phiếu xuất xe', `Xe đã có Phiếu Đề Nghị Xuất Xe (${dnxInfo?.so_ct || 'DNX'}) trên CyberSoft.`, 'info');
                         handleOpenPrintDnx();
+                        setInlineMode('VIEW');
                         return;
                     }
                     const detectedMk = res.ma_kho || car.ma_kho;
                     if (detectedMk === 'K83') {
                         showToast?.('Xe đã ở Thuận An', 'Xe hiện đã có mặt tại kho Thuận An (K83). Không cần tạo yêu cầu điều chuyển.', 'info');
+                        setInlineMode('VIEW');
                         return;
                     }
                     if (!detectedMk || res.ten_kho === 'Đang vận tải') {
                         showToast?.('Xe chưa về kho', `Xe đang ở trạng thái "${res.ten_kho || 'Đang vận tải'}". Chỉ xe đã về kho thực tế mới có thể điều chuyển.`, 'warning');
+                        setInlineMode('VIEW');
                         return;
                     }
                     if (!transferRequest && detectedMk) {
@@ -745,7 +763,6 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 setIsDetectingWarehouse(false);
             }
         }
-        setInlineMode('TRANSFER');
     };
 
     const handleSubmitTransferRequest = async () => {
@@ -784,9 +801,13 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
         setIsSubmittingTransfer(true);
         try {
-            // Kiểm tra thời gian thực lần cuối trực tiếp trên CyberSoft
+            // Kiểm tra thời gian thực lần cuối trực tiếp trên CyberSoft (tối đa 2.5s)
             try {
-                const checkCyber = await lookupCyberVinWarehouse([vin]);
+                const checkTimeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2500));
+                const checkCyber = await Promise.race([
+                    lookupCyberVinWarehouse([vin]),
+                    checkTimeout
+                ]);
                 if (checkCyber && checkCyber.success) {
                     const car = checkCyber.cars?.[0] || checkCyber;
                     if (car.has_td4 || car.td4) {

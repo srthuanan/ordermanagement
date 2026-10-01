@@ -27,15 +27,17 @@ function generateBcGhepXeDuXhd() {
     sheet = ss.insertSheet(sheetName);
   }
 
-  // 0. Lưu lại dữ liệu người dùng đã tự tay điền (Ngày dự XHĐ, Tình trạng) theo VIN để không bị ghi đè
+  // 0. Lưu lại dữ liệu người dùng đã tự tay điền (Ngày dự XHĐ, Tình trạng) theo VIN hoặc Tên KH để không bị ghi đè
   var existingUserInputs = {};
   if (sheet.getLastRow() > 1) {
     try {
       var oldData = sheet.getRange(2, 1, sheet.getLastRow() - 1, Math.min(sheet.getLastColumn(), 9)).getValues();
       for (var o = 0; o < oldData.length; o++) {
         var oldVin = String(oldData[o][4] || "").trim(); // Cột E (index 4) là VIN
-        if (oldVin) {
-          existingUserInputs[oldVin] = {
+        var oldKh = String(oldData[o][5] || "").trim();  // Cột F là Tên KH
+        var key = oldVin || oldKh;
+        if (key) {
+          existingUserInputs[key] = {
             duXhd: oldData[o][7] || "",     // Cột H
             tinhTrang: oldData[o][8] || ""  // Cột I
           };
@@ -47,11 +49,11 @@ function generateBcGhepXeDuXhd() {
   sheet.clear();
   sheet.clearFormats();
 
-  // 1. Lấy dữ liệu xe đã ghép và các xe TVBH đã yêu cầu XHĐ nhưng CHƯA có trạng thái Chờ ký hóa đơn (vẫn tính là Dự XHĐ)
+  // 1. Lấy dữ liệu xe đã ghép và các xe Chưa ghép (chỉ loại trừ Chờ ký hóa đơn, Đã xuất hóa đơn, Đã hủy)
   var pairedOrders = [];
   try {
-    // Điều kiện: Có VIN, và ket_qua CHƯA Chờ ký hóa đơn, CHƯA Đã xuất hóa đơn, CHƯA Đã hủy, CHƯA Chưa ghép
-    var url = SUPABASE_URL + "/rest/v1/donhang?and=(vin.not.is.null,vin.neq.,ket_qua.neq.Ch%E1%BB%9D%20k%C3%BD%20h%C3%B3a%20%C4%91%C6%A1n,ket_qua.neq.%C4%90%C3%A3%20xu%E1%BA%A5t%20h%C3%B3a%20%C4%91%C6%A1n,ket_qua.neq.%C4%90%C3%A3%20h%E1%BB%A7y,ket_qua.neq.Ch%C6%B0a%20gh%C3%A9p)&select=vin,ten_khach_hang,dong_xe,phien_ban,ngoai_that,thoi_gian_ghep,thoi_gian_can_xe,ket_qua&order=thoi_gian_ghep.desc";
+    // Điều kiện: Chưa xuất hóa đơn, chưa chờ ký hóa đơn, chưa hủy -> Bao gồm Đã ghép, Chưa ghép, Đã yêu cầu XHĐ
+    var url = SUPABASE_URL + "/rest/v1/donhang?and=(ket_qua.neq.Ch%E1%BB%9D%20k%C3%BD%20h%C3%B3a%20%C4%91%C6%A1n,ket_qua.neq.%C4%90%C3%A3%20xu%E1%BA%A5t%20h%C3%B3a%20%C4%91%C6%A1n,ket_qua.neq.%C4%90%C3%A3%20h%E1%BB%A7y)&select=vin,ten_khach_hang,dong_xe,phien_ban,ngoai_that,thoi_gian_ghep,thoi_gian_can_xe,ket_qua&order=thoi_gian_ghep.desc.nullslast";
     var response = UrlFetchApp.fetch(url, {
       method: "get",
       headers: {
@@ -86,21 +88,22 @@ function generateBcGhepXeDuXhd() {
         var excludedStatuses = [
           "chờ ký hóa đơn", "chờ ký hóa đơn", 
           "đã xuất hóa đơn", "đã xuất hóa đơn", 
-          "đã hủy", "đã hủy", 
-          "chưa ghép", "chưa ghép"
+          "đã hủy", "đã hủy"
         ];
 
         for (var i = 1; i < data.length; i++) {
           var row = data[i];
           var vinVal = String(row[idxVin] || "").trim();
           var kqVal = String(row[idxKetQua] || "").trim().toLowerCase();
+          var khVal = String(row[idxKh] || "").trim();
+          var dongXeVal = String(row[idxDongXe] || "").trim();
 
-          // Có số VIN và chưa sang Chờ ký hóa đơn / Đã xuất hóa đơn -> Tính là Dự XHĐ
-          if (vinVal && excludedStatuses.indexOf(kqVal) === -1) {
+          // Chỉ loại trừ Đã xuất hóa đơn, Chờ ký, Đã hủy -> LẤY CẢ Chưa ghép
+          if (excludedStatuses.indexOf(kqVal) === -1 && (vinVal || khVal || dongXeVal)) {
             pairedOrders.push({
               vin: vinVal,
-              ten_khach_hang: row[idxKh] || "",
-              dong_xe: row[idxDongXe] || "",
+              ten_khach_hang: khVal,
+              dong_xe: dongXeVal,
               phien_ban: row[idxPhienBan] || "",
               ngoai_that: row[idxNgoaiThat] || "",
               thoi_gian_ghep: row[idxTgGhep] || "",
@@ -108,9 +111,14 @@ function generateBcGhepXeDuXhd() {
             });
           }
         }
-        // Sắp xếp ngày ghép mới nhất lên đầu
+        // Sắp xếp: xe có ngày ghép mới nhất lên đầu, tiếp đến các xe chưa ghép
         pairedOrders.sort(function(a, b) {
-          return (b.thoi_gian_ghep || "").localeCompare(a.thoi_gian_ghep || "");
+          if (a.thoi_gian_ghep && b.thoi_gian_ghep) {
+            return (b.thoi_gian_ghep || "").localeCompare(a.thoi_gian_ghep || "");
+          }
+          if (a.thoi_gian_ghep) return -1;
+          if (b.thoi_gian_ghep) return 1;
+          return 0;
         });
       }
     }
@@ -163,18 +171,26 @@ function generateBcGhepXeDuXhd() {
       }
     }
 
-    var userDuXhd = currentMonth;
     var cleanVin = (p.vin || "").trim();
-    if (cleanVin && existingUserInputs[cleanVin] && existingUserInputs[cleanVin].duXhd) {
-      userDuXhd = existingUserInputs[cleanVin].duXhd;
+    var cleanKh = (p.ten_khach_hang || "").trim();
+    var userKey = cleanVin || cleanKh;
+
+    var userDuXhd = currentMonth;
+    if (userKey && existingUserInputs[userKey] && existingUserInputs[userKey].duXhd) {
+      userDuXhd = existingUserInputs[userKey].duXhd;
     }
 
     var userTinhTrang = "";
-    // Tình trạng: Các trường hợp TVBH gửi yêu cầu XHĐ luôn note "Đã đủ hồ sơ"
-    if (p.ket_qua && p.ket_qua !== "Đã ghép") {
+    var kqLower = (p.ket_qua || "").toLowerCase();
+    if (kqLower === "chưa ghép" || kqLower === "chưa ghép") {
+      userTinhTrang = "Chưa ghép";
+    } else if (p.ket_qua && p.ket_qua !== "Đã ghép") {
       userTinhTrang = "Đã đủ hồ sơ";
-    } else if (cleanVin && existingUserInputs[cleanVin] && existingUserInputs[cleanVin].tinhTrang) {
-      userTinhTrang = existingUserInputs[cleanVin].tinhTrang;
+    }
+
+    // Nếu người dùng đã tự chỉnh sửa tay tình trạng trước đó thì ưu tiên giữ lại
+    if (userKey && existingUserInputs[userKey] && existingUserInputs[userKey].tinhTrang) {
+      userTinhTrang = existingUserInputs[userKey].tinhTrang;
     }
 
     rows.push([
@@ -311,11 +327,11 @@ function setupRealtimeBcGhepXeFormula() {
     sheet.getRange(2, 1, sheet.getLastRow() - 1, 9).clearContent();
   }
 
-  // Thiết lập công thức Real-time (Bao gồm xe Đã ghép & xe TVBH đã yêu cầu XHĐ chưa sang Chờ ký hóa đơn):
-  var cond = 'donhang!M2:M<>"", donhang!L2:L<>"Chờ ký hóa đơn", donhang!L2:L<>"chờ ký hóa đơn", donhang!L2:L<>"Đã xuất hóa đơn", donhang!L2:L<>"đã xuất hóa đơn", donhang!L2:L<>"Đã hủy", donhang!L2:L<>"Chưa ghép"';
+  // Thiết lập công thức Real-time (Bao gồm xe Chưa ghép, xe Đã ghép & xe TVBH đã yêu cầu XHĐ; chỉ loại trừ Chờ ký hóa đơn, Đã xuất hóa đơn, Đã hủy):
+  var cond = 'donhang!D2:D<>"", donhang!L2:L<>"Chờ ký hóa đơn", donhang!L2:L<>"chờ ký hóa đơn", donhang!L2:L<>"Đã xuất hóa đơn", donhang!L2:L<>"đã xuất hóa đơn", donhang!L2:L<>"Đã hủy", donhang!L2:L<>"đã hủy"';
 
-  // Cột A: Tự sinh mã TA1, TA2... theo số lượng xe dự XHĐ
-  sheet.getRange("A2").setFormula('=ARRAYFORMULA(IF(ROW(A2:A)-1<=COUNTA(IFERROR(FILTER(donhang!M2:M, ' + cond + '))), "TA" & (ROW(A2:A)-1), ""))');
+  // Cột A: Tự sinh mã TA1, TA2... theo số lượng đơn hàng dự XHĐ
+  sheet.getRange("A2").setFormula('=ARRAYFORMULA(IF(ROW(A2:A)-1<=COUNTA(IFERROR(FILTER(donhang!D2:D, ' + cond + '))), "TA" & (ROW(A2:A)-1), ""))');
 
   // Cột B: Showroom "Thuận An"
   sheet.getRange("B2").setFormula('=ARRAYFORMULA(IF(A2:A<>"", "Thuận An", ""))');
@@ -338,8 +354,8 @@ function setupRealtimeBcGhepXeFormula() {
   // Cột H: Ngày dự XHĐ mặc định theo tháng
   sheet.getRange("H2").setFormula('=ARRAYFORMULA(IF(A2:A<>"", "Tháng " & MONTH(TODAY()), ""))');
 
-  // Cột I: Tình trạng (Các trường hợp TVBH đã yêu cầu XHĐ thì note "Đã đủ hồ sơ", trống nếu là Đã ghép thông thường)
-  sheet.getRange("I2").setFormula('=IFERROR(FILTER(IF(donhang!L2:L="Đã ghép", "", "Đã đủ hồ sơ"), ' + cond + '), "")');
+  // Cột I: Tình trạng (Chưa ghép thì ghi "Chưa ghép", TVBH đã yêu cầu XHĐ thì note "Đã đủ hồ sơ", trống nếu là Đã ghép thông thường)
+  sheet.getRange("I2").setFormula('=IFERROR(FILTER(IF(REGEXMATCH(LOWER(donhang!L2:L), "chưa gh[eé]p"), "Chưa ghép", IF(donhang!L2:L="Đã ghép", "", "Đã đủ hồ sơ")), ' + cond + '), "")');
 
   sheet.setFrozenRows(1);
 

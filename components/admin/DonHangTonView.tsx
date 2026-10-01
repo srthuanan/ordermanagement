@@ -1,11 +1,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import * as apiService from '../../services/apiService';
 import { supabase } from '../../services/supabaseClient';
 import moment from 'moment';
 import AnimatedBackground from '../ui/AnimatedBackground';
-import Filters from '../ui/Filters';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
+import { exportOrdersToExcel } from '../../utils/excelUtils';
 
 interface DonHangTonViewProps {
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info') => void;
@@ -20,49 +19,63 @@ const CopyableField: React.FC<{ text: string; showToast?: Function; className?: 
         return <div className={className}>{label ? `${label}: ` : ''}N/A</div>;
     }
     return (
-        <div
-            className={`cursor-pointer ${className}`}
+        <span
+            className={`cursor-pointer hover:underline inline-flex items-center gap-1 ${className}`}
             title={`Click để sao chép: ${text}`}
             onClick={(e) => { e.stopPropagation(); copyWithFeedback(text, e); }}
         >
-            <span>{label ? `${label}: ` : ''}</span>
+            {label ? <span>{label}: </span> : null}
             <span className={wrap ? 'break-words' : 'truncate'}>{text}</span>
-        </div>
+            <i className="far fa-copy text-[10px] opacity-60 hover:opacity-100"></i>
+        </span>
     );
 };
 
-const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = true, pairedData = [], processedInvoices = [] }) => {
+export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive: _isActive = true, pairedData = [], processedInvoices = [] }) => {
     const [backlogOrders, setBacklogOrders] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedTVBH, setSelectedTVBH] = useState('all');
+    const [isSyncingCyber, setIsSyncingCyber] = useState(false);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-    const [mobileView, setMobileView] = useState<'folders' | 'list' | 'detail'>('folders');
-    
-    // Detailed Filters
-    const [filters, setFilters] = useState<Record<string, string[]>>({
-        dongXe: [],
-        phienBan: [],
-        mauSac: []
-    });
+    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-    // const copyWithFeedback = useCopyFeedback(); // Removed to fix build error
+    // Filters & Search
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedTVBH, setSelectedTVBH] = useState('all');
+    const [selectedModel, setSelectedModel] = useState('all');
+    const [selectedMonthYear, setSelectedMonthYear] = useState('all');
+    const [sortBy, setSortBy] = useState<'date_desc' | 'date_asc' | 'coc_desc' | 'coc_asc'>('date_desc');
+
+    const copyWithFeedback = useCopyFeedback();
 
     const fetchBacklogOrders = async () => {
         setIsLoading(true);
         try {
             const res = await apiService.getBacklogOrders();
             if (res.status === 'SUCCESS' && res.data) {
-                // Enrich data with split Model/Version
+                const modelPatterns = [
+                    { pattern: /^VF\s*MPV\s*7/i, model: 'VF MPV 7' },
+                    { pattern: /^EC\s*VAN/i, model: 'EC VAN' },
+                    { pattern: /^MINIO\s*GREEN/i, model: 'MINIO GREEN' },
+                    { pattern: /^LIMO\s*GREEN/i, model: 'LIMO GREEN' },
+                    { pattern: /^VF\s*9/i, model: 'VF 9' },
+                    { pattern: /^VF\s*8/i, model: 'VF 8' },
+                    { pattern: /^VF\s*7/i, model: 'VF 7' },
+                    { pattern: /^VF\s*6/i, model: 'VF 6' },
+                    { pattern: /^VF\s*5/i, model: 'VF 5' },
+                    { pattern: /^VF\s*3/i, model: 'VF 3' },
+                    { pattern: /^VF\s*2/i, model: 'VF 2' },
+                    { pattern: /^VF\s*e34/i, model: 'VFe34' },
+                ];
+
                 const enriched = res.data.map((o: any) => {
                     const full = o.phien_ban || '';
                     let model = 'N/A';
                     let version = full;
 
-                    const knownModels = ['VF 3', 'VF 5', 'VF 6', 'VF 7', 'VF 8', 'VF 9', 'VFe34', 'VF e34', '6 ECO', 'Limo Green'];
-                    for (const m of knownModels) {
-                        if (full.toUpperCase().includes(m.toUpperCase())) {
-                            model = m;
-                            version = full.replace(new RegExp(m, 'gi'), '').trim() || 'Tiêu chuẩn';
+                    for (const { pattern, model: mName } of modelPatterns) {
+                        if (pattern.test(full)) {
+                            model = mName;
+                            version = full.replace(pattern, '').trim() || 'Tiêu chuẩn';
                             break;
                         }
                     }
@@ -74,8 +87,7 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
                     }
 
                     const isProcessed = processedInvoices.some(inv => inv['Số đơn hàng'] === o.so_don_hang) || full.toUpperCase().includes('ĐÃ XUẤT HÓA ĐƠN');
-                    
-                    // Auto-delete if processed
+
                     if (isProcessed) {
                         try {
                             supabase.from('donhang_ton').delete().eq('id', o.id).then();
@@ -84,19 +96,18 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
                         }
                     }
 
-                    // Find actual VIN from paired data
                     const pairedInfo = pairedData.find(pd => pd['Số đơn hàng'] === o.so_don_hang);
-                    const realVin = pairedInfo?.VIN || o.donhanghienhuu?.so_vin || 'N/A';
+                    const realVin = (o.vin && o.vin !== 'N/A') ? o.vin : (pairedInfo?.VIN || o.donhanghienhuu?.so_vin || 'N/A');
 
-                    return { 
-                        ...o, 
-                        displayModel: model, 
-                        displayVersion: version, 
-                        vin: realVin, 
-                        isProcessed 
+                    return {
+                        ...o,
+                        displayModel: model,
+                        displayVersion: version,
+                        vin: realVin,
+                        isProcessed
                     };
                 });
-                
+
                 setBacklogOrders(enriched.filter((o: any) => !o.isProcessed));
             } else {
                 showToast('Lỗi', res.message || 'Lỗi khi tải đơn hàng tồn', 'error');
@@ -113,8 +124,7 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
 
         const channel = supabase
             .channel('donhang_ton_changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'donhang_ton' }, (payload) => {
-                console.log('Realtime donhang_ton update:', payload);
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'donhang_ton' }, () => {
                 fetchBacklogOrders();
             })
             .subscribe();
@@ -124,288 +134,738 @@ const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isActive = t
         };
     }, []);
 
-    // Extract unique values for filters based on all data
-    const filterOptions = useMemo(() => {
-        const baseList = backlogOrders.filter(o => selectedTVBH === 'all' || o.tvbh_name === selectedTVBH);
-        
-        return {
-            dongXe: ['all', ...new Set(baseList.map(o => o.displayModel))].filter(Boolean),
-            phienBan: ['all', ...new Set(baseList.map(o => o.displayVersion))].filter(Boolean),
-            mauSac: ['all', ...new Set(baseList.map(o => `${o.ngoai_that} / ${o.noi_that}`))].filter(Boolean)
-        };
-    }, [backlogOrders, selectedTVBH]);
-
-    const tvbhList = useMemo(() => {
-        const names = [...new Set(backlogOrders.map(o => o.tvbh_name))].sort();
-        return names.map(name => ({
-            id: name,
-            label: name,
-            count: backlogOrders.filter(o => o.tvbh_name === name).length
-        }));
+    // Unique model options with count
+    const modelStats = useMemo(() => {
+        const counts = new Map<string, number>();
+        backlogOrders.forEach(o => {
+            const m = o.displayModel || 'Khác';
+            counts.set(m, (counts.get(m) || 0) + 1);
+        });
+        return Array.from(counts.entries())
+            .sort((a, b) => b[1] - a[1])
+            .map(([model, count]) => ({ model, count }));
     }, [backlogOrders]);
 
-    const filteredOrders = useMemo(() => {
-        return backlogOrders.filter(order => {
-            const matchTVBH = selectedTVBH === 'all' || order.tvbh_name === selectedTVBH;
-            const matchDongXe = filters.dongXe.length === 0 || filters.dongXe.includes(order.displayModel);
-            const matchPhienBan = filters.phienBan.length === 0 || filters.phienBan.includes(order.displayVersion);
-            const colorCombo = `${order.ngoai_that} / ${order.noi_that}`;
-            const matchMauSac = filters.mauSac.length === 0 || filters.mauSac.includes(colorCombo);
-            
-            return matchTVBH && matchDongXe && matchPhienBan && matchMauSac;
+    // Unique TVBH list with count & total deposit
+    const tvbhList = useMemo(() => {
+        const statsMap = new Map<string, { count: number; totalCoc: number }>();
+        backlogOrders.forEach(o => {
+            const name = o.tvbh_name || 'Khác';
+            const cur = statsMap.get(name) || { count: 0, totalCoc: 0 };
+            cur.count += 1;
+            cur.totalCoc += Number(o.tien_coc || 0);
+            statsMap.set(name, cur);
         });
-    }, [backlogOrders, selectedTVBH, filters]);
 
-    const selectedOrder = useMemo(() => backlogOrders.find(o => o.id === selectedOrderId), [backlogOrders, selectedOrderId]);
+        return Array.from(statsMap.entries())
+            .sort((a, b) => b[1].count - a[1].count || a[0].localeCompare(b[0]))
+            .map(([name, s]) => ({
+                name,
+                count: s.count,
+                totalCoc: s.totalCoc
+            }));
+    }, [backlogOrders]);
 
-    useEffect(() => {
-        if (filteredOrders.length > 0) {
-            const currentInList = filteredOrders.find(o => o.id === selectedOrderId);
-            if (!currentInList) {
-                setSelectedOrderId(filteredOrders[0].id);
+    // Unique Month/Year list with order count
+    const monthYearList = useMemo(() => {
+        const counts = new Map<string, { key: string; label: string; count: number }>();
+        backlogOrders.forEach(o => {
+            const rawDate = o.ngay_hop_dong || o.ngay_giao_dich;
+            if (!rawDate) return;
+            const m = moment(rawDate);
+            if (m.isValid()) {
+                const key = m.format('YYYY-MM');
+                const label = `Tháng ${m.format('MM/YYYY')}`;
+                const cur = counts.get(key) || { key, label, count: 0 };
+                cur.count += 1;
+                counts.set(key, cur);
             }
-        } else {
-            setSelectedOrderId(null);
-        }
-    }, [filteredOrders, selectedOrderId]);
+        });
+        return Array.from(counts.values()).sort((a, b) => b.key.localeCompare(a.key));
+    }, [backlogOrders]);
 
-    const copyWithFeedback = useCopyFeedback();
+    // Overall KPI statistics
+    const kpiStats = useMemo(() => {
+        const totalCount = backlogOrders.length;
+        const totalCoc = backlogOrders.reduce((sum, o) => sum + Number(o.tien_coc || 0), 0);
+        const activeTvbhCount = tvbhList.length;
+        const topModel = modelStats.length > 0 ? `${modelStats[0].model} (${modelStats[0].count})` : 'N/A';
+        const topTvbh = tvbhList.length > 0 ? `${tvbhList[0].name} (${tvbhList[0].count} đơn)` : 'N/A';
 
-    const renderOrderListItem = (order: any) => {
-        const isSelected = selectedOrderId === order.id;
-        return (
-            <div
-                key={order.id}
-                onClick={(e) => { 
-                    setSelectedOrderId(order.id); 
-                    setMobileView('detail');
-                    copyWithFeedback(order.khach_hang, e);
-                }}
-                className={`p-3 cursor-pointer transition-all duration-150 relative border-l-4 ${isSelected
-                    ? 'bg-slate-100/90 border-blue-600 font-semibold'
-                    : 'border-transparent hover:bg-slate-50'
-                    }`}
-            >
-                <div className="text-xs font-bold text-slate-900 truncate mb-1 uppercase">
-                    {order.khach_hang}
-                </div>
-                <div className="text-[11px] text-slate-500 font-normal truncate">
-                    {order.displayModel} - {order.displayVersion}
-                </div>
-            </div>
-        );
+        return { totalCount, totalCoc, activeTvbhCount, topModel, topTvbh };
+    }, [backlogOrders, tvbhList, modelStats]);
+
+    // Filter and sort orders
+    const filteredOrders = useMemo(() => {
+        const q = searchQuery.trim().toLowerCase();
+
+        return backlogOrders
+            .filter(order => {
+                const matchTVBH = selectedTVBH === 'all' || order.tvbh_name === selectedTVBH;
+                const matchModel = selectedModel === 'all' || order.displayModel === selectedModel;
+
+                const matchMonthYear = selectedMonthYear === 'all' || (() => {
+                    const rawDate = order.ngay_hop_dong || order.ngay_giao_dich;
+                    if (!rawDate) return false;
+                    const m = moment(rawDate);
+                    return m.isValid() && m.format('YYYY-MM') === selectedMonthYear;
+                })();
+
+                const matchSearch = !q || (
+                    (order.khach_hang && order.khach_hang.toLowerCase().includes(q)) ||
+                    (order.so_dien_thoai && order.so_dien_thoai.includes(q)) ||
+                    (order.tvbh_name && order.tvbh_name.toLowerCase().includes(q)) ||
+                    (order.so_hop_dong && order.so_hop_dong.toLowerCase().includes(q)) ||
+                    (order.so_don_hang && order.so_don_hang.toLowerCase().includes(q)) ||
+                    (order.vin && order.vin.toLowerCase().includes(q)) ||
+                    (order.displayModel && order.displayModel.toLowerCase().includes(q))
+                );
+
+                return matchTVBH && matchModel && matchMonthYear && matchSearch;
+            })
+            .sort((a, b) => {
+                if (sortBy === 'date_desc') {
+                    return new Date(b.ngay_hop_dong || b.ngay_giao_dich || 0).getTime() - new Date(a.ngay_hop_dong || a.ngay_giao_dich || 0).getTime();
+                }
+                if (sortBy === 'date_asc') {
+                    return new Date(a.ngay_hop_dong || a.ngay_giao_dich || 0).getTime() - new Date(b.ngay_hop_dong || b.ngay_giao_dich || 0).getTime();
+                }
+                if (sortBy === 'coc_desc') {
+                    return Number(b.tien_coc || 0) - Number(a.tien_coc || 0);
+                }
+                if (sortBy === 'coc_asc') {
+                    return Number(a.tien_coc || 0) - Number(b.tien_coc || 0);
+                }
+                return 0;
+            });
+    }, [backlogOrders, selectedTVBH, selectedModel, selectedMonthYear, searchQuery, sortBy]);
+
+    // Selected order for detail drawer
+    const selectedOrder = useMemo(() => {
+        return backlogOrders.find(o => o.id === selectedOrderId) || null;
+    }, [backlogOrders, selectedOrderId]);
+
+    const handleSelectOrder = (id: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        setSelectedOrderId(id);
+        setIsDrawerOpen(true);
     };
 
-    const filterPortalTarget = document.getElementById('admin-filter-portal-target');
+    const handleExportExcel = () => {
+        if (filteredOrders.length === 0) {
+            showToast('Thông báo', 'Không có đơn hàng nào để xuất', 'warning');
+            return;
+        }
 
-    const dropdownConfigs = [
-        { id: 'don-ton-dongxe', key: 'dongXe', label: 'Dòng Xe', options: filterOptions.dongXe.filter(o => o !== 'all'), icon: 'fa-car' },
-        { id: 'don-ton-phienban', key: 'phienBan', label: 'Phiên Bản', options: filterOptions.phienBan.filter(o => o !== 'all'), icon: 'fa-cogs' },
-        { id: 'don-ton-mausac', key: 'mauSac', label: 'Màu Sắc', options: filterOptions.mauSac.filter(o => o !== 'all'), icon: 'fa-palette' }
-    ];
+        const exportData = filteredOrders.map((o, idx) => ({
+            'STT': idx + 1,
+            'Tên Khách Hàng': o.khach_hang || '',
+            'Số Điện Thoại': o.so_dien_thoai || '',
+            'Tư Vấn Bán Hàng': o.tvbh_name || '',
+            'Dòng Xe': o.displayModel || '',
+            'Phiên Bản': o.displayVersion || '',
+            'Ngoại Thất': o.ngoai_that || '',
+            'Nội Thất': o.noi_that || '',
+            'Tiền Cọc Đã Nộp (VNĐ)': Number(o.tien_coc || 0),
+            'Giá Trị Hợp Đồng (VNĐ)': Number(o.gia_tri_hd || 0),
+            'Số HĐ Cyber': o.so_hop_dong || o.so_don_hang || '',
+            'Số VIN': o.vin || '',
+            'Ngày Hợp Đồng': o.ngay_hop_dong ? moment(o.ngay_hop_dong).format('DD/MM/YYYY') : '',
+            'Trạng Thái Cyber': o.ten_post || '',
+            'Ghi Chú': o.ghi_chu || ''
+        }));
 
-    const handleFilterChange = (newFilters: any) => setFilters(prev => ({ ...prev, ...newFilters }));
-    const handleFilterReset = () => setFilters({ dongXe: [], phienBan: [], mauSac: [] });
+        exportOrdersToExcel(exportData, `Don_Hang_Coc_Ton_${moment().format('YYYYMMDD_HHmm')}`);
+        showToast('Thành công', `Đã xuất ${filteredOrders.length} đơn hàng cọc tồn ra Excel`, 'success');
+    };
+
+    const handleSyncCyber = async () => {
+        setIsSyncingCyber(true);
+        showToast('Đang kết nối', 'Đang truy vấn dữ liệu cọc tồn mới nhất từ CyberSoft...', 'info');
+        try {
+            const res = await apiService.triggerCyberDonHangTonSync();
+            if (res.success) {
+                showToast('Thành công', res.message || 'Đồng bộ dữ liệu Cyber thành công!', 'success');
+                await fetchBacklogOrders();
+            } else {
+                showToast('Cảnh báo', res.error || res.message || 'Không thể đồng bộ từ Cyber', 'warning');
+            }
+        } catch (e: any) {
+            showToast('Lỗi', e.message || 'Lỗi khi đồng bộ Cyber', 'error');
+        } finally {
+            setIsSyncingCyber(false);
+        }
+    };
+
+    const handleCopyZaloSummary = (order: any, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const text = `🚗 ĐƠN CỌC TỒN VINFAST THUẬN AN
+• Khách hàng: ${order.khach_hang || 'N/A'}
+• SĐT: ${order.so_dien_thoai || 'N/A'}
+• TVBH: ${order.tvbh_name || 'N/A'}
+• Dòng xe: ${order.displayModel} - ${order.displayVersion}
+• Màu sắc: ${order.ngoai_that} / ${order.noi_that}
+• Tiền cọc: ${Number(order.tien_coc || 0).toLocaleString('vi-VN')} đ
+• Số HĐ: ${order.so_hop_dong || order.so_don_hang}
+• Ngày HĐ: ${moment(order.ngay_hop_dong || order.ngay_giao_dich).format('DD/MM/YYYY')}
+• Trạng thái: ${order.ten_post || 'Chờ giao xe'}`;
+
+        copyWithFeedback(text, e);
+    };
 
     return (
-        <div className="flex h-full bg-slate-50 md:rounded-xl shadow-md border-0 md:border border-border-primary overflow-hidden animate-fade-in relative z-0">
-            {isActive && filterPortalTarget && createPortal(
-                <Filters
-                    filters={filters as any}
-                    onFilterChange={handleFilterChange}
-                    onReset={handleFilterReset}
-                    dropdowns={dropdownConfigs}
-                    searchPlaceholder=""
-                    totalCount={filteredOrders.length}
-                    onRefresh={fetchBacklogOrders}
-                    isLoading={isLoading}
-                    hideSearch={true}
-                    size="compact"
-                    variant="modern"
-                    dropdownClassName="w-24 md:w-28 lg:w-32"
-                    searchable={false}
-                />,
-                filterPortalTarget
-            )}
+        <div className="flex flex-col h-full bg-slate-50 overflow-hidden relative">
             <AnimatedBackground />
-            
-            {/* Column 1: Sales Consultants */}
-            <div className={`w-full md:w-64 flex-shrink-0 border-r border-slate-200 bg-white flex flex-col relative z-10 ${mobileView !== 'folders' ? 'hidden md:flex' : 'flex'}`}>
-                <div className="hidden md:flex p-4 border-b border-slate-100">
-                    <span className="font-bold text-xs uppercase tracking-wider text-slate-400">DS Tư Vấn Bán Hàng</span>
-                </div>
-                <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-                    <button
-                        onClick={() => { setSelectedTVBH('all'); setMobileView('list'); }}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${selectedTVBH === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-700 hover:bg-slate-100'}`}
-                    >
-                        <div className="flex items-center gap-3">
-                            <i className="fas fa-users w-5 text-center"></i>
-                            <span>Tất Cả Sales</span>
+
+            {/* TOP KPI STATS BAR */}
+            <div className="flex-shrink-0 p-3 md:p-4 pb-2 z-10">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3">
+                    {/* Stat 1: Total Orders */}
+                    <div className="bg-white/90 backdrop-blur-sm p-3 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                            <i className="fas fa-file-invoice text-base"></i>
                         </div>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${selectedTVBH === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                            {backlogOrders.length}
-                        </span>
-                    </button>
-                    
-                    <div className="h-px bg-slate-100 my-2 mx-2"></div>
-                    
-                    {tvbhList.map(item => (
-                        <button
-                            key={item.id}
-                            onClick={() => { setSelectedTVBH(item.id); setMobileView('list'); }}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${selectedTVBH === item.id ? 'bg-blue-600 text-white shadow-xs font-bold' : 'text-slate-700 hover:bg-slate-100'}`}
-                        >
-                            <div className="flex items-center gap-3">
-                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${selectedTVBH === item.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
-                                    {item.label[0].toUpperCase()}
-                                </div>
-                                <span className="truncate max-w-[120px]">{item.label}</span>
+                        <div className="min-w-0">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Đơn Cọc Tồn</div>
+                            <div className="text-lg md:text-xl font-black text-slate-800 leading-tight">
+                                {kpiStats.totalCount} <span className="text-xs font-semibold text-slate-400">đơn</span>
                             </div>
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${selectedTVBH === item.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'}`}>
+                            <div className="text-[10px] text-blue-600 font-medium truncate">Từ 01/07/2026 đến nay</div>
+                        </div>
+                    </div>
+
+                    {/* Stat 2: Total Deposit Amount */}
+                    <div className="bg-white/90 backdrop-blur-sm p-3 rounded-2xl border border-emerald-200/80 shadow-xs flex items-center gap-3 bg-gradient-to-br from-white to-emerald-50/30">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-100/80 border border-emerald-200 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                            <i className="fas fa-coins text-base"></i>
+                        </div>
+                        <div className="min-w-0">
+                            <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider truncate">Tổng Tiền Cọc Đã Thu</div>
+                            <div className="text-lg md:text-xl font-black text-emerald-700 font-mono leading-tight">
+                                {(kpiStats.totalCoc / 1_000_000).toLocaleString('vi-VN')} <span className="text-xs font-bold">triệu</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono truncate">{kpiStats.totalCoc.toLocaleString('vi-VN')} đ</div>
+                        </div>
+                    </div>
+
+                    {/* Stat 3: Active Sales */}
+                    <div className="bg-white/90 backdrop-blur-sm p-3 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 flex-shrink-0">
+                            <i className="fas fa-users text-base"></i>
+                        </div>
+                        <div className="min-w-0">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">TVBH Có Đơn Tồn</div>
+                            <div className="text-lg md:text-xl font-black text-slate-800 leading-tight">
+                                {kpiStats.activeTvbhCount} <span className="text-xs font-semibold text-slate-400">nhân sự</span>
+                            </div>
+                            <div className="text-[10px] text-indigo-600 font-medium truncate">Top 1: {kpiStats.topTvbh}</div>
+                        </div>
+                    </div>
+
+                    {/* Stat 4: Top Model */}
+                    <div className="bg-white/90 backdrop-blur-sm p-3 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 flex-shrink-0">
+                            <i className="fas fa-car-side text-base"></i>
+                        </div>
+                        <div className="min-w-0">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider truncate">Dòng Xe Cọc Nhiều Nhất</div>
+                            <div className="text-base md:text-lg font-black text-slate-800 leading-tight truncate">
+                                {kpiStats.topModel}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-medium truncate">Showroom VinFast Thuận An</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* CONTROLS & TOOLBAR */}
+            <div className="flex-shrink-0 px-3 md:px-4 py-2 z-10">
+                <div className="bg-white/95 backdrop-blur-sm p-2.5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5">
+                    {/* Search & Select TVBH */}
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                        {/* Search Input */}
+                        <div className="relative flex-1 max-w-md">
+                            <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Tìm khách hàng, SĐT, số HĐ, VIN, TVBH..."
+                                className="w-full pl-8 pr-8 py-1.5 bg-slate-50 hover:bg-slate-100/80 focus:bg-white text-xs rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-hidden transition-all text-slate-700 placeholder-slate-400"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                                >
+                                    <i className="fas fa-times"></i>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Month/Year Filter Dropdown */}
+                        <div className="relative">
+                            <select
+                                value={selectedMonthYear}
+                                onChange={(e) => setSelectedMonthYear(e.target.value)}
+                                className="py-1.5 pl-8 pr-7 bg-slate-50 hover:bg-slate-100 text-xs font-semibold rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-hidden text-slate-700 appearance-none cursor-pointer"
+                            >
+                                <option value="all">Tất cả các tháng ({backlogOrders.length})</option>
+                                {monthYearList.map(m => (
+                                    <option key={m.key} value={m.key}>
+                                        {m.label} ({m.count} đơn)
+                                    </option>
+                                ))}
+                            </select>
+                            <i className="fas fa-calendar-alt absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-blue-600 pointer-events-none"></i>
+                            <i className="fas fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 pointer-events-none"></i>
+                        </div>
+
+                        {/* TVBH Dropdown */}
+                        <div className="relative">
+                            <select
+                                value={selectedTVBH}
+                                onChange={(e) => setSelectedTVBH(e.target.value)}
+                                className="py-1.5 pl-3 pr-7 bg-slate-50 hover:bg-slate-100 text-xs font-semibold rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-hidden text-slate-700 appearance-none cursor-pointer"
+                            >
+                                <option value="all">Tất cả TVBH ({backlogOrders.length})</option>
+                                {tvbhList.map(t => (
+                                    <option key={t.name} value={t.name}>
+                                        {t.name} ({t.count} đơn - {(t.totalCoc / 1_000_000).toLocaleString('vi-VN')} tr)
+                                    </option>
+                                ))}
+                            </select>
+                            <i className="fas fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 pointer-events-none"></i>
+                        </div>
+
+                        {/* Sort Dropdown */}
+                        <div className="relative hidden lg:block">
+                            <select
+                                value={sortBy}
+                                onChange={(e: any) => setSortBy(e.target.value)}
+                                className="py-1.5 pl-3 pr-7 bg-slate-50 hover:bg-slate-100 text-xs font-medium rounded-xl border border-slate-200 focus:border-blue-500 focus:outline-hidden text-slate-600 appearance-none cursor-pointer"
+                            >
+                                <option value="date_desc">Ngày ký: Mới nhất</option>
+                                <option value="date_asc">Ngày ký: Cũ nhất</option>
+                                <option value="coc_desc">Tiền cọc: Cao nhất</option>
+                                <option value="coc_asc">Tiền cọc: Thấp nhất</option>
+                            </select>
+                            <i className="fas fa-sort absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] text-slate-400 pointer-events-none"></i>
+                        </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-1.5 self-end md:self-auto">
+                        {/* Sync from Cyber Button */}
+                        <button
+                            onClick={handleSyncCyber}
+                            disabled={isSyncingCyber}
+                            className={`px-3 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 ${isSyncingCyber ? 'opacity-80 cursor-wait' : ''}`}
+                            title="Đồng bộ ngay dữ liệu cọc tồn từ CyberSoft (Hệ thống tự động chạy ngầm mỗi 3 tiếng)"
+                        >
+                            <i className={`fas fa-rotate text-xs ${isSyncingCyber ? 'fa-spin' : ''}`}></i>
+                            <span>{isSyncingCyber ? 'Đang đồng bộ...' : 'Đồng bộ từ Cyber'}</span>
+                            <span className="text-[9px] bg-white/20 text-white px-1.5 py-0.2 rounded-full font-mono hidden md:inline">3h/lần</span>
+                        </button>
+
+                        {/* Export Excel Button */}
+                        <button
+                            onClick={handleExportExcel}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5"
+                            title="Xuất file Excel"
+                        >
+                            <i className="fas fa-file-excel text-xs"></i>
+                            <span className="hidden sm:inline">Xuất Excel</span>
+                        </button>
+
+                        {/* Refresh Button */}
+                        <button
+                            onClick={fetchBacklogOrders}
+                            disabled={isLoading}
+                            className="w-8 h-8 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all"
+                            title="Làm mới dữ liệu"
+                        >
+                            <i className={`fas fa-sync-alt text-xs ${isLoading ? 'fa-spin' : ''}`}></i>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Quick Model Filter Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto py-1.5 no-scrollbar">
+                    <button
+                        onClick={() => setSelectedModel('all')}
+                        className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex-shrink-0 ${selectedModel === 'all' ? 'bg-blue-600 text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+                    >
+                        Tất cả dòng xe ({backlogOrders.length})
+                    </button>
+                    {modelStats.map(item => (
+                        <button
+                            key={item.model}
+                            onClick={() => setSelectedModel(item.model === selectedModel ? 'all' : item.model)}
+                            className={`px-3 py-1 rounded-full text-xs font-bold transition-all flex-shrink-0 flex items-center gap-1.5 ${selectedModel === item.model ? 'bg-blue-600 text-white shadow-xs' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'}`}
+                        >
+                            <span>{item.model}</span>
+                            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${selectedModel === item.model ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'}`}>
                                 {item.count}
                             </span>
                         </button>
                     ))}
-                </nav>
-
-            </div>
-
-            {/* Column 2: Filterable List */}
-            <div className={`w-full md:w-80 flex-shrink-0 border-r border-border-primary flex flex-col bg-white/95 relative z-10 ${mobileView !== 'list' ? 'hidden md:flex' : 'flex'}`}>
-                {/* Mobile Header for Column 2 */}
-                <div className="flex md:hidden items-center gap-2 px-3 py-2 border-b border-slate-100 bg-white">
-                    <button onClick={() => setMobileView('folders')} className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
-                        <i className="fas fa-chevron-left text-xs"></i>
-                    </button>
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 truncate">
-                        {selectedTVBH === 'all' ? 'Tất Cả Sales' : selectedTVBH}
-                    </span>
-                    <span className="ml-auto text-[10px] font-bold text-slate-400">{filteredOrders.length} đơn</span>
-                </div>
-
-                <div className="flex-1 overflow-y-auto divide-y divide-border-secondary no-scrollbar">
-                    {filteredOrders.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center p-12 h-full bg-slate-50/30">
-                            <i className="fas fa-filter text-slate-200 text-3xl mb-4 opacity-50"></i>
-                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Không tìm thấy đơn phù hợp</p>
-                        </div>
-                    ) : (
-                        filteredOrders.map(renderOrderListItem)
-                    )}
                 </div>
             </div>
 
-            {/* Column 3: Detailed View */}
-            <div className={`flex-1 flex flex-col bg-surface-ground/90 min-w-0 relative z-10 ${mobileView !== 'detail' ? 'hidden md:flex' : 'flex'}`}>
-                {/* Mobile Header for Column 3 */}
-                <div className="flex md:hidden items-center gap-2 px-3 py-2 border-b border-slate-100 bg-white">
-                    <button onClick={() => setMobileView('list')} className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
-                        <i className="fas fa-chevron-left text-xs"></i>
-                    </button>
-                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">Chi Tiết Đơn Tồn</span>
-                </div>
-                {selectedOrder ? (
-                    <>
-                        <div className="bg-white border-b border-gray-100 z-10 shadow-sm">
-                            <div className="px-4 md:px-6 py-4 flex flex-col md:flex-row md:items-center gap-3">
-                                <div className="flex items-center gap-3 flex-1 min-w-0">
-                                    <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-200 flex items-center justify-center text-indigo-600 font-black text-lg md:text-xl flex-shrink-0 shadow-sm ring-4 ring-white">
-                                        {selectedOrder.khach_hang?.[0].toUpperCase()}
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                        <h2 className="text-base font-black text-slate-800 truncate tracking-tight mb-0.5 uppercase">{selectedOrder.khach_hang}</h2>
-                                        <div className="flex items-center gap-1.5">
-                                            <div className="flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 rounded text-[9px] font-bold text-slate-500 border border-slate-200/50">
-                                                <i className="fas fa-user-tie text-[8px] opacity-60"></i>
-                                                <span className="uppercase tracking-tighter">TVBH: {selectedOrder.tvbh_name}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 rounded text-[9px] font-bold text-blue-600 border border-blue-100/50">
-                                                <i className="fas fa-history text-[8px] opacity-60"></i>
-                                                <span className="uppercase tracking-tighter">BÁO CÁO TỒN</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+            {/* MAIN CONTENT AREA */}
+            <div className="flex-1 min-h-0 px-3 md:px-4 pb-3 flex flex-col z-10 overflow-hidden">
+                {isLoading ? (
+                    <div className="flex-1 flex flex-col items-center justify-center bg-white/80 rounded-2xl border border-slate-200">
+                        <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+                        <p className="text-xs font-bold text-slate-500">Đang tải danh sách đơn cọc tồn...</p>
+                    </div>
+                ) : filteredOrders.length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center bg-white/80 rounded-2xl border border-slate-200 p-8 text-center">
+                        <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 text-2xl mb-3">
+                            <i className="fas fa-filter"></i>
                         </div>
-
-                        <div className="flex-1 p-3 flex flex-col gap-3 min-h-0 overflow-y-auto bg-gray-50/30 custom-scrollbar">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                
-                                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-                                    <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center gap-2">
-                                        <i className="fas fa-car text-accent-primary text-[10px]"></i>
-                                        <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Cấu hình xe tồn</h3>
-                                    </div>
-                                    <div className="p-3 space-y-2">
-                                         <div className="flex flex-col gap-0.5 py-1 px-2 bg-slate-50/50 rounded-lg">
-                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Dòng xe</span>
-                                            <span className="text-xs font-black text-slate-800">{selectedOrder.displayModel}</span>
-                                        </div>
-                                         <div className="flex flex-col gap-0.5 py-1 px-2 bg-slate-50/50 rounded-lg">
-                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Phiên bản</span>
-                                            <span className="text-xs font-black text-slate-800">{selectedOrder.displayVersion}</span>
-                                        </div>
-                                        <div className="flex flex-col gap-0.5 py-1 px-2 bg-slate-50/50 rounded-lg">
-                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Màu sắc (Ngoại/Nội)</span>
-                                            <span className="text-xs font-black text-slate-700">{selectedOrder.ngoai_that} / {selectedOrder.noi_that}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-                                    <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center gap-2">
-                                        <i className="fas fa-hashtag text-accent-primary text-[10px]"></i>
-                                        <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Giao dịch</h3>
-                                    </div>
-                                    <div className="p-3 space-y-3">
-                                        <div className="text-center px-2 py-3 bg-slate-50 rounded-2xl border border-slate-100">
-                                            <div className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mb-1">Số đơn hàng DMS</div>
-                                            <CopyableField text={selectedOrder.so_don_hang} showToast={showToast} className="text-[13px] font-black text-accent-primary font-mono" />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-gray-50">
-                                            <div className="p-2">
-                                                 <div className="text-[7px] font-black text-slate-400 uppercase mb-0.5">Số VIN</div>
-                                                 <CopyableField text={selectedOrder.vin || 'N/A'} className="text-[10px] font-bold text-accent-primary truncate" />
-                                            </div>
-                                            <div className="p-2">
-                                                 <div className="text-[7px] font-black text-blue-400 uppercase mb-0.5">DMS Date</div>
-                                                 <div className="text-[10px] font-bold text-blue-600">{moment(selectedOrder.ngay_giao_dich).format('DD/MM/YYYY')}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
-                                    <div className="bg-gray-50/50 px-3 py-1.5 border-b border-gray-100 flex items-center gap-2">
-                                        <i className="fas fa-comment-alt text-accent-primary text-[10px]"></i>
-                                        <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ghi chú từ TVBH</h3>
-                                    </div>
-                                    <div className="p-3 flex-1">
-                                        <div className="text-xs text-slate-600 leading-relaxed font-semibold bg-amber-50/30 p-4 rounded-xl border border-amber-100/50 h-full min-h-[100px] flex items-center justify-center text-center">
-                                            "{selectedOrder.ghi_chu || 'Trống'}"
-                                        </div>
-                                    </div>
-                                </div>
-
-                            </div>
-                            
-                            <div className="mt-auto p-4 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center">
-                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mb-1">Báo cáo lúc</p>
-                                <p className="text-[13px] font-black text-slate-600">{moment(selectedOrder.created_at).format('HH:mm:ss - DD/MM/YYYY')}</p>
-                            </div>
-                        </div>
-                    </>
+                        <h3 className="text-sm font-bold text-slate-700 mb-1">Không tìm thấy đơn cọc nào</h3>
+                        <p className="text-xs text-slate-400 max-w-sm mb-4">
+                            Không có kết quả nào khớp với bộ lọc hoặc từ khóa tìm kiếm hiện tại.
+                        </p>
+                        <button
+                            onClick={() => { setSearchQuery(''); setSelectedTVBH('all'); setSelectedModel('all'); setSelectedMonthYear('all'); }}
+                            className="px-4 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 text-xs font-bold rounded-xl transition-all"
+                        >
+                            Xóa bộ lọc
+                        </button>
+                    </div>
                 ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center p-12 text-slate-300">
-                        <div className="w-16 h-16 bg-white border border-gray-100 shadow-sm rounded-2xl flex items-center justify-center mb-4 text-slate-200">
-                            <i className="fas fa-layer-group text-2xl"></i>
+                    <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col min-h-0 overflow-hidden">
+                        {/* Status bar */}
+                        <div className="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                            <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-700">Đang hiển thị {filteredOrders.length} / {backlogOrders.length} đơn</span>
+                                {(selectedModel !== 'all' || selectedTVBH !== 'all' || selectedMonthYear !== 'all' || searchQuery) && (
+                                    <span className="text-[10px] text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full font-semibold">
+                                        Đã lọc
+                                    </span>
+                                )}
+                            </div>
+                            <div className="font-medium text-emerald-700 font-mono">
+                                Tổng cọc: {filteredOrders.reduce((s, o) => s + Number(o.tien_coc || 0), 0).toLocaleString('vi-VN')} đ
+                            </div>
                         </div>
-                        <p className="text-sm font-bold uppercase tracking-widest text-slate-400">Chọn báo cáo để xem chi tiết</p>
+
+                        {/* DATA TABLE */}
+                        <div className="flex-1 overflow-auto">
+                                <table className="w-full text-left text-xs border-collapse">
+                                    <thead className="bg-slate-100/80 sticky top-0 z-10 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+                                        <tr>
+                                            <th className="py-2.5 px-3 text-center w-12">STT</th>
+                                            <th className="py-2.5 px-3 min-w-[200px]">Khách Hàng</th>
+                                            <th className="py-2.5 px-3 min-w-[140px]">TVBH Phụ Trách</th>
+                                            <th className="py-2.5 px-3 min-w-[140px]">Dòng Xe & Phiên Bản</th>
+                                            <th className="py-2.5 px-3 min-w-[130px]">Màu Sắc</th>
+                                            <th className="py-2.5 px-3 text-right min-w-[120px]">Tiền Cọc Đã Nộp</th>
+                                            <th className="py-2.5 px-3 min-w-[160px]">Số Hợp Đồng Cyber</th>
+                                            <th className="py-2.5 px-3 min-w-[110px]">Ngày Ký HĐ</th>
+                                            <th className="py-2.5 px-3 min-w-[130px]">Trạng Thái Cyber</th>
+                                            <th className="py-2.5 px-3 text-center w-20">Thao Tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {filteredOrders.map((order, idx) => {
+                                            const daysAgo = moment().diff(moment(order.ngay_hop_dong || order.ngay_giao_dich), 'days');
+                                            return (
+                                                <tr
+                                                    key={order.id}
+                                                    onClick={() => handleSelectOrder(order.id)}
+                                                    className="hover:bg-blue-50/50 cursor-pointer transition-colors group"
+                                                >
+                                                    <td className="py-2.5 px-3 text-center font-mono text-slate-400 text-[11px]">
+                                                        {idx + 1}
+                                                    </td>
+
+                                                    {/* Customer */}
+                                                    <td className="py-2.5 px-3">
+                                                        <div className="font-black text-slate-800 uppercase tracking-tight group-hover:text-blue-600 transition-colors">
+                                                            {order.khach_hang}
+                                                        </div>
+                                                        {order.so_dien_thoai ? (
+                                                            <div className="text-[11px] text-slate-500 font-mono flex items-center gap-1 mt-0.5">
+                                                                <i className="fas fa-phone-alt text-[9px] text-slate-400"></i>
+                                                                <CopyableField text={order.so_dien_thoai} showToast={showToast} className="text-slate-600 font-bold" />
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-[10px] text-slate-300 italic">Chưa có SĐT</span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* TVBH */}
+                                                    <td className="py-2.5 px-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600 flex-shrink-0">
+                                                                {order.tvbh_name?.[0]?.toUpperCase() || 'S'}
+                                                            </div>
+                                                            <span className="font-semibold text-slate-700 truncate max-w-[130px]">{order.tvbh_name}</span>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Car Model & Version */}
+                                                    <td className="py-2.5 px-3">
+                                                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-blue-50 text-blue-700 font-bold border border-blue-100 text-xs mb-0.5">
+                                                            <i className="fas fa-car text-[10px]"></i>
+                                                            <span>{order.displayModel}</span>
+                                                        </div>
+                                                        <div className="text-[11px] text-slate-500 font-normal truncate max-w-[180px]">
+                                                            {order.displayVersion || 'Tiêu chuẩn'}
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Colors */}
+                                                    <td className="py-2.5 px-3 text-[11px] text-slate-600">
+                                                        <div><span className="text-slate-400 text-[10px]">Ngoại:</span> <span className="font-semibold">{order.ngoai_that || 'N/A'}</span></div>
+                                                        <div><span className="text-slate-400 text-[10px]">Nội:</span> <span className="font-semibold">{order.noi_that || 'N/A'}</span></div>
+                                                    </td>
+
+                                                    {/* Deposit Amount */}
+                                                    <td className="py-2.5 px-3 text-right">
+                                                        <div className="text-sm font-black text-emerald-700 font-mono">
+                                                            {Number(order.tien_coc || 0).toLocaleString('vi-VN')} đ
+                                                        </div>
+                                                        {order.gia_tri_hd > 0 && (
+                                                            <div className="text-[10px] text-slate-400 font-mono">
+                                                                HĐ: {(order.gia_tri_hd / 1_000_000).toLocaleString('vi-VN')} tr
+                                                            </div>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Contract & Cyber */}
+                                                    <td className="py-2.5 px-3">
+                                                        <div className="font-mono text-xs font-bold text-slate-700 truncate max-w-[160px]">
+                                                            <CopyableField text={order.so_hop_dong || order.so_don_hang} showToast={showToast} />
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Date & Aging */}
+                                                    <td className="py-2.5 px-3">
+                                                        <div className="font-medium text-slate-700">
+                                                            {moment(order.ngay_hop_dong || order.ngay_giao_dich).format('DD/MM/YYYY')}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-400">
+                                                            Tồn {daysAgo} ngày
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Cyber Status */}
+                                                    <td className="py-2.5 px-3">
+                                                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 truncate max-w-[130px]">
+                                                            {order.ten_post || 'Hợp đồng mới'}
+                                                        </span>
+                                                    </td>
+
+                                                    {/* Actions */}
+                                                    <td className="py-2.5 px-3 text-center">
+                                                        <button
+                                                            onClick={(e) => handleCopyZaloSummary(order, e)}
+                                                            className="w-7 h-7 inline-flex items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                                                            title="Sao chép tóm tắt gửi Zalo"
+                                                        >
+                                                            <i className="fas fa-share-nodes text-xs"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                     </div>
                 )}
             </div>
+
+            {/* SLIDE-OVER DRAWER FOR DETAILED ORDER VIEW */}
+            {isDrawerOpen && selectedOrder && (
+                <div className="fixed inset-0 z-50 overflow-hidden flex justify-end">
+                    {/* Backdrop */}
+                    <div
+                        className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity animate-fade-in"
+                        onClick={() => setIsDrawerOpen(false)}
+                    />
+
+                    {/* Drawer Content */}
+                    <div className="relative w-full max-w-lg bg-white shadow-2xl h-full flex flex-col z-10 animate-slide-left border-l border-slate-200">
+                        {/* Drawer Header */}
+                        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-lg font-black shadow-xs">
+                                    {selectedOrder.khach_hang?.[0]?.toUpperCase()}
+                                </div>
+                                <div>
+                                    <h2 className="text-sm font-black text-slate-900 uppercase tracking-tight">{selectedOrder.khach_hang}</h2>
+                                    <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                                        <span>TVBH: <strong className="text-slate-600">{selectedOrder.tvbh_name}</strong></span>
+                                        <span>•</span>
+                                        <span className="text-blue-600 font-bold">{selectedOrder.ten_post || 'Hợp đồng mới'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsDrawerOpen(false)}
+                                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition-colors"
+                            >
+                                <i className="fas fa-times text-xs"></i>
+                            </button>
+                        </div>
+
+                        {/* Drawer Body */}
+                        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                            {/* Deposit Highlight Card */}
+                            <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md">
+                                <div className="flex items-center justify-between text-xs text-emerald-100 mb-1">
+                                    <span className="font-bold uppercase tracking-wider">Tiền cọc thực tế đã nộp</span>
+                                    <i className="fas fa-check-circle text-emerald-200"></i>
+                                </div>
+                                <div className="text-2xl font-black font-mono tracking-tight mb-2">
+                                    {Number(selectedOrder.tien_coc || 0).toLocaleString('vi-VN')} VNĐ
+                                </div>
+                                <div className="pt-2 border-t border-emerald-400/40 flex items-center justify-between text-xs text-emerald-100">
+                                    <span>Tổng giá trị hợp đồng:</span>
+                                    <span className="font-mono font-bold text-white">
+                                        {selectedOrder.gia_tri_hd > 0 ? `${Number(selectedOrder.gia_tri_hd).toLocaleString('vi-VN')} đ` : 'Chưa cập nhật'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Customer Phone Card */}
+                            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm">
+                                        <i className="fas fa-phone-alt"></i>
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase">Số Điện Thoại Khách</div>
+                                        <div className="text-sm font-black text-slate-800 font-mono">
+                                            {selectedOrder.so_dien_thoai || 'Chưa có thông tin'}
+                                        </div>
+                                    </div>
+                                </div>
+                                {selectedOrder.so_dien_thoai && (
+                                    <div className="flex items-center gap-1.5">
+                                        <a
+                                            href={`tel:${selectedOrder.so_dien_thoai}`}
+                                            className="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-colors"
+                                        >
+                                            <i className="fas fa-phone mr-1 text-[10px]"></i> Gọi
+                                        </a>
+                                        <CopyableField
+                                            text={selectedOrder.so_dien_thoai}
+                                            showToast={showToast}
+                                            className="px-2 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-bold hover:bg-slate-100"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Section 1: Vehicle Configuration */}
+                            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+                                <div className="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100">
+                                    <i className="fas fa-car text-blue-600"></i>
+                                    <span>Cấu hình xe cọc</span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2.5 text-xs">
+                                    <div className="p-2.5 bg-slate-50 rounded-xl">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Dòng xe</div>
+                                        <div className="text-sm font-black text-blue-700">{selectedOrder.displayModel}</div>
+                                    </div>
+                                    <div className="p-2.5 bg-slate-50 rounded-xl">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Phiên bản</div>
+                                        <div className="text-xs font-bold text-slate-800 truncate">{selectedOrder.displayVersion || 'Tiêu chuẩn'}</div>
+                                    </div>
+                                    <div className="p-2.5 bg-slate-50 rounded-xl">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Ngoại thất</div>
+                                        <div className="text-xs font-bold text-slate-700">{selectedOrder.ngoai_that || 'N/A'}</div>
+                                    </div>
+                                    <div className="p-2.5 bg-slate-50 rounded-xl">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-0.5">Nội thất</div>
+                                        <div className="text-xs font-bold text-slate-700">{selectedOrder.noi_that || 'N/A'}</div>
+                                    </div>
+                                </div>
+                                <div className="p-2.5 bg-slate-50 rounded-xl flex items-center justify-between">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase">Số khung / VIN</span>
+                                    <CopyableField
+                                        text={selectedOrder.vin || 'Chưa gán VIN'}
+                                        showToast={showToast}
+                                        className="text-xs font-mono font-bold text-slate-700"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Section 2: Contract & Cyber Details */}
+                            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3">
+                                <div className="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100">
+                                    <i className="fas fa-file-contract text-blue-600"></i>
+                                    <span>Hợp đồng & Chứng từ Cyber</span>
+                                </div>
+                                <div className="space-y-2 text-xs">
+                                    <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                                        <span className="text-slate-400">Số HĐ Cyber:</span>
+                                        <CopyableField
+                                            text={selectedOrder.so_hop_dong || selectedOrder.so_don_hang}
+                                            showToast={showToast}
+                                            className="font-mono font-bold text-blue-600"
+                                        />
+                                    </div>
+                                    <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                                        <span className="text-slate-400">Ngày lập hợp đồng:</span>
+                                        <span className="font-semibold text-slate-800">
+                                            {moment(selectedOrder.ngay_hop_dong || selectedOrder.ngay_giao_dich).format('DD/MM/YYYY')}
+                                            <span className="text-[10px] text-slate-400 ml-1.5 font-normal">
+                                                ({moment().diff(moment(selectedOrder.ngay_hop_dong || selectedOrder.ngay_giao_dich), 'days')} ngày trước)
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                                        <span className="text-slate-400">Trạng thái trên Cyber:</span>
+                                        <span className="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded text-[11px]">
+                                            {selectedOrder.ten_post || 'Hợp đồng mới'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-1">
+                                        <span className="text-slate-400">Mã chứng từ (STT REC):</span>
+                                        <span className="font-mono text-[11px] text-slate-500">{selectedOrder.stt_rec || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 3: Notes & History */}
+                            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+                                <div className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                                    <i className="fas fa-sticky-note text-amber-500 mr-1.5"></i>
+                                    Ghi chú hệ thống
+                                </div>
+                                <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/60 text-xs text-amber-900 leading-relaxed font-medium">
+                                    {selectedOrder.ghi_chu || 'Không có ghi chú thêm.'}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Drawer Footer Actions */}
+                        <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center gap-2">
+                            <button
+                                onClick={(e) => handleCopyZaloSummary(selectedOrder, e)}
+                                className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2"
+                            >
+                                <i className="fas fa-copy"></i>
+                                <span>Sao chép thông tin gửi Zalo</span>
+                            </button>
+                            <button
+                                onClick={() => setIsDrawerOpen(false)}
+                                className="px-4 py-2.5 bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-bold rounded-xl transition-all"
+                            >
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
