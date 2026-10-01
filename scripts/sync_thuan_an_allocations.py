@@ -312,6 +312,10 @@ WAREHOUSE_SHORT_NAMES = {
     'K83': 'Thuận An',
     'K87': 'QL13 (HCM)',
     'K86': 'Q12 (HCM)',
+    'QL13': 'QL13 (HCM)',
+    'Q12': 'Q12 (HCM)',
+    'QL13 - HCM': 'QL13 (HCM)',
+    'Q12 - HCM': 'Q12 (HCM)',
     'K85': 'Dĩ An',
     'KHCM.PVD': 'Phạm Văn Đồng',
     'K106': 'Hà Huy Giáp',
@@ -370,6 +374,21 @@ def clean_location_name(name: str) -> str:
     if m_code and m_code.group(1).upper() in WAREHOUSE_SHORT_NAMES:
         return WAREHOUSE_SHORT_NAMES[m_code.group(1).upper()]
 
+    # Kiểm tra trực tiếp theo từ khóa tên kho trên chuỗi gốc trước
+    low = raw_clean.lower()
+    if 'thuận an' in low or 'thuan an' in low: return 'Thuận An'
+    if 'ql13' in low or 'quốc lộ 13' in low: return 'QL13 (HCM)'
+    if 'q12' in low or 'quận 12' in low: return 'Q12 (HCM)'
+    if 'dĩ an' in low or 'di an' in low: return 'Dĩ An'
+    if 'phạm văn đồng' in low or 'pham van dong' in low or 'pvd' in low: return 'Phạm Văn Đồng'
+    if 'hà huy giáp' in low or 'ha huy giap' in low: return 'Hà Huy Giáp'
+    if 'lê văn việt' in low or 'le van viet' in low: return 'Lê Văn Việt'
+    if 'vũng tàu' in low or 'vung tau' in low: return 'Vũng Tàu'
+    if 'ocp' in low or 'ocean park' in low: return 'OCP 2'
+    if 'lĩnh nam' in low or 'linh nam' in low: return 'Lĩnh Nam'
+    if 'nguyễn trãi' in low or 'nguyen trai' in low: return 'Nguyễn Trãi'
+    if 'tiếp nhận nhà máy' in low or 'nhà máy sxlr' in low or 'nha may' in low: return 'Nhà máy SXLR'
+
     cleaned = re.sub(
         r'^([A-Za-z0-9._-]+)\s*[-:–—]\s*',
         '',
@@ -385,20 +404,6 @@ def clean_location_name(name: str) -> str:
     cleaned = re.sub(r'\s*-\s*TPHCM', ' (HCM)', cleaned, flags=re.I)
     cleaned = re.sub(r'\s*-\s*HCM', ' (HCM)', cleaned, flags=re.I)
     cleaned = cleaned.strip(' -')
-
-    low = cleaned.lower()
-    if 'thuận an' in low or 'thuan an' in low: return 'Thuận An'
-    if 'ql13' in low or 'quốc lộ 13' in low: return 'QL13 (HCM)'
-    if 'q12' in low or 'quận 12' in low: return 'Q12 (HCM)'
-    if 'dĩ an' in low or 'di an' in low: return 'Dĩ An'
-    if 'phạm văn đồng' in low or 'pham van dong' in low or 'pvd' in low: return 'Phạm Văn Đồng'
-    if 'hà huy giáp' in low or 'ha huy giap' in low: return 'Hà Huy Giáp'
-    if 'lê văn việt' in low or 'le van viet' in low: return 'Lê Văn Việt'
-    if 'vũng tàu' in low or 'vung tau' in low: return 'Vũng Tàu'
-    if 'ocp' in low or 'ocean park' in low: return 'OCP 2'
-    if 'lĩnh nam' in low or 'linh nam' in low: return 'Lĩnh Nam'
-    if 'nguyễn trãi' in low or 'nguyen trai' in low: return 'Nguyễn Trãi'
-    if 'tiếp nhận nhà máy' in low or 'nhà máy sxlr' in low or 'nha may' in low: return 'Nhà máy SXLR'
 
     return cleaned or "Đang vận tải"
 

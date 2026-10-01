@@ -80,6 +80,10 @@ export const WAREHOUSE_SHORT_NAMES: Record<string, string> = {
     'K90': 'Xe cũ',
     'KBN.TS': 'Từ Sơn',
     'KHB.SH': 'Shop House Hòa Bình',
+    'QL13': 'QL13 (HCM)',
+    'Q12': 'Q12 (HCM)',
+    'QL13 - HCM': 'QL13 (HCM)',
+    'Q12 - HCM': 'Q12 (HCM)',
 };
 
 export const formatShortWarehouseName = (name: string | undefined | null): string => {
@@ -101,6 +105,21 @@ export const formatShortWarehouseName = (name: string | undefined | null): strin
         }
     }
 
+    // Đối chiếu theo từ khóa tên kho TRÊN CHUỖI GỐC TRƯỚC TIÊN (tránh regex xóa mất tiền tố như QL13, Q12)
+    const lowerRaw = raw.toLowerCase();
+    if (lowerRaw.includes('thuận an') || lowerRaw.includes('thuan an')) return 'Thuận An';
+    if (lowerRaw.includes('ql13') || lowerRaw.includes('quốc lộ 13')) return 'QL13 (HCM)';
+    if (lowerRaw.includes('q12') || lowerRaw.includes('quận 12')) return 'Q12 (HCM)';
+    if (lowerRaw.includes('dĩ an') || lowerRaw.includes('di an')) return 'Dĩ An';
+    if (lowerRaw.includes('phạm văn đồng') || lowerRaw.includes('pham van dong') || lowerRaw.includes('pvd')) return 'Phạm Văn Đồng';
+    if (lowerRaw.includes('hà huy giáp') || lowerRaw.includes('ha huy giap')) return 'Hà Huy Giáp';
+    if (lowerRaw.includes('lê văn việt') || lowerRaw.includes('le van viet')) return 'Lê Văn Việt';
+    if (lowerRaw.includes('vũng tàu') || lowerRaw.includes('vung tau')) return 'Vũng Tàu';
+    if (lowerRaw.includes('ocp') || lowerRaw.includes('ocean park')) return 'OCP 2';
+    if (lowerRaw.includes('lĩnh nam') || lowerRaw.includes('linh nam')) return 'Lĩnh Nam';
+    if (lowerRaw.includes('nguyễn trãi') || lowerRaw.includes('nguyen trai')) return 'Nguyễn Trãi';
+    if (lowerRaw.includes('tiếp nhận nhà máy') || lowerRaw.includes('nhà máy sxlr') || lowerRaw.includes('nha may')) return 'Nhà máy SXLR';
+
     // Xóa các tiền tố rườm rà
     let cleaned = raw
         .replace(/^([A-Za-z0-9._-]+)\s*[-:–—]\s*/, '')
@@ -109,21 +128,6 @@ export const formatShortWarehouseName = (name: string | undefined | null): strin
         .replace(/\s*-\s*TPHCM/gi, ' (HCM)')
         .replace(/\s*-\s*HCM/gi, ' (HCM)')
         .trim();
-
-    // Đối chiếu theo từ khóa tên kho
-    const lower = cleaned.toLowerCase();
-    if (lower.includes('thuận an') || lower.includes('thuan an')) return 'Thuận An';
-    if (lower.includes('ql13') || lower.includes('quốc lộ 13')) return 'QL13 (HCM)';
-    if (lower.includes('q12') || lower.includes('quận 12')) return 'Q12 (HCM)';
-    if (lower.includes('dĩ an') || lower.includes('di an')) return 'Dĩ An';
-    if (lower.includes('phạm văn đồng') || lower.includes('pham van dong') || lower.includes('pvd')) return 'Phạm Văn Đồng';
-    if (lower.includes('hà huy giáp') || lower.includes('ha huy giap')) return 'Hà Huy Giáp';
-    if (lower.includes('lê văn việt') || lower.includes('le van viet')) return 'Lê Văn Việt';
-    if (lower.includes('vũng tàu') || lower.includes('vung tau')) return 'Vũng Tàu';
-    if (lower.includes('ocp') || lower.includes('ocean park')) return 'OCP 2';
-    if (lower.includes('lĩnh nam') || lower.includes('linh nam')) return 'Lĩnh Nam';
-    if (lower.includes('nguyễn trãi') || lower.includes('nguyen trai')) return 'Nguyễn Trãi';
-    if (lower.includes('tiếp nhận nhà máy') || lower.includes('nhà máy sxlr') || lower.includes('nha may')) return 'Nhà máy SXLR';
 
     return cleaned || raw;
 };
