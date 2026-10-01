@@ -86,6 +86,7 @@ const StockView: React.FC<StockViewProps> = ({
         carModel: [] as string[],
         location: [] as string[],
         version: [] as string[],
+        dmsCode: [] as string[],
         status: [] as string[],
         exterior: [] as string[],
     });
@@ -98,6 +99,7 @@ const StockView: React.FC<StockViewProps> = ({
                 carModel: [],
                 location: [],
                 version: [],
+                dmsCode: [],
                 status: [],
                 exterior: [],
             });
@@ -279,6 +281,7 @@ const StockView: React.FC<StockViewProps> = ({
             carModel: [],
             location: [],
             version: [],
+            dmsCode: [],
             status: [],
             exterior: [],
         });
@@ -319,7 +322,9 @@ const StockView: React.FC<StockViewProps> = ({
                 includesNormalized(vehicle["Ngoại thất"], keyword) ||
                 includesNormalized(vehicle["Nội thất"], keyword) ||
                 includesNormalized(vehicle["Vị trí"], keyword) ||
-                includesNormalized(vehicle["Người Giữ Xe"], keyword)
+                includesNormalized(vehicle["Người Giữ Xe"], keyword) ||
+                includesNormalized(vehicle["Mã DMS"], keyword) ||
+                includesNormalized((vehicle as any).ma_dms, keyword)
             );
         }
         if (filters.carModel.length > 0) {
@@ -330,6 +335,14 @@ const StockView: React.FC<StockViewProps> = ({
         }
         if (filters.version.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.version.includes(vehicle["Phiên bản"]));
+        }
+        if (filters.dmsCode.length > 0) {
+            filteredVehicles = filteredVehicles.filter(vehicle => {
+                const code = (vehicle["Mã DMS"] || (vehicle as any).ma_dms || '').trim();
+                const matchesEmpty = filters.dmsCode.includes('Chưa có mã DMS') && !code;
+                const matchesCode = !!code && filters.dmsCode.includes(code);
+                return matchesEmpty || matchesCode;
+            });
         }
         if (filters.status.length > 0) {
             filteredVehicles = filteredVehicles.filter(vehicle => filters.status.includes(vehicle["Trạng thái"]));
@@ -437,12 +450,23 @@ const StockView: React.FC<StockViewProps> = ({
     const uniqueVersions = useMemo(() => [...new Set(stockData.map(v => v["Phiên bản"]).filter((v): v is string => !!v))].sort(), [stockData]);
     const uniqueStatuses = useMemo(() => [...new Set(stockData.map(v => v["Trạng thái"]).filter((v): v is string => !!v))].sort(), [stockData]);
     const uniqueExteriors = useMemo(() => [...new Set(stockData.map(v => v["Ngoại thất"]).filter((v): v is string => !!v))].sort(), [stockData]);
-
+    const uniqueDmsCodes = useMemo(() => {
+        const rawCodes = stockData
+            .map(v => (v["Mã DMS"] || (v as any).ma_dms || '').trim())
+            .filter((v): v is string => !!v);
+        const set = [...new Set(rawCodes)].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+        const hasEmptyDms = stockData.some(v => !(v["Mã DMS"] || (v as any).ma_dms || '').trim());
+        if (hasEmptyDms && set.length > 0) {
+            return ['Chưa có mã DMS', ...set];
+        }
+        return set;
+    }, [stockData]);
 
     const dropdownConfigs: DropdownFilterConfig[] = [
         { id: 'stock-filter-car-model', key: 'carModel', label: 'Dòng Xe', options: uniqueCarModels, icon: 'fa-car' },
         { id: 'stock-filter-location', key: 'location', label: 'Kho', options: uniqueLocations, icon: 'fa-warehouse' },
         { id: 'stock-filter-version', key: 'version', label: 'Phiên Bản', options: uniqueVersions, icon: 'fa-cogs' },
+        { id: 'stock-filter-dms', key: 'dmsCode', label: 'Mã DMS', options: uniqueDmsCodes, icon: 'fa-qrcode' },
         { id: 'stock-filter-status', key: 'status', label: 'Trạng Thái', options: uniqueStatuses, icon: 'fa-tag' },
         { id: 'stock-filter-exterior', key: 'exterior', label: 'Ngoại Thất', options: uniqueExteriors, icon: 'fa-palette' },
     ].filter(d => d.options.length > 0);
