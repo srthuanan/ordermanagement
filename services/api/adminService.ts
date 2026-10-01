@@ -1429,7 +1429,7 @@ export const uploadBulkInvoices = async (files: any[]): Promise<ApiResult> => {
             }
 
             if (url) {
-                const nowIso = new Date().toISOString();
+                const nowIso = f.invoiceDate || f.ngay_xuat_hoa_don || new Date().toISOString();
                 const { error: e1 } = await supabaseAdmin.from('yeucauxhd')
                     .update({ 
                         ket_qua_gui_mail: '', 

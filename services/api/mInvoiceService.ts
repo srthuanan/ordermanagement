@@ -182,7 +182,8 @@ export const autoFetchAndUploadInvoice = async (
             orderNumber: orderNo,
             fileObject: file,
             mimeType: 'application/pdf',
-            fileName: file.name
+            fileName: file.name,
+            invoiceDate: invoiceData.invoiceDate || invoiceData.dateSign
         }]);
 
         if (uploadRes.status === 'SUCCESS') {

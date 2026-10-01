@@ -245,6 +245,7 @@ html, body {
         return {"success": False, "status": "NO_PDF", "message": "Không tìm thấy Microsoft Edge/Chrome và không tải được PDF từ M-Invoice."}
 
     base64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+    invoice_date = inv.get("invoiceDate") or inv.get("invDate") or inv.get("issueDate") or inv.get("dateSign")
 
     return {
         "success": True,
@@ -254,6 +255,7 @@ html, body {
             "vin": vin,
             "invoiceNumber": so_hd,
             "serial": serial,
+            "invoiceDate": invoice_date,
             "dateSign": date_sign,
             "isSigned": is_signed,
             "buyer": buyer,
@@ -385,10 +387,12 @@ def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
 
     # 4. Cập nhật database: yeucauxhd & donhang
     now_iso = time.strftime('%Y-%m-%dT%H:%M:%S+07:00')
+    real_invoice_date = inv_data.get("invoiceDate") or inv_data.get("dateSign") or now_iso
+
     patch_hd = {
         "url_hoa_don_da_xuat": public_url,
         "trang_thai": "Đã xuất hóa đơn",
-        "ngay_xuat_hoa_don": now_iso,
+        "ngay_xuat_hoa_don": real_invoice_date,
         "ket_qua_gui_mail": "Đang gửi mail..."
     }
     requests.patch(f"{SUPABASE_URL}/rest/v1/yeucauxhd?so_don_hang=eq.{exact_order_no}", headers=headers, json=patch_hd, timeout=10)
@@ -396,7 +400,7 @@ def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
     patch_dh = {
         "ket_qua": "Đã xuất hóa đơn",
         "link_hoa_don_da_xuat": public_url,
-        "ngay_xuat_hoa_don": now_iso
+        "ngay_xuat_hoa_don": real_invoice_date
     }
     requests.patch(f"{SUPABASE_URL}/rest/v1/donhang?so_don_hang=eq.{exact_order_no}", headers=headers, json=patch_dh, timeout=10)
 
