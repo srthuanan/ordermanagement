@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { CyberWarehouseItem, CYBER_POPULAR_WAREHOUSES, CYBER_OTHER_WAREHOUSES, CYBER_ALL_WAREHOUSES } from '../../constants/cyberWarehouses';
-import { includesNormalized } from '../../utils/stringUtils';
+import { includesNormalized, formatShortWarehouseName } from '../../utils/stringUtils';
 
 interface SearchableWarehouseSelectProps {
     value: string;
@@ -35,10 +35,11 @@ export const SearchableWarehouseSelect: React.FC<SearchableWarehouseSelectProps>
         const found = CYBER_ALL_WAREHOUSES.find(w => w.id === value);
         if (found) return found;
         if (value) {
+            const clean = formatShortWarehouseName(customWarehouseName || value);
             return {
                 id: value,
-                name: customWarehouseName ? `${value} – ${customWarehouseName}` : value,
-                shortName: customWarehouseName || value,
+                name: clean,
+                shortName: clean,
                 isPopular: false
             };
         }
@@ -163,8 +164,8 @@ export const SearchableWarehouseSelect: React.FC<SearchableWarehouseSelectProps>
                             }`}>
                                 {selectedItem.id}
                             </span>
-                            <span className="truncate">
-                                {selectedItem.name}
+                            <span className="truncate font-semibold">
+                                {formatShortWarehouseName(selectedItem.shortName || selectedItem.name)}
                             </span>
                         </>
                     ) : (
@@ -253,7 +254,7 @@ export const SearchableWarehouseSelect: React.FC<SearchableWarehouseSelectProps>
                                                         }`}>
                                                             {item.id}
                                                         </span>
-                                                        <span className="truncate">{item.name}</span>
+                                                        <span className="truncate font-medium">{formatShortWarehouseName(item.shortName || item.name)}</span>
                                                     </div>
                                                     {isSelected && (
                                                         <i className="fas fa-check text-xs ml-1.5 shrink-0 text-blue-600 dark:text-emerald-400"></i>
@@ -291,7 +292,7 @@ export const SearchableWarehouseSelect: React.FC<SearchableWarehouseSelectProps>
                                                         }`}>
                                                             {item.id}
                                                         </span>
-                                                        <span className="truncate">{item.name}</span>
+                                                        <span className="truncate font-medium">{formatShortWarehouseName(item.shortName || item.name)}</span>
                                                     </div>
                                                     {isSelected && (
                                                         <i className="fas fa-check text-xs ml-1.5 shrink-0 text-blue-600 dark:text-emerald-400"></i>

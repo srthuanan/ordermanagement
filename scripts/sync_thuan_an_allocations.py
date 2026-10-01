@@ -308,37 +308,98 @@ def fetch_plan_map(vins: list) -> dict:
             print(f"[Warn] Fetch plan map error: {e}", file=sys.stderr)
     return plan_map
 
+WAREHOUSE_SHORT_NAMES = {
+    'K83': 'Thuận An',
+    'K87': 'QL13 (HCM)',
+    'K86': 'Q12 (HCM)',
+    'K85': 'Dĩ An',
+    'KHCM.PVD': 'Phạm Văn Đồng',
+    'K106': 'Hà Huy Giáp',
+    'K58': 'Lê Văn Việt',
+    'K60': '3/2 (HCM)',
+    'K65': 'Vũng Tàu',
+    'K46': 'Hồ Chí Minh',
+    'KTN.NM': 'Nhà máy SXLR',
+    'KTN.TL': 'Tân Long (Thái Nguyên)',
+    'KTN.TT': 'Tân Thịnh (Thái Nguyên)',
+    'KTN.CK': 'Xưởng cơ khí',
+    'K36': 'Thái Nguyên',
+    'K17': 'Cam Giá',
+    'K18': 'Cầu Gia Bảy',
+    'K19': 'Phổ Yên',
+    'K91': 'OCP 2',
+    'K103': 'Lĩnh Nam',
+    'K101': 'Nguyễn Trãi',
+    'K55': 'Nguyễn Trãi',
+    'K00': 'Tổng công ty',
+    'K01': 'Kho DEMO',
+    'K111': 'Hải Phòng',
+    'K14': 'Hoài Đức',
+    'K23': 'Điện Biên',
+    'K41': 'Kho đăng kiểm',
+    'K43': 'Gia Lai',
+    'K45': 'Đà Nẵng',
+    'K49': 'Hưng Yên',
+    'K57': 'Bắc Ninh',
+    'K59': 'Times City',
+    'K61': 'Quang Trung',
+    'K62': 'Vincom TN',
+    'K63': 'Sóc Sơn',
+    'K66': 'Đăng kiểm TN',
+    'K69': 'Hòa Bình',
+    'K74': 'Mê Linh',
+    'K75': 'Việt Trì',
+    'K76': 'Thái Bình',
+    'K77': 'Hạ Long',
+    'K82': 'Bắc Giang',
+    'K90': 'Xe cũ',
+    'KBN.TS': 'Từ Sơn',
+    'KHB.SH': 'Shop House Hòa Bình',
+}
+
 def clean_location_name(name: str) -> str:
     if not name:
         return "Đang vận tải"
-    CODE_MAP = {
-        'K83': 'Thuận An',
-        'K87': 'QL13 - HCM',
-        'K86': 'Q12 - HCM',
-        'K85': 'Dĩ An',
-        'KHCM.PVD': 'Phạm Văn Đồng',
-        'K106': 'Hà Huy Giáp',
-        'K91': 'OCP 2',
-        'K65': 'Bình Phước',
-        'K36': 'Thái Nguyên',
-        'K17': 'Cam Giá',
-        'K103': 'Lĩnh Nam',
-        'K101': 'Nguyễn Trãi',
-        'KTN.NM': 'Nhà máy SXLR',
-        'KTN.CK': 'Xưởng cơ khí',
-    }
     raw_clean = str(name).strip()
-    if raw_clean in CODE_MAP:
-        return CODE_MAP[raw_clean]
+    upper = raw_clean.upper()
+    if upper in WAREHOUSE_SHORT_NAMES:
+        return WAREHOUSE_SHORT_NAMES[upper]
 
+    # Kiểm tra mã kho ở đầu chuỗi (ví dụ: "K83 - ...")
+    m_code = re.match(r'^([A-Za-z0-9._-]+)\s*[-:–—]\s*(.*)$', raw_clean)
+    if m_code and m_code.group(1).upper() in WAREHOUSE_SHORT_NAMES:
+        return WAREHOUSE_SHORT_NAMES[m_code.group(1).upper()]
+
+    cleaned = re.sub(
+        r'^([A-Za-z0-9._-]+)\s*[-:–—]\s*',
+        '',
+        raw_clean
+    )
     cleaned = re.sub(
         r'^(Kho xe ô tô Vinfast|Kho xe ô tô Viinfast|Kho xe ô tô|Kho xe SR|Kho xe|Ô tô Vinfast|Ô tô VinFast|Vinfast|VinFast|Showroom|SR|Kho)\s*[-:–—]?\s*',
         '',
-        raw_clean,
+        cleaned,
         flags=re.I
     )
     cleaned = re.sub(r'^Minh Đạo\s*[-–—:]\s*', '', cleaned, flags=re.I)
+    cleaned = re.sub(r'\s*-\s*TPHCM', ' (HCM)', cleaned, flags=re.I)
+    cleaned = re.sub(r'\s*-\s*HCM', ' (HCM)', cleaned, flags=re.I)
     cleaned = cleaned.strip(' -')
+
+    low = cleaned.lower()
+    if 'thuận an' in low or 'thuan an' in low: return 'Thuận An'
+    if 'ql13' in low or 'quốc lộ 13' in low: return 'QL13 (HCM)'
+    if 'q12' in low or 'quận 12' in low: return 'Q12 (HCM)'
+    if 'dĩ an' in low or 'di an' in low: return 'Dĩ An'
+    if 'phạm văn đồng' in low or 'pham van dong' in low or 'pvd' in low: return 'Phạm Văn Đồng'
+    if 'hà huy giáp' in low or 'ha huy giap' in low: return 'Hà Huy Giáp'
+    if 'lê văn việt' in low or 'le van viet' in low: return 'Lê Văn Việt'
+    if 'vũng tàu' in low or 'vung tau' in low: return 'Vũng Tàu'
+    if 'ocp' in low or 'ocean park' in low: return 'OCP 2'
+    if 'lĩnh nam' in low or 'linh nam' in low: return 'Lĩnh Nam'
+    if 'nguyễn trãi' in low or 'nguyen trai' in low: return 'Nguyễn Trãi'
+    if 'tiếp nhận nhà máy' in low or 'nhà máy sxlr' in low or 'nha may' in low: return 'Nhà máy SXLR'
+
     return cleaned or "Đang vận tải"
 
 def fetch_physical_locations_from_cyber(vins: list) -> dict:
@@ -2079,18 +2140,17 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
 
         conn.close()
 
-        # 8. XUẤT VÀ TẢI NGAY LẬP TỨC 2 BẢN PDF (CÓ CHỮ KÝ & KHÔNG CHỮ KÝ) LÊN SUPABASE CLOUD
+        # 8. XUẤT VÀ TẢI PDF LÊN SUPABASE CLOUD (CHẠY NGẦM THREAD KHÔNG BLOCK HTTP RESPONSE)
         pdf_sig_url = None
         if sys.platform == "win32":
-            try:
-                print(f"[Instant PDF Export] Đang tự động kết xuất PDF chuẩn cho phiếu {so_ct} ({stt_rec})...", file=sys.stderr)
-                r_sig = export_cyber_pdf_via_ps(str(stt_rec), voucher_type="DNX", paper_size="A4", user_name=str(user_name), include_signatures="true", so_ct=str(so_ct))
-                r_nosig = export_cyber_pdf_via_ps(str(stt_rec), voucher_type="DNX", paper_size="A4", user_name=str(user_name), include_signatures="false", so_ct=str(so_ct))
-                if r_sig.get("success"):
-                    pdf_sig_url = r_sig.get("pdf_url")
-                print(f"[Instant PDF Export] ✅ Đã hoàn tất và tải 2 bản PDF của {so_ct} lên Supabase Cloud!", file=sys.stderr)
-            except Exception as ex_pdf:
-                print(f"[Instant PDF Export Warning]: {ex_pdf}", file=sys.stderr)
+            import threading
+            def _bg_export_pdf():
+                try:
+                    export_cyber_pdf_via_ps(str(stt_rec), voucher_type="DNX", paper_size="A4", user_name=str(user_name), include_signatures="true", so_ct=str(so_ct))
+                    export_cyber_pdf_via_ps(str(stt_rec), voucher_type="DNX", paper_size="A4", user_name=str(user_name), include_signatures="false", so_ct=str(so_ct))
+                except Exception as ex_pdf:
+                    print(f"[Instant PDF Export Warning]: {ex_pdf}", file=sys.stderr)
+            threading.Thread(target=_bg_export_pdf, daemon=True).start()
 
         return {
             "success": True,
@@ -2179,7 +2239,8 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
                 mk = (r.get('ma_kho') if is_pymssql else r[0] or '').strip()
                 tk = (r.get('ten_kho') if is_pymssql else r[1] or '').strip()
                 if mk:
-                    cyber_warehouses.append({"ma_kho": mk, "ten_kho": tk, "label": f"{mk} - {tk}"})
+                    clean_tk = clean_location_name(tk or mk)
+                    cyber_warehouses.append({"ma_kho": mk, "ten_kho": clean_tk, "raw_ten_kho": tk, "label": clean_tk})
         except Exception as e_wh:
             print(f"[Warehouse lookup warning] {e_wh}", file=sys.stderr)
 
@@ -2409,11 +2470,13 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
             # Ưu tiên số 1: Kho tồn thực tế hiện tại (Ton >= 1) từ CT70BEX
             if st and st.get("ma_kho"):
                 ma_kho = st.get("ma_kho")
-                ten_kho = st.get("ten_kho") or ma_kho
+                raw_tk = st.get("ten_kho") or ma_kho
+                ten_kho = clean_location_name(raw_tk or ma_kho)
             elif dnx_entry and (dnx_entry.get("ma_kho_nhan") or dnx_entry.get("ma_kho_xuat")):
                 # Nếu không còn tồn kho thực tế, xem phiếu DNX điều chuyển gần nhất
                 ma_kho = dnx_entry.get("ma_kho_nhan") or dnx_entry.get("ma_kho_xuat") or ""
-                ten_kho = dnx_entry.get("ten_kho_nhan") or dnx_entry.get("ten_kho_xuat") or ""
+                raw_tk = dnx_entry.get("ten_kho_nhan") or dnx_entry.get("ten_kho_xuat") or ""
+                ten_kho = clean_location_name(raw_tk or ma_kho)
             else:
                 ma_kho = ""
                 ten_kho = "Đang vận tải"

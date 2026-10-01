@@ -26,6 +26,8 @@ export interface TransferRequestItem {
     printData?: any;
     hasTd4?: boolean;
     soCtTd4?: string;
+    hasDnx?: boolean;
+    dnxData?: any;
 }
 
 /**

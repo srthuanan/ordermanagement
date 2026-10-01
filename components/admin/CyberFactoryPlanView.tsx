@@ -375,7 +375,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 try {
                     const { data: statuses } = await supabaseAdmin
                         .from('cyber_car_status')
-                        .select('vin, has_td4, so_ct_td4, td4_data, has_dnx, so_ct_dnx')
+                        .select('vin, has_td4, so_ct_td4, td4_data, has_dnx, so_ct_dnx, dnx_data')
                         .in('vin', vins);
                     if (statuses && statuses.length > 0) {
                         const statusMap = new Map(statuses.map(s => [s.vin, s]));
@@ -384,11 +384,14 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             if (st) {
                                 item.hasTd4 = Boolean(st.has_td4 || st.so_ct_td4);
                                 item.soCtTd4 = st.so_ct_td4 || st.td4_data?.so_ct || '';
+                                item.hasDnx = Boolean(st.has_dnx || st.so_ct_dnx);
+                                item.soCtDnx = st.so_ct_dnx || st.dnx_data?.so_ct || '';
+                                item.dnxData = st.dnx_data;
                             }
                         });
                     }
                 } catch (eStatus) {
-                    console.warn('[loadPendingTransferRequests] Lỗi tra cứu status TD4:', eStatus);
+                    console.warn('[loadPendingTransferRequests] Lỗi tra cứu status TD4/DNX:', eStatus);
                 }
             }
             setPendingTransferRequests(list);
@@ -396,6 +399,65 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             console.error("Lỗi tải yêu cầu chuyển xe từ TVBH:", e);
         } finally {
             setIsLoadingTransferRequests(false);
+        }
+    };
+
+    const handleResolveTransferRequestWithExistingTicket = async (req: TransferRequestItem, ticket: any) => {
+        const soCt = ticket?.so_ct || req.soCtDnx || 'DNX';
+        try {
+            // Cập nhật lạc quan (Optimistic update) để ẩn ngay khỏi danh sách chờ
+            setPendingTransferRequests(prev => prev.filter(r => r.id !== req.id));
+            if (activeTransferRequestId === req.id) {
+                setActiveTransferRequestId(null);
+                setDnxVinInput('');
+            }
+
+            const enrichedTicket: CyberDnxPrintData = {
+                so_ct: soCt,
+                stt_rec: ticket?.stt_rec || '',
+                user_name: ticket?.user_name || dnxUserName || '02.NHANPT',
+                ma_kho_xuat: ticket?.ma_kho_xuat || req.fromWarehouse || 'K87',
+                ten_kho_xuat: ticket?.ten_kho_xuat || req.fromWarehouseName || '',
+                ma_kho_nhan: ticket?.ma_kho_nhan || req.toWarehouse || 'K83',
+                ten_kho_nhan: ticket?.ten_kho_nhan || req.toWarehouseName || '',
+                khach_hang: ticket?.ten_kh || req.customerName || '',
+                don_vi: 'Thuận An',
+                ly_do: ticket?.dien_giai || req.reason || 'Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH',
+                total_cars: 1,
+                ngay_ct: ticket?.ngay_ct || new Date().toISOString().slice(0, 10),
+                cars: [{
+                    stt_rec0: '0001',
+                    vin: req.vin || ticket?.vin || '',
+                    so_may: ticket?.so_may || '',
+                    ma_kx: ticket?.ma_kx || '',
+                    ten_kx: ticket?.ten_kx || req.carModel || '',
+                    dong_xe: ticket?.ten_kx || req.carModel || '',
+                    ma_mau: ticket?.ma_mau || '',
+                    ten_mau: ticket?.ten_mau || req.extColor || '',
+                    ma_kho_xuat: ticket?.ma_kho_xuat || req.fromWarehouse || 'K87',
+                    ma_kho_nhan: ticket?.ma_kho_nhan || req.toWarehouse || 'K83'
+                }]
+            };
+
+            await updateTransferRequestStatus(req.id, 'completed', soCt, 'Đã hoàn tất theo phiếu DNX trên CyberSoft', enrichedTicket);
+
+            if (req.vin) {
+                const toLoc = formatShortWarehouseName(req.toWarehouse || ticket?.ma_kho_nhan || 'K83') || 'Thuận An';
+                try {
+                    await supabaseAdmin.from('khoxe').update({ vi_tri: toLoc }).eq('vin', req.vin.trim().toUpperCase());
+                } catch (eKh) {
+                    console.warn('Lỗi cập nhật vị trí khoxe:', eKh);
+                }
+            }
+
+            showToast('Hoàn tất yêu cầu', `Đã xác nhận hoàn tất yêu cầu chuyển xe VIN ${req.vin} theo phiếu ${soCt}`, 'success');
+            setPrintTicketData(enrichedTicket);
+            setTimeout(() => {
+                loadPendingTransferRequests();
+            }, 800);
+        } catch (err: any) {
+            showToast('Lỗi', err.message || 'Không thể cập nhật trạng thái yêu cầu', 'error');
+            loadPendingTransferRequests();
         }
     };
 
@@ -690,6 +752,14 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         return null;
     }, [extractedVins, lookupResultInfo, recentDnxTickets, voucherTickets]);
 
+    // Tìm kiếm yêu cầu TVBH khớp với VIN hiện tại
+    const activeMatchingRequest = useMemo(() => {
+        if (!extractedVins || extractedVins.length === 0) return null;
+        return pendingTransferRequests.find(r => 
+            r.id === activeTransferRequestId || extractedVins.some(v => v === (r.vin || '').trim().toUpperCase())
+        ) || null;
+    }, [extractedVins, activeTransferRequestId, pendingTransferRequests]);
+
     // Mở modal in ấn / xem chi tiết cho phiếu đã tồn tại
     const handleOpenExistingTicketPrint = (ticket: any) => {
         if (!ticket) return;
@@ -757,9 +827,9 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             return;
         }
 
-        // CHẶN TẠO TRÙNG LẶP NẾU PHIẾU ĐÃ TỒN TẠI
+        // CHẶN TẠO TRÙNG LẶP NẾU PHIẾU ĐÃ TỒN TẠI TRÊN CYBERSOFT
         if (detectedExistingTicket) {
-            setDnxError(`Xe có số VIN ${detectedExistingTicket.vin} đã tồn tại ${detectedExistingTicket.title} số ${detectedExistingTicket.so_ct}. Hệ thống chặn tạo phiếu trùng lặp!`);
+            setDnxError(`Xe có số VIN ${detectedExistingTicket.vin} đã tồn tại ${detectedExistingTicket.title} số ${detectedExistingTicket.so_ct}. Hệ thống chặn tuyệt đối tạo phiếu trùng lặp!`);
             handleOpenExistingTicketPrint(detectedExistingTicket);
             return;
         }
@@ -784,7 +854,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             // Nếu Backend trả về cảnh báo đã tồn tại chứng từ
             if (!res.success && res.already_exists && res.existing_ticket) {
                 const ex = res.existing_ticket;
-                setDnxError(res.error || `Xe đã có phiếu số ${ex.so_ct}. Hệ thống chặn tạo trùng lặp.`);
+                setDnxError(res.error || `Xe đã có phiếu số ${ex.so_ct}. Hệ thống chặn tuyệt đối tạo trùng lặp.`);
                 handleOpenExistingTicketPrint({
                     type: ex.ticket_type || 'DNX',
                     title: ex.ticket_type === 'TD4' ? 'Phiếu Hẹn Giao Xe / Giấy Ra Cổng (TD4)' : 'Phiếu Đề Nghị Xuất Xe (DNX)',
@@ -848,18 +918,32 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 );
 
                 if (matchingReqs.length > 0) {
-                    for (const req of matchingReqs) {
-                        updateTransferRequestStatus(req.id, 'completed', res.so_ct || 'DNX', undefined, enrichedTicket);
-                    }
+                    const matchingIds = matchingReqs.map(m => m.id);
+                    setPendingTransferRequests(prev => prev.filter(r => !matchingIds.includes(r.id)));
                     if (activeTransferRequestId) {
                         setActiveTransferRequestId(null);
+                    }
+                    try {
+                        await Promise.all(
+                            matchingReqs.map(req => 
+                                updateTransferRequestStatus(req.id, 'completed', res.so_ct || 'DNX', undefined, enrichedTicket)
+                            )
+                        );
+                    } catch (eUp) {
+                        console.error('Lỗi updateTransferRequestStatus:', eUp);
                     }
                     setTimeout(() => {
                         loadPendingTransferRequests();
                     }, 1000);
                 } else if (activeTransferRequestId) {
-                    updateTransferRequestStatus(activeTransferRequestId, 'completed', res.so_ct || 'DNX', undefined, enrichedTicket);
+                    const savedId = activeTransferRequestId;
+                    setPendingTransferRequests(prev => prev.filter(r => r.id !== savedId));
                     setActiveTransferRequestId(null);
+                    try {
+                        await updateTransferRequestStatus(savedId, 'completed', res.so_ct || 'DNX', undefined, enrichedTicket);
+                    } catch (eUp) {
+                        console.error('Lỗi updateTransferRequestStatus:', eUp);
+                    }
                     setTimeout(() => {
                         loadPendingTransferRequests();
                     }, 1000);
@@ -3735,14 +3819,31 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                                     <span>Đã có TD4 {req.soCtTd4 ? `(${req.soCtTd4})` : ''}</span>
                                                                 </span>
                                                             )}
+                                                            {req.hasDnx && req.soCtDnx && (
+                                                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 flex items-center gap-1 shadow-2xs" title={`Xe đã có phiếu DNX ${req.soCtDnx} trên CyberSoft`}>
+                                                                    <i className="fas fa-check-circle text-[8.5px] text-emerald-600"></i>
+                                                                    <span>Đã có DNX ({req.soCtDnx})</span>
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <div className="text-[10px] text-slate-600 truncate flex items-center gap-1">
-                                                            <strong className="text-indigo-700">{req.fromWarehouseName || req.fromWarehouse} ➔ {req.toWarehouseName || req.toWarehouse}</strong>
+                                                            <strong className="text-indigo-700">{formatShortWarehouseName(req.fromWarehouseName || req.fromWarehouse)} ➔ {formatShortWarehouseName(req.toWarehouseName || req.toWarehouse)}</strong>
                                                             <span className="text-slate-300">•</span>
                                                             <span className="italic text-slate-500 truncate">{req.reason}</span>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-1 shrink-0">
+                                                        {req.hasDnx && req.soCtDnx && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleResolveTransferRequestWithExistingTicket(req, req.dnxData || { so_ct: req.soCtDnx })}
+                                                                className="px-2 py-0.5 rounded text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
+                                                                title="Xác nhận hoàn tất yêu cầu theo phiếu DNX đã có sẵn trên CyberSoft"
+                                                            >
+                                                                <i className="fas fa-check-double text-[8.5px]"></i>
+                                                                <span>Hoàn tất ({req.soCtDnx})</span>
+                                                            </button>
+                                                        )}
                                                         <button
                                                             type="button"
                                                             onClick={() => handleRejectTransferRequest(req)}
@@ -3900,16 +4001,46 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 
                                     {/* ⚠️ CẢNH BÁO XE ĐÃ CÓ PHIẾU */}
                                     {detectedExistingTicket && (
-                                        <div className="mt-1 p-2 bg-amber-50 border border-amber-300 rounded-lg text-xs space-y-1">
+                                        <div className="mt-1 p-2 bg-amber-50 border border-amber-300 rounded-lg text-xs space-y-1.5">
                                             <div className="flex items-center justify-between text-amber-950 font-bold text-[11px]">
                                                 <span>⚠️ Xe đã tồn tại {detectedExistingTicket.title} ({detectedExistingTicket.so_ct})</span>
                                                 <button
                                                     type="button"
                                                     onClick={() => handleOpenExistingTicketPrint(detectedExistingTicket)}
-                                                    className="px-2 py-0.5 rounded text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 flex items-center gap-1 cursor-pointer"
+                                                    className="px-2 py-0.5 rounded text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 flex items-center gap-1 cursor-pointer shrink-0"
                                                 >
                                                     <i className="fas fa-print text-[9px]"></i>
                                                     <span>Xem & In Phiếu</span>
+                                                </button>
+                                            </div>
+                                            {/* Nút hành động hoàn tất nếu khớp yêu cầu TVBH */}
+                                            {activeMatchingRequest && (
+                                                <div className="pt-1 border-t border-amber-200/80 flex items-center justify-between gap-2 flex-wrap">
+                                                    <span className="text-[10px] text-amber-900 font-medium">
+                                                        Khớp yêu cầu TVBH: <strong>{activeMatchingRequest.consultantName}</strong>
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleResolveTransferRequestWithExistingTicket(activeMatchingRequest, detectedExistingTicket)}
+                                                        className="px-2.5 py-1 rounded text-[10px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 flex items-center gap-1 shadow-xs cursor-pointer"
+                                                    >
+                                                        <i className="fas fa-check-circle text-[9.5px]"></i>
+                                                        <span>Xác nhận hoàn tất theo phiếu {detectedExistingTicket.so_ct}</span>
+                                                    </button>
+                                                </div>
+                                            )}
+                                            <div className="pt-1 border-t border-amber-200/80 flex items-center justify-between gap-2 flex-wrap">
+                                                <span className="text-[10px] text-amber-900 font-semibold flex items-center gap-1">
+                                                    <i className="fas fa-shield-alt text-amber-600"></i>
+                                                    Hệ thống chặn tạo trùng phiếu trên CyberSoft ERP
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleOpenExistingTicketPrint(detectedExistingTicket)}
+                                                    className="px-2 py-0.5 rounded text-[10px] font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 flex items-center gap-1 cursor-pointer shadow-2xs"
+                                                >
+                                                    <i className="fas fa-print text-[9px] text-slate-500"></i>
+                                                    <span>Xem / In phiếu {detectedExistingTicket.so_ct}</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -4070,7 +4201,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         disabled={isSubmittingDnx || Boolean(detectedExistingTicket)}
                                         className={`w-full min-h-[34px] py-1.5 px-3 font-bold rounded-lg text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${
                                             detectedExistingTicket
-                                                ? 'bg-slate-300 text-slate-500 cursor-not-allowed border border-slate-300'
+                                                ? 'bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300'
                                                 : 'bg-slate-900 hover:bg-slate-800 active:scale-[0.99] disabled:opacity-50 text-white cursor-pointer'
                                         }`}
                                     >
@@ -4082,7 +4213,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         ) : detectedExistingTicket ? (
                                             <>
                                                 <i className="fas fa-ban text-rose-600 text-xs"></i>
-                                                <span>Không Thể Tạo: Xe Đã Có Phiếu {detectedExistingTicket.so_ct}</span>
+                                                <span>Không Thể Tạo Trùng: Xe Đã Có Phiếu {detectedExistingTicket.so_ct}</span>
                                             </>
                                         ) : (
                                             <>

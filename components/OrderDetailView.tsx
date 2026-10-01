@@ -23,6 +23,7 @@ import { CyberTd4PrintModal } from './admin/CyberTd4PrintModal';
 import { CyberVoucherTicketItem } from '../services/api/stockService';
 import MarqueeText from './ui/MarqueeText';
 import { downloadDeliveryNoticeDocx } from '../services/deliveryNoticeService';
+import { formatShortWarehouseName } from '../utils/stringUtils';
 
 moment.locale('vi');
 
@@ -94,37 +95,18 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     const [selectedPolicyNames, setSelectedPolicyNames] = useState<string[]>([]);
     const [showOnlyMatchModel, setShowOnlyMatchModel] = useState(true);
 
-    // Hàm rút gọn tên kho trực quan
+    // Hàm rút gọn tên kho chuẩn toàn hệ thống (chỉ tên ngắn gọn, không kèm mã)
     const shortenWarehouseName = (code?: string, fullName?: string): string => {
-        const raw = (fullName || code || '').trim();
-        if (!raw) return 'Chưa xác định';
-        let name = raw;
-        name = name.replace(/^[A-Za-z0-9._-]+\s*[-:]\s*/i, '');
-        name = name
-            .replace(/Kho\s+(xe\s+)?(ô\s+tô\s+)?/gi, '')
-            .replace(/VinFast\s+/gi, '')
-            .replace(/Vinfast\s+/gi, '')
-            .replace(/\s*-\s*TPHCM/gi, ' (HCM)')
-            .replace(/\s*-\s*HCM/gi, ' (HCM)')
-            .trim();
-
-        const c = (code || '').trim();
-        if (!c) return name;
-        if (c === 'K83') return 'K83 - Thuận An';
-        if (c === 'K87') return 'K87 - QL13 (HCM)';
-        if (c === 'K86') return 'K86 - Q12 (HCM)';
-        if (c === 'K85') return 'K85 - Dĩ An';
-        if (c === 'KHCM.PVD') return 'PVD - Phạm Văn Đồng';
-        return `${c} - ${name}`;
+        return formatShortWarehouseName(fullName || code || '');
     };
 
     // Inline Transfer Request States
     const [transferRequest, setTransferRequest] = useState<TransferRequestItem | null>(null);
     const [isLoadingTransferReq, setIsLoadingTransferReq] = useState(false);
     const [transferFromWarehouse, setTransferFromWarehouse] = useState('K87');
-    const [transferFromWarehouseName, setTransferFromWarehouseName] = useState('K87 - QL13 (HCM)');
+    const [transferFromWarehouseName, setTransferFromWarehouseName] = useState('QL13 (HCM)');
     const transferToWarehouse = 'K83';
-    const transferToWarehouseName = 'K83 - Thuận An';
+    const transferToWarehouseName = 'Thuận An';
     const [transferReason, setTransferReason] = useState('Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH');
     const [customTransferReason, setCustomTransferReason] = useState('');
     const [transferNote, setTransferNote] = useState('');
@@ -256,6 +238,67 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             (resolvedOrder as any)?.td4
         );
     }, [hasTd4, cyberCarStatus, resolvedOrder]);
+
+    // Trạng thái xe đã có phiếu ĐNX trên CyberSoft hoặc đã hoàn tất
+    const hasExistingDnx = useMemo(() => {
+        return Boolean(
+            cyberCarStatus?.has_dnx ||
+            cyberCarStatus?.so_ct_dnx ||
+            cyberCarStatus?.dnx_data ||
+            (transferRequest && transferRequest.status === 'completed' && transferRequest.soCtDnx)
+        );
+    }, [cyberCarStatus, transferRequest]);
+
+    // Trạng thái xe đã có phiếu TD4 trên CyberSoft
+    const hasExistingTd4 = useMemo(() => {
+        return Boolean(
+            hasTd4 ||
+            cyberCarStatus?.has_td4 ||
+            cyberCarStatus?.so_ct_td4 ||
+            cyberCarStatus?.td4_data ||
+            hasTd4Effective
+        );
+    }, [hasTd4, cyberCarStatus, hasTd4Effective]);
+
+    // Kiểm tra xe đã ở sẵn kho Thuận An hay chưa (K83)
+    const isCarAlreadyAtThuanAn = useMemo(() => {
+        const whCode = (
+            transferFromWarehouse ||
+            cyberCarStatus?.ma_kho ||
+            matchedStockVehicle?.['ma_kho'] ||
+            (resolvedOrder as any)?.['ma_kho'] ||
+            ''
+        ).toString().trim().toUpperCase();
+
+        if (whCode === 'K83') return true;
+
+        const locCandidates = [
+            currentCarLocation,
+            transferFromWarehouseName,
+            matchedStockVehicle?.['Vị trí'],
+            matchedStockVehicle?.['vi_tri'],
+            (resolvedOrder as any)?.['Vị trí'],
+            (resolvedOrder as any)?.['vi_tri'],
+            cyberCarStatus?.current_physical_warehouse,
+            cyberCarStatus?.current_location,
+            cyberCarStatus?.ten_kho,
+        ];
+
+        for (const raw of locCandidates) {
+            if (!raw) continue;
+            const s = String(raw).trim().toLowerCase();
+            if (
+                s.includes('thuận an') ||
+                s.includes('thuan an') ||
+                s === 'k83' ||
+                s.startsWith('k83 ') ||
+                s.startsWith('k83-')
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }, [transferFromWarehouse, transferFromWarehouseName, cyberCarStatus, matchedStockVehicle, resolvedOrder, currentCarLocation]);
 
     // Kiểm tra xe có ở kho thực tế hay chưa (phải có kho/vị trí cụ thể và không phải đang vận tải)
     const isCarInWarehouse = useMemo(() => {
@@ -643,17 +686,22 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     };
 
     const handleOpenTransferMode = async () => {
-        if (hasTd4Effective) {
-            showToast?.('Không thể chuyển xe', 'Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng. Hệ thống chặn yêu cầu chuyển xe.', 'warning');
+        if (hasExistingTd4) {
+            showToast?.('Không thể chuyển xe', 'Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng trên CyberSoft. Không thể yêu cầu điều chuyển.', 'warning');
+            handleOpenPrintTd4();
             return;
         }
-        if (!isCarInWarehouse) {
-            showToast?.('Xe chưa ở kho', `Xe đang có vị trí "${currentCarLocation || 'Chưa về kho'}" (chưa ở kho thực tế). Chỉ xe có ở kho mới có thể điều chuyển.`, 'warning');
-            return;
-        }
-        if (cyberCarStatus?.has_dnx || transferRequest?.status === 'completed') {
-            showToast?.('Đã có phiếu xuất xe', `Xe đã có Phiếu Đề Nghị Xuất Xe (${transferRequest?.soCtDnx || cyberCarStatus?.dnx_data?.so_ct || 'DNX'}).`, 'info');
+        if (hasExistingDnx) {
+            showToast?.('Đã có phiếu xuất xe', `Xe đã có Phiếu Đề Nghị Xuất Xe (${transferRequest?.soCtDnx || cyberCarStatus?.so_ct_dnx || cyberCarStatus?.dnx_data?.so_ct || 'DNX'}) trên CyberSoft.`, 'info');
             handleOpenPrintDnx();
+            return;
+        }
+        if (isCarAlreadyAtThuanAn) {
+            showToast?.('Xe đã ở Thuận An', 'Xe hiện đã có mặt tại kho Thuận An (K83). Không cần tạo yêu cầu điều chuyển.', 'info');
+            return;
+        }
+        if (isCarInTransit || !isCarInWarehouse) {
+            showToast?.('Xe chưa ở kho', `Xe đang có vị trí "${currentCarLocation || 'Chưa về kho'}" (chưa ở kho thực tế). Chỉ xe đã về kho thực tế mới có thể điều chuyển.`, 'warning');
             return;
         }
 
@@ -661,31 +709,34 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         if (vin) {
             setIsDetectingWarehouse(true);
             try {
-                // Thử lấy từ cache Supabase trước (< 50ms)
-                const cached = await getCyberCarStatusFromSupabase(vin);
-                if (cached) {
-                    if (cached.has_td4) {
+                // Kiểm tra trực tiếp thời gian thực trên CyberSoft (< 500ms)
+                const res = await lookupCyberVinWarehouse([vin]);
+                if (res && res.success) {
+                    const car = res.cars?.[0] || res;
+                    if (car.has_td4 || car.td4) {
                         setHasTd4(true);
-                        showToast?.('Không thể chuyển xe', `Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${cached.so_ct_td4 || cached.td4_data?.so_ct || 'TD4'}). Không thể điều chuyển.`, 'warning');
+                        showToast?.('Không thể chuyển xe', `Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${car.td4?.so_ct || 'TD4'}) trên CyberSoft.`, 'warning');
+                        handleOpenPrintTd4();
                         return;
                     }
-                    if (!transferRequest && cached.ma_kho) {
-                        setTransferFromWarehouse(cached.ma_kho);
-                        setTransferFromWarehouseName(shortenWarehouseName(cached.ma_kho, cached.ten_kho));
+                    if (car.has_dnx || car.dnx) {
+                        const dnxInfo = car.dnx;
+                        showToast?.('Đã có phiếu xuất xe', `Xe đã có Phiếu Đề Nghị Xuất Xe (${dnxInfo?.so_ct || 'DNX'}) trên CyberSoft.`, 'info');
+                        handleOpenPrintDnx();
+                        return;
                     }
-                } else {
-                    const res = await lookupCyberVinWarehouse([vin]);
-                    if (res && res.success) {
-                        const car = res.cars?.[0] || res;
-                        if (car.has_td4 || car.td4) {
-                            setHasTd4(true);
-                            showToast?.('Không thể chuyển xe', `Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${car.td4?.so_ct || 'TD4'}). Không thể điều chuyển.`, 'warning');
-                            return;
-                        }
-                        if (!transferRequest && res.found && res.ma_kho) {
-                            setTransferFromWarehouse(res.ma_kho);
-                            setTransferFromWarehouseName(shortenWarehouseName(res.ma_kho, res.ten_kho));
-                        }
+                    const detectedMk = res.ma_kho || car.ma_kho;
+                    if (detectedMk === 'K83') {
+                        showToast?.('Xe đã ở Thuận An', 'Xe hiện đã có mặt tại kho Thuận An (K83). Không cần tạo yêu cầu điều chuyển.', 'info');
+                        return;
+                    }
+                    if (!detectedMk || res.ten_kho === 'Đang vận tải') {
+                        showToast?.('Xe chưa về kho', `Xe đang ở trạng thái "${res.ten_kho || 'Đang vận tải'}". Chỉ xe đã về kho thực tế mới có thể điều chuyển.`, 'warning');
+                        return;
+                    }
+                    if (!transferRequest && detectedMk) {
+                        setTransferFromWarehouse(detectedMk);
+                        setTransferFromWarehouseName(shortenWarehouseName(detectedMk, res.ten_kho || car.ten_kho));
                     }
                 }
             } catch (e) {
@@ -704,30 +755,65 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         const tvbh = resolvedOrder?.['Tên tư vấn bán hàng'] || (resolvedOrder as any)?.['TVBH'] || '';
         const finalReason = transferReason === 'Khác' ? (customTransferReason.trim() || 'Điều chuyển xe nội bộ') : transferReason;
 
-        if (hasTd4 || cyberCarStatus?.has_td4) {
-            showToast?.('Không thể chuyển xe', 'Xe đã có Phiếu Giao Xe / Giấy Ra Cổng. Hệ thống chặn tạo yêu cầu điều chuyển.', 'warning');
-            handleOpenPrintTd4();
-            return;
-        }
-
-        if (cyberCarStatus?.has_dnx || (transferRequest && transferRequest.status === 'completed')) {
-            showToast?.('Đã có phiếu xuất xe', 'Xe đã có Phiếu Đề Nghị Xuất Xe hoàn tất.', 'info');
-            handleOpenPrintDnx();
-            return;
-        }
-
-        if (isCarInTransit) {
-            showToast?.('Xe đang vận tải', `Xe đang có vị trí "${currentCarLocation || 'Đang vận tải'}" (chưa về kho thực tế). Không thể yêu cầu điều chuyển.`, 'warning');
-            return;
-        }
-
         if (!vin || !orderNo) {
             showToast?.('Thiếu thông tin', 'Đơn hàng chưa có số VIN để yêu cầu chuyển xe.', 'warning');
             return;
         }
 
+        if (hasExistingTd4) {
+            showToast?.('Không thể chuyển xe', 'Xe đã có Phiếu Giao Xe / Giấy Ra Cổng trên CyberSoft. Không thể tạo yêu cầu điều chuyển.', 'warning');
+            handleOpenPrintTd4();
+            return;
+        }
+
+        if (hasExistingDnx) {
+            showToast?.('Đã có phiếu xuất xe', `Xe đã có Phiếu Đề Nghị Xuất Xe hoàn tất trên CyberSoft (${transferRequest?.soCtDnx || cyberCarStatus?.so_ct_dnx || 'DNX'}).`, 'info');
+            handleOpenPrintDnx();
+            return;
+        }
+
+        if (isCarAlreadyAtThuanAn) {
+            showToast?.('Xe đã ở Thuận An', 'Xe hiện đã có mặt tại kho Thuận An (K83). Không cần tạo yêu cầu điều chuyển.', 'info');
+            return;
+        }
+
+        if (isCarInTransit || !isCarInWarehouse) {
+            showToast?.('Xe đang vận tải', `Xe đang có vị trí "${currentCarLocation || 'Đang vận tải'}" (chưa về kho thực tế). Không thể yêu cầu điều chuyển.`, 'warning');
+            return;
+        }
+
         setIsSubmittingTransfer(true);
         try {
+            // Kiểm tra thời gian thực lần cuối trực tiếp trên CyberSoft
+            try {
+                const checkCyber = await lookupCyberVinWarehouse([vin]);
+                if (checkCyber && checkCyber.success) {
+                    const car = checkCyber.cars?.[0] || checkCyber;
+                    if (car.has_td4 || car.td4) {
+                        setHasTd4(true);
+                        showToast?.('Không thể chuyển xe', `Xe đã có Phiếu Hẹn Giao Xe / Giấy Ra Cổng (${car.td4?.so_ct || 'TD4'}) trên CyberSoft. Hệ thống chặn gửi yêu cầu.`, 'warning');
+                        handleOpenPrintTd4();
+                        return;
+                    }
+                    if (car.has_dnx || car.dnx) {
+                        showToast?.('Đã có phiếu xuất xe', `Xe đã có Phiếu Đề Nghị Xuất Xe (${car.dnx?.so_ct || 'DNX'}) trên CyberSoft. Hệ thống chặn gửi yêu cầu.`, 'info');
+                        handleOpenPrintDnx();
+                        return;
+                    }
+                    const checkMk = checkCyber.ma_kho || car.ma_kho;
+                    if (checkMk === 'K83') {
+                        showToast?.('Xe đã ở Thuận An', 'Xe hiện đã có mặt tại kho Thuận An (K83). Không cần tạo yêu cầu điều chuyển.', 'info');
+                        return;
+                    }
+                    if (!checkMk || checkCyber.ten_kho === 'Đang vận tải') {
+                        showToast?.('Xe chưa về kho', `Xe đang ở trạng thái "${checkCyber.ten_kho || 'Đang vận tải'}". Chỉ xe đã về kho thực tế mới có thể điều chuyển.`, 'warning');
+                        return;
+                    }
+                }
+            } catch (eCheck) {
+                console.warn("Lỗi kiểm tra CyberSoft trước khi gửi yêu cầu:", eCheck);
+            }
+
             const res = await createTransferRequest({
                 orderNumber: orderNo,
                 vin: vin,
@@ -1674,10 +1760,63 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
                             {/* Thân biểu mẫu tinh gọn, không rối */}
                             <div className="flex-1 flex flex-col justify-center py-3 space-y-3 min-h-0 overflow-y-auto">
-                                {isCarInTransit && (
-                                    <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2">
-                                        <i className="fas fa-truck text-amber-600 shrink-0"></i>
-                                        <span>Xe đang có vị trí <strong>{currentCarLocation || 'Đang vận tải'}</strong> (chưa về kho thực tế). Chỉ có xe có vị trí thực tế mới có thể điều chuyển.</span>
+                                {isCarAlreadyAtThuanAn && (
+                                    <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center gap-2">
+                                        <i className="fas fa-check-circle text-emerald-600 shrink-0 text-sm"></i>
+                                        <div>
+                                            <span className="font-bold">Xe đã có mặt tại kho Thuận An (K83)</span>
+                                            <p className="text-[11px] text-emerald-700 mt-0.5">Xe hiện đã ở tại kho đích Thuận An, không cần tạo thêm yêu cầu điều chuyển.</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {hasExistingDnx && (
+                                    <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <i className="fas fa-file-invoice text-blue-600 shrink-0 text-sm"></i>
+                                            <div className="min-w-0">
+                                                <span className="font-bold">Xe đã có Phiếu Đề Nghị Xuất Xe: {transferRequest?.soCtDnx || cyberCarStatus?.so_ct_dnx || cyberCarStatus?.dnx_data?.so_ct || 'DNX'}</span>
+                                                <p className="text-[11px] text-blue-700 mt-0.5">Phiếu đã được tạo trên hệ thống CyberSoft ERP. Hệ thống chặn tạo yêu cầu trùng lặp.</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleOpenPrintDnx}
+                                            className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[11px] shrink-0 flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <i className="fas fa-print"></i>
+                                            <span>In Phiếu</span>
+                                        </button>
+                                    </div>
+                                )}
+
+                                {hasExistingTd4 && (
+                                    <div className="p-2.5 bg-violet-50 border border-violet-200 rounded-xl text-xs text-violet-900 flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <i className="fas fa-id-card text-violet-600 shrink-0 text-sm"></i>
+                                            <div className="min-w-0">
+                                                <span className="font-bold">Xe đã có Phiếu Hẹn Giao Xe / Ra Cổng: {printTd4Data?.so_ct || cyberCarStatus?.so_ct_td4 || 'TD4'}</span>
+                                                <p className="text-[11px] text-violet-700 mt-0.5">Xe đã được lập thủ tục giao xe cho khách hàng, không thể tạo yêu cầu điều chuyển.</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleOpenPrintTd4}
+                                            className="px-2.5 py-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-bold text-[11px] shrink-0 flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <i className="fas fa-print"></i>
+                                            <span>Xem TD4</span>
+                                        </button>
+                                    </div>
+                                )}
+
+                                {(isCarInTransit || !isCarInWarehouse) && !isCarAlreadyAtThuanAn && !hasExistingDnx && !hasExistingTd4 && (
+                                    <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2">
+                                        <i className="fas fa-truck text-amber-600 shrink-0 text-sm"></i>
+                                        <div>
+                                            <span className="font-bold">Xe chưa về kho thực tế</span>
+                                            <p className="text-[11px] text-amber-800 mt-0.5">Xe đang có vị trí "{currentCarLocation || 'Đang vận tải'}". Chỉ xe đã về kho thực tế mới có thể điều chuyển.</p>
+                                        </div>
                                     </div>
                                 )}
                                 {/* Dải VIN & Khách hàng */}
@@ -1706,7 +1845,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                     <i className="fas fa-spinner fa-spin text-[10px]"></i> Đang kiểm tra kho...
                                                 </span>
                                             ) : (
-                                                shortenWarehouseName(transferFromWarehouse, transferFromWarehouseName) || 'K87 - QL13 (HCM)'
+                                                shortenWarehouseName(transferFromWarehouse, transferFromWarehouseName) || 'QL13 (HCM)'
                                             )}
                                         </div>
                                     </div>
@@ -1718,7 +1857,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     <div className="flex-1 min-w-0 text-right">
                                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">Kho nhận (Đích đến)</span>
                                         <div className="font-bold text-xs text-indigo-700 truncate">
-                                            K83 - Thuận An
+                                            Thuận An
                                         </div>
                                     </div>
                                 </div>
@@ -1857,16 +1996,16 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     >
                                         Đóng
                                     </button>
-                                    {hasTd4 ? (
+                                    {hasExistingTd4 ? (
                                         <button
                                             type="button"
                                             onClick={handleOpenPrintTd4}
                                             className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-violet-700 hover:bg-violet-800 shadow-md flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all"
                                         >
                                             <i className="fas fa-file-invoice text-xs"></i>
-                                            <span>Xem Phiếu Giao Xe ({printTd4Data?.so_ct || 'TD4'})</span>
+                                            <span>Xem Phiếu Giao Xe ({printTd4Data?.so_ct || cyberCarStatus?.so_ct_td4 || 'TD4'})</span>
                                         </button>
-                                    ) : transferRequest && transferRequest.status === 'completed' ? (
+                                    ) : (transferRequest && transferRequest.status === 'completed') || hasExistingDnx ? (
                                         <button
                                             type="button"
                                             onClick={handleOpenPrintDnx}
@@ -1874,17 +2013,22 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             title="Xem và in phiếu Đề Nghị Xuất Xe (DNX)"
                                         >
                                             <i className="fas fa-print text-xs"></i>
-                                            <span>In Phiếu DNX ({transferRequest.soCtDnx || 'DNX'})</span>
+                                            <span>In Phiếu DNX ({transferRequest?.soCtDnx || cyberCarStatus?.so_ct_dnx || 'DNX'})</span>
                                         </button>
                                     ) : transferRequest && transferRequest.status === 'pending' ? (
                                         <div className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200">
                                             <i className="fas fa-clock text-amber-600"></i>
                                             <span>Đang chờ Admin duyệt</span>
                                         </div>
-                                    ) : isCarInTransit ? (
-                                        <div className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200" title="Xe đang ở vị trí 'Đang vận tải'. Chỉ xe đã về kho thực tế mới có thể điều chuyển.">
+                                    ) : isCarAlreadyAtThuanAn ? (
+                                        <div className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 select-none">
+                                            <i className="fas fa-check-circle text-emerald-600"></i>
+                                            <span>Xe Đã Ở Kho Thuận An</span>
+                                        </div>
+                                    ) : (isCarInTransit || !isCarInWarehouse) ? (
+                                        <div className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200 select-none" title="Xe đang ở vị trí 'Đang vận tải' hoặc chưa nhập kho thực tế">
                                             <i className="fas fa-truck text-amber-600"></i>
-                                            <span>Đang vận tải — Không thể điều chuyển</span>
+                                            <span>Chưa Về Kho — Không Thể Chuyển</span>
                                         </div>
                                     ) : (
                                         <button
@@ -2477,6 +2621,14 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     <i className="fas fa-print text-[10px] text-slate-400"></i>
                                     <span>In Phiếu DNX</span>
                                 </button>
+                            ) : isCarAlreadyAtThuanAn ? (
+                                <div 
+                                    className="h-8 px-3.5 inline-flex items-center gap-1.5 text-emerald-800 bg-emerald-50/80 font-medium text-xs shrink-0 cursor-default select-none"
+                                    title="Xe hiện đã có mặt tại kho Thuận An (K83). Không cần điều chuyển."
+                                >
+                                    <i className="fas fa-check-circle text-[10px] text-emerald-600"></i>
+                                    <span>Đã ở Thuận An</span>
+                                </div>
                             ) : (
                                 <button
                                     type="button"

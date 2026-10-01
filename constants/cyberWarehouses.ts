@@ -1,3 +1,5 @@
+import { formatShortWarehouseName } from '../utils/stringUtils';
+
 // Danh sách kho xe ô tô trên CyberSoft (Dmkho)
 export interface CyberWarehouseItem {
     id: string;
@@ -8,7 +10,7 @@ export interface CyberWarehouseItem {
 }
 
 // 1. Kho xe ô tô & showroom kinh doanh trọng điểm (Thường dùng tại Miền Nam & Hệ thống chính)
-export const CYBER_POPULAR_WAREHOUSES: CyberWarehouseItem[] = [
+const RAW_POPULAR_WAREHOUSES: CyberWarehouseItem[] = [
     {
         id: "K83",
         name: "K83 – Kho xe ô tô Thuận An",
@@ -89,7 +91,7 @@ export const CYBER_POPULAR_WAREHOUSES: CyberWarehouseItem[] = [
 ];
 
 // 2. Các kho xe ô tô khác thuộc hệ thống toàn quốc trên CyberSoft
-export const CYBER_OTHER_WAREHOUSES: CyberWarehouseItem[] = [
+const RAW_OTHER_WAREHOUSES: CyberWarehouseItem[] = [
     {
         id: "K00",
         name: "K00 – Kho xe ô tô Tổng công ty",
@@ -322,6 +324,25 @@ export const CYBER_OTHER_WAREHOUSES: CyberWarehouseItem[] = [
         isPopular: false
     }
 ];
+
+// Chuẩn hóa tên kho toàn hệ thống: Chỉ dùng tên ngắn gọn, không kèm mã
+export const CYBER_POPULAR_WAREHOUSES: CyberWarehouseItem[] = RAW_POPULAR_WAREHOUSES.map(w => {
+    const clean = formatShortWarehouseName(w.id) || formatShortWarehouseName(w.shortName || w.name);
+    return {
+        ...w,
+        name: clean,
+        shortName: clean
+    };
+});
+
+export const CYBER_OTHER_WAREHOUSES: CyberWarehouseItem[] = RAW_OTHER_WAREHOUSES.map(w => {
+    const clean = formatShortWarehouseName(w.id) || formatShortWarehouseName(w.shortName || w.name);
+    return {
+        ...w,
+        name: clean,
+        shortName: clean
+    };
+});
 
 // 3. TOÀN BỘ DANH SÁCH KHO XE Ô TÔ TRÊN CYBERSOFT (Đầy đủ 44 kho xe thực tế)
 export const CYBER_ALL_WAREHOUSES: CyberWarehouseItem[] = [
