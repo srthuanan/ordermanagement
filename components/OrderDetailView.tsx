@@ -163,21 +163,24 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
     // Xác định vị trí kho hiện tại của xe (từ kho xe nội bộ hoặc CyberSoft)
     const currentCarLocation = useMemo(() => {
+        // Đơn hàng chưa ghép xe (chưa có số khung VIN) thì không có xe thực tế để xác định vị trí kho
+        if (!resolvedOrder?.VIN || !resolvedOrder.VIN.trim()) return '';
+
         const rawLoc = (
             matchedStockVehicle?.['Vị trí'] ||
             matchedStockVehicle?.['vi_tri'] ||
             matchedStockVehicle?.['Kho'] ||
             matchedStockVehicle?.['Kho xe'] ||
-            (resolvedOrder as any)?.['Vị trí'] ||
-            (resolvedOrder as any)?.['vi_tri'] ||
-            (resolvedOrder as any)?.['Kho'] ||
             cyberCarStatus?.current_physical_warehouse ||
             cyberCarStatus?.current_location ||
             cyberCarStatus?.ten_kho ||
+            (resolvedOrder as any)?.['Vị trí'] ||
+            (resolvedOrder as any)?.['vi_tri'] ||
+            (resolvedOrder as any)?.['Kho'] ||
             ''
         );
         return String(rawLoc || '').trim();
-    }, [matchedStockVehicle, resolvedOrder, cyberCarStatus]);
+    }, [resolvedOrder?.VIN, matchedStockVehicle, resolvedOrder, cyberCarStatus]);
 
     // Kiểm tra xe có đang ở vị trí "Đang vận tải" hay không (chưa về kho thực tế)
     const isCarInTransit = useMemo(() => {
@@ -371,9 +374,16 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         }
     }, [resolvedOrder?.['Số đơn hàng'], fetchAuditLogs]);
 
-    // Reset inline mode when switching to a different order hoặc khi xe có TD4 / không ở kho
+    // Reset inline mode & stale vehicle data when switching to a different order
     useEffect(() => {
         setInlineMode('VIEW');
+        setCyberCarStatus(null);
+        setTransferRequest(null);
+        setTransferFromWarehouse('');
+        setTransferFromWarehouseName('');
+        setPrintDnxData(null);
+        setPrintTd4Data(null);
+        setHasTd4(false);
     }, [order?.['Số đơn hàng']]);
 
     useEffect(() => {
@@ -611,6 +621,11 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             };
         } else {
             setTransferRequest(null);
+            setCyberCarStatus(null);
+            setTransferFromWarehouse('');
+            setTransferFromWarehouseName('');
+            setPrintDnxData(null);
+            setPrintTd4Data(null);
         }
     }, [resolvedOrder?.['Số đơn hàng'], resolvedOrder?.VIN]);
 
@@ -2090,7 +2105,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                         <div className="text-center">
                                             <p className="text-[8.5px] md:text-[9.5px] font-bold text-sky-300/90 uppercase tracking-[0.2em] md:tracking-[0.25em] mb-1 md:mb-1.5 flex items-center justify-center gap-1.5 flex-wrap">
                                                 <i className="fas fa-barcode text-[11px] md:text-xs text-sky-400"></i> Số Khung (VIN)
-                                                {currentCarLocation && (
+                                                {resolvedOrder?.VIN && currentCarLocation && (
                                                     <span className={`ml-1.5 px-2 py-0.5 rounded-full text-[8px] md:text-[8.5px] tracking-normal font-bold normal-case flex items-center gap-1 shadow-sm ${
                                                         isCarInTransit 
                                                             ? 'bg-amber-500/25 text-amber-200 border border-amber-400/40' 
