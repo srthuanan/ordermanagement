@@ -1661,6 +1661,85 @@ export const deleteCyberXepXe = async (params: { ma_hd: string; stt_rec: string;
     }
 };
 
+/**
+ * Duyệt hợp đồng trên CyberSoft ERP (chuyển Ma_Post từ 2 sang 3 - Màu vàng / Chờ ghép SK)
+ * Không ghi nhận người duyệt trên Cyber (không insert HistoryVoucher, không đổi user_id/Ky_HD).
+ */
+export const approveCyberContract = async (params: { stt_rec: string; ma_hd?: string; reason?: string; admin_user?: string }): Promise<CyberXepXeActionResult> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/approve-contract');
+        let response: Response | null = null;
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    lastErrorMsg = errJson.error || `HTTP ${res.status}`;
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        if (!response) throw new Error(lastErrorMsg || 'Không thể kết nối máy chủ duyệt hợp đồng.');
+        return await response.json();
+    } catch (err: any) {
+        console.error("Lỗi approveCyberContract:", err);
+        return {
+            success: false,
+            error: err.message || 'Lỗi khi duyệt hợp đồng trên CyberSoft.'
+        };
+    }
+};
+
+/**
+ * Hoàn tác duyệt hợp đồng trên CyberSoft ERP (chuyển Ma_Post từ 3 về lại 2 - Màu xanh / Chờ duyệt)
+ */
+export const revokeCyberContractApproval = async (params: { stt_rec: string; ma_hd?: string; reason?: string; admin_user?: string }): Promise<CyberXepXeActionResult> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/revoke-contract-approval');
+        let response: Response | null = null;
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const errJson = await res.json().catch(() => ({}));
+                    lastErrorMsg = errJson.error || `HTTP ${res.status}`;
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+
+        if (!response) throw new Error(lastErrorMsg || 'Không thể kết nối máy chủ hoàn tác duyệt hợp đồng.');
+        return await response.json();
+    } catch (err: any) {
+        console.error("Lỗi revokeCyberContractApproval:", err);
+        return {
+            success: false,
+            error: err.message || 'Lỗi khi hoàn tác duyệt hợp đồng trên CyberSoft.'
+        };
+    }
+};
+
 export interface CyberDnxCreateParams {
     vins: string[];
     ma_kho_xuat?: string;

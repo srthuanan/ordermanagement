@@ -198,6 +198,28 @@ function cyberSyncPlugin(): Plugin {
         });
       });
 
+      server.middlewares.use('/api/cyber/approve-contract', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          runPy([scriptPath, '--approve-contract'], body, res, undefined, false, success => {
+            if (success) invalidateCache();
+          });
+        });
+      });
+
+      server.middlewares.use('/api/cyber/revoke-contract-approval', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          runPy([scriptPath, '--revoke-contract-approval'], body, res, undefined, false, success => {
+            if (success) invalidateCache();
+          });
+        });
+      });
+
       server.middlewares.use('/api/cyber/create-dnx', (req, res, next) => {
         if (req.method !== 'POST') return next();
         let body = '';

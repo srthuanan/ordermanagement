@@ -1754,6 +1754,227 @@ def delete_cyber_xep_xe(params: dict = {}) -> dict:
             "msg": msg
         }
 
+def approve_cyber_contract(params: dict = {}) -> dict:
+    """
+    Duyệt hợp đồng Cyber bán xe (chuyển Ma_Post từ '2' sang '3' - Màu vàng / Chờ ghép SK).
+    Không ghi nhận người duyệt trên Cyber (không insert HistoryVoucher, không đổi user_id/Ky_HD).
+    """
+    stt_rec = (params.get("stt_rec") or "").strip()
+    ma_hd = (params.get("ma_hd") or "").strip()
+    reason = (params.get("reason") or "Admin duyệt hợp đồng").strip()
+    admin_user = (params.get("admin_user") or "").strip()
+
+    if not stt_rec:
+        return {"success": False, "error": "Thiếu stt_rec của hợp đồng"}
+
+    conn = None
+    try:
+        is_pymssql = True
+        try:
+            import pymssql
+            conn = pymssql.connect(
+                server='SQLVanDao.Cybersoft.com.vn',
+                port=7521,
+                user='cyber_vandao',
+                password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+                database='CyberAppGolden_VanDao',
+                timeout=25,
+                appname='CyberAppGolden',
+                autocommit=True
+            )
+        except Exception:
+            import pyodbc
+            conn = pyodbc.connect(CYBER_CONN, timeout=25)
+            is_pymssql = False
+
+        c = conn.cursor()
+        ph = "%s" if is_pymssql else "?"
+
+        c.execute("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;")
+
+        # Kiểm tra sự tồn tại và trạng thái hiện tại của hợp đồng
+        sql_check = f"""
+            SELECT TOP 1 stt_rec, so_ct, Ma_HD_H, Ma_Post, Huy, Ten_kh
+            FROM dbo.PHHDX WITH (NOLOCK)
+            WHERE stt_rec = {ph};
+        """
+        c.execute(sql_check, (stt_rec,))
+        row = c.fetchone()
+        if not row:
+            return {"success": False, "error": f"Không tìm thấy hợp đồng có stt_rec: {stt_rec}"}
+
+        cols = [d[0] for d in c.description]
+        rec = dict(zip(cols, row))
+        current_post = str(rec.get("Ma_Post") or "").strip()
+        is_huy = int(rec.get("Huy") or 0)
+        ma_hd_h = (rec.get("Ma_HD_H") or ma_hd).strip()
+        so_ct = (rec.get("so_ct") or ma_hd).strip()
+
+        if is_huy == 1 or current_post == '1':
+            return {"success": False, "error": f"Hợp đồng {so_ct} đã bị hủy, không thể duyệt!"}
+
+        if current_post == '3':
+            return {
+                "success": True,
+                "message": f"Hợp đồng {so_ct} đã ở trạng thái Đã duyệt (Màu vàng / Ma_Post = 3)",
+                "stt_rec": stt_rec,
+                "so_ct": so_ct,
+                "ma_post": current_post
+            }
+
+        if current_post in ('7', '8', '9'):
+            return {
+                "success": True,
+                "message": f"Hợp đồng {so_ct} đã ở trạng thái tiến trình cao hơn (Ma_Post = {current_post})",
+                "stt_rec": stt_rec,
+                "so_ct": so_ct,
+                "ma_post": current_post
+            }
+
+        # Cập nhật Ma_Post = '3' trên cả PHHDX và CT70HDX
+        sql_update_ph = f"UPDATE dbo.PHHDX SET Ma_Post = '3' WHERE stt_rec = {ph};"
+        sql_update_ct = f"UPDATE dbo.CT70HDX SET Ma_Post = '3' WHERE stt_rec = {ph};"
+        c.execute(sql_update_ph, (stt_rec,))
+        c.execute(sql_update_ct, (stt_rec,))
+
+        # Đồng bộ phiếu phụ kiện nếu có
+        if ma_hd_h:
+            sql_update_pk = f"UPDATE dbo.PHPPK SET Ma_Post = '5' WHERE ma_HD_H = {ph} AND Ma_Post = '3';"
+            c.execute(sql_update_pk, (ma_hd_h,))
+
+        return {
+            "success": True,
+            "message": f"Duyệt hợp đồng {so_ct} thành công! Trạng thái đã chuyển sang Màu vàng (Chờ ghép SK).",
+            "stt_rec": stt_rec,
+            "so_ct": so_ct,
+            "ma_post": "3",
+            "reason": reason,
+            "admin_user": admin_user
+        }
+    except Exception as e:
+        return {"success": False, "error": f"Lỗi duyệt hợp đồng Cyber: {str(e)}"}
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+
+def revoke_cyber_contract_approval(params: dict = {}) -> dict:
+    """
+    Hoàn tác duyệt hợp đồng Cyber bán xe (chuyển Ma_Post từ '3' về lại '2' - Màu xanh / Chờ duyệt).
+    Chỉ cho phép khi hợp đồng chưa được ghép số khung hoặc xuất hóa đơn.
+    """
+    stt_rec = (params.get("stt_rec") or "").strip()
+    ma_hd = (params.get("ma_hd") or "").strip()
+    reason = (params.get("reason") or "Admin hoàn tác duyệt hợp đồng").strip()
+    admin_user = (params.get("admin_user") or "").strip()
+
+    if not stt_rec:
+        return {"success": False, "error": "Thiếu stt_rec của hợp đồng"}
+
+    conn = None
+    try:
+        is_pymssql = True
+        try:
+            import pymssql
+            conn = pymssql.connect(
+                server='SQLVanDao.Cybersoft.com.vn',
+                port=7521,
+                user='cyber_vandao',
+                password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+                database='CyberAppGolden_VanDao',
+                timeout=25,
+                appname='CyberAppGolden',
+                autocommit=True
+            )
+        except Exception:
+            import pyodbc
+            conn = pyodbc.connect(CYBER_CONN, timeout=25)
+            is_pymssql = False
+
+        c = conn.cursor()
+        ph = "%s" if is_pymssql else "?"
+
+        c.execute("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;")
+
+        # Kiểm tra sự tồn tại và trạng thái hiện tại
+        sql_check = f"""
+            SELECT TOP 1 stt_rec, so_ct, Ma_HD_H, Ma_Post, Huy, Ten_kh
+            FROM dbo.PHHDX WITH (NOLOCK)
+            WHERE stt_rec = {ph};
+        """
+        c.execute(sql_check, (stt_rec,))
+        row = c.fetchone()
+        if not row:
+            return {"success": False, "error": f"Không tìm thấy hợp đồng có stt_rec: {stt_rec}"}
+
+        cols = [d[0] for d in c.description]
+        rec = dict(zip(cols, row))
+        current_post = str(rec.get("Ma_Post") or "").strip()
+        so_ct = (rec.get("so_ct") or ma_hd).strip()
+        ma_hd_h = (rec.get("Ma_HD_H") or ma_hd).strip()
+
+        if current_post == '2':
+            return {
+                "success": True,
+                "message": f"Hợp đồng {so_ct} hiện đã ở trạng thái Chờ duyệt (Màu xanh / Ma_Post = 2)",
+                "stt_rec": stt_rec,
+                "so_ct": so_ct,
+                "ma_post": "2"
+            }
+
+        # Kiểm tra an toàn: nếu đã ghép xe thì chặn
+        sql_chk_xep = f"""
+            SELECT COUNT(*) AS cnt 
+            FROM dbo.BEXEPXE WITH (NOLOCK) 
+            WHERE (stt_rec = {ph} OR Ma_Hd = {ph}) AND RTRIM(LTRIM(ISNULL(So_khung, ''))) <> '';
+        """
+        c.execute(sql_chk_xep, (stt_rec, so_ct))
+        xep_row = c.fetchone()
+        cnt_xep = xep_row[0] if xep_row else 0
+        if cnt_xep > 0 or current_post == '7':
+            return {
+                "success": False,
+                "error": f"Hợp đồng {so_ct} đã được xếp xe/ghép số khung trên Cyber. Bạn phải thực hiện 'Hủy ghép xe' trước khi hoàn tác duyệt!"
+            }
+
+        if current_post in ('8', '9'):
+            return {
+                "success": False,
+                "error": f"Hợp đồng {so_ct} đã xuất hóa đơn hoặc đóng (Ma_Post = {current_post}), không thể hoàn tác duyệt!"
+            }
+
+        # Cập nhật về Ma_Post = '2' (Chờ duyệt / Màu xanh)
+        sql_update_ph = f"UPDATE dbo.PHHDX SET Ma_Post = '2' WHERE stt_rec = {ph} AND Ma_Post = '3';"
+        sql_update_ct = f"UPDATE dbo.CT70HDX SET Ma_Post = '2' WHERE stt_rec = {ph} AND Ma_Post = '3';"
+        c.execute(sql_update_ph, (stt_rec,))
+        c.execute(sql_update_ct, (stt_rec,))
+
+        # Trả lại phiếu phụ kiện về Ma_Post = '3' nếu có
+        if ma_hd_h:
+            sql_update_pk = f"UPDATE dbo.PHPPK SET Ma_Post = '3' WHERE ma_HD_H = {ph} AND Ma_Post > 3;"
+            c.execute(sql_update_pk, (ma_hd_h,))
+
+        return {
+            "success": True,
+            "message": f"Hoàn tác duyệt thành công! Hợp đồng {so_ct} đã quay lại trạng thái Chờ duyệt (Màu xanh / Ma_Post = 2).",
+            "stt_rec": stt_rec,
+            "so_ct": so_ct,
+            "ma_post": "2",
+            "reason": reason,
+            "admin_user": admin_user
+        }
+    except Exception as e:
+        return {"success": False, "error": f"Lỗi hoàn tác duyệt hợp đồng Cyber: {str(e)}"}
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
 def create_cyber_dnx_ticket(params: dict = {}) -> dict:
     vins = params.get("vins") or []
     if not vins and params.get("vin"):
@@ -3241,6 +3462,8 @@ def main():
     parser.add_argument("--xep-xe-candidates", action="store_true", help="Get candidate cars for a contract from CP_BeXepXe_SK")
     parser.add_argument("--xep-xe-save", action="store_true", help="Assign vehicle to contract via CP_BeXepXe_SAVE")
     parser.add_argument("--xep-xe-delete", action="store_true", help="Unassign vehicle from contract via CP_BeXepXe_DELETE")
+    parser.add_argument("--approve-contract", action="store_true", help="Approve Cyber contract (Ma_Post = 3)")
+    parser.add_argument("--revoke-contract-approval", action="store_true", help="Revoke Cyber contract approval (Ma_Post = 2)")
     parser.add_argument("--create-dnx", action="store_true", help="Create Cyber Transfer Request document (DNX)")
     parser.add_argument("--lookup-vin", action="store_true", help="Lookup vehicle warehouse and details from Cyber")
     parser.add_argument("--voucher-tickets", action="store_true", help="Get voucher tickets (DNX / TD4) from Cyber")
@@ -3345,6 +3568,18 @@ def main():
     if args.xep_xe_delete:
         p = get_input_params()
         res = delete_cyber_xep_xe(p)
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.approve_contract:
+        p = get_input_params()
+        res = approve_cyber_contract(p)
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.revoke_contract_approval:
+        p = get_input_params()
+        res = revoke_cyber_contract_approval(p)
         print(json.dumps(res, default=str, ensure_ascii=False))
         return
 

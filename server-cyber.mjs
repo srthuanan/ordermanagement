@@ -114,6 +114,12 @@ async function handleCyberAction(pathname, method, body, queryParams = {}) {
         case '/api/cyber/xep-xe-delete':
             return await executePython([scriptPath, '--xep-xe-delete'], mergedJson);
 
+        case '/api/cyber/approve-contract':
+            return await executePython([scriptPath, '--approve-contract'], mergedJson);
+
+        case '/api/cyber/revoke-contract-approval':
+            return await executePython([scriptPath, '--revoke-contract-approval'], mergedJson);
+
         case '/api/cyber/create-dnx':
             return await executePython([scriptPath, '--create-dnx'], mergedJson);
 

@@ -73,7 +73,9 @@ from scripts.sync_thuan_an_allocations import (
     sync_all_cyber_to_supabase,
     sync_cyber_xep_xe_to_supabase,
     sync_cyber_ton_kho_to_supabase,
-    sync_cyber_voucher_tickets_to_supabase
+    sync_cyber_voucher_tickets_to_supabase,
+    approve_cyber_contract,
+    revoke_cyber_contract_approval
 )
 from scripts.cyber_crm_service import (
     get_crm_metadata,
@@ -766,6 +768,60 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 print(f"[CyberSync Cloud Xep Xe Delete Error]: {str(e)}", file=sys.stderr)
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/approve-contract":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            try:
+                data = json.loads(body_str or "{}")
+            except Exception:
+                data = {}
+
+            print(f"[CyberSync Contract Approval] Request: {data}")
+            try:
+                result = approve_cyber_contract(data)
+                if result and result.get("success") is not False:
+                    invalidate_api_cache()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync Contract Approval Error]: {str(e)}", file=sys.stderr)
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/revoke-contract-approval":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            try:
+                data = json.loads(body_str or "{}")
+            except Exception:
+                data = {}
+
+            print(f"[CyberSync Contract Revoke Approval] Request: {data}")
+            try:
+                result = revoke_cyber_contract_approval(data)
+                if result and result.get("success") is not False:
+                    invalidate_api_cache()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync Contract Revoke Approval Error]: {str(e)}", file=sys.stderr)
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()

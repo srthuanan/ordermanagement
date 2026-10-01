@@ -7,7 +7,9 @@ import {
     getCyberXepXeContracts,
     getCyberXepXeCandidates,
     saveCyberXepXe,
-    deleteCyberXepXe
+    deleteCyberXepXe,
+    approveCyberContract,
+    revokeCyberContractApproval
 } from '../../services/api/stockService';
 import { supabase, supabaseAdmin } from '../../services/supabaseClient';
 
@@ -31,6 +33,7 @@ interface CyberAssignVehicleModalProps {
     initialContracts?: CyberXepXeContract[];
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
     onSuccess?: (vin: string, engineNo?: string, contract?: CyberXepXeContract) => void;
+    isAdmin?: boolean;
 }
 
 export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = ({
@@ -40,7 +43,8 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
     contract,
     initialContracts,
     showToast,
-    onSuccess
+    onSuccess,
+    isAdmin: isAdminProp
 }) => {
     // Contract states
     const [activeContract, setActiveContract] = useState<CyberXepXeContract | null>(contract || null);
@@ -56,6 +60,25 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
     const [candidateSearchQuery, setCandidateSearchQuery] = useState<string>('');
     const [isSaving, setIsSaving] = useState<boolean>(false);
     const [isUnassigning, setIsUnassigning] = useState<boolean>(false);
+
+    // Approval states (Duyệt / Hoàn tác duyệt không ghi nhận người duyệt trên Cyber)
+    const [isApprovingContract, setIsApprovingContract] = useState<boolean>(false);
+    const [approvalConfirmModal, setApprovalConfirmModal] = useState<{
+        isOpen: boolean;
+        action: 'approve' | 'revoke';
+        contract: CyberXepXeContract;
+        reason: string;
+    } | null>(null);
+
+    const userRole = (typeof window !== 'undefined' ? (localStorage.getItem("userRole") || sessionStorage.getItem("userRole") || "") : "").toLowerCase();
+    const currentUserName = (typeof window !== 'undefined' ? (localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser") || "") : "").toLowerCase().trim();
+    const isUserAdmin = isAdminProp ?? (
+        userRole.includes('admin') || 
+        currentUserName === 'admin' || 
+        currentUserName === 'nhanpt' ||
+        userRole.includes('quản lý') ||
+        userRole.includes('giám đốc')
+    );
 
     // Initial setup on open
     useEffect(() => {
@@ -404,6 +427,111 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
 
         return list;
     }, [candidateCars, candidateSearchQuery, order]);
+
+    // Mở modal duyệt hợp đồng
+    const handleOpenApproveModal = (c: CyberXepXeContract) => {
+        setApprovalConfirmModal({
+            isOpen: true,
+            action: 'approve',
+            contract: c,
+            reason: 'Duyệt đề phòng lúc vắng Giám đốc để kịp tiến độ xếp xe'
+        });
+    };
+
+    // Mở modal hoàn tác duyệt hợp đồng
+    const handleOpenRevokeModal = (c: CyberXepXeContract) => {
+        setApprovalConfirmModal({
+            isOpen: true,
+            action: 'revoke',
+            contract: c,
+            reason: 'Hoàn tác duyệt hợp đồng'
+        });
+    };
+
+    // Thực thi Duyệt / Hoàn tác duyệt
+    const handleExecuteApproval = async () => {
+        if (!approvalConfirmModal || !approvalConfirmModal.contract) return;
+        const { action, contract: targetContract, reason } = approvalConfirmModal;
+        setIsApprovingContract(true);
+        try {
+            const adminUser = currentUserName || 'admin';
+            let res;
+            if (action === 'approve') {
+                res = await approveCyberContract({
+                    stt_rec: targetContract.stt_rec,
+                    ma_hd: targetContract.ma_hd,
+                    reason,
+                    admin_user: adminUser
+                });
+            } else {
+                res = await revokeCyberContractApproval({
+                    stt_rec: targetContract.stt_rec,
+                    ma_hd: targetContract.ma_hd,
+                    reason,
+                    admin_user: adminUser
+                });
+            }
+
+            if (!res || !res.success) {
+                throw new Error(res?.error || (action === 'approve' ? 'Không thể duyệt hợp đồng' : 'Không thể hoàn tác duyệt'));
+            }
+
+            // Ghi audit log vào Supabase để bảo đảm an toàn và minh bạch nội bộ
+            try {
+                await supabase.from('cyber_audit_logs').insert({
+                    action: action === 'approve' ? 'APPROVE_CONTRACT' : 'REVOKE_CONTRACT_APPROVAL',
+                    stt_rec: targetContract.stt_rec,
+                    ma_hd: targetContract.ma_hd,
+                    ten_kh: targetContract.ten_kh,
+                    so_khung: targetContract.so_khung || '',
+                    admin_user: adminUser,
+                    reason,
+                    created_at: new Date().toISOString()
+                });
+            } catch (auditErr) {
+                console.warn('[Audit Log] Không thể lưu cyber_audit_logs (bỏ qua):', auditErr);
+            }
+
+            // Cập nhật trạng thái tại chỗ ngay lập tức
+            const newPost = action === 'approve' ? '3' : '2';
+            const newColorName = action === 'approve' ? 'Chờ ghép SK' : 'Chờ duyệt';
+            const newMaColor = action === 'approve' ? '06' : '04';
+            const newBackColor = action === 'approve' ? 'yellow' : 'greenyellow';
+
+            const updatedContract: CyberXepXeContract = {
+                ...targetContract,
+                ma_post: newPost,
+                ten_color: newColorName,
+                ma_color: newMaColor,
+                back_color: newBackColor
+            };
+
+            setActiveContract(updatedContract);
+            setAllCyberContracts(prev => prev.map(c => 
+                (c.stt_rec === targetContract.stt_rec && c.stt_rec0 === targetContract.stt_rec0) 
+                    ? updatedContract 
+                    : c
+            ));
+
+            showToast(
+                action === 'approve' ? 'Duyệt thành công' : 'Hoàn tác thành công',
+                res.message || (action === 'approve' ? 'Hợp đồng đã chuyển sang Màu vàng (Chờ ghép SK)' : 'Hợp đồng đã quay lại Màu xanh (Chờ duyệt)'),
+                'success',
+                5000
+            );
+
+            setApprovalConfirmModal(null);
+
+            // Nếu vừa duyệt thì tự động tải danh sách xe khả dụng
+            if (action === 'approve') {
+                loadCandidates(updatedContract);
+            }
+        } catch (err: any) {
+            showToast('Lỗi thao tác', err.message || 'Có lỗi xảy ra', 'error', 6000);
+        } finally {
+            setIsApprovingContract(false);
+        }
+    };
 
     // Xử lý xác nhận ghép xe
     const handleConfirmAssign = async () => {
@@ -783,7 +911,7 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                                 <div className="w-6 h-6 rounded-full bg-amber-500/20 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
                                     <i className="fas fa-exclamation-triangle text-xs"></i>
                                 </div>
-                                <div className="text-xs">
+                                <div className="text-xs flex-1">
                                     <div className="font-extrabold uppercase tracking-wide text-amber-800 flex items-center gap-2">
                                         <span>Cảnh báo quy định duyệt hợp đồng</span>
                                         <span className="px-2 py-0.5 rounded-full bg-amber-200/80 text-amber-900 font-black text-[9px] border border-amber-300">
@@ -793,14 +921,56 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                                     <div className="mt-1 text-slate-700 leading-relaxed text-[11px]">
                                         Hợp đồng <strong>{activeContract.ma_hd}</strong> trên CyberSoft đang ở trạng thái <strong>Chờ duyệt (Màu xanh)</strong>. Theo quy định, hợp đồng phải được <strong>Giám đốc duyệt chuyển sang MÀU VÀNG</strong> thì mới được phép ghép xe!
                                     </div>
+
+                                    {/* Action Button dành cho Admin duyệt đề phòng lúc vắng Giám đốc */}
+                                    {isUserAdmin && (
+                                        <div className="mt-2.5 pt-2 border-t border-amber-200/80 flex items-center justify-between gap-2">
+                                            <span className="text-[10px] text-amber-700 italic">
+                                                Quyền Admin: Cho phép duyệt nhanh để mở khóa xếp xe khi vắng Giám đốc (không ghi người duyệt trên Cyber).
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleOpenApproveModal(activeContract)}
+                                                disabled={isApprovingContract}
+                                                className="px-3 py-1 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white rounded-lg text-xs font-bold shadow-xs hover:shadow transition-all flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                                            >
+                                                {isApprovingContract ? (
+                                                    <i className="fas fa-spinner fa-spin text-xs"></i>
+                                                ) : (
+                                                    <i className="fas fa-bolt text-xs"></i>
+                                                )}
+                                                <span>Duyệt hợp đồng (Admin)</span>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ) : (
-                            <div className="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-emerald-800 text-xs shadow-2xs">
-                                <i className="fas fa-check-circle text-emerald-600 text-xs shrink-0"></i>
-                                <span className="text-[11px] font-medium">
-                                    Hợp đồng đã được Giám đốc duyệt <strong className="text-emerald-900 font-bold">(Màu vàng)</strong> - Đủ điều kiện ghép xe theo quy định.
-                                </span>
+                            <div className="px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between gap-2 text-emerald-800 text-xs shadow-2xs">
+                                <div className="flex items-center gap-2">
+                                    <i className="fas fa-check-circle text-emerald-600 text-xs shrink-0"></i>
+                                    <span className="text-[11px] font-medium">
+                                        Hợp đồng đã được duyệt <strong className="text-emerald-900 font-bold">(Màu vàng)</strong> - Đủ điều kiện ghép xe theo quy định.
+                                    </span>
+                                </div>
+
+                                {/* Nút Hoàn tác duyệt khi chưa ghép số khung */}
+                                {isUserAdmin && !activeContract.so_khung && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleOpenRevokeModal(activeContract)}
+                                        disabled={isApprovingContract}
+                                        className="px-2.5 py-1 bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 hover:border-rose-300 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50 shadow-2xs"
+                                        title="Thu hồi duyệt, chuyển hợp đồng về trạng thái Chờ duyệt (Màu xanh)"
+                                    >
+                                        {isApprovingContract ? (
+                                            <i className="fas fa-spinner fa-spin text-[10px]"></i>
+                                        ) : (
+                                            <i className="fas fa-undo text-[10px]"></i>
+                                        )}
+                                        <span>Hoàn tác duyệt</span>
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -990,6 +1160,117 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                         </button>
                     </div>
                 </div>
+
+                {/* Modal xác nhận Duyệt / Hoàn tác duyệt hợp đồng Cyber */}
+                {approvalConfirmModal && approvalConfirmModal.isOpen && (
+                    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                        <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-150">
+                            {/* Header */}
+                            <div className={`p-4 border-b flex items-center justify-between ${
+                                approvalConfirmModal.action === 'approve' ? 'bg-amber-50/70 border-amber-200' : 'bg-rose-50/70 border-rose-200'
+                            }`}>
+                                <div className="flex items-center gap-2.5">
+                                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm ${
+                                        approvalConfirmModal.action === 'approve' ? 'bg-amber-500 text-white' : 'bg-rose-500 text-white'
+                                    }`}>
+                                        <i className={`fas ${approvalConfirmModal.action === 'approve' ? 'fa-bolt' : 'fa-undo'}`}></i>
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-slate-900">
+                                            {approvalConfirmModal.action === 'approve' ? 'Duyệt hợp đồng Cyber (Admin)' : 'Hoàn tác duyệt hợp đồng'}
+                                        </h4>
+                                        <p className="text-[11px] text-slate-500">
+                                            {approvalConfirmModal.action === 'approve' ? 'Mở khóa ghép xe & xuất hóa đơn' : 'Thu hồi về trạng thái Chờ duyệt'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setApprovalConfirmModal(null)}
+                                    className="w-7 h-7 rounded-lg hover:bg-slate-200/60 text-slate-400 hover:text-slate-600 flex items-center justify-center transition-colors cursor-pointer"
+                                >
+                                    <i className="fas fa-times text-xs"></i>
+                                </button>
+                            </div>
+
+                            {/* Body */}
+                            <div className="p-4 space-y-3 text-xs">
+                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Hợp đồng:</span>
+                                        <span className="font-bold text-slate-800">{approvalConfirmModal.contract.ma_hd || approvalConfirmModal.contract.so_ct}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Khách hàng:</span>
+                                        <span className="font-semibold text-slate-800">{approvalConfirmModal.contract.ten_kh}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-slate-500">Dòng xe:</span>
+                                        <span className="text-slate-700">{approvalConfirmModal.contract.ten_kx} ({approvalConfirmModal.contract.ten_mau || 'Màu tiêu chuẩn'})</span>
+                                    </div>
+                                </div>
+
+                                <div className="p-3 rounded-xl border text-[11px] leading-relaxed bg-blue-50/60 border-blue-200 text-blue-900 flex items-start gap-2">
+                                    <i className="fas fa-info-circle text-blue-600 mt-0.5 shrink-0"></i>
+                                    <div>
+                                        {approvalConfirmModal.action === 'approve' ? (
+                                            <span>Hợp đồng sẽ chuyển sang <strong>Màu vàng (Chờ ghép SK)</strong> trên Cyber. Thao tác này <strong>không ghi nhận người duyệt trên Cyber ERP</strong> nhằm đảm bảo an toàn & linh hoạt khi vắng Giám đốc.</span>
+                                        ) : (
+                                            <span>Hợp đồng sẽ chuyển lại về <strong>Màu xanh (Chờ duyệt)</strong> trên Cyber. Nút ghép xe sẽ bị khóa cho đến khi được duyệt lại.</span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                        Lý do thực hiện <span className="text-slate-400 font-normal">(ghi nhận audit log nội bộ)</span>:
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={approvalConfirmModal.reason}
+                                        onChange={e => setApprovalConfirmModal(prev => prev ? { ...prev, reason: e.target.value } : null)}
+                                        placeholder="Nhập lý do duyệt / hoàn tác..."
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setApprovalConfirmModal(null)}
+                                    disabled={isApprovingContract}
+                                    className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                                >
+                                    Hủy bỏ
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleExecuteApproval}
+                                    disabled={isApprovingContract}
+                                    className={`px-4 py-1.5 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50 ${
+                                        approvalConfirmModal.action === 'approve'
+                                            ? 'bg-amber-600 hover:bg-amber-700'
+                                            : 'bg-rose-600 hover:bg-rose-700'
+                                    }`}
+                                >
+                                    {isApprovingContract ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin text-xs"></i>
+                                            <span>Đang xử lý...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className={`fas ${approvalConfirmModal.action === 'approve' ? 'fa-check' : 'fa-undo'} text-xs`}></i>
+                                            <span>{approvalConfirmModal.action === 'approve' ? 'Xác nhận duyệt' : 'Xác nhận hoàn tác'}</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
             </div>
         </div>
