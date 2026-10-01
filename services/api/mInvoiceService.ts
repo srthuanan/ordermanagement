@@ -8,6 +8,7 @@ export interface MInvoiceFetchResult {
         vin: string;
         invoiceNumber: string | number;
         serial: string;
+        invoiceDate?: string | null;
         dateSign: string | null;
         isSigned: boolean;
         buyer: string;
