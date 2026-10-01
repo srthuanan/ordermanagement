@@ -13,6 +13,8 @@ import CyberAssignVehicleModal from '../modals/CyberAssignVehicleModal';
 import {
     getCyberXepXeContracts,
     deleteCyberXepXe,
+    approveCyberContract,
+    revokeCyberContractApproval,
     CyberXepXeContract,
     isOrderAssignedOnCyber,
     checkOrderCyberAssignmentDirect
@@ -205,6 +207,13 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         } catch (_) {}
         return [];
     });
+    const [cyberApprovalConfirm, setCyberApprovalConfirm] = useState<{
+        isOpen: boolean;
+        action: 'approve' | 'revoke';
+        contract: CyberXepXeContract;
+        reason: string;
+    } | null>(null);
+    const [isSubmittingCyberApproval, setIsSubmittingCyberApproval] = useState(false);
     const [isLoadingCyberContracts, setIsLoadingCyberContracts] = useState<boolean>(() => {
         try {
             const cached = sessionStorage.getItem('cyber_xep_xe_contracts_cache');
@@ -348,6 +357,87 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
             showToast('Lỗi tải từ Cyber', err.message || 'Không thể đồng bộ dữ liệu trực tiếp từ CyberSoft.', 'error');
         } finally {
             setIsLoadingCyberContracts(false);
+        }
+    };
+
+    const handleExecuteDirectCyberApproval = async () => {
+        if (!cyberApprovalConfirm || !cyberApprovalConfirm.contract) return;
+        const { action, contract: targetContract, reason } = cyberApprovalConfirm;
+        setIsSubmittingCyberApproval(true);
+        try {
+            const currentUserName = (typeof window !== 'undefined' ? (localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser") || "") : "").toLowerCase().trim();
+            const adminUser = currentUserName || 'admin';
+            let res;
+            if (action === 'approve') {
+                res = await approveCyberContract({
+                    stt_rec: targetContract.stt_rec,
+                    ma_hd: targetContract.ma_hd,
+                    reason,
+                    admin_user: adminUser
+                });
+            } else {
+                res = await revokeCyberContractApproval({
+                    stt_rec: targetContract.stt_rec,
+                    ma_hd: targetContract.ma_hd,
+                    reason,
+                    admin_user: adminUser
+                });
+            }
+
+            if (!res || !res.success) {
+                throw new Error(res?.error || (action === 'approve' ? 'Không thể duyệt hợp đồng' : 'Không thể hoàn tác duyệt'));
+            }
+
+            // Ghi audit log vào Supabase để bảo đảm an toàn và minh bạch nội bộ
+            try {
+                await supabase.from('cyber_audit_logs').insert({
+                    action: action === 'approve' ? 'APPROVE_CONTRACT' : 'REVOKE_CONTRACT_APPROVAL',
+                    stt_rec: targetContract.stt_rec,
+                    ma_hd: targetContract.ma_hd,
+                    ten_kh: targetContract.ten_kh,
+                    so_khung: targetContract.so_khung || '',
+                    admin_user: adminUser,
+                    reason,
+                    created_at: new Date().toISOString()
+                });
+            } catch (auditErr) {
+                console.warn('[Audit Log] Không thể lưu cyber_audit_logs:', auditErr);
+            }
+
+            const newPost = action === 'approve' ? '3' : '2';
+            const newColorName = action === 'approve' ? 'Chờ ghép SK' : 'Chờ duyệt';
+            const newMaColor = action === 'approve' ? '06' : '04';
+            const newBackColor = action === 'approve' ? 'yellow' : 'greenyellow';
+
+            const updatedContract: CyberXepXeContract = {
+                ...targetContract,
+                ma_post: newPost,
+                ten_color: newColorName,
+                ma_color: newMaColor,
+                back_color: newBackColor
+            };
+
+            setCyberContracts(prev => prev.map(c => 
+                (c.stt_rec === targetContract.stt_rec && c.stt_rec0 === targetContract.stt_rec0) 
+                    ? updatedContract 
+                    : c
+            ));
+
+            showToast(
+                action === 'approve' ? 'Duyệt thành công' : 'Hoàn tác thành công',
+                res.message || (action === 'approve' ? `Hợp đồng ${targetContract.ma_hd} đã chuyển sang Màu vàng (Chờ ghép SK)` : `Hợp đồng ${targetContract.ma_hd} đã quay lại Màu xanh (Chờ duyệt)`),
+                'success',
+                5000
+            );
+
+            setCyberApprovalConfirm(null);
+
+            // Làm mới dữ liệu Cyber trực tiếp
+            handleRefreshCyber();
+        } catch (err: any) {
+            showToast('Lỗi thao tác Cyber', err.message || 'Có lỗi xảy ra', 'error', 6000);
+        } finally {
+            setIsSubmittingCyberApproval(false);
         }
     };
 
@@ -1367,35 +1457,68 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                                 </span>
                                                             ) : cyberAssignmentStatus.isPendingGreen ? (
                                                                 selectedOrder['Trạng thái xử lý'] !== 'đã xuất hóa đơn' && selectedOrder['Kết quả'] !== 'đã xuất hóa đơn' && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => {
-                                                                            showToast(
-                                                                                'Hợp đồng chưa duyệt',
-                                                                                `Hợp đồng ${cyberAssignmentStatus.contract?.ma_hd || ''} trên Cyber đang ở trạng thái Chờ duyệt (Màu xanh). Cần duyệt sang Màu vàng mới được ghép xe!`,
-                                                                                'warning',
-                                                                                6000
-                                                                            );
-                                                                            setIsCyberAssignModalOpen(true);
-                                                                        }}
-                                                                        className="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100"
-                                                                        title="Hợp đồng trên Cyber đang Chờ duyệt (Màu xanh) - Cần duyệt sang Màu vàng mới được ghép xe"
-                                                                    >
-                                                                        <i className="fas fa-exclamation-triangle text-[9px]"></i>
-                                                                        <span>HĐ Cyber Chờ Duyệt</span>
-                                                                    </button>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                if (cyberAssignmentStatus.contract) {
+                                                                                    setCyberApprovalConfirm({
+                                                                                        isOpen: true,
+                                                                                        action: 'approve',
+                                                                                        contract: cyberAssignmentStatus.contract,
+                                                                                        reason: 'Duyệt đề phòng lúc vắng Giám đốc để kịp tiến độ xếp xe'
+                                                                                    });
+                                                                                } else {
+                                                                                    setIsCyberAssignModalOpen(true);
+                                                                                }
+                                                                            }}
+                                                                            className="px-2.5 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white animate-pulse"
+                                                                            title="Duyệt hợp đồng trên CyberSoft ERP từ Màu xanh -> Màu vàng (Chờ ghép SK) không ghi nhận người duyệt trên Cyber"
+                                                                        >
+                                                                            <i className="fas fa-bolt text-[9px] text-yellow-200"></i>
+                                                                            <span>⚡ Duyệt Cyber</span>
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setIsCyberAssignModalOpen(true)}
+                                                                            className="px-1.5 py-0.5 rounded-lg text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors"
+                                                                            title="Xem danh sách hợp đồng & ghép xe Cyber"
+                                                                        >
+                                                                            <i className="fas fa-external-link-alt text-[8px]"></i>
+                                                                        </button>
+                                                                    </div>
                                                                 )
                                                             ) : (
                                                                 selectedOrder['Trạng thái xử lý'] !== 'đã xuất hóa đơn' && selectedOrder['Kết quả'] !== 'đã xuất hóa đơn' && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setIsCyberAssignModalOpen(true)}
-                                                                        className="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
-                                                                        title="Ghép xe trực tiếp từ CyberSoft ERP"
-                                                                    >
-                                                                        <i className="fas fa-car-side text-[9px]"></i>
-                                                                        <span>Ghép xe Cyber</span>
-                                                                    </button>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setIsCyberAssignModalOpen(true)}
+                                                                            className="px-2 py-0.5 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs cursor-pointer bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white"
+                                                                            title="Ghép xe trực tiếp từ CyberSoft ERP"
+                                                                        >
+                                                                            <i className="fas fa-car-side text-[9px]"></i>
+                                                                            <span>Ghép xe Cyber</span>
+                                                                        </button>
+                                                                        {cyberAssignmentStatus.contract && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    setCyberApprovalConfirm({
+                                                                                        isOpen: true,
+                                                                                        action: 'revoke',
+                                                                                        contract: cyberAssignmentStatus.contract!,
+                                                                                        reason: 'Hoàn tác duyệt hợp đồng'
+                                                                                    });
+                                                                                }}
+                                                                                className="px-1.5 py-0.5 rounded-lg text-[10px] font-medium bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 border border-slate-200 transition-colors cursor-pointer"
+                                                                                title="Hoàn tác duyệt: Chuyển hợp đồng về lại Màu xanh (Chờ duyệt) trên CyberSoft ERP"
+                                                                            >
+                                                                                <i className="fas fa-undo text-[8px]"></i>
+                                                                                <span className="text-[9px]">Hoàn tác</span>
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
                                                                 )
                                                             )}
 
@@ -1720,6 +1843,139 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                 showToast={showToast}
                 onSuccess={handleCyberAssignSuccess}
             />
+
+            {/* Modal Xác nhận Duyệt / Hoàn tác Hợp đồng Cyber trực tiếp */}
+            {cyberApprovalConfirm && cyberApprovalConfirm.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className={`p-4 border-b flex items-center justify-between ${
+                            cyberApprovalConfirm.action === 'approve' 
+                                ? 'bg-amber-50/70 border-amber-100 text-amber-900' 
+                                : 'bg-rose-50/70 border-rose-100 text-rose-900'
+                        }`}>
+                            <div className="flex items-center gap-2.5">
+                                <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                                    cyberApprovalConfirm.action === 'approve'
+                                        ? 'bg-amber-500 text-white shadow-xs'
+                                        : 'bg-rose-500 text-white shadow-xs'
+                                }`}>
+                                    <i className={`fas ${cyberApprovalConfirm.action === 'approve' ? 'fa-bolt' : 'fa-undo'} text-sm`}></i>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-sm leading-tight">
+                                        {cyberApprovalConfirm.action === 'approve' ? 'Phê Duyệt Hợp Đồng Cyber' : 'Hoàn Tác Duyệt Hợp Đồng Cyber'}
+                                    </h3>
+                                    <p className="text-[10px] text-slate-500">
+                                        {cyberApprovalConfirm.action === 'approve' ? 'Duyệt nội bộ Admin (Không ghi nhận người duyệt trên Cyber ERP)' : 'Đưa hợp đồng về lại Màu xanh (Chờ duyệt)'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setCyberApprovalConfirm(null)}
+                                disabled={isSubmittingCyberApproval}
+                                className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors"
+                            >
+                                <i className="fas fa-times text-xs"></i>
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-4 space-y-3.5">
+                            {/* Contract summary */}
+                            <div className="bg-slate-50 rounded-xl p-3 border border-slate-200/80 space-y-1.5 text-xs">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-500">Số hợp đồng:</span>
+                                    <span className="font-bold font-mono text-slate-900">{cyberApprovalConfirm.contract.ma_hd || '—'}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-500">Khách hàng:</span>
+                                    <span className="font-bold text-slate-900">{cyberApprovalConfirm.contract.ten_kh || '—'}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-500">Dòng xe:</span>
+                                    <span className="font-medium text-slate-700">{cyberApprovalConfirm.contract.ten_kx || '—'} - {cyberApprovalConfirm.contract.ten_mau || '—'}</span>
+                                </div>
+                                <div className="flex justify-between items-center pt-1 border-t border-slate-200/60">
+                                    <span className="text-slate-500">Trạng thái hiện tại:</span>
+                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                                        cyberApprovalConfirm.contract.ma_post === '2' || (cyberApprovalConfirm.contract.ten_color || '').toLowerCase().includes('chờ duyệt')
+                                            ? 'bg-emerald-100 text-emerald-800'
+                                            : 'bg-amber-100 text-amber-800'
+                                    }`}>
+                                        {cyberApprovalConfirm.contract.ten_color || (cyberApprovalConfirm.contract.ma_post === '2' ? 'Chờ duyệt (Xanh)' : 'Chờ ghép SK (Vàng)')}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Note notice */}
+                            <div className={`p-2.5 rounded-xl border text-[11px] leading-relaxed flex items-start gap-2 ${
+                                cyberApprovalConfirm.action === 'approve'
+                                    ? 'bg-amber-50/60 border-amber-200/70 text-amber-900'
+                                    : 'bg-rose-50/60 border-rose-200/70 text-rose-900'
+                            }`}>
+                                <i className={`fas ${cyberApprovalConfirm.action === 'approve' ? 'fa-info-circle text-amber-600' : 'fa-exclamation-triangle text-rose-600'} text-xs mt-0.5 flex-shrink-0`}></i>
+                                <span>
+                                    {cyberApprovalConfirm.action === 'approve' ? (
+                                        <>Hợp đồng sẽ chuyển sang <b>Màu vàng (Chờ ghép SK)</b> để có thể ghép số khung ngay. Thao tác này <b>không ghi nhận người duyệt trên Cyber ERP</b>, phục vụ xử lý kịp tiến độ.</>
+                                    ) : (
+                                        <>Hợp đồng sẽ quay về trạng thái <b>Chờ duyệt (Màu xanh)</b> trên Cyber ERP. Lưu ý: Chỉ hoàn tác khi xe chưa xuất hóa đơn.</>
+                                    )}
+                                </span>
+                            </div>
+
+                            {/* Reason Input */}
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                                    Lý do / Ghi chú nội bộ
+                                </label>
+                                <input
+                                    type="text"
+                                    value={cyberApprovalConfirm.reason}
+                                    onChange={(e) => setCyberApprovalConfirm(prev => prev ? ({ ...prev, reason: e.target.value }) : null)}
+                                    placeholder="Nhập lý do thực hiện..."
+                                    className="w-full px-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setCyberApprovalConfirm(null)}
+                                disabled={isSubmittingCyberApproval}
+                                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors"
+                            >
+                                Đóng
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleExecuteDirectCyberApproval}
+                                disabled={isSubmittingCyberApproval}
+                                className={`px-4 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs transition-all flex items-center gap-1.5 ${
+                                    cyberApprovalConfirm.action === 'approve'
+                                        ? 'bg-amber-600 hover:bg-amber-700'
+                                        : 'bg-rose-600 hover:bg-rose-700'
+                                }`}
+                            >
+                                {isSubmittingCyberApproval ? (
+                                    <>
+                                        <i className="fas fa-spinner fa-spin text-xs"></i>
+                                        <span>Đang xử lý Cyber...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className={`fas ${cyberApprovalConfirm.action === 'approve' ? 'fa-check' : 'fa-undo'} text-xs`}></i>
+                                        <span>{cyberApprovalConfirm.action === 'approve' ? 'Xác nhận Duyệt Cyber' : 'Xác nhận Hoàn tác'}</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <input
                 type="file"
