@@ -16,6 +16,9 @@ interface CrmLeadImporterViewProps {
     userRole?: string;
     isAdmin?: boolean;
     showToast?: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
+    isCrmEnabled?: boolean;
+    onToggleCrmGlobal?: () => void;
+    isTogglingCrm?: boolean;
 }
 
 interface ParsedLeadRow {
@@ -190,7 +193,10 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
     currentUser = '',
     currentUserName = '',
     isAdmin = false,
-    showToast
+    showToast,
+    isCrmEnabled = true,
+    onToggleCrmGlobal,
+    isTogglingCrm = false
 }) => {
     // Modal Admin xem danh sách TVBH đã sử dụng dịch vụ (chỉ dành cho Admin)
     const [showAdminTvbhModal, setShowAdminTvbhModal] = useState<boolean>(false);
@@ -1517,6 +1523,23 @@ export const CrmLeadImporterView: React.FC<CrmLeadImporterViewProps> = ({
 
                         {isAdmin && (
                             <>
+                                {onToggleCrmGlobal && (
+                                    <button
+                                        type="button"
+                                        onClick={onToggleCrmGlobal}
+                                        disabled={isTogglingCrm}
+                                        className={`px-2 py-0.5 text-xs font-semibold rounded transition-all cursor-pointer flex items-center gap-1 border ${
+                                            isCrmEnabled 
+                                                ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-300' 
+                                                : 'text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-300'
+                                        } ${isTogglingCrm ? 'opacity-50 cursor-wait' : ''}`}
+                                        title={isCrmEnabled ? 'Bấm để tắt cổng tiếp nhận KHTN đối với toàn bộ TVBH' : 'Bấm để mở lại cổng tiếp nhận KHTN cho toàn bộ TVBH'}
+                                    >
+                                        <i className={`fas ${isTogglingCrm ? 'fa-spinner fa-spin' : (isCrmEnabled ? 'fa-toggle-on text-emerald-600' : 'fa-toggle-off text-amber-600')} text-[12px]`}></i>
+                                        <span>{isCrmEnabled ? 'Tab KHTN: Đang Mở' : 'Tab KHTN: Đang Tắt'}</span>
+                                    </button>
+                                )}
+
                                 <button
                                     type="button"
                                     onClick={() => setShowAdminTvbhModal(true)}

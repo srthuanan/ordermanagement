@@ -39,6 +39,9 @@ interface HeaderProps {
     isStockEnabled: boolean;
     isTogglingStock: boolean;
     handleToggleStockGlobal: () => void;
+    isCrmEnabled?: boolean;
+    isTogglingCrm?: boolean;
+    handleToggleCrmGlobal?: () => void;
     isChatEnabled: boolean;
     isTogglingChat: boolean;
     handleToggleChatGlobal: () => void;
@@ -93,6 +96,9 @@ const Header: React.FC<HeaderProps> = ({
     isStockEnabled,
     isTogglingStock,
     handleToggleStockGlobal,
+    isCrmEnabled = true,
+    isTogglingCrm = false,
+    handleToggleCrmGlobal,
     isChatEnabled,
     isTogglingChat: _isTogglingChat,
     handleToggleChatGlobal: _handleToggleChatGlobal,
@@ -163,7 +169,7 @@ const Header: React.FC<HeaderProps> = ({
         { id: 'orders', label: 'Đơn Hàng', icon: 'fa-car-side' },
         { id: 'backlog', label: 'Cọc Tồn', icon: 'fa-file-invoice-dollar' },
         ...(isStockEnabled || isCurrentUserAdmin ? [{ id: 'stock', label: 'Kho xe', icon: 'fa-warehouse' }] : []),
-        { id: 'crm', label: 'KHTN', icon: 'fa-user-plus' },
+        ...(isCrmEnabled || isCurrentUserAdmin ? [{ id: 'crm', label: 'KHTN', icon: 'fa-user-plus' }] : []),
         { id: 'laithu', label: 'Lái Thử', icon: 'fa-gauge-high' },
         { id: 'pricing', label: 'Báo Giá', icon: 'fa-calculator' },
         { id: 'sold', label: 'Lịch Sử', icon: 'fa-receipt' },
@@ -317,6 +323,15 @@ const Header: React.FC<HeaderProps> = ({
                                         title={isChatEnabled ? 'Tắt trợ lý AI' : 'Bật trợ lý AI'}
                                     >
                                         <i className={`fas ${_isTogglingChat ? 'fa-spinner fa-spin' : (isChatEnabled ? 'fa-robot' : 'fa-user-slash')} text-[13px]`}></i>
+                                    </Button>
+                                    <Button
+                                        onClick={handleToggleCrmGlobal}
+                                        variant="ghost"
+                                        disabled={isTogglingCrm}
+                                        className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 transition-all hover:bg-slate-100 ${isCrmEnabled ? 'text-emerald-600 font-bold' : 'text-slate-400'}`}
+                                        title={isCrmEnabled ? 'Tắt tab KHTN đối với TVBH' : 'Bật tab KHTN cho toàn showroom'}
+                                    >
+                                        <i className={`fas ${isTogglingCrm ? 'fa-spinner fa-spin' : (isCrmEnabled ? 'fa-user-plus' : 'fa-user-slash')} text-[13px]`}></i>
                                     </Button>
                                 </>
                             )}

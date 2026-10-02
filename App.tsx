@@ -277,12 +277,15 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [isTogglingStock, setIsTogglingStock] = useState(false);
     const [isChatEnabled, setIsChatEnabled] = useState(true);
     const [isTogglingChat, setIsTogglingChat] = useState(false);
+    const [isCrmEnabled, setIsCrmEnabled] = useState(true);
+    const [isTogglingCrm, setIsTogglingCrm] = useState(false);
 
     const fetchAppConfig = useCallback(async () => {
         try {
-            const [stockRes, chatRes] = await Promise.all([
+            const [stockRes, chatRes, crmRes] = await Promise.all([
                 apiService.getAppSetting('stock_visibility'),
-                apiService.getAppSetting('chat_visibility')
+                apiService.getAppSetting('chat_visibility'),
+                apiService.getAppSetting('crm_visibility')
             ]);
 
             if (stockRes && stockRes.status === 'SUCCESS' && stockRes.data) {
@@ -290,6 +293,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             }
             if (chatRes && chatRes.status === 'SUCCESS' && chatRes.data) {
                 setIsChatEnabled(!chatRes.data.isChatHidden);
+            }
+            if (crmRes && crmRes.status === 'SUCCESS' && crmRes.data) {
+                setIsCrmEnabled(!crmRes.data.isCrmHidden);
             }
         } catch (e) {
             console.error("Failed to fetch app config from Supabase:", e);
@@ -327,6 +333,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                             console.log("Chat visibility changed! Hidden:", isHidden);
                             setIsChatEnabled(!isHidden);
                         }
+                        if (newData.key === 'crm_visibility') {
+                            const isHidden = !!newData.value?.isCrmHidden;
+                            console.log("CRM visibility changed! Hidden:", isHidden);
+                            setIsCrmEnabled(!isHidden);
+                        }
                     }
                 }
             )
@@ -359,6 +370,18 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         }
         prevStockEnabledRef.current = isStockEnabled;
     }, [isStockEnabled, showToast]);
+
+    const prevCrmEnabledRef = useRef<boolean | null>(null);
+    useEffect(() => {
+        if (prevCrmEnabledRef.current !== null && prevCrmEnabledRef.current !== isCrmEnabled) {
+            if (!isCrmEnabled) {
+                showToast('Hệ Thống Tạm Đóng Nhận KHTN', 'Quản trị viên đang tạm thời tắt tính năng nhập khách hàng tiềm năng.', 'warning', 8000);
+            } else {
+                showToast('Hệ Thống Mở Lại KHTN', 'Tính năng nhập khách hàng tiềm năng đã được mở lại cho toàn showroom.', 'success', 8000);
+            }
+        }
+        prevCrmEnabledRef.current = isCrmEnabled;
+    }, [isCrmEnabled, showToast]);
 
     // --- TÍNH NĂNG TỰ ĐỘNG REFRESH KHI KHO ĐƯỢC MỞ LẠI ---
     const [reputation, setReputation] = useState<{ score: number; total: number; matched: number; bonus?: number, isNewUser?: boolean } | undefined>(undefined);
@@ -494,6 +517,27 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             showToast('Lỗi', 'Có lỗi xảy ra khi cập nhật cài đặt AI.', 'error');
         } finally {
             setIsTogglingChat(false);
+        }
+    };
+
+    const handleToggleCrmGlobal = async () => {
+        if (!isCurrentUserAdmin) return;
+        setIsTogglingCrm(true);
+        try {
+            const newIsHidden = isCrmEnabled;
+            const res = await apiService.updateAppSetting('crm_visibility', { isCrmHidden: newIsHidden });
+
+            if (res && res.status === 'SUCCESS') {
+                setIsCrmEnabled(!newIsHidden);
+                showToast('Thành công', `Đã ${newIsHidden ? 'Tắt' : 'Bật'} nhận KHTN toàn hệ thống.`, 'success');
+            } else {
+                showToast('Lỗi', res.message || "Không thể thay đổi trạng thái KHTN", 'error');
+            }
+        } catch (e) {
+            console.error("Lỗi khi thay đổi trạng thái KHTN:", e);
+            showToast('Lỗi', 'Có lỗi xảy ra khi cập nhật cài đặt KHTN.', 'error');
+        } finally {
+            setIsTogglingCrm(false);
         }
     };
 
@@ -1020,6 +1064,9 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         isChatEnabled={isChatEnabled}
                         isTogglingChat={isTogglingChat}
                         handleToggleChatGlobal={handleToggleChatGlobal}
+                        isCrmEnabled={isCrmEnabled}
+                        isTogglingCrm={isTogglingCrm}
+                        handleToggleCrmGlobal={handleToggleCrmGlobal}
                         onOpenBacklogReport={() => setIsBacklogModalOpen(true)}
                         isReferenceAccount={isReferenceAccount}
                     />
@@ -1157,16 +1204,46 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                 <PricingCalculatorIframeView />
                             </Suspense>
                         </div>
-                        <div hidden={activeView !== 'crm'} className="h-full">
-                            <Suspense fallback={<LoadingFallback />}>
-                                <CrmLeadImporterView
-                                    currentUser={currentUser}
-                                    currentUserName={currentUserName}
-                                    userRole={userRole}
-                                    isAdmin={isCurrentUserAdmin}
-                                    showToast={showToast}
-                                />
-                            </Suspense>
+                        <div hidden={activeView !== 'crm'} className="h-full relative overflow-hidden flex flex-col">
+                            {!isCrmEnabled && isCurrentUserAdmin && (
+                                <div className="flex-shrink-0 bg-amber-500/10 backdrop-blur-md border-b border-amber-500/20 px-4 py-2 flex items-center justify-center gap-3 animate-fade-in z-20">
+                                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                                    <span className="text-sm font-bold text-amber-800 uppercase tracking-wider">Chế độ Admin: Tab KHTN đang tắt đối với nhân viên</span>
+                                </div>
+                            )}
+                            <div className="flex-1 overflow-hidden relative">
+                                {(!isCrmEnabled && !isCurrentUserAdmin) ? (
+                                    <div className="flex flex-col items-center justify-center h-full p-6 text-center bg-white relative overflow-hidden">
+                                        <div className="w-16 h-16 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 text-2xl mb-4 shadow-xs border border-rose-100">
+                                            <i className="fas fa-user-slash"></i>
+                                        </div>
+                                        <h3 className="text-base font-bold text-slate-800 mb-1">Tạm Dừng Tiếp Nhận Khách Hàng Tiềm Năng</h3>
+                                        <p className="text-xs text-slate-500 max-w-md mb-5 leading-relaxed">
+                                            Quản trị viên đang tạm thời đóng cổng tiếp nhận nhập liệu KHTN để rà soát dữ liệu hoặc bảo trì hệ thống Cyber. Vui lòng quay lại sau!
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveView('orders')}
+                                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
+                                        >
+                                            <i className="fas fa-arrow-left"></i> Quay Về Đơn Hàng
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <Suspense fallback={<LoadingFallback />}>
+                                        <CrmLeadImporterView
+                                            currentUser={currentUser}
+                                            currentUserName={currentUserName}
+                                            userRole={userRole}
+                                            isAdmin={isCurrentUserAdmin}
+                                            showToast={showToast}
+                                            isCrmEnabled={isCrmEnabled}
+                                            onToggleCrmGlobal={handleToggleCrmGlobal}
+                                            isTogglingCrm={isTogglingCrm}
+                                        />
+                                    </Suspense>
+                                )}
+                            </div>
                         </div>
                         <div hidden={activeView !== 'admin'} className="h-full">
                             {isCurrentUserAdmin && (
@@ -1348,6 +1425,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     onLogout={onLogout}
                     setIsChangePasswordModalOpen={setIsChangePasswordModalOpen}
                     isStockEnabled={isStockEnabled}
+                    isCrmEnabled={isCrmEnabled}
                     reputation={reputation}
                     isTogglingStock={isTogglingStock}
                     handleToggleStockGlobal={handleToggleStockGlobal}
