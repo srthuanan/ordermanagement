@@ -4,7 +4,7 @@ import { createNotification } from './notificationService';
 
 export const requestInvoice = async (
     orderNumber: string, contractFile: File, proposalFile: File, policy: string, commission: string, vpoint: string,
-    orderData?: { ten_khach_hang?: string; tvbh?: string; vin?: string; dong_xe?: string; phien_ban?: string; ngoai_that?: string; noi_that?: string; ngay_coc?: string; },
+    orderData?: { ten_khach_hang?: string; tvbh?: string; vin?: string; dong_xe?: string; phien_ban?: string; ngoai_that?: string; noi_that?: string; ngay_coc?: string; ma_hd_cyber?: string; 'Mã HĐ Cyber'?: string; },
     aiNote?: string,
     xeXangVin?: string, xeXangHang?: string, xeXangModel?: string,
     _preProcessedPayloads?: { contract: any, proposal: any },
@@ -44,25 +44,77 @@ export const requestInvoice = async (
     if (pUp.error) throw new Error(`Lỗi upload Đề nghị XHĐ: ${pUp.error.message}`);
     const { data: cUrl } = supabase.storage.from('yeucauxhd-files').getPublicUrl(cPath);
     const { data: pUrl } = supabase.storage.from('yeucauxhd-files').getPublicUrl(pPath);
+    
     let soMay = '', maDms = '', vinLookup = orderData?.vin;
-    if (!vinLookup) { const { data: orderRec } = await supabase.from('donhang').select('vin, ma_dms').eq('so_don_hang', orderNumber).single(); if (orderRec?.vin) { vinLookup = orderRec.vin; maDms = orderRec.ma_dms || ''; } }
+    let maHdCyber = (orderData?.ma_hd_cyber || orderData?.['Mã HĐ Cyber'] || '').trim();
+
+    if (!vinLookup || !maHdCyber) { 
+        const { data: orderRec } = await supabase.from('donhang').select('vin, ma_dms, ma_hd_cyber').eq('so_don_hang', orderNumber).maybeSingle(); 
+        if (orderRec) {
+            if (!vinLookup && orderRec.vin) {
+                vinLookup = orderRec.vin;
+                maDms = orderRec.ma_dms || '';
+            }
+            if (!maHdCyber && orderRec.ma_hd_cyber) {
+                maHdCyber = orderRec.ma_hd_cyber.trim();
+            }
+        }
+    }
+
     if (vinLookup) {
         const cleanVin = vinLookup.trim().toUpperCase();
         const { data: ttx } = await supabase.from('thongtinxe').select('so_may, khu_vuc').eq('vin', cleanVin).maybeSingle(); 
         soMay = ttx?.so_may || ''; 
         if (!maDms) maDms = ttx?.khu_vuc || ''; 
     }
-    const row = { so_don_hang: orderNumber, ten_khach_hang: orderData?.ten_khach_hang || '', tvbh: orderData?.tvbh || requestedBy, dong_xe: orderData?.dong_xe || '', phien_ban: orderData?.phien_ban || '', ngoai_that: orderData?.ngoai_that || '', noi_that: orderData?.noi_that || '', ngay_coc: orderData?.ngay_coc || null, ngay_yeu_cau: now, chinh_sach: policy || '', hoa_hong_ung: commission || '', vpoint: vpoint || '', url_hop_dong: cUrl.publicUrl, url_de_nghi_xhd: pUrl.publicUrl, so_may: soMay, vin: vinLookup || '', ma_dms: maDms, ngay_xuat_hoa_don: null, ket_qua_gui_mail: '', url_hoa_don_da_xuat: '', trang_thai_vc: '', ghi_chu_ai: aiNote || '', xe_xang_vin: xeXangVin || '', xe_xang_hang: xeXangHang || '', xe_xang_model: xeXangModel || '', ma_vc: maVc || '' };
+
+    const row = { 
+        so_don_hang: orderNumber, 
+        ma_hd_cyber: maHdCyber, 
+        ten_khach_hang: orderData?.ten_khach_hang || '', 
+        tvbh: orderData?.tvbh || requestedBy, 
+        dong_xe: orderData?.dong_xe || '', 
+        phien_ban: orderData?.phien_ban || '', 
+        ngoai_that: orderData?.ngoai_that || '', 
+        noi_that: orderData?.noi_that || '', 
+        ngay_coc: orderData?.ngay_coc || null, 
+        ngay_yeu_cau: now, 
+        chinh_sach: policy || '', 
+        hoa_hong_ung: commission || '', 
+        vpoint: vpoint || '', 
+        url_hop_dong: cUrl.publicUrl, 
+        url_de_nghi_xhd: pUrl.publicUrl, 
+        so_may: soMay, 
+        vin: vinLookup || '', 
+        ma_dms: maDms, 
+        ngay_xuat_hoa_don: null, 
+        ket_qua_gui_mail: '', 
+        url_hoa_don_da_xuat: '', 
+        trang_thai_vc: '', 
+        ghi_chu_ai: aiNote || '', 
+        xe_xang_vin: xeXangVin || '', 
+        xe_xang_hang: xeXangHang || '', 
+        xe_xang_model: xeXangModel || '', 
+        ma_vc: maVc || '' 
+    };
     const { error: insErr } = await supabaseAdmin.from('yeucauxhd').insert([row]);
     if (insErr) throw new Error(`Lỗi lưu Supabase: ${insErr.message}`);
-    await supabaseAdmin.from('donhang').update({ 
+
+    const updateDonHangPayload: any = { 
         ket_qua: 'Chờ phê duyệt',
         chinh_sach: policy || '',
         ma_vc: maVc || ''
-    }).eq('so_don_hang', orderNumber);
-    await logAction('REQUEST_INVOICE', { orderNumber, policy, commission, vpoint, aiNote, xeXangVin, xeXangHang, xeXangModel }, orderNumber, 'order');
+    };
+    if (maHdCyber) {
+        updateDonHangPayload.ma_hd_cyber = maHdCyber;
+    }
+    await supabaseAdmin.from('donhang').update(updateDonHangPayload).eq('so_don_hang', orderNumber);
+
+    await logAction('REQUEST_INVOICE', { orderNumber, ma_hd_cyber: maHdCyber, policy, commission, vpoint, aiNote, xeXangVin, xeXangHang, xeXangModel }, orderNumber, 'order');
     if (vinLookup) await supabaseAdmin.from('khoxe').delete().eq('vin', vinLookup);
-    await createNotification({ message: `TVBH đã yêu cầu xuất hóa đơn cho đơn hàng ${orderNumber}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: orderNumber });
+    
+    const cyberSuffix = maHdCyber ? ` (Mã HĐ Cyber: ${maHdCyber})` : '';
+    await createNotification({ message: `TVBH đã yêu cầu xuất hóa đơn cho đơn hàng ${orderNumber}${cyberSuffix}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: orderNumber });
     
     // Gửi email biên nhận tiếp nhận yêu cầu xuất hóa đơn cho TVBH (Background non-blocking)
     supabaseAdmin.functions.invoke('send-email', {
@@ -70,6 +122,7 @@ export const requestInvoice = async (
             actionId: 'invoice_request_submitted',
             record: {
                 ...row,
+                ma_hd_cyber: maHdCyber,
                 policy: policy || row.chinh_sach,
                 commission: commission || row.hoa_hong_ung,
                 vpoint: vpoint || row.vpoint,

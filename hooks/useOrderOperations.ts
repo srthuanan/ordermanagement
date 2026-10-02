@@ -209,6 +209,8 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
                     ngoai_that: order["Ngoại thất"],
                     noi_that: order["Nội thất"],
                     ngay_coc: parseSafeIsoDate(order["Ngày cọc"]),
+                    ma_hd_cyber: order["Mã HĐ Cyber"] || order.ma_hd_cyber || order["Số hợp đồng"] || order.so_hop_dong || '',
+                    'Mã HĐ Cyber': order["Mã HĐ Cyber"] || order.ma_hd_cyber || '',
                 },
                 aiNote,
                 xeXangVin,

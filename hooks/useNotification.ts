@@ -105,11 +105,15 @@ export const useNotification = (showToast: (title: string, message: string, type
                         timestamp: newInteraction.created_at,
                         createdBy: newInteraction.actor_name,
                         targetView: newInteraction.target_view,
-                        targetId: newInteraction.target_id
+                        targetId: newInteraction.target_id,
+                        metadata: newInteraction.metadata
                     } as unknown as SystemNotification;
                     
                     if (document.visibilityState !== 'visible') {
                         showBrowserNotification(newNotif);
+                    }
+                    if (newInteraction.metadata?.type === 'DNX_COMPLETED' && newInteraction.metadata?.print_data) {
+                        window.dispatchEvent(new CustomEvent('open-dnx-modal', { detail: newInteraction.metadata.print_data }));
                     }
                     fetchNotifications();
                 }
@@ -197,6 +201,11 @@ export const useNotification = (showToast: (title: string, message: string, type
                 setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, isRead: false } : n));
                 setUnreadCount(prev => prev + 1);
             }
+        }
+
+        // Nếu là thông báo phiếu DNX đã lập, lập tức mở modal hiển thị file in
+        if (notification.metadata?.print_data) {
+            window.dispatchEvent(new CustomEvent('open-dnx-modal', { detail: notification.metadata.print_data }));
         }
 
         // Logic điều hướng dựa trên Target View & Target ID

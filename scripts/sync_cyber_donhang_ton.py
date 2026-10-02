@@ -10,12 +10,19 @@ import json
 import pymssql
 import requests
 from datetime import datetime
+from dotenv import load_dotenv
+
+_env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".env"))
+if os.path.exists(_env_path):
+    load_dotenv(_env_path)
+else:
+    load_dotenv()
 
 # Cấu hình Cyber SQL Server
 CYBER_SERVER = os.environ.get("CYBER_SERVER", "SQLVanDao.Cybersoft.com.vn")
 CYBER_PORT = int(os.environ.get("CYBER_PORT", 7521))
-CYBER_USER = os.environ.get("CYBER_USER", "")
-CYBER_PWD = os.environ.get("CYBER_PWD", "")
+CYBER_USER = os.environ.get("CYBER_USER", "cyber_vandao")
+CYBER_PWD = os.environ.get("CYBER_PWD", "HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv")
 CYBER_DB = os.environ.get("CYBER_DB", "CyberAppGolden_VanDao")
 
 # Cấu hình Supabase
@@ -154,20 +161,57 @@ def sync_to_supabase(contracts):
             "ten_post": post,
             "stt_rec": c.get('stt_rec') or '',
             "ghi_chu": f"HĐ Cyber {so_ct} | Đã thu: {tien:,.0f} đ | {post}",
-            "status": post
+            "status": post,
+            "tien_do": "Chờ xe",
+            "ghi_chu_tvbh": None,
+            "updated_at_tvbh": None
         }
         records.append(rec)
     
-    # Xóa sạch các đơn tồn cũ và nạp mới toàn bộ
-    mgmt_url = "https://api.supabase.com/v1/projects/jwvgxqrkjlbewvpkvucj/database/query"
-    mgmt_headers = {
-        "Authorization": f"Bearer {SUPABASE_MGMT_TOKEN}",
-        "Content-Type": "application/json"
+    # Lấy thông tin tiến độ hiện tại do TVBH đã chọn từ Supabase để bảo toàn 100%
+    headers_get = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}"
     }
-    requests.post(mgmt_url, headers=mgmt_headers, json={"query": "DELETE FROM public.donhang_ton;"})
+    existing_map = {}
+    try:
+        r_get = requests.get(f"{SUPABASE_URL}/rest/v1/donhang_ton?select=so_don_hang,tien_do,ghi_chu_tvbh,updated_at_tvbh", headers=headers_get, timeout=15)
+        if r_get.status_code == 200:
+            for item in r_get.json():
+                so_dh = item.get('so_don_hang')
+                if so_dh:
+                    existing_map[so_dh] = item
+    except Exception as e:
+        print(f"Warning: Không thể lấy tiến độ hiện tại của TVBH: {e}")
 
-    # Upsert danh sách mới
-    url = f"{SUPABASE_URL}/rest/v1/donhang_ton"
+    # Gắn lại tien_do, ghi_chu_tvbh nếu đã có sẵn (đảm bảo đồng nhất các trường dữ liệu)
+    for rec in records:
+        so_dh = rec["so_don_hang"]
+        if so_dh in existing_map:
+            prev = existing_map[so_dh]
+            rec["tien_do"] = prev.get("tien_do") or "Chờ xe"
+            rec["ghi_chu_tvbh"] = prev.get("ghi_chu_tvbh")
+            rec["updated_at_tvbh"] = prev.get("updated_at_tvbh")
+        else:
+            rec["tien_do"] = "Chờ xe"
+            rec["ghi_chu_tvbh"] = None
+            rec["updated_at_tvbh"] = None
+
+    # Xóa các đơn không còn tồn trên Cyber (đã xuất HĐ hoặc đã hoàn tất chi)
+    incoming_so_dh = set(r["so_don_hang"] for r in records)
+    if incoming_so_dh and existing_map:
+        to_delete = [k for k in existing_map.keys() if k not in incoming_so_dh]
+        if to_delete:
+            mgmt_url = "https://api.supabase.com/v1/projects/jwvgxqrkjlbewvpkvucj/database/query"
+            mgmt_headers = {
+                "Authorization": f"Bearer {SUPABASE_MGMT_TOKEN}",
+                "Content-Type": "application/json"
+            }
+            del_list = ",".join([f"'{s}'" for s in to_delete])
+            requests.post(mgmt_url, headers=mgmt_headers, json={"query": f"DELETE FROM public.donhang_ton WHERE so_don_hang IN ({del_list});"})
+
+    # Upsert danh sách mới (Bảo toàn tiến độ TVBH)
+    url = f"{SUPABASE_URL}/rest/v1/donhang_ton?on_conflict=so_don_hang"
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
@@ -175,6 +219,8 @@ def sync_to_supabase(contracts):
         "Prefer": "resolution=merge-duplicates"
     }
     res = requests.post(url, headers=headers, json=records)
+    if res.status_code not in (200, 201):
+        print(f"[Supabase Error] Status {res.status_code}: {res.text}")
     return res.status_code in (200, 201), len(records)
 
 def run_sync_donhang_ton():

@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, FormEvent } from 'react';
+import React, { useState, useEffect, useCallback, FormEvent, useMemo, useRef } from 'react';
 import { AnalyticsData, Order, StockVehicle } from '../types';
 import { extractDateFromImageTesseract, extractDateWithGemini } from '../services/ocrService';
 import { useVehicleConfig } from '../hooks/useVehicleConfig';
 import * as apiService from '../services/apiService';
 import FileUpload from './ui/FileUpload';
 import CarImage from './ui/CarImage';
-import Button from './ui/Button';
 import SelectPolicyModal from './modals/SelectPolicyModal';
 interface ImageSource {
     src: string;
@@ -37,6 +36,20 @@ const InputGroup: React.FC<{ icon?: string; children: React.ReactNode; label: st
 );
 
 
+const normalizeStr = (s?: string): string => {
+    if (!s) return '';
+    return s.trim().toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d");
+};
+
+const isNameMatch = (orderTvbh?: string, targetName?: string): boolean => {
+    const a = normalizeStr(orderTvbh);
+    const b = normalizeStr(targetName);
+    if (!a || !b) return false;
+    return a === b || a.includes(b) || b.includes(a);
+};
+
 const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existingOrderNumbers, initialVehicle, currentUser, vehicleAnalyticsData, onOpenImagePreview }) => {
     // --- State ---
     const [step, setStep] = useState<1 | 2>(1); // 1: Config, 2: Info
@@ -44,6 +57,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         ten_ban_hang: currentUser,
         ten_khach_hang: '',
         so_don_hang: '',
+        ma_hd_cyber: '',
         dong_xe: '',
         phien_ban: '',
         ngoai_that: '',
@@ -63,8 +77,99 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
     const [dmsWarning, setDmsWarning] = useState('');
     const { versionsMap, allPossibleVersions, vehicleLines, getMappedExteriors, getMappedInteriors } = useVehicleConfig();
 
+    // Backlog deposits (Cọc tồn Cyber)
+    const [backlogOrders, setBacklogOrders] = useState<any[]>([]);
+    const [isBacklogDropdownOpen, setIsBacklogDropdownOpen] = useState(false);
+    const [backlogSearch, setBacklogSearch] = useState('');
+    const backlogDropdownRef = useRef<HTMLDivElement>(null);
+
     const [availableExteriors, setAvailableExteriors] = useState<string[]>([]);
     const [availableInteriors, setAvailableInteriors] = useState<string[]>([]);
+
+    // Tải danh sách hợp đồng cọc tồn từ donhang_ton
+    useEffect(() => {
+        let isMounted = true;
+        const loadBacklog = async () => {
+            try {
+                const res = await apiService.getBacklogOrders();
+                if (isMounted && res.status === 'SUCCESS' && Array.isArray(res.data)) {
+                    setBacklogOrders(res.data);
+                }
+            } catch (err) {
+                console.error('[RequestForm] Lỗi tải danh sách cọc tồn:', err);
+            }
+        };
+        loadBacklog();
+        return () => { isMounted = false; };
+    }, []);
+
+    // Danh sách hợp đồng cọc tồn thuộc TVBH hiện tại
+    const userBacklogList = useMemo(() => {
+        if (!backlogOrders || backlogOrders.length === 0) return [];
+        const isAdm = currentUser?.toLowerCase() === 'admin' || currentUser?.toLowerCase() === 'quản trị viên';
+        return backlogOrders.filter(item => {
+            if (!isAdm && !isNameMatch(item.tvbh_name, currentUser)) return false;
+            const td = (item.tien_do || '').toLowerCase();
+            if (td === 'hoàn cọc' || td === 'hủy cọc') return false;
+            return true;
+        });
+    }, [backlogOrders, currentUser]);
+
+    // Lọc theo tìm kiếm trong popup cọc tồn
+    const filteredBacklog = useMemo(() => {
+        if (!backlogSearch.trim()) return userBacklogList;
+        const q = normalizeStr(backlogSearch);
+        return userBacklogList.filter(item => {
+            const soHd = normalizeStr(item.so_hop_dong || item.so_ct || item.so_don_hang);
+            const kh = normalizeStr(item.khach_hang);
+            const sdt = normalizeStr(item.so_dien_thoai);
+            const pb = normalizeStr(item.phien_ban);
+            const nt = normalizeStr(item.ngoai_that);
+            return soHd.includes(q) || kh.includes(q) || sdt.includes(q) || pb.includes(q) || nt.includes(q);
+        });
+    }, [userBacklogList, backlogSearch]);
+
+    // Xử lý click ngoài để đóng dropdown cọc tồn
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (backlogDropdownRef.current && !backlogDropdownRef.current.contains(e.target as Node)) {
+                setIsBacklogDropdownOpen(false);
+            }
+        };
+        if (isBacklogDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isBacklogDropdownOpen]);
+
+    // Xử lý chọn 1 hợp đồng từ cọc tồn
+    const handleSelectBacklogContract = (contract: any) => {
+        const cyberCode = (contract.so_hop_dong || contract.so_ct || contract.so_don_hang || '').trim();
+        const customerName = (contract.khach_hang || '').trim().toUpperCase();
+
+        setFormData(prev => {
+            const next = {
+                ...prev,
+                ma_hd_cyber: cyberCode,
+                ten_khach_hang: customerName || prev.ten_khach_hang,
+            };
+            // Nếu so_don_hang trong Cyber có định dạng DMS chuẩn thì tự động điền
+            if (contract.so_don_hang && /^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$/.test(contract.so_don_hang)) {
+                next.so_don_hang = contract.so_don_hang;
+            }
+            // Điền ngày cọc nếu chưa có
+            if (contract.ngay_hop_dong && !prev.ngay_coc) {
+                next.ngay_coc = contract.ngay_hop_dong;
+            }
+            return next;
+        });
+
+        setIsBacklogDropdownOpen(false);
+        setBacklogSearch('');
+        showToast('Đã chọn HĐ Cyber', `Đã chọn: ${cyberCode} - ${customerName}`, 'success', 2500);
+    };
 
     // --- BỘ SƯU TẬP 5 BỨC TRANH 3D SHOWROOM TONE TRẮNG SÁNG SIÊU SANG ---
     const [whiteLuxuryBgIndex, setWhiteLuxuryBgIndex] = useState<number>(() => Math.floor(Math.random() * 5));
@@ -175,7 +280,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
     }, []);
 
     const handleClearForm = () => {
-        setFormData({ ten_ban_hang: currentUser, ten_khach_hang: '', so_don_hang: '', dong_xe: '', phien_ban: '', ngoai_that: '', noi_that: '', ngay_coc: '', thoi_gian_can_xe: '', vin: '', chinh_sach: '' });
+        setFormData({ ten_ban_hang: currentUser, ten_khach_hang: '', so_don_hang: '', ma_hd_cyber: '', dong_xe: '', phien_ban: '', ngoai_that: '', noi_that: '', ngay_coc: '', thoi_gian_can_xe: '', vin: '', chinh_sach: '' });
         handleFileSelect(null);
         setStep(1);
     };
@@ -215,10 +320,12 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
     const handleConfirmSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        // Validation Step 2
-        const requiredFields: (keyof typeof formData)[] = ['ten_khach_hang', 'so_don_hang', 'chinh_sach'];
-        if (requiredFields.some(field => !formData[field])) { 
-            if (!formData.chinh_sach) {
+        // Validation Step 2: BẮT BUỘC NHẬP MÃ HĐ CYBER
+        const requiredFields: (keyof typeof formData)[] = ['ten_khach_hang', 'so_don_hang', 'chinh_sach', 'ma_hd_cyber'];
+        if (requiredFields.some(field => !formData[field]?.trim())) { 
+            if (!formData.ma_hd_cyber?.trim()) {
+                showToast('Thiếu Thông Tin', 'Vui lòng nhập hoặc chọn Mã HĐ Cyber (Bắt buộc khi yêu cầu ghép xe).', 'warning', 3500); 
+            } else if (!formData.chinh_sach) {
                 showToast('Thiếu Thông Tin', 'Vui lòng chọn Chính sách bán hàng áp dụng cho đơn hàng.', 'warning', 3000); 
             } else {
                 showToast('Thiếu Thông Tin', 'Vui lòng điền đủ thông tin khách hàng.', 'warning', 3000); 
@@ -238,6 +345,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         try {
             const requestPayload = {
                 ...formData,
+                ma_hd_cyber: (formData.ma_hd_cyber || '').trim(),
                 ten_khach_hang: (formData.ten_khach_hang || '').trim().toUpperCase(),
                 is_flex_match: 'false',
                 ngoai_that_flex: '[]',
@@ -364,6 +472,34 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                         {/* STEP 1: Premium Config Grid */}
                         {step === 1 && (
                             <div className="space-y-4 md:space-y-5 animate-fade-in relative z-10">
+                                {userBacklogList.length > 0 && !isPreFilled && (
+                                    <div className="p-3 bg-gradient-to-r from-blue-50/90 to-indigo-50/90 border border-blue-200/80 rounded-xl flex items-center justify-between gap-3 animate-fade-in shadow-2xs">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs shrink-0 shadow-xs">
+                                                <i className="fas fa-file-contract"></i>
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-slate-800">
+                                                    Bạn có <span className="text-blue-600 font-extrabold">{userBacklogList.length}</span> hợp đồng cọc tồn trên Cyber
+                                                </p>
+                                                <p className="text-[11px] text-slate-500 truncate">
+                                                    Chọn hợp đồng cọc tồn để tự động điền mã HĐ, tên KH và ngày cọc
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setStep(2);
+                                                setIsBacklogDropdownOpen(true);
+                                            }}
+                                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold whitespace-nowrap transition-colors shadow-2xs flex items-center gap-1.5"
+                                        >
+                                            <i className="fas fa-list-check"></i>
+                                            <span>Chọn cọc tồn</span>
+                                        </button>
+                                    </div>
+                                )}
                                 <div className="grid grid-cols-1 gap-5 md:gap-6">
                                     <div>
                                         <InputGroup label="Dòng xe (Model)" htmlFor="dong_xe" required>
@@ -526,11 +662,129 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                         {step === 2 && (
                             <div className="flex flex-col gap-3 md:gap-4 animate-fade-in relative z-10">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                                    <div>
-                                        <InputGroup label="Tên khách hàng" htmlFor="ten_khach_hang" icon="fa-user" required>
-                                            <input id="ten_khach_hang" type="text" name="ten_khach_hang" value={formData.ten_khach_hang} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} required className={`${inputClass} !py-2.5`} placeholder="" />
-                                        </InputGroup>
+                                    {/* MÃ HĐ CYBER (BẮT BUỘC) */}
+                                    <div className="relative">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label htmlFor="ma_hd_cyber" className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wide">
+                                                <i className="fas fa-file-signature text-blue-500"></i>
+                                                Mã HĐ Cyber <span className="text-red-500">*</span>
+                                            </label>
+                                            {userBacklogList.length > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsBacklogDropdownOpen(prev => !prev)}
+                                                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-0.5 rounded-md flex items-center gap-1 border border-blue-200 transition-colors shadow-2xs"
+                                                    title="Chọn nhanh từ danh sách hợp đồng cọc tồn của bạn"
+                                                >
+                                                    <i className="fas fa-list-check text-[10px]"></i>
+                                                    <span>Cọc tồn ({userBacklogList.length})</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="relative">
+                                            <input
+                                                id="ma_hd_cyber"
+                                                type="text"
+                                                name="ma_hd_cyber"
+                                                value={formData.ma_hd_cyber}
+                                                onChange={handleInputChange}
+                                                onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())}
+                                                required
+                                                placeholder="VD: 02.xxxx/xx/2026/HĐMB-MDP"
+                                                className={`${inputClass} !py-2.5 pr-10 font-mono font-medium ${!formData.ma_hd_cyber ? 'border-amber-300 focus:border-blue-500' : 'border-blue-300 text-blue-900 bg-blue-50/20'}`}
+                                            />
+                                            {userBacklogList.length > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsBacklogDropdownOpen(prev => !prev)}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-blue-600 transition-colors"
+                                                    title="Mở danh sách cọc tồn"
+                                                >
+                                                    <i className={`fas ${isBacklogDropdownOpen ? 'fa-chevron-up' : 'fa-chevron-down'} text-xs`}></i>
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* DROPDOWN POPUP CỌC TỒN */}
+                                        {isBacklogDropdownOpen && (
+                                            <div
+                                                ref={backlogDropdownRef}
+                                                className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white rounded-xl shadow-2xl border border-slate-200 p-2.5 max-h-72 overflow-hidden flex flex-col animate-fade-in"
+                                                style={{ minWidth: '300px' }}
+                                            >
+                                                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 shrink-0">
+                                                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                                        <i className="fas fa-layer-group text-blue-500"></i>
+                                                        Cọc tồn của bạn ({filteredBacklog.length})
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsBacklogDropdownOpen(false)}
+                                                        className="text-slate-400 hover:text-slate-600 text-xs px-1"
+                                                    >
+                                                        <i className="fas fa-times"></i>
+                                                    </button>
+                                                </div>
+
+                                                {userBacklogList.length > 3 && (
+                                                    <div className="mb-2 shrink-0">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Tìm số HĐ, tên KH, xe, SĐT..."
+                                                            value={backlogSearch}
+                                                            onChange={(e) => setBacklogSearch(e.target.value)}
+                                                            className="w-full px-2.5 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-blue-500"
+                                                            autoFocus
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                <div className="space-y-1.5 overflow-y-auto flex-1 pr-1">
+                                                    {filteredBacklog.length === 0 ? (
+                                                        <div className="py-4 text-center text-xs text-slate-400 italic">
+                                                            {backlogSearch ? 'Không tìm thấy hợp đồng phù hợp' : 'Chưa có hợp đồng cọc tồn nào'}
+                                                        </div>
+                                                    ) : (
+                                                        filteredBacklog.map((item, idx) => {
+                                                            const code = item.so_hop_dong || item.so_ct || item.so_don_hang;
+                                                            const isCurrentSelected = formData.ma_hd_cyber === code;
+                                                            return (
+                                                                <div
+                                                                    key={item.id || code || idx}
+                                                                    onClick={() => handleSelectBacklogContract(item)}
+                                                                    className={`p-2.5 rounded-lg border cursor-pointer transition-all text-left ${
+                                                                        isCurrentSelected
+                                                                            ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-400'
+                                                                            : 'bg-white hover:bg-slate-50 border-slate-200/80 hover:border-blue-200'
+                                                                    }`}
+                                                                >
+                                                                    <div className="flex items-center justify-between gap-2">
+                                                                        <span className="font-mono font-bold text-xs text-blue-700 truncate">
+                                                                            {code}
+                                                                        </span>
+                                                                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60 shrink-0">
+                                                                            {Number(item.tien_coc || 0).toLocaleString('vi-VN')} ₫
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex items-center justify-between text-xs text-slate-700 font-semibold mt-1">
+                                                                        <span className="truncate">{item.khach_hang}</span>
+                                                                        <span className="text-[11px] text-slate-500 font-mono shrink-0">{item.so_dien_thoai}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center justify-between text-[11px] text-slate-500 mt-0.5">
+                                                                        <span className="truncate italic">{item.phien_ban} - {item.ngoai_that}</span>
+                                                                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 font-medium">
+                                                                            {item.tien_do || 'Chờ xe'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
+
                                     <div>
                                         <InputGroup label="Số đơn hàng" htmlFor="so_don_hang" icon="fa-barcode" required>
                                             <input
@@ -555,13 +809,13 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                             )}
                                         </InputGroup>
                                     </div>
-                                    {!formData.vin && (
-                                        <div>
-                                            <InputGroup label="Thời gian cần xe" htmlFor="thoi_gian_can_xe" icon="fa-clock" required>
-                                                <input id="thoi_gian_can_xe" type="date" name="thoi_gian_can_xe" value={formData.thoi_gian_can_xe} onChange={handleInputChange} required className={`${inputClass} !py-2.5`} />
-                                            </InputGroup>
-                                        </div>
-                                    )}
+
+                                    <div>
+                                        <InputGroup label="Tên khách hàng" htmlFor="ten_khach_hang" icon="fa-user" required>
+                                            <input id="ten_khach_hang" type="text" name="ten_khach_hang" value={formData.ten_khach_hang} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} required className={`${inputClass} !py-2.5`} placeholder="" />
+                                        </InputGroup>
+                                    </div>
+
                                     <div>
                                         <InputGroup label="Chính sách" htmlFor="chinh_sach" icon="fa-scroll" required>
                                             <div className="relative">
@@ -586,6 +840,14 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                             </div>
                                         </InputGroup>
                                     </div>
+
+                                    {!formData.vin && (
+                                        <div className="md:col-span-2">
+                                            <InputGroup label="Thời gian cần xe" htmlFor="thoi_gian_can_xe" icon="fa-clock" required>
+                                                <input id="thoi_gian_can_xe" type="date" name="thoi_gian_can_xe" value={formData.thoi_gian_can_xe} onChange={handleInputChange} required className={`${inputClass} !py-2.5`} />
+                                            </InputGroup>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="p-3 md:p-4 bg-slate-50/50 backdrop-blur-sm rounded-2xl border border-slate-200/50 shadow-inner">
                                     <div className="flex justify-between items-center mb-3">
@@ -614,19 +876,51 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                 <div className="px-6 md:px-8 py-5 flex items-center justify-end shrink-0">
                     <div className="flex items-center gap-3">
                         {step === 1 ? (
-                            <Button type="button" onClick={handleClearForm} variant="outline" className="px-5 py-2 border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 rounded-full font-medium text-sm transition-all shadow-sm">Hủy bỏ</Button>
+                            <button
+                                type="button"
+                                onClick={handleClearForm}
+                                className="px-5 py-2.5 border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 active:bg-slate-200 rounded-full font-semibold text-sm transition-all shadow-xs cursor-pointer"
+                            >
+                                Hủy bỏ
+                            </button>
                         ) : (
-                            <Button type="button" onClick={handleBackStep} variant="outline" className="px-5 py-2 border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 rounded-full font-medium text-sm transition-all shadow-sm">Quay lại</Button>
+                            <button
+                                type="button"
+                                onClick={handleBackStep}
+                                className="px-5 py-2.5 border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 active:bg-slate-200 rounded-full font-semibold text-sm transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                            >
+                                <i className="fas fa-arrow-left text-xs"></i>
+                                <span>Quay lại</span>
+                            </button>
                         )}
 
                         {step === 1 ? (
-                            <Button type="button" onClick={handleNextStep} variant="primary" className="px-5 py-2 bg-blue-600 hover:bg-blue-700 !text-white rounded-full font-medium text-sm transition-all shadow-sm border-none">
-                                Tiếp theo
-                            </Button>
+                            <button
+                                type="button"
+                                onClick={handleNextStep}
+                                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm rounded-full transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
+                            >
+                                <span>Tiếp theo</span>
+                                <i className="fas fa-arrow-right text-xs"></i>
+                            </button>
                         ) : (
-                            <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting} variant="primary" className="px-5 py-2 bg-blue-600 hover:bg-blue-700 !text-white rounded-full font-medium text-sm transition-all shadow-sm border-none">
-                                Gửi yêu cầu
-                            </Button>
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-sm rounded-full transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <i className="fas fa-spinner fa-spin text-sm"></i>
+                                        <span>Đang gửi...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>Gửi yêu cầu</span>
+                                        <i className="fas fa-paper-plane text-xs"></i>
+                                    </>
+                                )}
+                            </button>
                         )}
                     </div>
                 </div>

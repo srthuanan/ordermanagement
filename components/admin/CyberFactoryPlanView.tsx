@@ -26,7 +26,8 @@ import {
 } from '../../services/api/stockService';
 import { CyberDnxPrintModal, CyberDnxPrintData } from './CyberDnxPrintModal';
 import { CyberTd4PrintModal } from './CyberTd4PrintModal';
-import { getTransferRequests, updateTransferRequestStatus, TransferRequestItem } from '../../services/api/transferService';
+import { getTransferRequests, updateTransferRequestStatus, syncCyberDnxToInteraction, TransferRequestItem } from '../../services/api/transferService';
+import { createNotification } from '../../services/api/notificationService';
 import { supabase, supabaseAdmin } from '../../services/supabaseClient';
 import { formatShortWarehouseName } from '../../utils/stringUtils';
 import { SearchableWarehouseSelect } from '../ui/SearchableWarehouseSelect';
@@ -947,6 +948,71 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                     setTimeout(() => {
                         loadPendingTransferRequests();
                     }, 1000);
+                }
+
+                // Kiểm tra thêm các VIN thuộc đơn hàng của TVBH (kể cả khi TVBH chưa tạo yêu cầu chuyển xe trước đó) để thông báo & đồng bộ
+                const handledVins = matchingReqs.map(r => (r.vin || '').toUpperCase());
+                const otherVins = rawVins.filter(v => !handledVins.includes(v.toUpperCase()));
+                if (otherVins.length > 0) {
+                    try {
+                        const { data: matchedOrders } = await supabaseAdmin
+                            .from('donhang')
+                            .select('so_don_hang, ten_tu_van_ban_hang, ten_khach_hang, vin, dong_xe, phien_ban')
+                            .in('vin', otherVins);
+
+                        if (matchedOrders && matchedOrders.length > 0) {
+                            for (const ord of matchedOrders) {
+                                if (ord.ten_tu_van_ban_hang) {
+                                    await syncCyberDnxToInteraction({
+                                        orderNumber: ord.so_don_hang,
+                                        vin: ord.vin,
+                                        customerName: ord.ten_khach_hang,
+                                        consultantName: ord.ten_tu_van_ban_hang,
+                                        carModel: ord.dong_xe,
+                                        trim: ord.phien_ban,
+                                        fromWarehouse: dnxMaKhoXuat,
+                                        toWarehouse: dnxMaKhoNhan,
+                                        reason: dnxLyDo,
+                                        soCtDnx: res.so_ct || 'DNX',
+                                        printData: enrichedTicket
+                                    });
+                                    await createNotification({
+                                        message: `✅ Admin đã lập phiếu DNX ${res.so_ct || ''} điều chuyển xe ${ord.vin} (KH: ${ord.ten_khach_hang}). Phiếu đã mở sẵn cho bạn!`,
+                                        type: 'success',
+                                        recipient: ord.ten_tu_van_ban_hang,
+                                        targetView: 'orders',
+                                        targetId: ord.so_don_hang,
+                                        metadata: {
+                                            type: 'DNX_COMPLETED',
+                                            so_ct_dnx: res.so_ct,
+                                            vin: ord.vin,
+                                            print_data: enrichedTicket,
+                                            order_number: ord.so_don_hang
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                    } catch (eOrder) {
+                        console.warn('[handleCreateDnxSubmit] Lỗi tra cứu đơn hàng để thông báo TVBH:', eOrder);
+                    }
+                }
+
+                // Gửi broadcast Realtime mở modal ngay lập tức cho TVBH
+                try {
+                    const bcChannel = supabase.channel('dnx-realtime-alerts');
+                    await bcChannel.send({
+                        type: 'broadcast',
+                        event: 'DNX_CREATED',
+                        payload: {
+                            ticket: enrichedTicket,
+                            so_ct: res.so_ct,
+                            vins: rawVins,
+                            recipients: matchingReqs.map(r => r.consultantName).filter(Boolean)
+                        }
+                    });
+                } catch (eBc) {
+                    console.warn('[handleCreateDnxSubmit] Lỗi gửi broadcast DNX:', eBc);
                 }
 
                 // Đồng bộ lại danh sách từ CyberSoft sau khi database commit

@@ -583,6 +583,7 @@ Deno.serve(async (req: Request) => {
       const details: Record<string, string> = {
         "Số đơn hàng": `<b>${record.so_don_hang}</b>`,
         "Tên khách hàng": record.ten_khach_hang || "N/A",
+        "Mã HĐ Cyber": record.ma_hd_cyber ? `<b>${record.ma_hd_cyber}</b>` : "N/A",
         "Số VIN": `<b>${record.vin || "N/A"}</b>`,
         "Chính sách": Array.isArray(record.policy) ? record.policy.join(', ') : (record.policy || "N/A"),
         "Hoa hồng ứng": record.commission ? `<b>${formatCurrency(record.commission)} VND</b>` : "0 VND",

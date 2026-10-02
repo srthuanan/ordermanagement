@@ -34,7 +34,8 @@ export const fetchNotifications = async (): Promise<ApiResult> => {
             targetId: n.target_id,
             createdBy: n.actor_name,
             isRead: n.is_read,
-            recipient: n.recipient
+            recipient: n.recipient,
+            metadata: n.metadata
         }));
 
         const unreadCount = formattedNotifs.filter((n: any) => !n.isRead).length;
@@ -100,6 +101,7 @@ export const createNotification = async (payload: {
     recipient?: string;
     targetView?: string;
     targetId?: string;
+    metadata?: any;
 }): Promise<void> => {
     try {
         const actorId = getStorageItem("currentUser") || "System";
@@ -107,6 +109,7 @@ export const createNotification = async (payload: {
         const recipient = payload.recipient || 'ALL';
         const targetView = payload.targetView || '';
         const targetId = payload.targetId || '';
+        const payloadMeta = payload.metadata || {};
 
         if (targetId && targetView && recipient !== 'ALL') {
             const { data: existing } = await supabase.from('interactions').select('id, message, metadata').eq('category', 'NOTIFICATION').eq('recipient', recipient).eq('target_view', targetView).eq('target_id', targetId).eq('is_read', false).order('created_at', { ascending: false }).limit(1).maybeSingle();
@@ -115,7 +118,13 @@ export const createNotification = async (payload: {
                 const metadata = existing.metadata || {};
                 const count = (metadata.count || 1) + 1;
                 if (payload.message.includes('phản hồi') || payload.message.includes(':')) newMessage = `(${count}) ${payload.message}`;
-                await supabase.from('interactions').update({ message: newMessage, created_at: new Date().toISOString(), actor_id: actorId, actor_name: actorName, metadata: { ...metadata, count } }).eq('id', existing.id);
+                await supabase.from('interactions').update({ 
+                    message: newMessage, 
+                    created_at: new Date().toISOString(), 
+                    actor_id: actorId, 
+                    actor_name: actorName, 
+                    metadata: { ...metadata, ...payloadMeta, count } 
+                }).eq('id', existing.id);
                 return;
             }
         }
@@ -123,7 +132,7 @@ export const createNotification = async (payload: {
         await supabaseAdmin.from('interactions').insert({
             category: 'NOTIFICATION', type: payload.type || 'info', message: payload.message,
             recipient, target_view: targetView, target_id: targetId, is_read: false,
-            actor_id: actorId, actor_name: actorName
+            actor_id: actorId, actor_name: actorName, metadata: payloadMeta
         });
     } catch (err) {
         console.error("Failed to create notification:", err);

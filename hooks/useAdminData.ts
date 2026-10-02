@@ -97,6 +97,8 @@ export const useAdminData = ({
             'NGÀY XUẤT HÓA ĐƠN': row.ngay_xuat_hoa_don,
             'Trạng thái VC': row.trang_thai_vc || '',
             'Mã VC': row.ma_vc || '',
+            'Mã HĐ Cyber': row.ma_hd_cyber || '',
+            'ma_hd_cyber': row.ma_hd_cyber || '',
             'Ghi chú AI': row.ghi_chu_ai,
             'Ghi chú Admin': row.ghi_chu_admin || '',
             'ghi_chu_admin': row.ghi_chu_admin || '',
@@ -166,11 +168,14 @@ export const useAdminData = ({
                 let urlDeNghiTemp = invoice['LinkDeNghiXHD'] || invoice['URL Đề Nghị XHĐ'];
                 if (!isValidUrl(urlDeNghiTemp) && correspondingOrder) urlDeNghiTemp = (correspondingOrder as any)['LinkDeNghiXHD'];
 
+                const cyberCode = invoice['Mã HĐ Cyber'] || invoice.ma_hd_cyber || correspondingOrder?.['Mã HĐ Cyber'] || (correspondingOrder as any)?.ma_hd_cyber || '';
                 const mergedOrder: Order = {
                     ...invoice,
                     "Số đơn hàng": orderNumber,
                     "Tên khách hàng": invoice['TÊN KHÁCH HÀNG'] || invoice['Tên khách hàng'],
                     "VIN": invoice['SỐ VIN'] || invoice['VIN'],
+                    "Mã HĐ Cyber": cyberCode,
+                    "ma_hd_cyber": cyberCode,
                     "Thời gian nhập": invoice['NGÀY YÊU CẦU XHĐ'] || invoice['Thời gian nhập'],
                     "LinkHopDong": isValidUrl(urlHopDongTemp) ? urlHopDongTemp : '',
                     "LinkDeNghiXHD": isValidUrl(urlDeNghiTemp) ? urlDeNghiTemp : '',
@@ -256,6 +261,7 @@ export const useAdminData = ({
                 const keywordMatch = !lowerKeyword || (
                     includesNormalized(row['Số đơn hàng'], lowerKeyword) ||
                     includesNormalized(row['Tên khách hàng'], lowerKeyword) ||
+                    includesNormalized(row['Mã HĐ Cyber'] || (row as any).ma_hd_cyber, lowerKeyword) ||
                     includesNormalized(row.VIN, lowerKeyword) ||
                     includesNormalized(row['Dòng xe'], lowerKeyword) ||
                     includesNormalized(row['Phiên bản'], lowerKeyword)

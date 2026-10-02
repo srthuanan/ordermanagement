@@ -199,6 +199,12 @@ const AdminOrderCard: React.FC<{
                                 <span className="text-[10px] text-text-secondary uppercase font-bold tracking-wider">Mã DMS</span>
                                 <CopyableField text={order['Mã DMS'] || ''} showToast={showToast} className="font-mono font-bold text-slate-500 text-[11px]" />
                             </div>
+                            {(order['Mã HĐ Cyber'] || (order as any).ma_hd_cyber) && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] text-text-secondary uppercase font-bold tracking-wider">HĐ Cyber</span>
+                                    <CopyableField text={order['Mã HĐ Cyber'] || (order as any).ma_hd_cyber || ''} showToast={showToast} className="font-mono font-bold text-emerald-700 text-[11px]" />
+                                </div>
+                            )}
                             {order['CHÍNH SÁCH'] && (
                                 <div className="flex justify-between items-center mt-1 p-1 bg-amber-50 rounded border border-amber-100">
                                     <span className="text-[9px] text-amber-600 uppercase font-black tracking-tighter">

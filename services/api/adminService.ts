@@ -923,6 +923,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
                             ngoai_that: o.ngoai_that || 'CXĐ',
                             noi_that: o.noi_that || 'CXĐ',
                             vin: o.vin || null,
+                            ma_hd_cyber: o.ma_hd_cyber || null,
                             ngay_coc: o.ngay_coc || isoNow,
                             ngay_yeu_cau: isoNow,
                             trang_thai_vc: o.trang_thai_vc || 'Chưa gửi YC',
@@ -1128,6 +1129,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
                     url_de_nghi_xhd: y.url_de_nghi_xhd,
                     url_hoa_don_da_xuat: y.url_hoa_don_da_xuat,
                     trang_thai_vc: y.trang_thai_vc,
+                    ma_hd_cyber: y.ma_hd_cyber || null,
                     ket_qua: 'Đã xuất hóa đơn',
                     created_at: parseDateSafe(y.created_at) || new Date().toISOString()
                 }));
@@ -1664,6 +1666,24 @@ export const updateBacklogStatus = async (id: string, status: string, ghi_chu_ad
         return { status: 'SUCCESS', message: 'Cập nhật trạng thái thành công' };
     } catch (err: any) {
         return { status: 'ERROR', message: err.message || 'Lỗi khi cập nhật trạng thái đơn hàng tồn' };
+    }
+};
+
+export const updateBacklogTienDo = async (id: string, tien_do: string, ghi_chu_tvbh?: string): Promise<ApiResult> => {
+    try {
+        const updateData: any = { 
+            tien_do, 
+            updated_at_tvbh: new Date().toISOString(),
+            updated_at: new Date().toISOString() 
+        };
+        if (ghi_chu_tvbh !== undefined) {
+            updateData.ghi_chu_tvbh = ghi_chu_tvbh;
+        }
+        const { error } = await supabase.from('donhang_ton').update(updateData).eq('id', id);
+        if (error) throw error;
+        return { status: 'SUCCESS', message: `Đã cập nhật tiến độ "${tien_do}" thành công` };
+    } catch (err: any) {
+        return { status: 'ERROR', message: err.message || 'Lỗi khi cập nhật tiến độ đơn hàng tồn' };
     }
 };
 

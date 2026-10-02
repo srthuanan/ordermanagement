@@ -139,6 +139,8 @@ export const mapOrderDbToUi = (o: any) => ({
     "Mã số thuế": o.ma_so_thue || o.mst || o['Mã số thuế'],
     "Hình thức thanh toán": o.hinh_thuc_thanh_toan || o['Hình thức thanh toán'],
     "Ngân hàng": o.ngan_hang || o['Ngân hàng'],
+    "Mã HĐ Cyber": o.ma_hd_cyber || o["Mã HĐ Cyber"] || o.so_hop_dong || o["Số hợp đồng"],
+    "ma_hd_cyber": o.ma_hd_cyber || o["Mã HĐ Cyber"] || o.so_hop_dong || o["Số hợp đồng"],
 });
 
 export const mapStockDbToUi = (s: any) => ({

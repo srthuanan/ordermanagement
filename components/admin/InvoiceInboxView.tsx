@@ -896,9 +896,17 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                         className="text-xs font-extrabold text-slate-900 uppercase"
                     />
                 </div>
-                <div className="text-[11px] text-slate-600 font-medium truncate">
-                    {order['Dòng xe']} {order['Phiên bản']}
+                <div className="text-[11px] text-slate-600 font-medium truncate flex items-center justify-between">
+                    <span>{order['Dòng xe']} {order['Phiên bản']}</span>
                 </div>
+                {(order['Mã HĐ Cyber'] || (order as any).ma_hd_cyber) && (
+                    <div className="mt-1 flex items-center">
+                        <span className="text-[9.5px] font-mono font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/80 truncate flex items-center gap-1">
+                            <i className="fas fa-file-contract text-emerald-600 text-[8.5px]"></i>
+                            <span>{order['Mã HĐ Cyber'] || (order as any).ma_hd_cyber}</span>
+                        </span>
+                    </div>
+                )}
             </div>
         );
     };
@@ -1047,8 +1055,20 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                 </div>
                                                 <StatusBadge status={selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || ''} size="sm" />
                                             </div>
-                                            <div className="flex items-center gap-2.5 text-xs text-slate-600 font-medium truncate">
+                                            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 font-medium">
                                                 <span>Đơn hàng: <strong className="font-mono text-slate-900">{selectedOrder['Số đơn hàng']}</strong></span>
+                                                {(selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber) && (
+                                                    <>
+                                                        <span className="text-slate-300">|</span>
+                                                        <span className="flex items-center gap-1">
+                                                            <i className="fas fa-file-contract text-emerald-600 text-[10px]"></i>
+                                                            <span>HĐ Cyber:</span>
+                                                            <strong className="font-mono text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shadow-2xs">
+                                                                {selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber}
+                                                            </strong>
+                                                        </span>
+                                                    </>
+                                                )}
                                                 <span className="text-slate-300">|</span>
                                                 <span>TVBH: <strong className="text-slate-900">{selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ'}</strong></span>
                                             </div>
@@ -1338,9 +1358,32 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                             </div>
                                                             <StatusBadge status={selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || ''} size="sm" />
                                                         </div>
-                                                        <div className="text-[11px] text-slate-500 font-medium truncate flex items-center gap-1.5 italic">
-                                                            <i className="fa-solid fa-user-tie text-[9px] text-slate-400 not-italic"></i>
-                                                            <span>TVBH: <span className="text-slate-600 font-medium italic">{toTitleCase(selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ')}</span></span>
+                                                        <div className="text-[11px] text-slate-500 font-medium truncate flex flex-wrap items-center gap-2">
+                                                            <span>Đơn: <strong className="font-mono text-slate-900">{selectedOrder['Số đơn hàng']}</strong></span>
+                                                            {(selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber) && (
+                                                                <>
+                                                                    <span className="text-slate-300">|</span>
+                                                                    <span 
+                                                                        className="flex items-center gap-1 font-normal not-italic cursor-pointer"
+                                                                        title={`Click để sao chép mã HĐ Cyber: ${selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber}`}
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            copyWithFeedback(selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber, e);
+                                                                        }}
+                                                                    >
+                                                                        <i className="fas fa-file-contract text-emerald-600 text-[10px]"></i>
+                                                                        <span className="text-[10px] text-slate-500">HĐ Cyber:</span>
+                                                                        <strong className="font-mono text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10.5px]">
+                                                                            {selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber}
+                                                                        </strong>
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                            <span className="text-slate-300">|</span>
+                                                            <span className="flex items-center gap-1.5 italic">
+                                                                <i className="fa-solid fa-user-tie text-[9px] text-slate-400 not-italic"></i>
+                                                                <span>TVBH: <span className="text-slate-600 font-medium italic">{toTitleCase(selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ')}</span></span>
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1607,37 +1650,56 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                 <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Giao dịch</h3>
                                             </div>
                                             <div className={`p-2.5 space-y-2 relative ${isSplitView ? 'flex-1 flex flex-col justify-evenly' : ''}`}>
-                                                <div className="text-left relative">
-                                                    <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 ml-0.5">Số đơn hàng</div>
-                                                    {(() => {
-                                                        const aiNotes = (selectedOrder as any)._aiNotes || [];
-                                                        const hasWarning = aiNotes.some((n: string) => n.includes('⚠️') || n.includes('🚨'));
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <div className="text-left relative flex flex-col">
+                                                        <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 ml-0.5 truncate">Số đơn hàng</div>
+                                                        {(() => {
+                                                            const aiNotes = (selectedOrder as any)._aiNotes || [];
+                                                            const hasWarning = aiNotes.some((n: string) => n.includes('⚠️') || n.includes('🚨'));
 
-                                                        return (
-                                                            <div className={`flex justify-center bg-gray-50/50 border rounded-xl py-1 pr-8 relative transition-all duration-300 ${hasWarning ? 'border-red-200 bg-red-50/30' : 'border-gray-100 shadow-sm'}`}>
-                                                                <CopyableField text={selectedOrder['Số đơn hàng'] || ''} showToast={showToast} className={`text-[12px] font-bold truncate font-mono tracking-tight ${hasWarning ? 'text-red-600' : 'text-accent-primary'}`} />
-                                                                {hasWarning && (
-                                                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 group/err">
-                                                                        <div className="text-red-500 animate-pulse cursor-help">
-                                                                            <i className="fas fa-exclamation-triangle text-xs"></i>
-                                                                        </div>
-                                                                        <div className="absolute top-full right-0 mt-2 w-72 bg-slate-900 text-white rounded-xl p-3 shadow-2xl opacity-0 group-hover/err:opacity-100 transition-all invisible group-hover/err:visible z-[100] transform scale-95 group-hover/err:scale-100 origin-top-right">
-                                                                            <div className="text-[10px] font-bold text-red-400 uppercase mb-2 border-b border-white/10 pb-1">Chi tiết sai lệch (AI)</div>
-                                                                            <div className="space-y-2">
-                                                                                {aiNotes.filter((n: string) => !n.includes('✅')).map((note: string, idx: number) => (
-                                                                                    <div key={`ai-note-${idx}`} className="flex items-start gap-2">
-                                                                                        <i className="fas fa-caret-right text-red-500 mt-1 text-[8px]"></i>
-                                                                                        <span className="text-[10px] font-medium leading-relaxed text-slate-200">{note.replace(/^[⚠️🚨ℹ️]\s*/, '').trim()}</span>
-                                                                                    </div>
-                                                                                ))}
+                                                            return (
+                                                                <div className={`flex items-center justify-center bg-gray-50/50 border rounded-xl py-1 px-1.5 relative transition-all duration-300 h-[34px] ${hasWarning ? 'border-red-200 bg-red-50/30' : 'border-gray-100 shadow-sm'}`}>
+                                                                    <CopyableField text={selectedOrder['Số đơn hàng'] || ''} showToast={showToast} className={`text-[11px] font-bold truncate font-mono tracking-tight ${hasWarning ? 'text-red-600' : 'text-accent-primary'}`} />
+                                                                    {hasWarning && (
+                                                                        <div className="absolute right-1 top-1/2 -translate-y-1/2 group/err">
+                                                                            <div className="text-red-500 animate-pulse cursor-help">
+                                                                                <i className="fas fa-exclamation-triangle text-xs"></i>
                                                                             </div>
-                                                                            <div className="absolute top-[-4px] right-3 w-3 h-3 bg-slate-900 rotate-45"></div>
+                                                                            <div className="absolute top-full right-0 mt-2 w-72 bg-slate-900 text-white rounded-xl p-3 shadow-2xl opacity-0 group-hover/err:opacity-100 transition-all invisible group-hover/err:visible z-[100] transform scale-95 group-hover/err:scale-100 origin-top-right">
+                                                                                <div className="text-[10px] font-bold text-red-400 uppercase mb-2 border-b border-white/10 pb-1">Chi tiết sai lệch (AI)</div>
+                                                                                <div className="space-y-2">
+                                                                                    {aiNotes.filter((n: string) => !n.includes('✅')).map((note: string, idx: number) => (
+                                                                                        <div key={`ai-note-${idx}`} className="flex items-start gap-2">
+                                                                                            <i className="fas fa-caret-right text-red-500 mt-1 text-[8px]"></i>
+                                                                                            <span className="text-[10px] font-medium leading-relaxed text-slate-200">{note.replace(/^[⚠️🚨ℹ️]\s*/, '').trim()}</span>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                                <div className="absolute top-[-4px] right-3 w-3 h-3 bg-slate-900 rotate-45"></div>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        );
-                                                    })()}
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                    <div className="text-left relative flex flex-col">
+                                                        <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 ml-0.5 truncate">
+                                                            Mã HĐ Cyber
+                                                        </div>
+                                                        <div className="flex items-center justify-center gap-1 bg-emerald-50/50 border border-emerald-200/80 rounded-xl py-1 px-1.5 shadow-2xs h-[34px]">
+                                                            <i className="fas fa-file-contract text-emerald-600 text-[9px] flex-shrink-0"></i>
+                                                            {(selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber) ? (
+                                                                <CopyableField 
+                                                                    text={selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber || ''} 
+                                                                    showToast={showToast} 
+                                                                    className="text-[10.5px] font-bold truncate font-mono tracking-tight text-emerald-800" 
+                                                                />
+                                                            ) : (
+                                                                <span className="text-[10px] text-slate-400 italic truncate">Chưa liên kết</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <div className="flex flex-col">

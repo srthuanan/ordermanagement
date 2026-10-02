@@ -35,6 +35,8 @@ const ReportBacklogModal = React.lazy(() => import('./components/modals/ReportBa
 import { OrderDetailView } from './components/OrderDetailView';
 import OrderGridView from './components/OrderGridView';
 import CustomTitleBar from './components/layout/CustomTitleBar';
+import TVBHBacklogOrdersView from './components/orders/TVBHBacklogOrdersView';
+import { CyberDnxPrintModal, CyberDnxPrintData } from './components/admin/CyberDnxPrintModal';
 
 import { useAppNavigation } from './hooks/useAppNavigation';
 import { useNotification } from './hooks/useNotification';
@@ -133,6 +135,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const [isBacklogModalOpen, setIsBacklogModalOpen] = useState(false);
     const [mobileSubTab, setMobileSubTab] = useState<'list' | 'detail'>('list');
 
+
     const handleSelectOrderMobile = useCallback((order: Order) => {
         handleViewDetails(order);
         setMobileSubTab('detail');
@@ -161,6 +164,98 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
     // State để điều hướng từ thông báo đến đúng xe
     const [stockSearch, setStockSearch] = useState('');
+
+    // State hiển thị modal in phiếu DNX toàn cục cho TVBH khi Admin hoàn tất
+    const [globalDnxPrintData, setGlobalDnxPrintData] = useState<CyberDnxPrintData | null>(null);
+
+    // Lắng nghe sự kiện custom mở modal in phiếu DNX (từ thông báo hoặc order detail)
+    useEffect(() => {
+        const handleOpenDnx = (e: any) => {
+            if (e.detail) {
+                setGlobalDnxPrintData(e.detail);
+            }
+        };
+        window.addEventListener('open-dnx-modal', handleOpenDnx);
+        return () => window.removeEventListener('open-dnx-modal', handleOpenDnx);
+    }, []);
+
+    // Lắng nghe Realtime khi Admin tạo phiếu DNX thành công để tự động mở modal in phiếu cho TVBH
+    useEffect(() => {
+        if (!currentUser && !currentUserName) return;
+        const norm = (str?: string) => (str || '').toLowerCase().trim().normalize('NFC');
+        const myName = norm(currentUser);
+        const myUser = norm(currentUserName);
+        const shownKeys = new Set<string>();
+
+        const triggerOpenDnx = (ticket: any, soCt?: string, vin?: string) => {
+            if (!ticket) return;
+            const key = ticket.stt_rec || ticket.so_ct || `${vin}_${soCt}`;
+            if (shownKeys.has(key)) return;
+            shownKeys.add(key);
+
+            try {
+                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                audio.volume = 0.6;
+                audio.play().catch(() => {});
+            } catch (_) {}
+
+            showToast(
+                'Admin Đã Lập Phiếu Xuất (DNX)',
+                `Phiếu ${soCt || ticket.so_ct || 'DNX'} đã được tạo hoàn tất. Đang mở file cho bạn xem!`,
+                'success',
+                9000
+            );
+
+            setGlobalDnxPrintData(ticket);
+        };
+
+        const channel = supabase
+            .channel(`tvbh-dnx-realtime-${Date.now()}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'interactions'
+                },
+                (payload: any) => {
+                    const row = payload.new || {};
+                    const cat = row.category;
+                    const meta = row.metadata || {};
+
+                    // 1. Nhận cập nhật từ TRANSFER_REQUEST hoàn tất
+                    if (cat === 'TRANSFER_REQUEST' && meta.status === 'completed' && meta.print_data) {
+                        const targetUser = norm(meta.consultant_name || row.actor_name);
+                        const targetActor = norm(row.actor_id);
+                        if (targetUser === myName || targetUser === myUser || targetActor === myUser) {
+                            triggerOpenDnx(meta.print_data, meta.so_ct_dnx, meta.vin);
+                        }
+                    }
+
+                    // 2. Nhận từ thông báo chuông NOTIFICATION
+                    if (cat === 'NOTIFICATION' && meta.type === 'DNX_COMPLETED' && meta.print_data) {
+                        const rec = norm(row.recipient);
+                        if (rec === myName || rec === myUser || rec === 'all' || rec === 'all_tvbh') {
+                            triggerOpenDnx(meta.print_data, meta.so_ct_dnx, meta.vin);
+                        }
+                    }
+                }
+            )
+            .on('broadcast', { event: 'DNX_CREATED' }, (evt: any) => {
+                const p = evt.payload;
+                if (p && p.ticket) {
+                    const recipients = (p.recipients || []).map((r: string) => norm(r));
+                    if (recipients.includes(myName) || recipients.includes(myUser)) {
+                        triggerOpenDnx(p.ticket, p.so_ct, (p.vins || []).join(', '));
+                    }
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [currentUser, currentUserName, showToast]);
 
     useEffect(() => {
         const handleNavigateStock = (e: any) => {
@@ -476,6 +571,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 else if (isPendingStatsModalOpen) setIsPendingStatsModalOpen(false);
                 else if (isChangePasswordModalOpen) setIsChangePasswordModalOpen(false);
                 else if (isBacklogModalOpen) setIsBacklogModalOpen(false);
+                else if (globalDnxPrintData) setGlobalDnxPrintData(null);
             }
         };
 
@@ -933,6 +1029,16 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         <div hidden={activeView !== 'orders'} className="h-full">
                             {renderOrdersContent()}
                         </div>
+                        <div hidden={activeView !== 'backlog'} className="h-full">
+                            <TVBHBacklogOrdersView
+                                currentUser={currentUser}
+                                currentUserName={currentUserName}
+                                userRole={userRole}
+                                isCurrentUserAdmin={isCurrentUserAdmin}
+                                showToast={showToast}
+                                onBackToDms={() => setActiveView('orders')}
+                            />
+                        </div>
                         <div hidden={activeView !== 'stock'} className="h-full relative overflow-hidden flex flex-col">
                             {!isStockEnabled && isCurrentUserAdmin && (
                                 <div className="flex-shrink-0 bg-amber-500/10 backdrop-blur-md border-b border-amber-500/20 px-4 py-2 flex items-center justify-center gap-3 animate-fade-in z-20">
@@ -1215,6 +1321,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                         />
                     )}
                     <FifoAlertModal />
+                    <CyberDnxPrintModal
+                        isOpen={!!globalDnxPrintData}
+                        onClose={() => setGlobalDnxPrintData(null)}
+                        data={globalDnxPrintData}
+                    />
                 </Suspense>
 
                 {isChatEnabled && (

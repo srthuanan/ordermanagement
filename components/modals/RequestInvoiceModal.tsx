@@ -3,6 +3,7 @@ import { Order } from '../../types';
 import SimpleFileUpload from '../ui/SimpleFileUpload';
 import Button from '../ui/Button';
 import * as apiService from '../../services/apiService';
+import { supabase } from '../../services/supabaseClient';
 import { checkCyberContractStatus, CheckCyberContractResult } from '../../services/api/stockService';
 
 interface RequestInvoiceModalProps {
@@ -140,6 +141,9 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const [xeXangHang, setXeXangHang] = useState('');
     const [xeXangModel, setXeXangModel] = useState('');
     const [maVc, setMaVc] = useState('');
+    const [maHdCyber, setMaHdCyber] = useState<string>(() => {
+        return (order?.["Mã HĐ Cyber"] || order?.ma_hd_cyber || (order as any)?.so_hop_dong || order?.["Số hợp đồng"] || '').trim();
+    });
     const [vinCheckError, setVinCheckError] = useState('');
     const [isCheckingVin, setIsCheckingVin] = useState(false);
     
@@ -173,10 +177,52 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     };
 
     useEffect(() => {
+        const existing = (order?.["Mã HĐ Cyber"] || order?.ma_hd_cyber || (order as any)?.so_hop_dong || order?.["Số hợp đồng"] || '').trim();
+        if (existing) {
+            setMaHdCyber(existing);
+            return;
+        }
+
+        // Tự động tìm Mã HĐ Cyber nếu đơn hàng chưa có
+        const autoResolveCyberContract = async () => {
+            try {
+                const custName = (order?.["Tên khách hàng"] || '').trim();
+                if (custName) {
+                    const { data: tonData } = await supabase
+                        .from('donhang_ton')
+                        .select('so_hop_dong, khach_hang')
+                        .ilike('khach_hang', `%${custName}%`)
+                        .limit(1);
+
+                    if (tonData && tonData.length > 0 && tonData[0].so_hop_dong) {
+                        setMaHdCyber(tonData[0].so_hop_dong.trim());
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.error("Lỗi tra cứu cọc tồn cho HĐ Cyber:", e);
+            }
+
+            // Fallback: Tra cứu trực tiếp từ CyberSoft
+            recheckCyberContract();
+        };
+
+        if (order) {
+            autoResolveCyberContract();
+        }
+    }, [order]);
+
+    useEffect(() => {
         if (step === 3 && !cyberContractStatus && !isCheckingCyberContract) {
             recheckCyberContract();
         }
-    }, [step, order]);
+    }, [step]);
+
+    useEffect(() => {
+        if (cyberContractStatus?.so_ct && !maHdCyber) {
+            setMaHdCyber(cyberContractStatus.so_ct.trim());
+        }
+    }, [cyberContractStatus?.so_ct]);
     
     // Background tracking for Google Drive
     const [capturedImages, setCapturedImages] = useState<any[]>([]);
@@ -504,8 +550,14 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 triggerArchival();
             }
 
+            const updatedOrder: Order = {
+                ...order,
+                "Mã HĐ Cyber": maHdCyber.trim() || order["Mã HĐ Cyber"] || order.ma_hd_cyber || '',
+                ma_hd_cyber: maHdCyber.trim() || order.ma_hd_cyber || order["Mã HĐ Cyber"] || '',
+            };
+
             await onConfirm(
-                order, 
+                updatedOrder, 
                 contractFile!, 
                 proposalFile!, 
                 policy, 
@@ -778,7 +830,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         <div className="flex flex-col mb-3 space-y-1.5 md:space-y-2">
                             <Stepper currentStep={step} hasVinClub={vinClubConfirmed} />
                             <div className="bg-white rounded-[10px] border-l-4 border-l-blue-500 border-y border-r border-gray-200 p-2.5 md:p-3 shadow-sm flex-shrink-0 bg-gradient-to-r from-blue-50/40 to-white">
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-3 relative z-10 items-center">
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 relative z-10 items-center">
                                     <div className="flex flex-col">
                                         <span className="text-[9px] uppercase tracking-wider text-text-secondary/80 font-semibold mb-0.5">Số đơn hàng</span>
                                         <div className="flex items-center gap-1.5 text-blue-700">
@@ -794,6 +846,25 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                         </div>
                                     </div>
                                     <div className="flex flex-col md:border-l md:border-gray-200 md:pl-3">
+                                        <span className="text-[9px] uppercase tracking-wider text-text-secondary/80 font-semibold mb-0.5">Mã HĐ Cyber</span>
+                                        <div className="flex items-center gap-1.5 text-emerald-700">
+                                            <i className="fas fa-file-contract opacity-60 text-[10px]"></i>
+                                            {maHdCyber ? (
+                                                <span className="font-semibold font-mono tracking-tight text-[13px] truncate" title={maHdCyber}>
+                                                    {maHdCyber}
+                                                </span>
+                                            ) : (
+                                                <input 
+                                                    type="text" 
+                                                    value={maHdCyber} 
+                                                    onChange={(e) => setMaHdCyber(e.target.value.toUpperCase())} 
+                                                    placeholder="Nhập mã HĐ..." 
+                                                    className="bg-white border border-emerald-300 text-emerald-800 text-[11px] font-mono font-semibold rounded px-1.5 py-0.5 w-28 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-2xs" 
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col md:border-l md:border-gray-200 md:pl-3">
                                         <span className="text-[9px] uppercase tracking-wider text-text-secondary/80 font-semibold mb-0.5">Số VIN</span>
                                         <div className="flex items-center gap-1.5 text-text-primary">
                                             <i className="fas fa-car text-blue-600 opacity-60 text-[10px]"></i>
@@ -801,10 +872,12 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                         </div>
                                     </div>
                                     <div className="flex flex-col md:border-l md:border-gray-200 md:pl-3">
-                                        <span className="text-[9px] uppercase tracking-wider text-text-secondary/80 font-semibold mb-0.5">Số máy</span>
+                                        <span className="text-[9px] uppercase tracking-wider text-text-secondary/80 font-semibold mb-0.5">Dòng xe</span>
                                         <div className="flex items-center gap-1.5 text-text-primary">
-                                            <i className="fas fa-cog text-blue-600 opacity-60 text-[10px]"></i>
-                                            <span className="font-semibold tracking-tight font-mono text-[13px]">{order["Số máy"] || '---'}</span>
+                                            <i className="fas fa-car-side text-blue-600 opacity-60 text-[10px]"></i>
+                                            <span className="font-semibold tracking-tight text-[13px] truncate" title={`${order["Dòng xe"] || ''} ${order["Phiên bản"] || ''}`}>
+                                                {order["Dòng xe"] ? `${order["Dòng xe"]}${order["Phiên bản"] ? ` · ${order["Phiên bản"]}` : ''}` : (order.dong_xe || '---')}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

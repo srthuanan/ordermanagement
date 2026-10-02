@@ -23,7 +23,7 @@ const donHangTonScript = path.resolve(__dirname, 'scripts', 'sync_cyber_donhang_
  */
 function executePython(args, bodyData) {
     return new Promise((resolve, reject) => {
-        const pyProcess = spawn('python', args, { cwd: __dirname });
+        const pyProcess = spawn('python', args, { cwd: __dirname, env: { ...process.env } });
         let stdout = '';
         let stderr = '';
 

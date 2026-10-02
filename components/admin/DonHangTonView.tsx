@@ -251,6 +251,17 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
         setIsDrawerOpen(true);
     };
 
+    const handleUpdateProgress = async (id: string, newProgress: string, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        setBacklogOrders(prev => prev.map(o => o.id === id ? { ...o, tien_do: newProgress } : o));
+        try {
+            await apiService.updateBacklogTienDo(id, newProgress);
+            showToast?.('Đã cập nhật', `Đã cập nhật tiến độ sang "${newProgress}"`, 'success');
+        } catch (e: any) {
+            showToast?.('Lỗi cập nhật', e.message || 'Không thể lưu tiến độ', 'error');
+        }
+    };
+
     const handleExportExcel = () => {
         if (filteredOrders.length === 0) {
             showToast('Thông báo', 'Không có đơn hàng nào để xuất', 'warning');
@@ -567,6 +578,7 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                                             <th className="py-2.5 px-3 min-w-[160px]">Số Hợp Đồng Cyber</th>
                                             <th className="py-2.5 px-3 min-w-[110px]">Ngày Ký HĐ</th>
                                             <th className="py-2.5 px-3 min-w-[130px]">Trạng Thái Cyber</th>
+                                            <th className="py-2.5 px-3 min-w-[240px] text-center">Tiến Độ TVBH</th>
                                             <th className="py-2.5 px-3 text-center w-20">Thao Tác</th>
                                         </tr>
                                     </thead>
@@ -659,6 +671,35 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                                                         <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 truncate max-w-[130px]">
                                                             {order.ten_post || 'Hợp đồng mới'}
                                                         </span>
+                                                    </td>
+
+                                                    {/* TVBH Progress Select */}
+                                                    <td className="py-2.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                                        <div className="inline-flex items-center justify-center gap-1 p-1 bg-slate-100/90 rounded-lg border border-slate-200">
+                                                            {(['Chờ xe', 'Cần xe', 'Hoàn cọc', 'Hủy cọc']).map(status => {
+                                                                const isSelected = (order.tien_do || 'Chờ xe') === status;
+                                                                return (
+                                                                    <button
+                                                                        key={status}
+                                                                        type="button"
+                                                                        onClick={(e) => handleUpdateProgress(order.id, status, e)}
+                                                                        className={`px-1.5 py-0.5 rounded text-[10px] font-black transition-all cursor-pointer ${
+                                                                            isSelected 
+                                                                                ? (status === 'Cần xe' 
+                                                                                    ? 'bg-emerald-600 text-white shadow-xs' 
+                                                                                    : status === 'Hoàn cọc' 
+                                                                                    ? 'bg-amber-500 text-white shadow-xs' 
+                                                                                    : status === 'Hủy cọc' 
+                                                                                    ? 'bg-rose-600 text-white shadow-xs' 
+                                                                                    : 'bg-sky-600 text-white shadow-xs')
+                                                                                : 'text-slate-600 hover:bg-white hover:text-slate-900'
+                                                                        }`}
+                                                                    >
+                                                                        {status}
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </td>
 
                                                     {/* Actions */}

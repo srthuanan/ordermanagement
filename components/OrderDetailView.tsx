@@ -606,7 +606,13 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 if (updated) {
                                     setTransferRequest(updated);
                                     if (updated.status === 'completed' && updated.soCtDnx) {
-                                        showToast?.('Đã có phiếu DNX', `Admin đã lập xong phiếu xuất ${updated.soCtDnx}. File in đã sẵn sàng cho bạn!`, 'success');
+                                        showToast?.('Đã có phiếu DNX', `Admin đã lập xong phiếu xuất ${updated.soCtDnx}. Đang mở file cho bạn xem...`, 'success');
+                                        if (updated.printData) {
+                                            setPrintDnxData(updated.printData);
+                                            setIsPrintDnxOpen(true);
+                                        } else {
+                                            handleOpenPrintDnx();
+                                        }
                                     }
                                 }
                             });
@@ -2169,6 +2175,24 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                 />
                                                 <p className="text-[9px] md:text-[10px] font-medium text-slate-400 mt-0.5 truncate flex items-center gap-1.5"><i className="fas fa-user-tie text-[8.5px] md:text-[9px] text-indigo-400"></i> {resolvedOrder['Tên tư vấn bán hàng']}</p>
                                             </div>
+                                            {/* Mã HĐ Cyber (nếu có) */}
+                                            {(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber) && (
+                                                <div 
+                                                    className="text-right cursor-pointer group flex-shrink-0 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 backdrop-blur-md px-2 py-1 md:px-2.5 md:py-1 rounded-lg md:rounded-xl transition-all active:scale-95"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const cyberId = String(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber || '');
+                                                        navigator.clipboard.writeText(cyberId).then(() => {
+                                                            setCopiedLabel('cyberId');
+                                                            setTimeout(() => setCopiedLabel(null), 2000);
+                                                        });
+                                                    }}
+                                                    title="Click để sao chép Mã HĐ Cyber"
+                                                >
+                                                    <p className="text-[7px] md:text-[8px] font-bold text-blue-300 uppercase tracking-widest mb-0.5">HĐ Cyber</p>
+                                                    <p className="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-black font-mono text-blue-100 tracking-wide">{copiedLabel === 'cyberId' ? '✓ Đã copy' : (resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber)}</p>
+                                                </div>
+                                            )}
                                             <div 
                                                 className="text-right cursor-pointer group flex-shrink-0 bg-white/[0.06] hover:bg-white/[0.14] backdrop-blur-md px-2 py-1 md:px-3 md:py-1.5 rounded-lg md:rounded-xl transition-all active:scale-95"
                                                 onClick={(e) => {

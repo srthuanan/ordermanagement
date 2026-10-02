@@ -38,6 +38,8 @@ export interface Order {
   noi_that_flex?: string[];
   matched_via_flex?: boolean;
   matched_flex_color?: string;
+  "Mã HĐ Cyber"?: string;
+  ma_hd_cyber?: string;
   // other potential fields from components
   [key: string]: any; // Allow for other properties
 }
@@ -144,6 +146,7 @@ export interface Notification {
   targetView?: string;
   targetId?: string;
   type: NotificationType;
+  metadata?: any;
 }
 
 export type ActionType = 'approve' | 'supplement' | 'rescan' | 'pendingSignature' | 'uploadInvoice' | 'cancel' | 'resend' | 'manualMatch' | 'requestInvoice' | 'unmatch' | 'approveVc' | 'rejectVc' | 'vinclub' | 'confirmVc' | 'edit' | 'pair' | 'migrateToDrive' | 'reScan';

@@ -551,12 +551,36 @@ export const updateTransferRequestStatus = async (
         const tvbhName = currentMetadata.consultant_name || existing.actor_name;
         if (status === 'completed' && tvbhName) {
             await createNotification({
-                message: `✅ Admin đã lập phiếu DNX ${soCtDnx || ''} điều chuyển xe ${currentMetadata.vin} (KH: ${currentMetadata.customer_name}) về ${currentMetadata.to_warehouse_name || 'K83'}. Bạn có thể xem và in phiếu ngay.`,
+                message: `✅ Admin đã lập phiếu DNX ${soCtDnx || ''} điều chuyển xe ${currentMetadata.vin} (KH: ${currentMetadata.customer_name}) về ${currentMetadata.to_warehouse_name || 'K83'}. Phiếu đã mở sẵn cho bạn!`,
                 type: 'success',
                 recipient: tvbhName,
                 targetView: 'orders',
-                targetId: currentMetadata.order_number
+                targetId: currentMetadata.order_number,
+                metadata: {
+                    type: 'DNX_COMPLETED',
+                    so_ct_dnx: soCtDnx,
+                    vin: currentMetadata.vin,
+                    print_data: printData,
+                    order_number: currentMetadata.order_number
+                }
             });
+
+            // Gửi Broadcast Realtime tới TVBH để mở trực tiếp modal in phiếu ngay lập tức
+            try {
+                const bcChannel = supabase.channel('dnx-realtime-alerts');
+                await bcChannel.send({
+                    type: 'broadcast',
+                    event: 'DNX_CREATED',
+                    payload: {
+                        ticket: printData,
+                        so_ct: soCtDnx,
+                        vins: [currentMetadata.vin],
+                        recipients: [tvbhName, existing.actor_id, currentMetadata.consultant_name].filter(Boolean)
+                    }
+                });
+            } catch (eBc) {
+                console.warn('[updateTransferRequestStatus] Lỗi gửi broadcast DNX:', eBc);
+            }
         } else if (status === 'rejected' && tvbhName) {
             await createNotification({
                 message: `⚠️ Yêu cầu chuyển xe ${currentMetadata.vin} (ĐH ${currentMetadata.order_number}) đã bị Admin từ chối: ${adminNote || 'Admin từ chối'}.`,

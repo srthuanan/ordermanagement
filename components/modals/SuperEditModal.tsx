@@ -34,6 +34,7 @@ const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSucc
                 "VIN": order["VIN"] || order["SỐ VIN"] || '',
                 "Số máy": order["Số máy"] || order["SỐ MÁY"] || '',
                 "Mã DMS": order["Mã DMS"] || '',
+                "Mã HĐ Cyber": order["Mã HĐ Cyber"] || order.ma_hd_cyber || order["Số hợp đồng"] || '',
                 "Kết quả": order["Kết quả"],
                 "Trạng thái VC": order["Trạng thái VC"],
                 "Ngày xuất hóa đơn": order["Ngày xuất hóa đơn"] ? moment(order["Ngày xuất hóa đơn"], ["DD/MM/YYYY", "YYYY-MM-DD"]).format('YYYY-MM-DD') : '',
@@ -137,6 +138,10 @@ const SuperEditModal: React.FC<SuperEditModalProps> = ({ isOpen, onClose, onSucc
                                 <div className="md:col-span-1">
                                     <label className={labelClass}>Mã DMS</label>
                                     <input name="Mã DMS" value={formData["Mã DMS"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono`} placeholder="Nhập mã DMS..." />
+                                </div>
+                                <div className="md:col-span-1">
+                                    <label className={labelClass}>Mã HĐ Cyber</label>
+                                    <input name="Mã HĐ Cyber" value={formData["Mã HĐ Cyber"] || ''} onChange={handleInputChange} className={`${inputClass} font-mono text-emerald-800 bg-emerald-50/30 border-emerald-200`} placeholder="Nhập mã HĐ Cyber..." />
                                 </div>
                             </div>
                         </section>

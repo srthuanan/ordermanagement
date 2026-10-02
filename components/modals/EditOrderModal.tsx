@@ -28,6 +28,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
             setFormData({
                 "Tên khách hàng": order["Tên khách hàng"],
                 "Số đơn hàng": order["Số đơn hàng"],
+                "Mã HĐ Cyber": order["Mã HĐ Cyber"] || order.ma_hd_cyber || order["Số hợp đồng"] || '',
                 "Dòng xe": order["Dòng xe"],
                 "Phiên bản": order["Phiên bản"],
                 "Ngoại thất": order["Ngoại thất"],
@@ -247,6 +248,13 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                                         <div className="relative">
                                             <i className="fas fa-user absolute top-1/2 left-3.5 -translate-y-1/2 text-gray-400 text-xs"></i>
                                             <input id="Tên khách hàng" type="text" name="Tên khách hàng" value={formData["Tên khách hàng"] || ''} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} required className={inputClass} placeholder="VD: NGUYEN VAN A" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className={labelClass} htmlFor="Mã HĐ Cyber">Mã HĐ Cyber</label>
+                                        <div className="relative">
+                                            <i className="fas fa-file-signature absolute top-1/2 left-3.5 -translate-y-1/2 text-blue-500 text-xs"></i>
+                                            <input id="Mã HĐ Cyber" type="text" name="Mã HĐ Cyber" value={formData["Mã HĐ Cyber"] || ''} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} className={`${inputClass} font-mono`} placeholder="VD: 02.xxxx/xx/2026/HĐMB-MDP" />
                                         </div>
                                     </div>
                                     <div>
