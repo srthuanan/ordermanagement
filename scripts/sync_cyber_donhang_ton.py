@@ -168,34 +168,66 @@ def sync_to_supabase(contracts):
         }
         records.append(rec)
     
-    # Lấy thông tin tiến độ hiện tại do TVBH đã chọn từ Supabase để bảo toàn 100%
+    # Lấy thông tin tiến độ hiện tại và VIN đã lưu từ Supabase để bảo toàn 100%
     headers_get = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}"
     }
     existing_map = {}
     try:
-        r_get = requests.get(f"{SUPABASE_URL}/rest/v1/donhang_ton?select=so_don_hang,tien_do,ghi_chu_tvbh,updated_at_tvbh", headers=headers_get, timeout=15)
+        r_get = requests.get(f"{SUPABASE_URL}/rest/v1/donhang_ton?select=so_don_hang,so_hop_dong,vin,tien_do,ghi_chu_tvbh,updated_at_tvbh", headers=headers_get, timeout=15)
         if r_get.status_code == 200:
             for item in r_get.json():
                 so_dh = item.get('so_don_hang')
+                so_hd = item.get('so_hop_dong')
                 if so_dh:
                     existing_map[so_dh] = item
+                if so_hd:
+                    existing_map[so_hd] = item
     except Exception as e:
         print(f"Warning: Không thể lấy tiến độ hiện tại của TVBH: {e}")
 
-    # Gắn lại tien_do, ghi_chu_tvbh nếu đã có sẵn (đảm bảo đồng nhất các trường dữ liệu)
+    # Lấy danh sách xe đã ghép từ donhang trên Supabase để tự động liên kết VIN
+    paired_map = {}
+    try:
+        r_paired = requests.get(f"{SUPABASE_URL}/rest/v1/donhang?select=ma_hd_cyber,so_don_hang,vin&vin=not.is.null", headers=headers_get, timeout=15)
+        if r_paired.status_code == 200:
+            for p in r_paired.json():
+                shd = (p.get('ma_hd_cyber') or '').strip()
+                sdh = (p.get('so_don_hang') or '').strip()
+                vin = (p.get('vin') or '').strip()
+                if shd and vin:
+                    paired_map[shd] = (vin, sdh)
+                if sdh and vin:
+                    paired_map[sdh] = (vin, sdh)
+    except Exception as e:
+        print(f"Warning: Không thể lấy danh sách xe đã ghép từ donhang: {e}")
+
+    # Gắn lại tien_do, ghi_chu_tvbh và tự động liên kết VIN nếu đã ghép xe
     for rec in records:
         so_dh = rec["so_don_hang"]
-        if so_dh in existing_map:
-            prev = existing_map[so_dh]
+        so_hd = rec.get("so_hop_dong")
+
+        # 1. Bảo toàn tiến độ và VIN đã lưu
+        prev = existing_map.get(so_dh) or existing_map.get(so_hd)
+        if prev:
             rec["tien_do"] = prev.get("tien_do") or "Chờ xe"
             rec["ghi_chu_tvbh"] = prev.get("ghi_chu_tvbh")
             rec["updated_at_tvbh"] = prev.get("updated_at_tvbh")
+            if not rec.get("vin") and prev.get("vin"):
+                rec["vin"] = prev.get("vin")
         else:
             rec["tien_do"] = "Chờ xe"
             rec["ghi_chu_tvbh"] = None
             rec["updated_at_tvbh"] = None
+
+        # 2. Tự động liên kết VIN và mã đơn DMS từ đơn hàng đã ghép
+        match_key = so_hd or so_dh
+        if match_key in paired_map:
+            p_vin, p_so = paired_map[match_key]
+            rec["vin"] = p_vin
+            if p_so:
+                rec["so_don_hang"] = p_so
 
     # Xóa các đơn không còn tồn trên Cyber (đã xuất HĐ hoặc đã hoàn tất chi)
     incoming_so_dh = set(r["so_don_hang"] for r in records)

@@ -1037,6 +1037,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                 isCurrentUserAdmin={isCurrentUserAdmin}
                                 showToast={showToast}
                                 onBackToDms={() => setActiveView('orders')}
+                                orders={allHistoryData}
+                                onSelectOrder={(order) => {
+                                    handleViewDetails(order);
+                                    setActiveView('orders');
+                                }}
                             />
                         </div>
                         <div hidden={activeView !== 'stock'} className="h-full relative overflow-hidden flex flex-col">

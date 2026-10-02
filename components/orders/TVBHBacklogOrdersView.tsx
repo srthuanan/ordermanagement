@@ -14,6 +14,8 @@ interface TVBHBacklogOrdersViewProps {
     isCurrentUserAdmin?: boolean;
     showToast?: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info') => void;
     onBackToDms?: () => void;
+    orders?: any[];
+    onSelectOrder?: (order: any) => void;
 }
 
 const normalizeStr = (s?: string): string => {
@@ -79,7 +81,9 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
     userRole,
     isCurrentUserAdmin = false,
     showToast,
-    onBackToDms
+    onBackToDms,
+    orders = [],
+    onSelectOrder
 }) => {
     const copyWithFeedback = useCopyFeedback();
     const [backlogOrders, setBacklogOrders] = useState<any[]>([]);
@@ -144,6 +148,7 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
     // Filters (CyberSoft style toolbar)
     const [activeTab, setActiveTab] = useState<string>('all');
     const [progressFilter, setProgressFilter] = useState<string>('all');
+    const [pairingFilter, setPairingFilter] = useState<'all' | 'paired' | 'unpaired'>('all');
     const [tvbhFilter, setTvbhFilter] = useState<string>('all');
     const [searchValue, setSearchValue] = useState<string>('');
     const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -181,6 +186,88 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
             supabase.removeChannel(channel);
         };
     }, [fetchOrders]);
+
+    // Tự động đối soát và liên kết với các đơn hàng đã ghép xe trên DMS (donhang)
+    useEffect(() => {
+        let isMounted = true;
+        const autoLinkPairedOrders = async () => {
+            try {
+                const { data: pairedRows } = await supabase
+                    .from('donhang')
+                    .select('so_don_hang, ma_hd_cyber, vin, ket_qua, ten_khach_hang')
+                    .not('vin', 'is', null);
+
+                if (!isMounted) return;
+
+                const lookup: Record<string, { vin: string; so_don_hang?: string }> = {};
+
+                if (pairedRows) {
+                    pairedRows.forEach(r => {
+                        const shd = (r.ma_hd_cyber || '').trim();
+                        const sdh = (r.so_don_hang || '').trim();
+                        const vin = (r.vin || '').trim();
+                        if (shd && vin) lookup[shd] = { vin, so_don_hang: sdh };
+                        if (sdh && vin) lookup[sdh] = { vin, so_don_hang: sdh };
+                    });
+                }
+
+                if (orders && orders.length > 0) {
+                    orders.forEach(o => {
+                        const shd = (o['Mã HĐ Cyber'] || o.ma_hd_cyber || '').trim();
+                        const sdh = (o['Số đơn hàng'] || o.so_don_hang || '').trim();
+                        const vin = (o.VIN || o['Số khung'] || o.vin || '').trim();
+                        if (shd && vin) lookup[shd] = { vin, so_don_hang: sdh };
+                        if (sdh && vin) lookup[sdh] = { vin, so_don_hang: sdh };
+                    });
+                }
+
+                setBacklogOrders(prev => {
+                    let changed = false;
+                    const next = prev.map(item => {
+                        const shd = (item.so_hop_dong || '').trim();
+                        const sdh = (item.so_don_hang || '').trim();
+                        const match = lookup[shd] || (sdh && lookup[sdh]);
+
+                        if (match && match.vin) {
+                            const needsVinUpdate = !item.vin || item.vin !== match.vin;
+                            const needsSdhUpdate = match.so_don_hang && item.so_don_hang !== match.so_don_hang;
+
+                            if (needsVinUpdate || needsSdhUpdate) {
+                                changed = true;
+                                if (needsVinUpdate) {
+                                    supabase.from('donhang_ton')
+                                        .update({ 
+                                            vin: match.vin, 
+                                            so_don_hang: match.so_don_hang || item.so_don_hang 
+                                        })
+                                        .eq('id', item.id)
+                                        .then();
+                                }
+                                return {
+                                    ...item,
+                                    vin: match.vin,
+                                    so_don_hang: match.so_don_hang || item.so_don_hang
+                                };
+                            }
+                        }
+                        return item;
+                    });
+
+                    return changed ? next : prev;
+                });
+            } catch (err) {
+                console.error('Lỗi tự động liên kết đơn hàng đã ghép:', err);
+            }
+        };
+
+        if (backlogOrders.length > 0) {
+            autoLinkPairedOrders();
+        }
+
+        return () => {
+            isMounted = false;
+        };
+    }, [backlogOrders.length, orders]);
 
     // Handle quick status change on single row
     const handleProgressChange = async (orderId: string, newProgress: BacklogProgressType, currentVal: string) => {
@@ -274,6 +361,13 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                 if (td !== progressFilter) return false;
             }
 
+            // Pairing Filter
+            if (pairingFilter === 'paired') {
+                if (!o.vin || o.vin.length < 5) return false;
+            } else if (pairingFilter === 'unpaired') {
+                if (o.vin && o.vin.length >= 5) return false;
+            }
+
             // TVBH Filter (Cho Admin và TPKD)
             if ((isCurrentUserAdmin || isManager) && tvbhFilter !== 'all') {
                 if (o.tvbh_name !== tvbhFilter) return false;
@@ -295,15 +389,16 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
 
             return true;
         });
-    }, [baseOrdersForUser, activeTab, progressFilter, tvbhFilter, isCurrentUserAdmin, isManager, searchValue]);
+    }, [baseOrdersForUser, activeTab, progressFilter, pairingFilter, tvbhFilter, isCurrentUserAdmin, isManager, searchValue]);
 
     // Summary counts
-    const { totalFilteredCoc, countCanXe, countChoXe, countHoanCoc, countHuyCoc } = useMemo(() => {
+    const { totalFilteredCoc, countCanXe, countChoXe, countHoanCoc, countHuyCoc, countDaGhep, countChuaGhep } = useMemo(() => {
         let total = 0;
         let canXe = 0;
         let choXe = 0;
         let hoanCoc = 0;
         let huyCoc = 0;
+        let daGhep = 0;
 
         filteredOrders.forEach(o => {
             total += Number(o.tien_coc || 0);
@@ -312,6 +407,8 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
             else if (td === 'Hoàn cọc') hoanCoc++;
             else if (td === 'Hủy cọc') huyCoc++;
             else choXe++;
+
+            if (o.vin && o.vin.length >= 5) daGhep++;
         });
 
         return {
@@ -319,7 +416,9 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
             countCanXe: canXe,
             countChoXe: choXe,
             countHoanCoc: hoanCoc,
-            countHuyCoc: huyCoc
+            countHuyCoc: huyCoc,
+            countDaGhep: daGhep,
+            countChuaGhep: filteredOrders.length - daGhep
         };
     }, [filteredOrders]);
 
@@ -327,6 +426,7 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
     const handleResetFilters = () => {
         setActiveTab('all');
         setProgressFilter('all');
+        setPairingFilter('all');
         setTvbhFilter('all');
         setSearchValue('');
     };
@@ -443,6 +543,20 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                             <option value="Cần xe">⚡ Cần xe</option>
                             <option value="Hoàn cọc">Hoàn cọc</option>
                             <option value="Hủy cọc">Hủy cọc</option>
+                        </select>
+                    </div>
+
+                    {/* Lọc Trạng Thái Ghép Xe */}
+                    <div className="flex items-center gap-1">
+                        <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Ghép xe:</span>
+                        <select
+                            value={pairingFilter}
+                            onChange={e => setPairingFilter(e.target.value as any)}
+                            className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[125px]"
+                        >
+                            <option value="all">Tất cả ({baseOrdersForUser.length})</option>
+                            <option value="paired">🟢 Đã ghép ({baseOrdersForUser.filter(o => o.vin && o.vin.length >= 5).length})</option>
+                            <option value="unpaired">⚪ Chưa ghép ({baseOrdersForUser.filter(o => !o.vin || o.vin.length < 5).length})</option>
                         </select>
                     </div>
 
@@ -633,16 +747,73 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                             </div>
                                         </td>
 
-                                        {/* 6. Số VIN */}
+                                        {/* 6. Số VIN & Liên Kết Đơn Hàng Đã Ghép */}
                                         <td className="px-1 border-r border-slate-200 text-center font-mono py-1">
                                             {order.vin && order.vin.length > 5 ? (
-                                                <span 
-                                                    onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.vin, e); }}
-                                                    title="Click copy số VIN"
-                                                    className="font-bold text-emerald-800 hover:underline cursor-pointer truncate block text-[10px]"
-                                                >
-                                                    {order.vin}
-                                                </span>
+                                                <div className="flex flex-col items-center justify-center gap-0.5">
+                                                    <span 
+                                                        onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.vin, e); }}
+                                                        title="Số VIN đã ghép xe - Bấm để copy"
+                                                        className="inline-flex items-center gap-1 font-bold text-emerald-800 hover:text-emerald-950 hover:underline cursor-pointer truncate max-w-full text-[10px] bg-emerald-50 px-1 py-0.5 rounded-xs border border-emerald-300 shadow-2xs"
+                                                    >
+                                                        <i className="fas fa-car text-[8px] text-emerald-600 shrink-0"></i>
+                                                        <span className="truncate">{order.vin}</span>
+                                                        <i className="far fa-copy text-[7.5px] text-emerald-600 shrink-0 opacity-70 hover:opacity-100"></i>
+                                                    </span>
+
+                                                    {/* Link đơn hàng DMS & vị trí kho xe */}
+                                                    {order.so_don_hang && order.so_don_hang !== order.so_hop_dong ? (
+                                                        <div className="flex items-center justify-center gap-1 text-[9px] text-slate-500 font-mono">
+                                                            <span 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (onSelectOrder && orders) {
+                                                                        const matched = orders.find(ord => 
+                                                                            ord['Số đơn hàng'] === order.so_don_hang || 
+                                                                            ord['Mã HĐ Cyber'] === order.so_hop_dong || 
+                                                                            ord.id === order.so_don_hang
+                                                                        );
+                                                                        if (matched) onSelectOrder(matched);
+                                                                        else copyWithFeedback(order.so_don_hang, e);
+                                                                    } else {
+                                                                        copyWithFeedback(order.so_don_hang, e);
+                                                                    }
+                                                                }}
+                                                                title={`Mã đơn hàng DMS: ${order.so_don_hang}${onSelectOrder ? ' (Bấm để xem chi tiết đơn)' : ' (Bấm để copy)'}`}
+                                                                className="text-blue-700 hover:text-blue-900 hover:underline cursor-pointer truncate max-w-[95px] inline-flex items-center gap-0.5 font-bold"
+                                                            >
+                                                                <i className="fas fa-link text-[7.5px]"></i>
+                                                                <span>{order.so_don_hang}</span>
+                                                            </span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    window.dispatchEvent(new CustomEvent('navigate-stock', { detail: { vin: order.vin } }));
+                                                                }}
+                                                                title="Xem vị trí xe trong kho"
+                                                                className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5"
+                                                            >
+                                                                <i className="fas fa-location-dot text-[8px]"></i>
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center justify-center gap-1 text-[9px] text-emerald-700 font-sans font-semibold">
+                                                            <span>Đã ghép xe</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    window.dispatchEvent(new CustomEvent('navigate-stock', { detail: { vin: order.vin } }));
+                                                                }}
+                                                                title="Xem vị trí xe trong kho"
+                                                                className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5"
+                                                            >
+                                                                <i className="fas fa-location-dot text-[8px]"></i>
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             ) : (
                                                 <span className="text-slate-400 italic text-[10px] block truncate">
                                                     Chưa ghép xe
@@ -719,6 +890,13 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                             Hoàn/Hủy: {countHoanCoc + countHuyCoc}
                         </span>
                     )}
+                    <span>•</span>
+                    <span className="px-1 py-0.1 rounded-xs text-[9.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                        <i className="fas fa-car text-[8.5px]"></i> Đã ghép: {countDaGhep}
+                    </span>
+                    <span className="px-1 py-0.1 rounded-xs text-[9.5px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
+                        Chưa ghép: {countChuaGhep}
+                    </span>
                 </div>
 
                 <div className="flex items-center gap-1.5 ml-auto">

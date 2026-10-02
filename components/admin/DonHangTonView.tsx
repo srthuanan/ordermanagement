@@ -96,8 +96,13 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                         }
                     }
 
-                    const pairedInfo = pairedData.find(pd => pd['Số đơn hàng'] === o.so_don_hang);
-                    const realVin = (o.vin && o.vin !== 'N/A') ? o.vin : (pairedInfo?.VIN || o.donhanghienhuu?.so_vin || 'N/A');
+                    const pairedInfo = pairedData.find(pd => 
+                        (o.so_hop_dong && (pd['Mã HĐ Cyber'] === o.so_hop_dong || pd.ma_hd_cyber === o.so_hop_dong)) ||
+                        (o.so_don_hang && (pd['Số đơn hàng'] === o.so_don_hang || pd['Mã HĐ Cyber'] === o.so_don_hang))
+                    );
+                    const realVin = (o.vin && o.vin !== 'N/A' && o.vin !== '') 
+                        ? o.vin 
+                        : (pairedInfo?.VIN || pairedInfo?.['Số khung'] || o.donhanghienhuu?.so_vin || 'N/A');
 
                     return {
                         ...o,
@@ -576,6 +581,7 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                                             <th className="py-2.5 px-3 min-w-[130px]">Màu Sắc</th>
                                             <th className="py-2.5 px-3 text-right min-w-[120px]">Tiền Cọc Đã Nộp</th>
                                             <th className="py-2.5 px-3 min-w-[160px]">Số Hợp Đồng Cyber</th>
+                                            <th className="py-2.5 px-3 min-w-[130px] text-center">Số VIN</th>
                                             <th className="py-2.5 px-3 min-w-[110px]">Ngày Ký HĐ</th>
                                             <th className="py-2.5 px-3 min-w-[130px]">Trạng Thái Cyber</th>
                                             <th className="py-2.5 px-3 min-w-[240px] text-center">Tiến Độ TVBH</th>
@@ -654,6 +660,25 @@ export const DonHangTonView: React.FC<DonHangTonViewProps> = ({ showToast, isAct
                                                         <div className="font-mono text-xs font-bold text-slate-700 truncate max-w-[160px]">
                                                             <CopyableField text={order.so_hop_dong || order.so_don_hang} showToast={showToast} />
                                                         </div>
+                                                    </td>
+
+                                                    {/* Số VIN */}
+                                                    <td className="py-2.5 px-3 text-center font-mono">
+                                                        {order.vin && order.vin !== 'N/A' && order.vin.length > 5 ? (
+                                                            <span 
+                                                                onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.vin, e); }}
+                                                                title="Số VIN đã ghép xe - Bấm để copy"
+                                                                className="inline-flex items-center gap-1 font-mono font-bold text-emerald-800 hover:text-emerald-950 hover:underline cursor-pointer truncate max-w-full text-[10.5px] bg-emerald-50 px-1.5 py-0.5 rounded-sm border border-emerald-300 shadow-2xs"
+                                                            >
+                                                                <i className="fas fa-car text-[8px] text-emerald-600 shrink-0"></i>
+                                                                <span className="truncate">{order.vin}</span>
+                                                                <i className="far fa-copy text-[7.5px] text-emerald-600 shrink-0 opacity-70 hover:opacity-100"></i>
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-slate-400 italic text-[11px]">
+                                                                Chưa ghép xe
+                                                            </span>
+                                                        )}
                                                     </td>
 
                                                     {/* Date & Aging */}
