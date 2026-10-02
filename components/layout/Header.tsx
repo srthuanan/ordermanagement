@@ -207,7 +207,7 @@ const Header: React.FC<HeaderProps> = ({
                 </div>
 
                 {/* Top Navigation — Frameless */}
-                <nav className="hidden lg:flex items-center gap-1 absolute left-1/2 transform -translate-x-1/2 transition-all duration-300 z-10">
+                <nav className="hidden lg:flex items-center gap-1 absolute left-[41%] xl:left-[43%] 2xl:left-[45%] transform -translate-x-1/2 transition-all duration-300 z-10">
                         {navItems.map((item) => {
                             const isActive = activeView === item.id;
                             return (
