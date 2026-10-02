@@ -899,14 +899,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                 <div className="text-[11px] text-slate-600 font-medium truncate flex items-center justify-between">
                     <span>{order['Dòng xe']} {order['Phiên bản']}</span>
                 </div>
-                {(order['Mã HĐ Cyber'] || (order as any).ma_hd_cyber) && (
-                    <div className="mt-1 flex items-center">
-                        <span className="text-[9.5px] font-mono font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/80 truncate flex items-center gap-1">
-                            <i className="fas fa-file-contract text-emerald-600 text-[8.5px]"></i>
-                            <span>{order['Mã HĐ Cyber'] || (order as any).ma_hd_cyber}</span>
-                        </span>
-                    </div>
-                )}
+
             </div>
         );
     };
@@ -1056,20 +1049,6 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                 <StatusBadge status={selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || ''} size="sm" />
                                             </div>
                                             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 font-medium">
-                                                <span>Đơn hàng: <strong className="font-mono text-slate-900">{selectedOrder['Số đơn hàng']}</strong></span>
-                                                {(selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber) && (
-                                                    <>
-                                                        <span className="text-slate-300">|</span>
-                                                        <span className="flex items-center gap-1">
-                                                            <i className="fas fa-file-contract text-emerald-600 text-[10px]"></i>
-                                                            <span>HĐ Cyber:</span>
-                                                            <strong className="font-mono text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shadow-2xs">
-                                                                {selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber}
-                                                            </strong>
-                                                        </span>
-                                                    </>
-                                                )}
-                                                <span className="text-slate-300">|</span>
                                                 <span>TVBH: <strong className="text-slate-900">{selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ'}</strong></span>
                                             </div>
                                         </div>
@@ -1359,27 +1338,6 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                             <StatusBadge status={selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || ''} size="sm" />
                                                         </div>
                                                         <div className="text-[11px] text-slate-500 font-medium truncate flex flex-wrap items-center gap-2">
-                                                            <span>Đơn: <strong className="font-mono text-slate-900">{selectedOrder['Số đơn hàng']}</strong></span>
-                                                            {(selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber) && (
-                                                                <>
-                                                                    <span className="text-slate-300">|</span>
-                                                                    <span 
-                                                                        className="flex items-center gap-1 font-normal not-italic cursor-pointer"
-                                                                        title={`Click để sao chép mã HĐ Cyber: ${selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber}`}
-                                                                        onClick={(e) => {
-                                                                            e.stopPropagation();
-                                                                            copyWithFeedback(selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber, e);
-                                                                        }}
-                                                                    >
-                                                                        <i className="fas fa-file-contract text-emerald-600 text-[10px]"></i>
-                                                                        <span className="text-[10px] text-slate-500">HĐ Cyber:</span>
-                                                                        <strong className="font-mono text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 text-[10.5px]">
-                                                                            {selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber}
-                                                                        </strong>
-                                                                    </span>
-                                                                </>
-                                                            )}
-                                                            <span className="text-slate-300">|</span>
                                                             <span className="flex items-center gap-1.5 italic">
                                                                 <i className="fa-solid fa-user-tie text-[9px] text-slate-400 not-italic"></i>
                                                                 <span>TVBH: <span className="text-slate-600 font-medium italic">{toTitleCase(selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ')}</span></span>
