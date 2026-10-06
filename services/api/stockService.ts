@@ -905,6 +905,9 @@ export interface CyberTonKhoItem {
     ten_ttcp: string;
     tvbh: string;
     ghi_chu: string;
+    is_deep_search?: boolean;
+    deep_status_label?: string;
+    deep_meta?: any;
 }
 
 export interface CyberTonKhoResponse {
@@ -1873,11 +1876,15 @@ export interface CyberVinLookupResult {
         dnx?: any;
         has_td4?: boolean;
         td4?: any;
+        contract?: any;
+        latest_export?: any;
     }>;
     has_dnx?: boolean;
     dnx?: any;
     has_td4?: boolean;
     td4?: any;
+    contract?: any;
+    latest_export?: any;
     warehouses?: Array<{
         ma_kho: string;
         ten_kho: string;

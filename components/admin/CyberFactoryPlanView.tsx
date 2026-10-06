@@ -1171,10 +1171,45 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const [tonKhoModels, setTonKhoModels] = useState<string[]>([]);
     const [tonKhoCopiedVin, setTonKhoCopiedVin] = useState<string | null>(null);
 
-    // Dữ liệu tồn kho hiển thị tức thì sau khi lọc trên máy khách (hỗ trợ dán nhiều VIN)
+    // State cho tính năng Smart ERP Deep Search khi tìm kiếm xe tồn kho
+    const [deepTonKhoResult, setDeepTonKhoResult] = useState<any | null>(null);
+    const [isDeepSearchingTonKho, setIsDeepSearchingTonKho] = useState<boolean>(false);
+    const [showDeepCarInTable, setShowDeepCarInTable] = useState<boolean>(false);
+
+    // Dữ liệu tồn kho hiển thị tức thì sau khi lọc trên máy khách (hỗ trợ dán nhiều VIN hoặc nạp xe từ Deep Search)
     const displayedTonKhoCars = useMemo(() => {
-        return filterTonKhoLocally(tonKhoCars, tonKhoKeyword);
-    }, [tonKhoCars, tonKhoKeyword]);
+        const filtered = filterTonKhoLocally(tonKhoCars, tonKhoKeyword);
+        if (filtered.length === 0 && showDeepCarInTable && deepTonKhoResult?.cars && deepTonKhoResult.cars.length > 0) {
+            const dc = deepTonKhoResult.cars[0];
+            const virtualCar: CyberTonKhoItem = {
+                vin: dc.vin,
+                so_may: dc.so_may || '',
+                so_hd: deepTonKhoResult.contract?.so_hd || dc.contract?.so_hd || 'Đã ghép SK',
+                ngay_hd: deepTonKhoResult.latest_export?.ngay_ct || dc.latest_export?.ngay_ct || '',
+                thang_hd: '',
+                ma_kx: dc.ma_kx || '',
+                ten_kx: dc.ten_kx || '',
+                ma_mau: dc.ma_mau || '',
+                ten_mau: dc.ten_mau || '',
+                ma_mau_nt: dc.ma_mau_nt || '',
+                ten_mau_nt: dc.ten_mau_nt || '',
+                ma_kho: deepTonKhoResult.ma_kho || dc.ma_kho || 'K87',
+                ten_kho: deepTonKhoResult.ten_kho || dc.ten_kho || 'Kho xe ô tô Thuận An',
+                ngay_ton: 0,
+                nam_sx: dc.nam_sx || new Date().getFullYear(),
+                tinh_trang: deepTonKhoResult.latest_export?.dien_giai ? `Xuất: ${deepTonKhoResult.latest_export.dien_giai}` : 'Tồn = 0 (Đã xuất kho)',
+                is_invoiced: false,
+                ten_ttcp: 'VinFast Thuận An',
+                tvbh: deepTonKhoResult.contract?.ten_kh ? `${deepTonKhoResult.contract.ten_kh}` : '',
+                ghi_chu: deepTonKhoResult.detection_reason || '',
+                is_deep_search: true,
+                deep_status_label: 'Tồn = 0 (Đã xuất kho)',
+                deep_meta: deepTonKhoResult
+            };
+            return [virtualCar];
+        }
+        return filtered;
+    }, [tonKhoCars, tonKhoKeyword, showDeepCarInTable, deepTonKhoResult]);
 
     // -------------------------------------------------------------
     // SUB-TAB 3: XẾP XE HỢP ĐỒNG (CP_BEXEPXE TỪ CYBERSOFT)
@@ -1534,12 +1569,73 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         setTonKhoWarehouse('');
         setTonKhoModel('');
         setTonKhoStatus('not_invoiced');
+        setDeepTonKhoResult(null);
+        setShowDeepCarInTable(false);
+        setIsDeepSearchingTonKho(false);
         executeTonKhoSearch({
             keyword: '',
             warehouse: '',
             model: '',
             status: 'not_invoiced'
         });
+    };
+
+    // Tự động kích hoạt CyberSoft ERP Deep Search khi tìm kiếm xe tồn kho mà không có trong danh sách số dư dương
+    useEffect(() => {
+        if (!isActive || activeSubTab !== 'ton_kho') return;
+        const kw = tonKhoKeyword.trim().toUpperCase();
+
+        if (kw.length < 8) {
+            setDeepTonKhoResult(null);
+            setShowDeepCarInTable(false);
+            setIsDeepSearchingTonKho(false);
+            return;
+        }
+
+        const currentMatches = filterTonKhoLocally(tonKhoCars, kw);
+        if (currentMatches.length > 0) {
+            setDeepTonKhoResult(null);
+            setShowDeepCarInTable(false);
+            setIsDeepSearchingTonKho(false);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setIsDeepSearchingTonKho(true);
+            try {
+                const res = await lookupCyberVinWarehouse([kw]);
+                if (res && res.success && res.found) {
+                    setDeepTonKhoResult(res);
+                } else {
+                    setDeepTonKhoResult({ success: true, found: false, searchedVin: kw });
+                }
+            } catch (err) {
+                console.warn('[SmartTonKhoDeepSearch] Lỗi tra cứu sâu Cyber:', err);
+                setDeepTonKhoResult(null);
+            } finally {
+                setIsDeepSearchingTonKho(false);
+            }
+        }, 350);
+
+        return () => clearTimeout(timer);
+    }, [isActive, activeSubTab, tonKhoKeyword, tonKhoCars]);
+
+    const handleQuickCreateDnxFromDeepTonKho = (car: any, deepInfo: any) => {
+        setActiveSubTab('de_nghi_xuat');
+        setDnxVinInput(car.vin);
+        const targetFrom = deepInfo?.ma_kho || car.ma_kho || 'K87';
+        setDnxMaKhoXuat(targetFrom);
+        setDnxMaKhoNhan('K83');
+        if (deepInfo?.contract?.ten_kh) {
+            setDnxKhachHang(deepInfo.contract.ten_kh);
+        }
+        showToast('Lập Phiếu DNX', `Đã chuyển sang tab Lập Phiếu DNX cho xe ${car.vin} (Kho xuất: ${targetFrom})`, 'info');
+    };
+
+    const handleQuickOpenXepXeFromDeepTonKho = (car: any) => {
+        setActiveSubTab('xep_xe');
+        setXepXeKeyword(car.vin);
+        showToast('Tra cứu Hợp Đồng', `Đã mở danh sách Xếp Xe cho số VIN ${car.vin}`, 'info');
     };
 
     const handleTonKhoCopyVin = (vin: string) => {
@@ -2697,26 +2793,291 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 <p className="text-xs text-slate-400">Vui lòng chờ trong giây lát</p>
                             </div>
                         ) : tonKhoCars.length > 0 && displayedTonKhoCars.length === 0 ? (
-                            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-10 flex flex-col items-center justify-center my-6 text-center max-w-lg mx-auto">
-                                <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-3">
-                                    <i className="fas fa-search text-lg"></i>
+                            isDeepSearchingTonKho ? (
+                                <div className="bg-gradient-to-b from-blue-50/80 via-white to-indigo-50/60 rounded-3xl border border-blue-200/80 shadow-md p-8 flex flex-col items-center justify-center my-6 text-center max-w-lg mx-auto animate-pulse">
+                                    <div className="relative mb-4">
+                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-blue-500/30">
+                                            <i className="fas fa-satellite-dish animate-pulse"></i>
+                                        </div>
+                                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full animate-ping"></div>
+                                    </div>
+                                    <h3 className="text-base font-extrabold text-slate-800">
+                                        Không có trong {tonKhoCars.length} xe tồn dương
+                                    </h3>
+                                    <p className="text-xs text-blue-700 font-bold mt-1">
+                                        ⚡ Đang tự động quét sâu toàn bộ hệ thống CyberSoft ERP...
+                                    </p>
+                                    <p className="text-[11.5px] text-slate-500 mt-2 max-w-sm leading-relaxed">
+                                        Đang rà soát lịch sử nhập/xuất kho (CT70BEX), hợp đồng ghép (BEXEPXE), và phiếu điều chuyển (DNX) cho số VIN <span className="font-mono font-bold text-slate-800">{tonKhoKeyword.trim().toUpperCase()}</span>.
+                                    </p>
+                                    <div className="mt-5 flex items-center gap-2 text-xs font-bold text-blue-700 bg-white/90 border border-blue-200 px-4 py-2 rounded-full shadow-2xs">
+                                        <div className="w-3.5 h-3.5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                        <span>Đang định vị dữ liệu thực tế...</span>
+                                    </div>
                                 </div>
-                                <p className="text-sm font-bold text-slate-800">
-                                    Không có xe tồn nào khớp trong {tonKhoCars.length} xe đã tải về!
-                                </p>
-                                <p className="text-xs text-slate-500 mt-1 max-w-xs">
-                                    Từ khóa hoặc danh sách số VIN dán vào không trùng khớp với xe nào hiện tại.
-                                </p>
-                                <div className="mt-4 flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setTonKhoKeyword('')}
-                                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                                    >
-                                        Xóa từ khóa tìm kiếm
-                                    </button>
+                            ) : deepTonKhoResult && deepTonKhoResult.found && deepTonKhoResult.cars && deepTonKhoResult.cars.length > 0 ? (
+                                (() => {
+                                    const dc = deepTonKhoResult.cars[0];
+                                    const contract = deepTonKhoResult.contract || dc.contract;
+                                    const latestExport = deepTonKhoResult.latest_export || dc.latest_export;
+                                    const dnx = dc.dnx;
+                                    const warehouseName = deepTonKhoResult.ten_kho || dc.ten_kho || 'Thuận An';
+                                    const warehouseCode = deepTonKhoResult.ma_kho || dc.ma_kho || 'K87';
+
+                                    return (
+                                        <div className="bg-gradient-to-b from-indigo-50/70 via-white to-slate-50/50 rounded-3xl border-2 border-indigo-200 shadow-xl p-6 sm:p-7 max-w-2xl mx-auto my-4 text-left font-sans transition-all">
+                                            {/* Smart Header */}
+                                            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-indigo-100 pb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center text-xl shadow-lg shadow-indigo-500/25 shrink-0">
+                                                        <i className="fas fa-brain"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                                                                CyberSoft Smart ERP Insight
+                                                            </span>
+                                                            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                                                                🔴 Tồn kho sổ sách = 0 xe
+                                                            </span>
+                                                        </div>
+                                                        <h3 className="text-base font-extrabold text-slate-900 mt-1">
+                                                            Tìm thấy xe trên hệ thống CyberSoft ERP!
+                                                        </h3>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="text-right">
+                                                    <div className="text-[11px] text-slate-500 font-medium">Vị trí kho thực tế:</div>
+                                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-xs mt-0.5">
+                                                        <i className="fas fa-warehouse text-[10px]"></i>
+                                                        <span>{warehouseCode} — {warehouseName}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Why stock is 0 banner */}
+                                            <div className="mt-4 p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-950 text-xs">
+                                                <div className="flex items-start gap-2.5">
+                                                    <i className="fas fa-circle-info text-amber-600 text-sm mt-0.5 shrink-0"></i>
+                                                    <div className="flex-1 leading-relaxed">
+                                                        <span className="font-extrabold">Lý do xe không có trong Báo Cáo Tồn Kho: </span>
+                                                        {latestExport ? (
+                                                            <span>
+                                                                Xe đã phát sinh phiếu xuất kho <strong className="font-mono text-amber-900 font-extrabold">{latestExport.so_ct}</strong> ({latestExport.ma_ct || 'PXK'}) ngày <strong>{latestExport.ngay_ct}</strong> tại kho <strong>{latestExport.ma_kho} ({latestExport.ten_kho})</strong>.
+                                                                {latestExport.dien_giai && (
+                                                                    <span> Diễn giải: <em>"{latestExport.dien_giai}"</em>.</span>
+                                                                )}
+                                                                {' '}Do đó trên sổ sách kế toán, tổng số dư xe hiện tại = 0 nên báo cáo tồn kho thông thường [CP_BETONXE] không trả về xe này.
+                                                            </span>
+                                                        ) : (
+                                                            <span>
+                                                                {deepTonKhoResult.detection_reason || 'Xe có số dư tồn kho kế toán = 0 hoặc đang được vận tải điều chuyển trên hệ thống CyberSoft.'}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Vehicle Details & Linked Transactions Grid */}
+                                            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                                {/* Left Card: Vehicle Info */}
+                                                <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                                                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
+                                                        <i className="fas fa-car text-indigo-500"></i>
+                                                        <span>Thông Tin Chi Tiết Xe</span>
+                                                    </div>
+                                                    <div className="space-y-1.5 pt-1">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-slate-500">Số khung (VIN):</span>
+                                                            <div className="flex items-center gap-1">
+                                                                <span className="font-mono font-extrabold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">
+                                                                    {dc.vin}
+                                                                </span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleTonKhoCopyVin(dc.vin)}
+                                                                    className="text-slate-400 hover:text-blue-600 p-0.5"
+                                                                    title="Sao chép số VIN"
+                                                                >
+                                                                    <i className="far fa-copy text-[10px]"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-slate-500">Kiểu xe:</span>
+                                                            <span className="font-bold text-slate-900">{dc.ten_kx || dc.ma_kx || '-'}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-slate-500">Màu ngoại thất:</span>
+                                                            <span className="font-semibold text-slate-800">{dc.ten_mau || dc.ma_mau || '-'}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-slate-500">Số máy:</span>
+                                                            <span className="font-mono text-slate-700">{dc.so_may || '-'}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-slate-500">Năm sản xuất:</span>
+                                                            <span className="font-semibold text-slate-700">{dc.nam_sx || '-'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Right Card: Contract & DNX Info */}
+                                                <div className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-2xs space-y-2">
+                                                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
+                                                        <i className="fas fa-file-signature text-purple-500"></i>
+                                                        <span>Hợp Đồng & Phiếu Đã Lập</span>
+                                                    </div>
+                                                    <div className="space-y-1.5 pt-1">
+                                                        {contract ? (
+                                                            <>
+                                                                <div className="flex justify-between items-start">
+                                                                    <span className="text-slate-500">HĐ xếp xe:</span>
+                                                                    <span className="font-mono font-bold text-purple-700 text-right max-w-[155px] truncate" title={contract.so_hd}>
+                                                                        {contract.so_hd}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex justify-between items-center">
+                                                                    <span className="text-slate-500">Khách hàng:</span>
+                                                                    <span className="font-bold text-slate-900 max-w-[155px] truncate" title={contract.ten_kh}>
+                                                                        {contract.ten_kh || 'Chưa rõ'}
+                                                                    </span>
+                                                                </div>
+                                                                {contract.dien_thoai && (
+                                                                    <div className="flex justify-between items-center">
+                                                                        <span className="text-slate-500">Số điện thoại:</span>
+                                                                        <span className="font-mono font-semibold text-slate-800">{contract.dien_thoai}</span>
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex justify-between items-center">
+                                                                    <span className="text-slate-500">Trạng thái HĐ:</span>
+                                                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-100 text-cyan-800 border border-cyan-300">
+                                                                        {contract.status || 'Đã ghép SK'}
+                                                                    </span>
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <div className="text-slate-400 italic py-1">Chưa ghép vào hợp đồng bán lẻ nào</div>
+                                                        )}
+
+                                                        {dnx ? (
+                                                            <div className="pt-1.5 border-t border-slate-100 flex justify-between items-center">
+                                                                <span className="text-slate-500">Phiếu DNX gần nhất:</span>
+                                                                <span className="font-mono font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                                                    {dnx.so_ct}
+                                                                </span>
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Quick Action Buttons */}
+                                            <div className="mt-5 pt-4 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2.5">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    {/* Action 1: Đưa tạm vào bảng */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setShowDeepCarInTable(true);
+                                                            showToast('Đã thêm vào bảng', `Đã nạp tạm xe ${dc.vin} vào bảng tồn kho`, 'success');
+                                                        }}
+                                                        className="h-9 px-3.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-xs flex items-center gap-1.5 active:scale-95 transition-all"
+                                                    >
+                                                        <i className="fas fa-plus-circle text-xs text-indigo-300"></i>
+                                                        <span>Đưa tạm vào bảng để xem</span>
+                                                    </button>
+
+                                                    {/* Action 2: Lập phiếu DNX */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleQuickCreateDnxFromDeepTonKho(dc, deepTonKhoResult)}
+                                                        className="h-9 px-3.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center gap-1.5 active:scale-95 transition-all"
+                                                    >
+                                                        <i className="fas fa-truck-moving text-xs"></i>
+                                                        <span>Lập Phiếu DNX điều chuyển</span>
+                                                    </button>
+
+                                                    {/* Action 3: Mở Hợp Đồng */}
+                                                    {contract?.so_hd && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleQuickOpenXepXeFromDeepTonKho(dc)}
+                                                            className="h-9 px-3 rounded-xl text-xs font-bold bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1.5 transition-all"
+                                                        >
+                                                            <i className="fas fa-folder-open text-xs"></i>
+                                                            <span>Xem Hợp Đồng Xếp Xe</span>
+                                                        </button>
+                                                    )}
+
+                                                    {/* Action 4: In phiếu DNX nếu có */}
+                                                    {dnx?.so_ct && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleOpenExistingTicketPrint({ type: 'DNX', so_ct: dnx.so_ct, raw: dnx })}
+                                                            className="h-9 px-3 rounded-xl text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 flex items-center gap-1.5 transition-all"
+                                                        >
+                                                            <i className="fas fa-print text-xs"></i>
+                                                            <span>In Phiếu DNX</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setTonKhoKeyword('')}
+                                                    className="text-xs font-bold text-slate-400 hover:text-slate-600 px-2 py-1"
+                                                >
+                                                    Đóng / Xóa từ khóa
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })()
+                            ) : deepTonKhoResult && !deepTonKhoResult.found ? (
+                                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-9 flex flex-col items-center justify-center my-6 text-center max-w-lg mx-auto">
+                                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
+                                        <i className="fas fa-search-minus text-lg"></i>
+                                    </div>
+                                    <p className="text-sm font-bold text-slate-800">
+                                        Không tìm thấy xe trên toàn hệ thống CyberSoft ERP!
+                                    </p>
+                                    <p className="text-xs text-slate-500 mt-1.5 max-w-sm leading-relaxed">
+                                        Đã rà soát toàn bộ lịch sử xuất/nhập, hợp đồng và các kho nhưng không có bản ghi nào cho số VIN <span className="font-mono font-bold text-slate-800">{tonKhoKeyword.trim()}</span>.
+                                    </p>
+                                    <div className="mt-4 flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setTonKhoKeyword('')}
+                                            className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                                        >
+                                            Xóa từ khóa tìm kiếm
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-10 flex flex-col items-center justify-center my-6 text-center max-w-lg mx-auto">
+                                    <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-3">
+                                        <i className="fas fa-search text-lg"></i>
+                                    </div>
+                                    <p className="text-sm font-bold text-slate-800">
+                                        Không có xe tồn nào khớp trong {tonKhoCars.length} xe đã tải về!
+                                    </p>
+                                    <p className="text-xs text-slate-500 mt-1 max-w-xs">
+                                        Từ khóa hoặc danh sách số VIN dán vào không trùng khớp với xe nào hiện tại.
+                                    </p>
+                                    <div className="mt-4 flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setTonKhoKeyword('')}
+                                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                                        >
+                                            Xóa từ khóa tìm kiếm
+                                        </button>
+                                    </div>
+                                </div>
+                            )
                         ) : tonKhoCars.length === 0 ? (
                             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-12 flex flex-col items-center justify-center my-6 text-center max-w-lg mx-auto">
                                 <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
@@ -2752,28 +3113,43 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 text-[11px]">
                                             {displayedTonKhoCars.map((item, idx) => {
+                                                const isDeep = Boolean((item as any).is_deep_search);
                                                 const isInvoiced = item.is_invoiced;
                                                 return (
                                                     <tr 
                                                         key={`${item.vin}-${idx}`} 
                                                         className={`transition-colors group ${
-                                                            isInvoiced 
-                                                                ? 'bg-yellow-200/80 hover:bg-yellow-200 text-yellow-950 font-medium' 
-                                                                : 'hover:bg-slate-50 text-slate-800'
+                                                            isDeep
+                                                                ? 'bg-gradient-to-r from-purple-50/90 via-indigo-50/70 to-purple-50/90 hover:from-purple-100/90 hover:to-indigo-100/90 text-purple-950 font-medium border-l-4 border-l-purple-600'
+                                                                : isInvoiced 
+                                                                    ? 'bg-yellow-200/80 hover:bg-yellow-200 text-yellow-950 font-medium' 
+                                                                    : 'hover:bg-slate-50 text-slate-800'
                                                         }`}
                                                     >
                                                         {/* STT */}
-                                                        <td className={`py-2.5 px-3 text-center border-r ${isInvoiced ? 'border-yellow-300/80 text-yellow-800 font-bold' : 'border-slate-100 text-slate-400'}`}>
+                                                        <td className={`py-2.5 px-3 text-center border-r ${
+                                                            isDeep
+                                                                ? 'border-purple-200 text-purple-800 font-bold'
+                                                                : isInvoiced ? 'border-yellow-300/80 text-yellow-800 font-bold' : 'border-slate-100 text-slate-400'
+                                                        }`}>
                                                             {idx + 1}
                                                         </td>
 
                                                         {/* Số hóa đơn */}
-                                                        <td className={`py-2.5 px-3 border-r font-mono font-bold whitespace-nowrap ${isInvoiced ? 'border-yellow-300/80 text-yellow-900' : 'border-slate-100 text-slate-700'}`}>
+                                                        <td className={`py-2.5 px-3 border-r font-mono font-bold whitespace-nowrap ${
+                                                            isDeep
+                                                                ? 'border-purple-200 text-purple-900'
+                                                                : isInvoiced ? 'border-yellow-300/80 text-yellow-900' : 'border-slate-100 text-slate-700'
+                                                        }`}>
                                                             {item.so_hd || '-'}
                                                         </td>
 
                                                         {/* Ngày & Tháng nhập HĐ */}
-                                                        <td className={`py-2.5 px-3 border-r whitespace-nowrap ${isInvoiced ? 'border-yellow-300/80' : 'border-slate-100 text-slate-600'}`}>
+                                                        <td className={`py-2.5 px-3 border-r whitespace-nowrap ${
+                                                            isDeep
+                                                                ? 'border-purple-200 text-slate-700'
+                                                                : isInvoiced ? 'border-yellow-300/80' : 'border-slate-100 text-slate-600'
+                                                        }`}>
                                                             <div className="font-semibold">{item.ngay_hd || '-'}</div>
                                                             {item.thang_hd && (
                                                                 <div className={`text-[10px] ${isInvoiced ? 'text-yellow-800' : 'text-slate-400'}`}>T{item.thang_hd}</div>
@@ -2781,7 +3157,11 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                         </td>
 
                                                         {/* Kiểu xe */}
-                                                        <td className={`py-2.5 px-3 border-r ${isInvoiced ? 'border-yellow-300/80' : 'border-slate-100'}`}>
+                                                        <td className={`py-2.5 px-3 border-r ${
+                                                            isDeep
+                                                                ? 'border-purple-200'
+                                                                : isInvoiced ? 'border-yellow-300/80' : 'border-slate-100'
+                                                        }`}>
                                                             <div className="font-bold text-slate-900">{item.ten_kx || item.ma_kx}</div>
                                                             {item.ma_kx && item.ma_kx !== item.ten_kx && (
                                                                 <div className={`text-[10px] ${isInvoiced ? 'text-yellow-800' : 'text-slate-400'}`}>{item.ma_kx}</div>
@@ -2789,18 +3169,28 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                         </td>
 
                                                         {/* Số khung (VIN) */}
-                                                        <td className={`py-2.5 px-3 border-r ${isInvoiced ? 'border-yellow-300/80' : 'border-slate-100'}`}>
+                                                        <td className={`py-2.5 px-3 border-r ${
+                                                            isDeep
+                                                                ? 'border-purple-200'
+                                                                : isInvoiced ? 'border-yellow-300/80' : 'border-slate-100'
+                                                        }`}>
                                                             <div className="flex items-center gap-1.5">
-                                                                <span className={`font-mono font-bold tracking-wide ${isInvoiced ? 'text-yellow-950' : 'text-slate-900 group-hover:text-blue-600'}`}>
+                                                                <span className={`font-mono font-bold tracking-wide ${
+                                                                    isDeep
+                                                                        ? 'text-purple-950 font-extrabold'
+                                                                        : isInvoiced ? 'text-yellow-950' : 'text-slate-900 group-hover:text-blue-600'
+                                                                }`}>
                                                                     {item.vin}
                                                                 </span>
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleTonKhoCopyVin(item.vin)}
                                                                     className={`w-5 h-5 flex items-center justify-center rounded transition-colors ${
-                                                                        isInvoiced 
-                                                                            ? 'text-yellow-800 hover:text-yellow-950 hover:bg-yellow-300/60' 
-                                                                            : 'text-slate-400 hover:text-blue-600 hover:bg-slate-100'
+                                                                        isDeep
+                                                                            ? 'text-purple-700 hover:text-purple-950 hover:bg-purple-200/60'
+                                                                            : isInvoiced 
+                                                                                ? 'text-yellow-800 hover:text-yellow-950 hover:bg-yellow-300/60' 
+                                                                                : 'text-slate-400 hover:text-blue-600 hover:bg-slate-100'
                                                                     }`}
                                                                     title="Sao chép số VIN"
                                                                 >
@@ -2814,12 +3204,20 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                         </td>
 
                                                         {/* Số máy */}
-                                                        <td className={`py-2.5 px-3 border-r font-mono text-[10.5px] ${isInvoiced ? 'border-yellow-300/80 text-yellow-900' : 'border-slate-100 text-slate-600'}`}>
+                                                        <td className={`py-2.5 px-3 border-r font-mono text-[10.5px] ${
+                                                            isDeep
+                                                                ? 'border-purple-200 text-slate-700'
+                                                                : isInvoiced ? 'border-yellow-300/80 text-yellow-900' : 'border-slate-100 text-slate-600'
+                                                        }`}>
                                                             {item.so_may || '-'}
                                                         </td>
 
                                                         {/* Màu ngoại thất / Nội thất */}
-                                                        <td className={`py-2.5 px-3 border-r whitespace-nowrap ${isInvoiced ? 'border-yellow-300/80' : 'border-slate-100'}`}>
+                                                        <td className={`py-2.5 px-3 border-r whitespace-nowrap ${
+                                                            isDeep
+                                                                ? 'border-purple-200'
+                                                                : isInvoiced ? 'border-yellow-300/80' : 'border-slate-100'
+                                                        }`}>
                                                             <div className="font-semibold">{item.ten_mau || item.ma_mau || '-'}</div>
                                                             {item.ten_mau_nt && (
                                                                 <div className={`text-[10px] ${isInvoiced ? 'text-yellow-800' : 'text-slate-400'}`}>NT: {item.ten_mau_nt}</div>
@@ -2827,39 +3225,78 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                         </td>
 
                                                         {/* Tên Kho */}
-                                                        <td className={`py-2.5 px-3 border-r ${isInvoiced ? 'border-yellow-300/80' : 'border-slate-100'}`}>
-                                                            <span className={`inline-block px-2 py-0.5 rounded text-[10.5px] font-semibold ${
-                                                                isInvoiced
-                                                                    ? 'bg-yellow-300/60 text-yellow-950 border border-yellow-400'
-                                                                    : 'bg-slate-100 text-slate-700 border border-slate-200'
-                                                            }`}>
-                                                                {item.ten_kho || item.ma_kho}
-                                                            </span>
+                                                        <td className={`py-2.5 px-3 border-r ${
+                                                            isDeep
+                                                                ? 'border-purple-200'
+                                                                : isInvoiced ? 'border-yellow-300/80' : 'border-slate-100'
+                                                        }`}>
+                                                            {isDeep ? (
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-bold bg-indigo-100 text-indigo-900 border border-indigo-300">
+                                                                    <i className="fas fa-warehouse text-[9px] text-indigo-600"></i>
+                                                                    <span>{item.ten_kho || item.ma_kho}</span>
+                                                                </span>
+                                                            ) : (
+                                                                <span className={`inline-block px-2 py-0.5 rounded text-[10.5px] font-semibold ${
+                                                                    isInvoiced
+                                                                        ? 'bg-yellow-300/60 text-yellow-950 border border-yellow-400'
+                                                                        : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                                                }`}>
+                                                                    {item.ten_kho || item.ma_kho}
+                                                                </span>
+                                                            )}
                                                         </td>
 
                                                         {/* Tuổi tồn (ngày) */}
-                                                        <td className={`py-2.5 px-3 border-r text-center font-bold ${isInvoiced ? 'border-yellow-300/80' : 'border-slate-100'}`}>
-                                                            <span className={`inline-block px-2 py-0.5 rounded text-[10.5px] ${
-                                                                item.ngay_ton > 180 
-                                                                    ? 'bg-rose-100 text-rose-800 border border-rose-300 font-extrabold' 
-                                                                    : item.ngay_ton > 90 
-                                                                        ? 'bg-amber-100 text-amber-900 border border-amber-300 font-bold'
-                                                                        : isInvoiced
-                                                                            ? 'bg-yellow-300/70 text-yellow-950 border border-yellow-400 font-semibold'
-                                                                            : 'bg-slate-100 text-slate-700 border border-slate-200'
-                                                            }`}>
-                                                                {item.ngay_ton} ngày
-                                                            </span>
+                                                        <td className={`py-2.5 px-3 border-r text-center font-bold ${
+                                                            isDeep
+                                                                ? 'border-purple-200'
+                                                                : isInvoiced ? 'border-yellow-300/80' : 'border-slate-100'
+                                                        }`}>
+                                                            {isDeep ? (
+                                                                <span className="inline-block px-2 py-0.5 rounded text-[10.5px] bg-purple-100 text-purple-900 border border-purple-200 font-bold whitespace-nowrap">
+                                                                    0 ngày (Đã xuất)
+                                                                </span>
+                                                            ) : (
+                                                                <span className={`inline-block px-2 py-0.5 rounded text-[10.5px] ${
+                                                                    item.ngay_ton > 180 
+                                                                        ? 'bg-rose-100 text-rose-800 border border-rose-300 font-extrabold' 
+                                                                        : item.ngay_ton > 90 
+                                                                            ? 'bg-amber-100 text-amber-900 border border-amber-300 font-bold'
+                                                                            : isInvoiced
+                                                                                ? 'bg-yellow-300/70 text-yellow-950 border border-yellow-400 font-semibold'
+                                                                                : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                                                }`}>
+                                                                    {item.ngay_ton} ngày
+                                                                </span>
+                                                            )}
                                                         </td>
 
                                                         {/* Năm SX */}
-                                                        <td className={`py-2.5 px-3 border-r text-center ${isInvoiced ? 'border-yellow-300/80' : 'border-slate-100 text-slate-600'}`}>
+                                                        <td className={`py-2.5 px-3 border-r text-center ${
+                                                            isDeep
+                                                                ? 'border-purple-200 text-slate-700'
+                                                                : isInvoiced ? 'border-yellow-300/80' : 'border-slate-100 text-slate-600'
+                                                        }`}>
                                                             {item.nam_sx || '-'}
                                                         </td>
 
                                                         {/* Trạng thái HĐ */}
-                                                        <td className={`py-2.5 px-3 border-r whitespace-nowrap ${isInvoiced ? 'border-yellow-300/80' : 'border-slate-100'}`}>
-                                                            {isInvoiced ? (
+                                                        <td className={`py-2.5 px-3 border-r whitespace-nowrap ${
+                                                            isDeep
+                                                                ? 'border-purple-200'
+                                                                : isInvoiced ? 'border-yellow-300/80' : 'border-slate-100'
+                                                        }`}>
+                                                            {isDeep ? (
+                                                                <div className="flex flex-col gap-0.5">
+                                                                    <span className="inline-flex items-center gap-1 font-bold text-purple-900 bg-purple-100 px-2 py-0.5 rounded border border-purple-300 text-[10.5px]">
+                                                                        <i className="fas fa-triangle-exclamation text-amber-600 text-[9px]"></i>
+                                                                        <span>Tồn = 0 (Đã xuất)</span>
+                                                                    </span>
+                                                                    <span className="text-[10px] text-slate-500 font-medium truncate max-w-[140px]" title={item.tinh_trang}>
+                                                                        {item.tinh_trang}
+                                                                    </span>
+                                                                </div>
+                                                            ) : isInvoiced ? (
                                                                 <span className="inline-flex items-center gap-1 font-bold text-yellow-950 text-[11px]">
                                                                     <i className="fas fa-check-circle text-amber-700 text-xs"></i>
                                                                     {item.tinh_trang || 'Xe đã được viết hóa đơn'}
@@ -2870,13 +3307,36 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                         </td>
 
                                                         {/* Đơn vị bán / Showroom */}
-                                                        <td className={`py-2.5 px-3 border-r whitespace-nowrap ${isInvoiced ? 'border-yellow-300/80 font-semibold' : 'border-slate-100 text-slate-600'}`}>
+                                                        <td className={`py-2.5 px-3 border-r whitespace-nowrap ${
+                                                            isDeep
+                                                                ? 'border-purple-200 font-semibold text-slate-800'
+                                                                : isInvoiced ? 'border-yellow-300/80 font-semibold' : 'border-slate-100 text-slate-600'
+                                                        }`}>
                                                             {item.ten_ttcp || '-'}
                                                         </td>
 
                                                         {/* TVBH */}
-                                                        <td className={`py-2.5 px-3 whitespace-nowrap ${isInvoiced ? 'font-semibold text-yellow-950' : 'text-slate-700'}`}>
-                                                            {item.tvbh || '-'}
+                                                        <td className={`py-2.5 px-3 whitespace-nowrap ${
+                                                            isDeep
+                                                                ? 'font-semibold text-purple-950'
+                                                                : isInvoiced ? 'font-semibold text-yellow-950' : 'text-slate-700'
+                                                        }`}>
+                                                            {isDeep ? (
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <span>{item.tvbh || '-'}</span>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleQuickCreateDnxFromDeepTonKho(item, item.deep_meta)}
+                                                                        className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs transition-all flex items-center gap-1"
+                                                                        title="Lập phiếu DNX điều chuyển xe"
+                                                                    >
+                                                                        <i className="fas fa-truck-moving text-[9px]"></i>
+                                                                        <span>Lập DNX</span>
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                item.tvbh || '-'
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 );

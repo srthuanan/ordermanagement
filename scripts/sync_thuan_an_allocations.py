@@ -2503,7 +2503,12 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             "error": f"Lỗi tạo phiếu đề nghị xuất trên CyberSoft: {str(e)}"
         }
 
-def lookup_vin_warehouse(params: dict = {}) -> dict:
+def lookup_vin_warehouse(params: any = {}) -> dict:
+    if isinstance(params, list):
+        params = {"vins": params}
+    elif not isinstance(params, dict):
+        params = {"vin": str(params)}
+
     vin_input = params.get("vin") or ""
     vins = params.get("vins") or []
     if not vins and vin_input:
@@ -2704,6 +2709,55 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
             cols_td4 = [comp[0].lower() for comp in c.description]
             td4_raw_list = [dict(zip(cols_td4, r)) for r in td4_rows]
 
+        # 6. Tra cứu hợp đồng xếp xe từ BEXEPXE & PHHDX
+        sql_bx = f"""
+            SELECT 
+                bx.So_khung, bx.Ma_Hd, bx.Stt_Rec0, bx.Ngay_Xep,
+                h.ngay_ct AS ngay_hd, h.ong_ba AS ten_kh, h.Dien_Thoai AS dien_thoai
+            FROM BEXEPXE bx WITH (NOLOCK)
+            LEFT JOIN PHHDX h WITH (NOLOCK) ON RTRIM(bx.Ma_Hd) = RTRIM(h.so_ct)
+            WHERE bx.So_khung IN ({vin_list_str})
+        """
+        c.execute(sql_bx)
+        bx_rows = c.fetchall()
+        bx_map = {}
+        for r in bx_rows:
+            v = (r.get('So_khung') if is_pymssql else r[0] or "").strip().upper()
+            if v and v not in bx_map:
+                ngay_xep = r.get('Ngay_Xep') if is_pymssql else r[3]
+                bx_map[v] = {
+                    "so_hd": (r.get('Ma_Hd') if is_pymssql else r[1] or "").strip(),
+                    "ngay_xep": str(ngay_xep)[:10] if ngay_xep else "",
+                    "ten_kh": (r.get('ten_kh') if is_pymssql else r[5] or "").strip(),
+                    "dien_thoai": (r.get('dien_thoai') if is_pymssql else r[6] or "").strip(),
+                    "status": "Đã ghép SK"
+                }
+
+        # 7. Tra cứu chứng từ xuất kho gần nhất (để biết lý do nếu tồn = 0)
+        sql_exp = f"""
+            SELECT 
+                b.So_Khung, b.so_ct, b.ngay_ct, b.ma_kho, k.Ten_kho, b.dien_giai, b.ma_ct
+            FROM CT70BEX b WITH (NOLOCK)
+            LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
+            WHERE b.nxt = '2' AND b.Ma_Post >= '9' AND b.So_Khung IN ({vin_list_str})
+            ORDER BY b.ngay_ct DESC, b.stt_rec DESC
+        """
+        c.execute(sql_exp)
+        exp_rows = c.fetchall()
+        export_map = {}
+        for r in exp_rows:
+            v = (r.get('So_Khung') if is_pymssql else r[0] or "").strip().upper()
+            if v and v not in export_map:
+                ngay_ct = r.get('ngay_ct') if is_pymssql else r[2]
+                export_map[v] = {
+                    "so_ct": (r.get('so_ct') if is_pymssql else r[1] or "").strip(),
+                    "ngay_ct": str(ngay_ct)[:10] if ngay_ct else "",
+                    "ma_kho": (r.get('ma_kho') if is_pymssql else r[3] or "").strip(),
+                    "ten_kho": (r.get('Ten_kho') if is_pymssql else r[4] or "").strip(),
+                    "dien_giai": (r.get('dien_giai') if is_pymssql else r[5] or "").strip(),
+                    "ma_ct": (r.get('ma_ct') if is_pymssql else r[6] or "").strip()
+                }
+
         conn.close()
 
         td4_map = {}
@@ -2775,6 +2829,8 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
             inf = info_map.get(v, {})
             dnx_entry = dnx_map.get(v)
             td4_entry = td4_map.get(v)
+            bx_entry = bx_map.get(v)
+            exp_entry = export_map.get(v)
             
             ma_kho = st.get("ma_kho") or ""
             ten_kho = st.get("ten_kho") or "Đang vận tải"
@@ -2796,6 +2852,8 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
                 "dnx": dnx_entry,
                 "has_td4": bool(td4_entry),
                 "td4": td4_entry,
+                "contract": bx_entry,
+                "latest_export": exp_entry,
                 "detection_reason": reason,
                 "alt_warehouses": alt_whs
             })
@@ -2806,6 +2864,8 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
         first_reason = results[0].get("detection_reason", "") if results else ""
         first_dnx = results[0].get("dnx") if results else None
         first_td4 = results[0].get("td4") if results else None
+        first_bx = results[0].get("contract") if results else None
+        first_exp = results[0].get("latest_export") if results else None
 
         # Tự động cập nhật / lưu cache ngay vào bảng cyber_car_status trên Supabase
         try:
@@ -2826,6 +2886,8 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
             "dnx": first_dnx,
             "has_td4": bool(first_td4),
             "td4": first_td4,
+            "contract": first_bx,
+            "latest_export": first_exp,
             "cars": results,
             "warehouses": cyber_warehouses
         }
