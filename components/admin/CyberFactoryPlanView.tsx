@@ -304,6 +304,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const [isLoadingRecentTickets, setIsLoadingRecentTickets] = useState(false);
     const [printTicketData, setPrintTicketData] = useState<CyberDnxPrintData | null>(null);
     const [printTd4Data, setPrintTd4Data] = useState<CyberVoucherTicketItem | null>(null);
+    const [bypassExistingTicket, setBypassExistingTicket] = useState(false);
 
     // Trạng thái đồng bộ toàn bộ CyberSoft -> Supabase
     const [isFullSyncing, setIsFullSyncing] = useState(false);
@@ -576,6 +577,12 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         ten_kho?: string;
         carInfo?: string;
         cars?: any[];
+        detection_reason?: string;
+        alt_warehouses?: Array<{
+            ma_kho: string;
+            ten_kho: string;
+            reason?: string;
+        }>;
         error?: string;
     } | null>(null);
 
@@ -634,7 +641,9 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         ma_kho: res.ma_kho,
                         ten_kho: res.ten_kho,
                         carInfo: carDesc,
-                        cars: res.cars
+                        cars: res.cars,
+                        detection_reason: res.detection_reason,
+                        alt_warehouses: res.alt_warehouses || (res.cars && res.cars[0]?.alt_warehouses) || []
                     });
                 } else {
                     const firstCar = res.cars && res.cars[0];
@@ -707,26 +716,28 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             }
         }
 
-        // 2. Kiểm tra từ danh sách recentDnxTickets
-        for (const t of recentDnxTickets) {
-            if (t.cars && Array.isArray(t.cars)) {
-                const matchCar = t.cars.find((c: any) => extractedVins.includes((c.vin || '').toUpperCase()));
-                if (matchCar) {
-                    return {
-                        type: 'DNX',
-                        title: 'Phiếu Đề Nghị Xuất Xe (DNX)',
-                        so_ct: t.so_ct || 'DNX',
-                        stt_rec: t.stt_rec || '',
-                        ngay_ct: t.ngay_ct || '',
-                        vin: matchCar.vin,
-                        ten_kh: t.khach_hang || '',
-                        dien_giai: t.ly_do || '',
-                        ma_kho_xuat: t.ma_kho_xuat || '',
-                        ten_kho_xuat: t.ten_kho_xuat || '',
-                        ma_kho_nhan: t.ma_kho_nhan || '',
-                        ten_kho_nhan: t.ten_kho_nhan || '',
-                        raw: t
-                    };
+        // 2. Kiểm tra từ danh sách recentDnxTickets (chỉ áp dụng nếu chưa có kết quả tra cứu trực tiếp từ CSDL Cyber)
+        if (!lookupResultInfo?.cars || lookupResultInfo.cars.length === 0) {
+            for (const t of recentDnxTickets) {
+                if (t.cars && Array.isArray(t.cars)) {
+                    const matchCar = t.cars.find((c: any) => extractedVins.includes((c.vin || '').toUpperCase()));
+                    if (matchCar) {
+                        return {
+                            type: 'DNX',
+                            title: 'Phiếu Đề Nghị Xuất Xe (DNX)',
+                            so_ct: t.so_ct || 'DNX',
+                            stt_rec: t.stt_rec || '',
+                            ngay_ct: t.ngay_ct || '',
+                            vin: matchCar.vin,
+                            ten_kh: t.khach_hang || '',
+                            dien_giai: t.ly_do || '',
+                            ma_kho_xuat: t.ma_kho_xuat || '',
+                            ten_kho_xuat: t.ten_kho_xuat || '',
+                            ma_kho_nhan: t.ma_kho_nhan || '',
+                            ten_kho_nhan: t.ten_kho_nhan || '',
+                            raw: t
+                        };
+                    }
                 }
             }
         }
@@ -828,9 +839,9 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             return;
         }
 
-        // CHẶN TẠO TRÙNG LẶP NẾU PHIẾU ĐÃ TỒN TẠI TRÊN CYBERSOFT
-        if (detectedExistingTicket) {
-            setDnxError(`Xe có số VIN ${detectedExistingTicket.vin} đã tồn tại ${detectedExistingTicket.title} số ${detectedExistingTicket.so_ct}. Hệ thống chặn tuyệt đối tạo phiếu trùng lặp!`);
+        // CHẶN TẠO TRÙNG LẶP NẾU PHIẾU ĐÃ TỒN TẠI TRÊN CYBERSOFT (trừ khi người dùng cho phép bỏ qua)
+        if (detectedExistingTicket && !bypassExistingTicket) {
+            setDnxError(`Xe có số VIN ${detectedExistingTicket.vin} đã tồn tại ${detectedExistingTicket.title} số ${detectedExistingTicket.so_ct}. Nếu phiếu cũ đã hoàn tất, vui lòng tích chọn "Phiếu cũ đã hoàn tất — Cho phép lập phiếu DNX mới".`);
             handleOpenExistingTicketPrint(detectedExistingTicket);
             return;
         }
@@ -849,7 +860,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 ly_do: dnxLyDo,
                 user_name: dnxUserName,
                 ma_dvcs: '02',
-                ma_ttcp: dnxMaTtcp || '02.01.08'
+                ma_ttcp: dnxMaTtcp || '02.01.08',
+                force: bypassExistingTicket
             });
 
             // Nếu Backend trả về cảnh báo đã tồn tại chứng từ
@@ -4033,21 +4045,56 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 
                                     {/* Auto-detected warehouse banner from Cyber */}
                                     {lookupResultInfo?.found && !isLookingUpVin && (
-                                        <div className="mt-1 px-2 py-1 bg-emerald-50 border border-emerald-300 rounded-md text-emerald-900 text-[11px] flex items-center justify-between">
-                                            <div className="flex items-center gap-1.5 truncate">
-                                                <i className="fas fa-check-circle text-emerald-600 text-[10px] shrink-0"></i>
-                                                <span className="font-bold text-emerald-800 truncate">
-                                                    Kho Cyber: {lookupResultInfo.ma_kho} - {lookupResultInfo.ten_kho}
-                                                </span>
-                                                {lookupResultInfo.carInfo && (
-                                                    <span className="text-[10px] text-emerald-700 truncate">
-                                                        ({lookupResultInfo.carInfo})
+                                        <div className="mt-1 p-2 bg-emerald-50/90 border border-emerald-300 rounded-lg text-emerald-900 text-xs shadow-2xs space-y-1.5">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5 truncate">
+                                                    <i className="fas fa-check-circle text-emerald-600 text-[11px] shrink-0"></i>
+                                                    <span className="font-bold text-emerald-950 truncate">
+                                                        Kho Cyber: <span className="font-mono text-blue-700 bg-blue-50 px-1 py-0.5 rounded border border-blue-200">{lookupResultInfo.ma_kho}</span> - {lookupResultInfo.ten_kho}
                                                     </span>
-                                                )}
+                                                    {lookupResultInfo.carInfo && (
+                                                        <span className="text-[10px] text-emerald-800 truncate">
+                                                            ({lookupResultInfo.carInfo})
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-emerald-200 text-emerald-900 rounded shrink-0">
+                                                    ✓ Nhận diện đúng
+                                                </span>
                                             </div>
-                                            <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-emerald-200 text-emerald-800 rounded shrink-0">
-                                                ✓ Tự nhận kho
-                                            </span>
+
+                                            {lookupResultInfo.detection_reason && (
+                                                <div className="text-[10.5px] text-emerald-800 flex items-center gap-1">
+                                                    <span className="text-slate-400">💡 Cơ sở:</span>
+                                                    <span className="font-medium">{lookupResultInfo.detection_reason}</span>
+                                                </div>
+                                            )}
+
+                                            {/* Đề xuất kho liên quan / đối ứng nếu có lệch hạch toán */}
+                                            {lookupResultInfo.alt_warehouses && lookupResultInfo.alt_warehouses.length > 0 && (
+                                                <div className="pt-1 border-t border-emerald-200/80 flex items-center gap-1.5 flex-wrap">
+                                                    <span className="text-[10px] text-slate-600 font-bold">Kho liên quan:</span>
+                                                    {lookupResultInfo.alt_warehouses.map(alt => (
+                                                        <button
+                                                            key={alt.ma_kho}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setDnxMaKhoXuat(alt.ma_kho);
+                                                                setDetectedWarehouseName(alt.ten_kho);
+                                                            }}
+                                                            className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+                                                                dnxMaKhoXuat === alt.ma_kho
+                                                                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs ring-1 ring-blue-300'
+                                                                    : 'bg-white hover:bg-emerald-100/60 text-slate-700 border-emerald-300 shadow-2xs'
+                                                            }`}
+                                                            title={alt.reason}
+                                                        >
+                                                            <span>📍 {alt.ma_kho} - {alt.ten_kho}</span>
+                                                            {alt.reason && <span className="text-[9px] opacity-80 font-normal">({alt.reason})</span>}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -4096,10 +4143,15 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                 </div>
                                             )}
                                             <div className="pt-1 border-t border-amber-200/80 flex items-center justify-between gap-2 flex-wrap">
-                                                <span className="text-[10px] text-amber-900 font-semibold flex items-center gap-1">
-                                                    <i className="fas fa-shield-alt text-amber-600"></i>
-                                                    Hệ thống chặn tạo trùng phiếu trên CyberSoft ERP
-                                                </span>
+                                                <label className="flex items-center gap-1.5 text-[10px] text-amber-900 font-bold cursor-pointer select-none">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={bypassExistingTicket}
+                                                        onChange={(e) => setBypassExistingTicket(e.target.checked)}
+                                                        className="rounded text-amber-600 focus:ring-amber-500 cursor-pointer"
+                                                    />
+                                                    <span>Phiếu cũ đã hoàn tất — Cho phép lập phiếu DNX mới</span>
+                                                </label>
                                                 <button
                                                     type="button"
                                                     onClick={() => handleOpenExistingTicketPrint(detectedExistingTicket)}
@@ -4171,6 +4223,32 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                             theme="light"
                                             placeholder="Chọn kho xuất..."
                                         />
+                                        <div className="flex items-center gap-1 mt-1 flex-wrap">
+                                            <span className="text-[9.5px] text-slate-400 font-medium">Kho nhanh:</span>
+                                            {[
+                                                { code: 'K87', label: 'K87 (QL13)' },
+                                                { code: 'K83', label: 'K83 (Thuận An)' },
+                                                { code: 'K86', label: 'K86 (Q12)' },
+                                                { code: 'K85', label: 'K85 (Dĩ An)' },
+                                                { code: 'KHCM.PVD', label: 'PVD' },
+                                            ].map(item => (
+                                                <button
+                                                    key={item.code}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setDnxMaKhoXuat(item.code);
+                                                        setDetectedWarehouseName(item.label);
+                                                    }}
+                                                    className={`px-1.5 py-0.5 rounded text-[9.5px] font-bold border transition-all cursor-pointer ${
+                                                        dnxMaKhoXuat === item.code
+                                                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                                            : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                                                    }`}
+                                                >
+                                                    {item.label}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
 
                                     <div>
@@ -4264,10 +4342,12 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 <div>
                                     <button
                                         type="submit"
-                                        disabled={isSubmittingDnx || Boolean(detectedExistingTicket)}
+                                        disabled={isSubmittingDnx || (Boolean(detectedExistingTicket) && !bypassExistingTicket)}
                                         className={`w-full min-h-[34px] py-1.5 px-3 font-bold rounded-lg text-xs shadow-xs transition-all flex items-center justify-center gap-1.5 shrink-0 ${
-                                            detectedExistingTicket
+                                            isSubmittingDnx || (detectedExistingTicket && !bypassExistingTicket)
                                                 ? 'bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300'
+                                                : detectedExistingTicket && bypassExistingTicket
+                                                ? 'bg-amber-600 hover:bg-amber-700 text-white cursor-pointer active:scale-[0.99]'
                                                 : 'bg-slate-900 hover:bg-slate-800 active:scale-[0.99] disabled:opacity-50 text-white cursor-pointer'
                                         }`}
                                     >
@@ -4276,10 +4356,15 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                 <i className="fas fa-spinner fa-spin text-xs"></i>
                                                 <span>Đang ghi nhận chứng từ lên CyberSoft ERP...</span>
                                             </>
-                                        ) : detectedExistingTicket ? (
+                                        ) : detectedExistingTicket && !bypassExistingTicket ? (
                                             <>
                                                 <i className="fas fa-ban text-rose-600 text-xs"></i>
                                                 <span>Không Thể Tạo Trùng: Xe Đã Có Phiếu {detectedExistingTicket.so_ct}</span>
+                                            </>
+                                        ) : detectedExistingTicket && bypassExistingTicket ? (
+                                            <>
+                                                <i className="fas fa-bolt text-white text-xs"></i>
+                                                <span className="text-center font-bold">Xác Nhận Lập Phiếu Mới (Bỏ Qua Phiếu {detectedExistingTicket.so_ct})</span>
                                             </>
                                         ) : (
                                             <>

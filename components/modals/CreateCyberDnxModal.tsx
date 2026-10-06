@@ -30,10 +30,17 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
     const [resultData, setResultData] = useState<CyberDnxCreateResult | null>(null);
     const [existingTicket, setExistingTicket] = useState<any | null>(null);
     const [isCheckingVins, setIsCheckingVins] = useState(false);
+    const [detectedWhInfo, setDetectedWhInfo] = useState<{
+        ma_kho?: string;
+        ten_kho?: string;
+        detection_reason?: string;
+        alt_warehouses?: Array<{ ma_kho: string; ten_kho: string; reason?: string }>;
+    } | null>(null);
 
     useEffect(() => {
         if (!isOpen || !vins || vins.length === 0) {
             setExistingTicket(null);
+            setDetectedWhInfo(null);
             return;
         }
         let isMounted = true;
@@ -43,6 +50,12 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                 if (!isMounted) return;
                 if (res && res.found && res.ma_kho) {
                     setMaKhoXuat(res.ma_kho);
+                    setDetectedWhInfo({
+                        ma_kho: res.ma_kho,
+                        ten_kho: res.ten_kho,
+                        detection_reason: res.detection_reason,
+                        alt_warehouses: res.alt_warehouses || (res.cars && res.cars[0]?.alt_warehouses) || []
+                    });
                     if (res.ma_kho === 'K83') {
                         setMaKhoNhan(prev => (prev === 'K83' ? 'K87' : prev));
                     } else {
@@ -282,9 +295,14 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                             {/* Kho xuất & Kho nhận */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                                        Kho xuất:
-                                    </label>
+                                    <div className="flex items-center justify-between text-xs font-semibold text-slate-300 mb-1">
+                                        <span>Kho xuất:</span>
+                                        {detectedWhInfo?.ma_kho && (
+                                            <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                                                <span>✓ Nhận diện đúng</span>
+                                            </span>
+                                        )}
+                                    </div>
                                     <SearchableWarehouseSelect
                                         value={maKhoXuat}
                                         onChange={(val) => setMaKhoXuat(val)}
@@ -292,6 +310,54 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                                         theme="dark"
                                         placeholder="Chọn kho xuất..."
                                     />
+                                    <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                                        <span className="text-[10px] text-slate-400 font-medium">Kho nhanh:</span>
+                                        {[
+                                            { code: 'K87', label: 'K87 (QL13)' },
+                                            { code: 'K83', label: 'K83 (Thuận An)' },
+                                            { code: 'K86', label: 'K86 (Q12)' },
+                                            { code: 'K85', label: 'K85 (Dĩ An)' },
+                                            { code: 'KHCM.PVD', label: 'PVD' },
+                                        ].map(item => (
+                                            <button
+                                                key={item.code}
+                                                type="button"
+                                                onClick={() => setMaKhoXuat(item.code)}
+                                                className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-all cursor-pointer ${
+                                                    maKhoXuat === item.code
+                                                        ? 'bg-emerald-600 text-white border-emerald-500 shadow-xs'
+                                                        : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                                                }`}
+                                            >
+                                                {item.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {detectedWhInfo?.detection_reason && (
+                                        <div className="text-[10px] text-emerald-300/90 mt-1 flex items-center gap-1">
+                                            <span>💡 {detectedWhInfo.detection_reason}</span>
+                                        </div>
+                                    )}
+                                    {detectedWhInfo?.alt_warehouses && detectedWhInfo.alt_warehouses.length > 0 && (
+                                        <div className="flex items-center gap-1 mt-1 flex-wrap">
+                                            <span className="text-[9.5px] text-slate-400 font-semibold">Kho liên quan:</span>
+                                            {detectedWhInfo.alt_warehouses.map(alt => (
+                                                <button
+                                                    key={alt.ma_kho}
+                                                    type="button"
+                                                    onClick={() => setMaKhoXuat(alt.ma_kho)}
+                                                    className={`px-1.5 py-0.5 rounded text-[9.5px] font-bold border transition-all cursor-pointer ${
+                                                        maKhoXuat === alt.ma_kho
+                                                            ? 'bg-blue-600 text-white border-blue-500'
+                                                            : 'bg-slate-800 hover:bg-slate-700 text-emerald-300 border-emerald-500/40'
+                                                    }`}
+                                                    title={alt.reason}
+                                                >
+                                                    📍 {alt.ma_kho} - {alt.ten_kho}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>

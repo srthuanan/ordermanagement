@@ -130,6 +130,30 @@ serve(async (req) => {
           },
           required: ["ngay_coc", "ly_do_suy_luan"]
         }
+      : action === 'scan-coc-receipt'
+      ? {
+          type: "OBJECT",
+          properties: {
+            ngay_bien_ban: { type: "STRING", description: "Ngày lập biên bản bàn giao, định dạng DD/MM/YYYY (ví dụ: 01/10/2026)" },
+            ben_giao: { type: "STRING", description: "Tên bên bàn giao giấy tờ" },
+            nguoi_nhan: { type: "STRING", description: "Tên người đại diện bên nhận bàn giao (ví dụ: Hoàng Thị Hạnh)" },
+            so_luong_xe: { type: "INTEGER", description: "Tổng số xe bàn giao trong biên bản" },
+            danh_sach_xe: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  stt: { type: "INTEGER" },
+                  loai_xe: { type: "STRING" },
+                  so_khung: { type: "STRING", description: "Số khung / VIN chính xác 17 ký tự" },
+                  ngan_hang: { type: "STRING" }
+                },
+                required: ["stt", "loai_xe", "so_khung"]
+              }
+            }
+          },
+          required: ["ngay_bien_ban", "danh_sach_xe"]
+        }
       : {
           type: "OBJECT",
           properties: {
@@ -224,6 +248,19 @@ Yêu cầu:
 2. Nếu chỉ có ngày không có giờ, hãy mặc định giờ là 00:00:00.
 3. Giải thích vị trí tìm thấy ngày trong trường ly_do_suy_luan.
 4. KHÔNG được bịa đặt ngày tháng. Nếu hoàn toàn không thấy, trả về null cho ngay_coc.`
+      : action === 'scan-coc-receipt'
+      ? `Bạn là chuyên gia trích xuất dữ liệu Biên Bản Bàn Giao Giấy Tờ xe VinFast (Biên bản giao trả giấy tờ tài sản thế chấp / Phiếu kiểm tra chất lượng xuất xưởng / COC).
+Nhiệm vụ của bạn:
+1. Đọc kỹ hình ảnh biên bản giao trả giấy tờ.
+2. Trích xuất chính xác "Ngày lập biên bản" (định dạng DD/MM/YYYY, ví dụ: 01/10/2026 hoặc 02/10/2026 ghi ở phần "lập vào ngày ...").
+3. Trích xuất tên Bên bàn giao và Người đại diện bên nhận (ví dụ: Hoàng Thị Hạnh - 0925821888).
+4. Trích xuất TOÀN BỘ danh sách các xe trong bảng vào "danh_sach_xe". Mỗi xe gồm:
+   - "stt": Số thứ tự trên biên bản (số nguyên)
+   - "loai_xe": Tên loại xe (ví dụ: VF 6 Plus, VF3 Plus, LIMO_GREEN_VN, VF2_LHD_VNM, VF5 Plus...)
+   - "so_khung": Số khung (VIN) chính xác 17 ký tự, viết liền không dấu cách (ví dụ: RLLVAG8C7TH818377, RLNVBL9K1TT745362...)
+   - "ngan_hang": Tên ngân hàng ghi trên cột NH (ví dụ: BIDV...)
+5. "so_luong_xe": Tổng số xe có trong bảng (ví dụ: 9 hoặc 10).
+TUYỆT ĐỐI không bỏ sót bất kỳ xe nào trong bảng. Trả về đúng định dạng JSON.`
       : `
 Bạn là một Chuyên viên Kiểm toán cấp cao về Hồ sơ Ô tô VinFast. File đính kèm có thể là MỘT hoặc NHIỀU loại giấy tờ gộp lại trong cùng một file PDF. Nhiệm vụ của bạn là nhận diện VÀ bóc tách TẤT CẢ các loại giấy tờ có trong file. KHÔNG bịa đặt, nếu không có hãy ghi "Không đề cập".
 

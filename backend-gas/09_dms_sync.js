@@ -258,7 +258,7 @@ function createSyncTriggers() {
   var triggers = ScriptApp.getProjectTriggers();
   for (var i = 0; i < triggers.length; i++) {
     var funcName = triggers[i].getHandlerFunction();
-    if (funcName === "syncDmsGpsToSupabase" || funcName === "syncDmsDataToSupabase") {
+    if (funcName === "syncDmsGpsToSupabase" || funcName === "syncDmsDataToSupabase" || funcName === "generateBcGhepXeDuXhd" || funcName === "syncAllFromSupabase") {
       ScriptApp.deleteTrigger(triggers[i]);
     }
   }
@@ -275,8 +275,8 @@ function createSyncTriggers() {
            .everyHours(4)
            .create();
 
-  // Tạo trigger lặp định kỳ mỗi 15 phút cập nhật Báo Cáo Ghép Xe - Dự XHĐ
-  ScriptApp.newTrigger("generateBcGhepXeDuXhd")
+  // Tạo trigger lặp định kỳ mỗi 15 phút kéo dữ liệu mới từ Supabase và tự động cập nhật Báo Cáo Ghép Xe - Dự XHĐ
+  ScriptApp.newTrigger("syncAllFromSupabase")
            .timeBased()
            .everyMinutes(15)
            .create();

@@ -407,6 +407,196 @@ def clean_location_name(name: str) -> str:
 
     return cleaned or "Đang vận tải"
 
+def resolve_physical_warehouses_from_cyber(c, vin_list: list, is_pymssql: bool = True) -> dict:
+    if not vin_list:
+        return {}
+    vins_clean = list(set([v.strip().upper() for v in vin_list if v and len(v.strip()) >= 8]))
+    if not vins_clean:
+        return {}
+
+    vin_list_str = ','.join([repr(v) for v in vins_clean])
+
+    # 1. Truy vấn sổ kho CT70BEX của các VIN (Ma_Post >= '9')
+    sql_bex = f"""
+        SELECT 
+            b.So_Khung, b.ma_kho, k.Ten_kho, b.nxt, b.Ngay_Ct, b.stt_rec, b.so_ct, b.ma_ct, b.so_luong
+        FROM CT70BEX b WITH (NOLOCK)
+        LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
+        WHERE b.Ma_Post >= '9' AND b.So_Khung IN ({vin_list_str})
+        ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC
+    """
+    c.execute(sql_bex)
+    bex_rows = c.fetchall()
+
+    vin_bex_map = {}
+    for r in bex_rows:
+        v = (r.get('So_Khung') if is_pymssql else r[0] or "").strip().upper()
+        mk = (r.get('ma_kho') if is_pymssql else r[1] or "").strip()
+        tk = (r.get('Ten_kho') if is_pymssql else r[2] or "").strip()
+        nxt = str(r.get('nxt') if is_pymssql else r[3] or "").strip()
+        ngay = str(r.get('Ngay_Ct') if is_pymssql else r[4] or "")[:10]
+        stt = str(r.get('stt_rec') if is_pymssql else r[5] or "")
+        so_ct = str(r.get('so_ct') if is_pymssql else r[6] or "")
+        ma_ct = str(r.get('ma_ct') if is_pymssql else r[7] or "")
+        sl = float(r.get('so_luong') if is_pymssql else r[8] or 0)
+
+        if v not in vin_bex_map:
+            vin_bex_map[v] = []
+        vin_bex_map[v].append({
+            "ma_kho": mk,
+            "ten_kho": tk,
+            "nxt": nxt,
+            "ngay_ct": ngay,
+            "stt_rec": stt,
+            "so_ct": so_ct,
+            "ma_ct": ma_ct,
+            "so_luong": sl
+        })
+
+    # 2. Truy vấn phiếu điều chuyển CTDNX gần nhất cho các VIN
+    sql_dnx = f"""
+        WITH RankedDNX AS (
+            SELECT 
+                c.so_khung,
+                p.so_ct,
+                p.ngay_ct,
+                p.stt_rec,
+                ISNULL(c.ma_kho_i, p.Ma_kho) AS ma_kho_xuat,
+                kxuat.Ten_kho AS ten_kho_xuat,
+                ISNULL(c.ma_khoN_i, p.Ma_khoN) AS ma_kho_nhan,
+                knhan.Ten_kho AS ten_kho_nhan,
+                ROW_NUMBER() OVER(PARTITION BY c.so_khung ORDER BY p.ngay_ct DESC, p.stt_rec DESC) as rn
+            FROM CTDNX c WITH (NOLOCK)
+            JOIN PHDNX p WITH (NOLOCK) ON c.stt_rec = p.stt_rec
+            LEFT JOIN Dmkho kxuat WITH (NOLOCK) ON ISNULL(c.ma_kho_i, p.Ma_kho) = kxuat.Ma_kho
+            LEFT JOIN Dmkho knhan WITH (NOLOCK) ON ISNULL(c.ma_khoN_i, p.Ma_khoN) = knhan.Ma_kho
+            WHERE c.so_khung IN ({vin_list_str})
+        )
+        SELECT so_khung, so_ct, ngay_ct, stt_rec, ma_kho_xuat, ten_kho_xuat, ma_kho_nhan, ten_kho_nhan
+        FROM RankedDNX
+        WHERE rn = 1
+    """
+    c.execute(sql_dnx)
+    dnx_rows = c.fetchall()
+    vin_dnx_map = {}
+    for r in dnx_rows:
+        v = (r.get('so_khung') if is_pymssql else r[0] or "").strip().upper()
+        vin_dnx_map[v] = {
+            "so_ct": (r.get('so_ct') if is_pymssql else r[1] or "").strip(),
+            "ngay_ct": str(r.get('ngay_ct') if is_pymssql else r[2] or "")[:10],
+            "stt_rec": (r.get('stt_rec') if is_pymssql else r[3] or "").strip(),
+            "ma_kho_xuat": (r.get('ma_kho_xuat') if is_pymssql else r[4] or "").strip(),
+            "ten_kho_xuat": (r.get('ten_kho_xuat') if is_pymssql else r[5] or "").strip(),
+            "ma_kho_nhan": (r.get('ma_kho_nhan') if is_pymssql else r[6] or "").strip(),
+            "ten_kho_nhan": (r.get('ten_kho_nhan') if is_pymssql else r[7] or "").strip(),
+        }
+
+    # 3. Thuật toán phân giải kho thông minh cho từng xe
+    results = {}
+    for v in vins_clean:
+        bex_list = vin_bex_map.get(v, [])
+        dnx = vin_dnx_map.get(v)
+
+        ton_by_wh = {}
+        latest_tx_by_wh = {}
+        for r in bex_list:
+            mk = r['ma_kho']
+            delta = r['so_luong'] if r['nxt'] == '1' else (-1 * r['so_luong'])
+            ton_by_wh[mk] = ton_by_wh.get(mk, 0.0) + delta
+            if mk not in latest_tx_by_wh:
+                latest_tx_by_wh[mk] = r
+
+        positive_whs = [mk for mk, ton in ton_by_wh.items() if ton >= 1]
+        negative_whs = [mk for mk, ton in ton_by_wh.items() if ton < 0]
+
+        chosen_wh = ""
+        chosen_tk = ""
+        reason = ""
+        alt_warehouses = []
+
+        if positive_whs and negative_whs:
+            # Lệch âm hạch toán: K86 +1 và K87 -1
+            most_recent_bex = bex_list[0]
+            recent_mk = most_recent_bex['ma_kho']
+            recent_tk = most_recent_bex['ten_kho'] or recent_mk
+
+            chosen_wh = recent_mk
+            chosen_tk = clean_location_name(recent_tk)
+            reason = f"Phát sinh gần nhất tại {recent_mk} ({most_recent_bex['ngay_ct']})"
+
+            for p_mk in positive_whs:
+                if p_mk != chosen_wh:
+                    alt_warehouses.append({
+                        "ma_kho": p_mk,
+                        "ten_kho": clean_location_name(latest_tx_by_wh[p_mk]['ten_kho'] or p_mk),
+                        "reason": f"Tồn sổ sách kế toán (+{int(ton_by_wh[p_mk])})"
+                    })
+
+        elif positive_whs:
+            most_recent_bex = bex_list[0]
+            recent_mk = most_recent_bex['ma_kho']
+            recent_tk = most_recent_bex['ten_kho'] or recent_mk
+
+            if recent_mk in positive_whs:
+                chosen_wh = recent_mk
+                chosen_tk = clean_location_name(recent_tk)
+                reason = f"Tồn kho thực tế (+{int(ton_by_wh[recent_mk])})"
+            else:
+                chosen_wh = recent_mk
+                chosen_tk = clean_location_name(recent_tk)
+                reason = f"Giao dịch mới nhất tại {recent_mk}"
+                for p_mk in positive_whs:
+                    alt_warehouses.append({
+                        "ma_kho": p_mk,
+                        "ten_kho": clean_location_name(latest_tx_by_wh[p_mk]['ten_kho'] or p_mk),
+                        "reason": f"Tồn sổ sách (+{int(ton_by_wh[p_mk])})"
+                    })
+
+        else:
+            # Tồn kho = 0 hoặc chưa có nhập kho CT70BEX
+            if dnx and (dnx.get('ma_kho_xuat') or dnx.get('ma_kho_nhan')):
+                chosen_wh = dnx.get('ma_kho_xuat') or dnx.get('ma_kho_nhan') or ""
+                raw_tk = dnx.get('ten_kho_xuat') or dnx.get('ten_kho_nhan') or chosen_wh
+                chosen_tk = clean_location_name(raw_tk)
+                reason = f"Theo phiếu điều chuyển gần nhất {dnx.get('so_ct')}"
+            elif bex_list:
+                chosen_wh = bex_list[0]['ma_kho']
+                chosen_tk = clean_location_name(bex_list[0]['ten_kho'] or chosen_wh)
+                reason = f"Lịch sử giao dịch gần nhất ({chosen_wh})"
+            else:
+                chosen_wh = ""
+                chosen_tk = "Đang vận tải"
+                reason = "Chưa có phát sinh kho trên Cyber"
+
+        # Bổ sung các kho từ phiếu DNX vào alt_warehouses nếu chưa có
+        if dnx:
+            xuat = dnx.get('ma_kho_xuat')
+            nhan = dnx.get('ma_kho_nhan')
+            if xuat and xuat != chosen_wh and not any(a['ma_kho'] == xuat for a in alt_warehouses):
+                alt_warehouses.append({
+                    "ma_kho": xuat,
+                    "ten_kho": clean_location_name(dnx.get('ten_kho_xuat') or xuat),
+                    "reason": f"Kho xuất theo phiếu DNX {dnx.get('so_ct')}"
+                })
+            if nhan and nhan != chosen_wh and not any(a['ma_kho'] == nhan for a in alt_warehouses):
+                alt_warehouses.append({
+                    "ma_kho": nhan,
+                    "ten_kho": clean_location_name(dnx.get('ten_kho_nhan') or nhan),
+                    "reason": f"Kho nhận theo phiếu DNX {dnx.get('so_ct')}"
+                })
+
+        results[v] = {
+            "ma_kho": chosen_wh,
+            "raw_kho": chosen_tk or chosen_wh,
+            "vi_tri": chosen_tk,
+            "ten_kho": chosen_tk,
+            "reason": reason,
+            "alt_warehouses": alt_warehouses,
+            "ton_by_wh": ton_by_wh
+        }
+
+    return results
+
 def fetch_physical_locations_from_cyber(vins: list) -> dict:
     if not vins:
         return {}
@@ -422,87 +612,20 @@ def fetch_physical_locations_from_cyber(vins: list) -> dict:
             timeout=30,
             appname='CyberAppGolden',
         )
+        is_pymssql = True
     except Exception:
         import pyodbc
         conn = pyodbc.connect(CYBER_CONN, timeout=30)
+        is_pymssql = False
 
-    c = conn.cursor()
+    c = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
     CHUNK_SIZE = 150
     results = {}
 
     for i in range(0, len(vins), CHUNK_SIZE):
         chunk = vins[i:i + CHUNK_SIZE]
-        vin_list_str = ','.join([repr(v) for v in chunk])
-        
-        # 1. Tra cứu sổ cái kho xe thực tế CT70BEX (các xe đang có tồn kho >= 1)
-        sql = f"""
-            WITH TonSK AS (
-                SELECT So_Khung, ma_kho, SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) AS Ton
-                FROM CT70BEX WITH (NOLOCK)
-                WHERE Ma_Post >= '9' AND So_Khung IN ({vin_list_str})
-                GROUP BY So_Khung, ma_kho
-                HAVING SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) >= 1
-            ),
-            LatestSK AS (
-                SELECT 
-                    b.So_Khung, 
-                    b.ma_kho, 
-                    k.Ten_kho,
-                    ROW_NUMBER() OVER(PARTITION BY b.So_Khung ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC) AS rn
-                FROM CT70BEX b WITH (NOLOCK)
-                INNER JOIN TonSK t ON b.So_Khung = t.So_Khung AND b.ma_kho = t.ma_kho
-                LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
-                WHERE b.nxt = '1' 
-                  AND b.Ma_Post >= '9'
-            )
-            SELECT So_Khung, ma_kho, Ten_kho
-            FROM LatestSK
-            WHERE rn = 1
-        """
-        c.execute(sql)
-        for r in c.fetchall():
-            vin = r[0].strip().upper()
-            ma_kho = (r[1] or "").strip()
-            raw_ten = (r[2] or "").strip()
-            results[vin] = {
-                "ma_kho": ma_kho,
-                "raw_kho": raw_ten or ma_kho,
-                "vi_tri": clean_location_name(raw_ten or ma_kho)
-            }
-
-        # 2. Đối với các xe chưa có tồn kho CT70BEX, kiểm tra phiếu điều chuyển xe gần nhất (CTDNX)
-        missing_vins = [v for v in chunk if v not in results]
-        if missing_vins:
-            missing_str = ','.join([repr(v) for v in missing_vins])
-            sql_dnx = f"""
-                WITH LatestDNX AS (
-                    SELECT 
-                        c.So_khung,
-                        ISNULL(c.ma_khoN_i, p.Ma_khoN) AS ma_kho_nhan,
-                        kn.Ten_kho AS Ten_kho_nhan,
-                        ROW_NUMBER() OVER(PARTITION BY c.So_khung ORDER BY p.ngay_ct DESC, p.stt_rec DESC) AS rn
-                    FROM CTDNX c WITH (NOLOCK)
-                    JOIN PHDNX p WITH (NOLOCK) ON c.stt_rec = p.stt_rec
-                    LEFT JOIN Dmkho kn WITH (NOLOCK) ON ISNULL(c.ma_khoN_i, p.Ma_khoN) = kn.Ma_kho
-                    WHERE c.So_khung IN ({missing_str})
-                )
-                SELECT So_khung, ma_kho_nhan, Ten_kho_nhan
-                FROM LatestDNX
-                WHERE rn = 1 AND ma_kho_nhan IS NOT NULL AND ma_kho_nhan <> ''
-            """
-            try:
-                c.execute(sql_dnx)
-                for r in c.fetchall():
-                    vin = r[0].strip().upper()
-                    ma_kho = (r[1] or "").strip()
-                    raw_ten = (r[2] or "").strip()
-                    results[vin] = {
-                        "ma_kho": ma_kho,
-                        "raw_kho": raw_ten or ma_kho,
-                        "vi_tri": clean_location_name(raw_ten or ma_kho)
-                    }
-            except Exception as e_dnx:
-                print(f"[fetch_physical_locations warning DNX fallback]: {e_dnx}", file=sys.stderr)
+        chunk_res = resolve_physical_warehouses_from_cyber(c, chunk, is_pymssql=is_pymssql)
+        results.update(chunk_res)
 
     conn.close()
     return results
@@ -1041,44 +1164,20 @@ def search_cyber_factory_plan(params: dict) -> dict:
         if row_d.get('vin'):
             vins.append(row_d['vin'].strip().upper())
 
-    # 3. Lookup physical warehouse from CT70BEX for these VINs
+    # 3. Lookup physical warehouse from CT70BEX for these VINs with smart resolution
     if vins:
-        vin_list_str = ','.join([repr(v) for v in vins])
-        bex_sql = f"""
-            WITH TonSK AS (
-                SELECT So_Khung, ma_kho, SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) AS Ton
-                FROM CT70BEX WITH (NOLOCK)
-                WHERE Ma_Post >= '9' AND So_Khung IN ({vin_list_str})
-                GROUP BY So_Khung, ma_kho
-                HAVING SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) >= 1
-            ),
-            LatestSK AS (
-                SELECT 
-                    b.So_Khung, 
-                    b.ma_kho, 
-                    k.Ten_kho,
-                    ROW_NUMBER() OVER(PARTITION BY b.So_Khung ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC) AS rn
-                FROM CT70BEX b WITH (NOLOCK)
-                INNER JOIN TonSK t ON b.So_Khung = t.So_Khung AND b.ma_kho = t.ma_kho
-                LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
-                WHERE b.nxt = '1' 
-                  AND b.Ma_Post >= '9'
-            )
-            SELECT So_Khung, ma_kho, Ten_kho
-            FROM LatestSK
-            WHERE rn = 1
-        """
-        c.execute(bex_sql)
-        wh_map = {r[0].strip().upper(): (r[1], r[2]) for r in c.fetchall()}
+        phys_map = resolve_physical_warehouses_from_cyber(c, vins, is_pymssql=is_pymssql)
         for item in results:
             v = item.get('vin', '').strip().upper()
-            if v in wh_map:
-                raw_wh = wh_map[v][1] or ""
-                item['current_physical_warehouse'] = clean_location_name(raw_wh)
-                item['raw_physical_warehouse'] = raw_wh
+            if v in phys_map:
+                item['current_physical_warehouse'] = phys_map[v].get('vi_tri') or 'Đang vận tải'
+                item['raw_physical_warehouse'] = phys_map[v].get('raw_kho') or ''
+                item['ma_kho'] = phys_map[v].get('ma_kho') or ''
+                item['alt_warehouses'] = phys_map[v].get('alt_warehouses') or []
             else:
                 item['current_physical_warehouse'] = 'Đang vận tải'
                 item['raw_physical_warehouse'] = ''
+                item['ma_kho'] = ''
 
     conn.close()
     return {
@@ -2052,12 +2151,12 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
         if not ma_ttcp_n:
             ma_ttcp_n = ma_ttcp
 
-        # 0. CHẶN TẠO TRÙNG LẶP: Kiểm tra xem các số VIN đã tồn tại phiếu ĐNX hoặc phiếu TD4 chưa
+        # 0. CHẶN TẠO TRÙNG LẶP: Kiểm tra xem các số VIN đã tồn tại phiếu ĐNX (chưa xuất kho) hoặc phiếu TD4 chưa
         vins_clean = [v.strip().upper() for v in vins if v and len(v.strip()) >= 8]
-        if vins_clean:
+        if vins_clean and not params.get("force"):
             vin_list_str = ', '.join([f"'{v}'" for v in vins_clean])
             
-            # Kiểm tra phiếu ĐNX đã tồn tại
+            # Kiểm tra phiếu ĐNX đã tồn tại nhưng CHƯA xuất kho hoàn tất
             sql_check_dnx = f"""
                 SELECT TOP 1 
                     c.so_khung,
@@ -2078,6 +2177,13 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
                       p.Ma_TTCP_H = '02.01.08'
                       OR p.so_ct LIKE '08.DNX%'
                       OR ISNULL(c.ma_khoN_i, p.Ma_khoN) = 'K83'
+                  )
+                  AND NOT EXISTS (
+                      SELECT 1 
+                      FROM CT70BEX bx WITH (NOLOCK) 
+                      WHERE bx.Stt_recTD4 = p.stt_rec 
+                        AND bx.So_Khung = c.so_khung
+                        AND bx.Ma_Post >= '9'
                   )
                 ORDER BY p.ngay_ct DESC, p.so_ct DESC
             """
@@ -2485,39 +2591,8 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
 
         vin_list_str = ','.join([repr(v) for v in vins_clean])
 
-        # 2. Tra cứu kho tồn thực tế từ CT70BEX
-        sql_stock = f"""
-            WITH TonSK AS (
-                SELECT So_Khung, ma_kho, SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) AS Ton
-                FROM CT70BEX WITH (NOLOCK)
-                WHERE Ma_Post >= '9' AND So_Khung IN ({vin_list_str})
-                GROUP BY So_Khung, ma_kho
-                HAVING SUM(CASE WHEN nxt = '1' THEN So_Luong ELSE -1 * So_Luong END) >= 1
-            ),
-            LatestSK AS (
-                SELECT 
-                    b.So_Khung, 
-                    b.ma_kho, 
-                    k.Ten_kho,
-                    ROW_NUMBER() OVER(PARTITION BY b.So_Khung ORDER BY b.Ngay_Ct DESC, b.stt_rec DESC) AS rn
-                FROM CT70BEX b WITH (NOLOCK)
-                INNER JOIN TonSK t ON b.So_Khung = t.So_Khung AND b.ma_kho = t.ma_kho
-                LEFT JOIN Dmkho k WITH (NOLOCK) ON b.ma_kho = k.Ma_kho
-                WHERE b.nxt = '1' 
-                  AND b.Ma_Post >= '9'
-            )
-            SELECT So_Khung, ma_kho, Ten_kho
-            FROM LatestSK
-            WHERE rn = 1
-        """
-        c.execute(sql_stock)
-        stock_rows = c.fetchall()
-        stock_map = {}
-        for r in stock_rows:
-            v = (r.get('So_Khung') if is_pymssql else r[0] or "").strip().upper()
-            mk = (r.get('ma_kho') if is_pymssql else r[1] or "").strip()
-            tk = (r.get('Ten_kho') if is_pymssql else r[2] or "").strip()
-            stock_map[v] = {"ma_kho": mk, "ten_kho": tk}
+        # 2. Tra cứu kho tồn thực tế và nhận diện thông minh từ CT70BEX & CTDNX
+        stock_map = resolve_physical_warehouses_from_cyber(c, vins_clean, is_pymssql=is_pymssql)
 
         # 3. Tra cứu chi tiết xe từ CT70BEX & CTKH kết hợp danh mục DmKx & Dmmauxe (đầy đủ tên tiếng Việt)
         sql_info = f"""
@@ -2581,6 +2656,13 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
                 p.Ma_TTCP_H = '02.01.08'
                 OR p.so_ct LIKE '08.DNX%'
                 OR ISNULL(c.ma_khoN_i, p.Ma_khoN) = 'K83'
+              )
+              AND NOT EXISTS (
+                  SELECT 1 
+                  FROM CT70BEX bx WITH (NOLOCK) 
+                  WHERE bx.Stt_recTD4 = p.stt_rec 
+                    AND bx.So_Khung = c.so_khung
+                    AND bx.Ma_Post >= '9'
               )
             ORDER BY p.ngay_ct DESC, p.so_ct DESC
         """
@@ -2693,19 +2775,12 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
             inf = info_map.get(v, {})
             dnx_entry = dnx_map.get(v)
             td4_entry = td4_map.get(v)
-            # Ưu tiên số 1: Kho tồn thực tế hiện tại (Ton >= 1) từ CT70BEX
-            if st and st.get("ma_kho"):
-                ma_kho = st.get("ma_kho")
-                raw_tk = st.get("ten_kho") or ma_kho
-                ten_kho = clean_location_name(raw_tk or ma_kho)
-            elif dnx_entry and (dnx_entry.get("ma_kho_nhan") or dnx_entry.get("ma_kho_xuat")):
-                # Nếu không còn tồn kho thực tế, xem phiếu DNX điều chuyển gần nhất
-                ma_kho = dnx_entry.get("ma_kho_nhan") or dnx_entry.get("ma_kho_xuat") or ""
-                raw_tk = dnx_entry.get("ten_kho_nhan") or dnx_entry.get("ten_kho_xuat") or ""
-                ten_kho = clean_location_name(raw_tk or ma_kho)
-            else:
-                ma_kho = ""
-                ten_kho = "Đang vận tải"
+            
+            ma_kho = st.get("ma_kho") or ""
+            ten_kho = st.get("ten_kho") or "Đang vận tải"
+            alt_whs = st.get("alt_warehouses") or []
+            reason = st.get("reason") or ""
+
             if ma_kho:
                 found_warehouses.append({"ma_kho": ma_kho, "ten_kho": ten_kho})
             results.append({
@@ -2720,11 +2795,15 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
                 "has_dnx": bool(dnx_entry),
                 "dnx": dnx_entry,
                 "has_td4": bool(td4_entry),
-                "td4": td4_entry
+                "td4": td4_entry,
+                "detection_reason": reason,
+                "alt_warehouses": alt_whs
             })
 
         first_mk = found_warehouses[0]["ma_kho"] if found_warehouses else ""
         first_tk = found_warehouses[0]["ten_kho"] if found_warehouses else ""
+        first_alt_whs = results[0].get("alt_warehouses", []) if results else []
+        first_reason = results[0].get("detection_reason", "") if results else ""
         first_dnx = results[0].get("dnx") if results else None
         first_td4 = results[0].get("td4") if results else None
 
@@ -2739,6 +2818,8 @@ def lookup_vin_warehouse(params: dict = {}) -> dict:
             "found": bool(first_mk),
             "ma_kho": first_mk,
             "ten_kho": first_tk,
+            "detection_reason": first_reason,
+            "alt_warehouses": first_alt_whs,
             "total_vins": len(vins_clean),
             "found_count": len(found_warehouses),
             "has_dnx": bool(first_dnx),

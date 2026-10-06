@@ -9,6 +9,25 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        document.addEventListener('contextmenu', function(e) { e.preventDefault(); return false; }, false);
+        document.addEventListener('keydown', function(e) {
+            var isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            var ctrl = isMac ? e.metaKey : e.ctrlKey;
+            if ((ctrl && (e.key === 'u' || e.key === 'U')) || (e.altKey && e.metaKey && (e.key === 'u' || e.key === 'U'))) {
+                e.preventDefault(); e.stopPropagation(); return false;
+            }
+            if (e.key === 'F12' || e.keyCode === 123) {
+                e.preventDefault(); e.stopPropagation(); return false;
+            }
+            if (ctrl && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].indexOf(e.key) !== -1) {
+                e.preventDefault(); e.stopPropagation(); return false;
+            }
+            if (ctrl && (e.key === 's' || e.key === 'S')) {
+                e.preventDefault(); e.stopPropagation(); return false;
+            }
+        }, false);
+    </script>
 
     <style>
         :root {

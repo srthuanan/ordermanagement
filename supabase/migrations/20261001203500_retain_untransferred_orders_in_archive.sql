@@ -38,9 +38,14 @@ BEGIN
         y.vin, 
         y.so_may, 
         y.ma_dms,
-        (NULLIF(y.ngay_coc, ''))::DATE,
-        (NULLIF(y.ngay_yeu_cau, ''))::TIMESTAMPTZ,
-        (NULLIF(y.ngay_xuat_hoa_don, ''))::DATE,
+        CASE 
+            WHEN y.ngay_coc IS NULL OR TRIM(y.ngay_coc) = '' THEN NULL
+            WHEN y.ngay_coc ~ '^\d{4}-\d{2}-\d{2}' THEN y.ngay_coc::DATE
+            WHEN y.ngay_coc ~ '^\d{1,2}/\d{1,2}/\d{4}' THEN to_date(y.ngay_coc, 'DD/MM/YYYY')
+            ELSE NULL
+        END,
+        y.ngay_yeu_cau,
+        y.ngay_xuat_hoa_don::DATE,
         y.chinh_sach, 
         COALESCE(y.hoa_hong_ung, 0), 
         COALESCE(y.vpoint, 0), 
@@ -52,24 +57,24 @@ BEGIN
         y.created_at,
         NOW()
     FROM yeucauxhd y
-    WHERE NULLIF(y.ngay_xuat_hoa_don, '') IS NOT NULL
-    AND (NULLIF(y.ngay_xuat_hoa_don, ''))::DATE < first_of_month
+    WHERE y.ngay_xuat_hoa_don IS NOT NULL
+    AND y.ngay_xuat_hoa_don::DATE < first_of_month
     ON CONFLICT (so_don_hang) DO NOTHING;
 
     GET DIAGNOSTICS archived_count = ROW_COUNT;
 
     -- 2. Xóa TOÀN BỘ các đơn XHĐ tháng trước khỏi yeucauxhd để sẵn sàng cho tháng mới
     DELETE FROM yeucauxhd 
-    WHERE NULLIF(ngay_xuat_hoa_don, '') IS NOT NULL
-    AND (NULLIF(ngay_xuat_hoa_don, ''))::DATE < first_of_month;
+    WHERE ngay_xuat_hoa_don IS NOT NULL
+    AND ngay_xuat_hoa_don::DATE < first_of_month;
 
     GET DIAGNOSTICS deleted_yeucauxhd_count = ROW_COUNT;
 
     -- 3. Bảng donhang: CHỈ XÓA những đơn mà xe không có VIN HOẶC (xe đã ở Thuận An VÀ đã có TD4)
     --    Các đơn còn lại tiếp tục CHO TỒN ở bảng donhang!
     DELETE FROM donhang
-    WHERE NULLIF(ngay_xuat_hoa_don, '') IS NOT NULL
-    AND (NULLIF(ngay_xuat_hoa_don, ''))::DATE < first_of_month
+    WHERE ngay_xuat_hoa_don IS NOT NULL
+    AND ngay_xuat_hoa_don::DATE < first_of_month
     AND (
         vin IS NULL OR TRIM(vin) = ''
         OR EXISTS (
@@ -118,20 +123,25 @@ BEGIN
         SELECT 
             d.so_don_hang, d.ten_khach_hang, d.dong_xe, d.phien_ban, d.ngoai_that, d.noi_that,
             d.ten_tu_van_ban_hang, d.vin, d.so_may, d.ma_dms,
-            (NULLIF(d.ngay_coc, ''))::DATE,
-            (NULLIF(d.ngay_xuat_hoa_don, ''))::DATE,
+            CASE 
+                WHEN d.ngay_coc IS NULL OR TRIM(d.ngay_coc) = '' THEN NULL
+                WHEN d.ngay_coc ~ '^\d{4}-\d{2}-\d{2}' THEN d.ngay_coc::DATE
+                WHEN d.ngay_coc ~ '^\d{1,2}/\d{1,2}/\d{4}' THEN to_date(d.ngay_coc, 'DD/MM/YYYY')
+                ELSE NULL
+            END,
+            d.ngay_xuat_hoa_don::DATE,
             d.chinh_sach, 'Đã xuất hóa đơn', NOW(), NOW()
         FROM donhang d
         WHERE UPPER(TRIM(d.vin)) = UPPER(TRIM(NEW.vin))
-        AND NULLIF(d.ngay_xuat_hoa_don, '') IS NOT NULL
-        AND (NULLIF(d.ngay_xuat_hoa_don, ''))::DATE < date_trunc('month', CURRENT_DATE)::DATE
+        AND d.ngay_xuat_hoa_don IS NOT NULL
+        AND d.ngay_xuat_hoa_don::DATE < date_trunc('month', CURRENT_DATE)::DATE
         ON CONFLICT (so_don_hang) DO NOTHING;
 
         -- 2. Tự động xóa khỏi bảng donhang
         DELETE FROM donhang
         WHERE UPPER(TRIM(vin)) = UPPER(TRIM(NEW.vin))
-        AND NULLIF(ngay_xuat_hoa_don, '') IS NOT NULL
-        AND (NULLIF(ngay_xuat_hoa_don, ''))::DATE < date_trunc('month', CURRENT_DATE)::DATE;
+        AND ngay_xuat_hoa_don IS NOT NULL
+        AND ngay_xuat_hoa_don::DATE < date_trunc('month', CURRENT_DATE)::DATE;
     END IF;
     RETURN NEW;
 END;
@@ -161,19 +171,24 @@ BEGIN
         SELECT 
             d.so_don_hang, d.ten_khach_hang, d.dong_xe, d.phien_ban, d.ngoai_that, d.noi_that,
             d.ten_tu_van_ban_hang, d.vin, d.so_may, d.ma_dms,
-            (NULLIF(d.ngay_coc, ''))::DATE,
-            (NULLIF(d.ngay_xuat_hoa_don, ''))::DATE,
+            CASE 
+                WHEN d.ngay_coc IS NULL OR TRIM(d.ngay_coc) = '' THEN NULL
+                WHEN d.ngay_coc ~ '^\d{4}-\d{2}-\d{2}' THEN d.ngay_coc::DATE
+                WHEN d.ngay_coc ~ '^\d{1,2}/\d{1,2}/\d{4}' THEN to_date(d.ngay_coc, 'DD/MM/YYYY')
+                ELSE NULL
+            END,
+            d.ngay_xuat_hoa_don::DATE,
             d.chinh_sach, 'Đã xuất hóa đơn', NOW(), NOW()
         FROM donhang d
         WHERE UPPER(TRIM(d.vin)) = UPPER(TRIM(NEW.vin))
-        AND NULLIF(d.ngay_xuat_hoa_don, '') IS NOT NULL
-        AND (NULLIF(d.ngay_xuat_hoa_don, ''))::DATE < date_trunc('month', CURRENT_DATE)::DATE
+        AND d.ngay_xuat_hoa_don IS NOT NULL
+        AND d.ngay_xuat_hoa_don::DATE < date_trunc('month', CURRENT_DATE)::DATE
         ON CONFLICT (so_don_hang) DO NOTHING;
 
         DELETE FROM donhang
         WHERE UPPER(TRIM(vin)) = UPPER(TRIM(NEW.vin))
-        AND NULLIF(ngay_xuat_hoa_don, '') IS NOT NULL
-        AND (NULLIF(ngay_xuat_hoa_don, ''))::DATE < date_trunc('month', CURRENT_DATE)::DATE;
+        AND ngay_xuat_hoa_don IS NOT NULL
+        AND ngay_xuat_hoa_don::DATE < date_trunc('month', CURRENT_DATE)::DATE;
     END IF;
     RETURN NEW;
 END;

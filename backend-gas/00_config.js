@@ -1,4 +1,6 @@
 const SPREADSHEET_ID = "1CzYUfDAcwt4D64UIZIUC77lZ2lOYQ257xlmVXy2nZG0";
+const SHOWROOM_SPREADSHEET_ID = "1GMAX4_0Xubwz4ByRN9eDIokZntLO98NlmzeURkYBc8M";
+const SHOWROOM_YEUCAUXHD_SHEET = "_DATA_YEUCAUXHD";
 
 // ===== CẤU HÌNH SUPABASE =====
 var SUPABASE_URL = PropertiesService.getScriptProperties().getProperty('SUPABASE_URL') || "https://jwvgxqrkjlbewvpkvucj.supabase.co";

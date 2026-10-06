@@ -393,6 +393,15 @@ function writeSheet(ss, tableName, sheetName, data) {
        applySorting(sheet, sheetName);
     }
   }
+
+  // Đồng bộ trực tiếp sang Showroom Sheet nếu là yeucauxhd
+  if (sheetName === 'yeucauxhd') {
+    try {
+      syncAllToShowroomSheet(data);
+    } catch (errShowroom) {
+      Logger.log("Lỗi syncAllToShowroomSheet: " + errShowroom.message);
+    }
+  }
 }
 
 /**
@@ -555,6 +564,15 @@ function syncOneRecordToSheet(tableName, record, action) {
   // Tự động sắp xếp dữ liệu sau khi chèn/sửa đổi dòng
   applySorting(sheet, tbl.sheet);
   
+  // Đồng bộ trực tiếp 1 dòng sang Showroom Sheet nếu là yeucauxhd
+  if (tableName === 'yeucauxhd') {
+    try {
+      syncOneRecordToShowroomSheet(record || oldRecord, action);
+    } catch (errShowroom) {
+      Logger.log("Lỗi syncOneRecordToShowroomSheet: " + errShowroom.message);
+    }
+  }
+
   return true;
 }
 
@@ -629,5 +647,145 @@ function applySorting(sheet, sheetName) {
     }
   } catch (err) {
     Logger.log("Lỗi sorting: " + err.message);
+  }
+}
+
+
+/**
+ * Đồng bộ 1 dòng yêu cầu xuất hóa đơn trực tiếp sang Sheet _DATA_YEUCAUXHD trên file Showroom Thuận An
+ */
+function syncOneRecordToShowroomSheet(record, action) {
+  try {
+    if (typeof SHOWROOM_SPREADSHEET_ID === 'undefined' || !SHOWROOM_SPREADSHEET_ID) return;
+    var ss = SpreadsheetApp.openById(SHOWROOM_SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHOWROOM_YEUCAUXHD_SHEET);
+    if (!sheet) return;
+    
+    var lastRow = sheet.getLastRow();
+    var keyOrder = record ? String(record.so_don_hang || '').trim() : '';
+    var keyVin = record ? String(record.vin || '').trim() : '';
+    
+    var targetRow = -1;
+    if (lastRow >= 1) {
+      var searchRows = sheet.getRange(1, 1, lastRow, 9).getValues();
+      for (var r = 0; r < searchRows.length; r++) {
+        var rOrder = String(searchRows[r][2] || '').trim();
+        var rVin = String(searchRows[r][8] || '').trim();
+        if ((keyOrder && rOrder === keyOrder) || (keyVin && rVin === keyVin)) {
+          targetRow = r + 1;
+          break;
+        }
+      }
+    }
+    
+    if (action === 'DELETE') {
+      if (targetRow !== -1) {
+        sheet.getRange(targetRow, 1, 1, 14).clearContent();
+        logAction("Auto-Sync Showroom", "Đã xóa dòng đơn " + keyOrder + " trên " + SHOWROOM_YEUCAUXHD_SHEET);
+      }
+      return;
+    }
+    
+    var ngayYc = (record && record.ngay_yeu_cau) ? new Date(record.ngay_yeu_cau) : "";
+    var ngayXhd = (record && record.ngay_xuat_hoa_don) ? new Date(record.ngay_xuat_hoa_don) : "";
+    var hoaHong = (record && record.hoa_hong_ung) ? parseFloat(record.hoa_hong_ung) : 0;
+    var vpoint = (record && record.vpoint) ? parseFloat(record.vpoint) : 0;
+    
+    var sttVal = targetRow !== -1 ? sheet.getRange(targetRow, 1).getValue() : (lastRow + 1);
+    if (!sttVal) sttVal = lastRow + 1;
+    
+    var rowData = [
+      sttVal,
+      (record && record.ten_khach_hang) || "",
+      (record && record.so_don_hang) || "",
+      (record && record.dong_xe) || "",
+      (record && record.phien_ban) || "",
+      (record && record.ngoai_that) || "",
+      (record && record.noi_that) || "",
+      (record && record.tvbh) || "",
+      (record && record.vin) || "",
+      (record && record.so_may) || "",
+      ngayYc,
+      ngayXhd,
+      hoaHong,
+      vpoint
+    ];
+    
+    if (targetRow !== -1) {
+      sheet.getRange(targetRow, 1, 1, rowData.length).setValues([rowData]);
+    } else {
+      var insertRow = lastRow + 1;
+      sheet.getRange(insertRow, 1, 1, rowData.length).setValues([rowData]);
+      targetRow = insertRow;
+    }
+    
+    if (ngayYc) sheet.getRange(targetRow, 11).setNumberFormat("dd/mm/yyyy hh:mm:ss");
+    if (ngayXhd) sheet.getRange(targetRow, 12).setNumberFormat("dd/mm/yyyy");
+    sheet.getRange(targetRow, 13, 1, 2).setNumberFormat("#,##0");
+    
+    logAction("Auto-Sync Showroom", "Đã cập nhật đơn " + keyOrder + " vào " + SHOWROOM_YEUCAUXHD_SHEET);
+  } catch (err) {
+    logAction("Auto-Sync Showroom Error", err.message);
+  }
+}
+
+/**
+ * Đồng bộ toàn bộ dữ liệu yêu cầu xuất hóa đơn trực tiếp sang Sheet _DATA_YEUCAUXHD trên file Showroom Thuận An
+ */
+function syncAllToShowroomSheet(data) {
+  try {
+    if (typeof SHOWROOM_SPREADSHEET_ID === 'undefined' || !SHOWROOM_SPREADSHEET_ID) return;
+    var ss = SpreadsheetApp.openById(SHOWROOM_SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHOWROOM_YEUCAUXHD_SHEET);
+    if (!sheet) return;
+    
+    if (!data) {
+      var url = SUPABASE_URL + "/rest/v1/yeucauxhd?select=*&order=ngay_xuat_hoa_don.asc.nullslast";
+      var resp = UrlFetchApp.fetch(url, {
+        headers: { "apikey": SUPABASE_SERVICE_KEY, "Authorization": "Bearer " + SUPABASE_SERVICE_KEY },
+        muteHttpExceptions: true
+      });
+      if (resp.getResponseCode() === 200) {
+        data = JSON.parse(resp.getContentText());
+      }
+    }
+    if (!Array.isArray(data) || data.length === 0) return;
+    
+    var rows = [];
+    for (var i = 0; i < data.length; i++) {
+      var r = data[i];
+      var ngayYc = r.ngay_yeu_cau ? new Date(r.ngay_yeu_cau) : "";
+      var ngayXhd = r.ngay_xuat_hoa_don ? new Date(r.ngay_xuat_hoa_don) : "";
+      var hoaHong = r.hoa_hong_ung ? parseFloat(r.hoa_hong_ung) : 0;
+      var vpoint = r.vpoint ? parseFloat(r.vpoint) : 0;
+      rows.push([
+        i + 1,
+        r.ten_khach_hang || "",
+        r.so_don_hang || "",
+        r.dong_xe || "",
+        r.phien_ban || "",
+        r.ngoai_that || "",
+        r.noi_that || "",
+        r.tvbh || "",
+        r.vin || "",
+        r.so_may || "",
+        ngayYc,
+        ngayXhd,
+        hoaHong,
+        vpoint
+      ]);
+    }
+    
+    var clearRows = Math.max(sheet.getLastRow(), rows.length, 50);
+    sheet.getRange(1, 1, clearRows, 14).clearContent();
+    sheet.getRange(1, 1, rows.length, 14).setValues(rows);
+    
+    sheet.getRange(1, 11, rows.length, 1).setNumberFormat("dd/mm/yyyy hh:mm:ss");
+    sheet.getRange(1, 12, rows.length, 1).setNumberFormat("dd/mm/yyyy");
+    sheet.getRange(1, 13, rows.length, 2).setNumberFormat("#,##0");
+    
+    logAction("Auto-Sync Showroom", "Đã nạp toàn bộ " + rows.length + " bản ghi vào " + SHOWROOM_YEUCAUXHD_SHEET);
+  } catch (err) {
+    logAction("Auto-Sync Showroom Error", err.message);
   }
 }

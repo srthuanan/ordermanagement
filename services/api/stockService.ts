@@ -1751,6 +1751,7 @@ export interface CyberDnxCreateParams {
     ma_ttcp_n?: string;
     ma_gd?: '4' | '9' | string;
     user_name?: string;
+    force?: boolean;
 }
 
 export interface CyberDnxCreateResult {
@@ -1845,12 +1846,24 @@ export interface CyberVinLookupResult {
     found?: boolean;
     ma_kho?: string;
     ten_kho?: string;
+    detection_reason?: string;
+    alt_warehouses?: Array<{
+        ma_kho: string;
+        ten_kho: string;
+        reason?: string;
+    }>;
     total_vins?: number;
     found_count?: number;
     cars?: Array<{
         vin: string;
         ma_kho: string;
         ten_kho: string;
+        detection_reason?: string;
+        alt_warehouses?: Array<{
+            ma_kho: string;
+            ten_kho: string;
+            reason?: string;
+        }>;
         so_may?: string;
         ma_kx?: string;
         ten_kx?: string;
