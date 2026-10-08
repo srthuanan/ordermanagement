@@ -430,15 +430,16 @@ def resolve_physical_warehouses_from_cyber(c, vin_list: list, is_pymssql: bool =
 
     vin_bex_map = {}
     for r in bex_rows:
-        v = (r.get('So_Khung') if is_pymssql else r[0] or "").strip().upper()
-        mk = (r.get('ma_kho') if is_pymssql else r[1] or "").strip()
-        tk = (r.get('Ten_kho') if is_pymssql else r[2] or "").strip()
-        nxt = str(r.get('nxt') if is_pymssql else r[3] or "").strip()
-        ngay = str(r.get('Ngay_Ct') if is_pymssql else r[4] or "")[:10]
-        stt = str(r.get('stt_rec') if is_pymssql else r[5] or "")
-        so_ct = str(r.get('so_ct') if is_pymssql else r[6] or "")
-        ma_ct = str(r.get('ma_ct') if is_pymssql else r[7] or "")
-        sl = float(r.get('so_luong') if is_pymssql else r[8] or 0)
+        is_dict = isinstance(r, dict)
+        v = (r.get('So_Khung') or r.get('so_khung') if is_dict else r[0] or "").strip().upper()
+        mk = (r.get('ma_kho') or r.get('Ma_kho') if is_dict else r[1] or "").strip()
+        tk = (r.get('Ten_kho') or r.get('ten_kho') if is_dict else r[2] or "").strip()
+        nxt = str(r.get('nxt') if is_dict else r[3] or "").strip()
+        ngay = str(r.get('Ngay_Ct') or r.get('ngay_ct') if is_dict else r[4] or "")[:10]
+        stt = str(r.get('stt_rec') if is_dict else r[5] or "")
+        so_ct = str(r.get('so_ct') if is_dict else r[6] or "")
+        ma_ct = str(r.get('ma_ct') if is_dict else r[7] or "")
+        sl = float(r.get('so_luong') if is_dict else r[8] or 0)
 
         if v not in vin_bex_map:
             vin_bex_map[v] = []
@@ -480,15 +481,16 @@ def resolve_physical_warehouses_from_cyber(c, vin_list: list, is_pymssql: bool =
     dnx_rows = c.fetchall()
     vin_dnx_map = {}
     for r in dnx_rows:
-        v = (r.get('so_khung') if is_pymssql else r[0] or "").strip().upper()
+        is_dict = isinstance(r, dict)
+        v = (r.get('so_khung') or r.get('So_khung') if is_dict else r[0] or "").strip().upper()
         vin_dnx_map[v] = {
-            "so_ct": (r.get('so_ct') if is_pymssql else r[1] or "").strip(),
-            "ngay_ct": str(r.get('ngay_ct') if is_pymssql else r[2] or "")[:10],
-            "stt_rec": (r.get('stt_rec') if is_pymssql else r[3] or "").strip(),
-            "ma_kho_xuat": (r.get('ma_kho_xuat') if is_pymssql else r[4] or "").strip(),
-            "ten_kho_xuat": (r.get('ten_kho_xuat') if is_pymssql else r[5] or "").strip(),
-            "ma_kho_nhan": (r.get('ma_kho_nhan') if is_pymssql else r[6] or "").strip(),
-            "ten_kho_nhan": (r.get('ten_kho_nhan') if is_pymssql else r[7] or "").strip(),
+            "so_ct": (r.get('so_ct') if is_dict else r[1] or "").strip(),
+            "ngay_ct": str(r.get('ngay_ct') or r.get('Ngay_ct') if is_dict else r[2] or "")[:10],
+            "stt_rec": (r.get('stt_rec') if is_dict else r[3] or "").strip(),
+            "ma_kho_xuat": (r.get('ma_kho_xuat') if is_dict else r[4] or "").strip(),
+            "ten_kho_xuat": (r.get('ten_kho_xuat') if is_dict else r[5] or "").strip(),
+            "ma_kho_nhan": (r.get('ma_kho_nhan') if is_dict else r[6] or "").strip(),
+            "ten_kho_nhan": (r.get('ten_kho_nhan') if is_dict else r[7] or "").strip(),
         }
 
     # 3. Thuật toán phân giải kho thông minh cho từng xe
