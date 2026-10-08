@@ -3,7 +3,7 @@ import moment from 'moment';
 import { StockVehicle } from '../types';
 import { getExteriorColorStyle, getInteriorColorStyle } from '../utils/styleUtils';
 import { formatShortWarehouseName } from '../utils/stringUtils';
-import { getQuickLocationName, getGoogleMapsUrl } from '../utils/geocodeUtils';
+import { getQuickLocationName } from '../utils/geocodeUtils';
 import CarImage from './ui/CarImage';
 import StatusBadge from './ui/StatusBadge';
 import * as apiService from '../services/apiService';
@@ -208,7 +208,6 @@ const StockCard: React.FC<StockCardProps> = ({
     const hasGps = Boolean(telemetry && telemetry.lat && telemetry.lng);
     const quickLocation = hasGps ? getQuickLocationName(telemetry.lat, telemetry.lng) : '';
     const isInTransit = vehicle["Vị trí"] === 'Đang vận tải';
-    const gmapsUrl = hasGps ? getGoogleMapsUrl(telemetry.lat, telemetry.lng) : '';
 
     const renderActions = () => {
         if (isReferenceAccount) {

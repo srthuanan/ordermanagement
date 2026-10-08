@@ -3,7 +3,7 @@ import moment from 'moment';
 import { StockVehicle, StockSortConfig } from '../types';
 import StatusBadge from './ui/StatusBadge';
 import { getExteriorColorStyle } from '../utils/styleUtils';
-import { getQuickLocationName, getGoogleMapsUrl } from '../utils/geocodeUtils';
+import { getQuickLocationName } from '../utils/geocodeUtils';
 import sandTimerAnimationUrl from '../pictures/sand-timer.json?url';
 import pairCarAnimationUrl from '../pictures/pair-animation.json?url';
 import huygiuAnimationUrl from '../pictures/huygiu.json?url';
