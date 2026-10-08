@@ -517,14 +517,16 @@ def resolve_physical_warehouses_from_cyber(c, vin_list: list, is_pymssql: bool =
         alt_warehouses = []
 
         if positive_whs and negative_whs:
-            # Lệch âm hạch toán: K86 +1 và K87 -1
-            most_recent_bex = bex_list[0]
-            recent_mk = most_recent_bex['ma_kho']
-            recent_tk = most_recent_bex['ten_kho'] or recent_mk
+            # Lệch âm hạch toán: kho thực tế còn xe bắt buộc phải là kho có tồn dương (positive_whs),
+            # không thể là kho bị xuất âm / xuất lệch (negative_whs).
+            pos_sorted = sorted(positive_whs, key=lambda mk: latest_tx_by_wh[mk]['ngay_ct'], reverse=True)
+            chosen_pos_mk = pos_sorted[0]
+            recent_mk = chosen_pos_mk
+            recent_tk = latest_tx_by_wh[chosen_pos_mk]['ten_kho'] or chosen_pos_mk
 
             chosen_wh = recent_mk
             chosen_tk = clean_location_name(recent_tk)
-            reason = f"Phát sinh gần nhất tại {recent_mk} ({most_recent_bex['ngay_ct']})"
+            reason = f"Tồn kho thực tế (+{int(ton_by_wh[recent_mk])}), phát hiện lệch âm tại {', '.join(negative_whs)}"
 
             for p_mk in positive_whs:
                 if p_mk != chosen_wh:
@@ -533,6 +535,12 @@ def resolve_physical_warehouses_from_cyber(c, vin_list: list, is_pymssql: bool =
                         "ten_kho": clean_location_name(latest_tx_by_wh[p_mk]['ten_kho'] or p_mk),
                         "reason": f"Tồn sổ sách kế toán (+{int(ton_by_wh[p_mk])})"
                     })
+            for n_mk in negative_whs:
+                alt_warehouses.append({
+                    "ma_kho": n_mk,
+                    "ten_kho": clean_location_name(latest_tx_by_wh[n_mk]['ten_kho'] or n_mk),
+                    "reason": f"Lệch âm hạch toán ({int(ton_by_wh[n_mk])})"
+                })
 
         elif positive_whs:
             most_recent_bex = bex_list[0]
