@@ -6,5 +6,5 @@ if not exist "logs" mkdir "logs"
 :loop
 echo [%date% %time%] Dang khoi chay dich vu CyberSync... >> "logs\cyber_sync.log"
 node server-cyber.mjs >> "logs\cyber_sync.log" 2>&1
-timeout /t 5 > nul
+ping 127.0.0.1 -n 6 > nul
 goto loop
