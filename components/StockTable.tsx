@@ -3,10 +3,12 @@ import moment from 'moment';
 import { StockVehicle, StockSortConfig } from '../types';
 import StatusBadge from './ui/StatusBadge';
 import { getExteriorColorStyle } from '../utils/styleUtils';
+import { getQuickLocationName, getGoogleMapsUrl } from '../utils/geocodeUtils';
 import sandTimerAnimationUrl from '../pictures/sand-timer.json?url';
 import pairCarAnimationUrl from '../pictures/pair-animation.json?url';
 import huygiuAnimationUrl from '../pictures/huygiu.json?url';
 import Button from './ui/Button';
+import { MiniGpsMapModal } from './modals/MiniGpsMapModal';
 
 interface StockTableProps {
     vehicles: StockVehicle[];
@@ -88,6 +90,7 @@ import { useNightMode } from '../hooks/useNightMode';
 const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, startIndex, onHoldCar, onReleaseCar, onCreateRequestForVehicle, onShowDetails, currentUser, isAdmin, showToast, highlightedVins, processingVin }) => {
     const [confirmAction, setConfirmAction] = useState<{ vin: string; action: 'hold' | 'release' } | null>(null);
     const [copiedVin, setCopiedVin] = useState<string | null>(null);
+    const [selectedGpsCar, setSelectedGpsCar] = useState<StockVehicle | null>(null);
     const isNight = useNightMode();
     if (false) showToast?.('', '', 'success');
 
@@ -152,18 +155,57 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                                 >
                                     <td data-label="#" className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-center text-text-secondary font-medium sm:pl-6">{startIndex + index + 1}</td>
                                     <td data-label="Số VIN" className="whitespace-nowrap px-3 py-4 text-sm font-mono text-text-primary">
-                                        <span
-                                            className={`text-base font-bold hover:underline cursor-pointer transition-colors ${copiedVin === vehicle.VIN ? 'text-green-500' : 'text-accent-primary hover:text-accent-primary-hover'}`}
-                                            title="Click để sao chép VIN"
-                                            onClick={(e) => handleCopyVin(e, vehicle.VIN)}>
-                                            {copiedVin === vehicle.VIN ? <span className="flex items-center gap-1"><i className="fas fa-check text-sm"></i> Đã copy</span> : vehicle.VIN}
-                                        </span>
+                                        <div className="flex items-center gap-1.5">
+                                            <span
+                                                className={`text-base font-bold hover:underline cursor-pointer transition-colors ${copiedVin === vehicle.VIN ? 'text-green-500' : 'text-accent-primary hover:text-accent-primary-hover'}`}
+                                                title="Click để sao chép VIN"
+                                                onClick={(e) => handleCopyVin(e, vehicle.VIN)}>
+                                                {copiedVin === vehicle.VIN ? <span className="flex items-center gap-1"><i className="fas fa-check text-sm"></i> Đã copy</span> : vehicle.VIN}
+                                            </span>
+                                            {vehicle["Vị trí"] === 'Đang vận tải' && vehicle.telemetry && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedGpsCar(vehicle);
+                                                    }}
+                                                    className="w-5 h-5 flex items-center justify-center rounded-full bg-amber-50 hover:bg-amber-100 text-amber-600 hover:text-amber-700 transition-colors cursor-pointer"
+                                                    title={`🛰️ Xem bản đồ vị trí xe lồng: ${vehicle.telemetry.lat.toFixed(5)}, ${vehicle.telemetry.lng.toFixed(5)}`}
+                                                >
+                                                    <i className="fas fa-truck text-[10px]"></i>
+                                                </button>
+                                            )}
+                                        </div>
                                     </td>
                                     <td data-label="Dòng Xe" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Dòng xe"]}</td>
                                     <td data-label="Phiên Bản" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Phiên bản"]}</td>
                                     <td data-label="Ngoại Thất" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary font-medium" style={getExteriorColorStyle(vehicle['Ngoại thất'])}>{vehicle["Ngoại thất"]}</td>
                                     <td data-label="Nội Thất" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Nội thất"]}</td>
-                                    <td data-label="Ngày Vận Tải" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">{vehicle["Ngày vận tải"] ? moment(vehicle["Ngày vận tải"]).format('DD/MM/YYYY') : ''}</td>
+                                    <td data-label="Ngày Vận Tải" className="whitespace-nowrap px-3 py-4 text-sm text-text-primary">
+                                        <div className="flex flex-col gap-0.5">
+                                            {vehicle["Ngày vận tải"] && (
+                                                <span>{moment(vehicle["Ngày vận tải"]).format('DD/MM/YYYY')}</span>
+                                            )}
+                                            {vehicle["Vị trí"] === 'Đang vận tải' && vehicle.telemetry ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedGpsCar(vehicle);
+                                                    }}
+                                                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 hover:text-blue-600 hover:underline cursor-pointer group/tblgps"
+                                                    title={`📍 Tọa độ: ${vehicle.telemetry.lat.toFixed(5)}, ${vehicle.telemetry.lng.toFixed(5)}\nClick để xem bản đồ`}
+                                                >
+                                                    <span>{getQuickLocationName(vehicle.telemetry.lat, vehicle.telemetry.lng) || 'Xem GPS'}</span>
+                                                    <i className="fas fa-map-marked-alt text-[8px] opacity-0 group-hover/tblgps:opacity-100 transition-opacity"></i>
+                                                </button>
+                                            ) : vehicle["Vị trí"] === 'Đang vận tải' ? (
+                                                <span className="text-[11px] font-medium text-amber-600">
+                                                    Đang vận tải
+                                                </span>
+                                            ) : null}
+                                        </div>
+                                    </td>
                                     <td data-label="Trạng Thái" className="whitespace-nowrap px-3 py-4 text-sm">
                                         <div>
                                             <StatusBadge status={vehicle["Trạng thái"]} />
@@ -291,6 +333,20 @@ const StockTable: React.FC<StockTableProps> = ({ vehicles, sortConfig, onSort, s
                     </tbody>
                 </table>
             </div>
+
+            {/* Mini GPS Map Modal */}
+            {selectedGpsCar && selectedGpsCar.telemetry && (
+                <MiniGpsMapModal
+                    isOpen={Boolean(selectedGpsCar)}
+                    onClose={() => setSelectedGpsCar(null)}
+                    vehicleName={`${selectedGpsCar['Dòng xe'] || ''} ${selectedGpsCar['Phiên bản'] || ''}`.trim()}
+                    vin={selectedGpsCar.VIN}
+                    lat={selectedGpsCar.telemetry.lat}
+                    lng={selectedGpsCar.telemetry.lng}
+                    locationName={getQuickLocationName(selectedGpsCar.telemetry.lat, selectedGpsCar.telemetry.lng) || selectedGpsCar['Vị trí']}
+                    capturedAt={selectedGpsCar.telemetry.captured_at}
+                />
+            )}
         </div>
     );
 };

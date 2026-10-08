@@ -39,11 +39,25 @@ def get_dms_headers():
             "OData-Version": "4.0"
         }
 
-    # Cách 2: Sử dụng Session Cookie từ trình duyệt
-    if DMS_SESSION_COOKIE:
-        print("🍪 Sử dụng Session Cookie lấy từ trình duyệt...")
+    # Cách 2: Sử dụng Session Cookie từ biến môi trường hoặc dms_dealers_config.json
+    cookie = DMS_SESSION_COOKIE
+    if not cookie:
+        try:
+            config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dms_dealers_config.json")
+            if os.path.exists(config_path):
+                with open(config_path, "r", encoding="utf-8") as f:
+                    dealers = json.load(f)
+                    for d in dealers:
+                        if d.get("cookie"):
+                            cookie = d["cookie"]
+                            break
+        except Exception:
+            pass
+
+    if cookie:
+        print("🍪 Sử dụng Session Cookie lấy từ cấu hình DMS...")
         return {
-            "Cookie": DMS_SESSION_COOKIE,
+            "Cookie": cookie,
             "Accept": "application/json",
             "Content-Type": "application/json; charset=utf-8",
             "OData-MaxVersion": "4.0",

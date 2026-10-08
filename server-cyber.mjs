@@ -17,6 +17,14 @@ const scriptPath = path.resolve(__dirname, 'scripts', 'sync_thuan_an_allocations
 const crmScript = path.resolve(__dirname, 'scripts', 'cyber_crm_service.py');
 const minvoiceScript = path.resolve(__dirname, 'scripts', 'm_invoice_service.py');
 const donHangTonScript = path.resolve(__dirname, 'scripts', 'sync_cyber_donhang_ton.py');
+const gpsRadarScript = path.resolve(__dirname, 'scripts', 'cloud_dms_sync_radar.py');
+
+process.on('uncaughtException', (err) => {
+    console.error('[CRITICAL] Uncaught exception:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[CRITICAL] Unhandled rejection:', reason);
+});
 
 /**
  * Thực thi lệnh python và trả về Promise JSON
@@ -27,10 +35,20 @@ function executePython(args, bodyData) {
         let stdout = '';
         let stderr = '';
 
-        if (bodyData) {
-            pyProcess.stdin.write(typeof bodyData === 'string' ? bodyData : JSON.stringify(bodyData));
+        pyProcess.on('error', (err) => {
+            console.error(`[CyberSync Error] Spawn error:`, err.message);
+            reject(err);
+        });
+
+        if (pyProcess.stdin) {
+            pyProcess.stdin.on('error', (err) => {
+                console.error(`[CyberSync Error] stdin error:`, err.message);
+            });
+            if (bodyData) {
+                pyProcess.stdin.write(typeof bodyData === 'string' ? bodyData : JSON.stringify(bodyData));
+            }
+            pyProcess.stdin.end();
         }
-        pyProcess.stdin.end();
 
         pyProcess.stdout.on('data', (data) => { stdout += data.toString(); });
         pyProcess.stderr.on('data', (data) => { stderr += data.toString(); });
@@ -396,7 +414,24 @@ server.listen(PORT, () => {
     console.log(`  - Supabase Bridge:  Kênh 'cyber-realtime-bridge' (Đang lắng nghe)`);
     console.log(`  - Web GitHub Pages: Sẽ tự động ưu tiên máy tính này, KHÔNG dùng Render!`);
     console.log(`  - AutoSync Đơn Tồn: Chạy ngầm định kỳ mỗi 3 tiếng/lần`);
+    console.log(`  - AutoSync GPS DMS: Chạy khi khởi động và tự động quét 4 lần/ngày (mỗi 6 tiếng)`);
     console.log('==================================================================');
+
+    // ── Tự động quét GPS DMS xe lồng: Chạy ngay khi khởi động và 4 lần/ngày (mỗi 6 tiếng = 6 * 3600 * 1000 ms)
+    const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+    setTimeout(() => {
+        console.log(`[AutoSync GPS] 🛰️ [${new Date().toLocaleString('vi-VN')}] Đang quét vị trí GPS xe lồng lần đầu khi khởi động máy...`);
+        executePython([gpsRadarScript, 'gps_only'], '{}')
+            .then(res => console.log(`[AutoSync GPS] ✅ Hoàn tất quét GPS xe lồng khi khởi động!`))
+            .catch(err => console.error(`[AutoSync GPS Error]:`, err.message));
+
+        setInterval(() => {
+            console.log(`[AutoSync GPS] 🛰️ [${new Date().toLocaleString('vi-VN')}] Đang quét vị trí GPS định kỳ (lịch 4 lần/ngày)...`);
+            executePython([gpsRadarScript, 'gps_only'], '{}')
+                .then(res => console.log(`[AutoSync GPS] ✅ Hoàn tất quét vị trí GPS định kỳ!`))
+                .catch(err => console.error(`[AutoSync GPS Error]:`, err.message));
+        }, SIX_HOURS_MS);
+    }, 20000);
 
     // ── Tự động đồng bộ ngầm đơn hàng cọc tồn từ Cyber mỗi 3 tiếng (3 * 3600 * 1000 ms)
     const THREE_HOURS_MS = 3 * 60 * 60 * 1000;

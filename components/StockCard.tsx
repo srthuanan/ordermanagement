@@ -3,12 +3,14 @@ import moment from 'moment';
 import { StockVehicle } from '../types';
 import { getExteriorColorStyle, getInteriorColorStyle } from '../utils/styleUtils';
 import { formatShortWarehouseName } from '../utils/stringUtils';
+import { getQuickLocationName, getGoogleMapsUrl } from '../utils/geocodeUtils';
 import CarImage from './ui/CarImage';
 import StatusBadge from './ui/StatusBadge';
 import * as apiService from '../services/apiService';
 import { useVehicleConfig } from '../hooks/useVehicleConfig';
 import { isMidAutumnSeason } from './ui/HolidayThemeDecorator';
 import panoramaBg from '../pictures/stock_card_panorama_trung_thu.webp';
+import { MiniGpsMapModal } from './modals/MiniGpsMapModal';
 
 interface StockCardProps {
     vehicle: StockVehicle;
@@ -61,6 +63,7 @@ const StockCard: React.FC<StockCardProps> = ({
     const [confirmAction, setConfirmAction] = useState<{ action: 'hold' | 'release' } | null>(null);
     if (false) showToast?.('', '', 'success');
     const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
+    const [isGpsMapOpen, setIsGpsMapOpen] = useState(false);
 
     // Inline Admin Edit state
     const [isInlineEditing, setIsInlineEditing] = useState(false);
@@ -200,6 +203,12 @@ const StockCard: React.FC<StockCardProps> = ({
         const diffMinutes = expiry.diff(moment(), 'minutes');
         isNearExpiry = diffMinutes <= 20 && diffMinutes > 0;
     }
+
+    const telemetry = vehicle.telemetry || (vehicle as any).telemetry;
+    const hasGps = Boolean(telemetry && telemetry.lat && telemetry.lng);
+    const quickLocation = hasGps ? getQuickLocationName(telemetry.lat, telemetry.lng) : '';
+    const isInTransit = vehicle["Vị trí"] === 'Đang vận tải';
+    const gmapsUrl = hasGps ? getGoogleMapsUrl(telemetry.lat, telemetry.lng) : '';
 
     const renderActions = () => {
         if (isReferenceAccount) {
@@ -342,14 +351,24 @@ const StockCard: React.FC<StockCardProps> = ({
         { icon: 'fa-palette', label: 'Màu sắc', value: `${vehicle['Ngoại thất'] || '---'} / ${vehicle['Nội thất'] || '---'}`, copyable: false },
         vehicle.VIN && vehicle.VIN !== '---' ? { icon: 'fa-fingerprint', label: 'Số VIN', value: vehicle.VIN, copyable: true } : null,
         (vehicle['Mã DMS'] || (vehicle as any).ma_dms) ? { icon: 'fa-qrcode', label: 'Mã DMS', value: vehicle['Mã DMS'] || (vehicle as any).ma_dms, copyable: true } : null,
-        (vehicle['Số máy'] || (vehicle as any).so_may) ? { icon: 'fa-cogs', label: 'Số máy', value: vehicle['Số máy'] || (vehicle as any).so_may, copyable: true } : null,
-        { icon: vehicle['Vị trí'] === 'Đang vận tải' ? 'fa-truck text-amber-500' : 'fa-warehouse text-emerald-600', label: vehicle['Vị trí'] === 'Đang vận tải' ? 'Vận tải' : 'Kho xe', value: formatShortWarehouseName(vehicle['Vị trí']) || 'Chưa cập nhật', copyable: false },
+        isInTransit ? {
+            icon: 'fa-truck text-amber-500',
+            label: 'Vận tải',
+            value: quickLocation || formatShortWarehouseName(vehicle['Vị trí']) || 'Đang vận tải',
+            copyable: false,
+            isMapGps: hasGps
+        } : {
+            icon: 'fa-warehouse text-emerald-600',
+            label: 'Kho xe',
+            value: formatShortWarehouseName(vehicle['Vị trí']) || 'Chưa cập nhật',
+            copyable: false
+        },
         { icon: 'fa-info-circle', label: 'Trạng thái', value: vehicle['Trạng thái'] || '---', copyable: false },
         vehicle['Người Giữ Xe'] ? { icon: 'fa-user-shield', label: 'Người giữ', value: vehicle['Người Giữ Xe'], copyable: false } : null,
         vehicle['Thời Gian Hết Hạn Giữ'] && moment(vehicle['Thời Gian Hết Hạn Giữ'], DATE_FORMATS).isValid() ? { icon: 'fa-clock', label: 'Thời hạn', value: moment(vehicle['Thời Gian Hết Hạn Giữ'], DATE_FORMATS).format('DD/MM/YYYY HH:mm:ss'), copyable: false } : null,
         vehicle['Ngày vận tải'] && vehicle['Ngày vận tải'] !== '#N/A' && moment(vehicle['Ngày vận tải'], DATE_FORMATS).isValid() ? { icon: 'fa-shipping-fast', label: 'Vận tải', value: moment(vehicle['Ngày vận tải'], DATE_FORMATS).format('DD/MM/YYYY'), copyable: false } : null,
         vehicle['Ghi chú dms'] && vehicle['Ghi chú dms'] !== '#N/A' && vehicle['Ghi chú dms'].trim() !== '' ? { icon: 'fa-comment-dots', label: 'Ghi chú', value: vehicle['Ghi chú dms'], copyable: false } : null,
-    ].filter((item): item is { icon: string; label: string; value: string; copyable: boolean; isMapAction?: boolean } => item !== null);
+    ].filter((item): item is { icon: string; label: string; value: string; copyable: boolean; isMapAction?: boolean; isMapGps?: boolean } => item !== null);
 
     return (
         <div 
@@ -380,38 +399,53 @@ const StockCard: React.FC<StockCardProps> = ({
                 
                 <div className="flex flex-col justify-around flex-1 py-0.5 w-full overflow-hidden">
                     {detailsList.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-[10px] leading-tight w-full gap-1 py-1">
+                        <div key={idx} className="flex items-center justify-between text-[10px] leading-tight w-full gap-1 py-1 group/row">
                             <span className="text-slate-500 font-semibold whitespace-nowrap text-[9.5px] flex-shrink-0 flex items-center gap-1.5">
                                 <i className={`fas ${item.icon} text-slate-400 text-[9px] w-3`}></i>
                                 {item.label}
                             </span>
-                            <span 
-                                className={`truncate max-w-[130px] text-right ${
-                                    (item as any).isMapAction
-                                        ? 'cursor-pointer font-bold text-blue-600 hover:text-blue-700 hover:underline text-[10.5px] flex items-center justify-end gap-1'
-                                        : item.label === 'Số VIN'
-                                        ? 'cursor-pointer font-mono font-bold text-blue-600 hover:text-blue-700 hover:underline text-[11.5px]'
-                                        : item.label === 'Mã DMS'
-                                        ? 'cursor-pointer font-mono font-bold text-teal-600 hover:text-teal-700 hover:underline text-[10.5px]'
-                                        : item.label === 'Số máy'
-                                        ? 'cursor-pointer font-mono font-bold text-indigo-600 hover:text-indigo-700 hover:underline text-[10.5px]'
-                                        : 'font-bold text-slate-800 text-[10px]'
-                                }`}
-                                onClick={(e) => {
-                                    if (item.copyable && item.value !== '---') {
+                            {(item as any).isMapGps ? (
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
                                         e.stopPropagation();
-                                        navigator.clipboard.writeText(item.value).then(() => {
-                                            setCopiedLabel(item.label);
-                                            setTimeout(() => setCopiedLabel(null), 2000);
-                                        }).catch(err => {
-                                            console.error('Lỗi sao chép: ', err);
-                                        });
-                                    }
-                                }}
-                                title={item.value}
-                            >
-                                {copiedLabel === item.label ? <span className="text-green-600 flex items-center gap-1 font-sans text-[9px]"><i className="fas fa-check text-[8px]"></i> Đã copy</span> : item.value}
-                            </span>
+                                        setIsGpsMapOpen(true);
+                                    }}
+                                    className="truncate max-w-[130px] text-right font-bold text-amber-700 hover:text-blue-600 hover:underline inline-flex items-center justify-end gap-1 cursor-pointer transition-colors"
+                                    title={`📍 Tọa độ GPS xe lồng\nClick để xem bản đồ`}
+                                >
+                                    <span className="truncate">{item.value}</span>
+                                    <i className="fas fa-map-marked-alt text-[8.5px] opacity-0 group-hover/row:opacity-100 text-blue-600 transition-opacity"></i>
+                                </button>
+                            ) : (
+                                <span 
+                                    className={`truncate max-w-[130px] text-right ${
+                                        (item as any).isMapAction
+                                            ? 'cursor-pointer font-bold text-blue-600 hover:text-blue-700 hover:underline text-[10.5px] flex items-center justify-end gap-1'
+                                            : item.label === 'Số VIN'
+                                            ? 'cursor-pointer font-mono font-bold text-blue-600 hover:text-blue-700 hover:underline text-[11.5px]'
+                                            : item.label === 'Mã DMS'
+                                            ? 'cursor-pointer font-mono font-bold text-teal-600 hover:text-teal-700 hover:underline text-[10.5px]'
+                                            : item.label === 'Số máy'
+                                            ? 'cursor-pointer font-mono font-bold text-indigo-600 hover:text-indigo-700 hover:underline text-[10.5px]'
+                                            : 'font-bold text-slate-800 text-[10px]'
+                                    }`}
+                                    onClick={(e) => {
+                                        if (item.copyable && item.value !== '---') {
+                                            e.stopPropagation();
+                                            navigator.clipboard.writeText(item.value).then(() => {
+                                                setCopiedLabel(item.label);
+                                                setTimeout(() => setCopiedLabel(null), 2000);
+                                            }).catch(err => {
+                                                console.error('Lỗi sao chép: ', err);
+                                            });
+                                        }
+                                    }}
+                                    title={item.value}
+                                >
+                                    {copiedLabel === item.label ? <span className="text-green-600 flex items-center gap-1 font-sans text-[9px]"><i className="fas fa-check text-[8px]"></i> Đã copy</span> : item.value}
+                                </span>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -740,14 +774,29 @@ const StockCard: React.FC<StockCardProps> = ({
                         </div>
 
                         {vehicle["Vị trí"] && (
-                            <div className="flex items-center justify-between text-[10.5px] pt-0.5 border-t border-slate-200/50" title={`Vị trí: ${vehicle["Vị trí"]}`}>
-                                <span className={`text-[10px] font-semibold flex items-center gap-1 ${vehicle["Vị trí"] === 'Đang vận tải' ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                    <i className={`fas ${vehicle["Vị trí"] === 'Đang vận tải' ? 'fa-truck' : 'fa-warehouse'} text-[9px]`}></i>
-                                    {vehicle["Vị trí"] === 'Đang vận tải' ? 'Vận tải' : 'Kho'}
+                            <div className="flex items-center justify-between text-[10.5px] pt-0.5 border-t border-slate-200/50" title={`Vị trí: ${vehicle["Vị trí"]}${hasGps ? `\nGPS: ${quickLocation ? quickLocation + ' • ' : ''}${telemetry.lat.toFixed(5)}, ${telemetry.lng.toFixed(5)}` : ''}`}>
+                                <span className={`text-[10px] font-semibold flex items-center gap-1 ${isInTransit ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                    <i className={`fas ${isInTransit ? 'fa-truck' : 'fa-warehouse'} text-[9px]`}></i>
+                                    {isInTransit ? 'Vận tải' : 'Kho'}
                                 </span>
-                                <span className={`font-semibold text-[10.5px] truncate max-w-[140px] ${vehicle["Vị trí"] === 'Đang vận tải' ? 'text-amber-700' : 'text-emerald-800'}`}>
-                                    {formatShortWarehouseName(vehicle["Vị trí"])}
-                                </span>
+                                {isInTransit && hasGps ? (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsGpsMapOpen(true);
+                                        }}
+                                        className="font-semibold text-[10.5px] text-amber-700 hover:text-blue-600 hover:underline inline-flex items-center gap-1 truncate max-w-[140px] group/frontgps cursor-pointer"
+                                        title={`📍 Vị trí xe lồng: ${quickLocation ? quickLocation + ' • ' : ''}${telemetry.lat.toFixed(5)}, ${telemetry.lng.toFixed(5)}\nClick để xem bản đồ`}
+                                    >
+                                        <span className="truncate">{quickLocation || 'Xem GPS'}</span>
+                                        <i className="fas fa-map-marked-alt text-[8px] opacity-0 group-hover/frontgps:opacity-100 text-blue-600 transition-opacity"></i>
+                                    </button>
+                                ) : (
+                                    <span className={`font-semibold text-[10.5px] truncate max-w-[140px] ${isInTransit ? 'text-amber-700' : 'text-emerald-800'}`}>
+                                        {formatShortWarehouseName(vehicle["Vị trí"])}
+                                    </span>
+                                )}
                             </div>
                         )}
                     </div>
@@ -792,6 +841,20 @@ const StockCard: React.FC<StockCardProps> = ({
             <div className="border-t border-slate-100 mt-1 pt-1.5 flex items-center justify-center relative z-10">
                 {renderActions()}
             </div>
+
+            {/* Mini GPS Map Modal */}
+            {hasGps && isGpsMapOpen && (
+                <MiniGpsMapModal
+                    isOpen={isGpsMapOpen}
+                    onClose={() => setIsGpsMapOpen(false)}
+                    vehicleName={`${vehicle['Dòng xe'] || ''} ${vehicle['Phiên bản'] || ''}`.trim()}
+                    vin={vehicle.VIN}
+                    lat={telemetry.lat}
+                    lng={telemetry.lng}
+                    locationName={quickLocation || formatShortWarehouseName(vehicle['Vị trí'])}
+                    capturedAt={telemetry.captured_at}
+                />
+            )}
         </div>
     );
 };
