@@ -1110,18 +1110,20 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     case 'supplement': variant = 'secondary'; break;
                                                     default: variant = action.variant === 'success' ? 'success' : (action.variant === 'danger' ? 'danger' : (action.variant === 'secondary' ? 'secondary' : 'primary'));
                                                 }
+                                                const isActionLoading = processingId === selectedOrder['Số đơn hàng'] && processingActionType === action.type;
                                                 return (
                                                     <Button
                                                         key={action.type}
                                                         onClick={action.onClick ? action.onClick : () => onAction(action.type as any, selectedOrder)}
                                                         variant={variant}
                                                         size="sm"
-                                                        leftIcon={<i className={`fas ${action.icon} text-[9px]`}></i>}
-                                                        className="font-bold px-2.5 py-1 h-7 text-[10px]"
-                                                        isLoading={processingId === selectedOrder['Số đơn hàng'] && processingActionType === action.type}
+                                                        className="!w-8 !h-8 !p-0 !min-w-[32px] rounded-lg flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-xs"
+                                                        title={action.label}
+                                                        aria-label={action.label}
+                                                        isLoading={isActionLoading}
                                                         disabled={!!processingId}
                                                     >
-                                                        {action.label}
+                                                        {!isActionLoading && <i className={`fas ${action.icon} text-xs`}></i>}
                                                     </Button>
                                                 );
                                             })}
@@ -1362,29 +1364,33 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         <span>Đang Chờ TVBH Scan Lại</span>
                                                     </div>
                                                 )}
-                                                {getActions(selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || '').map(action => {
-                                                    let variant: 'primary' | 'success' | 'danger' | 'secondary' = 'primary';
-                                                    switch (action.type) {
-                                                        case 'approve': variant = 'success'; break;
-                                                        case 'cancel': variant = 'danger'; break;
-                                                        case 'supplement': variant = 'secondary'; break;
-                                                        default: variant = action.variant === 'success' ? 'success' : (action.variant === 'danger' ? 'danger' : (action.variant === 'secondary' ? 'secondary' : 'primary'));
-                                                    }
-                                                    return (
-                                                        <Button
-                                                            key={action.type}
-                                                            onClick={action.onClick ? action.onClick : () => onAction(action.type as any, selectedOrder)}
-                                                            variant={variant}
-                                                            size="sm"
-                                                            leftIcon={<i className={`fas ${action.icon} text-[10px]`}></i>}
-                                                            className="font-bold px-2.5 py-1 h-7 text-xs flex-1 justify-center whitespace-nowrap"
-                                                            isLoading={processingId === selectedOrder['Số đơn hàng'] && processingActionType === action.type}
-                                                            disabled={!!processingId}
-                                                        >
-                                                            {action.label}
-                                                        </Button>
-                                                    );
-                                                })}
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    {getActions(selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || '').map(action => {
+                                                        let variant: 'primary' | 'success' | 'danger' | 'secondary' = 'primary';
+                                                        switch (action.type) {
+                                                            case 'approve': variant = 'success'; break;
+                                                            case 'cancel': variant = 'danger'; break;
+                                                            case 'supplement': variant = 'secondary'; break;
+                                                            default: variant = action.variant === 'success' ? 'success' : (action.variant === 'danger' ? 'danger' : (action.variant === 'secondary' ? 'secondary' : 'primary'));
+                                                        }
+                                                        const isActionLoading = processingId === selectedOrder['Số đơn hàng'] && processingActionType === action.type;
+                                                        return (
+                                                            <Button
+                                                                key={action.type}
+                                                                onClick={action.onClick ? action.onClick : () => onAction(action.type as any, selectedOrder)}
+                                                                variant={variant}
+                                                                size="sm"
+                                                                className="!w-8 !h-8 !p-0 !min-w-[32px] rounded-lg flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-xs"
+                                                                title={action.label}
+                                                                aria-label={action.label}
+                                                                isLoading={isActionLoading}
+                                                                disabled={!!processingId}
+                                                            >
+                                                                {!isActionLoading && <i className={`fas ${action.icon} text-xs`}></i>}
+                                                            </Button>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         </div>
                                     )}

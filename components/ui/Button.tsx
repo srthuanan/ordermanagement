@@ -52,7 +52,7 @@ const Button: React.FC<ButtonProps> = ({
             {...props}
         >
             {isLoading && (
-                <i className="fas fa-spinner fa-spin mr-2"></i>
+                <i className={`fas fa-spinner fa-spin ${children ? 'mr-2' : ''}`}></i>
             )}
             {!isLoading && leftIcon && (
                 <span className="inline-flex">{leftIcon}</span>
