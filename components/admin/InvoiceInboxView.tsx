@@ -1399,9 +1399,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                 </div>
                                             </div>
                                             <div className={`p-2 space-y-0.5 ${isSplitView ? 'flex-1 flex flex-col justify-evenly' : ''}`}>
-                                                <div className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded-lg transition-colors group">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <i className="fas fa-car text-blue-500 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
+                                                <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-lg transition-colors group">
+                                                    <div className="flex items-center gap-2">
+                                                        <i className="fas fa-car text-blue-500 opacity-50 group-hover:opacity-100 text-[10px] transition-opacity"></i>
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Dòng xe / PB</span>
                                                     </div>
                                                     <span className="text-[10px] font-semibold text-slate-800 truncate ml-4" title={`${selectedOrder['Dòng xe']} - ${selectedOrder['Phiên bản']}`}>
@@ -1409,9 +1409,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </span>
                                                 </div>
 
-                                                <div className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded-lg transition-colors group border-t border-gray-50 mt-0.5">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <i className="fas fa-palette text-amber-500 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
+                                                <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-lg transition-colors group border-t border-gray-100/80">
+                                                    <div className="flex items-center gap-2">
+                                                        <i className="fas fa-palette text-amber-500 opacity-50 group-hover:opacity-100 text-[10px] transition-opacity"></i>
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Màu sắc</span>
                                                     </div>
                                                     <span className="text-[10px] font-medium text-slate-700 truncate ml-4">
@@ -1419,10 +1419,10 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </span>
                                                 </div>
 
-                                                <div className="flex flex-col py-1 px-2 hover:bg-gray-50/60 rounded-lg transition-colors group border-t border-gray-50 mt-0.5 pt-1">
-                                                    <div className="flex items-center justify-between">
+                                                <div className="flex flex-col py-1.5 px-2 hover:bg-gray-50/60 rounded-lg transition-colors group border-t border-gray-100/80">
+                                                    <div className="flex items-center justify-between mb-1.5">
                                                         <div className="flex items-center gap-2">
-                                                            <i className="fas fa-fingerprint text-accent-primary opacity-50 group-hover:opacity-100 text-[10px] transition-opacity"></i>
+                                                            <i className="fas fa-fingerprint text-accent-primary opacity-60 group-hover:opacity-100 text-[10px] transition-opacity"></i>
                                                             <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số VIN</span>
                                                         </div>
                                                         
@@ -1543,7 +1543,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                                 copyWithFeedback(selectedOrder.VIN, e);
                                                             }
                                                         }}
-                                                        className={`mt-1 w-full bg-blue-50/50 hover:bg-blue-100/70 border border-blue-200/90 hover:border-blue-300 rounded-xl px-3 py-1.5 flex items-center justify-center transition-all duration-200 ${selectedOrder.VIN && selectedOrder.VIN !== '—' ? 'cursor-pointer active:scale-[0.99]' : ''}`}
+                                                        className={`w-full bg-blue-50/60 hover:bg-blue-100/80 border border-blue-200 hover:border-blue-300 rounded-lg py-1.5 px-3 flex items-center justify-center transition-all duration-200 shadow-xs ${selectedOrder.VIN && selectedOrder.VIN !== '—' ? 'cursor-pointer active:scale-[0.99]' : ''}`}
                                                         title={selectedOrder.VIN && selectedOrder.VIN !== '—' ? "Click để sao chép số VIN" : ""}
                                                     >
                                                         <span className="font-mono font-bold text-xs text-blue-700 tracking-wider select-all text-center">
@@ -1552,9 +1552,9 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded-lg transition-colors group">
-                                                    <div className="flex items-center gap-2.5">
-                                                        <i className="fas fa-cogs text-gray-400 opacity-40 group-hover:opacity-100 text-[10px] transition-opacity"></i>
+                                                <div className="flex items-center justify-between py-1.5 px-2 hover:bg-gray-50 rounded-lg transition-colors group border-t border-gray-100/80">
+                                                    <div className="flex items-center gap-2">
+                                                        <i className="fas fa-cogs text-indigo-500 opacity-50 group-hover:opacity-100 text-[10px] transition-opacity"></i>
                                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Số Máy</span>
                                                     </div>
                                                     <div className="text-[10px] font-medium text-slate-700 truncate ml-4 font-mono">
