@@ -6,6 +6,22 @@
   const COOLDOWN_MINUTES = 15; // Giãn cách 15 phút giữa 2 lần chạy để tránh lặp khi chuyển trang
   const STORAGE_KEY = 'vf_dms_last_silent_sync';
 
+  // Hiển thị thông báo nhỏ khi thành công
+  function showSuccessToast(msg) {
+    const old = document.getElementById('vf-dms-success-toast');
+    if (old) old.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'vf-dms-success-toast';
+    toast.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999999;background:#15803d;color:#fff;padding:10px 16px;border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,0.3);font-family:system-ui,-apple-system,sans-serif;font-size:13px;display:flex;align-items:center;gap:8px;border:1px solid #4ade80;line-height:1.4;transition:opacity 0.5s ease;';
+    toast.innerHTML = '<span>🛰️ <b>DMS Auto Sync:</b> ' + msg + '</span>';
+    document.body.appendChild(toast);
+    setTimeout(function () {
+      toast.style.opacity = '0';
+      setTimeout(function () { if (toast.parentElement) toast.remove(); }, 500);
+    }, 4000);
+  }
+
   // Hiển thị thông báo nhỏ chỉ khi có lỗi
   function showErrorToast(msg) {
     const old = document.getElementById('vf-dms-error-toast');
@@ -92,7 +108,7 @@
         var chunk = cleanVins.slice(i, i + batchSize);
         var filter = chunk.map(function (v) { return "xts_chassisnumber eq '" + v + "'"; }).join(' or ');
         try {
-          var res = await xrm.WebApi.retrieveMultipleRecords('xts_inventorynewvehicle', '?$select=xts_chassisnumber,xts_enginenumber,_xts_siteid_value,_xts_lastvehicleorderid_value,modifiedon&$filter=' + filter);
+          var res = await xrm.WebApi.retrieveMultipleRecords('xts_inventorynewvehicle', '?$select=xts_chassisnumber,xts_enginenumber,_xts_siteid_value,_xts_lastvehicleorderid_value,modifiedon,itv_lastlatitude,itv_lastlongitude,itv_lastlocationupdatetime&$filter=' + filter);
           if (res && res.entities) dmsRecords.push.apply(dmsRecords, res.entities);
         } catch (e) {
           console.warn('[DMS Auto Sync] Lỗi đọc batch DMS:', e);
@@ -154,9 +170,51 @@
         });
       }
 
-      console.log('[DMS Auto Sync] Kho xe xong: Cập nhật ' + updateList.length + ' xe, Gỡ ' + soldVins.length + ' xe XHĐ.');
+      // 3. Đồng bộ tọa độ GPS xe trong kho lên bảng car_telemetry
+      var gpsByVin = {};
+      dmsRecords.forEach(function (r) {
+        var vin = String(r.xts_chassisnumber || '').trim().toUpperCase();
+        var lat = r.itv_lastlatitude ? parseFloat(r.itv_lastlatitude) : null;
+        var lng = r.itv_lastlongitude ? parseFloat(r.itv_lastlongitude) : null;
+        if (vin && lat && lng && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+          gpsByVin[vin] = {
+            vin: vin,
+            lat: lat,
+            lng: lng,
+            speed: 0,
+            heading: 0,
+            captured_at: r.itv_lastlocationupdatetime || new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+        }
+      });
+      var gpsList = Object.values(gpsByVin);
 
-      // 3. Tải và nạp xe chưa XHĐ vào thongtinxe
+      if (gpsList.length > 0) {
+        try {
+          var telemetryHeaders = Object.assign({}, sbHeaders, {
+            'Prefer': 'resolution=merge-duplicates'
+          });
+          var gpsRes = await fetch(sbUrl + '/rest/v1/car_telemetry', {
+            method: 'POST',
+            headers: telemetryHeaders,
+            body: JSON.stringify(gpsList)
+          });
+          if (gpsRes.ok) {
+            console.log('[DMS Auto Sync] 🛰️ GPS Live: Đã cập nhật tọa độ cho ' + gpsList.length + ' xe vào car_telemetry!');
+          } else {
+            console.warn('[DMS Auto Sync] ⚠️ Lỗi lưu car_telemetry:', await gpsRes.text());
+          }
+        } catch (gpsErr) {
+          console.warn('[DMS Auto Sync] ⚠️ Ngoại lệ car_telemetry:', gpsErr);
+        }
+      }
+
+      var successMsg = 'Kho: ' + updateList.length + ' xe | GPS Live: ' + gpsList.length + ' xe | Gỡ XHĐ: ' + soldVins.length;
+      console.log('[DMS Auto Sync] ✅ ' + successMsg);
+      showSuccessToast(successMsg);
+
+      // 4. Tải và nạp xe chưa XHĐ vào thongtinxe
       runThongtinxeSync(xrm, sbUrl, sbHeaders);
 
     } catch (err) {
