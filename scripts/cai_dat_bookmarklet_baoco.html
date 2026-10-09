@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Cài đặt nút: ⚡ Báo Có BIDV ➔ Zalo</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      max-width: 650px;
+      width: 100%;
+      padding: 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    h1 {
+      font-size: 22px;
+      color: #38bdf8;
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    p {
+      line-height: 1.6;
+      color: #cbd5e1;
+      font-size: 15px;
+    }
+    .drag-box {
+      background: #090d16;
+      border: 2px dashed #0284c7;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      margin: 25px 0;
+    }
+    .bookmark-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff !important;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 12px 28px;
+      border-radius: 50px;
+      text-decoration: none !important;
+      box-shadow: 0 10px 20px rgba(2, 132, 199, 0.4);
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .bookmark-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 26px rgba(2, 132, 199, 0.6);
+    }
+    .step {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 16px;
+      align-items: flex-start;
+    }
+    .step-num {
+      background: #0284c7;
+      color: #fff;
+      font-weight: bold;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .step-text {
+      color: #e2e8f0;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .highlight {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+    .copy-section {
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 15px;
+      border: 1px solid #334155;
+    }
+    button.btn-copy {
+      background: #334155;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+    button.btn-copy:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>⚡ Tiện Ích: Check Tiền & Báo Có BIDV ➔ Zalo</h1>
+    <p>Tiện ích giúp tự động tạo ảnh <b>Giấy Báo Có BIDV</b> chuẩn 100% và sao chép thẳng vào Zalo chỉ với <b>1 Click</b> (không cần chụp màn hình hay cắt xén thủ công)!</p>
+
+    <div class="drag-box">
+      <div style="font-size: 13px; color: #94a3b8; margin-bottom: 12px;">👇 <b>KÉO VÀ THẢ</b> NÚT NÀY LÊN THANH DẤU TRANG (BOOKMARKS BAR) CỦA CHROME:</div>
+      <a class="bookmark-btn" id="main-bookmark-btn" href="#">⚡ Báo Có BIDV ➔ Zalo</a>
+    </div>
+
+    <div style="margin-top: 25px;">
+      <h3 style="color: #f1f5f9; font-size: 16px; margin-bottom: 14px;">📖 Hướng dẫn sử dụng:</h3>
+      
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">Bật thanh dấu trang trên Chrome bằng tổ hợp phím <span class="highlight">Ctrl + Shift + B</span> (nếu chưa bật).</div>
+      </div>
+      
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Kéo nút xanh <span class="highlight">⚡ Báo Có BIDV ➔ Zalo</span> ở trên thả lên thanh dấu trang (nằm cạnh các nút <i>Đồng bộ, DMS, VinClub...</i> của anh).</div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Khi mở trang <b>Lịch sử giao dịch BIDV iBank</b>:
+          <br>➔ Bấm nút <span class="highlight">⚡ Báo Có BIDV ➔ Zalo</span> trên thanh dấu trang.
+          <br>➔ Bấm nút <b>⚡ Báo Có</b> ở dòng giao dịch (ví dụ: món 468tr của Nguyễn Thị Lý).
+          <br>➔ Ảnh Giấy Báo Có tự động được copy vào bộ nhớ. Anh chỉ việc sang nhóm Zalo bấm <b>Ctrl + V</b> là xong!
+        </div>
+      </div>
+    </div>
+
+    <div class="copy-section">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 13px; color: #94a3b8;">Hoặc copy mã Javascript:</span>
+        <button class="btn-copy" id="btn-copy-code" onclick="copyCode()">📋 Copy Mã Bookmarklet</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    fetch('bookmarklet_bidv_baoco_oneliner.txt')
+      .then(r => r.text())
+      .then(code => {
+        document.getElementById('main-bookmark-btn').href = code.trim();
+        window._bmCode = code.trim();
+      });
+
+    function copyCode() {
+      if (window._bmCode) {
+        navigator.clipboard.writeText(window._bmCode).then(() => {
+          var b = document.getElementById('btn-copy-code');
+          b.innerText = '✅ Đã Copy!';
+          b.style.background = '#16a34a';
+          setTimeout(() => {
+            b.innerText = '📋 Copy Mã Bookmarklet';
+            b.style.background = '#334155';
+          }, 3000);
+        });
+      }
+    }
+  </script>
+</body>
+</html>

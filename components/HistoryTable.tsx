@@ -75,7 +75,19 @@ const HistoryTableRow: React.FC<HistoryTableRowProps> =
                 
                 <td className="whitespace-nowrap px-4 py-3.5 border-b border-r border-slate-200/80" data-label="Khách hàng / SĐH">
                     <div className="font-black text-slate-800 text-[14px] tracking-tight leading-tight group-hover:text-accent-primary transition-colors uppercase">{order["Tên khách hàng"] || "N/A"}</div>
-                    <div className="text-slate-400 font-mono text-[10px] mt-0.5 font-bold">{order["Số đơn hàng"]}</div>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <span className="text-slate-400 font-mono text-[10px] font-bold">{order["Số đơn hàng"]}</span>
+                        {(order.so_ct_dnx || order['Số CT DNX']) && (
+                            <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-1 py-0.5 rounded font-mono" title={`Phiếu xuất DNX: ${order.so_ct_dnx || order['Số CT DNX']}`}>
+                                DNX: {order.so_ct_dnx || order['Số CT DNX']}
+                            </span>
+                        )}
+                        {(order.so_ct_td4 || order['Số CT TD4']) && (
+                            <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1 py-0.5 rounded font-mono" title={`Phiếu giao xe TD4: ${order.so_ct_td4 || order['Số CT TD4']}`}>
+                                TD4: {order.so_ct_td4 || order['Số CT TD4']}
+                            </span>
+                        )}
+                    </div>
                 </td>
                 
                 <td className="whitespace-nowrap px-4 py-3.5 border-b border-r border-slate-200/80" data-label="Thông Tin Xe">
@@ -155,9 +167,19 @@ const HistoryTable: React.FC<HistoryTableProps> = ({ orders, onViewDetails, onCa
                                 <p className="text-slate-800 text-sm font-black tracking-tight uppercase" title={order["Tên khách hàng"]}>
                                     {order["Tên khách hàng"] || "N/A"}
                                 </p>
-                                <p className="text-slate-400 text-[10px] font-mono font-bold">
-                                    {order["Số đơn hàng"]}
-                                </p>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-slate-400 text-[10px] font-mono font-bold">{order["Số đơn hàng"]}</span>
+                                    {(order.so_ct_dnx || order['Số CT DNX']) && (
+                                        <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-1 py-0.5 rounded font-mono">
+                                            DNX: {order.so_ct_dnx || order['Số CT DNX']}
+                                        </span>
+                                    )}
+                                    {(order.so_ct_td4 || order['Số CT TD4']) && (
+                                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1 py-0.5 rounded font-mono">
+                                            TD4: {order.so_ct_td4 || order['Số CT TD4']}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <StatusBadge status={order["Kết quả"] || order["Trạng thái VC"] || "Chưa ghép"} size="sm" />
                         </div>

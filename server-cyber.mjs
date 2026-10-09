@@ -27,6 +27,28 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 /**
+ * Tự động kiểm tra và xoay vòng file log (Log Rotation) nếu vượt quá maxBytes (mặc định 5MB)
+ * Giữ lại keepLines (mặc định 2000 dòng mới nhất) để không bao giờ làm nặng ổ cứng.
+ */
+function rotateLogFile(maxBytes = 5 * 1024 * 1024, keepLines = 2000) {
+    const logPath = path.resolve(__dirname, 'logs', 'cyber_sync.log');
+    try {
+        if (!fs.existsSync(logPath)) return;
+        const stat = fs.statSync(logPath);
+        if (stat.size > maxBytes) {
+            const content = fs.readFileSync(logPath, 'utf8');
+            const lines = content.split('\n');
+            const recentLines = lines.slice(-keepLines);
+            const header = `[${new Date().toLocaleString('vi-VN')}] [LogRotation] Đã tự động cắt bớt log (vượt quá ${(stat.size / (1024 * 1024)).toFixed(2)} MB), giữ lại ${recentLines.length} dòng gần nhất.\n`;
+            fs.writeFileSync(logPath, header + recentLines.join('\n'), 'utf8');
+            console.log(`[LogRotation] Đã xoay vòng file cyber_sync.log thành công.`);
+        }
+    } catch (_) {
+        // Tránh gián đoạn nếu file đang bị lock
+    }
+}
+
+/**
  * Thực thi lệnh python và trả về Promise JSON
  */
 function executePython(args, bodyData) {
@@ -447,4 +469,8 @@ server.listen(PORT, () => {
                 .catch(err => console.error(`[AutoSync DonHangTon Error]:`, err.message));
         }, THREE_HOURS_MS);
     }, 15000);
+
+    // ── Tự động kiểm tra và giới hạn dung lượng file log (tối đa 5MB) mỗi 30 phút
+    rotateLogFile();
+    setInterval(() => rotateLogFile(), 30 * 60 * 1000);
 });

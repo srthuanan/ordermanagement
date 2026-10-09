@@ -13,8 +13,7 @@
         "predeploy": "npm run build",
         "deploy": "gh-pages -d dist",
         "backup": "node backups/run_full_backup.cjs",
-        "backup:live": "node backups/realtime_backup.cjs",
-        "standby": "node emergency-web/server.js"
+        "backup:live": "node backups/realtime_backup.cjs"
     },
     "dependencies": {
         "@google/genai": "^1.22.0",

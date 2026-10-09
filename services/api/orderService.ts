@@ -29,7 +29,14 @@ export const getPaginatedData = async (_?: string[], __?: string, ___?: boolean)
                 'LinkHopDong': yc?.url_hop_dong || order.link_hop_dong,
                 'LinkDeNghiXHD': yc?.url_de_nghi_xhd || order.link_de_nghi_xhd,
                 'Ghi chú Admin': yc?.ghi_chu_admin || '',
-                'ghi_chu_admin': yc?.ghi_chu_admin || ''
+                'ghi_chu_admin': yc?.ghi_chu_admin || '',
+                'so_ct_dnx': order.so_ct_dnx || '',
+                'so_ct_td4': order.so_ct_td4 || '',
+                'ghi_chu_xuat_xe': order.ghi_chu_xuat_xe || '',
+                'Số CT DNX': order.so_ct_dnx || '',
+                'Số CT TD4': order.so_ct_td4 || '',
+                'ma_hd_cyber': order.ma_hd_cyber || '',
+                'Mã HĐ Cyber': order.ma_hd_cyber || ''
             };
         });
         return { status: 'SUCCESS', message: 'Fetched orders from Supabase', data: formattedData };
@@ -56,7 +63,14 @@ export const fetchAllArchivedData = async (): Promise<ApiResult> => {
             'VIN': order.vin, 'SỐ VIN': order.vin, 'Ngày xuất hóa đơn': order.ngay_xuat_hoa_don,
             'NGÀY XUẤT HÓA ĐƠN': order.ngay_xuat_hoa_don, 'Kết quả': 'Đã xuất hóa đơn',
             'Số máy': order.so_may, 'SỐ MÁY': order.so_may, 'LinkHopDong': order.url_hop_dong,
-            'LinkDeNghiXHD': order.url_de_nghi_xhd, 'LinkHoaDonDaXuat': order.url_hoa_don_da_xuat, 'Trạng thái VC': order.trang_thai_vc
+            'LinkDeNghiXHD': order.url_de_nghi_xhd, 'LinkHoaDonDaXuat': order.url_hoa_don_da_xuat, 'Trạng thái VC': order.trang_thai_vc,
+            'so_ct_dnx': order.so_ct_dnx || '',
+            'so_ct_td4': order.so_ct_td4 || '',
+            'ghi_chu_xuat_xe': order.ghi_chu_xuat_xe || '',
+            'Số CT DNX': order.so_ct_dnx || '',
+            'Số CT TD4': order.so_ct_td4 || '',
+            'ma_hd_cyber': order.ma_hd_cyber || '',
+            'Mã HĐ Cyber': order.ma_hd_cyber || ''
         }));
         return { status: 'SUCCESS', message: 'Fetched archived orders from Supabase', data: formattedData };
     } catch (err: any) {
@@ -269,7 +283,10 @@ export const updateOrderDetails = async (orderNumber: string, details: Partial<O
         if (details["Ngày cọc"]) updateData.ngay_coc = details["Ngày cọc"];
         if (details["Tên tư vấn bán hàng"]) updateData.ten_tu_van_ban_hang = details["Tên tư vấn bán hàng"];
         if (details["CHÍNH SÁCH"] !== undefined || details.chinh_sach !== undefined) updateData.chinh_sach = details["CHÍNH SÁCH"] || details.chinh_sach;
-        if (details["Mã HĐ Cyber"] !== undefined || details.ma_hd_cyber !== undefined) updateData.ma_hd_cyber = details["Mã HĐ Cyber"] || details.ma_hd_cyber;
+        if (details["Mã HĐ Cyber"] !== undefined || details.ma_hd_cyber !== undefined) {
+            const rawCyber = details["Mã HĐ Cyber"] !== undefined ? details["Mã HĐ Cyber"] : details.ma_hd_cyber;
+            updateData.ma_hd_cyber = rawCyber ? String(rawCyber).trim() : null;
+        }
         if (matchedVin) { updateData.vin = matchedVin; updateData.ket_qua = 'Đã ghép'; updateData.thoi_gian_ghep = new Date().toISOString(); }
         if (Object.keys(updateData).length > 0) {
             const { error: donhangError } = await supabase.from('donhang').update(updateData).eq('so_don_hang', orderNumber);

@@ -5,9 +5,38 @@ import { logAction } from './baseService';
 
 export const getStockData = async (): Promise<ApiResult> => {
     try {
-        const { data, error } = await supabase.from('khoxe').select('*');
+        const [{ data, error }, { data: telemetryData }] = await Promise.all([
+            supabase.from('khoxe').select('*'),
+            supabase.from('car_telemetry').select('vin, lat, lng, speed, heading, captured_at')
+        ]);
         if (error) throw error;
-        return { status: 'SUCCESS', message: 'Fetched stock from Supabase', khoxe: (data || []).map(mapStockDbToUi) };
+
+        const telemetryMap = new Map<string, any>();
+        if (telemetryData && Array.isArray(telemetryData)) {
+            telemetryData.forEach(t => {
+                if (t.vin) {
+                    telemetryMap.set(t.vin.trim().toUpperCase(), t);
+                }
+            });
+        }
+
+        const khoxe = (data || []).map(item => {
+            const cleanVin = (item.vin || '').trim().toUpperCase();
+            const tel = telemetryMap.get(cleanVin);
+            const enriched = {
+                ...item,
+                telemetry: tel ? {
+                    lat: Number(tel.lat),
+                    lng: Number(tel.lng),
+                    speed: Number(tel.speed || 0),
+                    heading: Number(tel.heading || 0),
+                    captured_at: tel.captured_at
+                } : null
+            };
+            return mapStockDbToUi(enriched);
+        });
+
+        return { status: 'SUCCESS', message: 'Fetched stock from Supabase', khoxe };
     } catch (err: any) {
         return { status: 'ERROR', message: err.message };
     }

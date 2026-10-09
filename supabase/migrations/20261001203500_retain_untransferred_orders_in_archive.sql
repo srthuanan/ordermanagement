@@ -97,7 +97,6 @@ BEGIN
     RETURN json_build_object(
         'status', 'SUCCESS',
         'archived_count', archived_count,
-        'deleted_from_yeucauxhd', deleted_yeucauxhd_count,
         'deleted_from_donhang', deleted_donhang_count
     );
 END;
@@ -105,15 +104,15 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
 -- ========================================================
--- PHẦN 2: TRIGGER TỰ ĐỘNG DỌN DẸP KHI CÓ TD4 HOẶC VỀ THUẬN AN
+-- PHẦN 2: TRIGGER TỰ ĐỘNG DỌN DẸP KHI CÓ TD4
 -- ========================================================
 
 -- Trigger khi bảng cyber_car_status được cập nhật
 CREATE OR REPLACE FUNCTION trg_auto_archive_retained_order_cyber()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Điều kiện: Nếu xe đã có TD4 HOẶC vị trí xe đã về kho Thuận An (K83)
-    IF (NEW.has_td4 = true OR NEW.so_ct_td4 IS NOT NULL OR UPPER(TRIM(NEW.ma_kho)) = 'K83') THEN
+    -- Điều kiện nghiêm ngặt: CHỈ XÓA KHI XE THỰC SỰ ĐÃ CÓ PHIẾU TD4 (Giao xe hoàn tất)
+    IF (NEW.has_td4 = true OR (NEW.so_ct_td4 IS NOT NULL AND TRIM(NEW.so_ct_td4) <> '')) THEN
         -- 1. Đảm bảo đơn đã có trong archived_orders
         INSERT INTO archived_orders (
             so_don_hang, ten_khach_hang, dong_xe, phien_ban, ngoai_that, noi_that,
@@ -153,49 +152,6 @@ AFTER INSERT OR UPDATE ON public.cyber_car_status
 FOR EACH ROW
 EXECUTE FUNCTION trg_auto_archive_retained_order_cyber();
 
-
--- Trigger khi bảng khoxe có vị trí xe cập nhật về Thuận An
-CREATE OR REPLACE FUNCTION trg_auto_archive_retained_order_khoxe()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF (
-        LOWER(COALESCE(NEW.vi_tri, '')) LIKE '%k83%'
-        OR LOWER(COALESCE(NEW.vi_tri, '')) LIKE '%thuận an%'
-        OR LOWER(COALESCE(NEW.vi_tri, '')) LIKE '%thuan an%'
-    ) THEN
-        INSERT INTO archived_orders (
-            so_don_hang, ten_khach_hang, dong_xe, phien_ban, ngoai_that, noi_that,
-            tvbh, vin, so_may, ma_dms, ngay_coc, ngay_xuat_hoa_don,
-            chinh_sach, ket_qua, created_at, updated_at
-        )
-        SELECT 
-            d.so_don_hang, d.ten_khach_hang, d.dong_xe, d.phien_ban, d.ngoai_that, d.noi_that,
-            d.ten_tu_van_ban_hang, d.vin, d.so_may, d.ma_dms,
-            CASE 
-                WHEN d.ngay_coc IS NULL OR TRIM(d.ngay_coc) = '' THEN NULL
-                WHEN d.ngay_coc ~ '^\d{4}-\d{2}-\d{2}' THEN d.ngay_coc::DATE
-                WHEN d.ngay_coc ~ '^\d{1,2}/\d{1,2}/\d{4}' THEN to_date(d.ngay_coc, 'DD/MM/YYYY')
-                ELSE NULL
-            END,
-            d.ngay_xuat_hoa_don::DATE,
-            d.chinh_sach, 'Đã xuất hóa đơn', NOW(), NOW()
-        FROM donhang d
-        WHERE UPPER(TRIM(d.vin)) = UPPER(TRIM(NEW.vin))
-        AND d.ngay_xuat_hoa_don IS NOT NULL
-        AND d.ngay_xuat_hoa_don::DATE < date_trunc('month', CURRENT_DATE)::DATE
-        ON CONFLICT (so_don_hang) DO NOTHING;
-
-        DELETE FROM donhang
-        WHERE UPPER(TRIM(vin)) = UPPER(TRIM(NEW.vin))
-        AND ngay_xuat_hoa_don IS NOT NULL
-        AND ngay_xuat_hoa_don::DATE < date_trunc('month', CURRENT_DATE)::DATE;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
+-- Xóa bỏ hoàn toàn trigger trên bảng khoxe để vị trí xe điều chuyển không bao giờ tự động xóa đơn hàng
 DROP TRIGGER IF EXISTS trg_khoxe_auto_archive ON public.khoxe;
-CREATE TRIGGER trg_khoxe_auto_archive
-AFTER INSERT OR UPDATE OF vi_tri ON public.khoxe
-FOR EACH ROW
-EXECUTE FUNCTION trg_auto_archive_retained_order_khoxe();
+DROP FUNCTION IF EXISTS trg_auto_archive_retained_order_khoxe();

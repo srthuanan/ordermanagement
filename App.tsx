@@ -74,6 +74,8 @@ const LoadingFallback = () => (
     </div>
 );
 
+const shownDnxKeys = new Set<string>();
+
 const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
     const currentUser = localStorage.getItem("currentConsultant") || sessionStorage.getItem("currentConsultant") || "";
     const currentUserName = localStorage.getItem("currentUser") || sessionStorage.getItem("currentUser") || "";
@@ -179,19 +181,18 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         return () => window.removeEventListener('open-dnx-modal', handleOpenDnx);
     }, []);
 
-    // Lắng nghe Realtime khi Admin tạo phiếu DNX thành công để tự động mở modal in phiếu cho TVBH
+    // Lắng nghe Realtime khi Admin tạo phiếu DNX thành công để thông báo cho TVBH
     useEffect(() => {
         if (!currentUser && !currentUserName) return;
         const norm = (str?: string) => (str || '').toLowerCase().trim().normalize('NFC');
         const myName = norm(currentUser);
         const myUser = norm(currentUserName);
-        const shownKeys = new Set<string>();
 
         const triggerOpenDnx = (ticket: any, soCt?: string, vin?: string) => {
             if (!ticket) return;
             const key = ticket.stt_rec || ticket.so_ct || `${vin}_${soCt}`;
-            if (shownKeys.has(key)) return;
-            shownKeys.add(key);
+            if (shownDnxKeys.has(key)) return;
+            shownDnxKeys.add(key);
 
             try {
                 const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
@@ -201,12 +202,10 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
 
             showToast(
                 'Admin Đã Lập Phiếu Xuất (DNX)',
-                `Phiếu ${soCt || ticket.so_ct || 'DNX'} đã được tạo hoàn tất. Đang mở file cho bạn xem!`,
+                `Phiếu ${soCt || ticket.so_ct || 'DNX'} đã được tạo hoàn tất. Bạn có thể bấm vào Thông báo để xem phiếu.`,
                 'success',
-                9000
+                8000
             );
-
-            setGlobalDnxPrintData(ticket);
         };
 
         const channel = supabase

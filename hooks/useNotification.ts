@@ -112,9 +112,6 @@ export const useNotification = (showToast: (title: string, message: string, type
                     if (document.visibilityState !== 'visible') {
                         showBrowserNotification(newNotif);
                     }
-                    if (newInteraction.metadata?.type === 'DNX_COMPLETED' && newInteraction.metadata?.print_data) {
-                        window.dispatchEvent(new CustomEvent('open-dnx-modal', { detail: newInteraction.metadata.print_data }));
-                    }
                     fetchNotifications();
                 }
             })

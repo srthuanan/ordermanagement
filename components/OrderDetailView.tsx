@@ -248,9 +248,11 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             cyberCarStatus?.has_dnx ||
             cyberCarStatus?.so_ct_dnx ||
             cyberCarStatus?.dnx_data ||
+            (resolvedOrder as any)?.so_ct_dnx ||
+            (resolvedOrder as any)?.['Số CT DNX'] ||
             (transferRequest && transferRequest.status === 'completed' && transferRequest.soCtDnx)
         );
-    }, [cyberCarStatus, transferRequest]);
+    }, [cyberCarStatus, transferRequest, resolvedOrder]);
 
     // Trạng thái xe đã có phiếu TD4 trên CyberSoft
     const hasExistingTd4 = useMemo(() => {
@@ -258,10 +260,12 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             hasTd4 ||
             cyberCarStatus?.has_td4 ||
             cyberCarStatus?.so_ct_td4 ||
+            (resolvedOrder as any)?.so_ct_td4 ||
+            (resolvedOrder as any)?.['Số CT TD4'] ||
             cyberCarStatus?.td4_data ||
             hasTd4Effective
         );
-    }, [hasTd4, cyberCarStatus, hasTd4Effective]);
+    }, [hasTd4, cyberCarStatus, hasTd4Effective, resolvedOrder]);
 
     // Kiểm tra xe đã ở sẵn kho Thuận An hay chưa (K83)
     const isCarAlreadyAtThuanAn = useMemo(() => {
@@ -606,12 +610,8 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 if (updated) {
                                     setTransferRequest(updated);
                                     if (updated.status === 'completed' && updated.soCtDnx) {
-                                        showToast?.('Đã có phiếu DNX', `Admin đã lập xong phiếu xuất ${updated.soCtDnx}. Đang mở file cho bạn xem...`, 'success');
                                         if (updated.printData) {
                                             setPrintDnxData(updated.printData);
-                                            setIsPrintDnxOpen(true);
-                                        } else {
-                                            handleOpenPrintDnx();
                                         }
                                     }
                                 }
@@ -922,6 +922,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             setEditFormData({
                 "Tên khách hàng": resolvedOrder["Tên khách hàng"] || "",
                 "Số đơn hàng": resolvedOrder["Số đơn hàng"] || "",
+                "Mã HĐ Cyber": resolvedOrder["Mã HĐ Cyber"] || (resolvedOrder as any)?.ma_hd_cyber || resolvedOrder["Số hợp đồng"] || (resolvedOrder as any)?.so_hop_dong || "",
                 "Dòng xe": resolvedOrder["Dòng xe"] || "",
                 "Phiên bản": resolvedOrder["Phiên bản"] || "",
                 "Ngoại thất": resolvedOrder["Ngoại thất"] || "",
@@ -935,7 +936,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
     const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        const val = name === 'Tên khách hàng' ? value.toUpperCase() : value;
+        const val = (name === 'Tên khách hàng' || name === 'Mã HĐ Cyber') ? value.toUpperCase() : value;
         setEditFormData(prev => {
             const newState: Partial<Order> = { ...prev, [name]: val };
             if (name === 'Dòng xe') {
@@ -977,7 +978,9 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             const changes: Partial<Order> = {};
             Object.keys(editFormData).forEach(key => {
                 const formKey = key as keyof Order;
-                const originalValue = resolvedOrder[formKey];
+                const originalValue = formKey === 'Mã HĐ Cyber'
+                    ? (resolvedOrder["Mã HĐ Cyber"] || (resolvedOrder as any)?.ma_hd_cyber || resolvedOrder["Số hợp đồng"] || (resolvedOrder as any)?.so_hop_dong || '')
+                    : resolvedOrder[formKey];
                 const newValue = editFormData[formKey];
 
                 if (formKey === 'Ngày cọc') {
@@ -985,6 +988,9 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                     return;
                 } else if (String(newValue || '') !== String(originalValue || '')) {
                     changes[formKey] = newValue;
+                    if (formKey === 'Mã HĐ Cyber') {
+                        (changes as any).ma_hd_cyber = newValue;
+                    }
                 }
             });
 
@@ -1018,7 +1024,11 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
             setEditSuccessMessage('Cập nhật thông tin đơn hàng thành công!');
             if (onEdit) {
-                onEdit({ ...resolvedOrder, ...changes });
+                onEdit({
+                    ...resolvedOrder,
+                    ...changes,
+                    ...(changes['Mã HĐ Cyber'] !== undefined ? { 'Mã HĐ Cyber': changes['Mã HĐ Cyber'], ma_hd_cyber: changes['Mã HĐ Cyber'] } : {})
+                });
             }
             setTimeout(() => {
                 setInlineMode('VIEW');
@@ -1493,7 +1503,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     <div className="space-y-2 md:space-y-3">
                                         <h4 className="text-[10.5px] md:text-[11px] font-black text-blue-600 uppercase tracking-wider">THÔNG TIN KHÁCH HÀNG</h4>
                                         
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 md:gap-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-3">
                                             <div>
                                                 <label className="block text-[10px] md:text-[10.5px] font-bold text-slate-500 uppercase tracking-wide mb-1 truncate">TVBH (ADMIN ONLY)</label>
                                                 <div className="relative">
@@ -1533,6 +1543,20 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                         onChange={handleEditInputChange}
                                                         placeholder="Mã đơn hàng..."
                                                         className="w-full bg-slate-50 border border-slate-200 text-slate-800 font-bold text-xs rounded-xl pl-8 pr-2.5 py-2 md:py-2.5 focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-[10px] md:text-[10.5px] font-bold text-blue-600 uppercase tracking-wide mb-1 truncate">MÃ HĐ CYBER</label>
+                                                <div className="relative">
+                                                    <i className="fas fa-file-contract absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 text-xs"></i>
+                                                    <input 
+                                                        type="text"
+                                                        name="Mã HĐ Cyber"
+                                                        value={editFormData['Mã HĐ Cyber'] || ''}
+                                                        onChange={handleEditInputChange}
+                                                        placeholder="VD: 02.xxxx/xx/2026/HĐMB-MDP"
+                                                        className="w-full bg-slate-50 border border-slate-200 text-slate-800 font-bold font-mono text-xs rounded-xl pl-8 pr-2.5 py-2 md:py-2.5 focus:outline-none focus:border-blue-500 focus:bg-white transition-all uppercase"
                                                     />
                                                 </div>
                                             </div>
@@ -1817,7 +1841,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                         <div className="flex items-center gap-2 min-w-0">
                                             <i className="fas fa-file-invoice text-blue-600 shrink-0 text-sm"></i>
                                             <div className="min-w-0">
-                                                <span className="font-bold">Xe đã có Phiếu Đề Nghị Xuất Xe: {transferRequest?.soCtDnx || cyberCarStatus?.so_ct_dnx || cyberCarStatus?.dnx_data?.so_ct || 'DNX'}</span>
+                                                <span className="font-bold">Xe đã có Phiếu Đề Nghị Xuất Xe: {transferRequest?.soCtDnx || cyberCarStatus?.so_ct_dnx || (resolvedOrder as any)?.so_ct_dnx || (resolvedOrder as any)?.['Số CT DNX'] || cyberCarStatus?.dnx_data?.so_ct || 'DNX'}</span>
                                                 <p className="text-[11px] text-blue-700 mt-0.5">Phiếu đã được tạo trên hệ thống CyberSoft ERP. Hệ thống chặn tạo yêu cầu trùng lặp.</p>
                                             </div>
                                         </div>
@@ -1837,7 +1861,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                         <div className="flex items-center gap-2 min-w-0">
                                             <i className="fas fa-id-card text-violet-600 shrink-0 text-sm"></i>
                                             <div className="min-w-0">
-                                                <span className="font-bold">Xe đã có Phiếu Hẹn Giao Xe / Ra Cổng: {printTd4Data?.so_ct || cyberCarStatus?.so_ct_td4 || 'TD4'}</span>
+                                                <span className="font-bold">Xe đã có Phiếu Hẹn Giao Xe / Ra Cổng: {printTd4Data?.so_ct || cyberCarStatus?.so_ct_td4 || (resolvedOrder as any)?.so_ct_td4 || (resolvedOrder as any)?.['Số CT TD4'] || 'TD4'}</span>
                                                 <p className="text-[11px] text-violet-700 mt-0.5">Xe đã được lập thủ tục giao xe cho khách hàng, không thể tạo yêu cầu điều chuyển.</p>
                                             </div>
                                         </div>
@@ -2156,13 +2180,13 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             </div>
                                         </div>
 
-                                        {/* Customer & Order Code Section */}
-                                        <div className="flex items-center justify-between pt-1 md:pt-2 gap-2">
-                                            <div className="min-w-0 pr-1.5 sm:pr-2 flex-1 overflow-hidden">
-                                                <MarqueeText 
-                                                    text={copiedLabel === 'customer' ? '✓ ĐÃ SAO CHÉP TÊN KH' : (resolvedOrder['Tên khách hàng'] || '—')} 
-                                                    className="text-[11.5px] sm:text-xs md:text-sm font-extrabold text-white tracking-tight uppercase cursor-pointer hover:text-amber-200 transition-colors"
-                                                    title={resolvedOrder['Tên khách hàng'] ? `Click để sao chép: ${resolvedOrder['Tên khách hàng']}` : undefined}
+                                        {/* Customer & Order Identifiers Section - Re-architected for Clarity */}
+                                        <div className="pt-2 md:pt-3 border-t border-white/10 flex flex-col gap-2">
+                                            {/* Row: Customer Name (Left) & 2 Mã HĐ nằm với nhau căn phải (Right) */}
+                                            <div className="flex items-start justify-between gap-2.5">
+                                                {/* Left Column: Tên KH, TVBH & Chứng từ xe (DNX / TD4) */}
+                                                <div 
+                                                    className="min-w-0 flex-1 cursor-pointer group pr-2"
                                                     onClick={(e) => {
                                                         const name = resolvedOrder['Tên khách hàng'];
                                                         if (!name) return;
@@ -2172,40 +2196,84 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                             setTimeout(() => setCopiedLabel(null), 2000);
                                                         });
                                                     }}
-                                                />
-                                                <p className="text-[9px] md:text-[10px] font-medium text-slate-400 mt-0.5 truncate flex items-center gap-1.5"><i className="fas fa-user-tie text-[8.5px] md:text-[9px] text-indigo-400"></i> {resolvedOrder['Tên tư vấn bán hàng']}</p>
-                                            </div>
-                                            {/* Mã HĐ Cyber (nếu có) */}
-                                            {(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber) && (
-                                                <div 
-                                                    className="text-right cursor-pointer group flex-shrink-0 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-400/30 backdrop-blur-md px-2 py-1 md:px-2.5 md:py-1 rounded-lg md:rounded-xl transition-all active:scale-95"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        const cyberId = String(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber || '');
-                                                        navigator.clipboard.writeText(cyberId).then(() => {
-                                                            setCopiedLabel('cyberId');
-                                                            setTimeout(() => setCopiedLabel(null), 2000);
-                                                        });
-                                                    }}
-                                                    title="Click để sao chép Mã HĐ Cyber"
+                                                    title={resolvedOrder['Tên khách hàng'] ? `Click để sao chép: ${resolvedOrder['Tên khách hàng']}` : undefined}
                                                 >
-                                                    <p className="text-[7px] md:text-[8px] font-bold text-blue-300 uppercase tracking-widest mb-0.5">HĐ Cyber</p>
-                                                    <p className="text-[9.5px] sm:text-[10px] md:text-[10.5px] font-black font-mono text-blue-100 tracking-wide">{copiedLabel === 'cyberId' ? '✓ Đã copy' : (resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber)}</p>
+                                                    {copiedLabel === 'customer' ? (
+                                                        <p className="text-[12px] sm:text-[13px] md:text-[14.5px] font-black text-amber-200 tracking-tight uppercase truncate">
+                                                            ✓ ĐÃ SAO CHÉP TÊN KH
+                                                        </p>
+                                                    ) : (
+                                                        <MarqueeText 
+                                                            text={resolvedOrder['Tên khách hàng'] || '—'}
+                                                            className="text-[12px] sm:text-[13px] md:text-[14.5px] font-black text-white tracking-tight uppercase hover:text-amber-200 transition-colors"
+                                                            speed={14}
+                                                            pauseOnHover
+                                                        />
+                                                    )}
+                                                    <p className="text-[9.5px] md:text-[10.5px] font-medium text-slate-300 mt-0.5 truncate flex items-center gap-1.5">
+                                                        <i className="fas fa-user-tie text-[9px] text-indigo-400"></i>
+                                                        <span className="text-slate-400">TVBH:</span>
+                                                        <span className="font-bold text-slate-200 uppercase">{resolvedOrder['Tên tư vấn bán hàng'] || 'N/A'}</span>
+                                                    </p>
+
+                                                    {/* Chứng từ (DNX / TD4) nếu có */}
+                                                    {(resolvedOrder.so_ct_dnx || resolvedOrder['Số CT DNX'] || resolvedOrder.so_ct_td4 || resolvedOrder['Số CT TD4']) && (
+                                                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                                                            {(resolvedOrder.so_ct_dnx || resolvedOrder['Số CT DNX']) && (
+                                                                <span className="bg-amber-500/20 border border-amber-400/30 text-amber-200 px-2 py-0.5 rounded-md font-mono font-bold text-[9px] shadow-xs">
+                                                                    DNX: {resolvedOrder.so_ct_dnx || resolvedOrder['Số CT DNX']}
+                                                                </span>
+                                                            )}
+                                                            {(resolvedOrder.so_ct_td4 || resolvedOrder['Số CT TD4']) && (
+                                                                <span className="bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 px-2 py-0.5 rounded-md font-mono font-bold text-[9px] shadow-xs">
+                                                                    TD4: {resolvedOrder.so_ct_td4 || resolvedOrder['Số CT TD4']}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                            <div 
-                                                className="text-right cursor-pointer group flex-shrink-0 bg-white/[0.06] hover:bg-white/[0.14] backdrop-blur-md px-2 py-1 md:px-3 md:py-1.5 rounded-lg md:rounded-xl transition-all active:scale-95"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    navigator.clipboard.writeText(resolvedOrder["Số đơn hàng"]).then(() => {
-                                                        setCopiedLabel('orderId');
-                                                        setTimeout(() => setCopiedLabel(null), 2000);
-                                                    });
-                                                }}
-                                                title="Click để sao chép mã đơn hàng"
-                                            >
-                                                <p className="text-[7px] md:text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Mã Đơn</p>
-                                                <p className="text-[9.5px] sm:text-[10.5px] md:text-[11px] font-black font-mono text-white tracking-wide">{copiedLabel === 'orderId' ? '✓ Đã copy' : resolvedOrder['Số đơn hàng']}</p>
+
+                                                {/* Right Column: 2 Mã HĐ nằm với nhau căn phải - Không đóng khung */}
+                                                <div className="flex flex-col items-end gap-1 flex-shrink-0 text-right">
+                                                    {/* Mã Đơn */}
+                                                    <div 
+                                                        className="flex items-center gap-1.5 cursor-pointer group active:scale-95 transition-all hover:opacity-90"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigator.clipboard.writeText(resolvedOrder["Số đơn hàng"]).then(() => {
+                                                                setCopiedLabel('orderId');
+                                                                setTimeout(() => setCopiedLabel(null), 2000);
+                                                            });
+                                                        }}
+                                                        title="Click để sao chép mã đơn hàng"
+                                                    >
+                                                        <span className="text-[8px] md:text-[8.5px] font-bold text-slate-400 uppercase tracking-wider">MÃ ĐƠN:</span>
+                                                        <span className="text-[10px] sm:text-[10.5px] md:text-[11.5px] font-black font-mono text-white tracking-wide">
+                                                            {copiedLabel === 'orderId' ? '✓ ĐÃ COPY' : resolvedOrder['Số đơn hàng']}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* HĐ Cyber */}
+                                                    {(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber) && (
+                                                        <div 
+                                                            className="flex items-center gap-1.5 cursor-pointer group active:scale-95 transition-all hover:opacity-90"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const cyberId = String(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber || '');
+                                                                navigator.clipboard.writeText(cyberId).then(() => {
+                                                                    setCopiedLabel('cyberId');
+                                                                    setTimeout(() => setCopiedLabel(null), 2000);
+                                                                });
+                                                            }}
+                                                            title="Click để sao chép Mã HĐ Cyber"
+                                                        >
+                                                            <span className="text-[8px] md:text-[8.5px] font-bold text-sky-400 uppercase tracking-wider">HĐ CYBER:</span>
+                                                            <span className="text-[10px] sm:text-[10.5px] md:text-[11.5px] font-black font-mono text-sky-300 tracking-wide truncate max-w-[190px] sm:max-w-[260px]">
+                                                                {copiedLabel === 'cyberId' ? '✓ ĐÃ COPY' : (resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber)}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -2682,13 +2750,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     <span>In Phiếu DNX</span>
                                 </button>
                             ) : isCarAlreadyAtThuanAn ? (
-                                <div 
-                                    className="h-8 px-3.5 inline-flex items-center gap-1.5 text-emerald-800 bg-emerald-50/80 font-medium text-xs shrink-0 cursor-default select-none"
-                                    title="Xe hiện đã có mặt tại kho Thuận An (K83). Không cần điều chuyển."
-                                >
-                                    <i className="fas fa-check-circle text-[10px] text-emerald-600"></i>
-                                    <span>Đã ở Thuận An</span>
-                                </div>
+                                null
                             ) : (
                                 <button
                                     type="button"

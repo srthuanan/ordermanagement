@@ -40,6 +40,11 @@ export interface Order {
   matched_flex_color?: string;
   "Mã HĐ Cyber"?: string;
   ma_hd_cyber?: string;
+  so_ct_dnx?: string;
+  so_ct_td4?: string;
+  ghi_chu_xuat_xe?: string;
+  "Số CT DNX"?: string;
+  "Số CT TD4"?: string;
   // other potential fields from components
   [key: string]: any; // Allow for other properties
 }
@@ -74,6 +79,14 @@ export interface StockVehicle {
   "Ngày vận tải"?: string;
   "Mã DMS"?: string;
   "Số máy"?: string;
+  telemetry?: {
+    lat: number;
+    lng: number;
+    speed?: number;
+    heading?: number;
+    captured_at?: string;
+    address?: string;
+  } | null;
   [key: string]: any; // Allow for other properties
 }
 
