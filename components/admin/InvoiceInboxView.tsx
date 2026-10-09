@@ -1537,18 +1537,22 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     </div>
 
                                                     {/* Full width VIN display pill card */}
-                                                    <div className="mt-1 w-full bg-blue-50/40 border border-blue-200/80 rounded-xl px-2.5 py-1 flex items-center justify-between group/vin">
-                                                        <span className="font-mono font-bold text-xs text-blue-700 tracking-wider select-all">
+                                                    <div 
+                                                        onClick={(e) => {
+                                                            if (selectedOrder.VIN && selectedOrder.VIN !== '—') {
+                                                                copyWithFeedback(selectedOrder.VIN, e);
+                                                            }
+                                                        }}
+                                                        className={`mt-1 w-full bg-blue-50/50 hover:bg-blue-100/70 border border-blue-200/90 hover:border-blue-300 rounded-xl px-3 py-1.5 flex items-center justify-center relative group/vin transition-all duration-200 ${selectedOrder.VIN && selectedOrder.VIN !== '—' ? 'cursor-pointer active:scale-[0.99]' : ''}`}
+                                                        title={selectedOrder.VIN && selectedOrder.VIN !== '—' ? "Click để sao chép số VIN" : ""}
+                                                    >
+                                                        <span className="font-mono font-bold text-xs text-blue-700 tracking-wider select-all text-center">
                                                             {selectedOrder.VIN || '—'}
                                                         </span>
-                                                        {selectedOrder.VIN && (
+                                                        {selectedOrder.VIN && selectedOrder.VIN !== '—' && (
                                                             <button 
                                                                 type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    copyWithFeedback(selectedOrder.VIN || '', e);
-                                                                }}
-                                                                className="text-blue-500 hover:text-blue-700 transition-colors cursor-pointer p-0.5"
+                                                                className="absolute right-2.5 text-blue-500 group-hover/vin:text-blue-700 transition-colors p-0.5 pointer-events-none"
                                                                 title="Sao chép số VIN"
                                                             >
                                                                 <i className="fas fa-copy text-xs"></i>
