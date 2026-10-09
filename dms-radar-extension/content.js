@@ -246,8 +246,18 @@
         }
       }
 
-      var successMsg = 'Kho: ' + updateList.length + ' xe | GPS Live: ' + gpsList.length + ' xe | Gỡ XHĐ: ' + soldVins.length;
+      var successMsg = 'Số máy & Mã DMS: ' + updateList.length + ' xe | GPS Live: ' + gpsList.length + ' xe | Gỡ XHĐ: ' + soldVins.length;
       console.log('[DMS Auto Sync] ✅ ' + successMsg);
+      if (console.table && updateList.length > 0) {
+        console.log('[DMS Auto Sync] 📋 Danh sách chi tiết Số máy & Mã DMS đã đồng bộ:');
+        console.table(updateList.map(function (x) {
+          return {
+            'Số VIN': x.vin,
+            'Số máy': x.so_may || '(trống)',
+            'Mã DMS': x.ma_dms || '(trống)'
+          };
+        }));
+      }
       showSuccessToast(successMsg);
 
       // 4. Tải và nạp xe chưa XHĐ vào thongtinxe
