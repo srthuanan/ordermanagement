@@ -1,15 +1,44 @@
 import os
-from dotenv import load_dotenv
-load_dotenv()
-import os
 import sys
 import json
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # ===== CẤU HÌNH HỆ THỐNG =====
 DMS_BASE_URL = "https://vinfastdms.crm5.dynamics.com"
 SUPABASE_URL = "https://jwvgxqrkjlbewvpkvucj.supabase.co"
+
+# Mapping mã site DMS sang mã DMS showroom
+DMS_SITE_MAP = {
+    "2bd660d4-92ad-f111-aaae-000d3a8140c0": "N31925",
+    "bf9e5764-ff8f-f111-8076-000d3a821339": "N31924",
+    "4cfe574e-b361-ea11-a811-000d3a85937e": "N31901",
+    "52b1cce4-4d52-f011-877a-00224816cf50": "N31917",
+    "4ce24370-2b15-f011-998a-00224817e379": "N31915",
+    "4ee24370-2b15-f011-998a-00224817e379": "N31916",
+    "490968e0-9b28-ef11-840b-002248ec8105": "N31902",
+    "4b0968e0-9b28-ef11-840b-002248ec8105": "N31903",
+    "4d0968e0-9b28-ef11-840b-002248ec8105": "N31904",
+    "4f0968e0-9b28-ef11-840b-002248ec8105": "N31905",
+    "510968e0-9b28-ef11-840b-002248ec8105": "N31906",
+    "530968e0-9b28-ef11-840b-002248ec8105": "N31907",
+    "4c4b8713-b539-ef11-a317-002248ec8105": "N31908",
+    "f818cbd3-3d7e-ef11-ac21-002248ec8105": "N31910",
+    "fa18cbd3-3d7e-ef11-ac21-002248ec8105": "N31911",
+    "4de683b5-489c-f011-bbd2-002248ee5962": "N31918",
+    "bcfeca24-b1bb-f011-bbd3-6045bd5685f8": "N31920",
+    "5c994131-8193-ef11-8a6a-6045bd5754c8": "N31912",
+    "30fb9dbe-274a-ef11-a317-6045bd5754c8": "N31909",
+    "548d8293-af9d-ef11-8a6b-6045bd5754ce": "N31913",
+    "bc71e0bd-b1c6-ef11-b8e9-6045bd5754ce": "N31914",
+    "e24d9ffb-8b9e-f011-bbd2-6045bd576695": "N31919",
+    "dc66ab0e-6a45-f111-bec7-6045bd585385": "N31923",
+    "6f13b85d-f73f-f111-bec6-6045bd5a3372": "N31921",
+    "7113b85d-f73f-f111-bec6-6045bd5a3372": "N31922"
+}
 
 # Đọc các thông số bí mật từ biến môi trường (.env hoặc secrets cấu hình trên Cloud)
 DMS_USERNAME = os.environ.get("DMS_USERNAME")
@@ -63,7 +92,10 @@ def get_dms_headers():
         print("🍪 Sử dụng Session Cookie lấy từ cấu hình DMS (Thuận An N31913)...")
         return {
             "Cookie": cookie,
-            "Accept": "application/json"
+            "Accept": "application/json",
+            "Content-Type": "application/json; charset=utf-8",
+            "OData-MaxVersion": "4.0",
+            "OData-Version": "4.0"
         }
 
     # Cách 3: Tự động lấy Access Token thông qua OAuth 2.0 (ROPC Flow) nếu có username/password
@@ -122,42 +154,13 @@ def sync_gps_live(dms_headers):
     vin_set = set(vins)
     print(f"🎯 Tìm thấy {len(vins)} xe trong kho Supabase.")
 
-DMS_SITE_MAP = {
-    "2bd660d4-92ad-f111-aaae-000d3a8140c0": "N31925",
-    "bf9e5764-ff8f-f111-8076-000d3a821339": "N31924",
-    "4cfe574e-b361-ea11-a811-000d3a85937e": "N31901",
-    "52b1cce4-4d52-f011-877a-00224816cf50": "N31917",
-    "4ce24370-2b15-f011-998a-00224817e379": "N31915",
-    "4ee24370-2b15-f011-998a-00224817e379": "N31916",
-    "490968e0-9b28-ef11-840b-002248ec8105": "N31902",
-    "4b0968e0-9b28-ef11-840b-002248ec8105": "N31903",
-    "4d0968e0-9b28-ef11-840b-002248ec8105": "N31904",
-    "4f0968e0-9b28-ef11-840b-002248ec8105": "N31905",
-    "510968e0-9b28-ef11-840b-002248ec8105": "N31906",
-    "530968e0-9b28-ef11-840b-002248ec8105": "N31907",
-    "4c4b8713-b539-ef11-a317-002248ec8105": "N31908",
-    "f818cbd3-3d7e-ef11-ac21-002248ec8105": "N31910",
-    "fa18cbd3-3d7e-ef11-ac21-002248ec8105": "N31911",
-    "4de683b5-489c-f011-bbd2-002248ee5962": "N31918",
-    "bcfeca24-b1bb-f011-bbd3-6045bd5685f8": "N31920",
-    "5c994131-8193-ef11-8a6a-6045bd5754c8": "N31912",
-    "30fb9dbe-274a-ef11-a317-6045bd5754c8": "N31909",
-    "548d8293-af9d-ef11-8a6b-6045bd5754ce": "N31913",
-    "bc71e0bd-b1c6-ef11-b8e9-6045bd5754ce": "N31914",
-    "e24d9ffb-8b9e-f011-bbd2-6045bd576695": "N31919",
-    "dc66ab0e-6a45-f111-bec7-6045bd585385": "N31923",
-    "6f13b85d-f73f-f111-bec6-6045bd5a3372": "N31921",
-    "7113b85d-f73f-f111-bec6-6045bd5a3372": "N31922"
-}
-
     # 2. Truy vấn trực tiếp các cột GPS, Số máy & Mã DMS từ bảng kho xe xts_inventorynewvehicles của DMS
     print("📡 Đang lấy tọa độ GPS, Số máy & Mã DMS từ bảng kho xe xts_inventorynewvehicles của DMS...")
     gps_results = []
     metadata_by_vin = {}
-    inv_url = f"{DMS_BASE_URL}/api/data/v9.0/xts_inventorynewvehicles"
+    inv_url = f"{DMS_BASE_URL}/api/data/v9.2/xts_inventorynewvehicles?$select=xts_chassisnumber,xts_enginenumber,_xts_siteid_value,itv_lastlatitude,itv_lastlongitude,itv_lastlocationupdatetime"
     
     try:
-        from datetime import timezone
         while inv_url:
             res = requests.get(inv_url, headers=dms_headers, timeout=40)
             if res.status_code != 200:
@@ -392,19 +395,24 @@ def sync_inventory(dms_headers):
         print("⚠️ Không có xe trống nào chưa bán để đồng bộ.")
         return
 
-    # 3. Đẩy lên thongtinxe qua REST Bulk POST
+    # 3. Đẩy lên thongtinxe qua RPC rpc_sync_thongtinxe (hoặc fallback REST Bulk POST)
     try:
-        inv_url = f"{SUPABASE_URL}/rest/v1/thongtinxe?on_conflict=vin"
-        headers_with_upsert = {**SUPABASE_HEADERS, "Prefer": "resolution=merge-duplicates, return=minimal"}
-        
-        CHUNK_SIZE = 200
+        rpc_url = f"{SUPABASE_URL}/rest/v1/rpc/rpc_sync_thongtinxe"
+        CHUNK_SIZE = 500
         for i in range(0, len(final_inv), CHUNK_SIZE):
             chunk = final_inv[i:i+CHUNK_SIZE]
-            res = requests.post(inv_url, headers=headers_with_upsert, json=chunk, timeout=30)
-            if res.status_code in [200, 201, 204]:
-                print(f"   ✅ Đã đẩy cụm kho xe {i//CHUNK_SIZE + 1}: {len(chunk)} xe OK.")
+            rpc_res = requests.post(rpc_url, headers=SUPABASE_HEADERS, json={"p_cars": chunk}, timeout=30)
+            if rpc_res.status_code in [200, 204]:
+                print(f"   ✅ Đã nạp cụm kho xe qua RPC {i//CHUNK_SIZE + 1}: {len(chunk)} xe OK.")
             else:
-                print(f"   ❌ Lỗi đẩy cụm kho xe: {res.text}")
+                # Fallback qua REST table
+                inv_url = f"{SUPABASE_URL}/rest/v1/thongtinxe?on_conflict=vin"
+                headers_with_upsert = {**SUPABASE_HEADERS, "Prefer": "resolution=merge-duplicates, return=minimal"}
+                res = requests.post(inv_url, headers=headers_with_upsert, json=chunk, timeout=30)
+                if res.status_code in [200, 201, 204]:
+                    print(f"   ✅ Đã nạp cụm kho xe qua REST {i//CHUNK_SIZE + 1}: {len(chunk)} xe OK.")
+                else:
+                    print(f"   ❌ Lỗi đẩy cụm kho xe: {res.text}")
     except Exception as e:
         print(f"❌ Lỗi kết nối Supabase kho xe: {e}")
 
