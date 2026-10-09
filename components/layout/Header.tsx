@@ -112,6 +112,8 @@ const Header: React.FC<HeaderProps> = ({
     const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
     const [isNotificationHistoryOpen, setIsNotificationHistoryOpen] = React.useState(false);
     const profileMenuRef = React.useRef<HTMLDivElement>(null);
+    const [isAdminControlsOpen, setIsAdminControlsOpen] = React.useState(false);
+    const adminControlsRef = React.useRef<HTMLDivElement>(null);
     const [isInternalChatOpen, setIsInternalChatOpen] = React.useState(false);
 
     // Tự động sử dụng siêu logo Trung Thu đa cảnh (tự chuyển cảnh mượt mà trong 1 ảnh duy nhất)
@@ -152,11 +154,14 @@ const Header: React.FC<HeaderProps> = ({
 
 
 
-    // Click outside for profile menu
+    // Click outside for profile menu & admin controls menu
     React.useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
                 setIsProfileMenuOpen(false);
+            }
+            if (adminControlsRef.current && !adminControlsRef.current.contains(event.target as Node)) {
+                setIsAdminControlsOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -171,7 +176,6 @@ const Header: React.FC<HeaderProps> = ({
         ...(isStockEnabled || isCurrentUserAdmin ? [{ id: 'stock', label: 'Kho xe', icon: 'fa-warehouse' }] : []),
         ...(isCrmEnabled || isCurrentUserAdmin ? [{ id: 'crm', label: 'KHTN', icon: 'fa-user-plus' }] : []),
         { id: 'laithu', label: 'Lái Thử', icon: 'fa-gauge-high' },
-        { id: 'pricing', label: 'Báo Giá', icon: 'fa-calculator' },
         { id: 'sold', label: 'Lịch Sử', icon: 'fa-receipt' },
     ];
 
@@ -306,33 +310,104 @@ const Header: React.FC<HeaderProps> = ({
                                     >
                                         <i className="fas fa-search text-[13px]"></i>
                                     </Button>
-                                    <Button
-                                        onClick={handleToggleStockGlobal}
-                                        variant="ghost"
-                                        disabled={isTogglingStock}
-                                        className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 transition-all hover:bg-slate-100 ${isStockEnabled ? 'text-indigo-600 font-bold' : 'text-slate-400'}`}
-                                        title={isStockEnabled ? 'Ẩn kho xe' : 'Hiện kho xe'}
-                                    >
-                                        <i className={`fas ${isTogglingStock ? 'fa-spinner fa-spin' : (isStockEnabled ? 'fa-eye-slash' : 'fa-warehouse')} text-[13px]`}></i>
-                                    </Button>
-                                    <Button
-                                        onClick={_handleToggleChatGlobal}
-                                        variant="ghost"
-                                        disabled={_isTogglingChat}
-                                        className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 transition-all hover:bg-slate-100 ${isChatEnabled ? 'text-blue-600 font-bold' : 'text-slate-400'}`}
-                                        title={isChatEnabled ? 'Tắt trợ lý AI' : 'Bật trợ lý AI'}
-                                    >
-                                        <i className={`fas ${_isTogglingChat ? 'fa-spinner fa-spin' : (isChatEnabled ? 'fa-robot' : 'fa-user-slash')} text-[13px]`}></i>
-                                    </Button>
-                                    <Button
-                                        onClick={handleToggleCrmGlobal}
-                                        variant="ghost"
-                                        disabled={isTogglingCrm}
-                                        className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 transition-all hover:bg-slate-100 ${isCrmEnabled ? 'text-emerald-600 font-bold' : 'text-slate-400'}`}
-                                        title={isCrmEnabled ? 'Tắt tab KHTN đối với TVBH' : 'Bật tab KHTN cho toàn showroom'}
-                                    >
-                                        <i className={`fas ${isTogglingCrm ? 'fa-spinner fa-spin' : (isCrmEnabled ? 'fa-user-plus' : 'fa-user-slash')} text-[13px]`}></i>
-                                    </Button>
+
+                                    {/* Menu Bật/Tắt Tính Năng Gọn Gàng Cho Admin */}
+                                    <div ref={adminControlsRef} className="relative">
+                                        <Button
+                                            onClick={() => setIsAdminControlsOpen(prev => !prev)}
+                                            variant="ghost"
+                                            className={`w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center !p-0 transition-all ${
+                                                isAdminControlsOpen
+                                                    ? 'bg-blue-50 text-blue-600 shadow-xs ring-1 ring-blue-500/20'
+                                                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+                                            }`}
+                                            title="Bật/Tắt tính năng cho TVBH"
+                                        >
+                                            <i className="fas fa-sliders text-[13px]"></i>
+                                        </Button>
+
+                                        {isAdminControlsOpen && (
+                                            <div className="absolute right-0 top-full mt-2 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/80 p-3 z-[1000] animate-fade-in flex flex-col gap-1.5">
+                                                <div className="flex items-center justify-between pb-2 border-b border-slate-100 px-1">
+                                                    <span className="text-[11px] font-black uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                                                        <i className="fas fa-sliders text-blue-500"></i> Tính Năng TVBH
+                                                    </span>
+                                                    <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
+                                                        Admin
+                                                    </span>
+                                                </div>
+
+                                                {/* Kho xe */}
+                                                <div className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50/80 transition-colors">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${isStockEnabled ? 'bg-indigo-50 text-indigo-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                            <i className={`fas ${isTogglingStock ? 'fa-spinner fa-spin' : (isStockEnabled ? 'fa-warehouse' : 'fa-eye-slash')}`}></i>
+                                                        </div>
+                                                        <div className="flex flex-col text-left">
+                                                            <span className="text-xs font-bold text-slate-800">Kho Xe</span>
+                                                            <span className="text-[10px] text-slate-400 font-medium">
+                                                                {isStockEnabled ? 'Đang mở cho TVBH' : 'Đang ẩn với TVBH'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleToggleStockGlobal}
+                                                        disabled={isTogglingStock}
+                                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isStockEnabled ? 'bg-indigo-600' : 'bg-slate-300'} disabled:opacity-50`}
+                                                    >
+                                                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out mt-0.5 ${isStockEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                                                    </button>
+                                                </div>
+
+                                                {/* Trợ lý AI */}
+                                                <div className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50/80 transition-colors">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${isChatEnabled ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                            <i className={`fas ${_isTogglingChat ? 'fa-spinner fa-spin' : (isChatEnabled ? 'fa-robot' : 'fa-comment-slash')}`}></i>
+                                                        </div>
+                                                        <div className="flex flex-col text-left">
+                                                            <span className="text-xs font-bold text-slate-800">Trợ Lý AI</span>
+                                                            <span className="text-[10px] text-slate-400 font-medium">
+                                                                {isChatEnabled ? 'Đang kích hoạt' : 'Đang tắt'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={_handleToggleChatGlobal}
+                                                        disabled={_isTogglingChat}
+                                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isChatEnabled ? 'bg-blue-600' : 'bg-slate-300'} disabled:opacity-50`}
+                                                    >
+                                                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out mt-0.5 ${isChatEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                                                    </button>
+                                                </div>
+
+                                                {/* Tab KHTN */}
+                                                <div className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50/80 transition-colors">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${isCrmEnabled ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                            <i className={`fas ${isTogglingCrm ? 'fa-spinner fa-spin' : (isCrmEnabled ? 'fa-user-plus' : 'fa-user-slash')}`}></i>
+                                                        </div>
+                                                        <div className="flex flex-col text-left">
+                                                            <span className="text-xs font-bold text-slate-800">Tab KHTN</span>
+                                                            <span className="text-[10px] text-slate-400 font-medium">
+                                                                {isCrmEnabled ? 'Đang mở cho TVBH' : 'Đang tắt với TVBH'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleToggleCrmGlobal}
+                                                        disabled={isTogglingCrm}
+                                                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${isCrmEnabled ? 'bg-emerald-600' : 'bg-slate-300'} disabled:opacity-50`}
+                                                    >
+                                                        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out mt-0.5 ${isCrmEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </>
                             )}
                         </div>

@@ -6,6 +6,7 @@ import * as apiService from '../services/apiService';
 import FileUpload from './ui/FileUpload';
 import CarImage from './ui/CarImage';
 import SelectPolicyModal from './modals/SelectPolicyModal';
+import { cleanCyberContractCode } from '../utils/stringUtils';
 interface ImageSource {
     src: string;
     originalUrl?: string;
@@ -146,7 +147,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
     // Xử lý chọn 1 hợp đồng từ cọc tồn
     const handleSelectBacklogContract = (contract: any) => {
-        const cyberCode = (contract.so_hop_dong || contract.so_ct || contract.so_don_hang || '').trim();
+        const cyberCode = cleanCyberContractCode(contract.so_hop_dong || contract.so_ct || contract.so_don_hang || '');
         const customerName = (contract.khach_hang || '').trim().toUpperCase();
 
         setFormData(prev => {
@@ -211,7 +212,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        const val = name === 'ten_khach_hang' ? value.toUpperCase() : value;
+        const val = (name === 'ten_khach_hang' || name === 'ma_hd_cyber') ? value.toUpperCase() : value;
         setFormData(prev => {
             const newState = { ...prev, [name]: val };
 
@@ -345,7 +346,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         try {
             const requestPayload = {
                 ...formData,
-                ma_hd_cyber: (formData.ma_hd_cyber || '').trim(),
+                ma_hd_cyber: cleanCyberContractCode(formData.ma_hd_cyber) || null,
                 ten_khach_hang: (formData.ten_khach_hang || '').trim().toUpperCase(),
                 is_flex_match: 'false',
                 ngoai_that_flex: '[]',
@@ -688,6 +689,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                 name="ma_hd_cyber"
                                                 value={formData.ma_hd_cyber}
                                                 onChange={handleInputChange}
+                                                onBlur={() => setFormData(prev => ({ ...prev, ma_hd_cyber: cleanCyberContractCode(prev.ma_hd_cyber) }))}
                                                 onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())}
                                                 required
                                                 placeholder="VD: 02.xxxx/xx/2026/HĐMB-MDP"

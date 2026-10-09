@@ -131,3 +131,22 @@ export const formatShortWarehouseName = (name: string | undefined | null): strin
 
     return cleaned || raw;
 };
+
+/**
+ * Tự động chuẩn hóa và làm sạch Mã HĐ Cyber:
+ * - Loại bỏ khoảng trắng thừa, viết hoa toàn bộ (UPPERCASE)
+ * - Cắt bỏ các hậu tố thanh toán do Sale tự gõ: -TG, -TM, -TN, -TRA GOP, -TRẢ GÓP, -TIEN MAT, -TIỀN MẶT, -NH, -NGAN HANG, -NGÂN HÀNG...
+ * - Chuẩn hóa HDMB thành HĐMB
+ */
+export const cleanCyberContractCode = (code: string | undefined | null): string => {
+    if (!code) return '';
+    let cleaned = String(code).trim().toUpperCase();
+
+    // 1. Cắt bỏ hậu tố hình thức thanh toán ở đuôi (ví dụ: -TG, -TM, -TRA GOP, _TG...)
+    cleaned = cleaned.replace(/[\s\-_/]+(TG|TM|TN|TRA\s*GOP|TRẢ\s*GÓP|TIEN\s*MAT|TIỀN\s*MẶT|NH|NGAN\s*HANG|NGÂN\s*HÀNG)$/i, '');
+
+    // 2. Chuẩn hóa HDMB -> HĐMB
+    cleaned = cleaned.replace(/HDMB/g, 'HĐMB');
+
+    return cleaned.trim();
+};

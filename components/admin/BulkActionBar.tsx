@@ -38,7 +38,6 @@ const bulkActionsForView: Record<AdminSubView, { type: ActionType; label: string
     policy_summary: [],
     maintenance_fee: [],
     vehicle_config: [],
-    pricing_config: [],
     super_management: [],
     live_users: [],
 };

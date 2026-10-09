@@ -30,7 +30,6 @@ const BottomNav: React.FC<BottomNavProps> = ({
         ...(isStockEnabled || isCurrentUserAdmin ? [{ id: 'stock', label: 'Kho xe', icon: 'fa-warehouse' }] : []),
         ...(isCrmEnabled || isCurrentUserAdmin ? [{ id: 'crm', label: 'KHTN', icon: 'fa-user-plus' }] : []),
         { id: 'laithu', label: 'Lái Thử', icon: 'fa-gauge-high' },
-        { id: 'pricing', label: 'Báo Giá', icon: 'fa-calculator' },
         { id: 'sold', label: 'Lịch Sử', icon: 'fa-receipt' },
     ];
 

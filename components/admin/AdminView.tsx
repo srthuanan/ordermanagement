@@ -40,7 +40,6 @@ import PolicySummaryView from './PolicySummaryView';
 import MaintenanceFeeManager from './MaintenanceFeeManager';
 import VehicleConfigManager from './VehicleConfigManager';
 import { AdminSwapManagementView } from './AdminSwapManagementView';
-import PricingCalculatorManager from './PricingCalculatorManager';
 import LiveUserMonitorView from './LiveUserMonitorView';
 
 import * as apiService from '../../services/apiService';
@@ -264,7 +263,7 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         system: {
             label: 'HỆ THỐNG',
             icon: 'fa-cogs',
-            views: ['super_edit', 'policies', 'pricing_config', 'live_users', 'ai_knowledge', 'phongkd', 'maintenance_fee'] as AdminSubView[]
+            views: ['super_edit', 'policies', 'live_users', 'ai_knowledge', 'phongkd', 'maintenance_fee'] as AdminSubView[]
         },
         stats: {
             label: 'THỐNG KÊ',
@@ -313,7 +312,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         system: 'HỆ THỐNG',
         maintenance_fee: 'KINH PHÍ WEB',
         vehicle_config: 'CẤU HÌNH XE',
-        pricing_config: 'CẤU HÌNH BÁO GIÁ',
         super_management: 'QUẢN LÝ NÂNG CAO',
         live_users: 'VỊ TRÍ TRUY CẬP'
     };
@@ -373,7 +371,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         system: null,
         maintenance_fee: null,
         vehicle_config: null,
-        pricing_config: null,
         super_management: null,
         live_users: null
     };
@@ -631,11 +628,6 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 {/* Vehicle Config Manager */}
                 <div className={adminView === 'vehicle_config' ? 'flex-1 flex flex-col min-h-0 overflow-y-auto' : 'hidden'}>
                     <VehicleConfigManager showToast={showToast} />
-                </div>
-
-                {/* Pricing Calculator Manager */}
-                <div className={adminView === 'pricing_config' ? 'flex-1 flex flex-col min-h-0 overflow-y-auto' : 'hidden'}>
-                    <PricingCalculatorManager showToast={showToast} />
                 </div>
 
                 {/* Live User & Geolocation Monitor */}

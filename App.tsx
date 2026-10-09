@@ -9,7 +9,6 @@ import MultiSelectDropdown from './components/ui/MultiSelectDropdown';
 const StockView = React.lazy(() => import('./components/StockView'));
 const SoldCarsView = React.lazy(() => import('./components/SoldCarsView'));
 const AdminView = React.lazy(() => import('./components/admin/AdminView'));
-const PricingCalculatorIframeView = React.lazy(() => import('./components/PricingCalculatorIframeView'));
 const CrmLeadImporterView = React.lazy(() => import('./components/crm/CrmLeadImporterView'));
 const TestDriveForm = React.lazy(() => import('./components/testdrive/TestDriveForm'));
 const VirtualAssistant = React.lazy(() => import('./components/VirtualAssistant'));
@@ -1196,11 +1195,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                     refetch={refetchTestDrive}
                                     isReferenceAccount={isReferenceAccount}
                                 />
-                            </Suspense>
-                        </div>
-                        <div hidden={activeView !== 'pricing'} className="h-full">
-                            <Suspense fallback={<LoadingFallback />}>
-                                <PricingCalculatorIframeView />
                             </Suspense>
                         </div>
                         <div hidden={activeView !== 'crm'} className="h-full relative overflow-hidden flex flex-col">

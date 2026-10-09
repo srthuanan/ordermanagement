@@ -23,7 +23,7 @@ import { CyberTd4PrintModal } from './admin/CyberTd4PrintModal';
 import { CyberVoucherTicketItem } from '../services/api/stockService';
 import MarqueeText from './ui/MarqueeText';
 import { downloadDeliveryNoticeDocx } from '../services/deliveryNoticeService';
-import { formatShortWarehouseName } from '../utils/stringUtils';
+import { formatShortWarehouseName, cleanCyberContractCode } from '../utils/stringUtils';
 
 moment.locale('vi');
 
@@ -922,7 +922,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             setEditFormData({
                 "Tên khách hàng": resolvedOrder["Tên khách hàng"] || "",
                 "Số đơn hàng": resolvedOrder["Số đơn hàng"] || "",
-                "Mã HĐ Cyber": resolvedOrder["Mã HĐ Cyber"] || (resolvedOrder as any)?.ma_hd_cyber || resolvedOrder["Số hợp đồng"] || (resolvedOrder as any)?.so_hop_dong || "",
+                "Mã HĐ Cyber": cleanCyberContractCode(resolvedOrder["Mã HĐ Cyber"] || (resolvedOrder as any)?.ma_hd_cyber || resolvedOrder["Số hợp đồng"] || (resolvedOrder as any)?.so_hop_dong || ""),
                 "Dòng xe": resolvedOrder["Dòng xe"] || "",
                 "Phiên bản": resolvedOrder["Phiên bản"] || "",
                 "Ngoại thất": resolvedOrder["Ngoại thất"] || "",
@@ -979,9 +979,10 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             Object.keys(editFormData).forEach(key => {
                 const formKey = key as keyof Order;
                 const originalValue = formKey === 'Mã HĐ Cyber'
-                    ? (resolvedOrder["Mã HĐ Cyber"] || (resolvedOrder as any)?.ma_hd_cyber || resolvedOrder["Số hợp đồng"] || (resolvedOrder as any)?.so_hop_dong || '')
+                    ? cleanCyberContractCode(resolvedOrder["Mã HĐ Cyber"] || (resolvedOrder as any)?.ma_hd_cyber || resolvedOrder["Số hợp đồng"] || (resolvedOrder as any)?.so_hop_dong || '')
                     : resolvedOrder[formKey];
-                const newValue = editFormData[formKey];
+                const rawNewValue = editFormData[formKey];
+                const newValue = formKey === 'Mã HĐ Cyber' ? cleanCyberContractCode(rawNewValue as string) : rawNewValue;
 
                 if (formKey === 'Ngày cọc') {
                     // Không cho phép chỉnh sửa ngày cọc
@@ -1555,6 +1556,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                         name="Mã HĐ Cyber"
                                                         value={editFormData['Mã HĐ Cyber'] || ''}
                                                         onChange={handleEditInputChange}
+                                                        onBlur={() => setEditFormData(prev => ({ ...prev, 'Mã HĐ Cyber': cleanCyberContractCode(prev['Mã HĐ Cyber']) }))}
                                                         placeholder="VD: 02.xxxx/xx/2026/HĐMB-MDP"
                                                         className="w-full bg-slate-50 border border-slate-200 text-slate-800 font-bold font-mono text-xs rounded-xl pl-8 pr-2.5 py-2 md:py-2.5 focus:outline-none focus:border-blue-500 focus:bg-white transition-all uppercase"
                                                     />

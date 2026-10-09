@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import * as apiService from '../../services/apiService';
 import { supabase } from '../../services/supabaseClient';
 import { checkCyberContractStatus, CheckCyberContractResult } from '../../services/api/stockService';
+import { cleanCyberContractCode } from '../../utils/stringUtils';
 
 interface RequestInvoiceModalProps {
     order: Order;
@@ -142,7 +143,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const [xeXangModel, setXeXangModel] = useState('');
     const [maVc, setMaVc] = useState('');
     const [maHdCyber, setMaHdCyber] = useState<string>(() => {
-        return (order?.["Mã HĐ Cyber"] || order?.ma_hd_cyber || (order as any)?.so_hop_dong || order?.["Số hợp đồng"] || '').trim();
+        return cleanCyberContractCode(order?.["Mã HĐ Cyber"] || order?.ma_hd_cyber || (order as any)?.so_hop_dong || order?.["Số hợp đồng"] || '');
     });
     const [vinCheckError, setVinCheckError] = useState('');
     const [isCheckingVin, setIsCheckingVin] = useState(false);
@@ -195,7 +196,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         .limit(1);
 
                     if (tonData && tonData.length > 0 && tonData[0].so_hop_dong) {
-                        setMaHdCyber(tonData[0].so_hop_dong.trim());
+                        setMaHdCyber(cleanCyberContractCode(tonData[0].so_hop_dong));
                         return;
                     }
                 }
@@ -550,10 +551,11 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 triggerArchival();
             }
 
+            const cleanedContractCode = cleanCyberContractCode(maHdCyber) || cleanCyberContractCode(order["Mã HĐ Cyber"] || order.ma_hd_cyber || '');
             const updatedOrder: Order = {
                 ...order,
-                "Mã HĐ Cyber": maHdCyber.trim() || order["Mã HĐ Cyber"] || order.ma_hd_cyber || '',
-                ma_hd_cyber: maHdCyber.trim() || order.ma_hd_cyber || order["Mã HĐ Cyber"] || '',
+                "Mã HĐ Cyber": cleanedContractCode,
+                ma_hd_cyber: cleanedContractCode,
             };
 
             await onConfirm(
@@ -858,6 +860,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                                     type="text" 
                                                     value={maHdCyber} 
                                                     onChange={(e) => setMaHdCyber(e.target.value.toUpperCase())} 
+                                                    onBlur={() => setMaHdCyber(prev => cleanCyberContractCode(prev))}
                                                     placeholder="Nhập mã HĐ..." 
                                                     className="bg-white border border-emerald-300 text-emerald-800 text-[11px] font-mono font-semibold rounded px-1.5 py-0.5 w-28 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-2xs" 
                                                 />

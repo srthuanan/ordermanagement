@@ -2,6 +2,7 @@ import { supabase, supabaseAdmin } from '../supabaseClient';
 import { getStorageItem, mapOrderDbToUi, ApiResult, logAction, uploadToSupabase, getApi, postApi } from './baseService';
 import { createNotification } from './notificationService';
 import { Order } from '../../types';
+import { cleanCyberContractCode } from '../../utils/stringUtils';
 
 
 export const getPaginatedData = async (_?: string[], __?: string, ___?: boolean): Promise<ApiResult> => {
@@ -131,7 +132,7 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
         const noiThatFlex = Array.isArray(payloadData.noi_that_flex) ? payloadData.noi_that_flex : typeof payloadData.noi_that_flex === 'string' ? JSON.parse(payloadData.noi_that_flex || '[]') : [];
 
         const insertPayload: Record<string, any> = {
-            ten_tu_van_ban_hang: payloadData.ten_ban_hang, ten_khach_hang: payloadData.ten_khach_hang, dong_xe: payloadData.dong_xe, phien_ban: payloadData.phien_ban, ngoai_that: payloadData.ngoai_that, noi_that: payloadData.noi_that, so_don_hang: payloadData.so_don_hang, ma_hd_cyber: payloadData.ma_hd_cyber?.trim() || null, ngay_coc: payloadData.ngay_coc || null, thoi_gian_can_xe: payloadData.thoi_gian_can_xe || null, thoi_gian_nhap: nowISO, ket_qua: ketQua, vin: vinDk, thoi_gian_ghep: pairedTime, is_flex_match: isFlexMatch, ngoai_that_flex: ngoaiThatFlex, noi_that_flex: noiThatFlex, chinh_sach: payloadData.chinh_sach || ''
+            ten_tu_van_ban_hang: payloadData.ten_ban_hang, ten_khach_hang: payloadData.ten_khach_hang, dong_xe: payloadData.dong_xe, phien_ban: payloadData.phien_ban, ngoai_that: payloadData.ngoai_that, noi_that: payloadData.noi_that, so_don_hang: payloadData.so_don_hang, ma_hd_cyber: cleanCyberContractCode(payloadData.ma_hd_cyber) || null, ngay_coc: payloadData.ngay_coc || null, thoi_gian_can_xe: payloadData.thoi_gian_can_xe || null, thoi_gian_nhap: nowISO, ket_qua: ketQua, vin: vinDk, thoi_gian_ghep: pairedTime, is_flex_match: isFlexMatch, ngoai_that_flex: ngoaiThatFlex, noi_that_flex: noiThatFlex, chinh_sach: payloadData.chinh_sach || ''
         };
         const { error } = await supabase.from('donhang').upsert(insertPayload, { onConflict: 'so_don_hang' });
         if (error) throw error;
@@ -285,7 +286,7 @@ export const updateOrderDetails = async (orderNumber: string, details: Partial<O
         if (details["CHÍNH SÁCH"] !== undefined || details.chinh_sach !== undefined) updateData.chinh_sach = details["CHÍNH SÁCH"] || details.chinh_sach;
         if (details["Mã HĐ Cyber"] !== undefined || details.ma_hd_cyber !== undefined) {
             const rawCyber = details["Mã HĐ Cyber"] !== undefined ? details["Mã HĐ Cyber"] : details.ma_hd_cyber;
-            updateData.ma_hd_cyber = rawCyber ? String(rawCyber).trim() : null;
+            updateData.ma_hd_cyber = rawCyber ? (cleanCyberContractCode(rawCyber) || null) : null;
         }
         if (matchedVin) { updateData.vin = matchedVin; updateData.ket_qua = 'Đã ghép'; updateData.thoi_gian_ghep = new Date().toISOString(); }
         if (Object.keys(updateData).length > 0) {
@@ -349,7 +350,7 @@ export const superUpdateOrderDetails = async (oldOrderNumber: string, details: a
                 link_hoa_don_da_xuat: details['LinkHoaDonDaXuat'],
                 so_may: details['Số máy'] || details['SỐ MÁY'],
                 ma_dms: details['Mã DMS'],
-                ma_hd_cyber: details['Mã HĐ Cyber'] || details['ma_hd_cyber'] || details['Số hợp đồng'] || details['so_hop_dong'],
+                ma_hd_cyber: cleanCyberContractCode(details['Mã HĐ Cyber'] || details['ma_hd_cyber'] || details['Số hợp đồng'] || details['so_hop_dong']) || null,
                 chinh_sach: details['CHÍNH SÁCH'] || details['chinh_sach']
             },
             yeucauxhd: {

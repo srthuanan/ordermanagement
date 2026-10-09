@@ -3,6 +3,7 @@ import { Order } from '../../types';
 import { useVehicleConfig } from '../../hooks/useVehicleConfig';
 import * as apiService from '../../services/apiService';
 import moment from 'moment';
+import { cleanCyberContractCode } from '../../utils/stringUtils';
 
 import Button from '../ui/Button';
 
@@ -28,7 +29,7 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
             setFormData({
                 "Tên khách hàng": order["Tên khách hàng"],
                 "Số đơn hàng": order["Số đơn hàng"],
-                "Mã HĐ Cyber": order["Mã HĐ Cyber"] || order.ma_hd_cyber || order["Số hợp đồng"] || '',
+                "Mã HĐ Cyber": cleanCyberContractCode(order["Mã HĐ Cyber"] || order.ma_hd_cyber || order["Số hợp đồng"] || ''),
                 "Dòng xe": order["Dòng xe"],
                 "Phiên bản": order["Phiên bản"],
                 "Ngoại thất": order["Ngoại thất"],
@@ -103,8 +104,11 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
             // Compare formData with the original order prop to find what changed
             Object.keys(formData).forEach(key => {
                 const formKey = key as keyof Order;
-                const originalValue = order[formKey];
-                const newValue = formData[formKey];
+                const originalValue = formKey === 'Mã HĐ Cyber'
+                    ? cleanCyberContractCode(order["Mã HĐ Cyber"] || order.ma_hd_cyber || order["Số hợp đồng"] || '')
+                    : order[formKey];
+                const rawNewValue = formData[formKey];
+                const newValue = formKey === 'Mã HĐ Cyber' ? cleanCyberContractCode(rawNewValue as string) : rawNewValue;
 
                 if (formKey === 'Ngày cọc') {
                     const oldDate = originalValue ? moment(originalValue).format('YYYY-MM-DDTHH:mm') : '';
@@ -254,7 +258,17 @@ const EditOrderModal: React.FC<EditOrderModalProps> = ({ isOpen, onClose, onSucc
                                         <label className={labelClass} htmlFor="Mã HĐ Cyber">Mã HĐ Cyber</label>
                                         <div className="relative">
                                             <i className="fas fa-file-signature absolute top-1/2 left-3.5 -translate-y-1/2 text-blue-500 text-xs"></i>
-                                            <input id="Mã HĐ Cyber" type="text" name="Mã HĐ Cyber" value={formData["Mã HĐ Cyber"] || ''} onChange={handleInputChange} onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())} className={`${inputClass} font-mono`} placeholder="VD: 02.xxxx/xx/2026/HĐMB-MDP" />
+                                            <input
+                                                id="Mã HĐ Cyber"
+                                                type="text"
+                                                name="Mã HĐ Cyber"
+                                                value={formData["Mã HĐ Cyber"] || ''}
+                                                onChange={handleInputChange}
+                                                onBlur={() => setFormData(prev => ({ ...prev, "Mã HĐ Cyber": cleanCyberContractCode(prev["Mã HĐ Cyber"]) }))}
+                                                onInput={(e) => (e.currentTarget.value = e.currentTarget.value.toUpperCase())}
+                                                className={`${inputClass} font-mono`}
+                                                placeholder="VD: 02.xxxx/xx/2026/HĐMB-MDP"
+                                            />
                                         </div>
                                     </div>
                                     <div>
