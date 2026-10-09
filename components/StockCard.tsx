@@ -349,6 +349,7 @@ const StockCard: React.FC<StockCardProps> = ({
         { icon: 'fa-car-side', label: 'Dòng xe', value: `${vehicle['Dòng xe'] || ''} - ${vehicle['Phiên bản'] || 'Chưa rõ phiên bản'}`, copyable: false },
         { icon: 'fa-palette', label: 'Màu sắc', value: `${vehicle['Ngoại thất'] || '---'} / ${vehicle['Nội thất'] || '---'}`, copyable: false },
         vehicle.VIN && vehicle.VIN !== '---' ? { icon: 'fa-fingerprint', label: 'Số VIN', value: vehicle.VIN, copyable: true } : null,
+        (vehicle['Số máy'] || (vehicle as any).so_may) ? { icon: 'fa-cogs', label: 'Số máy', value: vehicle['Số máy'] || (vehicle as any).so_may, copyable: true } : null,
         (vehicle['Mã DMS'] || (vehicle as any).ma_dms) ? { icon: 'fa-qrcode', label: 'Mã DMS', value: vehicle['Mã DMS'] || (vehicle as any).ma_dms, copyable: true } : null,
         isInTransit ? {
             icon: 'fa-truck text-amber-500',
