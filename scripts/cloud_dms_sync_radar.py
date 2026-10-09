@@ -47,21 +47,23 @@ def get_dms_headers():
             if os.path.exists(config_path):
                 with open(config_path, "r", encoding="utf-8") as f:
                     dealers = json.load(f)
-                    for d in dealers:
-                        if d.get("cookie"):
-                            cookie = d["cookie"]
-                            break
+                    # Ưu tiên đại lý Thuận An N31913 hoặc đại lý có cookie hợp lệ
+                    target = next((x for x in dealers if x.get("dealer_code") == "N31913" and x.get("cookie")), None)
+                    if target:
+                        cookie = target.get("cookie")
+                    else:
+                        for d in dealers:
+                            if d.get("cookie"):
+                                cookie = d["cookie"]
+                                break
         except Exception:
             pass
 
     if cookie:
-        print("🍪 Sử dụng Session Cookie lấy từ cấu hình DMS...")
+        print("🍪 Sử dụng Session Cookie lấy từ cấu hình DMS (Thuận An N31913)...")
         return {
             "Cookie": cookie,
-            "Accept": "application/json",
-            "Content-Type": "application/json; charset=utf-8",
-            "OData-MaxVersion": "4.0",
-            "OData-Version": "4.0"
+            "Accept": "application/json"
         }
 
     # Cách 3: Tự động lấy Access Token thông qua OAuth 2.0 (ROPC Flow) nếu có username/password
@@ -117,16 +119,18 @@ def sync_gps_live(dms_headers):
         print("⚠️ Không tìm thấy số VIN hợp lệ nào trong kho xe.")
         return
 
+    vin_set = set(vins)
     print(f"🎯 Tìm thấy {len(vins)} xe trong kho Supabase.")
 
     # 2. Truy vấn trực tiếp các cột GPS từ bảng kho xe xts_inventorynewvehicles của DMS
     print("📡 Đang lấy tọa độ GPS trực tiếp từ bảng kho xe xts_inventorynewvehicles của DMS...")
     gps_results = []
-    inv_url = f"{DMS_BASE_URL}/api/data/v9.2/xts_inventorynewvehicles?$select=xts_chassisnumber,itv_lastlatitude,itv_lastlongitude,itv_lastlocationupdatetime,itv_lastposition&$filter=itv_lastlatitude ne null"
+    inv_url = f"{DMS_BASE_URL}/api/data/v9.0/xts_inventorynewvehicles"
     
     try:
+        from datetime import timezone
         while inv_url:
-            res = requests.get(inv_url, headers=dms_headers, timeout=30)
+            res = requests.get(inv_url, headers=dms_headers, timeout=40)
             if res.status_code != 200:
                 print(f"⚠️ Không truy vấn được kho xe: {res.text[:200]}")
                 break
@@ -135,8 +139,8 @@ def sync_gps_live(dms_headers):
                 vin = (item.get("xts_chassisnumber") or "").strip().upper()
                 lat = item.get("itv_lastlatitude")
                 lng = item.get("itv_lastlongitude")
-                t_val = item.get("itv_lastlocationupdatetime") or datetime.utcnow().isoformat()
-                if vin and lat and lng and float(lat) != 0 and float(lng) != 0:
+                t_val = item.get("itv_lastlocationupdatetime") or datetime.now(timezone.utc).isoformat()
+                if vin and vin in vin_set and lat and lng and float(lat) != 0 and float(lng) != 0:
                     gps_results.append({
                         "vin": vin,
                         "lat": float(lat),
@@ -144,10 +148,12 @@ def sync_gps_live(dms_headers):
                         "speed": 0,
                         "heading": 0,
                         "captured_at": t_val,
-                        "updated_at": datetime.utcnow().isoformat()
+                        "updated_at": datetime.now(timezone.utc).isoformat()
                     })
+            if len(gps_results) >= len(vin_set):
+                break
             inv_url = data.get("@odata.nextLink")
-        print(f"   ✅ Đã trích xuất {len(gps_results)} xe có sẵn tọa độ GPS từ DMS!")
+        print(f"   ✅ Đã trích xuất {len(gps_results)} xe trong kho có tọa độ GPS từ DMS!")
     except Exception as e:
         print(f"❌ Lỗi truy vấn tọa độ kho xe: {e}")
         return
@@ -156,15 +162,27 @@ def sync_gps_live(dms_headers):
         print("⚠️ Không có tọa độ GPS mới nào được phản hồi thành công từ VinFast.")
         return
 
-    # 3. Đẩy dữ liệu tọa độ lên bảng car_telemetry trên Supabase
+    # 3. Đẩy dữ liệu tọa độ lên bảng car_telemetry trên Supabase (khử trùng VIN trước khi upsert)
     try:
+        unique_gps = {}
+        for r in gps_results:
+            unique_gps[r["vin"]] = r
+        final_gps = list(unique_gps.values())
+
         telemetry_url = f"{SUPABASE_URL}/rest/v1/car_telemetry"
         headers_with_upsert = {**SUPABASE_HEADERS, "Prefer": "resolution=merge-duplicates"}
-        res = requests.post(telemetry_url, headers=headers_with_upsert, json=gps_results, timeout=20)
-        if res.status_code in [200, 201, 204]:
-            print(f"🎉 Đồng bộ thành công {len(gps_results)} vị trí GPS lên car_telemetry!")
-        else:
-            print(f"❌ Lỗi ghi nhận car_telemetry lên Supabase: {res.text}")
+        
+        CHUNK_SIZE = 200
+        success_count = 0
+        for i in range(0, len(final_gps), CHUNK_SIZE):
+            chunk = final_gps[i:i+CHUNK_SIZE]
+            res = requests.post(telemetry_url, headers=headers_with_upsert, json=chunk, timeout=30)
+            if res.status_code in [200, 201, 204]:
+                success_count += len(chunk)
+            else:
+                print(f"❌ Lỗi ghi nhận cụm {i//CHUNK_SIZE + 1} car_telemetry: {res.text}")
+
+        print(f"🎉 Đồng bộ thành công {success_count}/{len(final_gps)} vị trí GPS xe lên car_telemetry!")
     except Exception as e:
         print(f"❌ Lỗi đẩy telemetry: {e}")
 
