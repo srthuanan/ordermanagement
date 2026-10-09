@@ -124,6 +124,35 @@
         dmsByVin[v].push(r);
       });
 
+      // Bảng ánh xạ định danh 25 showroom VinFast sang mã DMS chuẩn
+      var SITE_MAP = {
+        "2bd660d4-92ad-f111-aaae-000d3a8140c0": "N31925",
+        "bf9e5764-ff8f-f111-8076-000d3a821339": "N31924",
+        "4cfe574e-b361-ea11-a811-000d3a85937e": "N31901",
+        "52b1cce4-4d52-f011-877a-00224816cf50": "N31917",
+        "4ce24370-2b15-f011-998a-00224817e379": "N31915",
+        "4ee24370-2b15-f011-998a-00224817e379": "N31916",
+        "490968e0-9b28-ef11-840b-002248ec8105": "N31902",
+        "4b0968e0-9b28-ef11-840b-002248ec8105": "N31903",
+        "4d0968e0-9b28-ef11-840b-002248ec8105": "N31904",
+        "4f0968e0-9b28-ef11-840b-002248ec8105": "N31905",
+        "510968e0-9b28-ef11-840b-002248ec8105": "N31906",
+        "530968e0-9b28-ef11-840b-002248ec8105": "N31907",
+        "4c4b8713-b539-ef11-a317-002248ec8105": "N31908",
+        "f818cbd3-3d7e-ef11-ac21-002248ec8105": "N31910",
+        "fa18cbd3-3d7e-ef11-ac21-002248ec8105": "N31911",
+        "4de683b5-489c-f011-bbd2-002248ee5962": "N31918",
+        "bcfeca24-b1bb-f011-bbd3-6045bd5685f8": "N31920",
+        "5c994131-8193-ef11-8a6a-6045bd5754c8": "N31912",
+        "30fb9dbe-274a-ef11-a317-6045bd5754c8": "N31909",
+        "548d8293-af9d-ef11-8a6b-6045bd5754ce": "N31913",
+        "bc71e0bd-b1c6-ef11-b8e9-6045bd5754ce": "N31914",
+        "e24d9ffb-8b9e-f011-bbd2-6045bd576695": "N31919",
+        "dc66ab0e-6a45-f111-bec7-6045bd585385": "N31923",
+        "6f13b85d-f73f-f111-bec6-6045bd5a3372": "N31921",
+        "7113b85d-f73f-f111-bec6-6045bd5a3372": "N31922"
+      };
+
       var soldVins = [];
       var updateList = [];
 
@@ -137,9 +166,16 @@
         if (recs.some(function (it) { return !!it._xts_lastvehicleorderid_value; })) {
           soldVins.push(vin);
         } else {
+          // Sắp xếp theo ngày cập nhật mới nhất để tránh lấy nhầm dòng cũ
+          recs.sort(function (a, b) {
+            var tA = a.modifiedon ? new Date(a.modifiedon).getTime() : 0;
+            var tB = b.modifiedon ? new Date(b.modifiedon).getTime() : 0;
+            return tB - tA;
+          });
           var best = recs.find(function (it) { return !!it.xts_enginenumber; }) || recs[0];
           var siteFormatted = best['_xts_siteid_value@OData.Community.Display.V1.FormattedValue'];
-          var dmsVal = siteFormatted ? siteFormatted.split(' ')[0] : (best._xts_siteid_value || '');
+          var siteId = best._xts_siteid_value;
+          var dmsVal = siteFormatted ? siteFormatted.split(' ')[0] : (SITE_MAP[siteId] || '');
           var engVal = best.xts_enginenumber ? String(best.xts_enginenumber).trim() : '';
 
           if (dmsVal || engVal) {
@@ -256,13 +292,15 @@
               var tB = b.modifiedon ? new Date(b.modifiedon).getTime() : 0;
               return tB - tA;
             });
-            var best = recs.find(function (r) { return !!r.xts_enginenumber; }) || recs[0];
+            var siteFormatted = best['_xts_siteid_value@OData.Community.Display.V1.FormattedValue'];
+            var siteId = best._xts_siteid_value;
+            var dmsKhuVuc = siteFormatted ? siteFormatted.split(' ')[0] : (SITE_MAP[siteId] || siteId || '');
 
             nonSoldCars.push({
               vin: vin,
               so_may: String(best.xts_enginenumber || '').trim(),
               mo_ta: String(best.xts_productdescription || '').trim(),
-              khu_vuc: String(best['_xts_siteid_value@OData.Community.Display.V1.FormattedValue'] || best._xts_siteid_value || '').trim(),
+              khu_vuc: dmsKhuVuc.trim(),
               phien_ban: String(best['_xts_configurationid_value@OData.Community.Display.V1.FormattedValue'] || ''),
               so_ton_kho: String(best.xts_stocknumber || ''),
               so_tham_chieu: String(best.xts_referencenumber || ''),

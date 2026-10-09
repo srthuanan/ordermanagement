@@ -122,9 +122,38 @@ def sync_gps_live(dms_headers):
     vin_set = set(vins)
     print(f"🎯 Tìm thấy {len(vins)} xe trong kho Supabase.")
 
-    # 2. Truy vấn trực tiếp các cột GPS từ bảng kho xe xts_inventorynewvehicles của DMS
-    print("📡 Đang lấy tọa độ GPS trực tiếp từ bảng kho xe xts_inventorynewvehicles của DMS...")
+DMS_SITE_MAP = {
+    "2bd660d4-92ad-f111-aaae-000d3a8140c0": "N31925",
+    "bf9e5764-ff8f-f111-8076-000d3a821339": "N31924",
+    "4cfe574e-b361-ea11-a811-000d3a85937e": "N31901",
+    "52b1cce4-4d52-f011-877a-00224816cf50": "N31917",
+    "4ce24370-2b15-f011-998a-00224817e379": "N31915",
+    "4ee24370-2b15-f011-998a-00224817e379": "N31916",
+    "490968e0-9b28-ef11-840b-002248ec8105": "N31902",
+    "4b0968e0-9b28-ef11-840b-002248ec8105": "N31903",
+    "4d0968e0-9b28-ef11-840b-002248ec8105": "N31904",
+    "4f0968e0-9b28-ef11-840b-002248ec8105": "N31905",
+    "510968e0-9b28-ef11-840b-002248ec8105": "N31906",
+    "530968e0-9b28-ef11-840b-002248ec8105": "N31907",
+    "4c4b8713-b539-ef11-a317-002248ec8105": "N31908",
+    "f818cbd3-3d7e-ef11-ac21-002248ec8105": "N31910",
+    "fa18cbd3-3d7e-ef11-ac21-002248ec8105": "N31911",
+    "4de683b5-489c-f011-bbd2-002248ee5962": "N31918",
+    "bcfeca24-b1bb-f011-bbd3-6045bd5685f8": "N31920",
+    "5c994131-8193-ef11-8a6a-6045bd5754c8": "N31912",
+    "30fb9dbe-274a-ef11-a317-6045bd5754c8": "N31909",
+    "548d8293-af9d-ef11-8a6b-6045bd5754ce": "N31913",
+    "bc71e0bd-b1c6-ef11-b8e9-6045bd5754ce": "N31914",
+    "e24d9ffb-8b9e-f011-bbd2-6045bd576695": "N31919",
+    "dc66ab0e-6a45-f111-bec7-6045bd585385": "N31923",
+    "6f13b85d-f73f-f111-bec6-6045bd5a3372": "N31921",
+    "7113b85d-f73f-f111-bec6-6045bd5a3372": "N31922"
+}
+
+    # 2. Truy vấn trực tiếp các cột GPS, Số máy & Mã DMS từ bảng kho xe xts_inventorynewvehicles của DMS
+    print("📡 Đang lấy tọa độ GPS, Số máy & Mã DMS từ bảng kho xe xts_inventorynewvehicles của DMS...")
     gps_results = []
+    metadata_by_vin = {}
     inv_url = f"{DMS_BASE_URL}/api/data/v9.0/xts_inventorynewvehicles"
     
     try:
@@ -137,10 +166,24 @@ def sync_gps_live(dms_headers):
             data = res.json()
             for item in data.get("value", []):
                 vin = (item.get("xts_chassisnumber") or "").strip().upper()
+                if not vin or vin not in vin_set:
+                    continue
+
+                # Trích xuất số máy và mã DMS showroom
+                sm = (item.get("xts_enginenumber") or "").strip()
+                site_id = item.get("_xts_siteid_value")
+                dms_code = DMS_SITE_MAP.get(site_id, "")
+                if sm or dms_code:
+                    metadata_by_vin[vin] = {
+                        "vin": vin,
+                        "so_may": sm,
+                        "ma_dms": dms_code
+                    }
+
                 lat = item.get("itv_lastlatitude")
                 lng = item.get("itv_lastlongitude")
                 t_val = item.get("itv_lastlocationupdatetime") or datetime.now(timezone.utc).isoformat()
-                if vin and vin in vin_set and lat and lng and float(lat) != 0 and float(lng) != 0:
+                if lat and lng and float(lat) != 0 and float(lng) != 0:
                     gps_results.append({
                         "vin": vin,
                         "lat": float(lat),
@@ -150,13 +193,23 @@ def sync_gps_live(dms_headers):
                         "captured_at": t_val,
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     })
-            if len(gps_results) >= len(vin_set):
+            if len(gps_results) >= len(vin_set) and len(metadata_by_vin) >= len(vin_set):
                 break
             inv_url = data.get("@odata.nextLink")
         print(f"   ✅ Đã trích xuất {len(gps_results)} xe trong kho có tọa độ GPS từ DMS!")
     except Exception as e:
         print(f"❌ Lỗi truy vấn tọa độ kho xe: {e}")
         return
+
+    # Cập nhật số máy và mã DMS cho khoxe
+    if metadata_by_vin:
+        try:
+            rpc_url = f"{SUPABASE_URL}/rest/v1/rpc/rpc_sync_dms_metadata"
+            rpc_res = requests.post(rpc_url, headers=SUPABASE_HEADERS, json={"p_cars": list(metadata_by_vin.values())}, timeout=30)
+            if rpc_res.status_code in [200, 204]:
+                print(f"   ✅ Đã chuẩn hóa Số máy & Mã DMS cho {len(metadata_by_vin)} xe trong kho!")
+        except Exception as e:
+            print(f"⚠️ Lỗi cập nhật metadata kho xe: {e}")
 
     if not gps_results:
         print("⚠️ Không có tọa độ GPS mới nào được phản hồi thành công từ VinFast.")
