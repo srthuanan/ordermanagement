@@ -1543,21 +1543,12 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                                 copyWithFeedback(selectedOrder.VIN, e);
                                                             }
                                                         }}
-                                                        className={`mt-1 w-full bg-blue-50/50 hover:bg-blue-100/70 border border-blue-200/90 hover:border-blue-300 rounded-xl px-3 py-1.5 flex items-center justify-center relative group/vin transition-all duration-200 ${selectedOrder.VIN && selectedOrder.VIN !== '—' ? 'cursor-pointer active:scale-[0.99]' : ''}`}
+                                                        className={`mt-1 w-full bg-blue-50/50 hover:bg-blue-100/70 border border-blue-200/90 hover:border-blue-300 rounded-xl px-3 py-1.5 flex items-center justify-center transition-all duration-200 ${selectedOrder.VIN && selectedOrder.VIN !== '—' ? 'cursor-pointer active:scale-[0.99]' : ''}`}
                                                         title={selectedOrder.VIN && selectedOrder.VIN !== '—' ? "Click để sao chép số VIN" : ""}
                                                     >
                                                         <span className="font-mono font-bold text-xs text-blue-700 tracking-wider select-all text-center">
                                                             {selectedOrder.VIN || '—'}
                                                         </span>
-                                                        {selectedOrder.VIN && selectedOrder.VIN !== '—' && (
-                                                            <button 
-                                                                type="button"
-                                                                className="absolute right-2.5 text-blue-500 group-hover/vin:text-blue-700 transition-colors p-0.5 pointer-events-none"
-                                                                title="Sao chép số VIN"
-                                                            >
-                                                                <i className="fas fa-copy text-xs"></i>
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 </div>
 
