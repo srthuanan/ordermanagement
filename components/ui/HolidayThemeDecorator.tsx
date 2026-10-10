@@ -8,7 +8,8 @@ export type HolidaySeason =
   | 'NEW_YEAR'          // Tết Dương Lịch (từ 27/12 đến 05/01)
   | 'REUNIFICATION_DAY' // 30/4 & 1/5 (từ 24/04 đến 04/05)
   | 'WOMEN_DAY'         // 8/3 & 20/10
-  | 'MID_AUTUMN';       // Trung Thu
+  | 'MID_AUTUMN'        // Trung Thu
+  | 'HALLOWEEN';        // Halloween (từ 09/10 đến 02/11)
 
 export const detectCurrentHolidaySeason = (): HolidaySeason => {
   const now = new Date();
@@ -45,12 +46,38 @@ export const detectCurrentHolidaySeason = (): HolidaySeason => {
     return 'WOMEN_DAY';
   }
 
-  // 7. Trung Thu (từ 04/09 đến 08/10)
+  // 7. Halloween: từ 09/10 đến hết ngày 02/11
+  if (isHalloweenSeason(now)) {
+    return 'HALLOWEEN';
+  }
+
+  // 8. Trung Thu (từ 04/09 đến 08/10)
   if (isMidAutumnSeason(now)) {
     return 'MID_AUTUMN';
   }
 
   return 'NONE';
+};
+
+/**
+ * Kiểm tra xem thời điểm hiện tại có đang trong mùa lễ hội Halloween hay không.
+ * Tự động kích hoạt từ 09/10 đến hết ngày 02/11 hàng năm.
+ */
+export const isHalloweenSeason = (customDate?: Date): boolean => {
+  if (typeof window !== 'undefined') {
+    const override = localStorage.getItem('THEME_SEASON');
+    if (override === 'halloween') return true;
+    if (override === 'normal') return false;
+  }
+  const now = customDate || new Date();
+  const m = now.getMonth(); // 9 = Tháng 10, 10 = Tháng 11
+  const d = now.getDate();
+
+  // Từ ngày 09/10 đến hết ngày 02/11
+  if ((m === 9 && d >= 9) || (m === 10 && d <= 2)) {
+    return true;
+  }
+  return false;
 };
 
 /**

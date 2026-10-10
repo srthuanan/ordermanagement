@@ -5,8 +5,9 @@ import { Notification, NotificationType } from '../../types';
 import yeucauAnimationUrl from '../../pictures/yeucau.json?url';
 import logoShowroomThuanAn from '../../pictures/logo_showroom_thuan_an.webp';
 import logoShowroomThuanAnTrungThu from '../../pictures/logo_showroom_thuan_an_trung_thu.webp';
+import logoShowroomThuanAnHalloween from '../../pictures/logo_showroom_thuan_an_halloween.webp';
 import tabActiveTrungThuBg from '../../pictures/tab_active_trung_thu_bg.webp';
-import { isMidAutumnSeason } from '../ui/HolidayThemeDecorator';
+import { isMidAutumnSeason, isHalloweenSeason } from '../ui/HolidayThemeDecorator';
 import Button from '../ui/Button';
 import Avatar from '../ui/Avatar';
 import { CyberAutoSyncBadge } from '../ui/CyberAutoSyncBadge';
@@ -116,9 +117,12 @@ const Header: React.FC<HeaderProps> = ({
     const adminControlsRef = React.useRef<HTMLDivElement>(null);
     const [isInternalChatOpen, setIsInternalChatOpen] = React.useState(false);
 
-    // Tự động sử dụng siêu logo Trung Thu đa cảnh (tự chuyển cảnh mượt mà trong 1 ảnh duy nhất)
+    // Tự động sử dụng logo theo mùa lễ hội (Halloween từ 09/10 đến hết 02/11)
+    const isHalloween = React.useMemo(() => isHalloweenSeason(), []);
     const isMidAutumn = React.useMemo(() => isMidAutumnSeason(), []);
-    const currentLogo = isMidAutumn ? logoShowroomThuanAnTrungThu : logoShowroomThuanAn;
+    const currentLogo = isHalloween 
+        ? logoShowroomThuanAnHalloween 
+        : (isMidAutumn ? logoShowroomThuanAnTrungThu : logoShowroomThuanAn);
     const [chatUnreadCount, setChatUnreadCount] = React.useState(0);
     const [isSwapInboxOpen, setIsSwapInboxOpen] = React.useState(false);
     const [pendingSwapCount, setPendingSwapCount] = React.useState(0);
@@ -189,12 +193,12 @@ const Header: React.FC<HeaderProps> = ({
                 <div className="flex items-center gap-2 sm:gap-4 relative z-10">
                     <div 
                         className="flex flex-col cursor-default select-none relative" 
-                        title={isMidAutumn ? "VinFast Showroom Thuận An - Tết Trung Thu" : "VinFast Showroom Thuận An"}
+                        title={isHalloween ? "VinFast Showroom Thuận An - Halloween Edition" : (isMidAutumn ? "VinFast Showroom Thuận An - Tết Trung Thu" : "VinFast Showroom Thuận An")}
                         onContextMenu={(e) => e.preventDefault()}
                     >
                         <img 
                             src={currentLogo} 
-                            alt={isMidAutumn ? "VinFast Showroom Thuận An - Tết Trung Thu" : "VinFast Showroom Thuận An"} 
+                            alt={isHalloween ? "VinFast Showroom Thuận An - Halloween Edition" : (isMidAutumn ? "VinFast Showroom Thuận An - Tết Trung Thu" : "VinFast Showroom Thuận An")} 
                             draggable={false}
                             onContextMenu={(e) => e.preventDefault()}
                             onDragStart={(e) => e.preventDefault()}

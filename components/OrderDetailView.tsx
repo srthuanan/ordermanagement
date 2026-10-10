@@ -1213,7 +1213,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                     showToast={showToast || ((t, m, type) => console.log(t, m, type))}
                 />
             ) : (
-            <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-1.5 sm:gap-2 md:gap-6 px-1.5 py-1 md:px-6 md:py-3 overflow-hidden relative">
+            <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-1.5 sm:gap-2 md:gap-6 px-1.5 py-1 md:px-6 md:py-3 overflow-hidden md:overflow-visible relative">
                 
                 {/* LEFT COLUMN: Borderless Car Display with Real-Time Weather Effect (Hidden on mobile when in inline EDIT/CANCEL/POLICY mode) */}
                 <div className={`flex-[3.5] sm:flex-[4] md:flex-[5] ${inlineMode !== 'VIEW' ? 'hidden md:flex' : 'flex'} flex-col relative items-center justify-center py-0.5 md:py-1 shrink-0 min-h-[135px] sm:min-h-[170px] md:min-h-0`}>
@@ -1366,7 +1366,30 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 </div>
 
                 {/* RIGHT COLUMN: Apple Frosted Glass Architecture Card */}
-                <div className="flex-[6.5] md:flex-[6] max-w-lg w-full flex flex-col bg-white/85 backdrop-blur-2xl rounded-2xl md:rounded-3xl border border-slate-200/70 shadow-[0_12px_40px_-8px_rgba(15,23,42,0.06),inset_0_1px_1px_rgba(255,255,255,0.95)] overflow-hidden md:overflow-visible relative z-10 mx-auto md:mx-0 p-2 sm:p-3 md:p-4 pt-3 md:pt-6 gap-2 md:gap-3">
+                <div className="flex-[6.5] md:flex-[6] max-w-lg w-full flex flex-col bg-white/85 backdrop-blur-2xl rounded-2xl md:rounded-3xl border border-slate-200/70 shadow-[0_12px_40px_-8px_rgba(15,23,42,0.06),inset_0_1px_1px_rgba(255,255,255,0.95)] overflow-visible relative z-10 mx-auto md:mx-0 p-2 sm:p-3 md:p-4 pt-3 md:pt-6 gap-2 md:gap-3">
+                    {/* Chú dơi Halloween vỗ cánh đặt chính xác tại vị trí khoanh đỏ */}
+                    <div 
+                        className="absolute top-1 sm:top-1.5 md:top-2 left-2 sm:left-4 md:left-6 z-50 pointer-events-auto select-none group cursor-pointer"
+                        title="🦇 Chúc mừng lễ hội Halloween! 🎃"
+                    >
+                        <img 
+                            src={`${import.meta.env.BASE_URL}halloween/bat_frame_by_frame.webp`} 
+                            alt="Halloween Bat" 
+                            className="w-16 sm:w-20 md:w-24 h-auto object-contain filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.22)] hover:scale-125 transition-transform duration-200" 
+                            onError={(e) => {
+                                const target = e.currentTarget;
+                                if (!target.dataset.fallback) {
+                                    target.dataset.fallback = '1';
+                                    target.src = `${import.meta.env.BASE_URL}halloween/bat_frame_by_frame.gif`;
+                                }
+                            }}
+                        />
+                        {/* Interactive Halloween Tooltip */}
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2.5 py-1 bg-slate-900/95 text-amber-300 text-[11px] font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 border border-amber-500/30 flex items-center gap-1.5 backdrop-blur-sm">
+                            <span>🎃</span>
+                            <span>Happy Halloween!</span>
+                        </div>
+                    </div>
                     {inlineMode === 'CANCEL' ? (
                         <div className="flex-1 flex flex-col h-full p-4 md:p-6 bg-white/90 rounded-2xl border border-red-100 overflow-hidden animate-fade-in justify-between">
                             {/* Header */}

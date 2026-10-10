@@ -42,78 +42,78 @@ HEADERS = {
 }
 
 MODEL_MAP = {
-    # VF 3
-    "VF3":        ("VF 3",   ""),
-    "VF301":      ("VF 3",   "Tiêu chuẩn 1 màu"),
-    "VF302":      ("VF 3",   "Tiêu chuẩn 2 màu"),
-    "VF304":      ("VF 3",   "Nâng cao 2 màu"),
-    "VF305":      ("VF 3",   "Plus tiêu chuẩn 2 màu"),
-    "VF306":      ("VF 3",   "Plus nâng cao 2 màu"),
-    # VF 2
-    "VF2":        ("VF 2",   "Màu cơ bản"),
-    "VF201":      ("VF 2",   "Màu nâng cao"),
-    # VF 5
-    "VF5":        ("VF 5",   ""),
-    "VF501":      ("VF 5",   "Plus cơ bản"),
-    "VF502":      ("VF 5",   "S"),
-    "VF503":      ("VF 5",   "Plus nâng cao"),
+    # VF 3 (Web App: Base, Base Tiêu chuẩn 2, Plus)
+    "VF3":        ("VF 3",   "Base"),
+    "VF301":      ("VF 3",   "Base"),
+    "VF302":      ("VF 3",   "Base"),
+    "VF304":      ("VF 3",   "Base"),
+    "VF305":      ("VF 3",   "Plus"),
+    "VF306":      ("VF 3",   "Plus"),
+    # VF 2 (Web App: Tiêu chuẩn, Base, Plus)
+    "VF2":        ("VF 2",   "Base"),
+    "VF201":      ("VF 2",   "Plus"),
+    # VF 5 (Web App: Plus)
+    "VF5":        ("VF 5",   "Plus"),
+    "VF501":      ("VF 5",   "Plus"),
+    "VF502":      ("VF 5",   "Plus"),
+    "VF503":      ("VF 5",   "Plus"),
     "VF504":      ("VF 5",   "Plus"),
-    "HERIO":      ("VF 5",   "Herio Green"),
-    "HERIOTC2":   ("VF 5",   "Herio Green TC2"),
-    # VF 6
-    "VF6":        ("VF 6",   ""),
-    "VF601":      ("VF 6",   "Eco Nâng cấp"),
-    "VF602":      ("VF 6",   "Plus Nâng cấp"),
+    "HERIO":      ("VF 5",   "Plus"),
+    "HERIOTC2":   ("VF 5",   "Plus"),
+    # VF 6 (Web App: Eco Tiêu chuẩn, Plus)
+    "VF6":        ("VF 6",   "Plus"),
+    "VF601":      ("VF 6",   "Eco Tiêu chuẩn"),
+    "VF602":      ("VF 6",   "Plus"),
     "VF603":      ("VF 6",   "Eco Tiêu chuẩn"),
-    "VF604":      ("VF 6",   "Plus 1 màu"),
-    "VF605":      ("VF 6",   "Plus 2 màu"),
-    "VF607":      ("VF 6",   "Eco nâng cao"),
+    "VF604":      ("VF 6",   "Plus"),
+    "VF605":      ("VF 6",   "Plus"),
+    "VF607":      ("VF 6",   "Eco Tiêu chuẩn"),
     "VF608":      ("VF 6",   "Plus"),
-    "VF609":      ("VF 6",   "Plus 2 màu nâng cao"),
-    # VF 7
-    "VF7":        ("VF 7",   ""),
+    "VF609":      ("VF 6",   "Plus"),
+    # VF 7 (Web App: Eco, Eco_HUD, Eco Tiêu chuẩn 1, Eco Tiêu chuẩn 2, Plus Tiêu chuẩn, Plus Nâng cấp, Plus_Metal Tiêu chuẩn...)
+    "VF7":        ("VF 7",   "Plus Tiêu chuẩn"),
     "VF701":      ("VF 7",   "Eco Tiêu chuẩn 1"),
-    "VF702":      ("VF 7",   "Plus trần thép Nâng cấp"),
-    "VF703":      ("VF 7",   "Plus trần kính Nâng cấp"),
+    "VF702":      ("VF 7",   "Plus Nâng cấp"),
+    "VF703":      ("VF 7",   "Plus Nâng cấp"),
     "VF706":      ("VF 7",   "Eco Tiêu chuẩn 2"),
-    "VF707":      ("VF 7",   "Plus trần thép 1 cầu"),
-    "VF708":      ("VF 7",   "Plus trần kính 1 cầu"),
-    "VF713":      ("VF 7",   "Eco HUD"),
-    "VF784":      ("VF 7",   "Plus trần thép 2 cầu"),
-    "VF793":      ("VF 7",   "Plus trần thép 2 cầu TC3"),
-    "VF794":      ("VF 7",   "Plus trần thép 2 cầu NC"),
-    # VF 8
-    "VF8":        ("VF 8",   ""),
+    "VF707":      ("VF 7",   "Plus Tiêu chuẩn 1"),
+    "VF708":      ("VF 7",   "Plus Tiêu chuẩn 2"),
+    "VF713":      ("VF 7",   "Eco_HUD"),
+    "VF784":      ("VF 7",   "Plus_Metal Tiêu chuẩn 2 (2 Cầu)"),
+    "VF793":      ("VF 7",   "Plus_Metal Tiêu chuẩn 2 (2 Cầu)"),
+    "VF794":      ("VF 7",   "Plus Nâng cấp"),
+    # VF 8 (Web App: Eco Tiêu chuẩn, Eco Nâng cấp, Plus, Eco_US, Plus_US, All New)
+    "VF8":        ("VF 8",   "Plus"),
     "PD1U01":     ("VF 8",   "Eco Tiêu chuẩn"),
     "PD1U02":     ("VF 8",   "Plus"),
-    "PD1U03":     ("VF 8",   "Lux Plus"),
+    "PD1U03":     ("VF 8",   "Plus"),
     "PD1U05":     ("VF 8",   "Eco Nâng cấp"),
-    "PD1U07":     ("VF 8",   "Plus Limited"),
-    "VF806":      ("VF 8",   "Plus nâng cao"),
-    "VF8THM":     ("VF 8",   "Thế hệ mới"),
-    "VF8THMMNC":  ("VF 8",   "Thế hệ mới nâng cao"),
-    "VF8 S":      ("VF 8",   "Eco"),
-    # VF 9
-    "VF9":        ("VF 9",   ""),
-    "PE1U01":     ("VF 9",   "Eco"),
-    "PE1U06":     ("VF 9",   "Plus 7 chỗ CATL trần thép"),
-    "PE1U08":     ("VF 9",   "Plus 6 chỗ CATL trần kính"),
-    "PE1U09":     ("VF 9",   "Plus 6 chỗ CATL trần thép"),
-    "VF908":      ("VF 9",   "Plus 6 chỗ trần thép"),
-    "VF926":      ("VF 9",   "Plus 7 chỗ trần thép"),
+    "PD1U07":     ("VF 8",   "Plus"),
+    "VF806":      ("VF 8",   "Plus"),
+    "VF8THM":     ("VF 8",   "All New"),
+    "VF8THMMNC":  ("VF 8",   "All New"),
+    "VF8 S":      ("VF 8",   "Eco Tiêu chuẩn"),
+    # VF 9 (Web App: Plus_CAP_Metal_3ZONES, Plus_Metal_3ZONES, Eco_3ZONES, Plus_Metal, Plus_CAP_Metal, Plus_CAP)
+    "VF9":        ("VF 9",   "Plus_Metal_3ZONES"),
+    "PE1U01":     ("VF 9",   "Eco_3ZONES"),
+    "PE1U06":     ("VF 9",   "Plus_Metal_3ZONES"),
+    "PE1U08":     ("VF 9",   "Plus_CAP_Metal_3ZONES"),
+    "PE1U09":     ("VF 9",   "Plus_Metal_3ZONES"),
+    "VF908":      ("VF 9",   "Plus_Metal_3ZONES"),
+    "VF926":      ("VF 9",   "Plus_Metal_3ZONES"),
     # LIMO / EC Van / Khác
     "LIMO":       ("LIMO",   "LIMO"),
-    "ECVAN":      ("EC Van", "Tiêu chuẩn"),
-    "ECVAN01":    ("EC Van", "Tiêu chuẩn"),
-    "ECVANNC":    ("EC Van", "Nâng cao"),
-    "ECVANNCCT":  ("EC Van", "Nâng cao Cửa trượt"),
-    "MINIOGREEN": ("MINIO",  "Green"),
-    "MINIOMNC8":  ("MINIO",  "Màu nâng cao"),
-    "MinioGreen": ("MINIO",  "Green"),
-    "Nerio":      ("NERIO",  "Green"),
+    "ECVAN":      ("EC Van", "Base"),
+    "ECVAN01":    ("EC Van", "Base"),
+    "ECVANNC":    ("EC Van", "Plus"),
+    "ECVANNCCT":  ("EC Van", "Plus_Cửa trượt"),
+    "MINIOGREEN": ("MINIO",  "MINIO"),
+    "MINIOMNC8":  ("MINIO",  "MINIO"),
+    "MinioGreen": ("MINIO",  "MINIO"),
+    "Nerio":      ("NERIO",  "NERIO"),
     "LACHONG":    ("LẠC HỒNG", "Tiêu chuẩn"),
-    "VFMPV7":     ("VF MPV 7", "Tiêu chuẩn"),
-    "VFMPV7MNC":  ("VF MPV 7", "Màu nâng cao"),
+    "VFMPV7":     ("VF LIMO", "MPV 7"),
+    "VFMPV7MNC":  ("VF LIMO", "MPV 7"),
 }
 
 # Bảng ánh xạ chính xác Mã màu Ngoại thất Cyber sang Tên màu chuẩn Web App (constants.ts)
@@ -822,6 +822,34 @@ def upsert_to_supabase_khoxe(records: list):
         if not rec.get("trang_thai"):
             rec["trang_thai"] = "Chưa ghép"
         clean_records.append(rec)
+
+    if not clean_records:
+        return 0, 0
+
+    # QUY TẮC BẢO VỆ: Xe đã từng được thêm vào hệ thống thì không được thêm lại
+    try:
+        all_vins = [r["vin"] for r in clean_records if r.get("vin")]
+        if all_vins:
+            existing_vins = set()
+            for b_idx in range(0, len(all_vins), 50):
+                batch = all_vins[b_idx:b_idx + 50]
+                v_param = f"in.({','.join(batch)})"
+                chk_res = requests.get(
+                    f"{SUPABASE_URL}/rest/v1/khoxe?select=vin&vin={v_param}",
+                    headers=HEADERS,
+                    timeout=10
+                )
+                if chk_res.status_code == 200:
+                    for x in chk_res.json():
+                        if x.get("vin"):
+                            existing_vins.add(x["vin"].strip().upper())
+            if existing_vins:
+                clean_records = [r for r in clean_records if r["vin"] not in existing_vins]
+    except Exception as e_chk:
+        print(f"[Supabase existing check warning]: {e_chk}", file=sys.stderr)
+
+    if not clean_records:
+        return 0, 0
 
     for i in range(0, len(clean_records), CHUNK_SIZE):
         chunk = clean_records[i:i + CHUNK_SIZE]

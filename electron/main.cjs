@@ -84,8 +84,9 @@ ipcMain.on('quit-and-install', () => {
 
 // --- CyberSoft Allocation Sync IPC ---
 const { spawn } = require('child_process');
-ipcMain.handle('cyber-sync-allocations', async (event, { fromDate, toDate, preview }) => {
+ipcMain.handle('cyber-sync-allocations', async (event, options = {}) => {
     return new Promise((resolve, reject) => {
+        const { fromDate, toDate, preview } = options;
         const scriptPath = path.resolve(__dirname, '..', 'scripts', 'sync_thuan_an_allocations.py');
         const args = [scriptPath];
         if (fromDate) args.push('--from', fromDate);
@@ -97,7 +98,7 @@ ipcMain.handle('cyber-sync-allocations', async (event, { fromDate, toDate, previ
         let stderr = '';
 
         try {
-            py.stdin.write(JSON.stringify({ fromDate, toDate, preview, ...(arguments[1] || {}) }));
+            py.stdin.write(JSON.stringify(options));
             py.stdin.end();
         } catch (e) {}
 
