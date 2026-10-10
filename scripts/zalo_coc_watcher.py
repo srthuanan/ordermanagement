@@ -10,6 +10,7 @@ import os
 import sys
 import time
 import json
+import re
 import base64
 import hashlib
 import logging
@@ -298,8 +299,8 @@ def sync_coc_to_supabase_orders(vins, receipt_date):
             continue
 
         try:
-            # 1. Tra cứu đơn hàng trong yeucauxhd
-            lookup_url = f"{SUPABASE_URL}/rest/v1/yeucauxhd?vin=eq.{clean_vin}&select=so_don_hang,ten_khach_hang,tvbh,ghi_chu_admin"
+            # 1. Tra cứu đơn hàng trong yeucauxhd & donhang
+            lookup_url = f"{SUPABASE_URL}/rest/v1/yeucauxhd?vin=eq.{clean_vin}&select=so_don_hang,ten_khach_hang,tvbh,ghi_chu_admin,ngay_coc_ve"
             req_lookup = urllib.request.Request(lookup_url, headers=headers, method="GET")
             orders = []
             try:
@@ -309,6 +310,23 @@ def sync_coc_to_supabase_orders(vins, receipt_date):
                 logging.warning(f"Lỗi tra cứu yeucauxhd cho VIN {clean_vin}: {le}")
 
             order_info = orders[0] if orders else None
+
+            if not order_info:
+                try:
+                    lookup_dh = f"{SUPABASE_URL}/rest/v1/donhang?vin=eq.{clean_vin}&select=so_don_hang,ten_khach_hang,tvbh,ngay_coc_ve"
+                    req_dh_get = urllib.request.Request(lookup_dh, headers=headers, method="GET")
+                    with urllib.request.urlopen(req_dh_get, timeout=15) as resp_dh:
+                        dh_list = json.loads(resp_dh.read().decode("utf-8"))
+                        if dh_list:
+                            order_info = dh_list[0]
+                except Exception:
+                    pass
+
+            existing_coc = ((order_info.get("ngay_coc_ve") or "") if order_info else "").strip()
+            # Nếu xe này đã có đúng ngày COC về này rồi -> Bỏ qua mọi thao tác ghi đè và TUYỆT ĐỐI KHÔNG BẮN THÔNG BÁO LẠI
+            if existing_coc and existing_coc == target_date:
+                logging.info(f"ℹ️ Xe {clean_vin} đã có ngày COC về ({existing_coc}). Bỏ qua cập nhật & không gửi thông báo trùng lặp.")
+                continue
 
             # 2. Cập nhật yeucauxhd nếu tìm thấy
             if order_info:
@@ -358,7 +376,7 @@ def sync_coc_to_supabase_orders(vins, receipt_date):
             except Exception:
                 pass
 
-            # 6. Bắn thông báo chuông cho TVBH và Admin
+            # 6. Bắn thông báo chuông cho TVBH và Admin (chỉ gửi nếu chưa từng gửi thông báo COC cho VIN này)
             if order_info:
                 tvbh = (order_info.get("tvbh") or "").strip()
                 cust_name = order_info.get("ten_khach_hang") or "Khách hàng"
@@ -367,47 +385,74 @@ def sync_coc_to_supabase_orders(vins, receipt_date):
                 notif_msg = f"🚗 Xe VIN {clean_vin} (KH: {cust_name}) đã có giấy tờ COC về ngày {target_date}! Sẵn sàng bàn giao xe."
 
                 if tvbh and tvbh not in notified_users:
-                    notified_users.add(tvbh)
-                    notif_body = {
+                    # Kiểm tra xem TVBH đã nhận thông báo về xe này chưa
+                    already_sent_tvbh = False
+                    try:
+                        chk_url = f"{SUPABASE_URL}/rest/v1/interactions?recipient=eq.{urllib.parse.quote(tvbh)}&metadata->>vin=eq.{clean_vin}&select=id"
+                        chk_req = urllib.request.Request(chk_url, headers=headers, method="GET")
+                        with urllib.request.urlopen(chk_req, timeout=10) as c_resp:
+                            c_data = json.loads(c_resp.read().decode("utf-8"))
+                            if c_data and len(c_data) > 0:
+                                already_sent_tvbh = True
+                    except Exception:
+                        pass
+
+                    if already_sent_tvbh:
+                        logging.info(f"ℹ️ Bỏ qua gửi chuông cho TVBH {tvbh}: Đã có thông báo COC xe {clean_vin} từ trước.")
+                    else:
+                        notified_users.add(tvbh)
+                        notif_body = {
+                            "category": "NOTIFICATION",
+                            "actor_id": "System",
+                            "actor_name": "Zalo COC Watcher",
+                            "recipient": tvbh,
+                            "message": notif_msg,
+                            "type": "success",
+                            "target_view": "orders",
+                            "target_id": order_no,
+                            "is_read": False,
+                            "metadata": {"vin": clean_vin, "ngay_coc_ve": target_date}
+                        }
+                        notif_url = f"{SUPABASE_URL}/rest/v1/interactions"
+                        req_notif = urllib.request.Request(notif_url, data=json.dumps(notif_body).encode("utf-8"), headers=headers, method="POST")
+                        try:
+                            with urllib.request.urlopen(req_notif, timeout=15) as _:
+                                pass
+                        except Exception as ne:
+                            logging.warning(f"Lỗi gửi thông báo cho TVBH {tvbh}: {ne}")
+
+                # Bắn cho ADMINS (kiểm tra trùng lặp)
+                already_sent_admin = False
+                try:
+                    chk_adm_url = f"{SUPABASE_URL}/rest/v1/interactions?recipient=eq.ADMINS&metadata->>vin=eq.{clean_vin}&select=id"
+                    chk_adm_req = urllib.request.Request(chk_adm_url, headers=headers, method="GET")
+                    with urllib.request.urlopen(chk_adm_req, timeout=10) as a_resp:
+                        a_data = json.loads(a_resp.read().decode("utf-8"))
+                        if a_data and len(a_data) > 0:
+                            already_sent_admin = True
+                except Exception:
+                    pass
+
+                if not already_sent_admin:
+                    admin_notif_body = {
                         "category": "NOTIFICATION",
                         "actor_id": "System",
                         "actor_name": "Zalo COC Watcher",
-                        "recipient": tvbh,
-                        "message": notif_msg,
-                        "type": "success",
-                        "target_view": "orders",
+                        "recipient": "ADMINS",
+                        "message": f"📄 Giấy tờ COC xe {clean_vin} (Đơn {order_no}) đã về ngày {target_date}.",
+                        "type": "info",
+                        "target_view": "invoices",
                         "target_id": order_no,
                         "is_read": False,
                         "metadata": {"vin": clean_vin, "ngay_coc_ve": target_date}
                     }
                     notif_url = f"{SUPABASE_URL}/rest/v1/interactions"
-                    req_notif = urllib.request.Request(notif_url, data=json.dumps(notif_body).encode("utf-8"), headers=headers, method="POST")
+                    req_admin_notif = urllib.request.Request(notif_url, data=json.dumps(admin_notif_body).encode("utf-8"), headers=headers, method="POST")
                     try:
-                        with urllib.request.urlopen(req_notif, timeout=15) as _:
+                        with urllib.request.urlopen(req_admin_notif, timeout=15) as _:
                             pass
-                    except Exception as ne:
-                        logging.warning(f"Lỗi gửi thông báo cho TVBH {tvbh}: {ne}")
-
-                # Bắn cho ADMINS
-                admin_notif_body = {
-                    "category": "NOTIFICATION",
-                    "actor_id": "System",
-                    "actor_name": "Zalo COC Watcher",
-                    "recipient": "ADMINS",
-                    "message": f"📄 Giấy tờ COC xe {clean_vin} (Đơn {order_no}) đã về ngày {target_date}.",
-                    "type": "info",
-                    "target_view": "invoices",
-                    "target_id": order_no,
-                    "is_read": False,
-                    "metadata": {"vin": clean_vin, "ngay_coc_ve": target_date}
-                }
-                notif_url = f"{SUPABASE_URL}/rest/v1/interactions"
-                req_admin_notif = urllib.request.Request(notif_url, data=json.dumps(admin_notif_body).encode("utf-8"), headers=headers, method="POST")
-                try:
-                    with urllib.request.urlopen(req_admin_notif, timeout=15) as _:
+                    except Exception:
                         pass
-                except Exception:
-                    pass
 
         except Exception as e:
             logging.error(f"Lỗi cập nhật COC lên Supabase cho xe {vin}: {e}")
@@ -591,10 +636,7 @@ def check_clipboard():
     global last_clipboard_seq, last_clipboard_hash, last_clipboard_time
     try:
         seq = user32.GetClipboardSequenceNumber()
-        if last_clipboard_seq is None:
-            last_clipboard_seq = seq
-            return
-        if seq == last_clipboard_seq:
+        if last_clipboard_seq == seq:
             return
 
         last_clipboard_seq = seq
@@ -610,74 +652,78 @@ def check_clipboard():
             except Exception:
                 pass
 
-        # Xử lý nếu bộ nhớ tạm là danh sách đường dẫn file ảnh
+        # Xử lý nếu bộ nhớ tạm là danh sách đường dẫn file (Zalo cache file không có đuôi .jpg thông thường)
         if isinstance(img, list) and len(img) > 0:
             for item in img:
-                if isinstance(item, str) and item.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp', '.webp', '.jfif')):
+                if isinstance(item, str) and os.path.exists(item):
                     try:
                         img = Image.open(item)
                         break
                     except Exception:
                         pass
 
-        # Nếu Pillow không bắt được, dùng PowerShell worker làm fallback dự phòng 100%
+        # Nếu Pillow không bắt được, dùng PowerShell worker (-Sta) làm fallback dự phòng 100%
         if not isinstance(img, Image.Image):
             try:
                 ps_worker = os.path.join(SCRIPT_DIR, "get_clipboard_image.ps1")
                 if os.path.exists(ps_worker):
                     res = subprocess.run(
-                        ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", ps_worker, "-OutPath", TEMP_CLIPBOARD_IMG],
+                        ["powershell", "-NoProfile", "-Sta", "-ExecutionPolicy", "Bypass", "-File", ps_worker, "-OutPath", TEMP_CLIPBOARD_IMG],
                         capture_output=True, text=True, timeout=6, creationflags=0x08000000
                     )
                     if "OK:" in (res.stdout or "") and os.path.exists(TEMP_CLIPBOARD_IMG):
                         img = Image.open(TEMP_CLIPBOARD_IMG)
-            except Exception:
-                pass
+            except Exception as pe:
+                logging.warning(f"Lỗi fallback PowerShell clipboard: {pe}")
 
-        if isinstance(img, Image.Image):
-            w, h = img.size
-            # Bỏ qua nếu là ảnh dải hẹp chụp màn hình terminal/thanh công cụ (tỷ lệ > 2.8 hoặc chiều cao < 200px)
-            if (w > h and (w / h) > 2.8) or min(w, h) < 200:
-                return
+        if not isinstance(img, Image.Image):
+            logging.info(f"📋 Bắt sự kiện Clipboard ({seq}) nhưng không phải định dạng hình ảnh.")
+            return
 
-            img.convert("RGB").save(TEMP_CLIPBOARD_IMG, "JPEG", quality=92)
+        w, h = img.size
+        # Bỏ qua nếu là ảnh dải hẹp chụp màn hình terminal/thanh công cụ (tỷ lệ > 2.8 hoặc chiều cao < 200px)
+        if (w > h and (w / h) > 2.8) or min(w, h) < 200:
+            logging.info(f"⏭️ Bỏ qua ảnh chụp dải hẹp/thanh công cụ ({w}x{h}).")
+            return
 
-            # Kiểm tra mã băm để tránh quét lặp lại 100% cùng một ảnh trong vòng 60 giây
-            with open(TEMP_CLIPBOARD_IMG, "rb") as f:
-                cur_hash = hashlib.md5(f.read()).hexdigest()
-            now = time.time()
-            if cur_hash == last_clipboard_hash and (now - last_clipboard_time) < 60:
-                logging.info("⏭️ Bỏ qua ảnh: Trùng lặp hoàn toàn với ảnh vừa quét trước đó.")
-                try:
-                    if os.path.exists(TEMP_CLIPBOARD_IMG):
-                        os.remove(TEMP_CLIPBOARD_IMG)
-                except Exception:
-                    pass
-                return
+        img.convert("RGB").save(TEMP_CLIPBOARD_IMG, "JPEG", quality=92)
 
-            last_clipboard_hash = cur_hash
-            last_clipboard_time = now
-
-            logging.info(f"📋 BẮT ĐƯỢC ẢNH TỪ CLIPBOARD (Kích thước: {w}x{h})!")
-            show_windows_notification("🚗 Zalo COC Watcher", f"📋 Đã nhận ảnh sao chép ({w}x{h})! Đang kiểm tra nội dung...")
-
-            # Quét nhanh qua Windows OCR để kiểm tra nội dung văn bản
-            ocr_text = run_local_fast_ocr(TEMP_CLIPBOARD_IMG)
-            is_coc, reason = has_coc_signals(ocr_text)
-
-            # BẮT BUỘC phải khớp từ khóa biên bản COC hoặc số khung xe
-            if is_coc:
-                logging.info(f"🚀 Gửi AI Gemini phân tích ảnh từ Clipboard ({reason})...")
-                process_coc_image(TEMP_CLIPBOARD_IMG, "Clipboard (Ảnh sao chép)")
-            else:
-                logging.info(f"ℹ️ Ảnh Clipboard không phải biên bản COC ({reason}).")
-
+        # Kiểm tra mã băm để tránh quét lặp lại cùng một ảnh trong vòng 3 giây
+        with open(TEMP_CLIPBOARD_IMG, "rb") as f:
+            cur_hash = hashlib.md5(f.read()).hexdigest()
+        now = time.time()
+        if cur_hash == last_clipboard_hash and (now - last_clipboard_time) < 3:
+            logging.info("⏭️ Bỏ qua ảnh: Thao tác copy lặp trong vòng 3 giây.")
             try:
                 if os.path.exists(TEMP_CLIPBOARD_IMG):
                     os.remove(TEMP_CLIPBOARD_IMG)
             except Exception:
                 pass
-        # Nếu sao chép text, link, file... (không phải ảnh): Bỏ qua âm thầm, không hiển thị cảnh báo gây phiền
+            return
+
+        last_clipboard_hash = cur_hash
+        last_clipboard_time = now
+
+        logging.info(f"📋 BẮT ĐƯỢC ẢNH TỪ CLIPBOARD (Kích thước: {w}x{h})!")
+        show_windows_notification("🚗 Zalo COC Watcher", f"📋 Đã nhận ảnh sao chép ({w}x{h})! Đang kiểm tra nội dung...")
+
+        # Quét nhanh qua Windows OCR để kiểm tra nội dung văn bản
+        ocr_text = run_local_fast_ocr(TEMP_CLIPBOARD_IMG)
+        is_coc, reason = has_coc_signals(ocr_text)
+
+        # BẮT BUỘC phải khớp từ khóa biên bản COC hoặc số khung xe
+        if is_coc:
+            logging.info(f"🚀 Gửi AI Gemini phân tích ảnh từ Clipboard ({reason})...")
+            process_coc_image(TEMP_CLIPBOARD_IMG, "Clipboard (Ảnh sao chép)")
+        else:
+            logging.info(f"ℹ️ Ảnh Clipboard không phải biên bản COC ({reason}).")
+
+        try:
+            if os.path.exists(TEMP_CLIPBOARD_IMG):
+                os.remove(TEMP_CLIPBOARD_IMG)
+        except Exception:
+            pass
+    # Nếu sao chép text, link, file... (không phải ảnh): Bỏ qua âm thầm, không hiển thị cảnh báo gây phiền
     except Exception as e:
         logging.warning(f"Lỗi kiểm tra Clipboard: {e}")
 

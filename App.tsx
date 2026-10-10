@@ -369,17 +369,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         prevStockEnabledRef.current = isStockEnabled;
     }, [isStockEnabled, showToast]);
 
-    const prevCrmEnabledRef = useRef<boolean | null>(null);
-    useEffect(() => {
-        if (prevCrmEnabledRef.current !== null && prevCrmEnabledRef.current !== isCrmEnabled) {
-            if (!isCrmEnabled) {
-                showToast('Hệ Thống Tạm Đóng Nhận KHTN', 'Quản trị viên đang tạm thời tắt tính năng nhập khách hàng tiềm năng.', 'warning', 8000);
-            } else {
-                showToast('Hệ Thống Mở Lại KHTN', 'Tính năng nhập khách hàng tiềm năng đã được mở lại cho toàn showroom.', 'success', 8000);
-            }
-        }
-        prevCrmEnabledRef.current = isCrmEnabled;
-    }, [isCrmEnabled, showToast]);
 
     // --- TÍNH NĂNG TỰ ĐỘNG REFRESH KHI KHO ĐƯỢC MỞ LẠI ---
     const [reputation, setReputation] = useState<{ score: number; total: number; matched: number; bonus?: number, isNewUser?: boolean } | undefined>(undefined);

@@ -26,16 +26,15 @@ try {
     if ([System.Windows.Forms.Clipboard]::ContainsFileDropList()) {
         $files = [System.Windows.Forms.Clipboard]::GetFileDropList()
         foreach ($f in $files) {
-            $ext = [System.IO.Path]::GetExtension($f).ToLower()
-            if ($ext -in @('.jpg', '.jpeg', '.png', '.bmp', '.webp', '.jfif')) {
+            try {
+                $testImg = [System.Drawing.Image]::FromFile($f)
+                $w = $testImg.Width
+                $h = $testImg.Height
+                $testImg.Dispose()
                 Copy-Item -Path $f -Destination $OutPath -Force
-                $img = [System.Drawing.Image]::FromFile($OutPath)
-                $w = $img.Width
-                $h = $img.Height
-                $img.Dispose()
                 Write-Host "OK:$($w)x$($h)"
                 exit 0
-            }
+            } catch {}
         }
     }
 } catch {
