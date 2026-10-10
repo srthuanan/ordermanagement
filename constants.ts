@@ -29,7 +29,7 @@ export const allPossibleVersions = [
 // --- Color Rules ---
 
 export const defaultExteriors = [
-    "Brahminy White (CE18)", "Yellow (CE1U)", "Summer Yellow (CE1U)", "Sunset ORB (CE1A)", "Crimson Red (CE1M)",
+    "White (CE18)", "Yellow (CE1U)", "Summer Yellow (CE1U)", "Sunset ORB (CE1A)", "Crimson Red (CE1M)",
     "Vinfast Blue (CE1N)", "Neptune Grey (CE14)", "Jet Black (CE11)", "Electric Blue (CE1J)",
     "Zenith Grey (CE1V)", "Jet Black Roof- Summer Yellow Body (111U)",
     "Brahminy White Roof- Aquatic Azure Body (181Y)", "Brahminy White Roof- Rose Pink Body (1821)",
@@ -65,7 +65,7 @@ export const exteriorColorRules = [
     {
         models: ["vf 2", "vf2"],
         colors: [
-            "Infinity Blanc (CE18)",
+            "White (CE18)",
             "Desat Silver (CE17)",
             "Solar Ruby (CE2Q)",
             "Urbant Mint (CE1W)",
@@ -79,7 +79,7 @@ export const exteriorColorRules = [
         models: ["vf 8"],
         versions: ["all new"],
         colors: [
-            "Infinity Blanc (CE18)",
+            "White (CE18)",
             "Starburst Blue (CE33)",
             "Solar Ruby (CE2Q)",
             "Jet Black (CE11)",

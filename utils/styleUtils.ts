@@ -308,7 +308,7 @@ export const getCarImage = (model?: string, exteriorColor?: string, version?: st
     const isEco = lowerVersion.includes('eco');
     const isPlus = lowerVersion.includes('plus');
 
-    // 1. Extract color code inside parentheses, e.g., "Infinity Blanc (CE18)"
+    // 1. Extract color code inside parentheses, e.g., "White (CE18)"
     const codeMatch = lowerExterior.match(/\(([^)]+)\)/);
     let colorCodeKey = '';
     if (codeMatch && codeMatch[1]) {

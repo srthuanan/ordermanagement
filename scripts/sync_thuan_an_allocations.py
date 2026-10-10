@@ -120,7 +120,7 @@ MODEL_MAP = {
 WEB_EXTERIOR_COLORS = {
     # 1 màu
     "CE11": "Jet Black (CE11)",
-    "CE18": "Brahminy White (CE18)",
+    "CE18": "White (CE18)",
     "CE17": "Silver (CE17)",
     "CE2Q": "Solar Ruby (CE2Q)",
     "CE1W": "Urbant Mint (CE1W)",

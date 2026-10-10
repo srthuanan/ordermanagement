@@ -1,4 +1,4 @@
-﻿"""
+"""
 sync_kho_xe_from_cyber.py
 =========================
 Đồng bộ tồn kho xe VinFast từ CyberSoft ERP → Supabase (bảng khoxe).
@@ -89,7 +89,7 @@ COLOR_MAP = {
     "CE15": "Brahminy White (CE15)",
     "CE16": "Sage Green (CE16)",
     "CE17": "Burgundy (CE17)",
-    "CE18": "Brahminy White (CE18)",
+    "CE18": "White (CE18)",
     "CE19": "Khaki Brown (CE19)",
     "CE1M": "Brahminy White (CE1M)",
     "111V": "Silver (111V)",
