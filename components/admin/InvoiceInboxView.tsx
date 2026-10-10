@@ -1102,6 +1102,19 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     <span>Đang Chờ TVBH Scan Lại</span>
                                                 </div>
                                             )}
+                                            {(() => {
+                                                const coc = (selectedOrder as any)?.['Ngày COC về'] || (selectedOrder as any)?.ngay_coc_ve || (() => {
+                                                    const m = ((selectedOrder?.['Ghi chú Admin'] || selectedOrder?.ghi_chu_admin || '') as string).match(/\[COC về:\s*([^\]]+)\]/i);
+                                                    return m ? m[1].trim() : '';
+                                                })();
+                                                if (!coc) return null;
+                                                return (
+                                                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-lg text-[10px] font-bold shadow-xs" title={`Hồ sơ COC đã về: ${coc}`}>
+                                                        <i className="fas fa-certificate text-emerald-600 text-[9px]"></i>
+                                                        <span>COC: {coc}</span>
+                                                    </div>
+                                                );
+                                            })()}
                                             {getActions(selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || '').map(action => {
                                                 let variant: 'primary' | 'success' | 'danger' | 'secondary' = 'primary';
                                                 switch (action.type) {

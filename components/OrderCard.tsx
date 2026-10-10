@@ -164,6 +164,16 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
                                 <i className="fas fa-random text-[8px]"></i> Flex
                             </span>
                         )}
+                        {(() => {
+                            const coc = order['Ngày COC về'] || order.ngay_coc_ve;
+                            const hasCoc = Boolean(coc || (order['Ghi chú Admin'] || order.ghi_chu_admin || '').toString().includes('COC về'));
+                            if (!hasCoc) return null;
+                            return (
+                                <span className="inline-flex items-center gap-1 text-[8.5px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 rounded-md shadow-2xs" title={coc ? `Hồ sơ COC về ngày ${coc}` : 'Đã về COC'}>
+                                    <i className="fas fa-certificate text-[7.5px] text-emerald-600"></i> COC
+                                </span>
+                            );
+                        })()}
                     </div>
                 </div>
 

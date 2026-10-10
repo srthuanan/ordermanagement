@@ -45,6 +45,8 @@ export interface Order {
   ghi_chu_xuat_xe?: string;
   "Số CT DNX"?: string;
   "Số CT TD4"?: string;
+  "Ngày COC về"?: string;
+  ngay_coc_ve?: string;
   // other potential fields from components
   [key: string]: any; // Allow for other properties
 }

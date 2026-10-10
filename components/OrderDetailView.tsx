@@ -39,6 +39,22 @@ const formatDateTime = (dateString?: string) => {
     return date.isValid() ? date.format('DD/MM/YYYY HH:mm:ss') : '—';
 };
 
+const formatDateDisplay = (dateString?: string) => {
+    if (!dateString) return '—';
+    const trimmed = dateString.trim();
+    const formats = [
+        "DD/MM/YYYY",
+        "D/M/YYYY",
+        moment.ISO_8601,
+        "DD/MM/YYYY HH:mm:ss",
+        "D/M/YYYY H:m:s",
+        "YYYY-MM-DD HH:mm:ss",
+        "YYYY-MM-DD"
+    ];
+    const date = moment(trimmed, formats, 'vi');
+    return date.isValid() ? date.format('DD/MM/YYYY') : trimmed;
+};
+
 export interface OrderDetailViewProps {
     order: Order | null;
     orderList?: Order[];
@@ -1111,6 +1127,10 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
     const isSupplementRequested = generalStatus === 'yêu cầu bổ sung';
     const adminNotes = (resolvedOrder['Ghi chú Admin'] || resolvedOrder.ghi_chu_admin || '').toString();
+    const cocReceivedDate = resolvedOrder["Ngày COC về"] || resolvedOrder.ngay_coc_ve || (() => {
+        const match = adminNotes.match(/\[COC về:\s*([^\]]+)\]/i);
+        return match ? match[1].trim() : '';
+    })();
     const isRescanRequested = adminNotes.includes('[YÊU CẦU SCAN LẠI]');
     const canCancel = ['chưa ghép', 'đã ghép'].includes(generalStatus);
     const canRequestInvoice = generalStatus === 'đã ghép';
@@ -2241,21 +2261,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                         <span className="font-bold text-slate-200 uppercase">{resolvedOrder['Tên tư vấn bán hàng'] || 'N/A'}</span>
                                                     </p>
 
-                                                    {/* Chứng từ (DNX / TD4) nếu có */}
-                                                    {(resolvedOrder.so_ct_dnx || resolvedOrder['Số CT DNX'] || resolvedOrder.so_ct_td4 || resolvedOrder['Số CT TD4']) && (
-                                                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                                                            {(resolvedOrder.so_ct_dnx || resolvedOrder['Số CT DNX']) && (
-                                                                <span className="bg-amber-500/20 border border-amber-400/30 text-amber-200 px-2 py-0.5 rounded-md font-mono font-bold text-[9px] shadow-xs">
-                                                                    DNX: {resolvedOrder.so_ct_dnx || resolvedOrder['Số CT DNX']}
-                                                                </span>
-                                                            )}
-                                                            {(resolvedOrder.so_ct_td4 || resolvedOrder['Số CT TD4']) && (
-                                                                <span className="bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 px-2 py-0.5 rounded-md font-mono font-bold text-[9px] shadow-xs">
-                                                                    TD4: {resolvedOrder.so_ct_td4 || resolvedOrder['Số CT TD4']}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    )}
+
                                                 </div>
 
                                                 {/* Right Column: 2 Mã HĐ nằm với nhau căn phải - Không đóng khung */}
@@ -2482,9 +2488,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                         {/* Card 4: Xuất Hóa Đơn */}
                                                         <div className={`px-3 py-1.5 md:py-2 rounded-xl border shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10 ${
                                                             hasInvoiced
-                                                                ? isAllCompleted
-                                                                    ? 'bg-white/95 hover:bg-white border-slate-200/90'
-                                                                    : 'bg-blue-500/[0.08] hover:bg-blue-500/[0.12] border-blue-400/50 shadow-[0_0_15px_rgba(59,130,246,0.12)]'
+                                                                ? 'bg-white/95 hover:bg-white border-slate-200/90'
                                                                 : 'bg-slate-100/70 border-slate-200/50 opacity-60'
                                                         }`}>
                                                             <div className="flex items-center gap-2.5 min-w-0 flex-1">
@@ -2503,6 +2507,38 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                                 </div>
                                                             </div>
                                                             {hasInvoiced ? (
+                                                                <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
+                                                            ) : <div className="w-3.5" />}
+                                                        </div>
+
+                                                        {/* Flowchart Directional Arrow 4 -> 5 */}
+                                                        <div className="flex items-center justify-center py-0.5">
+                                                            <svg className={`w-3.5 h-3.5 transition-colors ${cocReceivedDate ? 'text-emerald-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                                                <line x1="12" y1="4" x2="12" y2="20" />
+                                                                <polyline points="18 14 12 20 6 14" />
+                                                            </svg>
+                                                        </div>
+
+                                                        {/* Card 5: Hồ Sơ COC */}
+                                                        <div className={`px-3 py-1.5 md:py-2 rounded-xl border shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10 ${
+                                                            cocReceivedDate
+                                                                ? 'bg-emerald-500/[0.08] hover:bg-emerald-500/[0.12] border-emerald-400/50 shadow-[0_0_15px_rgba(16,185,129,0.12)]'
+                                                                : 'bg-slate-100/70 border-slate-200/50 opacity-60'
+                                                        }`}>
+                                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                                <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${
+                                                                    cocReceivedDate ? 'text-emerald-500' : 'text-slate-300'
+                                                                }`}>
+                                                                    <i className="fas fa-certificate text-sm"></i>
+                                                                </div>
+                                                                <div className="min-w-0 flex-1 flex flex-col justify-center">
+                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">5. Hồ Sơ COC</p>
+                                                                    <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
+                                                                        {cocReceivedDate ? formatDateDisplay(cocReceivedDate) : 'Chưa có COC'}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            {cocReceivedDate ? (
                                                                 <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
                                                             ) : <div className="w-3.5" />}
                                                         </div>

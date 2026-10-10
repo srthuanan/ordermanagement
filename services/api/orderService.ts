@@ -10,13 +10,14 @@ export const getPaginatedData = async (_?: string[], __?: string, ___?: boolean)
         let query = supabase.from('donhang').select('*').not('ket_qua', 'ilike', 'Đã hủy%');
         const [{ data, error }, { data: yeucauList }] = await Promise.all([
             query,
-            supabase.from('yeucauxhd').select('so_don_hang, ghi_chu_admin, url_hop_dong, url_de_nghi_xhd')
+            supabase.from('yeucauxhd').select('so_don_hang, ghi_chu_admin, url_hop_dong, url_de_nghi_xhd, ngay_coc_ve')
         ]);
         if (error) throw error;
         const yeucauMap = new Map((yeucauList || []).map((y: any) => [y.so_don_hang?.trim(), y]));
 
         const formattedData = (data || []).map((order: any) => {
             const yc = yeucauMap.get(order.so_don_hang?.trim());
+            const cocDate = order.ngay_coc_ve || yc?.ngay_coc_ve || '';
             return {
                 'Tên tư vấn bán hàng': order.ten_tu_van_ban_hang, 'Tên khách hàng': order.ten_khach_hang, 'Dòng xe': order.dong_xe,
                 'Phiên bản': order.phien_ban, 'Ngoại thất': order.ngoai_that, 'Nội thất': order.noi_that,
@@ -31,6 +32,8 @@ export const getPaginatedData = async (_?: string[], __?: string, ___?: boolean)
                 'LinkDeNghiXHD': yc?.url_de_nghi_xhd || order.link_de_nghi_xhd,
                 'Ghi chú Admin': yc?.ghi_chu_admin || '',
                 'ghi_chu_admin': yc?.ghi_chu_admin || '',
+                'Ngày COC về': cocDate,
+                'ngay_coc_ve': cocDate,
                 'so_ct_dnx': order.so_ct_dnx || '',
                 'so_ct_td4': order.so_ct_td4 || '',
                 'ghi_chu_xuat_xe': order.ghi_chu_xuat_xe || '',
@@ -71,7 +74,9 @@ export const fetchAllArchivedData = async (): Promise<ApiResult> => {
             'Số CT DNX': order.so_ct_dnx || '',
             'Số CT TD4': order.so_ct_td4 || '',
             'ma_hd_cyber': order.ma_hd_cyber || '',
-            'Mã HĐ Cyber': order.ma_hd_cyber || ''
+            'Mã HĐ Cyber': order.ma_hd_cyber || '',
+            'Ngày COC về': order.ngay_coc_ve || '',
+            'ngay_coc_ve': order.ngay_coc_ve || ''
         }));
         return { status: 'SUCCESS', message: 'Fetched archived orders from Supabase', data: formattedData };
     } catch (err: any) {

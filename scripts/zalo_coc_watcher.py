@@ -73,6 +73,7 @@ SHOWROOM_GROUP_DIRS = [
 
 SUPABASE_URL = "https://jwvgxqrkjlbewvpkvucj.supabase.co"
 ANON_KEY = "sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX"
+SERVICE_KEY = os.environ.get("VITE_SUPABASE_SERVICE_KEY") or "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp3dmd4cXJramxiZXd2cGt2dWNqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjUyNTUyNywiZXhwIjoyMDg4MTAxNTI3fQ.R8XaLf9RuB9ICMM3Uti4faIOgN0Beui9pxh-Vy-t4rU"
 GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzC8Zf7QdBuFdTV_-8COtDLuUAtFZoQ6pkNy9XF-b1tz6Z7puV1dorjhj-Fmf-zdC7Dvg/exec"
 
 COC_KEYWORDS = [
@@ -245,6 +246,147 @@ def update_google_sheet_coc(vins, receipt_date):
         return None
 
 
+def sync_coc_to_supabase_orders(vins, receipt_date):
+    """Đồng bộ ngày COC về vào Supabase: donhang, yeucauxhd, archived_orders, khoxe, và tạo thông báo chuông cho TVBH."""
+    if not vins or not receipt_date:
+        return {"updated": 0}
+
+    today_str = datetime.datetime.now().strftime("%d/%m/%Y")
+    target_date = receipt_date if receipt_date else today_str
+    headers = {
+        "Content-Type": "application/json",
+        "apikey": SERVICE_KEY,
+        "Authorization": f"Bearer {SERVICE_KEY}",
+        "Prefer": "return=representation"
+    }
+
+    updated_count = 0
+    notified_users = set()
+
+    for vin in vins:
+        clean_vin = vin.strip().upper()
+        if len(clean_vin) < 10:
+            continue
+
+        try:
+            # 1. Tra cứu đơn hàng trong yeucauxhd
+            lookup_url = f"{SUPABASE_URL}/rest/v1/yeucauxhd?vin=eq.{clean_vin}&select=so_don_hang,ten_khach_hang,tvbh,ghi_chu_admin"
+            req_lookup = urllib.request.Request(lookup_url, headers=headers, method="GET")
+            orders = []
+            try:
+                with urllib.request.urlopen(req_lookup, timeout=15) as resp:
+                    orders = json.loads(resp.read().decode("utf-8"))
+            except Exception as le:
+                logging.warning(f"Lỗi tra cứu yeucauxhd cho VIN {clean_vin}: {le}")
+
+            order_info = orders[0] if orders else None
+
+            # 2. Cập nhật yeucauxhd nếu tìm thấy
+            if order_info:
+                current_note = order_info.get("ghi_chu_admin") or ""
+                coc_tag = f"[COC về: {target_date}]"
+                new_note = current_note
+                if "COC về" not in current_note:
+                    new_note = f"{current_note} | {coc_tag}".strip(" | ")
+
+                update_payload = {
+                    "ngay_coc_ve": target_date,
+                    "ghi_chu_admin": new_note
+                }
+                patch_url = f"{SUPABASE_URL}/rest/v1/yeucauxhd?vin=eq.{clean_vin}"
+                req_patch = urllib.request.Request(patch_url, data=json.dumps(update_payload).encode("utf-8"), headers=headers, method="PATCH")
+                try:
+                    with urllib.request.urlopen(req_patch, timeout=15) as _:
+                        pass
+                    updated_count += 1
+                except Exception as pe:
+                    logging.warning(f"Lỗi PATCH yeucauxhd cho VIN {clean_vin}: {pe}")
+
+            # 3. Cập nhật donhang
+            patch_dh_url = f"{SUPABASE_URL}/rest/v1/donhang?vin=eq.{clean_vin}"
+            req_dh = urllib.request.Request(patch_dh_url, data=json.dumps({"ngay_coc_ve": target_date}).encode("utf-8"), headers=headers, method="PATCH")
+            try:
+                with urllib.request.urlopen(req_dh, timeout=15) as _:
+                    pass
+            except Exception:
+                pass
+
+            # 4. Cập nhật archived_orders
+            patch_arc_url = f"{SUPABASE_URL}/rest/v1/archived_orders?vin=eq.{clean_vin}"
+            req_arc = urllib.request.Request(patch_arc_url, data=json.dumps({"ngay_coc_ve": target_date}).encode("utf-8"), headers=headers, method="PATCH")
+            try:
+                with urllib.request.urlopen(req_arc, timeout=15) as _:
+                    pass
+            except Exception:
+                pass
+
+            # 5. Cập nhật khoxe
+            patch_kho_url = f"{SUPABASE_URL}/rest/v1/khoxe?vin=eq.{clean_vin}"
+            req_kho = urllib.request.Request(patch_kho_url, data=json.dumps({"ngay_coc_ve": target_date}).encode("utf-8"), headers=headers, method="PATCH")
+            try:
+                with urllib.request.urlopen(req_kho, timeout=15) as _:
+                    pass
+            except Exception:
+                pass
+
+            # 6. Bắn thông báo chuông cho TVBH và Admin
+            if order_info:
+                tvbh = (order_info.get("tvbh") or "").strip()
+                cust_name = order_info.get("ten_khach_hang") or "Khách hàng"
+                order_no = order_info.get("so_don_hang") or ""
+
+                notif_msg = f"🚗 Xe VIN {clean_vin} (KH: {cust_name}) đã có giấy tờ COC về ngày {target_date}! Sẵn sàng bàn giao xe."
+
+                if tvbh and tvbh not in notified_users:
+                    notified_users.add(tvbh)
+                    notif_body = {
+                        "category": "NOTIFICATION",
+                        "actor_id": "System",
+                        "actor_name": "Zalo COC Watcher",
+                        "recipient": tvbh,
+                        "message": notif_msg,
+                        "type": "success",
+                        "target_view": "orders",
+                        "target_id": order_no,
+                        "is_read": False,
+                        "metadata": {"vin": clean_vin, "ngay_coc_ve": target_date}
+                    }
+                    notif_url = f"{SUPABASE_URL}/rest/v1/interactions"
+                    req_notif = urllib.request.Request(notif_url, data=json.dumps(notif_body).encode("utf-8"), headers=headers, method="POST")
+                    try:
+                        with urllib.request.urlopen(req_notif, timeout=15) as _:
+                            pass
+                    except Exception as ne:
+                        logging.warning(f"Lỗi gửi thông báo cho TVBH {tvbh}: {ne}")
+
+                # Bắn cho ADMINS
+                admin_notif_body = {
+                    "category": "NOTIFICATION",
+                    "actor_id": "System",
+                    "actor_name": "Zalo COC Watcher",
+                    "recipient": "ADMINS",
+                    "message": f"📄 Giấy tờ COC xe {clean_vin} (Đơn {order_no}) đã về ngày {target_date}.",
+                    "type": "info",
+                    "target_view": "invoices",
+                    "target_id": order_no,
+                    "is_read": False,
+                    "metadata": {"vin": clean_vin, "ngay_coc_ve": target_date}
+                }
+                notif_url = f"{SUPABASE_URL}/rest/v1/interactions"
+                req_admin_notif = urllib.request.Request(notif_url, data=json.dumps(admin_notif_body).encode("utf-8"), headers=headers, method="POST")
+                try:
+                    with urllib.request.urlopen(req_admin_notif, timeout=15) as _:
+                        pass
+                except Exception:
+                    pass
+
+        except Exception as e:
+            logging.error(f"Lỗi cập nhật COC lên Supabase cho xe {vin}: {e}")
+
+    logging.info(f"⚡ Đã đồng bộ COC vào Supabase cho {len(vins)} xe (Cập nhật khớp {updated_count} đơn hàng).")
+    return {"updated": updated_count}
+
+
 def get_zalo_send_date(image_path):
     """Lấy ngày gửi thực tế từ timestamp tên file Zalo (ví dụ 1791362214172 -> 07/10/2026)."""
     fn = os.path.basename(image_path)
@@ -327,7 +469,11 @@ def process_coc_image(image_path, source_desc="Zalo"):
             sheet_res = update_google_sheet_coc(vins, target_date)
             updated_count = sheet_res.get("updatedCount", 0) if sheet_res else 0
 
-            msg = f"Đã nhận diện {len(vins)} xe từ {source_desc} (Ngày: {target_date}). Khớp & cập nhật {updated_count} xe mới vào Sổ Rút COC!"
+            # Đồng bộ trực tiếp vào đơn hàng trên ứng dụng Supabase
+            sb_res = sync_coc_to_supabase_orders(vins, target_date)
+            sb_updated = sb_res.get("updated", 0)
+
+            msg = f"Đã nhận diện {len(vins)} xe từ {source_desc} (Ngày: {target_date}). Cập nhật Sổ Rút COC & note {sb_updated} đơn hàng trên ứng dụng!"
             logging.info(f"✅ {msg}")
             show_windows_notification("🚗 Zalo COC Auto Watcher", msg)
             return True

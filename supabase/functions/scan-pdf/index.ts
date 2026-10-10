@@ -94,10 +94,10 @@ serve(async (req) => {
 
     // DANH SÁCH CÁC PROVIDER VÀ MODEL VISION (QUÉT ẢNH/PDF)
     const AI_PROVIDERS = [
-      // ── TIER 1: GOOGLE GEMINI FLASH (✅ hoạt động, hỗ trợ PDF trực tiếp) ──
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.0-flash" })),
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-1.5-flash" })),
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-1.5-pro" })),
+      // ── TIER 1: GOOGLE GEMINI 2.5 FLASH (✅ Cực nhanh, hỗ trợ Vision/PDF chuẩn xác nhất) ──
+      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.5-flash" })),
+      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-flash-latest" })),
+      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.5-pro" })),
       
       // ── TIER 2: GITHUB MODELS (GPT-4O - CHỈ DÙNG CHO ẢNH) ──
       { type: "github", apiKey: GITHUB_TOKEN, model: "gpt-4o" },
@@ -111,13 +111,7 @@ serve(async (req) => {
       { type: "openrouter", apiKey: OPENROUTER_KEY, model: "openai/gpt-4o-mini" },
       { type: "openrouter", apiKey: OPENROUTER_KEY, model: "anthropic/claude-3.5-haiku" },
 
-      // ── TIER 5: GOOGLE FLASH (Các model cực nhanh và ổn định nhất hiện tại) ──
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.5-flash" })),
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-flash-latest" })),
-
-      // ── TIER 6: GOOGLE PRO & TƯƠNG LAI (Thông minh hơn nhưng dễ hết quota, sẽ tự phục hồi vào hôm sau) ──
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.5-pro" })),
-      ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-2.0-flash" })),
+      // ── TIER 5: GOOGLE PRO & TƯƠNG LAI ──
       ...ALL_GEMINI_KEYS.map(key => ({ type: "google", apiKey: key, model: "gemini-3.1-pro-preview" })),
     ].filter(p => !!p.apiKey);
 

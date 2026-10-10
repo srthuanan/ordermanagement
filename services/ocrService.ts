@@ -263,14 +263,12 @@ export const convertPdfToImages = async (
 
         const results: { base64Data: string; mimeType: string }[] = [];
         
-        // TỐI ƯU HÓA: Nếu file PDF quá dài (ví dụ > 8 trang), 
-        // AI sẽ mất rất nhiều thời gian phân tích dẫn đến lỗi Timeout (Http: connection closed).
-        // Giải pháp: Chỉ lấy 4 trang đầu (chứa thông tin KH, xe) và 4 trang cuối (chứa chữ ký)
+        // Đảm bảo quét đầy đủ 100% các trang của PDF để không bỏ sót trang phụ lục giá, khuyến mãi hoặc chữ ký
         let pagesToProcess = [];
-        if (numPages <= 8) {
-            for (let i = 1; i <= numPages; i++) pagesToProcess.push(i);
-        } else {
-            pagesToProcess = [1, 2, 3, 4, numPages - 3, numPages - 2, numPages - 1, numPages];
+        const MAX_PAGES = 30; // Hỗ trợ quét toàn diện lên tới 30 trang
+        const totalToScan = Math.min(numPages, MAX_PAGES);
+        for (let i = 1; i <= totalToScan; i++) {
+            pagesToProcess.push(i);
         }
 
         // Xử lý tuần tự các trang đã chọn
