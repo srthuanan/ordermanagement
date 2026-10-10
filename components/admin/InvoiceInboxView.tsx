@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import moment from 'moment';
 import { Order, ActionType } from '../../types';
-import StatusBadge from '../ui/StatusBadge';
 import PdfThumbnail from '../ui/PdfThumbnail';
 import Button from '../ui/Button';
 import { toEmbeddableUrl, getDriveFileId, forceDownload, getSanitizedFilename } from '../../utils/imageUtils';
@@ -1034,19 +1033,16 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                         </div>
 
                                         <div className="space-y-1 flex-1 min-w-0 overflow-hidden">
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="min-w-0 flex-1 overflow-hidden">
-                                                    <MarqueeText 
-                                                        text={selectedOrder['Tên khách hàng'] || '—'}
-                                                        className="font-black text-base text-slate-900 leading-none cursor-pointer hover:text-blue-600 transition-colors uppercase"
-                                                        title="Click để sao chép tên khách hàng"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            copyWithFeedback(selectedOrder['Tên khách hàng'], e);
-                                                        }}
-                                                    />
-                                                </div>
-                                                <StatusBadge status={selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || ''} size="sm" />
+                                            <div className="min-w-0 flex-1 overflow-hidden">
+                                                <MarqueeText 
+                                                    text={selectedOrder['Tên khách hàng'] || '—'}
+                                                    className="font-black text-base text-slate-900 leading-none cursor-pointer hover:text-blue-600 transition-colors uppercase"
+                                                    title="Click để sao chép tên khách hàng"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        copyWithFeedback(selectedOrder['Tên khách hàng'], e);
+                                                    }}
+                                                />
                                             </div>
                                             <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600 font-medium">
                                                 <span>TVBH: <strong className="text-slate-900">{selectedOrder['Tên tư vấn bán hàng'] || 'Chưa rõ'}</strong></span>
@@ -1338,19 +1334,16 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         {selectedOrder['Tên khách hàng'].charAt(0)}
                                                     </div>
                                                     <div className="space-y-0.5 min-w-0 flex-1 overflow-hidden">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="min-w-0 flex-1 overflow-hidden">
-                                                                <MarqueeText 
-                                                                    text={selectedOrder['Tên khách hàng'] || '—'}
-                                                                    className="font-black text-sm text-slate-900 leading-tight cursor-pointer hover:text-blue-600 transition-colors uppercase"
-                                                                    title="Click để sao chép tên khách hàng"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        copyWithFeedback(selectedOrder['Tên khách hàng'], e);
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                            <StatusBadge status={selectedOrder['Trạng thái xử lý'] || selectedOrder['Kết quả'] || ''} size="sm" />
+                                                        <div className="min-w-0 flex-1 overflow-hidden">
+                                                            <MarqueeText 
+                                                                text={selectedOrder['Tên khách hàng'] || '—'}
+                                                                className="font-black text-sm text-slate-900 leading-tight cursor-pointer hover:text-blue-600 transition-colors uppercase"
+                                                                title="Click để sao chép tên khách hàng"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    copyWithFeedback(selectedOrder['Tên khách hàng'], e);
+                                                                }}
+                                                            />
                                                         </div>
                                                         <div className="text-[11px] text-slate-500 font-medium truncate flex flex-wrap items-center gap-2">
                                                             <span className="flex items-center gap-1.5 italic">
