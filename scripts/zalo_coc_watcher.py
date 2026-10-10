@@ -77,9 +77,37 @@ SERVICE_KEY = os.environ.get("VITE_SUPABASE_SERVICE_KEY") or "eyJhbGciOiJIUzI1Ni
 GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzC8Zf7QdBuFdTV_-8COtDLuUAtFZoQ6pkNy9XF-b1tz6Z7puV1dorjhj-Fmf-zdC7Dvg/exec"
 
 COC_KEYWORDS = [
-    "BIEN BAN", "BAN GIAO", "XUAT XUONG",
-    "PHIEU KIEM TRA", "CHUNG NHAN XUAT XUONG", "GIAO NHAN", "CHUNG TU"
+    "BIEN BAN", "BIEN", "BIÉN", "BAN GIAO", "GIAO TRA", "GIAO TRÅ", "TRA GIAY", "TRÅ GIÅY",
+    "GIAY TO", "GIÅY", "XUAT XUONG", "XUẤT XƯỞNG", "PHIEU KIEM TRA", "PHIẾU KIỂM TRA",
+    "CHUNG NHAN", "CHỨNG NHẬN", "GIAO NHAN", "CHUNG TU", "CHỨNG TỪ", "THOẢ THUẬN", "THOA THUAN",
+    "THUAN AN", "THUẬN AN", "MINH DAO", "MINH ĐẠO", "COC VE", "COC VỀ"
 ]
+
+def has_coc_signals(ocr_text):
+    """Kiểm tra ảnh có chứa tín hiệu biên bản giao nhận/trả giấy tờ COC hoặc số khung xe không."""
+    ocr_upper = (ocr_text or "").upper()
+    
+    # 1. Bỏ qua tuyệt đối nếu là ảnh bảng tính / sổ theo dõi Google Sheet / báo cáo
+    table_ignore_markers = [
+        "SO THEO DOI", "SỔ THEO DÕI", "RUT COC", "RÚT COC",
+        "CHINH SACH", "CHÍNH SÁCH", "GIAI NGAN", "GIẢI NGÂN",
+        "KHACH THANH TOAN", "KHÁCH THANH TOÁN", "NGAN HANG",
+        "BANG TINH", "SPREADSHEET", "EXCEL", "SHOWROOM", "THUẬN AN - SỔ"
+    ]
+    if any(m in ocr_upper for m in table_ignore_markers):
+        return False, "Bảng tính/sổ theo dõi"
+
+    # 2. Kiểm tra từ khóa biên bản
+    matched = [kw for kw in COC_KEYWORDS if kw in ocr_upper]
+    if matched:
+        return True, f"Khớp từ khóa {matched[:3]}"
+
+    # 3. Kiểm tra số khung xe VinFast (RNX, RLN, RLL, RNN... 15-17 ký tự)
+    vin_matches = re.findall(r'\b(R[NLX][A-Z0-9]{13,15})\b', ocr_upper)
+    if len(vin_matches) >= 1:
+        return True, f"Tìm thấy số khung xe {vin_matches[:3]}"
+
+    return False, "Không có tín hiệu biên bản COC"
 
 last_clipboard_hash = None
 
@@ -178,7 +206,7 @@ def call_gemini_scan(image_path):
     return None
 
 
-def update_google_sheet_coc(vins, receipt_date):
+def update_google_sheet_coc(vins, receipt_date, overwrite=False):
     """Cập nhật ngày COC về vào Cột O trên sheet RÚT COC của Showroom."""
     today_str = datetime.datetime.now().strftime("%d/%m/%Y")
     target_date = receipt_date if receipt_date else today_str
@@ -191,6 +219,7 @@ def update_google_sheet_coc(vins, receipt_date):
       
       var vins = {json.dumps(vins)};
       var targetDate = "{target_date}";
+      var allowOverwrite = {json.dumps(overwrite)};
       var maxR = sheet.getLastRow();
       if (maxR < 3) return {{ success: true, updated: 0 }};
       
@@ -207,8 +236,8 @@ def update_google_sheet_coc(vins, receipt_date):
             var rIdx = i + 3;
             var cellO = sheet.getRange(rIdx, 15);
             var existingVal = String(cellO.getValue() || '').trim();
-            // KHÔNG GHI ĐÈ nếu ô này đã có ngày COC về từ trước
-            if (existingVal !== '') {{
+            // KHÔNG GHI ĐÈ nếu ô này đã có ngày COC về từ trước (trừ khi allowOverwrite = true)
+            if (existingVal !== '' && !allowOverwrite) {{
               break;
             }}
             cellO.setValue(targetDate);
@@ -463,9 +492,10 @@ def process_coc_image(image_path, source_desc="Zalo"):
         if vins:
             send_date = get_zalo_send_date(image_path)
             doc_date = ai_data.get("ngay_bien_ban", "")
-            logging.info(f"🎯 PHÁT HIỆN BIÊN BẢN COC! Ngày biên bản: {doc_date} | Ngày gửi Zalo: {send_date} | Số xe: {len(vins)}: {vins}")
+            # Quy định nghiệp vụ: Ngày COC về là ngày ảnh được gửi lên Zalo (send_date), không phải ngày lập biên bản (doc_date)
+            target_date = send_date if (send_date and len(send_date.strip()) >= 8) else datetime.datetime.now().strftime("%d/%m/%Y")
+            logging.info(f"🎯 PHÁT HIỆN BIÊN BẢN COC! Ngày COC về (Zalo): {target_date} (Biên bản ghi: {doc_date}) | Số xe: {len(vins)}: {vins}")
 
-            target_date = doc_date if doc_date and len(doc_date.strip()) >= 8 else send_date
             sheet_res = update_google_sheet_coc(vins, target_date)
             updated_count = sheet_res.get("updatedCount", 0) if sheet_res else 0
 
@@ -497,47 +527,54 @@ def check_and_process_file(file_path):
     if not (lower_fn.endswith("_n") or lower_fn.endswith(".jpg") or lower_fn.endswith(".jpeg") or lower_fn.endswith(".png")):
         return
 
-    # Chỉ xử lý ảnh mới tạo trong vòng 120 giây (tránh quét lại ảnh cũ trong lịch sử)
+    # Chỉ xử lý ảnh mới tạo trong vòng 30 phút (tránh quét lại ảnh cũ, nhưng bắt kịp ảnh gửi trong lúc khởi động)
     try:
         mtime = os.path.getmtime(file_path)
-        if (time.time() - mtime) > 120:
+        if (time.time() - mtime) > 1800:
             processed.add(file_path)
             save_processed_files(processed)
             return
     except Exception:
         return
 
-    # Chờ Zalo ghi file xong
-    time.sleep(0.5)
-    try:
-        sz = os.path.getsize(file_path)
-    except Exception:
-        return
+    # Chờ Zalo ghi file xong nếu kích thước đang nhỏ
+    sz = 0
+    for _ in range(6):
+        try:
+            sz = os.path.getsize(file_path)
+            if sz >= 35 * 1024:
+                break
+        except Exception:
+            pass
+        time.sleep(0.5)
 
     if sz < 35 * 1024:
-        processed.add(file_path)
-        save_processed_files(processed)
-        return
+        return  # File chưa ghi xong, không đánh dấu processed vội để event sau kiểm tra tiếp
 
-    logging.info(f"📸 PHÁT HIỆN ẢNH MỚI TRONG NHÓM SHOWROOM: {os.path.basename(file_path)} ({round(sz/1024)} KB)")
     processed.add(file_path)
     save_processed_files(processed)
 
+    logging.info(f"📸 PHÁT HIỆN ẢNH TRONG NHÓM SHOWROOM: {os.path.basename(file_path)} ({round(sz/1024)} KB)")
+
     # Chạy bộ lọc Windows OCR
     ocr_text = run_local_fast_ocr(file_path)
-    matched_kw = [kw for kw in COC_KEYWORDS if kw in ocr_text]
+    is_coc, reason = has_coc_signals(ocr_text)
 
-    if not matched_kw:
-        logging.info(f"⏭️ Bỏ qua ảnh thông thường (không chứa từ khóa biên bản COC).")
+    if not is_coc:
+        logging.info(f"⏭️ Bỏ qua ảnh thông thường ({reason}).")
         return
 
-    logging.info(f"📄 BỘ LỌC XÁC NHẬN BIÊN BẢN COC: Khớp từ khóa {matched_kw}!")
+    logging.info(f"📄 BỘ LỌC XÁC NHẬN BIÊN BẢN COC: {reason}!")
     process_coc_image(file_path, "Nhóm Showroom")
 
 
 class ShowroomGroupImageHandler(FileSystemEventHandler):
-    """Lắng nghe duy nhất sự kiện tạo ảnh mới (on_created) trong thời gian thực tại các nhóm Showroom."""
+    """Lắng nghe cả sự kiện tạo ảnh mới (on_created) và ghi hoàn tất (on_modified) tại nhóm Showroom."""
     def on_created(self, event):
+        if not event.is_directory:
+            check_and_process_file(event.src_path)
+
+    def on_modified(self, event):
         if not event.is_directory:
             check_and_process_file(event.src_path)
 
@@ -626,27 +663,14 @@ def check_clipboard():
 
             # Quét nhanh qua Windows OCR để kiểm tra nội dung văn bản
             ocr_text = run_local_fast_ocr(TEMP_CLIPBOARD_IMG)
-            ocr_upper = ocr_text.upper()
+            is_coc, reason = has_coc_signals(ocr_text)
 
-            # Bỏ qua tuyệt đối nếu là ảnh chụp màn hình bảng tính, sổ theo dõi Google Sheet hoặc báo cáo
-            table_ignore_markers = [
-                "SO THEO DOI", "SỔ THEO DÕI", "RUT COC", "RÚT COC",
-                "CHINH SACH", "CHÍNH SÁCH", "GIAI NGAN", "GIẢI NGÂN",
-                "KHACH THANH TOAN", "KHÁCH THANH TOÁN", "NGAN HANG",
-                "BANG TINH", "SPREADSHEET", "EXCEL", "SHOWROOM", "THUẬN AN - SỔ"
-            ]
-            if any(m in ocr_upper for m in table_ignore_markers):
-                logging.info("⏭️ Bỏ qua ảnh Clipboard: Phát hiện ảnh chụp màn hình bảng tính/sổ theo dõi, không phải biên bản gốc.")
-                return
-
-            matched_kw = [kw for kw in COC_KEYWORDS if kw in ocr_upper]
-
-            # BẮT BUỘC phải khớp từ khóa biên bản COC thực tế (Biên bản, Bàn giao, Xuất xưởng, Phiếu kiểm tra)
-            if matched_kw:
-                logging.info(f"🚀 Gửi AI Gemini phân tích ảnh từ Clipboard (Khớp: {matched_kw})...")
+            # BẮT BUỘC phải khớp từ khóa biên bản COC hoặc số khung xe
+            if is_coc:
+                logging.info(f"🚀 Gửi AI Gemini phân tích ảnh từ Clipboard ({reason})...")
                 process_coc_image(TEMP_CLIPBOARD_IMG, "Clipboard (Ảnh sao chép)")
             else:
-                logging.info("ℹ️ Ảnh Clipboard không chứa từ khóa biên bản COC hợp lệ.")
+                logging.info(f"ℹ️ Ảnh Clipboard không phải biên bản COC ({reason}).")
 
             try:
                 if os.path.exists(TEMP_CLIPBOARD_IMG):
@@ -659,9 +683,12 @@ def check_clipboard():
 
 
 def initial_sync_showroom_groups():
-    """Đánh dấu tất cả ảnh hiện có là đã xử lý để không quét lại ảnh cũ trong lịch sử."""
+    """Kiểm tra ảnh mới trong 30 phút qua và đánh dấu ảnh cũ hơn là đã xử lý."""
     processed = load_processed_files()
-    count = 0
+    count_skipped = 0
+    recent_files = []
+    now = time.time()
+
     for d in SHOWROOM_GROUP_DIRS:
         if not os.path.exists(d):
             continue
@@ -671,11 +698,24 @@ def initial_sync_showroom_groups():
                 if lower_fn.endswith("_n") or lower_fn.endswith(".jpg") or lower_fn.endswith(".jpeg") or lower_fn.endswith(".png"):
                     fp = os.path.join(root, fn)
                     if fp not in processed:
+                        try:
+                            mtime = os.path.getmtime(fp)
+                            if (now - mtime) <= 1800:
+                                recent_files.append(fp)
+                                continue
+                        except Exception:
+                            pass
                         processed.add(fp)
-                        count += 1
-    if count > 0:
+                        count_skipped += 1
+
+    if count_skipped > 0:
         save_processed_files(processed)
-    logging.info(f"Đã nạp và bỏ qua {count} ảnh lịch sử. Chỉ lắng nghe sự kiện ảnh mới gửi hoặc ảnh copy.")
+    logging.info(f"Đã nạp và bỏ qua {count_skipped} ảnh lịch sử cũ.")
+
+    if recent_files:
+        logging.info(f"⚡ Phát hiện {len(recent_files)} ảnh trong 30 phút qua, đang kiểm tra...")
+        for rf in recent_files:
+            check_and_process_file(rf)
 
 
 def main():
