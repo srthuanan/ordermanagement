@@ -76,8 +76,8 @@ ANON_KEY = "sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX"
 GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzC8Zf7QdBuFdTV_-8COtDLuUAtFZoQ6pkNy9XF-b1tz6Z7puV1dorjhj-Fmf-zdC7Dvg/exec"
 
 COC_KEYWORDS = [
-    "BIEN BAN", "BAN GIAO", "XUAT XUONG", "SO KHUNG",
-    "PHIEU KIEM TRA", "CHUNG NHAN XUAT XUONG"
+    "BIEN BAN", "BAN GIAO", "XUAT XUONG",
+    "PHIEU KIEM TRA", "CHUNG NHAN XUAT XUONG", "GIAO NHAN", "CHUNG TU"
 ]
 
 last_clipboard_hash = None
@@ -205,6 +205,11 @@ def update_google_sheet_coc(vins, receipt_date):
           if (cellVin === vins[j]) {{
             var rIdx = i + 3;
             var cellO = sheet.getRange(rIdx, 15);
+            var existingVal = String(cellO.getValue() || '').trim();
+            // KHÔNG GHI ĐÈ nếu ô này đã có ngày COC về từ trước
+            if (existingVal !== '') {{
+              break;
+            }}
             cellO.setValue(targetDate);
             cellO.setBackground('#E6F4EA');
             cellO.setFontWeight('bold');
@@ -318,10 +323,11 @@ def process_coc_image(image_path, source_desc="Zalo"):
             doc_date = ai_data.get("ngay_bien_ban", "")
             logging.info(f"🎯 PHÁT HIỆN BIÊN BẢN COC! Ngày biên bản: {doc_date} | Ngày gửi Zalo: {send_date} | Số xe: {len(vins)}: {vins}")
 
-            sheet_res = update_google_sheet_coc(vins, send_date)
+            target_date = doc_date if doc_date and len(doc_date.strip()) >= 8 else send_date
+            sheet_res = update_google_sheet_coc(vins, target_date)
             updated_count = sheet_res.get("updatedCount", 0) if sheet_res else 0
 
-            msg = f"Đã nhận diện {len(vins)} xe từ {source_desc}. Khớp & cập nhật {updated_count} xe vào Sổ Rút COC!"
+            msg = f"Đã nhận diện {len(vins)} xe từ {source_desc} (Ngày: {target_date}). Khớp & cập nhật {updated_count} xe mới vào Sổ Rút COC!"
             logging.info(f"✅ {msg}")
             show_windows_notification("🚗 Zalo COC Auto Watcher", msg)
             return True
@@ -474,16 +480,27 @@ def check_clipboard():
 
             # Quét nhanh qua Windows OCR để kiểm tra nội dung văn bản
             ocr_text = run_local_fast_ocr(TEMP_CLIPBOARD_IMG)
-            matched_kw = [kw for kw in COC_KEYWORDS if kw in ocr_text]
+            ocr_upper = ocr_text.upper()
 
-            # Với ảnh người dùng chủ động Sao chép: Nếu khớp từ khóa COC hoặc có chứa văn bản/bảng biểu, gửi AI Gemini phân tích ngay!
-            if matched_kw or len(ocr_text.strip()) >= 10:
-                kw_desc = f"(Khớp: {matched_kw})" if matched_kw else f"(Có {len(ocr_text.strip())} ký tự văn bản)"
-                logging.info(f"🚀 Gửi AI Gemini phân tích ảnh từ Clipboard {kw_desc}...")
+            # Bỏ qua tuyệt đối nếu là ảnh chụp màn hình bảng tính, sổ theo dõi Google Sheet hoặc báo cáo
+            table_ignore_markers = [
+                "SO THEO DOI", "SỔ THEO DÕI", "RUT COC", "RÚT COC",
+                "CHINH SACH", "CHÍNH SÁCH", "GIAI NGAN", "GIẢI NGÂN",
+                "KHACH THANH TOAN", "KHÁCH THANH TOÁN", "NGAN HANG",
+                "BANG TINH", "SPREADSHEET", "EXCEL", "SHOWROOM", "THUẬN AN - SỔ"
+            ]
+            if any(m in ocr_upper for m in table_ignore_markers):
+                logging.info("⏭️ Bỏ qua ảnh Clipboard: Phát hiện ảnh chụp màn hình bảng tính/sổ theo dõi, không phải biên bản gốc.")
+                return
+
+            matched_kw = [kw for kw in COC_KEYWORDS if kw in ocr_upper]
+
+            # BẮT BUỘC phải khớp từ khóa biên bản COC thực tế (Biên bản, Bàn giao, Xuất xưởng, Phiếu kiểm tra)
+            if matched_kw:
+                logging.info(f"🚀 Gửi AI Gemini phân tích ảnh từ Clipboard (Khớp: {matched_kw})...")
                 process_coc_image(TEMP_CLIPBOARD_IMG, "Clipboard (Ảnh sao chép)")
             else:
-                logging.info("ℹ️ Ảnh vừa sao chép không chứa văn bản (ảnh phong cảnh/đồ họa thông thường).")
-                show_windows_notification("🚗 Zalo COC Watcher", "ℹ️ Đã nhận ảnh sao chép, nhưng ảnh không chứa thông tin văn bản/biên bản.")
+                logging.info("ℹ️ Ảnh Clipboard không chứa từ khóa biên bản COC hợp lệ.")
 
             try:
                 if os.path.exists(TEMP_CLIPBOARD_IMG):
