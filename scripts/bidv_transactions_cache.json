@@ -1,6 +1,110 @@
 [
   {
     "tr": {},
+    "ref": "0831cN4q-8CjzBpR3L",
+    "date": "10/10/2026 07:31:29",
+    "amount": "89,709,000",
+    "balance": "90,709,000",
+    "desc": "TKTHE :72074191008239, TAI MB. NGUYEN THI THU THAO THANH TOAN TIEN XE VF5 PLUS -CTLNHIDI000016974618645-1/1-CRE-002"
+  },
+  {
+    "tr": {},
+    "ref": "08327AYc-8CjIwQGvy",
+    "date": "09/10/2026 20:46:24",
+    "amount": "1,000,000",
+    "balance": "4,000,000",
+    "desc": "TKTHE :396883979, TAI VIB. HOANG VAN GIANG COC XE LIMO -CTLNHIDI000016971103703-1/1-CRE-002"
+  },
+  {
+    "tr": {},
+    "ref": "083UFWm-8CjIrCoSE",
+    "date": "09/10/2026 20:45:07",
+    "amount": "1,000,000",
+    "balance": "3,000,000",
+    "desc": "TKTHE :396883979, TAI VIB. HOANG THI XUAN DAO COC XE LIMO -CTLNHIDI000016971082688-1/1-CRE-002"
+  },
+  {
+    "tr": {},
+    "ref": "08327AYc-8CjIkluLM",
+    "date": "09/10/2026 20:43:32",
+    "amount": "1,000,000",
+    "balance": "2,000,000",
+    "desc": "TKTHE :396883979, TAI VIB. NGUYEN CONG GIANG COC XE LIMO -CTLNHIDI000016971062318-1/1-CRE-002"
+  },
+  {
+    "tr": {},
+    "ref": "03933BwG-8CjACrlGF",
+    "date": "09/10/2026 18:33:02",
+    "amount": "1,000,000",
+    "balance": "362,945,400",
+    "desc": "8603427888 NGUYEN NGUYEN VEN DAT COC XE"
+  },
+  {
+    "tr": {},
+    "ref": "08333BwG-8Cj8MHkQY",
+    "date": "09/10/2026 18:04:48",
+    "amount": "648,000",
+    "balance": "361,945,400",
+    "desc": "TKTHE :3334053960, TAI TECHCOMBANK. 70H-10734 FT26282780068040 -CTLNHIDI000016968482468-1/1-CRE-002"
+  },
+  {
+    "tr": {},
+    "ref": "0831gDiu-8Cj8EmFbP",
+    "date": "09/10/2026 18:02:57",
+    "amount": "2,000,000",
+    "balance": "361,297,400",
+    "desc": "TKTHE :018176, TAI VIB. LE THI DINH COC XE VF6 ECO DO -CTLNHIDI000016968449448-1/1-CRE-002"
+  },
+  {
+    "tr": {},
+    "ref": "0831gDiu-8Cj6GZ4HG",
+    "date": "09/10/2026 17:32:52",
+    "amount": "96,360,000",
+    "balance": "359,297,400",
+    "desc": "TKTHE :86888682682, TAI TIENPHONGBANK. NGO TRIEU KHOI TT TIEN XE VF5 -CTLNHIDI000016967850541-1/1-CRE-002"
+  },
+  {
+    "tr": {},
+    "ref": "0832RFDW-8Cj6FK4LY",
+    "date": "09/10/2026 17:32:33",
+    "amount": "500,000",
+    "balance": "262,937,400",
+    "desc": "TKTHE :0388978122, TAI OCB. TANG THAI BINH PHUONG CHUYEN KHOAN NHANH QUA ZALO -CTLNHIDI000016967844497-1/1-CRE-002"
+  },
+  {
+    "tr": {},
+    "ref": "0831T1Pa-8Cj67vnBL",
+    "date": "09/10/2026 17:30:44",
+    "amount": "10,000,000",
+    "balance": "262,437,400",
+    "desc": "TKTHE :1231799999, TAI MB. CTY CP KT DIEN KYM COC 2 XE VF3 -CTLNHIDI000016967808816-1/1-CRE-002"
+  },
+  {
+    "tr": {},
+    "ref": "0833L3xg-8Cj5Dp5p1",
+    "date": "09/10/2026 17:16:55",
+    "amount": "437,400",
+    "balance": "252,437,400",
+    "desc": "TKTHE :489696, TAI ACB. 51K59060-091026-17 16 54 6282ASCB02EVMUQB -CTLNHIDI000016967528890-1/1-CRE-002"
+  },
+  {
+    "tr": {},
+    "ref": "0832ocEo-8Cj5DOh2t",
+    "date": "09/10/2026 17:16:49",
+    "amount": "250,000,000",
+    "balance": "252,000,000",
+    "desc": "TKTHE :10005935951, TAI TIENPHONGBANK. VO NGAN HA LOI 02 1673 09 2026 HDMB MDP TG VINFAST VF6 PLUS -CTLNHIDI000016967523268-1/1-CRE-002"
+  },
+  {
+    "tr": {},
+    "ref": "08329e44-8Cj4gmZIn",
+    "date": "09/10/2026 17:08:47",
+    "amount": "1,000,000",
+    "balance": "2,000,000",
+    "desc": "TKTHE :700018523938, TAI SHINHAN BANK V. HO LONG HOA COC XE VF3 PLUS XAM SALE VINH -CTLNHIDI000016967373007-1/1-CRE-002"
+  },
+  {
+    "tr": {},
     "ref": "03931odo-8Cj41PY8i",
     "date": "09/10/2026 16:58:35",
     "amount": "1,182,060",
@@ -88,9 +192,7 @@
     "desc": "REM TFR AC:1770260769 O@L_080005_211601_0_0_2747608643_150808412331 0364936258 61H-13193V THANH TOAN DICH VU"
   },
   {
-    "tr": {
-      "jQuery112308083169416481554": 53
-    },
+    "tr": {},
     "ref": "0863L3xg-8CipKibMu",
     "date": "09/10/2026 13:14:19",
     "amount": "207,500,000",
@@ -568,101 +670,5 @@
     "amount": "436,000",
     "balance": "552,726,000",
     "desc": "8603427888 NGUYEN VAN NAM CHUYEN TIEN"
-  },
-  {
-    "tr": {},
-    "ref": "0831th20-8CfslRQ3L",
-    "date": "07/10/2026 14:46:41",
-    "amount": "5,000,000",
-    "balance": "552,290,000",
-    "desc": "TKTHE :86888682682, TAI TIENPHONGBANK. NGO TRIEU KHOI COC XE VF5 PLUS -CTLNHIDI000016940729015-1/1-CRE-002"
-  },
-  {
-    "tr": {},
-    "ref": "0861Vls0-8CfsPVH2X",
-    "date": "07/10/2026 14:41:17",
-    "amount": "545,000,000",
-    "balance": "547,290,000",
-    "desc": "REM 9901DP261007000053917 B/O CTY MAFC F/O-8603427888 CTTNHH MINH DAO PHAT DTLS-REF/BNK6280784679659 MIRAE ASSET CHUYEN TIEN GN NGUYEN NANG TAN AT HD 7916416 BANK CHARGE .00 VAT .00"
-  },
-  {
-    "tr": {},
-    "ref": "0832nnAq-8CfsFlquB",
-    "date": "07/10/2026 14:38:53",
-    "amount": "1,290,000",
-    "balance": "2,290,000",
-    "desc": "TKTHE :19028625960013, TAI TECHCOMBANK. DANG TRONG HUONG CHUYEN TIEN FT26280017911708 -CTLNHIDI000016940646310-1/1-CRE-002"
-  },
-  {
-    "tr": {},
-    "ref": "868Thb8-8CfpexzxX",
-    "date": "07/10/2026 13:59:17",
-    "amount": "1,728,000",
-    "balance": "98,752,631",
-    "desc": "TKTHE :0933891518, TAI MSCBVNVX. KHANH CHUYEN KHOAN NHANH QUA ZALO-020097042210071359172026WZB2553837"
-  },
-  {
-    "tr": {},
-    "ref": "0831Vls0-8Cfoa8BQR",
-    "date": "07/10/2026 13:42:50",
-    "amount": "197,631",
-    "balance": "97,024,631",
-    "desc": "TKTHE :19031899760089, TAI TECHCOMBANK. NGUYEN QUANG MINH CHUYEN TIEN FT26280816774027 -CTLNHIDI000016940113845-1/1-CRE-002"
-  },
-  {
-    "tr": {},
-    "ref": "8883AL06-8CfoG7sPx",
-    "date": "07/10/2026 13:37:54",
-    "amount": "31,978,000",
-    "balance": "96,827,000",
-    "desc": "NOP DOANH THU XDV THUAN AN"
-  },
-  {
-    "tr": {},
-    "ref": "8681FGyi-8Cfo1aMtG",
-    "date": "07/10/2026 13:34:19",
-    "amount": "1,209,000",
-    "balance": "64,849,000",
-    "desc": "TKTHE :103876364852, TAI ICBVVNVX. QR - TRAN VAN NAM CHUYEN TIEN-020097041510071334192026QHV5341258"
-  },
-  {
-    "tr": {},
-    "ref": "8681Uwj2-8CfeZVqtO",
-    "date": "07/10/2026 11:09:59",
-    "amount": "5,000,000",
-    "balance": "63,640,000",
-    "desc": "TKTHE :5590206792679, TAI VBAAVNVX. BIDV;8603427888;TRAN THI LE XUAN DAT COC VF3 PLUS VANG MUA PIN 2026-020097040510071109592026XPRC065166"
-  },
-  {
-    "tr": {},
-    "ref": "0392aJey-8CfdnU2oR",
-    "date": "07/10/2026 10:58:09",
-    "amount": "57,390,000",
-    "balance": "58,640,000",
-    "desc": "8603427888 TRAN VAN SANG CHUYEN TIEN COC XE LIMO"
-  },
-  {
-    "tr": {},
-    "ref": "0391T1Rk-8CfcHB9fe",
-    "date": "07/10/2026 10:34:56",
-    "amount": "250,000",
-    "balance": "1,250,000",
-    "desc": "8603427888 TRAN QUANG MY THANH TOAN TIEN XE"
-  },
-  {
-    "tr": {},
-    "ref": "03921fco-8CfX6xNfb",
-    "date": "07/10/2026 09:16:04",
-    "amount": "388,800",
-    "balance": "2,388,800",
-    "desc": "8603427888 51M19321"
-  },
-  {
-    "tr": {},
-    "ref": "0832nnAq-8CfUbaRew",
-    "date": "07/10/2026 08:37:49",
-    "amount": "1,000,000",
-    "balance": "2,000,000",
-    "desc": "TKTHE :050019249848, TAI SACOMBANK. CONG TY TNHH MTV HUU HA COC XE VF3 PLUS XAM SALE VINH -CTLNHIDI000016936692918-1/1-CRE-002"
   }
 ]

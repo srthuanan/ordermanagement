@@ -582,14 +582,12 @@ export const CyberAssignVehicleModal: React.FC<CyberAssignVehicleModalProps> = (
                         })
                         .eq('so_don_hang', orderNo);
 
-                    // Cập nhật bảng donhang (nếu có đơn hàng tương ứng): chỉ cập nhật VIN và thời gian ghép, không ghi đè nếu đơn đã vào luồng xuất hóa đơn
-                    const pairedTime = new Date().toISOString();
+                    // Cập nhật bảng donhang (nếu có đơn hàng tương ứng): chỉ cập nhật VIN và số máy, KHÔNG ghi nhận ngày ghép (thoi_gian_ghep) vì 2 CSDL riêng biệt
                     await supabase
                         .from('donhang')
                         .update({
                             vin: selectedCandidateVin,
-                            ...(engineNo ? { so_may: engineNo } : {}),
-                            thoi_gian_ghep: pairedTime
+                            ...(engineNo ? { so_may: engineNo } : {})
                         })
                         .eq('so_don_hang', orderNo);
 
