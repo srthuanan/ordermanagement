@@ -766,7 +766,6 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         const isAlreadyRequestedRescan = adminNotes.includes('[YÊU CẦU SCAN LẠI]');
 
         return [
-            { type: 'reScan', label: 'Quét AI', icon: 'fa-sync', variant: 'primary', condition: true },
             { type: 'approve', label: 'Phê Duyệt', icon: 'fa-check-double', variant: 'primary', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
             { type: 'supplement', label: 'Yêu Cầu Bổ Sung', icon: 'fa-exclamation-triangle', variant: 'secondary', condition: s === 'chờ phê duyệt' || s === 'đã bổ sung' },
             { type: 'rescan', label: 'Y/C Scan Lại', icon: 'fa-camera', variant: 'secondary', condition: s !== 'đã hủy' && !isAlreadyRequestedRescan },
