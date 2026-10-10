@@ -2071,9 +2071,9 @@ def revoke_cyber_contract_approval(params: dict = {}) -> dict:
         sql_chk_xep = f"""
             SELECT COUNT(*) AS cnt 
             FROM dbo.BEXEPXE WITH (NOLOCK) 
-            WHERE (stt_rec = {ph} OR Ma_Hd = {ph}) AND RTRIM(LTRIM(ISNULL(So_khung, ''))) <> '';
+            WHERE (Ma_Hd = {ph} OR Ma_Hd = {ph}) AND RTRIM(LTRIM(ISNULL(So_khung, ''))) <> '';
         """
-        c.execute(sql_chk_xep, (stt_rec, so_ct))
+        c.execute(sql_chk_xep, (so_ct, ma_hd_h))
         xep_row = c.fetchone()
         cnt_xep = xep_row[0] if xep_row else 0
         if cnt_xep > 0 or current_post == '7':
