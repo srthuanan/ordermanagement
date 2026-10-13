@@ -1,6 +1,6 @@
 import React, { useState, FormEvent, useEffect, useRef } from 'react';
 import * as authService from '../services/authService';
-import { isMidAutumnSeason } from './ui/HolidayThemeDecorator';
+import HolidayThemeDecorator, { isMidAutumnSeason } from './ui/HolidayThemeDecorator';
 import { MidAutumnLoginView } from './login/MidAutumnLoginView';
 // Import images
 import kepgiay from '../pictures/kepgiay.webp';
@@ -244,6 +244,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess, showToast }) 
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
         >
+            <HolidayThemeDecorator />
 
 
 

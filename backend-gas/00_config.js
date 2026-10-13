@@ -9,20 +9,8 @@ var SUPABASE_SERVICE_KEY = PropertiesService.getScriptProperties().getProperty('
 const DRIVE_FOLDER_ID = "1eLbuAfT349u0D5hF6aJgTzS7cmKUs0ab";
 const ADMIN_EMAIL = "showroomthuanan@gmail.com";
 
-// Tên các sheet còn sử dụng
-const MAIL_SHEET_NAME = "Mail";
-const LOG_SHEET_NAME = "log";
-
 // Cấu hình Telegram
 const TELEGRAM_BOT_TOKEN = "8444242103:AAGupLJ1RJS3b3LD5LMEYIWMfwCFW3mzhB4";
 const TELEGRAM_CHAT_ID = "5812034168";
 
 const EMAIL_BACKGROUND_IMAGE_URL = "https://raw.githubusercontent.com/srthuanan/ordermanagement/refs/heads/main/pictures/b557cf85e54efd6a7da71db596ca4754.jpg";
-
-// Headers cho các sheet log
-const SHEET_HEADERS = {
-  "log": ["Thời gian", "Hành động", "Chi tiết"],
-  "lichsu_donhang": ["Thời gian", "Số đơn hàng", "VIN", "Hành động", "Chi tiết", "Người thực hiện", "Dữ liệu JSON"],
-  "lichsu_xe": ["Thời gian", "VIN", "Hành động", "Chi tiết", "Người thực hiện", "Dữ liệu JSON"],
-  "Mail": ["Tên tư vấn bán hàng", "Email"]
-};

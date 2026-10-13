@@ -238,7 +238,7 @@ def show_toast(title, message):
         log(f"Lỗi hiện Toast: {e}")
 
 
-# --- HTTP Server nhận đồng bộ từ Bookmarklet ---
+# --- HTTP Server nhận đồng bộ từ Bookmarklet và DMS Sync Extension ---
 class SyncHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
@@ -248,26 +248,82 @@ class SyncHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Private-Network", "true")
         self.end_headers()
 
+    def do_GET(self):
+        if self.path == "/dealers":
+            dealers_file = os.path.join(BASE_DIR, "dms_dealers_config.json")
+            dealers_data = []
+            if os.path.exists(dealers_file):
+                try:
+                    with open(dealers_file, "r", encoding="utf-8") as f:
+                        dealers_data = json.load(f)
+                except Exception:
+                    pass
+            self.send_response(200)
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Private-Network", "true")
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json.dumps(dealers_data, ensure_ascii=False).encode("utf-8"))
+        else:
+            self.send_response(404)
+            self.end_headers()
+
     def do_POST(self):
         global cached_transactions
         if self.path == "/sync":
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length).decode("utf-8")
+            res_data = {"status": "ok"}
             try:
                 data = json.loads(body)
-                if isinstance(data, list) and len(data) > 0:
+                # Trường hợp 1: Nhận Cookie từ dms_sync_extension
+                if isinstance(data, dict) and "dealer_code" in data and "cookie" in data:
+                    d_code = str(data.get("dealer_code", "")).strip().upper()
+                    new_cookie = str(data.get("cookie", "")).strip()
+                    dealers_file = os.path.join(BASE_DIR, "dms_dealers_config.json")
+                    dealers_list = []
+                    if os.path.exists(dealers_file):
+                        try:
+                            with open(dealers_file, "r", encoding="utf-8") as f:
+                                dealers_list = json.load(f)
+                        except Exception:
+                            dealers_list = []
+                    
+                    found = False
+                    for item in dealers_list:
+                        if item.get("dealer_code", "").strip().upper() == d_code:
+                            item["cookie"] = new_cookie
+                            item["last_sync_time"] = time.strftime("%Y-%m-%d %H:%M:%S")
+                            found = True
+                            break
+                    if not found and d_code:
+                        dealers_list.append({
+                            "dealer_code": d_code,
+                            "name": f"VinFast Showroom {d_code}",
+                            "cookie": new_cookie,
+                            "last_sync_time": time.strftime("%Y-%m-%d %H:%M:%S")
+                        })
+                    
+                    with open(dealers_file, "w", encoding="utf-8") as f:
+                        json.dump(dealers_list, f, indent=2, ensure_ascii=False)
+                    log(f"🔑 [DMS Sync Extension] ĐÃ CẬP NHẬT COOKIE MỚI CHO ĐẠI LÝ [{d_code}] THÀNH CÔNG!")
+                    res_data = {"status": "ok", "message": f"Đã lưu cookie cho [{d_code}] thành công!"}
+
+                # Trường hợp 2: Nhận giao dịch từ Bookmarklet BIDV
+                elif isinstance(data, list) and len(data) > 0:
                     cached_transactions = data
                     save_cache()
                     log(f"⚡ Đã đồng bộ {len(data)} giao dịch mới nhất từ BIDV iBank!")
             except Exception as e:
                 log(f"Lỗi parse dữ liệu sync: {e}")
+                res_data = {"status": "error", "message": str(e)}
 
             self.send_response(200)
             self.send_header("Access-Control-Allow-Origin", "*")
             self.send_header("Access-Control-Allow-Private-Network", "true")
-            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
-            self.wfile.write(b'{"status":"OK"}')
+            self.wfile.write(json.dumps(res_data, ensure_ascii=False).encode("utf-8"))
         else:
             self.send_response(404)
             self.end_headers()

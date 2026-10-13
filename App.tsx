@@ -50,6 +50,7 @@ import BottomNav from './components/layout/BottomNav';
 import RealtimeFooterClock from './components/layout/RealtimeFooterClock';
 import StockArrivalPopup from './components/ui/StockArrivalPopup';
 import BroadcastPopup from './components/ui/BroadcastPopup';
+import HolidayThemeDecorator from './components/ui/HolidayThemeDecorator';
 // import LuckyMoneyWidget from './components/ui/LuckyMoneyWidget';
 // import { ADMIN_USER } from './constants';
 import * as apiService from './services/apiService';
@@ -1277,6 +1278,8 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     notifications={notifications}
                     onRefresh={fetchNotificationsInternal}
                 />
+
+                <HolidayThemeDecorator />
 
                 <Suspense fallback={null}>
                     {createRequestData.isOpen && (

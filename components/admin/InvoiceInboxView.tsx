@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import moment from 'moment';
 import { Order, ActionType } from '../../types';
 import PdfThumbnail from '../ui/PdfThumbnail';
@@ -20,6 +21,7 @@ import {
     exportCyberPdf
 } from '../../services/api/stockService';
 import { syncAndNotifyMInvoice } from '../../services/api/mInvoiceService';
+import { executeCyberApi } from '../../services/api/cyberBridge';
 
 interface InvoiceInboxViewProps {
     orders: Order[];
@@ -194,6 +196,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const [cyberDkbhUrls, setCyberDkbhUrls] = useState<Record<string, string>>({});
     const [isLoadingCyberDkbh, setIsLoadingCyberDkbh] = useState(false);
     const [cyberDkbhError, setCyberDkbhError] = useState<string | null>(null);
+    const [dmsReportResult, setDmsReportResult] = useState<any>(null);
 
     const loadCyberDkbhPdf = async (order?: Order | null, force = false) => {
         const targetOrder = order || selectedOrder;
@@ -282,6 +285,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [isAutoFetching, setIsAutoFetching] = useState(false);
     const [isBatchFetching, setIsBatchFetching] = useState(false);
+    const [isCheckingDms, setIsCheckingDms] = useState(false);
     const copyWithFeedback = useCopyFeedback();
     const [isCyberAssignModalOpen, setIsCyberAssignModalOpen] = useState(false);
     const [cyberContracts, setCyberContracts] = useState<CyberXepXeContract[]>(() => {
@@ -689,6 +693,52 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         }
     };
 
+    const handleBatchDmsCheckApproved = async (_checkAll = false, singleOrderNo?: string) => {
+        setIsCheckingDms(true);
+        // Quét chính xác toàn bộ danh sách đơn hàng đang hiển thị trong tab hiện tại (kể cả tab Đã xuất hoá đơn hay Tất cả đơn)
+        const targetOrderNumbers: string[] = singleOrderNo 
+            ? [singleOrderNo] 
+            : filteredOrders.map(o => (o['Số đơn hàng'] || (o as any).so_don_hang || '').trim()).filter(Boolean);
+
+        const countMsg = singleOrderNo ? `đơn ${singleOrderNo}` : `${targetOrderNumbers.length} đơn hàng`;
+        showToast('Bắt đầu tra cứu DMS', `Đang đối soát VSO & ARI trên DMS cho ${countMsg}...`, 'info', 4000);
+        try {
+            const bodyPayload: any = {
+                orderNumbers: targetOrderNumbers
+            };
+            if (singleOrderNo) {
+                bodyPayload.orderNo = singleOrderNo;
+            }
+            const res = await executeCyberApi('/api/dms/check-approved-ari', { 
+                method: 'POST',
+                body: JSON.stringify(bodyPayload),
+                timeoutMs: 180000
+            });
+            let cleanRes = res;
+            if (res && res.raw && typeof res.raw === 'string' && res.raw.includes('__JSON_RESULT_START__')) {
+                try {
+                    const jsonPart = res.raw.split('__JSON_RESULT_START__')[1].split('__JSON_RESULT_END__')[0].trim();
+                    cleanRes = JSON.parse(jsonPart);
+                } catch (_) {}
+            }
+
+            if (cleanRes && cleanRes.success) {
+                setDmsReportResult(cleanRes);
+                if (cleanRes.transitioned_count > 0) {
+                    showToast('Thành công', `Đã tìm thấy ${cleanRes.transitioned_count}/${cleanRes.total_checked} đơn hàng có HĐ/ARI trên DMS! Báo cáo chi tiết đang hiển thị.`, 'success', 6000);
+                } else {
+                    showToast('Kết quả tra cứu DMS', `Đã kiểm tra ${cleanRes.total_checked || filteredOrders.length} đơn. Xem báo cáo chi tiết trên màn hình.`, 'info', 5000);
+                }
+            } else {
+                showToast('Thông báo', cleanRes?.error || 'Không thể kết nối DMS (cookie có thể đã hết hạn). Bạn có thể dùng Bookmarklet DMS 1-Click trên tab DMS để quét tức thì.', 'warning', 6000);
+            }
+        } catch (err: any) {
+            showToast('Lỗi', err.message || 'Lỗi khi tra cứu DMS.', 'error', 5000);
+        } finally {
+            setIsCheckingDms(false);
+        }
+    };
+
     // 1. Filter Orders by Folder
     const filteredOrders = useMemo(() => {
         const list = orders.filter(order => {
@@ -1044,9 +1094,54 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                     </span>
                 </div>
 
+                {/* Batch DMS check button for Approved folder */}
+                {selectedFolder === 'approved' && filteredOrders.length > 0 && (
+                    <div className="p-2 border-b border-border-secondary bg-gradient-to-r from-emerald-50 to-teal-50/60">
+                        <button
+                            onClick={() => handleBatchDmsCheckApproved(false)}
+                            disabled={isCheckingDms}
+                            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.99] text-white rounded-lg text-xs font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                            title="Tự động tra cứu trên VinFast DMS, nếu đơn hàng đã có HĐ và sinh ARI phát hành thì tự động chuyển sang Chờ ký hóa đơn"
+                        >
+                            <i className={`fas ${isCheckingDms ? 'fa-spinner fa-spin' : 'fa-robot'} text-[11px]`}></i>
+                            <span>{isCheckingDms ? 'Đang Tra DMS & ARI...' : `⚡ Tra DMS Tự Động Chờ Ký (${filteredOrders.length})`}</span>
+                        </button>
+                    </div>
+                )}
+
+                {/* Batch DMS check button for ALL folders */}
+                {selectedFolder === 'all' && filteredOrders.length > 0 && (
+                    <div className="p-2 border-b border-border-secondary bg-gradient-to-r from-emerald-50 to-teal-50/60">
+                        <button
+                            onClick={() => handleBatchDmsCheckApproved(false)}
+                            disabled={isCheckingDms}
+                            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.99] text-white rounded-lg text-xs font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                            title="Tự động tra cứu DMS và đối soát lại tất cả các đơn hàng (bao gồm đơn Đã xuất hóa đơn)"
+                        >
+                            <i className={`fas ${isCheckingDms ? 'fa-spinner fa-spin' : 'fa-sync-alt'} text-[11px]`}></i>
+                            <span>{isCheckingDms ? 'Đang Tra DMS Lại...' : `⚡ Tra DMS Lại Tất Cả Đơn (${filteredOrders.length})`}</span>
+                        </button>
+                    </div>
+                )}
+
+                {/* Batch DMS check button for Invoiced folder */}
+                {selectedFolder === 'invoiced' && filteredOrders.length > 0 && (
+                    <div className="p-2 border-b border-border-secondary bg-gradient-to-r from-emerald-50 to-teal-50/60">
+                        <button
+                            onClick={() => handleBatchDmsCheckApproved(false)}
+                            disabled={isCheckingDms}
+                            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 active:scale-[0.99] text-white rounded-lg text-xs font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+                            title="Đối soát lại số ARI và ngày hóa đơn trên VinFast DMS cho các đơn đã xuất"
+                        >
+                            <i className={`fas ${isCheckingDms ? 'fa-spinner fa-spin' : 'fa-robot'} text-[11px]`}></i>
+                            <span>{isCheckingDms ? 'Đang Đối Soát DMS...' : `🔄 Đối Soát DMS Đơn Đã Xuất (${filteredOrders.length})`}</span>
+                        </button>
+                    </div>
+                )}
+
                 {/* Batch M-Invoice button for Pending Signature folder */}
                 {selectedFolder === 'pending_signature' && filteredOrders.length > 0 && (
-                    <div className="p-2 border-b border-border-secondary bg-gradient-to-r from-blue-50 to-indigo-50/60">
+                    <div className="p-2 border-b border-border-secondary bg-gradient-to-r from-blue-50 to-indigo-50/60 flex flex-col gap-1.5">
                         <button
                             onClick={handleBatchFetchMInvoice}
                             disabled={isBatchFetching}
@@ -1054,7 +1149,16 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                             title="Tự động kiểm tra trên M-Invoice và tải lên tất cả các xe đã ký số"
                         >
                             <i className={`fas ${isBatchFetching ? 'fa-spinner fa-spin' : 'fa-bolt'} text-[11px]`}></i>
-                            <span>{isBatchFetching ? 'Đang Quét HĐ...' : `⚡ Quét HĐ Tất Cả Xe (${filteredOrders.length})`}</span>
+                            <span>{isBatchFetching ? 'Đang Quét HĐ M-Invoice...' : `⚡ Quét HĐ Tất Cả Xe (${filteredOrders.length})`}</span>
+                        </button>
+                        <button
+                            onClick={() => handleBatchDmsCheckApproved(true)}
+                            disabled={isCheckingDms}
+                            className="w-full flex items-center justify-center gap-1.5 py-1 px-2 bg-white hover:bg-slate-50 text-indigo-700 border border-indigo-200 active:scale-[0.99] rounded-lg text-[11px] font-bold shadow-2xs transition-all disabled:opacity-50 cursor-pointer"
+                            title="Kiểm tra lại trạng thái ARI trên DMS cho các đơn này"
+                        >
+                            <i className={`fas ${isCheckingDms ? 'fa-spinner fa-spin' : 'fa-sync-alt'} text-[10px]`}></i>
+                            <span>{isCheckingDms ? 'Đang kiểm tra DMS...' : `🔄 Đối Soát Lại DMS (${filteredOrders.length})`}</span>
                         </button>
                     </div>
                 )}
@@ -1280,6 +1384,20 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
 
                                                     return (
                                                         <>
+                                                            {/* Nút Tra DMS Đơn Này */}
+                                                            {selectedOrder && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleBatchDmsCheckApproved(false, selectedOrder['Số đơn hàng'] || (selectedOrder as any).so_don_hang)}
+                                                                    disabled={isCheckingDms}
+                                                                    className="px-2 h-6 flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-700 hover:bg-emerald-100 transition-colors text-[10px] font-bold shadow-2xs"
+                                                                    title="Tra cứu trực tiếp VSO và ARI của đơn hàng này trên VinFast DMS"
+                                                                >
+                                                                    <i className={`fas ${isCheckingDms ? 'fa-spinner fa-spin' : 'fa-robot'} text-[9px]`}></i>
+                                                                    <span>Tra DMS</span>
+                                                                </button>
+                                                            )}
+
                                                             {/* Zoom Controls: [-] [100%] [+] */}
                                                             <div className="flex items-center bg-white border border-gray-200 rounded-lg p-0.5 shadow-2xs">
                                                                 <button 
@@ -2180,6 +2298,149 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Modal Báo Cáo Chi Tiết Đối Soát DMS Cho Admin - Render trực tiếp lên document.body ở lớp cao nhất */}
+            {dmsReportResult && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 z-[9999999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden">
+                        {/* Header */}
+                        <div className="p-4 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-lg">
+                                    🤖
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-bold tracking-tight">KẾT QUẢ ĐỐI SOÁT VINFAST DMS (VSO ➔ ARI)</h3>
+                                    <p className="text-[11px] text-emerald-100">
+                                        Tổng số đơn đã quét: <b>{dmsReportResult.total_checked}</b> | Chuyển thành công: <b>{dmsReportResult.transitioned_count}</b>
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setDmsReportResult(null)}
+                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white text-xs transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-4 overflow-y-auto space-y-4 flex-1 text-xs">
+                            {/* Summary Cards */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+                                    <div>
+                                        <div className="text-[11px] text-emerald-700 font-medium">Đã chuyển "Chờ ký hóa đơn"</div>
+                                        <div className="text-xl font-bold text-emerald-800 mt-0.5">{dmsReportResult.transitioned_count || 0} đơn</div>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-200/60 flex items-center justify-center text-emerald-700 text-sm font-bold">
+                                        ✓
+                                    </div>
+                                </div>
+                                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                                    <div>
+                                        <div className="text-[11px] text-slate-600 font-medium">Giữ nguyên "Đã phê duyệt"</div>
+                                        <div className="text-xl font-bold text-slate-800 mt-0.5">{dmsReportResult.unprocessed?.length || 0} đơn</div>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-bold">
+                                        ⏳
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section 1: Đơn hàng đã chuyển */}
+                            {dmsReportResult.transitioned && dmsReportResult.transitioned.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        Đơn hàng chuyển thành công ({dmsReportResult.transitioned.length})
+                                    </div>
+                                    <div className="space-y-2">
+                                        {dmsReportResult.transitioned.map((item: any, idx: number) => (
+                                            <div key={idx} className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-200/80 flex flex-col gap-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-bold text-emerald-900 text-[13px]">{item.order_no}</span>
+                                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600 text-white">
+                                                        ARI: {item.ari_no}
+                                                    </span>
+                                                </div>
+                                                <div className="text-slate-600 text-[11px] flex items-center justify-between">
+                                                    <span>Khách hàng: <b>{item.customer}</b></span>
+                                                    <span>VIN: <b>{item.vin || 'N/A'}</b></span>
+                                                </div>
+                                                <div className="text-[10px] text-emerald-700">
+                                                    Ngày hóa đơn: <b>{item.invoice_date}</b> • Showroom: <b>{item.showroom || item.order_no?.split('-')[0]}</b>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Section 2: Đơn hàng chưa chuyển & Lý do */}
+                            {dmsReportResult.unprocessed && dmsReportResult.unprocessed.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                                        Đơn hàng chưa chuyển & Lý do chi tiết ({dmsReportResult.unprocessed.length})
+                                    </div>
+                                    <div className="space-y-2">
+                                        {dmsReportResult.unprocessed.map((item: any, idx: number) => (
+                                            <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="font-bold text-slate-800 text-[12px]">{item.order_no}</span>
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 font-semibold">
+                                                        Showroom: {item.showroom || item.order_no?.split('-')[0]}
+                                                    </span>
+                                                </div>
+                                                <div className="text-slate-600 text-[11px]">
+                                                    Khách hàng: <b>{item.customer}</b> {item.vin ? `• VIN: ${item.vin}` : ''}
+                                                </div>
+                                                <div className="text-[11px] text-amber-800 bg-amber-50/80 p-2 rounded-lg border border-amber-200/60 mt-0.5">
+                                                    <i className="fas fa-info-circle mr-1 text-amber-600"></i>
+                                                    Lý do: <b>{item.reason}</b>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="p-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+                            <span className="text-[11px] text-slate-500 italic">
+                                * Đơn đã chuyển sang "Chờ ký hóa đơn" sẽ tự động hiển thị trong tab tương ứng.
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => handleBatchDmsCheckApproved(false)}
+                                    disabled={isCheckingDms}
+                                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 transition-colors flex items-center gap-1"
+                                    title="Quét lại các đơn hàng ngay bây giờ"
+                                >
+                                    <i className={`fas ${isCheckingDms ? 'fa-spinner fa-spin' : 'fa-sync-alt'} text-xs`}></i>
+                                    <span>Quét Lại</span>
+                                </button>
+                                <button
+                                    onClick={() => setDmsReportResult(null)}
+                                    className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors"
+                                >
+                                    Đóng
+                                </button>
+                                <button
+                                    onClick={() => window.location.reload()}
+                                    className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors flex items-center gap-1.5"
+                                >
+                                    <i className="fas fa-sync-alt text-xs"></i>
+                                    <span>Tải lại trang</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>,
+                document.body
             )}
 
             <input

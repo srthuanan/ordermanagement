@@ -2209,21 +2209,10 @@ function testSend2026Email() {
   Logger.log(`Đã gửi mail test thành công tới: ${targetEmail}`);
 }
 function getGlobalNotification() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Config");
-  if (!sheet) {
-    sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Config");
-    appendAndFormatRow(sheet, ["Key", "Value"]);
-    appendAndFormatRow(sheet, ["GlobalNotification", JSON.stringify({ content: "", isActive: false, type: "info" })]);
-  }
-  var data = sheet.getDataRange().getValues();
+  var stored = PropertiesService.getScriptProperties().getProperty("GlobalNotification");
   var notification = { content: "", isActive: false, type: "info" };
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0] == "GlobalNotification") {
-      try {
-        notification = JSON.parse(data[i][1]);
-      } catch (e) { }
-      break;
-    }
+  if (stored) {
+    try { notification = JSON.parse(stored); } catch (e) { }
   }
   return ContentService.createTextOutput(JSON.stringify({
     status: "SUCCESS",
@@ -2232,24 +2221,8 @@ function getGlobalNotification() {
 }
 
 function updateGlobalNotification(params) {
-  var notificationJson = params.notification;
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Config");
-  if (!sheet) {
-    sheet = SpreadsheetApp.getActiveSpreadsheet().insertSheet("Config");
-    appendAndFormatRow(sheet, ["Key", "Value"]);
-  }
-  var data = sheet.getDataRange().getValues();
-  var found = false;
-  for (var i = 1; i < data.length; i++) {
-    if (data[i][0] == "GlobalNotification") {
-      sheet.getRange(i + 1, 2).setValue(notificationJson);
-      found = true;
-      break;
-    }
-  }
-  if (!found) {
-    appendAndFormatRow(sheet, ["GlobalNotification", notificationJson]);
-  }
+  var notificationJson = typeof params.notification === 'string' ? params.notification : JSON.stringify(params.notification || {});
+  PropertiesService.getScriptProperties().setProperty("GlobalNotification", notificationJson);
   return ContentService.createTextOutput(JSON.stringify({
     status: "SUCCESS",
     message: "Global notification updated."
@@ -2324,8 +2297,3 @@ function sendSupplementSubmittedEmail(data, filesInfo, attachments) {
 
   sendEmailViaEdge(mailOptions);
 }
-
-/**
- * Hàm nâng cấp: Đồng bộ trạng thái VC từ cột F sheet YeuCauVC sang tất cả các sheet khác.
- * Chỉ tập trung vào 2 trạng thái cuối cùng: Đã phê duyệt và Từ chối.
- */

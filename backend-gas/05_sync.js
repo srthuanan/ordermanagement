@@ -4,26 +4,31 @@
  */
 
 // Kích hoạt Menu đặc biệt khi mở Google Sheet
+// Kích hoạt Menu đặc biệt khi mở Google Sheet
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
-  ui.createMenu('🚀 VINFO SYNC 2.0')
-      .addItem('📊 Báo cáo KPI (Xuất HĐ)', 'generateKpiSheet')
-      .addItem('📑 Báo Cáo Ghép Xe - Dự XHĐ (Chạy ngay)', 'generateBcGhepXeDuXhd')
-      .addItem('⚡ Cài đặt Sheet Ghép Xe REAL-TIME (0ms)', 'setupRealtimeBcGhepXeFormula')
-      .addItem('🎯 Tự động điền Ký Mới (Cọc trong tháng)', 'tuDongDienKyMoi')
-      .addSeparator()
-      .addItem('🔑 Cập nhật Mã kết nối DMS (Token)', 'saveDmsToken')
-      .addItem('📍 Đồng bộ GPS Live tức thì', 'syncDmsGpsToSupabase')
-      .addItem('📋 Đồng bộ Đơn hàng & Kho xe tức thì', 'syncDmsDataToSupabase')
-      .addItem('⏰ Kích hoạt lịch chạy tự động 24/7', 'createSyncTriggers')
-      .addSeparator()
+  ui.createMenu('🚀 VINFO SYNC')
       .addItem('📥 Làm mới toàn bộ dữ liệu (Sync Supabase)', 'syncAllFromSupabase')
-      .addSeparator()
-      .addItem('✂️ Xóa ô trống thừa (Giảm dung lượng file)', 'trimEmptyCells')
-      .addItem('🧹 Hút Bụi: Xóa sạch các Sheet rác', 'cleanUpGhostSheets')
-      .addSeparator()
-      .addItem('🚑 KHÔI PHỤC FILE PDF (Từ Thùng Rác)', 'restoreTrashedPdfs')
+      .addItem('📊 Cập nhật Báo Cáo Ghép Xe & KPI', 'updateAllReports')
+      .addItem('🧹 Tối ưu & Dọn dẹp Sheet', 'optimizeAndCleanSheet')
       .addToUi();
+}
+
+function updateAllReports() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    ss.toast('Đang cập nhật toàn bộ báo cáo...', 'Báo Cáo', 10);
+    generateBcGhepXeDuXhd();
+    generateKpiSheet();
+    ss.toast('Đã cập nhật Báo Cáo Ghép Xe & KPI thành công!', 'Hoàn tất', 5);
+  } catch (e) {
+    SpreadsheetApp.getActiveSpreadsheet().toast('Lỗi cập nhật: ' + e.message, 'Lỗi', 5);
+  }
+}
+
+function optimizeAndCleanSheet() {
+  cleanUpGhostSheets();
+  trimEmptyCells();
 }
 
 var TABLES_TO_SYNC = [
@@ -108,36 +113,32 @@ function cleanUpGhostSheets() {
 
         if (shouldDelete && sheets.length - count > 1) {
             try {
-              // 1. Gỡ toàn bộ các lớp khoá (Protection) nếu có
-              var protections = targetSheet.getProtections(SpreadsheetApp.ProtectionType.SHEET);
-              for (var p = 0; p < protections.length; p++) {
-                try { protections[p].remove(); } catch(pErr){}
-              }
-
-              // 2. Thử hủy liên kết Google Form nếu có
+              // 1. Gỡ toàn bộ các lớp khoá (Cả Sheet Protection và Range Protection)
               try {
-                var formUrl = targetSheet.getFormUrl();
-                if (formUrl && typeof FormApp !== 'undefined') {
-                  var form = FormApp.openByUrl(formUrl);
-                  form.removeDestination();
+                var protections = targetSheet.getProtections(SpreadsheetApp.ProtectionType.SHEET);
+                for (var p = 0; p < protections.length; p++) {
+                  try { protections[p].remove(); } catch(pErr){}
                 }
-              } catch(fErr) {
-                Logger.log("Không thể tự hủy form: " + fErr.message);
-              }
+                var rangeProtections = targetSheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+                for (var rp = 0; rp < rangeProtections.length; rp++) {
+                  try { rangeProtections[rp].remove(); } catch(rpErr){}
+                }
+              } catch(protErr) {}
 
-              // 3. Tiến hành xóa sheet
+              // 2. Tiến hành xóa vĩnh viễn sheet
               ss.deleteSheet(targetSheet);
               count++;
             } catch(delErr) {
               Logger.log("Không thể xóa sheet " + name + ": " + delErr.message);
-              // Nếu bị vướng Google Form hoặc ràng buộc không cho xóa, tự động ẨN sheet đi để sạch thanh tab
+              // Nếu bị Google chặn quyền xóa, tự động đổi tên và ẩn đi
               try {
+                targetSheet.setName("[RÁC]_" + name);
                 targetSheet.hideSheet();
               } catch(hideErr) {}
             }
         }
     }
-    SpreadsheetApp.getActiveSpreadsheet().toast('Đã dọn dẹp thành công ' + count + ' sheet rác!', 'Hoàn tất', 10);
+    SpreadsheetApp.getActiveSpreadsheet().toast('Đã dọn dẹp và triệt tiêu thành công ' + count + ' sheet rác!', 'Hoàn tất', 10);
   } catch (e) {
     Logger.log(e);
     SpreadsheetApp.getActiveSpreadsheet().toast('Lỗi: ' + e.message, 'Lỗi', 10);
@@ -239,6 +240,13 @@ function syncAllFromSupabase() {
       generateBcGhepXeDuXhd();
     } catch(errGhep) {
       Logger.log("Lỗi cập nhật BC Ghép Xe: " + errGhep.message);
+    }
+
+    // Tự động quét và dọn dẹp triệt để mọi sheet rác phát sinh
+    try {
+      cleanUpGhostSheets();
+    } catch(errClean) {
+      Logger.log("Lỗi tự động quét sheet rác: " + errClean.message);
     }
 
     SpreadsheetApp.flush();

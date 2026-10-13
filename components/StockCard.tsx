@@ -8,8 +8,9 @@ import CarImage from './ui/CarImage';
 import StatusBadge from './ui/StatusBadge';
 import * as apiService from '../services/apiService';
 import { useVehicleConfig } from '../hooks/useVehicleConfig';
-import { isMidAutumnSeason } from './ui/HolidayThemeDecorator';
+import { isMidAutumnSeason, isHalloweenSeason } from './ui/HolidayThemeDecorator';
 import panoramaBg from '../pictures/stock_card_panorama_trung_thu.webp';
+import HalloweenCarBackdrop from './ui/HalloweenCarBackdrop';
 import { MiniGpsMapModal } from './modals/MiniGpsMapModal';
 
 interface StockCardProps {
@@ -60,6 +61,7 @@ const StockCard: React.FC<StockCardProps> = ({
 }) => {
     const { versionsMap, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
     const isMidAutumn = React.useMemo(() => isMidAutumnSeason(), []);
+    const isHalloween = React.useMemo(() => isHalloweenSeason(), []);
     const [confirmAction, setConfirmAction] = useState<{ action: 'hold' | 'release' } | null>(null);
     if (false) showToast?.('', '', 'success');
     const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
@@ -375,7 +377,9 @@ const StockCard: React.FC<StockCardProps> = ({
             id={`stock-card-${vehicle.VIN}`}
             className={`relative flex flex-col gap-2 rounded-2xl p-2.5 transition-all duration-300 ease-out group overflow-hidden bg-white/95 ${
                 isMissingVersion ? 'border-amber-300 ring-1 ring-amber-100/50 shadow-amber-50' : 'border border-slate-200/80 hover:border-amber-300/80'
-            } shadow-sm hover:shadow-xl hover:shadow-amber-500/10 hover:z-[99]`}
+            } shadow-sm hover:shadow-xl hover:shadow-amber-500/10 hover:z-[99] ${
+                isHalloween ? 'hover:!border-orange-400/80 hover:!shadow-[0_0_20px_rgba(249,115,22,0.22)]' : ''
+            }`}
         >
             {/* Mid-Autumn Panorama Fixed Background (Cố định tỷ lệ chuẩn 'cover', không bị méo hay biến dạng khi zoom) */}
             {isMidAutumn && (
@@ -685,8 +689,10 @@ const StockCard: React.FC<StockCardProps> = ({
             <div className="cursor-pointer relative z-10" onClick={() => onShowDetails(vehicle)}>
                 {/* Car Image with Animation and Glow */}
                 <div className={`car-image-container relative flex items-center justify-center py-0.5 h-[90px] overflow-hidden rounded-lg transition-colors ${
-                    isMidAutumn ? 'bg-transparent' : 'bg-gradient-to-br from-gray-50 to-white'
+                    isMidAutumn || isHalloween ? 'bg-transparent' : 'bg-gradient-to-br from-gray-50 to-white'
                 }`}>
+                    {/* Halloween Moon & Spooky Backdrop */}
+                    {isHalloween && <HalloweenCarBackdrop vin={vehicle.VIN} />}
                     {/* Static Car */}
                     <div className={`relative z-10 w-[160px] h-[80px] flex items-center justify-center ${vehicle["Người Giữ Xe"] ? 'group-hover:blur-[1px] group-hover:opacity-90' : ''}`}>
                         {/* Sparkles */}

@@ -157,8 +157,8 @@ interface RequestCyberOptions {
  *    - Nếu OFFLINE -> Tự động chuyển hướng gọi sang Render Cloud.
  */
 export async function executeCyberApi<T = any>(pathname: string, options: RequestCyberOptions = {}): Promise<T> {
-    const isMinvoiceOrHeavy = pathname.startsWith('/api/minvoice/') || pathname.includes('sync-') || pathname.includes('export-pdf');
-    const defaultTimeout = isMinvoiceOrHeavy ? 60000 : 15000;
+    const isMinvoiceOrHeavy = pathname.startsWith('/api/minvoice/') || pathname.includes('sync-') || pathname.includes('export-pdf') || pathname.startsWith('/api/dms/');
+    const defaultTimeout = isMinvoiceOrHeavy ? 120000 : 15000;
 
     const {
         method = 'POST',
@@ -185,7 +185,7 @@ export async function executeCyberApi<T = any>(pathname: string, options: Reques
                 method,
                 headers: { 'Content-Type': 'application/json' },
                 body: method === 'POST' ? (typeof body === 'string' ? body : JSON.stringify(body || {})) : undefined,
-                signal: AbortSignal.timeout(isMinvoiceOrHeavy ? 45000 : 4000)
+                signal: AbortSignal.timeout(isMinvoiceOrHeavy ? 120000 : 4000)
             });
             if (res.ok) {
                 return await res.json();

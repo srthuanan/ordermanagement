@@ -18,6 +18,7 @@ const crmScript = path.resolve(__dirname, 'scripts', 'cyber_crm_service.py');
 const minvoiceScript = path.resolve(__dirname, 'scripts', 'm_invoice_service.py');
 const donHangTonScript = path.resolve(__dirname, 'scripts', 'sync_cyber_donhang_ton.py');
 const gpsRadarScript = path.resolve(__dirname, 'scripts', 'cloud_dms_sync_radar.py');
+const dmsAriCheckerScript = path.resolve(__dirname, 'scripts', 'dms_vso_ari_checker.py');
 
 process.on('uncaughtException', (err) => {
     console.error('[CRITICAL] Uncaught exception:', err);
@@ -231,6 +232,80 @@ async function handleCyberAction(pathname, method, body, queryParams = {}) {
         case '/api/minvoice/batch-fetch':
             return await executePython([minvoiceScript], mergedJson);
 
+        // Tra cứu DMS VSO & ARI tự động chuyển sang Chờ ký
+        case '/api/dms/check-approved-ari': {
+            const orderNo = queryParams.orderNo || mergedData.orderNo || '';
+            const orderNumbers = Array.isArray(mergedData.orderNumbers) ? mergedData.orderNumbers : [];
+            const checkAll = queryParams.checkAll === 'true' || mergedData.checkAll === true || mergedData.checkAll === 'true' || queryParams.all === 'true' || mergedData.all === true;
+            const args = [dmsAriCheckerScript];
+            if (orderNo) {
+                args.push(orderNo);
+            } else if (orderNumbers.length > 0) {
+                args.push('--orders', orderNumbers.join(','));
+            } else if (checkAll) {
+                args.push('--all');
+            }
+            const pyRes = await executePython(args, '');
+            if (pyRes) {
+                const rawStr = pyRes.raw || (typeof pyRes === 'string' ? pyRes : '');
+                if (rawStr.includes('__JSON_RESULT_START__')) {
+                    const parts = rawStr.split('__JSON_RESULT_START__');
+                    if (parts.length > 1) {
+                        const jsonPart = parts[1].split('__JSON_RESULT_END__')[0].trim();
+                        try { return JSON.parse(jsonPart); } catch (_) {}
+                    }
+                }
+            }
+            return pyRes;
+        }
+
+        // Lấy danh sách showroom và trạng thái Cookie DMS
+        case '/api/dms/dealers': {
+            const dealersFile = path.resolve(__dirname, 'dms_dealers_config.json');
+            if (fs.existsSync(dealersFile)) {
+                try {
+                    const data = JSON.parse(fs.readFileSync(dealersFile, 'utf8'));
+                    return data;
+                } catch (e) {
+                    return [];
+                }
+            }
+            return [];
+        }
+
+        // Nhận Cookie mới từ Extension hoặc app đồng bộ
+        case '/api/dms/sync': {
+            const dCode = (mergedData.dealer_code || queryParams.dealer_code || '').trim().toUpperCase();
+            const newCookie = (mergedData.cookie || queryParams.cookie || '').trim();
+            if (!dCode || !newCookie) {
+                return { success: false, error: 'Thiếu dealer_code hoặc cookie' };
+            }
+            const dealersFile = path.resolve(__dirname, 'dms_dealers_config.json');
+            let dealersList = [];
+            if (fs.existsSync(dealersFile)) {
+                try {
+                    dealersList = JSON.parse(fs.readFileSync(dealersFile, 'utf8'));
+                } catch (e) {
+                    dealersList = [];
+                }
+            }
+            const foundItem = dealersList.find(x => (x.dealer_code || '').toUpperCase() === dCode);
+            if (foundItem) {
+                foundItem.cookie = newCookie;
+                foundItem.last_sync_time = new Date().toISOString();
+            } else {
+                dealersList.push({
+                    dealer_code: dCode,
+                    name: `VinFast Showroom ${dCode}`,
+                    cookie: newCookie,
+                    last_sync_time: new Date().toISOString()
+                });
+            }
+            fs.writeFileSync(dealersFile, JSON.stringify(dealersList, null, 2), 'utf8');
+            console.log(`[DMS Sync] 🔑 Đã nạp Cookie mới cho Showroom [${dCode}] thành công!`);
+            return { status: 'ok', success: true, message: `Đã lưu cookie cho [${dCode}]` };
+        }
+
         default:
             throw new Error(`Đường dẫn API không hỗ trợ: ${pathname}`);
     }
@@ -355,6 +430,7 @@ const server = http.createServer(async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Private-Network', 'true');
 
     if (req.method === 'OPTIONS') {
         res.writeHead(204);

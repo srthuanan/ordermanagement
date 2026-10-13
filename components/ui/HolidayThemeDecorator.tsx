@@ -98,8 +98,13 @@ interface HolidayThemeDecoratorProps {
   position?: 'left' | 'right';
 }
 
+import HalloweenThemeWidget from './HalloweenThemeEffects';
+
 export const HolidayThemeDecorator: React.FC<HolidayThemeDecoratorProps> = () => {
-  // Đã xóa toàn bộ dải ruy băng theo yêu cầu
+  const isHalloween = isHalloweenSeason();
+  if (isHalloween) {
+    return <HalloweenThemeWidget />;
+  }
   return null;
 };
 

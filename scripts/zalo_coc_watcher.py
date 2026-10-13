@@ -764,13 +764,59 @@ def initial_sync_showroom_groups():
             check_and_process_file(rf)
 
 
+def sync_coc_from_google_sheet():
+    """Định kỳ quét Google Sheet 'RÚT COC' để tự động đồng bộ vào Supabase cho các trường hợp gõ tay trên Sheet."""
+    try:
+        js_code = """
+        (function() {
+          var ss = SpreadsheetApp.getActiveSpreadsheet();
+          var sheet = ss.getSheetByName('RÚT COC');
+          if (!sheet) return { success: false, rows: [] };
+          var maxR = sheet.getLastRow();
+          if (maxR < 3) return { success: true, rows: [] };
+          
+          var vins = sheet.getRange(3, 5, maxR - 2, 1).getDisplayValues();
+          var cocDates = sheet.getRange(3, 15, maxR - 2, 1).getDisplayValues();
+          var result = [];
+          
+          for (var i = 0; i < vins.length; i++) {
+            var v = String(vins[i][0] || '').trim().toUpperCase();
+            var d = String(cocDates[i][0] || '').trim();
+            if (v && d && v.length >= 10) {
+              result.push({ vin: v, date: d });
+            }
+          }
+          return { success: true, rows: result };
+        })()
+        """
+        req = urllib.request.Request(
+            GAS_WEBAPP_URL,
+            data=json.dumps({"action": "EXECUTE_SCRIPT", "code": js_code}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            res = json.loads(resp.read().decode("utf-8"))
+            payload = res.get("data", {}) if isinstance(res.get("data"), dict) else res
+            rows = payload.get("rows", [])
+            if rows:
+                by_date = {}
+                for r in rows:
+                    by_date.setdefault(r["date"], []).append(r["vin"])
+                for d, v_list in by_date.items():
+                    sync_coc_to_supabase(v_list, d)
+    except Exception as e:
+        logging.warning(f"Lỗi quét định kỳ Google Sheet RÚT COC: {e}")
+
+
 def main():
     logging.info("=== ĐÃ KHỞI ĐỘNG ZALO COC EVENT WATCHER ===")
     logging.info("📍 Theo dõi thời gian thực nhóm Showroom & Bắt ảnh Clipboard tức thì.")
     show_windows_notification("🚗 Zalo COC Watcher", "Hệ thống tự động theo dõi ảnh COC từ Zalo & Clipboard đã kích hoạt!")
 
-    # 1. Đồng bộ ảnh ban đầu
+    # 1. Đồng bộ ảnh ban đầu & quét Google Sheet RÚT COC ban đầu
     initial_sync_showroom_groups()
+    sync_coc_from_google_sheet()
 
     # 2. Đăng ký Watchdog cho tất cả nhóm Showroom
     event_handler = ShowroomGroupImageHandler()
@@ -785,10 +831,16 @@ def main():
         observer.start()
         logging.info("⚡ Watchdog lắng nghe sự kiện ảnh gửi vào nhóm Showroom đã sẵn sàng! CPU = 0.0%.")
 
-    # 3. Lắng nghe Clipboard siêu tốc (mỗi 1.5s, dùng Pillow Native, 0% CPU)
+    # 3. Lắng nghe Clipboard siêu tốc và đồng bộ định kỳ Google Sheet (mỗi 5 phút)
+    last_sheet_sync = time.time()
+    SHEET_SYNC_INTERVAL = 300  # 5 phút quét Sheet một lần
     try:
         while True:
             check_clipboard()
+            now = time.time()
+            if now - last_sheet_sync >= SHEET_SYNC_INTERVAL:
+                last_sheet_sync = now
+                sync_coc_from_google_sheet()
             time.sleep(0.5)
     except KeyboardInterrupt:
         observer.stop()
