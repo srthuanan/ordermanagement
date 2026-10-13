@@ -16,7 +16,8 @@ import {
     revokeCyberContractApproval,
     CyberXepXeContract,
     isOrderAssignedOnCyber,
-    checkOrderCyberAssignmentDirect
+    checkOrderCyberAssignmentDirect,
+    exportCyberPdf
 } from '../../services/api/stockService';
 import { syncAndNotifyMInvoice } from '../../services/api/mInvoiceService';
 
@@ -189,7 +190,94 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
     const [policySearchQuery, setPolicySearchQuery] = useState('');
     const [policyFilterModelOnly, setPolicyFilterModelOnly] = useState(true);
     const [isSplitView, setIsSplitView] = useState(true);
-    const [activeDocKey, setActiveDocKey] = useState<'LinkHopDong' | 'LinkDeNghiXHD' | 'LinkHoaDonDaXuat'>('LinkDeNghiXHD');
+    const [activeDocKey, setActiveDocKey] = useState<'LinkHopDong' | 'LinkDeNghiXHD' | 'LinkHoaDonDaXuat' | 'CyberDKBH'>('LinkDeNghiXHD');
+    const [cyberDkbhUrls, setCyberDkbhUrls] = useState<Record<string, string>>({});
+    const [isLoadingCyberDkbh, setIsLoadingCyberDkbh] = useState(false);
+    const [cyberDkbhError, setCyberDkbhError] = useState<string | null>(null);
+
+    const loadCyberDkbhPdf = async (order?: Order | null, force = false) => {
+        const targetOrder = order || selectedOrder;
+        if (!targetOrder) return;
+        const orderKey = targetOrder['Số đơn hàng'] || targetOrder.id || '';
+        if (!orderKey) return;
+        if (!force && cyberDkbhUrls[orderKey]) return;
+
+        // Ưu tiên tìm số HĐ Cyber chuẩn (dạng 02.xxxx hoặc lấy từ hợp đồng đã liên kết)
+        let contractCode = (targetOrder['Mã HĐ Cyber'] || (targetOrder as any).ma_hd_cyber || targetOrder['Số hợp đồng'] || '').trim();
+        
+        // Nếu mã đang lưu là dạng số đơn hàng (N31...), đối soát nhanh trong danh sách cyberContracts
+        if (!contractCode || contractCode.startsWith('N31') || !contractCode.includes('02.')) {
+            const matchedContract = cyberContracts.find(c => 
+                (c.ma_hd && c.ma_hd.includes('02.')) &&
+                ((targetOrder['Số đơn hàng'] && c.ma_hd.includes(targetOrder['Số đơn hàng'])) ||
+                 (c.ten_kh && targetOrder['Tên khách hàng'] && c.ten_kh.toLowerCase().trim() === targetOrder['Tên khách hàng'].toLowerCase().trim()) ||
+                 (c.so_khung && targetOrder.VIN && c.so_khung.trim() === targetOrder.VIN.trim()))
+            );
+            if (matchedContract && matchedContract.ma_hd) {
+                contractCode = matchedContract.ma_hd;
+            }
+        }
+
+        const customerName = (targetOrder['Tên khách hàng'] || (targetOrder as any).ten_khach_hang || '').trim();
+
+        if (!contractCode && !customerName) {
+            setCyberDkbhError('Đơn hàng này chưa có thông tin Mã HĐ Cyber để tra cứu Điều Kiện Bán Hàng.');
+            return;
+        }
+
+        setIsLoadingCyberDkbh(true);
+        setCyberDkbhError(null);
+        try {
+            const res = await exportCyberPdf({
+                so_ct: contractCode,
+                ten_kh: customerName,
+                so_vin: targetOrder.VIN || (targetOrder as any).so_vin,
+                voucher_type: 'HDX',
+                user_name: '02.NHANPT',
+                force_refresh: force
+            });
+            if (res && res.success && (res.pdf_base64 || res.pdf_url)) {
+                let url = res.pdf_url || '';
+                if (res.pdf_base64) {
+                    try {
+                        const base64Clean = res.pdf_base64.replace(/^data:application\/pdf;base64,/, '');
+                        const byteCharacters = atob(base64Clean);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: 'application/pdf' });
+                        url = URL.createObjectURL(blob);
+                    } catch (_) {
+                        url = res.pdf_base64;
+                    }
+                } else if (url && url.startsWith('http')) {
+                    url += (url.includes('?') ? '&' : '?') + `t=${Date.now()}`;
+                }
+                if (url) {
+                    setCyberDkbhUrls(prev => ({ ...prev, [orderKey]: url }));
+                }
+            } else {
+                setCyberDkbhError(res?.error || 'Không tìm thấy phiếu Đề nghị điều kiện bán hàng trên CyberSoft.');
+            }
+        } catch (err: any) {
+            setCyberDkbhError(err?.message || 'Lỗi khi kết xuất phiếu từ CyberSoft.');
+        } finally {
+            setIsLoadingCyberDkbh(false);
+        }
+    };
+
+    // Tự động tải hoặc cập nhật PDF ĐKBH Cyber khi chọn đơn hàng khác
+    useEffect(() => {
+        if (activeDocKey === 'CyberDKBH' && selectedOrder) {
+            const orderKey = selectedOrder['Số đơn hàng'] || selectedOrder.id || '';
+            if (orderKey && !cyberDkbhUrls[orderKey]) {
+                loadCyberDkbhPdf(selectedOrder);
+            }
+        }
+    }, [activeDocKey, selectedOrderId]);
+
     const [docZoom, setDocZoom] = useState<number>(100);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [isAutoFetching, setIsAutoFetching] = useState(false);
@@ -709,6 +797,13 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         return () => { isCancelled = true; };
     }, [selectedOrderId]);
 
+    // Tự động tải Đề nghị điều kiện bán hàng (Cyber) khi admin đang xem tab CyberDKBH
+    useEffect(() => {
+        if (activeDocKey === 'CyberDKBH' && selectedOrder) {
+            loadCyberDkbhPdf(selectedOrder);
+        }
+    }, [activeDocKey, selectedOrderId]);
+
     // Sync edit data
     useEffect(() => {
         if (selectedOrder && !isEditing) {
@@ -1150,11 +1245,17 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                 {[
                                                     { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' },
                                                     { key: 'LinkHopDong', label: 'Hợp đồng MB', icon: 'fa-file-contract' },
-                                                    { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Red', icon: 'fa-file-invoice-dollar' }
+                                                    { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Red', icon: 'fa-file-invoice-dollar' },
+                                                    { key: 'CyberDKBH', label: 'ĐK Bán Hàng', icon: 'fa-receipt' }
                                                 ].map(doc => (
                                                     <button 
                                                         key={doc.key}
-                                                        onClick={() => setActiveDocKey(doc.key as any)}
+                                                        onClick={() => {
+                                                            setActiveDocKey(doc.key as any);
+                                                            if (doc.key === 'CyberDKBH' && selectedOrder) {
+                                                                loadCyberDkbhPdf(selectedOrder);
+                                                            }
+                                                        }}
                                                         className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all flex items-center gap-1.5 ${activeDocKey === doc.key ? 'bg-accent-primary text-white shadow-md' : 'bg-white border border-gray-100 text-gray-500 hover:bg-gray-50'}`}
                                                     >
                                                         <i className={`fas ${doc.icon} ${activeDocKey === doc.key ? 'text-white' : 'text-accent-primary'} opacity-80 text-[9px]`}></i>
@@ -1163,79 +1264,143 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                 ))}
                                             </div>
                                             <div className="flex items-center gap-1.5">
-                                                {selectedOrder[activeDocKey] && (
-                                                    <>
-                                                        {/* Zoom Controls: [-] [100%] [+] */}
-                                                        <div className="flex items-center bg-white border border-gray-200 rounded-lg p-0.5 shadow-2xs">
-                                                            <button 
-                                                                type="button"
-                                                                onClick={() => setDocZoom(prev => Math.max(prev - 20, 60))}
-                                                                className="w-6 h-6 flex items-center justify-center rounded text-gray-500 hover:text-accent-primary hover:bg-gray-100 transition-colors"
-                                                                title="Thu nhỏ (-20%)"
-                                                            >
-                                                                <i className="fas fa-minus text-[9px]"></i>
-                                                            </button>
-                                                            <button 
-                                                                type="button"
-                                                                onClick={() => setDocZoom(100)}
-                                                                className="px-1.5 h-6 flex items-center justify-center text-[10px] font-bold text-gray-700 hover:text-accent-primary hover:bg-gray-100 rounded transition-colors min-w-[42px]"
-                                                                title="Nhấn để đưa về kích thước chuẩn (100%)"
-                                                            >
-                                                                {docZoom}%
-                                                            </button>
-                                                            <button 
-                                                                type="button"
-                                                                onClick={() => setDocZoom(prev => Math.min(prev + 20, 250))}
-                                                                className="w-6 h-6 flex items-center justify-center rounded text-gray-500 hover:text-accent-primary hover:bg-gray-100 transition-colors"
-                                                                title="Phóng to (+20%)"
-                                                            >
-                                                                <i className="fas fa-plus text-[9px]"></i>
-                                                            </button>
-                                                        </div>
+                                                {(() => {
+                                                    const orderKey = selectedOrder ? (selectedOrder['Số đơn hàng'] || selectedOrder.id || '') : '';
+                                                    const currentDocUrl = activeDocKey === 'CyberDKBH'
+                                                        ? (cyberDkbhUrls[orderKey] || '')
+                                                        : (selectedOrder ? (selectedOrder[activeDocKey] as string || '') : '');
+                                                    const docLabels: any = {
+                                                        LinkDeNghiXHD: 'Đề nghị XHĐ',
+                                                        LinkHopDong: 'Hợp đồng MB',
+                                                        LinkHoaDonDaXuat: 'Hóa Đơn Red',
+                                                        CyberDKBH: 'Đề nghị ĐK Bán Hàng'
+                                                    };
 
-                                                        {/* Fullscreen Modal Preview */}
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                const url = selectedOrder[activeDocKey] as string;
-                                                                const labels: any = {
-                                                                    LinkDeNghiXHD: 'Đề nghị XHĐ',
-                                                                    LinkHopDong: 'Hợp đồng MB',
-                                                                    LinkHoaDonDaXuat: 'Hóa Đơn Red'
-                                                                };
-                                                                onOpenFilePreview(url, `${labels[activeDocKey]} - ${selectedOrder['Tên khách hàng']}`);
-                                                            }}
-                                                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-accent-primary hover:border-accent-primary transition-all shadow-2xs"
-                                                            title="Xem toàn màn hình"
-                                                        >
-                                                            <i className="fas fa-expand text-[10px]"></i>
-                                                        </button>
+                                                    if (!currentDocUrl) return null;
 
-                                                        <button 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                const url = selectedOrder[activeDocKey] as string;
-                                                                const labels: any = {
-                                                                    LinkDeNghiXHD: 'Đề nghị XHĐ',
-                                                                    LinkHopDong: 'Hợp đồng MB',
-                                                                    LinkHoaDonDaXuat: 'Hóa Đơn Red'
-                                                                };
-                                                                forceDownload(url, getSanitizedFilename(selectedOrder["Tên khách hàng"], labels[activeDocKey], url));
-                                                            }}
-                                                            className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-accent-primary hover:border-accent-primary transition-all shadow-2xs group"
-                                                            title="Tải xuống tài liệu này"
-                                                        >
-                                                            <i className="fas fa-download text-[10px] group-hover:bounce"></i>
-                                                        </button>
-                                                    </>
-                                                )}
+                                                    return (
+                                                        <>
+                                                            {/* Zoom Controls: [-] [100%] [+] */}
+                                                            <div className="flex items-center bg-white border border-gray-200 rounded-lg p-0.5 shadow-2xs">
+                                                                <button 
+                                                                    type="button"
+                                                                    onClick={() => setDocZoom(prev => Math.max(prev - 20, 60))}
+                                                                    className="w-6 h-6 flex items-center justify-center rounded text-gray-500 hover:text-accent-primary hover:bg-gray-100 transition-colors"
+                                                                    title="Thu nhỏ (-20%)"
+                                                                >
+                                                                    <i className="fas fa-minus text-[9px]"></i>
+                                                                </button>
+                                                                <button 
+                                                                    type="button"
+                                                                    onClick={() => setDocZoom(100)}
+                                                                    className="px-1.5 h-6 flex items-center justify-center text-[10px] font-bold text-gray-700 hover:text-accent-primary hover:bg-gray-100 rounded transition-colors min-w-[42px]"
+                                                                    title="Nhấn để đưa về kích thước chuẩn (100%)"
+                                                                >
+                                                                    {docZoom}%
+                                                                </button>
+                                                                <button 
+                                                                    type="button"
+                                                                    onClick={() => setDocZoom(prev => Math.min(prev + 20, 250))}
+                                                                    className="w-6 h-6 flex items-center justify-center rounded text-gray-500 hover:text-accent-primary hover:bg-gray-100 transition-colors"
+                                                                    title="Phóng to (+20%)"
+                                                                >
+                                                                    <i className="fas fa-plus text-[9px]"></i>
+                                                                </button>
+                                                            </div>
+
+                                                            {/* Refresh CyberDKBH button */}
+                                                            {activeDocKey === 'CyberDKBH' && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => loadCyberDkbhPdf(selectedOrder, true)}
+                                                                    disabled={isLoadingCyberDkbh}
+                                                                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-emerald-600 hover:border-emerald-500 transition-all shadow-2xs"
+                                                                    title="Làm mới phiếu từ máy chủ CyberSoft"
+                                                                >
+                                                                    <i className={`fas fa-sync-alt text-[10px] ${isLoadingCyberDkbh ? 'animate-spin text-emerald-600' : ''}`}></i>
+                                                                </button>
+                                                            )}
+
+                                                            {/* Fullscreen Modal Preview */}
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    onOpenFilePreview(currentDocUrl, `${docLabels[activeDocKey]} - ${selectedOrder['Tên khách hàng']}`);
+                                                                }}
+                                                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-accent-primary hover:border-accent-primary transition-all shadow-2xs"
+                                                                title="Xem toàn màn hình"
+                                                            >
+                                                                <i className="fas fa-expand text-[10px]"></i>
+                                                            </button>
+
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    forceDownload(currentDocUrl, getSanitizedFilename(selectedOrder["Tên khách hàng"], docLabels[activeDocKey], currentDocUrl));
+                                                                }}
+                                                                className="w-7 h-7 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:text-accent-primary hover:border-accent-primary transition-all shadow-2xs group"
+                                                                title="Tải xuống tài liệu này"
+                                                            >
+                                                                <i className="fas fa-download text-[10px] group-hover:bounce"></i>
+                                                            </button>
+                                                        </>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                         
                                         <div className="flex-1 bg-slate-100 relative overflow-hidden">
-                                            {selectedOrder[activeDocKey] ? (
-                                                (() => {
-                                                    const rawUrl = (selectedOrder[activeDocKey] as string) || '';
+                                            {(() => {
+                                                const orderKey = selectedOrder ? (selectedOrder['Số đơn hàng'] || selectedOrder.id || '') : '';
+                                                const currentDocUrl = activeDocKey === 'CyberDKBH'
+                                                    ? (cyberDkbhUrls[orderKey] || '')
+                                                    : (selectedOrder ? (selectedOrder[activeDocKey] as string || '') : '');
+
+                                                // Xử lý riêng cho tab CyberDKBH
+                                                if (activeDocKey === 'CyberDKBH') {
+                                                    if (isLoadingCyberDkbh) {
+                                                        return (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-white/70">
+                                                                <div className="relative mb-3">
+                                                                    <div className="w-10 h-10 border-3 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+                                                                    <i className="fas fa-receipt absolute inset-0 m-auto flex items-center justify-center text-emerald-600 text-xs"></i>
+                                                                </div>
+                                                                <div className="text-xs font-bold text-gray-700">Đang kết xuất phiếu từ CyberSoft...</div>
+                                                                <div className="text-[10px] text-gray-400 mt-1 max-w-xs">Đang tải mẫu Đề nghị điều kiện bán hàng và dữ liệu hợp đồng</div>
+                                                            </div>
+                                                        );
+                                                    }
+
+                                                    if (!currentDocUrl) {
+                                                        const contractCode = (selectedOrder['Mã HĐ Cyber'] || (selectedOrder as any).ma_hd_cyber || selectedOrder['Số hợp đồng'] || '').trim();
+                                                        return (
+                                                            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center text-gray-500 bg-white/50">
+                                                                <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-3 shadow-2xs">
+                                                                    <i className="fas fa-receipt text-xl"></i>
+                                                                </div>
+                                                                <div className="text-xs font-bold text-gray-700 mb-1">
+                                                                    {contractCode ? 'Chưa kết xuất phiếu Đề nghị điều kiện bán hàng' : 'Chưa có Mã HĐ Cyber'}
+                                                                </div>
+                                                                <div className="text-[10px] text-gray-400 max-w-sm mb-3">
+                                                                    {cyberDkbhError || (contractCode ? `Hợp đồng: ${contractCode}. Nhấn nút dưới đây để kết xuất trực tiếp từ máy chủ CyberSoft.` : 'Vui lòng cập nhật Mã HĐ Cyber cho đơn hàng này để xem điều kiện bán hàng.')}
+                                                                </div>
+                                                                {contractCode && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => loadCyberDkbhPdf(selectedOrder, true)}
+                                                                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold rounded-xl transition-all shadow-sm flex items-center gap-1.5 hover:shadow-md active:scale-95 cursor-pointer"
+                                                                    >
+                                                                        <i className="fas fa-sync-alt text-[10px]"></i>
+                                                                        <span>Kết xuất từ CyberSoft</span>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    }
+                                                }
+
+                                                if (currentDocUrl) {
+                                                    const rawUrl = currentDocUrl;
                                                     const lowerUrl = rawUrl.toLowerCase();
                                                     const fileId = getDriveFileId(rawUrl);
                                                     const isDrive = Boolean(fileId || lowerUrl.includes('drive.google.com') || lowerUrl.includes('docs.google.com'));
@@ -1245,7 +1410,7 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     if (!isPureImage) {
                                                         const iframeSrc = (isDrive && fileId) 
                                                             ? `https://drive.google.com/file/d/${fileId}/preview`
-                                                            : `${rawUrl}${rawUrl.includes('#') ? '&' : '#'}toolbar=0&navpanes=0`;
+                                                            : `${rawUrl}${rawUrl.includes('#') ? '&' : '#'}toolbar=0&navpanes=0&view=FitH`;
                                                         
                                                         if (docZoom === 100) {
                                                             return (
@@ -1310,13 +1475,15 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                             />
                                                         </div>
                                                     );
-                                                })()
-                                            ) : (
-                                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
-                                                    <i className="fas fa-file-excel text-4xl mb-4 opacity-20"></i>
-                                                    <span className="text-xs font-medium italic">Tài liệu này chưa được tải lên</span>
-                                                </div>
-                                            )}
+                                                }
+
+                                                return (
+                                                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                                                        <i className="fas fa-file-excel text-4xl mb-4 opacity-20"></i>
+                                                        <span className="text-xs font-medium italic">Tài liệu này chưa được tải lên</span>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 )}
@@ -1648,8 +1815,8 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                         })()}
                                                     </div>
                                                     <div className="text-left relative flex flex-col">
-                                                        <div className="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-0.5 ml-0.5 truncate">
-                                                            Mã HĐ Cyber
+                                                        <div className="flex items-center justify-between mb-0.5 ml-0.5">
+                                                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-wider truncate">Mã HĐ Cyber</span>
                                                         </div>
                                                         <div className="flex items-center justify-center gap-1 bg-emerald-50/50 border border-emerald-200/80 rounded-xl py-1 px-1.5 shadow-2xs h-[34px]">
                                                             <i className="fas fa-file-contract text-emerald-600 text-[9px] flex-shrink-0"></i>
@@ -1825,16 +1992,28 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
                                                     {[
                                                         { key: 'LinkHopDong', label: 'Hợp đồng MB', icon: 'fa-file-contract' },
                                                         { key: 'LinkDeNghiXHD', label: 'Đề nghị XHĐ', icon: 'fa-file-invoice' },
-                                                        { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Red', icon: 'fa-file-invoice-dollar' }
+                                                        { key: 'LinkHoaDonDaXuat', label: 'Hóa Đơn Red', icon: 'fa-file-invoice-dollar' },
+                                                        { key: 'CyberDKBH', label: 'ĐK Bán Hàng', icon: 'fa-receipt' }
                                                     ].map(file => {
-                                                        const url = selectedOrder[file.key] as string | undefined;
+                                                        const orderKey = selectedOrder['Số đơn hàng'] || selectedOrder.id || '';
+                                                        const url = file.key === 'CyberDKBH' 
+                                                            ? (cyberDkbhUrls[orderKey] || undefined)
+                                                            : (selectedOrder[file.key] as string | undefined);
                                                         return (
                                                             <div key={file.key} className="h-48 lg:h-full flex-none lg:flex-1 lg:min-w-[200px]">
                                                                 <DocumentThumbnail
                                                                     url={url}
                                                                     label={file.label}
                                                                     icon={file.icon}
-                                                                    onPreview={() => url && onOpenFilePreview(url, `${file.label} - ${selectedOrder["Tên khách hàng"]}`)}
+                                                                    onPreview={() => {
+                                                                        if (file.key === 'CyberDKBH' && !url) {
+                                                                            loadCyberDkbhPdf(selectedOrder);
+                                                                            setActiveDocKey('CyberDKBH');
+                                                                            setIsSplitView(true);
+                                                                        } else if (url) {
+                                                                            onOpenFilePreview(url, `${file.label} - ${selectedOrder["Tên khách hàng"]}`);
+                                                                        }
+                                                                    }}
                                                                     customerName={selectedOrder["Tên khách hàng"]}
                                                                 />
                                                             </div>

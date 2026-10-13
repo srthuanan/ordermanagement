@@ -3889,7 +3889,7 @@ def main():
 
     if args.export_pdf:
         p = get_input_params()
-        stt_rec = p.get("stt_rec") or "A000033691TD4"
+        stt_rec = p.get("stt_rec") or ""
         voucher_type = p.get("voucher_type") or "TD4"
         paper_size = p.get("paper_size") or "A4"
         user_name = p.get("user_name") or "02.NHANPT"
@@ -3900,7 +3900,12 @@ def main():
             inc_sig_str = "true" if inc_sig else "false"
         else:
             inc_sig_str = str(inc_sig)
-        res = export_cyber_pdf_via_ps(stt_rec, voucher_type, paper_size, user_name, inc_sig_str, so_ct=p.get("so_ct"))
+        res = export_cyber_pdf_via_ps(
+            stt_rec, voucher_type, paper_size, user_name, inc_sig_str,
+            so_ct=p.get("so_ct"),
+            ten_kh=p.get("ten_kh") or p.get("ten_khach_hang"),
+            so_vin=p.get("so_vin") or p.get("vin")
+        )
         print(json.dumps(res, default=str, ensure_ascii=False))
         return
 
@@ -4235,7 +4240,7 @@ def cleanup_old_cyber_pdfs_from_supabase(max_days=30):
     }
 
 
-def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT", include_signatures="true", so_ct=None):
+def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_name="02.NHANPT", include_signatures="true", so_ct=None, ten_kh=None, so_vin=None, force_refresh=False):
     """Kết xuất PDF chính thức bằng PowerShell CyberSoft (.NET Engine) và đẩy lên Supabase Storage"""
     import subprocess
     import os
@@ -4247,9 +4252,13 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
     
     script_dir = os.path.dirname(os.path.abspath(__file__))
     ps_path = os.path.join(script_dir, "render_cyber_pdf.ps1")
+    v_up = str(voucher_type).upper()
     
-    # 0. Tự động kiểm tra và chữa lỗi stt_rec nếu có so_ct
-    if so_ct and str(so_ct).strip():
+    # 0. Tự động kiểm tra và chữa lỗi stt_rec nếu có so_ct, ten_kh hoặc so_vin
+    clean_so = str(so_ct).strip() if so_ct else ""
+    clean_kh = str(ten_kh).strip() if ten_kh else ""
+    
+    if clean_so or clean_kh:
         try:
             import pymssql
             conn_heal = pymssql.connect(
@@ -4257,40 +4266,108 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
                 password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
                 database='CyberAppGolden_VanDao', timeout=8, appname='CyberAppGolden', autocommit=True
             )
-            cur_h = conn_heal.cursor(as_dict=True)
-            tbl = "PHDNX" if str(voucher_type).upper() == "DNX" else "PHTD"
-            cur_h.execute(f"SELECT TOP 1 stt_rec FROM {tbl} WITH (NOLOCK) WHERE so_ct = %s ORDER BY ngay_ct DESC", (str(so_ct).strip(),))
-            r_heal = cur_h.fetchone()
-            conn_heal.close()
-            if r_heal and r_heal.get('stt_rec'):
-                correct_stt = str(r_heal['stt_rec']).strip()
-                if correct_stt and correct_stt != str(stt_rec).strip():
-                    print(f"[Self-Healing] Tự động sửa stt_rec từ '{stt_rec}' sang '{correct_stt}' theo số chứng từ {so_ct}", file=sys.stderr)
-                    stt_rec = correct_stt
+            try:
+                cur_h = conn_heal.cursor(as_dict=True)
+                if v_up in ["HDX", "HDX20"]:
+                    r_heal = None
+                    # 1. Tìm theo số hợp đồng chuẩn (dạng 02.xxxx hoặc chứa HĐMB)
+                    if clean_so and ("02." in clean_so or "HĐMB" in clean_so.upper()):
+                        so_base = clean_so.split('-')[0].strip() if '-' in clean_so else clean_so
+                        cur_h.execute("""
+                            SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+                            SELECT TOP 1 stt_rec, so_ct FROM PHHDX WITH (NOLOCK) 
+                            WHERE so_ct = %s OR so_ct LIKE %s OR Ma_HD_H = %s OR Ma_HD_H LIKE %s
+                            ORDER BY ngay_ct DESC
+                        """, (clean_so, f"%{clean_so}%", clean_so, f"%{so_base}%"))
+                        r_heal = cur_h.fetchone()
+
+                    # 1.1 Tìm theo So_donhang nếu clean_so là mã đơn hàng (N31...)
+                    if not r_heal and clean_so:
+                        cur_h.execute("""
+                            SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+                            SELECT TOP 1 stt_rec, so_ct FROM PHHDX WITH (NOLOCK) 
+                            WHERE So_donhang = %s OR So_donhang LIKE %s
+                            ORDER BY ngay_ct DESC
+                        """, (clean_so, f"%{clean_so}%"))
+                        r_heal = cur_h.fetchone()
+
+                    # 2. Nếu clean_so là mã đơn hàng (N31...) hoặc chưa tìm thấy, tự động tìm theo Tên khách hàng
+                    if not r_heal and clean_kh:
+                        cur_h.execute("""
+                            SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+                            SELECT TOP 1 stt_rec, so_ct FROM PHHDX WITH (NOLOCK) 
+                            WHERE (Ten_Kh = %s OR Ong_Ba = %s OR Ten_Kh LIKE %s OR Ong_Ba LIKE %s)
+                              AND Ma_Dvcs = '02'
+                            ORDER BY Ngay_Ct DESC
+                        """, (clean_kh, clean_kh, f"%{clean_kh}%", f"%{clean_kh}%"))
+                        r_heal = cur_h.fetchone()
+
+                    # 3. Thử tìm clean_so trực tiếp nếu các bước trên chưa ra
+                    if not r_heal and clean_so:
+                        cur_h.execute("""
+                            SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+                            SELECT TOP 1 stt_rec, so_ct FROM PHHDX WITH (NOLOCK) 
+                            WHERE so_ct = %s OR so_ct LIKE %s
+                            ORDER BY Ngay_Ct DESC
+                        """, (clean_so, f"%{clean_so}%"))
+                        r_heal = cur_h.fetchone()
+
+                    if r_heal and r_heal.get('stt_rec'):
+                        stt_rec = str(r_heal['stt_rec']).strip()
+                        if r_heal.get('so_ct'):
+                            so_ct = str(r_heal['so_ct']).strip()
+                            clean_so = so_ct
+                elif v_up == "DNX":
+                    cur_h.execute("""
+                        SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+                        SELECT TOP 1 stt_rec FROM PHDNX WITH (NOLOCK) WHERE so_ct = %s ORDER BY ngay_ct DESC
+                    """, (clean_so,))
+                    r_heal = cur_h.fetchone()
+                    if r_heal and r_heal.get('stt_rec'):
+                        stt_rec = str(r_heal['stt_rec']).strip()
+                else:
+                    cur_h.execute("""
+                        SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+                        SELECT TOP 1 stt_rec FROM PHTD WITH (NOLOCK) WHERE so_ct = %s ORDER BY ngay_ct DESC
+                    """, (clean_so,))
+                    r_heal = cur_h.fetchone()
+                    if r_heal and r_heal.get('stt_rec'):
+                        stt_rec = str(r_heal['stt_rec']).strip()
+            finally:
+                conn_heal.close()
         except Exception as e_h:
             print(f"[Self-Healing Warning]: {e_h}", file=sys.stderr)
+
+    # Kiểm tra tính hợp lệ của stt_rec đối với chứng từ HDX
+    if v_up in ["HDX", "HDX20"]:
+        if not stt_rec or not str(stt_rec).upper().endswith("HDX"):
+            return {
+                "success": False,
+                "error": f"Không tìm thấy Hợp đồng CyberSoft tương ứng (Mã tìm kiếm: '{clean_so or 'N/A'}', Khách hàng: '{clean_kh or 'N/A'}'). Vui lòng kiểm tra lại Mã HĐ Cyber."
+            }
 
     sig_suffix = "_sig" if str(include_signatures).lower() in ["true", "1"] else "_nosig"
     clean_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(stt_rec)) + sig_suffix
     clean_so_ct = (re.sub(r'[^a-zA-Z0-9_\-]', '_', str(so_ct)) + sig_suffix) if so_ct else None
 
-    # 1. Kiểm tra xem file đã có sẵn trên Supabase Storage Cloud chưa
+    # 1. Kiểm tra xem file đã có sẵn trên Supabase Storage Cloud chưa (HDX hoàn toàn không lưu Cloud để tiết kiệm bộ nhớ)
     supabase_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co").strip().rstrip('/')
     bucket = "yeucauxhd-files"
     public_url = f"{supabase_url}/storage/v1/object/public/{bucket}/cyber_pdfs/{clean_stt}.pdf"
 
-    try:
-        head_res = requests.head(public_url, timeout=5)
-        if head_res.status_code == 200:
-            return {
-                "success": True,
-                "pdf_url": public_url,
-                "stt_rec": stt_rec,
-                "voucher_type": voucher_type,
-                "from_storage": True
-            }
-    except Exception:
-        pass
+    if v_up not in ["HDX", "HDX20"] and not force_refresh:
+        try:
+            head_res = requests.head(public_url, timeout=5)
+            if head_res.status_code == 200:
+                return {
+                    "success": True,
+                    "pdf_url": public_url,
+                    "stt_rec": stt_rec,
+                    "voucher_type": voucher_type,
+                    "from_storage": True
+                }
+        except Exception:
+            pass
 
     # 2. Nếu đang chạy trên Linux/Render Cloud:
     if sys.platform != "win32":
@@ -4328,14 +4405,16 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
             except Exception:
                 pass
 
-            # Tự động đẩy file lên Supabase Storage (đám mây) để xem được từ GitHub Pages & Mobile
-            raw_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(stt_rec))
-            storage_url = upload_pdf_to_supabase_storage(pdf_bytes, f"{raw_stt}.pdf")
-            upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_stt}.pdf")
-            if clean_so_ct:
-                raw_so = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(so_ct))
-                upload_pdf_to_supabase_storage(pdf_bytes, f"{raw_so}.pdf")
-                upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_so_ct}.pdf")
+            # Đối với chứng từ HDX (ĐK Bán Hàng): Hoàn toàn không lưu lên Supabase Storage để tiết kiệm 100% dung lượng Cloud
+            storage_url = None
+            if v_up not in ["HDX", "HDX20"]:
+                raw_stt = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(stt_rec))
+                storage_url = upload_pdf_to_supabase_storage(pdf_bytes, f"{raw_stt}.pdf")
+                upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_stt}.pdf")
+                if clean_so_ct:
+                    raw_so = re.sub(r'[^a-zA-Z0-9_\-]', '_', str(so_ct))
+                    upload_pdf_to_supabase_storage(pdf_bytes, f"{raw_so}.pdf")
+                    upload_pdf_to_supabase_storage(pdf_bytes, f"{clean_so_ct}.pdf")
 
             return {
                 "success": True,

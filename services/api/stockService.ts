@@ -2320,12 +2320,15 @@ export const checkCyberContractStatus = async (params: {
 };
 
 export interface ExportCyberPdfParams {
-    stt_rec: string;
+    stt_rec?: string;
     so_ct?: string;
-    voucher_type?: 'TD4' | 'DNX';
-    paper_size?: 'A4' | 'A5';
+    ten_kh?: string;
+    so_vin?: string;
+    voucher_type?: 'TD4' | 'DNX' | 'HDX' | 'HDX20' | string;
+    paper_size?: 'A4' | 'A5' | string;
     user_name?: string;
     include_signatures?: boolean;
+    force_refresh?: boolean;
 }
 
 export interface ExportCyberPdfResponse {
@@ -2340,12 +2343,15 @@ export interface ExportCyberPdfResponse {
 export const exportCyberPdf = async (params: ExportCyberPdfParams): Promise<ExportCyberPdfResponse> => {
     try {
         const queryParams = new URLSearchParams();
-        queryParams.set('stt_rec', params.stt_rec);
+        if (params.stt_rec) queryParams.set('stt_rec', params.stt_rec);
         if (params.so_ct) queryParams.set('so_ct', params.so_ct);
+        if (params.ten_kh) queryParams.set('ten_kh', params.ten_kh);
+        if (params.so_vin) queryParams.set('so_vin', params.so_vin);
         if (params.voucher_type) queryParams.set('voucher_type', params.voucher_type);
         if (params.paper_size) queryParams.set('paper_size', params.paper_size);
         if (params.user_name) queryParams.set('user_name', params.user_name);
         if (params.include_signatures !== undefined) queryParams.set('include_signatures', params.include_signatures ? 'true' : 'false');
+        if (params.force_refresh) queryParams.set('force_refresh', 'true');
 
         const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
         const endpoints = getCyberEndpoints(`/api/cyber/export-pdf${queryString}`);

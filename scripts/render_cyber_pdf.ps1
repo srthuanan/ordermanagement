@@ -23,25 +23,41 @@ $conn = New-Object System.Data.SqlClient.SqlConnection($connStr)
 $conn.Open()
 
 $mrtFile = ""
-$cmd = $conn.CreateCommand()
+$ds = New-Object System.Data.DataSet
 
-if ($VoucherType -eq "TD4") {
-    $mrtFile = "$cyberPath\Repo\TD400.mrt"
-    $cmd.CommandText = "EXEC CP_PrintTD4 @M_Stt_Rec = '$SttRec', @M_Id = '1', @M_User_Name = '$UserName'"
-} elseif ($VoucherType -eq "DNX") {
-    $mrtFile = "$cyberPath\Repo\PXX00.mrt"
-    $cmd.CommandText = "EXEC CP_PrintDNX @M_Stt_Rec = '$SttRec', @M_Id = '1', @M_User_Name = '$UserName'"
-} else {
-    $mrtFile = "$cyberPath\Repo\TD400.mrt"
-    $cmd.CommandText = "EXEC CP_PrintTD4 @M_Stt_Rec = '$SttRec', @M_Id = '1', @M_User_Name = '$UserName'"
+try {
+    $cmd = $conn.CreateCommand()
+    $cmd.Parameters.AddWithValue("@SttRec", $SttRec) | Out-Null
+    $cmd.Parameters.AddWithValue("@UserName", $UserName) | Out-Null
+
+    if ($VoucherType -eq "TD4") {
+        $mrtFile = "$cyberPath\Repo\TD400.mrt"
+        $cmd.CommandText = "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; EXEC CP_PrintTD4 @M_Stt_Rec = @SttRec, @M_Id = '1', @M_User_Name = @UserName"
+    } elseif ($VoucherType -eq "DNX") {
+        $mrtFile = "$cyberPath\Repo\PXX00.mrt"
+        $cmd.CommandText = "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; EXEC CP_PrintDNX @M_Stt_Rec = @SttRec, @M_Id = '1', @M_User_Name = @UserName"
+    } elseif ($VoucherType -eq "HDX" -or $VoucherType -eq "HDX20") {
+        $mrtFile = "$cyberPath\Repo\HDX20_VF.mrt"
+        if (-not (Test-Path $mrtFile)) {
+            $mrtFile = "$cyberPath\Repo\HDX20.mrt"
+        }
+        $cmd.CommandText = "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; EXEC CP_PrintHDX @M_Stt_Rec = @SttRec, @M_Id = '20', @M_User_Name = @UserName"
+    } else {
+        $mrtFile = "$cyberPath\Repo\TD400.mrt"
+        $cmd.CommandText = "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; EXEC CP_PrintTD4 @M_Stt_Rec = @SttRec, @M_Id = '1', @M_User_Name = @UserName"
+    }
+
+    $adapter = New-Object System.Data.SqlClient.SqlDataAdapter($cmd)
+    $adapter.Fill($ds) | Out-Null
+} finally {
+    $conn.Close()
 }
 
-$adapter = New-Object System.Data.SqlClient.SqlDataAdapter($cmd)
-$ds = New-Object System.Data.DataSet
-$adapter.Fill($ds) | Out-Null
-$conn.Close()
-
-if ($ds.Tables.Count -ge 3) {
+if ($VoucherType -eq "HDX" -or $VoucherType -eq "HDX20") {
+    for ($i = 1; $i -lt $ds.Tables.Count; $i++) {
+        $ds.Tables[$i].TableName = "Table" + ($i - 1)
+    }
+} elseif ($ds.Tables.Count -ge 3) {
     $ds.Tables[1].TableName = "Table0"
     $ds.Tables[2].TableName = "Table1"
 } elseif ($ds.Tables.Count -ge 2) {
@@ -123,7 +139,9 @@ if ($IncludeSignatures -eq "true" -or $IncludeSignatures -eq "1" -or $IncludeSig
 }
 
 $report.RegData("CyberDataSource", $ds)
-$report.Dictionary.Synchronize()
+if ($VoucherType -ne "HDX" -and $VoucherType -ne "HDX20") {
+    $report.Dictionary.Synchronize()
+}
 $report.Render($false)
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -143,6 +161,11 @@ if (-not $OutFile) {
     }
 }
 
-$report.ExportDocument([Stimulsoft.Report.StiExportFormat]::Pdf, $OutFile)
+$pdfSettings = New-Object Stimulsoft.Report.Export.StiPdfExportSettings
+$pdfSettings.ImageQuality = 1.0
+$pdfSettings.ImageResolution = 300
+$pdfSettings.EmbeddedFonts = $true
+$pdfSettings.UseUnicode = $true
+$report.ExportDocument([Stimulsoft.Report.StiExportFormat]::Pdf, $OutFile, $pdfSettings)
 
 Write-Output $OutFile
