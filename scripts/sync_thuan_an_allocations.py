@@ -628,7 +628,7 @@ def fetch_physical_locations_from_cyber(vins: list) -> dict:
         conn = pyodbc.connect(CYBER_CONN, timeout=30)
         is_pymssql = False
 
-    c = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
+    c = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()  # type: ignore
     CHUNK_SIZE = 150
     results = {}
 
@@ -2175,7 +2175,7 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             conn = pyodbc.connect(CYBER_CONN, timeout=30)
             is_pymssql = False
 
-        cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
+        cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()  # type: ignore
         ph = "%s" if is_pymssql else "?"
 
         if not ma_ttcp_n and ma_kho_nhan:
@@ -2573,7 +2573,7 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
             conn = pyodbc.connect(CYBER_CONN, timeout=15)
             is_pymssql = False
 
-        c = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
+        c = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()  # type: ignore
 
         # 1. Luôn truy vấn danh mục kho xe thực tế từ Dmkho trên Cyber
         cyber_warehouses = []
@@ -3589,7 +3589,7 @@ def check_cyber_contract_status(params: dict = {}) -> dict:
                 "error": f"Lỗi kết nối cơ sở dữ liệu CyberSoft: {e_odbc}"
             }
 
-    cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
+    cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()  # type: ignore
     ph = "%s" if is_pymssql else "?"
 
     try:
@@ -4015,7 +4015,7 @@ def get_cyber_voucher_tickets(ma_ct=None, ma_post=None, search=None, from_date=N
         except Exception as e_pyodbc:
             raise Exception(f"Lỗi kết nối CyberSoft SQL Server: {e_pymssql}")
 
-    cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
+    cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()  # type: ignore
     tickets = []
 
     limit_val = int(limit) if limit else 200
@@ -4267,7 +4267,7 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
                 database='CyberAppGolden_VanDao', timeout=8, appname='CyberAppGolden', autocommit=True
             )
             try:
-                cur_h = conn_heal.cursor(as_dict=True)
+                cur_h = conn_heal.cursor(as_dict=True)  # type: ignore
                 if v_up in ["HDX", "HDX20"]:
                     r_heal = None
                     # 1. Tìm theo số hợp đồng chuẩn (dạng 02.xxxx hoặc chứa HĐMB)
