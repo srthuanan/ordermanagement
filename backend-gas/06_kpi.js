@@ -71,7 +71,9 @@ function generateKpiSheet() {
     "Nguyễn Dư Thuận",
     "Đào Minh Ký",
     "Lê Thị Huyền Trang",
-    "Lê Thị Thúy Nga"
+    "Lê Thị Thúy Nga",
+    "Lê Trần Đồng",
+    "Vũ Mạnh Tiến"
   ];
 
   // Helper chuyển đổi chỉ số cột sang chữ cái (1 -> A, 2 -> B, 3 -> C...)

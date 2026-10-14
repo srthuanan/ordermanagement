@@ -146,14 +146,28 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
             await supabase.from('car_hold_activities').update({ updated_at: nowISO, status: 'matched' }).eq('vin', vinDk).eq('status', 'active');
             await supabase.from('car_hold_activities').delete().eq('vin', vinDk).eq('type', 'QUEUE');
         }
-        // GỬI EMAIL THÔNG BÁO (match_success)
+        // GỬI EMAIL THÔNG BÁO (match_success nếu đã ghép ngay, match_request_pending nếu chờ xe)
+        const currentUserObj = getStorageItem('user');
+        const userEmail = (currentUserObj && typeof currentUserObj === 'object') ? currentUserObj.email : undefined;
+
         if (vinDk) {
             supabaseAdmin.functions.invoke('send-email', {
                 body: { 
                     actionId: 'match_success', 
-                    record: insertPayload 
+                    record: insertPayload,
+                    targetTvbh: payloadData.ten_ban_hang,
+                    recipient_email: userEmail
                 }
-            }).then(({ error }) => { if (error) console.warn('Lỗi gửi mail addRequest:', error) });
+            }).then(({ error }) => { if (error) console.warn('Lỗi gửi mail addRequest match_success:', error) });
+        } else {
+            supabaseAdmin.functions.invoke('send-email', {
+                body: { 
+                    actionId: 'match_request_pending', 
+                    record: insertPayload,
+                    targetTvbh: payloadData.ten_ban_hang,
+                    recipient_email: userEmail
+                }
+            }).then(({ error }) => { if (error) console.warn('Lỗi gửi mail addRequest match_request_pending:', error) });
         }
 
         return { status: 'SUCCESS', message: 'Đã gửi yêu cầu thành công', newRecord: { ...mapOrderDbToUi(insertPayload) } };

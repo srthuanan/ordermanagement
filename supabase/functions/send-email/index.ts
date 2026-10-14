@@ -31,16 +31,52 @@ function normalizeString(str: string): string {
 
 async function getEmailForAdvisor(advisorName: string): Promise<string | null> {
   if (!advisorName) return null;
-  const { data, error } = await supabase.from("users").select("full_name, username, email").limit(500);
-  if (error || !data) return null;
-  const normalizedTarget = normalizeString(advisorName);
   const rawTarget = String(advisorName).trim().toLowerCase();
-  
-  for (const row of data) {
-    if (normalizeString(row.full_name || "") === normalizedTarget) return row.email || null;
-    const uName = String(row.username || "").trim().toLowerCase();
-    if (uName && uName === rawTarget) return row.email || null;
+  const normalizedTarget = normalizeString(advisorName);
+
+  // 1. Tìm chính xác/chuẩn hóa trong bảng users
+  try {
+    const { data: usersData } = await supabase.from("users").select("full_name, username, email").limit(1000);
+    if (usersData) {
+      for (const row of usersData) {
+        if (!row.email) continue;
+        if (normalizeString(row.full_name || "") === normalizedTarget) return row.email;
+        const uName = String(row.username || "").trim().toLowerCase();
+        if (uName && (uName === rawTarget || normalizeString(uName) === normalizedTarget)) return row.email;
+      }
+    }
+  } catch (e1) {
+    console.warn("Lỗi tra cứu bảng users:", e1);
   }
+
+  // 2. Tìm trong bảng tvbh_emails (danh sách TVBH showroom)
+  try {
+    const { data: tvbhData } = await supabase.from("tvbh_emails").select("ten_tvbh, email").limit(1000);
+    if (tvbhData) {
+      for (const row of tvbhData) {
+        if (!row.email) continue;
+        if (normalizeString(row.ten_tvbh || "") === normalizedTarget) return row.email;
+        if (String(row.ten_tvbh || "").trim().toLowerCase() === rawTarget) return row.email;
+      }
+    }
+  } catch (e2) {
+    console.warn("Lỗi tra cứu bảng tvbh_emails:", e2);
+  }
+
+  // 3. Tìm kiếm tương đối (chứa tên hoặc họ tên đầy đủ)
+  try {
+    const { data: allUsers } = await supabase.from("users").select("full_name, email").limit(1000);
+    if (allUsers) {
+      for (const row of allUsers) {
+        if (!row.email || !row.full_name) continue;
+        const n = normalizeString(row.full_name);
+        if (n && normalizedTarget && (n.includes(normalizedTarget) || normalizedTarget.includes(n))) {
+          return row.email;
+        }
+      }
+    }
+  } catch (e3) {}
+
   return null;
 }
 
@@ -239,8 +275,38 @@ function buildHtml(title: string, user: string, details: Record<string, string>,
 function formatDate(isoStr: string | null): string {
   if (!isoStr) return "N/A";
   try {
-    const d = new Date(isoStr);
-    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    const raw = String(isoStr).trim();
+    if (/^\d{2}\/\d{2}\/\d{4}/.test(raw)) return raw;
+
+    // Đối với ngày thuần túy dạng YYYY-MM-DD hoặc YYYY-MM-DDT00:00 (ví dụ ngày cọc, không kèm giờ thực)
+    const dateOnlyMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:T00:00(?::00(?:\.000)?)?(?:Z|[+-]\d{2}:\d{2})?)?$/);
+    if (dateOnlyMatch) {
+      return `${dateOnlyMatch[3]}/${dateOnlyMatch[2]}/${dateOnlyMatch[1]}`;
+    }
+
+    const d = new Date(raw);
+    if (isNaN(d.getTime())) return raw;
+
+    // Chuyển đổi chính xác sang giờ Việt Nam (UTC+7 / Asia/Ho_Chi_Minh)
+    const formatter = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+
+    const parts = formatter.formatToParts(d);
+    const getVal = (type: string) => parts.find(p => p.type === type)?.value || '';
+    const day = getVal('day');
+    const month = getVal('month');
+    const year = getVal('year');
+    const hour = getVal('hour');
+    const minute = getVal('minute');
+
+    return `${day}/${month}/${year} ${hour}:${minute}`;
   } catch {
     return String(isoStr);
   }
