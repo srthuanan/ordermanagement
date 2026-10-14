@@ -7,6 +7,7 @@ import {
     fetchInvoicedMissingYardReconciliationData,
     InvoicedMissingYardItem
 } from '../../services/api/satelliteWarehouseService';
+import { ReconciliationDetailModal } from './ReconciliationDetailModal';
 
 export interface SatelliteCarItem {
     id: string;
@@ -42,7 +43,7 @@ interface SatelliteWarehousesViewProps {
     onCountsChange?: (counts: { carsCount: number; td4Count: number; dnxCount: number; missingYardCount: number; allAlertCount: number }) => void;
 }
 
-const API_URL = "https://script.google.com/macros/s/AKfycbyQ8PIQx9DEI0Caps3q0GBGKcgo7DOV9rP_ykFbCr30WX5kaG8F8SjhblSGgKzadef9/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbylEAT8IqQVmKsulKUB5imIUcWm3h7a6Mfe-MQyhF3T5Wu2JWcbO3Q6a1aXZLN7exnV/exec";
 const CACHE_KEY = "satellite_warehouses_cache_v1";
 
 const formatDate = (val: any): string => {
@@ -134,7 +135,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     // 2. DỮ LIỆU BẢNG ĐỐI CHIẾU ĐNX XUẤT ĐIỀU CHUYỂN
     const [reconcileItems, setReconcileItems] = useState<DnxReconciliationItem[]>([]);
     const [isLoadingReconcile, setIsLoadingReconcile] = useState(false);
-    const [reconcileStatusFilter, setReconcileStatusFilter] = useState<'all' | 'thuan_an' | 'transit_yard' | 'in_transit'>('thuan_an');
+    const [reconcileStatusFilter, setReconcileStatusFilter] = useState<'all' | 'thuan_an' | 'cyber_not_yard' | 'transit_yard' | 'in_transit' | 'already_in_cyber'>('thuan_an');
     const [reconcileTvbhFilter, setReconcileTvbhFilter] = useState<string>('all');
     const [reconcileModelFilter, setReconcileModelFilter] = useState<string>('all');
     const [reconcileSearch, setReconcileSearch] = useState('');
@@ -144,6 +145,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     const [td4Items, setTd4Items] = useState<Td4ReconciliationItem[]>([]);
     const [isLoadingTd4, setIsLoadingTd4] = useState(false);
     const [td4YardFilter, setTd4YardFilter] = useState<'all' | 'thuan_an' | 'other'>('all');
+    const [td4ApprovalFilter, setTd4ApprovalFilter] = useState<'all' | 'approved' | 'pending'>('all');
     const [td4TvbhFilter, setTd4TvbhFilter] = useState<string>('all');
     const [td4ModelFilter, setTd4ModelFilter] = useState<string>('all');
     const [td4Search, setTd4Search] = useState('');
@@ -156,6 +158,17 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     const [missingYardModelFilter, setMissingYardModelFilter] = useState<string>('all');
     const [missingYardSearch, setMissingYardSearch] = useState('');
     const [selectedMissingYardRowIdx, setSelectedMissingYardRowIdx] = useState<number>(0);
+
+    // 5. MODAL XEM CHI TIẾT LỖI VÀ HƯỚNG XỬ LÝ VI PHẠM
+    const [detailModalItem, setDetailModalItem] = useState<any | null>(null);
+    const [detailModalType, setDetailModalType] = useState<'missing_yard' | 'td4' | 'dnx' | 'all'>('all');
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+    const handleOpenDetailModal = (item: any, type: 'missing_yard' | 'td4' | 'dnx' | 'all') => {
+        setDetailModalItem(item);
+        setDetailModalType(type);
+        setIsDetailModalOpen(true);
+    };
 
     // Parser for API Data
     const parseApiResponse = useCallback((warehouses: Record<string, any>): SatelliteCarItem[] => {
@@ -363,35 +376,50 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         setTimeout(() => setCopiedVin(null), 2000);
     };
 
-    // Copy Danh Sách Gửi Zalo (ĐNX)
+    // Copy Danh Sách Gửi Zalo (ĐNX - Cả xe về bãi chưa nhập Cyber và xe Sổ Cyber có K83 nhưng chưa có bãi)
     const handleCopyZaloDnxList = () => {
-        const alertCars = reconcileItems.filter(c => c.reconcileStatus === 'AT_THUAN_AN');
-        if (alertCars.length === 0) {
-            showToast('Thông báo', 'Hiện không có xe nào tại bãi Thuận An chưa nhập Cyber', 'info');
+        const alertThuanAnCars = reconcileItems.filter(c => c.reconcileStatus === 'AT_THUAN_AN');
+        const alertCyberNotYardCars = reconcileItems.filter(c => c.reconcileStatus === 'CYBER_K83_NOT_IN_YARD');
+
+        if (alertThuanAnCars.length === 0 && alertCyberNotYardCars.length === 0) {
+            showToast('Thông báo', 'Hiện không có trường hợp lệch tồn ĐNX nào cần cảnh báo', 'info');
             return;
         }
 
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
         
-        let text = `🚨 DANH SÁCH XE ĐÃ VỀ BÃI THỰC TẾ THUẬN AN — TVBH CHƯA BÁO NHẬP KHO CYBER\n`;
-        text += `(Cập nhật lúc: ${timeStr} - Tổng: ${alertCars.length} xe)\n`;
+        let text = `📋 BÁO CÁO ĐỐI SOÁT LUÂN CHUYỂN ĐNX: SỔ CYBER vs BÃI THỰC TẾ\n`;
+        text += `(Cập nhật lúc: ${timeStr} - Về bãi chưa nhập Cyber: ${alertThuanAnCars.length} | Sổ Cyber có K83 nhưng chưa có bãi: ${alertCyberNotYardCars.length})\n`;
         text += `----------------------------------------\n`;
         
-        alertCars.forEach((c, i) => {
-            const pin = c.satelliteYard?.mucPin || '-';
-            const ngayNhan = c.satelliteYard?.ngayNhan || '';
-            text += `${i + 1}. VIN: ${c.vin}\n`;
-            text += `   - ĐNX: ${c.soCtDnx || 'Chưa rõ'}\n`;
-            text += `   - TVBH: ${c.tvbh || 'Chưa rõ'} | KH: ${c.customerName || 'Chưa rõ'}\n`;
-            text += `   - Xe: ${c.carModel} ${c.color ? `(${c.color})` : ''} | Pin: ${pin} | Về bãi: ${ngayNhan}\n`;
-        });
-        
-        text += `----------------------------------------\n`;
-        text += `👉 Đề nghị các TVBH có tên trên khẩn trương liên hệ Admin/Kế toán để làm thủ tục PNK nhập kho Cyber kịp thời giao xe cho khách hàng!`;
+        if (alertThuanAnCars.length > 0) {
+            text += `🚨 1. XE ĐÃ VỀ BÃI THỰC TẾ THUẬN AN — CHƯA LÀM PNK CYBER (${alertThuanAnCars.length} xe):\n`;
+            text += `👉 Đề nghị TVBH khẩn trương liên hệ Admin/Kế toán làm thủ tục PNK nhập kho Cyber để kịp tiến độ giao xe:\n`;
+            alertThuanAnCars.forEach((c, i) => {
+                const pin = c.satelliteYard?.mucPin || '-';
+                const ngayNhan = c.satelliteYard?.ngayNhan || '';
+                text += `   ${i + 1}. VIN: ${c.vin} | ĐNX: ${c.soCtDnx || 'Chưa rõ'}\n`;
+                text += `      - TVBH: ${c.tvbh || 'Chưa rõ'} | KH: ${c.customerName || 'Chưa rõ'}\n`;
+                text += `      - Xe: ${c.carModel} ${c.color ? `(${c.color})` : ''} | Pin: ${pin} | Về bãi: ${ngayNhan}\n`;
+            });
+            text += `----------------------------------------\n`;
+        }
+
+        if (alertCyberNotYardCars.length > 0) {
+            text += `⚠️ 2. SỔ CYBER ĐÃ NHẬP K83 — NHƯNG BÃI THỰC TẾ CHƯA CÓ XE (${alertCyberNotYardCars.length} xe):\n`;
+            text += `👉 Đề nghị Kế toán kho và Thủ kho đối chiếu khẩn cấp để xác định vị trí thực tế của xe:\n`;
+            alertCyberNotYardCars.forEach((c, i) => {
+                text += `   ${i + 1}. VIN: ${c.vin} | ĐNX: ${c.soCtDnx || 'Chưa rõ'}\n`;
+                text += `      - TVBH: ${c.tvbh || 'Chưa rõ'} | KH: ${c.customerName || 'Chưa rõ'}\n`;
+                text += `      - Xe: ${c.carModel} ${c.color ? `(${c.color})` : ''}\n`;
+                text += `      - Tình trạng: ${c.reconcileNote}\n`;
+            });
+            text += `----------------------------------------\n`;
+        }
 
         navigator.clipboard.writeText(text);
-        showToast('Đã sao chép Zalo', `Đã sao chép danh sách ${alertCars.length} xe để gửi nhóm Zalo!`, 'success', 2500);
+        showToast('Đã sao chép Zalo', `Đã sao chép danh sách đối soát ĐNX (${alertThuanAnCars.length + alertCyberNotYardCars.length} xe)!`, 'success', 2500);
     };
 
     // Copy Danh Sách Gửi Zalo (Cảnh Báo Tồn TD4)
@@ -424,138 +452,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         showToast('Đã sao chép Zalo', `Đã sao chép danh sách ${td4Items.length} xe vi phạm tồn TD4!`, 'warning', 2500);
     };
 
-    // Export CSV 3 Kho
-    const exportCsv = () => {
-        if (filteredCars.length === 0) {
-            showToast('Thông báo', 'Không có dữ liệu để xuất', 'warning');
-            return;
-        }
 
-        const headers = ['Kho', 'STT', 'SR Quản Lý', 'Loại Xe', 'Số Khung (VIN)', 'Màu Sắc', 'Mức Pin', 'Bên Giao', 'Ngày Nhận', 'Ngày Giao', 'Số Ngày Tồn', 'Trạng Thái', 'Ghi Chú'];
-        const rows = filteredCars.map(c => [
-            c.khoName,
-            c.stt,
-            c.showroomQuanLy,
-            c.loaiXe,
-            c.soKhung,
-            c.mauSac,
-            c.mucPin,
-            c.benGiao,
-            c.ngayNhan,
-            c.ngayGiao,
-            c.soNgayTonKho,
-            c.isTonKho ? 'Còn tồn bãi' : 'Đã giao',
-            c.note
-        ]);
-
-        const csvContent = '\uFEFF' + [headers, ...rows]
-            .map(row => row.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(','))
-            .join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `ton_kho_bai_${new Date().toISOString().slice(0, 10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('Thành công', 'Đã xuất file dữ liệu 3 kho thành công', 'success');
-    };
-
-    // Export CSV Bảng Đối Chiếu ĐNX
-    const exportReconcileCsv = () => {
-        if (filteredReconcileItems.length === 0) {
-            showToast('Thông báo', 'Không có dữ liệu đối chiếu để xuất', 'warning');
-            return;
-        }
-
-        const headers = [
-            'STT', 'Số Khung (VIN)', 'Số ĐNX', 'Ngày Lập ĐNX', 'TVBH Phụ Trách', 
-            'Khách Hàng', 'Số Hợp Đồng', 'Dòng Xe', 'Màu Sắc', 'Kho Xuất', 
-            'Kho Nhập Cyber', 'Tồn Kho Cyber (K83)', 'Vị Trí Thực Tế (Bãi Ngoài)', 
-            'Ngày Nhận Bãi', 'Mức Pin', 'Kết Quả Đối Chiếu / Cảnh Báo'
-        ];
-
-        const rows = filteredReconcileItems.map((c, idx) => [
-            idx + 1,
-            c.vin,
-            c.soCtDnx,
-            c.ngayCtDnx,
-            c.tvbh,
-            c.customerName,
-            c.orderNumber || '',
-            c.carModel,
-            c.color,
-            c.khoXuat,
-            c.khoNhan,
-            c.isTonKhoCyberK83 ? 'Đã có tồn K83' : `Chưa nhập K83 (${c.tenKhoCyber || c.maKhoCyber || 'Đang vận tải'})`,
-            c.satelliteYard ? c.satelliteYard.khoName : 'Chưa ghi nhận bãi',
-            c.satelliteYard?.ngayNhan || '',
-            c.satelliteYard?.mucPin || '',
-            c.reconcileNote
-        ]);
-
-        const csvContent = '\uFEFF' + [headers, ...rows]
-            .map(row => row.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(','))
-            .join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `doi_chieu_dnx_bai_thuan_an_${new Date().toISOString().slice(0, 10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('Thành công', 'Đã xuất file đối chiếu thành công', 'success');
-    };
-
-    // Export CSV Xe Tồn TD4
-    const exportTd4Csv = () => {
-        if (filteredTd4Items.length === 0) {
-            showToast('Thông báo', 'Không có dữ liệu tồn TD4 để xuất', 'warning');
-            return;
-        }
-
-        const headers = [
-            'STT', 'Số Khung (VIN)', 'Số Phiếu TD4', 'Ngày Lập TD4', 'TVBH Phụ Trách',
-            'Khách Hàng', 'Số Hợp Đồng', 'Dòng Xe', 'Màu Sắc', 'Kho Cyber',
-            'Bãi Thực Tế Vẫn Còn Tồn', 'Ngày Nhận Bãi', 'Mức Pin', 'Tình Trạng Bãi', 'Cảnh Báo Vi Phạm'
-        ];
-
-        const rows = filteredTd4Items.map((c, idx) => [
-            idx + 1,
-            c.vin,
-            c.soCtTd4,
-            c.ngayCtTd4,
-            c.tvbh,
-            c.customerName,
-            c.orderNumber,
-            c.carModel,
-            c.color,
-            c.tenKhoCyber || c.maKhoCyber || '',
-            c.satelliteYard.khoName,
-            c.satelliteYard.ngayNhan,
-            c.satelliteYard.pin,
-            c.satelliteYard.tinhTrang,
-            c.warningNote
-        ]);
-
-        const csvContent = '\uFEFF' + [headers, ...rows]
-            .map(row => row.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(','))
-            .join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `canh_bao_xe_ton_td4_${new Date().toISOString().slice(0, 10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('Thành công', 'Đã xuất file danh sách xe tồn TD4 thành công', 'success');
-    };
 
     // =========================================================================
     // DỮ LIỆU TỔNG HỢP TOÀN BỘ CẢNH BÁO LỆCH KHO (ĐẦU VÀO ĐNX & ĐẦU RA TD4)
@@ -593,17 +490,32 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
             }
         });
 
-        // 1. Chiều Nhập: Các xe ĐNX chưa có tồn K83 trên Cyber (Đã tự động bỏ qua nếu xe đã có TD4)
+        // 1. Chiều Nhập: Các xe ĐNX (Đã tự động bỏ qua nếu xe đã có TD4)
         reconcileItems.forEach(item => {
             const v = (item.vin || '').trim().toUpperCase();
             if (td4VinSet.has(v) || (v.length >= 6 && td4VinSet.has(v.slice(-6)))) {
                 return; // Bỏ qua phiếu ĐNX nếu xe đã có phiếu TD4
             }
+            if (item.reconcileStatus === 'ALREADY_IN_CYBER') {
+                return; // Khớp hoàn hảo cả Cyber K83 và bãi thực tế, không đưa vào danh sách cảnh báo sai lệch
+            }
+
             const isAtThuanAn = item.reconcileStatus === 'AT_THUAN_AN';
+            const isCyberNotYard = item.reconcileStatus === 'CYBER_K83_NOT_IN_YARD';
+
+            // Chỉ đưa các trường hợp sai lệch/vi phạm thực tế vào danh sách cảnh báo tổng hợp
+            if (!isAtThuanAn && !isCyberNotYard) {
+                return;
+            }
+
             list.push({
                 id: `dnx-${item.vin}`,
                 type: 'DNX',
-                typeLabel: isAtThuanAn ? 'ĐNX Chưa Nhập K83' : 'ĐNX Đang Luân Chuyển',
+                typeLabel: isAtThuanAn 
+                    ? 'ĐNX Về Bãi Chưa Nhập K83' 
+                    : isCyberNotYard 
+                        ? 'Sổ K83 Chưa Có Bãi' 
+                        : 'ĐNX Đang Luân Chuyển',
                 vin: item.vin,
                 carModel: item.carModel,
                 color: item.color,
@@ -612,18 +524,26 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 orderNumber: item.orderNumber || '',
                 soChungTu: item.soCtDnx || 'Chưa rõ',
                 ngayChungTu: item.ngayCtDnx || '',
-                khoCyber: item.isTonKhoCyberK83 ? 'Đã có tồn K83' : `Chưa có tồn K83 (${item.tenKhoCyber || item.maKhoCyber || 'Đang vận tải'})`,
-                khoThucTe: item.satelliteYard ? item.satelliteYard.khoName : 'Chưa ghi nhận bãi',
+                khoCyber: item.isTonKhoCyberK83 ? 'Đã có tồn K83 trên Cyber' : `Chưa có tồn K83 (${item.tenKhoCyber || item.maKhoCyber || 'Đang vận tải'})`,
+                khoThucTe: item.satelliteYard ? `${item.satelliteYard.khoName}${item.satelliteYard.isTonKho ? '' : ' (Đã xuất)'}` : 'Chưa ghi nhận bãi',
                 mucPin: item.satelliteYard?.mucPin || '-',
                 ngayNhanBai: item.satelliteYard?.ngayNhan || '',
-                alertTitle: isAtThuanAn ? 'XE ĐÃ VỀ BÃI THUẬN AN — CHƯA LÀM PNK CYBER' : (item.satelliteYard ? 'Tại bãi trung chuyển QL13/Q12' : 'Đang vận chuyển'),
-                actionRequired: isAtThuanAn ? 'TVBH báo Admin/Kế toán làm phiếu PNK nhập kho Cyber để kịp tiến độ giao xe' : 'Theo dõi điều phối xe về Showroom Thuận An',
-                severity: isAtThuanAn ? 'critical' : 'warning'
+                alertTitle: isAtThuanAn 
+                    ? 'XE ĐÃ VỀ BÃI THUẬN AN — CHƯA LÀM PNK CYBER' 
+                    : isCyberNotYard 
+                        ? 'SỔ CYBER ĐÃ NHẬP K83 — NHƯNG BÃI THỰC TẾ CHƯA CÓ XE' 
+                        : (item.satelliteYard ? 'Tại bãi trung chuyển QL13/Q12' : 'Đang vận chuyển'),
+                actionRequired: isAtThuanAn 
+                    ? 'TVBH báo Admin/Kế toán làm phiếu PNK nhập kho Cyber để kịp tiến độ giao xe' 
+                    : isCyberNotYard 
+                        ? 'Khẩn trương đối chiếu Kế toán kho và Thủ kho bãi nhận để xác định xe thực tế đang ở vị trí nào' 
+                        : 'Theo dõi điều phối xe về Showroom Thuận An',
+                severity: isAtThuanAn || isCyberNotYard ? 'critical' : 'warning'
             });
         });
 
-        // 2. Chiều Xuất: Các xe đã có phiếu TD4 (đã giao xe) nhưng bãi thực tế vẫn báo tồn kho
-        td4Items.forEach(item => {
+        // 2. Chiều Xuất: Các xe đã có phiếu TD4 và ĐÃ ĐƯỢC DUYỆT (isViolation !== false) nhưng bãi thực tế vẫn báo tồn kho
+        td4Items.filter(item => item.isViolation !== false).forEach(item => {
             list.push({
                 id: `td4-${item.vin}`,
                 type: 'TD4',
@@ -646,27 +566,34 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
             });
         });
 
-        // 3. Chiều Xuất Hóa Đơn: Đã xuất HĐ nhưng chưa có TD4 mà mất tồn bãi thực tế
-        missingYardItems.forEach(item => {
+        // 3. Chiều Xuất Hóa Đơn: Đã xuất HĐ nhưng chưa có TD4 mà mất tồn bãi thực tế (vi phạm)
+        missingYardItems.filter(item => item.isViolation).forEach(item => {
+            const isDnx = item.satelliteStatus === 'IN_TRANSIT_DNX';
             list.push({
                 id: `missing-${item.vin}`,
                 type: 'MISSING_YARD' as any,
-                typeLabel: 'Xuất HĐ Mất Tồn Bãi',
+                typeLabel: isDnx ? 'ĐNX Đang Luân Chuyển' : 'Xuất Bãi Trái Quy Trình',
                 vin: item.vin,
                 carModel: item.carModel,
                 color: item.color,
                 tvbh: item.tvbh || 'Chưa rõ',
                 customerName: item.customerName || 'Chưa rõ',
                 orderNumber: item.orderNumber || '',
-                soChungTu: item.maHdCyber || 'HĐ',
-                ngayChungTu: item.ngayXuatHoaDon || '',
+                soChungTu: isDnx ? (item.soCtDnx || item.maHdCyber || 'ĐNX') : (item.maHdCyber || 'HĐ'),
+                ngayChungTu: isDnx ? (item.ngayCtDnx || item.ngayXuatHoaDon || '') : (item.ngayXuatHoaDon || ''),
                 khoCyber: `Kho Cyber: ${item.tenKhoCyber || item.maKhoCyber}`,
-                khoThucTe: item.khoBaiThucTe || 'Không có trong 3 bãi',
+                khoThucTe: item.khoBaiThucTe ? `${item.khoBaiThucTe}${item.ngayXuatBaiThucTe ? ` (Rời bãi: ${item.ngayXuatBaiThucTe})` : ''}` : 'Không có trong 3 bãi',
                 mucPin: '-',
                 ngayNhanBai: item.ngayXuatBaiThucTe || '',
-                alertTitle: 'NGUY HIỂM: ĐÃ XUẤT HÓA ĐƠN NHƯNG CHƯA CÓ LỆNH TD4 MÀ MẤT TỒN BÃI THỰC TẾ',
-                actionRequired: 'Khẩn trương kiểm tra vị trí xe thực tế! Nguy cơ giao xe chui trái quy trình hoặc thất lạc!',
-                severity: 'critical'
+                alertTitle: isDnx 
+                    ? `ĐANG LUÂN CHUYỂN THEO ĐNX (${item.soCtDnx || 'ĐNX'}) — CHỜ KHO NHẬN NHẬP KHO` 
+                    : (item.satelliteStatus === 'ALREADY_DISPATCHED_WITHOUT_TD4' 
+                        ? 'XUẤT BÃI KHÔNG CÓ LỆNH — CHƯA CÓ TD4 & KHÔNG CÓ ĐNX' 
+                        : 'SỔ CYBER CÓ KHO NHƯNG KHÔNG TỒN TẠI TRONG 3 BÃI NGOÀI'),
+                actionRequired: isDnx 
+                    ? 'Theo dõi xe về bãi nhận và hoàn tất nhập kho K83 trên Cyber khi xe đến' 
+                    : 'Khẩn trương kiểm tra vị trí xe thực tế! Nguy cơ giao xe không lệnh hoặc sai lệch dữ liệu kho!',
+                severity: isDnx ? 'warning' : 'critical'
             });
         });
 
@@ -737,11 +664,12 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     // Copy Báo Cáo Tổng Hợp Gửi Zalo (Cả ĐNX & TD4)
     const handleCopyZaloAllReconcile = () => {
         const dnxAlerts = reconcileItems.filter(c => c.reconcileStatus === 'AT_THUAN_AN');
+        const cyberNotYardAlerts = reconcileItems.filter(c => c.reconcileStatus === 'CYBER_K83_NOT_IN_YARD');
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
         
         let text = `🚨 BÁO CÁO TỔNG HỢP SAI LỆCH KHO: CYBERSOFT vs BÃI XE THỰC TẾ\n`;
-        text += `(Thời điểm kiểm tra: ${timeStr} - Tổng cộng: ${dnxAlerts.length + td4Items.length} trường hợp lệch)\n`;
+        text += `(Thời điểm kiểm tra: ${timeStr} - Tổng cộng: ${dnxAlerts.length + cyberNotYardAlerts.length + td4Items.length + missingYardItems.length} trường hợp lệch)\n`;
         text += `========================================\n\n`;
 
         // 1. Chiều Nhập (ĐNX Chưa Nhập Cyber)
@@ -761,6 +689,20 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
             });
         }
         text += `\n`;
+
+        // 1B. Lệch Sổ K83 vs Bãi (Đã làm PNK K83 nhưng bãi chưa có xe)
+        if (cyberNotYardAlerts.length > 0) {
+            text += `⚠️ 1B. LỆCH SỔ SÁCH (SỔ CYBER ĐÃ NHẬP K83 — BÃI THỰC TẾ CHƯA CÓ XE): ${cyberNotYardAlerts.length} xe\n`;
+            text += `👉 Đề nghị Kế toán kho và Thủ kho đối chiếu kiểm tra vị trí xe thực tế:\n`;
+            text += `----------------------------------------\n`;
+            cyberNotYardAlerts.forEach((c, i) => {
+                text += ` ${i + 1}. VIN: ${c.vin}\n`;
+                text += `    • ĐNX: ${c.soCtDnx || 'Chưa rõ'} | TVBH: ${c.tvbh || 'Chưa rõ'}\n`;
+                text += `    • Xe: ${c.carModel} ${c.color ? `(${c.color})` : ''}\n`;
+                text += `    • Tình trạng: ${c.reconcileNote}\n`;
+            });
+            text += `\n`;
+        }
 
         // 2. Chiều Xuất (TD4 Vi Phạm Tồn)
         text += `🚨 2. ĐẦU RA (ĐÃ LẬP PHIẾU TD4 — BÃI THỰC TẾ VẪN BÁO TỒN KHO): ${td4Items.length} xe\n`;
@@ -800,7 +742,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         showToast('Đã sao chép Zalo', `Đã sao chép Báo cáo tổng hợp đối soát (${dnxAlerts.length + td4Items.length + missingYardItems.length} xe)!`, 'success', 2500);
     };
 
-    // Copy Zalo Danh Sách Xe Xuất HĐ Mất Tồn Bãi
+    // Copy Zalo Danh Sách Xe Xuất HĐ Mất Tồn Bãi (Phân loại rõ vi phạm và xe đi theo ĐNX)
     const handleCopyZaloMissingYardList = () => {
         if (missingYardItems.length === 0) {
             showToast('Thông báo', 'Tuyệt vời! Không có xe nào đã xuất HĐ mà mất tồn bãi.', 'success');
@@ -810,116 +752,26 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
         
-        let text = `🚨 CẢNH BÁO NGUY HIỂM: XE ĐÃ XUẤT HÓA ĐƠN — CHƯA LẬP PHIẾU TD4 NHƯNG MẤT TỒN BÃI THỰC TẾ\n`;
-        text += `(Cập nhật lúc: ${timeStr} - Tổng: ${missingYardItems.length} xe vi phạm/nguy cơ)\n`;
-        text += `QUY TẮC: "Xe chưa có phiếu TD4 KHÔNG ĐƯỢC PHÉP rời khỏi bãi xe showroom!"\n`;
+        let text = `🚨 BÁO CÁO CẢNH BÁO XE XUẤT HÓA ĐƠN — MẤT TỒN BÃI THỰC TẾ\n`;
+        text += `(Cập nhật lúc: ${timeStr} - Tổng: ${missingYardItems.length} xe vi phạm)\n`;
+        text += `QUY TẮC: "Chưa có phiếu TD4 và không có ĐNX KHÔNG ĐƯỢC PHÉP rời khỏi bãi xe showroom!"\n`;
         text += `----------------------------------------\n`;
-        
+
         missingYardItems.forEach((c, i) => {
             text += `${i + 1}. VIN: ${c.vin}\n`;
             text += `   - TVBH: ${c.tvbh || 'Chưa rõ'} | KH: ${c.customerName || 'Chưa rõ'}\n`;
-            text += `   - Xe: ${c.carModel} ${c.color ? `(${c.color})` : ''} | Ngày xuất HĐ: ${c.ngayXuatHoaDon ? c.ngayXuatHoaDon.slice(0, 10) : 'N/A'}\n`;
-            text += `   - Tình trạng: ${c.satelliteStatusLabel}\n`;
-            text += `   - Kho Cyber từng lưu: ${c.tenKhoCyber || c.maKhoCyber}\n`;
+            text += `   - Xe: ${c.carModel} ${c.color ? `(${c.color})` : ''} | Ngày HĐ: ${c.ngayXuatHoaDon ? c.ngayXuatHoaDon.slice(0, 10) : 'N/A'}\n`;
+            text += `   - Trạng thái: ${c.satelliteStatusLabel}\n`;
+            text += `   - Kho Cyber: ${c.tenKhoCyber || c.maKhoCyber}\n`;
         });
-        
         text += `----------------------------------------\n`;
-        text += `👉 Đề nghị TVBH và Bộ phận Quản lý Kho bãi kiểm tra khẩn cấp vị trí hiện tại của các xe trên và báo cáo Ban Giám Đốc ngay trong ngày!`;
+        text += `👉 Đề nghị TVBH và Quản lý Kho bãi kiểm tra khẩn cấp vị trí thực tế của các xe trên!`;
 
         navigator.clipboard.writeText(text);
-        showToast('Đã sao chép Zalo', `Đã sao chép danh sách ${missingYardItems.length} xe xuất HĐ mất tồn bãi!`, 'warning', 2500);
+        showToast('Đã sao chép Zalo', `Đã sao chép danh sách đối soát (${missingYardItems.length} xe)!`, 'info', 2500);
     };
 
-    // Export CSV Xe Xuất HĐ Mất Tồn Bãi
-    const exportMissingYardCsv = () => {
-        if (filteredMissingYardItems.length === 0) {
-            showToast('Thông báo', 'Không có dữ liệu để xuất', 'warning');
-            return;
-        }
 
-        const headers = [
-            'STT', 'Số Khung (VIN)', 'Dòng Xe', 'Màu Sắc', 'Số HĐ / Hóa Đơn', 
-            'Ngày Xuất Hóa Đơn', 'TVBH Phụ Trách', 'Khách Hàng', 'Kho Cyber Từng Có', 
-            'Tình Trạng Bãi Thực Tế', 'Ngày Xuất Bãi (Nếu Có)', 'Cảnh Báo Vi Phạm'
-        ];
-
-        const rows = filteredMissingYardItems.map((c, idx) => [
-            idx + 1,
-            c.vin,
-            c.carModel,
-            c.color,
-            c.maHdCyber || c.orderNumber,
-            c.ngayXuatHoaDon ? c.ngayXuatHoaDon.slice(0, 10) : '',
-            c.tvbh,
-            c.customerName,
-            c.tenKhoCyber || c.maKhoCyber,
-            c.satelliteStatusLabel,
-            c.ngayXuatBaiThucTe || '',
-            c.warningNote
-        ]);
-
-        const csvContent = '\uFEFF' + [headers, ...rows]
-            .map(row => row.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(','))
-            .join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `canh_bao_xuat_hd_mat_ton_bai_${new Date().toISOString().slice(0, 10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('Thành công', 'Đã xuất file cảnh báo thành công', 'success');
-    };
-
-    // Xuất Excel Báo Cáo Toàn Bộ Sai Lệch
-    const exportAllAlertsCsv = () => {
-        if (filteredAllAlerts.length === 0) {
-            showToast('Thông báo', 'Không có dữ liệu cảnh báo để xuất', 'warning');
-            return;
-        }
-
-        const headers = [
-            'STT', 'Phân Loại', 'Số Khung (VIN)', 'Số Chứng Từ (ĐNX/TD4)', 'Ngày Chứng Từ', 
-            'Dòng Xe', 'Màu Sắc', 'TVBH Phụ Trách', 'Khách Hàng', 'Số Hợp Đồng', 
-            'Trạng Thái CyberSoft', 'Vị Trí Thực Tế (Bãi Ngoài)', 'Mức Pin', 'Ngày Nhận Bãi', 
-            'Tình Trạng Sai Lệch', 'Yêu Cầu Hành Động'
-        ];
-
-        const rows = filteredAllAlerts.map((c, idx) => [
-            idx + 1,
-            c.type === 'DNX' ? 'Đầu vào (ĐNX chưa nhập K83)' : 'Đầu ra (TD4 vi phạm tồn bãi)',
-            c.vin,
-            c.soChungTu,
-            c.ngayChungTu,
-            c.carModel,
-            c.color,
-            c.tvbh,
-            c.customerName,
-            c.orderNumber,
-            c.khoCyber,
-            c.khoThucTe,
-            c.mucPin,
-            c.ngayNhanBai,
-            c.alertTitle,
-            c.actionRequired
-        ]);
-
-        const csvContent = '\uFEFF' + [headers, ...rows]
-            .map(row => row.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(','))
-            .join('\n');
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `bao_cao_lech_kho_cyber_vs_thuc_te_${new Date().toISOString().slice(0, 10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('Thành công', 'Đã xuất file đối soát tổng hợp thành công', 'success');
-    };
 
     // Models for dropdown (3 Kho)
     const uniqueModels = useMemo(() => {
@@ -995,8 +847,10 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     const filteredReconcileItems = useMemo(() => {
         return reconcileItems.filter(c => {
             if (reconcileStatusFilter === 'thuan_an' && c.reconcileStatus !== 'AT_THUAN_AN') return false;
+            if (reconcileStatusFilter === 'cyber_not_yard' && c.reconcileStatus !== 'CYBER_K83_NOT_IN_YARD') return false;
             if (reconcileStatusFilter === 'transit_yard' && c.reconcileStatus !== 'AT_TRANSIT_YARD') return false;
             if (reconcileStatusFilter === 'in_transit' && c.reconcileStatus !== 'IN_TRANSIT') return false;
+            if (reconcileStatusFilter === 'already_in_cyber' && c.reconcileStatus !== 'ALREADY_IN_CYBER') return false;
 
             if (reconcileTvbhFilter !== 'all' && c.tvbh.trim() !== reconcileTvbhFilter) return false;
             if (reconcileModelFilter !== 'all' && c.carModel.trim() !== reconcileModelFilter) return false;
@@ -1018,6 +872,9 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     // Filtered cars (TD4)
     const filteredTd4Items = useMemo(() => {
         return td4Items.filter(c => {
+            if (td4ApprovalFilter === 'approved' && c.isViolation === false) return false;
+            if (td4ApprovalFilter === 'pending' && c.isViolation !== false) return false;
+
             if (td4YardFilter === 'thuan_an' && !c.isTonThuanAn) return false;
             if (td4YardFilter === 'other' && c.isTonThuanAn) return false;
 
@@ -1036,7 +893,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
             }
             return true;
         });
-    }, [td4Items, td4YardFilter, td4TvbhFilter, td4ModelFilter, td4Search]);
+    }, [td4Items, td4ApprovalFilter, td4YardFilter, td4TvbhFilter, td4ModelFilter, td4Search]);
 
     // Counts for status bar (3 Kho)
     const countThuanAn = useMemo(() => filteredCars.filter(c => c.isThuanAn).length, [filteredCars]);
@@ -1045,10 +902,14 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
 
     // Counts for Reconciliation Stats (ĐNX)
     const countAlertThuanAn = useMemo(() => reconcileItems.filter(c => c.reconcileStatus === 'AT_THUAN_AN').length, [reconcileItems]);
+    const countCyberNotYard = useMemo(() => reconcileItems.filter(c => c.reconcileStatus === 'CYBER_K83_NOT_IN_YARD').length, [reconcileItems]);
     const countTransitYard = useMemo(() => reconcileItems.filter(c => c.reconcileStatus === 'AT_TRANSIT_YARD').length, [reconcileItems]);
     const countInTransit = useMemo(() => reconcileItems.filter(c => c.reconcileStatus === 'IN_TRANSIT').length, [reconcileItems]);
+    const countAlreadyInCyber = useMemo(() => reconcileItems.filter(c => c.reconcileStatus === 'ALREADY_IN_CYBER').length, [reconcileItems]);
 
     // Counts for TD4 Stats
+    const countTd4Approved = useMemo(() => td4Items.filter(c => c.isViolation !== false).length, [td4Items]);
+    const countTd4Pending = useMemo(() => td4Items.filter(c => c.isViolation === false).length, [td4Items]);
     const countTd4ThuanAn = useMemo(() => td4Items.filter(c => c.isTonThuanAn).length, [td4Items]);
     const countTd4Other = useMemo(() => td4Items.filter(c => !c.isTonThuanAn).length, [td4Items]);
 
@@ -1084,7 +945,8 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 const matchHd = (c.orderNumber || '').toLowerCase().includes(q) || (c.maHdCyber || '').toLowerCase().includes(q);
                 const matchModel = c.carModel.toLowerCase().includes(q);
                 const matchKho = c.khoBaiThucTe ? c.khoBaiThucTe.toLowerCase().includes(q) : false;
-                if (!matchVin && !matchTvbh && !matchKh && !matchHd && !matchModel && !matchKho) return false;
+                const matchDnx = (c.soCtDnx || '').toLowerCase().includes(q);
+                if (!matchVin && !matchTvbh && !matchKh && !matchHd && !matchModel && !matchKho && !matchDnx) return false;
             }
             return true;
         });
@@ -1095,13 +957,13 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         if (onCountsChange) {
             onCountsChange({
                 carsCount: cars.length,
-                td4Count: td4Items.length,
+                td4Count: countTd4Approved,
                 dnxCount: countAlertThuanAn,
-                missingYardCount: missingYardItems.length,
-                allAlertCount: countAlertThuanAn + td4Items.length + missingYardItems.length
+                missingYardCount: missingYardItems.filter(c => c.isViolation).length,
+                allAlertCount: allCombinedAlerts.length
             });
         }
-    }, [cars.length, td4Items.length, countAlertThuanAn, missingYardItems.length, onCountsChange]);
+    }, [cars.length, countTd4Approved, countAlertThuanAn, missingYardItems, allCombinedAlerts.length, onCountsChange]);
 
     return (
         <div className="flex-1 flex flex-col min-h-0 w-full bg-[#ECE9D8] rounded border border-[#CCCCCC] shadow-sm overflow-hidden font-sans select-none h-full">
@@ -1215,20 +1077,16 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 </span>
                             </div>
                         ) : (
-                            <table className="w-full border-collapse text-left text-[11px] text-slate-800 select-text">
+                            <table className="table-fixed w-full border-collapse text-left text-[11px] text-slate-800 select-text">
                                 <thead className="bg-[#DDECFE] text-slate-900 sticky top-0 z-10 border-b border-[#9FBCEB] text-[11px] font-bold shadow-2xs">
                                     <tr>
-                                        <th className="py-1 px-1.5 text-center w-8 border-r border-[#B9D5F7]">#</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">Kho Bãi</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">SR Quản Lý</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">Dòng Xe & Màu</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] text-center whitespace-nowrap">Mức Pin</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">Số VIN (Số Khung)</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">Bên Giao</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">Ngày Nhận</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">Ngày Giao / Trạng Thái</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] text-center whitespace-nowrap">Tồn (Ngày)</th>
-                                        <th className="py-1 px-2 whitespace-nowrap">Ghi Chú</th>
+                                        <th className="py-1 px-1 text-center w-7 border-r border-[#B9D5F7]">#</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[15%]">Kho Bãi & SR</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[21%]">Số VIN & Bên Giao</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[17%]">Dòng Xe & Màu</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[15%]">Pin & Ngày Nhận</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[16%]">Trạng Thái Bãi</th>
+                                        <th className="py-1 px-2 w-[16%]">Ghi Chú</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[#E1E1E1]">
@@ -1254,81 +1112,94 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                             : 'bg-white hover:bg-[#EBF4FF]'
                                                 }`}
                                             >
-                                                <td className="py-1 px-1.5 text-center text-slate-500 font-mono text-[10px] border-r border-[#EBEBEB]">
+                                                <td className="py-1 px-1 text-center text-slate-500 font-mono text-[10px] border-r border-[#EBEBEB]">
                                                     {idx + 1}
                                                 </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className="font-bold text-slate-800 text-[10.5px]">
-                                                        {car.khoName.replace('Kho ', '')}
-                                                    </span>
-                                                    {car.thangNhap && (
-                                                        <span className="text-[9px] text-slate-400 block">
-                                                            {car.thangNhap}
+
+                                                {/* Kho Bãi & SR */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="font-bold text-slate-800 text-[10.5px] truncate">
+                                                            {car.khoName.replace('Kho ', '')}
                                                         </span>
-                                                    )}
-                                                </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className={`px-1 py-0.2 rounded-xs font-semibold text-[10px] border ${
-                                                        car.isThuanAn 
-                                                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
-                                                            : 'bg-slate-100 text-slate-700 border-slate-200'
-                                                    }`}>
-                                                        {car.showroomQuanLy || 'Thuận An'}
-                                                    </span>
-                                                </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className="font-bold text-slate-900">{car.loaiXe || '-'}</span>
-                                                    {car.mauSac && (
-                                                        <span className="text-slate-500 text-[10px] ml-1">
-                                                            ({car.mauSac})
+                                                        {car.thangNhap && (
+                                                            <span className="text-[9px] text-slate-400 font-mono">
+                                                                ({car.thangNhap})
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="mt-0.5">
+                                                        <span className={`px-1 py-0.2 rounded-xs font-semibold text-[9.5px] border inline-block ${
+                                                            car.isThuanAn 
+                                                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+                                                                : 'bg-slate-100 text-slate-700 border-slate-200'
+                                                        }`}>
+                                                            {car.showroomQuanLy || 'Thuận An'}
                                                         </span>
-                                                    )}
+                                                    </div>
                                                 </td>
-                                                <td className="py-1 px-2 text-center border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className={`inline-block px-1.5 py-0.2 rounded-xs text-[10px] font-bold border font-mono ${pinBadge}`}>
-                                                        {car.mucPin}
-                                                    </span>
-                                                </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap font-mono text-[11px] font-bold text-blue-900 group">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span>{car.soKhung}</span>
+
+                                                {/* Số VIN & Bên Giao */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="flex items-center gap-1 font-mono text-[11px] font-bold text-blue-900">
+                                                        <span className="truncate">{car.soKhung}</span>
                                                         <button
                                                             type="button"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 copyVin(car.soKhung);
                                                             }}
-                                                            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition-opacity"
+                                                            className="text-slate-400 hover:text-blue-600 transition-opacity shrink-0"
                                                             title="Sao chép số VIN"
                                                         >
                                                             <i className={`fas ${copiedVin === car.soKhung ? 'fa-check text-green-600' : 'fa-copy'} text-[10px]`}></i>
                                                         </button>
                                                     </div>
+                                                    <div className="text-[9.5px] text-slate-500 truncate mt-0.5" title={car.benGiao}>
+                                                        Giao: {car.benGiao || '-'}
+                                                    </div>
                                                 </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap text-slate-600">
-                                                    {car.benGiao || '-'}
+
+                                                {/* Dòng Xe & Màu */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="font-bold text-slate-900 truncate">{car.loaiXe || '-'}</div>
+                                                    <div className="text-[10px] text-slate-500 truncate">{car.mauSac || '-'}</div>
                                                 </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap font-mono text-slate-700">
-                                                    {car.ngayNhan || '-'}
+
+                                                {/* Pin & Ngày Nhận */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div>
+                                                        <span className={`inline-block px-1.5 py-0.2 rounded-xs text-[10px] font-bold border font-mono ${pinBadge}`}>
+                                                            {car.mucPin}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-[9.5px] text-slate-500 font-mono mt-0.5 truncate">
+                                                        {car.ngayNhan || '-'}
+                                                    </div>
                                                 </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
+
+                                                {/* Trạng Thái & Ngày Tồn */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
                                                     {car.isTonKho ? (
-                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-[#E6F4EA] text-[#137333] border border-[#CEEAD6] rounded-xs font-semibold text-[10px]">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                            Còn tồn bãi
-                                                        </span>
+                                                        <div>
+                                                            <span className="inline-flex items-center gap-1 px-1 py-0.2 bg-[#E6F4EA] text-[#137333] border border-[#CEEAD6] rounded-xs font-semibold text-[9.5px]">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                                Tồn: <strong>{car.soNgayTonKho || 0}n</strong>
+                                                            </span>
+                                                        </div>
                                                     ) : (
-                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-slate-100 text-slate-600 border border-slate-300 rounded-xs text-[10px]">
-                                                            <i className="fas fa-check text-slate-400 text-[9px]"></i>
+                                                        <div className="text-[9.5px] text-slate-600 truncate">
+                                                            <i className="fas fa-check text-slate-400 text-[9px] mr-1"></i>
                                                             Đã giao ({car.ngayGiao})
-                                                        </span>
+                                                        </div>
                                                     )}
                                                 </td>
-                                                <td className="py-1 px-2 text-center border-r border-[#EBEBEB] whitespace-nowrap font-mono font-semibold text-slate-700">
-                                                    {car.soNgayTonKho || '-'}
-                                                </td>
-                                                <td className="py-1 px-2 text-slate-600 max-w-[220px] truncate" title={car.note}>
-                                                    {car.note || '-'}
+
+                                                {/* Ghi Chú */}
+                                                <td className="py-1 px-2 overflow-hidden text-slate-600 text-[10px]">
+                                                    <div className="truncate" title={car.note}>
+                                                        {car.note || '-'}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
@@ -1360,18 +1231,6 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 Đã giao: {countDaGiao}
                             </span>
                         </div>
-
-                        <div className="flex items-center gap-1.5 ml-auto">
-                            <button
-                                type="button"
-                                onClick={exportCsv}
-                                className="px-2 py-0.5 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-400 rounded-xs text-[10px] sm:text-[11px] font-bold shadow-2xs flex items-center gap-1 cursor-pointer"
-                                title="Xuất file Excel/CSV danh sách xe đang xem"
-                            >
-                                <i className="fas fa-file-excel text-emerald-600"></i>
-                                <span>Xuất Excel</span>
-                            </button>
-                        </div>
                     </div>
                 </>
             )}
@@ -1384,46 +1243,78 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 <>
                     {/* THANH CÔNG CỤ DUY NHẤT (Single Ribbon Toolbar ~30px) */}
                     <div className="bg-[#F0F0F0] border-b border-[#CCCCCC] px-1.5 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-800 shrink-0">
-                        {/* Nhóm Trái: Tab Chuyển Phân Hệ + Bộ Lọc */}
+                        {/* Nhóm Trái: Segmented Buttons Chuyển Phân Hệ Đối Soát */}
                         <div className="flex items-center gap-1.5 flex-wrap">
-                            {/* Tiêu đề phân hệ hiện tại (Đã chuyển điều hướng sang Sidebar) */}
-                            <div className="flex items-center gap-1.5 font-bold text-[11.5px] text-slate-800 pr-1">
-                                {reconcileSubTab === 'td4' && (
-                                    <>
-                                        <i className="fa-solid fa-triangle-exclamation text-amber-600"></i>
-                                        <span>Xe Tồn TD4</span>
-                                        <span className="px-1.5 py-0.2 text-[9.5px] rounded-full bg-purple-100 text-purple-800 border border-purple-300 font-mono">
-                                            {td4Items.length}
+                            <div className="inline-flex items-center bg-slate-200/90 p-0.5 rounded border border-slate-300 gap-0.5">
+                                <button
+                                    type="button"
+                                    onClick={() => setReconcileSubTab('all')}
+                                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                        reconcileSubTab === 'all'
+                                            ? 'bg-white text-slate-900 shadow-2xs'
+                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/50'
+                                    }`}
+                                >
+                                    <i className="fa-solid fa-list-check text-[10px]"></i>
+                                    <span>Tất cả</span>
+                                    <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-slate-100 text-slate-700 font-mono font-bold">
+                                        {allCombinedAlerts.length}
+                                    </span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setReconcileSubTab('td4')}
+                                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                        reconcileSubTab === 'td4'
+                                            ? 'bg-white text-purple-900 shadow-2xs ring-1 ring-purple-300'
+                                            : 'text-slate-600 hover:text-purple-900 hover:bg-slate-100/50'
+                                    }`}
+                                >
+                                    <i className="fa-solid fa-triangle-exclamation text-[10px] text-amber-500"></i>
+                                    <span>Xe Tồn TD4</span>
+                                    {countTd4Approved > 0 && (
+                                        <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-purple-100 text-purple-800 font-mono font-bold" title={`${countTd4Approved} xe vi phạm / ${countTd4Pending} xe đang duyệt`}>
+                                            {countTd4Approved}
                                         </span>
-                                    </>
-                                )}
-                                {reconcileSubTab === 'dnx' && (
-                                    <>
-                                        <i className="fa-solid fa-arrow-down-to-bracket text-red-600"></i>
-                                        <span>ĐNX Về Bãi Chưa Nhập</span>
-                                        <span className="px-1.5 py-0.2 text-[9.5px] rounded-full bg-red-100 text-red-800 border border-red-300 font-mono">
+                                    )}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setReconcileSubTab('dnx')}
+                                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                        reconcileSubTab === 'dnx'
+                                            ? 'bg-white text-red-900 shadow-2xs ring-1 ring-red-300'
+                                            : 'text-slate-600 hover:text-red-900 hover:bg-slate-100/50'
+                                    }`}
+                                >
+                                    <i className="fa-solid fa-arrow-down-to-bracket text-[10px] text-red-500"></i>
+                                    <span>ĐNX Về Bãi Chưa Nhập</span>
+                                    {countAlertThuanAn > 0 && (
+                                        <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-red-100 text-red-800 font-mono font-bold">
                                             {countAlertThuanAn}
                                         </span>
-                                    </>
-                                )}
-                                {reconcileSubTab === 'missing_yard' && (
-                                    <>
-                                        <i className="fa-solid fa-file-invoice-dollar text-amber-600"></i>
-                                        <span>Xuất HĐ Mất Bãi</span>
-                                        <span className="px-1.5 py-0.2 text-[9.5px] rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-mono">
-                                            {missingYardItems.length}
+                                    )}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setReconcileSubTab('missing_yard')}
+                                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                                        reconcileSubTab === 'missing_yard'
+                                            ? 'bg-white text-amber-900 shadow-2xs ring-1 ring-amber-300'
+                                            : 'text-slate-600 hover:text-amber-900 hover:bg-slate-100/50'
+                                    }`}
+                                >
+                                    <i className="fa-solid fa-file-invoice-dollar text-[10px] text-amber-500"></i>
+                                    <span>Xuất HĐ Mất Bãi</span>
+                                    {missingYardItems.filter(c => c.isViolation).length > 0 && (
+                                        <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-amber-100 text-amber-900 font-mono font-bold">
+                                            {missingYardItems.filter(c => c.isViolation).length}
                                         </span>
-                                    </>
-                                )}
-                                {reconcileSubTab === 'all' && (
-                                    <>
-                                        <i className="fa-solid fa-list-check text-slate-700"></i>
-                                        <span>Tổng Hợp Lệch Kho</span>
-                                        <span className="px-1.5 py-0.2 text-[9.5px] rounded-full bg-slate-200 text-slate-800 border border-slate-300 font-mono">
-                                            {countAlertThuanAn + td4Items.length + missingYardItems.length}
-                                        </span>
-                                    </>
-                                )}
+                                    )}
+                                </button>
                             </div>
 
                             <div className="h-3.5 w-[1px] bg-slate-300 mx-0.5 hidden sm:block"></div>
@@ -1432,13 +1323,26 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                             {reconcileSubTab === 'td4' && (
                                 <>
                                     <div className="flex items-center gap-1">
+                                        <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Trạng thái:</span>
+                                        <select
+                                            value={td4ApprovalFilter}
+                                            onChange={e => setTd4ApprovalFilter(e.target.value as any)}
+                                            className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[155px]"
+                                        >
+                                            <option value="all">Tất cả ({td4Items.length} xe)</option>
+                                            <option value="approved">🚨 Đã duyệt xuất ({countTd4Approved})</option>
+                                            <option value="pending">⏳ Đang duyệt ({countTd4Pending})</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
                                         <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Bãi tồn:</span>
                                         <select
                                             value={td4YardFilter}
                                             onChange={e => setTd4YardFilter(e.target.value as any)}
                                             className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[145px]"
                                         >
-                                            <option value="all">Tất cả ({td4Items.length} xe)</option>
+                                            <option value="all">Tất cả bãi ({td4Items.length})</option>
                                             <option value="thuan_an">Bãi Thuận An ({countTd4ThuanAn})</option>
                                             <option value="other">Bãi QL13/Q12 ({countTd4Other})</option>
                                         </select>
@@ -1481,12 +1385,14 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                         <select
                                             value={reconcileStatusFilter}
                                             onChange={e => setReconcileStatusFilter(e.target.value as any)}
-                                            className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[160px]"
+                                            className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] font-bold text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[170px]"
                                         >
                                             <option value="thuan_an">🚨 Đã về Thuận An ({countAlertThuanAn})</option>
+                                            <option value="cyber_not_yard">⚠️ Sổ K83 chưa có bãi ({countCyberNotYard})</option>
                                             <option value="all">Tất cả xe ĐNX ({reconcileItems.length})</option>
                                             <option value="transit_yard">Tại bãi QL13/Q12 ({countTransitYard})</option>
                                             <option value="in_transit">Đang vận chuyển ({countInTransit})</option>
+                                            <option value="already_in_cyber">✅ Đã nhập K83 & có bãi ({countAlreadyInCyber})</option>
                                         </select>
                                     </div>
 
@@ -1522,6 +1428,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
 
                             {reconcileSubTab === 'missing_yard' && (
                                 <>
+
                                     <div className="flex items-center gap-1">
                                         <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">TVBH:</span>
                                         <select
@@ -1631,21 +1538,6 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 <i className="fa-solid fa-copy"></i>
                                 <span>Copy Zalo</span>
                             </button>
-
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    if (reconcileSubTab === 'td4') exportTd4Csv();
-                                    else if (reconcileSubTab === 'dnx') exportReconcileCsv();
-                                    else if (reconcileSubTab === 'missing_yard') exportMissingYardCsv();
-                                    else exportAllAlertsCsv();
-                                }}
-                                className="px-2 py-0.5 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-400 rounded-xs text-[10px] sm:text-[11px] font-bold shadow-2xs flex items-center gap-1 cursor-pointer"
-                                title="Xuất file Excel"
-                            >
-                                <i className="fas fa-file-excel text-emerald-600"></i>
-                                <span>Xuất Excel</span>
-                            </button>
                         </div>
                     </div>
 
@@ -1667,19 +1559,15 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                         <div className="text-xs text-slate-500 mt-1">Toàn bộ dữ liệu chứng từ trên CyberSoft và bãi thực tế đều khớp nhau.</div>
                                     </div>
                                 ) : (
-                                    <table className="w-full text-left border-collapse text-[11px] font-sans">
+                                    <table className="table-fixed w-full text-left border-collapse text-[11px] font-sans">
                                         <thead className="bg-[#EBEADB] text-slate-700 sticky top-0 z-10 select-none border-b border-[#CCCCCC] text-[10px] sm:text-[11px]">
                                             <tr>
-                                                <th className="p-1 border-r border-[#CCCCCC] w-8 text-center font-bold">STT</th>
-                                                <th className="p-1 border-r border-[#CCCCCC] font-bold text-center w-32">PHÂN LOẠI LỆCH</th>
-                                                <th className="p-1 border-r border-[#CCCCCC] font-bold w-36">SỐ KHUNG (VIN)</th>
-                                                <th className="p-1 border-r border-[#CCCCCC] font-bold w-28">DÒNG XE & MÀU</th>
-                                                <th className="p-1 border-r border-[#CCCCCC] font-bold w-28">CHỨNG TỪ</th>
-                                                <th className="p-1 border-r border-[#CCCCCC] font-bold w-28">TVBH</th>
-                                                <th className="p-1 border-r border-[#CCCCCC] font-bold w-32">KHÁCH HÀNG / HĐ</th>
-                                                <th className="p-1 border-r border-[#CCCCCC] font-bold w-36">TRẠNG THÁI CYBER</th>
-                                                <th className="p-1 border-r border-[#CCCCCC] font-bold w-36">BÃI THỰC TẾ & PIN</th>
-                                                <th className="p-1 font-bold">TÌNH TRẠNG & YÊU CẦU XỬ LÝ</th>
+                                                <th className="py-1 px-1 border-r border-[#CCCCCC] w-7 text-center font-bold">#</th>
+                                                <th className="py-1 px-2 border-r border-[#CCCCCC] font-bold w-[21%]">Phân Loại & Số VIN</th>
+                                                <th className="py-1 px-2 border-r border-[#CCCCCC] font-bold w-[18%]">Dòng Xe & Chứng Từ</th>
+                                                <th className="py-1 px-2 border-r border-[#CCCCCC] font-bold w-[19%]">TVBH & Khách Hàng</th>
+                                                <th className="py-1 px-2 border-r border-[#CCCCCC] font-bold w-[19%]">Cyber & Bãi Ngoài</th>
+                                                <th className="py-1 px-2 font-bold w-[23%]">Tình Trạng & Xử Lý</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-200">
@@ -1689,68 +1577,66 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                 return (
                                                     <tr
                                                         key={c.id}
-                                                        onClick={() => setSelectedAllRowIdx(idx)}
+                                                        onClick={() => {
+                                                            setSelectedAllRowIdx(idx);
+                                                            handleOpenDetailModal(c, 'all');
+                                                        }}
                                                         onDoubleClick={() => copyVin(c.vin)}
                                                         className={`hover:bg-blue-50/70 transition-colors cursor-pointer ${
                                                             isSelected ? 'bg-blue-100/90 font-medium' : idx % 2 === 1 ? 'bg-[#F9F9F6]' : 'bg-white'
                                                         }`}
                                                     >
-                                                        <td className="p-1 border-r border-slate-200 text-center text-slate-500 font-mono text-[10px]">
+                                                        <td className="py-1 px-1 border-r border-slate-200 text-center text-slate-500 font-mono text-[10px]">
                                                             {idx + 1}
                                                         </td>
-                                                        <td className="p-1 border-r border-slate-200 text-center whitespace-nowrap">
-                                                            {isDnx ? (
-                                                                <span className="px-1.5 py-0.2 text-[9px] bg-red-100 text-red-700 font-extrabold rounded border border-red-300 shadow-2xs">
-                                                                    📥 ĐNX CHỜ NHẬP
-                                                                </span>
-                                                            ) : (
-                                                                <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-900 font-extrabold rounded border border-purple-300 shadow-2xs animate-pulse">
-                                                                    🚨 TD4 TỒN BÃI
-                                                                </span>
-                                                            )}
-                                                        </td>
-                                                        <td className="p-1 border-r border-slate-200 font-mono font-bold text-slate-900 whitespace-nowrap">
-                                                            <div className="flex items-center justify-between gap-1">
-                                                                <span>{c.vin}</span>
+                                                        <td className="py-1 px-2 border-r border-slate-200 overflow-hidden">
+                                                            <div className="flex items-center gap-1.5">
+                                                                {isDnx ? (
+                                                                    <span className="px-1 py-0.1 text-[8.5px] bg-red-100 text-red-700 font-extrabold rounded border border-red-300">
+                                                                        📥 ĐNX
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="px-1 py-0.1 text-[8.5px] bg-purple-100 text-purple-900 font-extrabold rounded border border-purple-300">
+                                                                        🚨 TD4
+                                                                    </span>
+                                                                )}
+                                                                <span className="font-mono font-bold text-slate-900 truncate">{c.vin}</span>
                                                                 <button
                                                                     type="button"
                                                                     onClick={(e) => { e.stopPropagation(); copyVin(c.vin); }}
-                                                                    className="text-slate-400 hover:text-blue-600 text-[10px] p-0.5"
+                                                                    className="text-slate-400 hover:text-blue-600 text-[10px] shrink-0"
                                                                     title="Copy số khung"
                                                                 >
                                                                     <i className={`fa-regular ${copiedVin === c.vin ? 'fa-check text-green-600' : 'fa-copy'}`}></i>
                                                                 </button>
                                                             </div>
                                                         </td>
-                                                        <td className="p-1 border-r border-slate-200 whitespace-nowrap">
-                                                            <div className="font-semibold text-slate-800">{c.carModel}</div>
-                                                            <div className="text-[9.5px] text-slate-500">{c.color || '-'}</div>
-                                                        </td>
-                                                        <td className="p-1 border-r border-slate-200 font-mono text-[10px] whitespace-nowrap">
-                                                            <div className="font-bold text-blue-700">{c.soChungTu}</div>
-                                                            <div className="text-[9px] text-slate-500">{formatDate(c.ngayChungTu)}</div>
-                                                        </td>
-                                                        <td className="p-1 border-r border-slate-200 font-medium text-slate-800 whitespace-nowrap truncate max-w-[110px]" title={c.tvbh}>
-                                                            {c.tvbh}
-                                                        </td>
-                                                        <td className="p-1 border-r border-slate-200 whitespace-nowrap truncate max-w-[130px]">
-                                                            <div className="font-semibold text-slate-900 truncate" title={c.customerName}>{c.customerName}</div>
-                                                            {c.orderNumber && <div className="text-[9px] text-slate-500 font-mono">HĐ: {c.orderNumber}</div>}
-                                                        </td>
-                                                        <td className="p-1 border-r border-slate-200 text-[10px]">
-                                                            <div className="font-semibold text-slate-800 truncate" title={c.khoCyber}>{c.khoCyber}</div>
-                                                        </td>
-                                                        <td className="p-1 border-r border-slate-200 text-[10px] whitespace-nowrap">
-                                                            <div className="font-bold text-slate-900">{c.khoThucTe}</div>
-                                                            <div className="text-[9.5px] text-slate-600">
-                                                                Pin: <strong className="text-blue-700">{c.mucPin}</strong> {c.ngayNhanBai ? `| Về: ${formatDate(c.ngayNhanBai)}` : ''}
+                                                        <td className="py-1 px-2 border-r border-slate-200 overflow-hidden">
+                                                            <div className="font-bold text-slate-800 truncate">{c.carModel} <span className="font-normal text-slate-500 text-[9.5px]">({c.color || '-'})</span></div>
+                                                            <div className="text-[9.5px] text-blue-700 font-mono truncate">
+                                                                CT: <strong>{c.soChungTu}</strong> {c.ngayChungTu ? `(${formatDate(c.ngayChungTu)})` : ''}
                                                             </div>
                                                         </td>
-                                                        <td className="p-1 text-[10.5px]">
-                                                            <div className={`font-bold ${isDnx ? 'text-red-700' : 'text-purple-900'}`}>
+                                                        <td className="py-1 px-2 border-r border-slate-200 overflow-hidden">
+                                                            <div className="font-bold text-slate-900 truncate" title={c.tvbh}>{c.tvbh || 'Chưa gán'}</div>
+                                                            <div className="text-[10px] text-slate-600 truncate" title={c.customerName}>
+                                                                {c.customerName || '-'}{c.orderNumber ? ` • HĐ: ${c.orderNumber}` : ''}
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-1 px-2 border-r border-slate-200 overflow-hidden text-[10px]">
+                                                            <div className="text-slate-700 truncate" title={c.khoCyber}>
+                                                                Cyber: <strong className="text-slate-900">{c.khoCyber}</strong>
+                                                            </div>
+                                                            <div className="text-slate-600 truncate mt-0.5">
+                                                                Bãi: <strong className="text-blue-800">{c.khoThucTe}</strong>
+                                                                {c.mucPin && c.mucPin !== '-' ? ` • Pin: ${c.mucPin}` : ''}
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-1 px-2 overflow-hidden text-[10.5px]">
+                                                            <div className={`font-bold truncate ${isDnx ? 'text-red-700' : 'text-purple-900'}`} title={c.alertTitle}>
                                                                 {c.alertTitle}
                                                             </div>
-                                                            <div className="text-[9.5px] text-slate-600">
+                                                            <div className="text-[9.5px] text-slate-600 truncate" title={c.actionRequired}>
                                                                 👉 {c.actionRequired}
                                                             </div>
                                                         </td>
@@ -1800,32 +1686,30 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 </span>
                             </div>
                         ) : (
-                            <table className="w-full border-collapse text-left text-[11px] text-slate-800 select-text">
+                            <table className="table-fixed w-full border-collapse text-left text-[11px] text-slate-800 select-text">
                                 <thead className="bg-[#DDECFE] text-slate-900 sticky top-0 z-10 border-b border-[#9FBCEB] text-[11px] font-bold shadow-2xs">
                                     <tr>
                                         <th className="py-1 px-1 text-center w-7 border-r border-[#B9D5F7]">#</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">Số VIN (Số Khung)</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">Phiếu ĐNX & Ngày Lập</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">TVBH Phụ Trách</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">Khách Hàng / Hợp Đồng</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">Dòng Xe & Màu</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">Kho Xuất ➔ Kho Nhập</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] text-center whitespace-nowrap">Tồn Cyber (K83)</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] whitespace-nowrap">Vị Trí Thực Tế (Bãi Ngoài)</th>
-                                        <th className="py-1 px-2 whitespace-nowrap min-w-[280px]">KẾT QUẢ ĐỐI CHIẾU & CẢNH BÁO (GHI CHÚ)</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[20%]">Số VIN & Phiếu ĐNX</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[17%]">Dòng Xe & Màu</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[20%]">TVBH & Khách Hàng</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[20%]">Lộ Trình & Vị Trí Bãi</th>
+                                        <th className="py-1 px-2 w-[23%]">Kết Quả Đối Chiếu</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[#E1E1E1]">
                                     {filteredReconcileItems.map((item, idx) => {
                                         const isSelected = selectedReconcileRowIdx === idx;
                                         const isThuanAnAlert = item.reconcileStatus === 'AT_THUAN_AN';
-                                        const isTransitYard = item.reconcileStatus === 'AT_TRANSIT_YARD';
                                         const sat = item.satelliteYard;
 
                                         return (
                                             <tr
                                                 key={item.id || item.vin}
-                                                onClick={() => setSelectedReconcileRowIdx(idx)}
+                                                onClick={() => {
+                                                    setSelectedReconcileRowIdx(idx);
+                                                    handleOpenDetailModal(item, 'dnx');
+                                                }}
                                                 className={`cursor-pointer transition-colors ${
                                                     isSelected 
                                                         ? 'bg-[#CCE8FF] text-slate-900 font-medium' 
@@ -1839,115 +1723,83 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                 <td className="py-1 px-1 text-center text-slate-500 font-mono text-[10px] border-r border-[#EBEBEB]">
                                                     {idx + 1}
                                                 </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap font-mono text-[11px] font-bold text-blue-900 group">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span>{item.vin}</span>
+
+                                                {/* VIN & ĐNX */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="font-mono font-bold text-blue-900 truncate">{item.vin}</span>
                                                         <button
                                                             type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                copyVin(item.vin);
-                                                            }}
-                                                            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition-opacity"
+                                                            onClick={(e) => { e.stopPropagation(); copyVin(item.vin); }}
+                                                            className="text-slate-400 hover:text-blue-600 transition-opacity shrink-0"
                                                             title="Sao chép số VIN"
                                                         >
                                                             <i className={`fas ${copiedVin === item.vin ? 'fa-check text-green-600' : 'fa-copy'} text-[10px]`}></i>
                                                         </button>
                                                     </div>
-                                                </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className="font-mono font-bold text-slate-800 bg-slate-100 px-1 py-0.2 rounded border border-slate-300 text-[10.5px]">
-                                                        {item.soCtDnx || 'DNX'}
-                                                    </span>
-                                                    {item.ngayCtDnx && (
-                                                        <span className="text-[9.5px] text-slate-500 font-mono block mt-0.5">
-                                                            {item.ngayCtDnx.slice(0, 10)}
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className="font-bold text-slate-900">
-                                                        {item.tvbh || <span className="text-slate-400 italic">Chưa gán</span>}
-                                                    </span>
-                                                </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <div className="font-semibold text-slate-800">
-                                                        {item.customerName || '-'}
-                                                    </div>
-                                                    {item.orderNumber && (
-                                                        <div className="text-[9.5px] text-slate-500 font-mono">
-                                                            HĐ: {item.orderNumber}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className="font-bold text-slate-900">{item.carModel || '-'}</span>
-                                                    {item.color && (
-                                                        <span className="text-slate-500 text-[10px] ml-1">
-                                                            ({item.color})
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap font-mono text-[10px]">
-                                                    <span className="text-slate-600 font-semibold">{item.khoXuat || 'K87'}</span>
-                                                    <span className="text-slate-400 mx-1">➔</span>
-                                                    <span className="text-blue-700 font-bold">{item.khoNhan || 'K83'}</span>
-                                                </td>
-                                                <td className="py-1 px-2 text-center border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-red-50 text-red-700 border border-red-200 rounded-xs font-bold text-[9.5px]">
-                                                        <i className="fa-solid fa-xmark text-red-500 text-[8px]"></i>
-                                                        Chưa nhập K83
-                                                    </span>
-                                                    <div className="text-[9px] text-slate-400 truncate max-w-[110px]" title={item.tenKhoCyber || item.maKhoCyber}>
-                                                        Cyber: {item.tenKhoCyber || item.maKhoCyber || 'Đang vận tải'}
+                                                    <div className="text-[10px] text-slate-600 font-medium mt-0.5 truncate">
+                                                        ĐNX: <strong className="font-mono text-slate-800">{item.soCtDnx || 'DNX'}</strong>
+                                                        {item.ngayCtDnx && <span className="text-slate-400 ml-1 font-mono">({item.ngayCtDnx.slice(0, 10)})</span>}
                                                     </div>
                                                 </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    {sat && sat.isTonKho ? (
-                                                        <div>
-                                                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded-xs font-bold text-[10px] border ${
-                                                                sat.khoKey === 'tada' 
-                                                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
-                                                                    : 'bg-amber-50 text-amber-800 border-amber-300'
-                                                            }`}>
-                                                                <i className="fa-solid fa-location-dot"></i>
-                                                                {sat.khoName}
-                                                            </span>
-                                                            <div className="text-[9.5px] text-slate-600 font-mono mt-0.5 flex items-center gap-1.5">
-                                                                {sat.ngayNhan && <span>Nhận: {sat.ngayNhan.slice(0, 10)}</span>}
-                                                                {sat.mucPin && sat.mucPin !== '-' && (
-                                                                    <span className="font-bold text-blue-700">Pin: {sat.mucPin}</span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-slate-400 text-[10px] italic">
-                                                            <i className="fa-solid fa-truck text-slate-300 mr-1"></i>
-                                                            Đang trên đường
-                                                        </span>
-                                                    )}
+
+                                                {/* Dòng xe & Màu */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="font-bold text-slate-900 truncate">{item.carModel || '-'}</div>
+                                                    <div className="text-[10px] text-slate-500 truncate">{item.color || '-'}</div>
                                                 </td>
-                                                <td className="py-1 px-2 whitespace-nowrap">
-                                                    {isThuanAnAlert ? (
-                                                        <div className="inline-flex items-center gap-1.5 px-2 py-1 bg-yellow-100 text-red-800 border-2 border-red-500 rounded font-bold text-[10.5px] shadow-2xs">
-                                                            <i className="fa-solid fa-bell text-red-600 text-[11px] animate-bounce"></i>
+
+                                                {/* TVBH & Khách hàng */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="font-bold text-slate-900 truncate" title={item.tvbh}>{item.tvbh || 'Chưa gán'}</div>
+                                                    <div className="text-[10px] text-slate-600 truncate" title={item.customerName}>
+                                                        {item.customerName || '-'}{item.orderNumber ? ` • HĐ: ${item.orderNumber}` : ''}
+                                                    </div>
+                                                </td>
+
+                                                {/* Lộ trình & Bãi ngoài */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="text-[10px] text-slate-700 font-mono truncate">
+                                                        <span className="font-semibold">{item.khoXuat || 'K87'}</span>
+                                                        <span className="text-slate-400 mx-1">➔</span>
+                                                        <span className="font-bold text-blue-700">{item.khoNhan || 'K83'}</span>
+                                                        <span className="text-slate-400 mx-1">•</span>
+                                                        <span className={item.isTonKhoCyberK83 ? 'text-emerald-700 font-bold' : 'text-red-600 font-bold'}>
+                                                            {item.isTonKhoCyberK83 ? 'Đã nhập K83' : 'Chưa nhập K83'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-500 mt-0.5 truncate">
+                                                        {sat && sat.isTonKho ? (
                                                             <span>
-                                                                XE ĐÃ VỀ BÃI THUẬN AN — TVBH ({item.tvbh || 'Chưa rõ'}) CHƯA BÁO NHẬP KHO CYBER!
+                                                                Bãi: <strong className="text-slate-800">{sat.khoName}</strong>
+                                                                {sat.ngayNhan ? ` (${sat.ngayNhan.slice(0, 10)})` : ''}
+                                                                {sat.mucPin && sat.mucPin !== '-' ? ` • Pin: ${sat.mucPin}` : ''}
                                                             </span>
+                                                        ) : sat && !sat.isTonKho && sat.ngayGiao ? (
+                                                            <span className="text-rose-700">Đã xuất {sat.khoName} ({sat.ngayGiao.slice(0, 10)})</span>
+                                                        ) : (
+                                                            <span className="italic text-slate-400">Đang trên đường luân chuyển</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+
+                                                {/* Kết quả đối chiếu */}
+                                                <td className="py-1 px-2 overflow-hidden">
+                                                    {item.reconcileStatus === 'AT_THUAN_AN' ? (
+                                                        <div className="text-red-700 font-bold text-[10px] leading-tight">
+                                                            🚨 ĐÃ VỀ BÃI THUẬN AN — CHƯA LÀM PNK CYBER
                                                         </div>
-                                                    ) : isTransitYard ? (
-                                                        <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-300 rounded font-semibold text-[10px]">
-                                                            <i className="fa-solid fa-truck text-amber-600 text-[9.5px]"></i>
-                                                            <span>
-                                                                Xe còn tại bãi {sat?.khoName || 'trung chuyển'} — Chưa chuyển về bãi Thuận An
-                                                            </span>
+                                                    ) : item.reconcileStatus === 'CYBER_K83_NOT_IN_YARD' ? (
+                                                        <div className="text-amber-800 font-bold text-[10px] leading-tight">
+                                                            ⚠️ SỔ CYBER ĐÃ NHẬP K83 — CHƯA THẤY BÃI
+                                                        </div>
+                                                    ) : item.reconcileStatus === 'ALREADY_IN_CYBER' ? (
+                                                        <div className="text-emerald-700 font-semibold text-[10px] leading-tight">
+                                                            ✓ Đã nhập K83 & có tại bãi thực tế
                                                         </div>
                                                     ) : (
-                                                        <div className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-50 text-slate-600 border border-slate-200 rounded text-[10px]">
-                                                            <i className="fa-solid fa-route text-slate-400 text-[9.5px]"></i>
-                                                            <span>
-                                                                Đang trên đường vận chuyển (chưa về bãi thực tế)
-                                                            </span>
+                                                        <div className="text-slate-500 text-[10px] leading-tight truncate">
+                                                            {item.reconcileNote || 'Đang vận chuyển giữa các kho'}
                                                         </div>
                                                     )}
                                                 </td>
@@ -1970,25 +1822,21 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 🚨 Về bãi Thuận An (Chưa nhập Cyber): <strong className="font-mono text-red-800">{countAlertThuanAn}</strong> xe
                             </span>
                             <span>•</span>
-                            <span className="text-amber-800 font-bold hidden sm:inline">
+                            <span className="text-amber-800 font-bold">
+                                ⚠️ Sổ K83 chưa có bãi: <strong className="font-mono text-amber-900">{countCyberNotYard}</strong> xe
+                            </span>
+                            <span>•</span>
+                            <span className="text-sky-800 font-bold hidden sm:inline">
                                 🚚 Bãi QL13/Q12: <strong className="font-mono">{countTransitYard}</strong>
+                            </span>
+                            <span>•</span>
+                            <span className="text-emerald-800 font-bold hidden md:inline">
+                                ✅ Khớp tồn K83: <strong className="font-mono">{countAlreadyInCyber}</strong>
                             </span>
                             <span>•</span>
                             <span className="text-blue-800 font-bold hidden sm:inline">
                                 ⏳ Trên đường: <strong className="font-mono">{countInTransit}</strong>
                             </span>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 ml-auto">
-                            <button
-                                type="button"
-                                onClick={exportReconcileCsv}
-                                className="px-2 py-0.5 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-400 rounded-xs text-[10px] sm:text-[11px] font-bold shadow-2xs flex items-center gap-1 cursor-pointer"
-                                title="Xuất file Excel/CSV kết quả đối chiếu ĐNX"
-                            >
-                                <i className="fas fa-file-excel text-emerald-600"></i>
-                                <span>Xuất Excel Đối Chiếu</span>
-                            </button>
                         </div>
                     </div>
                 </>
@@ -2010,35 +1858,35 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 </span>
                             </div>
                         ) : (
-                            <table className="w-full border-collapse text-left text-[11px] text-slate-800 select-text">
+                            <table className="table-fixed w-full border-collapse text-left text-[11px] text-slate-800 select-text">
                                 <thead className="bg-[#FBEAEB] text-slate-900 sticky top-0 z-10 border-b border-red-300 text-[11px] font-bold shadow-2xs">
                                     <tr>
                                         <th className="py-1 px-1 text-center w-7 border-r border-red-200">#</th>
-                                        <th className="py-1 px-2 border-r border-red-200 whitespace-nowrap">Số VIN (Số Khung)</th>
-                                        <th className="py-1 px-2 border-r border-red-200 whitespace-nowrap">Số Phiếu TD4 & Ngày Lập</th>
-                                        <th className="py-1 px-2 border-r border-red-200 whitespace-nowrap">TVBH Phụ Trách</th>
-                                        <th className="py-1 px-2 border-r border-red-200 whitespace-nowrap">Khách Hàng / Hợp Đồng</th>
-                                        <th className="py-1 px-2 border-r border-red-200 whitespace-nowrap">Dòng Xe & Màu</th>
-                                        <th className="py-1 px-2 border-r border-red-200 whitespace-nowrap">Vị Trí Bãi Đang Tồn</th>
-                                        <th className="py-1 px-2 border-r border-red-200 text-center whitespace-nowrap">Mức Pin</th>
-                                        <th className="py-1 px-2 border-r border-red-200 whitespace-nowrap">Ngày Nhận Bãi</th>
-                                        <th className="py-1 px-2 whitespace-nowrap min-w-[300px]">CẢNH BÁO VI PHẠM TỒN KHO TD4</th>
+                                        <th className="py-1 px-2 border-r border-red-200 w-[20%]">Số VIN & Phiếu TD4</th>
+                                        <th className="py-1 px-2 border-r border-red-200 w-[17%]">Dòng Xe & Màu</th>
+                                        <th className="py-1 px-2 border-r border-red-200 w-[20%]">TVBH & Khách Hàng</th>
+                                        <th className="py-1 px-2 border-r border-red-200 w-[20%]">Vị Trí Bãi Đang Tồn</th>
+                                        <th className="py-1 px-2 w-[23%]">Cảnh Báo Vi Phạm</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[#E1E1E1]">
                                     {filteredTd4Items.map((item, idx) => {
                                         const isSelected = selectedTd4RowIdx === idx;
                                         const sat = item.satelliteYard;
+                                        const isApprovedViolation = item.isViolation !== false;
 
                                         return (
                                             <tr
                                                 key={item.id}
-                                                onClick={() => setSelectedTd4RowIdx(idx)}
+                                                onClick={() => {
+                                                    setSelectedTd4RowIdx(idx);
+                                                    handleOpenDetailModal(item, 'td4');
+                                                }}
                                                 className={`cursor-pointer transition-colors ${
                                                     isSelected 
                                                         ? 'bg-[#CCE8FF] text-slate-900 font-medium' 
-                                                        : item.isTonThuanAn
-                                                            ? 'bg-[#FFF2F2] hover:bg-[#FFE5E5]'
+                                                        : isApprovedViolation
+                                                            ? (item.isTonThuanAn ? 'bg-[#FFF2F2] hover:bg-[#FFE5E5]' : 'bg-[#FFF9F9] hover:bg-[#FFEBEB]')
                                                             : idx % 2 === 1 
                                                                 ? 'bg-[#F9FBFC] hover:bg-[#EBF4FF]' 
                                                                 : 'bg-white hover:bg-[#EBF4FF]'
@@ -2048,100 +1896,88 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                     {idx + 1}
                                                 </td>
 
-                                                {/* VIN */}
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap font-mono text-[11px] font-bold text-blue-900 group">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span>{item.vin}</span>
+                                                {/* VIN & TD4 */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="font-mono font-bold text-blue-900 truncate">{item.vin}</span>
                                                         <button
                                                             type="button"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 copyVin(item.vin);
                                                             }}
-                                                            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition-opacity"
+                                                            className="text-slate-400 hover:text-blue-600 transition-opacity shrink-0"
                                                             title="Sao chép số VIN"
                                                         >
                                                             <i className={`fas ${copiedVin === item.vin ? 'fa-check text-green-600' : 'fa-copy'} text-[10px]`}></i>
                                                         </button>
                                                     </div>
-                                                </td>
-
-                                                {/* Phiếu TD4 & Ngày Lập */}
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className="font-mono font-bold text-purple-900 bg-purple-100 px-1.5 py-0.2 rounded border border-purple-300 text-[10.5px]">
-                                                        {item.soCtTd4}
-                                                    </span>
-                                                    {item.ngayCtTd4 && (
-                                                        <span className="text-[9.5px] text-slate-500 font-mono block mt-0.5">
-                                                            {item.ngayCtTd4.slice(0, 10)}
-                                                        </span>
-                                                    )}
-                                                </td>
-
-                                                {/* TVBH Phụ Trách */}
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className="font-bold text-slate-900">
-                                                        {item.tvbh || <span className="text-slate-400 italic">Chưa gán</span>}
-                                                    </span>
-                                                </td>
-
-                                                {/* Khách Hàng / Hợp Đồng */}
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <div className="font-semibold text-slate-800">
-                                                        {item.customerName || '-'}
+                                                    <div className="text-[10px] text-purple-900 font-medium mt-0.5 truncate flex items-center gap-1">
+                                                        <span>Phiếu TD4: <strong className="font-mono">{item.soCtTd4}</strong></span>
+                                                        {item.ngayCtTd4 && <span className="text-slate-500 font-mono">({item.ngayCtTd4.slice(0, 10)})</span>}
                                                     </div>
-                                                    {item.orderNumber && (
-                                                        <div className="text-[9.5px] text-slate-500 font-mono">
-                                                            HĐ: {item.orderNumber}
-                                                        </div>
-                                                    )}
                                                 </td>
 
-                                                {/* Dòng Xe & Màu */}
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className="font-bold text-slate-900">{item.carModel || '-'}</span>
-                                                    {item.color && (
-                                                        <span className="text-slate-500 text-[10px] ml-1">
-                                                            ({item.color})
-                                                        </span>
-                                                    )}
+                                                {/* Dòng xe & Màu */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="font-bold text-slate-900 truncate">{item.carModel || '-'}</div>
+                                                    <div className="text-[10px] text-slate-500 truncate">{item.color || '-'}</div>
+                                                </td>
+
+                                                {/* TVBH & Khách hàng */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="font-bold text-slate-900 truncate" title={item.tvbh}>{item.tvbh || 'Chưa gán'}</div>
+                                                    <div className="text-[10px] text-slate-600 truncate" title={item.customerName}>
+                                                        {item.customerName || '-'}{item.orderNumber ? ` • HĐ: ${item.orderNumber}` : ''}
+                                                    </div>
                                                 </td>
 
                                                 {/* Vị Trí Bãi Đang Tồn */}
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded-xs font-bold text-[10px] border ${
-                                                        item.isTonThuanAn 
-                                                            ? 'bg-red-50 text-red-800 border-red-300' 
-                                                            : 'bg-amber-50 text-amber-800 border-amber-300'
-                                                    }`}>
-                                                        <i className="fa-solid fa-location-dot"></i>
-                                                        {sat.khoName}
-                                                    </span>
-                                                    {sat.tinhTrang && (
-                                                        <div className="text-[9.5px] text-slate-500 truncate max-w-[120px]" title={sat.tinhTrang}>
-                                                            {sat.tinhTrang}
-                                                        </div>
-                                                    )}
-                                                </td>
-
-                                                {/* Mức Pin */}
-                                                <td className="py-1 px-2 text-center border-r border-[#EBEBEB] whitespace-nowrap font-mono font-bold text-blue-800">
-                                                    {sat.pin}
-                                                </td>
-
-                                                {/* Ngày Nhận Bãi */}
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap font-mono text-slate-600">
-                                                    {sat.ngayNhan.slice(0, 10) || '-'}
-                                                </td>
-
-                                                {/* CẢNH BÁO VI PHẠM */}
-                                                <td className="py-1 px-2 whitespace-nowrap">
-                                                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-red-100 text-red-900 border border-red-500 rounded font-bold text-[10px] shadow-2xs">
-                                                        <i className="fa-solid fa-triangle-exclamation text-red-600 text-[11px] animate-bounce"></i>
-                                                        <span>
-                                                            VI PHẠM: ĐÃ CÓ PHIẾU GIAO XE TD4 NHƯNG VẪN CÒN TỒN BÃI THỰC TẾ!
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="truncate">
+                                                        <span className={`inline-flex items-center gap-1 px-1.5 py-0.2 rounded-xs font-bold text-[10px] border ${
+                                                            item.isTonThuanAn 
+                                                                ? 'bg-red-50 text-red-800 border-red-300' 
+                                                                : 'bg-amber-50 text-amber-800 border-amber-300'
+                                                        }`}>
+                                                            <i className="fa-solid fa-location-dot"></i>
+                                                            {sat.khoName}
                                                         </span>
+                                                        {sat.tinhTrang && (
+                                                            <span className="text-[9.5px] text-slate-500 ml-1 truncate">
+                                                                {sat.tinhTrang}
+                                                            </span>
+                                                        )}
                                                     </div>
+                                                    <div className="text-[10px] text-slate-600 font-mono mt-0.5 truncate">
+                                                        Pin: <strong className="text-blue-800">{sat.pin}</strong>
+                                                        {sat.ngayNhan && <span className="text-slate-500 ml-1">Nhận: {sat.ngayNhan.slice(0, 10)}</span>}
+                                                    </div>
+                                                </td>
+
+                                                {/* Cảnh báo vi phạm & Mức duyệt Ma_Post */}
+                                                <td className="py-1 px-2 overflow-hidden">
+                                                    {isApprovedViolation ? (
+                                                        <>
+                                                            <div className="text-red-700 font-bold text-[10px] leading-tight flex items-center gap-1">
+                                                                <i className="fa-solid fa-triangle-exclamation text-red-600 text-[10px] shrink-0 animate-bounce"></i>
+                                                                <span className="truncate">🚨 VI PHẠM TỒN: ĐÃ DUYỆT [{item.maPostLabel || 'Cấp 5+'}]</span>
+                                                            </div>
+                                                            <div className="text-[9.5px] text-red-600 truncate mt-0.5 font-medium">
+                                                                👉 Đã có lệnh xuất xe ra cổng. Kiểm tra giao xe gấp!
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <div className="text-blue-700 font-bold text-[10px] leading-tight flex items-center gap-1">
+                                                                <i className="fa-solid fa-clock text-blue-500 text-[10px] shrink-0"></i>
+                                                                <span className="truncate">⏳ ĐANG TRÌNH DUYỆT [{item.maPostLabel || 'Cấp 3/4'}]</span>
+                                                            </div>
+                                                            <div className="text-[9.5px] text-slate-500 truncate mt-0.5">
+                                                                ✓ Chưa duyệt ra cổng. Xe lưu bãi là hợp lệ, đúng quy trình.
+                                                            </div>
+                                                        </>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );
@@ -2155,32 +1991,20 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                     <div className="bg-[#ECE9D8] border-t border-[#CCCCCC] px-2 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] select-none shrink-0 font-sans">
                         <div className="flex items-center gap-1.5 sm:gap-2.5 text-slate-700 flex-wrap">
                             <span className="font-bold">
-                                Tổng vi phạm: <strong className="text-red-700">{filteredTd4Items.length}</strong> xe
+                                Tổng TD4 tại bãi: <strong className="text-slate-900">{filteredTd4Items.length}</strong> xe
                             </span>
                             <span>•</span>
                             <span className="text-red-700 font-bold">
-                                Bãi Thuận An: <strong className="font-mono">{countTd4ThuanAn}</strong> xe
+                                🚨 Vi phạm (đã duyệt): <strong className="font-mono">{countTd4Approved}</strong> xe
+                            </span>
+                            <span>•</span>
+                            <span className="text-blue-700 font-bold">
+                                ⏳ Đang trình duyệt (hợp lệ): <strong className="font-mono">{countTd4Pending}</strong> xe
                             </span>
                             <span>•</span>
                             <span className="text-purple-800 font-bold hidden sm:inline">
-                                Bãi QL13/Q12: <strong className="font-mono">{countTd4Other}</strong> xe
+                                Bãi Thuận An: <strong className="font-mono">{countTd4ThuanAn}</strong> xe
                             </span>
-                            <span>•</span>
-                            <span className="text-slate-500 text-[10px] italic">
-                                * TD4 có nghĩa là đã giao xe, không được phép tồn ở đâu hết.
-                            </span>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 ml-auto">
-                            <button
-                                type="button"
-                                onClick={exportTd4Csv}
-                                className="px-2 py-0.5 bg-white hover:bg-red-50 text-red-800 border border-red-400 rounded-xs text-[10px] sm:text-[11px] font-bold shadow-2xs flex items-center gap-1 cursor-pointer"
-                                title="Xuất file Excel danh sách xe vi phạm tồn TD4"
-                            >
-                                <i className="fas fa-file-excel text-red-600"></i>
-                                <span>Xuất Excel TD4</span>
-                            </button>
                         </div>
                     </div>
                 </>
@@ -2206,95 +2030,93 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 </span>
                             </div>
                         ) : (
-                            <table className="w-full border-collapse text-left text-[11px] text-slate-800 select-text">
+                            <table className="table-fixed w-full border-collapse text-left text-[11px] text-slate-800 select-text">
                                 <thead className="bg-[#FFF8E1] text-slate-900 sticky top-0 z-10 border-b border-amber-300 text-[11px] font-bold shadow-2xs">
                                     <tr>
                                         <th className="py-1 px-1 text-center w-7 border-r border-amber-200">#</th>
-                                        <th className="py-1 px-2 border-r border-amber-200 whitespace-nowrap">Số VIN (Số Khung)</th>
-                                        <th className="py-1 px-2 border-r border-amber-200 whitespace-nowrap">Số HĐ & Ngày Xuất</th>
-                                        <th className="py-1 px-2 border-r border-amber-200 whitespace-nowrap">TVBH Phụ Trách</th>
-                                        <th className="py-1 px-2 border-r border-amber-200 whitespace-nowrap">Khách Hàng</th>
-                                        <th className="py-1 px-2 border-r border-amber-200 whitespace-nowrap">Dòng Xe & Màu</th>
-                                        <th className="py-1 px-2 border-r border-amber-200 whitespace-nowrap">Kho Cyber Lưu Trữ</th>
-                                        <th className="py-1 px-2 border-r border-amber-200 whitespace-nowrap">Tình Trạng Bãi Ngoài</th>
-                                        <th className="py-1 px-2 whitespace-nowrap min-w-[300px]">CẢNH BÁO NGUY CƠ & YÊU CẦU XỬ LÝ</th>
+                                        <th className="py-1 px-2 border-r border-amber-200 w-[20%]">Số VIN & Hóa Đơn</th>
+                                        <th className="py-1 px-2 border-r border-amber-200 w-[17%]">Dòng Xe & Màu</th>
+                                        <th className="py-1 px-2 border-r border-amber-200 w-[20%]">TVBH & Khách Hàng</th>
+                                        <th className="py-1 px-2 border-r border-amber-200 w-[20%]">Kho Cyber & Bãi Ngoài</th>
+                                        <th className="py-1 px-2 w-[23%]">Cảnh Báo & Xử Lý</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[#E1E1E1]">
                                     {filteredMissingYardItems.map((item, idx) => {
                                         const isSelected = selectedMissingYardRowIdx === idx;
+                                        const isViolation = item.isViolation;
+
                                         return (
                                             <tr
                                                 key={item.id}
-                                                onClick={() => setSelectedMissingYardRowIdx(idx)}
+                                                onClick={() => {
+                                                    setSelectedMissingYardRowIdx(idx);
+                                                    handleOpenDetailModal(item, 'missing_yard');
+                                                }}
                                                 className={`cursor-pointer transition-colors ${
                                                     isSelected 
-                                                        ? 'bg-[#CCE8FF] text-slate-900 font-medium' 
-                                                        : 'bg-[#FFFDF5] hover:bg-[#FFF8E1]'
+                                                        ? 'bg-red-200 font-medium'
+                                                        : isViolation 
+                                                            ? 'bg-red-50/50 hover:bg-red-100/50' 
+                                                            : 'bg-[#FFFDF5] hover:bg-[#FFF8E1]'
                                                 }`}
                                             >
                                                 <td className="py-1 px-1 text-center text-slate-500 font-mono text-[10px] border-r border-[#EBEBEB]">
                                                     {idx + 1}
                                                 </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap font-mono text-[11px] font-bold text-blue-900 group">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span>{item.vin}</span>
+
+                                                {/* VIN & HĐ */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="font-mono font-bold text-blue-900 truncate">{item.vin}</span>
                                                         <button
                                                             type="button"
                                                             onClick={(e) => { e.stopPropagation(); copyVin(item.vin); }}
-                                                            className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-blue-600 transition-opacity"
+                                                            className="text-slate-400 hover:text-blue-600 transition-opacity shrink-0"
                                                             title="Sao chép số VIN"
                                                         >
                                                             <i className={`fas ${copiedVin === item.vin ? 'fa-check text-green-600' : 'fa-copy'} text-[10px]`}></i>
                                                         </button>
                                                     </div>
-                                                </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <div className="font-mono font-bold text-amber-900 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-300 text-[10.5px] inline-block">
-                                                        {item.maHdCyber || item.orderNumber || 'Đã XHĐ'}
+                                                    <div className="text-[10px] text-amber-900 font-medium mt-0.5 truncate">
+                                                        HĐ: <strong className="font-mono">{item.maHdCyber || item.orderNumber || 'Đã XHĐ'}</strong>
+                                                        {item.ngayXuatHoaDon && <span className="text-slate-500 ml-1 font-mono">({item.ngayXuatHoaDon.slice(0, 10)})</span>}
                                                     </div>
-                                                    {item.ngayXuatHoaDon && (
-                                                        <span className="text-[9.5px] text-slate-500 font-mono block mt-0.5">
-                                                            {item.ngayXuatHoaDon.slice(0, 10)}
-                                                        </span>
-                                                    )}
                                                 </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap font-bold text-slate-900">
-                                                    {item.tvbh || <span className="text-slate-400 italic">Chưa rõ</span>}
+
+                                                {/* Dòng xe & Màu */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="font-bold text-slate-900 truncate">{item.carModel || '-'}</div>
+                                                    <div className="text-[10px] text-slate-500 truncate">{item.color || '-'}</div>
                                                 </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <div className="font-semibold text-slate-800">{item.customerName || '-'}</div>
-                                                    {item.orderNumber && (
-                                                        <div className="text-[9.5px] text-slate-500 font-mono">HĐ: {item.orderNumber}</div>
-                                                    )}
+
+                                                {/* TVBH & Khách hàng */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="font-bold text-slate-900 truncate" title={item.tvbh}>{item.tvbh || 'Chưa rõ'}</div>
+                                                    <div className="text-[10px] text-slate-600 truncate" title={item.customerName}>{item.customerName || '-'}</div>
                                                 </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className="font-bold text-slate-900">{item.carModel || '-'}</span>
-                                                    {item.color && (
-                                                        <span className="text-slate-500 text-[10px] ml-1">({item.color})</span>
-                                                    )}
+
+                                                {/* Kho Cyber & Bãi ngoài */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="text-[10.5px] font-semibold text-slate-800 truncate" title={item.tenKhoCyber || item.maKhoCyber}>
+                                                        Cyber: {item.tenKhoCyber || item.maKhoCyber || 'CyberSoft'}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-500 truncate">
+                                                        {item.khoBaiThucTe ? (
+                                                            <span>{item.khoBaiThucTe}{item.ngayXuatBaiThucTe ? ` (Xuất: ${item.ngayXuatBaiThucTe.slice(0, 10)})` : ''}</span>
+                                                        ) : (
+                                                            <span className="text-amber-800 italic">Không có ở 3 bãi</span>
+                                                        )}
+                                                    </div>
                                                 </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap font-mono text-[10.5px]">
-                                                    <span className="font-bold text-slate-800">{item.tenKhoCyber || item.maKhoCyber || 'Cyber'}</span>
-                                                    {item.maKhoCyber && (
-                                                        <span className="text-slate-400 text-[9.5px] block">Mã: {item.maKhoCyber}</span>
-                                                    )}
-                                                </td>
-                                                <td className="py-1 px-2 border-r border-[#EBEBEB] whitespace-nowrap">
-                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-xs font-bold text-[10px] bg-rose-50 text-rose-800 border border-rose-300">
-                                                        <i className="fa-solid fa-triangle-exclamation text-rose-600"></i>
+
+                                                {/* Cảnh báo & Xử lý */}
+                                                <td className="py-1 px-2 overflow-hidden">
+                                                    <div className="text-[10px] font-bold text-red-700 leading-tight">
                                                         {item.satelliteStatusLabel}
-                                                    </span>
-                                                    {item.ngayXuatBaiThucTe && (
-                                                        <div className="text-[9.5px] text-slate-500 mt-0.5">
-                                                            Xuất bãi: {item.ngayXuatBaiThucTe.slice(0, 10)}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="py-1 px-2 whitespace-nowrap">
-                                                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-amber-100 text-amber-950 border border-amber-400 rounded font-bold text-[10px] shadow-2xs">
-                                                        <i className="fa-solid fa-bell text-amber-600 text-[11px] animate-bounce"></i>
-                                                        <span>{item.warningNote}</span>
+                                                    </div>
+                                                    <div className="text-[9.5px] text-slate-500 mt-0.5 truncate" title={item.warningNote}>
+                                                        {item.warningNote}
                                                     </div>
                                                 </td>
                                             </tr>
@@ -2309,29 +2131,27 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                     <div className="bg-[#ECE9D8] border-t border-[#CCCCCC] px-2 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] select-none shrink-0 font-sans">
                         <div className="flex items-center gap-1.5 sm:gap-2.5 text-slate-700 flex-wrap">
                             <span className="font-bold">
-                                Tổng cảnh báo: <strong className="text-amber-800">{filteredMissingYardItems.length}</strong> xe
+                                Tổng xe vi phạm mất bãi: <strong className="text-red-700">{filteredMissingYardItems.length}</strong> xe
                             </span>
                             <span>•</span>
-                            <span className="text-slate-600 text-[10.5px]">
-                                * Xe đã xuất hóa đơn nhưng chưa có phiếu giao xe TD4 mà mất tồn bãi thực tế.
+                            <span className="text-slate-500 text-[10px] italic">
+                                * Xe đã xuất hóa đơn nhưng chưa có phiếu TD4 và không có ĐNX mà không còn ở bãi xe.
                             </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 ml-auto">
-                            <button
-                                type="button"
-                                onClick={exportMissingYardCsv}
-                                className="px-2 py-0.5 bg-white hover:bg-amber-50 text-amber-900 border border-amber-400 rounded-xs text-[10px] sm:text-[11px] font-bold shadow-2xs flex items-center gap-1 cursor-pointer"
-                                title="Xuất file Excel"
-                            >
-                                <i className="fas fa-file-excel text-amber-600"></i>
-                                <span>Xuất Excel</span>
-                            </button>
                         </div>
                     </div>
                 </>
             )}
                 </>
             )}
+
+            {/* MODAL CHI TIẾT LỖI VÀ HƯỚNG XỬ LÝ VI PHẠM */}
+            <ReconciliationDetailModal
+                isOpen={isDetailModalOpen}
+                onClose={() => setIsDetailModalOpen(false)}
+                item={detailModalItem}
+                type={detailModalType}
+                showToast={showToast}
+            />
         </div>
     );
 };

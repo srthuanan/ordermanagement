@@ -282,8 +282,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     allOrders = [],
     stockData = []
 }) => {
-    // Sub-tab switcher: 'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat' | 'tra_cuu_phieu' | 'satellite_warehouses' | 'reconcile_td4' | 'reconcile_dnx' | 'reconcile_missing_yard'
-    const [activeSubTab, setActiveSubTab] = useState<'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat' | 'tra_cuu_phieu' | 'satellite_warehouses' | 'reconcile_td4' | 'reconcile_dnx' | 'reconcile_missing_yard'>('factory_plan');
+    // Sub-tab switcher: 'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat' | 'tra_cuu_phieu' | 'satellite_warehouses' | 'reconcile' | 'reconcile_td4' | 'reconcile_dnx' | 'reconcile_missing_yard'
+    const [activeSubTab, setActiveSubTab] = useState<'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat' | 'tra_cuu_phieu' | 'satellite_warehouses' | 'reconcile' | 'reconcile_td4' | 'reconcile_dnx' | 'reconcile_missing_yard'>('factory_plan');
     const [reconcileCounts, setReconcileCounts] = useState<{ carsCount: number; td4Count: number; dnxCount: number; missingYardCount: number; allCount: number }>({ carsCount: 0, td4Count: 0, dnxCount: 0, missingYardCount: 0, allCount: 0 });
     const [mobileDnxView, setMobileDnxView] = useState<'form' | 'history'>('form');
 
@@ -1416,40 +1416,6 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         setTimeout(() => setCopiedVin(null), 2000);
     };
 
-    const handleExportExcel = () => {
-        const targetList = displayedCars.length > 0 ? displayedCars : cars;
-        if (targetList.length === 0) {
-            showToast('Không có dữ liệu', 'Chưa có xe nào trong kết quả để xuất file.', 'warning');
-            return;
-        }
-
-        const exportRows = targetList.map((c, idx) => ({
-            'STT': idx + 1,
-            'Số VIN': c.vin,
-            'Số máy': c.so_may,
-            'Dòng xe': c.dong_xe || c.ten_kx,
-            'Phiên bản': c.phien_ban,
-            'Ngoại thất': c.ten_mau,
-            'Nội thất': c.ten_mau_nt,
-            'Năm SX': c.nam_sx,
-            'Đơn vị nhận (TTCP)': c.ten_ttcp,
-            'Mã TTCP': c.ma_ttcp,
-            'Vị trí kho thực tế': c.current_physical_warehouse || '',
-            'Kho trên phiếu': c.vi_tri_kho || '',
-            'Mã DMS (XHĐ)': c.ma_dms,
-            'Ngày chứng từ': c.ngay_ct,
-            'Ngày phân bổ': c.ngay_phan_bo,
-            'Loại chứng từ': c.ma_ct,
-            'Ghi chú': c.ghi_chu
-        }));
-
-        const ws = xlsx.utils.json_to_sheet(exportRows);
-        const wb = xlsx.utils.book_new();
-        xlsx.utils.book_append_sheet(wb, ws, 'KeHoachGiaoXeCyber');
-        const fileName = `Ke_Hoach_Giao_Xe_CyberSoft_${new Date().toISOString().slice(0, 10)}.xlsx`;
-        xlsx.writeFile(wb, fileName);
-        showToast('Xuất Excel thành công', `Đã tải về file ${fileName} (${targetList.length} xe)`, 'success');
-    };
 
     // -------------------------------------------------------------
     // HANDLERS FOR SUB-TAB 2: BÁO CÁO TỒN KHO XE
@@ -1609,43 +1575,6 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         setTimeout(() => setTonKhoCopiedVin(null), 2000);
     };
 
-    const handleExportTonKhoExcel = () => {
-        const targetList = displayedTonKhoCars.length > 0 ? displayedTonKhoCars : tonKhoCars;
-        if (targetList.length === 0) {
-            showToast('Không có dữ liệu', 'Không có dữ liệu tồn kho để xuất file.', 'warning');
-            return;
-        }
-
-        const exportRows = targetList.map((c, idx) => ({
-            'STT': idx + 1,
-            'Số hóa đơn': c.so_hd,
-            'Ngày HĐ nhập': c.ngay_hd,
-            'Tháng nhập HĐ': c.thang_hd,
-            'Mã kiểu xe': c.ma_kx,
-            'Kiểu xe': c.ten_kx,
-            'Số khung': c.vin,
-            'Số máy': c.so_may,
-            'Mã màu': c.ma_mau,
-            'Tên màu': c.ten_mau,
-            'Mã màu NT': c.ma_mau_nt,
-            'Tên màu NT': c.ten_mau_nt,
-            'Mã kho': c.ma_kho,
-            'Tên kho': c.ten_kho,
-            'Tuổi tồn (ngày)': c.ngay_ton,
-            'Năm SX': c.nam_sx,
-            'Tình trạng': c.tinh_trang || (c.is_invoiced ? 'Xe đã được viết hóa đơn' : ''),
-            'Đơn vị bán / Showroom': c.ten_ttcp,
-            'Tư vấn bán hàng (TVBH)': c.tvbh,
-            'Ghi chú': c.ghi_chu
-        }));
-
-        const ws = xlsx.utils.json_to_sheet(exportRows);
-        const wb = xlsx.utils.book_new();
-        xlsx.utils.book_append_sheet(wb, ws, 'BaoCaoTonKhoXeCyber');
-        const fileName = `Bao_Cao_Ton_Kho_Xe_CyberSoft_${tonKhoFromDate}_den_${tonKhoToDate}.xlsx`;
-        xlsx.writeFile(wb, fileName);
-        showToast('Xuất Excel thành công', `Đã tải về file ${fileName} (${targetList.length} xe)`, 'success');
-    };
 
     // -------------------------------------------------------------
     // HANDLERS FOR SUB-TAB 3: XẾP XE HỢP ĐỒNG (CP_BEXEPXE)
@@ -1893,59 +1822,21 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         )}
                     </button>
 
-                    {/* Tab 6 Mobile: Xe Tồn TD4 */}
+                    {/* Tab Mobile: Đối Soát Lệch Kho */}
                     <button
                         type="button"
-                        onClick={() => setActiveSubTab('reconcile_td4')}
+                        onClick={() => setActiveSubTab('reconcile')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all ${
-                            activeSubTab === 'reconcile_td4'
-                                ? 'bg-purple-700 text-white font-bold shadow-xs'
-                                : 'bg-purple-50 text-purple-800 font-semibold hover:bg-purple-100 border border-purple-200'
+                            activeSubTab === 'reconcile' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard'
+                                ? 'bg-rose-600 text-white font-bold shadow-xs'
+                                : 'bg-rose-50 text-rose-800 font-semibold hover:bg-rose-100 border border-rose-200'
                         }`}
                     >
                         <i className="fa-solid fa-triangle-exclamation text-[11px] text-amber-500"></i>
-                        <span>Xe Tồn TD4</span>
-                        {reconcileCounts.td4Count > 0 && (
-                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-full font-bold bg-purple-900 text-purple-100 border border-purple-300">
-                                {reconcileCounts.td4Count}
-                            </span>
-                        )}
-                    </button>
-
-                    {/* Tab 7 Mobile: ĐNX Về Bãi Chưa Nhập */}
-                    <button
-                        type="button"
-                        onClick={() => setActiveSubTab('reconcile_dnx')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all ${
-                            activeSubTab === 'reconcile_dnx'
-                                ? 'bg-red-600 text-white font-bold shadow-xs'
-                                : 'bg-red-50 text-red-800 font-semibold hover:bg-red-100 border border-red-200'
-                        }`}
-                    >
-                        <i className="fa-solid fa-arrow-down-to-bracket text-[11px] text-red-500"></i>
-                        <span>ĐNX Về Bãi Chưa Nhập</span>
-                        {reconcileCounts.dnxCount > 0 && (
-                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-full font-bold bg-red-700 text-white border border-red-300 animate-pulse">
-                                {reconcileCounts.dnxCount}
-                            </span>
-                        )}
-                    </button>
-
-                    {/* Tab 8 Mobile: Xuất HĐ Mất Bãi */}
-                    <button
-                        type="button"
-                        onClick={() => setActiveSubTab('reconcile_missing_yard')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all ${
-                            activeSubTab === 'reconcile_missing_yard'
-                                ? 'bg-amber-600 text-white font-bold shadow-xs'
-                                : 'bg-amber-50 text-amber-800 font-semibold hover:bg-amber-100 border border-amber-200'
-                        }`}
-                    >
-                        <i className="fa-solid fa-file-invoice-dollar text-[11px] text-amber-500"></i>
-                        <span>Xuất HĐ Mất Bãi</span>
-                        {reconcileCounts.missingYardCount > 0 && (
-                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-full font-bold bg-amber-800 text-white border border-amber-300 animate-pulse">
-                                {reconcileCounts.missingYardCount}
+                        <span>Đối Soát Lệch Kho</span>
+                        {reconcileCounts.allCount > 0 && (
+                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-full font-bold bg-rose-700 text-white border border-rose-300 animate-pulse">
+                                {reconcileCounts.allCount}
                             </span>
                         )}
                     </button>
@@ -2102,71 +1993,27 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         )}
                     </button>
 
-                    {/* Tab 6: Xe Tồn TD4 */}
+                    {/* Tab: Đối Soát Lệch Kho */}
                     <button
                         type="button"
-                        onClick={() => setActiveSubTab('reconcile_td4')}
+                        onClick={() => setActiveSubTab('reconcile')}
                         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all ${
-                            activeSubTab === 'reconcile_td4'
-                                ? 'bg-purple-700 text-white shadow-xs font-bold'
-                                : 'text-slate-700 hover:bg-purple-50 hover:text-purple-900 font-semibold'
+                            activeSubTab === 'reconcile' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard'
+                                ? 'bg-rose-600 text-white shadow-xs font-bold'
+                                : 'text-slate-700 hover:bg-rose-50 hover:text-rose-900 font-semibold'
                         }`}
                     >
                         <div className="flex items-center gap-2.5">
                             <i className="fa-solid fa-triangle-exclamation w-4 text-center text-xs text-amber-500"></i>
-                            <span>Xe Tồn TD4</span>
+                            <span>Đối Soát Lệch Kho</span>
                         </div>
-                        {reconcileCounts.td4Count > 0 && (
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                                activeSubTab === 'reconcile_td4' ? 'bg-purple-900 text-purple-100 border border-purple-400' : 'bg-purple-100 text-purple-800 border border-purple-200'
-                            }`}>
-                                {reconcileCounts.td4Count}
-                            </span>
-                        )}
-                    </button>
-
-                    {/* Tab 7: ĐNX Về Bãi Chưa Nhập */}
-                    <button
-                        type="button"
-                        onClick={() => setActiveSubTab('reconcile_dnx')}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all ${
-                            activeSubTab === 'reconcile_dnx'
-                                ? 'bg-red-600 text-white shadow-xs font-bold'
-                                : 'text-slate-700 hover:bg-red-50 hover:text-red-900 font-semibold'
-                        }`}
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <i className="fa-solid fa-arrow-down-to-bracket w-4 text-center text-xs text-red-500"></i>
-                            <span>ĐNX Về Bãi Chưa Nhập</span>
-                        </div>
-                        {reconcileCounts.dnxCount > 0 && (
+                        {reconcileCounts.allCount > 0 && (
                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse ${
-                                activeSubTab === 'reconcile_dnx' ? 'bg-red-800 text-white border border-red-400' : 'bg-red-100 text-red-800 border border-red-200'
+                                activeSubTab === 'reconcile' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard'
+                                    ? 'bg-rose-800 text-white border border-rose-400'
+                                    : 'bg-rose-100 text-rose-800 border border-rose-200'
                             }`}>
-                                {reconcileCounts.dnxCount}
-                            </span>
-                        )}
-                    </button>
-
-                    {/* Tab 8: Xuất HĐ Mất Bãi */}
-                    <button
-                        type="button"
-                        onClick={() => setActiveSubTab('reconcile_missing_yard')}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-all ${
-                            activeSubTab === 'reconcile_missing_yard'
-                                ? 'bg-amber-600 text-white shadow-xs font-bold'
-                                : 'text-slate-700 hover:bg-amber-50 hover:text-amber-900 font-semibold'
-                        }`}
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <i className="fa-solid fa-file-invoice-dollar w-4 text-center text-xs text-amber-500"></i>
-                            <span>Xuất HĐ Mất Bãi</span>
-                        </div>
-                        {reconcileCounts.missingYardCount > 0 && (
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse ${
-                                activeSubTab === 'reconcile_missing_yard' ? 'bg-amber-800 text-white border border-amber-400' : 'bg-amber-100 text-amber-800 border border-amber-200'
-                            }`}>
-                                {reconcileCounts.missingYardCount}
+                                {reconcileCounts.allCount}
                             </span>
                         )}
                     </button>
@@ -2337,19 +2184,6 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 
                             {/* Action buttons */}
                             <div className="flex items-center gap-1.5 ml-auto">
-                                {displayedCars.length > 0 && (
-                                    <button
-                                        type="button"
-                                        onClick={handleExportExcel}
-                                        disabled={isLoading}
-                                        className="h-9 px-3 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 disabled:opacity-40 transition-all flex items-center gap-1.5 shadow-xs whitespace-nowrap"
-                                        title="Xuất file Excel cho các xe đang hiển thị"
-                                    >
-                                        <i className="fas fa-file-excel text-emerald-600"></i>
-                                        <span>Xuất Excel ({displayedCars.length})</span>
-                                    </button>
-                                )}
-                                
                                 {(keyword || selectedModel !== 'Tất cả' || selectedVersion !== 'Tất cả' || selectedColor !== 'Tất cả' || selectedTtcp) && (
                                     <button
                                         type="button"
@@ -2741,19 +2575,6 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 
                             {/* Right Action Buttons */}
                             <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                                {displayedTonKhoCars.length > 0 && (
-                                    <button
-                                        type="button"
-                                        onClick={handleExportTonKhoExcel}
-                                        disabled={isLoadingTonKho}
-                                        className="h-9 px-3 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 disabled:opacity-40 transition-all flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
-                                        title="Xuất file Excel cho các xe tồn đang hiển thị"
-                                    >
-                                        <i className="fas fa-file-excel text-emerald-600"></i>
-                                        <span>Xuất Excel ({displayedTonKhoCars.length})</span>
-                                    </button>
-                                )}
-
                                 {(tonKhoKeyword || tonKhoWarehouse || tonKhoModel || tonKhoStatus !== 'not_invoiced') && (
                                     <button
                                         type="button"
@@ -5039,15 +4860,15 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             {/* ============================================================= */}
             {/* SUB-TAB: KHO VỆ TINH (3 KHO) & ĐỐI CHIẾU LỆCH KHO             */}
             {/* ============================================================= */}
-            {(activeSubTab === 'satellite_warehouses' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard') && (
+            {(activeSubTab === 'satellite_warehouses' || activeSubTab === 'reconcile' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard') && (
                 <div className="flex-1 flex flex-col min-h-0 h-full w-full overflow-hidden">
                     <SatelliteWarehousesView
                         showToast={showToast}
-                        isActive={isActive && (activeSubTab === 'satellite_warehouses' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard')}
+                        isActive={isActive && (activeSubTab === 'satellite_warehouses' || activeSubTab === 'reconcile' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard')}
                         allOrders={allOrders}
                         stockData={stockData}
                         initialViewMode={activeSubTab === 'satellite_warehouses' ? 'inventory' : 'reconcile'}
-                        initialReconcileTab={activeSubTab === 'reconcile_missing_yard' ? 'missing_yard' : activeSubTab === 'reconcile_td4' ? 'td4' : 'dnx'}
+                        initialReconcileTab={activeSubTab === 'reconcile_missing_yard' ? 'missing_yard' : activeSubTab === 'reconcile_td4' ? 'td4' : activeSubTab === 'reconcile_dnx' ? 'dnx' : 'all'}
                         onCountsChange={(c) => {
                             setReconcileCounts({
                                 carsCount: c.carsCount,

@@ -3,7 +3,7 @@ import json
 import os
 import csv
 
-API_URL = "https://script.google.com/macros/s/AKfycbyQ8PIQx9DEI0Caps3q0GBGKcgo7DOV9rP_ykFbCr30WX5kaG8F8SjhblSGgKzadef9/exec"
+API_URL = "https://script.google.com/macros/s/AKfycbylEAT8IqQVmKsulKUB5imIUcWm3h7a6Mfe-MQyhF3T5Wu2JWcbO3Q6a1aXZLN7exnV/exec"
 
 def fetch_all():
     print(f"--- Đang gọi API đồng bộ 3 kho xe ---")

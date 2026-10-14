@@ -1,7 +1,7 @@
 import { StockVehicle } from '../../types';
 import { supabase } from '../supabaseClient';
 
-export const SATELLITE_API_URL = "https://script.google.com/macros/s/AKfycbyQ8PIQx9DEI0Caps3q0GBGKcgo7DOV9rP_ykFbCr30WX5kaG8F8SjhblSGgKzadef9/exec";
+export const SATELLITE_API_URL = "https://script.google.com/macros/s/AKfycbylEAT8IqQVmKsulKUB5imIUcWm3h7a6Mfe-MQyhF3T5Wu2JWcbO3Q6a1aXZLN7exnV/exec";
 export const SATELLITE_CACHE_KEY = "satellite_warehouses_cache_v1";
 
 export interface SatelliteCarRecord {
@@ -45,7 +45,7 @@ export interface DnxReconciliationItem {
         note?: string;
     } | null;
 
-    reconcileStatus: 'AT_THUAN_AN' | 'AT_TRANSIT_YARD' | 'IN_TRANSIT' | 'ALREADY_IN_CYBER';
+    reconcileStatus: 'AT_THUAN_AN' | 'AT_TRANSIT_YARD' | 'IN_TRANSIT' | 'ALREADY_IN_CYBER' | 'CYBER_K83_NOT_IN_YARD';
     reconcileNote: string;
     warningLevel: 'danger' | 'warning' | 'info' | 'success';
 }
@@ -310,19 +310,50 @@ export const fetchDnxReconciliationData = async (
             return false;
         };
 
-        // 1.1 Lấy danh sách xe đã có ĐNX từ bảng cyber_car_status
+        // 1.1 Lấy toàn bộ bản đồ trạng thái xe CyberSoft từ cyber_car_status
+        const cyberStatusMap = new Map<string, any>();
         let cyberCars: any[] = [];
         try {
             const { data, error } = await supabase
                 .from('cyber_car_status')
-                .select('vin, ma_kho, ten_kho, has_dnx, so_ct_dnx, ngay_ct_dnx, dnx_data, so_may, ma_kx, ten_kx, ma_mau, ten_mau, has_td4, so_ct_td4')
-                .eq('has_dnx', true);
+                .select('vin, ma_kho, ten_kho, has_dnx, so_ct_dnx, ngay_ct_dnx, dnx_data, so_may, ma_kx, ten_kx, ma_mau, ten_mau, has_td4, so_ct_td4');
             if (!error && data) {
-                cyberCars = data;
+                data.forEach(c => {
+                    const v = String(c.vin || '').trim().toUpperCase();
+                    if (!v) return;
+                    cyberStatusMap.set(v, c);
+                    if (v.length >= 6) cyberStatusMap.set(v.slice(-6), c);
+                    // Hỗ trợ map biến thể chữ S / số 5 cho số khung VF 5 (JSE <-> J5E)
+                    if (v.includes('JSE')) cyberStatusMap.set(v.replace('JSE', 'J5E'), c);
+                    if (v.includes('J5E')) cyberStatusMap.set(v.replace('J5E', 'JSE'), c);
+
+                    if (c.has_dnx) {
+                        cyberCars.push(c);
+                    }
+                });
             }
         } catch (eCyber) {
             console.warn('[fetchDnxReconciliationData] cyber_car_status read warning:', eCyber);
         }
+
+        // Helper kiểm tra trạng thái kho và TD4 thực tế từ Cyber
+        const checkCyberInfo = (vinStr: string) => {
+            const clean = vinStr.trim().toUpperCase();
+            if (!clean) return { isK83: false, maKho: '', tenKho: '', hasTd4: false, car: null };
+            let cs = cyberStatusMap.get(clean);
+            if (!cs && clean.length >= 6) cs = cyberStatusMap.get(clean.slice(-6));
+            if (!cs && clean.includes('J5E')) cs = cyberStatusMap.get(clean.replace('J5E', 'JSE'));
+            if (!cs && clean.includes('JSE')) cs = cyberStatusMap.get(clean.replace('JSE', 'J5E'));
+
+            if (cs) {
+                const mk = (cs.ma_kho || '').trim().toUpperCase();
+                const tk = (cs.ten_kho || '').trim();
+                const isK83 = mk === 'K83' || tk.toLowerCase().includes('thuận an');
+                const hasTd4 = Boolean(cs.has_td4 || cs.so_ct_td4);
+                return { isK83, maKho: mk, tenKho: tk, hasTd4, car: cs };
+            }
+            return { isK83: false, maKho: '', tenKho: '', hasTd4: false, car: null };
+        };
 
         // 2. Lấy các yêu cầu ĐNX điều chuyển từ interactions
         let transferInteractions: any[] = [];
@@ -441,30 +472,39 @@ export const fetchDnxReconciliationData = async (
             const hasDnx = m.status === 'completed' || !!m.so_ct_dnx;
             if (!hasDnx) return;
 
+            const cyberInfo = checkCyberInfo(v);
+            if (cyberInfo.hasTd4) return; // Đã giao xe trên CyberSoft, bỏ qua
+
             const existing = dnxMap.get(v);
             if (!existing) {
+                const cs = cyberInfo.car;
                 dnxMap.set(v, {
                     id: it.id,
                     vin: v,
-                    soCtDnx: m.so_ct_dnx || 'DNX',
-                    ngayCtDnx: m.updated_at || it.created_at || '',
+                    soCtDnx: m.so_ct_dnx || cs?.so_ct_dnx || 'DNX',
+                    ngayCtDnx: m.updated_at || it.created_at || cs?.ngay_ct_dnx || '',
                     khoXuat: m.from_warehouse || 'K87',
                     khoNhan: m.to_warehouse || 'K83',
-                    maKhoCyber: '',
-                    tenKhoCyber: 'Đang vận tải',
-                    isTonKhoCyberK83: false,
+                    maKhoCyber: cyberInfo.maKho || '',
+                    tenKhoCyber: cyberInfo.tenKho || (cyberInfo.isK83 ? 'Showroom Thuận An (K83)' : 'Đang vận tải'),
+                    isTonKhoCyberK83: cyberInfo.isK83,
                     tvbh: m.consultant_name || it.actor_name || '',
                     customerName: m.customer_name || '',
                     orderNumber: m.order_number || it.target_id || '',
-                    carModel: m.car_model || '',
+                    carModel: m.car_model || cs?.ten_kx || '',
                     trim: m.trim || '',
-                    color: m.ext_color || '',
+                    color: m.ext_color || cs?.ten_mau || '',
                     reconcileStatus: 'IN_TRANSIT',
                     reconcileNote: '',
                     warningLevel: 'info',
                     satelliteYard: null
                 });
             } else {
+                if (cyberInfo.isK83) {
+                    existing.isTonKhoCyberK83 = true;
+                    existing.maKhoCyber = cyberInfo.maKho;
+                    existing.tenKhoCyber = cyberInfo.tenKho || 'Showroom Thuận An (K83)';
+                }
                 if (!existing.tvbh) existing.tvbh = m.consultant_name || it.actor_name || '';
                 if (!existing.customerName) existing.customerName = m.customer_name || '';
                 if (!existing.orderNumber) existing.orderNumber = m.order_number || it.target_id || '';
@@ -477,13 +517,19 @@ export const fetchDnxReconciliationData = async (
         ordersByVin.forEach((o, v) => {
             // BỎ QUA NẾU XE ĐÃ CÓ PHIẾU TD4
             if (!v || isCarWithTd4(v)) return;
+            const cyberInfo = checkCyberInfo(v);
+            if (cyberInfo.hasTd4) return;
+
             const hasDnx = o.has_dnx || o.so_ct_dnx || o['Số CT DNX'];
+            const maKhoOrder = (o.ma_kho || o['Mã kho'] || '').toUpperCase();
+            const tenKhoOrder = (o.kho_xe || o['Kho xe'] || '').trim();
+            const isTonK83 = cyberInfo.isK83 || maKhoOrder === 'K83' || tenKhoOrder.toLowerCase().includes('thuận an');
+            const maKhoFinal = cyberInfo.maKho || maKhoOrder;
+            const tenKhoFinal = cyberInfo.tenKho || tenKhoOrder;
+
             if (hasDnx) {
                 const existing = dnxMap.get(v);
                 if (!existing) {
-                    const maKho = (o.ma_kho || o['Mã kho'] || '').toUpperCase();
-                    const tenKho = (o.kho_xe || o['Kho xe'] || '').trim();
-                    const isTonK83 = maKho === 'K83' || tenKho.toLowerCase().includes('thuận an');
                     dnxMap.set(v, {
                         id: `order-${v}`,
                         vin: v,
@@ -491,8 +537,8 @@ export const fetchDnxReconciliationData = async (
                         ngayCtDnx: o.ngay_lap_dnx || '',
                         khoXuat: 'K87',
                         khoNhan: 'K83',
-                        maKhoCyber: maKho,
-                        tenKhoCyber: tenKho || (isTonK83 ? 'Showroom Thuận An (K83)' : 'Đang vận tải'),
+                        maKhoCyber: maKhoFinal,
+                        tenKhoCyber: tenKhoFinal || (isTonK83 ? 'Showroom Thuận An (K83)' : 'Đang vận tải'),
                         isTonKhoCyberK83: isTonK83,
                         tvbh: o.tvbh || o['TVBH'] || '',
                         customerName: o.ten_khach_hang || o['Tên KH'] || '',
@@ -506,6 +552,11 @@ export const fetchDnxReconciliationData = async (
                         satelliteYard: null
                     });
                 } else {
+                    if (isTonK83) {
+                        existing.isTonKhoCyberK83 = true;
+                        existing.maKhoCyber = maKhoFinal;
+                        existing.tenKhoCyber = tenKhoFinal || 'Showroom Thuận An (K83)';
+                    }
                     if (!existing.tvbh) existing.tvbh = o.tvbh || o['TVBH'] || '';
                     if (!existing.customerName) existing.customerName = o.ten_khach_hang || o['Tên KH'] || '';
                     if (!existing.orderNumber) existing.orderNumber = o.so_hop_dong || o.so_don_hang || o['Số HĐ'] || '';
@@ -516,6 +567,11 @@ export const fetchDnxReconciliationData = async (
             } else {
                 const existing = dnxMap.get(v);
                 if (existing) {
+                    if (isTonK83) {
+                        existing.isTonKhoCyberK83 = true;
+                        existing.maKhoCyber = maKhoFinal;
+                        existing.tenKhoCyber = tenKhoFinal || 'Showroom Thuận An (K83)';
+                    }
                     if (!existing.tvbh) existing.tvbh = o.tvbh || o['TVBH'] || '';
                     if (!existing.customerName) existing.customerName = o.ten_khach_hang || o['Tên KH'] || '';
                     if (!existing.orderNumber) existing.orderNumber = o.so_hop_dong || o.so_don_hang || o['Số HĐ'] || '';
@@ -566,25 +622,56 @@ export const fetchDnxReconciliationData = async (
         dnxMap.forEach((item, v) => {
             if (isCarWithTd4(v) || isCarWithTd4(item.vin)) return;
 
+            // Kiểm tra bổ sung trạng thái Cyber K83 / TD4
+            const cyberInfo = checkCyberInfo(v);
+            if (cyberInfo.hasTd4) return;
+            if (cyberInfo.isK83) {
+                item.isTonKhoCyberK83 = true;
+                item.maKhoCyber = cyberInfo.maKho || 'K83';
+                item.tenKhoCyber = cyberInfo.tenKho || 'Showroom Thuận An (K83)';
+            }
+
             let sat = satMap.get(v);
             if (!sat && v.length >= 6) {
                 sat = satMap.get(v.slice(-6));
             }
+            if (!sat && v.includes('J5E')) {
+                sat = satMap.get(v.replace('J5E', 'JSE'));
+            }
+            if (!sat && v.includes('JSE')) {
+                sat = satMap.get(v.replace('JSE', 'J5E'));
+            }
 
             item.satelliteYard = sat || null;
 
+            const isAtThuanAnYard = sat && sat.isTonKho && (sat.khoKey === 'tada' || String(sat.khoName || '').toLowerCase().includes('thuận an'));
+            const isAtTransitYard = sat && sat.isTonKho && (sat.khoKey === 'ql13' || sat.khoKey === 'q12');
+            const hasYardStock = sat && sat.isTonKho;
+
             if (item.isTonKhoCyberK83) {
-                item.reconcileStatus = 'ALREADY_IN_CYBER';
-                item.warningLevel = 'success';
-                item.reconcileNote = 'Đã có tồn kho K83 trên CyberSoft';
-            } else if (sat && sat.isTonKho && (sat.khoKey === 'tada' || String(sat.khoName || '').toLowerCase().includes('thuận an'))) {
+                // ĐÃ NHẬP KHO K83 TRÊN CYBER:
+                if (hasYardStock) {
+                    // Cả sổ Cyber và Bãi thực tế đều có xe: Hoàn tất đồng bộ!
+                    item.reconcileStatus = 'ALREADY_IN_CYBER';
+                    item.warningLevel = 'success';
+                    item.reconcileNote = `✅ Đã nhập kho K83 trên Cyber & Đang tồn tại bãi ${sat.khoName}`;
+                } else {
+                    // TRƯỜNG HỢP 2: Sổ Cyber đã làm PNK nhập K83 nhưng bãi thực tế KHÔNG CÓ XE!
+                    item.reconcileStatus = 'CYBER_K83_NOT_IN_YARD';
+                    item.warningLevel = 'warning';
+                    item.reconcileNote = sat && sat.ngayGiao 
+                        ? `⚠️ SỔ CYBER ĐÃ NHẬP K83 — NHƯNG BÃI ĐÃ XUẤT (${sat.khoName} ngày ${sat.ngayGiao})!` 
+                        : '⚠️ SỔ CYBER ĐÃ NHẬP K83 — NHƯNG BÃI THỰC TẾ CHƯA GHI NHẬN XE!';
+                }
+            } else if (isAtThuanAnYard) {
+                // TRƯỜNG HỢP 1: Xe đã về bãi Thuận An nhưng Cyber chưa làm PNK nhập K83!
                 item.reconcileStatus = 'AT_THUAN_AN';
                 item.warningLevel = 'danger';
                 item.reconcileNote = `🚨 XE ĐÃ VỀ BÃI THỰC TẾ THUẬN AN — TVBH (${item.tvbh || 'Chưa rõ'}) CHƯA BÁO NHẬP KHO CYBER`;
-            } else if (sat && sat.isTonKho && (sat.khoKey === 'ql13' || sat.khoKey === 'q12')) {
+            } else if (isAtTransitYard) {
                 item.reconcileStatus = 'AT_TRANSIT_YARD';
                 item.warningLevel = 'warning';
-                item.reconcileNote = `🚚 Xe còn tại bãi ${sat.khoName || sat.khoKey.toUpperCase()} — Chờ chuyển về bãi Thuận An`;
+                item.reconcileNote = `🚚 Xe còn tại bãi trung chuyển ${sat.khoName || sat.khoKey.toUpperCase()} — Chờ chuyển về bãi Thuận An`;
             } else {
                 item.reconcileStatus = 'IN_TRANSIT';
                 item.warningLevel = 'info';
@@ -594,9 +681,9 @@ export const fetchDnxReconciliationData = async (
             results.push(item);
         });
 
-        // Ưu tiên xếp xe Đã về bãi Thuận An lên đầu, tiếp đến các bãi ngoài khác, rồi đến đang trên đường
+        // Ưu tiên xếp xe Đã về bãi Thuận An lên đầu, tiếp đến xe Cyber có K83 nhưng chưa có bãi, rồi đến các bãi ngoài, đang trên đường, và hoàn tất
         results.sort((a, b) => {
-            const orderMap = { AT_THUAN_AN: 1, AT_TRANSIT_YARD: 2, IN_TRANSIT: 3, ALREADY_IN_CYBER: 4 };
+            const orderMap = { AT_THUAN_AN: 1, CYBER_K83_NOT_IN_YARD: 2, AT_TRANSIT_YARD: 3, IN_TRANSIT: 4, ALREADY_IN_CYBER: 5 };
             const diff = orderMap[a.reconcileStatus] - orderMap[b.reconcileStatus];
             if (diff !== 0) return diff;
             return (b.ngayCtDnx || '').localeCompare(a.ngayCtDnx || '');
@@ -622,6 +709,10 @@ export interface Td4ReconciliationItem {
     color: string;
     maKhoCyber: string;
     tenKhoCyber: string;
+    maPost?: string;
+    maPostLabel?: string;
+    isApproved?: boolean;
+    isViolation?: boolean;
     satelliteYard: {
         khoKey: string;
         khoName: string;
@@ -805,6 +896,25 @@ export const fetchTd4ReconciliationData = async (
             const trim = ord.phien_ban || ord['Phiên bản'] || '';
             const color = c.ten_mau || ord.mau_ngoai_that || ord['Màu'] || '';
             const isTonThuanAn = sat.khoKey === 'tada' || String(sat.khoName || '').toLowerCase().includes('thuận an');
+            const rawPost = String(td4.ma_post || td4.Ma_Post || c.ma_post || '').trim();
+            const maPostNum = parseInt(rawPost, 10);
+
+            // Quy tắc duyệt chứng từ trên CyberSoft:
+            // - Ma_Post >= 5 hoặc 9: Ban Giám Đốc đã duyệt đủ điều kiện giao xe / Đã hạch toán sổ cái -> Đã có lệnh ra cổng. Xe tồn bãi là VI PHẠM TỒN KHO!
+            // - Ma_Post < 5 (thường là 3 hoặc 4) hoặc rỗng: Phiếu mới lập, đang trình duyệt KTT / BGĐ -> Thủ kho giữ xe tại bãi là HỢP LỆ!
+            const isApproved = !isNaN(maPostNum) ? maPostNum >= 5 : (rawPost >= '5' || rawPost === '9');
+            const isViolation = isApproved;
+
+            let maPostLabel = 'Đang trình duyệt';
+            if (rawPost === '9') maPostLabel = 'Đã hạch toán (Cấp 9)';
+            else if (rawPost === '5') maPostLabel = 'BGĐ đã duyệt (Cấp 5)';
+            else if (rawPost === '4') maPostLabel = 'KTT đã duyệt (Cấp 4)';
+            else if (rawPost === '3') maPostLabel = 'Chờ duyệt (Cấp 3)';
+            else if (rawPost) maPostLabel = `Cấp ${rawPost}`;
+
+            const warningNote = isApproved
+                ? `🚨 VI PHẠM TỒN KHO TD4: Phiếu TD4 (${soCtTd4}) đã được BGĐ phê duyệt xuất xe [${maPostLabel}] nhưng vẫn còn tồn tại ${sat.khoName} (Pin: ${sat.pin})!`
+                : `⏳ ĐANG TRÌNH DUYỆT: Phiếu TD4 (${soCtTd4}) [${maPostLabel}] chưa được BGĐ duyệt ra cổng. Xe lưu bãi ${sat.khoName} là hợp lệ.`;
 
             results.push({
                 id: `td4-${v}`,
@@ -819,14 +929,20 @@ export const fetchTd4ReconciliationData = async (
                 color,
                 maKhoCyber: c.ma_kho || '',
                 tenKhoCyber: c.ten_kho || '',
+                maPost: rawPost,
+                maPostLabel,
+                isApproved,
+                isViolation,
                 satelliteYard: sat,
                 isTonThuanAn,
-                warningNote: `🚨 VI PHẠM TỒN KHO TD4: Đã lập phiếu giao xe TD4 (${soCtTd4}) nhưng vẫn còn tồn tại ${sat.khoName} (Pin: ${sat.pin})! Xe có TD4 không được phép tồn ở đâu hết!`
+                warningNote
             });
         });
 
-        // Sắp xếp: Ưu tiên xe tồn bãi Thuận An lên trước, tiếp đến ngày lập TD4 mới nhất
+        // Sắp xếp: Ưu tiên các xe vi phạm thực tế (đã duyệt) lên trước, sau đó đến xe tồn Thuận An, rồi ngày lập TD4 mới nhất
         results.sort((a, b) => {
+            if (a.isViolation && !b.isViolation) return -1;
+            if (!a.isViolation && b.isViolation) return 1;
             if (a.isTonThuanAn && !b.isTonThuanAn) return -1;
             if (!a.isTonThuanAn && b.isTonThuanAn) return 1;
             return (b.ngayCtTd4 || '').localeCompare(a.ngayCtTd4 || '');
@@ -853,11 +969,15 @@ export interface InvoicedMissingYardItem {
     urlHoaDon?: string;
     maKhoCyber: string;
     tenKhoCyber: string;
-    satelliteStatus: 'NOT_FOUND_IN_YARD' | 'ALREADY_DISPATCHED_WITHOUT_TD4';
+    satelliteStatus: 'NOT_FOUND_IN_YARD' | 'ALREADY_DISPATCHED_WITHOUT_TD4' | 'IN_TRANSIT_DNX';
     satelliteStatusLabel: string;
     ngayXuatBaiThucTe?: string;
     khoBaiThucTe?: string;
     warningNote: string;
+    hasDnx?: boolean;
+    soCtDnx?: string;
+    ngayCtDnx?: string;
+    isViolation?: boolean;
 }
 
 /**
@@ -967,12 +1087,12 @@ export const fetchInvoicedMissingYardReconciliationData = async (
             });
         }
 
-        // 3. Lấy thông tin cyber_car_status để xác định xe từng có mặt trên Cyber
+        // 3. Lấy thông tin cyber_car_status để xác định xe từng có mặt trên Cyber và kiểm tra lệnh ĐNX
         const cyberMap = new Map<string, any>();
         try {
             const { data: cyberCars } = await supabase
                 .from('cyber_car_status')
-                .select('vin, ma_kho, ten_kho, has_td4, so_ct_td4, has_dnx, so_ct_dnx, so_may, ma_kx, ten_kx, ma_mau, ten_mau');
+                .select('vin, ma_kho, ten_kho, has_td4, so_ct_td4, has_dnx, so_ct_dnx, so_may, ma_kx, ten_kx, ma_mau, ten_mau, dnx_data, ngay_ct_dnx');
             if (cyberCars) {
                 cyberCars.forEach((c: any) => {
                     const v = String(c.vin || '').trim().toUpperCase();
@@ -986,21 +1106,41 @@ export const fetchInvoicedMissingYardReconciliationData = async (
             console.warn('[fetchInvoicedMissingYard] cyber_car_status read warning:', eCyber);
         }
 
+        // 3.1 Nạp danh sách ĐNX từ allOrders (nếu có)
+        const dnxOrderMap = new Map<string, { soCtDnx: string; ngayCtDnx?: string }>();
+        if (allOrders && allOrders.length > 0) {
+            allOrders.forEach(o => {
+                const v = String(o.vin || o.VIN || o['Số khung'] || '').trim().toUpperCase();
+                const soDnx = o.so_ct_dnx || o['Số CT DNX'] || o['Số ĐNX'] || '';
+                const hasDnx = o.has_dnx === true || (soDnx && String(soDnx).trim() !== '' && String(soDnx).toLowerCase() !== 'null');
+                if (v && hasDnx) {
+                    const dnxObj = {
+                        soCtDnx: String(soDnx || 'DNX').trim(),
+                        ngayCtDnx: o.ngay_lap_dnx || o.ngay_dnx || ''
+                    };
+                    dnxOrderMap.set(v, dnxObj);
+                    if (v.length >= 6) dnxOrderMap.set(v.slice(-6), dnxObj);
+                }
+            });
+        }
+
         // 4. Lấy danh sách xe đã xuất hóa đơn từ yeucauxhd, donhang và archived_orders
         const invoicedMap = new Map<string, any>();
 
-        // 4.1 yeucauxhd
+        // 4.1 yeucauxhd (Lọc các xe đã xuất hóa đơn từ 01/08/2026 đến nay)
         try {
             const { data: yData } = await supabase
                 .from('yeucauxhd')
                 .select('vin, so_don_hang, ten_khach_hang, tvbh, dong_xe, phien_ban, ngoai_that, ngay_xuat_hoa_don, url_hoa_don_da_xuat, ma_hd_cyber')
-                .not('vin', 'is', null);
+                .not('vin', 'is', null)
+                .gte('ngay_xuat_hoa_don', '2026-08-01');
             if (yData) {
                 yData.forEach((row: any) => {
                     const vin = String(row.vin || '').trim().toUpperCase();
                     if (!vin) return;
-                    const isXhd = Boolean(row.ngay_xuat_hoa_don || row.url_hoa_don_da_xuat);
-                    if (isXhd && !invoicedMap.has(vin)) {
+                    const ngayXhd = String(row.ngay_xuat_hoa_don || '').slice(0, 10);
+                    if (!ngayXhd || ngayXhd < '2026-08-01') return;
+                    if (!invoicedMap.has(vin)) {
                         invoicedMap.set(vin, {
                             vin,
                             orderNumber: row.so_don_hang || '',
@@ -1009,7 +1149,7 @@ export const fetchInvoicedMissingYardReconciliationData = async (
                             carModel: row.dong_xe || '',
                             trim: row.phien_ban || '',
                             color: row.ngoai_that || '',
-                            ngayXuatHoaDon: row.ngay_xuat_hoa_don || '',
+                            ngayXuatHoaDon: ngayXhd,
                             urlHoaDon: row.url_hoa_don_da_xuat || '',
                             maHdCyber: row.ma_hd_cyber || ''
                         });
@@ -1020,18 +1160,20 @@ export const fetchInvoicedMissingYardReconciliationData = async (
             console.warn('[fetchInvoicedMissingYard] yeucauxhd read warning:', eYc);
         }
 
-        // 4.2 donhang & archived_orders
+        // 4.2 donhang & archived_orders (Lọc các xe đã xuất hóa đơn từ 01/08/2026 đến nay)
         try {
             const [dhRes, archRes] = await Promise.all([
-                supabase.from('donhang').select('vin, so_don_hang, ten_khach_hang, ten_tu_van_ban_hang, dong_xe, phien_ban, mau_ngoai_that, ngay_hoa_don, so_hoa_don, ma_hd_cyber').not('vin', 'is', null).or('ngay_hoa_don.not.is.null,so_hoa_don.not.is.null'),
-                supabase.from('archived_orders').select('vin, so_don_hang, ten_khach_hang, tvbh, dong_xe, phien_ban, mau_ngoai_that, ngay_hoa_don, so_hoa_don, ma_hd_cyber').not('vin', 'is', null).or('ngay_hoa_don.not.is.null,so_hoa_don.not.is.null')
+                supabase.from('donhang').select('vin, so_don_hang, ten_khach_hang, ten_tu_van_ban_hang, dong_xe, phien_ban, mau_ngoai_that, ngay_xuat_hoa_don, link_hoa_don_da_xuat, ma_hd_cyber, so_ct_dnx, so_ct_td4').not('vin', 'is', null).gte('ngay_xuat_hoa_don', '2026-08-01'),
+                supabase.from('archived_orders').select('vin, so_don_hang, ten_khach_hang, tvbh, dong_xe, phien_ban, mau_ngoai_that, ngay_xuat_hoa_don, url_hoa_don_da_xuat, ma_hd_cyber, so_ct_dnx, so_ct_td4').not('vin', 'is', null).gte('ngay_xuat_hoa_don', '2026-08-01')
             ]);
 
             const processOrderRow = (row: any) => {
                 const vin = String(row.vin || '').trim().toUpperCase();
                 if (!vin) return;
-                const isXhd = Boolean(row.ngay_hoa_don || row.so_hoa_don);
-                if (isXhd && !invoicedMap.has(vin)) {
+                const ngayXhd = String(row.ngay_xuat_hoa_don || '').slice(0, 10);
+                if (!ngayXhd || ngayXhd < '2026-08-01') return;
+
+                if (!invoicedMap.has(vin)) {
                     invoicedMap.set(vin, {
                         vin,
                         orderNumber: row.so_don_hang || '',
@@ -1040,10 +1182,17 @@ export const fetchInvoicedMissingYardReconciliationData = async (
                         carModel: row.dong_xe || '',
                         trim: row.phien_ban || '',
                         color: row.mau_ngoai_that || '',
-                        ngayXuatHoaDon: row.ngay_hoa_don || '',
-                        urlHoaDon: '',
-                        maHdCyber: row.ma_hd_cyber || row.so_hoa_don || ''
+                        ngayXuatHoaDon: ngayXhd,
+                        urlHoaDon: row.link_hoa_don_da_xuat || row.url_hoa_don_da_xuat || '',
+                        maHdCyber: row.ma_hd_cyber || '',
+                        soCtDnx: row.so_ct_dnx || '',
+                        hasDnx: Boolean(row.so_ct_dnx)
                     });
+                }
+                if (row.so_ct_dnx) {
+                    const dnxObj = { soCtDnx: String(row.so_ct_dnx).trim() };
+                    dnxOrderMap.set(vin, dnxObj);
+                    if (vin.length >= 6) dnxOrderMap.set(vin.slice(-6), dnxObj);
                 }
             };
 
@@ -1053,8 +1202,115 @@ export const fetchInvoicedMissingYardReconciliationData = async (
             console.warn('[fetchInvoicedMissingYard] donhang/archived_orders read warning:', eOrders);
         }
 
+        // 4.3 cyber_ton_kho (Xe Showroom Thuận An đã xuất hóa đơn tồn trên Cyber)
+        try {
+            const { data: tkData } = await supabase
+                .from('cyber_ton_kho')
+                .select('*');
+            if (tkData) {
+                tkData.forEach((row: any) => {
+                    const vin = String(row.vin || '').trim().toUpperCase();
+                    if (!vin) return;
+                    const isInv = Boolean(row.is_invoiced || (row.tinh_trang && String(row.tinh_trang).includes('HĐ')));
+                    const ttcp = String(row.ten_ttcp || '');
+                    const isThuanAn = ttcp.toLowerCase().includes('thuận an') || ttcp.includes('08');
+                    if (isInv && isThuanAn) {
+                        const ngayHd = String(row.ngay_hd || '').slice(0, 10);
+                        if (!ngayHd || ngayHd >= '2026-08-01') {
+                            if (!invoicedMap.has(vin)) {
+                                invoicedMap.set(vin, {
+                                    vin,
+                                    orderNumber: '',
+                                    customerName: '',
+                                    tvbh: row.tvbh || '',
+                                    carModel: row.ten_kx || '',
+                                    trim: '',
+                                    color: row.ten_mau || '',
+                                    ngayXuatHoaDon: ngayHd,
+                                    urlHoaDon: '',
+                                    maHdCyber: row.so_hd || ''
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+        } catch (eTk) {
+            console.warn('[fetchInvoicedMissingYard] cyber_ton_kho read warning:', eTk);
+        }
+
+        // 4.4 Bổ sung Tên Khách Hàng, Số Đơn Hàng & TVBH từ Supabase (donhang, archived_orders, yeucauxhd & allOrders)
+        const allInvoicedVins = Array.from(invoicedMap.keys());
+        if (allInvoicedVins.length > 0) {
+            try {
+                const [archRes, dhRes, ycRes] = await Promise.all([
+                    supabase
+                        .from('archived_orders')
+                        .select('vin, ten_khach_hang, tvbh, so_don_hang, ma_hd_cyber, dong_xe, phien_ban')
+                        .in('vin', allInvoicedVins),
+                    supabase
+                        .from('donhang')
+                        .select('vin, ten_khach_hang, ten_tu_van_ban_hang, so_don_hang, ma_hd_cyber, dong_xe, phien_ban')
+                        .in('vin', allInvoicedVins),
+                    supabase
+                        .from('yeucauxhd')
+                        .select('vin, ten_khach_hang, tvbh, so_don_hang, ma_hd_cyber, dong_xe, phien_ban')
+                        .in('vin', allInvoicedVins)
+                ]);
+
+                const mergeOrderData = (row: any, tvbhField = 'tvbh') => {
+                    const v = String(row.vin || '').trim().toUpperCase();
+                    if (!v) return;
+                    const inv = invoicedMap.get(v) || (v.length >= 6 ? invoicedMap.get(v.slice(-6)) : null);
+                    if (inv) {
+                        const kh = String(row.ten_khach_hang || '').trim();
+                        const dh = String(row.so_don_hang || '').trim();
+                        const tv = String(row[tvbhField] || row.tvbh || row.ten_tu_van_ban_hang || '').trim();
+                        if (kh && (!inv.customerName || inv.customerName === 'Chưa rõ')) {
+                            inv.customerName = kh;
+                        }
+                        if (dh && !inv.orderNumber) {
+                            inv.orderNumber = dh;
+                        }
+                        if (tv && (!inv.tvbh || inv.tvbh === 'Chưa rõ')) {
+                            inv.tvbh = tv;
+                        }
+                    }
+                };
+
+                (archRes.data || []).forEach(r => mergeOrderData(r, 'tvbh'));
+                (dhRes.data || []).forEach(r => mergeOrderData(r, 'ten_tu_van_ban_hang'));
+                (ycRes.data || []).forEach(r => mergeOrderData(r, 'tvbh'));
+            } catch (eKh) {
+                console.warn('[fetchInvoicedMissingYard] customer enrichment warning:', eKh);
+            }
+        }
+
+        // Bổ sung thêm từ props allOrders nếu Supabase chưa có
+        if (allOrders && allOrders.length > 0) {
+            allOrders.forEach(o => {
+                const v = String(o.vin || o.VIN || o['Số khung'] || '').trim().toUpperCase();
+                if (!v) return;
+                const inv = invoicedMap.get(v) || (v.length >= 6 ? invoicedMap.get(v.slice(-6)) : null);
+                if (inv) {
+                    const kh = String(o.ten_khach_hang || o.customer_name || o.khach_hang || o['Tên khách hàng'] || o['Khách hàng'] || '').trim();
+                    const dh = String(o.so_don_hang || o.order_number || o.so_hop_dong || o['Số HĐ'] || o['Số hợp đồng'] || '').trim();
+                    const tv = String(o.tvbh || o.ten_tu_van_ban_hang || o['TVBH'] || '').trim();
+                    if (kh && (!inv.customerName || inv.customerName === 'Chưa rõ')) {
+                        inv.customerName = kh;
+                    }
+                    if (dh && !inv.orderNumber) {
+                        inv.orderNumber = dh;
+                    }
+                    if (tv && (!inv.tvbh || inv.tvbh === 'Chưa rõ')) {
+                        inv.tvbh = tv;
+                    }
+                }
+            });
+        }
+
         // 5. Đối chiếu logic:
-        // Đã xuất hóa đơn + Chưa có TD4 + Đã từng có ở Cyber + Không còn tồn thực tế tại 3 bãi
+        // Đã xuất hóa đơn từ 01/08/2026 + Chưa có TD4 + Đã từng có ở Cyber hoặc bãi + Không còn tồn thực tế tại 3 bãi
         const results: InvoicedMissingYardItem[] = [];
 
         invoicedMap.forEach((inv, v) => {
@@ -1071,7 +1327,7 @@ export const fetchInvoicedMissingYardReconciliationData = async (
             }
 
             // ĐIỀU KIỆN LỌC CHUẨN XÁC:
-            // Một xe chỉ có thể bị coi là "Mất bãi" nếu:
+            // Một xe chỉ có thể được đưa vào đối soát nếu:
             // 1. Xe ĐÃ TỪNG ĐƯỢC GHI NHẬN TẠI BÃI THỰC TẾ (sat tồn tại trong Google Sheets của bãi)
             // HOẶC 2. Xe ĐÃ ĐƯỢC NHẬP VÀO MỘT KHO THỰC TẾ TRÊN CYBER (ma_kho hợp lệ, không phải rỗng, không phải CYBEK và không phải "Đang vận tải")
             const maKhoCyberRaw = (cyber?.ma_kho || '').trim().toUpperCase();
@@ -1092,16 +1348,57 @@ export const fetchInvoicedMissingYardReconciliationData = async (
 
             const isTonBai = sat ? Boolean(sat.isTonKho) : false;
 
-            // Nếu XE KHÔNG CÒN TỒN BÃI THỰC TẾ
+            // Nếu XE KHÔNG CÒN TỒN BÃI THỰC TẾ (đã rời bãi hoặc không tìm thấy dữ liệu bãi)
             if (!isTonBai) {
-                const isDispatched = sat && sat.ngayGiao && String(sat.ngayGiao).trim() !== '';
-                const statusType = isDispatched ? 'ALREADY_DISPATCHED_WITHOUT_TD4' : 'NOT_FOUND_IN_YARD';
-                const statusLabel = isDispatched 
-                    ? `⚠️ Đã xuất bãi (${sat.khoName}) ngày ${sat.ngayGiao} — Chưa có phiếu TD4!`
-                    : '🚨 Không tìm thấy trong 3 bãi ngoài (Thuận An, QL13, Q12)';
+                // Kiểm tra lệnh ĐNX (Luân chuyển nội bộ)
+                const orderDnx = dnxOrderMap.get(v) || dnxOrderMap.get(inv.vin);
+                const cyberDnx = cyber?.dnx_data;
+                const soCtDnx = (cyber?.so_ct_dnx || cyberDnx?.so_ct || orderDnx?.soCtDnx || inv.soCtDnx || '').trim();
+                const ngayCtDnx = (cyber?.ngay_ct_dnx || cyberDnx?.ngay_ct || orderDnx?.ngayCtDnx || '').trim();
+                const hasDnx = Boolean(cyber?.has_dnx === true || (soCtDnx !== '' && soCtDnx.toUpperCase() !== 'NULL') || orderDnx || inv.hasDnx);
 
+                const isDispatched = sat && sat.ngayGiao && String(sat.ngayGiao).trim() !== '';
                 const tenKhoCyber = cyber ? (cyber.ten_kho || cyber.ma_kho || 'CyberSoft') : 'CyberSoft';
                 const maKhoCyber = cyber ? (cyber.ma_kho || 'CYBER') : 'CYBER';
+
+                const isTonCyberK83 = maKhoCyberRaw === 'K83' || tenKhoCyberRaw.includes('thuận an');
+
+                let statusType: 'IN_TRANSIT_DNX' | 'ALREADY_DISPATCHED_WITHOUT_TD4' | 'NOT_FOUND_IN_YARD';
+                let statusLabel: string;
+                let warningNote: string;
+                let isViolation: boolean;
+
+                if (hasDnx) {
+                    if (isTonCyberK83) {
+                        // Sổ Cyber ĐÃ NHẬP K83 nhưng thực tế bãi KHÔNG CÓ XE -> MẤT BÃI THỰC TẾ!
+                        isViolation = true;
+                        if (isDispatched) {
+                            statusType = 'ALREADY_DISPATCHED_WITHOUT_TD4';
+                            statusLabel = `⚠️ Sổ K83 (ĐNX ${soCtDnx}) — Đã xuất bãi ${sat?.khoName} ngày ${sat?.ngayGiao} (Chưa TD4)!`;
+                            warningNote = `CẢNH BÁO LỆCH KHO: Xe có ĐNX ${soCtDnx}, sổ Cyber đã nhập K83 nhưng bãi thực tế (${sat?.khoName}) đã xuất ngày ${sat?.ngayGiao} khi chưa có phiếu TD4!`;
+                        } else {
+                            statusType = 'NOT_FOUND_IN_YARD';
+                            statusLabel = `⚠️ Sổ Cyber đã nhập K83 (ĐNX ${soCtDnx}) — Nhưng bãi thực tế chưa có xe!`;
+                            warningNote = `CẢNH BÁO LỆCH KHO: Sổ Cyber đã nhập kho K83 theo ĐNX ${soCtDnx}, nhưng dữ liệu 3 bãi ngoài không tìm thấy xe thực tế! Cần đối chiếu vị trí xe ngay!`;
+                        }
+                    } else {
+                        // Xe có ĐNX chưa nhập K83 trên Cyber: Rời bãi là đang trên đường luân chuyển chờ kho nhận làm thủ tục nhập!
+                        // ĐÂY LÀ ĐIỀU PHỐI BÌNH THƯỜNG -> KHÔNG PHẢI MẤT BÃI -> BỎ QUA HOÀN TOÀN!
+                        return;
+                    }
+                } else {
+                    // Không có ĐNX và chưa có TD4: Vi phạm thực sự!
+                    isViolation = true;
+                    if (isDispatched) {
+                        statusType = 'ALREADY_DISPATCHED_WITHOUT_TD4';
+                        statusLabel = `🚨 Xuất bãi không có lệnh — Chưa có TD4 & Không có ĐNX!`;
+                        warningNote = `CẢNH BÁO VI PHẠM: Xe đã xuất hóa đơn ngày ${inv.ngayXuatHoaDon ? inv.ngayXuatHoaDon.slice(0, 10) : 'N/A'}, KHÔNG CÓ PHIẾU TD4 và KHÔNG CÓ ĐNX nhưng đã rời bãi (${sat?.khoName}) ngày ${sat?.ngayGiao}!`;
+                    } else {
+                        statusType = 'NOT_FOUND_IN_YARD';
+                        statusLabel = `🔍 Không tìm thấy trong 3 bãi ngoài (Thuận An, QL13, Q12)`;
+                        warningNote = `CẢNH BÁO TỒN KHO: Xe có mã kho Cyber (${tenKhoCyber}) nhưng không tìm thấy dữ liệu tồn tại trong 3 bãi ngoài!`;
+                    }
+                }
 
                 results.push({
                     id: `inv-missing-${v}`,
@@ -1121,13 +1418,22 @@ export const fetchInvoicedMissingYardReconciliationData = async (
                     satelliteStatusLabel: statusLabel,
                     ngayXuatBaiThucTe: sat?.ngayGiao || '',
                     khoBaiThucTe: sat?.khoName || '',
-                    warningNote: `CẢNH BÁO NGUY CƠ: Xe đã xuất hóa đơn ngày ${inv.ngayXuatHoaDon ? inv.ngayXuatHoaDon.slice(0, 10) : 'N/A'}, chưa có lệnh giao xe TD4 nhưng bãi thực tế ${statusLabel.toLowerCase()}!`
+                    warningNote,
+                    hasDnx,
+                    soCtDnx: soCtDnx || undefined,
+                    ngayCtDnx: ngayCtDnx || undefined,
+                    isViolation
                 });
             }
         });
 
-        // Sắp xếp: Ưu tiên ngày xuất hóa đơn mới nhất
-        results.sort((a, b) => (b.ngayXuatHoaDon || '').localeCompare(a.ngayXuatHoaDon || ''));
+        // Sắp xếp: Ưu tiên xe vi phạm thực sự lên trước, sau đó xếp theo ngày xuất hóa đơn mới nhất
+        results.sort((a, b) => {
+            if (a.isViolation !== b.isViolation) {
+                return a.isViolation ? -1 : 1;
+            }
+            return (b.ngayXuatHoaDon || '').localeCompare(a.ngayXuatHoaDon || '');
+        });
 
         return results;
     } catch (err) {
