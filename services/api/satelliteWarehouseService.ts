@@ -1070,6 +1070,26 @@ export const fetchInvoicedMissingYardReconciliationData = async (
                 sat = satMap.get(v.slice(-6));
             }
 
+            // ĐIỀU KIỆN LỌC CHUẨN XÁC:
+            // Một xe chỉ có thể bị coi là "Mất bãi" nếu:
+            // 1. Xe ĐÃ TỪNG ĐƯỢC GHI NHẬN TẠI BÃI THỰC TẾ (sat tồn tại trong Google Sheets của bãi)
+            // HOẶC 2. Xe ĐÃ ĐƯỢC NHẬP VÀO MỘT KHO THỰC TẾ TRÊN CYBER (ma_kho hợp lệ, không phải rỗng, không phải CYBEK và không phải "Đang vận tải")
+            const maKhoCyberRaw = (cyber?.ma_kho || '').trim().toUpperCase();
+            const tenKhoCyberRaw = (cyber?.ten_kho || '').trim().toLowerCase();
+            const isEnteredCyberWarehouse = Boolean(
+                maKhoCyberRaw && 
+                maKhoCyberRaw !== 'CYBEK' && 
+                !tenKhoCyberRaw.includes('đang vận tải') && 
+                !tenKhoCyberRaw.includes('vận tải')
+            );
+            const hasEverBeenInYard = Boolean(sat);
+
+            // Nếu xe chưa từng nhập kho nào trên Cyber VÀ cũng chưa từng về bãi thực tế (ví dụ xe mới xuất HĐ đang vận chuyển từ nhà máy),
+            // thì xe này CHƯA TỪNG VỀ BÃI, hoàn toàn không phải mất bãi -> Bỏ qua.
+            if (!isEnteredCyberWarehouse && !hasEverBeenInYard) {
+                return;
+            }
+
             const isTonBai = sat ? Boolean(sat.isTonKho) : false;
 
             // Nếu XE KHÔNG CÒN TỒN BÃI THỰC TẾ

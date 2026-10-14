@@ -113,6 +113,8 @@ BEGIN
         full_name,
         role,
         manager_id,
+        password_hash,
+        is_blocked,
         updated_at
     ) VALUES (
         v_uid,
@@ -121,6 +123,8 @@ BEGIN
         v_upper_fullname,
         p_role,
         v_clean_manager,
+        'SUPABASE_AUTH_ONLY',
+        false,
         now()
     )
     ON CONFLICT (email) DO UPDATE SET
@@ -129,13 +133,16 @@ BEGIN
         full_name = EXCLUDED.full_name,
         role = EXCLUDED.role,
         manager_id = EXCLUDED.manager_id,
+        password_hash = COALESCE(public.users.password_hash, 'SUPABASE_AUTH_ONLY'),
+        is_blocked = COALESCE(public.users.is_blocked, false),
         updated_at = now();
 
     -- 3. Đồng bộ vào bảng tvbh_emails
-    INSERT INTO public.tvbh_emails (email, ten_tvbh)
-    VALUES (v_clean_email, v_upper_fullname)
+    INSERT INTO public.tvbh_emails (email, ten_tvbh, updated_at)
+    VALUES (v_clean_email, v_upper_fullname, now())
     ON CONFLICT (email) DO UPDATE SET
-        ten_tvbh = EXCLUDED.ten_tvbh;
+        ten_tvbh = EXCLUDED.ten_tvbh,
+        updated_at = now();
 
     RETURN json_build_object(
         'success', true,
