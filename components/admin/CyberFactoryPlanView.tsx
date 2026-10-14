@@ -9,15 +9,11 @@ import {
     CyberTonKhoParams,
     CyberTonKhoItem,
     getCyberXepXeContracts,
-    getCyberXepXeCandidates,
-    saveCyberXepXe,
-    deleteCyberXepXe,
     createCyberDnxTicket,
     lookupCyberVinWarehouse,
     getCyberVoucherTickets,
     CyberVoucherTicketItem,
     CyberXepXeContract,
-    CyberXepXeCandidate,
     CyberXepXeFilterParams,
     prewarmTd4Pdfs,
     prewarmDnxPdfs,
@@ -1224,22 +1220,20 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const currM = currentNow.getMonth() + 1;
     const currY = currentNow.getFullYear();
 
-    const [xepXeThang1, setXepXeThang1] = useState<number>(currM);
-    const [xepXeNam1, setXepXeNam1] = useState<number>(currY);
-    const [xepXeThang2, setXepXeThang2] = useState<number>(currM);
-    const [xepXeNam2, setXepXeNam2] = useState<number>(currY);
+    const xepXeThang1 = currM;
+    const xepXeNam1 = currY;
+    const xepXeThang2 = currM;
+    const xepXeNam2 = currY;
 
-    const DEFAULT_SHOWROOM = 'Ô tô Vinfast Thuận An';
+    const DEFAULT_SHOWROOM = 'ALL';
     const [xepXeShowroom, setXepXeShowroom] = useState<string>(DEFAULT_SHOWROOM);
     const [xepXeModel, setXepXeModel] = useState<string>('');
-    const [xepXeStatusFilter, setXepXeStatusFilter] = useState<string>('approved_and_pending');
+    const [xepXeStatusFilter, setXepXeStatusFilter] = useState<string>('all');
     const [xepXeKeyword, setXepXeKeyword] = useState<string>('');
-    const [xepXeShowroomInvoicedFilter, setXepXeShowroomInvoicedFilter] = useState<string>('ALL');
 
     const [isLoadingXepXe, setIsLoadingXepXe] = useState<boolean>(false);
     const [hasLoadedXepXe, setHasLoadedXepXe] = useState<boolean>(false);
     const [xepXeContracts, setXepXeContracts] = useState<CyberXepXeContract[]>([]);
-    const [xepXeStatusCounts, setXepXeStatusCounts] = useState<Record<string, number>>({});
     const [xepXeShowrooms, setXepXeShowrooms] = useState<string[]>([
         'Ô tô Vinfast Thuận An',
         'Ô tô Vinfast Minh Đạo - Nguyễn Trãi',
@@ -1252,48 +1246,31 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const [xepXeModels, setXepXeModels] = useState<string[]>([]);
     const [xepXeCopiedVin, setXepXeCopiedVin] = useState<string | null>(null);
 
-    // Modal Xếp xe / Tra cứu xe khả dụng
-    const [selectedContractForAssign, setSelectedContractForAssign] = useState<CyberXepXeContract | null>(null);
-    const [candidateCars, setCandidateCars] = useState<CyberXepXeCandidate[]>([]);
-    const [isLoadingCandidates, setIsLoadingCandidates] = useState<boolean>(false);
-    const [selectedCandidateVin, setSelectedCandidateVin] = useState<string>('');
-    const [candidateSearchQuery, setCandidateSearchQuery] = useState<string>('');
-    const [isSavingAssign, setIsSavingAssign] = useState<boolean>(false);
-
-    // Modal xác nhận Hủy ghép xe
-    const [contractToUnassign, setContractToUnassign] = useState<CyberXepXeContract | null>(null);
-    const [isDeletingAssign, setIsDeletingAssign] = useState<boolean>(false);
     const [xepXePage, setXepXePage] = useState<number>(1);
     const XEP_XE_PAGE_SIZE = 50;
 
-    // Thống kê số lượng xe Đã xuất HĐ theo từng Showroom
-    const invoicedShowroomsBreakdown = useMemo(() => {
-        const counts: Record<string, number> = {};
-        for (const c of xepXeContracts) {
-            const isInvoiced = c.ten_color === 'Đã xuất HĐ' || (c.back_color || '').toLowerCase() === 'violet';
-            if (isInvoiced) {
-                const sr = (c.ten_ttcp || '').trim() || 'Chưa rõ Showroom';
-                counts[sr] = (counts[sr] || 0) + 1;
-            }
-        }
-        return counts;
+    // Đếm số lượng xe Đã xuất HĐ vs Chưa xuất HĐ
+    const invoicedCount = useMemo(() => {
+        return xepXeContracts.filter(c => c.ten_color === 'Đã xuất HĐ' || (c.back_color || '').toLowerCase() === 'violet').length;
     }, [xepXeContracts]);
 
-    // Danh sách hợp đồng hiển thị sau khi lọc trên client
+    const notInvoicedCount = useMemo(() => {
+        return Math.max(0, xepXeContracts.length - invoicedCount);
+    }, [xepXeContracts.length, invoicedCount]);
+
+    // Danh sách hợp đồng hiển thị sau khi lọc trên client (Tối ưu tìm kiếm Tên KH, VIN, Số HĐ xem Showroom nào xuất HĐ)
     const displayedXepXeContracts = useMemo(() => {
         let list = xepXeContracts;
 
-        // 1. Nếu có từ khóa tìm kiếm (gõ từ khóa hoặc dán nhiều VIN/HĐ từ Excel)
+        // 1. Nếu có từ khóa tìm kiếm (gõ tên khách hàng, số VIN, số HĐ, SĐT...)
         if (xepXeKeyword.trim()) {
-            // Tìm kiếm ngay trên TOÀN BỘ dữ liệu hợp đồng đã tải về (bao gồm mọi Showroom)
             list = filterXepXeLocally(list, xepXeKeyword);
 
-            // Khi đang tìm kiếm, nếu người dùng bấm chọn 1 trạng thái cụ thể (khác approved_and_pending mặc định và khác all)
-            if (xepXeStatusFilter && xepXeStatusFilter !== 'all' && xepXeStatusFilter !== 'approved_and_pending') {
-                list = list.filter(c => (c.ten_color || '').trim().toLowerCase() === xepXeStatusFilter.trim().toLowerCase());
+            if (xepXeStatusFilter === 'Đã xuất HĐ') {
+                list = list.filter(c => c.ten_color === 'Đã xuất HĐ' || (c.back_color || '').toLowerCase() === 'violet');
+            } else if (xepXeStatusFilter === 'Chưa xuất HĐ') {
+                list = list.filter(c => c.ten_color !== 'Đã xuất HĐ' && (c.back_color || '').toLowerCase() !== 'violet');
             }
-
-            // Lưu ý: Khi tìm theo VIN/Số HĐ, KHÔNG lọc showroom để tránh ẩn kết quả từ showroom khác!
         } else {
             // Khi không tìm kiếm: áp dụng lọc Showroom thông thường
             if (xepXeShowroom && xepXeShowroom !== 'ALL') {
@@ -1301,21 +1278,14 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 list = list.filter(c => (c.ten_ttcp || '').toLowerCase().includes(srLower) || srLower.includes((c.ten_ttcp || '').toLowerCase()));
             }
 
-            // Áp dụng lọc trạng thái mặc định (approved_and_pending) hoặc trạng thái được chọn
-            if (xepXeStatusFilter === 'approved_and_pending') {
-                list = list.filter(c => {
-                    const s = (c.ten_color || '').trim().toLowerCase();
-                    return s === 'chờ duyệt' || s === 'đã ghép sk' || s === 'chờ ghép sk';
-                });
-            } else if (xepXeStatusFilter && xepXeStatusFilter !== 'all') {
+            // Áp dụng bộ lọc trạng thái đơn giản
+            if (xepXeStatusFilter === 'Đã xuất HĐ') {
+                list = list.filter(c => c.ten_color === 'Đã xuất HĐ' || (c.back_color || '').toLowerCase() === 'violet');
+            } else if (xepXeStatusFilter === 'Chưa xuất HĐ') {
+                list = list.filter(c => c.ten_color !== 'Đã xuất HĐ' && (c.back_color || '').toLowerCase() !== 'violet');
+            } else if (xepXeStatusFilter && xepXeStatusFilter !== 'all' && xepXeStatusFilter !== 'approved_and_pending') {
                 list = list.filter(c => (c.ten_color || '').trim().toLowerCase() === xepXeStatusFilter.trim().toLowerCase());
             }
-        }
-
-        // Lọc phụ theo Showroom xuất hóa đơn (nếu đang ở bộ lọc Đã xuất HĐ)
-        if (xepXeStatusFilter === 'Đã xuất HĐ' && xepXeShowroomInvoicedFilter && xepXeShowroomInvoicedFilter !== 'ALL') {
-            const filterSrLower = xepXeShowroomInvoicedFilter.toLowerCase();
-            list = list.filter(c => (c.ten_ttcp || '').toLowerCase().includes(filterSrLower) || filterSrLower.includes((c.ten_ttcp || '').toLowerCase()));
         }
 
         if (xepXeModel) {
@@ -1323,7 +1293,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         }
 
         return list;
-    }, [xepXeContracts, xepXeStatusFilter, xepXeShowroom, xepXeShowroomInvoicedFilter, xepXeModel, xepXeKeyword]);
+    }, [xepXeContracts, xepXeStatusFilter, xepXeShowroom, xepXeModel, xepXeKeyword]);
 
     const totalXepXePages = useMemo(() => {
         return Math.max(1, Math.ceil(displayedXepXeContracts.length / XEP_XE_PAGE_SIZE));
@@ -1340,16 +1310,6 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         }
     }, [totalXepXePages, xepXePage]);
 
-    // Lọc danh sách candidate cars trong modal
-    const displayedCandidateCars = useMemo(() => {
-        const q = candidateSearchQuery.trim().toLowerCase();
-        if (!q) return candidateCars;
-        return candidateCars.filter(c => 
-            (c.so_khung || '').toLowerCase().includes(q) ||
-            (c.so_may || '').toLowerCase().includes(q) ||
-            (c.dien_giai || '').toLowerCase().includes(q)
-        );
-    }, [candidateCars, candidateSearchQuery]);
 
     // Load filter options for Sub-tab 1
     const loadFilterOptions = async (modelName?: string, isInitial = false) => {
@@ -1711,7 +1671,6 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             if (res && res.success) {
                 setXepXeContracts(res.contracts || []);
                 setXepXePage(1);
-                setXepXeStatusCounts(res.status_counts || {});
                 if (res.showrooms && res.showrooms.length > 0) {
                     setXepXeShowrooms(prev => Array.from(new Set([...prev, ...res.showrooms])));
                 }
@@ -1741,99 +1700,15 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const handleXepXeReset = () => {
         setXepXeShowroom(DEFAULT_SHOWROOM);
         setXepXeModel('');
-        setXepXeStatusFilter('approved_and_pending');
+        setXepXeStatusFilter('all');
         setXepXeKeyword('');
-        setXepXeShowroomInvoicedFilter('ALL');
+        setXepXePage(1);
         executeXepXeSearch({
             showroom: DEFAULT_SHOWROOM,
             keyword: '',
             ma_kx: '',
             ma_hd: ''
         });
-    };
-
-    const handleOpenAssignModal = async (contract: CyberXepXeContract) => {
-        setSelectedContractForAssign(contract);
-        setSelectedCandidateVin('');
-        setCandidateSearchQuery('');
-        setIsLoadingCandidates(true);
-        try {
-            const res = await getCyberXepXeCandidates({
-                stt_rec: contract.stt_rec,
-                stt_rec0: contract.stt_rec0,
-                ma_dvcs: contract.ma_dvcs || '02'
-            });
-            if (res && res.success) {
-                setCandidateCars(res.candidates || []);
-            } else {
-                showToast('Không có xe phù hợp', res?.error || 'Không tìm thấy xe phù hợp trong kế hoạch/kho', 'warning');
-                setCandidateCars([]);
-            }
-        } catch (err: any) {
-            showToast('Lỗi tìm xe', err.message || 'Lỗi khi tra cứu danh sách xe khả dụng', 'error');
-            setCandidateCars([]);
-        } finally {
-            setIsLoadingCandidates(false);
-        }
-    };
-
-    const handleConfirmAssign = async () => {
-        if (!selectedContractForAssign || !selectedCandidateVin) {
-            showToast('Chưa chọn xe', 'Vui lòng chọn một số khung xe từ danh sách để ghép', 'warning');
-            return;
-        }
-
-        setIsSavingAssign(true);
-        try {
-            const res = await saveCyberXepXe({
-                ma_hd: selectedContractForAssign.ma_hd,
-                stt_rec: selectedContractForAssign.stt_rec,
-                stt_rec0: selectedContractForAssign.stt_rec0,
-                so_khung: selectedCandidateVin,
-                ma_dvcs: selectedContractForAssign.ma_dvcs || '02',
-                user_name: 'SYSTEM'
-            });
-
-            if (res && res.success) {
-                showToast('Ghép xe thành công', `Đã xếp xe ${selectedCandidateVin} vào hợp đồng ${selectedContractForAssign.ma_hd}`, 'success');
-                setSelectedContractForAssign(null);
-                await executeXepXeSearch();
-            } else {
-                throw new Error(res?.error || res?.note || 'Không thể lưu xếp xe vào CyberSoft');
-            }
-        } catch (err: any) {
-            showToast('Lỗi xếp xe', err.message || 'Lỗi khi thực hiện xếp xe', 'error');
-        } finally {
-            setIsSavingAssign(false);
-        }
-    };
-
-    const handleConfirmUnassign = async () => {
-        if (!contractToUnassign || !contractToUnassign.so_khung) return;
-
-        setIsDeletingAssign(true);
-        try {
-            const res = await deleteCyberXepXe({
-                ma_hd: contractToUnassign.ma_hd,
-                stt_rec: contractToUnassign.stt_rec,
-                stt_rec0: contractToUnassign.stt_rec0,
-                so_khung: contractToUnassign.so_khung,
-                ma_dvcs: contractToUnassign.ma_dvcs || '02',
-                user_name: 'SYSTEM'
-            });
-
-            if (res && res.success) {
-                showToast('Hủy ghép thành công', `Đã hủy ghép xe ${contractToUnassign.so_khung} khỏi HĐ ${contractToUnassign.ma_hd}`, 'success');
-                setContractToUnassign(null);
-                await executeXepXeSearch();
-            } else {
-                throw new Error(res?.error || res?.note || 'Không thể hủy ghép xe');
-            }
-        } catch (err: any) {
-            showToast('Lỗi hủy ghép', err.message || 'Lỗi khi hủy ghép xe', 'error');
-        } finally {
-            setIsDeletingAssign(false);
-        }
     };
 
     const handleXepXeCopyVin = (vin: string) => {
@@ -3538,106 +3413,19 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
             {/* ============================================================= */}
             {activeSubTab === 'xep_xe' && (
                 <>
-                    {/* Filter Toolbar for Xếp Xe */}
-                    <div className="relative z-10 px-3.5 py-2.5 bg-white border-b border-slate-200 shadow-xs shrink-0">
-                        <div className="flex flex-wrap items-center gap-2">
+                    {/* Filter Toolbar for Xếp Xe - Tối giản cho nhu cầu Tra cứu Showroom xuất HĐ */}
+                    <div className="relative z-10 px-4 py-3 bg-white border-b border-slate-200 shadow-xs shrink-0 space-y-2.5">
+                        <div className="flex flex-wrap items-center gap-2.5">
                             
-                            {/* 1. Month / Year Range Filter */}
-                            <div className="flex items-center gap-1.5 bg-slate-50/90 border border-slate-200 rounded-xl px-2.5 h-9 shadow-xs text-xs font-semibold text-slate-700">
-                                <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">Từ</span>
-                                <select 
-                                    value={xepXeThang1} 
-                                    onChange={e => setXepXeThang1(Number(e.target.value))}
-                                    className="bg-transparent focus:outline-none cursor-pointer"
-                                >
-                                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                                        <option key={m} value={m}>Tháng {m}</option>
-                                    ))}
-                                </select>
-                                <select 
-                                    value={xepXeNam1} 
-                                    onChange={e => setXepXeNam1(Number(e.target.value))}
-                                    className="bg-transparent focus:outline-none cursor-pointer border-r border-slate-200 pr-1.5"
-                                >
-                                    {[2024, 2025, 2026, 2027].map(y => (
-                                        <option key={y} value={y}>{y}</option>
-                                    ))}
-                                </select>
-
-                                <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap pl-1">đến</span>
-                                <select 
-                                    value={xepXeThang2} 
-                                    onChange={e => setXepXeThang2(Number(e.target.value))}
-                                    className="bg-transparent focus:outline-none cursor-pointer"
-                                >
-                                    {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                                        <option key={m} value={m}>Tháng {m}</option>
-                                    ))}
-                                </select>
-                                <select 
-                                    value={xepXeNam2} 
-                                    onChange={e => setXepXeNam2(Number(e.target.value))}
-                                    className="bg-transparent focus:outline-none cursor-pointer"
-                                >
-                                    {[2024, 2025, 2026, 2027].map(y => (
-                                        <option key={y} value={y}>{y}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* 2. Showroom Filter */}
-                            <div className="flex items-center gap-1.5 bg-slate-50/90 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-white shadow-xs">
-                                <i className="fas fa-building text-[11px] text-slate-400 flex-shrink-0"></i>
-                                <select
-                                    value={xepXeShowroom}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        setXepXeShowroom(val);
-                                        setXepXePage(1);
-                                        if (xepXeContracts.length === 0) {
-                                            executeXepXeSearch({ showroom: val || 'ALL' });
-                                        }
-                                    }}
-                                    className="bg-transparent text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer max-w-[170px] truncate"
-                                    title="Chọn đơn vị / Showroom"
-                                >
-                                    <option value="ALL">🌐 Tất cả Showroom (Toàn hệ thống)</option>
-                                    {xepXeShowrooms.map(s => (
-                                        <option key={s} value={s}>
-                                            {s}{s.toLowerCase().includes('thuận an') ? ' (Mặc định)' : ''}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* 3. Model Filter */}
-                            <div className="flex items-center gap-1.5 bg-slate-50/90 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-9 transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:bg-white shadow-xs">
-                                <i className="fas fa-car text-[11px] text-slate-400 flex-shrink-0"></i>
-                                <select
-                                    value={xepXeModel}
-                                    onChange={e => {
-                                        setXepXeModel(e.target.value);
-                                        setXepXePage(1);
-                                    }}
-                                    className="bg-transparent text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer max-w-[150px] truncate"
-                                    title="Chọn dòng xe"
-                                >
-                                    <option value="">Tất cả dòng xe</option>
-                                    {xepXeModels.map(m => (
-                                        <option key={m} value={m}>{m}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* 4. Instant Search & Cross-Showroom Lookup */}
-                            <div className="flex-1 min-w-[240px] max-w-md relative">
-                                <div className={`flex items-center bg-slate-50/90 hover:bg-white border rounded-xl px-2.5 h-9 transition-all focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:bg-white shadow-xs ${
-                                    xepXeKeyword ? 'border-purple-300 ring-1 ring-purple-200 bg-purple-50/20' : 'border-slate-200'
+                            {/* 1. Thanh tìm kiếm trung tâm (Hero Search) */}
+                            <div className="flex-1 min-w-[280px] max-w-xl relative">
+                                <div className={`flex items-center bg-slate-50 hover:bg-white border-2 rounded-xl px-3.5 h-10 transition-all focus-within:border-purple-600 focus-within:ring-3 focus-within:ring-purple-500/20 focus-within:bg-white shadow-xs ${
+                                    xepXeKeyword ? 'border-purple-500 bg-purple-50/20 ring-2 ring-purple-100' : 'border-slate-200'
                                 }`}>
-                                    <i className="fas fa-search text-[11px] text-slate-400 mr-2 flex-shrink-0"></i>
+                                    <i className="fas fa-magnifying-glass text-slate-400 mr-2.5 text-sm"></i>
                                     <input
                                         type="text"
-                                        placeholder="Tìm số khung (VIN), số HĐ, tên KH xem SR xuất HĐ..."
+                                        placeholder="🔍 Nhập Tên khách hàng, Số khung (VIN), Số HĐ hoặc SĐT..."
                                         value={xepXeKeyword}
                                         onChange={e => {
                                             setXepXeKeyword(e.target.value);
@@ -3648,17 +3436,16 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                 executeXepXeSearch({ keyword: xepXeKeyword.trim(), showroom: 'ALL' });
                                             }
                                         }}
-                                        className="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 focus:outline-none font-medium"
-                                        title="Nhập số khung (VIN), số HĐ hoặc tên KH rồi bấm Enter để tra cứu xem Showroom nào xuất hóa đơn"
+                                        className="w-full bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none font-semibold"
+                                        title="Nhập tên khách hàng hoặc số VIN để kiểm tra ngay Showroom nào xuất hóa đơn"
                                     />
 
-                                    {/* Instant Match Badge on Downloaded Data */}
+                                    {/* Instant Match Badge */}
                                     {xepXeKeyword && xepXeContracts.length > 0 && (
                                         <span 
-                                            className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 whitespace-nowrap mr-1 shrink-0 animate-fade-in" 
-                                            title={`Khớp ${displayedXepXeContracts.length} / ${xepXeContracts.length} hợp đồng`}
+                                            className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 whitespace-nowrap mr-1 shrink-0 animate-fade-in" 
                                         >
-                                            {displayedXepXeContracts.length}/{xepXeContracts.length}
+                                            {displayedXepXeContracts.length} kết quả
                                         </span>
                                     )}
 
@@ -3669,287 +3456,198 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                 setXepXeKeyword('');
                                                 setXepXePage(1);
                                             }}
-                                            className="text-slate-400 hover:text-slate-600 ml-1 p-0.5"
-                                            title="Xóa tìm kiếm"
+                                            className="text-slate-400 hover:text-slate-600 ml-1 p-1"
+                                            title="Xóa từ khóa"
                                         >
-                                            <i className="fas fa-times-circle text-xs"></i>
+                                            <i className="fas fa-times-circle text-sm"></i>
                                         </button>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Nút Tra Cứu Toàn Hệ Thống (Xem Showroom Nào Xuất Hóa Đơn) */}
-                            {xepXeKeyword.trim() && (
-                                <button
-                                    type="button"
-                                    onClick={() => executeXepXeSearch({ keyword: xepXeKeyword.trim(), showroom: 'ALL' })}
-                                    disabled={isLoadingXepXe}
-                                    className="h-9 px-3.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 shrink-0 animate-fade-in"
-                                    title="Tra cứu số khung/HĐ trên toàn bộ hệ thống các Showroom"
+                            {/* 2. Chọn Showroom */}
+                            <div className="flex items-center gap-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-10 transition-all focus-within:border-purple-500 shadow-xs">
+                                <i className="fas fa-building text-xs text-slate-400 flex-shrink-0"></i>
+                                <select
+                                    value={xepXeShowroom}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        setXepXeShowroom(val);
+                                        setXepXePage(1);
+                                        if (xepXeContracts.length === 0) {
+                                            executeXepXeSearch({ showroom: val || 'ALL' });
+                                        }
+                                    }}
+                                    className="bg-transparent text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer max-w-[200px] truncate"
+                                    title="Lọc theo Showroom xuất hóa đơn"
                                 >
-                                    <i className={`fas ${isLoadingXepXe ? 'fa-spinner fa-spin' : 'fa-magnifying-glass'} text-xs`}></i>
-                                    <span>Tra cứu SR xuất HĐ</span>
-                                </button>
-                            )}
+                                    <option value="ALL">🌐 Tất cả Showroom (Toàn hệ thống)</option>
+                                    {xepXeShowrooms.map(s => (
+                                        <option key={s} value={s}>
+                                            {s}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
-                            {/* 5. Fetch Data Button */}
+                            {/* 3. Dòng xe */}
+                            <div className="hidden lg:flex items-center gap-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl px-2.5 h-10 transition-all focus-within:border-purple-500 shadow-xs">
+                                <i className="fas fa-car text-xs text-slate-400 flex-shrink-0"></i>
+                                <select
+                                    value={xepXeModel}
+                                    onChange={e => {
+                                        setXepXeModel(e.target.value);
+                                        setXepXePage(1);
+                                    }}
+                                    className="bg-transparent text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer max-w-[140px] truncate"
+                                    title="Chọn dòng xe"
+                                >
+                                    <option value="">Tất cả dòng xe</option>
+                                    {xepXeModels.map(m => (
+                                        <option key={m} value={m}>{m}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* 4. Nút Lấy dữ liệu */}
                             <button
                                 type="button"
                                 onClick={() => executeXepXeSearch({ force: true })}
                                 disabled={isLoadingXepXe}
-                                className="h-9 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 shrink-0"
-                                title="Tải lại dữ liệu mới nhất từ CyberSoft"
+                                className="h-10 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 shrink-0"
+                                title="Tải lại dữ liệu hợp đồng mới nhất từ CyberSoft"
                             >
                                 <i className={`fas ${isLoadingXepXe ? 'fa-spinner fa-spin' : 'fa-rotate'} text-xs`}></i>
                                 <span>{isLoadingXepXe ? 'Đang tải...' : 'Lấy dữ liệu'}</span>
                             </button>
 
-                            {/* 6. Reset Filters */}
+                            {/* 5. Đặt lại */}
                             <button
                                 type="button"
                                 onClick={handleXepXeReset}
-                                className="h-9 w-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs transition-all flex items-center justify-center shadow-xs shrink-0"
-                                title="Đặt lại bộ lọc"
+                                className="h-10 w-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs transition-all flex items-center justify-center shadow-xs shrink-0"
+                                title="Đặt lại bộ lọc tìm kiếm"
                             >
                                 <i className="fas fa-undo text-xs"></i>
                             </button>
 
-                            {/* 7. Export Excel Button */}
+                            {/* 6. Xuất Excel */}
                             <button
                                 type="button"
                                 onClick={handleExportXepXeExcel}
                                 disabled={xepXeContracts.length === 0}
-                                className="h-9 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 shrink-0 ml-auto"
-                                title="Xuất danh sách ra Excel"
+                                className="h-10 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 shrink-0 ml-auto"
+                                title="Xuất danh sách ra file Excel"
                             >
                                 <i className="fas fa-file-excel text-xs"></i>
                                 <span className="hidden sm:inline">Xuất Excel</span>
                             </button>
                         </div>
 
-                        {/* Status Legend & Quick Filter Bar (Matching CyberSoft screenshot 100%) */}
-                        <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap items-center gap-1.5 text-xs font-semibold">
-                            <span className="text-[11px] text-slate-400 mr-1 flex items-center gap-1">
-                                <i className="fas fa-filter text-[10px]"></i> Trạng thái:
-                            </span>
-
-                            {/* Đã duyệt & Chờ duyệt (Mặc định) */}
-                            <button
-                                type="button"
-                                onClick={() => setXepXeStatusFilter('approved_and_pending')}
-                                className={`px-2.5 py-1 rounded-lg text-xs transition-all border flex items-center gap-1.5 font-bold ${
-                                    xepXeStatusFilter === 'approved_and_pending'
-                                        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                                        : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
-                                }`}
-                                title="Các hợp đồng đã duyệt và chờ duyệt sẵn sàng ghép xe (Chờ duyệt, Đã ghép SK, Chờ ghép SK)"
-                            >
-                                <i className="fas fa-check-double text-[10px]"></i>
-                                <span>Đã duyệt & Chờ duyệt</span>
-                                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                                    xepXeStatusFilter === 'approved_and_pending' ? 'bg-white/25 text-white' : 'bg-slate-200 text-slate-800 font-bold'
-                                }`}>
-                                    {(xepXeStatusCounts['Chờ duyệt'] || 0) + (xepXeStatusCounts['Đã ghép SK'] || 0) + (xepXeStatusCounts['Chờ ghép SK'] || 0)}
-                                </span>
-                            </button>
-
-                            {/* All */}
-                            <button
-                                type="button"
-                                onClick={() => setXepXeStatusFilter('all')}
-                                className={`px-2.5 py-1 rounded-lg text-xs transition-all border flex items-center gap-1.5 ${
-                                    xepXeStatusFilter === 'all'
-                                        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                                }`}
-                            >
-                                <span>Tất cả</span>
-                                <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                                    xepXeStatusFilter === 'all' ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-700'
-                                }`}>
-                                    {xepXeContracts.length}
-                                </span>
-                            </button>
-
-                            {/* Chờ ghép SK (Trắng) */}
-                            <button
-                                type="button"
-                                onClick={() => setXepXeStatusFilter(xepXeStatusFilter === 'Chờ ghép SK' ? 'all' : 'Chờ ghép SK')}
-                                className={`px-2.5 py-1 rounded-lg text-xs transition-all border flex items-center gap-1.5 ${
-                                    xepXeStatusFilter === 'Chờ ghép SK'
-                                        ? 'bg-slate-800 text-white border-slate-800 shadow-xs ring-2 ring-slate-400'
-                                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                                }`}
-                            >
-                                <span className="w-2.5 h-2.5 rounded-full border border-slate-400 bg-white"></span>
-                                <span>Chờ ghép SK</span>
-                                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-100 text-slate-700 font-bold">
-                                    {xepXeStatusCounts['Chờ ghép SK'] || 0}
-                                </span>
-                            </button>
-
-                            {/* Đã ghép SK (Xanh lơ / Cyan) */}
-                            <button
-                                type="button"
-                                onClick={() => setXepXeStatusFilter(xepXeStatusFilter === 'Đã ghép SK' ? 'all' : 'Đã ghép SK')}
-                                className={`px-2.5 py-1 rounded-lg text-xs transition-all border flex items-center gap-1.5 ${
-                                    xepXeStatusFilter === 'Đã ghép SK'
-                                        ? 'bg-cyan-600 text-white border-cyan-600 shadow-xs ring-2 ring-cyan-300'
-                                        : 'bg-cyan-50 text-cyan-800 border-cyan-200 hover:bg-cyan-100'
-                                }`}
-                            >
-                                <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 border border-cyan-500"></span>
-                                <span>Đã ghép SK</span>
-                                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-cyan-100 text-cyan-800 font-bold">
-                                    {xepXeStatusCounts['Đã ghép SK'] || 0}
-                                </span>
-                            </button>
-
-                            {/* Chờ duyệt (Xanh chuối / GreenYellow) */}
-                            <button
-                                type="button"
-                                onClick={() => setXepXeStatusFilter(xepXeStatusFilter === 'Chờ duyệt' ? 'all' : 'Chờ duyệt')}
-                                className={`px-2.5 py-1 rounded-lg text-xs transition-all border flex items-center gap-1.5 ${
-                                    xepXeStatusFilter === 'Chờ duyệt'
-                                        ? 'bg-lime-600 text-white border-lime-600 shadow-xs ring-2 ring-lime-300'
-                                        : 'bg-lime-50 text-lime-900 border-lime-200 hover:bg-lime-100'
-                                }`}
-                            >
-                                <span className="w-2.5 h-2.5 rounded-full bg-lime-400 border border-lime-500"></span>
-                                <span>Chờ duyệt</span>
-                                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-lime-100 text-lime-900 font-bold">
-                                    {xepXeStatusCounts['Chờ duyệt'] || 0}
-                                </span>
-                            </button>
-
-                            {/* QH đặt cọc (Vàng / Yellow) */}
-                            <button
-                                type="button"
-                                onClick={() => setXepXeStatusFilter(xepXeStatusFilter === 'QH đặt cọc' ? 'all' : 'QH đặt cọc')}
-                                className={`px-2.5 py-1 rounded-lg text-xs transition-all border flex items-center gap-1.5 ${
-                                    xepXeStatusFilter === 'QH đặt cọc'
-                                        ? 'bg-amber-500 text-white border-amber-500 shadow-xs ring-2 ring-amber-300'
-                                        : 'bg-amber-50 text-amber-900 border-amber-200 hover:bg-amber-100'
-                                }`}
-                            >
-                                <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 border border-yellow-500"></span>
-                                <span>QH đặt cọc</span>
-                                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-100 text-amber-900 font-bold">
-                                    {xepXeStatusCounts['QH đặt cọc'] || 0}
-                                </span>
-                            </button>
-
-                            {/* Đã xuất HĐ (Tím / Violet) */}
-                            <button
-                                type="button"
-                                onClick={() => setXepXeStatusFilter(xepXeStatusFilter === 'Đã xuất HĐ' ? 'all' : 'Đã xuất HĐ')}
-                                className={`px-2.5 py-1 rounded-lg text-xs transition-all border flex items-center gap-1.5 ${
-                                    xepXeStatusFilter === 'Đã xuất HĐ'
-                                        ? 'bg-purple-600 text-white border-purple-600 shadow-xs ring-2 ring-purple-300'
-                                        : 'bg-purple-50 text-purple-800 border-purple-200 hover:bg-purple-100'
-                                }`}
-                            >
-                                <span className="w-2.5 h-2.5 rounded-full bg-purple-400 border border-purple-500"></span>
-                                <span>Đã xuất HĐ</span>
-                                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-100 text-purple-800 font-bold">
-                                    {xepXeStatusCounts['Đã xuất HĐ'] || 0}
-                                </span>
-                            </button>
-
-                            {/* Hủy (Đỏ / Red) */}
-                            <button
-                                type="button"
-                                onClick={() => setXepXeStatusFilter(xepXeStatusFilter === 'Hủy' ? 'all' : 'Hủy')}
-                                className={`px-2.5 py-1 rounded-lg text-xs transition-all border flex items-center gap-1.5 ${
-                                    xepXeStatusFilter === 'Hủy'
-                                        ? 'bg-rose-600 text-white border-rose-600 shadow-xs ring-2 ring-rose-300'
-                                        : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
-                                    }`}
-                            >
-                                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 border border-rose-600"></span>
-                                <span>Hủy</span>
-                                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-rose-100 text-rose-800 font-bold">
-                                    {xepXeStatusCounts['Hủy'] || 0}
-                                </span>
-                            </button>
-                        </div>
-
-                        {/* Thanh lọc theo Showroom xuất hóa đơn khi đang lọc Đã xuất HĐ */}
-                        {xepXeStatusFilter === 'Đã xuất HĐ' && Object.keys(invoicedShowroomsBreakdown).length > 0 && (
-                            <div className="mt-2.5 pt-2 border-t border-purple-100 bg-purple-50/70 -mx-3 -mb-1 px-3 py-2 rounded-xl flex flex-wrap items-center gap-1.5 text-xs animate-fade-in">
-                                <span className="text-[11px] font-bold text-purple-950 flex items-center gap-1 mr-1">
-                                    <i className="fas fa-file-invoice text-purple-600 text-xs"></i> Showroom xuất HĐ:
-                                </span>
+                        {/* Hàng 2: Bộ lọc nhanh trạng thái hóa đơn (Tất cả / Đã xuất HĐ / Chưa xuất HĐ) */}
+                        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
+                            <div className="flex items-center gap-1.5 bg-slate-100/80 p-1 rounded-xl">
                                 <button
                                     type="button"
-                                    onClick={() => setXepXeShowroomInvoicedFilter('ALL')}
-                                    className={`px-2.5 py-1 rounded-lg text-xs transition-all border font-bold ${
-                                        xepXeShowroomInvoicedFilter === 'ALL'
-                                            ? 'bg-purple-700 text-white border-purple-700 shadow-xs'
-                                            : 'bg-white text-purple-800 border-purple-200 hover:bg-purple-100'
+                                    onClick={() => setXepXeStatusFilter('all')}
+                                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                                        xepXeStatusFilter === 'all'
+                                            ? 'bg-white text-slate-900 shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
-                                    Tất cả ({xepXeStatusCounts['Đã xuất HĐ'] || 0})
+                                    Tất cả ({xepXeContracts.length})
                                 </button>
-                                {Object.entries(invoicedShowroomsBreakdown).map(([sr, count]) => (
-                                    <button
-                                        key={sr}
-                                        type="button"
-                                        onClick={() => setXepXeShowroomInvoicedFilter(xepXeShowroomInvoicedFilter === sr ? 'ALL' : sr)}
-                                        className={`px-2.5 py-1 rounded-lg text-xs transition-all border flex items-center gap-1.5 ${
-                                            xepXeShowroomInvoicedFilter === sr
-                                                ? 'bg-purple-700 text-white border-purple-700 shadow-xs font-bold'
-                                                : 'bg-white text-slate-700 border-slate-200 hover:border-purple-300 hover:text-purple-700'
-                                        }`}
-                                        title={`Xem ${count} xe đã xuất hóa đơn tại ${sr}`}
-                                    >
-                                        <i className="fas fa-building text-[10px] text-purple-500"></i>
-                                        <span>{sr}</span>
-                                        <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                                            xepXeShowroomInvoicedFilter === sr ? 'bg-white/30 text-white' : 'bg-purple-100 text-purple-800'
-                                        }`}>
-                                            {count}
-                                        </span>
-                                    </button>
-                                ))}
+                                <button
+                                    type="button"
+                                    onClick={() => setXepXeStatusFilter(xepXeStatusFilter === 'Đã xuất HĐ' ? 'all' : 'Đã xuất HĐ')}
+                                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                        xepXeStatusFilter === 'Đã xuất HĐ'
+                                            ? 'bg-purple-600 text-white shadow-xs'
+                                            : 'text-purple-700 hover:bg-purple-50'
+                                    }`}
+                                >
+                                    <i className="fas fa-file-invoice text-[10px]"></i>
+                                    <span>Đã xuất HĐ</span>
+                                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                                        xepXeStatusFilter === 'Đã xuất HĐ' ? 'bg-white/30 text-white font-bold' : 'bg-purple-100 text-purple-800'
+                                    }`}>
+                                        {invoicedCount}
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setXepXeStatusFilter(xepXeStatusFilter === 'Chưa xuất HĐ' ? 'all' : 'Chưa xuất HĐ')}
+                                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                                        xepXeStatusFilter === 'Chưa xuất HĐ'
+                                            ? 'bg-slate-800 text-white shadow-xs'
+                                            : 'text-slate-600 hover:bg-slate-200/60'
+                                    }`}
+                                >
+                                    <i className="fas fa-clock text-[10px]"></i>
+                                    <span>Chưa xuất HĐ</span>
+                                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                                        xepXeStatusFilter === 'Chưa xuất HĐ' ? 'bg-white/30 text-white font-bold' : 'bg-slate-200 text-slate-700'
+                                    }`}>
+                                        {notInvoicedCount}
+                                    </span>
+                                </button>
                             </div>
-                        )}
+
+                            {/* Thông tin hỗ trợ */}
+                            <div className="text-[11px] text-slate-400 hidden md:flex items-center gap-1.5 font-medium">
+                                <i className="fas fa-circle-info text-slate-400"></i>
+                                <span>Gõ tên KH hoặc số VIN để nhận biết ngay Showroom nào đã xuất hóa đơn.</span>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Table Area for Xếp Xe */}
                     <div className="flex-1 overflow-auto bg-slate-50/50 p-3 sm:p-4 min-h-[300px] relative">
                         {/* Banner thông báo kết quả tra cứu Showroom xuất HĐ */}
                         {xepXeKeyword && displayedXepXeContracts.length > 0 && (
-                            <div className="mb-3 p-3 bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 border border-purple-200 rounded-xl flex items-center justify-between gap-3 text-xs shadow-xs animate-fade-in">
+                            <div className="mb-3 p-3.5 bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 border-2 border-purple-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs animate-fade-in">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                                        <i className="fas fa-file-invoice text-sm"></i>
+                                    <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                                        <i className="fas fa-building text-base"></i>
                                     </div>
                                     <div>
-                                        <div className="font-bold text-slate-900 flex items-center gap-2">
-                                            <span>Kết quả tra cứu Showroom xuất HĐ: "{xepXeKeyword}"</span>
+                                        <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                                            <span>Kết quả tìm kiếm cho: <span className="text-purple-700 font-extrabold font-mono">"{xepXeKeyword}"</span></span>
                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-600 text-white">
-                                                {displayedXepXeContracts.length} kết quả
+                                                {displayedXepXeContracts.length} hợp đồng
                                             </span>
                                         </div>
-                                        <div className="text-slate-600 text-[11px] mt-0.5">
-                                            {displayedXepXeContracts.some(c => c.ten_color === 'Đã xuất HĐ') ? (
-                                                <span className="text-purple-800 font-semibold flex items-center gap-1">
-                                                    <i className="fas fa-check-circle text-emerald-600"></i>
-                                                    Đã tìm thấy thông tin Showroom xuất hóa đơn bên dưới!
-                                                </span>
+                                        <div className="text-slate-600 text-xs mt-1">
+                                            {displayedXepXeContracts.some(c => c.ten_color === 'Đã xuất HĐ' || (c.back_color || '').toLowerCase() === 'violet') ? (
+                                                <div className="text-purple-950 font-bold flex flex-wrap items-center gap-2">
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[11px]">
+                                                        <i className="fas fa-check-circle"></i> ĐÃ XUẤT HÓA ĐƠN TẠI:
+                                                    </span>
+                                                    <span className="text-purple-700 text-sm font-extrabold underline underline-offset-2">
+                                                        {Array.from(new Set(
+                                                            displayedXepXeContracts
+                                                                .filter(c => c.ten_color === 'Đã xuất HĐ' || (c.back_color || '').toLowerCase() === 'violet')
+                                                                .map(c => c.ten_ttcp)
+                                                                .filter(Boolean)
+                                                        )).join(', ')}
+                                                    </span>
+                                                </div>
                                             ) : (
-                                                <span>Danh sách hợp đồng khớp thông tin trên toàn hệ thống.</span>
+                                                <span className="text-slate-600 font-medium">Chưa có Showroom nào xuất hóa đơn cho các hợp đồng khớp từ khóa này.</span>
                                             )}
                                         </div>
                                     </div>
                                 </div>
                                 <button
                                     type="button"
-                                    onClick={() => setXepXeKeyword('')}
-                                    className="px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-lg shrink-0 shadow-2xs hover:bg-slate-50"
+                                    onClick={() => {
+                                        setXepXeKeyword('');
+                                        setXepXePage(1);
+                                    }}
+                                    className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white border border-slate-200 rounded-xl shrink-0 shadow-2xs hover:bg-slate-50 transition-all"
                                 >
-                                    <i className="fas fa-times mr-1 text-[10px]"></i> Đóng tra cứu
+                                    <i className="fas fa-times mr-1 text-slate-400"></i> Đóng tìm kiếm
                                 </button>
                             </div>
                         )}
@@ -3957,8 +3655,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         {isLoadingXepXe ? (
                             <div className="flex flex-col items-center justify-center py-20 text-slate-500">
                                 <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
-                                <span className="font-semibold text-sm text-slate-700">Đang truy vấn dữ liệu xếp xe từ CyberSoft ERP...</span>
-                                <span className="text-xs text-slate-400 mt-1">Stored Procedure [dbo].[CP_BeXepXe]</span>
+                                <span className="font-semibold text-sm text-slate-700">Đang truy vấn dữ liệu từ CSDL hợp đồng...</span>
+                                <span className="text-xs text-slate-400 mt-1">Đang tải và cập nhật danh sách hợp đồng xe</span>
                             </div>
                         ) : !hasLoadedXepXe ? (
                             <div className="flex flex-col items-center justify-center py-20 text-slate-400">
@@ -3991,20 +3689,19 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 ) : null}
                             </div>
                         ) : (
-                            <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden">
+                            <div className="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
                                 <div className="overflow-x-auto">
-                                    <table className="w-full min-w-[950px] text-left text-xs border-collapse">
+                                    <table className="w-full min-w-[900px] text-left text-xs border-collapse">
                                         <thead>
-                                            <tr className="bg-slate-50 border-b-2 border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
-                                                <th className="px-3 py-2.5 text-center w-10">#</th>
-                                                <th className="px-3 py-2.5 w-28">Trạng thái</th>
-                                                <th className="px-3 py-2.5 min-w-[210px]">Showroom / Đơn vị xuất HĐ</th>
-                                                <th className="px-3 py-2.5 min-w-[190px]">Số khung (VIN)</th>
-                                                <th className="px-3 py-2.5 min-w-[170px]">Số HĐ / Chứng từ</th>
-                                                <th className="px-3 py-2.5 min-w-[190px]">Khách hàng & TVBH</th>
-                                                <th className="px-3 py-2.5 min-w-[150px]">Dòng xe / Màu</th>
-                                                <th className="px-3 py-2.5 w-28">Ngày HĐ / Giao</th>
-                                                <th className="px-3 py-2.5 text-center w-32 sticky right-0 bg-slate-50">Thao tác</th>
+                                            <tr className="bg-slate-50/90 border-b-2 border-slate-200 text-slate-500 uppercase text-[10px] tracking-wider font-bold">
+                                                <th className="px-3.5 py-3 text-center w-12">#</th>
+                                                <th className="px-3.5 py-3 min-w-[220px]">Khách hàng & SĐT</th>
+                                                <th className="px-3.5 py-3 min-w-[190px]">Số khung (VIN)</th>
+                                                <th className="px-3.5 py-3 min-w-[230px]">Showroom xuất HĐ</th>
+                                                <th className="px-3.5 py-3 min-w-[170px]">Số HĐ / Chứng từ</th>
+                                                <th className="px-3.5 py-3 min-w-[160px]">Dòng xe / Màu</th>
+                                                <th className="px-3.5 py-3 min-w-[130px]">TVBH</th>
+                                                <th className="px-3.5 py-3 text-center w-28">Trạng thái</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
@@ -4017,47 +3714,31 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                 return (
                                                     <tr
                                                         key={`${c.stt_rec}_${c.stt_rec0}_${idx}`}
-                                                        className={`transition-colors text-slate-800 hover:bg-blue-50/40 ${badgeInfo.rowClass}`}
+                                                        className={`transition-colors text-slate-800 hover:bg-purple-50/30 ${isInvoiced ? 'bg-purple-50/20' : ''}`}
                                                     >
                                                         {/* STT */}
-                                                        <td className="px-3 py-2.5 text-center text-slate-400 text-[11px] font-mono">{globalIdx + 1}</td>
+                                                        <td className="px-3.5 py-3 text-center text-slate-400 text-[11px] font-mono">{globalIdx + 1}</td>
 
-                                                        {/* Trạng thái */}
-                                                        <td className="px-3 py-2.5 whitespace-nowrap">
-                                                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeInfo.badgeClass}`}>
-                                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${badgeInfo.dotColor}`}></span>
-                                                                {badgeInfo.label}
-                                                            </span>
-                                                        </td>
-
-                                                        {/* Showroom / Đơn vị xuất HĐ */}
-                                                        <td className="px-3 py-2.5 whitespace-nowrap">
-                                                            {isInvoiced ? (
-                                                                <div className="flex flex-col gap-0.5">
-                                                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-100 text-purple-950 border border-purple-300 font-bold text-[11.5px] shadow-2xs">
-                                                                        <i className="fas fa-file-invoice text-purple-600 text-xs shrink-0"></i>
-                                                                        <span className="truncate max-w-[210px]" title={c.ten_ttcp}>{c.ten_ttcp || 'Không rõ Showroom'}</span>
-                                                                    </div>
-                                                                    <span className="text-[10px] text-purple-700 font-bold pl-1 flex items-center gap-1">
-                                                                        <span className="w-1.5 h-1.5 rounded-full bg-purple-500 shrink-0 animate-pulse"></span>
-                                                                        Đơn vị đã xuất hóa đơn
-                                                                    </span>
+                                                        {/* Khách hàng + SĐT */}
+                                                        <td className="px-3.5 py-3 max-w-[220px]">
+                                                            <div className="font-bold text-slate-900 truncate text-sm" title={c.ten_kh}>
+                                                                {c.ten_kh || '-'}
+                                                            </div>
+                                                            {c.dien_thoai ? (
+                                                                <div className="text-[11px] text-slate-500 font-mono flex items-center gap-1.5 mt-0.5">
+                                                                    <i className="fas fa-phone text-[9px] text-slate-400"></i>
+                                                                    <span>{c.dien_thoai}</span>
                                                                 </div>
-                                                            ) : (
-                                                                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 text-[11px] font-medium">
-                                                                    <i className="fas fa-store text-slate-400 text-[10px] shrink-0"></i>
-                                                                    <span className="truncate max-w-[200px]" title={c.ten_ttcp}>{c.ten_ttcp || '-'}</span>
-                                                                </div>
-                                                            )}
+                                                            ) : null}
                                                         </td>
 
                                                         {/* Số khung (VIN) */}
-                                                        <td className="px-3 py-2.5 whitespace-nowrap">
+                                                        <td className="px-3.5 py-3 whitespace-nowrap">
                                                             {hasVin ? (
                                                                 <div className="flex items-center gap-1.5">
-                                                                    <span className={`font-mono font-bold px-2 py-0.5 rounded text-[11.5px] border ${
+                                                                    <span className={`font-mono font-bold px-2.5 py-1 rounded-lg text-xs border ${
                                                                         isInvoiced
-                                                                            ? 'text-purple-800 bg-purple-50 border-purple-200'
+                                                                            ? 'text-purple-900 bg-purple-50 border-purple-200'
                                                                             : 'text-indigo-700 bg-indigo-50 border-indigo-200'
                                                                     }`}>
                                                                         {c.so_khung}
@@ -4065,98 +3746,68 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleXepXeCopyVin(c.so_khung)}
-                                                                        className="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-white"
+                                                                        className="text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-slate-100"
                                                                         title="Sao chép số VIN"
                                                                     >
-                                                                        <i className={`fas ${xepXeCopiedVin === c.so_khung ? 'fa-check text-emerald-600' : 'fa-copy'} text-[11px]`}></i>
+                                                                        <i className={`fas ${xepXeCopiedVin === c.so_khung ? 'fa-check text-emerald-600' : 'fa-copy'} text-xs`}></i>
                                                                     </button>
                                                                 </div>
                                                             ) : (
-                                                                <span className="text-slate-400 italic text-[11px]">Chưa ghép xe</span>
+                                                                <span className="text-slate-400 italic text-xs">Chưa ghép xe</span>
                                                             )}
-                                                            {c.ngay_xep && c.ngay_xep !== '1900-01-01' && (
-                                                                <div className="text-[10px] text-slate-400 mt-0.5">Ghép: {c.ngay_xep}</div>
+                                                        </td>
+
+                                                        {/* Showroom / Đơn vị xuất HĐ */}
+                                                        <td className="px-3.5 py-3 whitespace-nowrap">
+                                                            {isInvoiced ? (
+                                                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-100 text-purple-950 border border-purple-300 font-bold text-xs shadow-2xs">
+                                                                    <i className="fas fa-file-invoice text-purple-600 text-sm shrink-0"></i>
+                                                                    <span className="truncate max-w-[200px]" title={c.ten_ttcp}>
+                                                                        {c.ten_ttcp || 'Không rõ Showroom'}
+                                                                    </span>
+                                                                    <span className="text-[9.5px] font-extrabold px-1.5 py-0.2 rounded bg-purple-600 text-white whitespace-nowrap">
+                                                                        Đã xuất HĐ
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-medium">
+                                                                    <i className="fas fa-store text-slate-400 text-xs shrink-0"></i>
+                                                                    <span className="truncate max-w-[190px]" title={c.ten_ttcp}>
+                                                                        {c.ten_ttcp || '-'}
+                                                                    </span>
+                                                                </div>
                                                             )}
                                                         </td>
 
                                                         {/* Số HĐ / Số chứng từ */}
-                                                        <td className="px-3 py-2.5 whitespace-nowrap">
-                                                            <div className="font-bold text-slate-900 text-[12px]">{c.ma_hd || c.so_ct}</div>
-                                                            {c.so_ct && c.so_ct !== c.ma_hd && (
-                                                                <div className="text-[10px] text-slate-400 font-mono">{c.so_ct}</div>
-                                                            )}
-                                                        </td>
-
-                                                        {/* Khách hàng + TVBH */}
-                                                        <td className="px-3 py-2.5 max-w-[200px]">
-                                                            <div className="font-semibold text-slate-900 truncate text-[11.5px]" title={c.ten_kh}>{c.ten_kh || '-'}</div>
-                                                            {c.dien_thoai && (
-                                                                <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
-                                                                    <i className="fas fa-phone text-[9px]"></i>
-                                                                    <span>{c.dien_thoai}</span>
-                                                                </div>
-                                                            )}
-                                                            {c.ten_hs && (
-                                                                <div className="text-[10px] text-slate-500 truncate" title={c.ten_hs}>
-                                                                    <span className="text-slate-400">TVBH: </span>{c.ten_hs}
-                                                                </div>
+                                                        <td className="px-3.5 py-3 whitespace-nowrap">
+                                                            <div className="font-bold text-slate-900 text-xs font-mono">{c.ma_hd || c.so_ct}</div>
+                                                            {c.ngay_ct && (
+                                                                <div className="text-[10px] text-slate-400 mt-0.5">Ngày: {c.ngay_ct}</div>
                                                             )}
                                                         </td>
 
                                                         {/* Dòng xe / Màu */}
-                                                        <td className="px-3 py-2.5 whitespace-nowrap">
-                                                            <div className="font-bold text-slate-900 text-[11.5px]">{c.ten_kx || c.ma_kx}</div>
-                                                            <div className="text-[10px] text-slate-500">{c.ten_mau || c.ma_mau || '-'}{c.ten_mau_nt ? <span className="text-slate-400"> · NT: {c.ten_mau_nt}</span> : null}</div>
+                                                        <td className="px-3.5 py-3 whitespace-nowrap">
+                                                            <div className="font-bold text-slate-900 text-xs">{c.ten_kx || c.ma_kx}</div>
+                                                            <div className="text-[11px] text-slate-500 mt-0.5">
+                                                                {c.ten_mau || c.ma_mau || '-'}{c.ten_mau_nt ? <span className="text-slate-400"> · NT: {c.ten_mau_nt}</span> : null}
+                                                            </div>
                                                         </td>
 
-                                                        {/* Ngày HĐ / Ngày giao xe */}
-                                                        <td className="px-3 py-2.5 whitespace-nowrap text-[11px] font-mono">
-                                                            <div className="text-slate-700 font-semibold">{c.ngay_gx || '-'}</div>
-                                                            <div className="text-[10px] text-slate-400">HĐ: {c.ngay_ct || '-'}</div>
+                                                        {/* TVBH */}
+                                                        <td className="px-3.5 py-3 whitespace-nowrap text-slate-700 text-xs">
+                                                            <div className="font-medium truncate max-w-[130px]" title={c.ten_hs}>
+                                                                {c.ten_hs || '-'}
+                                                            </div>
                                                         </td>
 
-                                                        {/* Thao tác */}
-                                                        <td className="px-3 py-2.5 text-center whitespace-nowrap sticky right-0 bg-white/95 backdrop-blur-xs shadow-xs">
-                                                            {hasVin ? (
-                                                                <div className="flex items-center justify-center gap-1">
-                                                                    {!isInvoiced && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleOpenAssignModal(c)}
-                                                                            className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1"
-                                                                            title="Đổi sang số khung khác"
-                                                                        >
-                                                                            <i className="fas fa-arrows-rotate text-[10px]"></i>
-                                                                            <span>Đổi xe</span>
-                                                                        </button>
-                                                                    )}
-                                                                    {!isInvoiced ? (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => setContractToUnassign(c)}
-                                                                            className="px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-bold transition-all flex items-center gap-1"
-                                                                            title="Hủy ghép xe khỏi hợp đồng"
-                                                                        >
-                                                                            <i className="fas fa-unlink text-[10px]"></i>
-                                                                            <span>Hủy</span>
-                                                                        </button>
-                                                                    ) : (
-                                                                        <span className="inline-flex items-center gap-1 text-[10.5px] text-purple-800 font-bold bg-purple-50 px-2 py-0.5 rounded-lg border border-purple-200 shadow-2xs">
-                                                                            <i className="fas fa-check-circle text-purple-600 text-[10px]"></i>
-                                                                            <span>Đã xuất HĐ</span>
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            ) : (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleOpenAssignModal(c)}
-                                                                    className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold shadow-xs transition-all flex items-center gap-1.5 mx-auto"
-                                                                >
-                                                                    <i className="fas fa-car-side text-[10px]"></i>
-                                                                    <span>Ghép xe</span>
-                                                                </button>
-                                                            )}
+                                                        {/* Trạng thái */}
+                                                        <td className="px-3.5 py-3 text-center whitespace-nowrap">
+                                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10.5px] font-bold border ${badgeInfo.badgeClass}`}>
+                                                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${badgeInfo.dotColor}`}></span>
+                                                                {badgeInfo.label}
+                                                            </span>
                                                         </td>
                                                     </tr>
                                                 );
@@ -4236,196 +3887,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 </>
             )}
 
-            {/* ============================================================= */}
-            {/* MODAL: GHÉP XE / CHỌN SỐ KHUNG CHO HỢP ĐỒNG (CP_BeXepXe_SK) */}
-            {/* ============================================================= */}
-            {selectedContractForAssign && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-in">
-                        {/* Modal Header */}
-                        <div className="px-5 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                                    <i className="fas fa-car-side text-white text-sm"></i>
-                                </div>
-                                <div>
-                                    <h3 className="font-bold text-sm">Xếp Xe Hợp Đồng CyberSoft</h3>
-                                    <p className="text-[11px] text-slate-300">Chọn số khung phù hợp từ kế hoạch phân bổ / kho để ghép vào HĐ</p>
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setSelectedContractForAssign(null)}
-                                className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
-                            >
-                                <i className="fas fa-times text-sm"></i>
-                            </button>
-                        </div>
 
-                        {/* Contract Details Card */}
-                        <div className="px-5 py-3 bg-slate-50 border-b border-slate-200 shrink-0 text-xs">
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-slate-700">
-                                <div>
-                                    <span className="text-slate-400 text-[11px] block">Số hợp đồng:</span>
-                                    <span className="font-bold text-slate-900 font-mono">{selectedContractForAssign.ma_hd}</span>
-                                </div>
-                                <div>
-                                    <span className="text-slate-400 text-[11px] block">Khách hàng:</span>
-                                    <span className="font-bold text-slate-900 truncate block" title={selectedContractForAssign.ten_kh}>
-                                        {selectedContractForAssign.ten_kh}
-                                    </span>
-                                </div>
-                                <div>
-                                    <span className="text-slate-400 text-[11px] block">Dòng xe / Màu:</span>
-                                    <span className="font-bold text-indigo-700 block truncate">
-                                        {selectedContractForAssign.ten_kx} ({selectedContractForAssign.ten_mau || selectedContractForAssign.ma_mau})
-                                    </span>
-                                </div>
-                                <div>
-                                    <span className="text-slate-400 text-[11px] block">Showroom:</span>
-                                    <span className="font-medium text-slate-800 block truncate" title={selectedContractForAssign.ten_ttcp}>
-                                        {selectedContractForAssign.ten_ttcp}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Search in Candidate Cars */}
-                        <div className="px-5 py-2.5 bg-white border-b border-slate-200 flex items-center justify-between gap-3 shrink-0">
-                            <div className="flex-1 relative">
-                                <i className="fas fa-search text-[11px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
-                                <input
-                                    type="text"
-                                    placeholder="Lọc số khung (VIN), số máy, ghi chú..."
-                                    value={candidateSearchQuery}
-                                    onChange={e => setCandidateSearchQuery(e.target.value)}
-                                    className="w-full pl-8 pr-3 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-                                />
-                            </div>
-                            <div className="text-xs text-slate-500 font-medium whitespace-nowrap">
-                                Tìm thấy: <strong className="text-indigo-700">{displayedCandidateCars.length}</strong> xe khả dụng
-                            </div>
-                        </div>
-
-                        {/* Candidates List / Table */}
-                        <div className="flex-1 overflow-auto p-4 min-h-[220px]">
-                            {isLoadingCandidates ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-slate-500">
-                                    <div className="w-8 h-8 border-3 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-3"></div>
-                                    <span className="text-xs font-semibold">Đang tra cứu xe khớp cấu hình từ CyberSoft ([dbo].[CP_BeXepXe_SK])...</span>
-                                </div>
-                            ) : candidateCars.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-slate-400 text-center">
-                                    <i className="fas fa-car-tunnel text-4xl text-slate-300 mb-2"></i>
-                                    <span className="font-semibold text-slate-600 text-sm">Không có xe phù hợp sẵn sàng ghép!</span>
-                                    <p className="text-xs text-slate-400 mt-1 max-w-md">
-                                        Hiện không có xe tồn kho hoặc kế hoạch phân bổ nào khớp với mã dòng xe <strong className="text-slate-600">{selectedContractForAssign.ma_kx}</strong> và nội ngoại thất của hợp đồng này.
-                                    </p>
-                                </div>
-                            ) : displayedCandidateCars.length === 0 ? (
-                                <div className="text-center py-8 text-slate-400 text-xs">
-                                    Không khớp với từ khóa tìm kiếm "{candidateSearchQuery}"
-                                </div>
-                            ) : (
-                                <div className="border border-slate-200 rounded-xl overflow-x-auto shadow-2xs">
-                                    <table className="w-full min-w-[700px] text-left text-xs border-collapse">
-                                        <thead>
-                                            <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 text-[11px] uppercase">
-                                                <th className="py-2.5 px-3 text-center w-10 border-r border-slate-200">Chọn</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200">Số khung (VIN)</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200">Số máy</th>
-                                                <th className="py-2.5 px-3 text-center border-r border-slate-200">Năm SX</th>
-                                                <th className="py-2.5 px-3 border-r border-slate-200">Ngày nhập / PB</th>
-                                                <th className="py-2.5 px-3">Ghi chú</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {displayedCandidateCars.map((car, cIdx) => {
-                                                const isSelected = selectedCandidateVin === car.so_khung;
-                                                return (
-                                                    <tr
-                                                        key={`${car.so_khung}_${cIdx}`}
-                                                        onClick={() => setSelectedCandidateVin(car.so_khung)}
-                                                        className={`cursor-pointer transition-colors ${
-                                                            isSelected ? 'bg-indigo-50/80 font-medium' : 'hover:bg-slate-50'
-                                                        }`}
-                                                    >
-                                                        <td className="py-2.5 px-3 text-center border-r border-slate-100">
-                                                            <input
-                                                                type="radio"
-                                                                name="candidate_vin"
-                                                                checked={isSelected}
-                                                                onChange={() => setSelectedCandidateVin(car.so_khung)}
-                                                                className="text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                                            />
-                                                        </td>
-                                                        <td className="py-2.5 px-3 border-r border-slate-100 font-mono font-bold text-indigo-700">
-                                                            {car.so_khung}
-                                                        </td>
-                                                        <td className="py-2.5 px-3 border-r border-slate-100 font-mono text-slate-700">
-                                                            {car.so_may || '-'}
-                                                        </td>
-                                                        <td className="py-2.5 px-3 border-r border-slate-100 text-center text-slate-600">
-                                                            {car.nam_sx || '-'}
-                                                        </td>
-                                                        <td className="py-2.5 px-3 border-r border-slate-100 text-slate-600">
-                                                            {car.ngay_ct || '-'}
-                                                        </td>
-                                                        <td className="py-2.5 px-3 text-slate-600 max-w-[200px] truncate" title={car.dien_giai}>
-                                                            {car.dien_giai || '-'}
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Modal Footer */}
-                        <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">
-                            <div>
-                                {selectedCandidateVin ? (
-                                    <span className="text-xs text-slate-700">
-                                        Đang chọn VIN: <strong className="font-mono text-indigo-700 font-bold">{selectedCandidateVin}</strong>
-                                    </span>
-                                ) : (
-                                    <span className="text-xs text-slate-400 italic">Vui lòng click vào 1 xe ở trên để chọn</span>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedContractForAssign(null)}
-                                    disabled={isSavingAssign}
-                                    className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all shadow-2xs"
-                                >
-                                    Đóng
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={handleConfirmAssign}
-                                    disabled={!selectedCandidateVin || isSavingAssign}
-                                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-xs transition-all flex items-center gap-1.5"
-                                >
-                                    {isSavingAssign ? (
-                                        <>
-                                            <i className="fas fa-spinner fa-spin text-xs"></i>
-                                            <span>Đang lưu Cyber...</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="fas fa-check text-xs"></i>
-                                            <span>Xác nhận ghép xe</span>
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* ============================================================= */}
             {/* SUB-TAB 4 CONTENT: LẬP ĐỀ NGHỊ XUẤT XE / ĐIỀU CHUYỂN XE (PHDNX & CTDNX) */}
@@ -5599,66 +5061,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 </div>
             )}
 
-            {/* ============================================================= */}
-            {/* MODAL: XÁC NHẬN HỦY GHÉP XE (CP_BeXepXe_DELETE) */}
-            {/* ============================================================= */}
-            {contractToUnassign && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
-                    <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-scale-in">
-                        <div className="px-5 py-4 bg-rose-600 text-white flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                                <i className="fas fa-triangle-exclamation text-white text-lg"></i>
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-sm">Xác nhận hủy ghép xe</h3>
-                                <p className="text-[11px] text-white/80">Thao tác sẽ xóa số khung đã gán khỏi hợp đồng này trên CyberSoft ERP</p>
-                            </div>
-                        </div>
 
-                        <div className="p-5 text-xs text-slate-700 space-y-2.5">
-                            <p>Bạn có chắc chắn muốn hủy ghép xe cho hợp đồng này không?</p>
-                            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1 text-xs">
-                                <div>Số HĐ: <strong className="font-mono text-slate-900 font-bold">{contractToUnassign.ma_hd}</strong></div>
-                                <div>Khách hàng: <strong className="text-slate-900">{contractToUnassign.ten_kh}</strong></div>
-                                <div>Dòng xe: <strong>{contractToUnassign.ten_kx}</strong></div>
-                                <div>Số khung đang ghép: <strong className="font-mono text-rose-600 font-bold">{contractToUnassign.so_khung}</strong></div>
-                            </div>
-                            <p className="text-[11px] text-slate-500 italic">
-                                Lưu ý: Chỉ các hợp đồng chưa xuất hóa đơn mới có thể hủy ghép.
-                            </p>
-                        </div>
-
-                        <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2">
-                            <button
-                                type="button"
-                                onClick={() => setContractToUnassign(null)}
-                                disabled={isDeletingAssign}
-                                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold shadow-2xs transition-all"
-                            >
-                                Hủy bỏ
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleConfirmUnassign}
-                                disabled={isDeletingAssign}
-                                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow transition-all flex items-center gap-1.5"
-                            >
-                                {isDeletingAssign ? (
-                                    <>
-                                        <i className="fas fa-spinner fa-spin text-xs"></i>
-                                        <span>Đang hủy...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <i className="fas fa-trash-alt text-xs"></i>
-                                        <span>Xác nhận hủy ghép</span>
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* MODAL IN CHỨNG TỪ CYBERSOFT ERP (PHDNX / CTDNX) */}
             <CyberDnxPrintModal 
