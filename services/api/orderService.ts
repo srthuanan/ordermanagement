@@ -147,7 +147,7 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
             await supabase.from('car_hold_activities').delete().eq('vin', vinDk).eq('type', 'QUEUE');
         }
         // GỬI EMAIL THÔNG BÁO (match_success nếu đã ghép ngay, match_request_pending nếu chờ xe)
-        const currentUserObj = getStorageItem('user');
+        const currentUserObj: any = getStorageItem('user');
         const userEmail = (currentUserObj && typeof currentUserObj === 'object') ? currentUserObj.email : undefined;
 
         if (vinDk) {
