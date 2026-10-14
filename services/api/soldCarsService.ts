@@ -111,7 +111,15 @@ export const getSoldCarsDataByMonth = async (month: string, year: number): Promi
         if (err2) console.warn("Archived query issue:", err2);
 
         // Cả 2 bảng này đều có cột tvbh thay vì ten_tu_van_ban_hang, cần map lại.
-        const combinedRawData = [...(yeucauData || []), ...(archivedData || [])];
+        // Khử trùng lặp theo so_don_hang (ưu tiên dữ liệu mới nhất từ yeucauxhd)
+        const dedupMap = new Map<string, any>();
+        [...(archivedData || []), ...(yeucauData || [])].forEach(row => {
+            const key = (row.so_don_hang || row.id || '').trim();
+            if (key) {
+                dedupMap.set(key, row);
+            }
+        });
+        const combinedRawData = Array.from(dedupMap.values());
         let normalizedData = combinedRawData.map(row => ({
              ...row,
              ket_qua: 'Đã xuất hóa đơn', // Hardcode cho UI vì table yeucauxhd không giữ cột ket_qua
@@ -204,7 +212,15 @@ export const getAllSoldCarsData = async (year: number): Promise<ApiResult> => {
         const { data: archivedData, error: err2 } = await queryArchived;
         if (err2) console.warn("Archived query issue in getAll:", err2);
 
-        const combinedRawData = [...(yeucauData || []), ...(archivedData || [])];
+        // Khử trùng lặp theo so_don_hang (ưu tiên dữ liệu mới nhất từ yeucauxhd)
+        const dedupMapAll = new Map<string, any>();
+        [...(archivedData || []), ...(yeucauData || [])].forEach(row => {
+            const key = (row.so_don_hang || row.id || '').trim();
+            if (key) {
+                dedupMapAll.set(key, row);
+            }
+        });
+        const combinedRawData = Array.from(dedupMapAll.values());
         let supabaseNormalized = combinedRawData.map(row => ({
              ...row,
              ket_qua: 'Đã xuất hóa đơn',
