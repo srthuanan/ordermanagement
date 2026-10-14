@@ -41,6 +41,7 @@ import MaintenanceFeeManager from './MaintenanceFeeManager';
 import VehicleConfigManager from './VehicleConfigManager';
 import { AdminSwapManagementView } from './AdminSwapManagementView';
 import LiveUserMonitorView from './LiveUserMonitorView';
+import SatelliteWarehousesView from './SatelliteWarehousesView';
 
 import * as apiService from '../../services/apiService';
 
@@ -272,8 +273,12 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         }
     };
 
-    // Auto-redirect if current adminView is hidden
+    // Auto-redirect if current adminView is satellite_warehouses (moved into cyber_plan) or hidden
     useEffect(() => {
+        if (adminView === 'satellite_warehouses') {
+            setAdminView('cyber_plan');
+            return;
+        }
         if (hiddenTabs.includes(adminView)) {
             // Find first visible tab in current category
             const visibleInCurrent = (categories[currentCategory]?.views || categories.orders.views).filter(v => !hiddenTabs.includes(v));
@@ -313,7 +318,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         maintenance_fee: 'KINH PHÍ WEB',
         vehicle_config: 'CẤU HÌNH XE',
         super_management: 'QUẢN LÝ NÂNG CAO',
-        live_users: 'VỊ TRÍ TRUY CẬP'
+        live_users: 'VỊ TRÍ TRUY CẬP',
+        satellite_warehouses: 'KHO VỆ TINH (3 KHO)'
     };
 
     useEffect(() => {
@@ -372,11 +378,13 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
         maintenance_fee: null,
         vehicle_config: null,
         super_management: null,
-        live_users: null
+        live_users: null,
+        satellite_warehouses: null
     };
 
 
     const adminTools = [
+        { title: 'Kho Vệ Tinh (3 Kho)', icon: 'fa-warehouse text-rose-500', action: () => setAdminView('satellite_warehouses') },
         { title: 'Phân Bổ Cyber (K10)', icon: 'fa-bolt text-yellow-500', action: () => setShowCyberSyncModal(true) },
         { title: 'Vị Trí Kho Cyber', icon: 'fa-map-marker-alt text-emerald-400', action: () => setShowCyberLocationSyncModal(true) },
         { title: 'Tra Cứu Kế Hoạch Cyber', icon: 'fa-search-location text-indigo-400', action: () => setAdminView('cyber_plan') },
@@ -496,6 +504,8 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                     <CyberFactoryPlanView
                         showToast={showToast}
                         isActive={adminView === 'cyber_plan'}
+                        allOrders={allOrders}
+                        stockData={stockData}
                     />
                 </div>
 
@@ -633,6 +643,16 @@ const AdminView: React.FC<AdminViewProps> = ({ showToast, hideToast, refetchHist
                 {/* Live User & Geolocation Monitor */}
                 <div className={adminView === 'live_users' ? 'flex-1 flex flex-col min-h-0 h-full w-full' : 'hidden'}>
                     <LiveUserMonitorView showToast={showToast} isActive={adminView === 'live_users'} />
+                </div>
+
+                {/* Satellite Warehouses View (3 Kho Ngoài) */}
+                <div className={adminView === 'satellite_warehouses' ? 'flex-1 flex flex-col min-h-0 h-full w-full' : 'hidden'}>
+                    <SatelliteWarehousesView 
+                        showToast={showToast} 
+                        isActive={adminView === 'satellite_warehouses'} 
+                        allOrders={allOrders}
+                        stockData={stockData}
+                    />
                 </div>
             </>
         );

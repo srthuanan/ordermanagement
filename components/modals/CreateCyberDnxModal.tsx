@@ -316,7 +316,7 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                                             { code: 'K87', label: 'K87 (QL13)' },
                                             { code: 'K83', label: 'K83 (Thuận An)' },
                                             { code: 'K86', label: 'K86 (Q12)' },
-                                            { code: 'K85', label: 'K85 (Dĩ An)' },
+                                            { code: 'K85', label: 'K85' },
                                             { code: 'KHCM.PVD', label: 'PVD' },
                                         ].map(item => (
                                             <button

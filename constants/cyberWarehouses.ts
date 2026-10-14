@@ -34,8 +34,8 @@ const RAW_POPULAR_WAREHOUSES: CyberWarehouseItem[] = [
     },
     {
         id: "K85",
-        name: "K85 – Kho xe ô tô Dĩ An",
-        shortName: "Kho xe ô tô Dĩ An",
+        name: "K85 – Kho xe ô tô K85",
+        shortName: "Kho xe ô tô K85",
         dvcs: "02",
         isPopular: true
     },

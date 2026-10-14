@@ -362,7 +362,9 @@ const StockCard: React.FC<StockCardProps> = ({
         } : {
             icon: 'fa-warehouse text-emerald-600',
             label: 'Kho xe',
-            value: formatShortWarehouseName(vehicle['Vị trí']) || 'Chưa cập nhật',
+            value: vehicle.isResolvedFromSatellite 
+                ? `${formatShortWarehouseName(vehicle['Vị trí'])} (Thực tế: ${vehicle.realWarehouseName || 'Bãi vệ tinh'}${vehicle.realBattery ? ` • Pin: ${vehicle.realBattery}` : ''})` 
+                : (formatShortWarehouseName(vehicle['Vị trí']) || 'Chưa cập nhật'),
             copyable: false
         },
         { icon: 'fa-info-circle', label: 'Trạng thái', value: vehicle['Trạng thái'] || '---', copyable: false },
@@ -799,8 +801,16 @@ const StockCard: React.FC<StockCardProps> = ({
                                         <i className="fas fa-map-marked-alt text-[8px] opacity-0 group-hover/frontgps:opacity-100 text-blue-600 transition-opacity"></i>
                                     </button>
                                 ) : (
-                                    <span className={`font-semibold text-[10.5px] truncate max-w-[140px] ${isInTransit ? 'text-amber-700' : 'text-emerald-800'}`}>
-                                        {formatShortWarehouseName(vehicle["Vị trí"])}
+                                    <span className={`font-semibold text-[10.5px] truncate max-w-[140px] inline-flex items-center gap-1 ${isInTransit ? 'text-amber-700' : 'text-emerald-800'}`}>
+                                        <span className="truncate">{formatShortWarehouseName(vehicle["Vị trí"])}</span>
+                                        {vehicle.isResolvedFromSatellite && (
+                                            <span 
+                                                className="shrink-0 text-[8.5px] font-bold text-emerald-800 bg-emerald-100/90 px-1 py-0.2 rounded border border-emerald-300 shadow-2xs" 
+                                                title={`Tìm thấy tại ${vehicle.realWarehouseName || 'Bãi ngoài'}${vehicle.realReceivedDate ? `\nNgày nhận: ${vehicle.realReceivedDate}` : ''}${vehicle.realBattery ? `\nPin: ${vehicle.realBattery}` : ''}`}
+                                            >
+                                                ✓ Bãi TT
+                                            </span>
+                                        )}
                                     </span>
                                 )}
                             </div>

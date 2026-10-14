@@ -1,8 +1,9 @@
 import useSWR from 'swr';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { StockVehicle } from '../types';
 import * as apiService from '../services/apiService';
 import { supabase } from '../services/supabaseClient';
+import { enrichTransitCarsWithRealLocations } from '../services/api/satelliteWarehouseService';
 
 export const useStockApi = () => {
     const { data: result, error, mutate } = useSWR('stockData', () => apiService.getStockData(), {
@@ -28,13 +29,28 @@ export const useStockApi = () => {
             })
             .subscribe();
 
+        const handleSatelliteUpdate = () => {
+            mutate();
+        };
+        if (typeof window !== 'undefined') {
+            window.addEventListener('satellite_warehouses_updated', handleSatelliteUpdate);
+        }
+
         return () => {
             supabase.removeChannel(channel);
+            if (typeof window !== 'undefined') {
+                window.removeEventListener('satellite_warehouses_updated', handleSatelliteUpdate);
+            }
         };
     }, [mutate, mutateQueued]);
 
+    const rawStock = result?.khoxe || [];
+    const enrichedStock = useMemo(() => {
+        return enrichTransitCarsWithRealLocations(rawStock);
+    }, [rawStock]);
+
     return {
-        stockData: result?.khoxe || [],
+        stockData: enrichedStock,
         queuedVins: queuedVins || [],
         setStockData: (data: StockVehicle[]) => mutate({ ...result, status: 'SUCCESS', message: result?.message || '', khoxe: data }, false),
         isLoading: (!result && !error) || (!queuedVins),

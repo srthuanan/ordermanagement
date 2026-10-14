@@ -35,7 +35,7 @@ export const WAREHOUSE_SHORT_NAMES: Record<string, string> = {
     'K83': 'Thuận An',
     'K87': 'QL13 (HCM)',
     'K86': 'Q12 (HCM)',
-    'K85': 'Dĩ An',
+    'K85': 'K85',
     'KHCM.PVD': 'Phạm Văn Đồng',
     'K106': 'Hà Huy Giáp',
     'K58': 'Lê Văn Việt',
