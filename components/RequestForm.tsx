@@ -54,6 +54,12 @@ const isNameMatch = (orderTvbh?: string, targetName?: string): boolean => {
     return a === b || a.includes(b) || b.includes(a);
 };
 
+// Kiểm tra xem chính sách có phải là "Cọc sỉ" hay không
+const isWholesaleDeposit = (policy?: string): boolean => {
+    if (!policy) return false;
+    return normalizeStr(policy).includes('coc si');
+};
+
 const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existingOrderNumbers, initialVehicle, currentUser, vehicleAnalyticsData, onOpenImagePreview }) => {
     // --- State ---
     const [step, setStep] = useState<1 | 2>(1); // 1: Config, 2: Info
@@ -99,6 +105,13 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
     // Tự động kiểm tra đối soát cấu hình xe ghép với VSO trên VinFast DMS
     useEffect(() => {
+        // Riêng đơn hàng nào chọn CS Cọc sỉ thì không cần tra so sánh DMS
+        if (isWholesaleDeposit(formData.chinh_sach)) {
+            setDmsConfigCheck({ isChecking: false, status: 'idle' });
+            setShowVsoTooltip(false);
+            return;
+        }
+
         const orderNo = (formData.so_don_hang || '').trim().toUpperCase();
         const pattern = new RegExp("^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$");
 
@@ -185,7 +198,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         }, 600);
 
         return () => clearTimeout(timer);
-    }, [formData.so_don_hang, formData.dong_xe, formData.phien_ban, formData.ngoai_that, formData.noi_that, initialVehicle]);
+    }, [formData.so_don_hang, formData.dong_xe, formData.phien_ban, formData.ngoai_that, formData.noi_that, formData.chinh_sach, initialVehicle]);
 
     // Tải danh sách hợp đồng cọc tồn từ donhang_ton
     useEffect(() => {
@@ -453,7 +466,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
             };
             const result = await apiService.addRequest(requestPayload as any, chicFile);
             if (result.status === "SUCCESS" && result.newRecord) {
-                if (dmsConfigCheck.status === 'warning') {
+                if (dmsConfigCheck.status === 'warning' && !isWholesaleDeposit(formData.chinh_sach)) {
                     showToast('Đã gửi yêu cầu ghép xe', 'Yêu cầu ghép xe đã được gửi. Lưu ý TVBH cần xử lý lệch cấu hình trước khi Xuất hóa đơn.', 'warning', 6000);
                 } else {
                     showToast('Thành Công', 'Yêu cầu ghép xe đã được gửi thành công.', 'success', 3000);

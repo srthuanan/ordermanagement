@@ -175,10 +175,39 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         };
     }, [stockData, order]);
 
+    const isWholesaleDeposit = (policyInput?: any): boolean => {
+        if (!policyInput) return false;
+        const str = Array.isArray(policyInput) ? policyInput.join(' ') : String(policyInput);
+        return str
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[đĐ]/g, 'd')
+            .includes('coc si');
+    };
+
     const recheckDmsVerification = async (isManualClick = false) => {
         const orderNo = order["Số đơn hàng"] || (order as any).so_don_hang;
         if (!orderNo) {
             setDmsVerification({ status: 'invalid', message: 'Đơn hàng chưa có Số đơn hàng (VSO).' });
+            return;
+        }
+
+        // Riêng đơn hàng nào chọn CS Cọc sỉ thì không cần tra so sánh DMS
+        const rawPolicies = [
+            ...(Array.isArray(policy) ? policy : [policy]),
+            order?.["Chính sách"] || (order as any)?.chinh_sach || ''
+        ].filter(Boolean).join(' ');
+
+        if (isWholesaleDeposit(rawPolicies)) {
+            setDmsVerification({
+                status: 'valid',
+                message: 'Chính sách Cọc sỉ: Miễn đối soát cấu hình DMS.'
+            });
+            setIsCheckingDms(false);
+            if (isManualClick) {
+                showToast('Chính sách Cọc sỉ', 'Đơn hàng chọn chính sách Cọc sỉ: Miễn đối soát cấu hình DMS.', 'info', 3000);
+            }
             return;
         }
 
@@ -552,6 +581,16 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             setMaHdCyber(cyberContractStatus.so_ct.trim());
         }
     }, [cyberContractStatus?.so_ct]);
+
+    useEffect(() => {
+        if (isWholesaleDeposit(policy)) {
+            setDmsVerification({
+                status: 'valid',
+                message: 'Chính sách Cọc sỉ: Miễn đối soát cấu hình DMS.'
+            });
+            setIsCheckingDms(false);
+        }
+    }, [policy]);
     
     // Background tracking for Google Drive
     const [capturedImages, setCapturedImages] = useState<any[]>([]);
