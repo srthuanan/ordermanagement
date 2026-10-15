@@ -2281,6 +2281,8 @@ export const checkCyberContractStatus = async (params: {
     tvbh_name?: string;
     vin?: string;
     order_no?: string;
+    so_ct?: string;
+    ma_hd?: string;
     ma_ttcp?: string;
 }): Promise<CheckCyberContractResult> => {
     try {
