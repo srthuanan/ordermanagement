@@ -3601,10 +3601,24 @@ def check_cyber_contract_status(params: dict = {}) -> dict:
                 SELECT TOP 1 
                     p.stt_rec, p.so_ct, p.Ma_Post, p.ngay_ct, p.Ten_kh, p.ong_ba,
                     p.Ma_Hs_H, ISNULL(h.Ten_Hs, '') AS ten_tvbh,
-                    ISNULL(d.Ten_Post, N'Chưa phân loại') AS ten_post
+                    ISNULL(d.Ten_Post, N'Chưa phân loại') AS ten_post,
+                    ISNULL(ct70.Ma_Kx, '') AS ma_kx,
+                    ISNULL(kx.Ten_Kx, ct70.Ma_Kx) AS ten_kx,
+                    ISNULL(ct70.ma_mau, '') AS ma_mau,
+                    ISNULL(mau.Ten_Mau, ct70.ma_mau) AS ten_mau,
+                    ISNULL(ct70.Ma_Mau_Nt, '') AS ma_mau_nt,
+                    ISNULL(nt.Ten_Mau, ct70.Ma_Mau_Nt) AS ten_mau_nt
                 FROM PHHDX p WITH (NOLOCK)
                 LEFT JOIN DmHs h WITH (NOLOCK) ON p.Ma_Hs_H = h.Ma_Hs
                 LEFT JOIN DmPost d WITH (NOLOCK) ON d.Ma_Ct = 'HDX' AND d.Ma_Post = p.Ma_Post
+                OUTER APPLY (
+                    SELECT TOP 1 c.Ma_Kx, c.ma_mau, c.Ma_Mau_Nt
+                    FROM CT70HDX c WITH (NOLOCK)
+                    WHERE c.stt_rec = p.stt_rec
+                ) ct70
+                LEFT JOIN DmKx kx WITH (NOLOCK) ON ct70.Ma_Kx = kx.Ma_Kx
+                LEFT JOIN DmMauxe mau WITH (NOLOCK) ON ct70.ma_mau = mau.Ma_Mau
+                LEFT JOIN DmMauxe nt WITH (NOLOCK) ON ct70.Ma_Mau_Nt = nt.Ma_Mau
                 WHERE p.Ten_kh COLLATE SQL_Latin1_General_CP1_CI_AI LIKE {ph}
                   AND h.Ten_Hs COLLATE SQL_Latin1_General_CP1_CI_AI LIKE {ph}
                 ORDER BY p.ngay_ct DESC, p.so_ct DESC
@@ -3621,10 +3635,24 @@ def check_cyber_contract_status(params: dict = {}) -> dict:
                 SELECT TOP 1 
                     p.stt_rec, p.so_ct, p.Ma_Post, p.ngay_ct, p.Ten_kh, p.ong_ba,
                     p.Ma_Hs_H, ISNULL(h.Ten_Hs, '') AS ten_tvbh,
-                    ISNULL(d.Ten_Post, N'Chưa phân loại') AS ten_post
+                    ISNULL(d.Ten_Post, N'Chưa phân loại') AS ten_post,
+                    ISNULL(ct70.Ma_Kx, '') AS ma_kx,
+                    ISNULL(kx.Ten_Kx, ct70.Ma_Kx) AS ten_kx,
+                    ISNULL(ct70.ma_mau, '') AS ma_mau,
+                    ISNULL(mau.Ten_Mau, ct70.ma_mau) AS ten_mau,
+                    ISNULL(ct70.Ma_Mau_Nt, '') AS ma_mau_nt,
+                    ISNULL(nt.Ten_Mau, ct70.Ma_Mau_Nt) AS ten_mau_nt
                 FROM PHHDX p WITH (NOLOCK)
                 LEFT JOIN DmHs h WITH (NOLOCK) ON p.Ma_Hs_H = h.Ma_Hs
                 LEFT JOIN DmPost d WITH (NOLOCK) ON d.Ma_Ct = 'HDX' AND d.Ma_Post = p.Ma_Post
+                OUTER APPLY (
+                    SELECT TOP 1 c.Ma_Kx, c.ma_mau, c.Ma_Mau_Nt
+                    FROM CT70HDX c WITH (NOLOCK)
+                    WHERE c.stt_rec = p.stt_rec
+                ) ct70
+                LEFT JOIN DmKx kx WITH (NOLOCK) ON ct70.Ma_Kx = kx.Ma_Kx
+                LEFT JOIN DmMauxe mau WITH (NOLOCK) ON ct70.ma_mau = mau.Ma_Mau
+                LEFT JOIN DmMauxe nt WITH (NOLOCK) ON ct70.Ma_Mau_Nt = nt.Ma_Mau
                 WHERE p.Ten_kh COLLATE SQL_Latin1_General_CP1_CI_AI LIKE {ph}
                   AND p.Ma_TTCP_H = {ph}
                 ORDER BY p.ngay_ct DESC, p.so_ct DESC
@@ -3642,11 +3670,25 @@ def check_cyber_contract_status(params: dict = {}) -> dict:
                     p.stt_rec, p.so_ct, p.Ma_Post, p.ngay_ct, p.Ten_kh, p.ong_ba,
                     p.Ma_Hs_H, ISNULL(h.Ten_Hs, '') AS ten_tvbh,
                     ISNULL(d.Ten_Post, N'Chưa phân loại') AS ten_post,
-                    b.So_khung
+                    b.So_khung,
+                    ISNULL(ct70.Ma_Kx, '') AS ma_kx,
+                    ISNULL(kx.Ten_Kx, ct70.Ma_Kx) AS ten_kx,
+                    ISNULL(ct70.ma_mau, '') AS ma_mau,
+                    ISNULL(mau.Ten_Mau, ct70.ma_mau) AS ten_mau,
+                    ISNULL(ct70.Ma_Mau_Nt, '') AS ma_mau_nt,
+                    ISNULL(nt.Ten_Mau, ct70.Ma_Mau_Nt) AS ten_mau_nt
                 FROM BEXEPXE b WITH (NOLOCK)
                 JOIN PHHDX p WITH (NOLOCK) ON b.Ma_Hd = p.so_ct
                 LEFT JOIN DmHs h WITH (NOLOCK) ON p.Ma_Hs_H = h.Ma_Hs
                 LEFT JOIN DmPost d WITH (NOLOCK) ON d.Ma_Ct = 'HDX' AND d.Ma_Post = p.Ma_Post
+                OUTER APPLY (
+                    SELECT TOP 1 c.Ma_Kx, c.ma_mau, c.Ma_Mau_Nt
+                    FROM CT70HDX c WITH (NOLOCK)
+                    WHERE c.stt_rec = p.stt_rec
+                ) ct70
+                LEFT JOIN DmKx kx WITH (NOLOCK) ON ct70.Ma_Kx = kx.Ma_Kx
+                LEFT JOIN DmMauxe mau WITH (NOLOCK) ON ct70.ma_mau = mau.Ma_Mau
+                LEFT JOIN DmMauxe nt WITH (NOLOCK) ON ct70.Ma_Mau_Nt = nt.Ma_Mau
                 WHERE b.So_khung = {ph}
                 ORDER BY p.ngay_ct DESC
             """
@@ -3662,10 +3704,24 @@ def check_cyber_contract_status(params: dict = {}) -> dict:
                 SELECT TOP 1 
                     p.stt_rec, p.so_ct, p.Ma_Post, p.ngay_ct, p.Ten_kh, p.ong_ba,
                     p.Ma_Hs_H, ISNULL(h.Ten_Hs, '') AS ten_tvbh,
-                    ISNULL(d.Ten_Post, N'Chưa phân loại') AS ten_post
+                    ISNULL(d.Ten_Post, N'Chưa phân loại') AS ten_post,
+                    ISNULL(ct70.Ma_Kx, '') AS ma_kx,
+                    ISNULL(kx.Ten_Kx, ct70.Ma_Kx) AS ten_kx,
+                    ISNULL(ct70.ma_mau, '') AS ma_mau,
+                    ISNULL(mau.Ten_Mau, ct70.ma_mau) AS ten_mau,
+                    ISNULL(ct70.Ma_Mau_Nt, '') AS ma_mau_nt,
+                    ISNULL(nt.Ten_Mau, ct70.Ma_Mau_Nt) AS ten_mau_nt
                 FROM PHHDX p WITH (NOLOCK)
                 LEFT JOIN DmHs h WITH (NOLOCK) ON p.Ma_Hs_H = h.Ma_Hs
                 LEFT JOIN DmPost d WITH (NOLOCK) ON d.Ma_Ct = 'HDX' AND d.Ma_Post = p.Ma_Post
+                OUTER APPLY (
+                    SELECT TOP 1 c.Ma_Kx, c.ma_mau, c.Ma_Mau_Nt
+                    FROM CT70HDX c WITH (NOLOCK)
+                    WHERE c.stt_rec = p.stt_rec
+                ) ct70
+                LEFT JOIN DmKx kx WITH (NOLOCK) ON ct70.Ma_Kx = kx.Ma_Kx
+                LEFT JOIN DmMauxe mau WITH (NOLOCK) ON ct70.ma_mau = mau.Ma_Mau
+                LEFT JOIN DmMauxe nt WITH (NOLOCK) ON ct70.Ma_Mau_Nt = nt.Ma_Mau
                 WHERE p.so_ct = {ph} OR p.So_donhang = {ph}
                 ORDER BY p.ngay_ct DESC
             """
@@ -3690,6 +3746,13 @@ def check_cyber_contract_status(params: dict = {}) -> dict:
         ten_post = str(matched_contract.get('ten_post') or '').strip()
         ten_kh = str(matched_contract.get('Ten_kh') or '').strip()
         ten_tvbh = str(matched_contract.get('ten_tvbh') or '').strip()
+        ma_kx = str(matched_contract.get('ma_kx') or '').strip()
+        ten_kx = str(matched_contract.get('ten_kx') or '').strip()
+        ma_mau = str(matched_contract.get('ma_mau') or '').strip()
+        ten_mau = str(matched_contract.get('ten_mau') or '').strip()
+        ma_mau_nt = str(matched_contract.get('ma_mau_nt') or '').strip()
+        ten_mau_nt = str(matched_contract.get('ten_mau_nt') or '').strip()
+
         ngay_ct = matched_contract.get('ngay_ct')
         if ngay_ct and isinstance(ngay_ct, (datetime, date)):
             ngay_ct = ngay_ct.strftime('%Y-%m-%d')
@@ -3713,6 +3776,12 @@ def check_cyber_contract_status(params: dict = {}) -> dict:
             "ten_kh": ten_kh,
             "ten_tvbh": ten_tvbh,
             "ngay_ct": ngay_ct,
+            "ma_kx": ma_kx,
+            "ten_kx": ten_kx,
+            "ma_mau": ma_mau,
+            "ten_mau": ten_mau,
+            "ma_mau_nt": ma_mau_nt,
+            "ten_mau_nt": ten_mau_nt,
             "match_by": matched_contract.get('match_by')
         }
 

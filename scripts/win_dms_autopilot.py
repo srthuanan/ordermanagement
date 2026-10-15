@@ -253,12 +253,18 @@ def sync_data_via_browser(driver):
         return item[field] || "";
     }
 
-    function isOpenStatus(status) {
-        if (!status) return true;
-        var s = status.toLowerCase();
+    function isOpenStatus(item) {
+        if (!item) return false;
+        if (item.xvf_sapinvoicenumber || item.xvf_sapinvoicedate || item.xts_salesdate) return false;
+        if (item.xts_status === 7 || item.xts_status === 10) return false;
+        var status = (item["xts_status@OData.Community.Display.V1.FormattedValue"] || item["statuscode@OData.Community.Display.V1.FormattedValue"] || "").toLowerCase();
+        var blockedKeywords = ["hóa đơn", "invoiced", "hủy", "cancel", "void", "closed", "đã giao", "hoàn tất"];
+        for (var b = 0; b < blockedKeywords.length; b++) {
+            if (status.indexOf(blockedKeywords[b]) !== -1) return false;
+        }
         var openKeywords = ["mở", "open", "mới", "new", "draft", "nháp", "active", "hoạt động"];
         for (var i = 0; i < openKeywords.length; i++) {
-            if (s.indexOf(openKeywords[i]) !== -1) return true;
+            if (status.indexOf(openKeywords[i]) !== -1) return true;
         }
         return false;
     }
@@ -267,8 +273,7 @@ def sync_data_via_browser(driver):
     Xrm.WebApi.retrieveMultipleRecords("xts_newvehiclesalesorder", "?$filter=statecode eq 0").then(
         function success(result) {
             data.orders = result.entities.filter(function(item) {
-                var statusText = item["xts_status@OData.Community.Display.V1.FormattedValue"] || item["statuscode@OData.Community.Display.V1.FormattedValue"] || "";
-                return isOpenStatus(statusText);
+                return isOpenStatus(item);
             }).map(function(item) {
                 return {
                     new_vehicle_sales_order_id: item.xts_newvehiclesalesorderid || "",
@@ -278,7 +283,7 @@ def sync_data_via_browser(driver):
                     tu_van_ban_hang: getLookupName(item, "xts_salespersonid") || getLookupName(item, "ownerid") || "",
                     so_don_hang_ban: item.xts_newvehiclesalesordernumber || "",
                     so_bao_gia_xe: getLookupName(item, "xts_newvehiclesalesquoteid") || "",
-                    ngay_xuat_hoa_don: item.xvf_sapinvoicedate ? new Date(item.xvf_sapinvoicedate).toISOString().split('T')[0] : (item.xts_salesdate ? new Date(item.xts_salesdate).toISOString().split('T')[0] : (item.xts_deliverydate ? new Date(item.xts_deliverydate).toISOString().split('T')[0] : null)),
+                    ngay_xuat_hoa_don: null,
                     khach_hang_tiem_nang: getLookupName(item, "xts_potentialcustomerid") || item.xts_potentiallookupname || item.xts_potentialcustomerdescription || "",
                     promotion: getLookupName(item, "xvf_promotionid") || item.itv_promotiondetail || "",
                     ma_khach_hang: item.xts_customernumber || "",

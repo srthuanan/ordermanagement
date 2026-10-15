@@ -57,6 +57,9 @@ function _processSingleOrder(serviceKey, soDonHang, parentFolder = null) {
       logAction("Status Check Warning", `Không thể lấy trạng thái donhang: ${e.message}`);
     }
 
+    if (!currentStatus && record.trang_thai) {
+      currentStatus = String(record.trang_thai).toLowerCase().trim();
+    }
     if (!currentStatus && record.trang_thai_vc) {
       currentStatus = String(record.trang_thai_vc).toLowerCase().trim();
     }

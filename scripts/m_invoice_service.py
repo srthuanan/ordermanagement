@@ -427,6 +427,13 @@ def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
 
     requests.patch(f"{SUPABASE_URL}/rest/v1/yeucauxhd?so_don_hang=eq.{exact_order_no}", headers=headers, json={"ket_qua_gui_mail": mail_status}, timeout=10)
 
+    # 6. Tự động kích hoạt bốc file hóa đơn sang Google Drive
+    try:
+        gas_url = "https://script.google.com/macros/s/AKfycbwC_Xw8YcudogtxpPJztqjFdttcL4tgDaHIdgFWqGcnZ0M44oH6KVb-2r52OKPtLex0Fg/exec"
+        requests.post(gas_url, params={"action": "archiveOrderNow", "orderNumber": exact_order_no}, json={"action": "archiveOrderNow", "orderNumber": exact_order_no}, timeout=10)
+    except Exception as egas:
+        print(f"[M-Invoice Auto] Lỗi kích hoạt bốc Drive cho đơn {exact_order_no}: {egas}")
+
     return {
         "success": True,
         "status": "COMPLETED",

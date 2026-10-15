@@ -201,7 +201,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        const val = (name === 'ten_khach_hang' || name === 'ma_hd_cyber') ? value.toUpperCase() : value;
+        const val = (name === 'ten_khach_hang' || name === 'ma_hd_cyber' || name === 'so_don_hang') ? value.toUpperCase() : value;
         setFormData(prev => {
             const newState = { ...prev, [name]: val };
 
@@ -329,8 +329,9 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
             return; 
         }
         const pattern = new RegExp("^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$");
-        if (!pattern.test(formData.so_don_hang)) { showToast('Sai Định Dạng', 'Số đơn hàng không đúng.', 'warning', 4000); return; }
-        if (existingOrderNumbers.includes(formData.so_don_hang)) { showToast('Trùng Lặp', 'Số đơn hàng đã tồn tại.', 'error', 4000); return; }
+        if (!pattern.test(formData.so_don_hang)) { showToast('Sai Định Dạng', 'Số đơn hàng không đúng định dạng DMS (Nxxxxx-VSO-xx-xx-xxxx).', 'warning', 4000); return; }
+        if (existingOrderNumbers.includes(formData.so_don_hang)) { showToast('Trùng Lặp', 'Số đơn hàng đã tồn tại trên hệ thống.', 'error', 4000); return; }
+
         // [CHỐNG GIAN LẬN]: Chặn cứng khi mã DMS không khớp với 6 ký tự đầu SĐH
         if (initialVehicle && dmsWarning) { showToast('Không Hợp Lệ', 'Mã DMS xe không khớp với Số đơn hàng. Không thể tiếp tục.', 'error', 5000); return; }
         if (!chicFile) { showToast('Thiếu Chứng Từ', 'Vui lòng tải lên UNC.', 'warning', 3000); return; }
@@ -747,37 +748,38 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                                     </div>
                                                                 </div>
                                                             );
-                                                        })
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <InputGroup label="Số đơn hàng" htmlFor="so_don_hang" icon="fa-barcode" required>
-                                            <input
-                                                id="so_don_hang"
-                                                type="text"
-                                                name="so_don_hang"
-                                                value={formData.so_don_hang}
-                                                onChange={handleInputChange}
-                                                required
-                                                pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$"
-                                                title="Định dạng: Nxxxxx-XXX-yy-mm-zzzz"
-                                                onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Sai định dạng.')}
-                                                onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
-                                                className={`${inputClass} !py-2.5 ${dmsWarning ? 'border-red-400 focus:ring-red-100' : ''}`}
-                                                placeholder=""
-                                            />
-                                            {dmsWarning && (
-                                                <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-red-500 bg-red-50 p-2 rounded-lg border border-red-100 animate-fade-in">
-                                                    <i className="fas fa-exclamation-triangle"></i>
-                                                    {dmsWarning}
+                                                        }))}
+                                                    </div>
                                                 </div>
                                             )}
-                                        </InputGroup>
-                                    </div>
+                                        </div>
+
+                                        <div>
+                                            <InputGroup label="Số đơn hàng (VSO)" htmlFor="so_don_hang" icon="fa-barcode" required>
+                                                <input
+                                                    id="so_don_hang"
+                                                    type="text"
+                                                    name="so_don_hang"
+                                                    value={formData.so_don_hang}
+                                                    onChange={handleInputChange}
+                                                    required
+                                                    pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$"
+                                                    title="Định dạng: Nxxxxx-VSO-yy-mm-zzzz"
+                                                    onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Sai định dạng.')}
+                                                    onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
+                                                    className={`${inputClass} !py-2.5 font-mono uppercase ${
+                                                        dmsWarning ? 'border-red-400 focus:ring-red-100' : ''
+                                                    }`}
+                                                    placeholder="VD: N31923-VSO-26-10-xxxx"
+                                                />
+                                                {dmsWarning && (
+                                                    <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-red-500 bg-red-50 p-2 rounded-lg border border-red-100 animate-fade-in">
+                                                        <i className="fas fa-exclamation-triangle"></i>
+                                                        {dmsWarning}
+                                                    </div>
+                                                )}
+                                            </InputGroup>
+                                        </div>
 
                                     <div>
                                         <InputGroup label="Tên khách hàng" htmlFor="ten_khach_hang" icon="fa-user" required>

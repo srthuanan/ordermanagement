@@ -1,4 +1,5 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
+import { cyberFetch } from './cyberBridge';
 import { getStorageItem, mapOrderDbToUi, ApiResult, logAction, uploadToSupabase, getApi, postApi } from './baseService';
 import { createNotification } from './notificationService';
 import { Order } from '../../types';
@@ -81,6 +82,735 @@ export const fetchAllArchivedData = async (): Promise<ApiResult> => {
         return { status: 'SUCCESS', message: 'Fetched archived orders from Supabase', data: formattedData };
     } catch (err: any) {
         return { status: 'ERROR', message: err.message || "Không thể tải dữ liệu lưu trữ" };
+    }
+};
+
+export interface DmsVsoExpectedConfig {
+    dong_xe?: string;
+    phien_ban?: string;
+    ngoai_that?: string;
+    noi_that?: string;
+}
+
+export interface DmsVsoVerificationResult {
+    isValid: boolean;
+    reason?: string;
+    dmsRecord?: any;
+    details?: {
+        model?: string;
+        version?: string;
+        exterior?: string;
+        interior?: string;
+        status?: string;
+        customer?: string;
+        salesperson?: string;
+        invoiceDate?: string | null;
+    };
+    errorType?: 'model' | 'version' | 'exterior' | 'interior' | 'invoiced' | 'canceled' | 'not_found' | 'general';
+    expectedVal?: string;
+    dmsVal?: string;
+}
+
+const normalizeNoDiacritics = (str?: string) => (str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase()
+    .trim();
+
+const COLOR_CODE_MAP: Record<string, string[]> = {
+    // Mã màu nội thất VinFast thực tế từ DMS
+    'CI11': ['den', 'black'],
+    'CI1H': ['den', 'black'],
+    'CI1M': ['xam den', 'xam', 'den', 'grey', 'gray', 'black', 'ghi'],
+    'CI12': ['nau', 'brown', 'saddle'],
+    'CI18': ['nau', 'mocha', 'brown'],
+    'CI13': ['be', 'beige', 'xam', 'grey', 'gray', 'cotton', 'ghi'],
+
+    // Mã màu ngoại thất VinFast thực tế từ DMS
+    'CE11': ['den', 'black', 'jet'],
+    'CE18': ['trang', 'white', 'brahminy'],
+    '2418': ['trang', 'white'],
+    '1118': ['trang', 'white', 'den', 'black'],
+    'CE1V': ['xam', 'grey', 'gray', 'neptune', 'xi mang', 'cement'],
+    'CE14': ['xam', 'grey', 'gray'],
+    'CE12': ['bac', 'silver', 'desat'],
+    'CE17': ['bac', 'silver'],
+    'CE31': ['bac', 'silver'],
+    'CE1M': ['do', 'red'],
+    'CE2Q': ['do', 'red', 'ruby'],
+    '112Q': ['do', 'red'],
+    'CE15': ['xanh', 'blue', 'vinfast blue'],
+    'CE1N': ['xanh', 'blue', 'vinfast blue'],
+    'CE33': ['xanh', 'blue'],
+    '1833': ['xanh', 'blue', 'trang', 'white'],
+    '182G': ['xanh', 'blue', 'trang', 'white'],
+    'CE1H': ['reu', 'ocean', 'luc bao', 'deep ocean', 'xanh reu'],
+    'CE22': ['xanh la', 'green'],
+    'CE1W': ['xanh la', 'green'],
+    'CE1P': ['ngoc lam', 'mint', 'aqua'],
+    'CE19': ['cam', 'orange', 'sunset'],
+    '1132': ['cam', 'orange'],
+    'CE16': ['vang', 'yellow', 'gold', 'cat'],
+    'CE1U': ['vang', 'yellow', 'gold'],
+    '181U': ['vang', 'yellow'],
+    'CE21': ['hong', 'pink'],
+    'CE1X': ['hong', 'pink', 'tim'],
+    '1821': ['hong', 'pink'],
+    'CE2N': ['nau', 'brown']
+};
+
+const COLOR_SYNONYM_GROUPS: string[][] = [
+    ['trang', 'white', 'brahminy'],
+    ['den', 'black', 'jet'],
+    ['do', 'red', 'crimson'],
+    ['xam', 'grey', 'gray', 'neptune', 'xi mang', 'cement', 'ghi'],
+    ['bac', 'silver', 'desat'],
+    ['xanh duong', 'vinfast blue', 'blue', 'xanh'],
+    ['reu', 'deep ocean', 'ocean', 'luc bao'],
+    ['vang', 'yellow', 'gold', 'cat'],
+    ['hong', 'pink'],
+    ['aqua', 'mint', 'xanh la', 'xanh lam'],
+    ['nau', 'brown', 'saddle'],
+    ['be', 'beige', 'cotton']
+];
+
+// Map tên màu sang mã ngoại thất VinFast chuẩn
+const EXT_NAME_TO_CODE: Record<string, string> = {
+    'white': 'CE18', 'trang': 'CE18', 'brahminy': 'CE18',
+    'black': 'CE11', 'den': 'CE11', 'jet black': 'CE11',
+    'solar ruby': 'CE2Q', 'ruby': 'CE2Q', 'do ruby': 'CE2Q',
+    'crimson red': 'CE1M', 'red': 'CE1M', 'do': 'CE1M',
+    'neptune grey': 'CE14', 'zenith grey': 'CE1V', 'grey': 'CE1V', 'gray': 'CE1V', 'xam': 'CE1V',
+    'silver': 'CE17', 'desat silver': 'CE17', 'bac': 'CE17',
+    'vinfast blue': 'CE1N', 'blue': 'CE1N', 'xanh': 'CE1N', 'xanh duong': 'CE1N',
+    'deep ocean': 'CE1H', 'ocean': 'CE1H', 'xanh reu': 'CE1H',
+    'urban mint': 'CE1W', 'mint': 'CE1W', 'xanh la nhat': 'CE1W',
+    'ivy green': 'CE22', 'xanh la': 'CE22',
+    'yellow': 'CE1U', 'summer yellow': 'CE1U', 'vang': 'CE1U',
+    'sunset orange': 'CE19', 'vitality orange': 'CE32', 'cam': 'CE19',
+    'rose pink': 'CE21', 'pink': 'CE21', 'hong': 'CE21',
+    'iris berry': 'CE1X', 'purple': 'CE2O', 'tim': 'CE1X'
+};
+
+// Nhóm mã màu nội thất tương đương
+const INT_CODE_GROUPS: Record<string, string[]> = {
+    'CI11': ['CI11', 'CI1H'], // Đen
+    'CI1H': ['CI11', 'CI1H'],
+    'CI12': ['CI12', 'CI18'], // Nâu / Mocha Nâu
+    'CI18': ['CI12', 'CI18'],
+    'CI13': ['CI13'],         // Be
+    'CI1M': ['CI1M', 'CI13']  // Xám / Xám Đen
+};
+
+const INT_NAME_TO_CODE: Record<string, string> = {
+    'black': 'CI11', 'den': 'CI11', 'mau den': 'CI11',
+    'brown': 'CI12', 'nau': 'CI12', 'mau nau': 'CI12', 'mocha': 'CI18', 'mocha nau': 'CI18',
+    'beige': 'CI13', 'be': 'CI13', 'mau be': 'CI13', 'cotton': 'CI13',
+    'grey': 'CI1M', 'gray': 'CI1M', 'xam': 'CI1M', 'xam den': 'CI1M', 'ghi': 'CI1M'
+};
+
+/**
+ * Trích xuất Mã màu ngoại thất VinFast chuẩn (Ví dụ: CE18, CE11, CE2Q, 1118, 1833,...)
+ */
+export const getExteriorColorCode = (str: string): string => {
+    if (!str) return '';
+    const clean = str.trim().toUpperCase();
+
+    // 1. Mã trong ngoặc đơn: (CE18), (1118), (182G),...
+    const matchParen = clean.match(/\(([A-Z0-9]{4,6})\)/);
+    if (matchParen) return matchParen[1];
+
+    // 2. Chuỗi dạng CE... hoặc mã phối 4 ký tự (ví dụ 1118, 1833)
+    const matchCE = clean.match(/\b(CE[0-9A-Z]{2,3})\b/);
+    if (matchCE) return matchCE[1];
+
+    if (/^[0-9][0-9A-Z]{3}$/.test(clean)) return clean;
+    if (/^CE[0-9A-Z]{2,3}$/.test(clean)) return clean;
+
+    // 3. Quy đổi từ tên sang mã chuẩn
+    const norm = normalizeNoDiacritics(str);
+    for (const [key, code] of Object.entries(EXT_NAME_TO_CODE)) {
+        if (norm.includes(key)) return code;
+    }
+    return '';
+};
+
+/**
+ * Trích xuất Mã màu nội thất VinFast chuẩn (Ví dụ: CI11, CI12, CI18, CI1H, CI13, CI1M)
+ */
+export const getInteriorColorCode = (str: string): string => {
+    if (!str) return '';
+    const clean = str.trim().toUpperCase();
+
+    // 1. Mã trong ngoặc: (CI11), (CI12)...
+    const matchParen = clean.match(/\(([A-Z0-9]{4,6})\)/);
+    if (matchParen) return matchParen[1];
+
+    // 2. Chuỗi dạng CI...
+    const matchCI = clean.match(/\b(CI[0-9A-Z]{2,3})\b/);
+    if (matchCI) return matchCI[1];
+
+    if (/^CI[0-9A-Z]{2,3}$/.test(clean)) return clean;
+
+    // 3. Quy đổi từ tên sang mã chuẩn
+    const norm = normalizeNoDiacritics(str);
+    for (const [key, code] of Object.entries(INT_NAME_TO_CODE)) {
+        if (norm.includes(key)) return code;
+    }
+    return '';
+};
+
+/**
+ * So sánh 2 mã màu ngoại thất bằng mã
+ */
+export const compareExteriorColorCodes = (code1: string, code2: string): boolean => {
+    if (!code1 || !code2) return true;
+    return code1.toUpperCase().trim() === code2.toUpperCase().trim();
+};
+
+/**
+ * So sánh 2 mã màu nội thất bằng mã (có xét nhóm mã tương đương của VinFast)
+ */
+export const compareInteriorColorCodes = (code1: string, code2: string): boolean => {
+    if (!code1 || !code2) return true;
+    const c1 = code1.toUpperCase().trim();
+    const c2 = code2.toUpperCase().trim();
+    if (c1 === c2) return true;
+
+    const group1 = INT_CODE_GROUPS[c1];
+    if (group1 && group1.includes(c2)) return true;
+
+    return false;
+};
+
+/**
+ * Bảng tra cứu Mã Phiên Bản DMS VinFast (Cột ten_phien_ban trong donhanghienhuu)
+ */
+export const DMS_VERSION_CODE_MAP: Record<string, { model: string; version: string; name: string }> = {
+    // VF 3
+    'TI1BV': { model: 'VF3', version: 'PLUS', name: 'VF 3 Plus' },
+    'TI1AV': { model: 'VF3', version: 'PLUS', name: 'VF 3 Plus' },
+    'TI1CV': { model: 'VF3', version: 'ECO', name: 'VF 3 Eco' },
+    'TI1DV': { model: 'VF3', version: 'PLUS', name: 'VF 3 Facelift Plus' },
+    'TI1EV': { model: 'VF3', version: 'ECO', name: 'VF 3 Facelift Eco' },
+    'GI10V': { model: 'VF3', version: 'BASE', name: 'VF 3 Tiêu chuẩn' },
+    'GI1PV': { model: 'VF3', version: 'BASE', name: 'VF 3 Tiêu chuẩn' },
+
+    // VF 5
+    'GA1RV': { model: 'VF5', version: 'PLUS', name: 'VF 5 Plus' },
+    'GA12V': { model: 'VF5', version: 'PLUS', name: 'VF 5 Plus' },
+    'GA12P': { model: 'VF5', version: 'PLUS', name: 'VF 5 Plus' },
+    'GA1QV': { model: 'VF5', version: 'PLUS', name: 'VF 5 Plus' },
+    'GA1KV': { model: 'VF5', version: 'ECO', name: 'VF 5 Eco' },
+    'GA1XV': { model: 'VF5', version: 'PLUS', name: 'Herio Green' },
+
+    // VF 6
+    'HB14V': { model: 'VF6', version: 'PLUS', name: 'VF 6 Plus' },
+    'JB12V': { model: 'VF6', version: 'PLUS', name: 'VF 6 Plus' },
+    'CB12V': { model: 'VF6', version: 'PLUS', name: 'VF 6 Plus Pin CKD' },
+    'JB10V': { model: 'VF6', version: 'ECO', name: 'VF 6 Eco' },
+    'CB10V': { model: 'VF6', version: 'ECO', name: 'VF 6 Base Pin CKD' },
+
+    // VF 7
+    'GC12V': { model: 'VF7', version: 'PLUS', name: 'VF 7 Plus Trần Thép' },
+    'GC15V': { model: 'VF7', version: 'PLUS', name: 'VF 7 Plus Trần Kính' },
+    'GC12P': { model: 'VF7', version: 'PLUS', name: 'VF 7 Plus' },
+    'HC1BV': { model: 'VF7', version: 'ECO', name: 'VF 7 Eco' },
+    'HC1CV': { model: 'VF7', version: 'ECO', name: 'VF 7 Eco BCO3' },
+    'HC1DV': { model: 'VF7', version: 'ECO', name: 'VF 7 Eco Tiêu chuẩn' },
+    'HC1QV': { model: 'VF7', version: 'ECO', name: 'VF 7 Eco' },
+    'HC1RV': { model: 'VF7', version: 'ECO', name: 'VF 7 Eco' },
+
+    // VF 8
+    'ND32V': { model: 'VF8', version: 'PLUS', name: 'VF 8 Plus' },
+    'ND42V': { model: 'VF8', version: 'PLUS', name: 'VF 8 Plus Pin CATL' },
+    'HD14V': { model: 'VF8', version: 'PLUS', name: 'VF 8 Plus Limited' },
+    'ND12V': { model: 'VF8', version: 'PLUS', name: 'VF 8 Plus' },
+    'MD12V': { model: 'VF8', version: 'PLUS', name: 'VF 8 Plus' },
+    'ND31V': { model: 'VF8', version: 'ECO', name: 'VF 8 Eco' },
+    'ND41V': { model: 'VF8', version: 'ECO', name: 'VF 8 Eco Pin CATL' },
+    'HD13V': { model: 'VF8', version: 'ECO', name: 'VF 8 Eco Limited' },
+    'MD11V': { model: 'VF8', version: 'ECO', name: 'VF 8 Eco' },
+    'ND20V': { model: 'VF8', version: 'ECO', name: 'VF 8 Eco' },
+    'HC11V': { model: 'VF8', version: 'BASE', name: 'VF 8 Comfort SVOLT' },
+
+    // VF 9
+    'NE3MV': { model: 'VF9', version: 'PLUS', name: 'VF 9 Plus 7 Chỗ' },
+    'NE3NV': { model: 'VF9', version: 'PLUS', name: 'VF 9 Plus 6 Chỗ' },
+    'NE12V': { model: 'VF9', version: 'PLUS', name: 'VF 9 Plus' },
+    'NE16V': { model: 'VF9', version: 'PLUS', name: 'VF 9 Plus' },
+    'NE3LV': { model: 'VF9', version: 'ECO', name: 'VF 9 Eco 7 Chỗ' },
+    'NE11V': { model: 'VF9', version: 'ECO', name: 'VF 9 Eco' },
+    'NE15V': { model: 'VF9', version: 'ECO', name: 'VF 9 Eco' },
+
+    // EC Van
+    'TG10V': { model: 'ECVAN', version: 'BASE', name: 'EC Van Bản Tiêu Chuẩn' },
+    'TG11V': { model: 'ECVAN', version: 'PLUS', name: 'EC Van Bản Nâng Cao' },
+    'TG12V': { model: 'ECVAN', version: 'SLIDING', name: 'EC Van Cửa Trượt' },
+
+    // Limo Green / MPV 7
+    'SL1VV': { model: 'LIMO', version: 'LIMO', name: 'Limo Green' },
+    'SL1WV': { model: 'LIMO', version: 'MPV7', name: 'MPV 7 (VF Limo)' },
+
+    // VF 2 / Minio
+    'TH14V': { model: 'VF2', version: 'ECO', name: 'VF 2' },
+    'TH13V': { model: 'VF2', version: 'MINIO', name: 'Minio Green' },
+    'TH12V': { model: 'VF2', version: 'ECO', name: 'VF 2' },
+    'TH15V': { model: 'VF2', version: 'BCO2', name: 'VF 2 BCO2' },
+
+    // VF Wild
+    'HJ01V': { model: 'VFWILD', version: 'BASE', name: 'VF Wild Base Comfort' },
+    'HJ03V': { model: 'VFWILD', version: 'PLUS', name: 'VF Wild High Premium' },
+    // VF e34
+    'GK1DI': { model: 'VFE34', version: 'BASE', name: 'VF e34' }
+};
+
+/**
+ * Chuẩn hóa Dòng xe về Mã chuẩn (VF3, VF5, VF6, VF7, VF8, VF9, VFE34, MINIO, ECVAN, LIMO, VF2)
+ */
+export const getModelCode = (model: string): string => {
+    if (!model) return '';
+    const clean = model.trim().toUpperCase();
+    if (DMS_VERSION_CODE_MAP[clean]) {
+        return DMS_VERSION_CODE_MAP[clean].model;
+    }
+    const c = clean.replace(/[^A-Z0-9]/g, '');
+    if (c.includes('VF3') || c === 'VF3') return 'VF3';
+    if (c.includes('VF5') || c === 'VF5') return 'VF5';
+    if (c.includes('VF6') || c === 'VF6') return 'VF6';
+    if (c.includes('VF7') || c === 'VF7') return 'VF7';
+    if (c.includes('VF8') || c === 'VF8') return 'VF8';
+    if (c.includes('VF9') || c === 'VF9') return 'VF9';
+    if (c.includes('VF2') || c === 'VF2') return 'VF2';
+    if (c.includes('VFE34') || c.includes('E34')) return 'VFE34';
+    if (c.includes('MINIO')) return 'VF2';
+    if (c.includes('ECVAN') || c.includes('VAN')) return 'ECVAN';
+    if (c.includes('LIMO')) return 'LIMO';
+    return c;
+};
+
+/**
+ * Chuẩn hóa Phiên bản xe về Mã chuẩn (BASE, PLUS, ECO, STD, PREMIUM, SLIDING, MPV7, LIMO, MINIO, S)
+ */
+export const getVersionCode = (version: string): string => {
+    if (!version) return '';
+    const clean = version.trim().toUpperCase();
+
+    // 1. Nếu là mã 5 ký tự VinFast DMS trực tiếp (GA1RV, JB12V, TI1BV, TG10V,...)
+    if (DMS_VERSION_CODE_MAP[clean]) {
+        return DMS_VERSION_CODE_MAP[clean].version;
+    }
+
+    // 2. Nếu có mã trong ngoặc: ví dụ "Plus (GA1RV)"
+    const matchParen = clean.match(/\(([A-Z0-9]{4,6})\)/);
+    if (matchParen && DMS_VERSION_CODE_MAP[matchParen[1]]) {
+        return DMS_VERSION_CODE_MAP[matchParen[1]].version;
+    }
+
+    const norm = normalizeNoDiacritics(version).toUpperCase();
+    if (norm.includes('CUA TRUOT') || norm.includes('SLIDING')) return 'SLIDING';
+    if (norm.includes('PLUS') || norm.includes('NANG CAO') || norm.includes('METAL')) return 'PLUS';
+    if (norm.includes('ECO')) return 'ECO';
+    if (norm.includes('BASE') || norm.includes('TIEU CHUAN')) return 'BASE';
+    if (norm.includes('STANDARD') || norm.includes('STD')) return 'STD';
+    if (norm.includes('PREMIUM')) return 'PREMIUM';
+    if (norm.includes('MPV') || norm.includes('7 CHO')) return 'MPV7';
+    if (norm.includes('LIMO')) return 'LIMO';
+    if (norm.includes('MINIO')) return 'MINIO';
+    if (norm.includes('S')) return 'S';
+    return norm.replace(/[^A-Z0-9]/g, '');
+};
+
+/**
+ * Trích xuất mã màu chung (tương thích ngược)
+ */
+export const extractColorCode = (str: string): string => {
+    return getExteriorColorCode(str) || getInteriorColorCode(str);
+};
+
+export const checkColorMatch = (inputColor: string, dmsColorName: string, dmsColorCode?: string, isInterior = false): boolean => {
+    if (!inputColor) return true;
+
+    if (isInterior) {
+        const c1 = getInteriorColorCode(inputColor);
+        const c2 = dmsColorCode ? (getInteriorColorCode(dmsColorCode) || dmsColorCode.trim().toUpperCase()) : getInteriorColorCode(dmsColorName);
+        if (c1 && c2) {
+            return compareInteriorColorCodes(c1, c2);
+        }
+    } else {
+        const c1 = getExteriorColorCode(inputColor);
+        const c2 = dmsColorCode ? (getExteriorColorCode(dmsColorCode) || dmsColorCode.trim().toUpperCase()) : getExteriorColorCode(dmsColorName);
+        if (c1 && c2) {
+            return compareExteriorColorCodes(c1, c2);
+        }
+    }
+
+    const inputCode = extractColorCode(inputColor);
+    const dmsCode = (dmsColorCode ? extractColorCode(dmsColorCode) || dmsColorCode.trim().toUpperCase() : '') || extractColorCode(dmsColorName);
+
+    if (inputCode && dmsCode) {
+        return inputCode === dmsCode;
+    }
+
+    const c1 = normalizeNoDiacritics(inputColor);
+    const c2 = normalizeNoDiacritics(dmsColorName || '');
+
+    const activeCode = inputCode || dmsCode;
+    if (activeCode && COLOR_CODE_MAP[activeCode]) {
+        const mappedKeywords = COLOR_CODE_MAP[activeCode];
+        const textToCheck = inputCode ? c2 : c1;
+        if (mappedKeywords.some(kw => textToCheck.includes(kw))) {
+            return true;
+        }
+    }
+
+    if (c1 === c2 || c1.includes(c2) || c2.includes(c1)) return true;
+
+    for (const group of COLOR_SYNONYM_GROUPS) {
+        const has1 = group.some(g => c1.includes(g));
+        const has2 = group.some(g => c2.includes(g));
+        if (has1 && has2) return true;
+    }
+    return false;
+};
+
+export const checkModelMatch = (inputModel: string, dmsModelOrProduct: string, dmsVersion: string): boolean => {
+    if (!inputModel) return true;
+    const m1 = getModelCode(inputModel);
+    const m2 = getModelCode(dmsModelOrProduct) || getModelCode(dmsVersion);
+    if (m1 && m2) return m1 === m2;
+
+    const cleanInput = inputModel.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const cleanDms = `${dmsModelOrProduct} ${dmsVersion}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (cleanDms.includes(cleanInput)) return true;
+    const inputParts = normalizeNoDiacritics(inputModel).split(' ').filter(Boolean);
+    return inputParts.every(p => cleanDms.includes(p));
+};
+
+export const checkVersionMatch = (inputVersion: string, dmsVersion: string): boolean => {
+    if (!inputVersion || !dmsVersion) return true;
+    const v1 = getVersionCode(inputVersion);
+    const v2 = getVersionCode(dmsVersion);
+    if (v1 && v2) return v1 === v2;
+
+    const keyTerms = ['plus', 'eco', 'base', 's', 'standard', 'tieu chuan', 'nang cao', 'premium'];
+    const s1 = normalizeNoDiacritics(inputVersion);
+    const s2 = normalizeNoDiacritics(dmsVersion);
+    const v1Terms = keyTerms.filter(t => s1.includes(t));
+    const v2Terms = keyTerms.filter(t => s2.includes(t));
+
+    if (v1Terms.length > 0 && v2Terms.length > 0) {
+        const hasCommon = v1Terms.some(t => v2Terms.includes(t));
+        if (!hasCommon) return false;
+    }
+    return true;
+};
+
+export const verifyDmsVso = async (
+    soDonHang: string,
+    expected?: DmsVsoExpectedConfig,
+    forceLiveSync = false
+): Promise<DmsVsoVerificationResult> => {
+    const cleanNo = (soDonHang || '').trim().toUpperCase().replace(/-VS0-/g, '-VSO-');
+    if (!cleanNo) {
+        return { isValid: false, reason: 'Chưa nhập số đơn hàng VSO.' };
+    }
+
+    try {
+        let dmsRecord: any = null;
+
+        // Nếu ép buộc đồng bộ live (hoặc khi TVBH vừa sửa trên DMS và bấm nút Tra lại)
+        if (forceLiveSync) {
+            try {
+                const liveRes = await cyberFetch(`/api/dms/lookup-vso?vso=${encodeURIComponent(cleanNo)}`);
+                if (liveRes.ok) {
+                    const liveData = await liveRes.json();
+                    if (liveData && liveData.found) {
+                        if (!liveData.isOpen) {
+                            const rawStatus = (liveData.order?.trang_thai || liveData.reason || '').toLowerCase();
+                            const normStatus = normalizeNoDiacritics(rawStatus);
+                            const isCanceled = normStatus.includes('huy') || normStatus.includes('cancel') || normStatus.includes('void');
+                            const isInv = normStatus.includes('hoa don') || normStatus.includes('invoiced') || normStatus.includes('da xuat');
+                            return {
+                                isValid: false,
+                                reason: isCanceled 
+                                    ? 'Đơn VSO trên DMS đã bị Hủy. Đổi sang số VSO đúng (đang Mở) cho đơn hàng rồi bấm Tra lại.'
+                                    : isInv 
+                                    ? 'Đơn VSO trên DMS đã xuất Hóa đơn (Đơn đã đóng). Đổi sang số VSO đúng (đang Mở) cho đơn hàng rồi bấm Tra lại.'
+                                    : `VSO trên DMS đã ở trạng thái ${liveData.order?.trang_thai || 'Hóa đơn'}. Đổi sang số VSO đúng rồi bấm Tra lại.`,
+                                errorType: isCanceled ? 'canceled' : isInv ? 'invoiced' : 'general',
+                                dmsRecord: liveData.order
+                            };
+                        }
+                        dmsRecord = liveData.order;
+                    }
+                }
+            } catch (liveErr) {
+                console.warn('[verifyDmsVso] Ép tra cứu Live DMS thất bại, chuyển sang tra cứu database:', liveErr);
+            }
+        }
+
+        // 1. Nếu chưa có từ Live, kiểm tra trong bảng donhanghienhuu
+        if (!dmsRecord) {
+            const { data: dmsList, error } = await supabase
+                .from('donhanghienhuu')
+                .select('*')
+                .ilike('so_don_hang_ban', cleanNo)
+                .limit(1);
+
+            if (error) {
+                console.warn('[verifyDmsVso] Lỗi query donhanghienhuu:', error);
+            }
+
+            dmsRecord = dmsList && dmsList.length > 0 ? dmsList[0] : null;
+
+            if (!dmsRecord) {
+                const { data: fallbackList } = await supabase
+                    .from('donhanghienhuu')
+                    .select('*')
+                    .or(`so_don_hang_ban.ilike.%${cleanNo}%`)
+                    .limit(1);
+                if (fallbackList && fallbackList.length > 0) {
+                    dmsRecord = fallbackList[0];
+                }
+            }
+        }
+
+        // BƯỚC 1B: LIVE FALLBACK - Nếu chưa có trong donhanghienhuu, truy vấn trực tiếp từ DMS Dynamics
+        if (!dmsRecord) {
+            try {
+                const liveRes = await cyberFetch(`/api/dms/lookup-vso?vso=${encodeURIComponent(cleanNo)}`);
+                if (liveRes.ok) {
+                    const liveData = await liveRes.json();
+                    if (liveData && liveData.found) {
+                        if (!liveData.isOpen) {
+                            const rawStatus = (liveData.order?.trang_thai || liveData.reason || '').toLowerCase();
+                            const normStatus = normalizeNoDiacritics(rawStatus);
+                            const isCanceled = normStatus.includes('huy') || normStatus.includes('cancel') || normStatus.includes('void');
+                            const isInv = normStatus.includes('hoa don') || normStatus.includes('invoiced') || normStatus.includes('da xuat');
+                            return {
+                                isValid: false,
+                                reason: isCanceled 
+                                    ? 'Đơn VSO trên DMS đã bị Hủy. Đổi sang số VSO đúng (đang Mở) cho đơn hàng rồi bấm Tra lại.'
+                                    : isInv 
+                                    ? 'Đơn VSO trên DMS đã xuất Hóa đơn (Đơn đã đóng). Đổi sang số VSO đúng (đang Mở) cho đơn hàng rồi bấm Tra lại.'
+                                    : `VSO trên DMS đã ở trạng thái ${liveData.order?.trang_thai || 'Hóa đơn'}. Đổi sang số VSO đúng rồi bấm Tra lại.`,
+                                errorType: isCanceled ? 'canceled' : isInv ? 'invoiced' : 'general',
+                                dmsRecord: liveData.order
+                            };
+                        }
+                        dmsRecord = liveData.order;
+                    }
+                }
+            } catch (liveErr) {
+                console.warn('[verifyDmsVso] Live DMS lookup failed:', liveErr);
+            }
+        }
+
+        // ĐIỀU KIỆN 1: Phải có thật trên DMS
+        if (!dmsRecord) {
+            return {
+                isValid: false,
+                reason: `Không tìm thấy VSO ${cleanNo} trên DMS.`
+            };
+        }
+
+        const dmsModel = dmsRecord.mo_ta_san_pham || '';
+        const dmsVersion = dmsRecord.ten_phien_ban || '';
+        const dmsExterior = dmsRecord.mau_ngoai_that || '';
+        const dmsExteriorCode = dmsRecord.ma_mau_ngoai_that || '';
+        const dmsInterior = dmsRecord.mau_noi_that || '';
+        const dmsInteriorCode = dmsRecord.ma_mau_noi_that || '';
+        const dmsStatus = dmsRecord.trang_thai || 'Mở';
+        const dmsInvDate = dmsRecord.ngay_xuat_hoa_don || null;
+        const dmsCustomer = dmsRecord.khach_hang_tiem_nang || '';
+        const dmsSalesperson = dmsRecord.tu_van_ban_hang || '';
+
+        const formatDispColor = (colorName?: string, colorCode?: string) => {
+            const name = (colorName || '').trim();
+            const code = (colorCode || '').trim();
+            if (!code) return name;
+            if (!name) return code;
+            if (name.toUpperCase().includes(code.toUpperCase())) return name;
+            return `${name} (${code})`;
+        };
+
+        const formatDispVersion = (verCode?: string) => {
+            const code = (verCode || '').trim().toUpperCase();
+            if (!code) return '';
+            if (DMS_VERSION_CODE_MAP[code]) {
+                return `${code} (${DMS_VERSION_CODE_MAP[code].name})`;
+            }
+            return code;
+        };
+
+        const details = {
+            model: dmsModel,
+            version: formatDispVersion(dmsVersion),
+            exterior: formatDispColor(dmsExterior, dmsExteriorCode),
+            interior: formatDispColor(dmsInterior, dmsInteriorCode),
+            status: dmsStatus,
+            customer: dmsCustomer,
+            salesperson: dmsSalesperson,
+            invoiceDate: dmsInvDate
+        };
+
+        // ĐIỀU KIỆN 2: Trạng thái phải là Mở (Chưa xuất hóa đơn, chưa hủy)
+        if (dmsInvDate) {
+            return {
+                isValid: false,
+                reason: `VSO ${cleanNo} đã xuất hóa đơn trên DMS ngày ${dmsInvDate}. Chỉ được yêu cầu ghép xe cho đơn hàng có trạng thái MỞ.`,
+                dmsRecord,
+                details
+            };
+        }
+
+        const statusNorm = normalizeNoDiacritics(dmsStatus);
+        if (statusNorm.includes('huy') || statusNorm.includes('cancel') || statusNorm.includes('void')) {
+            return {
+                isValid: false,
+                reason: `Đơn VSO trên DMS đã bị HỦY. Đổi sang số VSO đúng (đang Mở) cho đơn hàng rồi bấm Tra lại.`,
+                errorType: 'canceled',
+                dmsRecord,
+                details
+            };
+        }
+
+        if (statusNorm.includes('hoa don') || statusNorm.includes('invoiced') || statusNorm.includes('da xuat')) {
+            return {
+                isValid: false,
+                reason: `Đơn VSO trên DMS đã xuất Hóa đơn. Đổi sang số VSO đúng (đang Mở) cho đơn hàng rồi bấm Tra lại.`,
+                errorType: 'invoiced',
+                dmsRecord,
+                details
+            };
+        }
+
+        // ĐIỀU KIỆN 3 & 4: Đối chiếu cấu hình xe SO SÁNH BẰNG MÃ
+        if (expected) {
+            // 3.1 Dòng xe (Model) - So sánh bằng mã dòng xe
+            if (expected.dong_xe) {
+                const expModelCode = getModelCode(expected.dong_xe);
+                const dmsModelCode = getModelCode(dmsModel) || getModelCode(dmsVersion);
+                if (expModelCode && dmsModelCode && expModelCode !== dmsModelCode) {
+                    const dispExpModel = expected.dong_xe || expModelCode;
+                    const dispDmsModel = dmsModel || dmsVersion || dmsModelCode;
+                    return {
+                        isValid: false,
+                        reason: `Lệch Dòng xe: Xe là [${dispExpModel}] ⇄ DMS là [${dispDmsModel}].`,
+                        errorType: 'model',
+                        expectedVal: dispExpModel,
+                        dmsVal: dispDmsModel,
+                        dmsRecord,
+                        details
+                    };
+                }
+            }
+
+            // 3.2 Phiên bản (Version) - So sánh bằng mã phiên bản
+            if (expected.phien_ban && dmsVersion) {
+                const expVerCode = getVersionCode(expected.phien_ban);
+                const dmsVerCode = getVersionCode(dmsVersion);
+                if (expVerCode && dmsVerCode && expVerCode !== dmsVerCode) {
+                    const dispDmsVer = formatDispVersion(dmsVersion);
+                    return {
+                        isValid: false,
+                        reason: `Lệch Phiên bản: Xe là [${expected.phien_ban}] ⇄ DMS là [${dispDmsVer}].`,
+                        errorType: 'version',
+                        expectedVal: expected.phien_ban,
+                        dmsVal: dispDmsVer,
+                        dmsRecord,
+                        details
+                    };
+                }
+            }
+
+            // 4.1 Màu ngoại thất - BẮT BUỘC SO SÁNH BẰNG MÃ MÀU NGOẠI THẤT
+            if (expected.ngoai_that) {
+                const expExtCode = getExteriorColorCode(expected.ngoai_that);
+                const dmsExtCode = dmsExteriorCode ? (getExteriorColorCode(dmsExteriorCode) || dmsExteriorCode.trim().toUpperCase()) : getExteriorColorCode(dmsExterior);
+                if (expExtCode && dmsExtCode) {
+                    if (!compareExteriorColorCodes(expExtCode, dmsExtCode)) {
+                        const dispDms = formatDispColor(dmsExterior, dmsExteriorCode);
+                        const expShow = expExtCode ? `${expected.ngoai_that} (${expExtCode})` : expected.ngoai_that;
+                        const dmsShow = dmsExtCode ? `${dispDms} (${dmsExtCode})` : dispDms;
+                        return {
+                            isValid: false,
+                            reason: `Lệch Ngoại thất: Xe là [${expShow}] ⇄ DMS là [${dmsShow}].`,
+                            errorType: 'exterior',
+                            expectedVal: expShow,
+                            dmsVal: dmsShow,
+                            dmsRecord,
+                            details
+                        };
+                    }
+                } else {
+                    const extOk = checkColorMatch(expected.ngoai_that, dmsExterior, dmsExteriorCode, false);
+                    if (!extOk) {
+                        const dispDms = formatDispColor(dmsExterior, dmsExteriorCode);
+                        return {
+                            isValid: false,
+                            reason: `Lệch Ngoại thất: Xe là [${expected.ngoai_that}] ⇄ DMS là [${dispDms}].`,
+                            errorType: 'exterior',
+                            expectedVal: expected.ngoai_that,
+                            dmsVal: dispDms,
+                            dmsRecord,
+                            details
+                        };
+                    }
+                }
+            }
+
+            // 4.2 Màu nội thất - BẮT BUỘC SO SÁNH BẰNG MÃ MÀU NỘI THẤT
+            if (expected.noi_that) {
+                const expIntCode = getInteriorColorCode(expected.noi_that);
+                const dmsIntCode = dmsInteriorCode ? (getInteriorColorCode(dmsInteriorCode) || dmsInteriorCode.trim().toUpperCase()) : getInteriorColorCode(dmsInterior);
+                if (expIntCode && dmsIntCode) {
+                    if (!compareInteriorColorCodes(expIntCode, dmsIntCode)) {
+                        const dispDms = formatDispColor(dmsInterior, dmsInteriorCode);
+                        const expShow = expIntCode ? `${expected.noi_that} (${expIntCode})` : expected.noi_that;
+                        const dmsShow = dmsIntCode ? `${dispDms} (${dmsIntCode})` : dispDms;
+                        return {
+                            isValid: false,
+                            reason: `Lệch Nội thất: Xe là [${expShow}] ⇄ DMS là [${dmsShow}].`,
+                            errorType: 'interior',
+                            expectedVal: expShow,
+                            dmsVal: dmsShow,
+                            dmsRecord,
+                            details
+                        };
+                    }
+                } else {
+                    const intOk = checkColorMatch(expected.noi_that, dmsInterior, dmsInteriorCode, true);
+                    if (!intOk) {
+                        const dispDms = formatDispColor(dmsInterior, dmsInteriorCode);
+                        return {
+                            isValid: false,
+                            reason: `Lệch Nội thất: Xe là [${expected.noi_that}] ⇄ DMS là [${dispDms}].`,
+                            errorType: 'interior',
+                            expectedVal: expected.noi_that,
+                            dmsVal: dispDms,
+                            dmsRecord,
+                            details
+                        };
+                    }
+                }
+            }
+        }
+
+        return {
+            isValid: true,
+            dmsRecord,
+            details
+        };
+    } catch (err: any) {
+        console.error('[verifyDmsVso] Exception:', err);
+        return {
+            isValid: true,
+            reason: `Cảnh báo kiểm tra DMS: ${err.message || 'Lỗi mạng'}`
+        };
     }
 };
 

@@ -154,6 +154,307 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const [cyberContractStatus, setCyberContractStatus] = useState<CheckCyberContractResult | null>(null);
     const [isCheckingCyberContract, setIsCheckingCyberContract] = useState(false);
 
+    // DMS Verification (Đối soát cấu hình VinFast DMS trước khi xuất hóa đơn)
+    const [dmsVerification, setDmsVerification] = useState<{
+        status: 'idle' | 'checking' | 'valid' | 'invalid';
+        message?: string;
+        details?: any;
+        errorType?: 'model' | 'version' | 'exterior' | 'interior' | 'invoiced' | 'canceled' | 'not_found' | 'general';
+        expectedVal?: string;
+        dmsVal?: string;
+    }>({ status: 'idle' });
+    const [isCheckingDms, setIsCheckingDms] = useState(false);
+
+    const expectedConfig = useMemo(() => {
+        const car = stockData?.find((v: any) => v.VIN === order.VIN);
+        return {
+            dong_xe: car?.['Dòng xe'] || order['Dòng xe'] || (order as any).dong_xe || '',
+            phien_ban: car?.['Phiên bản'] || order['Phiên bản'] || (order as any).phien_ban || '',
+            ngoai_that: car?.['Màu ngoại thất'] || car?.['Ngoại thất'] || order['Ngoại thất'] || (order as any).ngoai_that || '',
+            noi_that: car?.['Màu nội thất'] || car?.['Nội thất'] || order['Nội thất'] || (order as any).noi_that || '',
+        };
+    }, [stockData, order]);
+
+    const recheckDmsVerification = async () => {
+        const orderNo = order["Số đơn hàng"] || (order as any).so_don_hang;
+        if (!orderNo) {
+            setDmsVerification({ status: 'invalid', message: 'Đơn hàng chưa có Số đơn hàng (VSO).' });
+            return;
+        }
+
+        // TÌM XE THỰC TẾ TRONG KHO THEO SỐ VIN ĐÃ GHÉP
+        let car = stockData?.find((v: any) => v.VIN === order.VIN);
+        if (!car && order.VIN) {
+            try {
+                const { data: dbCar } = await supabase.from('khoxe').select('*').ilike('vin', order.VIN.trim()).maybeSingle();
+                if (dbCar) {
+                    car = {
+                        VIN: dbCar.vin,
+                        'Dòng xe': dbCar.dong_xe,
+                        'Phiên bản': dbCar.phien_ban,
+                        'Ngoại thất': dbCar.ngoai_that,
+                        'Nội thất': dbCar.noi_that,
+                        'Mã phiên bản': dbCar.ma_phien_ban,
+                        ma_phien_ban: dbCar.ma_phien_ban
+                    };
+                }
+            } catch (carErr) {
+                console.warn('[RequestInvoiceModal] Lỗi tìm xe khoxe:', carErr);
+            }
+        }
+
+        // BƯỚC 1: ĐỐI SOÁT CẤU HÌNH XE GHÉP (VIN) VỚI ĐƠN HÀNG KHÁCH ĐẶT (SO SÁNH BẰNG MÃ)
+        if (car && order.VIN) {
+            const carModel = car['Dòng xe'] || '';
+            const carVersion = car['Phiên bản'] || '';
+            const carExterior = car['Ngoại thất'] || car['Màu ngoại thất'] || '';
+            const carInterior = car['Nội thất'] || car['Màu nội thất'] || '';
+
+            const ordModel = order['Dòng xe'] || (order as any).dong_xe || '';
+            const ordVersion = order['Phiên bản'] || (order as any).phien_ban || '';
+            const ordExterior = order['Ngoại thất'] || (order as any).ngoai_that || '';
+            const ordInterior = order['Nội thất'] || (order as any).noi_that || '';
+
+            // 1.1 Kiểm tra Dòng xe bằng mã
+            const carModelCode = apiService.getModelCode(carModel);
+            const ordModelCode = apiService.getModelCode(ordModel);
+            if (carModelCode && ordModelCode && carModelCode !== ordModelCode) {
+                setDmsVerification({
+                    status: 'invalid',
+                    errorType: 'model',
+                    expectedVal: carModel || carModelCode,
+                    dmsVal: ordModel || ordModelCode,
+                    message: `Lệch Dòng xe: Xe ghép là [${carModel || carModelCode}] nhưng Đơn hàng yêu cầu [${ordModel || ordModelCode}].`
+                });
+                return;
+            }
+
+            // 1.2 Kiểm tra Phiên bản bằng mã
+            const carVerCode = apiService.getVersionCode(carVersion);
+            const ordVerCode = apiService.getVersionCode(ordVersion);
+            if (carVerCode && ordVerCode && carVerCode !== ordVerCode) {
+                setDmsVerification({
+                    status: 'invalid',
+                    errorType: 'version',
+                    expectedVal: carVersion || carVerCode,
+                    dmsVal: ordVersion || ordVerCode,
+                    message: `Lệch Phiên bản: Xe ghép là [${carVersion || carVerCode}] nhưng Đơn hàng yêu cầu [${ordVersion || ordVerCode}].`
+                });
+                return;
+            }
+
+            // 1.3 Kiểm tra Màu ngoại thất bằng MÃ (nếu không phải ghép linh hoạt)
+            const isFlex = order.is_flex_match || order.matched_via_flex;
+            if (ordExterior && carExterior && !isFlex) {
+                const carExtCode = apiService.getExteriorColorCode(carExterior);
+                const ordExtCode = apiService.getExteriorColorCode(ordExterior);
+                if (carExtCode && ordExtCode) {
+                    if (!apiService.compareExteriorColorCodes(carExtCode, ordExtCode)) {
+                        setDmsVerification({
+                            status: 'invalid',
+                            errorType: 'exterior',
+                            expectedVal: `${carExterior} (${carExtCode})`,
+                            dmsVal: `${ordExterior} (${ordExtCode})`,
+                            message: `Lệch Ngoại thất: Xe ghép là [${carExterior} (${carExtCode})] nhưng Đơn hàng yêu cầu [${ordExterior} (${ordExtCode})].`
+                        });
+                        return;
+                    }
+                } else if (!apiService.checkColorMatch(ordExterior, carExterior, undefined, false)) {
+                    setDmsVerification({
+                        status: 'invalid',
+                        errorType: 'exterior',
+                        expectedVal: carExterior,
+                        dmsVal: ordExterior,
+                        message: `Lệch Ngoại thất: Xe ghép là [${carExterior}] nhưng Đơn hàng yêu cầu [${ordExterior}].`
+                    });
+                    return;
+                }
+            }
+
+            // 1.4 Kiểm tra Màu nội thất bằng MÃ (nếu không phải ghép linh hoạt)
+            if (ordInterior && carInterior && !isFlex) {
+                const carIntCode = apiService.getInteriorColorCode(carInterior);
+                const ordIntCode = apiService.getInteriorColorCode(ordInterior);
+                if (carIntCode && ordIntCode) {
+                    if (!apiService.compareInteriorColorCodes(carIntCode, ordIntCode)) {
+                        setDmsVerification({
+                            status: 'invalid',
+                            errorType: 'interior',
+                            expectedVal: `${carInterior} (${carIntCode})`,
+                            dmsVal: `${ordInterior} (${ordIntCode})`,
+                            message: `Lệch Nội thất: Xe ghép là [${carInterior} (${carIntCode})] nhưng Đơn hàng yêu cầu [${ordInterior} (${ordIntCode})].`
+                        });
+                        return;
+                    }
+                } else if (!apiService.checkColorMatch(ordInterior, carInterior, undefined, true)) {
+                    setDmsVerification({
+                        status: 'invalid',
+                        errorType: 'interior',
+                        expectedVal: carInterior,
+                        dmsVal: ordInterior,
+                        message: `Lệch Nội thất: Xe ghép là [${carInterior}] nhưng Đơn hàng yêu cầu [${ordInterior}].`
+                    });
+                    return;
+                }
+            }
+        }
+
+        // BƯỚC 2: ĐỐI SOÁT CẤU HÌNH TRỰC TIẾP GIỮA VIN XE VÀ VSO TRÊN VINFAST DMS
+        setIsCheckingDms(true);
+        setDmsVerification({ status: 'checking', message: 'Đang đối soát cấu hình giữa VIN xe và VSO trên VinFast DMS...' });
+        try {
+            // Lấy cấu hình kiểm tra: Ưu tiên trực tiếp từ xe mang số VIN ghép
+            const targetConfig = car ? {
+                dong_xe: car['Dòng xe'] || car.dong_xe,
+                phien_ban: car['Phiên bản'] || car.phien_ban,
+                ngoai_that: car['Ngoại thất'] || car['Màu ngoại thất'] || car.ngoai_that,
+                noi_that: car['Nội thất'] || car['Màu nội thất'] || car.noi_that
+            } : expectedConfig;
+
+            const res = await apiService.verifyDmsVso(orderNo, targetConfig, true);
+            if (res.isValid) {
+                // Nếu có VIN, kiểm tra đối soát trực tiếp giữa VIN xe và DMS bằng mã
+                if (car && order.VIN) {
+                    const carModel = car['Dòng xe'] || '';
+                    const carVersion = car['Phiên bản'] || '';
+                    const carExterior = car['Ngoại thất'] || car['Màu ngoại thất'] || '';
+                    const carInterior = car['Nội thất'] || car['Màu nội thất'] || '';
+
+                    const dmsModel = res.dmsRecord?.mo_ta_san_pham || '';
+                    const dmsVersion = res.dmsRecord?.ten_phien_ban || '';
+                    const dmsExtCode = res.dmsRecord?.ma_mau_ngoai_that || apiService.getExteriorColorCode(res.dmsRecord?.mau_ngoai_that);
+                    const dmsIntCode = res.dmsRecord?.ma_mau_noi_that || apiService.getInteriorColorCode(res.dmsRecord?.mau_noi_that);
+
+                    const carModelCode = apiService.getModelCode(carModel);
+                    const dmsModelCode = apiService.getModelCode(dmsModel) || apiService.getModelCode(dmsVersion);
+                    if (carModelCode && dmsModelCode && carModelCode !== dmsModelCode) {
+                        const expShow = carModel || carModelCode;
+                        const dmsShow = dmsModel || dmsVersion || dmsModelCode;
+                        setDmsVerification({
+                            status: 'invalid',
+                            errorType: 'model',
+                            expectedVal: expShow,
+                            dmsVal: dmsShow,
+                            message: `Lệch Dòng xe: Xe là [${expShow}] ⇄ DMS là [${dmsShow}].`,
+                            details: res.details
+                        });
+                        return;
+                    }
+
+                    const carVerCode = (car.ma_phien_ban || car['Mã phiên bản'] || '').trim().toUpperCase();
+                    const dmsVerCode = (res.dmsRecord?.ten_phien_ban || res.dmsRecord?.ma_phien_ban || '').trim().toUpperCase();
+
+                    // ƯU TIÊN 1: SO SÁNH TRỰC TIẾP MÃ PHIÊN BẢN CỦA VIN XE VÀ DMS (VÍ DỤ GA1RV === GA1RV)
+                    if (carVerCode && dmsVerCode) {
+                        const isDirectMatch = carVerCode === dmsVerCode;
+                        const isGroupMatch = apiService.getVersionCode(carVerCode) === apiService.getVersionCode(dmsVerCode);
+                        if (!isDirectMatch && !isGroupMatch) {
+                            const dispCarVer = apiService.DMS_VERSION_CODE_MAP[carVerCode]?.name || carVersion || carVerCode;
+                            const dispDmsVer = res.details?.version || dmsVersion || dmsVerCode;
+                            setDmsVerification({
+                                status: 'invalid',
+                                errorType: 'version',
+                                expectedVal: dispCarVer,
+                                dmsVal: dispDmsVer,
+                                message: `Lệch Phiên bản: Xe là [${dispCarVer}] ⇄ DMS là [${dispDmsVer}].`,
+                                details: res.details
+                            });
+                            return;
+                        }
+                    } else {
+                        const carVerGroup = apiService.getVersionCode(carVersion);
+                        const dmsVerGroup = apiService.getVersionCode(dmsVersion);
+                        if (carVerGroup && dmsVerGroup && carVerGroup !== dmsVerGroup) {
+                            const dispDmsVer = res.details?.version || dmsVersion;
+                            setDmsVerification({
+                                status: 'invalid',
+                                errorType: 'version',
+                                expectedVal: carVersion,
+                                dmsVal: dispDmsVer,
+                                message: `Lệch Phiên bản: Xe là [${carVersion}] ⇄ DMS là [${dispDmsVer}].`,
+                                details: res.details
+                            });
+                            return;
+                        }
+                    }
+
+                    const carExtCode = apiService.getExteriorColorCode(carExterior);
+                    if (carExtCode && dmsExtCode && !apiService.compareExteriorColorCodes(carExtCode, dmsExtCode)) {
+                        const dispDmsExt = res.details?.exterior || dmsExtCode;
+                        const expShow = carExtCode ? `${carExterior} (${carExtCode})` : carExterior;
+                        const dmsShow = dmsExtCode ? `${dispDmsExt} (${dmsExtCode})` : dispDmsExt;
+                        setDmsVerification({
+                            status: 'invalid',
+                            errorType: 'exterior',
+                            expectedVal: expShow,
+                            dmsVal: dmsShow,
+                            message: `Lệch Ngoại thất: Xe là [${expShow}] ⇄ DMS là [${dmsShow}].`,
+                            details: res.details
+                        });
+                        return;
+                    }
+
+                    const carIntCode = apiService.getInteriorColorCode(carInterior);
+                    if (carIntCode && dmsIntCode && !apiService.compareInteriorColorCodes(carIntCode, dmsIntCode)) {
+                        const dispDmsInt = res.details?.interior || dmsIntCode;
+                        const expShow = carIntCode ? `${carInterior} (${carIntCode})` : carInterior;
+                        const dmsShow = dmsIntCode ? `${dispDmsInt} (${dmsIntCode})` : dispDmsInt;
+                        setDmsVerification({
+                            status: 'invalid',
+                            errorType: 'interior',
+                            expectedVal: expShow,
+                            dmsVal: dmsShow,
+                            message: `Lệch Nội thất: Xe là [${expShow}] ⇄ DMS là [${dmsShow}].`,
+                            details: res.details
+                        });
+                        return;
+                    }
+
+                    setDmsVerification({
+                        status: 'valid',
+                        message: `Khớp 100% cấu hình giữa VIN xe (${order.VIN}) và VSO (${orderNo}) trên DMS!`,
+                        details: res.details
+                    });
+                } else {
+                    setDmsVerification({
+                        status: 'valid',
+                        message: 'Khớp 100% giữa Đơn hàng và VSO trên DMS',
+                        details: res.details
+                    });
+                }
+            } else {
+                setDmsVerification({
+                    status: 'invalid',
+                    errorType: res.errorType || 'general',
+                    expectedVal: res.expectedVal,
+                    dmsVal: res.dmsVal,
+                    message: res.reason || 'Cấu hình xe không khớp với VSO trên VinFast DMS.',
+                    details: res.details
+                });
+            }
+        } catch (err: any) {
+            setDmsVerification({
+                status: 'invalid',
+                message: err.message || 'Lỗi khi kết nối hệ thống kiểm tra DMS.'
+            });
+        } finally {
+            setIsCheckingDms(false);
+        }
+    };
+
+    const checkedKeyRef = useRef<string>('');
+    const orderNoStr = (order?.["Số đơn hàng"] || (order as any)?.so_don_hang || '').trim();
+    const orderVinStr = (order?.VIN || '').trim();
+    const currentKey = `${orderNoStr}_${orderVinStr}`;
+
+    useEffect(() => {
+        if (!orderNoStr) return;
+        if (checkedKeyRef.current === currentKey) return;
+        checkedKeyRef.current = currentKey;
+        recheckDmsVerification();
+        recheckCyberContract();
+    }, [orderNoStr, orderVinStr]);
+
     const recheckCyberContract = async () => {
         setIsCheckingCyberContract(true);
         try {
@@ -203,15 +504,12 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             } catch (e) {
                 console.error("Lỗi tra cứu cọc tồn cho HĐ Cyber:", e);
             }
-
-            // Fallback: Tra cứu trực tiếp từ CyberSoft
-            recheckCyberContract();
         };
 
         if (order) {
             autoResolveCyberContract();
         }
-    }, [order]);
+    }, [order?.["Tên khách hàng"], order?.["Số đơn hàng"]]);
 
     useEffect(() => {
         if (step === 3 && !cyberContractStatus && !isCheckingCyberContract) {
@@ -431,14 +729,35 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const isCommissionValid = rawCommission === '' || (!isNaN(Number(rawCommission)) && Number(rawCommission) >= 0);
     const isVpointValid = rawVpoint === '' || (!isNaN(Number(rawVpoint)) && Number(rawVpoint) >= 0);
 
+    // Kiểm tra hợp lệ cấu hình DMS và CyberSoft (Chặn không cho tiếp tục nếu có lỗi)
+    const car = stockData?.find((v: any) => v.VIN === order.VIN);
+    const carExtCode = car ? (apiService.getExteriorColorCode(car['Ngoại thất'] || car['Màu ngoại thất'] || '') || (car as any).ma_mau) : '';
+    const carIntCode = car ? (apiService.getInteriorColorCode(car['Nội thất'] || car['Màu nội thất'] || '') || (car as any).ma_noi_that) : '';
+    const carModelCode = car ? apiService.getModelCode(car['Dòng xe'] || '') : '';
+
+    const cyberExtCode = (cyberContractStatus?.ma_mau || '').trim().toUpperCase();
+    const cyberIntCode = (cyberContractStatus?.ma_mau_nt || '').trim().toUpperCase();
+    const cyberModelCode = apiService.getModelCode(cyberContractStatus?.ten_kx || cyberContractStatus?.ma_kx || '');
+
+    const hasCyberMismatch = Boolean(car && cyberContractStatus?.found && (
+        (carModelCode && cyberModelCode && carModelCode !== cyberModelCode) ||
+        (carExtCode && cyberExtCode && !apiService.compareExteriorColorCodes(carExtCode, cyberExtCode)) ||
+        (carIntCode && cyberIntCode && !apiService.compareInteriorColorCodes(carIntCode, cyberIntCode))
+    ));
+
+    const isCyberContractValid = Boolean(cyberContractStatus && cyberContractStatus.is_approved && !hasCyberMismatch);
+    const isDmsValid = dmsVerification.status !== 'invalid';
+    const isVerificationBlocked = !isDmsValid || hasCyberMismatch || (cyberContractStatus && !cyberContractStatus.is_approved);
+
     const isStep1Valid = policy.length > 0 && 
         isCommissionValid && 
         isVpointValid && 
         (!isGasToElectricPolicy || (xeXangVin.trim() !== '' && xeXangHang.trim() !== '' && xeXangModel.trim() !== '' && !vinCheckError)) && 
-        (!isVinFastGasCarAppreciationPolicy || maVc.trim() !== '');
+        (!isVinFastGasCarAppreciationPolicy || maVc.trim() !== '') &&
+        !isVerificationBlocked;
     const isStep2Valid = Boolean(contractFile && proposalFile);
     const isStep3Valid = vinClubConfirmed;
-    const isFormValid = isStep1Valid && isStep2Valid && isStep3Valid;
+    const isFormValid = isStep1Valid && isStep2Valid && isStep3Valid && !isVerificationBlocked;
 
     useEffect(() => {
         const savedData = sessionStorage.getItem(`invoice_draft_${order["Số đơn hàng"]}`);
@@ -585,7 +904,17 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
 
     const handleSubmit = async () => {
         if (isSubmittingRef.current || isValidatingContract) return;
-        
+
+        // 1. Kiểm tra đối soát cấu hình xe trên hệ thống VinFast DMS
+        if (dmsVerification.status === 'invalid') {
+            showToast('Lỗi Đối Soát DMS', dmsVerification.message || 'Cấu hình xe không khớp với VSO trên VinFast DMS.', 'error', 10000);
+            return;
+        }
+        if (dmsVerification.status === 'checking' || isCheckingDms) {
+            showToast('Đang Kiểm Tra DMS', 'Hệ thống đang đối soát cấu hình xe trên VinFast DMS, vui lòng đợi trong giây lát...', 'warning', 4000);
+            return;
+        }
+
         if (!isFormValid || !contractFile || !proposalFile) {
             showToast('Thiếu Thông Tin', "Vui lòng hoàn thành tất cả các bước.", 'warning');
             return;
@@ -622,9 +951,38 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             }
         }
 
-        // Nếu hợp đồng chưa duyệt (Ma_Post == '2', '1', hoặc chưa tìm thấy): Hiển thị modal cảnh báo xác nhận cho TVBH
+        // Kiểm tra đối soát cấu hình Mã màu ngoại thất, nội thất và dòng xe giữa HĐ CyberSoft và Xe ghép
+        if (currentStatus && currentStatus.found) {
+            const car = stockData?.find((v: any) => v.VIN === order.VIN);
+            const carExtCode = car ? (apiService.getExteriorColorCode(car['Ngoại thất'] || car['Màu ngoại thất'] || '') || (car as any).ma_mau) : '';
+            const carIntCode = car ? (apiService.getInteriorColorCode(car['Nội thất'] || car['Màu nội thất'] || '') || (car as any).ma_noi_that) : '';
+            const carModelCode = car ? apiService.getModelCode(car['Dòng xe'] || '') : '';
+
+            const cyberExtCode = (currentStatus.ma_mau || '').trim().toUpperCase();
+            const cyberIntCode = (currentStatus.ma_mau_nt || '').trim().toUpperCase();
+            const cyberModelCode = apiService.getModelCode(currentStatus.ten_kx || currentStatus.ma_kx || '');
+
+            if (carModelCode && cyberModelCode && carModelCode !== cyberModelCode) {
+                showToast('Lệch dòng xe với Cyber', `Xe ghép (${order.VIN}) là [${carModelCode}] nhưng HĐ Cyber là [${cyberModelCode} - ${currentStatus.ten_kx || currentStatus.ma_kx}].`, 'error');
+                return;
+            }
+            if (carExtCode && cyberExtCode && !apiService.compareExteriorColorCodes(carExtCode, cyberExtCode)) {
+                showToast('Lệch màu ngoại thất với Cyber', `Xe ghép mang mã [${carExtCode}] nhưng HĐ Cyber mang mã [${cyberExtCode} - ${currentStatus.ten_mau || cyberExtCode}].`, 'error');
+                return;
+            }
+            if (carIntCode && cyberIntCode && !apiService.compareInteriorColorCodes(carIntCode, cyberIntCode)) {
+                showToast('Lệch màu nội thất với Cyber', `Xe ghép mang mã [${carIntCode}] nhưng HĐ Cyber mang mã [${cyberIntCode} - ${currentStatus.ten_mau_nt || cyberIntCode}].`, 'error');
+                return;
+            }
+        }
+
+        // Nếu hợp đồng chưa duyệt: Chặn hoàn toàn không cho xuất hóa đơn
         if (currentStatus && !currentStatus.is_approved) {
-            setContractWarning(currentStatus);
+            showToast(
+                'Hợp đồng chưa được duyệt', 
+                `Hợp đồng ${currentStatus.so_ct || ''} hiện ở trạng thái '${currentStatus.ten_post || 'Chờ duyệt'}'. Vui lòng liên hệ Quản lý/Giám đốc duyệt hợp đồng trước khi xuất hóa đơn.`, 
+                'error'
+            );
             return;
         }
 
@@ -686,98 +1044,85 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     }
 
     const renderCyberContractStatusCard = () => {
-        if (isCheckingCyberContract) {
-            return (
-                <div className="relative p-3.5 rounded-xl border-2 border-blue-200 bg-blue-50/50 flex items-center justify-between shadow-2xs h-full min-h-[58px]">
-                    <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0 animate-spin">
-                            <i className="fas fa-circle-notch text-xs"></i>
-                        </div>
-                        <div className="min-w-0">
-                            <p className="font-bold text-blue-900 uppercase tracking-wider text-[11px]">Đang kiểm tra hợp đồng...</p>
-                            <p className="text-[9px] text-blue-600 truncate">
-                                KH: {order["Tên khách hàng"] || 'N/A'} - TVBH: {order["Tên tư vấn bán hàng"] || 'N/A'}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
+        // Tự chạy ngầm hoàn toàn - Không hiển thị loading hay khung chờ
         if (!cyberContractStatus) {
-            return (
-                <div 
-                    onClick={recheckCyberContract}
-                    className="relative p-3.5 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/60 hover:bg-slate-100/60 cursor-pointer flex items-center justify-between transition-colors shadow-2xs group h-full min-h-[58px]"
-                >
-                    <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center text-slate-400 group-hover:text-blue-600 flex-shrink-0 transition-colors">
-                            <i className="fas fa-shield-halved text-xs"></i>
-                        </div>
-                        <div className="min-w-0">
-                            <p className="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Kiểm tra hợp đồng</p>
-                            <p className="text-[9px] text-slate-400 truncate">Nhấn để đối soát trạng thái phê duyệt hợp đồng</p>
-                        </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-blue-600 group-hover:underline flex items-center gap-1 flex-shrink-0">
-                        <i className="fas fa-search text-[9px]"></i> Kiểm tra
-                    </span>
-                </div>
-            );
+            return null;
         }
 
-        if (cyberContractStatus.is_approved) {
+        // 1. Kiểm tra đối soát cấu hình Mã màu ngoại thất, nội thất và dòng xe giữa HĐ CyberSoft và Xe ghép
+        const car = stockData?.find((v: any) => v.VIN === order.VIN);
+        const carExtCode = car ? (apiService.getExteriorColorCode(car['Ngoại thất'] || car['Màu ngoại thất'] || '') || (car as any).ma_mau) : '';
+        const carIntCode = car ? (apiService.getInteriorColorCode(car['Nội thất'] || car['Màu nội thất'] || '') || (car as any).ma_noi_that) : '';
+        const carModelCode = car ? apiService.getModelCode(car['Dòng xe'] || '') : '';
+
+        const cyberExtCode = (cyberContractStatus.ma_mau || '').trim().toUpperCase();
+        const cyberIntCode = (cyberContractStatus.ma_mau_nt || '').trim().toUpperCase();
+        const cyberModelCode = apiService.getModelCode(cyberContractStatus.ten_kx || cyberContractStatus.ma_kx || '');
+
+        let configTitle = '';
+        let configGuide = '';
+        if (car && cyberContractStatus.found) {
+            if (carModelCode && cyberModelCode && carModelCode !== cyberModelCode) {
+                const expShow = carModelCode || car['Dòng xe'];
+                const cybShow = cyberModelCode || cyberContractStatus.ten_kx;
+                configTitle = `Lệch Dòng xe: Xe [${expShow}] ⇄ Cyber [${cybShow}]`;
+                configGuide = `Sửa dòng xe trên Cyber thành [${expShow}] rồi bấm Tra lại.`;
+            } else if (carExtCode && cyberExtCode && !apiService.compareExteriorColorCodes(carExtCode, cyberExtCode)) {
+                configTitle = `Lệch Ngoại thất: Xe [${carExtCode}] ⇄ Cyber [${cyberExtCode}]`;
+                configGuide = `Sửa màu trên Cyber thành [${carExtCode}] rồi bấm Tra lại.`;
+            } else if (carIntCode && cyberIntCode && !apiService.compareInteriorColorCodes(carIntCode, cyberIntCode)) {
+                configTitle = `Lệch Nội thất: Xe [${carIntCode}] ⇄ Cyber [${cyberIntCode}]`;
+                configGuide = `Sửa màu trên Cyber thành [${carIntCode}] rồi bấm Tra lại.`;
+            }
+        }
+
+        // Trường hợp lệch mã cấu hình với HĐ Cyber
+        if (configTitle) {
             return (
-                <div className="relative p-3.5 rounded-xl border-2 border-emerald-300 bg-emerald-50/70 flex items-center justify-between shadow-2xs h-full min-h-[58px]">
-                    <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-600 flex-shrink-0">
-                            <i className="fas fa-check-double text-xs"></i>
-                        </div>
-                        <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                                <span className="font-black text-emerald-950 uppercase tracking-wider text-[11px]">Hợp đồng đã được duyệt</span>
-                                <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-200 text-emerald-900 border border-emerald-300">
-                                    {cyberContractStatus.ten_post || 'Đã duyệt'}
-                                </span>
-                            </div>
-                            <p className="text-[9px] text-emerald-700 font-medium truncate mt-0.5">
-                                Số HĐ: <strong className="font-mono">{cyberContractStatus.so_ct || 'N/A'}</strong> (TVBH: {cyberContractStatus.ten_tvbh || order["Tên tư vấn bán hàng"]})
+                <div className="relative p-2 px-3 rounded-xl border border-rose-300 bg-rose-50/95 flex items-center justify-between gap-2.5 shadow-2xs">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <i className="fas fa-triangle-exclamation text-rose-600 text-xs flex-shrink-0"></i>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-bold text-rose-950 truncate">
+                                {configTitle}
+                            </p>
+                            <p className="text-[10px] text-rose-700 truncate">
+                                {configGuide}
                             </p>
                         </div>
                     </div>
                     <button 
                         type="button" 
                         onClick={(e) => { e.stopPropagation(); recheckCyberContract(); }} 
-                        title="Kiểm tra lại trạng thái hợp đồng"
-                        className="p-1.5 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-100 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                        title="Kiểm tra lại hợp đồng Cyber"
+                        className="flex-shrink-0 px-2 py-0.5 rounded-lg bg-white hover:bg-rose-100 text-rose-800 border border-rose-300 text-[9.5px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
                     >
-                        <i className="fas fa-arrows-rotate text-xs"></i>
+                        <i className={`fas fa-arrows-rotate text-[8px] ${isCheckingCyberContract ? 'animate-spin' : ''}`}></i>
+                        <span>Tra lại</span>
                     </button>
                 </div>
             );
         }
 
-        // Trường hợp chưa duyệt hoặc chưa có HĐ: Cảnh báo nổi bật
+        // Nếu hợp đồng đã duyệt và KHÔNG có lỗi cấu hình: Ẩn đi để giao diện gọn gàng
+        if (cyberContractStatus.is_approved) {
+            return null;
+        }
+
+        // Trường hợp chưa duyệt hoặc chưa có HĐ: Cảnh báo ngắn gọn
+        const unapprovedTitle = cyberContractStatus.found ? 'HĐ Cyber chưa duyệt' : 'Chưa có HĐ trên Cyber';
+        const unapprovedGuide = cyberContractStatus.found ? 'Duyệt HĐ trên Cyber rồi bấm Tra lại.' : 'Tạo HĐ trên Cyber rồi bấm Tra lại.';
+
         return (
-            <div className="relative p-3 rounded-xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50/70 shadow-2xs flex items-center justify-between animate-fade-in h-full min-h-[58px]">
-                <div className="flex items-start gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-600 flex-shrink-0 shadow-inner mt-0.5">
-                        <i className="fas fa-triangle-exclamation text-sm animate-bounce"></i>
-                    </div>
-                    <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="font-black text-amber-950 uppercase tracking-tight text-[11px]">
-                                Cảnh báo: Hợp đồng chưa được duyệt
-                            </span>
-                            <span className="px-1.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider bg-amber-200 text-amber-900 border border-amber-400">
-                                {cyberContractStatus.ten_post || (cyberContractStatus.found ? 'Chờ duyệt' : 'Chưa có HĐ')}
-                            </span>
-                        </div>
-                        <p className="text-[10px] text-amber-900 font-bold mt-0.5 truncate">
-                            {cyberContractStatus.so_ct ? `Số HĐ: ${cyberContractStatus.so_ct}` : 'Chưa tìm thấy hợp đồng trên hệ thống'}
+            <div className="relative p-2 px-3 rounded-xl border border-amber-300 bg-amber-50/95 flex items-center justify-between gap-2.5 shadow-2xs">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <i className="fas fa-clock text-amber-600 text-xs flex-shrink-0"></i>
+                    <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-bold text-amber-950 truncate">
+                            {unapprovedTitle}
                         </p>
-                        <p className="text-[9px] text-amber-700 leading-tight">
-                            Vui lòng liên hệ Giám đốc để duyệt hợp đồng trước khi gửi XHĐ.
+                        <p className="text-[10px] text-amber-700 truncate">
+                            {unapprovedGuide}
                         </p>
                     </div>
                 </div>
@@ -785,13 +1130,94 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     type="button" 
                     onClick={(e) => { e.stopPropagation(); recheckCyberContract(); }} 
                     title="Kiểm tra lại trạng thái hợp đồng"
-                    className="flex-shrink-0 px-2.5 py-1.5 rounded-lg bg-white hover:bg-amber-100/60 text-amber-800 border border-amber-300 text-[10px] font-bold shadow-xs hover:shadow-sm transition-all flex items-center gap-1 cursor-pointer ml-2"
+                    className="flex-shrink-0 px-2 py-0.5 rounded-lg bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 text-[9.5px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
                 >
-                    <i className="fas fa-arrows-rotate text-[9px]"></i>
+                    <i className={`fas fa-arrows-rotate text-[8px] ${isCheckingCyberContract ? 'animate-spin' : ''}`}></i>
                     <span>Tra lại</span>
                 </button>
             </div>
         );
+    };
+
+    const renderDmsVerificationCard = () => {
+        // Chỉ ẩn khi cấu hình DMS đã khớp hoàn toàn hoặc chưa có thông tin
+        if (dmsVerification.status === 'valid' || (dmsVerification.status === 'idle' && !isCheckingDms)) {
+            return null;
+        }
+
+        if (dmsVerification.status === 'invalid') {
+            const raw = (dmsVerification.message || '').trim();
+            const norm = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+
+            let title = 'Lỗi cấu hình DMS';
+            let guide = 'Kiểm tra lại trên DMS rồi bấm Tra lại.';
+
+            const errorType = dmsVerification.errorType;
+            const expectedVal = dmsVerification.expectedVal;
+            const dmsVal = dmsVerification.dmsVal;
+
+            // Rút gọn tối đa thông điệp cho từng lỗi
+            if (errorType === 'canceled' || norm.includes('huy') || norm.includes('cancel') || norm.includes('void')) {
+                title = 'VSO trên DMS đã bị Hủy';
+                guide = 'Đổi số VSO đang Mở rồi bấm Tra lại.';
+            } else if (errorType === 'invoiced' || norm.includes('hoa don') || norm.includes('invoiced') || norm.includes('da xuat')) {
+                title = 'VSO trên DMS đã xuất Hóa đơn';
+                guide = 'Đổi số VSO đang Mở rồi bấm Tra lại.';
+            } else if (errorType === 'not_found' || norm.includes('khong tim thay')) {
+                title = 'Không tìm thấy VSO trên DMS';
+                guide = 'Đổi số VSO đang Mở rồi bấm Tra lại.';
+            } else if (errorType === 'exterior' || norm.includes('ngoai that')) {
+                const exp = apiService.getExteriorColorCode(expectedVal || '') || expectedVal || '';
+                const dms = apiService.getExteriorColorCode(dmsVal || '') || dmsVal || '';
+                title = `Lệch Ngoại thất: Xe [${exp}] ⇄ DMS [${dms}]`;
+                guide = `Sửa màu trên DMS thành [${exp}] rồi bấm Tra lại.`;
+            } else if (errorType === 'interior' || norm.includes('noi that')) {
+                const exp = apiService.getInteriorColorCode(expectedVal || '') || expectedVal || '';
+                const dms = apiService.getInteriorColorCode(dmsVal || '') || dmsVal || '';
+                title = `Lệch Nội thất: Xe [${exp}] ⇄ DMS [${dms}]`;
+                guide = `Sửa màu trên DMS thành [${exp}] rồi bấm Tra lại.`;
+            } else if (errorType === 'model' || norm.includes('dong xe') || norm.includes('model')) {
+                const exp = apiService.getModelCode(expectedVal || '') || expectedVal || '';
+                const dms = apiService.getModelCode(dmsVal || '') || dmsVal || '';
+                title = `Lệch Dòng xe: Xe [${exp}] ⇄ DMS [${dms}]`;
+                guide = `Sửa dòng xe trên DMS thành [${exp}] rồi bấm Tra lại.`;
+            } else if (errorType === 'version' || norm.includes('phien ban') || norm.includes('version')) {
+                const exp = apiService.getVersionCode(expectedVal || '') || expectedVal || '';
+                const dms = apiService.getVersionCode(dmsVal || '') || dmsVal || '';
+                title = `Lệch Phiên bản: Xe [${exp}] ⇄ DMS [${dms}]`;
+                guide = `Sửa phiên bản trên DMS thành [${exp}] rồi bấm Tra lại.`;
+            } else if (raw) {
+                title = 'Cấu hình chưa khớp DMS';
+                guide = 'Kiểm tra lại trên DMS rồi bấm Tra lại.';
+            }
+
+            return (
+                <div className="relative p-2 px-3 rounded-xl border border-rose-300 bg-rose-50/95 flex items-center justify-between gap-2.5 shadow-2xs">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <i className="fas fa-triangle-exclamation text-rose-600 text-xs flex-shrink-0"></i>
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-bold text-rose-950 truncate">
+                                {title}
+                            </p>
+                            <p className="text-[10px] text-rose-700 truncate">
+                                {guide}
+                            </p>
+                        </div>
+                    </div>
+                    <button 
+                        type="button" 
+                        onClick={(e) => { e.stopPropagation(); recheckDmsVerification(); }} 
+                        title="Kiểm tra lại trạng thái DMS"
+                        className="flex-shrink-0 px-2 py-0.5 rounded-lg bg-white hover:bg-rose-100 text-rose-800 border border-rose-300 text-[9.5px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
+                    >
+                        <i className={`fas fa-arrows-rotate text-[8px] ${isCheckingDms ? 'animate-spin' : ''}`}></i>
+                        <span>Tra lại</span>
+                    </button>
+                </div>
+            );
+        }
+
+        return null;
     };
 
     // Shared inner content (header + steps + form)
@@ -885,6 +1311,19 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                     </div>
                                 </div>
                             </div>
+
+                            {/* BARS: KIỂM TRA DUYỆT HĐ CYBER & ĐỐI SOÁT CẤU HÌNH VINFAST DMS (CHỈ HIỆN KHI CÓ LỖI HOẶC ĐANG TRA CỨU) */}
+                            {(() => {
+                                const cyberCard = renderCyberContractStatusCard();
+                                const dmsCard = renderDmsVerificationCard();
+                                if (!cyberCard && !dmsCard) return null;
+                                return (
+                                    <div className={`grid grid-cols-1 ${cyberCard && dmsCard ? 'md:grid-cols-2' : ''} gap-2 pt-1`}>
+                                        {cyberCard && <div>{cyberCard}</div>}
+                                        {dmsCard && <div>{dmsCard}</div>}
+                                    </div>
+                                );
+                            })()}
                         </div>
 
                         <div className="flex-grow overflow-hidden flex flex-col">
@@ -1155,10 +1594,9 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                             </div>
                                         </div>
 
-                                        {/* Row 2: Vinclub Confirm (Left) & Cyber Contract Status (Right) */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 flex-shrink-0">
-                                            {/* Left: Vinclub Confirm */}
-                                            <div className="relative p-3.5 rounded-xl border-2 border-accent-primary/20 bg-accent-primary/5 hover:bg-accent-primary/10 transition-colors cursor-pointer group flex items-center h-full min-h-[58px]" onClick={() => setVinClubConfirmed(!vinClubConfirmed)}>
+                                        {/* Row 2: Vinclub Confirm */}
+                                        <div className="flex-shrink-0">
+                                            <div className="relative p-3.5 rounded-xl border-2 border-accent-primary/20 bg-accent-primary/5 hover:bg-accent-primary/10 transition-colors cursor-pointer group flex items-center min-h-[58px]" onClick={() => setVinClubConfirmed(!vinClubConfirmed)}>
                                                 <div className="flex items-center gap-3.5">
                                                     <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${vinClubConfirmed ? 'bg-accent-primary border-accent-primary text-white scale-110' : 'bg-white border-gray-300'}`}>
                                                         {vinClubConfirmed && <i className="fas fa-check text-[10px]"></i>}
@@ -1169,9 +1607,6 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                                     </div>
                                                 </div>
                                             </div>
-
-                                            {/* Right: Cyber Contract Status & Warning Card */}
-                                            {renderCyberContractStatusCard()}
                                         </div>
                                     </div>
                                 </div>
@@ -1189,6 +1624,16 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         {step < 3 ? (
                             <Button 
                                 onClick={() => {
+                                    if (isVerificationBlocked) {
+                                        if (!isDmsValid) {
+                                            showToast('Chặn xuất hóa đơn', dmsVerification.message || 'Cấu hình xe chưa khớp với DMS.', 'error');
+                                        } else if (hasCyberMismatch) {
+                                            showToast('Chặn xuất hóa đơn', 'Cấu hình xe không khớp với Hợp đồng Cyber. Vui lòng kiểm tra lại.', 'error');
+                                        } else if (cyberContractStatus && !cyberContractStatus.is_approved) {
+                                            showToast('Hợp đồng chưa duyệt', 'Hợp đồng Cyber chưa được duyệt. Vui lòng liên hệ Giám đốc duyệt hợp đồng.', 'warning');
+                                        }
+                                        return;
+                                    }
                                     if (step === 1 && !isStep1Valid) {
                                         if (policy.length === 0) {
                                             showToast('Chưa chọn chính sách', 'Vui lòng chọn ít nhất 1 chính sách bán hàng áp dụng.', 'warning');
@@ -1205,7 +1650,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                                     }
                                     handleNext();
                                 }} 
-                                disabled={isSubmitting} 
+                                disabled={isSubmitting || (step === 1 && !isStep1Valid)} 
                                 variant="primary" 
                                 size="sm" 
                                 rightIcon={<i className="fas fa-arrow-right"></i>}
@@ -1309,22 +1754,10 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         <button
                             type="button"
                             onClick={() => setContractWarning(null)}
-                            className="px-4 py-2.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-95 rounded-xl transition-all shadow-xs flex items-center gap-2"
+                            className="px-5 py-2.5 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 active:scale-95 rounded-xl transition-all shadow-sm flex items-center gap-2 cursor-pointer"
                         >
                             <i className="fas fa-arrow-left text-[11px]"></i>
-                            Quay lại kiểm tra
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setContractWarning(null);
-                                executeSubmission();
-                            }}
-                            className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 active:scale-95 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-                        >
-                            <i className="fas fa-paper-plane text-[11px]"></i>
-                            Vẫn tiếp tục gửi
+                            Đã hiểu, quay lại
                         </button>
                     </div>
                 </div>

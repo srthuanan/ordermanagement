@@ -2262,6 +2262,12 @@ export interface CheckCyberContractResult {
     ten_kh?: string;
     ten_tvbh?: string;
     ngay_ct?: string;
+    ma_kx?: string;
+    ten_kx?: string;
+    ma_mau?: string;
+    ten_mau?: string;
+    ma_mau_nt?: string;
+    ten_mau_nt?: string;
     match_by?: string;
     message?: string;
     error?: string;

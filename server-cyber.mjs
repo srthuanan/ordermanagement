@@ -12,6 +12,17 @@ const __dirname = path.dirname(__filename);
 // Nạp biến môi trường từ .env
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://jwvgxqrkjlbewvpkvucj.supabase.co';
+const supabaseKey = process.env.VITE_SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+let supabase = null;
+if (supabaseUrl && supabaseKey) {
+    try {
+        supabase = createClient(supabaseUrl, supabaseKey, { auth: { persistSession: false } });
+    } catch (e) {
+        console.warn('[Supabase Client Warning]', e.message);
+    }
+}
+
 const PORT = parseInt(process.env.CYBER_LOCAL_PORT || '3001', 10);
 const scriptPath = path.resolve(__dirname, 'scripts', 'sync_thuan_an_allocations.py');
 const crmScript = path.resolve(__dirname, 'scripts', 'cyber_crm_service.py');
@@ -306,25 +317,181 @@ async function handleCyberAction(pathname, method, body, queryParams = {}) {
             return { status: 'ok', success: true, message: `Đã lưu cookie cho [${dCode}]` };
         }
 
+        // Tra cứu đơn hàng VSO trực tiếp từ DMS Dynamics (Live Fallback)
+        case '/api/dms/lookup-vso': {
+            const vsoRaw = (mergedData.vso || queryParams.vso || '').trim();
+            return await lookupDmsVsoLive(vsoRaw);
+        }
+
         default:
             throw new Error(`Đường dẫn API không hỗ trợ: ${pathname}`);
+    }
+}
+
+/**
+ * Trích xuất nhãn formattedvalue hoặc lookup id từ đối tượng Dynamics OData
+ */
+function getDmsLookupName(item, field) {
+    if (!item) return "";
+    const f = field.toLowerCase();
+    for (const [k, v] of Object.entries(item)) {
+        const kl = k.toLowerCase();
+        if (kl.includes(f) && kl.includes('@odata.community.display.v1.formattedvalue')) {
+            return String(v ?? '');
+        }
+    }
+    for (const [k, v] of Object.entries(item)) {
+        const kl = k.toLowerCase();
+        if (kl.includes(f) && kl.includes('_value')) {
+            return String(v ?? '');
+        }
+    }
+    const val = item[field];
+    return val !== undefined && val !== null ? String(val) : '';
+}
+
+/**
+ * Tra cứu tức thì số đơn hàng VSO trên VinFast DMS và tự nạp vào donhanghienhuu nếu là đơn Mở
+ */
+async function lookupDmsVsoLive(vsoRaw) {
+    const cleanNo = (vsoRaw || '').trim().toUpperCase().replace(/-VS0-/g, '-VSO-');
+    if (!cleanNo) return { success: false, found: false, error: 'Thiếu mã đơn hàng VSO' };
+
+    const dealersFile = path.resolve(__dirname, 'dms_dealers_config.json');
+    let dealersList = [];
+    if (fs.existsSync(dealersFile)) {
+        try {
+            dealersList = JSON.parse(fs.readFileSync(dealersFile, 'utf8'));
+        } catch (_) {}
+    }
+
+    const dCode = (cleanNo.split('-')[0] || '').trim().toUpperCase();
+    let targetDealer = dealersList.find(x => (x.dealer_code || '').toUpperCase() === dCode && x.cookie);
+    if (!targetDealer) {
+        targetDealer = dealersList.find(x => x.cookie);
+    }
+
+    if (!targetDealer || !targetDealer.cookie) {
+        return {
+            success: false,
+            found: false,
+            error: `Chưa có Cookie DMS hoạt động cho showroom [${dCode}]. Vui lòng dùng Extension đồng bộ lại.`
+        };
+    }
+
+    const queryUrl = `https://vinfastdms.crm5.dynamics.com/api/data/v9.2/xts_newvehiclesalesorders?$filter=xts_newvehiclesalesordernumber eq '${encodeURIComponent(cleanNo)}'`;
+    try {
+        const res = await fetch(queryUrl, {
+            method: 'GET',
+            headers: {
+                'Cookie': targetDealer.cookie,
+                'Accept': 'application/json',
+                'OData-MaxVersion': '4.0',
+                'OData-Version': '4.0',
+                'Prefer': 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'
+            },
+            signal: AbortSignal.timeout(20000)
+        });
+
+        if (res.status === 401) {
+            return {
+                success: false,
+                found: false,
+                error: `Cookie của đại lý [${dCode}] đã hết hạn (401). Vui lòng dùng Extension cập nhật lại.`
+            };
+        }
+
+        if (!res.ok) {
+            return {
+                success: false,
+                found: false,
+                error: `Lỗi kết nối VinFast DMS (HTTP ${res.status})`
+            };
+        }
+
+        const data = await res.json();
+        const items = data.value || [];
+        if (items.length === 0) {
+            return {
+                success: true,
+                found: false,
+                error: `Không tìm thấy Số đơn hàng ${cleanNo} trên hệ thống VinFast DMS.`
+            };
+        }
+
+        const item = items[0];
+        const invDate = item.xvf_sapinvoicedate || item.xts_salesdate;
+        const hasSapInv = Boolean(item.xvf_sapinvoicenumber);
+        const isInvStatus = [7, 10, '7', '10'].includes(item.xts_status);
+        const statusText = (getDmsLookupName(item, 'xts_status') || '').toLowerCase();
+        const isBlocked = ['hóa đơn', 'invoiced', 'hủy', 'cancel', 'void', 'closed', 'đã giao', 'hoàn tất'].some(b => statusText.includes(b));
+
+        const isOpen = !invDate && !hasSapInv && !isInvStatus && !isBlocked;
+
+        const orderRecord = {
+            new_vehicle_sales_order_id: item.xts_newvehiclesalesorderid || "",
+            kiem_tra_tong_cho_hang: "",
+            ngay_sua_doi: item.modifiedon || null,
+            ngay_giao_dich: item.xts_transactiondate ? item.xts_transactiondate.substring(0, 10) : null,
+            tu_van_ban_hang: getDmsLookupName(item, "xts_salespersonid") || getDmsLookupName(item, "ownerid") || "",
+            so_don_hang_ban: item.xts_newvehiclesalesordernumber || cleanNo,
+            so_bao_gia_xe: getDmsLookupName(item, "xts_newvehiclesalesquoteid") || "",
+            ngay_xuat_hoa_don: invDate ? String(invDate).substring(0, 10) : null,
+            khach_hang_tiem_nang: getDmsLookupName(item, "xts_potentialcustomerid") || item.xts_potentialcustomerdescription || "",
+            promotion: getDmsLookupName(item, "xvf_promotionid") || item.itv_promotiondetail || "",
+            ma_khach_hang: item.xts_customernumber || "",
+            mo_ta_san_pham: item.xts_productdescription || getDmsLookupName(item, "xts_productid") || "",
+            ten_phien_ban: getDmsLookupName(item, "xvf_characteristicconfiguration") || getDmsLookupName(item, "xts_productconfigurationid") || "",
+            loai_tran: getDmsLookupName(item, "itv_characteristicceilingid") || "",
+            mau_ngoai_that: item.xvf_exteriorcolor || getDmsLookupName(item, "xts_productexteriorcolorid") || "",
+            mau_noi_that: item.xvf_interiorcolor || getDmsLookupName(item, "xts_productinteriorcolorid") || "",
+            ma_phien_ban: getDmsLookupName(item, "xvf_vehiclepackage") || "",
+            ma_mau_ngoai_that: getDmsLookupName(item, "xts_productexteriorcolorid") || getDmsLookupName(item, "xvf_characteristicexteriorcolor") || "",
+            ma_mau_noi_that: getDmsLookupName(item, "xts_productinteriorcolorid") || getDmsLookupName(item, "xvf_characteristicinteriorcolor") || "",
+            trang_thai: getDmsLookupName(item, "xts_status") || (isOpen ? "Mở" : "Hóa đơn"),
+            pre_customer: getDmsLookupName(item, "itv_customerpreorderid") || getDmsLookupName(item, "itv_leadid") || "",
+            so_vin: getDmsLookupName(item, "xts_chassisid") || item.xts_chassisnumber || "",
+            accessory_serial: getDmsLookupName(item, "xts_stockid") || "",
+            ma_san_pham: getDmsLookupName(item, "xts_productid") || "",
+            so_ton_kho: getDmsLookupName(item, "xts_stockid") || "",
+            so_tien_thuc_sau_thue: item.xts_netamountaftertax || item.xvf_grandtotal || 0,
+            don_hang_goc: getDmsLookupName(item, "xts_originalnewvehiclesalesorderreferenceid") || "",
+            chi_nhanh: getDmsLookupName(item, "xts_businessunitid") || ""
+        };
+
+        // Nếu là đơn hàng MỞ, tự động lưu ngay vào Supabase bảng donhanghienhuu
+        if (isOpen && supabase) {
+            try {
+                await supabase.from('donhanghienhuu').upsert(orderRecord, { onConflict: 'so_don_hang_ban' });
+                console.log(`[DMS Live Lookup] ⚡ Đã tự động lưu đơn hàng MỞ ${cleanNo} vào donhanghienhuu!`);
+            } catch (errSup) {
+                console.warn(`[DMS Live Lookup] Lỗi upsert donhanghienhuu:`, errSup);
+            }
+        }
+
+        return {
+            success: true,
+            found: true,
+            isOpen,
+            order: orderRecord,
+            reason: isOpen ? undefined : `VSO trên DMS đã ở trạng thái ${orderRecord.trang_thai || 'Hóa đơn'}.`
+        };
+    } catch (netErr) {
+        return {
+            success: false,
+            found: false,
+            error: `Lỗi kết nối DMS: ${netErr.message}`
+        };
     }
 }
 
 // ─────────────────────────────────────────────────────────────
 // 1. KẾT NỐI SUPABASE REALTIME BRIDGE (CHO WEB GITHUB PAGES)
 // ─────────────────────────────────────────────────────────────
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-
 let bridgeChannel = null;
 
-if (supabaseUrl && supabaseKey) {
+if (supabase) {
     try {
-        const supabase = createClient(supabaseUrl, supabaseKey, {
-            auth: { persistSession: false }
-        });
-
         bridgeChannel = supabase.channel('cyber-realtime-bridge', {
             config: { broadcast: { self: false } }
         });
@@ -512,8 +679,25 @@ server.listen(PORT, () => {
     console.log(`  - Supabase Bridge:  Kênh 'cyber-realtime-bridge' (Đang lắng nghe)`);
     console.log(`  - Web GitHub Pages: Sẽ tự động ưu tiên máy tính này, KHÔNG dùng Render!`);
     console.log(`  - AutoSync Đơn Tồn: Chạy ngầm định kỳ mỗi 3 tiếng/lần`);
+    console.log(`  - AutoSync Đơn DMS: Chạy ngầm đồng bộ donhanghienhuu mỗi 1 tiếng/lần`);
     console.log(`  - AutoSync GPS DMS: Chạy khi khởi động và tự động quét 4 lần/ngày (mỗi 6 tiếng)`);
     console.log('==================================================================');
+
+    // ── Tự động đồng bộ Đơn hàng mở DMS vào bảng donhanghienhuu mỗi 1 tiếng (1 * 3600 * 1000 ms)
+    const ONE_HOUR_MS = 1 * 60 * 60 * 1000;
+    setTimeout(() => {
+        console.log(`[AutoSync DMS Orders] 📋 [${new Date().toLocaleString('vi-VN')}] Đang đồng bộ donhanghienhuu từ DMS lần đầu...`);
+        executePython([gpsRadarScript, 'orders_only'], '{}')
+            .then(res => console.log(`[AutoSync DMS Orders] ✅ Hoàn tất đồng bộ donhanghienhuu!`))
+            .catch(err => console.error(`[AutoSync DMS Orders Error]:`, err.message));
+
+        setInterval(() => {
+            console.log(`[AutoSync DMS Orders] 📋 [${new Date().toLocaleString('vi-VN')}] Đang đồng bộ donhanghienhuu định kỳ (chu kỳ 1 tiếng)...`);
+            executePython([gpsRadarScript, 'orders_only'], '{}')
+                .then(res => console.log(`[AutoSync DMS Orders] ✅ Hoàn tất đồng bộ donhanghienhuu định kỳ!`))
+                .catch(err => console.error(`[AutoSync DMS Orders Error]:`, err.message));
+        }, ONE_HOUR_MS);
+    }, 10000);
 
     // ── Tự động quét GPS DMS xe lồng: Chạy ngay khi khởi động và 4 lần/ngày (mỗi 6 tiếng = 6 * 3600 * 1000 ms)
     const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
@@ -529,7 +713,7 @@ server.listen(PORT, () => {
                 .then(res => console.log(`[AutoSync GPS] ✅ Hoàn tất quét vị trí GPS định kỳ!`))
                 .catch(err => console.error(`[AutoSync GPS Error]:`, err.message));
         }, SIX_HOURS_MS);
-    }, 20000);
+    }, 25000);
 
     // ── Tự động đồng bộ ngầm đơn hàng cọc tồn từ Cyber mỗi 3 tiếng (3 * 3600 * 1000 ms)
     const THREE_HOURS_MS = 3 * 60 * 60 * 1000;

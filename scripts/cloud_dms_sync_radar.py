@@ -249,35 +249,98 @@ def get_lookup_name(item, field):
     for k, v in item.items():
         kl = k.lower()
         if f in kl and "@odata.community.display.v1.formattedvalue" in kl:
-            return v
+            return str(v) if v is not None else ""
     for k, v in item.items():
         kl = k.lower()
         if f in kl and "_value" in kl:
-            return v
-    return item.get(field, "")
+            return str(v) if v is not None else ""
+    val = item.get(field, "")
+    return str(val) if val is not None else ""
 
-def sync_orders(dms_headers):
-    print("\n📋 --- BƯỚC 2: ĐỒNG BỘ ĐƠN HÀNG HIỆN HỮU ---")
-    
-    # 1. Tải tất cả các đơn hàng từ API OData DMS
+def get_all_dealer_headers():
+    dealers_headers = []
+    config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dms_dealers_config.json")
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                dealers = json.load(f)
+                for d in dealers:
+                    cookie = d.get("cookie")
+                    code = d.get("dealer_code") or d.get("name") or "DMS"
+                    if cookie:
+                        headers = {
+                            "Cookie": cookie,
+                            "Accept": "application/json",
+                            "Content-Type": "application/json; charset=utf-8",
+                            "OData-MaxVersion": "4.0",
+                            "OData-Version": "4.0",
+                            "Prefer": 'odata.include-annotations="OData.Community.Display.V1.FormattedValue", odata.maxpagesize=500'
+                        }
+                        dealers_headers.append((code, headers))
+        except Exception as e:
+            print(f"Lỗi đọc dms_dealers_config.json: {e}")
+    if not dealers_headers:
+        single = get_dms_headers()
+        if single:
+            dealers_headers.append(("DEFAULT", single))
+    return dealers_headers
+
+def is_open_order(item):
+    """Chỉ chấp nhận các đơn hàng thực sự MỞ (Chưa xuất hóa đơn, chưa hủy)"""
+    # 1. Nếu đã có số HĐ SAP hoặc ngày xuất HĐ -> Bỏ qua
+    if item.get("xvf_sapinvoicenumber"):
+        return False
+    inv_date = item.get("xvf_sapinvoicedate") or item.get("xts_salesdate")
+    if inv_date:
+        return False
+    # 2. Mã trạng thái 7 (Invoiced) hoặc 10 (Invoice Processing) -> Bỏ qua
+    status_val = item.get("xts_status")
+    if status_val in [7, 10, "7", "10"]:
+        return False
+    # 3. Trạng thái chữ
+    st = str(get_lookup_name(item, "xts_status") or "").lower()
+    for blocked in ["hóa đơn", "invoiced", "hủy", "cancel", "void", "closed", "đã giao", "hoàn tất"]:
+        if blocked in st:
+            return False
+    return True
+
+# ===== BƯỚC 2: ĐỒNG BỘ ĐƠN HÀNG MỞ HIỆN HỮU (TẤT CẢ MÃ DMS) =====
+def sync_orders(dealers_headers=None):
+    print("\n📋 --- BƯỚC 2: ĐỒNG BỘ ĐƠN HÀNG MỞ HIỆN HỮU (TẤT CẢ CÁC MÃ DMS) ---")
+    if not dealers_headers:
+        dealers_headers = get_all_dealer_headers()
+
     all_orders = []
-    query_url = f"{DMS_BASE_URL}/api/data/v9.2/xts_newvehiclesalesorders?$filter=statecode eq 0"
-    
-    print("📥 Đang tải đơn hàng mở từ Dynamics OData API...")
-    try:
-        while query_url:
-            res = requests.get(query_url, headers=dms_headers, timeout=30)
-            if res.status_code != 200:
-                print(f"❌ Lỗi tải đơn hàng DMS: {res.text[:300]}")
-                return
-            data = res.json()
-            all_orders.extend(data.get("value", []))
-            query_url = data.get("@odata.nextLink")
-    except Exception as e:
-        print(f"❌ Lỗi kết nối Dynamics: {e}")
-        return
+    seen_dealers = set()
 
-    print(f"   📊 Nhận được {len(all_orders)} đơn hàng từ DMS. Đang xử lý chuẩn hóa...")
+    for d_code, headers in dealers_headers:
+        if d_code in seen_dealers:
+            continue
+        seen_dealers.add(d_code)
+        print(f"📥 Đang tải đơn hàng mở từ DMS cho đại lý/mã [{d_code}]...")
+        query_url = f"{DMS_BASE_URL}/api/data/v9.2/xts_newvehiclesalesorders?$filter=statecode eq 0"
+        dealer_order_count = 0
+        try:
+            while query_url:
+                res = requests.get(query_url, headers=headers, timeout=60)
+                if res.status_code == 401:
+                    print(f"   ⚠️ Cookie của đại lý [{d_code}] đã hết hạn (401). Bỏ qua.")
+                    break
+                if res.status_code != 200:
+                    print(f"   ❌ Lỗi tải đơn hàng đại lý [{d_code}]: {res.text[:200]}")
+                    break
+                data = res.json()
+                items = data.get("value", [])
+                for it in items:
+                    if is_open_order(it):
+                        all_orders.append(it)
+                        dealer_order_count += 1
+                query_url = data.get("@odata.nextLink")
+            print(f"   📊 Nhận được {dealer_order_count} đơn hàng MỞ từ [{d_code}].")
+        except Exception as e:
+            print(f"   ❌ Lỗi kết nối DMS cho [{d_code}]: {e}")
+
+    print(f"📊 Tổng cộng thu thập được {len(all_orders)} đơn hàng MỞ từ tất cả các mã DMS.")
 
     # 2. Map dữ liệu sang cấu trúc Supabase bảng donhanghienhuu
     mapped_data = []
@@ -290,7 +353,7 @@ def sync_orders(dms_headers):
             "tu_van_ban_hang": get_lookup_name(item, "xts_salespersonid") or get_lookup_name(item, "ownerid") or "",
             "so_don_hang_ban": item.get("xts_newvehiclesalesordernumber", ""),
             "so_bao_gia_xe": get_lookup_name(item, "xts_newvehiclesalesquoteid") or "",
-            "ngay_xuat_hoa_don": item.get("xvf_sapinvoicedate")[:10] if item.get("xvf_sapinvoicedate") else (item.get("xts_salesdate")[:10] if item.get("xts_salesdate") else (item.get("xts_deliverydate")[:10] if item.get("xts_deliverydate") else None)),
+            "ngay_xuat_hoa_don": None,
             "khach_hang_tiem_nang": get_lookup_name(item, "xts_potentialcustomerid") or item.get("xts_potentialcustomerdescription", ""),
             "promotion": get_lookup_name(item, "xvf_promotionid") or item.get("itv_promotiondetail", ""),
             "ma_khach_hang": item.get("xts_customernumber", ""),
@@ -302,7 +365,7 @@ def sync_orders(dms_headers):
             "ma_phien_ban": get_lookup_name(item, "xvf_vehiclepackage") or "",
             "ma_mau_ngoai_that": get_lookup_name(item, "xts_productexteriorcolorid") or "",
             "ma_mau_noi_that": get_lookup_name(item, "xts_productinteriorcolorid") or "",
-            "trang_thai": get_lookup_name(item, "xts_status") or "",
+            "trang_thai": get_lookup_name(item, "xts_status") or "Mở",
             "pre_customer": get_lookup_name(item, "itv_customerpreorderid") or get_lookup_name(item, "itv_leadid") or "",
             "so_vin": get_lookup_name(item, "xts_chassisid") or item.get("xts_chassisnumber") or "",
             "accessory_serial": get_lookup_name(item, "xts_stockid") or "",
@@ -313,7 +376,7 @@ def sync_orders(dms_headers):
             "chi_nhanh": get_lookup_name(item, "xts_businessunitid") or ""
         })
 
-    # Lọc trùng lặp dựa trên so_don_hang_ban mới nhất
+    # Lọc trùng lặp dựa trên so_don_hang_ban
     unique_orders = {}
     for ord in mapped_data:
         so_dh = ord["so_don_hang_ban"]
@@ -322,21 +385,28 @@ def sync_orders(dms_headers):
 
     final_orders = list(unique_orders.values())
     if not final_orders:
-        print("⚠️ Không có dữ liệu đơn hàng hợp lệ để đồng bộ.")
+        print("⚠️ Không có dữ liệu đơn hàng Mở hợp lệ để đồng bộ.")
         return
 
-    # 3. Đẩy dữ liệu lên donhanghienhuu qua REST Bulk POST
+    # 3. Dọn sạch các đơn đã xuất hóa đơn hoặc đã hủy còn nằm trong donhanghienhuu trên Supabase
+    try:
+        prune_url = f"{SUPABASE_URL}/rest/v1/donhanghienhuu?or=(ngay_xuat_hoa_don.not.is.null,trang_thai.ilike.*hóa đơn*,trang_thai.ilike.*invoiced*,trang_thai.ilike.*hủy*,trang_thai.ilike.*cancel*)"
+        requests.delete(prune_url, headers=SUPABASE_HEADERS, timeout=30)
+        print("🧹 Đã dọn dẹp các đơn hàng đã xuất hóa đơn hoặc đã hủy khỏi donhanghienhuu.")
+    except Exception as e:
+        print(f"⚠️ Cảnh báo dọn dẹp donhanghienhuu: {e}")
+
+    # 4. Đẩy dữ liệu đơn hàng MỞ lên donhanghienhuu qua REST Bulk POST
     try:
         orders_url = f"{SUPABASE_URL}/rest/v1/donhanghienhuu?on_conflict=so_don_hang_ban"
         headers_with_upsert = {**SUPABASE_HEADERS, "Prefer": "resolution=merge-duplicates, return=minimal"}
         
-        # Gửi theo cụm 200 bản ghi để tránh quá tải
         CHUNK_SIZE = 200
         for i in range(0, len(final_orders), CHUNK_SIZE):
             chunk = final_orders[i:i+CHUNK_SIZE]
             res = requests.post(orders_url, headers=headers_with_upsert, json=chunk, timeout=30)
             if res.status_code in [200, 201, 204]:
-                print(f"   ✅ Đã đẩy cụm đơn hàng {i//CHUNK_SIZE + 1}: {len(chunk)} bản ghi OK.")
+                print(f"   ✅ Đã đẩy cụm đơn hàng Mở {i//CHUNK_SIZE + 1}: {len(chunk)} bản ghi OK.")
             else:
                 print(f"   ❌ Lỗi đẩy cụm đơn hàng: {res.text}")
     except Exception as e:
@@ -434,10 +504,14 @@ def main():
 
     if mode == "gps_only":
         sync_gps_live(dms_headers)
+    elif mode == "orders_only":
+        dealers_headers = get_all_dealer_headers()
+        sync_orders(dealers_headers)
     else:
         # Chạy đồng bộ toàn diện tuần tự
+        dealers_headers = get_all_dealer_headers()
         sync_gps_live(dms_headers)
-        sync_orders(dms_headers)
+        sync_orders(dealers_headers)
         sync_inventory(dms_headers)
 
     print("\n🎉 Hoàn thành phiên đồng bộ autopilot đám mây thành công!")

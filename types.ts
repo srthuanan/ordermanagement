@@ -81,6 +81,8 @@ export interface StockVehicle {
   "Ngày vận tải"?: string;
   "Mã DMS"?: string;
   "Số máy"?: string;
+  "Mã phiên bản"?: string;
+  ma_phien_ban?: string;
   telemetry?: {
     lat: number;
     lng: number;

@@ -269,10 +269,10 @@ function createSyncTriggers() {
            .everyMinutes(30)
            .create();
            
-  // Tạo trigger lặp định kỳ mỗi 4 tiếng cho Đơn hàng & Kho xe
+  // Tạo trigger lặp định kỳ mỗi 1 tiếng cho Đơn hàng & Kho xe
   ScriptApp.newTrigger("syncDmsDataToSupabase")
            .timeBased()
-           .everyHours(4)
+           .everyHours(1)
            .create();
 
   // Tạo trigger lặp định kỳ mỗi 15 phút kéo dữ liệu mới từ Supabase và tự động cập nhật Báo Cáo Ghép Xe - Dự XHĐ

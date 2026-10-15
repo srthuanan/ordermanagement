@@ -64,7 +64,16 @@ function doPost(e) {
 
       case 'archiveOrderNow':
         // Gọi từ backend-gas/04_maintenance.js
-        archiveOrderNow(e.parameter.orderNumber);
+        let orderNoToArchive = (e.parameter && e.parameter.orderNumber);
+        if (!orderNoToArchive && e.postData && e.postData.contents) {
+          try {
+            const parsedBody = JSON.parse(e.postData.contents);
+            orderNoToArchive = parsedBody.orderNumber || parsedBody.so_don_hang;
+          } catch (eJson) {}
+        }
+        if (orderNoToArchive) {
+          archiveOrderNow(orderNoToArchive);
+        }
         response = createJsonResponse({ status: "SUCCESS" });
         break;
 
@@ -259,20 +268,20 @@ function handleSupabaseWebhook(e) {
     }
     
     // LOGIC 2: TỰ ĐỘNG BỐC FILE SANG DRIVE (Chỉ bốc khi đơn hàng ở trạng thái "Chờ ký hóa đơn" hoặc "Đã xuất hóa đơn")
-    if (tableName === 'donhang' && type === 'UPDATE') {
+    if (tableName === 'donhang' && (type === 'UPDATE' || type === 'INSERT')) {
        const status = (record.ket_qua || '').toLowerCase().trim();
-       if (status === 'chờ ký hóa đơn' || status === 'chờ ký hóa đơn') {
-          logAction("Auto-Migration", `Đơn ${orderNo} chuyển sang Chờ ký hóa đơn -> Tự động bốc hồ sơ sang Drive...`);
+       if (status === 'chờ ký hóa đơn' || status === 'chờ ký hóa đơn' || status === 'đã xuất hóa đơn' || status === 'đã xuất hóa đơn') {
+          logAction("Auto-Migration", `Đơn ${orderNo} bảng donhang chuyển sang ${status} -> Tự động bốc hồ sơ sang Drive...`);
           archiveOrderNow(orderNo);
        }
     }
-    if (tableName === 'yeucauxhd' && type === 'UPDATE') {
-       const status = (record.trang_thai_vc || '').toLowerCase().trim();
+    if (tableName === 'yeucauxhd' && (type === 'UPDATE' || type === 'INSERT')) {
+       const status = (record.trang_thai || record.trang_thai_vc || '').toLowerCase().trim();
        if (status === 'chờ ký hóa đơn' || status === 'chờ ký hóa đơn' || status === 'đã xuất hóa đơn' || status === 'đã xuất hóa đơn') {
           if ((record.url_hop_dong && record.url_hop_dong.includes("supabase.co") && !record.url_hop_dong.includes("drive.google.com")) ||
               (record.url_de_nghi_xhd && record.url_de_nghi_xhd.includes("supabase.co") && !record.url_de_nghi_xhd.includes("drive.google.com")) ||
               (record.url_hoa_don_da_xuat && record.url_hoa_don_da_xuat.includes("supabase.co") && !record.url_hoa_don_da_xuat.includes("drive.google.com"))) {
-             logAction("Auto-Migration", `Đơn ${orderNo} có file mới và đang ở trạng thái ${status} -> Tự động bốc hồ sơ sang Drive...`);
+             logAction("Auto-Migration", `Đơn ${orderNo} bảng yeucauxhd có file mới và đang ở trạng thái ${status} -> Tự động bốc hồ sơ sang Drive...`);
              archiveOrderNow(orderNo);
           }
        }
