@@ -8,6 +8,7 @@ import {
     InvoicedMissingYardItem
 } from '../../services/api/satelliteWarehouseService';
 import { ReconciliationDetailModal } from './ReconciliationDetailModal';
+import { VinJourneySummaryCard } from './VinJourneySummaryCard';
 
 export interface SatelliteCarItem {
     id: string;
@@ -131,6 +132,59 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     const [searchQuery, setSearchQuery] = useState('');
     const [copiedVin, setCopiedVin] = useState<string | null>(null);
     const [selectedRowIdx, setSelectedRowIdx] = useState<number>(0);
+    const [manualJourneyVin, setManualJourneyVin] = useState<string | null>(null);
+    const [dismissedJourneyVin, setDismissedJourneyVin] = useState<string | null>(null);
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+    // Debounce tìm kiếm để chống giật lag khi gõ phím
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+            setDismissedJourneyVin(null);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    // Map tra cứu xe tồn theo số VIN tối ưu O(1) để render bảng mượt mà tuyệt đối
+    const tonCarsByVinMap = useMemo(() => {
+        const map = new Map<string, SatelliteCarItem>();
+        cars.forEach(car => {
+            if (car.isTonKho) {
+                const clean = (car.soKhung || '').trim().toUpperCase();
+                if (clean) {
+                    map.set(clean, car);
+                    if (clean.length >= 6) {
+                        map.set(clean.slice(-6), car);
+                    }
+                }
+            }
+        });
+        return map;
+    }, [cars]);
+
+    // Xác định số VIN đang cần xem hành trình A-Z (ưu tiên số VIN gõ trong ô tìm kiếm hoặc click chọn)
+    const activeJourneyVin = useMemo(() => {
+        let targetVin: string | null = null;
+        if (manualJourneyVin) {
+            targetVin = manualJourneyVin;
+        } else {
+            const q = debouncedSearchQuery.trim().toUpperCase();
+            if (q.length >= 8) {
+                const match = cars.find(c => {
+                    const v = (c.soKhung || '').trim().toUpperCase();
+                    return v === q || (q.length >= 8 && v.endsWith(q));
+                });
+                if (match) targetVin = match.soKhung.trim().toUpperCase();
+            }
+        }
+
+        // Nếu người dùng đã bấm nút đóng (✕) cho số VIN này thì ẩn hoàn toàn
+        if (targetVin && targetVin === dismissedJourneyVin) {
+            return null;
+        }
+
+        return targetVin;
+    }, [manualJourneyVin, debouncedSearchQuery, cars, dismissedJourneyVin]);
 
     // 2. DỮ LIỆU BẢNG ĐỐI CHIẾU ĐNX XUẤT ĐIỀU CHUYỂN
     const [reconcileItems, setReconcileItems] = useState<DnxReconciliationItem[]>([]);
@@ -843,6 +897,24 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         });
     }, [cars, khoFilter, modelFilter, showroomFilter, statusFilter, searchQuery]);
 
+    // Phân trang tăng dần (Progressive Chunk Rendering) chống lag khi danh sách có hàng ngàn xe (4.291 xe)
+    const [displayLimit, setDisplayLimit] = useState(100);
+
+    useEffect(() => {
+        setDisplayLimit(100);
+    }, [khoFilter, modelFilter, showroomFilter, statusFilter, debouncedSearchQuery]);
+
+    const handleTableScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+        if (scrollHeight - scrollTop - clientHeight < 300) {
+            setDisplayLimit(prev => Math.min(prev + 100, filteredCars.length));
+        }
+    }, [filteredCars.length]);
+
+    const visibleCars = useMemo(() => {
+        return filteredCars.slice(0, displayLimit);
+    }, [filteredCars, displayLimit]);
+
     // Filtered cars (ĐNX)
     const filteredReconcileItems = useMemo(() => {
         return reconcileItems.filter(c => {
@@ -1067,8 +1139,26 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                         </div>
                     </div>
 
+                    {/* THẺ TỔNG HỢP HÀNH TRÌNH TỪ A ĐẾN Z KHI TÌM VIN HOẶC CHỌN XE */}
+                    {activeJourneyVin && (
+                        <div className="p-1.5 bg-[#E8EEF5] border-b border-[#B9D5F7] shrink-0">
+                            <VinJourneySummaryCard 
+                                vin={activeJourneyVin}
+                                cars={cars}
+                                allOrders={allOrders}
+                                showToast={showToast}
+                                onClose={() => {
+                                    if (activeJourneyVin) {
+                                        setDismissedJourneyVin(activeJourneyVin);
+                                    }
+                                    setManualJourneyVin(null);
+                                }}
+                            />
+                        </div>
+                    )}
+
                     {/* DATA GRID */}
-                    <div className="flex-1 min-h-0 bg-white overflow-auto relative">
+                    <div className="flex-1 min-h-0 bg-white overflow-auto relative" onScroll={handleTableScroll}>
                         {filteredCars.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-slate-400 py-12">
                                 <i className="fas fa-inbox text-3xl mb-2 text-slate-300"></i>
@@ -1081,29 +1171,33 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 <thead className="bg-[#DDECFE] text-slate-900 sticky top-0 z-10 border-b border-[#9FBCEB] text-[11px] font-bold shadow-2xs">
                                     <tr>
                                         <th className="py-1 px-1 text-center w-7 border-r border-[#B9D5F7]">#</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[15%]">Kho Bãi & SR</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[14%]">Kho Bãi & SR</th>
                                         <th className="py-1 px-2 border-r border-[#B9D5F7] w-[21%]">Số VIN & Bên Giao</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[17%]">Dòng Xe & Màu</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[15%]">Pin & Ngày Nhận</th>
-                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[16%]">Trạng Thái Bãi</th>
-                                        <th className="py-1 px-2 w-[16%]">Ghi Chú</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[16%]">Dòng Xe & Màu</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[13%]">Pin & Ngày Nhận</th>
+                                        <th className="py-1 px-2 border-r border-[#B9D5F7] w-[18%]">Trạng Thái Bãi</th>
+                                        <th className="py-1 px-2 w-[18%]">Ghi Chú</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-[#E1E1E1]">
-                                    {filteredCars.map((car, idx) => {
+                                    {visibleCars.map((car, idx) => {
                                         const isSelected = selectedRowIdx === idx;
                                         const pinPct = car.mucPinPercent;
                                         let pinBadge = 'bg-slate-100 text-slate-700 border-slate-300';
                                         if (pinPct !== null) {
-                                            if (pinPct >= 50) pinBadge = 'bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]';
-                                            else if (pinPct >= 25) pinBadge = 'bg-[#FEF7E0] text-[#B06000] border-[#FCE8B2]';
-                                            else pinBadge = 'bg-[#FCE8E6] text-[#C5221F] border-[#FAD2CF]';
+                                            if (pinPct < 20) pinBadge = 'bg-red-50 text-red-700 border-red-300';
+                                            else if (pinPct < 50) pinBadge = 'bg-amber-50 text-amber-700 border-amber-300';
+                                            else pinBadge = 'bg-emerald-50 text-emerald-800 border-emerald-300';
                                         }
 
                                         return (
                                             <tr
                                                 key={car.id}
-                                                onClick={() => setSelectedRowIdx(idx)}
+                                                onClick={() => {
+                                                    setSelectedRowIdx(idx);
+                                                    setDismissedJourneyVin(null);
+                                                    setManualJourneyVin(car.soKhung.trim().toUpperCase());
+                                                }}
                                                 className={`cursor-pointer transition-colors ${
                                                     isSelected 
                                                         ? 'bg-[#CCE8FF] text-slate-900 font-medium' 
@@ -1112,11 +1206,12 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                             : 'bg-white hover:bg-[#EBF4FF]'
                                                 }`}
                                             >
+                                                {/* Cột 1: STT */}
                                                 <td className="py-1 px-1 text-center text-slate-500 font-mono text-[10px] border-r border-[#EBEBEB]">
                                                     {idx + 1}
                                                 </td>
 
-                                                {/* Kho Bãi & SR */}
+                                                {/* Cột 2: Kho Bãi & SR */}
                                                 <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
                                                     <div className="flex items-center gap-1">
                                                         <span className="font-bold text-slate-800 text-[10.5px] truncate">
@@ -1139,7 +1234,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                     </div>
                                                 </td>
 
-                                                {/* Số VIN & Bên Giao */}
+                                                {/* Cột 3: Số VIN & Bên Giao */}
                                                 <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
                                                     <div className="flex items-center gap-1 font-mono text-[11px] font-bold text-blue-900">
                                                         <span className="truncate">{car.soKhung}</span>
@@ -1149,10 +1244,23 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                                 e.stopPropagation();
                                                                 copyVin(car.soKhung);
                                                             }}
-                                                            className="text-slate-400 hover:text-blue-600 transition-opacity shrink-0"
+                                                            className="text-slate-400 hover:text-blue-600 transition-opacity shrink-0 cursor-pointer"
                                                             title="Sao chép số VIN"
                                                         >
                                                             <i className={`fas ${copiedVin === car.soKhung ? 'fa-check text-green-600' : 'fa-copy'} text-[10px]`}></i>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setDismissedJourneyVin(null);
+                                                                setManualJourneyVin(car.soKhung.trim().toUpperCase());
+                                                            }}
+                                                            className="px-1 py-0.2 bg-blue-50 hover:bg-blue-100 rounded text-[9px] font-bold border border-blue-200 text-blue-700 shrink-0 ml-auto flex items-center gap-0.5 cursor-pointer active:scale-95 transition-all"
+                                                            title="Xem toàn bộ hành trình A-Z của xe này"
+                                                        >
+                                                            <i className="fa-solid fa-route text-[8.5px]"></i>
+                                                            <span>A-Z</span>
                                                         </button>
                                                     </div>
                                                     <div className="text-[9.5px] text-slate-500 truncate mt-0.5" title={car.benGiao}>
@@ -1160,13 +1268,13 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                     </div>
                                                 </td>
 
-                                                {/* Dòng Xe & Màu */}
+                                                {/* Cột 4: Dòng Xe & Màu */}
                                                 <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
                                                     <div className="font-bold text-slate-900 truncate">{car.loaiXe || '-'}</div>
                                                     <div className="text-[10px] text-slate-500 truncate">{car.mauSac || '-'}</div>
                                                 </td>
 
-                                                {/* Pin & Ngày Nhận */}
+                                                {/* Cột 5: Pin & Ngày Nhận */}
                                                 <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
                                                     <div>
                                                         <span className={`inline-block px-1.5 py-0.2 rounded-xs text-[10px] font-bold border font-mono ${pinBadge}`}>
@@ -1178,24 +1286,63 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                     </div>
                                                 </td>
 
-                                                {/* Trạng Thái & Ngày Tồn */}
+                                                {/* Cột 6: Trạng Thái Bãi (Chuẩn hóa rõ ràng, không dùng ký hiệu khó hiểu) */}
                                                 <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
                                                     {car.isTonKho ? (
-                                                        <div>
-                                                            <span className="inline-flex items-center gap-1 px-1 py-0.2 bg-[#E6F4EA] text-[#137333] border border-[#CEEAD6] rounded-xs font-semibold text-[9.5px]">
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <span className="inline-flex items-center gap-1.5 px-1.5 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded text-[9.5px] font-bold shadow-2xs w-fit">
                                                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                                Tồn: <strong>{car.soNgayTonKho || 0}n</strong>
+                                                                ĐANG TỒN BÃI
                                                             </span>
+                                                            <span className="text-[9px] text-slate-500 font-medium truncate">
+                                                                {car.soNgayTonKho && !isNaN(parseInt(String(car.soNgayTonKho))) && parseInt(String(car.soNgayTonKho)) > 0 
+                                                                    ? `Lưu bãi: ${car.soNgayTonKho} ngày` 
+                                                                    : (car.note || 'Mới tiếp nhận')}
+                                                            </span>
+                                                            {car.tinhTrang && (
+                                                                <span className="inline-block text-[9px] px-1 py-0.1 bg-blue-50 text-blue-700 border border-blue-200 rounded-xs font-semibold w-fit truncate max-w-[130px]" title={car.tinhTrang}>
+                                                                    {car.tinhTrang}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     ) : (
-                                                        <div className="text-[9.5px] text-slate-600 truncate">
-                                                            <i className="fas fa-check text-slate-400 text-[9px] mr-1"></i>
-                                                            Đã giao ({car.ngayGiao})
+                                                        <div className="flex flex-col gap-0.5">
+                                                            {(() => {
+                                                                const cleanSoKhung = (car.soKhung || '').trim().toUpperCase();
+                                                                const otherTonCar = tonCarsByVinMap.get(cleanSoKhung);
+
+                                                                if (otherTonCar && otherTonCar.id !== car.id) {
+                                                                    const otherKho = otherTonCar.khoName.replace('Kho ', '').trim();
+                                                                    return (
+                                                                        <>
+                                                                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-300 rounded text-[9.5px] font-bold w-fit">
+                                                                                <i className="fa-solid fa-arrow-right-arrow-left text-[8px] text-amber-600"></i>
+                                                                                ĐÃ CHUYỂN KHO
+                                                                            </span>
+                                                                            <span className="text-[9px] text-slate-500 truncate" title={`Xuất ngày ${car.ngayGiao} để chuyển sang ${otherKho}`}>
+                                                                                ➔ Đã qua: <strong>{otherKho}</strong>
+                                                                            </span>
+                                                                        </>
+                                                                    );
+                                                                }
+
+                                                                return (
+                                                                    <>
+                                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-700 border border-slate-300 rounded text-[9.5px] font-semibold w-fit">
+                                                                            <i className="fas fa-check text-emerald-600 text-[8px]"></i>
+                                                                            ĐÃ XUẤT GIAO
+                                                                        </span>
+                                                                        <span className="text-[9px] text-slate-500 truncate">
+                                                                            Ngày: {car.ngayGiao || '-'}
+                                                                        </span>
+                                                                    </>
+                                                                );
+                                                            })()}
                                                         </div>
                                                     )}
                                                 </td>
 
-                                                {/* Ghi Chú */}
+                                                {/* Cột 7: Ghi Chú */}
                                                 <td className="py-1 px-2 overflow-hidden text-slate-600 text-[10px]">
                                                     <div className="truncate" title={car.note}>
                                                         {car.note || '-'}
@@ -1214,7 +1361,22 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                         <div className="flex items-center gap-1.5 sm:gap-2.5 text-slate-700 flex-wrap">
                             <span className="font-bold">
                                 Tổng: <strong>{filteredCars.length}</strong> xe
+                                {visibleCars.length < filteredCars.length && (
+                                    <span className="text-slate-500 font-normal ml-1">
+                                        (Đang hiển thị <strong>{visibleCars.length}</strong> xe)
+                                    </span>
+                                )}
                             </span>
+                            {visibleCars.length < filteredCars.length && (
+                                <button
+                                    type="button"
+                                    onClick={() => setDisplayLimit(filteredCars.length)}
+                                    className="px-1.5 py-0.1 bg-white hover:bg-slate-100 border border-slate-300 rounded text-[9.5px] text-blue-700 font-bold cursor-pointer"
+                                    title="Tải hiển thị toàn bộ xe cùng lúc"
+                                >
+                                    Tải tất cả
+                                </button>
+                            )}
                             <span>•</span>
                             <span className="text-blue-700 font-bold hidden sm:inline">
                                 Dòng: <strong>{filteredCars.length > 0 ? selectedRowIdx + 1 : 0}</strong>
