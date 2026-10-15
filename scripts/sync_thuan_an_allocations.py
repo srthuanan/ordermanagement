@@ -3552,14 +3552,15 @@ def check_cyber_contract_status(params: dict = {}) -> dict:
     tvbh_name = (params.get("tvbh_name") or params.get("ten_tvbh") or "").strip()
     vin = (params.get("vin") or "").strip().upper()
     order_no = (params.get("order_no") or params.get("so_don_hang") or "").strip()
+    so_ct = (params.get("so_ct") or params.get("ma_hd") or params.get("so_hop_dong") or "").strip()
     ma_ttcp = (params.get("ma_ttcp") or "02.01.08").strip()
 
-    if not customer_name and not vin and not order_no:
+    if not customer_name and not vin and not order_no and not so_ct:
         return {
             "success": True,
             "found": False,
             "is_approved": False,
-            "message": "Chưa có thông tin khách hàng hoặc tư vấn bán hàng để tra cứu hợp đồng"
+            "message": "Chưa có thông tin khách hàng, số hợp đồng hoặc tư vấn bán hàng để tra cứu hợp đồng"
         }
 
     conn = None
@@ -3595,8 +3596,42 @@ def check_cyber_contract_status(params: dict = {}) -> dict:
     try:
         matched_contract = None
 
-        # 1. Tra cứu chính xác theo CẶP TÊN KHÁCH HÀNG & TÊN TƯ VẤN BÁN HÀNG (Ưu tiên số 1)
-        if customer_name and tvbh_name:
+        # 0. ƯU TIÊN SỐ 1 TUYỆT ĐỐI: Tra cứu trực tiếp theo Số hợp đồng Cyber (so_ct / ma_hd) nếu đã có
+        if so_ct:
+            clean_so_ct = so_ct.replace(' ', '')
+            sql_so_ct = f"""
+                SELECT TOP 1 
+                    p.stt_rec, p.so_ct, p.Ma_Post, p.ngay_ct, p.Ten_kh, p.ong_ba,
+                    p.Ma_Hs_H, ISNULL(h.Ten_Hs, '') AS ten_tvbh,
+                    ISNULL(d.Ten_Post, N'Chưa phân loại') AS ten_post,
+                    ISNULL(ct70.Ma_Kx, '') AS ma_kx,
+                    ISNULL(kx.Ten_Kx, ct70.Ma_Kx) AS ten_kx,
+                    ISNULL(ct70.ma_mau, '') AS ma_mau,
+                    ISNULL(mau.Ten_Mau, ct70.ma_mau) AS ten_mau,
+                    ISNULL(ct70.Ma_Mau_Nt, '') AS ma_mau_nt,
+                    ISNULL(nt.Ten_Mau, ct70.Ma_Mau_Nt) AS ten_mau_nt
+                FROM PHHDX p WITH (NOLOCK)
+                LEFT JOIN DmHs h WITH (NOLOCK) ON p.Ma_Hs_H = h.Ma_Hs
+                LEFT JOIN DmPost d WITH (NOLOCK) ON d.Ma_Ct = 'HDX' AND d.Ma_Post = p.Ma_Post
+                OUTER APPLY (
+                    SELECT TOP 1 c.Ma_Kx, c.ma_mau, c.Ma_Mau_Nt
+                    FROM CT70HDX c WITH (NOLOCK)
+                    WHERE c.stt_rec = p.stt_rec
+                ) ct70
+                LEFT JOIN DmKx kx WITH (NOLOCK) ON ct70.Ma_Kx = kx.Ma_Kx
+                LEFT JOIN DmMauxe mau WITH (NOLOCK) ON ct70.ma_mau = mau.Ma_Mau
+                LEFT JOIN DmMauxe nt WITH (NOLOCK) ON ct70.Ma_Mau_Nt = nt.Ma_Mau
+                WHERE p.so_ct = {ph} OR p.so_ct LIKE {ph}
+                ORDER BY p.ngay_ct DESC
+            """
+            cursor.execute(sql_so_ct, (clean_so_ct, f"%{clean_so_ct}%"))
+            r = cursor.fetchone()
+            if r:
+                matched_contract = r if is_pymssql else dict(zip([col[0] for col in cursor.description], r))
+                matched_contract['match_by'] = 'direct_so_ct'
+
+        # 1. Tra cứu theo CẶP TÊN KHÁCH HÀNG & TÊN TƯ VẤN BÁN HÀNG
+        if not matched_contract and customer_name and tvbh_name:
             sql_cus_tvbh = f"""
                 SELECT TOP 1 
                     p.stt_rec, p.so_ct, p.Ma_Post, p.ngay_ct, p.Ten_kh, p.ong_ba,

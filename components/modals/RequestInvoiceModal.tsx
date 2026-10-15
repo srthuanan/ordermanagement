@@ -175,11 +175,15 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         };
     }, [stockData, order]);
 
-    const recheckDmsVerification = async () => {
+    const recheckDmsVerification = async (isManualClick = false) => {
         const orderNo = order["Số đơn hàng"] || (order as any).so_don_hang;
         if (!orderNo) {
             setDmsVerification({ status: 'invalid', message: 'Đơn hàng chưa có Số đơn hàng (VSO).' });
             return;
+        }
+
+        if (isManualClick) {
+            showToast('Đang đối soát DMS...', 'Đang kiểm tra đối soát cấu hình thực tế với VinFast DMS...', 'info', 2000);
         }
 
         // TÌM XE THỰC TẾ TRONG KHO THEO SỐ VIN ĐÃ GHÉP
@@ -422,6 +426,9 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         details: res.details
                     });
                 }
+                if (isManualClick) {
+                    showToast('Khớp 100% DMS', 'Cấu hình xe khớp hoàn toàn với VSO trên VinFast DMS.', 'success', 3000);
+                }
             } else {
                 setDmsVerification({
                     status: 'invalid',
@@ -431,12 +438,18 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     message: res.reason || 'Cấu hình xe không khớp với VSO trên VinFast DMS.',
                     details: res.details
                 });
+                if (isManualClick) {
+                    showToast('Chưa khớp DMS', res.reason || 'Cấu hình xe chưa khớp với VSO trên VinFast DMS.', 'warning', 3500);
+                }
             }
         } catch (err: any) {
             setDmsVerification({
                 status: 'invalid',
                 message: err.message || 'Lỗi khi kết nối hệ thống kiểm tra DMS.'
             });
+            if (isManualClick) {
+                showToast('Lỗi kiểm tra DMS', err.message || 'Lỗi khi kết nối hệ thống kiểm tra DMS.', 'error', 3000);
+            }
         } finally {
             setIsCheckingDms(false);
         }
@@ -455,16 +468,30 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         recheckCyberContract();
     }, [orderNoStr, orderVinStr]);
 
-    const recheckCyberContract = async () => {
+    const recheckCyberContract = async (isManualClick = false) => {
         setIsCheckingCyberContract(true);
+        if (isManualClick) {
+            showToast('Đang tra cứu Cyber...', 'Đang kết nối kiểm tra dữ liệu hợp đồng mới nhất trên CyberSoft...', 'info', 2000);
+        }
         try {
+            const contractCode = (maHdCyber || order?.["Mã HĐ Cyber"] || order?.ma_hd_cyber || (order as any)?.so_hop_dong || order?.["Số hợp đồng"] || '').trim();
             const res = await checkCyberContractStatus({
+                so_ct: contractCode,
                 customer_name: order["Tên khách hàng"],
                 tvbh_name: order["Tên tư vấn bán hàng"],
                 vin: order.VIN,
                 order_no: order["Số đơn hàng"]
             });
             setCyberContractStatus(res);
+            if (isManualClick) {
+                if (res.found && res.is_approved) {
+                    showToast('Hợp đồng đã duyệt!', `HĐ ${res.so_ct || contractCode} trên CyberSoft đã được phê duyệt.`, 'success', 3500);
+                } else if (res.found && !res.is_approved) {
+                    showToast('HĐ Cyber chưa duyệt', `HĐ ${res.so_ct || contractCode} hiện vẫn đang chờ duyệt (${res.ten_post || 'chưa duyệt'}).`, 'warning', 3500);
+                } else {
+                    showToast('Chưa có HĐ trên Cyber', `Chưa tìm thấy hợp đồng ${contractCode || ''} của khách hàng trên hệ thống CyberSoft.`, 'error', 3500);
+                }
+            }
         } catch (err) {
             console.error("Lỗi tra cứu hợp đồng Cyber:", err);
             setCyberContractStatus({
@@ -473,6 +500,9 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 is_approved: false,
                 error: 'Không thể kết nối máy chủ đối soát hợp đồng'
             });
+            if (isManualClick) {
+                showToast('Lỗi kết nối Cyber', 'Không thể kết nối máy chủ CyberSoft. Vui lòng thử lại sau giây lát.', 'error', 3000);
+            }
         } finally {
             setIsCheckingCyberContract(false);
         }
@@ -1092,7 +1122,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     </div>
                     <button 
                         type="button" 
-                        onClick={(e) => { e.stopPropagation(); recheckCyberContract(); }} 
+                        onClick={(e) => { e.stopPropagation(); recheckCyberContract(true); }} 
                         title="Kiểm tra lại hợp đồng Cyber"
                         className="flex-shrink-0 px-2 py-0.5 rounded-lg bg-white hover:bg-rose-100 text-rose-800 border border-rose-300 text-[9.5px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
                     >
@@ -1127,7 +1157,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 </div>
                 <button 
                     type="button" 
-                    onClick={(e) => { e.stopPropagation(); recheckCyberContract(); }} 
+                    onClick={(e) => { e.stopPropagation(); recheckCyberContract(true); }} 
                     title="Kiểm tra lại trạng thái hợp đồng"
                     className="flex-shrink-0 px-2 py-0.5 rounded-lg bg-white hover:bg-amber-100 text-amber-800 border border-amber-300 text-[9.5px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
                 >
@@ -1205,7 +1235,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     </div>
                     <button 
                         type="button" 
-                        onClick={(e) => { e.stopPropagation(); recheckDmsVerification(); }} 
+                        onClick={(e) => { e.stopPropagation(); recheckDmsVerification(true); }} 
                         title="Kiểm tra lại trạng thái DMS"
                         className="flex-shrink-0 px-2 py-0.5 rounded-lg bg-white hover:bg-rose-100 text-rose-800 border border-rose-300 text-[9.5px] font-bold shadow-2xs transition-all flex items-center gap-1 cursor-pointer"
                     >
