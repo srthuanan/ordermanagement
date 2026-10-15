@@ -145,27 +145,16 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
         };
     }, [isBacklogDropdownOpen]);
 
-    // Xử lý chọn 1 hợp đồng từ cọc tồn
+    // Xử lý chọn 1 hợp đồng từ cọc tồn (chỉ lấy mã HĐ Cyber và Tên khách hàng theo yêu cầu)
     const handleSelectBacklogContract = (contract: any) => {
         const cyberCode = cleanCyberContractCode(contract.so_hop_dong || contract.so_ct || contract.so_don_hang || '');
         const customerName = (contract.khach_hang || '').trim().toUpperCase();
 
-        setFormData(prev => {
-            const next = {
-                ...prev,
-                ma_hd_cyber: cyberCode,
-                ten_khach_hang: customerName || prev.ten_khach_hang,
-            };
-            // Nếu so_don_hang trong Cyber có định dạng DMS chuẩn thì tự động điền
-            if (contract.so_don_hang && /^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$/.test(contract.so_don_hang)) {
-                next.so_don_hang = contract.so_don_hang;
-            }
-            // Điền ngày cọc nếu chưa có
-            if (contract.ngay_hop_dong && !prev.ngay_coc) {
-                next.ngay_coc = contract.ngay_hop_dong;
-            }
-            return next;
-        });
+        setFormData(prev => ({
+            ...prev,
+            ma_hd_cyber: cyberCode,
+            ten_khach_hang: customerName || prev.ten_khach_hang,
+        }));
 
         setIsBacklogDropdownOpen(false);
         setBacklogSearch('');
@@ -321,6 +310,12 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
     const handleConfirmSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        // Validation Step 1: BẮT BUỘC CHỌN ĐẦY ĐỦ CẤU HÌNH XE
+        if (!validateStep1()) {
+            setStep(1);
+            return;
+        }
+
         // Validation Step 2: BẮT BUỘC NHẬP MÃ HĐ CYBER
         const requiredFields: (keyof typeof formData)[] = ['ten_khach_hang', 'so_don_hang', 'chinh_sach', 'ma_hd_cyber'];
         if (requiredFields.some(field => !formData[field]?.trim())) { 
@@ -484,13 +479,14 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                     Bạn có <span className="text-blue-600 font-extrabold">{userBacklogList.length}</span> hợp đồng cọc tồn trên Cyber
                                                 </p>
                                                 <p className="text-[11px] text-slate-500 truncate">
-                                                    Chọn hợp đồng cọc tồn để tự động điền mã HĐ, tên KH và ngày cọc
+                                                    Chọn hợp đồng cọc tồn để tự động điền mã HĐ và tên KH
                                                 </p>
                                             </div>
                                         </div>
                                         <button
                                             type="button"
                                             onClick={() => {
+                                                if (!validateStep1()) return;
                                                 setStep(2);
                                                 setIsBacklogDropdownOpen(true);
                                             }}

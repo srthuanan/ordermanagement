@@ -86,6 +86,10 @@ export const fetchAllArchivedData = async (): Promise<ApiResult> => {
 
 export const addRequest = async (formData: Record<string, string>, _chicFile: File) => {
     const payloadData: Record<string, string> = { ...formData };
+    if (!payloadData.dong_xe?.trim() || !payloadData.phien_ban?.trim() || !payloadData.ngoai_that?.trim() || !payloadData.noi_that?.trim()) {
+        return { status: 'ERROR', message: 'Thông tin cấu hình xe không hợp lệ. Vui lòng chọn đầy đủ Dòng xe, Phiên bản, Màu ngoại thất và Nội thất.' };
+    }
+
     try {
         const soDonHang = payloadData.so_don_hang;
         const { data: activeExists } = await supabase.from('donhang').select('so_don_hang, ket_qua').eq('so_don_hang', soDonHang).maybeSingle();
