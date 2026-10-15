@@ -468,35 +468,6 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                         {/* STEP 1: Premium Config Grid */}
                         {step === 1 && (
                             <div className="space-y-4 md:space-y-5 animate-fade-in relative z-10">
-                                {userBacklogList.length > 0 && !isPreFilled && (
-                                    <div className="p-3 bg-gradient-to-r from-blue-50/90 to-indigo-50/90 border border-blue-200/80 rounded-xl flex items-center justify-between gap-3 animate-fade-in shadow-2xs">
-                                        <div className="flex items-center gap-2.5 min-w-0">
-                                            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs shrink-0 shadow-xs">
-                                                <i className="fas fa-file-contract"></i>
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-bold text-slate-800">
-                                                    Bạn có <span className="text-blue-600 font-extrabold">{userBacklogList.length}</span> hợp đồng cọc tồn trên Cyber
-                                                </p>
-                                                <p className="text-[11px] text-slate-500 truncate">
-                                                    Chọn hợp đồng cọc tồn để tự động điền mã HĐ và tên KH
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (!validateStep1()) return;
-                                                setStep(2);
-                                                setIsBacklogDropdownOpen(true);
-                                            }}
-                                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-bold whitespace-nowrap transition-colors shadow-2xs flex items-center gap-1.5"
-                                        >
-                                            <i className="fas fa-list-check"></i>
-                                            <span>Chọn cọc tồn</span>
-                                        </button>
-                                    </div>
-                                )}
                                 <div className="grid grid-cols-1 gap-5 md:gap-6">
                                     <div>
                                         <InputGroup label="Dòng xe (Model)" htmlFor="dong_xe" required>
