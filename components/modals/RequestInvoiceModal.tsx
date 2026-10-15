@@ -745,7 +745,6 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         (carIntCode && cyberIntCode && !apiService.compareInteriorColorCodes(carIntCode, cyberIntCode))
     ));
 
-    const isCyberContractValid = Boolean(cyberContractStatus && cyberContractStatus.is_approved && !hasCyberMismatch);
     const isDmsValid = dmsVerification.status !== 'invalid';
     const isVerificationBlocked = !isDmsValid || hasCyberMismatch || (cyberContractStatus && !cyberContractStatus.is_approved);
 
