@@ -24,12 +24,15 @@ interface RequestFormProps {
     onOpenImagePreview: (images: ImageSource[], startIndex: number, customerName: string) => void;
 }
 
-const InputGroup: React.FC<{ icon?: string; children: React.ReactNode; label: string; htmlFor: string; required?: boolean }> = ({ children, label, htmlFor, required, icon }) => (
-    <div className="space-y-2">
-        <label htmlFor={htmlFor} className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wide">
-            {icon && <i className={`fas ${icon} text-slate-400`}></i>}
-            {label} {required && <span className="text-red-500">*</span>}
-        </label>
+const InputGroup: React.FC<{ icon?: string; children: React.ReactNode; label: string; htmlFor: string; required?: boolean; badge?: React.ReactNode }> = ({ children, label, htmlFor, required, icon, badge }) => (
+    <div className="space-y-1.5">
+        <div className="flex items-center justify-between min-h-[22px]">
+            <label htmlFor={htmlFor} className="flex items-center gap-1.5 text-xs font-bold text-slate-800 uppercase tracking-wide">
+                {icon && <i className={`fas ${icon} text-slate-400`}></i>}
+                {label} {required && <span className="text-red-500">*</span>}
+            </label>
+            {badge}
+        </div>
         <div className="relative">
             {children}
         </div>
@@ -76,6 +79,13 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
     const [warningType, setWarningType] = useState<'hot' | 'slow' | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [dmsWarning, setDmsWarning] = useState('');
+    const [dmsConfigCheck, setDmsConfigCheck] = useState<{
+        isChecking: boolean;
+        status: 'idle' | 'checking' | 'valid' | 'warning';
+        title?: string;
+        message?: string;
+    }>({ isChecking: false, status: 'idle' });
+    const [showVsoTooltip, setShowVsoTooltip] = useState(false);
     const { versionsMap, allPossibleVersions, vehicleLines, getMappedExteriors, getMappedInteriors } = useVehicleConfig();
 
     // Backlog deposits (Cọc tồn Cyber)
@@ -86,6 +96,96 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
     const [availableExteriors, setAvailableExteriors] = useState<string[]>([]);
     const [availableInteriors, setAvailableInteriors] = useState<string[]>([]);
+
+    // Tự động kiểm tra đối soát cấu hình xe ghép với VSO trên VinFast DMS
+    useEffect(() => {
+        const orderNo = (formData.so_don_hang || '').trim().toUpperCase();
+        const pattern = new RegExp("^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$");
+
+        if (!pattern.test(orderNo) || (!initialVehicle && !formData.dong_xe)) {
+            setDmsConfigCheck({ isChecking: false, status: 'idle' });
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            setDmsConfigCheck(prev => ({ ...prev, isChecking: true, status: 'checking' }));
+            try {
+                const targetConfig = initialVehicle ? {
+                    dong_xe: initialVehicle['Dòng xe'] || formData.dong_xe,
+                    phien_ban: initialVehicle['Phiên bản'] || formData.phien_ban,
+                    ngoai_that: initialVehicle['Ngoại thất'] || initialVehicle['Màu ngoại thất'] || formData.ngoai_that,
+                    noi_that: initialVehicle['Nội thất'] || initialVehicle['Màu nội thất'] || formData.noi_that
+                } : {
+                    dong_xe: formData.dong_xe,
+                    phien_ban: formData.phien_ban,
+                    ngoai_that: formData.ngoai_that,
+                    noi_that: formData.noi_that
+                };
+
+                const res = await apiService.verifyDmsVso(orderNo, targetConfig, true);
+
+                if (res.isValid) {
+                    setDmsConfigCheck({
+                        isChecking: false,
+                        status: 'valid',
+                        title: 'Khớp 100% DMS',
+                        message: 'Cấu hình xe khớp hoàn toàn với VSO trên VinFast DMS.'
+                    });
+                } else {
+                    const errorType = res.errorType;
+                    const expectedVal = res.expectedVal;
+                    const dmsVal = res.dmsVal;
+                    const rawReason = (res.reason || '').trim();
+                    const norm = rawReason.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+
+                    let title = 'Lệch cấu hình DMS';
+                    let guide = 'Nhắc nhở: TVBH nhớ xử lý trước khi Xuất hóa đơn.';
+
+                    if (errorType === 'canceled' || norm.includes('huy') || norm.includes('cancel')) {
+                        title = 'VSO trên DMS đã bị Hủy';
+                        guide = 'VSO này đã bị Hủy trên DMS. Vui lòng mở lại hoặc đổi VSO trước khi Xuất hóa đơn.';
+                    } else if (errorType === 'invoiced' || norm.includes('hoa don') || norm.includes('da xuat')) {
+                        title = 'VSO trên DMS đã xuất Hóa đơn';
+                        guide = 'VSO này đã xuất hóa đơn trên DMS. Vui lòng kiểm tra lại trước khi làm thủ tục Xuất hóa đơn.';
+                    } else if (errorType === 'exterior' || norm.includes('ngoai that')) {
+                        const exp = apiService.getExteriorColorCode(expectedVal || '') || expectedVal || '';
+                        const dms = apiService.getExteriorColorCode(dmsVal || '') || dmsVal || '';
+                        title = `Lệch Ngoại thất: Xe [${exp}] ⇄ DMS [${dms}]`;
+                        guide = `Xe ghép mang màu [${exp}] nhưng VSO yêu cầu [${dms}]. TVBH nhớ xử lý trước khi Xuất hóa đơn.`;
+                    } else if (errorType === 'interior' || norm.includes('noi that')) {
+                        const exp = apiService.getInteriorColorCode(expectedVal || '') || expectedVal || '';
+                        const dms = apiService.getInteriorColorCode(dmsVal || '') || dmsVal || '';
+                        title = `Lệch Nội thất: Xe [${exp}] ⇄ DMS [${dms}]`;
+                        guide = `Xe ghép mang nội thất [${exp}] nhưng VSO yêu cầu [${dms}]. TVBH nhớ xử lý trước khi Xuất hóa đơn.`;
+                    } else if (errorType === 'version' || norm.includes('phien ban')) {
+                        const exp = apiService.getVersionCode(expectedVal || '') || expectedVal || '';
+                        const dms = apiService.getVersionCode(dmsVal || '') || dmsVal || '';
+                        title = `Lệch Phiên bản: Xe [${exp}] ⇄ DMS [${dms}]`;
+                        guide = `Xe ghép là phiên bản [${exp}] nhưng VSO là [${dms}]. TVBH nhớ xử lý trước khi Xuất hóa đơn.`;
+                    } else if (errorType === 'model' || norm.includes('dong xe')) {
+                        const exp = apiService.getModelCode(expectedVal || '') || expectedVal || '';
+                        const dms = apiService.getModelCode(dmsVal || '') || dmsVal || '';
+                        title = `Lệch Dòng xe: Xe [${exp}] ⇄ DMS [${dms}]`;
+                        guide = `Xe ghép là [${exp}] nhưng VSO là [${dms}]. TVBH nhớ xử lý trước khi Xuất hóa đơn.`;
+                    } else if (rawReason) {
+                        title = 'Cấu hình chưa khớp DMS';
+                        guide = `${rawReason}. TVBH nhớ xử lý trước khi Xuất hóa đơn.`;
+                    }
+
+                    setDmsConfigCheck({
+                        isChecking: false,
+                        status: 'warning',
+                        title,
+                        message: guide
+                    });
+                }
+            } catch (err: any) {
+                setDmsConfigCheck({ isChecking: false, status: 'idle' });
+            }
+        }, 600);
+
+        return () => clearTimeout(timer);
+    }, [formData.so_don_hang, formData.dong_xe, formData.phien_ban, formData.ngoai_that, formData.noi_that, initialVehicle]);
 
     // Tải danh sách hợp đồng cọc tồn từ donhang_ton
     useEffect(() => {
@@ -271,6 +371,9 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
 
     const handleClearForm = () => {
         setFormData({ ten_ban_hang: currentUser, ten_khach_hang: '', so_don_hang: '', ma_hd_cyber: '', dong_xe: '', phien_ban: '', ngoai_that: '', noi_that: '', ngay_coc: '', thoi_gian_can_xe: '', vin: '', chinh_sach: '' });
+        setDmsWarning('');
+        setDmsConfigCheck({ isChecking: false, status: 'idle' });
+        setShowVsoTooltip(false);
         handleFileSelect(null);
         setStep(1);
     };
@@ -349,7 +452,15 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                 noi_that_flex: '[]'
             };
             const result = await apiService.addRequest(requestPayload as any, chicFile);
-            if (result.status === "SUCCESS" && result.newRecord) { onSuccess(result.newRecord); handleClearForm(); }
+            if (result.status === "SUCCESS" && result.newRecord) {
+                if (dmsConfigCheck.status === 'warning') {
+                    showToast('Đã gửi yêu cầu ghép xe', 'Yêu cầu ghép xe đã được gửi. Lưu ý TVBH cần xử lý lệch cấu hình trước khi Xuất hóa đơn.', 'warning', 6000);
+                } else {
+                    showToast('Thành Công', 'Yêu cầu ghép xe đã được gửi thành công.', 'success', 3000);
+                }
+                onSuccess(result.newRecord);
+                handleClearForm();
+            }
             else { throw new Error(result.message || 'Thất bại.'); }
         } catch (error) {
             showToast('Lỗi', error instanceof Error ? error.message : 'Lỗi lạ.', 'error', 5000);
@@ -755,23 +866,94 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                         </div>
 
                                         <div>
-                                            <InputGroup label="Số đơn hàng (VSO)" htmlFor="so_don_hang" icon="fa-barcode" required>
-                                                <input
-                                                    id="so_don_hang"
-                                                    type="text"
-                                                    name="so_don_hang"
-                                                    value={formData.so_don_hang}
-                                                    onChange={handleInputChange}
-                                                    required
-                                                    pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$"
-                                                    title="Định dạng: Nxxxxx-VSO-yy-mm-zzzz"
-                                                    onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Sai định dạng.')}
-                                                    onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
-                                                    className={`${inputClass} !py-2.5 font-mono uppercase ${
-                                                        dmsWarning ? 'border-red-400 focus:ring-red-100' : ''
-                                                    }`}
-                                                    placeholder="VD: N31923-VSO-26-10-xxxx"
-                                                />
+                                            <InputGroup
+                                                label="Số đơn hàng (VSO)"
+                                                htmlFor="so_don_hang"
+                                                icon="fa-barcode"
+                                                required
+                                                badge={
+                                                    dmsConfigCheck.isChecking ? (
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400">
+                                                            <i className="fas fa-spinner fa-spin text-xs"></i>
+                                                            <span>Đang kiểm tra...</span>
+                                                        </span>
+                                                    ) : dmsConfigCheck.status === 'valid' ? (
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md shadow-2xs" title="Cấu hình xe khớp 100% với VSO trên VinFast DMS">
+                                                            <i className="fas fa-check-circle text-emerald-500 text-[10px]"></i>
+                                                            <span>Khớp DMS</span>
+                                                        </span>
+                                                    ) : dmsConfigCheck.status === 'warning' ? (
+                                                        <div 
+                                                            className="relative inline-flex items-center"
+                                                            onMouseEnter={() => setShowVsoTooltip(true)}
+                                                            onMouseLeave={() => setShowVsoTooltip(false)}
+                                                            onClick={() => setShowVsoTooltip(prev => !prev)}
+                                                        >
+                                                            <button
+                                                                type="button"
+                                                                className="inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-2.5 py-0.5 rounded-md shadow-2xs transition-colors cursor-pointer select-none"
+                                                                title="Xem chi tiết nhắc nhở lệch cấu hình"
+                                                            >
+                                                                <i className="fas fa-exclamation-triangle text-amber-600 text-[10px]"></i>
+                                                                <span>Nhắc nhở</span>
+                                                            </button>
+
+                                                            {/* Khung thông tin dạng hover nhẹ - Nền trắng đục 100%, không bị xuyên thấu, không đẩy bố cục */}
+                                                            {showVsoTooltip && (
+                                                                <div className="absolute right-0 top-full mt-2 w-80 sm:w-88 p-3.5 rounded-xl border-2 border-amber-300 bg-white shadow-2xl text-xs z-[100] animate-fade-in pointer-events-auto">
+                                                                    {/* Mũi tên chỉ lên nút Nhắc nhở */}
+                                                                    <div className="absolute -top-1.5 right-6 w-3 h-3 bg-white border-t-2 border-l-2 border-amber-300 rotate-45"></div>
+
+                                                                    <div className="relative z-10 space-y-2">
+                                                                        <div className="flex items-center justify-between border-b border-amber-100 pb-2">
+                                                                            <div className="flex items-center gap-1.5 font-bold text-amber-900 text-xs">
+                                                                                <i className="fas fa-info-circle text-amber-600 shrink-0"></i>
+                                                                                <span className="truncate">{dmsConfigCheck.title || 'Lệch cấu hình DMS'}</span>
+                                                                            </div>
+                                                                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-800 shrink-0 border border-amber-200">
+                                                                                Nhắc nhở
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="text-[11px] text-slate-700 leading-relaxed font-normal">
+                                                                            {dmsConfigCheck.message}
+                                                                        </div>
+                                                                        <div className="text-[10px] text-amber-800/90 pt-1.5 border-t border-amber-100 italic leading-snug">
+                                                                            * Hệ thống vẫn cho phép gửi yêu cầu ghép xe. TVBH vui lòng xử lý/chỉnh sửa trên DMS hoặc đổi xe trước khi làm thủ tục Xuất hóa đơn.
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : null
+                                                }
+                                            >
+                                                <div className="relative">
+                                                    <input
+                                                        id="so_don_hang"
+                                                        type="text"
+                                                        name="so_don_hang"
+                                                        value={formData.so_don_hang}
+                                                        onChange={handleInputChange}
+                                                        required
+                                                        pattern="^N[0-9]{5}-[A-Z]{3}-[0-9]{2}-[0-9]{2}-[0-9]{4}$"
+                                                        title="Định dạng: Nxxxxx-VSO-yy-mm-zzzz"
+                                                        onInvalid={(e) => (e.target as HTMLInputElement).setCustomValidity('Sai định dạng.')}
+                                                        onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
+                                                        className={`${inputClass} !py-2.5 font-mono uppercase ${
+                                                            dmsWarning
+                                                                ? 'border-red-400 focus:ring-red-100'
+                                                                : dmsConfigCheck.status === 'warning'
+                                                                    ? 'border-amber-300 bg-amber-50/15 focus:border-amber-400 focus:ring-amber-100 pr-9'
+                                                                    : ''
+                                                        }`}
+                                                        placeholder="VD: N31923-VSO-26-10-xxxx"
+                                                    />
+                                                    {dmsConfigCheck.status === 'warning' && (
+                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-500 pointer-events-none" title={dmsConfigCheck.message}>
+                                                            <i className="fas fa-exclamation-circle text-sm"></i>
+                                                        </div>
+                                                    )}
+                                                </div>
                                                 {dmsWarning && (
                                                     <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-bold text-red-500 bg-red-50 p-2 rounded-lg border border-red-100 animate-fade-in">
                                                         <i className="fas fa-exclamation-triangle"></i>
