@@ -51,19 +51,6 @@
         return false;
       }
 
-      // 2. Chặn F12 (Developer Tools)
-      if (e.key === 'F12' || e.keyCode === 123) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // 3. Chặn Ctrl + Shift + I / J / C (Inspect Element & Console)
-      if (ctrl && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].indexOf(e.key) !== -1) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
 
       // 4. Chặn Ctrl + S (Lưu mã nguồn HTML về máy)
       if (ctrl && (e.key === 's' || e.key === 'S')) {
@@ -1400,7 +1387,7 @@
     }
   </style>
 
-  <script type="module" crossorigin src="/ordermanagement/assets/index-C88OOb-t.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-DP0v_gi2.js"></script>
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-react-eCFT3dHp.js">
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-utils-WIB47F82.js">
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-supabase-ClANIQrd.js">
