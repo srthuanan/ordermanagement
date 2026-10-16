@@ -39,6 +39,7 @@ export interface CustomerTrackingOrder {
     link_hoa_don?: string;
     tvbh_name: string;
     tvbh_phone?: string;
+    showroom: string;
     current_milestone: number; // 1 -> 6
     ngay_coc_ve?: string;
     milestones: CustomerMilestone[];
@@ -77,7 +78,7 @@ export const normalizePhone = (phone: string): string => {
 /**
  * Chuẩn hóa tên Dòng xe sang trọng và đúng chuẩn thương mại VinFast
  */
-export const normalizeVehicleModelName = (model: string, version?: string): string => {
+export const normalizeVehicleModelName = (model: string, _version?: string): string => {
     const raw = (model || '').trim();
     const upper = raw.toUpperCase();
     if (upper.includes('LIMO GREEN') || upper === 'LIMO GREEN') return 'VinFast Limo Green';
@@ -281,7 +282,6 @@ export const searchCustomerOrders = async (inputPhone: string): Promise<Customer
     xepXeData.forEach(recordVinAndContract);
 
     const uniqueVins = [...new Set(allVins)];
-    const uniqueContracts = [...new Set(allContracts)];
 
     // 3. Truy vấn chuyên sâu: Vị trí bãi xe, GPS Telemetry, Đơn hàng DMS (so_ct_dnx, so_ct_td4, link hoa don)
     let khoxeMap = new Map<string, any>();
