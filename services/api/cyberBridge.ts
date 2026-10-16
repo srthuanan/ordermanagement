@@ -128,15 +128,22 @@ initCyberBridge();
 
 export const getResolvedCyberApiUrl = (): string => {
     let customUrl = (typeof window !== 'undefined' ? localStorage.getItem('cyber_api_url') : '') || '';
-    if (customUrl && customUrl.includes('cybersync-api.onrender.com') && !customUrl.includes('cybersync-api-4k4j')) {
+    if (customUrl && customUrl.includes('onrender.com')) {
         try { localStorage.removeItem('cyber_api_url'); } catch (_) {}
         customUrl = '';
     }
     let envUrl = ((import.meta as any).env?.VITE_CYBER_API_URL || '').trim();
-    if (envUrl && envUrl.includes('cybersync-api.onrender.com') && !envUrl.includes('cybersync-api-4k4j')) {
+    if (envUrl && envUrl.includes('onrender.com')) {
         envUrl = '';
     }
-    return (customUrl || envUrl || 'https://cybersync-api-4k4j.onrender.com').trim().replace(/\/+$/, '');
+
+    // Nếu người dùng đang mở web trên domain Vercel, dùng origin hiện tại
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+    if (currentOrigin && currentOrigin.includes('vercel.app')) {
+        return currentOrigin;
+    }
+
+    return (customUrl || envUrl || 'https://ordermanagement.vercel.app').trim().replace(/\/+$/, '');
 };
 
 interface RequestCyberOptions {

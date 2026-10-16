@@ -5072,23 +5072,4 @@ def export_cyber_pdf_via_ps(stt_rec, voucher_type="TD4", paper_size="A4", user_n
 
 
 if __name__ == "__main__":
-    main()
-
-
-    total_pending = sum(1 for c in cars if not c['has_transferred'])
-    total_transferred = sum(1 for c in cars if c['has_transferred'])
-
-    # Tự động đồng bộ vào Supabase
-    try:
-        sync_cyber_cross_allocations_to_supabase("OTHER_ALLOCATION", cars)
-    except Exception as e_sb:
-        print(f"[OTHER_ALLOCATION sync to Supabase error]: {e_sb}", file=sys.stderr)
-
-    return {
-        "success": True,
-        "total": len(cars),
-        "total_pending": total_pending,
-        "total_transferred": total_transferred,
-        "from_date": from_date,
-        "cars": cars
-    }
+    main()
