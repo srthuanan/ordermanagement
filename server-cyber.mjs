@@ -718,8 +718,5 @@ server.listen(PORT, () => {
                 .catch(err => console.error(`[AutoSync DonHangTon Error]:`, err.message));
         }, THREE_HOURS_MS);
     }, 15000);
-
-    // ── Tự động kiểm tra và giới hạn dung lượng file log (tối đa 5MB) mỗi 30 phút
-    rotateLogFile();
-    setInterval(() => rotateLogFile(), 30 * 60 * 1000);
 });
+
