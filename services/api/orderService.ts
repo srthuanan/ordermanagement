@@ -8,13 +8,33 @@ import { cleanCyberContractCode } from '../../utils/stringUtils';
 
 export const getPaginatedData = async (_?: string[], __?: string, ___?: boolean): Promise<ApiResult> => {
     try {
-        let query = supabase.from('donhang').select('*').not('ket_qua', 'ilike', 'Đã hủy%');
-        const [{ data, error }, { data: yeucauList }] = await Promise.all([
-            query,
-            supabase.from('yeucauxhd').select('so_don_hang, ghi_chu_admin, url_hop_dong, url_de_nghi_xhd, ngay_coc_ve')
-        ]);
+        const { data, error } = await supabase.from('donhang').select('*').not('ket_qua', 'ilike', 'Đã hủy%');
         if (error) throw error;
-        const yeucauMap = new Map((yeucauList || []).map((y: any) => [y.so_don_hang?.trim(), y]));
+
+        // Chỉ truy vấn thông tin bổ trợ yeucauxhd cho các đơn hàng active thực tế thay vì nạp toàn bộ bảng
+        const activeOrderNumbers = (data || [])
+            .map((o: any) => (o.so_don_hang || '').trim())
+            .filter((s: string) => s.length > 0);
+
+        let yeucauList: any[] = [];
+        if (activeOrderNumbers.length > 0) {
+            const chunkSize = 150;
+            const chunks: string[][] = [];
+            for (let i = 0; i < activeOrderNumbers.length; i += chunkSize) {
+                chunks.push(activeOrderNumbers.slice(i, i + chunkSize));
+            }
+            const chunkResults = await Promise.all(
+                chunks.map(chunk =>
+                    supabase
+                        .from('yeucauxhd')
+                        .select('so_don_hang, ghi_chu_admin, url_hop_dong, url_de_nghi_xhd, ngay_coc_ve')
+                        .in('so_don_hang', chunk)
+                )
+            );
+            yeucauList = chunkResults.flatMap(r => r.data || []);
+        }
+
+        const yeucauMap = new Map(yeucauList.map((y: any) => [y.so_don_hang?.trim(), y]));
 
         const formattedData = (data || []).map((order: any) => {
             const yc = yeucauMap.get(order.so_don_hang?.trim());

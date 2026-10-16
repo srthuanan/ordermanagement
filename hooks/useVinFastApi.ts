@@ -40,7 +40,7 @@ export const useVinFastApi = (currentUser?: string, isCurrentUserAdmin?: boolean
         // 3. Kết hợp: Dữ liệu API (mới nhất) + Dữ liệu lưu trữ (phiên hiện tại)
         return { data: [...activeData, ...archivedData], hasArchives };
     }, {
-        refreshInterval: 120000, // 2 phút (vì đã có Realtime lắng nghe tự động)
+        refreshInterval: 300000, // 5 phút làm dự phòng (vì đã có Realtime lắng nghe tự động)
         revalidateOnFocus: false,
         revalidateOnReconnect: true,
     });
@@ -56,10 +56,6 @@ export const useVinFastApi = (currentUser?: string, isCurrentUserAdmin?: boolean
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'archived_orders' }, () => {
                 console.log('Realtime change in archived_orders detected. Mutating...');
-                mutate();
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'yeucauvc' }, () => {
-                console.log('Realtime change in yeucauvc detected. Mutating...');
                 mutate();
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'yeucauxhd' }, () => {

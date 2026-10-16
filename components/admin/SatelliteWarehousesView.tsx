@@ -688,9 +688,6 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
             if (k83Items.length === 0) {
                 handleFetchK83(undefined, true);
             }
-            if (thuanAnAllocations.length === 0) {
-                handleFetchThuanAnAllocations(false, true);
-            }
             if (crossAllocations.length === 0) {
                 handleFetchCrossAllocations('2026-01-01', false, true);
             }
@@ -698,7 +695,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 handleFetchOtherAllocations('2026-08-01', false, true);
             }
         }
-    }, [isActive, cars.length, reconcileItems.length, td4Items.length, missingYardItems.length, k83Items.length, thuanAnAllocations.length, crossAllocations.length, otherAllocations.length, handleFetchReconcile, handleFetchTd4, handleFetchMissingYard, handleFetchK83, handleFetchThuanAnAllocations, handleFetchCrossAllocations, handleFetchOtherAllocations]);
+    }, [isActive, cars.length, reconcileItems.length, td4Items.length, missingYardItems.length, k83Items.length, crossAllocations.length, otherAllocations.length, handleFetchReconcile, handleFetchTd4, handleFetchMissingYard, handleFetchK83, handleFetchCrossAllocations, handleFetchOtherAllocations]);
 
     // Copy VIN
     const copyVin = (vin: string) => {
@@ -2015,29 +2012,19 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {/* BADGE TIÊU ĐỀ PHÂN HỆ ĐANG XEM TỪ SIDEBAR */}
                             {reconcileSubTab === 'thuan_an_allocations' && (
-                                allocSubMode === 'allocated_unbilled' ? (
-                                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
-                                        <i className="fa-solid fa-boxes-stacked text-[10px] text-emerald-600"></i>
-                                        <span>Xe Phân Bổ Tồn</span>
-                                        <span className="px-1 text-[9px] rounded-full bg-emerald-700 text-white font-mono font-bold">
-                                            {thuanAnAllocations.length}
+                                <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-900 border border-rose-300 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
+                                    <i className="fa-solid fa-triangle-exclamation text-[10px] text-rose-600"></i>
+                                    <span>SR Khác Xuất HĐ</span>
+                                    {countCrossPending > 0 ? (
+                                        <span className="px-1 text-[9px] rounded-full bg-rose-600 text-white font-mono font-bold animate-pulse" title="Cần lập ĐNX điều chuyển ĐĐKD">
+                                            {countCrossPending}
                                         </span>
-                                    </span>
-                                ) : (
-                                    <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-900 border border-rose-300 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
-                                        <i className="fa-solid fa-triangle-exclamation text-[10px] text-rose-600"></i>
-                                        <span>SR Khác Xuất HĐ</span>
-                                        {countCrossPending > 0 ? (
-                                            <span className="px-1 text-[9px] rounded-full bg-rose-600 text-white font-mono font-bold animate-pulse" title="Cần lập ĐNX điều chuyển ĐĐKD">
-                                                {countCrossPending}
-                                            </span>
-                                        ) : (
-                                            <span className="px-1 text-[9px] rounded-full bg-emerald-600 text-white font-mono font-bold">
-                                                0
-                                            </span>
-                                        )}
-                                    </span>
-                                )
+                                    ) : (
+                                        <span className="px-1 text-[9px] rounded-full bg-emerald-600 text-white font-mono font-bold">
+                                            0
+                                        </span>
+                                    )}
+                                </span>
                             )}
 
                             {reconcileSubTab === 'other_sr_allocations' && (

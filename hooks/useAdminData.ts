@@ -37,8 +37,7 @@ export const useAdminData = ({
         const result = await apiService.getYeuCauVcData();
         return result.data || [];
     }, {
-        refreshInterval: 30000,
-        revalidateOnFocus: true,
+        revalidateOnFocus: false,
         revalidateOnReconnect: true,
     });
 
@@ -57,14 +56,30 @@ export const useAdminData = ({
         if (error) throw error;
         return data || [];
     }, {
-        refreshInterval: 15000,
-        revalidateOnFocus: true,
+        revalidateOnFocus: false,
         revalidateOnReconnect: true,
     });
 
     const localXuathoadonRaw = xhdRes || [];
     const isLoadingXuathoadon = !xhdRes && !errorXhdRaw;
     const fetchXuathoadonData = () => mutateXhd();
+
+    // Lắng nghe Realtime cho VC và Yêu cầu xuất hóa đơn thay vì Polling liên tục
+    useEffect(() => {
+        const channel = supabase
+            .channel('admin-realtime-data-sync')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'yeucauvc' }, () => {
+                mutateVc();
+            })
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'yeucauxhd' }, () => {
+                mutateXhd();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [mutateVc, mutateXhd]);
 
     const localXuathoadonData = useMemo(() => {
         return localXuathoadonRaw.map((row: any) => ({

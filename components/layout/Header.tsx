@@ -145,7 +145,7 @@ const Header: React.FC<HeaderProps> = ({
 
     React.useEffect(() => {
         fetchPendingSwapCount();
-        const interval = setInterval(fetchPendingSwapCount, 15000);
+        const interval = setInterval(fetchPendingSwapCount, 60000); // 60s giãn cách để tránh spam request liên tục
         return () => clearInterval(interval);
     }, [fetchPendingSwapCount]);
 
