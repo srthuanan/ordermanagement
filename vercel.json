@@ -37,6 +37,14 @@
       "destination": "/api/index.py"
     },
     {
+      "source": "/ordermanagement/assets/(.*)",
+      "destination": "/assets/$1"
+    },
+    {
+      "source": "/ordermanagement/(.*)",
+      "destination": "/$1"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
