@@ -896,6 +896,50 @@ export const fetchCrossShowroomAllocations = async (options: {
     keyword?: string;
     force?: boolean;
 } = {}): Promise<CrossShowroomAllocationsResult> => {
+    // 1. Khi KHÔNG bấm làm mới (force = false), đọc ngay từ Supabase để nạp dữ liệu tức thì (<100ms)
+    if (!options.force) {
+        try {
+            let query = supabase
+                .from('cyber_cross_allocations')
+                .select('*')
+                .eq('allocation_type', 'CROSS_ALLOCATION')
+                .order('ngay_hd', { ascending: false });
+
+            if (options.fromDate) {
+                query = query.gte('ngay_hd', options.fromDate);
+            }
+
+            const { data, error } = await query;
+            if (!error && data && data.length > 0) {
+                let cars = data as CrossShowroomAllocationItem[];
+                if (options.keyword && options.keyword.trim()) {
+                    const q = options.keyword.toLowerCase().trim();
+                    cars = cars.filter(c =>
+                        (c.vin || '').toLowerCase().includes(q) ||
+                        (c.dong_xe || '').toLowerCase().includes(q) ||
+                        (c.ten_khach_hang || '').toLowerCase().includes(q) ||
+                        (c.so_hd || '').toLowerCase().includes(q) ||
+                        (c.ten_ttcp_xuat || '').toLowerCase().includes(q)
+                    );
+                }
+                const totalPending = cars.filter(c => !c.has_transferred).length;
+                const totalTransferred = cars.filter(c => c.has_transferred).length;
+                return {
+                    success: true,
+                    total: cars.length,
+                    total_pending: totalPending,
+                    total_transferred: totalTransferred,
+                    from_date: options.fromDate || '2026-01-01',
+                    cars
+                };
+            }
+        } catch (e) {
+            console.warn('[fetchCrossShowroomAllocations] Supabase cache read warning:', e);
+        }
+    }
+
+    // 2. Khi bấm Làm mới (force = true) hoặc Supabase chưa có data: Gọi trực tiếp API CyberSoft (qua Bridge/Daemon hoặc Cloud)
+    // Server sẽ truy vấn CSDL Cyber MSSQL trực tiếp và lưu dữ liệu mới nhất vào Supabase!
     try {
         const endpoints = getCyberEndpoints('/api/cyber/cross-showroom-allocations');
         let response: Response | null = null;
@@ -920,18 +964,37 @@ export const fetchCrossShowroomAllocations = async (options: {
             }
         }
 
-        if (!response) {
+        if (response) {
+            return await response.json();
+        }
+
+        // Fallback đọc từ Supabase nếu API ngoài gặp trục trặc
+        const { data } = await supabase
+            .from('cyber_cross_allocations')
+            .select('*')
+            .eq('allocation_type', 'CROSS_ALLOCATION')
+            .order('ngay_hd', { ascending: false });
+
+        if (data && data.length > 0) {
+            const cars = data as CrossShowroomAllocationItem[];
             return {
-                success: false,
-                total: 0,
-                total_pending: 0,
-                total_transferred: 0,
-                cars: [],
-                error: lastError || 'Không thể kết nối API tra cứu xe khác SR xuất HĐ'
+                success: true,
+                total: cars.length,
+                total_pending: cars.filter(c => !c.has_transferred).length,
+                total_transferred: cars.filter(c => c.has_transferred).length,
+                from_date: options.fromDate || '2026-01-01',
+                cars
             };
         }
 
-        return await response.json();
+        return {
+            success: false,
+            total: 0,
+            total_pending: 0,
+            total_transferred: 0,
+            cars: [],
+            error: lastError || 'Không thể kết nối API tra cứu xe khác SR xuất HĐ'
+        };
     } catch (err: any) {
         return {
             success: false,
@@ -953,6 +1016,50 @@ export const fetchOtherShowroomAllocations = async (options: {
     keyword?: string;
     force?: boolean;
 } = {}): Promise<CrossShowroomAllocationsResult> => {
+    // 1. Khi KHÔNG bấm làm mới (force = false), đọc ngay từ Supabase để nạp dữ liệu tức thì (<100ms)
+    if (!options.force) {
+        try {
+            let query = supabase
+                .from('cyber_cross_allocations')
+                .select('*')
+                .eq('allocation_type', 'OTHER_ALLOCATION')
+                .order('ngay_hd', { ascending: false });
+
+            if (options.fromDate) {
+                query = query.gte('ngay_hd', options.fromDate);
+            }
+
+            const { data, error } = await query;
+            if (!error && data && data.length > 0) {
+                let cars = data as CrossShowroomAllocationItem[];
+                if (options.keyword && options.keyword.trim()) {
+                    const q = options.keyword.toLowerCase().trim();
+                    cars = cars.filter(c =>
+                        (c.vin || '').toLowerCase().includes(q) ||
+                        (c.dong_xe || '').toLowerCase().includes(q) ||
+                        (c.ten_khach_hang || '').toLowerCase().includes(q) ||
+                        (c.so_hd || '').toLowerCase().includes(q) ||
+                        (c.ten_ttcp_phan_bo || '').toLowerCase().includes(q)
+                    );
+                }
+                const totalPending = cars.filter(c => !c.has_transferred).length;
+                const totalTransferred = cars.filter(c => c.has_transferred).length;
+                return {
+                    success: true,
+                    total: cars.length,
+                    total_pending: totalPending,
+                    total_transferred: totalTransferred,
+                    from_date: options.fromDate || '2026-08-01',
+                    cars
+                };
+            }
+        } catch (e) {
+            console.warn('[fetchOtherShowroomAllocations] Supabase cache read warning:', e);
+        }
+    }
+
+    // 2. Khi bấm Làm mới (force = true) hoặc Supabase chưa có data: Gọi trực tiếp API CyberSoft (qua Bridge/Daemon hoặc Cloud)
+    // Server sẽ truy vấn CSDL Cyber MSSQL trực tiếp và lưu dữ liệu mới nhất vào Supabase!
     try {
         const endpoints = getCyberEndpoints('/api/cyber/other-showroom-allocations');
         let response: Response | null = null;
@@ -977,18 +1084,37 @@ export const fetchOtherShowroomAllocations = async (options: {
             }
         }
 
-        if (!response) {
+        if (response) {
+            return await response.json();
+        }
+
+        // Fallback đọc từ Supabase nếu API ngoài gặp trục trặc
+        const { data } = await supabase
+            .from('cyber_cross_allocations')
+            .select('*')
+            .eq('allocation_type', 'OTHER_ALLOCATION')
+            .order('ngay_hd', { ascending: false });
+
+        if (data && data.length > 0) {
+            const cars = data as CrossShowroomAllocationItem[];
             return {
-                success: false,
-                total: 0,
-                total_pending: 0,
-                total_transferred: 0,
-                cars: [],
-                error: lastError || 'Không thể kết nối API tra cứu xe SR khác PB - Thuận An XHĐ'
+                success: true,
+                total: cars.length,
+                total_pending: cars.filter(c => !c.has_transferred).length,
+                total_transferred: cars.filter(c => c.has_transferred).length,
+                from_date: options.fromDate || '2026-08-01',
+                cars
             };
         }
 
-        return await response.json();
+        return {
+            success: false,
+            total: 0,
+            total_pending: 0,
+            total_transferred: 0,
+            cars: [],
+            error: lastError || 'Không thể kết nối API tra cứu xe SR khác PB - Thuận An XHĐ'
+        };
     } catch (err: any) {
         return {
             success: false,

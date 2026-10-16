@@ -57,6 +57,9 @@ from scripts.sync_thuan_an_allocations import (
     map_allocation_to_khoxe,
     upsert_to_supabase_khoxe,
     get_cyber_plan_filter_options,
+    get_cross_showroom_allocations,
+    get_other_showroom_allocations_thuan_an_billed,
+    transfer_business_location,
     search_cyber_factory_plan,
     get_cyber_ton_kho_report,
     get_cyber_xep_xe_contracts,
@@ -402,6 +405,72 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                     self.wfile.write(json.dumps({"success": False, "error": "PDF not found on server", "stt_rec": stt_rec}, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 self.send_response(404)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/cross-showroom-allocations":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            try:
+                data = json.loads(body_str or "{}")
+            except Exception:
+                data = {}
+            try:
+                result = get_cross_showroom_allocations(data)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/other-showroom-allocations":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            try:
+                data = json.loads(body_str or "{}")
+            except Exception:
+                data = {}
+            try:
+                result = get_other_showroom_allocations_thuan_an_billed(data)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/transfer-business-location":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            try:
+                data = json.loads(body_str or "{}")
+            except Exception:
+                data = {}
+            try:
+                result = transfer_business_location(data)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(result, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()

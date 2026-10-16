@@ -2547,6 +2547,123 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             "error": f"Lỗi tạo phiếu đề nghị xuất trên CyberSoft: {str(e)}"
         }
 
+def sync_cyber_cross_allocations_to_supabase(alloc_type: str, cars: list) -> int:
+    """Tự động lưu/đồng bộ danh sách xe điều chuyển vào bảng cyber_cross_allocations trên Supabase."""
+    if not cars:
+        return 0
+    now_utc = datetime.now(timezone.utc).isoformat()
+    records = []
+
+    def safe_d(val):
+        if not val or val in ('1900-01-01', '0000-00-00'):
+            return None
+        s = str(val).strip()
+        return s[:10] if len(s) >= 10 else None
+
+    for c in cars:
+        vin = (c.get("vin") or "").strip().upper()
+        if not vin:
+            continue
+        has_tx = bool(c.get("has_transferred"))
+        records.append({
+            "vin": vin,
+            "allocation_type": alloc_type,
+            "so_may": (c.get("so_may") or "").strip() or None,
+            "ma_kx": (c.get("ma_kx") or "").strip() or None,
+            "loai_xe": (c.get("loai_xe") or "").strip() or None,
+            "phien_ban": (c.get("phien_ban") or "").strip() or None,
+            "dong_xe": (c.get("dong_xe") or "").strip() or None,
+            "ma_mau": (c.get("ma_mau") or "").strip() or None,
+            "ten_mau": (c.get("ten_mau") or "").strip() or None,
+            "ma_mau_nt": (c.get("ma_mau_nt") or "").strip() or None,
+            "ten_mau_nt": (c.get("ten_mau_nt") or "").strip() or None,
+            "ma_dms": (c.get("ma_dms") or "").strip() or None,
+            "ttcp_phan_bo": (c.get("ttcp_phan_bo") or "").strip() or None,
+            "ten_ttcp_phan_bo": (c.get("ten_ttcp_phan_bo") or "").strip() or None,
+            "ngay_phan_bo": safe_d(c.get("ngay_phan_bo")),
+            "ttcp_xuat": (c.get("ttcp_xuat") or "").strip() or None,
+            "ten_ttcp_xuat": (c.get("ten_ttcp_xuat") or "").strip() or None,
+            "so_hd": (c.get("so_hd") or "").strip() or None,
+            "ngay_hd": safe_d(c.get("ngay_hd")),
+            "ten_khach_hang": (c.get("ten_khach_hang") or "").strip() or None,
+            "tvbh_xuat": (c.get("tvbh_xuat") or "").strip() or None,
+            "has_transferred": has_tx,
+            "status": "TRANSFERRED" if has_tx else "PENDING_TRANSFER",
+            "so_ct_dnx": (c.get("so_ct_dnx") or "").strip() or None,
+            "ngay_ct_dnx": safe_d(c.get("ngay_ct_dnx")),
+            "ma_gd_dnx": (c.get("ma_gd_dnx") or "").strip() or None,
+            "ttcp_nhan_dnx": (c.get("ttcp_nhan_dnx") or "").strip() or None,
+            "so_ct_transfer": (c.get("so_ct_transfer") or "").strip() or None,
+            "updated_at": now_utc
+        })
+
+    CHUNK_SIZE = 100
+    total_ok = 0
+    for i in range(0, len(records), CHUNK_SIZE):
+        chunk = records[i:i + CHUNK_SIZE]
+        clean_chunk = json.loads(json.dumps(chunk, default=str))
+        try:
+            up_res = requests.post(
+                f"{SUPABASE_URL}/rest/v1/cyber_cross_allocations",
+                headers={**HEADERS, "Prefer": "resolution=merge-duplicates"},
+                params={"on_conflict": "vin,allocation_type"},
+                json=clean_chunk,
+                timeout=20
+            )
+            if 200 <= up_res.status_code < 300:
+                total_ok += len(chunk)
+            else:
+                print(f"[{alloc_type} Supabase sync warning] HTTP {up_res.status_code}: {up_res.text[:150]}", file=sys.stderr)
+        except Exception as e_up:
+            print(f"[{alloc_type} Supabase sync error] {e_up}", file=sys.stderr)
+    return total_ok
+
+def get_cross_allocations_from_supabase(alloc_type: str, from_date: str = "", status_filter: str = "all", keyword: str = "") -> dict:
+    """Truy vấn dữ liệu xe điều chuyển đã lưu trong Supabase (chế độ dự phòng khi không kết nối được Cyber MSSQL)."""
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/cyber_cross_allocations?allocation_type=eq.{alloc_type}&order=ngay_hd.desc"
+        if from_date:
+            url += f"&ngay_hd=gte.{from_date}"
+        r = requests.get(url, headers=HEADERS, timeout=15)
+        if r.ok:
+            cars = r.json()
+            if status_filter == 'pending':
+                cars = [c for c in cars if not c.get('has_transferred')]
+            elif status_filter == 'transferred':
+                cars = [c for c in cars if c.get('has_transferred')]
+
+            if keyword:
+                cars = [c for c in cars if (
+                    keyword in str(c.get('vin') or '').lower() or
+                    keyword in str(c.get('dong_xe') or '').lower() or
+                    keyword in str(c.get('ten_khach_hang') or '').lower() or
+                    keyword in str(c.get('so_hd') or '').lower()
+                )]
+
+            total_pending = sum(1 for c in cars if not c.get('has_transferred'))
+            total_transferred = sum(1 for c in cars if c.get('has_transferred'))
+            return {
+                "success": True,
+                "total": len(cars),
+                "total_pending": total_pending,
+                "total_transferred": total_transferred,
+                "from_date": from_date or ("2026-08-01" if alloc_type == 'OTHER_ALLOCATION' else "2026-01-01"),
+                "cars": cars,
+                "from_cache": True
+            }
+    except Exception as e:
+        print(f"[get_cross_allocations_from_supabase error] {e}", file=sys.stderr)
+
+    return {
+        "success": False,
+        "total": 0,
+        "total_pending": 0,
+        "total_transferred": 0,
+        "cars": [],
+        "error": "Không thể kết nối CSDL CyberSoft MSSQL và Supabase"
+    }
+
+
 def get_cross_showroom_allocations(params: dict = {}) -> dict:
     from_date = (params.get("fromDate") or params.get("from_date") or "2026-08-01").strip()
     status_filter = (params.get("status") or "all").strip() # 'all' | 'pending' | 'transferred'
@@ -2680,6 +2797,12 @@ def get_cross_showroom_allocations(params: dict = {}) -> dict:
 
     total_pending = sum(1 for c in cars if not c['has_transferred'])
     total_transferred = sum(1 for c in cars if c['has_transferred'])
+
+    # Tự động đồng bộ vào Supabase
+    try:
+        sync_cyber_cross_allocations_to_supabase("CROSS_ALLOCATION", cars)
+    except Exception as e_sb:
+        print(f"[CROSS_ALLOCATION sync to Supabase error]: {e_sb}", file=sys.stderr)
 
     return {
         "success": True,
@@ -4952,3 +5075,20 @@ if __name__ == "__main__":
     main()
 
 
+    total_pending = sum(1 for c in cars if not c['has_transferred'])
+    total_transferred = sum(1 for c in cars if c['has_transferred'])
+
+    # Tự động đồng bộ vào Supabase
+    try:
+        sync_cyber_cross_allocations_to_supabase("OTHER_ALLOCATION", cars)
+    except Exception as e_sb:
+        print(f"[OTHER_ALLOCATION sync to Supabase error]: {e_sb}", file=sys.stderr)
+
+    return {
+        "success": True,
+        "total": len(cars),
+        "total_pending": total_pending,
+        "total_transferred": total_transferred,
+        "from_date": from_date,
+        "cars": cars
+    }
