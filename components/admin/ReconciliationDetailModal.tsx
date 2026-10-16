@@ -5,7 +5,7 @@ export interface ReconciliationDetailModalProps {
     isOpen: boolean;
     onClose: () => void;
     item: any | null;
-    type?: 'missing_yard' | 'td4' | 'dnx' | 'all';
+    type?: 'missing_yard' | 'td4' | 'dnx' | 'k83_reconcile' | 'all';
     showToast: (title: string, message: string, type: 'success' | 'error' | 'loading' | 'warning' | 'info', duration?: number) => void;
 }
 
@@ -19,6 +19,8 @@ export const ReconciliationDetailModal: React.FC<ReconciliationDetailModalProps>
     if (!isOpen || !item) return null;
 
     const itemType = item.type || (
+        item.reconcileType ? 'K83_RECONCILE' :
+        type === 'k83_reconcile' ? 'K83_RECONCILE' :
         type === 'missing_yard' ? 'MISSING_YARD' :
         type === 'td4' ? 'TD4' :
         type === 'dnx' ? 'DNX' : 'UNKNOWN'
@@ -28,14 +30,14 @@ export const ReconciliationDetailModal: React.FC<ReconciliationDetailModalProps>
     const carModel = item.carModel || item.loaiXe || 'Chưa rõ';
     const color = item.color || item.mauSac || '';
     const customerName = item.customerName || 'Chưa rõ';
-    const tvbh = item.tvbh || 'Chưa rõ';
+    const tvbh = item.tvbh || item.tvbhCyber || 'Chưa rõ';
     const orderNumber = item.orderNumber || item.soDonHang || '';
-    const ngayXhd = item.ngayXuatHoaDon || item.ngayChungTu || '';
-    const maHdCyber = item.maHdCyber || item.soHd || '';
+    const ngayXhd = item.ngayXuatHoaDon || item.ngayChungTu || item.ngayHdCyber || '';
+    const maHdCyber = item.maHdCyber || item.soHd || item.soHdCyber || '';
     const khoCyber = item.khoCyber || item.tenKhoCyber || item.maKhoCyber || 'Cyber';
-    const khoThucTe = item.khoThucTe || item.khoBaiThucTe || (item.satelliteYard ? item.satelliteYard.khoName : '') || 'Không có ở 3 bãi';
-    const ngayXuatBai = item.ngayXuatBaiThucTe || (item.satelliteYard ? item.satelliteYard.ngayGiao : '');
-    const ngayNhanBai = item.ngayNhanBai || (item.satelliteYard ? item.satelliteYard.ngayNhan : '');
+    const khoThucTe = item.khoThucTe || item.khoBaiThucTe || item.khoName || (item.satelliteYard ? item.satelliteYard.khoName : '') || 'Không có ở 3 bãi';
+    const ngayXuatBai = item.ngayXuatBaiThucTe || item.ngayGiaoYard || (item.satelliteYard ? item.satelliteYard.ngayGiao : '');
+    const ngayNhanBai = item.ngayNhanBai || item.ngayNhanYard || (item.satelliteYard ? item.satelliteYard.ngayNhan : '');
 
     // Nội dung ngắn gọn & súc tích
     let shortAlertTitle = '';
@@ -43,8 +45,89 @@ export const ReconciliationDetailModal: React.FC<ReconciliationDetailModalProps>
     let actionSteps: { role: string; task: string; color: string }[] = [];
     let bannerBg = 'bg-red-50 text-red-900 border-red-200';
 
+    // 0. Phân hệ mới: TRA SOÁT TỒN KHO CYBER K83 vs BÃI THUẬN AN THỰC TẾ
+    if (itemType === 'K83_RECONCILE' || item.reconcileType) {
+        if (item.reconcileType === 'MATCHED') {
+            bannerBg = 'bg-emerald-50 text-emerald-950 border-emerald-300';
+            shortAlertTitle = 'Xe đã khớp hoàn toàn giữa Sổ Cyber K83 và Bãi Thuận An thực tế';
+            shortProblem = 'Xe có mặt trên sổ sách Cyber K83 và thực tế đang nằm tại bãi Thuận An (Mức pin: ' + (item.mucPin || '-') + ').';
+            actionSteps = [
+                { role: 'Thủ Kho Bãi', task: 'Định kỳ kiểm tra mức pin, bảo quản xe an toàn trong bãi.', color: 'text-emerald-800 bg-emerald-50 border-emerald-200' },
+                { role: `TVBH (${tvbh})`, task: 'Theo dõi hợp đồng và chuẩn bị lịch hẹn bàn giao cho khách hàng.', color: 'text-blue-700 bg-blue-50 border-blue-200' }
+            ];
+        } else if (item.reconcileType === 'CYBER_K83_ONLY') {
+            bannerBg = 'bg-amber-50 text-amber-950 border-amber-300';
+            const td4Label = item.td4MaPostLabel ? ` [${item.td4MaPostLabel}]` : '';
+
+            if (item.otherYardInfo?.isTonKho) {
+                const otherYardName = item.otherYardInfo.khoName;
+                if (item.hasDnx) {
+                    shortAlertTitle = `Xe đang ở bãi ${otherYardName} — ĐÃ CÓ ĐNX (${item.soCtDnx}) về K83`;
+                    shortProblem = item.discrepancyReason || `Sổ Cyber báo K83 nhưng xe đang nằm tại ${otherYardName} và đã lập phiếu ĐNX ${item.soCtDnx} về Showroom Thuận An.`;
+                    actionSteps = [
+                        { role: 'Admin & Điều Phối Xe', task: `Đã có ĐNX ${item.soCtDnx}. Liên hệ xe lồng khẩn trương vận chuyển xe từ ${otherYardName} về Showroom Thuận An.`, color: 'text-purple-800 bg-purple-50 border-purple-200' },
+                        { role: `TVBH (${tvbh})`, task: 'Theo dõi tiến độ vận chuyển xe về bãi Thuận An để kịp chuẩn bị bàn giao cho khách.', color: 'text-blue-700 bg-blue-50 border-blue-200' }
+                    ];
+                } else {
+                    shortAlertTitle = `Xe đang ở bãi ${otherYardName} — CHƯA CÓ ĐNX điều chuyển về K83`;
+                    shortProblem = item.discrepancyReason || `Sổ Cyber báo tồn K83 nhưng thực tế xe đang ở ${otherYardName} và chưa hề có phiếu ĐNX điều chuyển về Showroom Thuận An.`;
+                    actionSteps = [
+                        { role: 'TVBH & Admin', task: `Khẩn trương lập phiếu ĐNX điều chuyển xe từ ${otherYardName} về Showroom Thuận An (K83).`, color: 'text-amber-800 bg-amber-50 border-amber-200' },
+                        { role: 'Điều Phối Xe', task: 'Sau khi có ĐNX, lên kế hoạch xe lồng vận chuyển về bãi showroom.', color: 'text-slate-700 bg-slate-100 border-slate-200' }
+                    ];
+                }
+            } else if (item.hasDnx && item.dnxMaKhoXuat === 'K83' && item.dnxMaKhoNhan && item.dnxMaKhoNhan !== 'K83') {
+                shortAlertTitle = `Phiếu ĐNX (${item.soCtDnx}) xuất khỏi K83 — Kế toán chưa làm PXK trừ kho`;
+                shortProblem = item.discrepancyReason || `Xe có lệnh ĐNX ${item.soCtDnx} xuất điều chuyển từ K83 sang ${item.dnxTenKhoNhan || item.dnxMaKhoNhan}, nhưng Kế toán chưa làm Phiếu Xuất Kho (PXK) để trừ tồn K83.`;
+                actionSteps = [
+                    { role: 'Kế Toán Kho', task: `Mở CyberSoft hoàn tất Phiếu Xuất Kho (PXK) theo ĐNX ${item.soCtDnx} để giảm trừ tồn kho K83.`, color: 'text-purple-800 bg-purple-50 border-purple-200' },
+                    { role: `TVBH (${tvbh})`, task: 'Kiểm tra thủ tục xuất điều chuyển xe sang showroom nhận.', color: 'text-blue-700 bg-blue-50 border-blue-200' }
+                ];
+            } else if (item.hasTd4 && item.isTd4Approved) {
+                shortAlertTitle = `Phiếu TD4 (${item.soCtTd4})${td4Label} ĐÃ DUYỆT — Sổ Cyber K83 chưa trừ tồn`;
+                shortProblem = item.discrepancyReason || `Xe đã có phiếu TD4 được phê duyệt hoàn tất nhưng sổ tồn kho K83 CyberSoft vẫn chưa giảm trừ.`;
+                actionSteps = [
+                    { role: 'Kế Toán Kho', task: `Kiểm tra lại hạch toán sổ cái trên CyberSoft ERP hoặc chạy lại Stored Procedure để hạ tồn kho K83.`, color: 'text-purple-800 bg-purple-50 border-purple-200' },
+                    { role: `TVBH (${tvbh})`, task: 'Xe đã hoàn tất thủ tục chứng từ xuất kho.', color: 'text-blue-700 bg-blue-50 border-blue-200' }
+                ];
+            } else if (item.hasTd4 && !item.isTd4Approved) {
+                shortAlertTitle = `Phiếu TD4 (${item.soCtTd4})${td4Label} ĐANG CHỜ DUYỆT — Chưa hạ tồn kho K83`;
+                shortProblem = item.discrepancyReason || `Phiếu TD4 mới lập, đang trình KTT/BGĐ phê duyệt, chưa hoàn tất hạ tồn kho sổ sách.`;
+                actionSteps = [
+                    { role: 'Kế Toán Trưởng & BGĐ', task: `Khẩn trương phê duyệt hoàn tất phiếu TD4 (${item.soCtTd4}) trên CyberSoft để hạ tồn kho K83.`, color: 'text-amber-800 bg-amber-50 border-amber-200' },
+                    { role: `TVBH (${tvbh})`, task: 'Theo dõi tiến trình ký duyệt phiếu TD4 của Kế toán & BGĐ.', color: 'text-blue-700 bg-blue-50 border-blue-200' }
+                ];
+            } else {
+                shortAlertTitle = 'Xe đã rời bãi nhưng CHƯA LẬP PHIẾU TD4 trên CyberSoft';
+                shortProblem = item.discrepancyReason || `Xe đã xuất khỏi bãi thực tế nhưng trên hệ thống CyberSoft K83 hoàn toàn chưa có phiếu TD4.`;
+                actionSteps = [
+                    { role: `TVBH (${tvbh})`, task: 'Gửi biên bản giao nhận xe cho Kế toán để lập phiếu TD4 ngay.', color: 'text-blue-700 bg-blue-50 border-blue-200' },
+                    { role: 'Kế Toán Xuất Xe', task: 'Mở CyberSoft ERP lập phiếu xuất bán / giao xe (TD4) trình duyệt để hạ kho K83.', color: 'text-rose-800 bg-rose-50 border-rose-200' }
+                ];
+            }
+        } else {
+            // YARD_ONLY
+            bannerBg = 'bg-red-50 text-red-950 border-red-300';
+            if (item.hasDnx) {
+                const routeInfo = (item.dnxTenKhoXuat || item.dnxMaKhoXuat) ? ` (${item.dnxTenKhoXuat || item.dnxMaKhoXuat} ➔ ${item.dnxTenKhoNhan || item.dnxMaKhoNhan || 'K83'})` : '';
+                shortAlertTitle = `Xe đã về bãi theo ĐNX (${item.soCtDnx}) — Kế toán CHƯA LẬP PNK K83`;
+                shortProblem = item.discrepancyReason || `Xe đã có mặt tại bãi Thuận An thực tế theo phiếu ĐNX ${item.soCtDnx}${routeInfo}, nhưng Kế toán chưa làm Phiếu Nhập Kho (PNK) K83 trên CyberSoft.`;
+                actionSteps = [
+                    { role: 'Kế Toán Kho Thuận An', task: `Mở CyberSoft kiểm tra ĐNX ${item.soCtDnx} và bấm xác nhận Phiếu Nhập Kho (PNK) K83 ngay để đưa xe vào sổ tồn showroom.`, color: 'text-amber-800 bg-amber-50 border-amber-200' },
+                    { role: `TVBH (${tvbh})`, task: 'Đôn đốc Kế toán hoàn tất PNK để kịp tiến độ làm thủ tục xuất giao xe.', color: 'text-blue-700 bg-blue-50 border-blue-200' }
+                ];
+            } else {
+                shortAlertTitle = 'Xe nằm tại bãi Thuận An nhưng CHƯA CÓ ĐNX điều chuyển về K83';
+                shortProblem = item.discrepancyReason || `Xe đang nằm tại bãi Thuận An (Pin: ${item.mucPin || '-'}) nhưng sổ Cyber ghi nhận ở ${item.tenKhoCyber || item.maKhoCyber || 'kho khác'} và chưa hề có phiếu ĐNX điều chuyển về K83.`;
+                actionSteps = [
+                    { role: 'TVBH Phụ Trách & Admin', task: `Lập ngay phiếu ĐNX điều chuyển xe từ ${item.maKhoCyber || 'kho hiện tại'} về K83 trên CyberSoft ERP để làm căn cứ nhập kho.`, color: 'text-rose-800 bg-rose-50 border-rose-200' },
+                    { role: 'Thủ Kho Bãi', task: 'Rà soát chứng từ xe vào bãi, yêu cầu TVBH cung cấp số ĐNX.', color: 'text-slate-800 bg-slate-100 border-slate-200' }
+                ];
+            }
+        }
+    }
     // 1. Phân hệ: MẤT BÃI / XUẤT BÃI CHƯA CÓ TD4
-    if (itemType === 'MISSING_YARD' || item.satelliteStatus) {
+    else if (itemType === 'MISSING_YARD' || item.satelliteStatus) {
         const isDispatched = item.satelliteStatus === 'ALREADY_DISPATCHED_WITHOUT_TD4' || Boolean(ngayXuatBai);
 
         if (isDispatched) {

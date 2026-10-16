@@ -86,14 +86,25 @@ export const buildSatelliteCarMap = (warehouses: Record<string, any>): Map<strin
             }
         }
 
+        const activeSheetName = String(info.sheetName || '').trim();
+        const activeMonthMatch = activeSheetName.match(/(\d+)/);
+        const activeMonth = activeMonthMatch ? activeMonthMatch[1] : '';
+
         const rows = data.slice(headerIdx + 1);
         rows.forEach((r) => {
             if (!r || r.length === 0) return;
             const vin = String(r[5] || '').trim().toUpperCase();
             if (!vin) return;
 
+            const rowMonth = String(r[1] || '').trim();
+            const isCurrentMonthRow = !activeMonth || rowMonth.includes(activeMonth) || rowMonth === activeMonth;
+
             const ngayGiao = String(r[10] || '').trim();
-            const isTonKho = !ngayGiao || ngayGiao === '' || ngayGiao.toLowerCase() === 'none';
+            const colTonKho = String(r[17] || '').trim();
+
+            const hasNoNgayGiao = !ngayGiao || ngayGiao === '' || ngayGiao.toLowerCase() === 'none';
+            const isColTonKhoValid = !colTonKho || colTonKho === '1' || colTonKho === '1.0';
+            const isTonKho = isCurrentMonthRow && hasNoNgayGiao && isColTonKhoValid;
 
             // Chỉ lấy các xe đang thực tế còn tồn tại bãi
             if (!isTonKho) return;
@@ -1441,5 +1452,562 @@ export const fetchInvoicedMissingYardReconciliationData = async (
         return [];
     }
 };
+
+export interface K83ReconciliationItem {
+    id: string;
+    vin: string;
+    carModel: string;
+    trim?: string;
+    color: string;
+
+    // Trạng thái Cyber K83
+    hasCyberK83: boolean;
+    inCyberK83?: boolean;
+    maKhoCyber: string;
+    tenKhoCyber: string;
+    soHdCyber?: string;
+    ngayHdCyber?: string;
+    isInvoiced?: boolean;
+    ngayTonCyber?: number;
+    tvbhCyber?: string;
+    customerName?: string;
+    orderNumber?: string;
+
+    // Trạng thái Bãi Thuận An thực tế
+    hasYardStock: boolean;
+    inYardThuanAn?: boolean;
+    otherYardLocation?: string;
+    yardCar?: any;
+    khoKey?: 'tada' | 'ql13' | 'q12';
+    khoName?: string;
+    isTonKhoYard?: boolean;
+    ngayNhanYard?: string;
+    ngayGiaoYard?: string;
+    mucPin?: string;
+    pinPercent?: number | null;
+    noteYard?: string;
+    showroomYard?: string;
+
+    // Thông tin xe ở bãi khác (nếu có)
+    otherYardInfo?: {
+        khoName: string;
+        isTonKho: boolean;
+        ngayGiao?: string;
+    } | null;
+
+    // Chứng từ liên quan
+    hasDnx?: boolean;
+    soCtDnx?: string;
+    ngayCtDnx?: string;
+    dnxMaKhoXuat?: string;
+    dnxTenKhoXuat?: string;
+    dnxMaKhoNhan?: string;
+    dnxTenKhoNhan?: string;
+    hasTd4?: boolean;
+    soCtTd4?: string;
+    ngayCtTd4?: string;
+    td4MaPost?: string;
+    td4MaPostLabel?: string;
+    isTd4Approved?: boolean;
+
+    // Phân loại đối soát
+    reconcileType: 'MATCHED' | 'CYBER_K83_ONLY' | 'YARD_ONLY';
+    reconcileTypeLabel: string;
+    severity: 'success' | 'warning' | 'danger';
+
+    // Chi tiết sai lệch & Hướng xử lý
+    discrepancyReason: string;
+    actionRequired: string;
+    responsiblePerson: string;
+}
+
+/**
+ * Tra cứu và đối soát toàn diện tồn kho Cyber K83 (Showroom Thuận An)
+ * với tồn kho bãi Thuận An thực tế (Google Sheets bãi xe).
+ * TUYỆT ĐỐI CHỈ ĐỌC (READ-ONLY).
+ */
+export const fetchK83ReconciliationData = async (
+    allOrders: any[] = [],
+    satelliteCars: any[] = []
+): Promise<K83ReconciliationItem[]> => {
+    try {
+        // 1. TẢI DỮ LIỆU TỒN KHO CYBER K83 (CHUẨN TỪ BÁO CÁO TỒN KHO CP_BETONXE - BẢNG CYBER_TON_KHO)
+        const [cyberTonKhoRes, allCyberCarStatusRes] = await Promise.all([
+            supabase.from('cyber_ton_kho').select('*').eq('ma_kho', 'K83'),
+            supabase.from('cyber_car_status').select('vin, ma_kho, ten_kho, has_td4, so_ct_td4, ngay_ct_td4, td4_data, has_dnx, so_ct_dnx, ngay_ct_dnx, dnx_data, so_may, ma_kx, ten_kx, ma_mau, ten_mau').limit(5000)
+        ]);
+
+        // Map Cyber K83 cars (Chuẩn xác 100% khớp Báo Cáo Tồn Kho CP_BETONXE: đúng 50 xe)
+        const cyberK83Map = new Map<string, any>();
+        
+        // Nạp từ cyber_ton_kho
+        (cyberTonKhoRes.data || []).forEach((row: any) => {
+            const vin = String(row.vin || '').trim().toUpperCase();
+            if (!vin) return;
+            cyberK83Map.set(vin, {
+                vin,
+                maKho: 'K83',
+                tenKho: row.ten_kho || 'Showroom Thuận An (K83)',
+                carModel: row.ten_kx || row.ma_kx || '',
+                color: row.ten_mau || row.ma_mau || '',
+                soHd: row.so_hd || '',
+                ngayHd: row.ngay_hd ? String(row.ngay_hd).slice(0, 10) : '',
+                isInvoiced: Boolean(row.is_invoiced || (row.tinh_trang && String(row.tinh_trang).includes('HĐ'))),
+                ngayTon: row.ngay_ton || 0,
+                tvbh: row.tvbh || '',
+                tenTtcp: row.ten_ttcp || ''
+            });
+        });
+
+        // Map tổng hợp toàn bộ trạng thái xe trên CyberSoft (để tra cứu nhanh mã kho của xe ngoài bãi)
+        const allCyberMap = new Map<string, any>();
+        (allCyberCarStatusRes.data || []).forEach((c: any) => {
+            const v = String(c.vin || '').trim().toUpperCase();
+            if (v) {
+                allCyberMap.set(v, c);
+                if (v.length >= 6) allCyberMap.set(v.slice(-6), c);
+            }
+        });
+
+        // 2. TẢI VÀ MAP DỮ LIỆU BÃI XE THỰC TẾ (GOOGLE SHEETS)
+        let allSatCars: any[] = [];
+        if (satelliteCars && satelliteCars.length > 0) {
+            allSatCars = satelliteCars;
+        } else {
+            const satCarMap = getSatelliteCarMap();
+            allSatCars = Array.from(satCarMap.values());
+        }
+
+        // Tách riêng xe tại BÃI THUẬN AN THỰC TẾ và XE TẠI CÁC BÃI KHÁC (QL13, Q12)
+        const thuanAnYardTonMap = new Map<string, any>();
+        const thuanAnYardDispatchedMap = new Map<string, any>();
+        const otherYardMap = new Map<string, any>();
+
+        allSatCars.forEach((c: any) => {
+            const rawVin = String(c.soKhung || c.vin || '').trim().toUpperCase();
+            if (!rawVin) return;
+            const cleanVin = rawVin.split(' ')[0].split('(')[0].trim();
+            if (!cleanVin) return;
+
+            const khoK = (c.khoKey || '').toLowerCase();
+            const khoN = (c.khoName || '').toLowerCase();
+            const isThuanAnYard = khoK === 'tada' || khoN.includes('thuận an') || khoN.includes('thuan an') || (c.isThuanAn && khoK === 'tada');
+
+            const isTon = Boolean(c.isTonKho);
+
+            if (isThuanAnYard) {
+                if (isTon) {
+                    thuanAnYardTonMap.set(cleanVin, c);
+                    if (cleanVin.length >= 6) thuanAnYardTonMap.set(cleanVin.slice(-6), c);
+                } else {
+                    thuanAnYardDispatchedMap.set(cleanVin, c);
+                    if (cleanVin.length >= 6) thuanAnYardDispatchedMap.set(cleanVin.slice(-6), c);
+                }
+            } else {
+                // Bãi khác: QL13, Q12
+                otherYardMap.set(cleanVin, c);
+                if (cleanVin.length >= 6) otherYardMap.set(cleanVin.slice(-6), c);
+            }
+        });
+
+        // 3. MAP DỮ LIỆU ĐƠN HÀNG, KHÁCH HÀNG & CHỨNG TỪ (ĐNX, TD4)
+        const orderInfoMap = new Map<string, any>();
+        if (allOrders && allOrders.length > 0) {
+            allOrders.forEach(o => {
+                const v = String(o.vin || o.VIN || o['Số khung'] || '').trim().toUpperCase();
+                if (!v) return;
+                const kh = o.ten_khach_hang || o.customer_name || o.khach_hang || o['Tên khách hàng'] || o['Khách hàng'] || '';
+                const dh = o.so_don_hang || o.order_number || o.so_hop_dong || o['Số HĐ'] || o['Số hợp đồng'] || '';
+                const tv = o.tvbh || o.ten_tu_van_ban_hang || o['TVBH'] || '';
+                const soDnx = o.so_ct_dnx || o['Số CT DNX'] || o['Số ĐNX'] || '';
+                const soTd4 = o.so_ct_td4 || o['Số phiếu TD4'] || o['Số CT TD4'] || '';
+                const info = {
+                    customerName: String(kh || '').trim(),
+                    orderNumber: String(dh || '').trim(),
+                    tvbh: String(tv || '').trim(),
+                    soCtDnx: String(soDnx || '').trim(),
+                    soCtTd4: String(soTd4 || '').trim(),
+                    hasDnx: Boolean(o.has_dnx || (soDnx && String(soDnx).trim() !== '' && String(soDnx).toLowerCase() !== 'null')),
+                    hasTd4: Boolean(o.has_td4 || (soTd4 && String(soTd4).trim() !== '' && String(soTd4).toLowerCase() !== 'null')),
+                    ngayCtDnx: o.ngay_lap_dnx || o.ngay_dnx || '',
+                    ngayCtTd4: o.ngay_lap_td4 || o.ngay_td4 || ''
+                };
+                orderInfoMap.set(v, info);
+                if (v.length >= 6) orderInfoMap.set(v.slice(-6), info);
+            });
+        }
+
+        // Bổ sung thêm từ Supabase donhang & yeucauxhd nếu allOrders chưa có đủ
+        const allTargetVins = Array.from(new Set([...Array.from(cyberK83Map.keys()), ...Array.from(thuanAnYardTonMap.keys())]));
+        if (allTargetVins.length > 0) {
+            try {
+                const [dhRes, ycRes] = await Promise.all([
+                    supabase.from('donhang').select('vin, ten_khach_hang, ten_tu_van_ban_hang, so_don_hang, so_ct_dnx, so_ct_td4').in('vin', allTargetVins),
+                    supabase.from('yeucauxhd').select('vin, ten_khach_hang, tvbh, so_don_hang').in('vin', allTargetVins)
+                ]);
+
+                const mergeExtra = (row: any, tvbhField: string) => {
+                    const v = String(row.vin || '').trim().toUpperCase();
+                    if (!v) return;
+                    const existing = orderInfoMap.get(v) || {};
+                    const kh = row.ten_khach_hang;
+                    const dh = row.so_don_hang;
+                    const tv = row[tvbhField];
+                    const soDnx = row.so_ct_dnx;
+                    const soTd4 = row.so_ct_td4;
+                    if (kh && (!existing.customerName || existing.customerName === 'Chưa rõ')) existing.customerName = kh;
+                    if (dh && !existing.orderNumber) existing.orderNumber = dh;
+                    if (tv && (!existing.tvbh || existing.tvbh === 'Chưa rõ')) existing.tvbh = tv;
+                    if (soDnx && !existing.soCtDnx) {
+                        existing.soCtDnx = soDnx;
+                        existing.hasDnx = true;
+                    }
+                    if (soTd4 && !existing.soCtTd4) {
+                        existing.soCtTd4 = soTd4;
+                        existing.hasTd4 = true;
+                    }
+                    orderInfoMap.set(v, existing);
+                    if (v.length >= 6) orderInfoMap.set(v.slice(-6), existing);
+                };
+
+                (dhRes.data || []).forEach(r => mergeExtra(r, 'ten_tu_van_ban_hang'));
+                (ycRes.data || []).forEach(r => mergeExtra(r, 'tvbh'));
+            } catch (eOrderExtra) {
+                console.warn('[fetchK83ReconciliationData] Extra orders enrich warning:', eOrderExtra);
+            }
+        }
+
+        // 4. TIẾN HÀNH ĐỐI SOÁT CHI TIẾT (K83 vs BÃI THUẬN AN THỰC TẾ)
+        const results: K83ReconciliationItem[] = [];
+        const processedVins = new Set<string>();
+
+        // 4.1 Quét tất cả các xe có trong CYBER K83
+        cyberK83Map.forEach((cyberItem, vin) => {
+            processedVins.add(vin);
+            if (vin.length >= 6) processedVins.add(vin.slice(-6));
+
+            // Kiểm tra bãi Thuận An thực tế
+            let yardCar = thuanAnYardTonMap.get(vin);
+            if (!yardCar && vin.length >= 6) yardCar = thuanAnYardTonMap.get(vin.slice(-6));
+
+            const hasYardStock = Boolean(yardCar);
+
+            // Kiểm tra bãi Thuận An đã xuất giao hay chưa
+            let dispatchedYardCar = thuanAnYardDispatchedMap.get(vin);
+            if (!dispatchedYardCar && vin.length >= 6) dispatchedYardCar = thuanAnYardDispatchedMap.get(vin.slice(-6));
+
+            // Kiểm tra xe có đang nằm ở bãi khác (QL13, Q12) hay không
+            let otherYardCar = otherYardMap.get(vin);
+            if (!otherYardCar && vin.length >= 6) otherYardCar = otherYardMap.get(vin.slice(-6));
+
+            // Lấy thông tin chứng từ & đơn hàng
+            const orderInfo = orderInfoMap.get(vin) || (vin.length >= 6 ? orderInfoMap.get(vin.slice(-6)) : {}) || {};
+            const cyberStatus = allCyberMap.get(vin) || (vin.length >= 6 ? allCyberMap.get(vin.slice(-6)) : null);
+
+            const soCtDnx = orderInfo.soCtDnx || cyberStatus?.so_ct_dnx || cyberStatus?.dnx_data?.so_ct || '';
+            const ngayCtDnx = orderInfo.ngayCtDnx || cyberStatus?.ngay_ct_dnx || cyberStatus?.dnx_data?.ngay_ct || '';
+            const hasDnx = Boolean(orderInfo.hasDnx || cyberStatus?.has_dnx || soCtDnx);
+
+            const dnxData = cyberStatus?.dnx_data || {};
+            const dnxMaKhoXuat = dnxData.ma_kho_xuat || '';
+            const dnxTenKhoXuat = dnxData.ten_kho_xuat || '';
+            const dnxMaKhoNhan = dnxData.ma_kho_nhan || '';
+            const dnxTenKhoNhan = dnxData.ten_kho_nhan || '';
+
+            const soCtTd4 = orderInfo.soCtTd4 || cyberStatus?.so_ct_td4 || cyberStatus?.td4_data?.so_ct || '';
+            const ngayCtTd4 = orderInfo.ngayCtTd4 || cyberStatus?.ngay_ct_td4 || cyberStatus?.td4_data?.ngay_ct || '';
+            const hasTd4 = Boolean(orderInfo.hasTd4 || cyberStatus?.has_td4 || soCtTd4);
+
+            // Kiểm tra trạng thái duyệt (Ma_Post) của phiếu TD4 trên CyberSoft
+            const td4Data = cyberStatus?.td4_data || {};
+            const rawPost = String(td4Data.ma_post || td4Data.Ma_Post || cyberStatus?.ma_post || '').trim();
+            const maPostNum = parseInt(rawPost, 10);
+            const isTd4Approved = !isNaN(maPostNum) ? maPostNum >= 5 : (rawPost === '9' || rawPost === '5');
+
+            let td4MaPostLabel = '';
+            if (rawPost === '9') td4MaPostLabel = 'Đã hạch toán (Cấp 9)';
+            else if (rawPost === '5') td4MaPostLabel = 'BGĐ đã duyệt (Cấp 5)';
+            else if (rawPost === '4') td4MaPostLabel = 'KTT đã duyệt (Cấp 4)';
+            else if (rawPost === '3') td4MaPostLabel = 'Chờ duyệt (Cấp 3)';
+            else if (rawPost) td4MaPostLabel = `Cấp ${rawPost}`;
+            else if (hasTd4) td4MaPostLabel = 'Đang trình duyệt';
+
+            const customerName = orderInfo.customerName || cyberItem.tenTtcp || 'Chưa rõ';
+            const tvbh = orderInfo.tvbh || cyberItem.tvbh || 'Chưa rõ';
+            const orderNumber = orderInfo.orderNumber || '';
+
+            if (hasYardStock) {
+                // TRƯỜNG HỢP 1: CẢ HAI CÙNG CÓ (KHỚP HOÀN HẢO)
+                results.push({
+                    id: `k83-match-${vin}`,
+                    vin,
+                    carModel: cyberItem.carModel || yardCar.loaiXe || '',
+                    color: cyberItem.color || yardCar.mauSac || '',
+                    hasCyberK83: true,
+                    maKhoCyber: 'K83',
+                    tenKhoCyber: cyberItem.tenKho || 'Showroom Thuận An (K83)',
+                    soHdCyber: cyberItem.soHd || '',
+                    ngayHdCyber: cyberItem.ngayHd || '',
+                    isInvoiced: cyberItem.isInvoiced,
+                    ngayTonCyber: cyberItem.ngayTon,
+                    tvbhCyber: tvbh,
+                    customerName,
+                    orderNumber,
+                    hasYardStock: true,
+                    khoKey: 'tada',
+                    khoName: yardCar.khoName || 'Bãi Thuận An',
+                    isTonKhoYard: true,
+                    ngayNhanYard: yardCar.ngayNhan || '',
+                    ngayGiaoYard: '',
+                    mucPin: yardCar.mucPin || '-',
+                    pinPercent: yardCar.mucPinPercent !== undefined ? yardCar.mucPinPercent : null,
+                    noteYard: yardCar.note || '',
+                    showroomYard: yardCar.showroomQuanLy || 'Thuận An',
+                    hasDnx,
+                    soCtDnx,
+                    ngayCtDnx,
+                    dnxMaKhoXuat: dnxMaKhoXuat || undefined,
+                    dnxTenKhoXuat: dnxTenKhoXuat || undefined,
+                    dnxMaKhoNhan: dnxMaKhoNhan || undefined,
+                    dnxTenKhoNhan: dnxTenKhoNhan || undefined,
+                    hasTd4,
+                    soCtTd4,
+                    ngayCtTd4,
+                    td4MaPost: rawPost || undefined,
+                    td4MaPostLabel: td4MaPostLabel || undefined,
+                    isTd4Approved: hasTd4 ? isTd4Approved : undefined,
+                    reconcileType: 'MATCHED',
+                    reconcileTypeLabel: 'Đã khớp chuẩn (Cả hai cùng có)',
+                    severity: 'success',
+                    discrepancyReason: 'Sổ sách Cyber K83 và Bãi Thuận An thực tế khớp nhau hoàn toàn.',
+                    actionRequired: 'An tâm quản lý. Kiểm tra mức sạc pin định kỳ và theo dõi lịch giao xe cho khách hàng.',
+                    responsiblePerson: 'Thủ kho bãi Thuận An & TVBH'
+                });
+            } else {
+                // TRƯỜNG HỢP 2: THỪA CYBER K83 / THIẾU BÃI THỰC TẾ
+                let reason = 'Sổ Cyber ghi nhận tồn kho K83 nhưng thực tế bãi Thuận An không có xe.';
+                let action = 'Kế toán kho và Thủ kho đối chiếu lại phiếu nhập kho K83, xác minh vị trí xe thực tế.';
+                let person = 'Kế toán kho & Thủ kho Thuận An';
+
+                let otherYardPayload = null;
+
+                if (otherYardCar && otherYardCar.isTonKho) {
+                    const otherName = otherYardCar.khoName || otherYardCar.khoKey.toUpperCase();
+                    if (hasDnx) {
+                        reason = `Sổ Cyber báo tồn K83 nhưng xe đang nằm tại bãi ${otherName} (Đã có ĐNX ${soCtDnx} từ ${dnxTenKhoXuat || dnxMaKhoXuat || 'kho ngoài'} về ${dnxTenKhoNhan || dnxMaKhoNhan || 'K83'}, Pin: ${otherYardCar.mucPin || '-'})!`;
+                        action = `Đã có ĐNX ${soCtDnx}. Admin / Điều phối xe liên hệ xe lồng khẩn trương vận chuyển xe từ ${otherName} về Showroom Thuận An.`;
+                    } else {
+                        reason = `Sổ Cyber báo tồn K83 Thuận An nhưng thực tế xe đang nằm tại bãi ${otherName} (Nhận bãi: ${otherYardCar.ngayNhan || 'N/A'}, Pin: ${otherYardCar.mucPin || '-'}) và CHƯA CÓ ĐNX!`;
+                        action = `Khẩn trương lập phiếu ĐNX điều chuyển xe từ ${otherName} về Showroom Thuận An (K83) hoặc sửa mã kho Cyber cho đúng thực tế.`;
+                    }
+                    person = 'Admin / Điều phối xe & TVBH';
+                    otherYardPayload = { khoName: otherName, isTonKho: true };
+                } else if (dispatchedYardCar && dispatchedYardCar.ngayGiao) {
+                    if (hasTd4) {
+                        if (isTd4Approved) {
+                            reason = `Xe đã rời bãi Thuận An ngày ${dispatchedYardCar.ngayGiao}. Phiếu TD4 (${soCtTd4}) [${td4MaPostLabel}] ĐÃ ĐƯỢC DUYỆT nhưng sổ tồn kho Cyber K83 chưa cập nhật giảm trừ!`;
+                            action = `Phiếu TD4 đã duyệt hoàn tất. Kế toán kho kiểm tra lại hệ thống CyberSoft hoặc chạy tính lại tồn kho để trừ kho K83.`;
+                            person = 'Kế toán kho & Quản trị hệ thống';
+                        } else {
+                            reason = `Xe đã rời bãi Thuận An ngày ${dispatchedYardCar.ngayGiao}. Phiếu TD4 (${soCtTd4}) [${td4MaPostLabel}] ĐANG CHỜ DUYỆT, chưa được duyệt hạ tồn kho sổ sách!`;
+                            action = `Kế toán trưởng / BGĐ khẩn trương phê duyệt hoàn tất phiếu TD4 trên CyberSoft ERP để trừ tồn kho K83.`;
+                            person = 'Kế toán trưởng & BGĐ duyệt phiếu';
+                        }
+                    } else if (hasDnx) {
+                        reason = `Xe đã rời bãi Thuận An ngày ${dispatchedYardCar.ngayGiao} theo Lệnh ĐNX ${soCtDnx} điều chuyển từ ${dnxTenKhoXuat || dnxMaKhoXuat || 'K83'} sang ${dnxTenKhoNhan || dnxMaKhoNhan || 'kho nhận'}. Kế toán chưa làm thủ tục phiếu xuất điều chuyển (PXK) để trừ kho K83!`;
+                        action = `Kế toán kho hoàn tất phiếu xuất điều chuyển (PXK) theo ĐNX ${soCtDnx} để giảm trừ tồn kho K83.`;
+                        person = 'Kế toán kho xuất điều chuyển';
+                    } else {
+                        reason = `Xe đã rời bãi Thuận An ngày ${dispatchedYardCar.ngayGiao}${dispatchedYardCar.benGiao ? ` (Giao cho: ${dispatchedYardCar.benGiao})` : ''} nhưng CyberSoft HOÀN TOÀN CHƯA CÓ PHIẾU TD4 HOẶC ĐNX!`;
+                        action = `TVBH phụ trách liên hệ Kế toán lập ngay phiếu xuất giao xe (TD4) hoặc phiếu điều chuyển (ĐNX) trên CyberSoft ERP để trừ kho K83.`;
+                        person = 'TVBH phụ trách & Kế toán xuất xe';
+                    }
+                    otherYardPayload = { khoName: 'Bãi Thuận An (Đã xuất)', isTonKho: false, ngayGiao: dispatchedYardCar.ngayGiao };
+                } else if (hasDnx && dnxMaKhoXuat === 'K83' && dnxMaKhoNhan && dnxMaKhoNhan !== 'K83') {
+                    reason = `Xe có phiếu ĐNX ${soCtDnx} điều chuyển xuất từ K83 sang ${dnxTenKhoNhan || dnxMaKhoNhan}. Kế toán làm thủ tục phiếu xuất điều chuyển (PXK) để trừ kho K83!`;
+                    action = `Kế toán kho hoàn tất phiếu xuất điều chuyển (PXK) theo ĐNX ${soCtDnx} để giảm trừ tồn kho K83.`;
+                    person = 'Kế toán kho & TVBH';
+                    otherYardPayload = { khoName: dnxTenKhoNhan || dnxMaKhoNhan, isTonKho: false };
+                } else if (hasTd4) {
+                    if (isTd4Approved) {
+                        reason = `Xe đã có phiếu xuất TD4 ${soCtTd4} [${td4MaPostLabel}] ĐÃ DUYỆT nhưng tồn kho Cyber K83 vẫn chưa được trừ.`;
+                        action = 'Kế toán kho kiểm tra lại hạch toán phiếu xuất trên CyberSoft ERP.';
+                        person = 'Kế toán kho';
+                    } else {
+                        reason = `Xe đã lập phiếu xuất TD4 ${soCtTd4} nhưng [${td4MaPostLabel}] ĐANG CHỜ DUYỆT, chưa hạ tồn kho sổ sách.`;
+                        action = 'Kế toán trưởng / BGĐ duyệt hoàn tất phiếu TD4 trên CyberSoft.';
+                        person = 'Kế toán trưởng & BGĐ duyệt phiếu';
+                    }
+                }
+
+                results.push({
+                    id: `k83-cyber-only-${vin}`,
+                    vin,
+                    carModel: cyberItem.carModel || (otherYardCar ? otherYardCar.loaiXe : '') || (dispatchedYardCar ? dispatchedYardCar.loaiXe : ''),
+                    color: cyberItem.color || (otherYardCar ? otherYardCar.mauSac : '') || (dispatchedYardCar ? dispatchedYardCar.mauSac : ''),
+                    hasCyberK83: true,
+                    maKhoCyber: 'K83',
+                    tenKhoCyber: cyberItem.tenKho || 'Showroom Thuận An (K83)',
+                    soHdCyber: cyberItem.soHd || '',
+                    ngayHdCyber: cyberItem.ngayHd || '',
+                    isInvoiced: cyberItem.isInvoiced,
+                    ngayTonCyber: cyberItem.ngayTon,
+                    tvbhCyber: tvbh,
+                    customerName,
+                    orderNumber,
+                    hasYardStock: false,
+                    otherYardInfo: otherYardPayload,
+                    hasDnx,
+                    soCtDnx,
+                    ngayCtDnx,
+                    dnxMaKhoXuat: dnxMaKhoXuat || undefined,
+                    dnxTenKhoXuat: dnxTenKhoXuat || undefined,
+                    dnxMaKhoNhan: dnxMaKhoNhan || undefined,
+                    dnxTenKhoNhan: dnxTenKhoNhan || undefined,
+                    hasTd4,
+                    soCtTd4,
+                    ngayCtTd4,
+                    td4MaPost: rawPost || undefined,
+                    td4MaPostLabel: td4MaPostLabel || undefined,
+                    isTd4Approved: hasTd4 ? isTd4Approved : undefined,
+                    reconcileType: 'CYBER_K83_ONLY',
+                    reconcileTypeLabel: 'Thừa Cyber K83 (Bãi TT thiếu)',
+                    severity: 'warning',
+                    discrepancyReason: reason,
+                    actionRequired: action,
+                    responsiblePerson: person
+                });
+            }
+        });
+
+        // 4.2 Quét các xe CÓ TẠI BÃI THUẬN AN THỰC TẾ nhưng CHƯA ĐƯỢC XỬ LÝ (Tức không có trong Cyber K83)
+        thuanAnYardTonMap.forEach((yardCar, rawVinKey) => {
+            const vin = String(yardCar.soKhung || yardCar.vin || rawVinKey).trim().toUpperCase();
+            if (processedVins.has(vin) || (vin.length >= 6 && processedVins.has(vin.slice(-6)))) {
+                return; // Đã xử lý ở trên
+            }
+            processedVins.add(vin);
+            if (vin.length >= 6) processedVins.add(vin.slice(-6));
+
+            // Tra cứu trạng thái CyberSoft hiện tại của xe này (xe này đang ở kho nào trên Cyber?)
+            const cyberStatus = allCyberMap.get(vin) || (vin.length >= 6 ? allCyberMap.get(vin.slice(-6)) : null);
+            const orderInfo = orderInfoMap.get(vin) || (vin.length >= 6 ? orderInfoMap.get(vin.slice(-6)) : {}) || {};
+
+            const maKhoCyberHienTai = cyberStatus?.ma_kho || 'CHƯA_NHẬP';
+            const tenKhoCyberHienTai = cyberStatus?.ten_kho || (maKhoCyberHienTai !== 'CHƯA_NHẬP' ? maKhoCyberHienTai : 'Chưa có trên Cyber');
+
+            const dnxData = cyberStatus?.dnx_data || {};
+            const dnxMaKhoXuat = dnxData.ma_kho_xuat || '';
+            const dnxTenKhoXuat = dnxData.ten_kho_xuat || '';
+            const dnxMaKhoNhan = dnxData.ma_kho_nhan || '';
+            const dnxTenKhoNhan = dnxData.ten_kho_nhan || '';
+
+            const soCtDnx = orderInfo.soCtDnx || cyberStatus?.so_ct_dnx || dnxData.so_ct || '';
+            const ngayCtDnx = orderInfo.ngayCtDnx || cyberStatus?.ngay_ct_dnx || dnxData.ngay_ct || '';
+            const hasDnx = Boolean(orderInfo.hasDnx || cyberStatus?.has_dnx || soCtDnx);
+
+            const soCtTd4 = orderInfo.soCtTd4 || cyberStatus?.so_ct_td4 || cyberStatus?.td4_data?.so_ct || '';
+            const ngayCtTd4 = orderInfo.ngayCtTd4 || cyberStatus?.ngay_ct_td4 || cyberStatus?.td4_data?.ngay_ct || '';
+            const hasTd4 = Boolean(orderInfo.hasTd4 || cyberStatus?.has_td4 || soCtTd4);
+
+            const td4Data = cyberStatus?.td4_data || {};
+            const rawPost = String(td4Data.ma_post || td4Data.Ma_Post || cyberStatus?.ma_post || '').trim();
+            const maPostNum = parseInt(rawPost, 10);
+            const isTd4Approved = !isNaN(maPostNum) ? maPostNum >= 5 : (rawPost === '9' || rawPost === '5');
+
+            let td4MaPostLabel = '';
+            if (rawPost === '9') td4MaPostLabel = 'Đã hạch toán (Cấp 9)';
+            else if (rawPost === '5') td4MaPostLabel = 'BGĐ đã duyệt (Cấp 5)';
+            else if (rawPost === '4') td4MaPostLabel = 'KTT đã duyệt (Cấp 4)';
+            else if (rawPost === '3') td4MaPostLabel = 'Chờ duyệt (Cấp 3)';
+            else if (rawPost) td4MaPostLabel = `Cấp ${rawPost}`;
+            else if (hasTd4) td4MaPostLabel = 'Đang trình duyệt';
+
+            const customerName = orderInfo.customerName || yardCar.showroomQuanLy || 'Chưa rõ';
+            const tvbh = orderInfo.tvbh || 'Chưa rõ';
+            const orderNumber = orderInfo.orderNumber || '';
+
+            // Phân tích lý do thừa bãi
+            let reason = `Xe đang nằm tại bãi Thuận An thực tế nhưng sổ Cyber đang ở ${tenKhoCyberHienTai} (${maKhoCyberHienTai}), chưa nhập K83!`;
+            let action = 'TVBH và Kế toán làm thủ tục ĐNX điều chuyển và nhập kho K83 trên CyberSoft.';
+            let person = 'TVBH & Kế toán kho';
+
+            if (hasDnx) {
+                const routeStr = (dnxTenKhoXuat || dnxMaKhoXuat) ? ` (${dnxTenKhoXuat || dnxMaKhoXuat} ➔ ${dnxTenKhoNhan || dnxMaKhoNhan || 'K83'})` : '';
+                reason = `Xe đã về bãi Thuận An theo ĐNX ${soCtDnx}${routeStr} (Ngày: ${ngayCtDnx || 'N/A'}), nhưng Kế toán chưa làm Phiếu Nhập Kho (PNK) K83 trên Cyber!`;
+                action = `Kế toán mở CyberSoft kiểm tra ĐNX ${soCtDnx} và bấm xác nhận Phiếu Nhập Kho (PNK) K83 ngay để hợp lệ hóa số lượng xe tại showroom.`;
+                person = 'Kế toán kho Thuận An & TVBH';
+            } else if (yardCar.showroomQuanLy && !yardCar.showroomQuanLy.toLowerCase().includes('thuận an') && !yardCar.showroomQuanLy.toLowerCase().includes('thuan an')) {
+                reason = `Xe thuộc showroom khác (${yardCar.showroomQuanLy}) đang lưu giữ tạm tại bãi Thuận An, không thuộc tồn K83.`;
+                action = `Ghi nhận diện xe lưu kho hộ. Liên hệ TVBH phụ trách của ${yardCar.showroomQuanLy} để điều phối xe bàn giao khách.`;
+                person = 'Thủ kho bãi Thuận An';
+            } else {
+                reason = `Xe đã về bãi Thuận An nhưng chưa hề có phiếu ĐNX trên CyberSoft (Sổ Cyber đang ở ${tenKhoCyberHienTai})!`;
+                action = `TVBH / Admin lập ngay phiếu ĐNX điều chuyển xe từ ${maKhoCyberHienTai} về K83 trên phần mềm để làm căn cứ nhập kho.`;
+                person = 'TVBH phụ trách & Admin';
+            }
+
+            results.push({
+                id: `k83-yard-only-${vin}`,
+                vin,
+                carModel: yardCar.loaiXe || (cyberStatus ? cyberStatus.ten_kx : '') || '',
+                color: yardCar.mauSac || (cyberStatus ? cyberStatus.ten_mau : '') || '',
+                hasCyberK83: false,
+                maKhoCyber: maKhoCyberHienTai,
+                tenKhoCyber: tenKhoCyberHienTai,
+                soHdCyber: '',
+                ngayHdCyber: '',
+                isInvoiced: false,
+                ngayTonCyber: 0,
+                tvbhCyber: tvbh,
+                customerName,
+                orderNumber,
+                hasYardStock: true,
+                khoKey: 'tada',
+                khoName: yardCar.khoName || 'Bãi Thuận An',
+                isTonKhoYard: true,
+                ngayNhanYard: yardCar.ngayNhan || '',
+                ngayGiaoYard: '',
+                mucPin: yardCar.mucPin || '-',
+                pinPercent: yardCar.mucPinPercent !== undefined ? yardCar.mucPinPercent : null,
+                noteYard: yardCar.note || '',
+                showroomYard: yardCar.showroomQuanLy || 'Thuận An',
+                hasDnx,
+                soCtDnx,
+                ngayCtDnx,
+                dnxMaKhoXuat: dnxMaKhoXuat || undefined,
+                dnxTenKhoXuat: dnxTenKhoXuat || undefined,
+                dnxMaKhoNhan: dnxMaKhoNhan || undefined,
+                dnxTenKhoNhan: dnxTenKhoNhan || undefined,
+                hasTd4,
+                soCtTd4,
+                ngayCtTd4,
+                td4MaPost: rawPost || undefined,
+                td4MaPostLabel: td4MaPostLabel || undefined,
+                isTd4Approved: hasTd4 ? isTd4Approved : undefined,
+                reconcileType: 'YARD_ONLY',
+                reconcileTypeLabel: 'Thừa bãi TT (Cyber K83 thiếu)',
+                severity: 'danger',
+                discrepancyReason: reason,
+                actionRequired: action,
+                responsiblePerson: person
+            });
+        });
+
+        // Sắp xếp: Ưu tiên xe Thừa bãi TT (nguy hiểm nhất) -> Thừa Cyber K83 -> Đã khớp
+        results.sort((a, b) => {
+            const orderMap = { YARD_ONLY: 1, CYBER_K83_ONLY: 2, MATCHED: 3 };
+            const diff = orderMap[a.reconcileType] - orderMap[b.reconcileType];
+            if (diff !== 0) return diff;
+            return a.vin.localeCompare(b.vin);
+        });
+
+        return results;
+    } catch (err) {
+        console.error('[fetchK83ReconciliationData] Error:', err);
+        return [];
+    }
+};
+
 
 

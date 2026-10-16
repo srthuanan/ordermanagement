@@ -86,6 +86,18 @@ function doPost(e) {
         response = createJsonResponse({ status: syncOk ? "SUCCESS" : "ERROR" });
         break;
 
+      case 'syncTable':
+        let targetTableName = (e.parameter && (e.parameter.tableName || e.parameter.table)) || 'yeucauxhd';
+        if (!targetTableName && e.postData && e.postData.contents) {
+          try {
+            const bodyObj = JSON.parse(e.postData.contents);
+            targetTableName = bodyObj.tableName || bodyObj.table || 'yeucauxhd';
+          } catch(eJson){}
+        }
+        const syncTableOk = syncSpecificTableToSheet(targetTableName);
+        response = createJsonResponse({ status: syncTableOk ? "SUCCESS" : "ERROR" });
+        break;
+
       case 'generateBcGhepXe':
         const bcOk = generateBcGhepXeDuXhd();
         response = createJsonResponse({ status: bcOk ? "SUCCESS" : "ERROR" });

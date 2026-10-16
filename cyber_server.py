@@ -949,9 +949,14 @@ class CyberApiHandler(BaseHTTPRequestHandler):
             return
 
         elif parsed.path == "/api/cyber/sync-ton-kho-to-supabase":
-            print("[CyberSync Cloud Sync Ton Kho] Request received. Syncing ton kho to Supabase...")
+            print("[CyberSync Cloud Sync Ton Kho] Request received. Syncing ton kho & car status to Supabase...")
             try:
                 result = sync_cyber_ton_kho_to_supabase()
+                try:
+                    res_cs = sync_cyber_car_status_to_supabase()
+                    result["car_status"] = res_cs
+                except Exception as e_cs:
+                    print(f"[CyberSync Cloud Sync Ton Kho - car status warning]: {e_cs}", file=sys.stderr)
                 invalidate_api_cache()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")

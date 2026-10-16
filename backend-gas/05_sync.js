@@ -55,7 +55,7 @@ var CUSTOM_CONFIGS = {
       { key: 'vin', label: 'Số VIN' },
       { key: 'so_may', label: 'Số máy' },
       { key: 'ngay_yeu_cau', label: 'Ngày yêu cầu', type: 'datetime' },
-      { key: 'ngay_xuat_hoa_don', label: 'Ngày xuất hóa đơn', type: 'date' },
+      { key: 'ngay_xuat_hoa_don', label: 'Ngày xuất hóa đơn', type: 'datetime' },
       { key: 'hoa_hong_ung', label: 'Hoa hồng ứng', type: 'number' },
       { key: 'vpoint', label: 'V-Point', type: 'number' },
       { key: 'chinh_sach', label: 'Chính sách' },
@@ -69,6 +69,10 @@ var CUSTOM_CONFIGS = {
     headerTextColor: '#ffffff',
     rowColor1: '#ffffff',
     rowColor2: '#f1f5f9', // Slate 100
+    sortColumns: [
+      { key: 'ngay_xuat_hoa_don', ascending: true },
+      { key: 'ngay_yeu_cau', ascending: true }
+    ],
     sortColumn: 'ngay_xuat_hoa_don',
     sortAscending: true // Cũ lên trước, mới xuống dưới, CHƯA XUẤT (Trống) xuống cuối cùng
   }
@@ -594,39 +598,68 @@ function applySorting(sheet, sheetName) {
     if (lastRow <= 1) return;
     
     var config = CUSTOM_CONFIGS[sheetName];
-    var sortKey = (config && config.sortColumn) ? config.sortColumn : null;
-    
-    // Mặc định nếu chưa khai báo: Bảng yeucauxhd luôn sort theo ngay_xuat_hoa_don
-    if (sheetName === 'yeucauxhd' && !sortKey) sortKey = 'ngay_xuat_hoa_don';
-    
-    if (!sortKey) return; 
-    
     var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
-    var sortColIndex = -1;
+    var sortSpecs = [];
     
-    // 1. Tìm vị trí cột (Index) dựa theo Key
-    if (config && config.columns) {
-      var targetCol = config.columns.find(function(c) { return c.key === sortKey; });
-      if (targetCol) {
-        sortColIndex = headers.indexOf(targetCol.label) + 1;
-      }
+    // 1. Kiểm tra cấu hình sort đa cột (sortColumns)
+    if (config && config.sortColumns && Array.isArray(config.sortColumns)) {
+      config.sortColumns.forEach(function(sc) {
+        var tCol = config.columns ? config.columns.find(function(c) { return c.key === sc.key; }) : null;
+        var colIdx = -1;
+        if (tCol) {
+          colIdx = headers.indexOf(tCol.label) + 1;
+        }
+        if (colIdx <= 0) {
+          var normK = normalizeString(sc.key);
+          for (var c = 0; c < headers.length; c++) {
+            if (normalizeString(headers[c]) === normK) {
+              colIdx = c + 1;
+              break;
+            }
+          }
+        }
+        if (colIdx > 0) {
+          sortSpecs.push({
+            column: colIdx,
+            ascending: sc.ascending !== undefined ? sc.ascending : true
+          });
+        }
+      });
     }
-    if (sortColIndex <= 0) {
-      var normKey = normalizeString(sortKey);
-      for (var c = 0; c < headers.length; c++) {
-        if (normalizeString(headers[c]) === normKey) {
-          sortColIndex = c + 1;
-          break;
+    
+    // 2. Nếu không có sortColumns thì fallback về sortColumn đơn
+    if (sortSpecs.length === 0) {
+      var sortKey = (config && config.sortColumn) ? config.sortColumn : null;
+      if (sheetName === 'yeucauxhd' && !sortKey) sortKey = 'ngay_xuat_hoa_don';
+      
+      if (sortKey) {
+        var sortColIndex = -1;
+        if (config && config.columns) {
+          var targetCol = config.columns.find(function(c) { return c.key === sortKey; });
+          if (targetCol) {
+            sortColIndex = headers.indexOf(targetCol.label) + 1;
+          }
+        }
+        if (sortColIndex <= 0) {
+          var normKey = normalizeString(sortKey);
+          for (var c = 0; c < headers.length; c++) {
+            if (normalizeString(headers[c]) === normKey) {
+              sortColIndex = c + 1;
+              break;
+            }
+          }
+        }
+        if (sortColIndex > 0) {
+          var asc = (config && config.sortAscending !== undefined) ? config.sortAscending : true;
+          sortSpecs.push({ column: sortColIndex, ascending: asc });
         }
       }
     }
     
-    // 2. Tiến hành Sort
-    if (sortColIndex > 0) {
-      var asc = (config && config.sortAscending !== undefined) ? config.sortAscending : true;
-      
-      // Thực hiện sắp xếp (Blanks tự xuống đáy)
-      sheet.getRange(2, 1, lastRow - 1, lastCol).sort({ column: sortColIndex, ascending: asc });
+    // 3. Tiến hành Sort
+    if (sortSpecs.length > 0) {
+      // Thực hiện sắp xếp đa tiêu chí (Blanks tự xuống đáy)
+      sheet.getRange(2, 1, lastRow - 1, lastCol).sort(sortSpecs);
       
       // 3. Khôi phục Số Thứ Tự (STT) liền mạch từ 1 -> N
       var sttIndex = headers.indexOf("Số thứ tự") + 1;

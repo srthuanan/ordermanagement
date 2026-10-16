@@ -846,6 +846,207 @@ export const getCyberPlanFilterOptions = async (model?: string) => {
     }
 };
 
+export interface CrossShowroomAllocationItem {
+    vin: string;
+    so_may?: string;
+    ma_dms?: string;
+    dong_xe?: string;
+    phien_ban?: string;
+    ma_kx?: string;
+    ten_kx?: string;
+    ma_mau?: string;
+    ten_mau?: string;
+    ma_mau_nt?: string;
+    ten_mau_nt?: string;
+    nam_sx?: string;
+    ngay_phan_bo?: string;
+    ngay_hd?: string;
+    so_hd?: string;
+    ten_khach_hang?: string;
+    ma_ttcp_xuat?: string;
+    ten_ttcp_xuat?: string;
+    tvbh_xuat?: string;
+    ttcp_phan_bo?: string;
+    ten_ttcp_phan_bo?: string;
+    loai_xe?: string;
+    has_transferred: boolean;
+    status: 'TRANSFERRED' | 'PENDING_TRANSFER';
+    so_ct_dnx?: string;
+    ngay_ct_dnx?: string;
+    ma_ttcp_nhan_dnx?: string;
+    so_ct_transfer?: string;
+}
+
+export interface CrossShowroomAllocationsResult {
+    success: boolean;
+    total: number;
+    total_pending: number;
+    total_transferred: number;
+    from_date?: string;
+    cars: CrossShowroomAllocationItem[];
+    error?: string;
+}
+
+/**
+ * Tra cứu xe phân bổ cho Thuận An nhưng do Showroom khác xuất Hóa Đơn (HDC)
+ */
+export const fetchCrossShowroomAllocations = async (options: {
+    fromDate?: string;
+    status?: 'all' | 'pending' | 'transferred';
+    keyword?: string;
+    force?: boolean;
+} = {}): Promise<CrossShowroomAllocationsResult> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/cross-showroom-allocations');
+        let response: Response | null = null;
+        let lastError = '';
+
+        for (const ep of endpoints) {
+            try {
+                const res = await fetch(ep, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(options)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    lastError = err.error || `HTTP ${res.status}`;
+                }
+            } catch (e: any) {
+                lastError = e.message;
+            }
+        }
+
+        if (!response) {
+            return {
+                success: false,
+                total: 0,
+                total_pending: 0,
+                total_transferred: 0,
+                cars: [],
+                error: lastError || 'Không thể kết nối API tra cứu xe khác SR xuất HĐ'
+            };
+        }
+
+        return await response.json();
+    } catch (err: any) {
+        return {
+            success: false,
+            total: 0,
+            total_pending: 0,
+            total_transferred: 0,
+            cars: [],
+            error: err.message || 'Lỗi tra cứu xe khác SR xuất HĐ'
+        };
+    }
+};
+
+/**
+ * Tra cứu xe phân bổ cho Showroom khác nhưng do Thuận An xuất Hóa Đơn (HDC)
+ */
+export const fetchOtherShowroomAllocations = async (options: {
+    fromDate?: string;
+    status?: 'all' | 'pending' | 'transferred';
+    keyword?: string;
+    force?: boolean;
+} = {}): Promise<CrossShowroomAllocationsResult> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/other-showroom-allocations');
+        let response: Response | null = null;
+        let lastError = '';
+
+        for (const ep of endpoints) {
+            try {
+                const res = await fetch(ep, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(options)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    lastError = err.error || `HTTP ${res.status}`;
+                }
+            } catch (e: any) {
+                lastError = e.message;
+            }
+        }
+
+        if (!response) {
+            return {
+                success: false,
+                total: 0,
+                total_pending: 0,
+                total_transferred: 0,
+                cars: [],
+                error: lastError || 'Không thể kết nối API tra cứu xe SR khác PB - Thuận An XHĐ'
+            };
+        }
+
+        return await response.json();
+    } catch (err: any) {
+        return {
+            success: false,
+            total: 0,
+            total_pending: 0,
+            total_transferred: 0,
+            cars: [],
+            error: err.message || 'Lỗi tra cứu xe SR khác PB - Thuận An XHĐ'
+        };
+    }
+};
+
+/**
+ * Thực hiện điều chuyển địa điểm kinh doanh (Mã Giao Dịch 9 trên CyberSoft)
+ */
+export const transferBusinessLocation = async (params: {
+    vins: string[];
+    to_ttcp: string;
+    to_ttcp_name?: string;
+    reason?: string;
+    user_name?: string;
+    ma_kho_xuat?: string;
+    ma_kho_nhan?: string;
+}): Promise<{ success: boolean; so_ct?: string; stt_rec?: string; message?: string; error?: string }> => {
+    try {
+        const endpoints = getCyberEndpoints('/api/cyber/transfer-business-location');
+        let response: Response | null = null;
+        let lastError = '';
+
+        for (const ep of endpoints) {
+            try {
+                const res = await fetch(ep, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(params)
+                });
+                if (res.ok) {
+                    response = res;
+                    break;
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    lastError = err.error || `HTTP ${res.status}`;
+                }
+            } catch (e: any) {
+                lastError = e.message;
+            }
+        }
+
+        if (!response) {
+            return { success: false, error: lastError || 'Không thể kết nối API điều chuyển địa điểm kinh doanh' };
+        }
+
+        return await response.json();
+    } catch (err: any) {
+        return { success: false, error: err.message || 'Lỗi thực thi điều chuyển ĐĐKD' };
+    }
+};
+
 /**
  * Hoàn tác các xe phân bổ vừa được nạp vào khoxe
  */

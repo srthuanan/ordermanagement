@@ -5,10 +5,47 @@ import {
     fetchTd4ReconciliationData,
     Td4ReconciliationItem,
     fetchInvoicedMissingYardReconciliationData,
-    InvoicedMissingYardItem
+    InvoicedMissingYardItem,
+    fetchK83ReconciliationData,
+    K83ReconciliationItem
 } from '../../services/api/satelliteWarehouseService';
 import { ReconciliationDetailModal } from './ReconciliationDetailModal';
 import { VinJourneySummaryCard } from './VinJourneySummaryCard';
+import { 
+    triggerCyberTonKhoSync, 
+    searchCyberFactoryPlan, 
+    fetchCrossShowroomAllocations, 
+    fetchOtherShowroomAllocations,
+    transferBusinessLocation, 
+    CrossShowroomAllocationItem 
+} from '../../services/api/stockService';
+
+export const VINFAST_SHOWROOMS = [
+    { code: '02.01.08', name: 'Ô tô Vinfast Thuận An (Minh Đạo)' },
+    { code: '02.01.21', name: 'Ô tô Vinfast Minh Đạo - Phạm Văn Đồng' },
+    { code: '02.01.20', name: 'Ô tô Vinfast Minh Đạo - Hà Huy Giáp' },
+    { code: '02.01.14', name: 'Ô tô Vinfast Dĩ An' },
+    { code: '02.01.07', name: 'Ô tô Vinfast 03/2' },
+    { code: '02.01.12', name: 'Ô tô Vinfast Vũng Tàu' },
+    { code: '02.01.05', name: 'Ô tô Vinfast Times City' },
+    { code: '02.01.18', name: 'Ô tô Vinfast Minh Đạo - Nguyễn Trãi' },
+    { code: '02.01.19', name: 'Ô tô Vinfast Minh Đạo - Ocean Park 2' },
+    { code: '02.01.15', name: 'Ô tô Vinfast Sóc Sơn' },
+    { code: '02.01.13', name: 'Ô tô Vinfast Thảo Điền' },
+    { code: '02.01.10', name: 'Ô tô Vinfast Long Thành' },
+    { code: '02.01.11', name: 'Ô tô Vinfast Biên Hòa' },
+    { code: '02.01.16', name: 'Ô tô Vinfast Cần Thơ' },
+    { code: '02.01.17', name: 'Ô tô Vinfast An Giang' },
+    { code: '02.01.01', name: 'Ô tô Vinfast Hải Phòng' },
+    { code: '02.01.02', name: 'Ô tô Vinfast Quảng Ninh' },
+    { code: '02.01.03', name: 'Ô tô Vinfast Thái Nguyên' },
+    { code: '02.01.04', name: 'Ô tô Vinfast Phú Thọ' },
+    { code: '02.01.06', name: 'Ô tô Vinfast Smart City' },
+    { code: '02.01.09', name: 'Ô tô Vinfast Nam Định' },
+    { code: '02.01.22', name: 'Ô tô Vinfast Bắc Ninh' },
+    { code: '02.01.23', name: 'Ô tô Vinfast Vĩnh Phúc' },
+    { code: '02.01.24', name: 'Ô tô Vinfast Thanh Hóa' }
+];
 
 export interface SatelliteCarItem {
     id: string;
@@ -40,8 +77,9 @@ interface SatelliteWarehousesViewProps {
     allOrders?: any[];
     stockData?: any[];
     initialViewMode?: 'inventory' | 'reconcile';
-    initialReconcileTab?: 'td4' | 'dnx' | 'missing_yard' | 'all';
-    onCountsChange?: (counts: { carsCount: number; td4Count: number; dnxCount: number; missingYardCount: number; allAlertCount: number }) => void;
+    initialReconcileTab?: 'td4' | 'dnx' | 'missing_yard' | 'k83_reconcile' | 'all' | 'thuan_an_allocations' | 'other_sr_allocations';
+    initialAllocSubMode?: 'allocated_unbilled' | 'cross_showroom_billed';
+    onCountsChange?: (counts: { carsCount: number; td4Count: number; dnxCount: number; missingYardCount: number; k83Count?: number; k83DiffCount?: number; allAlertCount: number; thuanAnAllocationsCount?: number; crossPendingCount?: number; otherShowroomAllocationsCount?: number; otherAllocPendingCount?: number }) => void;
 }
 
 const API_URL = "https://script.google.com/macros/s/AKfycbylEAT8IqQVmKsulKUB5imIUcWm3h7a6Mfe-MQyhF3T5Wu2JWcbO3Q6a1aXZLN7exnV/exec";
@@ -91,7 +129,8 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     allOrders = [],
     stockData: _stockData = [],
     initialViewMode = 'inventory',
-    initialReconcileTab = 'td4',
+    initialReconcileTab = 'all',
+    initialAllocSubMode = 'allocated_unbilled',
     onCountsChange
 }) => {
     // 2 View Modes chính:
@@ -103,8 +142,11 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     // 'td4': Chi tiết Đầu Ra: Xe đã có phiếu TD4 nhưng bãi vẫn báo tồn kho
     // 'dnx': Chi tiết Đầu Vào: Xe ĐNX về bãi Thuận An chưa nhập K83 trên Cyber
     // 'missing_yard': Cảnh báo Xuất HĐ nhưng chưa có TD4 mà mất tồn bãi
+    // 'k83_reconcile': Tra soát tồn kho Cyber K83 vs Bãi Thuận An thực tế
+    // 'thuan_an_allocations': Toàn bộ xe được phân bổ cho Thuận An từ CyberSoft
+    // 'other_sr_allocations': Xe phân bổ Showroom khác nhưng Thuận An xuất hóa đơn
     // 'all': Bảng tổng hợp toàn bộ sai lệch
-    const [reconcileSubTab, setReconcileSubTab] = useState<'td4' | 'dnx' | 'missing_yard' | 'all'>(initialReconcileTab);
+    const [reconcileSubTab, setReconcileSubTab] = useState<'td4' | 'dnx' | 'missing_yard' | 'k83_reconcile' | 'all' | 'thuan_an_allocations' | 'other_sr_allocations'>(initialReconcileTab as any);
 
     // Đồng bộ khi parent truyền prop thay đổi
     useEffect(() => {
@@ -213,12 +255,58 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     const [missingYardSearch, setMissingYardSearch] = useState('');
     const [selectedMissingYardRowIdx, setSelectedMissingYardRowIdx] = useState<number>(0);
 
-    // 5. MODAL XEM CHI TIẾT LỖI VÀ HƯỚNG XỬ LÝ VI PHẠM
+    // 5. DỮ LIỆU ĐỐI SOÁT TỒN KHO CYBER K83 vs BÃI THUẬN AN THỰC TẾ
+    const [k83Items, setK83Items] = useState<K83ReconciliationItem[]>([]);
+    const [isLoadingK83, setIsLoadingK83] = useState(false);
+    const [k83StatusFilter, setK83StatusFilter] = useState<'all' | 'diff' | 'yard_only' | 'cyber_only' | 'matched'>('diff');
+    const [k83ModelFilter, setK83ModelFilter] = useState<string>('all');
+    const [k83TvbhFilter, setK83TvbhFilter] = useState<string>('all');
+    const [k83Search, setK83Search] = useState('');
+    const [selectedK83RowIdx, setSelectedK83RowIdx] = useState<number>(0);
+
+    // 6. DỮ LIỆU XE PHÂN BỔ THUẬN AN TỪ CYBERSOFT (MÃ TTCP: 02.01.08)
+    const [thuanAnAllocations, setThuanAnAllocations] = useState<any[]>([]);
+    const [isLoadingAllocations, setIsLoadingAllocations] = useState(false);
+    const [allocModelFilter, setAllocModelFilter] = useState<string>('all');
+    const [allocLocationFilter, setAllocLocationFilter] = useState<string>('all');
+    const [allocSearch, setAllocSearch] = useState('');
+    const [selectedAllocRowIdx, setSelectedAllocRowIdx] = useState<number>(0);
+
+    // 6.2 DỮ LIỆU XE PHÂN BỔ THUẬN AN NHƯNG SHOWROOM KHÁC ĐÃ XUẤT HÓA ĐƠN
+    const [allocSubMode, setAllocSubMode] = useState<'allocated_unbilled' | 'cross_showroom_billed'>(initialAllocSubMode || 'allocated_unbilled');
+
+    useEffect(() => {
+        if (initialAllocSubMode) setAllocSubMode(initialAllocSubMode);
+    }, [initialAllocSubMode]);
+
+    const [crossAllocations, setCrossAllocations] = useState<CrossShowroomAllocationItem[]>([]);
+    const [isLoadingCrossAllocations, setIsLoadingCrossAllocations] = useState(false);
+    const [crossFromDate, setCrossFromDate] = useState<string>('2026-01-01');
+    const [crossSearch, setCrossSearch] = useState('');
+    const [selectedCrossVins, setSelectedCrossVins] = useState<Set<string>>(new Set());
+    const [selectedCrossRowIdx, setSelectedCrossRowIdx] = useState<number>(0);
+
+    // 6.3 DỮ LIỆU XE PHÂN BỔ SHOWROOM KHÁC NHƯNG THUẬN AN XUẤT HÓA ĐƠN
+    const [otherAllocations, setOtherAllocations] = useState<CrossShowroomAllocationItem[]>([]);
+    const [isLoadingOtherAllocations, setIsLoadingOtherAllocations] = useState(false);
+    const [otherAllocFromDate, setOtherAllocFromDate] = useState<string>('2026-08-01');
+    const [otherAllocSearch, setOtherAllocSearch] = useState('');
+    const [selectedOtherAllocRowIdx, setSelectedOtherAllocRowIdx] = useState<number>(0);
+    const [otherAllocStatusFilter, setOtherAllocStatusFilter] = useState<'all' | 'pending' | 'transferred'>('pending');
+
+    // Modal Điều Chuyển Địa Điểm Kinh Doanh (ĐĐKD)
+    const [transferModalCars, setTransferModalCars] = useState<CrossShowroomAllocationItem[]>([]);
+    const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+    const [transferTargetTtcp, setTransferTargetTtcp] = useState<string>('02.01.21');
+    const [transferReason, setTransferReason] = useState<string>('');
+    const [isTransferring, setIsTransferring] = useState(false);
+
+    // 7. MODAL XEM CHI TIẾT LỖI VÀ HƯỚNG XỬ LÝ VI PHẠM
     const [detailModalItem, setDetailModalItem] = useState<any | null>(null);
-    const [detailModalType, setDetailModalType] = useState<'missing_yard' | 'td4' | 'dnx' | 'all'>('all');
+    const [detailModalType, setDetailModalType] = useState<'missing_yard' | 'td4' | 'dnx' | 'k83_reconcile' | 'all'>('all');
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-    const handleOpenDetailModal = (item: any, type: 'missing_yard' | 'td4' | 'dnx' | 'all') => {
+    const handleOpenDetailModal = (item: any, type: 'missing_yard' | 'td4' | 'dnx' | 'k83_reconcile' | 'all') => {
         setDetailModalItem(item);
         setDetailModalType(type);
         setIsDetailModalOpen(true);
@@ -241,6 +329,11 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 }
             }
 
+            // Trích xuất tháng hiện hành từ tên sheet (VD: "Tháng 10 - 2026" -> "10")
+            const activeSheetName = String(info.sheetName || '').trim();
+            const activeMonthMatch = activeSheetName.match(/(\d+)/);
+            const activeMonth = activeMonthMatch ? activeMonthMatch[1] : '';
+
             const rows = data.slice(headerIdx + 1);
             rows.forEach((r, rIdx) => {
                 if (!r || r.length === 0) return;
@@ -250,8 +343,19 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
 
                 if (!vin && !loaiXe) return;
 
+                const rowMonth = String(r[1] || '').trim();
+                const isCurrentMonthRow = !activeMonth || rowMonth.includes(activeMonth) || rowMonth === activeMonth;
+
                 const ngayGiao = String(r[10] || '').trim();
-                const isTonKho = !ngayGiao || ngayGiao === '' || ngayGiao.toLowerCase() === 'none';
+                const colTonKho = String(r[17] || '').trim();
+
+                // Điều kiện xe tồn kho thực tế tại bãi:
+                // 1. Thuộc tab tháng hiện hành (loại bỏ tàn dư dữ liệu các tháng cũ đã chốt sổ)
+                // 2. Chưa có ngày xuất giao
+                // 3. Cột TỒN KHO (cột R / 17) có giá trị 1 (hoặc không bị gạch '-' / 0)
+                const hasNoNgayGiao = !ngayGiao || ngayGiao === '' || ngayGiao.toLowerCase() === 'none';
+                const isColTonKhoValid = !colTonKho || colTonKho === '1' || colTonKho === '1.0';
+                const isTonKho = isCurrentMonthRow && hasNoNgayGiao && isColTonKhoValid;
                 const isThuanAn = showroom.toLowerCase().includes('thuận an') || showroom.toLowerCase().includes('thuan an');
                 const pinInfo = parsePin(r[7]);
 
@@ -403,6 +507,169 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         }
     }, [allOrders, cars, showToast]);
 
+    // Fetch fresh K83 vs Bãi Thuận An reconciliation data
+    const handleFetchK83 = useCallback(async (currentCars?: SatelliteCarItem[], silent = false) => {
+        if (!silent) setIsLoadingK83(true);
+        try {
+            if (!silent) {
+                try {
+                    await triggerCyberTonKhoSync();
+                } catch (cyberSyncErr) {
+                    console.warn('Lỗi kích hoạt đồng bộ Cyber trực tiếp:', cyberSyncErr);
+                }
+            }
+            const carList = currentCars || cars;
+            const data = await fetchK83ReconciliationData(allOrders, carList);
+            setK83Items(data);
+            if (!silent) {
+                const diffs = data.filter(d => d.reconcileType !== 'MATCHED').length;
+                showToast('Tra soát K83 vs Bãi', `Đã đồng bộ Cyber mới nhất & đối chiếu ${data.length} xe (Phát hiện ${diffs} xe lệch giữa K83 và bãi Thuận An).`, diffs > 0 ? 'warning' : 'success');
+            }
+        } catch (err: any) {
+            console.error('K83 fetch error:', err);
+            if (!silent) {
+                showToast('Lỗi tra soát K83', err.message || 'Không thể tải dữ liệu đối chiếu K83', 'error');
+            }
+        } finally {
+            if (!silent) setIsLoadingK83(false);
+        }
+    }, [allOrders, cars, showToast]);
+
+    // Fetch fresh Xe Phân Bổ Cho Thuận An trực tiếp từ CyberSoft ERP (Mã TTCP: 02.01.08)
+    const handleFetchThuanAnAllocations = useCallback(async (forceRefresh = false, silent = false) => {
+        if (!silent) setIsLoadingAllocations(true);
+        try {
+            const res = await searchCyberFactoryPlan({
+                ttcp: '02.01.08',
+                limit: 500,
+                force: forceRefresh
+            } as any);
+
+            let carList: any[] = [];
+            if (res && res.cars) {
+                carList = res.cars;
+            } else if (Array.isArray(res)) {
+                carList = res;
+            }
+
+            setThuanAnAllocations(carList);
+            if (!silent) {
+                showToast('Phân Bổ Thuận An', `Đã tải ${carList.length} xe phân bổ cho Thuận An từ CyberSoft.`, 'success');
+            }
+        } catch (err: any) {
+            console.error('Lỗi tải xe phân bổ Thuận An:', err);
+            if (!silent) {
+                showToast('Lỗi tải dữ liệu', err.message || 'Không thể tải danh sách xe phân bổ từ CyberSoft', 'error');
+            }
+        } finally {
+            if (!silent) setIsLoadingAllocations(false);
+        }
+    }, [showToast]);
+
+    // Fetch fresh Xe Phân Bổ Cho Thuận An nhưng SR khác đã xuất HĐ từ CyberSoft
+    const handleFetchCrossAllocations = useCallback(async (customDate?: string, forceRefresh = false, silent = false) => {
+        if (!silent) setIsLoadingCrossAllocations(true);
+        try {
+            const dateToQuery = customDate || crossFromDate || '2026-01-01';
+            const res = await fetchCrossShowroomAllocations({
+                fromDate: dateToQuery,
+                force: forceRefresh
+            });
+            if (res && res.cars) {
+                setCrossAllocations(res.cars);
+                if (!silent) {
+                    showToast('Xe khác SR xuất HĐ', `Đã tìm thấy ${res.cars.length} xe (Có ${res.total_pending} xe chưa làm ĐNX điều chuyển).`, res.total_pending > 0 ? 'warning' : 'success');
+                }
+            }
+        } catch (err: any) {
+            console.error('Lỗi tải xe khác SR xuất HĐ:', err);
+            if (!silent) {
+                showToast('Lỗi tải dữ liệu', err.message || 'Không thể tải danh sách xe khác SR xuất HĐ', 'error');
+            }
+        } finally {
+            if (!silent) setIsLoadingCrossAllocations(false);
+        }
+    }, [crossFromDate, showToast]);
+
+    // Fetch fresh Xe Phân Bổ Showroom khác nhưng Thuận An xuất HĐ
+    const handleFetchOtherAllocations = useCallback(async (customDate?: string, forceRefresh = false, silent = false) => {
+        if (!silent) setIsLoadingOtherAllocations(true);
+        try {
+            const dateToQuery = customDate || otherAllocFromDate || '2026-08-01';
+            const res = await fetchOtherShowroomAllocations({
+                fromDate: dateToQuery,
+                force: forceRefresh
+            });
+            if (res && res.cars) {
+                setOtherAllocations(res.cars);
+                if (!silent) {
+                    showToast('SR khác PB - Thuận An XHĐ', `Đã tìm thấy ${res.cars.length} xe (Có ${res.total_pending} xe chưa làm ĐNX điều chuyển về Thuận An).`, res.total_pending > 0 ? 'warning' : 'success');
+                }
+            }
+        } catch (err: any) {
+            console.error('Lỗi tải xe SR khác PB - Thuận An XHĐ:', err);
+            if (!silent) {
+                showToast('Lỗi tải dữ liệu', err.message || 'Không thể tải danh sách xe SR khác PB - Thuận An XHĐ', 'error');
+            }
+        } finally {
+            if (!silent) setIsLoadingOtherAllocations(false);
+        }
+    }, [otherAllocFromDate, showToast]);
+
+    // Thực thi điều chuyển địa điểm kinh doanh trên CyberSoft
+    const handleExecuteTransfer = async () => {
+        if (!transferModalCars.length) {
+            showToast('Cảnh báo', 'Vui lòng chọn ít nhất 1 xe để điều chuyển', 'warning');
+            return;
+        }
+        if (!transferTargetTtcp) {
+            showToast('Cảnh báo', 'Vui lòng chọn Showroom nhận (Mã TTCP)', 'warning');
+            return;
+        }
+
+        const toShowroomObj = VINFAST_SHOWROOMS.find(s => s.code === transferTargetTtcp);
+        const toShowroomName = toShowroomObj?.name || transferTargetTtcp;
+        const vins = transferModalCars.map(c => c.vin);
+
+        setIsTransferring(true);
+        try {
+            const res = await transferBusinessLocation({
+                vins,
+                to_ttcp: transferTargetTtcp,
+                to_ttcp_name: toShowroomName,
+                reason: transferReason || `Điều chuyển địa điểm kinh doanh sang ${toShowroomName}`,
+                user_name: '02.NHANPT'
+            });
+
+            if (res.success) {
+                showToast('Điều chuyển thành công', `Đã tạo ĐNX số ${res.so_ct || ''} điều chuyển ${vins.length} xe sang ${toShowroomName}`, 'success', 5000);
+                setIsTransferModalOpen(false);
+                setSelectedCrossVins(new Set());
+                setTransferModalCars([]);
+                // Reload cả 2 bảng
+                handleFetchCrossAllocations(crossFromDate, true, true);
+                handleFetchThuanAnAllocations(true, true);
+            } else {
+                showToast('Lỗi điều chuyển', res.error || 'Không thể thực hiện điều chuyển trên CyberSoft', 'error', 6000);
+            }
+        } catch (err: any) {
+            showToast('Lỗi điều chuyển', err.message || 'Lỗi kết nối máy chủ CyberSoft', 'error', 6000);
+        } finally {
+            setIsTransferring(false);
+        }
+    };
+
+    const handleOpenTransferModal = (carsToTransfer: CrossShowroomAllocationItem[]) => {
+        if (!carsToTransfer.length) return;
+        setTransferModalCars(carsToTransfer);
+        const suggestedTtcp = carsToTransfer[0]?.ma_ttcp_xuat || '02.01.21';
+        setTransferTargetTtcp(suggestedTtcp);
+        const toShowroomObj = VINFAST_SHOWROOMS.find(s => s.code === suggestedTtcp);
+        const targetName = toShowroomObj?.name || suggestedTtcp;
+        setTransferReason(`Điều chuyển địa điểm kinh doanh sang ${targetName} (xe đã xuất hóa đơn)`);
+        setIsTransferModalOpen(true);
+    };
+
     // Auto fetch on first open
     useEffect(() => {
         if (isActive) {
@@ -418,8 +685,20 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
             if (missingYardItems.length === 0) {
                 handleFetchMissingYard(undefined, true);
             }
+            if (k83Items.length === 0) {
+                handleFetchK83(undefined, true);
+            }
+            if (thuanAnAllocations.length === 0) {
+                handleFetchThuanAnAllocations(false, true);
+            }
+            if (crossAllocations.length === 0) {
+                handleFetchCrossAllocations('2026-01-01', false, true);
+            }
+            if (otherAllocations.length === 0) {
+                handleFetchOtherAllocations('2026-08-01', false, true);
+            }
         }
-    }, [isActive, cars.length, reconcileItems.length, td4Items.length, missingYardItems.length, handleFetchReconcile, handleFetchTd4, handleFetchMissingYard]);
+    }, [isActive, cars.length, reconcileItems.length, td4Items.length, missingYardItems.length, k83Items.length, thuanAnAllocations.length, crossAllocations.length, otherAllocations.length, handleFetchReconcile, handleFetchTd4, handleFetchMissingYard, handleFetchK83, handleFetchThuanAnAllocations, handleFetchCrossAllocations, handleFetchOtherAllocations]);
 
     // Copy VIN
     const copyVin = (vin: string) => {
@@ -681,8 +960,16 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         setIsLoadingReconcile(true);
         setIsLoadingTd4(true);
         setIsLoadingMissingYard(true);
+        setIsLoadingK83(true);
         try {
-            // 1. Tải mới nhất trực tiếp từ Google Sheets của 3 bãi xe
+            // 1. Kích hoạt lấy dữ liệu mới nhất trực tiếp từ CyberSoft MSSQL (Tồn kho & Trạng thái xe) và lưu vào Supabase
+            try {
+                await triggerCyberTonKhoSync();
+            } catch (cyberSyncErr) {
+                console.warn('Lỗi kích hoạt đồng bộ Cyber trực tiếp:', cyberSyncErr);
+            }
+
+            // 2. Tải mới nhất trực tiếp từ Google Sheets của 3 bãi xe
             let freshCars = cars;
             try {
                 const res = await fetch(API_URL);
@@ -698,13 +985,16 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 console.warn('Lỗi tải Google Sheets, sử dụng cache/state hiện tại:', sheetErr);
             }
 
-            // 2. Chạy đối soát song song cả 3 phân hệ với dữ liệu bãi mới nhất và CSDL Cyber/Supabase
+            // 3. Chạy đối soát song song cả 4 phân hệ với dữ liệu bãi mới nhất và CSDL Cyber/Supabase
             await Promise.all([
                 handleFetchReconcile(freshCars, true),
                 handleFetchTd4(freshCars, true),
-                handleFetchMissingYard(freshCars, true)
+                handleFetchMissingYard(freshCars, true),
+                handleFetchK83(freshCars, true),
+                handleFetchThuanAnAllocations(true, true),
+                handleFetchOtherAllocations(otherAllocFromDate, true, true)
             ]);
-            showToast('Làm mới hoàn tất', 'Đã tải dữ liệu mới nhất từ Google Sheets và CSDL đối chiếu CyberSoft!', 'success');
+            showToast('Làm mới hoàn tất', 'Đã đồng bộ trực tiếp từ CyberSoft MSSQL và Google Sheets!', 'success');
         } catch (err: any) {
             console.error('Refresh all error:', err);
             showToast('Lỗi làm mới', err.message || 'Không thể làm mới dữ liệu đối chiếu', 'error');
@@ -712,7 +1002,71 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
             setIsLoadingReconcile(false);
             setIsLoadingTd4(false);
             setIsLoadingMissingYard(false);
+            setIsLoadingK83(false);
+            setIsLoadingAllocations(false);
+            setIsLoadingOtherAllocations(false);
         }
+    };
+
+    // Copy Báo Cáo Tra Soát K83 vs Bãi Thuận An Gửi Nhóm Zalo
+    const handleCopyZaloK83List = () => {
+        const yardOnly = k83Items.filter(c => c.reconcileType === 'YARD_ONLY');
+        const cyberOnly = k83Items.filter(c => c.reconcileType === 'CYBER_K83_ONLY');
+        const matched = k83Items.filter(c => c.reconcileType === 'MATCHED');
+
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+
+        let text = `⚖️ BÁO CÁO TRA SOÁT TỒN KHO: CYBER K83 vs BÃI THUẬN AN THỰC TẾ\n`;
+        text += `(Thời điểm kiểm tra: ${timeStr})\n`;
+        text += `📊 TỔNG QUAN TỒN KHO:\n`;
+        text += ` • Tồn sổ Cyber K83: ${matched.length + cyberOnly.length} xe\n`;
+        text += ` • Tồn thực tế bãi Thuận An: ${matched.length + yardOnly.length} xe\n`;
+        text += ` • Khớp cả hai: ${matched.length} xe\n`;
+        text += ` • TỔNG LỆCH KHO: ${yardOnly.length + cyberOnly.length} xe (Thừa bãi TT: ${yardOnly.length} | Thừa Cyber K83: ${cyberOnly.length})\n`;
+        text += `========================================\n\n`;
+
+        // 1. Thừa bãi thực tế
+        text += `🚨 1. THỪA BÃI THUẬN AN THỰC TẾ (CYBER K83 CHƯA GHI NHẬN TỒN): ${yardOnly.length} xe\n`;
+        text += `👉 CẦN XỬ LÝ: Kế toán & TVBH làm thủ tục nhập kho K83 / lập ĐNX ngay:\n`;
+        text += `----------------------------------------\n`;
+        if (yardOnly.length === 0) {
+            text += `   (Tuyệt vời! Không có xe lệch)\n`;
+        } else {
+            yardOnly.forEach((c, idx) => {
+                text += ` ${idx + 1}. VIN: ${c.vin}\n`;
+                text += `    • Xe: ${c.carModel} ${c.color ? `(${c.color})` : ''} | Pin: ${c.mucPin || '-'}\n`;
+                text += `    • Trạng thái Cyber: ${c.tenKhoCyber} (${c.maKhoCyber})\n`;
+                if (c.hasDnx) text += `    • ĐNX: ${c.soCtDnx} (Ngày: ${c.ngayCtDnx || 'N/A'})\n`;
+                text += `    • Lệch: ${c.discrepancyReason}\n`;
+                text += `    ➔ Hướng xử lý: ${c.actionRequired}\n`;
+            });
+        }
+        text += `\n`;
+
+        // 2. Thừa Cyber K83
+        text += `⚠️ 2. THỪA SỔ CYBER K83 (BÃI THUẬN AN THỰC TẾ KHÔNG CÓ XE): ${cyberOnly.length} xe\n`;
+        text += `👉 CẦN XỬ LÝ: Rà soát xe đã xuất giao lập TD4, hoặc điều chuyển xe từ bãi khác về:\n`;
+        text += `----------------------------------------\n`;
+        if (cyberOnly.length === 0) {
+            text += `   (Tuyệt vời! Không có xe lệch)\n`;
+        } else {
+            cyberOnly.forEach((c, idx) => {
+                text += ` ${idx + 1}. VIN: ${c.vin}\n`;
+                text += `    • Xe: ${c.carModel} ${c.color ? `(${c.color})` : ''}\n`;
+                text += `    • TVBH: ${c.tvbhCyber || 'Chưa rõ'} | KH: ${c.customerName || 'Chưa rõ'}\n`;
+                if (c.soHdCyber) text += `    • HĐ Cyber: ${c.soHdCyber} (${c.ngayHdCyber || 'N/A'})\n`;
+                if (c.hasTd4) text += `    • Phiếu TD4: ${c.soCtTd4} [${c.td4MaPostLabel || 'Đang duyệt'}]${c.ngayCtTd4 ? ` (Ngày lập: ${c.ngayCtTd4.slice(0, 10)})` : ''}\n`;
+                if (c.hasDnx) text += `    • Lệnh ĐNX: ${c.soCtDnx} (${c.dnxTenKhoXuat || c.dnxMaKhoXuat || 'K83'} ➔ ${c.dnxTenKhoNhan || c.dnxMaKhoNhan || 'Kho khác'})\n`;
+                text += `    • Lệch: ${c.discrepancyReason}\n`;
+                text += `    ➔ Hướng xử lý: ${c.actionRequired}\n`;
+            });
+        }
+        text += `\n========================================\n`;
+        text += `👉 Đề nghị Quản lý bãi, Kế toán kho và các TVBH phối hợp rà soát xử lý dứt điểm các trường hợp trên!`;
+
+        navigator.clipboard.writeText(text);
+        showToast('Đã sao chép Zalo', `Đã sao chép Báo cáo tra soát K83 vs Bãi Thuận An (${yardOnly.length + cyberOnly.length} xe lệch)!`, 'success', 2500);
     };
 
     // Copy Báo Cáo Tổng Hợp Gửi Zalo (Cả ĐNX & TD4)
@@ -823,6 +1177,52 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
 
         navigator.clipboard.writeText(text);
         showToast('Đã sao chép Zalo', `Đã sao chép danh sách đối soát (${missingYardItems.length} xe)!`, 'info', 2500);
+    };
+
+    // Copy Zalo Danh Sách Xe Phân Bổ Cho Thuận An Từ CyberSoft
+    const handleCopyZaloAllocations = () => {
+        if (filteredAllocations.length === 0) {
+            showToast('Thông báo', 'Không có dữ liệu xe phân bổ để sao chép', 'warning');
+            return;
+        }
+        if (allocSubMode === 'cross_showroom_billed') {
+            if (filteredCrossAllocations.length === 0) {
+                showToast('Thông báo', 'Không có xe nào khớp điều kiện lọc để sao chép', 'info');
+                return;
+            }
+            const now = new Date();
+            const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+            let text = `🚨 DANH SÁCH XE PHÂN BỔ THUẬN AN — SHOWROOM KHÁC ĐÃ XUẤT HÓA ĐƠN\n`;
+            text += `(Thời điểm kiểm tra: ${dateStr} - Tổng: ${filteredCrossAllocations.length} xe | Chưa lập ĐNX: ${countCrossPending} xe)\n`;
+            text += `* Quy định: Phải lập ĐNX điều chuyển địa điểm kinh doanh (Mã GD 9) để trừ hạn mức phân bổ\n`;
+            text += `────────────────────────────────────────\n`;
+            filteredCrossAllocations.forEach((c, idx) => {
+                const statusStr = c.has_transferred ? `✅ Đã có ĐNX (${c.so_ct_dnx || ''})` : `🚨 CHƯA ĐIỀU CHUYỂN ĐĐKD`;
+                text += `${idx + 1}. VIN: ${c.vin} | ${c.dong_xe || ''} ${c.phien_ban || ''} | Màu: ${c.ten_mau || c.ma_mau || '-'}\n`;
+                text += `   • SR xuất HĐ: ${c.ten_ttcp_xuat || c.ma_ttcp_xuat} | HĐ: ${c.so_hd || '-'} (${c.ngay_hd || ''})\n`;
+                text += `   • TVBH: ${c.tvbh_xuat || '-'} | KH: ${c.ten_khach_hang || '-'}\n`;
+                text += `   • Trạng thái: ${statusStr}\n`;
+            });
+            text += `────────────────────────────────────────\n`;
+            navigator.clipboard.writeText(text);
+            showToast('Đã sao chép Zalo', `Đã sao chép ${filteredCrossAllocations.length} xe khác SR xuất HĐ!`, 'success');
+            return;
+        }
+
+        const now = new Date();
+        const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+        let text = `📋 DANH SÁCH XE PHÂN BỔ CHO SHOWROOM THUẬN AN (CYBERSOFT)\n`;
+        text += `(Thời điểm kiểm tra: ${dateStr} - Tổng: ${filteredAllocations.length} xe)\n`;
+        text += `────────────────────────────────────────\n`;
+
+        filteredAllocations.forEach((c, idx) => {
+            const loc = c.current_physical_warehouse || c.vi_tri_kho || 'Đang vận tải';
+            text += `${idx + 1}. ${c.vin} | ${c.dong_xe || ''} ${c.phien_ban || ''} | Màu: ${c.ten_mau || c.ma_mau || '-'} | DMS: ${c.ma_dms || '-'} | Kho: ${loc}\n`;
+        });
+        text += `────────────────────────────────────────\n`;
+
+        navigator.clipboard.writeText(text);
+        showToast('Đã sao chép Zalo', `Đã sao chép ${filteredAllocations.length} xe phân bổ gửi Zalo!`, 'success');
     };
 
 
@@ -1024,6 +1424,206 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         });
     }, [missingYardItems, missingYardTvbhFilter, missingYardModelFilter, missingYardSearch]);
 
+    // -------------------------------------------------------------
+    // K83 VS BÃI THUẬN AN COMPUTED DATA
+    // -------------------------------------------------------------
+    const countK83Matched = useMemo(() => k83Items.filter(c => c.reconcileType === 'MATCHED').length, [k83Items]);
+    const countK83CyberOnly = useMemo(() => k83Items.filter(c => c.reconcileType === 'CYBER_K83_ONLY').length, [k83Items]);
+    const countK83YardOnly = useMemo(() => k83Items.filter(c => c.reconcileType === 'YARD_ONLY').length, [k83Items]);
+    const countK83Diff = useMemo(() => countK83CyberOnly + countK83YardOnly, [countK83CyberOnly, countK83YardOnly]);
+    const countK83TotalCyber = useMemo(() => countK83Matched + countK83CyberOnly, [countK83Matched, countK83CyberOnly]);
+    const countK83TotalYard = useMemo(() => countK83Matched + countK83YardOnly, [countK83Matched, countK83YardOnly]);
+
+    const uniqueK83Models = useMemo(() => {
+        const set = new Set<string>();
+        k83Items.forEach(c => {
+            if (c.carModel) set.add(c.carModel.trim());
+        });
+        return Array.from(set).sort();
+    }, [k83Items]);
+
+    const uniqueK83Tvbhs = useMemo(() => {
+        const set = new Set<string>();
+        k83Items.forEach(c => {
+            if (c.tvbhCyber && c.tvbhCyber !== 'Chưa rõ') set.add(c.tvbhCyber.trim());
+        });
+        return Array.from(set).sort();
+    }, [k83Items]);
+
+    const filteredK83Items = useMemo(() => {
+        return k83Items.filter(c => {
+            if (k83StatusFilter === 'diff' && c.reconcileType === 'MATCHED') return false;
+            if (k83StatusFilter === 'yard_only' && c.reconcileType !== 'YARD_ONLY') return false;
+            if (k83StatusFilter === 'cyber_only' && c.reconcileType !== 'CYBER_K83_ONLY') return false;
+            if (k83StatusFilter === 'matched' && c.reconcileType !== 'MATCHED') return false;
+
+            if (k83ModelFilter !== 'all' && c.carModel.trim() !== k83ModelFilter) return false;
+            if (k83TvbhFilter !== 'all' && (c.tvbhCyber || '').trim() !== k83TvbhFilter) return false;
+
+            if (k83Search.trim()) {
+                const q = k83Search.toLowerCase().trim();
+                const matchVin = c.vin.toLowerCase().includes(q);
+                const matchModel = c.carModel.toLowerCase().includes(q);
+                const matchColor = c.color.toLowerCase().includes(q);
+                const matchTvbh = (c.tvbhCyber || '').toLowerCase().includes(q);
+                const matchKh = (c.customerName || '').toLowerCase().includes(q);
+                const matchHd = (c.soHdCyber || c.orderNumber || '').toLowerCase().includes(q);
+                const matchDnx = (c.soCtDnx || '').toLowerCase().includes(q);
+                const matchTd4 = (c.soCtTd4 || '').toLowerCase().includes(q);
+                const matchReason = c.discrepancyReason.toLowerCase().includes(q);
+                if (!matchVin && !matchModel && !matchColor && !matchTvbh && !matchKh && !matchHd && !matchDnx && !matchTd4 && !matchReason) return false;
+            }
+            return true;
+        });
+    }, [k83Items, k83StatusFilter, k83ModelFilter, k83TvbhFilter, k83Search]);
+
+    // Unique models for Allocations dropdown
+    const uniqueAllocModels = useMemo(() => {
+        const set = new Set<string>();
+        thuanAnAllocations.forEach(c => {
+            const m = (c.dong_xe || '').trim();
+            if (m) set.add(m);
+        });
+        return Array.from(set).sort();
+    }, [thuanAnAllocations]);
+
+    // Unique locations for Allocations dropdown
+    const uniqueAllocLocations = useMemo(() => {
+        const set = new Set<string>();
+        thuanAnAllocations.forEach(c => {
+            const loc = (c.current_physical_warehouse || c.vi_tri_kho || 'Đang vận tải').trim();
+            if (loc) set.add(loc);
+        });
+        return Array.from(set).sort();
+    }, [thuanAnAllocations]);
+
+    // Filtered Allocations
+    const filteredAllocations = useMemo(() => {
+        return thuanAnAllocations.filter(c => {
+            if (allocModelFilter !== 'all' && (c.dong_xe || '').trim() !== allocModelFilter) {
+                return false;
+            }
+            if (allocLocationFilter !== 'all') {
+                const loc = (c.current_physical_warehouse || c.vi_tri_kho || 'Đang vận tải').trim();
+                if (loc !== allocLocationFilter) return false;
+            }
+            if (allocSearch.trim()) {
+                const q = allocSearch.toLowerCase().trim();
+                const matchVin = (c.vin || '').toLowerCase().includes(q);
+                const matchModel = (c.dong_xe || '').toLowerCase().includes(q) || (c.ten_kx || '').toLowerCase().includes(q);
+                const matchColor = (c.ten_mau || '').toLowerCase().includes(q) || (c.ma_mau || '').toLowerCase().includes(q);
+                const matchDms = (c.ma_dms || '').toLowerCase().includes(q);
+                const matchNote = (c.ghi_chu || '').toLowerCase().includes(q);
+                const matchLoc = (c.current_physical_warehouse || c.vi_tri_kho || '').toLowerCase().includes(q);
+                if (!matchVin && !matchModel && !matchColor && !matchDms && !matchNote && !matchLoc) return false;
+            }
+            return true;
+        });
+    }, [thuanAnAllocations, allocModelFilter, allocLocationFilter, allocSearch]);
+
+    // Counters for Allocations
+    const countAllocInTransit = useMemo(() => {
+        return thuanAnAllocations.filter(c => {
+            const loc = (c.current_physical_warehouse || c.vi_tri_kho || '').toLowerCase();
+            return !loc || loc.includes('vận tải') || loc.includes('nhà máy');
+        }).length;
+    }, [thuanAnAllocations]);
+
+    const countAllocAtYard = useMemo(() => {
+        return Math.max(0, thuanAnAllocations.length - countAllocInTransit);
+    }, [thuanAnAllocations.length, countAllocInTransit]);
+
+    // Filtered Cross-Showroom Allocations (Xe khác SR đã xuất hóa đơn)
+    const filteredCrossAllocations = useMemo(() => {
+        return crossAllocations.filter(c => {
+            // Theo yêu cầu: Chỉ hiển thị các xe CHƯA điều chuyển, xe đã điều chuyển không cần hiển thị
+            if (c.has_transferred) return false;
+
+            if (crossSearch.trim()) {
+                const q = crossSearch.toLowerCase().trim();
+                const matchVin = (c.vin || '').toLowerCase().includes(q);
+                const matchModel = (c.dong_xe || '').toLowerCase().includes(q) || (c.ten_kx || '').toLowerCase().includes(q);
+                const matchColor = (c.ten_mau || '').toLowerCase().includes(q) || (c.ma_mau || '').toLowerCase().includes(q);
+                const matchKh = (c.ten_khach_hang || '').toLowerCase().includes(q);
+                const matchHd = (c.so_hd || '').toLowerCase().includes(q);
+                const matchSr = (c.ten_ttcp_xuat || '').toLowerCase().includes(q) || (c.ma_ttcp_xuat || '').toLowerCase().includes(q);
+                const matchTvbh = (c.tvbh_xuat || '').toLowerCase().includes(q);
+                if (!matchVin && !matchModel && !matchColor && !matchKh && !matchHd && !matchSr && !matchTvbh) return false;
+            }
+            return true;
+        });
+    }, [crossAllocations, crossSearch]);
+
+    const countCrossPending = useMemo(() => crossAllocations.filter(c => !c.has_transferred).length, [crossAllocations]);
+    const countCrossTransferred = useMemo(() => crossAllocations.filter(c => c.has_transferred).length, [crossAllocations]);
+
+    // Filtered Other-Showroom Allocations (Xe SR khác phân bổ nhưng Thuận An xuất HĐ)
+    const filteredOtherAllocations = useMemo(() => {
+        return otherAllocations.filter(c => {
+            if (otherAllocStatusFilter === 'pending' && c.has_transferred) return false;
+            if (otherAllocStatusFilter === 'transferred' && !c.has_transferred) return false;
+
+            if (otherAllocSearch.trim()) {
+                const q = otherAllocSearch.toLowerCase().trim();
+                const matchVin = (c.vin || '').toLowerCase().includes(q);
+                const matchModel = (c.dong_xe || '').toLowerCase().includes(q) || (c.ten_kx || '').toLowerCase().includes(q);
+                const matchColor = (c.ten_mau || '').toLowerCase().includes(q) || (c.ma_mau || '').toLowerCase().includes(q);
+                const matchKh = (c.ten_khach_hang || '').toLowerCase().includes(q);
+                const matchHd = (c.so_hd || '').toLowerCase().includes(q);
+                const matchSr = (c.ten_ttcp_phan_bo || '').toLowerCase().includes(q) || (c.ttcp_phan_bo || '').toLowerCase().includes(q);
+                const matchTvbh = (c.tvbh_xuat || '').toLowerCase().includes(q);
+                if (!matchVin && !matchModel && !matchColor && !matchKh && !matchHd && !matchSr && !matchTvbh) return false;
+            }
+            return true;
+        });
+    }, [otherAllocations, otherAllocStatusFilter, otherAllocSearch]);
+
+    const countOtherAllocPending = useMemo(() => otherAllocations.filter(c => !c.has_transferred).length, [otherAllocations]);
+    const countOtherAllocTransferred = useMemo(() => otherAllocations.filter(c => c.has_transferred).length, [otherAllocations]);
+
+    // Sao chép danh sách xe SR khác phân bổ nhưng Thuận An xuất HĐ gửi Zalo
+    const handleCopyZaloOtherAllocations = () => {
+        const listToCopy = filteredOtherAllocations;
+        if (!listToCopy.length) {
+            showToast('Thông báo', 'Không có xe nào trong danh sách để sao chép', 'info');
+            return;
+        }
+
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+
+        let text = `📋 DANH SÁCH XE PHÂN BỔ SHOWROOM KHÁC — THUẬN AN XUẤT HÓA ĐƠN\n`;
+        text += `(Thời điểm kiểm tra: ${timeStr} | Kỳ xem: Từ ${otherAllocFromDate} | Tổng: ${listToCopy.length} xe)\n`;
+        text += `👉 Đề nghị Kế toán & Quản lý các Showroom hỗ trợ lập phiếu ĐNX (Mã GD = 9) điều chuyển ĐĐKD về cho Showroom Thuận An (02.01.08):\n`;
+        text += `========================================\n\n`;
+
+        // Gom theo Showroom phân bổ
+        const bySr = new Map<string, typeof listToCopy>();
+        listToCopy.forEach(c => {
+            const srName = c.ten_ttcp_phan_bo || c.ttcp_phan_bo || 'Showroom khác';
+            if (!bySr.has(srName)) bySr.set(srName, []);
+            bySr.get(srName)!.push(c);
+        });
+
+        bySr.forEach((cars, srName) => {
+            text += `🏢 ${srName.toUpperCase()} (${cars.length} xe):\n`;
+            cars.forEach((c, idx) => {
+                text += `  ${idx + 1}. VIN: ${c.vin}\n`;
+                text += `     • Dòng xe: ${c.dong_xe || c.loai_xe} (${c.ten_mau || c.ma_mau})\n`;
+                text += `     • HĐ Thuận An: ${c.so_hd} (Ngày: ${c.ngay_hd || 'N/A'})\n`;
+                text += `     • KH: ${c.ten_khach_hang || 'Chưa rõ'} | TVBH xuất: ${c.tvbh_xuat || 'Chưa rõ'}\n`;
+                text += `     • Trạng thái: ${c.has_transferred ? '✅ Đã có ĐNX' : '🚨 Chưa lập ĐNX về Thuận An'}\n`;
+            });
+            text += `\n`;
+        });
+
+        text += `========================================\n`;
+        text += `👉 Kính nhờ Kế toán các đơn vị kiểm tra và hoàn tất điều chuyển ĐĐKD sớm nhất! Trân trọng cảm ơn!`;
+
+        navigator.clipboard.writeText(text);
+        showToast('Đã sao chép Zalo', `Đã sao chép danh sách ${listToCopy.length} xe gửi Zalo!`, 'success', 2500);
+    };
+
     // Báo số lượng cho parent
     useEffect(() => {
         if (onCountsChange) {
@@ -1032,10 +1632,16 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 td4Count: countTd4Approved,
                 dnxCount: countAlertThuanAn,
                 missingYardCount: missingYardItems.filter(c => c.isViolation).length,
-                allAlertCount: allCombinedAlerts.length
+                k83Count: k83Items.length,
+                k83DiffCount: countK83Diff,
+                allAlertCount: allCombinedAlerts.length,
+                thuanAnAllocationsCount: thuanAnAllocations.length,
+                crossPendingCount: countCrossPending,
+                otherShowroomAllocationsCount: otherAllocations.length,
+                otherAllocPendingCount: countOtherAllocPending
             });
         }
-    }, [cars.length, countTd4Approved, countAlertThuanAn, missingYardItems, allCombinedAlerts.length, onCountsChange]);
+    }, [cars.length, countTd4Approved, countAlertThuanAn, missingYardItems, k83Items.length, countK83Diff, allCombinedAlerts.length, thuanAnAllocations.length, countCrossPending, otherAllocations.length, countOtherAllocPending, onCountsChange]);
 
     return (
         <div className="flex-1 flex flex-col min-h-0 w-full bg-[#ECE9D8] rounded border border-[#CCCCCC] shadow-sm overflow-hidden font-sans select-none h-full">
@@ -1405,83 +2011,124 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 <>
                     {/* THANH CÔNG CỤ DUY NHẤT (Single Ribbon Toolbar ~30px) */}
                     <div className="bg-[#F0F0F0] border-b border-[#CCCCCC] px-1.5 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-800 shrink-0">
-                        {/* Nhóm Trái: Segmented Buttons Chuyển Phân Hệ Đối Soát */}
+                        {/* Nhóm Trái: Active Phân Hệ Badge & Bộ Lọc Tuỳ Biến (Đã chuyển các nút chuyển tab sang Sidebar) */}
                         <div className="flex items-center gap-1.5 flex-wrap">
-                            <div className="inline-flex items-center bg-slate-200/90 p-0.5 rounded border border-slate-300 gap-0.5">
-                                <button
-                                    type="button"
-                                    onClick={() => setReconcileSubTab('all')}
-                                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                                        reconcileSubTab === 'all'
-                                            ? 'bg-white text-slate-900 shadow-2xs'
-                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/50'
-                                    }`}
-                                >
-                                    <i className="fa-solid fa-list-check text-[10px]"></i>
-                                    <span>Tất cả</span>
-                                    <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-slate-100 text-slate-700 font-mono font-bold">
+                            {/* BADGE TIÊU ĐỀ PHÂN HỆ ĐANG XEM TỪ SIDEBAR */}
+                            {reconcileSubTab === 'thuan_an_allocations' && (
+                                allocSubMode === 'allocated_unbilled' ? (
+                                    <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
+                                        <i className="fa-solid fa-boxes-stacked text-[10px] text-emerald-600"></i>
+                                        <span>Xe Phân Bổ Tồn</span>
+                                        <span className="px-1 text-[9px] rounded-full bg-emerald-700 text-white font-mono font-bold">
+                                            {thuanAnAllocations.length}
+                                        </span>
+                                    </span>
+                                ) : (
+                                    <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-900 border border-rose-300 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
+                                        <i className="fa-solid fa-triangle-exclamation text-[10px] text-rose-600"></i>
+                                        <span>SR Khác Xuất HĐ</span>
+                                        {countCrossPending > 0 ? (
+                                            <span className="px-1 text-[9px] rounded-full bg-rose-600 text-white font-mono font-bold animate-pulse" title="Cần lập ĐNX điều chuyển ĐĐKD">
+                                                {countCrossPending}
+                                            </span>
+                                        ) : (
+                                            <span className="px-1 text-[9px] rounded-full bg-emerald-600 text-white font-mono font-bold">
+                                                0
+                                            </span>
+                                        )}
+                                    </span>
+                                )
+                            )}
+
+                            {reconcileSubTab === 'other_sr_allocations' && (
+                                <span className="px-2 py-0.5 rounded bg-indigo-100 text-indigo-900 border border-indigo-300 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
+                                    <i className="fa-solid fa-arrow-right-arrow-left text-[10px] text-indigo-600"></i>
+                                    <span>SR Khác PB - TA Xuất HĐ</span>
+                                    {otherAllocations.length > 0 && (
+                                        <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-indigo-800 text-white font-mono font-bold">
+                                            {otherAllocations.length}
+                                        </span>
+                                    )}
+                                    {countOtherAllocPending > 0 && (
+                                        <span className="px-1 text-[9px] rounded-full bg-amber-500 text-white font-mono font-bold animate-pulse" title={`${countOtherAllocPending} xe chưa được SR khác lập ĐNX chuyển về Thuận An`}>
+                                            {countOtherAllocPending}
+                                        </span>
+                                    )}
+                                </span>
+                            )}
+
+                            {reconcileSubTab === 'k83_reconcile' && (
+                                <span className="px-2 py-0.5 rounded bg-sky-100 text-sky-900 border border-sky-300 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
+                                    <i className="fa-solid fa-scale-balanced text-[10px] text-sky-500"></i>
+                                    <span>Tra Soát K83 vs Bãi TT</span>
+                                    {countK83Diff > 0 && (
+                                        <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-sky-800 text-white font-mono font-bold">
+                                            {countK83Diff} lệch
+                                        </span>
+                                    )}
+                                </span>
+                            )}
+
+                            {(reconcileSubTab === 'all' || reconcileSubTab === 'td4' || reconcileSubTab === 'dnx' || reconcileSubTab === 'missing_yard') && (
+                                <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
+                                    <i className="fa-solid fa-triangle-exclamation text-[10px] text-amber-600"></i>
+                                    <span>Cảnh Báo Sai Lệch</span>
+                                    <span className={`px-1.5 py-0.2 text-[9px] rounded-full font-mono font-bold ${allCombinedAlerts.length > 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'}`}>
                                         {allCombinedAlerts.length}
                                     </span>
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setReconcileSubTab('td4')}
-                                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                                        reconcileSubTab === 'td4'
-                                            ? 'bg-white text-purple-900 shadow-2xs ring-1 ring-purple-300'
-                                            : 'text-slate-600 hover:text-purple-900 hover:bg-slate-100/50'
-                                    }`}
-                                >
-                                    <i className="fa-solid fa-triangle-exclamation text-[10px] text-amber-500"></i>
-                                    <span>Xe Tồn TD4</span>
-                                    {countTd4Approved > 0 && (
-                                        <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-purple-100 text-purple-800 font-mono font-bold" title={`${countTd4Approved} xe vi phạm / ${countTd4Pending} xe đang duyệt`}>
-                                            {countTd4Approved}
-                                        </span>
-                                    )}
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setReconcileSubTab('dnx')}
-                                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                                        reconcileSubTab === 'dnx'
-                                            ? 'bg-white text-red-900 shadow-2xs ring-1 ring-red-300'
-                                            : 'text-slate-600 hover:text-red-900 hover:bg-slate-100/50'
-                                    }`}
-                                >
-                                    <i className="fa-solid fa-arrow-down-to-bracket text-[10px] text-red-500"></i>
-                                    <span>ĐNX Về Bãi Chưa Nhập</span>
-                                    {countAlertThuanAn > 0 && (
-                                        <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-red-100 text-red-800 font-mono font-bold">
-                                            {countAlertThuanAn}
-                                        </span>
-                                    )}
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setReconcileSubTab('missing_yard')}
-                                    className={`px-2 py-0.5 rounded text-[11px] font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                                        reconcileSubTab === 'missing_yard'
-                                            ? 'bg-white text-amber-900 shadow-2xs ring-1 ring-amber-300'
-                                            : 'text-slate-600 hover:text-amber-900 hover:bg-slate-100/50'
-                                    }`}
-                                >
-                                    <i className="fa-solid fa-file-invoice-dollar text-[10px] text-amber-500"></i>
-                                    <span>Xuất HĐ Mất Bãi</span>
-                                    {missingYardItems.filter(c => c.isViolation).length > 0 && (
-                                        <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-amber-100 text-amber-900 font-mono font-bold">
-                                            {missingYardItems.filter(c => c.isViolation).length}
-                                        </span>
-                                    )}
-                                </button>
-                            </div>
+                                </span>
+                            )}
 
                             <div className="h-3.5 w-[1px] bg-slate-300 mx-0.5 hidden sm:block"></div>
 
                             {/* Bộ Lọc Tuỳ Biến Theo Phân Hệ Đang Chọn */}
+                            {reconcileSubTab === 'k83_reconcile' && (
+                                <>
+                                    <div className="flex items-center gap-1">
+                                        <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Trạng thái:</span>
+                                        <select
+                                            value={k83StatusFilter}
+                                            onChange={e => setK83StatusFilter(e.target.value as any)}
+                                            className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] font-bold text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[175px]"
+                                        >
+                                            <option value="diff">🚨 Chỉ xem xe lệch ({countK83Diff})</option>
+                                            <option value="all">Tất cả ({k83Items.length} xe)</option>
+                                            <option value="yard_only">🚨 Thừa bãi TT ({countK83YardOnly})</option>
+                                            <option value="cyber_only">⚠️ Thừa Cyber K83 ({countK83CyberOnly})</option>
+                                            <option value="matched">✅ Khớp chuẩn ({countK83Matched})</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                        <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">TVBH:</span>
+                                        <select
+                                            value={k83TvbhFilter}
+                                            onChange={e => setK83TvbhFilter(e.target.value)}
+                                            className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[120px]"
+                                        >
+                                            <option value="all">Tất cả ({uniqueK83Tvbhs.length})</option>
+                                            {uniqueK83Tvbhs.map(t => (
+                                                <option key={t} value={t}>{t}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                        <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Xe:</span>
+                                        <select
+                                            value={k83ModelFilter}
+                                            onChange={e => setK83ModelFilter(e.target.value)}
+                                            className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[100px]"
+                                        >
+                                            <option value="all">Tất cả dòng</option>
+                                            {uniqueK83Models.map(m => (
+                                                <option key={m} value={m}>{m}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </>
+                            )}
+
                             {reconcileSubTab === 'td4' && (
                                 <>
                                     <div className="flex items-center gap-1">
@@ -1621,18 +2268,140 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 </>
                             )}
 
-                            {reconcileSubTab === 'all' && (
+                            {reconcileSubTab === 'thuan_an_allocations' && (
+                                <>
+                                    {allocSubMode === 'allocated_unbilled' ? (
+                                        <>
+                                            <div className="flex items-center gap-1">
+                                                <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Dòng xe:</span>
+                                                <select
+                                                    value={allocModelFilter}
+                                                    onChange={e => setAllocModelFilter(e.target.value)}
+                                                    className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[110px]"
+                                                >
+                                                    <option value="all">Tất cả ({thuanAnAllocations.length})</option>
+                                                    {uniqueAllocModels.map(m => (
+                                                        <option key={m} value={m}>{m}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="flex items-center gap-1">
+                                                <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Vị trí kho:</span>
+                                                <select
+                                                    value={allocLocationFilter}
+                                                    onChange={e => setAllocLocationFilter(e.target.value)}
+                                                    className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[140px]"
+                                                >
+                                                    <option value="all">Tất cả vị trí</option>
+                                                    {uniqueAllocLocations.map(l => (
+                                                        <option key={l} value={l}>{l}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center gap-1">
+                                                <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Kỳ xem:</span>
+                                                <select
+                                                    value={crossFromDate}
+                                                    onChange={e => {
+                                                        const newDate = e.target.value;
+                                                        setCrossFromDate(newDate);
+                                                        handleFetchCrossAllocations(newDate, true, false);
+                                                    }}
+                                                    className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] font-bold text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[125px]"
+                                                >
+                                                    <option value="2026-01-01">📅 Toàn bộ 2026</option>
+                                                    <option value="2026-08-01">📅 Từ 01/08/2026</option>
+                                                    <option value="2026-09-01">📅 Từ 01/09/2026</option>
+                                                    <option value="2026-10-01">📅 Từ 01/10/2026</option>
+                                                </select>
+                                            </div>
+
+                                            <div className="flex items-center gap-1">
+                                                <span className="h-5 px-1.5 bg-rose-50 border border-rose-300 rounded-xs text-[10px] sm:text-[11px] font-bold text-rose-800 flex items-center gap-1 shadow-inner">
+                                                    <i className="fa-solid fa-circle-exclamation text-rose-600 text-[9px]"></i>
+                                                    <span>Chưa điều chuyển: <strong>{countCrossPending}</strong> xe</span>
+                                                </span>
+                                            </div>
+
+                                            {selectedCrossVins.size > 0 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const carsToTransfer = crossAllocations.filter(c => selectedCrossVins.has(c.vin));
+                                                        handleOpenTransferModal(carsToTransfer);
+                                                    }}
+                                                    className="h-5 px-2 bg-purple-700 hover:bg-purple-800 text-white rounded-xs text-[10px] font-bold flex items-center gap-1 shadow-xs cursor-pointer animate-pulse"
+                                                >
+                                                    <i className="fa-solid fa-bolt text-[9px]"></i>
+                                                    <span>Điều chuyển ĐĐKD ({selectedCrossVins.size})</span>
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                </>
+                            )}
+
+                            {reconcileSubTab === 'other_sr_allocations' && (
+                                <>
+                                    <div className="flex items-center gap-1">
+                                        <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Kỳ xem:</span>
+                                        <select
+                                            value={otherAllocFromDate}
+                                            onChange={e => {
+                                                const newDate = e.target.value;
+                                                setOtherAllocFromDate(newDate);
+                                                handleFetchOtherAllocations(newDate, true, false);
+                                            }}
+                                            className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] font-bold text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[125px]"
+                                        >
+                                            <option value="2026-08-01">📅 Từ 01/08/2026</option>
+                                            <option value="2026-09-01">📅 Từ 01/09/2026</option>
+                                            <option value="2026-10-01">📅 Từ 01/10/2026</option>
+                                            <option value="2026-01-01">📅 Toàn bộ 2026</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                        <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Trạng thái:</span>
+                                        <select
+                                            value={otherAllocStatusFilter}
+                                            onChange={e => setOtherAllocStatusFilter(e.target.value as any)}
+                                            className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] font-bold text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[165px]"
+                                        >
+                                            <option value="pending">🚨 Chưa có ĐNX về ({countOtherAllocPending})</option>
+                                            <option value="all">Tất cả ({otherAllocations.length} xe)</option>
+                                            <option value="transferred">✅ Đã có ĐNX ({countOtherAllocTransferred})</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="flex items-center gap-1">
+                                        <span className="h-5 px-1.5 bg-indigo-50 border border-indigo-200 rounded-xs text-[10px] sm:text-[11px] font-bold text-indigo-800 flex items-center gap-1 shadow-inner">
+                                            <i className="fa-solid fa-bell text-indigo-600 text-[9px]"></i>
+                                            <span>Chờ ĐNX về TA: <strong>{countOtherAllocPending}</strong> xe</span>
+                                        </span>
+                                    </div>
+                                </>
+                            )}
+
+                            {(reconcileSubTab === 'all' || reconcileSubTab === 'td4' || reconcileSubTab === 'dnx' || reconcileSubTab === 'missing_yard') && (
                                 <div className="flex items-center gap-1">
                                     <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Lọc loại:</span>
                                     <select
                                         value={allAlertFilter}
-                                        onChange={e => setAllAlertFilter(e.target.value as any)}
-                                        className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[170px]"
+                                        onChange={e => {
+                                            setAllAlertFilter(e.target.value as any);
+                                            setReconcileSubTab('all');
+                                        }}
+                                        className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] font-bold text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[200px]"
                                     >
-                                        <option value="all">Tất cả ({allCombinedAlerts.length})</option>
-                                        <option value="td4">🚨 Chỉ TD4 vi phạm ({td4Items.length})</option>
-                                        <option value="dnx">📥 Chỉ ĐNX chưa nhập ({reconcileItems.length})</option>
-                                        <option value="missing_yard">⚠️ Chỉ Xuất HĐ mất bãi ({missingYardItems.length})</option>
+                                        <option value="all">🚨 Tất cả cảnh báo ({allCombinedAlerts.length})</option>
+                                        <option value="td4">⚠️ Chỉ TD4 vi phạm ({td4Items.length})</option>
+                                        <option value="dnx">📥 Chỉ ĐNX chưa nhập ({countAlertThuanAn})</option>
+                                        <option value="missing_yard">🚗 Chỉ Xuất HĐ mất bãi ({missingYardItems.filter(c => c.isViolation).length})</option>
                                     </select>
                                 </div>
                             )}
@@ -1644,12 +2413,21 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 <input
                                     type="text"
                                     value={
+                                        reconcileSubTab === 'other_sr_allocations' ? otherAllocSearch :
+                                        reconcileSubTab === 'thuan_an_allocations' ? (allocSubMode === 'cross_showroom_billed' ? crossSearch : allocSearch) :
+                                        reconcileSubTab === 'k83_reconcile' ? k83Search :
                                         reconcileSubTab === 'td4' ? td4Search :
                                         reconcileSubTab === 'dnx' ? reconcileSearch :
                                         reconcileSubTab === 'missing_yard' ? missingYardSearch : allAlertSearch
                                     }
                                     onChange={e => {
-                                        if (reconcileSubTab === 'td4') setTd4Search(e.target.value);
+                                        if (reconcileSubTab === 'other_sr_allocations') setOtherAllocSearch(e.target.value);
+                                        else if (reconcileSubTab === 'thuan_an_allocations') {
+                                            if (allocSubMode === 'cross_showroom_billed') setCrossSearch(e.target.value);
+                                            else setAllocSearch(e.target.value);
+                                        }
+                                        else if (reconcileSubTab === 'k83_reconcile') setK83Search(e.target.value);
+                                        else if (reconcileSubTab === 'td4') setTd4Search(e.target.value);
                                         else if (reconcileSubTab === 'dnx') setReconcileSearch(e.target.value);
                                         else if (reconcileSubTab === 'missing_yard') setMissingYardSearch(e.target.value);
                                         else setAllAlertSearch(e.target.value);
@@ -1657,11 +2435,17 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                     placeholder="Tìm VIN, số phiếu, TVBH, KH..."
                                     className="h-5 w-36 sm:w-48 px-1.5 pr-4 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-900 outline-none focus:border-blue-600 shadow-inner"
                                 />
-                                {(reconcileSubTab === 'td4' ? td4Search : reconcileSubTab === 'dnx' ? reconcileSearch : reconcileSubTab === 'missing_yard' ? missingYardSearch : allAlertSearch) && (
+                                {(reconcileSubTab === 'other_sr_allocations' ? otherAllocSearch : reconcileSubTab === 'thuan_an_allocations' ? (allocSubMode === 'cross_showroom_billed' ? crossSearch : allocSearch) : reconcileSubTab === 'k83_reconcile' ? k83Search : reconcileSubTab === 'td4' ? td4Search : reconcileSubTab === 'dnx' ? reconcileSearch : reconcileSubTab === 'missing_yard' ? missingYardSearch : allAlertSearch) && (
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            if (reconcileSubTab === 'td4') setTd4Search('');
+                                            if (reconcileSubTab === 'other_sr_allocations') setOtherAllocSearch('');
+                                            else if (reconcileSubTab === 'thuan_an_allocations') {
+                                                if (allocSubMode === 'cross_showroom_billed') setCrossSearch('');
+                                                else setAllocSearch('');
+                                            }
+                                            else if (reconcileSubTab === 'k83_reconcile') setK83Search('');
+                                            else if (reconcileSubTab === 'td4') setTd4Search('');
                                             else if (reconcileSubTab === 'dnx') setReconcileSearch('');
                                             else if (reconcileSubTab === 'missing_yard') setMissingYardSearch('');
                                             else setAllAlertSearch('');
@@ -1675,25 +2459,40 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
 
                             <button 
                                 type="button" 
-                                onClick={handleFetchAllReconcile}
-                                disabled={isLoadingReconcile || isLoadingTd4 || isLoadingMissingYard}
+                                onClick={() => {
+                                    if (reconcileSubTab === 'other_sr_allocations') {
+                                        handleFetchOtherAllocations(otherAllocFromDate, true, false);
+                                    } else if (reconcileSubTab === 'thuan_an_allocations') {
+                                        if (allocSubMode === 'cross_showroom_billed') {
+                                            handleFetchCrossAllocations(crossFromDate, true, false);
+                                        } else {
+                                            handleFetchThuanAnAllocations(true);
+                                        }
+                                    } else {
+                                        handleFetchAllReconcile();
+                                    }
+                                }}
+                                disabled={isLoadingReconcile || isLoadingTd4 || isLoadingMissingYard || isLoadingK83 || isLoadingAllocations || isLoadingCrossAllocations || isLoadingOtherAllocations}
                                 className="px-1.5 py-0.5 bg-white hover:bg-slate-100 border border-[#B5B5B5] rounded-xs shadow-2xs flex items-center gap-1 font-semibold text-slate-800 active:translate-y-px cursor-pointer disabled:opacity-50 text-[10px] sm:text-[11px]"
                                 title="Nạp lại dữ liệu"
                             >
-                                <i className={`fas fa-rotate text-blue-600 text-[10px] ${isLoadingReconcile || isLoadingTd4 || isLoadingMissingYard ? 'animate-spin' : ''}`}></i>
+                                <i className={`fas fa-rotate text-blue-600 text-[10px] ${isLoadingReconcile || isLoadingTd4 || isLoadingMissingYard || isLoadingK83 || isLoadingAllocations || isLoadingCrossAllocations || isLoadingOtherAllocations ? 'animate-spin' : ''}`}></i>
                                 <span className="hidden sm:inline">Làm mới</span>
                             </button>
 
                             <button
                                 type="button"
                                 onClick={() => {
-                                    if (reconcileSubTab === 'td4') handleCopyZaloTd4List();
+                                    if (reconcileSubTab === 'other_sr_allocations') handleCopyZaloOtherAllocations();
+                                    else if (reconcileSubTab === 'thuan_an_allocations') handleCopyZaloAllocations();
+                                    else if (reconcileSubTab === 'k83_reconcile') handleCopyZaloK83List();
+                                    else if (reconcileSubTab === 'td4') handleCopyZaloTd4List();
                                     else if (reconcileSubTab === 'dnx') handleCopyZaloDnxList();
                                     else if (reconcileSubTab === 'missing_yard') handleCopyZaloMissingYardList();
                                     else handleCopyZaloAllReconcile();
                                 }}
                                 className={`px-2 py-0.5 text-white rounded-xs text-[10px] sm:text-[11px] font-bold shadow-2xs flex items-center gap-1 cursor-pointer ${
-                                    reconcileSubTab === 'td4' ? 'bg-purple-700 hover:bg-purple-800' : reconcileSubTab === 'dnx' ? 'bg-red-600 hover:bg-red-700' : reconcileSubTab === 'missing_yard' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'
+                                    reconcileSubTab === 'other_sr_allocations' ? 'bg-indigo-700 hover:bg-indigo-800' : reconcileSubTab === 'thuan_an_allocations' ? 'bg-emerald-700 hover:bg-emerald-800' : reconcileSubTab === 'k83_reconcile' ? 'bg-sky-700 hover:bg-sky-800' : reconcileSubTab === 'td4' ? 'bg-purple-700 hover:bg-purple-800' : reconcileSubTab === 'dnx' ? 'bg-red-600 hover:bg-red-700' : reconcileSubTab === 'missing_yard' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'
                                 }`}
                                 title="Sao chép nội dung gửi nhóm Zalo"
                             >
@@ -1735,7 +2534,6 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                         <tbody className="divide-y divide-slate-200">
                                             {filteredAllAlerts.map((c, idx) => {
                                                 const isSelected = selectedAllRowIdx === idx;
-                                                const isDnx = c.type === 'DNX';
                                                 return (
                                                     <tr
                                                         key={c.id}
@@ -1753,13 +2551,17 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                         </td>
                                                         <td className="py-1 px-2 border-r border-slate-200 overflow-hidden">
                                                             <div className="flex items-center gap-1.5">
-                                                                {isDnx ? (
-                                                                    <span className="px-1 py-0.1 text-[8.5px] bg-red-100 text-red-700 font-extrabold rounded border border-red-300">
+                                                                {c.type === 'DNX' ? (
+                                                                    <span className="px-1 py-0.1 text-[8.5px] bg-red-100 text-red-700 font-extrabold rounded border border-red-300 shrink-0">
                                                                         📥 ĐNX
                                                                     </span>
-                                                                ) : (
-                                                                    <span className="px-1 py-0.1 text-[8.5px] bg-purple-100 text-purple-900 font-extrabold rounded border border-purple-300">
+                                                                ) : c.type === 'TD4' ? (
+                                                                    <span className="px-1 py-0.1 text-[8.5px] bg-purple-100 text-purple-900 font-extrabold rounded border border-purple-300 shrink-0">
                                                                         🚨 TD4
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="px-1 py-0.1 text-[8.5px] bg-amber-100 text-amber-900 font-extrabold rounded border border-amber-300 shrink-0">
+                                                                        ⚠️ HĐ MẤT BÃI
                                                                     </span>
                                                                 )}
                                                                 <span className="font-mono font-bold text-slate-900 truncate">{c.vin}</span>
@@ -1795,7 +2597,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                             </div>
                                                         </td>
                                                         <td className="py-1 px-2 overflow-hidden text-[10.5px]">
-                                                            <div className={`font-bold truncate ${isDnx ? 'text-red-700' : 'text-purple-900'}`} title={c.alertTitle}>
+                                                            <div className={`font-bold truncate ${c.type === 'DNX' ? 'text-red-700' : c.type === 'TD4' ? 'text-purple-900' : 'text-amber-800'}`} title={c.alertTitle}>
                                                                 {c.alertTitle}
                                                             </div>
                                                             <div className="text-[9.5px] text-slate-600 truncate" title={c.actionRequired}>
@@ -1817,16 +2619,20 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                         Tổng sai lệch: <strong className="text-red-700 font-mono">{filteredAllAlerts.length}</strong> xe
                                     </span>
                                     <span>•</span>
+                                    <span className="text-purple-800 font-bold">
+                                        TD4 vi phạm tồn bãi: <strong className="font-mono">{countTd4Approved}</strong> xe
+                                    </span>
+                                    <span>•</span>
                                     <span className="text-red-700 font-bold">
                                         ĐNX chưa nhập K83: <strong className="font-mono">{countAlertThuanAn}</strong> xe
                                     </span>
                                     <span>•</span>
-                                    <span className="text-purple-800 font-bold">
-                                        TD4 vi phạm tồn bãi: <strong className="font-mono">{td4Items.length}</strong> xe
+                                    <span className="text-amber-800 font-bold">
+                                        Xuất HĐ mất bãi: <strong className="font-mono">{missingYardItems.filter(c => c.isViolation).length}</strong> xe
                                     </span>
                                 </div>
                                 <div className="text-slate-500 text-[10px] italic">
-                                    * Chọn dòng hoặc nhấp đúp để sao chép số khung. Bấm vào các thẻ chỉ số trên để lọc riêng từng phân hệ.
+                                    * Chọn dòng hoặc nhấp đúp để sao chép số khung. Dùng ô "Lọc loại" trên thanh công cụ để lọc nhanh.
                                 </div>
                             </div>
                         </>
@@ -2303,7 +3109,1022 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                     </div>
                 </>
             )}
+
+            {/* ========================================================================= */}
+            {/* SUB-VIEW 4: TRA SOÁT TỒN KHO CYBER K83 VÀ BÃI THUẬN AN THỰC TẾ             */}
+            {/* ========================================================================= */}
+            {reconcileSubTab === 'k83_reconcile' && (
+                <>
+                    {/* KPI SUMMARY CARDS */}
+                    <div className="bg-gradient-to-r from-slate-100 via-sky-50 to-amber-50 p-2 border-b border-[#CCCCCC] shrink-0">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                            {/* 1. Tổng Tồn Sổ Cyber K83 */}
+                            <div 
+                                onClick={() => setK83StatusFilter('all')}
+                                className="bg-white/90 border border-blue-200 rounded p-1.5 shadow-2xs cursor-pointer hover:border-blue-400 hover:bg-blue-50/50 transition-all"
+                            >
+                                <div className="text-[10px] text-blue-800 font-bold uppercase flex items-center justify-between">
+                                    <span>Sổ Cyber K83</span>
+                                    <i className="fas fa-book text-blue-500"></i>
+                                </div>
+                                <div className="text-lg font-black text-blue-900 mt-0.5 leading-none font-mono">
+                                    {countK83TotalCyber} <span className="text-[10px] font-normal text-slate-500">xe</span>
+                                </div>
+                                <div className="text-[9.5px] text-slate-500 mt-1 truncate">Mã kho K83 hệ thống</div>
+                            </div>
+
+                            {/* 2. Tổng Bãi Thuận An Thực Tế */}
+                            <div 
+                                onClick={() => setK83StatusFilter('all')}
+                                className="bg-white/90 border border-emerald-200 rounded p-1.5 shadow-2xs cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 transition-all"
+                            >
+                                <div className="text-[10px] text-emerald-800 font-bold uppercase flex items-center justify-between">
+                                    <span>Bãi Thuận An TT</span>
+                                    <i className="fas fa-warehouse text-emerald-500"></i>
+                                </div>
+                                <div className="text-lg font-black text-emerald-900 mt-0.5 leading-none font-mono">
+                                    {countK83TotalYard} <span className="text-[10px] font-normal text-slate-500">xe</span>
+                                </div>
+                                <div className="text-[9.5px] text-slate-500 mt-1 truncate">Thực tế nằm tại bãi</div>
+                            </div>
+
+                            {/* 3. Khớp Chuẩn Cả Hai */}
+                            <div 
+                                onClick={() => setK83StatusFilter('matched')}
+                                className={`border rounded p-1.5 shadow-2xs cursor-pointer transition-all ${
+                                    k83StatusFilter === 'matched' 
+                                        ? 'bg-emerald-100 border-emerald-500 ring-1 ring-emerald-400' 
+                                        : 'bg-white/90 border-emerald-300 hover:border-emerald-500 hover:bg-emerald-50/50'
+                                }`}
+                            >
+                                <div className="text-[10px] text-emerald-700 font-bold uppercase flex items-center justify-between">
+                                    <span>Khớp Chuẩn</span>
+                                    <i className="fas fa-check-circle text-emerald-600"></i>
+                                </div>
+                                <div className="text-lg font-black text-emerald-700 mt-0.5 leading-none font-mono">
+                                    {countK83Matched} <span className="text-[10px] font-normal text-slate-500">xe</span>
+                                </div>
+                                <div className="text-[9.5px] text-emerald-600 mt-1 truncate">Có K83 & có tại bãi</div>
+                            </div>
+
+                            {/* 4. Thừa Sổ Cyber K83 / Thiếu Bãi */}
+                            <div 
+                                onClick={() => setK83StatusFilter('cyber_only')}
+                                className={`border rounded p-1.5 shadow-2xs cursor-pointer transition-all ${
+                                    k83StatusFilter === 'cyber_only' 
+                                        ? 'bg-rose-100 border-rose-500 ring-1 ring-rose-400' 
+                                        : 'bg-white/90 border-rose-300 hover:border-rose-500 hover:bg-rose-50/50'
+                                }`}
+                            >
+                                <div className="text-[10px] text-rose-700 font-bold uppercase flex items-center justify-between">
+                                    <span>Thừa Cyber K83</span>
+                                    <i className="fas fa-arrow-circle-down text-rose-600"></i>
+                                </div>
+                                <div className="text-lg font-black text-rose-700 mt-0.5 leading-none font-mono">
+                                    {countK83CyberOnly} <span className="text-[10px] font-normal text-slate-500">xe</span>
+                                </div>
+                                <div className="text-[9.5px] text-rose-600 mt-1 truncate">Sổ K83 còn, bãi thiếu</div>
+                            </div>
+
+                            {/* 5. Thừa Bãi TT / Thiếu Sổ K83 */}
+                            <div 
+                                onClick={() => setK83StatusFilter('yard_only')}
+                                className={`border rounded p-1.5 shadow-2xs cursor-pointer transition-all ${
+                                    k83StatusFilter === 'yard_only' 
+                                        ? 'bg-amber-100 border-amber-500 ring-1 ring-amber-400' 
+                                        : 'bg-white/90 border-amber-300 hover:border-amber-500 hover:bg-amber-50/50'
+                                }`}
+                            >
+                                <div className="text-[10px] text-amber-700 font-bold uppercase flex items-center justify-between">
+                                    <span>Thừa Bãi TT</span>
+                                    <i className="fas fa-arrow-circle-up text-amber-600"></i>
+                                </div>
+                                <div className="text-lg font-black text-amber-700 mt-0.5 leading-none font-mono">
+                                    {countK83YardOnly} <span className="text-[10px] font-normal text-slate-500">xe</span>
+                                </div>
+                                <div className="text-[9.5px] text-amber-600 mt-1 truncate">Bãi có xe, sổ Cyber thiếu</div>
+                            </div>
+
+                            {/* 6. Tổng Lệch Cần Xử Lý */}
+                            <div 
+                                onClick={() => setK83StatusFilter('diff')}
+                                className={`border rounded p-1.5 shadow-2xs cursor-pointer transition-all ${
+                                    k83StatusFilter === 'diff' 
+                                        ? 'bg-red-100 border-red-500 ring-2 ring-red-400' 
+                                        : 'bg-gradient-to-br from-red-50 to-rose-100 border-red-300 hover:border-red-500'
+                                }`}
+                            >
+                                <div className="text-[10px] text-red-800 font-extrabold uppercase flex items-center justify-between">
+                                    <span>Tổng Lệch</span>
+                                    <i className="fas fa-exclamation-triangle text-red-600"></i>
+                                </div>
+                                <div className="text-lg font-black text-red-700 mt-0.5 leading-none font-mono">
+                                    {countK83Diff} <span className="text-[10px] font-normal text-slate-500">xe</span>
+                                </div>
+                                <div className="text-[9.5px] text-red-600 font-semibold mt-1 truncate">Cần xác minh & xử lý</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* DATA TABLE (K83 VS BÃI THUẬN AN) */}
+                    <div className="flex-1 overflow-auto bg-white">
+                        {isLoadingK83 ? (
+                            <div className="p-12 text-center text-slate-500 text-xs">
+                                <i className="fas fa-spinner fa-spin mr-2 text-blue-600 text-base"></i>
+                                Đang tải và đối soát dữ liệu kho Cyber K83 với bãi Thuận An thực tế...
+                            </div>
+                        ) : filteredK83Items.length === 0 ? (
+                            <div className="p-12 text-center text-slate-400 text-xs">
+                                <i className="fas fa-clipboard-check text-green-500 text-3xl mb-2 block"></i>
+                                {k83StatusFilter === 'diff'
+                                    ? 'Tuyệt vời! Toàn bộ xe tồn kho K83 và bãi xe Thuận An thực tế hoàn toàn khớp chuẩn.'
+                                    : 'Không tìm thấy xe nào phù hợp với bộ lọc hiện tại.'}
+                            </div>
+                        ) : (
+                            <table className="w-full text-[11px] text-left border-collapse table-fixed">
+                                <thead>
+                                    <tr className="bg-[#E8F0FE] text-slate-800 font-bold border-b border-[#CCCCCC] sticky top-0 z-10 select-none shadow-2xs text-[10.5px]">
+                                        <th className="py-1 px-1 text-center w-7 border-r border-[#CCCCCC]">#</th>
+                                        <th className="py-1 px-2 border-r border-[#CCCCCC] w-[18%]">Số VIN & Phân Loại</th>
+                                        <th className="py-1 px-2 border-r border-[#CCCCCC] w-[15%]">Dòng Xe & Màu</th>
+                                        <th className="py-1 px-2 border-r border-[#CCCCCC] w-[18%]">Sổ Cyber (Kho K83)</th>
+                                        <th className="py-1 px-2 border-r border-[#CCCCCC] w-[18%]">Thực Tế Bãi Thuận An</th>
+                                        <th className="py-1 px-2 border-r border-[#CCCCCC] w-[14%]">TVBH & Hợp Đồng</th>
+                                        <th className="py-1 px-2 w-[17%]">Lệch Ở Đâu & Hướng Xử Lý</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[#E1E1E1]">
+                                    {filteredK83Items.map((item, idx) => {
+                                        const isSelected = selectedK83RowIdx === idx;
+                                        const isCyberOnly = item.reconcileType === 'CYBER_K83_ONLY';
+                                        const isYardOnly = item.reconcileType === 'YARD_ONLY';
+                                        const isMatched = item.reconcileType === 'MATCHED';
+
+                                        return (
+                                            <tr
+                                                key={item.id}
+                                                onClick={() => {
+                                                    setSelectedK83RowIdx(idx);
+                                                    handleOpenDetailModal(item, 'k83_reconcile');
+                                                }}
+                                                className={`cursor-pointer transition-colors ${
+                                                    isSelected
+                                                        ? 'bg-blue-100 font-medium'
+                                                        : isCyberOnly
+                                                            ? 'bg-rose-50/50 hover:bg-rose-100/60'
+                                                            : isYardOnly
+                                                                ? 'bg-amber-50/50 hover:bg-amber-100/60'
+                                                                : 'bg-emerald-50/20 hover:bg-emerald-100/30'
+                                                }`}
+                                            >
+                                                {/* STT */}
+                                                <td className="py-1 px-1 text-center text-slate-500 font-mono text-[10px] border-r border-[#EBEBEB]">
+                                                    {idx + 1}
+                                                </td>
+
+                                                {/* Số VIN & Phân Loại Lệch */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="font-mono font-bold text-blue-900 truncate">{item.vin}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); copyVin(item.vin); }}
+                                                            className="text-slate-400 hover:text-blue-600 transition-opacity shrink-0"
+                                                            title="Sao chép số VIN"
+                                                        >
+                                                            <i className={`fas ${copiedVin === item.vin ? 'fa-check text-green-600' : 'fa-copy'} text-[10px]`}></i>
+                                                        </button>
+                                                    </div>
+                                                    <div className="mt-0.5">
+                                                        {isCyberOnly && (
+                                                            <span className="inline-block px-1 py-0.2 text-[9px] font-bold bg-rose-100 text-rose-800 border border-rose-300 rounded-xs">
+                                                                Thừa Cyber / Thiếu Bãi
+                                                            </span>
+                                                        )}
+                                                        {isYardOnly && (
+                                                            <span className="inline-block px-1 py-0.2 text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300 rounded-xs">
+                                                                Thừa Bãi / Thiếu Cyber
+                                                            </span>
+                                                        )}
+                                                        {isMatched && (
+                                                            <span className="inline-block px-1 py-0.2 text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xs">
+                                                                Khớp Chuẩn
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+
+                                                {/* Dòng Xe & Màu */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="font-bold text-slate-900 truncate">{item.carModel || '-'}</div>
+                                                    <div className="text-[10px] text-slate-500 truncate">{item.color || '-'}</div>
+                                                </td>
+
+                                                 {/* Sổ Cyber (Kho K83) */}
+                                                 <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                     {item.hasCyberK83 ? (
+                                                         <div>
+                                                             <span className="inline-flex items-center gap-1 px-1 py-0.2 text-[9.5px] font-bold bg-blue-100 text-blue-900 border border-blue-300 rounded-xs">
+                                                                 <i className="fas fa-check text-[8px] text-blue-600"></i> Kho K83
+                                                             </span>
+                                                             <div className="text-[10px] text-slate-600 mt-0.5 space-y-0.5">
+                                                                 {item.soHdCyber && (
+                                                                     <div className="text-amber-800 font-medium truncate">
+                                                                         HĐ: {item.soHdCyber}
+                                                                     </div>
+                                                                 )}
+                                                                 {item.soCtTd4 ? (
+                                                                     <div>
+                                                                         <span className={`inline-flex items-center gap-1 px-1 py-0.2 text-[8.5px] font-bold rounded-xs border ${
+                                                                             item.isTd4Approved 
+                                                                                 ? 'bg-purple-100 text-purple-900 border-purple-300' 
+                                                                                 : 'bg-amber-100 text-amber-900 border-amber-300'
+                                                                         }`}>
+                                                                             <i className={`fas ${item.isTd4Approved ? 'fa-check-double text-purple-600' : 'fa-clock text-amber-600'} text-[7.5px]`}></i>
+                                                                             TD4: {item.soCtTd4} {item.td4MaPostLabel ? `[${item.td4MaPostLabel}]` : ''}
+                                                                         </span>
+                                                                     </div>
+                                                                 ) : null}
+                                                                 {item.soCtDnx ? (
+                                                                     <div>
+                                                                         <span className="inline-flex items-center gap-1 px-1 py-0.2 text-[8.5px] font-bold rounded-xs bg-purple-100 text-purple-900 border border-purple-300" title={`Lộ trình ĐNX: ${item.dnxTenKhoXuat || item.dnxMaKhoXuat || 'K83'} ➔ ${item.dnxTenKhoNhan || item.dnxMaKhoNhan || 'Showroom'}`}>
+                                                                             <i className="fas fa-file-invoice text-[7.5px] text-purple-600"></i>
+                                                                             ĐNX: {item.soCtDnx}
+                                                                         </span>
+                                                                         {(item.dnxMaKhoXuat || item.dnxMaKhoNhan) && (
+                                                                             <div className="text-[9px] text-purple-700 font-mono mt-0.5 truncate">
+                                                                                 {item.dnxTenKhoXuat || item.dnxMaKhoXuat} ➔ {item.dnxTenKhoNhan || item.dnxMaKhoNhan}
+                                                                             </div>
+                                                                         )}
+                                                                     </div>
+                                                                 ) : null}
+                                                                 {!item.soCtTd4 && !item.soCtDnx && !item.soHdCyber ? (
+                                                                     <span className="text-slate-500">Xe mới chưa gắn HĐ</span>
+                                                                 ) : null}
+                                                             </div>
+                                                         </div>
+                                                     ) : (
+                                                         <div className="space-y-0.5">
+                                                             <div className="text-rose-700 text-[10px] font-semibold flex items-center gap-1">
+                                                                 <i className="fas fa-times-circle text-[8.5px]"></i>
+                                                                 <span>Thiếu sổ K83</span>
+                                                             </div>
+                                                             {item.maKhoCyber && item.maKhoCyber !== 'CHƯA_NHẬP' ? (
+                                                                 <div className="text-[9.5px] text-slate-600 truncate" title={item.tenKhoCyber || item.maKhoCyber}>
+                                                                     Sổ: <span className="font-semibold text-slate-800">{item.tenKhoCyber || item.maKhoCyber}</span>
+                                                                 </div>
+                                                             ) : (
+                                                                 <div className="text-[9.5px] text-slate-500 italic">Chưa nhập Cyber</div>
+                                                             )}
+                                                             {item.hasDnx ? (
+                                                                 <div className="mt-0.5">
+                                                                     <span className="inline-flex items-center gap-1 px-1 py-0.2 text-[8.5px] font-bold rounded-xs bg-amber-100 text-amber-900 border border-amber-300" title={`Lộ trình ĐNX: ${item.dnxTenKhoXuat || item.dnxMaKhoXuat || item.maKhoCyber} ➔ ${item.dnxTenKhoNhan || item.dnxMaKhoNhan || 'K83'}`}>
+                                                                         <i className="fas fa-file-invoice text-[7.5px] text-amber-600"></i>
+                                                                         ĐNX: {item.soCtDnx} (Chờ PNK)
+                                                                     </span>
+                                                                     {(item.dnxMaKhoXuat || item.dnxMaKhoNhan) && (
+                                                                         <div className="text-[9px] text-amber-800 font-mono mt-0.5 truncate">
+                                                                             {item.dnxTenKhoXuat || item.dnxMaKhoXuat} ➔ {item.dnxTenKhoNhan || item.dnxMaKhoNhan}
+                                                                         </div>
+                                                                     )}
+                                                                 </div>
+                                                             ) : (
+                                                                 <div className="mt-0.5">
+                                                                     <span className="inline-flex items-center gap-1 px-1 py-0.2 text-[8px] font-medium rounded-xs bg-rose-50 text-rose-700 border border-rose-200">
+                                                                         Chưa có ĐNX
+                                                                     </span>
+                                                                 </div>
+                                                             )}
+                                                         </div>
+                                                     )}
+                                                 </td>
+
+                                                {/* Thực Tế Bãi Thuận An */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    {item.hasYardStock ? (
+                                                        <div>
+                                                            <span className="inline-flex items-center gap-1 px-1 py-0.2 text-[9.5px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-xs">
+                                                                <i className="fas fa-check text-[8px] text-emerald-600"></i> Bãi Thuận An
+                                                            </span>
+                                                            <div className="text-[10px] text-slate-600 mt-0.5 truncate">
+                                                                {item.mucPin ? `Pin: ${item.mucPin}` : ''}
+                                                                {item.ngayNhanYard ? ` | Nhận: ${item.ngayNhanYard}` : ''}
+                                                            </div>
+                                                        </div>
+                                                    ) : item.otherYardInfo?.khoName ? (
+                                                        <div>
+                                                            <span className={`inline-flex items-center gap-1 px-1 py-0.2 text-[9.5px] font-bold rounded-xs border ${
+                                                                item.otherYardInfo.isTonKho
+                                                                    ? 'bg-purple-100 text-purple-900 border-purple-300'
+                                                                    : 'bg-slate-100 text-slate-800 border-slate-300'
+                                                            }`}>
+                                                                <i className={`fas ${item.otherYardInfo.isTonKho ? 'fa-map-marker-alt text-purple-600' : 'fa-truck-arrow-right text-slate-600'} text-[8px]`}></i> {item.otherYardInfo.khoName}
+                                                            </span>
+                                                            {item.otherYardInfo.isTonKho ? (
+                                                                <div className="text-[9.5px] text-purple-700 mt-0.5 italic truncate">
+                                                                    Đang lưu tại bãi ngoài ({item.otherYardInfo.khoName})
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-[9.5px] text-slate-600 mt-0.5 italic truncate">
+                                                                    {item.otherYardInfo.ngayGiao ? `Đã xuất ngày: ${item.otherYardInfo.ngayGiao.slice(0, 10)}` : 'Đã xuất khỏi bãi'}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-rose-700 italic text-[10px] font-medium">
+                                                            <i className="fas fa-times-circle mr-1"></i>
+                                                            Không có tại bãi Thuận An
+                                                        </div>
+                                                    )}
+                                                </td>
+
+                                                {/* TVBH & Hợp Đồng */}
+                                                <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                    <div className="font-bold text-slate-900 truncate" title={item.tvbhCyber}>
+                                                        {item.tvbhCyber || 'Chưa rõ'}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-600 truncate" title={item.customerName}>
+                                                        {item.customerName || (item.orderNumber ? `HĐ: ${item.orderNumber}` : '-')}
+                                                    </div>
+                                                </td>
+
+                                                {/* Lệch Ở Đâu & Hướng Xử Lý */}
+                                                <td className="py-1 px-2 overflow-hidden">
+                                                    <div className={`text-[10px] font-bold leading-tight truncate ${
+                                                        isCyberOnly ? 'text-rose-700' : isYardOnly ? 'text-amber-800' : 'text-emerald-700'
+                                                    }`} title={item.discrepancyReason}>
+                                                        {item.discrepancyReason}
+                                                    </div>
+                                                    <div className="text-[9.5px] text-slate-600 mt-0.5 truncate" title={item.actionRequired}>
+                                                        👉 {item.actionRequired}
+                                                    </div>
+                                                    {item.responsiblePerson && (
+                                                        <div className="mt-0.5">
+                                                            <span className="inline-block px-1 py-0.1 text-[8.5px] font-semibold bg-slate-100 text-slate-700 border border-slate-300 rounded-xs">
+                                                                Trách nhiệm: {item.responsiblePerson}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+
+                    {/* STATUS BAR (K83 Reconcile) */}
+                    <div className="bg-[#ECE9D8] border-t border-[#CCCCCC] px-2 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] select-none shrink-0 font-sans">
+                        <div className="flex items-center gap-1.5 sm:gap-2.5 text-slate-700 flex-wrap">
+                            <span className="font-bold">
+                                Hiển thị: <strong className="text-blue-900">{filteredK83Items.length}</strong> xe
+                            </span>
+                            <span>•</span>
+                            <span>
+                                Tồn Cyber K83: <strong className="text-blue-800">{countK83TotalCyber}</strong> xe
+                            </span>
+                            <span>•</span>
+                            <span>
+                                Bãi Thuận An TT: <strong className="text-emerald-800">{countK83TotalYard}</strong> xe
+                            </span>
+                            <span>•</span>
+                            <span>
+                                Khớp: <strong className="text-emerald-700">{countK83Matched}</strong>
+                            </span>
+                            <span>•</span>
+                            <span>
+                                Tổng Lệch: <strong className="text-red-700">{countK83Diff}</strong> xe
+                            </span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 italic">
+                            * Bấm vào từng dòng để xem hướng dẫn xử lý chi tiết và gửi Zalo cho bộ phận liên quan.
+                        </div>
+                    </div>
                 </>
+            )}
+
+            {/* SUB-VIEW 6: XE PHÂN BỔ THUẬN AN TỪ CYBERSOFT */}
+            {reconcileSubTab === 'thuan_an_allocations' && (
+                <>
+                    {allocSubMode === 'cross_showroom_billed' ? (
+                        <>
+                            {/* DATA GRID CHO XE KHÁC SR XUẤT HÓA ĐƠN */}
+                            <div className="flex-1 min-h-0 bg-white overflow-auto relative">
+                                {filteredCrossAllocations.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-slate-400 py-12">
+                                        <i className="fa-solid fa-circle-check text-4xl mb-2 text-emerald-500"></i>
+                                        <span className="text-xs font-bold text-slate-800">
+                                            Tuyệt vời! Hiện không có xe nào chưa điều chuyển địa điểm kinh doanh.
+                                        </span>
+                                        <span className="text-[10px] text-slate-500 mt-1">
+                                            Tất cả các xe phân bổ Thuận An đã xuất HĐ ở Showroom khác đều đã hoàn tất lập phiếu ĐNX điều chuyển (Đã chuyển {countCrossTransferred} xe).
+                                        </span>
+                                        {!isLoadingCrossAllocations && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleFetchCrossAllocations(crossFromDate, true, false)}
+                                                className="mt-3 px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded border border-slate-300 shadow-2xs cursor-pointer flex items-center gap-1"
+                                            >
+                                                <i className="fas fa-rotate text-blue-600 mr-1"></i> Kiểm tra lại từ CyberSoft
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <table className="table-fixed w-full text-left border-collapse text-[11px] font-sans">
+                                        <thead className="bg-[#FFEAEA] text-slate-800 sticky top-0 z-10 select-none border-b border-[#F5C2C7] text-[10px] sm:text-[11px]">
+                                            <tr>
+                                                <th className="py-1 px-1 border-r border-[#F5C2C7] w-7 text-center">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={filteredCrossAllocations.length > 0 && filteredCrossAllocations.every(c => selectedCrossVins.has(c.vin))}
+                                                        onChange={(e) => {
+                                                            const newSet = new Set(selectedCrossVins);
+                                                            if (e.target.checked) {
+                                                                filteredCrossAllocations.forEach(c => newSet.add(c.vin));
+                                                            } else {
+                                                                filteredCrossAllocations.forEach(c => newSet.delete(c.vin));
+                                                            }
+                                                            setSelectedCrossVins(newSet);
+                                                        }}
+                                                        className="cursor-pointer"
+                                                    />
+                                                </th>
+                                                <th className="py-1 px-1 border-r border-[#F5C2C7] w-7 text-center font-bold">#</th>
+                                                <th className="py-1 px-2 border-r border-[#F5C2C7] font-bold w-[20%]">Số VIN & Mã DMS</th>
+                                                <th className="py-1 px-2 border-r border-[#F5C2C7] font-bold w-[18%]">Dòng Xe & Màu Sắc</th>
+                                                <th className="py-1 px-2 border-r border-[#F5C2C7] font-bold w-[25%]">SR Xuất HĐ & Ngày HĐ</th>
+                                                <th className="py-1 px-2 border-r border-[#F5C2C7] font-bold w-[20%]">Trạng Thái Điều Chuyển</th>
+                                                <th className="py-1 px-2 font-bold w-[17%] text-center">Thao Tác</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-200">
+                                            {filteredCrossAllocations.map((c, idx) => {
+                                                const isSelected = selectedCrossRowIdx === idx;
+                                                const isChecked = selectedCrossVins.has(c.vin);
+                                                return (
+                                                    <tr
+                                                        key={c.vin || idx}
+                                                        onClick={() => setSelectedCrossRowIdx(idx)}
+                                                        onDoubleClick={() => copyVin(c.vin)}
+                                                        className={`hover:bg-rose-50/70 transition-colors cursor-pointer ${
+                                                            isSelected ? 'bg-rose-100/90 font-medium' : idx % 2 === 1 ? 'bg-[#FFFDFC]' : 'bg-white'
+                                                        }`}
+                                                    >
+                                                        <td className="py-1 px-1 border-r border-slate-200 text-center" onClick={e => e.stopPropagation()}>
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isChecked}
+                                                                onChange={(e) => {
+                                                                    const newSet = new Set(selectedCrossVins);
+                                                                    if (e.target.checked) newSet.add(c.vin);
+                                                                    else newSet.delete(c.vin);
+                                                                    setSelectedCrossVins(newSet);
+                                                                }}
+                                                                className="cursor-pointer"
+                                                            />
+                                                        </td>
+                                                        <td className="py-1 px-1 border-r border-slate-200 text-center text-slate-500 font-mono text-[10px]">
+                                                            {idx + 1}
+                                                        </td>
+                                                        <td className="py-1 px-2 border-r border-slate-200 overflow-hidden">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className="font-mono font-bold text-slate-900 truncate">{c.vin}</span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => { e.stopPropagation(); copyVin(c.vin); }}
+                                                                    className="text-slate-400 hover:text-rose-700 text-[10px] shrink-0"
+                                                                    title="Copy số khung"
+                                                                >
+                                                                    <i className={`fa-regular ${copiedVin === c.vin ? 'fa-check text-green-600' : 'fa-copy'}`}></i>
+                                                                </button>
+                                                            </div>
+                                                            <div className="text-[10px] text-blue-800 font-mono mt-0.5 truncate">
+                                                                DMS: <strong>{c.ma_dms || '-'}</strong>
+                                                                {c.so_may ? ` • Máy: ${c.so_may}` : ''}
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-1 px-2 border-r border-slate-200 overflow-hidden">
+                                                            <div className="font-bold text-slate-900 truncate">
+                                                                {c.dong_xe || c.ten_kx || '-'}
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-600 truncate mt-0.5">
+                                                                {c.ten_mau || c.ma_mau || '-'}
+                                                                {c.ten_mau_nt ? ` / ${c.ten_mau_nt}` : ''}
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-1 px-2 border-r border-slate-200 overflow-hidden text-[10.5px]">
+                                                            <div className="font-bold text-rose-900 truncate" title={c.ten_ttcp_xuat}>
+                                                                <i className="fa-solid fa-store mr-1 text-[9px] text-rose-600"></i>
+                                                                {c.ten_ttcp_xuat || c.ma_ttcp_xuat || 'SR khác'}
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-700 truncate mt-0.5">
+                                                                HĐ: <strong>{c.so_hd || '-'}</strong> {c.ngay_hd ? `(${formatDate(c.ngay_hd)})` : ''}
+                                                            </div>
+                                                            <div className="text-[9.5px] text-slate-500 truncate mt-0.2">
+                                                                KH: {c.ten_khach_hang || '-'} {c.tvbh_xuat ? `• TVBH: ${c.tvbh_xuat}` : ''}
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-1 px-2 border-r border-slate-200 overflow-hidden">
+                                                            {c.has_transferred ? (
+                                                                <div>
+                                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 text-[9.5px] font-bold rounded-xs bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                                                        <i className="fa-solid fa-circle-check text-[8px] text-emerald-600"></i>
+                                                                        Đã có ĐNX Điều chuyển
+                                                                    </span>
+                                                                    <div className="text-[9.5px] text-slate-600 font-mono mt-0.5 truncate">
+                                                                        Số ĐNX: <strong>{c.so_ct_dnx}</strong> {c.ngay_ct_dnx ? `(${formatDate(c.ngay_ct_dnx)})` : ''}
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div>
+                                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 text-[9.5px] font-bold rounded-xs bg-rose-100 text-rose-900 border border-rose-300 animate-pulse">
+                                                                        <i className="fa-solid fa-triangle-exclamation text-[8px] text-rose-600"></i>
+                                                                        Chưa điều chuyển ĐĐKD
+                                                                    </span>
+                                                                    <div className="text-[9px] text-rose-700 italic mt-0.5 truncate">
+                                                                        Cần lập ĐNX chuyển sang {c.ten_ttcp_xuat?.split('-')[0] || c.ma_ttcp_xuat}
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-1 px-2 overflow-hidden text-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleOpenTransferModal([c]);
+                                                                }}
+                                                                className={`px-2 py-0.5 rounded text-[10px] font-bold shadow-xs cursor-pointer inline-flex items-center gap-1 ${
+                                                                    c.has_transferred
+                                                                        ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300'
+                                                                        : 'bg-purple-700 hover:bg-purple-800 text-white animate-pulse'
+                                                                }`}
+                                                            >
+                                                                <i className="fa-solid fa-bolt text-[9px]"></i>
+                                                                <span>{c.has_transferred ? 'Chuyển lại' : 'Điều chuyển ĐĐKD'}</span>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+
+                            {/* STATUS BAR CHO XE KHÁC SR XUẤT HĐ */}
+                            <div className="bg-[#FFEAEA] border-t border-[#F5C2C7] px-2 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] select-none shrink-0 font-sans">
+                                <div className="flex items-center gap-1.5 sm:gap-2.5 text-slate-800 flex-wrap">
+                                    <span className="font-bold text-rose-800">
+                                        🚨 Chưa lập ĐNX điều chuyển ĐĐKD: <strong className="font-mono text-rose-900">{countCrossPending}</strong> xe
+                                    </span>
+                                    <span>•</span>
+                                    <span className="text-emerald-800 font-medium">
+                                        ✅ Đã hoàn tất điều chuyển: <strong className="font-mono">{countCrossTransferred}</strong> xe
+                                    </span>
+                                    {selectedCrossVins.size > 0 && (
+                                        <>
+                                            <span>•</span>
+                                            <span className="text-purple-800 font-bold">
+                                                Đã chọn: <strong className="font-mono">{selectedCrossVins.size}</strong> xe
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="text-slate-600 text-[10px] italic">
+                                    * Quy trình: Xe phân bổ cho Thuận An nhưng SR khác xuất HĐ phải lập ĐNX điều chuyển địa điểm kinh doanh (Mã GD 9) để trừ hạn mức phân bổ.
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            {/* DATA GRID CHO XE PHÂN BỔ TỒN THUẬN AN */}
+                            <div className="flex-1 min-h-0 bg-white overflow-auto relative">
+                                {filteredAllocations.length === 0 ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-slate-400 py-12">
+                                        <i className="fa-solid fa-car text-4xl mb-2 text-slate-300"></i>
+                                        <span className="text-xs font-semibold text-slate-600">
+                                            {isLoadingAllocations ? 'Đang tải danh sách xe phân bổ từ CyberSoft...' : 'Không có xe nào khớp điều kiện tìm kiếm'}
+                                        </span>
+                                        {!isLoadingAllocations && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleFetchThuanAnAllocations(true)}
+                                                className="mt-3 px-2 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-xs cursor-pointer"
+                                            >
+                                                <i className="fas fa-rotate mr-1"></i> Tải lại từ CyberSoft
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <table className="table-fixed w-full text-left border-collapse text-[11px] font-sans">
+                                        <thead className="bg-[#EBEADB] text-slate-700 sticky top-0 z-10 select-none border-b border-[#CCCCCC] text-[10px] sm:text-[11px]">
+                                            <tr>
+                                                <th className="py-1 px-1 border-r border-[#CCCCCC] w-7 text-center font-bold">#</th>
+                                                <th className="py-1 px-2 border-r border-[#CCCCCC] font-bold w-[22%]">Số VIN & Mã DMS</th>
+                                                <th className="py-1 px-2 border-r border-[#CCCCCC] font-bold w-[23%]">Dòng Xe & Phiên Bản</th>
+                                                <th className="py-1 px-2 border-r border-[#CCCCCC] font-bold w-[18%]">Màu Sắc (Ngoại/Nội)</th>
+                                                <th className="py-1 px-2 border-r border-[#CCCCCC] font-bold w-[18%]">Vị Trí / Kho Cyber</th>
+                                                <th className="py-1 px-2 font-bold w-[19%]">Ngày Lập & Ghi Chú</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-200">
+                                            {filteredAllocations.map((c, idx) => {
+                                                const isSelected = selectedAllocRowIdx === idx;
+                                                const loc = c.current_physical_warehouse || c.vi_tri_kho || 'Đang vận tải';
+                                                const isInTransit = !loc || loc.toLowerCase().includes('vận tải') || loc.toLowerCase().includes('nhà máy');
+                                                return (
+                                                    <tr
+                                                        key={c.vin || idx}
+                                                        onClick={() => setSelectedAllocRowIdx(idx)}
+                                                        onDoubleClick={() => copyVin(c.vin)}
+                                                        className={`hover:bg-emerald-50/70 transition-colors cursor-pointer ${
+                                                            isSelected ? 'bg-emerald-100/90 font-medium' : idx % 2 === 1 ? 'bg-[#F9F9F6]' : 'bg-white'
+                                                        }`}
+                                                    >
+                                                        <td className="py-1 px-1 border-r border-slate-200 text-center text-slate-500 font-mono text-[10px]">
+                                                            {idx + 1}
+                                                        </td>
+                                                        <td className="py-1 px-2 border-r border-slate-200 overflow-hidden">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className="font-mono font-bold text-slate-900 truncate">{c.vin}</span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => { e.stopPropagation(); copyVin(c.vin); }}
+                                                                    className="text-slate-400 hover:text-emerald-700 text-[10px] shrink-0"
+                                                                    title="Copy số khung"
+                                                                >
+                                                                    <i className={`fa-regular ${copiedVin === c.vin ? 'fa-check text-green-600' : 'fa-copy'}`}></i>
+                                                                </button>
+                                                            </div>
+                                                            <div className="text-[10px] text-blue-800 font-mono mt-0.5 truncate">
+                                                                DMS: <strong>{c.ma_dms || '-'}</strong>
+                                                                {c.so_may ? ` • Máy: ${c.so_may}` : ''}
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-1 px-2 border-r border-slate-200 overflow-hidden">
+                                                            <div className="font-bold text-slate-900 truncate">
+                                                                {c.dong_xe || c.ten_kx || '-'}
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-600 truncate mt-0.5">
+                                                                {c.phien_ban || c.ten_kx || '-'}
+                                                                {c.nam_sx ? ` • SX: ${c.nam_sx}` : ''}
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-1 px-2 border-r border-slate-200 overflow-hidden text-[10.5px]">
+                                                            <div className="font-semibold text-slate-800 truncate" title={c.ten_mau || c.ma_mau}>
+                                                                Ngoại: <strong className="text-slate-900">{c.ten_mau || c.ma_mau || '-'}</strong>
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-600 truncate mt-0.5" title={c.ten_mau_nt || c.ma_mau_nt}>
+                                                                Nội: {c.ten_mau_nt || c.ma_mau_nt || '-'}
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-1 px-2 border-r border-slate-200 overflow-hidden">
+                                                            <div>
+                                                                <span className={`inline-flex items-center gap-1 px-1.5 py-0.2 text-[9.5px] font-bold rounded-xs border ${
+                                                                    isInTransit 
+                                                                        ? 'bg-amber-100 text-amber-900 border-amber-300' 
+                                                                        : 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                                                                }`}>
+                                                                    <i className={`fas ${isInTransit ? 'fa-truck' : 'fa-warehouse'} text-[8px]`}></i>
+                                                                    {loc}
+                                                                </span>
+                                                            </div>
+                                                            {c.ma_kho && (
+                                                                <div className="text-[9.5px] text-slate-500 font-mono mt-0.5">
+                                                                    Mã kho: {c.ma_kho}
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                        <td className="py-1 px-2 overflow-hidden text-[10.5px]">
+                                                            <div className="text-slate-800 font-mono text-[10px] truncate">
+                                                                {c.ngay_ct ? `Ngày KH: ${formatDate(c.ngay_ct)}` : (c.ngay_phan_bo ? `Ngày PB: ${formatDate(c.ngay_phan_bo)}` : '-')}
+                                                            </div>
+                                                            <div className="text-[9.5px] text-slate-600 truncate mt-0.5" title={c.ghi_chu}>
+                                                                {c.ghi_chu || '-'}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+
+                            {/* STATUS BAR CHO XE PHÂN BỔ TỒN */}
+                            <div className="bg-[#ECE9D8] border-t border-[#CCCCCC] px-2 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] select-none shrink-0 font-sans">
+                                <div className="flex items-center gap-1.5 sm:gap-2.5 text-slate-700 flex-wrap">
+                                    <span className="font-bold">
+                                        Tổng xe phân bổ tồn: <strong className="text-emerald-800 font-mono">{thuanAnAllocations.length}</strong> xe
+                                    </span>
+                                    <span>•</span>
+                                    <span>
+                                        Đang hiển thị: <strong className="text-blue-800 font-mono">{filteredAllocations.length}</strong> xe
+                                    </span>
+                                    <span>•</span>
+                                    <span className="text-amber-800 font-medium">
+                                        Đang vận tải: <strong className="font-mono">{countAllocInTransit}</strong> xe
+                                    </span>
+                                    <span>•</span>
+                                    <span className="text-emerald-800 font-medium">
+                                        Đã về bãi/kho: <strong className="font-mono">{countAllocAtYard}</strong> xe
+                                    </span>
+                                </div>
+                                <div className="text-slate-500 text-[10px] italic">
+                                    * Dữ liệu xe phân bổ cho Thuận An (Mã TTCP: 02.01.08) trực tiếp từ CyberSoft ERP.
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </>
+            )}
+
+            {/* SUB-VIEW 7: XE PHÂN BỔ SHOWROOM KHÁC NHƯNG THUẬN AN XUẤT HÓA ĐƠN */}
+            {reconcileSubTab === 'other_sr_allocations' && (
+                <>
+                    {/* DATA GRID */}
+                    <div className="flex-1 min-h-0 bg-white overflow-auto relative">
+                        {filteredOtherAllocations.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-400 py-12">
+                                <i className="fa-solid fa-circle-check text-4xl mb-2 text-indigo-500"></i>
+                                <span className="text-xs font-bold text-slate-800">
+                                    Không có xe nào cần điều chuyển theo bộ lọc hiện tại.
+                                </span>
+                                <span className="text-[10px] text-slate-500 mt-1">
+                                    {otherAllocations.length === 0 
+                                        ? 'Bấm nút "Làm mới" bên trên để tải dữ liệu trực tiếp từ CyberSoft MSSQL.' 
+                                        : `Tổng cộng có ${otherAllocations.length} xe trong kỳ từ ${otherAllocFromDate}.`}
+                                </span>
+                                {!isLoadingOtherAllocations && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleFetchOtherAllocations(otherAllocFromDate, true, false)}
+                                        className="mt-3 px-2 py-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded border border-indigo-300 shadow-2xs cursor-pointer flex items-center gap-1"
+                                    >
+                                        <i className="fas fa-rotate text-indigo-600 mr-1"></i> Tải dữ liệu từ CyberSoft
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            <table className="table-fixed w-full text-left border-collapse text-[11px] font-sans">
+                                <thead className="bg-[#EEF2FF] text-slate-800 sticky top-0 z-10 select-none border-b border-[#C7D2FE] text-[10px] sm:text-[11px]">
+                                    <tr>
+                                        <th className="py-1 px-1 border-r border-[#C7D2FE] w-8 text-center font-bold">#</th>
+                                        <th className="py-1 px-2 border-r border-[#C7D2FE] font-bold w-[22%]">Số VIN & Mã DMS</th>
+                                        <th className="py-1 px-2 border-r border-[#C7D2FE] font-bold w-[18%]">Dòng Xe & Màu Sắc</th>
+                                        <th className="py-1 px-2 border-r border-[#C7D2FE] font-bold w-[22%]">SR Được Phân Bổ Gốc</th>
+                                        <th className="py-1 px-2 border-r border-[#C7D2FE] font-bold w-[22%]">Hóa Đơn Thuận An Xuất</th>
+                                        <th className="py-1 px-2 font-bold w-[16%] text-center">Trạng Thái ĐNX</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200">
+                                    {filteredOtherAllocations.map((c, idx) => {
+                                        const isSelected = selectedOtherAllocRowIdx === idx;
+                                        return (
+                                            <tr
+                                                key={c.vin || idx}
+                                                onClick={() => setSelectedOtherAllocRowIdx(idx)}
+                                                onDoubleClick={() => copyVin(c.vin)}
+                                                className={`hover:bg-indigo-50/70 transition-colors cursor-pointer ${
+                                                    isSelected ? 'bg-indigo-100/80 ring-1 ring-inset ring-indigo-400' : idx % 2 === 1 ? 'bg-slate-50/60' : 'bg-white'
+                                                }`}
+                                            >
+                                                <td className="py-1 px-1 border-r border-slate-200 text-center font-mono text-[10px] text-slate-500">
+                                                    {idx + 1}
+                                                </td>
+                                                <td className="py-1 px-2 border-r border-slate-200 overflow-hidden">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="font-mono font-bold text-indigo-900 select-all tracking-tight">
+                                                            {c.vin}
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                copyVin(c.vin);
+                                                            }}
+                                                            title="Sao chép số VIN"
+                                                            className="text-slate-400 hover:text-indigo-600 cursor-pointer p-0.5 text-[9px]"
+                                                        >
+                                                            <i className="fa-regular fa-copy"></i>
+                                                        </button>
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                                                        Mã DMS: <strong className="text-slate-700">{c.ma_dms || '-'}</strong>
+                                                    </div>
+                                                </td>
+                                                <td className="py-1 px-2 border-r border-slate-200 overflow-hidden text-[10.5px]">
+                                                    <div className="font-bold text-slate-800 truncate" title={`${c.dong_xe || c.loai_xe || ''} ${c.phien_ban || c.ten_kx || ''}`}>
+                                                        {c.dong_xe || c.loai_xe || '-'}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-600 truncate mt-0.5">
+                                                        Màu: <span className="font-medium text-slate-800">{c.ten_mau || c.ma_mau || '-'}</span>
+                                                        {c.ten_mau_nt && <span className="text-slate-500 ml-1">/ {c.ten_mau_nt}</span>}
+                                                    </div>
+                                                </td>
+                                                <td className="py-1 px-2 border-r border-slate-200 overflow-hidden text-[10.5px]">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="px-1.5 py-0.2 bg-amber-100 text-amber-900 border border-amber-300 rounded font-bold text-[10px] truncate" title={c.ten_ttcp_phan_bo || c.ttcp_phan_bo}>
+                                                            🏢 {c.ten_ttcp_phan_bo || c.ttcp_phan_bo || 'Showroom khác'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-[9.5px] text-slate-500 font-mono mt-0.5">
+                                                        Mã TTCP: {c.ttcp_phan_bo || '-'}
+                                                    </div>
+                                                </td>
+                                                <td className="py-1 px-2 border-r border-slate-200 overflow-hidden text-[10.5px]">
+                                                    <div className="font-bold text-emerald-800 flex items-center gap-1">
+                                                        <i className="fa-solid fa-file-invoice text-[9px]"></i>
+                                                        <span>HĐ: {c.so_hd || 'Chưa rõ'}</span>
+                                                        {c.ngay_hd && (
+                                                            <span className="text-[9.5px] font-normal text-slate-500">
+                                                                ({formatDate(c.ngay_hd)})
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-700 truncate mt-0.5">
+                                                        KH: <strong className="text-slate-900">{c.ten_khach_hang || 'Chưa rõ'}</strong>
+                                                        {c.tvbh_xuat && (
+                                                            <span className="text-slate-500 ml-1">({c.tvbh_xuat})</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="py-1 px-2 text-center overflow-hidden">
+                                                    {c.has_transferred ? (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded text-[10px] font-bold">
+                                                            <i className="fa-solid fa-circle-check text-emerald-600"></i>
+                                                            <span>Đã có ĐNX {c.so_ct_transfer || ''}</span>
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-rose-100 text-rose-800 border border-rose-300 rounded text-[10px] font-bold animate-pulse" title="Cần liên hệ Showroom phân bổ lập ĐNX chuyển về Thuận An">
+                                                            <i className="fa-solid fa-clock-rotate-left text-rose-600"></i>
+                                                            <span>Chờ SR khác chuyển</span>
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+
+                    {/* STATUS BAR CHO XE SR KHÁC PHÂN BỔ - THUẬN AN XUẤT HĐ */}
+                    <div className="bg-[#ECE9D8] border-t border-[#CCCCCC] px-2 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] select-none shrink-0 font-sans">
+                        <div className="flex items-center gap-1.5 sm:gap-2.5 text-slate-700 flex-wrap">
+                            <span className="font-bold">
+                                Tổng xe phát hiện: <strong className="text-indigo-900 font-mono">{otherAllocations.length}</strong> xe
+                            </span>
+                            <span>•</span>
+                            <span>
+                                Đang hiển thị: <strong className="text-blue-800 font-mono">{filteredOtherAllocations.length}</strong> xe
+                            </span>
+                            <span>•</span>
+                            <span className="text-rose-800 font-bold">
+                                Chưa lập ĐNX về Thuận An: <strong className="font-mono">{countOtherAllocPending}</strong> xe
+                            </span>
+                            <span>•</span>
+                            <span className="text-emerald-800 font-medium">
+                                Đã hoàn tất: <strong className="font-mono">{countOtherAllocTransferred}</strong> xe
+                            </span>
+                        </div>
+                        <div className="text-slate-500 text-[10px] italic">
+                            * Kỳ xem từ {otherAllocFromDate}. Các xe này cần Showroom phân bổ lập ĐNX (Mã GD = 9) chuyển về Thuận An (02.01.08).
+                        </div>
+                    </div>
+                </>
+            )}
+                </>
+            )}
+
+            {/* MODAL ĐIỀU CHUYỂN ĐỊA ĐIỂM KINH DOANH (ĐĐKD) */}
+            {isTransferModalOpen && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 animate-fade-in font-sans">
+                    <div className="bg-white rounded-lg shadow-2xl border border-slate-300 w-full max-w-lg overflow-hidden flex flex-col">
+                        {/* HEADER */}
+                        <div className="bg-[#0284C7] text-white px-3 py-2 flex items-center justify-between shrink-0">
+                            <div className="flex items-center gap-2">
+                                <i className="fa-solid fa-truck-ramp-box text-base"></i>
+                                <span className="font-bold text-xs sm:text-sm">
+                                    Điều Chuyển Địa Điểm Kinh Doanh (ĐĐKD)
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => !isTransferring && setIsTransferModalOpen(false)}
+                                disabled={isTransferring}
+                                className="text-white/80 hover:text-white text-sm cursor-pointer disabled:opacity-50"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* BODY */}
+                        <div className="p-3.5 space-y-3 text-[11px] overflow-auto max-h-[75vh]">
+                            {/* DANH SÁCH XE */}
+                            <div>
+                                <label className="font-bold text-slate-700 block mb-1">
+                                    Danh sách xe điều chuyển ({transferModalCars.length} xe):
+                                </label>
+                                <div className="border border-slate-200 rounded p-1.5 max-h-36 overflow-auto bg-slate-50 space-y-1">
+                                    {transferModalCars.map((c, i) => (
+                                        <div key={c.vin || i} className="flex items-center justify-between bg-white p-1 rounded border border-slate-200 text-[10.5px]">
+                                            <span className="font-mono font-bold text-blue-900">{c.vin}</span>
+                                            <span className="text-slate-600">{c.dong_xe || c.ten_kx} • {c.ten_mau || c.ma_mau}</span>
+                                            <span className="text-rose-700 font-medium text-[10px]">{c.ten_ttcp_xuat || c.ma_ttcp_xuat}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* CHỌN SHOWROOM NHẬN */}
+                            <div>
+                                <label className="font-bold text-slate-700 block mb-1">
+                                    Showroom nhận điều chuyển (Mã TTCP nhận): <span className="text-red-500">*</span>
+                                </label>
+                                <select
+                                    value={transferTargetTtcp}
+                                    onChange={(e) => {
+                                        setTransferTargetTtcp(e.target.value);
+                                        const found = VINFAST_SHOWROOMS.find(s => s.code === e.target.value);
+                                        if (found) {
+                                            setTransferReason(`Điều chuyển địa điểm kinh doanh sang ${found.name} (xe đã xuất hóa đơn)`);
+                                        }
+                                    }}
+                                    disabled={isTransferring}
+                                    className="w-full h-7 px-2 bg-white border border-[#7F9DB9] rounded text-[11px] font-bold text-slate-800 outline-none focus:border-blue-600 shadow-inner"
+                                >
+                                    {VINFAST_SHOWROOMS.map(s => (
+                                        <option key={s.code} value={s.code}>
+                                            [{s.code}] {s.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* LÝ DO / DIỄN GIẢI */}
+                            <div>
+                                <label className="font-bold text-slate-700 block mb-1">
+                                    Diễn giải / Lý do lập phiếu ĐNX:
+                                </label>
+                                <input
+                                    type="text"
+                                    value={transferReason}
+                                    onChange={e => setTransferReason(e.target.value)}
+                                    disabled={isTransferring}
+                                    placeholder="Nhập diễn giải cho phiếu điều chuyển..."
+                                    className="w-full h-7 px-2 bg-white border border-[#7F9DB9] rounded text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner"
+                                />
+                            </div>
+
+                            {/* HƯỚNG DẪN QUY TRÌNH */}
+                            <div className="bg-amber-50 border border-amber-200 rounded p-2 text-[10px] text-amber-900 space-y-1">
+                                <div className="font-bold flex items-center gap-1">
+                                    <i className="fa-solid fa-circle-info text-amber-600"></i>
+                                    <span>Tác vụ CyberSoft tự động:</span>
+                                </div>
+                                <ul className="list-disc list-inside space-y-0.5 text-slate-700">
+                                    <li>Lập Phiếu Đề Nghị Xuất Xe (<strong>DNX</strong>) trên CyberSoft với Mã Giao Dịch <strong>9 (Khác ĐĐKD)</strong>.</li>
+                                    <li>Mã TTCP xuất: <strong>02.01.08</strong> (Thuận An) ➔ Mã TTCP nhận: <strong>{transferTargetTtcp}</strong>.</li>
+                                    <li>Cập nhật phân bổ <strong>CTKH.Ma_TTCP_I</strong> để xe không còn trừ vào chỉ tiêu Thuận An.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* FOOTER */}
+                        <div className="bg-[#ECE9D8] px-3 py-2 border-t border-[#CCCCCC] flex items-center justify-end gap-2 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setIsTransferModalOpen(false)}
+                                disabled={isTransferring}
+                                className="px-3 py-1 bg-white hover:bg-slate-100 border border-slate-300 rounded text-slate-700 text-xs font-semibold cursor-pointer disabled:opacity-50"
+                            >
+                                Hủy Bỏ
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleExecuteTransfer}
+                                disabled={isTransferring}
+                                className="px-3 py-1 bg-purple-700 hover:bg-purple-800 text-white rounded text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                                {isTransferring ? (
+                                    <>
+                                        <i className="fas fa-rotate animate-spin text-[10px]"></i>
+                                        <span>Đang xử lý trên CyberSoft...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="fa-solid fa-check text-[10px]"></i>
+                                        <span>Xác Nhận Điều Chuyển ĐĐKD</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* MODAL CHI TIẾT LỖI VÀ HƯỚNG XỬ LÝ VI PHẠM */}

@@ -2391,15 +2391,21 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
         for idx, vin in enumerate(vins, start=1):
             vin_clean = vin.strip().upper()
             cursor.execute(f"""
-                SELECT TOP 1 c.Ma_Kx, c.Ma_Mau, c.So_May, c.Ma_Kho, c.Ma_mau_nt,
-                       ISNULL(k.Ten_Kx, c.Ma_Kx) AS Ten_Kx,
-                       ISNULL(m.Ten_mau, c.Ma_Mau) AS Ten_mau
-                FROM CT70BEX c
-                LEFT JOIN Dmkx k ON c.Ma_Kx = k.Ma_Kx
-                LEFT JOIN Dmmauxe m ON c.Ma_Mau = m.Ma_mau
-                WHERE c.So_Khung = {ph}
-                ORDER BY c.Ngay_Ct DESC
-            """, (vin_clean,))
+                SELECT TOP 1 
+                    COALESCE(c.Ma_Kx, k.Ma_Kx, h.Ma_Kx, '') AS Ma_Kx,
+                    COALESCE(c.Ma_Mau, k.Ma_Mau, h.Ma_Mau, '') AS Ma_Mau,
+                    COALESCE(c.So_May, k.So_May, h.So_May, '') AS So_May,
+                    COALESCE(c.Ma_Kho, 'K83') AS Ma_Kho,
+                    COALESCE(c.Ma_mau_nt, k.Ma_Mau_Nt, '') AS Ma_mau_nt,
+                    COALESCE(kx.Ten_Kx, c.Ma_Kx, k.Ma_Kx, '') AS Ten_Kx,
+                    COALESCE(mx.Ten_mau, c.Ma_Mau, k.Ma_Mau, '') AS Ten_mau
+                FROM (SELECT 1 AS dummy) d
+                LEFT JOIN CT70BEX c WITH (NOLOCK) ON c.So_Khung = {ph}
+                LEFT JOIN CTKH k WITH (NOLOCK) ON k.So_khung = {ph}
+                LEFT JOIN CTHDC h WITH (NOLOCK) ON h.So_khung = {ph}
+                LEFT JOIN Dmkx kx WITH (NOLOCK) ON kx.Ma_Kx = COALESCE(c.Ma_Kx, k.Ma_Kx, h.Ma_Kx)
+                LEFT JOIN Dmmauxe mx WITH (NOLOCK) ON mx.Ma_Mau = COALESCE(c.Ma_Mau, k.Ma_Mau, h.Ma_Mau)
+            """, (vin_clean, vin_clean, vin_clean))
             car_info = cursor.fetchone() or {}
 
             if is_pymssql:
@@ -2540,6 +2546,384 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             "success": False,
             "error": f"Lỗi tạo phiếu đề nghị xuất trên CyberSoft: {str(e)}"
         }
+
+def get_cross_showroom_allocations(params: dict = {}) -> dict:
+    from_date = (params.get("fromDate") or params.get("from_date") or "2026-08-01").strip()
+    status_filter = (params.get("status") or "all").strip() # 'all' | 'pending' | 'transferred'
+    keyword = (params.get("keyword") or "").strip().lower()
+
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=30,
+            appname='CyberAppGolden',
+            autocommit=True
+        )
+        is_pymssql = True
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=30)
+        is_pymssql = False
+
+    cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
+    ph = "%s" if is_pymssql else "?"
+
+    try:
+        cursor.execute("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;")
+
+        sql = f"""
+            SELECT 
+                k.So_khung AS vin,
+                k.So_May AS so_may,
+                k.Ma_Kx AS ma_kx,
+                ISNULL(kx.ten_kx, k.Ma_Kx) AS loai_xe,
+                ISNULL(kx.Quy_Cach, '') AS phien_ban,
+                k.Ma_Mau AS ma_mau,
+                ISNULL(mx.ten_mau, k.Ma_Mau) AS ten_mau,
+                k.Ma_Mau_Nt AS ma_mau_nt,
+                ISNULL(mnt.ten_mau, '') AS ten_mau_nt,
+                k.Ma_XHD AS ma_dms,
+                k.Ma_TTCP_I AS ttcp_phan_bo,
+                ttcp_pb.Ten_TTCP AS ten_ttcp_phan_bo,
+                k.ngay_ct AS ngay_phan_bo,
+                -- Thông tin Hóa đơn xuất bởi Showroom khác
+                h.Ma_TTCP_H AS ttcp_xuat,
+                ISNULL(ttcp_x.Ten_TTCP, h.Ma_TTCP_H) AS ten_ttcp_xuat,
+                h.So_Ct AS so_hd,
+                h.Ngay_Ct AS ngay_hd,
+                h.Ong_ba AS ten_khach_hang,
+                -- Kiểm tra xem đã có phiếu điều chuyển ĐĐKD (DNX Ma_Gd = 9) chưa
+                dnx.So_Ct AS so_ct_dnx,
+                dnx.Ngay_Ct AS ngay_ct_dnx,
+                dnx.Ma_Gd AS ma_gd_dnx
+            FROM CTKH k WITH (NOLOCK)
+            LEFT JOIN DmKx kx WITH (NOLOCK) ON k.Ma_Kx = kx.ma_kx
+            LEFT JOIN dmMauxe mx WITH (NOLOCK) ON k.Ma_Mau = mx.ma_Mau
+            LEFT JOIN dmMauxeNt mnt WITH (NOLOCK) ON k.Ma_Mau_Nt = mnt.Ma_mau_Nt
+            LEFT JOIN DmTTCP ttcp_pb WITH (NOLOCK) ON k.Ma_TTCP_I = ttcp_pb.Ma_TTCP
+            INNER JOIN CTHDC cth WITH (NOLOCK) ON k.So_khung = cth.So_khung
+            INNER JOIN PHHDC h WITH (NOLOCK) ON cth.Stt_rec = h.Stt_rec
+            LEFT JOIN DmTTCP ttcp_x WITH (NOLOCK) ON h.Ma_TTCP_H = ttcp_x.Ma_TTCP
+            OUTER APPLY (
+                SELECT TOP 1 p.So_Ct, p.Ngay_Ct, p.Ma_Gd, p.Ma_TTCP_N
+                FROM CTDNX cd WITH (NOLOCK)
+                INNER JOIN PHDNX p WITH (NOLOCK) ON cd.Stt_rec = p.Stt_rec
+                WHERE cd.So_khung = k.So_khung AND p.Ma_Gd = '9' AND p.Ma_TTCP_H = '02.01.08'
+                ORDER BY p.Ngay_Ct DESC
+            ) dnx
+            WHERE RTRIM(h.Ma_TTCP_H) <> '02.01.08'
+              AND h.Ngay_Ct >= {ph}
+              AND (
+                  RTRIM(k.Ma_TTCP_I) = '02.01.08' 
+                  OR RTRIM(k.Ma_TTCP_DMS) = '02.01.08'
+                  OR dnx.So_Ct IS NOT NULL
+              )
+            ORDER BY h.Ngay_Ct DESC, k.So_khung
+        """
+
+        cursor.execute(sql, (from_date,))
+        rows = cursor.fetchall()
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    seen_vins = set()
+    cars = []
+    for r in rows:
+        row_d = dict(r) if is_pymssql else dict(zip([d[0] for d in cursor.description], r))
+        vin = (row_d.get('vin') or '').strip().upper()
+        if not vin or vin in seen_vins:
+            continue
+        seen_vins.add(vin)
+        if row_d.get('ngay_phan_bo'):
+            row_d['ngay_phan_bo'] = str(row_d['ngay_phan_bo'])[:10]
+        if row_d.get('ngay_hd'):
+            row_d['ngay_hd'] = str(row_d['ngay_hd'])[:10]
+        if row_d.get('ngay_ct_dnx'):
+            row_d['ngay_ct_dnx'] = str(row_d['ngay_ct_dnx'])[:10]
+
+        has_dnx = bool(row_d.get('so_ct_dnx'))
+        row_d['has_transferred'] = has_dnx
+        row_d['status'] = 'TRANSFERRED' if has_dnx else 'PENDING_TRANSFER'
+
+        ma_kx = (row_d.get('ma_kx') or '').strip()
+        if ma_kx in MODEL_MAP:
+            d_name, p_name = MODEL_MAP[ma_kx]
+            row_d['dong_xe'] = d_name
+            if p_name and not row_d.get('phien_ban'):
+                row_d['phien_ban'] = p_name
+        else:
+            row_d['dong_xe'] = row_d.get('loai_xe') or ma_kx
+
+        if status_filter == 'pending' and has_dnx:
+            continue
+        if status_filter == 'transferred' and not has_dnx:
+            continue
+
+        if keyword:
+            v = str(row_d.get('vin') or '').lower()
+            m = str(row_d.get('dong_xe') or '').lower()
+            c_name = str(row_d.get('ten_khach_hang') or '').lower()
+            sr = str(row_d.get('ten_ttcp_xuat') or '').lower()
+            hd = str(row_d.get('so_hd') or '').lower()
+            if keyword not in v and keyword not in m and keyword not in c_name and keyword not in sr and keyword not in hd:
+                continue
+
+        cars.append(row_d)
+
+    total_pending = sum(1 for c in cars if not c['has_transferred'])
+    total_transferred = sum(1 for c in cars if c['has_transferred'])
+
+    return {
+        "success": True,
+        "total": len(cars),
+        "total_pending": total_pending,
+        "total_transferred": total_transferred,
+        "from_date": from_date,
+        "cars": cars
+    }
+
+def get_other_showroom_allocations_thuan_an_billed(params: dict = {}) -> dict:
+    from_date = (params.get("fromDate") or params.get("from_date") or "2026-08-01").strip()
+    status_filter = (params.get("status") or "all").strip() # 'all' | 'pending' | 'transferred'
+    keyword = (params.get("keyword") or "").strip().lower()
+
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=30,
+            appname='CyberAppGolden',
+            autocommit=True
+        )
+        is_pymssql = True
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=30)
+        is_pymssql = False
+
+    cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()
+    ph = "%s" if is_pymssql else "?"
+
+    try:
+        cursor.execute("SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;")
+
+        sql = f"""
+            SELECT 
+                k.So_khung AS vin,
+                k.So_May AS so_may,
+                k.Ma_Kx AS ma_kx,
+                ISNULL(kx.ten_kx, k.Ma_Kx) AS loai_xe,
+                ISNULL(kx.Quy_Cach, '') AS phien_ban,
+                k.Ma_Mau AS ma_mau,
+                ISNULL(mx.ten_mau, k.Ma_Mau) AS ten_mau,
+                k.Ma_Mau_Nt AS ma_mau_nt,
+                ISNULL(mnt.ten_mau, '') AS ten_mau_nt,
+                k.Ma_XHD AS ma_dms,
+                k.Ma_TTCP_I AS ttcp_phan_bo,
+                ttcp_pb.Ten_TTCP AS ten_ttcp_phan_bo,
+                k.ngay_ct AS ngay_phan_bo,
+                -- Thông tin Hóa đơn do Thuận An xuất
+                h.Ma_TTCP_H AS ttcp_xuat,
+                ISNULL(ttcp_x.Ten_TTCP, h.Ma_TTCP_H) AS ten_ttcp_xuat,
+                h.So_Ct AS so_hd,
+                h.Ngay_Ct AS ngay_hd,
+                h.Ong_ba AS ten_khach_hang,
+                ISNULL(NULLIF(hs.Ten_Hs, ''), h.Ma_Hs_H) AS tvbh_xuat,
+                -- Kiểm tra phiếu DNX điều chuyển ĐĐKD (Ma_Gd = 9) chuyển về Thuận An
+                dnx.So_Ct AS so_ct_dnx,
+                dnx.Ngay_Ct AS ngay_ct_dnx,
+                dnx.Ma_Gd AS ma_gd_dnx,
+                dnx.Ma_TTCP_H AS ttcp_xuat_dnx,
+                dnx.Ma_TTCP_N AS ttcp_nhan_dnx
+            FROM CTKH k WITH (NOLOCK)
+            INNER JOIN CTHDC cth WITH (NOLOCK) ON k.So_khung = cth.So_khung
+            INNER JOIN PHHDC h WITH (NOLOCK) ON cth.Stt_rec = h.Stt_rec
+            LEFT JOIN DmKx kx WITH (NOLOCK) ON k.Ma_Kx = kx.ma_kx
+            LEFT JOIN dmMauxe mx WITH (NOLOCK) ON k.Ma_Mau = mx.ma_Mau
+            LEFT JOIN dmMauxeNt mnt WITH (NOLOCK) ON k.Ma_Mau_Nt = mnt.Ma_mau_Nt
+            LEFT JOIN DmTTCP ttcp_pb WITH (NOLOCK) ON k.Ma_TTCP_I = ttcp_pb.Ma_TTCP
+            LEFT JOIN DmTTCP ttcp_x WITH (NOLOCK) ON h.Ma_TTCP_H = ttcp_x.Ma_TTCP
+            LEFT JOIN DmHs hs WITH (NOLOCK) ON h.Ma_Hs_H = hs.Ma_Hs
+            OUTER APPLY (
+                SELECT TOP 1 p.So_Ct, p.Ngay_Ct, p.Ma_Gd, p.Ma_TTCP_H, p.Ma_TTCP_N
+                FROM CTDNX cd WITH (NOLOCK)
+                INNER JOIN PHDNX p WITH (NOLOCK) ON cd.Stt_rec = p.Stt_rec
+                WHERE cd.So_khung = k.So_khung AND p.Ma_Gd = '9' AND p.Ma_TTCP_N = '02.01.08'
+                ORDER BY p.Ngay_Ct DESC
+            ) dnx
+            WHERE RTRIM(h.Ma_TTCP_H) = '02.01.08'
+              AND h.Ngay_Ct >= {ph}
+              AND RTRIM(k.Ma_TTCP_I) <> '02.01.08'
+              AND RTRIM(k.Ma_TTCP_I) <> ''
+            ORDER BY h.Ngay_Ct DESC, k.So_khung
+        """
+
+        cursor.execute(sql, (from_date,))
+        rows = cursor.fetchall()
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    seen_vins = set()
+    cars = []
+    for r in rows:
+        row_d = dict(r) if is_pymssql else dict(zip([d[0] for d in cursor.description], r))
+        vin = (row_d.get('vin') or '').strip().upper()
+        if not vin or vin in seen_vins:
+            continue
+        seen_vins.add(vin)
+        if row_d.get('ngay_phan_bo'):
+            row_d['ngay_phan_bo'] = str(row_d['ngay_phan_bo'])[:10]
+        if row_d.get('ngay_hd'):
+            row_d['ngay_hd'] = str(row_d['ngay_hd'])[:10]
+        if row_d.get('ngay_ct_dnx'):
+            row_d['ngay_ct_dnx'] = str(row_d['ngay_ct_dnx'])[:10]
+
+        has_dnx = bool(row_d.get('so_ct_dnx') and row_d.get('ttcp_nhan_dnx') == '02.01.08')
+        row_d['has_transferred'] = has_dnx
+        row_d['status'] = 'TRANSFERRED' if has_dnx else 'PENDING_TRANSFER'
+
+        ma_kx = (row_d.get('ma_kx') or '').strip()
+        if ma_kx in MODEL_MAP:
+            d_name, p_name = MODEL_MAP[ma_kx]
+            row_d['dong_xe'] = d_name
+            if p_name and not row_d.get('phien_ban'):
+                row_d['phien_ban'] = p_name
+        else:
+            row_d['dong_xe'] = row_d.get('loai_xe') or ma_kx
+
+        if status_filter == 'pending' and has_dnx:
+            continue
+        if status_filter == 'transferred' and not has_dnx:
+            continue
+
+        if keyword:
+            v = str(row_d.get('vin') or '').lower()
+            m = str(row_d.get('dong_xe') or '').lower()
+            c_name = str(row_d.get('ten_khach_hang') or '').lower()
+            sr = str(row_d.get('ten_ttcp_phan_bo') or '').lower()
+            hd = str(row_d.get('so_hd') or '').lower()
+            if keyword not in v and keyword not in m and keyword not in c_name and keyword not in sr and keyword not in hd:
+                continue
+
+        cars.append(row_d)
+
+    total_pending = sum(1 for c in cars if not c['has_transferred'])
+    total_transferred = sum(1 for c in cars if c['has_transferred'])
+
+    return {
+        "success": True,
+        "total": len(cars),
+        "total_pending": total_pending,
+        "total_transferred": total_transferred,
+        "from_date": from_date,
+        "cars": cars
+    }
+
+def transfer_business_location(params: dict = {}) -> dict:
+    vins = params.get("vins") or []
+    if not vins and params.get("vin"):
+        vins = [params.get("vin")]
+
+    to_ttcp = (params.get("to_ttcp") or "").strip()
+    to_ttcp_name = (params.get("to_ttcp_name") or "").strip()
+    reason = (params.get("reason") or f"Điều chuyển địa điểm kinh doanh sang {to_ttcp_name or to_ttcp}").strip()
+    user_name = (params.get("user_name") or "02.NHANPT").strip()
+    ma_kho_xuat = (params.get("ma_kho_xuat") or "K83").strip()
+    ma_kho_nhan = (params.get("ma_kho_nhan") or "").strip()
+
+    if not vins:
+        return {"success": False, "error": "Vui lòng chọn ít nhất một xe (số VIN) để điều chuyển địa điểm kinh doanh"}
+    if not to_ttcp:
+        return {"success": False, "error": "Vui lòng chọn Showroom nhận (Mã TTCP nhận)"}
+
+    # 1. Gọi create_cyber_dnx_ticket với Ma_Gd = '9' (Điều chuyển khác địa điểm kinh doanh)
+    dnx_params = {
+        "vins": vins,
+        "ma_gd": "9",
+        "ma_ttcp": "02.01.08",
+        "ma_ttcp_n": to_ttcp,
+        "dien_giai": reason,
+        "user_name": user_name,
+        "ma_kho_xuat": ma_kho_xuat,
+        "ma_kho_nhan": ma_kho_nhan or "K83",
+        "force": True
+    }
+    dnx_res = create_cyber_dnx_ticket(dnx_params)
+    if not dnx_res.get("success"):
+        return dnx_res
+
+    so_ct = dnx_res.get("so_ct")
+
+    # 2. Cập nhật kế hoạch phân bổ CTKH sang TTCP mới
+    try:
+        import pymssql
+        conn = pymssql.connect(
+            server='SQLVanDao.Cybersoft.com.vn',
+            port=7521,
+            user='cyber_vandao',
+            password='HyFleBEQKV191sBNeTFN3Fu0S@mfIQcnszfDcVqCZe7CiSqsszv',
+            database='CyberAppGolden_VanDao',
+            timeout=30,
+            appname='CyberAppGolden',
+            autocommit=True
+        )
+        is_pymssql = True
+    except Exception:
+        import pyodbc
+        conn = pyodbc.connect(CYBER_CONN, timeout=30)
+        is_pymssql = False
+
+    cursor = conn.cursor()
+    ph = "%s" if is_pymssql else "?"
+
+    for v in vins:
+        clean_v = v.strip().upper()
+        try:
+            sql_update = f"UPDATE CTKH SET Ma_TTCP_I = {ph}, Ma_TTCP_DMS = {ph} WHERE So_khung = {ph}"
+            cursor.execute(sql_update, (to_ttcp, to_ttcp, clean_v))
+        except Exception as e_up:
+            print(f"[Warning] Update CTKH for {clean_v} error: {e_up}", file=sys.stderr)
+
+    conn.close()
+
+    # 3. Đồng bộ Supabase khoxe (nếu có)
+    try:
+        for v in vins:
+            clean_v = v.strip().upper()
+            target_loc = to_ttcp_name or to_ttcp
+            requests.patch(
+                f"{SUPABASE_URL}/rest/v1/khoxe?vin=eq.{clean_v}",
+                headers=HEADERS,
+                json={"vi_tri": target_loc, "trang_thai": "Đã điều chuyển ĐĐKD"},
+                timeout=5
+            )
+    except Exception:
+        pass
+
+    return {
+        "success": True,
+        "count": len(vins),
+        "vins": vins,
+        "so_ct": so_ct,
+        "to_ttcp": to_ttcp,
+        "to_ttcp_name": to_ttcp_name,
+        "message": f"Đã lập phiếu điều chuyển ĐĐKD số {so_ct} và chuyển {len(vins)} xe sang {to_ttcp_name or to_ttcp} thành công!"
+    }
 
 def lookup_vin_warehouse(params: any = {}) -> dict:
     if isinstance(params, list):
@@ -3013,7 +3397,15 @@ def sync_cyber_car_status_to_supabase(target_vins: list = None) -> dict:
             )
             kx_vins = [r['vin'].strip().upper() for r in kx_res.json() if r.get('vin') and len(r['vin'].strip()) >= 8] if kx_res.ok else []
 
-            vins_to_sync = sorted(list(set(dh_vins + kx_vins)))
+            tk_res = requests.get(
+                f"{SUPABASE_URL}/rest/v1/cyber_ton_kho",
+                headers=HEADERS,
+                params={"select": "vin", "vin": "not.is.null", "limit": "500"},
+                timeout=15
+            )
+            tk_vins = [r['vin'].strip().upper() for r in tk_res.json() if r.get('vin') and len(r['vin'].strip()) >= 8] if tk_res.ok else []
+
+            vins_to_sync = sorted(list(set(dh_vins + kx_vins + tk_vins)))
         except Exception as e:
             print(f"[sync_cyber_car_status_to_supabase] Lỗi lấy danh sách VIN từ Supabase: {e}", file=sys.stderr)
 
@@ -3855,6 +4247,9 @@ def main():
     parser.add_argument("--sync-xep-xe", action="store_true", help="Sync xep xe contracts from CyberSoft to Supabase")
     parser.add_argument("--sync-ton-kho", action="store_true", help="Sync ton kho cars from CyberSoft to Supabase")
     parser.add_argument("--sync-voucher-tickets", action="store_true", help="Sync voucher tickets from CyberSoft to Supabase")
+    parser.add_argument("--cross-showroom-allocations", action="store_true", help="Get cars allocated to Thuan An but billed by other showrooms")
+    parser.add_argument("--other-showroom-allocations", action="store_true", help="Get cars allocated to other showrooms but billed by Thuan An")
+    parser.add_argument("--transfer-business-location", action="store_true", help="Transfer car business location to another showroom")
     parser.add_argument("--model", help="Car model filter for options", default="")
     parser.add_argument("--params", help="JSON string of search parameters", default=None)
     args = parser.parse_args()
@@ -3967,6 +4362,24 @@ def main():
     if args.create_dnx:
         p = get_input_params()
         res = create_cyber_dnx_ticket(p)
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.cross_showroom_allocations:
+        p = get_input_params()
+        res = get_cross_showroom_allocations(p)
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.other_showroom_allocations:
+        p = get_input_params()
+        res = get_other_showroom_allocations_thuan_an_billed(p)
+        print(json.dumps(res, default=str, ensure_ascii=False))
+        return
+
+    if args.transfer_business_location:
+        p = get_input_params()
+        res = transfer_business_location(p)
         print(json.dumps(res, default=str, ensure_ascii=False))
         return
 

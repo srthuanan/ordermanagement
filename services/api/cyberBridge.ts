@@ -157,8 +157,8 @@ interface RequestCyberOptions {
  *    - Nếu OFFLINE -> Tự động chuyển hướng gọi sang Render Cloud.
  */
 export async function executeCyberApi<T = any>(pathname: string, options: RequestCyberOptions = {}): Promise<T> {
-    const isMinvoiceOrHeavy = pathname.startsWith('/api/minvoice/') || pathname.includes('sync-') || pathname.includes('export-pdf') || pathname.startsWith('/api/dms/');
-    const defaultTimeout = isMinvoiceOrHeavy ? 120000 : 15000;
+    const isMinvoiceOrHeavy = pathname.startsWith('/api/minvoice/') || pathname.startsWith('/api/cyber/') || pathname.includes('sync-') || pathname.includes('export-pdf') || pathname.startsWith('/api/dms/');
+    const defaultTimeout = isMinvoiceOrHeavy ? 120000 : 30000;
 
     const {
         method = 'POST',
@@ -176,22 +176,33 @@ export async function executeCyberApi<T = any>(pathname: string, options: Reques
 
     // ─── 1. Ưu tiên kiểm tra trực tiếp HTTP nếu đang mở web ngay tại localhost ───
     if (isLocalHost && !forceCloud) {
-        try {
-            const queryStr = Object.keys(queryParams).length > 0
-                ? '?' + new URLSearchParams(queryParams).toString()
-                : '';
-            const localUrl = `http://localhost:3001${pathname}${queryStr}`;
-            const res = await fetch(localUrl, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: method === 'POST' ? (typeof body === 'string' ? body : JSON.stringify(body || {})) : undefined,
-                signal: AbortSignal.timeout(isMinvoiceOrHeavy ? 120000 : 4000)
-            });
-            if (res.ok) {
-                return await res.json();
+        const queryStr = Object.keys(queryParams).length > 0
+            ? '?' + new URLSearchParams(queryParams).toString()
+            : '';
+        const candidateOrigins = [
+            'http://localhost:3001',
+            typeof window !== 'undefined' ? window.location.origin : ''
+        ].filter(Boolean);
+        const uniqueOrigins = [...new Set(candidateOrigins)];
+
+        for (const origin of uniqueOrigins) {
+            try {
+                const localUrl = `${origin}${pathname}${queryStr}`;
+                const res = await fetch(localUrl, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: method === 'POST' ? (typeof body === 'string' ? body : JSON.stringify(body || {})) : undefined,
+                    signal: AbortSignal.timeout(isMinvoiceOrHeavy ? 120000 : 30000)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && (data.success !== false || data.cars || data.data)) {
+                        return data;
+                    }
+                }
+            } catch (_) {
+                // Thử origin tiếp theo
             }
-        } catch (_) {
-            // Local HTTP 3001 không chạy, tiếp tục thử các phương thức tiếp theo
         }
     }
 

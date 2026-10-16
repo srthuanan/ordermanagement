@@ -152,6 +152,15 @@ async function handleCyberAction(pathname, method, body, queryParams = {}) {
         case '/api/cyber/search-factory-plan':
             return await executePython([scriptPath, '--search-plan'], mergedJson);
 
+        case '/api/cyber/cross-showroom-allocations':
+            return await executePython([scriptPath, '--cross-showroom-allocations'], mergedJson);
+
+        case '/api/cyber/other-showroom-allocations':
+            return await executePython([scriptPath, '--other-showroom-allocations'], mergedJson);
+
+        case '/api/cyber/transfer-business-location':
+            return await executePython([scriptPath, '--transfer-business-location'], mergedJson);
+
         case '/api/cyber/ton-kho-report':
             return await executePython([scriptPath, '--ton-kho-report'], mergedJson);
 

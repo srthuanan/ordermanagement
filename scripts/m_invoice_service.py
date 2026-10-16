@@ -387,7 +387,13 @@ def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
 
     # 4. Cập nhật database: yeucauxhd & donhang
     now_iso = time.strftime('%Y-%m-%dT%H:%M:%S+07:00')
-    real_invoice_date = inv_data.get("invoiceDate") or inv_data.get("dateSign") or now_iso
+    raw_date = inv_data.get("dateSign") or inv_data.get("invoiceDate")
+    if raw_date and len(str(raw_date)) > 10 and "00:00:00" not in str(raw_date):
+        real_invoice_date = raw_date
+    elif raw_date and len(str(raw_date)[:10]) == 10:
+        real_invoice_date = f"{str(raw_date)[:10]}T{time.strftime('%H:%M:%S')}+07:00"
+    else:
+        real_invoice_date = now_iso
 
     patch_hd = {
         "url_hoa_don_da_xuat": public_url,

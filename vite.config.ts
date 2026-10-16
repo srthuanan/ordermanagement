@@ -143,6 +143,41 @@ function cyberSyncPlugin(): Plugin {
         });
       });
 
+      server.middlewares.use('/api/cyber/cross-showroom-allocations', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          let options: any = {};
+          try { options = JSON.parse(body || '{}'); } catch (e) {}
+          const isForce = Boolean(options.force || options.refresh);
+          runPy([scriptPath, '--cross-showroom-allocations'], body, res, `cross-showroom:${body}`, isForce);
+        });
+      });
+
+      server.middlewares.use('/api/cyber/other-showroom-allocations', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          let options: any = {};
+          try { options = JSON.parse(body || '{}'); } catch (e) {}
+          const isForce = Boolean(options.force || options.refresh);
+          runPy([scriptPath, '--other-showroom-allocations'], body, res, `other-showroom:${body}`, isForce);
+        });
+      });
+
+      server.middlewares.use('/api/cyber/transfer-business-location', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', () => {
+          runPy([scriptPath, '--transfer-business-location'], body, res, undefined, false, success => {
+            if (success) invalidateCache();
+          });
+        });
+      });
+
       server.middlewares.use('/api/cyber/ton-kho-report', (req, res, next) => {
         if (req.method !== 'POST') return next();
         let body = '';
