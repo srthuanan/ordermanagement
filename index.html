@@ -51,19 +51,6 @@
         return false;
       }
 
-      // 2. Chặn F12 (Developer Tools)
-      if (e.key === 'F12' || e.keyCode === 123) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // 3. Chặn Ctrl + Shift + I / J / C (Inspect Element & Console)
-      if (ctrl && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].indexOf(e.key) !== -1) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
 
       // 4. Chặn Ctrl + S (Lưu mã nguồn HTML về máy)
       if (ctrl && (e.key === 's' || e.key === 'S')) {

@@ -313,6 +313,22 @@ const Root = () => {
 
     const customerPortalPhone = getCustomerPortalPhone();
 
+    useEffect(() => {
+        if (customerPortalPhone !== null) {
+            const rootEl = document.getElementById('root');
+            if (rootEl) {
+                rootEl.classList.remove('overflow-hidden', 'h-screen');
+                rootEl.classList.add('min-h-screen', 'overflow-y-auto');
+            }
+            return () => {
+                if (rootEl) {
+                    rootEl.classList.remove('min-h-screen', 'overflow-y-auto');
+                    rootEl.classList.add('overflow-hidden', 'h-screen');
+                }
+            };
+        }
+    }, [customerPortalPhone]);
+
     const renderContent = () => {
         if (customerPortalPhone !== null) {
             return <CustomerTrackingPortal initialPhone={customerPortalPhone} />;

@@ -2122,8 +2122,10 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
     if not vins and params.get("vin"):
         vins = [params.get("vin")]
 
-    ma_kho_xuat = (params.get("ma_kho_xuat") or params.get("ma_kho_i") or "K87").strip()
-    ma_kho_nhan = (params.get("ma_kho_nhan") or params.get("ma_khoN_i") or "K83").strip()
+    ma_gd = str(params.get("ma_gd") or "").strip()
+    is_gd9 = (ma_gd == '9')
+    ma_kho_xuat = ("" if is_gd9 else (params.get("ma_kho_xuat") or params.get("ma_kho_i") or "K87")).strip()
+    ma_kho_nhan = ("" if is_gd9 else (params.get("ma_kho_nhan") or params.get("ma_khoN_i") or "K83")).strip()
     khach_hang  = (params.get("khach_hang") or params.get("ong_ba") or "").strip()
     ly_do       = (params.get("ly_do") or params.get("dien_giai") or "Điều chuyển xe nội bộ").strip()
     ma_dvcs     = (params.get("ma_dvcs") or "02").strip()
@@ -2146,12 +2148,15 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
     }
     ma_ttcp_n = (params.get("ma_ttcp_n") or WAREHOUSE_TO_TTCP.get(ma_kho_nhan, "")).strip()
 
-    ma_gd = str(params.get("ma_gd") or "").strip()
     if ma_gd not in ('4', '9'):
         if ma_ttcp_n and ma_ttcp_n != ma_ttcp:
             ma_gd = '9'
         else:
             ma_gd = '4'
+
+    if ma_gd == '9':
+        ma_kho_xuat = ""
+        ma_kho_nhan = ""
 
     if not vins:
         return {"success": False, "error": "Vui lòng chọn ít nhất một xe (số VIN) để lập phiếu đề nghị xuất"}
@@ -2967,7 +2972,7 @@ def transfer_business_location(params: dict = {}) -> dict:
     to_ttcp_name = (params.get("to_ttcp_name") or "").strip()
     reason = (params.get("reason") or f"Điều chuyển địa điểm kinh doanh sang {to_ttcp_name or to_ttcp}").strip()
     user_name = (params.get("user_name") or "02.NHANPT").strip()
-    ma_kho_xuat = (params.get("ma_kho_xuat") or "K83").strip()
+    ma_kho_xuat = (params.get("ma_kho_xuat") or "").strip()
     ma_kho_nhan = (params.get("ma_kho_nhan") or "").strip()
 
     if not vins:
@@ -2984,7 +2989,7 @@ def transfer_business_location(params: dict = {}) -> dict:
         "dien_giai": reason,
         "user_name": user_name,
         "ma_kho_xuat": ma_kho_xuat,
-        "ma_kho_nhan": ma_kho_nhan or "K83",
+        "ma_kho_nhan": ma_kho_nhan,
         "force": True
     }
     dnx_res = create_cyber_dnx_ticket(dnx_params)
