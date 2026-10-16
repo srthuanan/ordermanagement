@@ -662,13 +662,27 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     const handleOpenTransferModal = (carsToTransfer: CrossShowroomAllocationItem[]) => {
         if (!carsToTransfer.length) return;
         setTransferModalCars(carsToTransfer);
-        const suggestedTtcp = carsToTransfer[0]?.ma_ttcp_xuat || '02.01.21';
+        const firstCar = carsToTransfer[0] as any;
+        const rawCode = (firstCar?.ma_ttcp_xuat || firstCar?.ttcp_xuat || '').trim();
+        const rawName = (firstCar?.ten_ttcp_xuat || '').trim().toLowerCase();
+
+        // Tự động tìm showroom tương ứng theo mã TTCP xuất hoặc theo tên showroom xuất HĐ
+        let matchedShowroom = VINFAST_SHOWROOMS.find(s => rawCode && s.code === rawCode);
+        if (!matchedShowroom && rawName) {
+            matchedShowroom = VINFAST_SHOWROOMS.find(s => 
+                s.name.toLowerCase().includes(rawName) || 
+                rawName.includes(s.name.toLowerCase()) ||
+                (s.code && rawName.includes(s.code))
+            );
+        }
+
+        const suggestedTtcp = matchedShowroom?.code || rawCode || '02.01.20';
+        const targetName = matchedShowroom?.name || firstCar?.ten_ttcp_xuat || suggestedTtcp;
         setTransferTargetTtcp(suggestedTtcp);
-        const toShowroomObj = VINFAST_SHOWROOMS.find(s => s.code === suggestedTtcp);
-        const targetName = toShowroomObj?.name || suggestedTtcp;
         setTransferReason(`Điều chuyển địa điểm kinh doanh sang ${targetName} (xe đã xuất hóa đơn)`);
         setIsTransferModalOpen(true);
     };
+
 
     // Auto fetch on first open
     useEffect(() => {

@@ -2769,6 +2769,7 @@ def get_cross_showroom_allocations(params: dict = {}) -> dict:
         has_dnx = bool(row_d.get('so_ct_dnx'))
         row_d['has_transferred'] = has_dnx
         row_d['status'] = 'TRANSFERRED' if has_dnx else 'PENDING_TRANSFER'
+        row_d['ma_ttcp_xuat'] = (row_d.get('ttcp_xuat') or row_d.get('ma_ttcp_xuat') or '').strip()
 
         ma_kx = (row_d.get('ma_kx') or '').strip()
         if ma_kx in MODEL_MAP:
