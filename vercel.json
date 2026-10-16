@@ -4,7 +4,7 @@
   "outputDirectory": "dist",
   "functions": {
     "api/index.py": {
-      "includeFiles": "scripts/**"
+      "includeFiles": "{scripts/**,cyber_server.py}"
     }
   },
   "headers": [

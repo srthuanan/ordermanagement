@@ -6,15 +6,11 @@ dist
 .vscode
 backups
 blender_scripts
-bookmarklets
 downloads_vnpt
 electron
 logs
-pdf
-pictures
 scratch
 scratch_archive.zip
-docs
 *.xlsx
 *.zip
 *.bat
