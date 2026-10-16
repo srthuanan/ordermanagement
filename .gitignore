@@ -69,3 +69,4 @@ vnpt_invoices_cache.json
 downloads_vnpt/
 *.pdf
 !public/cyber_pdfs/.gitkeep
+.env*
