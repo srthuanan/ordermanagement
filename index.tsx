@@ -14,6 +14,7 @@ import * as authService from './services/authService';
 import UpdateModal from './components/modals/UpdateModal';
 import ChangePasswordModal from './components/modals/ChangePasswordModal';
 import { PublicLiveMapView } from './components/PublicLiveMapView';
+import { CustomerTrackingPortal } from './components/customer/CustomerTrackingPortal';
 import { registerSW } from 'virtual:pwa-register';
 import { VehicleConfigProvider } from './hooks/useVehicleConfig';
 import MaintenanceFeeBlocker from './components/MaintenanceFeeBlocker';
@@ -289,7 +290,34 @@ const Root = () => {
         }
     }, [isAuthenticated]);
 
+    const getCustomerPortalPhone = (): string | null => {
+        if (typeof window === 'undefined') return null;
+        const search = window.location.search || '';
+        const hash = window.location.hash || '';
+        const searchParams = new URLSearchParams(search);
+        let hashParams: URLSearchParams | null = null;
+        if (hash.includes('?')) {
+            hashParams = new URLSearchParams(hash.split('?')[1]);
+        }
+        if (searchParams.has('track') || searchParams.has('tracking') || searchParams.get('portal') === 'customer' || searchParams.get('portal') === 'tracking' || searchParams.has('phone') || searchParams.has('sdt')) {
+            return searchParams.get('phone') || searchParams.get('sdt') || searchParams.get('track') || '';
+        }
+        if (hashParams && (hashParams.has('track') || hashParams.has('tracking') || hashParams.get('portal') === 'customer' || hashParams.get('portal') === 'tracking' || hashParams.has('phone') || hashParams.has('sdt'))) {
+            return hashParams.get('phone') || hashParams.get('sdt') || hashParams.get('track') || '';
+        }
+        if (hash === '#track' || hash === '#tracking' || hash === '#portal') {
+            return '';
+        }
+        return null;
+    };
+
+    const customerPortalPhone = getCustomerPortalPhone();
+
     const renderContent = () => {
+        if (customerPortalPhone !== null) {
+            return <CustomerTrackingPortal initialPhone={customerPortalPhone} />;
+        }
+
         if (shareToken) {
             return <PublicLiveMapView shareToken={shareToken} />;
         }
