@@ -133,7 +133,7 @@ export const StockLocationGuard: React.FC<StockLocationGuardProps> = ({
         maximumAge: 0
       }
     );
-  }, [currentUserName, currentUser, userEmail, showToast]);
+  }, [showToast]);
 
   // GIÁM SÁT LIÊN TỤC (REAL-TIME GPS MONITORING):
   // Nếu TVBH tắt GPS trên điện thoại/máy tính hoặc thu hồi quyền trên trình duyệt,
