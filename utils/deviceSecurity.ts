@@ -76,7 +76,7 @@ export const getDeviceLabel = (): string => {
  */
 export const verifyAndRegisterDevice = async (
     username: string,
-    role: string = 'Tư vấn bán hàng',
+    _role: string = 'Tư vấn bán hàng',
     isRestore: boolean = false
 ): Promise<{ allowed: boolean; message?: string; sessionId?: string }> => {
     try {

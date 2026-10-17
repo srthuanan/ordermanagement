@@ -13,9 +13,9 @@ interface StockLocationGuardProps {
 
 export const StockLocationGuard: React.FC<StockLocationGuardProps> = ({
   children,
-  currentUser,
-  currentUserName,
-  userEmail,
+  currentUser: _currentUser,
+  currentUserName: _currentUserName,
+  userEmail: _userEmail,
   isAdmin,
   onCancel,
   showToast
@@ -66,7 +66,7 @@ export const StockLocationGuard: React.FC<StockLocationGuardProps> = ({
     setTimeout(() => {
       isLockingRef.current = false;
     }, 15000);
-  }, [showToast, currentUserName, currentUser, userEmail]);
+  }, [showToast]);
 
   // Yêu cầu lấy vị trí thiết bị (kích hoạt bằng cử chỉ bấm nút của người dùng)
   const requestLocation = useCallback(() => {
