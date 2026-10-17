@@ -324,7 +324,9 @@ const StockView: React.FC<StockViewProps> = ({
                 includesNormalized(vehicle["Vị trí"], keyword) ||
                 includesNormalized(vehicle["Người Giữ Xe"], keyword) ||
                 includesNormalized(vehicle["Mã DMS"], keyword) ||
-                includesNormalized((vehicle as any).ma_dms, keyword)
+                includesNormalized((vehicle as any).ma_dms, keyword) ||
+                includesNormalized(vehicle["Số COC"], keyword) ||
+                includesNormalized((vehicle as any).so_coc, keyword)
             );
         }
         if (filters.carModel.length > 0) {

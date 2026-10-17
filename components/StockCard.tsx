@@ -353,6 +353,7 @@ const StockCard: React.FC<StockCardProps> = ({
         vehicle.VIN && vehicle.VIN !== '---' ? { icon: 'fa-fingerprint', label: 'Số VIN', value: vehicle.VIN, copyable: true } : null,
         (vehicle['Số máy'] || (vehicle as any).so_may) ? { icon: 'fa-cogs', label: 'Số máy', value: vehicle['Số máy'] || (vehicle as any).so_may, copyable: true } : null,
         (vehicle['Mã DMS'] || (vehicle as any).ma_dms) ? { icon: 'fa-qrcode', label: 'Mã DMS', value: vehicle['Mã DMS'] || (vehicle as any).ma_dms, copyable: true } : null,
+        (vehicle['Số COC'] || (vehicle as any).so_coc) ? { icon: 'fa-file-invoice text-amber-500', label: 'Số COC', value: vehicle['Số COC'] || (vehicle as any).so_coc, copyable: true } : null,
         isInTransit ? {
             icon: 'fa-truck text-amber-500',
             label: 'Vận tải',
@@ -434,6 +435,8 @@ const StockCard: React.FC<StockCardProps> = ({
                                             ? 'cursor-pointer font-mono font-bold text-teal-600 hover:text-teal-700 hover:underline text-[10.5px]'
                                             : item.label === 'Số máy'
                                             ? 'cursor-pointer font-mono font-bold text-indigo-600 hover:text-indigo-700 hover:underline text-[10.5px]'
+                                            : item.label === 'Số COC'
+                                            ? 'cursor-pointer font-mono font-bold text-amber-600 hover:text-amber-700 hover:underline text-[10px]'
                                             : 'font-bold text-slate-800 text-[10px]'
                                     }`}
                                     onClick={(e) => {

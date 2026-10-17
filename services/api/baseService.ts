@@ -156,9 +156,11 @@ export const mapStockDbToUi = (s: any) => ({
     phien_ban: s.phien_ban,
     ngoai_that: s.ngoai_that,
     noi_that: s.noi_that,
-    trang_thai: s.trang_thai,
     ma_dms: s.ma_dms,
     so_may: s.so_may,
+    "Số COC": s.so_coc || s['Số COC'] || '',
+    so_coc: s.so_coc || s['Số COC'] || '',
+    "ngay_coc_ve": s.ngay_coc_ve || s['Ngày COC về'] || '',
     telemetry: s.telemetry || null
 });
 
