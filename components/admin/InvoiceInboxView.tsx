@@ -655,34 +655,40 @@ const InvoiceInboxView: React.FC<InvoiceInboxViewProps> = ({
         }
 
         setIsBatchFetching(true);
-        showToast('Bắt đầu quét hàng loạt', `Đang quét kiểm tra M-Invoice cho ${pendingOrders.length} xe đang chờ ký...`, 'info');
+        showToast('Bắt đầu quét hàng loạt', `Đang quét kiểm tra M-Invoice cho ${pendingOrders.length} xe đang chờ ký (chế độ song song siêu tốc)...`, 'info');
 
         let signedCount = 0;
         let unsignedCount = 0;
         let notFoundCount = 0;
 
-        for (let i = 0; i < pendingOrders.length; i++) {
-            const order = pendingOrders[i];
-            const vin = (order.VIN || order.vin || order['SỐ VIN'] || order['Số VIN'] || '').trim().toUpperCase();
-            const orderNo = (order['Số đơn hàng'] || order.so_don_hang || '').trim();
-            if (!vin) continue;
+        // Xử lý song song từng cụm 3 xe đồng thời để tăng tốc độ gấp 3 lần
+        const CHUNK_SIZE = 3;
+        for (let i = 0; i < pendingOrders.length; i += CHUNK_SIZE) {
+            const chunk = pendingOrders.slice(i, i + CHUNK_SIZE);
+            const progressMsg = `Đang quét xe ${i + 1} - ${Math.min(i + CHUNK_SIZE, pendingOrders.length)} / ${pendingOrders.length}...`;
+            showToast('Tiến độ quét M-Invoice', progressMsg, 'info', 2500);
 
-            try {
-                const res = await syncAndNotifyMInvoice(vin, orderNo);
-                if (res.success) {
-                    if (res.status !== 'ALREADY_COMPLETED') {
-                        signedCount++;
+            await Promise.all(chunk.map(async (order) => {
+                const vin = (order.VIN || order.vin || order['SỐ VIN'] || order['Số VIN'] || '').trim().toUpperCase();
+                const orderNo = (order['Số đơn hàng'] || order.so_don_hang || '').trim();
+                if (!vin) return;
+
+                try {
+                    const res = await syncAndNotifyMInvoice(vin, orderNo);
+                    if (res.success) {
+                        if (res.status !== 'ALREADY_COMPLETED') {
+                            signedCount++;
+                        }
+                        onAction('uploadInvoice', order, { url: res.data?.url });
+                    } else if (res.status === 'UNSIGNED') {
+                        unsignedCount++;
+                    } else {
+                        notFoundCount++;
                     }
-                    onAction('uploadInvoice', order, { url: res.data?.url });
-                    await new Promise(r => setTimeout(r, 600));
-                } else if (res.status === 'UNSIGNED') {
-                    unsignedCount++;
-                } else {
+                } catch (_) {
                     notFoundCount++;
                 }
-            } catch (_) {
-                notFoundCount++;
-            }
+            }));
         }
 
         setIsBatchFetching(false);

@@ -1160,9 +1160,9 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                     payload = {}
                 vins = payload.get("vins", [])
                 only_signed = payload.get("only_signed", True)
-                results = []
-                for v in vins:
-                    results.append(process_single_vin(v, only_signed=only_signed))
+                from concurrent.futures import ThreadPoolExecutor
+                with ThreadPoolExecutor(max_workers=4) as executor:
+                    results = list(executor.map(lambda v: process_single_vin(v, only_signed=only_signed), vins))
                 res_output = json.dumps({"success": True, "results": results}, ensure_ascii=False)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
