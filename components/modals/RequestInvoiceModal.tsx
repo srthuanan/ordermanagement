@@ -5,7 +5,7 @@ import Button from '../ui/Button';
 import * as apiService from '../../services/apiService';
 import { supabase } from '../../services/supabaseClient';
 import { checkCyberContractStatus, CheckCyberContractResult } from '../../services/api/stockService';
-import { cleanCyberContractCode } from '../../utils/stringUtils';
+import { cleanCyberContractCode, checkCustomerNameMatch } from '../../utils/stringUtils';
 
 interface RequestInvoiceModalProps {
     order: Order;
@@ -159,7 +159,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         status: 'idle' | 'checking' | 'valid' | 'invalid';
         message?: string;
         details?: any;
-        errorType?: 'model' | 'version' | 'exterior' | 'interior' | 'invoiced' | 'canceled' | 'not_found' | 'general';
+        errorType?: 'customer' | 'model' | 'version' | 'exterior' | 'interior' | 'invoiced' | 'canceled' | 'not_found' | 'general';
         expectedVal?: string;
         dmsVal?: string;
     }>({ status: 'idle' });
@@ -341,8 +341,12 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 dong_xe: car['Dòng xe'] || car.dong_xe,
                 phien_ban: car['Phiên bản'] || car.phien_ban,
                 ngoai_that: car['Ngoại thất'] || car['Màu ngoại thất'] || car.ngoai_that,
-                noi_that: car['Nội thất'] || car['Màu nội thất'] || car.noi_that
-            } : expectedConfig;
+                noi_that: car['Nội thất'] || car['Màu nội thất'] || car.noi_that,
+                ten_khach_hang: order["Tên khách hàng"]
+            } : {
+                ...expectedConfig,
+                ten_khach_hang: order["Tên khách hàng"]
+            };
 
             const res = await apiService.verifyDmsVso(orderNo, targetConfig, true);
             if (res.isValid) {
@@ -443,12 +447,41 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         return;
                     }
 
+                    // Kiểm tra Tên khách hàng giữa Đơn hàng và DMS
+                    const dmsCustomer = res.details?.customer || res.dmsRecord?.khach_hang_tiem_nang || '';
+                    const ordCustomer = (order["Tên khách hàng"] || '').trim();
+                    if (ordCustomer && dmsCustomer && !checkCustomerNameMatch(ordCustomer, dmsCustomer)) {
+                        setDmsVerification({
+                            status: 'invalid',
+                            errorType: 'customer',
+                            expectedVal: ordCustomer,
+                            dmsVal: dmsCustomer,
+                            message: `Lệch Tên khách hàng: Đơn là [${ordCustomer}] ⇄ DMS là [${dmsCustomer}].`,
+                            details: res.details
+                        });
+                        return;
+                    }
+
                     setDmsVerification({
                         status: 'valid',
-                        message: `Khớp 100% cấu hình giữa VIN xe (${order.VIN}) và VSO (${orderNo}) trên DMS!`,
+                        message: `Khớp 100% cấu hình & Tên khách hàng (${ordCustomer}) giữa VIN xe (${order.VIN}) và VSO (${orderNo}) trên DMS!`,
                         details: res.details
                     });
                 } else {
+                    const dmsCustomer = res.details?.customer || res.dmsRecord?.khach_hang_tiem_nang || '';
+                    const ordCustomer = (order["Tên khách hàng"] || '').trim();
+                    if (ordCustomer && dmsCustomer && !checkCustomerNameMatch(ordCustomer, dmsCustomer)) {
+                        setDmsVerification({
+                            status: 'invalid',
+                            errorType: 'customer',
+                            expectedVal: ordCustomer,
+                            dmsVal: dmsCustomer,
+                            message: `Lệch Tên khách hàng: Đơn là [${ordCustomer}] ⇄ DMS là [${dmsCustomer}].`,
+                            details: res.details
+                        });
+                        return;
+                    }
+
                     setDmsVerification({
                         status: 'valid',
                         message: 'Khớp 100% giữa Đơn hàng và VSO trên DMS',
@@ -1042,6 +1075,19 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 showToast('Lệch màu nội thất với Cyber', `Xe ghép mang mã [${carIntCode}] nhưng HĐ Cyber mang mã [${cyberIntCode} - ${currentStatus.ten_mau_nt || cyberIntCode}].`, 'error');
                 return;
             }
+
+            // Kiểm tra đối soát Tên khách hàng giữa Đơn hàng và HĐ Cyber
+            const ordCus = (order["Tên khách hàng"] || '').trim();
+            const cybCus = (currentStatus.ten_kh || '').trim();
+            if (ordCus && cybCus && !checkCustomerNameMatch(ordCus, cybCus)) {
+                showToast(
+                    'Lệch tên khách hàng với Cyber',
+                    `Tên khách hàng trên Đơn hàng [${ordCus}] KHÔNG KHỚP với tên trên HĐ Cyber [${cybCus}]. Vui lòng kiểm tra lại trước khi gửi đề nghị xuất HĐ.`,
+                    'error',
+                    8000
+                );
+                return;
+            }
         }
 
         // Nếu hợp đồng chưa duyệt: Chặn hoàn toàn không cho xuất hóa đơn
@@ -1144,18 +1190,35 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             }
         }
 
-        // Trường hợp lệch mã cấu hình với HĐ Cyber
-        if (configTitle) {
+        // 2. Kiểm tra đối soát Tên khách hàng giữa Đơn hàng và HĐ Cyber
+        const ordCustomer = (order["Tên khách hàng"] || '').trim();
+        const cybCustomer = (cyberContractStatus.ten_kh || '').trim();
+        let customerMismatch = false;
+        if (ordCustomer && cybCustomer && cyberContractStatus.found) {
+            if (!checkCustomerNameMatch(ordCustomer, cybCustomer)) {
+                customerMismatch = true;
+            }
+        }
+
+        // Trường hợp lệch mã cấu hình hoặc lệch tên khách hàng với HĐ Cyber
+        if (configTitle || customerMismatch) {
+            const displayTitle = customerMismatch 
+                ? `Lệch Tên KH: Đơn [${ordCustomer}] ⇄ Cyber [${cybCustomer}]` 
+                : configTitle;
+            const displayGuide = customerMismatch 
+                ? `Sửa tên khách hàng trên HĐ Cyber đúng với Đơn hàng rồi bấm Tra lại.` 
+                : configGuide;
+
             return (
                 <div className="relative p-2 px-3 rounded-xl border border-rose-300 bg-rose-50/95 flex items-center justify-between gap-2.5 shadow-2xs">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <i className="fas fa-triangle-exclamation text-rose-600 text-xs flex-shrink-0"></i>
+                        <i className={`fas ${customerMismatch ? 'fa-user-xmark' : 'fa-triangle-exclamation'} text-rose-600 text-xs flex-shrink-0`}></i>
                         <div className="min-w-0 flex-1">
                             <p className="text-[11px] font-bold text-rose-950 truncate">
-                                {configTitle}
+                                {displayTitle}
                             </p>
                             <p className="text-[10px] text-rose-700 truncate">
-                                {configGuide}
+                                {displayGuide}
                             </p>
                         </div>
                     </div>
@@ -1225,7 +1288,10 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             const dmsVal = dmsVerification.dmsVal;
 
             // Rút gọn tối đa thông điệp cho từng lỗi
-            if (errorType === 'canceled' || norm.includes('huy') || norm.includes('cancel') || norm.includes('void')) {
+            if (errorType === 'customer' || norm.includes('ten khach hang') || norm.includes('khach hang')) {
+                title = `Lệch Tên KH: Đơn [${expectedVal}] ⇄ DMS [${dmsVal}]`;
+                guide = `Sửa tên khách hàng trên DMS thành [${expectedVal}] hoặc kiểm tra lại VSO rồi bấm Tra lại.`;
+            } else if (errorType === 'canceled' || norm.includes('huy') || norm.includes('cancel') || norm.includes('void')) {
                 title = 'VSO trên DMS đã bị Hủy';
                 guide = 'Đổi số VSO đang Mở rồi bấm Tra lại.';
             } else if (errorType === 'invoiced' || norm.includes('hoa don') || norm.includes('invoiced') || norm.includes('da xuat')) {

@@ -150,3 +150,115 @@ export const cleanCyberContractCode = (code: string | undefined | null): string 
 
     return cleaned.trim();
 };
+
+/**
+ * Chuẩn hóa tên khách hàng phục vụ đối soát giữa Đơn hàng, VinFast DMS và CyberSoft:
+ * - Chuyển chữ thường, bỏ dấu tiếng Việt (NFD), xóa ký tự đặc biệt
+ * - Lược bỏ các danh xưng cá nhân (Anh, Chị, Ông, Bà, Em, Cô, Chú, Bác...)
+ * - Đồng bộ các từ viết tắt công ty (Cty/Công ty, TNHH/Trách nhiệm hữu hạn, CP/Cổ phần, TMDV...)
+ */
+export const cleanCustomerName = (name: string | undefined | null): string => {
+    if (!name) return '';
+    let s = String(name)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
+        .toLowerCase()
+        .trim();
+
+    // Thay thế ký tự đặc biệt bằng khoảng trắng
+    s = s.replace(/[\.,\-_/\\()&[\]{}:;+]/g, ' ');
+
+    // Chuẩn hóa khoảng trắng
+    s = s.replace(/\s+/g, ' ').trim();
+
+    // Lược bỏ danh xưng cá nhân đầu chuỗi
+    const personalPrefixes = ['anh ', 'chi ', 'ong ', 'ba ', 'co ', 'chu ', 'bac ', 'em '];
+    for (const p of personalPrefixes) {
+        if (s.startsWith(p)) {
+            s = s.substring(p.length).trim();
+            break;
+        }
+    }
+
+    // Chuẩn hóa từ viết tắt doanh nghiệp thông dụng
+    s = s
+        .replace(/\bcong ty\b/g, 'cty')
+        .replace(/\btrach nhiem huu han\b/g, 'tnhh')
+        .replace(/\bco phan\b/g, 'cp')
+        .replace(/\bthuong mai dich vu\b/g, 'tmdv')
+        .replace(/\bmot thanh vien\b/g, 'mtv')
+        .replace(/\bdoanh nghiep tu nhan\b/g, 'dntn')
+        .replace(/\bhop tac xa\b/g, 'htx');
+
+    // Chuẩn hóa lại khoảng trắng sau khi replace
+    s = s.replace(/\s+/g, ' ').trim();
+
+    return s;
+};
+
+/**
+ * Đối soát thông minh Tên Khách Hàng giữa 2 nguồn (Đơn hàng ⇄ DMS ⇄ CyberSoft):
+ * Trả về true nếu tên trùng khớp hoặc tương đồng cao (chấp nhận viết tắt công ty, danh xưng, không dấu, thiếu tên đệm).
+ * Trả về false nếu khác biệt rõ rệt (khác Họ, khác Tên gọi chính, hoặc khác tên công ty).
+ */
+export const checkCustomerNameMatch = (name1: string | undefined | null, name2: string | undefined | null): boolean => {
+    if (!name1 || !name2) return true; // Tránh chặn oan khi 1 bên chưa kịp nạp dữ liệu
+
+    const c1 = cleanCustomerName(name1);
+    const c2 = cleanCustomerName(name2);
+
+    if (!c1 || !c2) return true;
+
+    // 1. Trùng khớp 100% sau khi chuẩn hóa
+    if (c1 === c2) return true;
+
+    // 2. Một bên bao hàm bên kia hoàn toàn (ví dụ: "cty tnhh mai linh" vs "cty tnhh mai linh mtv")
+    if (c1.includes(c2) || c2.includes(c1)) {
+        const shorter = c1.length < c2.length ? c1 : c2;
+        if (shorter.length >= 4) return true;
+    }
+
+    // 3. Tách từ
+    const words1 = c1.split(' ').filter(w => w.length > 0);
+    const words2 = c2.split(' ').filter(w => w.length > 0);
+
+    if (words1.length === 0 || words2.length === 0) return true;
+
+    // Đối với tên cá nhân (thường không có từ khóa cty, tnhh, cp):
+    const isCompany = c1.includes('cty') || c2.includes('cty') || c1.includes('tnhh') || c2.includes('tnhh') || c1.includes('cp') || c2.includes('cp');
+    
+    if (!isCompany) {
+        // Tên chính (từ cuối cùng) BẮT BUỘC phải giống nhau (ví dụ "An" !== "Bình")
+        const lastName1 = words1[words1.length - 1];
+        const lastName2 = words2[words2.length - 1];
+        if (lastName1 !== lastName2) {
+            return false;
+        }
+
+        // Họ (từ đầu tiên) BẮT BUỘC phải giống nhau (ví dụ "Nguyễn" !== "Trần")
+        const firstName1 = words1[0];
+        const firstName2 = words2[0];
+        if (firstName1 !== firstName2) {
+            return false;
+        }
+
+        // Cùng Họ và cùng Tên chính -> Hợp lệ (cho phép khác biệt tên đệm hoặc gõ tắt đệm)
+        return true;
+    } else {
+        // Đối với doanh nghiệp: Lọc bỏ các từ tiền tố cty, tnhh, cp, tmdv, mtv để lấy tên riêng công ty
+        const stopWords = new Set(['cty', 'tnhh', 'cp', 'tmdv', 'mtv', 'dntn', 'htx', 'dau', 'tu', 'va']);
+        const coreWords1 = words1.filter(w => !stopWords.has(w));
+        const coreWords2 = words2.filter(w => !stopWords.has(w));
+
+        const core1 = coreWords1.join(' ');
+        const core2 = coreWords2.join(' ');
+
+        if (core1 && core2) {
+            if (core1 === core2 || core1.includes(core2) || core2.includes(core1)) {
+                return true;
+            }
+        }
+        return false;
+    }
+};

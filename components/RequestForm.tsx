@@ -127,12 +127,14 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                     dong_xe: initialVehicle['Dòng xe'] || formData.dong_xe,
                     phien_ban: initialVehicle['Phiên bản'] || formData.phien_ban,
                     ngoai_that: initialVehicle['Ngoại thất'] || initialVehicle['Màu ngoại thất'] || formData.ngoai_that,
-                    noi_that: initialVehicle['Nội thất'] || initialVehicle['Màu nội thất'] || formData.noi_that
+                    noi_that: initialVehicle['Nội thất'] || initialVehicle['Màu nội thất'] || formData.noi_that,
+                    ten_khach_hang: formData.ten_khach_hang
                 } : {
                     dong_xe: formData.dong_xe,
                     phien_ban: formData.phien_ban,
                     ngoai_that: formData.ngoai_that,
-                    noi_that: formData.noi_that
+                    noi_that: formData.noi_that,
+                    ten_khach_hang: formData.ten_khach_hang
                 };
 
                 const res = await apiService.verifyDmsVso(orderNo, targetConfig, true);
@@ -154,7 +156,10 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                     let title = 'Lệch cấu hình DMS';
                     let guide = 'Nhắc nhở: TVBH nhớ xử lý trước khi Xuất hóa đơn.';
 
-                    if (errorType === 'canceled' || norm.includes('huy') || norm.includes('cancel')) {
+                    if (errorType === 'customer' || norm.includes('ten khach hang') || norm.includes('khach hang')) {
+                        title = `Lệch Tên KH: Đơn [${expectedVal}] ⇄ DMS [${dmsVal}]`;
+                        guide = `Tên khách trên VSO là [${dmsVal}]. TVBH nhớ kiểm tra lại trước khi Xuất hóa đơn.`;
+                    } else if (errorType === 'canceled' || norm.includes('huy') || norm.includes('cancel')) {
                         title = 'VSO trên DMS đã bị Hủy';
                         guide = 'VSO này đã bị Hủy trên DMS. Vui lòng mở lại hoặc đổi VSO trước khi Xuất hóa đơn.';
                     } else if (errorType === 'invoiced' || norm.includes('hoa don') || norm.includes('da xuat')) {

@@ -3,7 +3,9 @@ import { cyberFetch } from './cyberBridge';
 import { getStorageItem, mapOrderDbToUi, ApiResult, logAction, uploadToSupabase, getApi, postApi } from './baseService';
 import { createNotification } from './notificationService';
 import { Order } from '../../types';
-import { cleanCyberContractCode } from '../../utils/stringUtils';
+import { cleanCyberContractCode, cleanCustomerName, checkCustomerNameMatch } from '../../utils/stringUtils';
+
+export { cleanCustomerName, checkCustomerNameMatch };
 
 
 export const getPaginatedData = async (_?: string[], __?: string, ___?: boolean): Promise<ApiResult> => {
@@ -110,6 +112,7 @@ export interface DmsVsoExpectedConfig {
     phien_ban?: string;
     ngoai_that?: string;
     noi_that?: string;
+    ten_khach_hang?: string;
 }
 
 export interface DmsVsoVerificationResult {
@@ -126,7 +129,7 @@ export interface DmsVsoVerificationResult {
         salesperson?: string;
         invoiceDate?: string | null;
     };
-    errorType?: 'model' | 'version' | 'exterior' | 'interior' | 'invoiced' | 'canceled' | 'not_found' | 'general';
+    errorType?: 'customer' | 'model' | 'version' | 'exterior' | 'interior' | 'invoiced' | 'canceled' | 'not_found' | 'general';
     expectedVal?: string;
     dmsVal?: string;
 }
@@ -816,6 +819,21 @@ export const verifyDmsVso = async (
                             details
                         };
                     }
+                }
+            }
+
+            // 4.3 Tên khách hàng - SO SÁNH TÊN KHÁCH HÀNG GIỮA ĐƠN HÀNG VÀ DMS
+            if (expected.ten_khach_hang && dmsCustomer) {
+                if (!checkCustomerNameMatch(expected.ten_khach_hang, dmsCustomer)) {
+                    return {
+                        isValid: false,
+                        reason: `Lệch Tên khách hàng: Đơn là [${expected.ten_khach_hang}] ⇄ DMS là [${dmsCustomer}].`,
+                        errorType: 'customer',
+                        expectedVal: expected.ten_khach_hang,
+                        dmsVal: dmsCustomer,
+                        dmsRecord,
+                        details
+                    };
                 }
             }
         }
