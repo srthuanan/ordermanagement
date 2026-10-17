@@ -167,7 +167,10 @@ export const useAdminActions = ({
             try {
                 await handleAdminSubmit(
                     'markAsPendingSignature',
-                    { orderNumbers: JSON.stringify([order['Số đơn hàng']]) },
+                    { 
+                        orderNumbers: JSON.stringify([order['Số đơn hàng']]),
+                        ngay_xuat_hoa_don: data?.ngay_xuat_hoa_don
+                    },
                     'Đã chuyển trạng thái.'
                 );
             } finally {

@@ -193,10 +193,10 @@ def check_dms_vso_and_ari(order_number, dms_headers):
             }
             
         inv_date_str = None
-        if sap_inv_date:
-            inv_date_str = sap_inv_date[:10]
-        elif ari.get("createdon"):
-            inv_date_str = ari.get("createdon")[:10]
+        if ari.get("createdon"):
+            inv_date_str = ari.get("createdon")
+        elif sap_inv_date:
+            inv_date_str = sap_inv_date
             
         return {
             "match": True,
@@ -217,7 +217,11 @@ def transition_order_to_pending_signature(order_number, dms_info):
     thông qua RPC rpc_mark_as_pending_signature và ghi nhận số ARI.
     """
     clean_no = order_number.strip()
-    inv_date = dms_info.get("invoice_date") or datetime.now().strftime("%Y-%m-%d")
+    inv_date = dms_info.get("invoice_date")
+    # Nếu không có giờ phút giây hoặc chỉ có ngày thuần túy, lấy giờ phút giây hiện tại (GMT+7)
+    if not inv_date or "00:00:00" in inv_date or len(inv_date) == 10:
+        inv_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S+07:00")
+        
     ari_no = dms_info.get("ari_no", "")
     
     # 1. Gọi RPC rpc_mark_as_pending_signature
@@ -232,14 +236,16 @@ def transition_order_to_pending_signature(order_number, dms_info):
     res = requests.post(rpc_url, headers=SUPABASE_HEADERS, json=rpc_payload, timeout=20)
     
     if res.status_code in [200, 204]:
-        # 2. Cập nhật ghi chú và mã ARI vào đơn hàng
+        # 2. Cập nhật ghi chú, mã ARI và chính xác timestamp có giờ phút giây vào đơn hàng
         try:
             note_msg = f"[DMS Auto] VSO Đã xuất HĐ, ARI: {ari_no}"
             requests.patch(f"{SUPABASE_URL}/rest/v1/yeucauxhd?so_don_hang=eq.{clean_no}", headers=SUPABASE_HEADERS, json={
-                "ghi_chu_admin": note_msg
+                "ghi_chu_admin": note_msg,
+                "ngay_xuat_hoa_don": inv_date
             }, timeout=10)
             requests.patch(f"{SUPABASE_URL}/rest/v1/donhang?so_don_hang=eq.{clean_no}", headers=SUPABASE_HEADERS, json={
-                "ghi_chu": note_msg
+                "ghi_chu": note_msg,
+                "ngay_xuat_hoa_don": inv_date
             }, timeout=10)
         except Exception:
             pass

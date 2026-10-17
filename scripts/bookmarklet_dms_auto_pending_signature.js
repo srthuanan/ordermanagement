@@ -140,7 +140,7 @@
           }
 
           // Thỏa mãn 100% điều kiện: VSO có HĐ & ARI đã phát hành!
-          var invDate = sapDate ? sapDate.substring(0, 10) : (ari.createdon ? ari.createdon.substring(0, 10) : new Date().toISOString().substring(0, 10));
+          var invDate = ari.createdon || new Date().toISOString();
 
           // Gọi Supabase RPC chuyển sang 'Chờ ký hóa đơn'
           var rpcRes = await fetch(sbUrl + '/rest/v1/rpc/rpc_mark_as_pending_signature', {
@@ -156,11 +156,16 @@
 
           if (rpcRes.ok) {
             transitionedCount++;
-            // Ghi chú mã ARI vào yeucauxhd
+            // Ghi chú mã ARI và timestamp chính xác vào yeucauxhd & donhang
             fetch(sbUrl + '/rest/v1/yeucauxhd?so_don_hang=eq.' + encodeURIComponent(soDonHang), {
               method: 'PATCH',
               headers: sbHeaders,
-              body: JSON.stringify({ ghi_chu_admin: '[DMS Auto] VSO Hóa đơn, ARI: ' + ariNo })
+              body: JSON.stringify({ ghi_chu_admin: '[DMS Auto] VSO Hóa đơn, ARI: ' + ariNo, ngay_xuat_hoa_don: invDate })
+            }).catch(function(){});
+            fetch(sbUrl + '/rest/v1/donhang?so_don_hang=eq.' + encodeURIComponent(soDonHang), {
+              method: 'PATCH',
+              headers: sbHeaders,
+              body: JSON.stringify({ ghi_chu: '[DMS Auto] VSO Hóa đơn, ARI: ' + ariNo, ngay_xuat_hoa_don: invDate })
             }).catch(function(){});
 
             subLog.innerHTML += '<div style="color:#10b981;padding-left:12px;font-weight:bold;">🎉 ĐÃ CHUYỂN CHỜ KÝ! (ARI: ' + ariNo + ')</div>';

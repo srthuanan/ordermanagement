@@ -501,7 +501,17 @@ export const performAdminAction = async (action: string, params: Record<string, 
         }
         if (action === 'markAsPendingSignature') {
             const nos = params.orderNumbers ? JSON.parse(params.orderNumbers) : [];
-            const dateVal = params.ngay_xuat_hoa_don || null;
+            let dateVal = params.ngay_xuat_hoa_don ? String(params.ngay_xuat_hoa_don).trim() : '';
+            if (!dateVal) {
+                // Tự động lấy timestamp chính xác hiện tại nếu không nhập
+                dateVal = new Date().toISOString();
+            } else if (dateVal.length === 10) {
+                // Người dùng chọn ngày từ ô date input (YYYY-MM-DD): ghép với giờ phút giây hiện tại (GMT+7)
+                const now = new Date();
+                const pad = (n: number) => String(n).padStart(2, '0');
+                const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+                dateVal = `${dateVal}T${timeStr}+07:00`;
+            }
             const userEmail = getStorageItem("userEmail") || getStorageItem("currentConsultant") || "admin@system.com";
             const userFullName = getStorageItem("currentUser") || "Admin";
 
@@ -513,6 +523,14 @@ export const performAdminAction = async (action: string, params: Record<string, 
             });
 
             if (error) throw error;
+
+            // Đảm bảo donhang và yeucauxhd lưu đúng giờ phút giây thực tế
+            if (Array.isArray(nos) && nos.length > 0) {
+                await Promise.all([
+                    supabaseAdmin.from('donhang').update({ ngay_xuat_hoa_don: dateVal }).in('so_don_hang', nos),
+                    supabaseAdmin.from('yeucauxhd').update({ ngay_xuat_hoa_don: dateVal }).in('so_don_hang', nos)
+                ]).catch(err => console.warn('Lỗi cập nhật timestamp đồng bộ:', err));
+            }
 
             // Đẩy file PDF về Google Drive khi đơn hàng đã ở trạng thái "Chờ ký hóa đơn"
             if (Array.isArray(nos)) {
