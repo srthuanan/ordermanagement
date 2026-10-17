@@ -83,7 +83,6 @@ export const verifyAndRegisterDevice = async (
         const cleanUser = username.toLowerCase().trim();
         const deviceId = getDeviceId();
         const deviceLabel = getDeviceLabel();
-        const isAdmin = cleanUser === 'admin' || role === 'Quản trị viên' || role === 'Admin' || role === 'Ban Giám Đốc';
 
         // 1. Truy vấn metadata hiện tại của tài khoản từ user_presence
         const { data } = await supabase

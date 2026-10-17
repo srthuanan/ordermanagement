@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '../../services/supabaseClient';
-import { parseUserAgent } from '../../utils/deviceParser';
 import { logStaffActivity } from '../../services/activityLogger';
 
 interface StockLocationGuardProps {
@@ -32,33 +30,6 @@ export const StockLocationGuard: React.FC<StockLocationGuardProps> = ({
     return sessionStorage.getItem('om_stock_location_verified') === 'true';
   });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Hàm đảo ngược tọa độ sang địa chỉ tiếng Việt qua API photon
-  const fetchAddress = async (lat: number, lng: number) => {
-    try {
-      const url = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        const feat = data.features?.[0]?.properties || {};
-        const city = feat.city || feat.county || 'Hồ Chí Minh';
-        const region = feat.state || 'Bình Dương';
-        const displayName = [feat.street, feat.district, feat.city, feat.state].filter(Boolean).join(', ');
-        return {
-          city,
-          region,
-          displayName: displayName || `Tọa độ: ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
-          country: feat.country || 'Việt Nam'
-        };
-      }
-    } catch (_) {}
-    return {
-      city: 'Hồ Chí Minh',
-      region: 'Bình Dương',
-      displayName: `Tọa độ: ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
-      country: 'Việt Nam'
-    };
-  };
 
   // Ghi nhận vị trí và lưu vào bảng staff_activity_logs trên Supabase
   const reportLocationToAdmin = async (lat: number, lng: number, accuracy: number) => {
@@ -185,7 +156,7 @@ export const StockLocationGuard: React.FC<StockLocationGuardProps> = ({
 
     // 2. Kích hoạt watchPosition liên tục: Bắt sự kiện người dùng tắt GPS ở cài đặt điện thoại
     const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
+      () => {
         // GPS vẫn đang hoạt động bình thường
       },
       (err) => {
