@@ -8,6 +8,7 @@ export interface VinJourneySummaryCardProps {
     allOrders?: any[];
     onClose?: () => void;
     showToast?: (title: string, message: string, type?: any, duration?: number) => void;
+    onNavigateToTab?: (tab: string, options?: any) => void;
 }
 
 export interface JourneyStep {
@@ -33,7 +34,8 @@ export const VinJourneySummaryCard: React.FC<VinJourneySummaryCardProps> = ({
     cars,
     allOrders = [],
     onClose,
-    showToast
+    showToast,
+    onNavigateToTab
 }) => {
     const cleanVin = useMemo(() => String(vin || '').trim().toUpperCase(), [vin]);
 
@@ -406,7 +408,48 @@ export const VinJourneySummaryCard: React.FC<VinJourneySummaryCardProps> = ({
                     )}
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                    {onNavigateToTab && (
+                        <div className="flex items-center gap-1 bg-white/90 p-0.5 rounded border border-[#B9D5F7] shadow-2xs">
+                            <button
+                                type="button"
+                                onClick={() => onNavigateToTab('de_nghi_xuat', { vin: cleanVin, fromWarehouse: currentStatus.location?.includes('QL13') ? 'K87' : 'K87', toWarehouse: 'K83' })}
+                                className="px-1.5 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xs text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
+                                title="Chuyển sang Lập Phiếu ĐNX cho xe này"
+                            >
+                                <i className="fa-solid fa-truck text-[9px]"></i>
+                                <span>Lập ĐNX</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onNavigateToTab('tra_cuu_phieu', { vin: cleanVin })}
+                                className="px-1.5 py-0.5 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xs text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
+                                title="Xem toàn bộ phiếu TD4, ĐNX, PX7 của xe này"
+                            >
+                                <i className="fa-solid fa-file-invoice text-[9px] text-blue-600"></i>
+                                <span>Tiến Trình Phiếu</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onNavigateToTab('ton_kho', { vin: cleanVin })}
+                                className="px-1.5 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xs text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
+                                title="Xem tồn kho Cyber của xe này"
+                            >
+                                <i className="fa-solid fa-warehouse text-[9px] text-blue-600"></i>
+                                <span>Sổ Tồn</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onNavigateToTab('reconcile_k83', { vin: cleanVin })}
+                                className="px-1.5 py-0.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xs text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
+                                title="Kiểm tra đối soát lệch kho xe này"
+                            >
+                                <i className="fa-solid fa-scale-balanced text-[9px] text-rose-600"></i>
+                                <span>Đối Soát</span>
+                            </button>
+                        </div>
+                    )}
+
                     <button
                         type="button"
                         onClick={handleCopyZalo}

@@ -1637,13 +1637,14 @@ export const fetchK83ReconciliationData = async (
             });
         }
 
-        // Bổ sung thêm từ Supabase donhang & yeucauxhd nếu allOrders chưa có đủ
+        // Bổ sung thêm từ Supabase donhang, yeucauxhd & cyber_xep_xe (Hợp đồng bán xe từ CyberSoft)
         const allTargetVins = Array.from(new Set([...Array.from(cyberK83Map.keys()), ...Array.from(thuanAnYardTonMap.keys())]));
         if (allTargetVins.length > 0) {
             try {
-                const [dhRes, ycRes] = await Promise.all([
+                const [dhRes, ycRes, xxRes] = await Promise.all([
                     supabase.from('donhang').select('vin, ten_khach_hang, ten_tu_van_ban_hang, so_don_hang, so_ct_dnx, so_ct_td4').in('vin', allTargetVins),
-                    supabase.from('yeucauxhd').select('vin, ten_khach_hang, tvbh, so_don_hang').in('vin', allTargetVins)
+                    supabase.from('yeucauxhd').select('vin, ten_khach_hang, tvbh, so_don_hang').in('vin', allTargetVins),
+                    supabase.from('cyber_xep_xe').select('so_khung, ten_kh, ten_hs, so_ct, ma_hd').in('so_khung', allTargetVins)
                 ]);
 
                 const mergeExtra = (row: any, tvbhField: string) => {
@@ -1672,6 +1673,24 @@ export const fetchK83ReconciliationData = async (
 
                 (dhRes.data || []).forEach(r => mergeExtra(r, 'ten_tu_van_ban_hang'));
                 (ycRes.data || []).forEach(r => mergeExtra(r, 'tvbh'));
+
+                // Nạp TVBH và Khách Hàng từ cyber_xep_xe (Hợp đồng CyberSoft chuẩn)
+                (xxRes.data || []).forEach((r: any) => {
+                    const v = String(r.so_khung || '').trim().toUpperCase();
+                    if (!v) return;
+                    const existing = orderInfoMap.get(v) || {};
+                    if (r.ten_kh && (!existing.customerName || existing.customerName === 'Chưa rõ')) {
+                        existing.customerName = r.ten_kh;
+                    }
+                    if (r.ten_hs && (!existing.tvbh || existing.tvbh === 'Chưa rõ')) {
+                        existing.tvbh = r.ten_hs;
+                    }
+                    if (r.so_ct || r.ma_hd) {
+                        if (!existing.orderNumber) existing.orderNumber = r.so_ct || r.ma_hd;
+                    }
+                    orderInfoMap.set(v, existing);
+                    if (v.length >= 6) orderInfoMap.set(v.slice(-6), existing);
+                });
             } catch (eOrderExtra) {
                 console.warn('[fetchK83ReconciliationData] Extra orders enrich warning:', eOrderExtra);
             }
@@ -1732,9 +1751,17 @@ export const fetchK83ReconciliationData = async (
             else if (rawPost) td4MaPostLabel = `Cấp ${rawPost}`;
             else if (hasTd4) td4MaPostLabel = 'Đang trình duyệt';
 
-            const customerName = orderInfo.customerName || cyberItem.tenTtcp || 'Chưa rõ';
-            const tvbh = orderInfo.tvbh || cyberItem.tvbh || 'Chưa rõ';
-            const orderNumber = orderInfo.orderNumber || '';
+            const isTrungBay = String(cyberItem.carModel || cyberItem.vin || '').toUpperCase().includes('TRƯNG BÀY') ||
+                               String(yardCar?.loaiXe || yardCar?.soKhung || '').toUpperCase().includes('TRƯNG BÀY');
+            const customerName = isTrungBay
+                ? 'Showroom Thuận An (Xe Trưng Bày)'
+                : (orderInfo.customerName || cyberItem.tenTtcp || cyberStatus?.td4_data?.ten_kh || 'Chưa rõ');
+            const tvbh = isTrungBay
+                ? 'Xe Trưng Bày Showroom'
+                : (orderInfo.tvbh || cyberItem.tvbh || 'Chưa rõ');
+            const orderNumber = isTrungBay
+                ? 'HĐ Tài sản trưng bày'
+                : (orderInfo.orderNumber || cyberItem.soHd || cyberStatus?.td4_data?.so_hd || '');
 
             if (hasYardStock) {
                 // TRƯỜNG HỢP 1: CẢ HAI CÙNG CÓ (KHỚP HOÀN HẢO)
@@ -1923,9 +1950,17 @@ export const fetchK83ReconciliationData = async (
             else if (rawPost) td4MaPostLabel = `Cấp ${rawPost}`;
             else if (hasTd4) td4MaPostLabel = 'Đang trình duyệt';
 
-            const customerName = orderInfo.customerName || yardCar.showroomQuanLy || 'Chưa rõ';
-            const tvbh = orderInfo.tvbh || 'Chưa rõ';
-            const orderNumber = orderInfo.orderNumber || '';
+            const isTrungBay = String(yardCar.loaiXe || yardCar.soKhung || rawVinKey || '').toUpperCase().includes('TRƯNG BÀY') || 
+                               String(yardCar.soKhung || '').toUpperCase().includes('(TRƯNG BÀY)');
+            const customerName = isTrungBay 
+                ? 'Showroom Thuận An (Xe Trưng Bày)' 
+                : (orderInfo.customerName || cyberStatus?.td4_data?.ten_kh || yardCar.showroomQuanLy || 'Chưa rõ');
+            const tvbh = isTrungBay 
+                ? 'Xe Trưng Bày Showroom' 
+                : (orderInfo.tvbh || 'Chưa rõ');
+            const orderNumber = isTrungBay 
+                ? 'HĐ Tài sản trưng bày' 
+                : (orderInfo.orderNumber || cyberStatus?.td4_data?.so_hd || '');
 
             // Phân tích lý do thừa bãi
             let reason = `Xe đang nằm tại bãi Thuận An thực tế nhưng sổ Cyber đang ở ${tenKhoCyberHienTai} (${maKhoCyberHienTai}), chưa nhập K83!`;

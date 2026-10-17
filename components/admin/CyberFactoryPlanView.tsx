@@ -286,6 +286,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     const [activeSubTab, setActiveSubTab] = useState<'factory_plan' | 'ton_kho' | 'xep_xe' | 'de_nghi_xuat' | 'tra_cuu_phieu' | 'satellite_warehouses' | 'reconcile' | 'reconcile_td4' | 'reconcile_dnx' | 'reconcile_missing_yard' | 'reconcile_k83' | 'reconcile_cross_allocations' | 'reconcile_other_sr_allocations'>('factory_plan');
     const [reconcileCounts, setReconcileCounts] = useState<{ carsCount: number; td4Count: number; dnxCount: number; missingYardCount: number; k83Count?: number; k83DiffCount?: number; allCount: number; thuanAnAllocationsCount?: number; crossPendingCount?: number; otherShowroomAllocationsCount?: number; otherAllocPendingCount?: number }>({ carsCount: 0, td4Count: 0, dnxCount: 0, missingYardCount: 0, k83Count: 0, k83DiffCount: 0, allCount: 0 });
     const [mobileDnxView, setMobileDnxView] = useState<'form' | 'history'>('form');
+    const [satelliteSearchVin, setSatelliteSearchVin] = useState('');
 
     // -------------------------------------------------------------
     // SUB-TAB 4: LẬP ĐỀ NGHỊ XUẤT XE / ĐIỀU CHUYỂN XE (PHDNX & CTDNX)
@@ -1551,22 +1552,64 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         return () => clearTimeout(timer);
     }, [isActive, activeSubTab, tonKhoKeyword, tonKhoCars]);
 
-    const handleQuickCreateDnxFromDeepTonKho = (car: any, deepInfo: any) => {
-        setActiveSubTab('de_nghi_xuat');
-        setDnxVinInput(car.vin);
-        const targetFrom = deepInfo?.ma_kho || car.ma_kho || 'K87';
-        setDnxMaKhoXuat(targetFrom);
-        setDnxMaKhoNhan('K83');
-        if (deepInfo?.contract?.ten_kh) {
-            setDnxKhachHang(deepInfo.contract.ten_kh);
+    const navigateToTab = (
+        tab: string,
+        options?: {
+            vin?: string;
+            fromWarehouse?: string;
+            toWarehouse?: string;
+            customerName?: string;
+            ticketMaCt?: string;
+            [key: string]: any;
         }
-        showToast('Lập Phiếu DNX', `Đã chuyển sang tab Lập Phiếu DNX cho xe ${car.vin} (Kho xuất: ${targetFrom})`, 'info');
+    ) => {
+        const cleanVin = (options?.vin || '').trim().toUpperCase();
+
+        if (tab === 'de_nghi_xuat') {
+            setActiveSubTab('de_nghi_xuat');
+            if (cleanVin) setDnxVinInput(cleanVin);
+            if (options?.fromWarehouse) setDnxMaKhoXuat(options.fromWarehouse);
+            if (options?.toWarehouse) setDnxMaKhoNhan(options.toWarehouse);
+            if (options?.customerName) setDnxKhachHang(options.customerName);
+            showToast('Lập Phiếu ĐNX', `Đã chuyển sang tab Lập Phiếu ĐNX cho xe ${cleanVin || ''}`, 'info', 2500);
+        } else if (tab === 'tra_cuu_phieu') {
+            setActiveSubTab('tra_cuu_phieu');
+            if (cleanVin) setTicketSearch(cleanVin);
+            if (options?.ticketMaCt) setTicketMaCt(options.ticketMaCt);
+            showToast('Tiến Trình Phiếu', `Đang tra cứu toàn bộ phiếu cho xe ${cleanVin || ''}`, 'info', 2500);
+        } else if (tab === 'ton_kho') {
+            setActiveSubTab('ton_kho');
+            if (cleanVin) setTonKhoKeyword(cleanVin);
+            showToast('Báo Cáo Tồn Kho', `Đang xem sổ tồn Cyber cho xe ${cleanVin || ''}`, 'info', 2500);
+        } else if (tab === 'xep_xe') {
+            setActiveSubTab('xep_xe');
+            if (cleanVin) setXepXeKeyword(cleanVin);
+            showToast('Xếp Xe Hợp Đồng', `Đang mở xếp xe cho số VIN ${cleanVin || ''}`, 'info', 2500);
+        } else if (tab === 'satellite_warehouses') {
+            setActiveSubTab('satellite_warehouses');
+            if (cleanVin) setSatelliteSearchVin(cleanVin);
+            showToast('Bãi Xe Thực Tế', `Đang tìm xe ${cleanVin || ''} tại 3 kho bãi thực tế`, 'info', 2500);
+        } else if (tab === 'reconcile_k83' || tab === 'reconcile') {
+            setActiveSubTab('reconcile_k83');
+            showToast('Trung Tâm Đối Soát', `Đang mở Trung tâm đối soát lệch kho cho xe ${cleanVin || ''}`, 'info', 2500);
+        } else if (tab === 'factory_plan') {
+            setActiveSubTab('factory_plan');
+            showToast('Kế Hoạch Nhà Máy', 'Đã chuyển sang Kế hoạch nhà máy', 'info', 2000);
+        }
+    };
+
+    const handleQuickCreateDnxFromDeepTonKho = (car: any, deepInfo: any) => {
+        const targetFrom = deepInfo?.ma_kho || car.ma_kho || 'K87';
+        navigateToTab('de_nghi_xuat', {
+            vin: car.vin,
+            fromWarehouse: targetFrom,
+            toWarehouse: 'K83',
+            customerName: deepInfo?.contract?.ten_kh
+        });
     };
 
     const handleQuickOpenXepXeFromDeepTonKho = (car: any) => {
-        setActiveSubTab('xep_xe');
-        setXepXeKeyword(car.vin);
-        showToast('Tra cứu Hợp Đồng', `Đã mở danh sách Xếp Xe cho số VIN ${car.vin}`, 'info');
+        navigateToTab('xep_xe', { vin: car.vin });
     };
 
     const handleTonKhoCopyVin = (vin: string) => {
@@ -1803,7 +1846,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         )}
                     </button>
 
-                    {/* Tab 5.5 Mobile: Kho Bãi (3 Kho) */}
+                    {/* Tab 5.5 Mobile: Bãi Xe Thực Tế (3 Kho) */}
                     <button
                         type="button"
                         onClick={() => setActiveSubTab('satellite_warehouses')}
@@ -1814,7 +1857,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         }`}
                     >
                         <i className="fa-solid fa-warehouse text-[11px] text-blue-500"></i>
-                        <span>Kho Bãi (3 Kho)</span>
+                        <span>Bãi Xe (3 Kho)</span>
                         {reconcileCounts.carsCount > 0 && (
                             <span className="text-[9.5px] px-1.5 py-0.2 rounded-full font-bold bg-blue-900 text-blue-100 border border-blue-300">
                                 {reconcileCounts.carsCount}
@@ -1822,63 +1865,27 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         )}
                     </button>
 
-                    {/* Tab Mobile: Đối Soát Lệch Kho */}
+                    {/* Tab Mobile: Trung Tâm Đối Soát Kho */}
                     <button
                         type="button"
-                        onClick={() => setActiveSubTab('reconcile')}
+                        onClick={() => setActiveSubTab('reconcile_k83')}
                         className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all ${
-                            activeSubTab === 'reconcile' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard'
-                                ? 'bg-rose-600 text-white font-bold shadow-xs'
-                                : 'bg-rose-50 text-rose-800 font-semibold hover:bg-rose-100 border border-rose-200'
-                        }`}
-                    >
-                        <i className="fa-solid fa-triangle-exclamation text-[11px] text-amber-500"></i>
-                        <span>Đối Soát Lệch Kho</span>
-                        {reconcileCounts.allCount > 0 && (
-                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-full font-bold bg-rose-700 text-white border border-rose-300 animate-pulse">
-                                {reconcileCounts.allCount}
-                            </span>
-                        )}
-                    </button>
-
-
-
-                    {/* Tab Mobile: SR Khác Xuất HĐ */}
-                    <button
-                        type="button"
-                        onClick={() => setActiveSubTab('reconcile_cross_allocations')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all ${
-                            activeSubTab === 'reconcile_cross_allocations'
-                                ? 'bg-rose-700 text-white font-bold shadow-xs'
-                                : 'bg-rose-50 text-rose-800 font-semibold hover:bg-rose-100 border border-rose-200'
-                        }`}
-                    >
-                        <i className="fa-solid fa-triangle-exclamation text-[11px] text-rose-600"></i>
-                        <span>SR Khác Xuất HĐ</span>
-                        {(reconcileCounts.crossPendingCount || 0) > 0 && (
-                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-full font-bold bg-rose-600 text-white animate-pulse">
-                                {reconcileCounts.crossPendingCount}
-                            </span>
-                        )}
-                    </button>
-
-                    {/* Tab Mobile: SR Khác PB - TA Xuất HĐ */}
-                    <button
-                        type="button"
-                        onClick={() => setActiveSubTab('reconcile_other_sr_allocations')}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all ${
-                            activeSubTab === 'reconcile_other_sr_allocations'
-                                ? 'bg-indigo-700 text-white font-bold shadow-xs'
+                            activeSubTab === 'reconcile' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard' || activeSubTab === 'reconcile_k83' || activeSubTab === 'reconcile_cross_allocations' || activeSubTab === 'reconcile_other_sr_allocations'
+                                ? 'bg-indigo-600 text-white font-bold shadow-xs'
                                 : 'bg-indigo-50 text-indigo-800 font-semibold hover:bg-indigo-100 border border-indigo-200'
                         }`}
                     >
-                        <i className="fa-solid fa-arrow-right-arrow-left text-[11px] text-indigo-600"></i>
-                        <span>SR Khác PB - TA XHĐ</span>
-                        {(reconcileCounts.otherShowroomAllocationsCount || 0) > 0 && (
-                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-full font-bold bg-indigo-800 text-white">
-                                {reconcileCounts.otherShowroomAllocationsCount}
+                        <i className="fa-solid fa-scale-balanced text-[11px] text-indigo-500"></i>
+                        <span>Đối Soát Kho</span>
+                        {(reconcileCounts.k83DiffCount !== undefined && reconcileCounts.k83DiffCount > 0) ? (
+                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-full font-bold bg-rose-600 text-white border border-rose-300 animate-pulse">
+                                {reconcileCounts.k83DiffCount} lệch
                             </span>
-                        )}
+                        ) : reconcileCounts.allCount > 0 ? (
+                            <span className="text-[9.5px] px-1.5 py-0.2 rounded-full font-bold bg-amber-600 text-white border border-amber-300">
+                                {reconcileCounts.allCount}
+                            </span>
+                        ) : null}
                     </button>
                 </div>
             </div>
@@ -2004,17 +2011,17 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
 
                     <div className="my-1.5 border-t border-slate-200/70"></div>
                     <div className="px-3 pt-1 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                        <span>Kho Bãi & Phân Bổ</span>
-                        {(reconcileCounts.td4Count > 0 || reconcileCounts.dnxCount > 0 || reconcileCounts.missingYardCount > 0 || (reconcileCounts.crossPendingCount || 0) > 0 || (reconcileCounts.otherAllocPendingCount || 0) > 0) && (
+                        <span>Kho Bãi & Đối Soát</span>
+                        {((reconcileCounts.k83DiffCount || 0) > 0 || reconcileCounts.allCount > 0 || (reconcileCounts.crossPendingCount || 0) > 0 || (reconcileCounts.otherAllocPendingCount || 0) > 0) && (
                             <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                         )}
                     </div>
 
-                    {/* Tab 6: Kho Bãi (3 Kho) */}
+                    {/* Tab 6: Bãi Xe Thực Tế (3 Kho) */}
                     <button
                         type="button"
                         onClick={() => setActiveSubTab('satellite_warehouses')}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all ${
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all cursor-pointer ${
                             activeSubTab === 'satellite_warehouses'
                                 ? 'bg-blue-600 text-white shadow-xs font-bold'
                                 : 'text-slate-700 hover:bg-blue-50 hover:text-blue-900 font-semibold'
@@ -2022,124 +2029,47 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                     >
                         <div className="flex items-center gap-2.5">
                             <i className="fa-solid fa-warehouse w-4 text-center text-xs opacity-90 text-blue-500"></i>
-                            <span>Kho Bãi (3 Kho)</span>
+                            <span>Bãi Xe Thực Tế (3 Kho)</span>
                         </div>
                         {reconcileCounts.carsCount > 0 && (
                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                                 activeSubTab === 'satellite_warehouses' ? 'bg-blue-800 text-white border border-blue-400' : 'bg-blue-100 text-blue-800 border border-blue-200'
                             }`}>
-                                {reconcileCounts.carsCount.toLocaleString()}
+                                {reconcileCounts.carsCount.toLocaleString()} tồn
                             </span>
                         )}
                     </button>
 
-                    {/* Tab 7: Cảnh Báo Sai Lệch */}
-                    <button
-                        type="button"
-                        onClick={() => setActiveSubTab('reconcile')}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all ${
-                            activeSubTab === 'reconcile' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard'
-                                ? 'bg-rose-600 text-white shadow-xs font-bold'
-                                : 'text-slate-700 hover:bg-rose-50 hover:text-rose-900 font-semibold'
-                        }`}
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <i className="fa-solid fa-triangle-exclamation w-4 text-center text-xs text-amber-500"></i>
-                            <span>Cảnh Báo Sai Lệch</span>
-                        </div>
-                        {reconcileCounts.allCount > 0 && (
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse ${
-                                activeSubTab === 'reconcile' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard'
-                                    ? 'bg-rose-800 text-white border border-rose-400'
-                                    : 'bg-rose-100 text-rose-800 border border-rose-200'
-                            }`}>
-                                {reconcileCounts.allCount}
-                            </span>
-                        )}
-                    </button>
-
-                    {/* Tab 8: Tra Soát K83 vs Bãi TT */}
+                    {/* Tab 7: Trung Tâm Đối Soát Kho */}
                     <button
                         type="button"
                         onClick={() => setActiveSubTab('reconcile_k83')}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all ${
-                            activeSubTab === 'reconcile_k83'
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all cursor-pointer ${
+                            activeSubTab === 'reconcile' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard' || activeSubTab === 'reconcile_k83' || activeSubTab === 'reconcile_cross_allocations' || activeSubTab === 'reconcile_other_sr_allocations'
                                 ? 'bg-indigo-600 text-white shadow-xs font-bold'
                                 : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-900 font-semibold'
                         }`}
                     >
                         <div className="flex items-center gap-2.5">
                             <i className="fa-solid fa-scale-balanced w-4 text-center text-xs text-indigo-500"></i>
-                            <span>Tra Soát K83 vs Bãi TT</span>
-                        </div>
-                        {(reconcileCounts.k83DiffCount !== undefined && reconcileCounts.k83DiffCount > 0) ? (
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse ${
-                                activeSubTab === 'reconcile_k83'
-                                    ? 'bg-indigo-800 text-white border border-indigo-400'
-                                    : 'bg-amber-100 text-amber-800 border border-amber-300'
-                            }`}>
-                                {reconcileCounts.k83DiffCount} lệch
-                            </span>
-                        ) : reconcileCounts.k83Count !== undefined && reconcileCounts.k83Count > 0 ? (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                {reconcileCounts.k83Count}
-                            </span>
-                        ) : null}
-                    </button>
-
-
-                    {/* Tab 10: SR Khác Xuất HĐ (Cần chuyển ĐĐKD) */}
-                    <button
-                        type="button"
-                        onClick={() => setActiveSubTab('reconcile_cross_allocations')}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all ${
-                            activeSubTab === 'reconcile_cross_allocations'
-                                ? 'bg-rose-700 text-white shadow-xs font-bold'
-                                : 'text-slate-700 hover:bg-rose-50 hover:text-rose-900 font-semibold'
-                        }`}
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <i className="fa-solid fa-triangle-exclamation w-4 text-center text-xs text-rose-500"></i>
-                            <span>SR Khác Xuất HĐ</span>
-                        </div>
-                        {(reconcileCounts.crossPendingCount || 0) > 0 ? (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-rose-600 text-white animate-pulse" title="Cần lập ĐNX điều chuyển ĐĐKD">
-                                {reconcileCounts.crossPendingCount}
-                            </span>
-                        ) : (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-slate-100 text-slate-600">
-                                0
-                            </span>
-                        )}
-                    </button>
-
-                    {/* Tab 11: SR Khác PB - TA Xuất HĐ */}
-                    <button
-                        type="button"
-                        onClick={() => setActiveSubTab('reconcile_other_sr_allocations')}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all ${
-                            activeSubTab === 'reconcile_other_sr_allocations'
-                                ? 'bg-indigo-700 text-white shadow-xs font-bold'
-                                : 'text-slate-700 hover:bg-indigo-50 hover:text-indigo-900 font-semibold'
-                        }`}
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <i className="fa-solid fa-arrow-right-arrow-left w-4 text-center text-xs text-indigo-500"></i>
-                            <span>SR Khác PB - TA XHĐ</span>
+                            <span>Trung Tâm Đối Soát Kho</span>
                         </div>
                         <div className="flex items-center gap-1">
-                            {(reconcileCounts.otherShowroomAllocationsCount || 0) > 0 && (
-                                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                                    activeSubTab === 'reconcile_other_sr_allocations'
-                                        ? 'bg-indigo-900 text-white'
-                                        : 'bg-indigo-100 text-indigo-800'
+                            {(reconcileCounts.k83DiffCount !== undefined && reconcileCounts.k83DiffCount > 0) ? (
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse ${
+                                    activeSubTab === 'reconcile_k83' || activeSubTab === 'reconcile'
+                                        ? 'bg-rose-700 text-white border border-rose-400'
+                                        : 'bg-rose-100 text-rose-800 border border-rose-300'
                                 }`}>
-                                    {reconcileCounts.otherShowroomAllocationsCount}
+                                    {reconcileCounts.k83DiffCount} lệch
                                 </span>
-                            )}
-                            {(reconcileCounts.otherAllocPendingCount || 0) > 0 && (
-                                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-amber-500 text-white animate-pulse" title={`${reconcileCounts.otherAllocPendingCount} xe chưa có ĐNX về Thuận An`}>
-                                    {reconcileCounts.otherAllocPendingCount}
+                            ) : reconcileCounts.allCount > 0 ? (
+                                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                    {reconcileCounts.allCount} cảnh báo
+                                </span>
+                            ) : (
+                                <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    Chuẩn
                                 </span>
                             )}
                         </div>
@@ -3000,7 +2930,29 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                                         className="h-9 px-3.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs flex items-center gap-1.5 active:scale-95 transition-all"
                                                     >
                                                         <i className="fas fa-truck-moving text-xs"></i>
-                                                        <span>Lập Phiếu DNX điều chuyển</span>
+                                                        <span>Lập Phiếu DNX</span>
+                                                    </button>
+
+                                                    {/* Action 2.5: Xem Vị Trí Bãi Thực Tế */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => navigateToTab('satellite_warehouses', { vin: dc.vin })}
+                                                        className="h-9 px-3 rounded-xl text-xs font-bold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 flex items-center gap-1.5 transition-all cursor-pointer"
+                                                        title="Xem vị trí xe tại Bãi thực tế"
+                                                    >
+                                                        <i className="fa-solid fa-warehouse text-xs text-blue-600"></i>
+                                                        <span>Vị Trí Bãi Xe</span>
+                                                    </button>
+
+                                                    {/* Action 2.6: Xem Tiến Trình Phiếu */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => navigateToTab('tra_cuu_phieu', { vin: dc.vin })}
+                                                        className="h-9 px-3 rounded-xl text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 flex items-center gap-1.5 transition-all cursor-pointer"
+                                                        title="Xem toàn bộ chứng từ phiếu của xe này"
+                                                    >
+                                                        <i className="fa-solid fa-file-invoice text-xs text-blue-600"></i>
+                                                        <span>Tiến Trình Phiếu</span>
                                                     </button>
 
                                                     {/* Action 3: Mở Hợp Đồng */}
@@ -5004,6 +4956,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             activeSubTab === 'reconcile_other_sr_allocations' ? 'other_sr_allocations' : 'all'
                         }
                         initialAllocSubMode="cross_showroom_billed"
+                        onNavigateToTab={navigateToTab}
+                        initialSearchVin={satelliteSearchVin}
                         onCountsChange={(c: any) => {
                             setReconcileCounts({
                                 carsCount: c.carsCount,

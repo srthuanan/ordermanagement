@@ -80,6 +80,8 @@ interface SatelliteWarehousesViewProps {
     initialReconcileTab?: 'td4' | 'dnx' | 'missing_yard' | 'k83_reconcile' | 'all' | 'thuan_an_allocations' | 'other_sr_allocations';
     initialAllocSubMode?: 'allocated_unbilled' | 'cross_showroom_billed';
     onCountsChange?: (counts: { carsCount: number; td4Count: number; dnxCount: number; missingYardCount: number; k83Count?: number; k83DiffCount?: number; allAlertCount: number; thuanAnAllocationsCount?: number; crossPendingCount?: number; otherShowroomAllocationsCount?: number; otherAllocPendingCount?: number }) => void;
+    onNavigateToTab?: (tab: string, options?: any) => void;
+    initialSearchVin?: string;
 }
 
 const API_URL = "https://script.google.com/macros/s/AKfycbylEAT8IqQVmKsulKUB5imIUcWm3h7a6Mfe-MQyhF3T5Wu2JWcbO3Q6a1aXZLN7exnV/exec";
@@ -131,7 +133,9 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     initialViewMode = 'inventory',
     initialReconcileTab = 'all',
     initialAllocSubMode = 'allocated_unbilled',
-    onCountsChange
+    onCountsChange,
+    onNavigateToTab,
+    initialSearchVin = ''
 }) => {
     // 2 View Modes chính:
     // 'inventory': Tồn kho 3 kho bãi vệ tinh
@@ -157,6 +161,13 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         if (initialReconcileTab) setReconcileSubTab(initialReconcileTab);
     }, [initialReconcileTab]);
 
+    useEffect(() => {
+        if (initialSearchVin) {
+            setSearchQuery(initialSearchVin);
+            setManualJourneyVin(initialSearchVin);
+        }
+    }, [initialSearchVin]);
+
     // Filters cho Bảng Tổng Hợp ('all')
     const [allAlertFilter, setAllAlertFilter] = useState<'all' | 'dnx' | 'td4' | 'missing_yard'>('all');
     const [allAlertSearch, setAllAlertSearch] = useState('');
@@ -170,7 +181,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     const [khoFilter, setKhoFilter] = useState<'all' | 'q12' | 'ql13' | 'tada'>('all');
     const [modelFilter, setModelFilter] = useState<string>('all');
     const [showroomFilter, setShowroomFilter] = useState<string>('thuan_an');
-    const [statusFilter, setStatusFilter] = useState<'all' | 'ton' | 'giao'>('all');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'ton' | 'giao'>('ton');
     const [searchQuery, setSearchQuery] = useState('');
     const [copiedVin, setCopiedVin] = useState<string | null>(null);
     const [selectedRowIdx, setSelectedRowIdx] = useState<number>(0);
@@ -1639,7 +1650,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     useEffect(() => {
         if (onCountsChange) {
             onCountsChange({
-                carsCount: cars.length,
+                carsCount: cars.filter(c => c.isTonKho).length,
                 td4Count: countTd4Approved,
                 dnxCount: countAlertThuanAn,
                 missingYardCount: missingYardItems.filter(c => c.isViolation).length,
@@ -1764,6 +1775,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 cars={cars}
                                 allOrders={allOrders}
                                 showToast={showToast}
+                                onNavigateToTab={onNavigateToTab}
                                 onClose={() => {
                                     if (activeJourneyVin) {
                                         setDismissedJourneyVin(activeJourneyVin);
@@ -2020,69 +2032,104 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
             {/* ========================================================================= */}
             {viewMode === 'reconcile' && (
                 <>
-                    {/* THANH CÔNG CỤ DUY NHẤT (Single Ribbon Toolbar ~30px) */}
-                    <div className="bg-[#F0F0F0] border-b border-[#CCCCCC] px-1.5 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-800 shrink-0">
-                        {/* Nhóm Trái: Active Phân Hệ Badge & Bộ Lọc Tuỳ Biến (Đã chuyển các nút chuyển tab sang Sidebar) */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            {/* BADGE TIÊU ĐỀ PHÂN HỆ ĐANG XEM TỪ SIDEBAR */}
-                            {reconcileSubTab === 'thuan_an_allocations' && (
-                                <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-900 border border-rose-300 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
-                                    <i className="fa-solid fa-triangle-exclamation text-[10px] text-rose-600"></i>
-                                    <span>SR Khác Xuất HĐ</span>
-                                    {countCrossPending > 0 ? (
-                                        <span className="px-1 text-[9px] rounded-full bg-rose-600 text-white font-mono font-bold animate-pulse" title="Cần lập ĐNX điều chuyển ĐĐKD">
-                                            {countCrossPending}
-                                        </span>
-                                    ) : (
-                                        <span className="px-1 text-[9px] rounded-full bg-emerald-600 text-white font-mono font-bold">
-                                            0
-                                        </span>
-                                    )}
-                                </span>
-                            )}
+                    {/* THANH CÔNG CỤ DUY NHẤT (Single Ribbon Toolbar ~36px) */}
+                    <div className="bg-[#F8FAFC] border-b border-slate-300 px-2 py-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-800 shrink-0 shadow-2xs">
+                        {/* 4 Tabs Phân Hệ Đối Soát Tinh Gọn */}
+                        <div className="flex items-center gap-1 bg-slate-200/90 p-0.5 rounded-lg border border-slate-300">
+                            {/* Tab 1: Tra Soát K83 vs Bãi TT */}
+                            <button
+                                type="button"
+                                onClick={() => setReconcileSubTab('k83_reconcile')}
+                                className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                                    reconcileSubTab === 'k83_reconcile'
+                                        ? 'bg-white text-indigo-700 shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                                }`}
+                            >
+                                <i className="fa-solid fa-scale-balanced text-[11px]"></i>
+                                <span>Tra Soát K83 vs Bãi TT</span>
+                                {countK83Diff > 0 ? (
+                                    <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-rose-600 text-white font-mono font-bold animate-pulse">
+                                        {countK83Diff} lệch
+                                    </span>
+                                ) : (
+                                    <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-emerald-600 text-white font-mono font-bold">
+                                        Khớp
+                                    </span>
+                                )}
+                            </button>
 
-                            {reconcileSubTab === 'other_sr_allocations' && (
-                                <span className="px-2 py-0.5 rounded bg-indigo-100 text-indigo-900 border border-indigo-300 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
-                                    <i className="fa-solid fa-arrow-right-arrow-left text-[10px] text-indigo-600"></i>
-                                    <span>SR Khác PB - TA Xuất HĐ</span>
+                            {/* Tab 2: Cảnh Báo Sai Lệch Giấy Tờ (TD4 / ĐNX) */}
+                            <button
+                                type="button"
+                                onClick={() => setReconcileSubTab('all')}
+                                className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                                    reconcileSubTab === 'all' || reconcileSubTab === 'td4' || reconcileSubTab === 'dnx' || reconcileSubTab === 'missing_yard'
+                                        ? 'bg-white text-amber-700 shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                                }`}
+                            >
+                                <i className="fa-solid fa-triangle-exclamation text-[11px] text-amber-500"></i>
+                                <span>Cảnh Báo Sai Lệch</span>
+                                {allCombinedAlerts.length > 0 && (
+                                    <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-amber-500 text-white font-mono font-bold">
+                                        {allCombinedAlerts.length}
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Tab 3: SR Khác Xuất HĐ */}
+                            <button
+                                type="button"
+                                onClick={() => setReconcileSubTab('thuan_an_allocations')}
+                                className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                                    reconcileSubTab === 'thuan_an_allocations'
+                                        ? 'bg-white text-rose-700 shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                                }`}
+                            >
+                                <i className="fa-solid fa-file-invoice text-[11px] text-rose-500"></i>
+                                <span>SR Khác Xuất HĐ</span>
+                                {countCrossPending > 0 ? (
+                                    <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-rose-600 text-white font-mono font-bold animate-pulse" title="Cần lập ĐNX điều chuyển ĐĐKD">
+                                        {countCrossPending}
+                                    </span>
+                                ) : (
+                                    <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-slate-300 text-slate-700 font-mono font-bold">
+                                        0
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Tab 4: SR Khác PB – TA Xuất HĐ */}
+                            <button
+                                type="button"
+                                onClick={() => setReconcileSubTab('other_sr_allocations')}
+                                className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                                    reconcileSubTab === 'other_sr_allocations'
+                                        ? 'bg-white text-indigo-700 shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                                }`}
+                            >
+                                <i className="fa-solid fa-arrow-right-arrow-left text-[11px] text-indigo-500"></i>
+                                <span>SR Khác PB – TA Xuất HĐ</span>
+                                <div className="flex items-center gap-1">
                                     {otherAllocations.length > 0 && (
-                                        <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-indigo-800 text-white font-mono font-bold">
+                                        <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-indigo-100 text-indigo-800 font-mono font-bold">
                                             {otherAllocations.length}
                                         </span>
                                     )}
                                     {countOtherAllocPending > 0 && (
-                                        <span className="px-1 text-[9px] rounded-full bg-amber-500 text-white font-mono font-bold animate-pulse" title={`${countOtherAllocPending} xe chưa được SR khác lập ĐNX chuyển về Thuận An`}>
+                                        <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-amber-500 text-white font-mono font-bold animate-pulse" title={`${countOtherAllocPending} xe chưa có ĐNX về Thuận An`}>
                                             {countOtherAllocPending}
                                         </span>
                                     )}
-                                </span>
-                            )}
+                                </div>
+                            </button>
+                        </div>
 
-                            {reconcileSubTab === 'k83_reconcile' && (
-                                <span className="px-2 py-0.5 rounded bg-sky-100 text-sky-900 border border-sky-300 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
-                                    <i className="fa-solid fa-scale-balanced text-[10px] text-sky-500"></i>
-                                    <span>Tra Soát K83 vs Bãi TT</span>
-                                    {countK83Diff > 0 && (
-                                        <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-sky-800 text-white font-mono font-bold">
-                                            {countK83Diff} lệch
-                                        </span>
-                                    )}
-                                </span>
-                            )}
-
-                            {(reconcileSubTab === 'all' || reconcileSubTab === 'td4' || reconcileSubTab === 'dnx' || reconcileSubTab === 'missing_yard') && (
-                                <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs">
-                                    <i className="fa-solid fa-triangle-exclamation text-[10px] text-amber-600"></i>
-                                    <span>Cảnh Báo Sai Lệch</span>
-                                    <span className={`px-1.5 py-0.2 text-[9px] rounded-full font-mono font-bold ${allCombinedAlerts.length > 0 ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700'}`}>
-                                        {allCombinedAlerts.length}
-                                    </span>
-                                </span>
-                            )}
-
-                            <div className="h-3.5 w-[1px] bg-slate-300 mx-0.5 hidden sm:block"></div>
-
-                            {/* Bộ Lọc Tuỳ Biến Theo Phân Hệ Đang Chọn */}
+                        {/* Bộ Lọc Tuỳ Biến Theo Phân Hệ Đang Chọn */}
+                        <div className="flex items-center gap-1.5 flex-wrap">
                             {reconcileSubTab === 'k83_reconcile' && (
                                 <>
                                     <div className="flex items-center gap-1">
@@ -3458,6 +3505,66 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                     </div>
                                                     <div className="text-[9.5px] text-slate-600 mt-0.5 truncate" title={item.actionRequired}>
                                                         👉 {item.actionRequired}
+                                                    </div>
+                                                    {/* CÁC NÚT THAO TÁC LIÊN KẾT NHANH */}
+                                                    <div className="mt-1 flex items-center gap-1 flex-wrap">
+                                                        {onNavigateToTab && (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        onNavigateToTab('de_nghi_xuat', {
+                                                                            vin: item.vin,
+                                                                            fromWarehouse: item.tenKhoCyber?.includes('QL13') ? 'K87' : 'K87',
+                                                                            toWarehouse: 'K83',
+                                                                            customerName: item.customerName
+                                                                        });
+                                                                    }}
+                                                                    className="px-1.5 py-0.5 rounded-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[9px] font-bold flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
+                                                                    title="Chuyển sang Lập Phiếu ĐNX cho xe này"
+                                                                >
+                                                                    <i className="fa-solid fa-truck text-[8px]"></i>
+                                                                    <span>Lập ĐNX</span>
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        onNavigateToTab('tra_cuu_phieu', { vin: item.vin });
+                                                                    }}
+                                                                    className="px-1.5 py-0.5 rounded-xs bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-300 text-[9px] font-bold flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
+                                                                    title="Tra cứu toàn bộ phiếu của xe này"
+                                                                >
+                                                                    <i className="fa-solid fa-file-invoice text-[8px] text-blue-600"></i>
+                                                                    <span>Phiếu</span>
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        onNavigateToTab('ton_kho', { vin: item.vin });
+                                                                    }}
+                                                                    className="px-1.5 py-0.5 rounded-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-[9px] font-bold flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
+                                                                    title="Xem sổ tồn Cyber của xe này"
+                                                                >
+                                                                    <i className="fa-solid fa-warehouse text-[8px] text-blue-600"></i>
+                                                                    <span>Sổ Tồn</span>
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setManualJourneyVin(item.vin);
+                                                            }}
+                                                            className="px-1.5 py-0.5 rounded-xs bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 text-[9px] font-bold flex items-center gap-1 cursor-pointer transition-all shadow-2xs"
+                                                            title="Mở bảng tổng hợp hành trình xe"
+                                                        >
+                                                            <i className="fa-solid fa-route text-[8px]"></i>
+                                                            <span>Hành Trình</span>
+                                                        </button>
                                                     </div>
                                                     {item.responsiblePerson && (
                                                         <div className="mt-0.5">
