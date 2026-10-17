@@ -1,4 +1,5 @@
 import { supabase, supabaseAdmin } from './supabaseClient';
+import { verifyAndRegisterDevice } from '../utils/deviceSecurity';
 export { supabase };
 
 /**
@@ -74,11 +75,22 @@ export const login = async (emailOrUsername: string, password: string, rememberM
                     ? userMetaName.trim()
                     : (profile?.username || email.split('@')[0]));
 
+            const resolvedUsername = profile?.username || email.split('@')[0];
+            const resolvedRole = profile?.role || 'Tư vấn bán hàng';
+
+            // KIỂM TRA BẢO MẬT: Giới hạn thiết bị (Max 2) và Khởi tạo phiên đơn (Single Session)
+            const deviceCheck = await verifyAndRegisterDevice(resolvedUsername, resolvedRole, false);
+            if (!deviceCheck.allowed) {
+                console.warn("[Auth] 🚫 Chặn đăng nhập do giới hạn thiết bị:", deviceCheck.message);
+                await supabase.auth.signOut();
+                return { success: false, message: deviceCheck.message || "Tài khoản đã đạt giới hạn thiết bị cho phép." };
+            }
+
             console.log(`[Auth] ✅ Đăng nhập THÀNH CÔNG cho TVBH: ${resolvedConsultantName}`);
             return applyLoginState({
-                username: profile?.username || email.split('@')[0],
+                username: resolvedUsername,
                 consultantName: resolvedConsultantName,
-                role: profile?.role || 'Tư vấn bán hàng',
+                role: resolvedRole,
                 email: email,
                 token: authData.session?.access_token
             }, rememberMe);
@@ -164,12 +176,23 @@ export const restoreSession = async (): Promise<boolean> => {
                 ? userMetaName.trim()
                 : (profile?.username || email.split('@')[0]));
 
+        const resolvedUsername = profile?.username || email.split('@')[0];
+        const resolvedRole = profile?.role || 'Tư vấn bán hàng';
+
+        // Xác minh thiết bị khi khôi phục phiên (F5)
+        const deviceCheck = await verifyAndRegisterDevice(resolvedUsername, resolvedRole, true);
+        if (!deviceCheck.allowed) {
+            console.warn("[Auth] 🚫 Chặn khôi phục phiên do giới hạn thiết bị:", deviceCheck.message);
+            await logout();
+            return false;
+        }
+
         const rememberMe = localStorage.getItem('rememberMe') === 'true';
 
         applyLoginState({
-            username: profile?.username || email.split('@')[0],
+            username: resolvedUsername,
             consultantName: resolvedConsultantName,
-            role: profile?.role || 'Tư vấn bán hàng',
+            role: resolvedRole,
             email: email,
             token: session.access_token
         }, rememberMe);

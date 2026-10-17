@@ -55,6 +55,7 @@ import HolidayThemeDecorator from './components/ui/HolidayThemeDecorator';
 // import { ADMIN_USER } from './constants';
 import * as apiService from './services/apiService';
 import { supabase } from './services/apiService';
+import { StockLocationGuard } from './components/security/StockLocationGuard';
 import { AnalyticsData, Order } from './types';
 import { GlobalNotificationProvider } from './components/context/GlobalNotificationContext';
 
@@ -255,6 +256,7 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
             supabase.removeChannel(channel);
         };
     }, [currentUser, currentUserName, showToast]);
+
 
     useEffect(() => {
         const handleNavigateStock = (e: any) => {
@@ -1124,39 +1126,50 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                                         </div>
                                     </div>
                                 ) : (
-                                    <Suspense fallback={<LoadingFallback />}>
-                                        <StockView
-                                            stockData={stockData}
-                                            queuedVins={queuedVins}
-                                            isLoading={isLoadingStock}
-                                            error={errorStock}
-                                            refetchStock={refetchStock}
-                                            highlightedVins={highlightedVins}
-                                            showToast={showToast}
-                                            currentUser={currentUser}
-                                            isAdmin={isCurrentUserAdmin}
-                                            canHoldMore={canHoldMore}
-                                            onCreateRequestForVehicle={handleCreateRequestForVehicle}
-                                            onHoldCar={handleHoldCar}
-                                            onReleaseCar={handleReleaseCar}
-                                            onJoinQueue={handleJoinQueue}
-                                            onLeaveQueue={handleLeaveQueue}
-                                            onOpenExtensionModal={setExtensionVehicle}
-                                            processingVin={processingVin}
-                                            isSidebarCollapsed={isSidebarCollapsed}
-                                            allOrders={allHistoryData}
-                                            showOrderInAdmin={isCurrentUserAdmin ? showOrderInAdmin : undefined}
-                                            showAdminTab={isCurrentUserAdmin ? showAdminTab : undefined}
-                                            forcedSearch={stockSearch}
-                                            isReferenceAccount={isReferenceAccount}
-                                            onNavigateToInquiry={() => {
-                                                setActiveView('inquiry');
-                                            }}
-                                            onViewCarOnMap={() => {
-                                                setActiveView('stock');
-                                            }}
-                                        />
-                                    </Suspense>
+                                    activeView === 'stock' && (
+                                        <Suspense fallback={<LoadingFallback />}>
+                                            <StockLocationGuard
+                                                currentUser={currentUser}
+                                                currentUserName={currentUserName}
+                                                userEmail={userEmail}
+                                                isAdmin={isCurrentUserAdmin}
+                                                onCancel={() => setActiveView('orders')}
+                                                showToast={showToast}
+                                            >
+                                                <StockView
+                                                    stockData={stockData}
+                                                    queuedVins={queuedVins}
+                                                    isLoading={isLoadingStock}
+                                                    error={errorStock}
+                                                    refetchStock={refetchStock}
+                                                    highlightedVins={highlightedVins}
+                                                    showToast={showToast}
+                                                    currentUser={currentUser}
+                                                    isAdmin={isCurrentUserAdmin}
+                                                    canHoldMore={canHoldMore}
+                                                    onCreateRequestForVehicle={handleCreateRequestForVehicle}
+                                                    onHoldCar={handleHoldCar}
+                                                    onReleaseCar={handleReleaseCar}
+                                                    onJoinQueue={handleJoinQueue}
+                                                    onLeaveQueue={handleLeaveQueue}
+                                                    onOpenExtensionModal={setExtensionVehicle}
+                                                    processingVin={processingVin}
+                                                    isSidebarCollapsed={isSidebarCollapsed}
+                                                    allOrders={allHistoryData}
+                                                    showOrderInAdmin={isCurrentUserAdmin ? showOrderInAdmin : undefined}
+                                                    showAdminTab={isCurrentUserAdmin ? showAdminTab : undefined}
+                                                    forcedSearch={stockSearch}
+                                                    isReferenceAccount={isReferenceAccount}
+                                                    onNavigateToInquiry={() => {
+                                                        setActiveView('inquiry');
+                                                    }}
+                                                    onViewCarOnMap={() => {
+                                                        setActiveView('stock');
+                                                    }}
+                                                />
+                                            </StockLocationGuard>
+                                        </Suspense>
+                                    )
                                 )}
                             </div>
                         </div>

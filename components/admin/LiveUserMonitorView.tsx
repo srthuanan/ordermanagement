@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { getActiveUsers, recordUserPresence } from '../../services/apiService';
+import { resetUserDevices } from '../../utils/deviceSecurity';
+import { getStaffActivityLogs, StaffActivityLogEntry } from '../../services/activityLogger';
 import Avatar from '../ui/Avatar';
 import moment from 'moment';
 
@@ -31,6 +33,13 @@ interface LiveUser {
       isp: string;
       source?: 'gps' | 'ip' | 'default';
     };
+    registered_devices?: Array<{
+      deviceId: string;
+      label: string;
+      firstLogin: string;
+      lastLogin: string;
+    }>;
+    active_device_label?: string;
   };
 }
 
@@ -40,6 +49,7 @@ interface LiveUserMonitorViewProps {
 }
 
 export const LiveUserMonitorView: React.FC<LiveUserMonitorViewProps> = ({ showToast, isActive = true }) => {
+  const [activeTab, setActiveTab] = useState<'map' | 'activity_logs'>('map');
   const [users, setUsers] = useState<LiveUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -47,6 +57,13 @@ export const LiveUserMonitorView: React.FC<LiveUserMonitorViewProps> = ({ showTo
   const [searchTerm, setSearchTerm] = useState('');
   const [deviceFilter, setDeviceFilter] = useState<'all' | 'Desktop' | 'Mobile'>('all');
   const [selectedUser, setSelectedUser] = useState<LiveUser | null>(null);
+
+  // Activity Logs State
+  const [activityLogs, setActivityLogs] = useState<StaffActivityLogEntry[]>([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+  const [totalLogs, setTotalLogs] = useState(0);
+  const [logActionFilter, setLogActionFilter] = useState<string>('all');
+  const [logSearchTerm, setLogSearchTerm] = useState('');
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<any>(null);
@@ -119,6 +136,44 @@ export const LiveUserMonitorView: React.FC<LiveUserMonitorViewProps> = ({ showTo
     });
   }, [users, searchTerm, deviceFilter]);
 
+  // Fetch Activity Logs
+  const fetchActivityLogs = useCallback(async (silent: boolean = false) => {
+    if (!silent) setIsLoadingLogs(true);
+    try {
+      const res = await getStaffActivityLogs({
+        actionType: logActionFilter,
+        limit: 100
+      });
+      setActivityLogs(res.data);
+      setTotalLogs(res.total);
+    } catch (_) {
+      if (!silent) showToast('Lỗi', 'Không thể tải nhật ký hoạt động', 'error');
+    } finally {
+      setIsLoadingLogs(false);
+    }
+  }, [logActionFilter, showToast]);
+
+  useEffect(() => {
+    if (activeTab === 'activity_logs') {
+      fetchActivityLogs();
+      const intv = setInterval(() => fetchActivityLogs(true), 15000);
+      return () => clearInterval(intv);
+    }
+  }, [activeTab, fetchActivityLogs]);
+
+  // Filtered Activity Logs
+  const filteredLogs = useMemo(() => {
+    if (!logSearchTerm) return activityLogs;
+    const term = logSearchTerm.toLowerCase().trim();
+    return activityLogs.filter(log =>
+      (log.full_name || '').toLowerCase().includes(term) ||
+      (log.username || '').toLowerCase().includes(term) ||
+      (log.action_title || '').toLowerCase().includes(term) ||
+      (log.target_vin || '').toLowerCase().includes(term) ||
+      (log.formatted_address || '').toLowerCase().includes(term)
+    );
+  }, [activityLogs, logSearchTerm]);
+
   // Invalidate size helper
   const refreshMapSize = useCallback(() => {
     if (!mapInstance.current) return;
@@ -132,17 +187,20 @@ export const LiveUserMonitorView: React.FC<LiveUserMonitorViewProps> = ({ showTo
     if (!L) return;
 
     if (!mapInstance.current) {
+      if ((mapContainerRef.current as any)._leaflet_id) {
+        (mapContainerRef.current as any)._leaflet_id = null;
+      }
       const defaultCenter: [number, number] = [10.9250, 106.6992]; // Showroom Thuận An
       const map = L.map(mapContainerRef.current, {
         attributionControl: false,
         zoomControl: true,
         minZoom: 4,
-        maxZoom: 18
+        maxZoom: 19
       }).setView(defaultCenter, 11);
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd',
-        maxZoom: 19
+      L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        maxZoom: 20
       }).addTo(map);
 
       mapInstance.current = map;
@@ -156,6 +214,10 @@ export const LiveUserMonitorView: React.FC<LiveUserMonitorViewProps> = ({ showTo
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
     };
   }, [refreshMapSize, isActive]);
 
@@ -309,44 +371,258 @@ export const LiveUserMonitorView: React.FC<LiveUserMonitorViewProps> = ({ showTo
 
         {/* Action Buttons & Quick KPI Badges */}
         <div className="flex items-center gap-2">
-          <div className="bg-slate-50 border border-slate-200/70 rounded-xl px-3 py-1.5 text-center">
+          {/* Sub-tab navigation switcher */}
+          <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
+            <button
+              onClick={() => setActiveTab('map')}
+              className={`py-1 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'map'
+                  ? 'bg-white text-sky-600 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <i className="fa-solid fa-map-location-dot"></i>
+              <span>Bản đồ Live</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('activity_logs')}
+              className={`py-1 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTab === 'activity_logs'
+                  ? 'bg-white text-sky-600 shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <i className="fa-solid fa-clock-rotate-left"></i>
+              <span>Lịch sử thao tác & Vị trí</span>
+              {totalLogs > 0 && (
+                <span className="bg-sky-100 text-sky-700 text-[10px] px-1.5 py-0.2 rounded-full">
+                  {totalLogs}
+                </span>
+              )}
+            </button>
+          </div>
+
+          <div className="hidden md:flex bg-slate-50 border border-slate-200/70 rounded-xl px-3 py-1.5 text-center">
             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Máy tính (PC)</span>
             <span className="text-xs font-black text-slate-800 flex items-center justify-center gap-1">
               <i className="fa-solid fa-desktop text-sky-500 text-[10px]"></i> {stats.desktop}
             </span>
           </div>
 
-          <div className="bg-slate-50 border border-slate-200/70 rounded-xl px-3 py-1.5 text-center">
+          <div className="hidden md:flex bg-slate-50 border border-slate-200/70 rounded-xl px-3 py-1.5 text-center">
             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Điện thoại</span>
             <span className="text-xs font-black text-slate-800 flex items-center justify-center gap-1">
               <i className="fa-solid fa-mobile-screen text-indigo-500 text-[10px]"></i> {stats.mobile}
             </span>
           </div>
 
-          <button
-            onClick={handleRequestExactGps}
-            disabled={isUpdatingGps}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
-            title="Kích hoạt GPS định vị chính xác vị trí của tôi"
-          >
-            <i className={`fa-solid ${isUpdatingGps ? 'fa-circle-notch fa-spin' : 'fa-location-crosshairs'}`}></i>
-            <span className="hidden sm:inline">LẤY GPS CỦA TÔI</span>
-          </button>
+          {activeTab === 'map' ? (
+            <>
+              <button
+                onClick={handleRequestExactGps}
+                disabled={isUpdatingGps}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                title="Kích hoạt GPS định vị chính xác vị trí của tôi"
+              >
+                <i className={`fa-solid ${isUpdatingGps ? 'fa-circle-notch fa-spin' : 'fa-location-crosshairs'}`}></i>
+                <span className="hidden sm:inline">LẤY GPS CỦA TÔI</span>
+              </button>
 
-          <button
-            onClick={() => fetchUsers(false)}
-            disabled={isRefreshing}
-            className="bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
-            title="Làm mới dữ liệu"
-          >
-            <i className={`fa-solid fa-rotate ${isRefreshing ? 'fa-spin' : ''}`}></i>
-            <span className="hidden sm:inline">LÀM MỚI</span>
-          </button>
+              <button
+                onClick={() => fetchUsers(false)}
+                disabled={isRefreshing}
+                className="bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                title="Làm mới dữ liệu"
+              >
+                <i className={`fa-solid fa-rotate ${isRefreshing ? 'fa-spin' : ''}`}></i>
+                <span className="hidden sm:inline">LÀM MỚI</span>
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => fetchActivityLogs(false)}
+              disabled={isLoadingLogs}
+              className="bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+              title="Làm mới nhật ký thao tác"
+            >
+              <i className={`fa-solid fa-rotate ${isLoadingLogs ? 'fa-spin' : ''}`}></i>
+              <span>LÀM MỚI NHẬT KÝ</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Main Content Layout: Map + User List Panel */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 relative w-full h-full">
+      {/* Main Content View Switcher */}
+      {activeTab === 'activity_logs' ? (
+        /* TAB 2: ACTIVITY & LOCATION AUDIT TABLE */
+        <div className="flex-1 flex flex-col min-h-0 bg-white p-4 overflow-hidden">
+          {/* Filters Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-1 max-w-md">
+              <div className="relative flex-1">
+                <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input
+                  type="text"
+                  placeholder="Tìm theo tên TVBH, số VIN, địa chỉ..."
+                  value={logSearchTerm}
+                  onChange={e => setLogSearchTerm(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:border-sky-500 focus:bg-white outline-none transition-all placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500">Hành động:</span>
+              <select
+                value={logActionFilter}
+                onChange={e => setLogActionFilter(e.target.value)}
+                className="py-1.5 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:border-sky-500"
+              >
+                <option value="all">Tất cả hành động</option>
+                <option value="ENTER_STOCK">Vào xem kho xe</option>
+                <option value="HOLD_CAR">Giữ xe</option>
+                <option value="UNHOLD_CAR">Nhả giữ xe</option>
+                <option value="JOIN_QUEUE">Xếp hàng chờ xe</option>
+                <option value="STOCK_GPS_REVOKED">Bị ngắt GPS giữa chừng</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Logs Table */}
+          <div className="flex-1 overflow-auto rounded-2xl border border-slate-200/80 shadow-xs">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th className="py-3 px-4">Thời gian</th>
+                  <th className="py-3 px-4">Tư vấn bán hàng</th>
+                  <th className="py-3 px-4">Hành động & Nghiệp vụ</th>
+                  <th className="py-3 px-4">Vị trí GPS & Địa chỉ thực tế</th>
+                  <th className="py-3 px-4">Thiết bị & Trình duyệt</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {isLoadingLogs ? (
+                  <tr>
+                    <td colSpan={5} className="py-16 text-center text-slate-400">
+                      <i className="fa-solid fa-circle-notch fa-spin text-2xl text-sky-500 mb-2 block"></i>
+                      <span>Đang tải nhật ký thao tác & vị trí...</span>
+                    </td>
+                  </tr>
+                ) : filteredLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-16 text-center text-slate-400">
+                      <i className="fa-solid fa-folder-open text-3xl text-slate-300 mb-2 block"></i>
+                      <span>Chưa có nhật ký hoạt động nào được ghi nhận</span>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredLogs.map(log => {
+                    const timeStr = log.created_at ? moment(log.created_at).format('HH:mm:ss - DD/MM/YYYY') : '—';
+                    const timeAgo = log.created_at ? moment(log.created_at).fromNow() : '';
+
+                    let badgeColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                    let badgeIcon = 'fa-eye';
+                    if (log.action_type === 'HOLD_CAR') {
+                      badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
+                      badgeIcon = 'fa-lock';
+                    } else if (log.action_type === 'UNHOLD_CAR') {
+                      badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                      badgeIcon = 'fa-lock-open';
+                    } else if (log.action_type === 'JOIN_QUEUE') {
+                      badgeColor = 'bg-purple-50 text-purple-700 border-purple-200';
+                      badgeIcon = 'fa-list-ol';
+                    } else if (log.action_type === 'STOCK_GPS_REVOKED') {
+                      badgeColor = 'bg-rose-50 text-rose-700 border-rose-200';
+                      badgeIcon = 'fa-triangle-exclamation';
+                    }
+
+                    return (
+                      <tr key={log.id} className="hover:bg-slate-50/80 transition-colors">
+                        {/* 1. Thời gian */}
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <div className="font-bold text-slate-800">{timeStr}</div>
+                          <div className="text-[10px] text-slate-400">{timeAgo}</div>
+                        </td>
+
+                        {/* 2. TVBH */}
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2.5">
+                            <Avatar name={log.username} size="sm" />
+                            <div>
+                              <div className="font-bold text-slate-900">{log.full_name || log.username}</div>
+                              <div className="text-[10.5px] font-mono text-slate-400">@{log.username}</div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* 3. Hành động */}
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border text-[11px] font-bold ${badgeColor}`}>
+                              <i className={`fa-solid ${badgeIcon} text-[10px]`}></i>
+                              {log.action_title}
+                            </span>
+                            {log.target_vin && (
+                              <span className="font-mono bg-slate-100 text-slate-800 px-2 py-0.5 rounded text-[10.5px] font-bold border border-slate-200">
+                                VIN: {log.target_vin}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* 4. Vị trí & Bản đồ */}
+                        <td className="py-3 px-4 max-w-xs">
+                          {log.formatted_address ? (
+                            <div>
+                              <div className="text-slate-800 font-semibold leading-snug line-clamp-2">
+                                📍 {log.formatted_address}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                {log.accuracy_meters && (
+                                  <span className="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-1.5 py-0.2 rounded border border-emerald-200">
+                                    Độ chính xác: ±{log.accuracy_meters}m
+                                  </span>
+                                )}
+                                {log.google_maps_url && (
+                                  <a
+                                    href={log.google_maps_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-[10.5px] font-bold text-blue-600 hover:text-blue-800 hover:underline"
+                                    title="Mở Google Maps vệ tinh"
+                                  >
+                                    <i className="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                                    Xem trên Google Maps
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 italic text-[11px]">Không có tọa độ GPS</span>
+                          )}
+                        </td>
+
+                        {/* 5. Thiết bị */}
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <div className="text-slate-700 font-medium">
+                            <i className="fa-solid fa-laptop text-slate-400 mr-1"></i>
+                            {log.device_info?.model || 'Thiết bị'} ({log.device_info?.os || 'OS'})
+                          </div>
+                          <div className="text-[10.5px] text-slate-400">
+                            {log.device_info?.browser || 'Trình duyệt'}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        /* TAB 1: LIVE MAP AREA */
+        <div className="flex-1 flex flex-col lg:flex-row min-h-0 relative w-full h-full">
         {/* Live Map Area */}
         <div className="flex-1 h-[300px] lg:h-full relative min-h-[300px] bg-slate-200">
           <div ref={mapContainerRef} className="absolute inset-0 w-full h-full z-0" />
@@ -477,6 +753,37 @@ export const LiveUserMonitorView: React.FC<LiveUserMonitorViewProps> = ({ showTo
                             {dev?.browser || 'Chrome'}
                           </span>
                         </div>
+
+                        {/* Device Binding Badge & Admin Reset Button */}
+                        {Array.isArray(u.metadata?.registered_devices) && (
+                          <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-slate-100">
+                            <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-200/60" title={u.metadata.registered_devices.map(d => d.label).join(', ')}>
+                              <i className="fa-solid fa-mobile-screen-button text-[9px] text-amber-600"></i>
+                              {u.metadata.registered_devices.length}/2 thiết bị
+                            </span>
+                            {u.metadata.registered_devices.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Bạn có chắc chắn muốn xóa toàn bộ thiết bị đã đăng ký của @${u.username}? Nhân viên sẽ có thể đăng ký lại từ đầu trên thiết bị mới.`)) {
+                                    const ok = await resetUserDevices(u.username);
+                                    if (ok) {
+                                      showToast('Thành công', `Đã xóa thiết bị của @${u.username}`, 'success');
+                                      fetchUsers(true);
+                                    } else {
+                                      showToast('Lỗi', 'Không thể xóa thiết bị', 'error');
+                                    }
+                                  }
+                                }}
+                                className="text-[9.5px] font-extrabold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-0.5 rounded border border-rose-200 transition-all cursor-pointer"
+                                title="Xóa danh sách thiết bị khi nhân viên đổi máy"
+                              >
+                                <i className="fa-solid fa-rotate-left mr-0.5"></i> Gỡ thiết bị
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -486,8 +793,9 @@ export const LiveUserMonitorView: React.FC<LiveUserMonitorViewProps> = ({ showTo
           </div>
         </div>
       </div>
-    </div>
-  );
+    )}
+  </div>
+);
 };
 
 export default LiveUserMonitorView;

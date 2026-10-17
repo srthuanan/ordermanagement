@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Order, StockVehicle } from '../types';
 import * as apiService from '../services/apiService';
+import { logStaffActivity } from '../services/activityLogger';
 
 interface ImageSource {
     src: string;
@@ -75,6 +76,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
                 showToast('Giữ Xe Thất Bại', res.message || 'Không thể giữ xe.', 'error', 5000);
             } else {
                 showToast('Giữ Xe Thành Công', `Đã giữ xe ${vin}.`, 'success', 3000);
+                logStaffActivity({ actionType: 'HOLD_CAR', actionTitle: `Giữ xe VIN ${vin}`, targetVin: vin });
                 refetchStock(true);
             }
         } catch (err) {
@@ -93,6 +95,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         try {
             await apiService.releaseCar(vin, outcome);
             showToast('Thành Công', `Đã ${actionText} xe ${vin}.`, 'success', 3000);
+            logStaffActivity({ actionType: 'UNHOLD_CAR', actionTitle: `Nhả giữ xe VIN ${vin} (${actionText})`, targetVin: vin });
             refetchStock(true);
         } catch (err) {
             const message = err instanceof Error ? err.message : `Không thể ${actionText} xe.`;
@@ -110,6 +113,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
             const res = await apiService.joinHoldQueue(vin);
             if (res.status === 'SUCCESS') {
                 showToast('Thành Công', res.message, 'success', 3000);
+                logStaffActivity({ actionType: 'JOIN_QUEUE', actionTitle: `Xếp hàng chờ xe VIN ${vin}`, targetVin: vin });
             } else {
                 showToast('Lỗi', res.message, 'error', 3000);
             }

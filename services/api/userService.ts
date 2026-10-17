@@ -75,12 +75,27 @@ export const startAutoGpsTracking = (): void => {
     } catch (e) {}
 };
 
-const getBrowserGpsCoordinates = (): Promise<{ lat: number; lng: number } | null> => {
+const getBrowserGpsCoordinates = async (): Promise<{ lat: number; lng: number } | null> => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+        return null;
+    }
+    // Chỉ đọc GPS nếu người dùng ĐÃ CẤP QUYỀN TRƯỚC ĐÓ (ở tab Kho xe).
+    // Tuyệt đối không tự ý bật pop-up xin quyền khi mới truy cập trang chủ / tab Đơn hàng!
+    try {
+        if (navigator.permissions && navigator.permissions.query) {
+            const status = await navigator.permissions.query({ name: 'geolocation' });
+            if (status.state !== 'granted') {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    } catch (_) {
+        return null;
+    }
+
     startAutoGpsTracking();
     return new Promise((resolve) => {
-        if (typeof navigator === 'undefined' || !navigator.geolocation) {
-            return resolve(null);
-        }
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 resolve({

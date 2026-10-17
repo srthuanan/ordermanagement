@@ -416,8 +416,18 @@ export const LiveWeatherEffect: React.FC<LiveWeatherEffectProps> = ({ className 
             // 1. Tự động fetch ngay tức thì trong 0.1s với tọa độ mặc định / cached
             fetchLiveWeather(lastLat, lastLon, lastLocName, force);
 
-            // 2. Chạy ngầm định vị GPS để cập nhật vị trí chính xác hơn nếu có
+            // 2. Chỉ chạy ngầm định vị GPS nếu người dùng ĐÃ cho phép trước đó (tuyệt đối không bật hộp thoại xin quyền)
             if (typeof navigator !== 'undefined' && navigator.geolocation) {
+                let isGranted = false;
+                try {
+                    if (navigator.permissions && navigator.permissions.query) {
+                        const status = await navigator.permissions.query({ name: 'geolocation' });
+                        isGranted = status.state === 'granted';
+                    }
+                } catch (_) {}
+
+                if (!isGranted) return;
+
                 navigator.geolocation.getCurrentPosition(
                     async (pos) => {
                         const lat = pos.coords.latitude;
