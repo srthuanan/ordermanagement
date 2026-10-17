@@ -7,6 +7,17 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
+  <!-- Tự động chuyển hướng trong suốt từ GitHub Pages sang máy chủ Vercel tốc độ cao -->
+  <script>
+    (function () {
+      if (window.location.hostname === 'srthuanan.github.io') {
+        var cleanPath = window.location.pathname.replace(/^\/ordermanagement\/?/, '/');
+        if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
+        var target = 'https://ordermanagement-six.vercel.app' + cleanPath + window.location.search + window.location.hash;
+        window.location.replace(target);
+      }
+    })();
+  </script>
   <!-- Google Analytics (GA4) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-VMWPKMD7K8"></script>
   <script>
@@ -1387,7 +1398,7 @@
     }
   </style>
 
-  <script type="module" crossorigin src="/ordermanagement/assets/index-CfkTY0ii.js"></script>
+  <script type="module" crossorigin src="/ordermanagement/assets/index-d-v0xj8P.js"></script>
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-react-eCFT3dHp.js">
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-utils-WIB47F82.js">
   <link rel="modulepreload" crossorigin href="/ordermanagement/assets/vendor-supabase-ClANIQrd.js">
