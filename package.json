@@ -11,7 +11,7 @@
         "electron": "concurrently \"cross-env IS_ELECTRON=true vite\" \"wait-on http://localhost:5173 && electron .\"",
         "electron:build": "tsc && cross-env IS_ELECTRON=true vite build && electron-builder",
         "predeploy": "npm run build",
-        "deploy": "gh-pages -d dist",
+        "deploy": "gh-pages -d dist && vercel --prod --yes",
         "backup": "node backups/run_full_backup.cjs",
         "backup:live": "node backups/realtime_backup.cjs"
     },
