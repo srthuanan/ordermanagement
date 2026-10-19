@@ -251,8 +251,8 @@ html, body { margin: 0 !important; padding: 0 !important; width: 210mm !importan
         }
     }
 
-def _bg_notify_and_archive(supabase_url: str, headers: dict, order: dict, public_url: str, exact_order_no: str):
-    """Background task to send email via Supabase Edge Function and archive to Google Drive asynchronously."""
+def _send_invoice_email_and_archive(supabase_url: str, headers: dict, order: dict, public_url: str, exact_order_no: str) -> str:
+    """Gửi email phát hành hóa đơn cho TVBH qua Supabase Edge Function và sao lưu Google Drive."""
     mail_status = "Đã gửi mail"
     try:
         ef_url = f"{supabase_url}/functions/v1/send-email"
@@ -264,7 +264,7 @@ def _bg_notify_and_archive(supabase_url: str, headers: dict, order: dict, public
                 "invoice_ext": "pdf"
             }
         }
-        r_mail = _session.post(ef_url, headers=headers, json=mail_payload, timeout=20)
+        r_mail = _session.post(ef_url, headers=headers, json=mail_payload, timeout=25)
         if r_mail.status_code not in (200, 201):
             mail_status = f"Lỗi gửi mail: HTTP {r_mail.status_code}"
     except Exception as em:
@@ -277,9 +277,11 @@ def _bg_notify_and_archive(supabase_url: str, headers: dict, order: dict, public
 
     try:
         gas_url = "https://script.google.com/macros/s/AKfycbwC_Xw8YcudogtxpPJztqjFdttcL4tgDaHIdgFWqGcnZ0M44oH6KVb-2r52OKPtLex0Fg/exec"
-        _session.post(gas_url, params={"action": "archiveOrderNow", "orderNumber": exact_order_no}, json={"action": "archiveOrderNow", "orderNumber": exact_order_no}, timeout=15)
+        _session.post(gas_url, params={"action": "archiveOrderNow", "orderNumber": exact_order_no}, json={"action": "archiveOrderNow", "orderNumber": exact_order_no}, timeout=8)
     except Exception as egas:
         print(f"[M-Invoice Auto] Lỗi kích hoạt bốc Drive cho đơn {exact_order_no}: {egas}")
+
+    return mail_status
 
 def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
     vin = (vin or "").strip().upper()
@@ -314,23 +316,47 @@ def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
         except Exception:
             pass
 
-    # Nếu đơn hàng đã có link hóa đơn và trạng thái 'Đã xuất hóa đơn', trả về ngay lập tức (chỉ mất ~0.1s)
+    # Nếu đơn hàng đã có link hóa đơn và trạng thái 'Đã xuất hóa đơn'
     if order:
         existing_url = order.get("link_hoa_don_da_xuat") or order.get("url_hoa_don_da_xuat")
         existing_status = str(order.get("ket_qua") or order.get("trang_thai_xu_ly") or "").strip().lower()
         if existing_status == "đã xuất hóa đơn" and existing_url:
             exact_order_no = order.get("so_don_hang") or order_number
-            print(f"[M-Invoice Auto] Đơn hàng {exact_order_no} đã có hóa đơn hoàn tất trước đó. Trả về ngay lập tức!")
-            return {
-                "success": True,
-                "status": "ALREADY_COMPLETED",
-                "message": f"Đơn hàng {exact_order_no} đã xuất HĐ và hoàn tất trước đó rồi!",
-                "data": {
-                    "orderNumber": exact_order_no,
-                    "url": existing_url,
-                    "mailStatus": "Đã hoàn tất trước đó"
+            # Kiểm tra xem email đã được gửi thành công cho TVBH hay chưa
+            existing_mail_status = ""
+            try:
+                r_yc = _session.get(f"{SUPABASE_URL}/rest/v1/yeucauxhd?so_don_hang=eq.{exact_order_no}&select=ket_qua_gui_mail", headers=headers, timeout=5)
+                if r_yc.status_code == 200 and r_yc.json():
+                    existing_mail_status = (r_yc.json()[0].get("ket_qua_gui_mail") or "").strip()
+            except Exception:
+                pass
+
+            if existing_mail_status == "Đã gửi mail":
+                print(f"[M-Invoice Auto] Đơn hàng {exact_order_no} đã có hóa đơn và đã gửi mail hoàn tất trước đó.")
+                return {
+                    "success": True,
+                    "status": "ALREADY_COMPLETED",
+                    "message": f"Đơn hàng {exact_order_no} đã xuất HĐ và gửi mail cho TVBH trước đó rồi!",
+                    "data": {
+                        "orderNumber": exact_order_no,
+                        "url": existing_url,
+                        "mailStatus": "Đã gửi mail trước đó"
+                    }
                 }
-            }
+            else:
+                # Đơn đã có hóa đơn nhưng trước đó gửi mail bị lỗi hoặc bị ngắt tiến trình
+                print(f"[M-Invoice Auto] Đơn hàng {exact_order_no} đã có HĐ nhưng mail chưa gửi thành công ('{existing_mail_status}'). Đang tiến hành gửi email cho TVBH...")
+                mail_status = _send_invoice_email_and_archive(SUPABASE_URL, headers, order, existing_url, exact_order_no)
+                return {
+                    "success": True,
+                    "status": "COMPLETED",
+                    "message": f"Đơn hàng {exact_order_no} đã xuất HĐ. Đã gửi email cho TVBH ({mail_status})!",
+                    "data": {
+                        "orderNumber": exact_order_no,
+                        "url": existing_url,
+                        "mailStatus": mail_status
+                    }
+                }
 
     if not vin:
         return {"success": False, "status": "NO_VIN", "message": f"Đơn hàng {order_number} chưa có số VIN."}
@@ -436,26 +462,20 @@ def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
     if vin:
         _session.patch(f"{SUPABASE_URL}/rest/v1/car_hold_activities?vin=eq.{vin}&status=eq.matched", headers=headers, json={"status": "invoiced"}, timeout=10)
 
-    # 5 & 6. BẬT TIẾN TRÌNH NỀN (Daemon Thread): Gửi email và kích hoạt sao lưu Drive bất đồng bộ
-    # Giúp giao diện và API phản hồi siêu tốc ngay lập tức (tiết kiệm 8-12 giây chờ đợi)
-    t = threading.Thread(
-        target=_bg_notify_and_archive,
-        args=(SUPABASE_URL, headers, order, public_url, exact_order_no),
-        daemon=True
-    )
-    t.start()
+    # 5 & 6. Gửi email phát hành hóa đơn cho TVBH qua Edge Function và sao lưu Drive
+    mail_status = _send_invoice_email_and_archive(SUPABASE_URL, headers, order, public_url, exact_order_no)
 
     return {
         "success": True,
         "status": "COMPLETED",
-        "message": f"Đã xuất HĐ số {so_hd} ({serial}), lưu file vào hệ thống thành công!",
+        "message": f"Đã xuất HĐ số {so_hd} ({serial}), lưu file vào hệ thống và {mail_status.lower()}!",
         "data": {
             "orderNumber": exact_order_no,
             "invoiceNumber": so_hd,
             "serial": serial,
             "buyer": buyer,
             "url": public_url,
-            "mailStatus": "Đang gửi mail & đồng bộ Drive ở nền..."
+            "mailStatus": mail_status
         }
     }
 
