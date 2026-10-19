@@ -312,6 +312,13 @@ async function handleCyberAction(pathname, method, body, queryParams = {}) {
             return await lookupDmsVsoLive(vsoRaw);
         }
 
+        // Kích hoạt đồng bộ toàn bộ đơn hàng DMS lên Supabase tức thì
+        case '/api/dms/sync-orders-now': {
+            console.log(`[ManualSync DMS Orders] ⚡ [${new Date().toLocaleString('vi-VN')}] Kích hoạt quét đơn hàng DMS lên Supabase tức thì...`);
+            const pyRes = await executePython([gpsRadarScript, 'orders_only'], '{}');
+            return { status: 'ok', success: true, message: 'Đã hoàn tất đồng bộ đơn hàng DMS!', data: pyRes };
+        }
+
         default:
             throw new Error(`Đường dẫn API không hỗ trợ: ${pathname}`);
     }
@@ -661,57 +668,86 @@ const server = http.createServer(async (req, res) => {
     });
 });
 
+function isDaytimeWorkingHours() {
+    const now = new Date();
+    // Giờ Việt Nam (UTC+7)
+    const utcHours = now.getUTCHours();
+    const vnHours = (utcHours + 7) % 24;
+    // Ban ngày từ 07:30 đến 18:30 (VN)
+    return vnHours >= 7 && vnHours < 19;
+}
+
 server.listen(PORT, () => {
     console.log('==================================================================');
     console.log(`  CYBERSYNC DỊCH VỤ NỘI BỘ ĐÃ KHỞI CHẠY THÀNH CÔNG!`);
     console.log(`  - Local Port:       http://localhost:${PORT}`);
     console.log(`  - Supabase Bridge:  Kênh 'cyber-realtime-bridge' (Đang lắng nghe)`);
-    console.log(`  - Web GitHub Pages: Sẽ tự động ưu tiên máy tính này, KHÔNG dùng Render!`);
-    console.log(`  - AutoSync Đơn Tồn: Chạy ngầm định kỳ mỗi 3 tiếng/lần`);
-    console.log(`  - AutoSync Đơn DMS: Chạy ngầm đồng bộ donhanghienhuu mỗi 1 tiếng/lần`);
-    console.log(`  - AutoSync GPS DMS: Chạy khi khởi động và tự động quét 4 lần/ngày (mỗi 6 tiếng)`);
+    console.log(`  - Web GitHub/Vercel: Ưu tiên máy tính văn phòng cổng ${PORT}!`);
+    console.log(`  - AutoSync Đơn Tồn: Chạy ngầm định kỳ mỗi 3 tiếng (chỉ ban ngày)`);
+    console.log(`  - AutoSync Đơn DMS: Chạy ngầm mỗi 15 phút (chỉ ban ngày 07:30 - 18:30)`);
+    console.log(`  - AutoSync GPS DMS: Chạy 4 lần/ngày (mỗi 6 tiếng, chỉ ban ngày)`);
     console.log('==================================================================');
 
-    // ── Tự động đồng bộ Đơn hàng mở DMS vào bảng donhanghienhuu mỗi 1 tiếng (1 * 3600 * 1000 ms)
-    const ONE_HOUR_MS = 1 * 60 * 60 * 1000;
+    // ── Tự động đồng bộ Đơn hàng mở DMS vào bảng donhanghienhuu mỗi 15 phút (chỉ ban ngày)
+    const FIFTEEN_MINS_MS = 15 * 60 * 1000;
     setTimeout(() => {
-        console.log(`[AutoSync DMS Orders] 📋 [${new Date().toLocaleString('vi-VN')}] Đang đồng bộ donhanghienhuu từ DMS lần đầu...`);
-        executePython([gpsRadarScript, 'orders_only'], '{}')
-            .then(res => console.log(`[AutoSync DMS Orders] ✅ Hoàn tất đồng bộ donhanghienhuu!`))
-            .catch(err => console.error(`[AutoSync DMS Orders Error]:`, err.message));
+        if (!isDaytimeWorkingHours()) {
+            console.log(`[AutoSync DMS Orders] 🌙 Ban đêm (ngoài 07:30 - 18:30), tạm ngưng đồng bộ.`);
+        } else {
+            console.log(`[AutoSync DMS Orders] 📋 [${new Date().toLocaleString('vi-VN')}] Đang đồng bộ donhanghienhuu từ DMS lần đầu...`);
+            executePython([gpsRadarScript, 'orders_only'], '{}')
+                .then(res => console.log(`[AutoSync DMS Orders] ✅ Hoàn tất đồng bộ donhanghienhuu!`))
+                .catch(err => console.error(`[AutoSync DMS Orders Error]:`, err.message));
+        }
 
         setInterval(() => {
-            console.log(`[AutoSync DMS Orders] 📋 [${new Date().toLocaleString('vi-VN')}] Đang đồng bộ donhanghienhuu định kỳ (chu kỳ 1 tiếng)...`);
+            if (!isDaytimeWorkingHours()) {
+                console.log(`[AutoSync DMS Orders] 🌙 [${new Date().toLocaleString('vi-VN')}] Ban đêm, bỏ qua chu kỳ quét DMS.`);
+                return;
+            }
+            console.log(`[AutoSync DMS Orders] 📋 [${new Date().toLocaleString('vi-VN')}] Đang đồng bộ donhanghienhuu định kỳ (chu kỳ 15 phút)...`);
             executePython([gpsRadarScript, 'orders_only'], '{}')
                 .then(res => console.log(`[AutoSync DMS Orders] ✅ Hoàn tất đồng bộ donhanghienhuu định kỳ!`))
                 .catch(err => console.error(`[AutoSync DMS Orders Error]:`, err.message));
-        }, ONE_HOUR_MS);
+        }, FIFTEEN_MINS_MS);
     }, 10000);
 
-    // ── Tự động quét GPS DMS xe lồng: Chạy ngay khi khởi động và 4 lần/ngày (mỗi 6 tiếng = 6 * 3600 * 1000 ms)
+    // ── Tự động quét GPS DMS xe lồng: Chạy ngay khi khởi động và mỗi 6 tiếng (chỉ ban ngày)
     const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
     setTimeout(() => {
-        console.log(`[AutoSync GPS] 🛰️ [${new Date().toLocaleString('vi-VN')}] Đang quét vị trí GPS xe lồng lần đầu khi khởi động máy...`);
-        executePython([gpsRadarScript, 'gps_only'], '{}')
-            .then(res => console.log(`[AutoSync GPS] ✅ Hoàn tất quét GPS xe lồng khi khởi động!`))
-            .catch(err => console.error(`[AutoSync GPS Error]:`, err.message));
+        if (isDaytimeWorkingHours()) {
+            console.log(`[AutoSync GPS] 🛰️ [${new Date().toLocaleString('vi-VN')}] Đang quét vị trí GPS xe lồng lần đầu...`);
+            executePython([gpsRadarScript, 'gps_only'], '{}')
+                .then(res => console.log(`[AutoSync GPS] ✅ Hoàn tất quét GPS xe lồng!`))
+                .catch(err => console.error(`[AutoSync GPS Error]:`, err.message));
+        }
 
         setInterval(() => {
-            console.log(`[AutoSync GPS] 🛰️ [${new Date().toLocaleString('vi-VN')}] Đang quét vị trí GPS định kỳ (lịch 4 lần/ngày)...`);
+            if (!isDaytimeWorkingHours()) {
+                console.log(`[AutoSync GPS] 🌙 [${new Date().toLocaleString('vi-VN')}] Ban đêm, bỏ qua quét GPS.`);
+                return;
+            }
+            console.log(`[AutoSync GPS] 🛰️ [${new Date().toLocaleString('vi-VN')}] Đang quét vị trí GPS định kỳ...`);
             executePython([gpsRadarScript, 'gps_only'], '{}')
                 .then(res => console.log(`[AutoSync GPS] ✅ Hoàn tất quét vị trí GPS định kỳ!`))
                 .catch(err => console.error(`[AutoSync GPS Error]:`, err.message));
         }, SIX_HOURS_MS);
     }, 25000);
 
-    // ── Tự động đồng bộ ngầm đơn hàng cọc tồn từ Cyber mỗi 3 tiếng (3 * 3600 * 1000 ms)
+    // ── Tự động đồng bộ ngầm đơn hàng cọc tồn từ Cyber mỗi 3 tiếng (chỉ ban ngày)
     const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
     setTimeout(() => {
-        executePython([donHangTonScript], '{}')
-            .then(res => console.log(`[AutoSync DonHangTon] ✅ Đồng bộ ngầm đơn cọc tồn Cyber hoàn tất:`, res?.message || 'Thành công'))
-            .catch(err => console.error(`[AutoSync DonHangTon Error]:`, err.message));
+        if (isDaytimeWorkingHours()) {
+            executePython([donHangTonScript], '{}')
+                .then(res => console.log(`[AutoSync DonHangTon] ✅ Đồng bộ ngầm đơn cọc tồn Cyber hoàn tất:`, res?.message || 'Thành công'))
+                .catch(err => console.error(`[AutoSync DonHangTon Error]:`, err.message));
+        }
 
         setInterval(() => {
+            if (!isDaytimeWorkingHours()) {
+                console.log(`[AutoSync DonHangTon] 🌙 [${new Date().toLocaleString('vi-VN')}] Ban đêm, bỏ qua đồng bộ đơn cọc tồn Cyber.`);
+                return;
+            }
             console.log(`[AutoSync DonHangTon] 🔄 [${new Date().toLocaleString('vi-VN')}] Đang chạy ngầm đồng bộ đơn cọc tồn Cyber (chu kỳ 3h)...`);
             executePython([donHangTonScript], '{}')
                 .then(res => console.log(`[AutoSync DonHangTon] ✅ Đồng bộ ngầm đơn cọc tồn Cyber hoàn tất:`, res?.message || 'Thành công'))

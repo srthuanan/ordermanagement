@@ -4,7 +4,7 @@
   "outputDirectory": "dist",
   "functions": {
     "api/index.py": {
-      "includeFiles": "{scripts/**,cyber_server.py}"
+      "includeFiles": "{scripts/**,cyber_server.py,dms_dealers_config.json}"
     }
   },
   "headers": [

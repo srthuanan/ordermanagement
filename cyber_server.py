@@ -87,8 +87,9 @@ from scripts.cyber_crm_service import (
 )
 from scripts.m_invoice_service import process_single_vin, auto_fetch_upload_and_notify
 from scripts.sync_cyber_donhang_ton import run_sync_donhang_ton
+from scripts.dms_vso_lookup import lookup_dms_vso, get_dealers_list
 
-PORT = int(os.environ.get("PORT", 8080))
+PORT = int(os.environ.get("CYBER_LOCAL_PORT") or os.environ.get("PORT", 3001))
 
 class CyberApiHandler(BaseHTTPRequestHandler):
     def _send_cors_headers(self):
@@ -506,6 +507,38 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                     res = get_crm_metadata()
                     if res.get("success"):
                         set_to_cache("crm-metadata", res)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+        elif parsed.path == "/api/dms/lookup-vso":
+            try:
+                qs = parse_qs(parsed.query)
+                vso = (qs.get("vso", [""])[0] or "").strip()
+                res = lookup_dms_vso(vso)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/dms/dealers":
+            try:
+                res = get_dealers_list()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -1229,6 +1262,79 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 ma_dvcs = payload.get("maDvcs", "02")
                 ma_ttcp = payload.get("maTtcp") or payload.get("ma_ttcp") or "02.01.08"
                 res = import_bulk_khtn(user_name, leads, ma_dvcs=ma_dvcs, ma_ttcp=ma_ttcp)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+        elif parsed.path == "/api/dms/lookup-vso":
+            try:
+                content_len = int(self.headers.get("Content-Length", 0))
+                body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+                try:
+                    data = json.loads(body_str or "{}")
+                except Exception:
+                    data = {}
+                qs = parse_qs(parsed.query)
+                vso = (data.get("vso") or qs.get("vso", [""])[0] or "").strip()
+                res = lookup_dms_vso(vso)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/dms/sync":
+            try:
+                content_len = int(self.headers.get("Content-Length", 0))
+                body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+                try:
+                    data = json.loads(body_str or "{}")
+                except Exception:
+                    data = {}
+                d_code = (data.get("dealer_code") or "").strip().upper()
+                new_cookie = (data.get("cookie") or "").strip()
+                if not d_code or not new_cookie:
+                    res = {"success": False, "error": "Thiếu dealer_code hoặc cookie"}
+                else:
+                    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dms_dealers_config.json")
+                    dealers_list = []
+                    if os.path.exists(config_path):
+                        try:
+                            with open(config_path, "r", encoding="utf-8") as f:
+                                dealers_list = json.load(f)
+                        except Exception:
+                            dealers_list = []
+                    found = next((x for x in dealers_list if (x.get("dealer_code") or "").upper() == d_code), None)
+                    if found:
+                        found["cookie"] = new_cookie
+                        found["last_sync_time"] = datetime.now().isoformat()
+                    else:
+                        dealers_list.append({
+                            "dealer_code": d_code,
+                            "name": f"VinFast Showroom {d_code}",
+                            "cookie": new_cookie,
+                            "last_sync_time": datetime.now().isoformat()
+                        })
+                    try:
+                        with open(config_path, "w", encoding="utf-8") as f:
+                            json.dump(dealers_list, f, indent=2, ensure_ascii=False)
+                    except Exception as e_save:
+                        print(f"Warning: could not write dms_dealers_config.json: {e_save}")
+                    res = {"status": "ok", "success": True, "message": f"Đã lưu cookie cho [{d_code}]"}
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
