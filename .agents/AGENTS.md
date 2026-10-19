@@ -38,9 +38,11 @@
      - Ban đêm (18:30 – 07:30 sáng hôm sau): Tự động ngừng hoàn toàn (Skip), không quét để tiết kiệm tài nguyên mạng và máy chủ.
   3. **Cơ Chế Cookie DMS Tập Trung**: Lưu cấu hình cookie đại lý trong `dms_dealers_config.json`. Khi 1 tài khoản cập nhật Cookie còn hạn, toàn bộ nhân sự TVBH trong đại lý đó đều tự động được chia sẻ quyền tra cứu qua backend/Vercel serverless.
 
-- **Hiệu Năng & Tối Ưu Tải Trang (Code-Splitting & Lazy Loading)**:
-  1. Các Modal, Form hoặc báo cáo có dung lượng lớn (như `RequestInvoiceModal`, Báo cáo doanh số...) bắt buộc phải sử dụng `React.lazy()` và `<Suspense>` để tách chunk độc lập.
-  2. Không để bundle chính (index chunk) vượt quá giới hạn khuyến nghị, đảm bảo tải siêu tốc trên cả thiết bị di động và đường truyền yếu.
+- **Kiến Trúc Giao Diện Đơn Hàng (Tri-Column Automotive Cockpit & Digital Twin)**:
+  1. Tab Đơn Hàng tuân theo chuẩn mực hệ thống xe hơi hiện đại (Tesla Fleet Hub & Porsche One Cockpit): Không gian Studio ánh sáng vô cực (Cinematic Studio Lighting), mô phỏng xe 3D tương tác dạng Digital Twin với bóng gầm mềm mại.
+  2. Bố cục 3 khối công thái học: Danh sách hàng đợi đơn hàng ➔ Bản sao số của xe & Hộ chiếu xe (VIN Monospace, kho bãi, thông số) ➔ Trung tâm tác nghiệp & dòng tiền (Tiến độ 5 bước, chính sách, đối soát).
+  3. Loại bỏ hoàn toàn các chi tiết đồ họa decor gây xao nhãng (hình nền lưới caro, hoạt ảnh lễ hội che dữ liệu, icon thời tiết vụn vặt) để tập trung 100% vào tốc độ và tính chính xác của dữ liệu nghiệp vụ.
+  4. Thanh tác vụ hỗ trợ Nút hành động chính thông minh (Smart Contextual CTA) tự động đổi màu và trạng thái tương thích theo quy trình (Xuất HĐ, Xác thực VinClub, Chuyển xe).
 
 
 

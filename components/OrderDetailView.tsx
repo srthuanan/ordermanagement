@@ -4,8 +4,6 @@ import 'moment/locale/vi';
 import { Order } from '../types';
 import StatusBadge from './ui/StatusBadge';
 import CarImage from './ui/CarImage';
-import LiveWeatherEffect from './ui/LiveWeatherEffect';
-import NationalDayCarBackdrop from './ui/NationalDayCarBackdrop';
 
 import carModelBadgeBgImg from '../pictures/car_model_badge_bg.webp';
 import vinHeroCardBgImg from '../pictures/vin_hero_card_bg.webp';
@@ -29,14 +27,22 @@ moment.locale('vi');
 
 const formatDateTime = (dateString?: string) => {
     if (!dateString) return '—';
+    const trimmed = dateString.trim();
     const formats = [
         moment.ISO_8601,
         "DD/MM/YYYY HH:mm:ss",
         "D/M/YYYY H:m:s",
-        "YYYY-MM-DD HH:mm:ss"
+        "YYYY-MM-DD HH:mm:ss",
+        "YYYY-MM-DD",
+        "DD/MM/YYYY"
     ];
-    const date = moment(dateString, formats, 'vi', true);
-    return date.isValid() ? date.format('DD/MM/YYYY HH:mm:ss') : '—';
+    const date = moment(trimmed, formats, 'vi');
+    if (!date.isValid()) return trimmed;
+    // Tự động bỏ 00:00:00 nếu chuỗi ngày không có thông tin giờ phút cụ thể
+    if ((date.hour() === 0 && date.minute() === 0 && date.second() === 0) || trimmed.length <= 10) {
+        return date.format('DD/MM/YYYY');
+    }
+    return date.format('DD/MM/YYYY HH:mm:ss');
 };
 
 const formatDateDisplay = (dateString?: string) => {
@@ -1213,11 +1219,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             {/* Main Body (FLEX SCALE-TO-FIT NO SCROLL) */}
             {/* Main Body - Tech Micro-Dashed Dot Mesh (15% Darker) */}
             <main 
-                className="flex-1 min-h-0 flex flex-col overflow-hidden relative"
-                style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M24 0 H0 V24' fill='none' stroke='%236366f1' stroke-width='0.8' stroke-opacity='0.24' stroke-dasharray='3 2' /%3E%3Ccircle cx='24' cy='0' r='1.2' fill='%236366f1' fill-opacity='0.35' /%3E%3C/svg%3E"), linear-gradient(135deg, rgba(238,242,255,0.5) 0%, rgba(255,255,255,0.95) 50%, rgba(241,245,249,0.6) 100%)`,
-                    backgroundSize: '24px 24px, cover'
-                }}
+                className="flex-1 min-h-0 flex flex-col overflow-hidden relative bg-gradient-to-br from-slate-100/90 via-slate-50 to-slate-200/50"
             >
             {inlineMode === 'INVOICE' ? (
                 <React.Suspense fallback={<div className="flex-1 flex items-center justify-center p-8 text-sm text-gray-500 font-semibold"><i className="fas fa-spinner fa-spin mr-2"></i>Đang tải dữ liệu xuất hóa đơn...</div>}>
@@ -1235,31 +1237,46 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                     />
                 </React.Suspense>
             ) : (
-            <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-1.5 sm:gap-2 md:gap-6 px-1.5 py-1 md:px-6 md:py-3 overflow-hidden md:overflow-visible relative">
+            <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-2 sm:gap-2.5 md:gap-3 px-2 py-1.5 md:px-3 md:py-2.5 overflow-hidden relative">
                 
-                {/* LEFT COLUMN: Borderless Car Display with Real-Time Weather Effect (Hidden on mobile when in inline EDIT/CANCEL/POLICY mode) */}
-                <div className={`flex-[3.5] sm:flex-[4] md:flex-[5] ${inlineMode !== 'VIEW' ? 'hidden md:flex' : 'flex'} flex-col relative items-center justify-center py-0.5 md:py-1 shrink-0 min-h-[135px] sm:min-h-[170px] md:min-h-0`}>
-                    {/* Live Dynamic Weather Backdrop (Nắng, Mưa, Ban đêm, Sấm sét) */}
-                    <LiveWeatherEffect />
-                    
-                    {/* Cờ Tổ Quốc Phấp Phới Dưới Nền Xe */}
-                    <NationalDayCarBackdrop />
-                    
+                {/* LEFT COLUMN: Modern Automotive Studio Digital Twin */}
+                <div className={`flex-[4] lg:flex-[4.5] ${inlineMode !== 'VIEW' ? 'hidden md:flex' : 'flex'} flex-col relative items-center justify-between py-2 px-3 md:py-3 md:px-4 shrink-0 min-h-[140px] sm:min-h-[180px] md:min-h-0 rounded-2xl bg-white/80 backdrop-blur-xl border border-slate-200/80 shadow-xs overflow-hidden`}>
+                    {/* Studio Ambient Rim Lighting */}
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_50%_45%,rgba(224,231,255,0.5),rgba(241,245,249,0.2)_65%,transparent_85%)] pointer-events-none" />
 
-                    
+                    {/* Top Anodized Titanium Model Badge & Pairing Status */}
+                    <div className="w-full flex items-center justify-between gap-2 relative z-20 shrink-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <div className="px-3 py-1.5 rounded-xl bg-slate-900/95 backdrop-blur-md border border-slate-700/80 shadow-md flex items-center gap-2 select-none">
+                                <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)] animate-pulse"></span>
+                                <span className="text-white text-xs font-black uppercase tracking-wider">{resolvedOrder['Dòng xe']}</span>
+                                <span className="text-slate-300 text-xs font-bold">{resolvedOrder['Phiên bản']}</span>
+                            </div>
+                        </div>
+
+                        {isCancelled && resolvedOrder["Ghi chú hủy"] && (
+                            <span className="px-2.5 py-1 bg-rose-500/90 backdrop-blur text-white text-[10px] font-bold rounded-xl shadow border border-rose-400 max-w-[200px] truncate" title={resolvedOrder["Ghi chú hủy"]}>
+                                Lý do hủy: {resolvedOrder["Ghi chú hủy"]}
+                            </span>
+                        )}
+                    </div>
+
                     {/* Interactive 3D Parallax Tilt Car Display */}
                     <div 
                         onMouseMove={handleCarMouseMove}
                         onMouseLeave={handleCarMouseLeave}
-                        className="flex-1 w-full min-h-0 relative z-30 flex items-center justify-center py-0 select-none cursor-grab transform translate-x-0 md:translate-x-16 translate-y-0 md:translate-y-5"
+                        className="flex-1 w-full min-h-0 relative z-10 flex items-center justify-center py-1 select-none cursor-grab"
                         style={{ perspective: '1200px' }}
                     >
+                        {/* Floor Contact Ground Shadow */}
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-3/4 max-w-[320px] h-4 bg-slate-900/15 rounded-[100%] blur-md pointer-events-none transform scale-y-50"></div>
+
                         <div 
                             className="w-full h-full flex items-center justify-center pointer-events-auto relative z-10"
                             style={{
                                 transform: car3dRotation.active 
                                     ? `rotateX(${car3dRotation.rx.toFixed(2)}deg) rotateY(${car3dRotation.ry.toFixed(2)}deg) scale3d(1.04, 1.04, 1.04)`
-                                    : 'rotateX(2deg) rotateY(-5deg) rotateZ(1.5deg) scale3d(1, 1, 1)',
+                                    : 'rotateX(2deg) rotateY(-4deg) rotateZ(1deg) scale3d(1, 1, 1)',
                                 transition: car3dRotation.active ? 'transform 0.12s ease-out' : 'transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1)',
                                 transformStyle: 'preserve-3d'
                             }}
@@ -1268,150 +1285,79 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 model={resolvedOrder['Dòng xe']} 
                                 exteriorColor={resolvedOrder['Ngoại thất']}
                                 version={resolvedOrder['Phiên bản']}
-                                className="w-full max-h-[105px] sm:max-h-[160px] md:max-h-none md:h-full object-contain" 
+                                className="w-full max-h-[120px] sm:max-h-[170px] md:max-h-none md:h-full object-contain filter drop-shadow-[0_12px_24px_rgba(15,23,42,0.18)]" 
                                 hideDecal
                             />
                         </div>
                     </div>
 
-                    {/* Floating Specs Pill */}
-                    <div className="absolute bottom-0.5 md:bottom-2 left-1/2 -translate-x-1/2 w-max max-w-[98%] md:max-w-full z-40 pointer-events-auto">
-                        <div className="relative overflow-hidden bg-white/95 border border-slate-200/90 shadow-lg shadow-slate-200/60 rounded-xl md:rounded-2xl p-1 md:p-2.5 flex items-center gap-0.5 sm:gap-1.5 md:gap-5 backdrop-blur-md select-none group hover:scale-[1.02] transition-transform duration-300 divide-x divide-slate-100">
+                    {/* Floating Specs Dock */}
+                    <div className="w-full relative z-20 shrink-0 pointer-events-auto">
+                        <div className="bg-white/95 border border-slate-200/90 shadow-md shadow-slate-200/50 rounded-xl p-1.5 md:p-2 flex items-center justify-between gap-1.5 backdrop-blur-md select-none divide-x divide-slate-100">
+                            {/* Ngoại thất */}
+                            <div className="flex-[1.2] px-1 text-center min-w-0" title={resolvedOrder["Ngoại thất"]}>
+                                <p className="text-[8px] md:text-[8.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5 truncate">Ngoại thất</p>
+                                <div className="flex items-center justify-center gap-1">
+                                    <span className="w-2.5 h-2.5 rounded-full border border-slate-300 shrink-0" style={{ backgroundColor: getExteriorColorStyle(resolvedOrder["Ngoại thất"])?.color || '#cbd5e1' }}></span>
+                                    <p className="text-[9px] md:text-[10px] font-black text-slate-900 leading-tight truncate" style={getExteriorColorStyle(resolvedOrder["Ngoại thất"])}>
+                                        {resolvedOrder["Ngoại thất"] || '—'}
+                                    </p>
+                                </div>
+                            </div>
 
-                            <div className="relative z-10 px-1 sm:px-2 md:px-4 text-center max-w-[85px] sm:max-w-[110px] md:max-w-none">
-                                <p className="text-[7.5px] md:text-[9px] font-bold text-slate-500 uppercase tracking-wide md:tracking-widest mb-0.5 md:mb-1 truncate">Ngoại thất</p>
-                                <p className="text-[8.5px] sm:text-[9.5px] md:text-[11px] font-black text-slate-900 truncate" style={getExteriorColorStyle(resolvedOrder["Ngoại thất"])}>{resolvedOrder["Ngoại thất"] || '—'}</p>
+                            {/* Nội thất */}
+                            <div className="flex-1 px-1 text-center min-w-0" title={resolvedOrder["Nội thất"]}>
+                                <p className="text-[8px] md:text-[8.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5 truncate">Nội thất</p>
+                                <p className="text-[9px] md:text-[10px] font-black text-slate-900 truncate" style={getInteriorColorStyle(resolvedOrder["Nội thất"])}>
+                                    {resolvedOrder["Nội thất"] || '—'}
+                                </p>
                             </div>
-                            <div className="relative z-10 px-1 sm:px-2 md:px-4 text-center">
-                                <p className="text-[7.5px] md:text-[9px] font-bold text-slate-500 uppercase tracking-wide md:tracking-widest mb-0.5 md:mb-1">Nội thất</p>
-                                <p className="text-[8.5px] sm:text-[9.5px] md:text-[11px] font-black text-slate-900 truncate" style={getInteriorColorStyle(resolvedOrder["Nội thất"])}>{resolvedOrder["Nội thất"] || '—'}</p>
-                            </div>
+
+                            {/* Mã DMS */}
                             <div 
-                                className="relative z-10 px-1 sm:px-2 md:px-4 text-center cursor-pointer group/dms rounded-lg md:rounded-2xl hover:bg-indigo-100/50 transition-colors py-0.5 md:py-1"
+                                className="flex-1 px-1 text-center cursor-pointer group/dms rounded-lg hover:bg-indigo-50/70 transition-colors py-0.5 min-w-0"
                                 onClick={(e) => {
                                     const dmsVal = resolvedOrder["Mã DMS"] || resolvedOrder["Mã DMS"] || '';
                                     if (!dmsVal) return;
                                     e.stopPropagation();
-                                    const copyDms = () => {
+                                    navigator.clipboard.writeText(dmsVal).then(() => {
                                         setCopiedLabel('dmsCode');
                                         setTimeout(() => setCopiedLabel(null), 2000);
-                                    };
-                                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                                        navigator.clipboard.writeText(dmsVal).then(copyDms).catch(() => {
-                                            const ta = document.createElement('textarea');
-                                            ta.value = dmsVal;
-                                            document.body.appendChild(ta);
-                                            ta.select();
-                                            document.execCommand('copy');
-                                            document.body.removeChild(ta);
-                                            copyDms();
-                                        });
-                                    } else {
-                                        const ta = document.createElement('textarea');
-                                        ta.value = dmsVal;
-                                        document.body.appendChild(ta);
-                                        ta.select();
-                                        document.execCommand('copy');
-                                        document.body.removeChild(ta);
-                                        copyDms();
-                                    }
+                                    });
                                 }}
                                 title={resolvedOrder["Mã DMS"] ? "Click để sao chép Mã DMS" : "Chưa có Mã DMS"}
                             >
-                                <p className="text-[7.5px] md:text-[9px] font-bold text-slate-500 uppercase tracking-wide md:tracking-widest mb-0.5 md:mb-1 group-hover/dms:text-indigo-800 transition-colors">Mã DMS</p>
-                                <p className="text-[8.5px] sm:text-[9.5px] md:text-[11px] font-black font-mono text-indigo-800 truncate">
+                                <p className="text-[8px] md:text-[8.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5 group-hover/dms:text-indigo-600 transition-colors truncate">Mã DMS</p>
+                                <p className="text-[9px] md:text-[10px] font-black font-mono text-indigo-700 truncate">
                                     {copiedLabel === 'dmsCode' ? '✓ Đã copy' : resolvedOrder["Mã DMS"] || '—'}
                                 </p>
                             </div>
+
+                            {/* Số máy */}
                             <div 
-                                className="relative z-10 px-1 sm:px-2 md:px-4 text-center cursor-pointer group/engine rounded-lg md:rounded-2xl hover:bg-amber-100/50 transition-colors py-0.5 md:py-1"
+                                className="flex-[1.2] px-1 text-center cursor-pointer group/engine rounded-lg hover:bg-amber-50/70 transition-colors py-0.5 min-w-0"
                                 onClick={(e) => {
                                     const engineVal = resolvedOrder["Số máy"] || resolvedOrder["Số Máy"] || resolvedOrder["So may"] || '';
                                     if (!engineVal) return;
                                     e.stopPropagation();
-                                    const copyEngine = () => {
+                                    navigator.clipboard.writeText(engineVal).then(() => {
                                         setCopiedLabel('engineNo');
                                         setTimeout(() => setCopiedLabel(null), 2000);
-                                    };
-                                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                                        navigator.clipboard.writeText(engineVal).then(copyEngine).catch(() => {
-                                            const ta = document.createElement('textarea');
-                                            ta.value = engineVal;
-                                            document.body.appendChild(ta);
-                                            ta.select();
-                                            document.execCommand('copy');
-                                            document.body.removeChild(ta);
-                                            copyEngine();
-                                        });
-                                    } else {
-                                        const ta = document.createElement('textarea');
-                                        ta.value = engineVal;
-                                        document.body.appendChild(ta);
-                                        ta.select();
-                                        document.execCommand('copy');
-                                        document.body.removeChild(ta);
-                                        copyEngine();
-                                    }
+                                    });
                                 }}
-                                title={resolvedOrder["Số máy"] ? "Click để sao chép số máy" : "Chưa có số máy"}
+                                title={resolvedOrder["Số máy"] ? `Click để sao chép: ${resolvedOrder["Số máy"]}` : "Chưa có số máy"}
                             >
-                                <p className="text-[7.5px] md:text-[9px] font-bold text-slate-500 uppercase tracking-wide md:tracking-widest mb-0.5 md:mb-1 group-hover/engine:text-amber-800 transition-colors">Số Máy</p>
-                                <p className="text-[8.5px] sm:text-[9.5px] md:text-[11px] font-black font-mono text-slate-900 truncate max-w-[65px] sm:max-w-[100px] md:max-w-[120px]">
+                                <p className="text-[8px] md:text-[8.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5 group-hover/engine:text-amber-600 transition-colors truncate">Số Máy</p>
+                                <p className="text-[8.5px] md:text-[9.5px] font-black font-mono text-slate-800 truncate" title={resolvedOrder["Số máy"]}>
                                     {copiedLabel === 'engineNo' ? '✓ Đã copy' : resolvedOrder["Số máy"] || '—'}
                                 </p>
                             </div>
                         </div>
                     </div>
-                    
-                    {/* Dynamic Animated Car Model & Trim Badge */}
-                    <div className="absolute top-1 left-1 md:top-2 md:left-2 z-20 flex flex-col gap-1 md:gap-2">
-                        <div className="relative group overflow-hidden rounded-lg md:rounded-2xl shadow-xl shadow-slate-900/30 border border-slate-700/80 w-max flex items-center justify-center transition-transform duration-300 hover:scale-105 select-none">
-                            {/* Animated Background WebP */}
-                            <img 
-                                src={carModelBadgeBgImg} 
-                                alt="Badge Background" 
-                                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                            />
-                            {/* Model & Trim Text with Glowing Contrast */}
-                            <span className="relative z-10 px-2 py-1 md:px-4 md:py-2 text-white text-[8.5px] sm:text-[9.5px] md:text-[10.5px] font-black uppercase tracking-wider md:tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] flex items-center gap-1 sm:gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping opacity-75"></span>
-                                <span className="text-cyan-300 font-extrabold tracking-wider">{resolvedOrder['Dòng xe']}</span>
-                                <span className="text-white/95">{resolvedOrder['Phiên bản']}</span>
-                            </span>
-                        </div>
-                        {isCancelled && resolvedOrder["Ghi chú hủy"] && (
-                            <span className="px-2 py-0.5 md:px-4 md:py-2 bg-red-500/90 backdrop-blur text-white text-[8px] md:text-[10px] font-bold rounded-lg md:rounded-2xl shadow-lg border border-red-400 max-w-[160px] md:max-w-[200px] text-right truncate w-max" title={resolvedOrder["Ghi chú hủy"]}>
-                                Lý do hủy: {resolvedOrder["Ghi chú hủy"]}
-                            </span>
-                        )}
-                    </div>
                 </div>
 
-                {/* RIGHT COLUMN: Apple Frosted Glass Architecture Card */}
-                <div className="flex-[6.5] md:flex-[6] max-w-lg w-full flex flex-col bg-white/85 backdrop-blur-2xl rounded-2xl md:rounded-3xl border border-slate-200/70 shadow-[0_12px_40px_-8px_rgba(15,23,42,0.06),inset_0_1px_1px_rgba(255,255,255,0.95)] overflow-visible relative z-10 mx-auto md:mx-0 p-2 sm:p-3 md:p-4 pt-3 md:pt-6 gap-2 md:gap-3">
-                    {/* Chú dơi Halloween vỗ cánh đặt chính xác tại vị trí khoanh đỏ */}
-                    <div 
-                        className="absolute top-1 sm:top-1.5 md:top-2 left-2 sm:left-4 md:left-6 z-50 pointer-events-auto select-none group cursor-pointer"
-                        title="🦇 Chúc mừng lễ hội Halloween! 🎃"
-                    >
-                        <img 
-                            src={`${import.meta.env.BASE_URL}halloween/bat_frame_by_frame.webp`} 
-                            alt="Halloween Bat" 
-                            className="w-16 sm:w-20 md:w-24 h-auto object-contain filter drop-shadow-[0_4px_12px_rgba(0,0,0,0.22)] hover:scale-125 transition-transform duration-200" 
-                            onError={(e) => {
-                                const target = e.currentTarget;
-                                if (!target.dataset.fallback) {
-                                    target.dataset.fallback = '1';
-                                    target.src = `${import.meta.env.BASE_URL}halloween/bat_frame_by_frame.gif`;
-                                }
-                            }}
-                        />
-                        {/* Interactive Halloween Tooltip */}
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2.5 py-1 bg-slate-900/95 text-amber-300 text-[11px] font-bold rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap z-50 border border-amber-500/30 flex items-center gap-1.5 backdrop-blur-sm">
-                            <span>🎃</span>
-                            <span>Happy Halloween!</span>
-                        </div>
-                    </div>
+                {/* RIGHT COLUMN: Operations, Milestones & Command Card */}
+                <div className="flex-[6] lg:flex-[5.5] w-full flex flex-col bg-white/90 backdrop-blur-2xl rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden relative z-10 p-2 sm:p-2.5 md:p-3 gap-2">
                     {inlineMode === 'CANCEL' ? (
                         <div className="flex-1 flex flex-col h-full p-4 md:p-6 bg-white/90 rounded-2xl border border-red-100 overflow-hidden animate-fade-in justify-between">
                             {/* Header */}
@@ -2364,11 +2310,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             <i className={`fas fa-rotate-right text-[9px] ${isLoadingLogs ? 'animate-spin text-indigo-600' : ''}`}></i>
                                             <span className="hidden sm:inline">Làm mới</span>
                                         </button>
-                                    ) : (
-                                        <span className="text-[9px] font-bold text-slate-700 bg-white px-2.5 py-0.5 rounded-full border border-slate-200 shadow-2xs">
-                                            Ghép: {daysSincePairedText}
-                                        </span>
-                                    )}
+                                    ) : null}
                                 </div>
 
                                 {activeRightTab === 'MILESTONES' ? (
@@ -2468,7 +2410,15 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                                     </svg>
                                                                 </div>
                                                                 <div className="min-w-0 flex-1 flex flex-col justify-center">
-                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">3. Ghép VIN</p>
+                                                                    <div className="flex items-center justify-between w-full mb-1">
+                                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none text-left">3. Ghép VIN</p>
+                                                                        {resolvedOrder["Thời gian ghép"] && daysSincePairedText !== '—' && (
+                                                                            <span className="text-[8.5px] font-extrabold text-emerald-700 bg-emerald-100/90 border border-emerald-300/60 px-1.5 py-0.5 rounded-md leading-none tabular-nums shadow-2xs flex items-center gap-1">
+                                                                                <i className="fas fa-clock text-[7.5px]"></i>
+                                                                                <span>{daysSincePairedText}</span>
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                     <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
                                                                         {resolvedOrder["Thời gian ghép"] ? formatDateTime(resolvedOrder["Thời gian ghép"]) : 'Chưa ghép xe'}
                                                                     </p>
@@ -2549,39 +2499,40 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             })()}
                                         </div>
 
-                                        {/* Right: Executive Policy Cards */}
-                                        <div className="flex flex-col justify-between gap-2.5 border-t md:border-t-0 md:border-l border-slate-200/80 pt-2 md:pt-0 md:pl-2.5 flex-1">
-                                            <h3 className="text-[9.5px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-                                                <i className="fas fa-gift text-indigo-600 text-[10px]"></i> Chính Sách Ưu Đãi
-                                            </h3>
+                                        {/* Right: Executive Policy Cards & Deal Ledger Overview */}
+                                        <div className="flex flex-col justify-between gap-2 border-t md:border-t-0 md:border-l border-slate-200/80 pt-2 md:pt-0 md:pl-2.5 flex-1">
+                                            <div className="flex items-center justify-between pb-0.5">
+                                                <h3 className="text-[9.5px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <i className="fas fa-gift text-indigo-600 text-[10px]"></i> Chính Sách &amp; Ưu Đãi
+                                                </h3>
+                                            </div>
                                             
                                             <div className="flex-1 flex flex-col justify-between bg-white rounded-2xl p-2.5 md:p-3 border border-slate-200/80 shadow-2xs min-h-[110px]">
-                                                {(() => {
-                                                    const rawPolicy: string = String(resolvedOrder["CHÍNH SÁCH"] || (resolvedOrder as any).chinh_sach || (resolvedOrder as any)["Chính sách"] || (resolvedOrder as any).policy || '');
-                                                    if (!rawPolicy) return <p className="text-[10.5px] font-medium text-slate-400 italic my-auto text-center">Không có chính sách</p>;
-                                                    
-                                                    const items: string[] = rawPolicy.includes('\n') 
-                                                        ? rawPolicy.split('\n') 
-                                                        : rawPolicy.includes(';') 
-                                                            ? rawPolicy.split(';') 
-                                                            : [rawPolicy];
+                                                {/* Danh sách chính sách / Voucher */}
+                                                <div className="flex-1 overflow-y-auto pr-0.5 space-y-1.5 mb-1.5">
+                                                    {(() => {
+                                                        const rawPolicy: string = String(resolvedOrder["CHÍNH SÁCH"] || (resolvedOrder as any).chinh_sach || (resolvedOrder as any)["Chính sách"] || (resolvedOrder as any).policy || '');
+                                                        if (!rawPolicy) return <p className="text-[10.5px] font-medium text-slate-400 italic my-auto text-center py-2">Không có chính sách</p>;
+                                                        
+                                                        const items: string[] = rawPolicy.includes('\n') 
+                                                            ? rawPolicy.split('\n') 
+                                                            : rawPolicy.includes(';') 
+                                                                ? rawPolicy.split(';') 
+                                                                : [rawPolicy];
 
-                                                    return (
-                                                        <div className="flex-1 overflow-y-auto pr-0.5 space-y-1.5 mb-1.5">
-                                                            {items.map((s: string) => s.trim()).filter(Boolean).map((item: string, idx: number) => (
-                                                                <div key={idx} className="flex items-start gap-1.5 bg-slate-50/80 px-2 py-1.5 rounded-lg border border-slate-200/60 shadow-2xs">
-                                                                    <i className="fas fa-check-circle text-emerald-600 text-[8.5px] mt-0.5 shrink-0"></i>
-                                                                    <span className="text-[9.5px] font-medium text-slate-600 leading-snug">{item}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    );
-                                                })()}
+                                                        return items.map((s: string) => s.trim()).filter(Boolean).map((item: string, idx: number) => (
+                                                            <div key={idx} className="flex items-start gap-1.5 bg-slate-50/80 px-2 py-1.5 rounded-lg border border-slate-200/60 shadow-2xs">
+                                                                <i className="fas fa-check-circle text-emerald-600 text-[8.5px] mt-0.5 shrink-0"></i>
+                                                                <span className="text-[9.5px] font-medium text-slate-600 leading-snug">{item}</span>
+                                                            </div>
+                                                        ));
+                                                    })()}
+                                                </div>
                                                 
                                                 {onSelectPolicy && !isReferenceAccount && ['chưa ghép', 'đã ghép'].includes(generalStatus) && (
                                                     <button 
                                                         onClick={() => setInlineMode('POLICY')}
-                                                        className="mt-1 text-[9.5px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-900 hover:text-white border border-slate-200 px-3 py-1.5 rounded-xl transition-all w-full text-center shadow-2xs active:scale-95 cursor-pointer"
+                                                        className="text-[9.5px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-900 hover:text-white border border-slate-200 px-3 py-1.5 rounded-xl transition-all w-full text-center shadow-2xs active:scale-95 cursor-pointer shrink-0"
                                                     >
                                                         Cập nhật chính sách
                                                     </button>
@@ -2866,14 +2817,14 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         {canConfirmVC && !isReferenceAccount && (
                             <button 
                                 onClick={() => onConfirmVC!(resolvedOrder)} 
-                                className="h-8 px-3.5 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white font-medium text-xs transition-colors cursor-pointer shrink-0"
+                                className="h-8 px-4 inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs transition-all shadow-sm shadow-emerald-500/20 cursor-pointer shrink-0 active:scale-95"
                             >
-                                <i className="fas fa-check text-[10px] text-slate-300"></i>
-                                <span>Xác Thực</span>
+                                <i className="fas fa-check text-[10px] text-white"></i>
+                                <span>Xác Thực VinClub</span>
                             </button>
                         )}
 
-                        {/* Nút Xuất Hóa Đơn (Hero CTA) - Điểm chốt sang trọng phía góc phải của dải phím */}
+                        {/* Nút Xuất Hóa Đơn (Hero CTA) - Nổi bật thông minh theo ngữ cảnh */}
                         {canRequestInvoice && !isReferenceAccount && (
                             <button 
                                 onClick={() => {
@@ -2883,9 +2834,9 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                         onRequestInvoice(resolvedOrder);
                                     }
                                 }} 
-                                className="h-8 px-4 inline-flex items-center gap-1.5 bg-slate-900 hover:bg-black text-white font-semibold text-xs transition-colors cursor-pointer shrink-0"
+                                className="h-8 px-4 inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-600 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/30 cursor-pointer shrink-0 active:scale-95 animate-pulse"
                             >
-                                <i className="fas fa-file-invoice text-[10px] text-slate-300"></i>
+                                <i className="fas fa-file-invoice text-[10px] text-white"></i>
                                 <span>Xuất Hóa Đơn</span>
                             </button>
                         )}

@@ -193,10 +193,6 @@ export const HalloweenThemeWidget: React.FC = () => {
         }
       `}</style>
 
-      {/* 1. Mạng nhện 2 góc trên màn hình */}
-      <SpiderWebCorner position="top-left" />
-      <SpiderWebCorner position="top-right" />
-
       {/* 2. Vệt chuột ma quái nhẹ nhàng */}
       <HalloweenCursorTrail />
     </>

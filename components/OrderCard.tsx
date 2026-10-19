@@ -1,7 +1,6 @@
 import React from 'react';
 import { Order } from '../types';
 import StatusBadge from './ui/StatusBadge';
-import CarImage from './ui/CarImage';
 import { getBackgroundColorStyle } from '../utils/styleUtils';
 import { useNightMode } from '../hooks/useNightMode';
 import MarqueeText from './ui/MarqueeText';
@@ -108,26 +107,7 @@ const OrderCard: React.FC<OrderCardProps> = ({ order, onViewDetails, processingO
             }`} />
 
             {/* Main content */}
-            <div className="flex-1 min-w-0 flex items-center gap-3 px-3 py-2.5">
-
-                {/* Showroom Showcase Car Pedestal (Bệ đỡ mô hình xe) */}
-                <div className={`w-16 h-11 flex-shrink-0 relative overflow-hidden rounded-xl transition-all duration-300 flex items-center justify-center p-0.5 ${
-                    isNight 
-                        ? 'bg-gradient-to-b from-slate-700/70 via-slate-800/80 to-slate-900 border border-slate-600/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),0_2px_6px_rgba(0,0,0,0.4)]' 
-                        : 'bg-gradient-to-b from-slate-100 via-slate-50 to-slate-200/80 border border-slate-200/80 shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_2px_6px_rgba(15,23,42,0.06)]'
-                } group-hover:scale-105`}>
-                    {/* Pedestal Ground Shadow */}
-                    <div className="absolute bottom-1 left-2 right-2 h-2 bg-slate-900/10 rounded-full blur-[2px] pointer-events-none" />
-
-                    <CarImage
-                        model={order['Dòng xe']}
-                        exteriorColor={order['Ngoại thất']}
-                        version={order['Phiên bản']}
-                        className="w-full h-full object-contain object-center relative z-10"
-                        alt=""
-                        hideDecal
-                    />
-                </div>
+            <div className="flex-1 min-w-0 flex items-center justify-between gap-3 px-3.5 py-2.5">
 
                 {/* Text info */}
                 <div className="flex-1 min-w-0">
