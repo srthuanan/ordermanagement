@@ -3,9 +3,8 @@ import { MaintenanceFee } from '../../types';
 import BankConfigModal from '../modals/BankConfigModal';
 import GenerateMonthlyModal from '../modals/GenerateMonthlyModal';
 
-// Use same env logic as TvbhEmailManager
-const SB_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const SB_URL = (import.meta.env.VITE_SUPABASE_URL as string) || 'https://jwvgxqrkjlbewvpkvucj.supabase.co';
+const SB_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || 'sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX';
 const SB_HEADERS = {
     'apikey': SB_KEY,
     'Authorization': `Bearer ${SB_KEY}`,

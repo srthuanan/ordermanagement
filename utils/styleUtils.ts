@@ -361,7 +361,7 @@ export const getCarImage = (model?: string, exteriorColor?: string, version?: st
     }
 
     // 4. Supabase fallback
-    const supabaseStorageUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/car-images/`;
+    const supabaseStorageUrl = `${import.meta.env.VITE_SUPABASE_URL || 'https://jwvgxqrkjlbewvpkvucj.supabase.co'}/storage/v1/object/public/car-images/`;
     if (colorCodeKey) {
         return `${supabaseStorageUrl}${modelKey}-${colorCodeKey}.webp`;
     }
@@ -379,7 +379,7 @@ export const getCarImage = (model?: string, exteriorColor?: string, version?: st
  * @returns The path to the model's default image (e.g., "pictures/vf6-default.webp").
  */
 export const getModelDefaultImage = (model?: string): string => {
-    const supabaseStorageUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/car-images/`;
+    const supabaseStorageUrl = `${import.meta.env.VITE_SUPABASE_URL || 'https://jwvgxqrkjlbewvpkvucj.supabase.co'}/storage/v1/object/public/car-images/`;
     const cleanedModel = model ? model.trim().toUpperCase() : 'DEFAULT';
     const modelKey = modelNameToImageKeyMap[cleanedModel] || 
                      Object.entries(modelNameToImageKeyMap).find(([k]) => k.toUpperCase() === cleanedModel)?.[1] ||
@@ -403,7 +403,7 @@ export const getModelDefaultImage = (model?: string): string => {
  * @returns The path to the global default image.
  */
 export const getGlobalDefaultImage = (): string => {
-    const supabaseStorageUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/car-images/`;
+    const supabaseStorageUrl = `${import.meta.env.VITE_SUPABASE_URL || 'https://jwvgxqrkjlbewvpkvucj.supabase.co'}/storage/v1/object/public/car-images/`;
     return `${supabaseStorageUrl}default.webp`;
 };
 

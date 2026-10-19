@@ -11,7 +11,7 @@ import carModelBadgeBgImg from '../pictures/car_model_badge_bg.webp';
 import vinHeroCardBgImg from '../pictures/vin_hero_card_bg.webp';
 import { getExteriorColorStyle, getInteriorColorStyle } from '../utils/styleUtils';
 import SelectPolicyModal from './modals/SelectPolicyModal';
-import RequestInvoiceModal from './modals/RequestInvoiceModal';
+const RequestInvoiceModal = React.lazy(() => import('./modals/RequestInvoiceModal'));
 import { Policy, policyAdminService } from '../services/api/policyAdminService';
 import { useVehicleConfig } from '../hooks/useVehicleConfig';
 import { changeOrderConfiguration, updateOrderDetails, getOrderAuditLogs, OrderAuditLogItem } from '../services/apiService';
@@ -1220,18 +1220,20 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 }}
             >
             {inlineMode === 'INVOICE' ? (
-                <RequestInvoiceModal
-                    inline
-                    order={resolvedOrder}
-                    onClose={() => setInlineMode('VIEW')}
-                    onConfirm={async (...args) => {
-                        if (onInvoiceConfirm) await onInvoiceConfirm(...args);
-                        else if (onRequestInvoice) onRequestInvoice(resolvedOrder);
-                        setInlineMode('VIEW');
-                    }}
-                    stockData={stockData}
-                    showToast={showToast || ((t, m, type) => console.log(t, m, type))}
-                />
+                <React.Suspense fallback={<div className="flex-1 flex items-center justify-center p-8 text-sm text-gray-500 font-semibold"><i className="fas fa-spinner fa-spin mr-2"></i>Đang tải dữ liệu xuất hóa đơn...</div>}>
+                    <RequestInvoiceModal
+                        inline
+                        order={resolvedOrder}
+                        onClose={() => setInlineMode('VIEW')}
+                        onConfirm={async (...args) => {
+                            if (onInvoiceConfirm) await onInvoiceConfirm(...args);
+                            else if (onRequestInvoice) onRequestInvoice(resolvedOrder);
+                            setInlineMode('VIEW');
+                        }}
+                        stockData={stockData}
+                        showToast={showToast || ((t, m, type) => console.log(t, m, type))}
+                    />
+                </React.Suspense>
             ) : (
             <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-1.5 sm:gap-2 md:gap-6 px-1.5 py-1 md:px-6 md:py-3 overflow-hidden md:overflow-visible relative">
                 

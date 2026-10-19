@@ -1,12 +1,8 @@
 /// <reference types="vite/client" />
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Supabase URL and Anon Key must be provided in the environment variables.');
-}
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://jwvgxqrkjlbewvpkvucj.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX';
 
 // Client thông thường (anon key) — dùng cho tất cả các thao tác của hệ thống
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
