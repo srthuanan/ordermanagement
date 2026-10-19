@@ -5,7 +5,6 @@ import { Order } from '../types';
 import StatusBadge from './ui/StatusBadge';
 import CarImage from './ui/CarImage';
 
-import carModelBadgeBgImg from '../pictures/car_model_badge_bg.webp';
 import vinHeroCardBgImg from '../pictures/vin_hero_card_bg.webp';
 import { getExteriorColorStyle, getInteriorColorStyle } from '../utils/styleUtils';
 import SelectPolicyModal from './modals/SelectPolicyModal';

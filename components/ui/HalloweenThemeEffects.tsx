@@ -47,37 +47,6 @@ export const PumpkinIcon: React.FC<{ className?: string; isGlow?: boolean; size?
   </svg>
 );
 
-// Mạng nhện tinh tế 2 góc màn hình
-const SpiderWebCorner: React.FC<{ position: 'top-left' | 'top-right' }> = ({ position }) => {
-  const isLeft = position === 'top-left';
-  return (
-    <div 
-      className={`fixed top-0 ${isLeft ? 'left-0' : 'right-0'} pointer-events-none z-30 select-none opacity-40 hover:opacity-80 transition-opacity duration-700`}
-      style={{ transform: isLeft ? 'none' : 'scaleX(-1)' }}
-      aria-hidden="true"
-    >
-      <svg width="130" height="130" viewBox="0 0 140 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0 0 L140 0" stroke="rgba(255,255,255,0.25)" strokeWidth="1.2" />
-        <path d="M0 0 L0 140" stroke="rgba(255,255,255,0.25)" strokeWidth="1.2" />
-        <path d="M0 0 L120 120" stroke="rgba(255,255,255,0.35)" strokeWidth="1.2" />
-        <path d="M0 0 L135 60" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
-        <path d="M0 0 L60 135" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
-        {/* Vòng cung tơ nhện */}
-        <path d="M30 0 Q25 25 0 30" stroke="rgba(255,255,255,0.3)" strokeWidth="0.9" fill="none" />
-        <path d="M60 0 Q50 50 0 60" stroke="rgba(255,255,255,0.3)" strokeWidth="0.9" fill="none" />
-        <path d="M95 0 Q80 80 0 95" stroke="rgba(255,255,255,0.3)" strokeWidth="0.9" fill="none" />
-        <path d="M130 0 Q110 110 0 130" stroke="rgba(255,255,255,0.25)" strokeWidth="0.9" fill="none" />
-        {/* Chú nhện nhỏ thả tơ */}
-        <line x1="85" y1="85" x2="85" y2="120" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" strokeDasharray="2 2" />
-        <ellipse cx="85" cy="122" rx="4" ry="5" fill="#f97316" />
-        <circle cx="85" cy="118" r="2.5" fill="#c2410c" />
-        <path d="M82 120 Q78 118 76 122 M88 120 Q92 118 94 122" stroke="#ea580c" strokeWidth="0.8" fill="none" />
-        <path d="M82 123 Q77 124 76 128 M88 123 Q93 124 94 128" stroke="#ea580c" strokeWidth="0.8" fill="none" />
-      </svg>
-    </div>
-  );
-};
-
 // ==========================================
 // 2. HIỆU ỨNG CON TRỎ CHUỘT MA QUÁI (GHOST TRAIL)
 // ==========================================
