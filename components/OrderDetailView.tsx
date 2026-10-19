@@ -1221,22 +1221,6 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         style={{ backgroundColor: chameleonTheme.primaryHex }}
                     ></div>
                     <span className="text-sm font-extrabold text-slate-800 tracking-tight whitespace-nowrap">Chi tiết đơn hàng</span>
-                    
-                    {/* Smart Contextual Progress Stage HUD */}
-                    <div className="hidden sm:flex items-center gap-1.5 ml-2">
-                        <span 
-                            className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold flex items-center gap-1.5 border backdrop-blur-sm transition-all duration-300"
-                            style={{
-                                backgroundColor: `rgba(${chameleonTheme.primaryRgb}, 0.12)`,
-                                borderColor: `rgba(${chameleonTheme.primaryRgb}, 0.35)`,
-                                color: chameleonTheme.primaryHex
-                            }}
-                            title={contextualLayout.stageDescription}
-                        >
-                            <i className={`fas ${contextualLayout.primaryHeroAction.icon} text-[10px] ${contextualLayout.primaryHeroAction.pulse ? 'animate-pulse' : ''}`}></i>
-                            <span>{contextualLayout.stageTitle}</span>
-                        </span>
-                    </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <StatusBadge status={statusText} />
@@ -1303,24 +1287,6 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 <span className="text-white text-xs font-black uppercase tracking-wider">{resolvedOrder['Dòng xe']}</span>
                                 <span className="text-slate-300 text-xs font-bold">{resolvedOrder['Phiên bản']}</span>
                             </div>
-
-                            {/* Chameleon Exterior Color Badge */}
-                            {resolvedOrder['Ngoại thất'] && (
-                                <div 
-                                    className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold border flex items-center gap-1.5 backdrop-blur-sm select-none transition-all shadow-xs"
-                                    style={{
-                                        backgroundColor: `rgba(${chameleonTheme.primaryRgb}, 0.12)`,
-                                        borderColor: `rgba(${chameleonTheme.primaryRgb}, 0.35)`,
-                                        color: chameleonTheme.primaryHex
-                                    }}
-                                >
-                                    <span 
-                                        className="w-2 h-2 rounded-full border border-white/60 shrink-0"
-                                        style={{ backgroundColor: chameleonTheme.primaryHex }}
-                                    ></span>
-                                    <span className="truncate max-w-[130px]">{resolvedOrder['Ngoại thất']}</span>
-                                </div>
-                            )}
                         </div>
 
                         {isCancelled && resolvedOrder["Ghi chú hủy"] && (
