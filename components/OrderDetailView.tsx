@@ -21,6 +21,7 @@ import { CyberVoucherTicketItem } from '../services/api/stockService';
 import MarqueeText from './ui/MarqueeText';
 import { downloadDeliveryNoticeDocx } from '../services/deliveryNoticeService';
 import { formatShortWarehouseName, cleanCyberContractCode } from '../utils/stringUtils';
+import { getCarChameleonTheme, getContextualLayoutBlueprint } from '../services/api/designTokenService';
 
 moment.locale('vi');
 
@@ -174,6 +175,15 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     };
 
     const resolvedOrder = order ? (orderList.find(o => o['Số đơn hàng'] === order['Số đơn hàng']) || order) : null;
+
+    // Chameleon Adaptive Theme & Contextual Layout Engine
+    const chameleonTheme = useMemo(() => {
+        return getCarChameleonTheme(resolvedOrder?.['Ngoại thất'], resolvedOrder?.['Dòng xe']);
+    }, [resolvedOrder?.['Ngoại thất'], resolvedOrder?.['Dòng xe']]);
+
+    const contextualLayout = useMemo(() => {
+        return getContextualLayoutBlueprint(resolvedOrder);
+    }, [resolvedOrder]);
 
     // Tìm thông tin xe trong kho (stockData) khớp với số VIN của đơn hàng
     const matchedStockVehicle = useMemo(() => {
@@ -1199,10 +1209,34 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         <div className="h-full flex flex-col overflow-hidden rounded-2xl border border-gray-200 shadow-lg bg-white">
             {/* Compact header with Harmonized Gradient */}
             {inlineMode !== 'INVOICE' && (
-            <header className="flex-shrink-0 flex items-center justify-between gap-3 px-5 py-3 border-b border-slate-200/80 bg-gradient-to-r from-slate-100/90 via-indigo-50/40 to-slate-100/90 rounded-t-2xl shadow-xs">
+            <header 
+                className="flex-shrink-0 flex items-center justify-between gap-3 px-5 py-2.5 border-b border-slate-200/80 rounded-t-2xl shadow-xs transition-colors duration-500"
+                style={{
+                    background: `linear-gradient(90deg, rgba(${chameleonTheme.primaryRgb}, 0.08) 0%, rgba(248, 250, 252, 0.95) 45%, rgba(241, 245, 249, 0.9) 100%)`
+                }}
+            >
                 <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-1.5 h-5 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full flex-shrink-0 shadow-xs"></div>
+                    <div 
+                        className="w-1.5 h-5 rounded-full flex-shrink-0 shadow-xs transition-colors duration-500"
+                        style={{ backgroundColor: chameleonTheme.primaryHex }}
+                    ></div>
                     <span className="text-sm font-extrabold text-slate-800 tracking-tight whitespace-nowrap">Chi tiết đơn hàng</span>
+                    
+                    {/* Smart Contextual Progress Stage HUD */}
+                    <div className="hidden sm:flex items-center gap-1.5 ml-2">
+                        <span 
+                            className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold flex items-center gap-1.5 border backdrop-blur-sm transition-all duration-300"
+                            style={{
+                                backgroundColor: `rgba(${chameleonTheme.primaryRgb}, 0.12)`,
+                                borderColor: `rgba(${chameleonTheme.primaryRgb}, 0.35)`,
+                                color: chameleonTheme.primaryHex
+                            }}
+                            title={contextualLayout.stageDescription}
+                        >
+                            <i className={`fas ${contextualLayout.primaryHeroAction.icon} text-[10px] ${contextualLayout.primaryHeroAction.pulse ? 'animate-pulse' : ''}`}></i>
+                            <span>{contextualLayout.stageTitle}</span>
+                        </span>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <StatusBadge status={statusText} />
@@ -1238,19 +1272,55 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             ) : (
             <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-2 sm:gap-2.5 md:gap-3 px-2 py-1.5 md:px-3 md:py-2.5 overflow-hidden relative">
                 
-                {/* LEFT COLUMN: Modern Automotive Studio Digital Twin */}
-                <div className={`flex-[4] lg:flex-[4.5] ${inlineMode !== 'VIEW' ? 'hidden md:flex' : 'flex'} flex-col relative items-center justify-between py-2 px-3 md:py-3 md:px-4 shrink-0 min-h-[140px] sm:min-h-[180px] md:min-h-0 rounded-2xl bg-white/80 backdrop-blur-xl border border-slate-200/80 shadow-xs overflow-hidden`}>
-                    {/* Studio Ambient Rim Lighting */}
-                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_55%_at_50%_45%,rgba(224,231,255,0.5),rgba(241,245,249,0.2)_65%,transparent_85%)] pointer-events-none" />
+                {/* LEFT COLUMN: Modern Automotive Studio Digital Twin with Chameleon Theme */}
+                <div 
+                    className={`flex-[4] lg:flex-[4.5] ${inlineMode !== 'VIEW' ? 'hidden md:flex' : 'flex'} flex-col relative items-center justify-between py-2 px-3 md:py-3 md:px-4 shrink-0 min-h-[140px] sm:min-h-[180px] md:min-h-0 rounded-2xl bg-white/85 backdrop-blur-xl border shadow-xs overflow-hidden transition-all duration-500`}
+                    style={{
+                        borderColor: `rgba(${chameleonTheme.primaryRgb}, 0.25)`,
+                        boxShadow: `0 12px 32px -8px rgba(${chameleonTheme.primaryRgb}, 0.12)`
+                    }}
+                >
+                    {/* Studio Ambient Rim Lighting (Dynamic Chameleon Gradient) */}
+                    <div 
+                        className="absolute inset-0 pointer-events-none transition-all duration-700" 
+                        style={{ background: chameleonTheme.ambientStudioGradient }}
+                    />
 
                     {/* Top Anodized Titanium Model Badge & Pairing Status */}
                     <div className="w-full flex items-center justify-between gap-2 relative z-20 shrink-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <div className="px-3 py-1.5 rounded-xl bg-slate-900/95 backdrop-blur-md border border-slate-700/80 shadow-md flex items-center gap-2 select-none">
-                                <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)] animate-pulse"></span>
+                            <div 
+                                className="px-3 py-1.5 rounded-xl bg-slate-900/95 backdrop-blur-md border shadow-md flex items-center gap-2 select-none transition-all"
+                                style={{ borderColor: `rgba(${chameleonTheme.primaryRgb}, 0.4)` }}
+                            >
+                                <span 
+                                    className="w-2 h-2 rounded-full animate-pulse"
+                                    style={{ 
+                                        backgroundColor: chameleonTheme.primaryHex,
+                                        boxShadow: `0 0 10px ${chameleonTheme.primaryHex}` 
+                                    }}
+                                ></span>
                                 <span className="text-white text-xs font-black uppercase tracking-wider">{resolvedOrder['Dòng xe']}</span>
                                 <span className="text-slate-300 text-xs font-bold">{resolvedOrder['Phiên bản']}</span>
                             </div>
+
+                            {/* Chameleon Exterior Color Badge */}
+                            {resolvedOrder['Ngoại thất'] && (
+                                <div 
+                                    className="px-2.5 py-1 rounded-xl text-[10.5px] font-bold border flex items-center gap-1.5 backdrop-blur-sm select-none transition-all shadow-xs"
+                                    style={{
+                                        backgroundColor: `rgba(${chameleonTheme.primaryRgb}, 0.12)`,
+                                        borderColor: `rgba(${chameleonTheme.primaryRgb}, 0.35)`,
+                                        color: chameleonTheme.primaryHex
+                                    }}
+                                >
+                                    <span 
+                                        className="w-2 h-2 rounded-full border border-white/60 shrink-0"
+                                        style={{ backgroundColor: chameleonTheme.primaryHex }}
+                                    ></span>
+                                    <span className="truncate max-w-[130px]">{resolvedOrder['Ngoại thất']}</span>
+                                </div>
+                            )}
                         </div>
 
                         {isCancelled && resolvedOrder["Ghi chú hủy"] && (
@@ -1267,8 +1337,13 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         className="flex-1 w-full min-h-0 relative z-10 flex items-center justify-center py-1 select-none cursor-grab"
                         style={{ perspective: '1200px' }}
                     >
-                        {/* Floor Contact Ground Shadow */}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-3/4 max-w-[320px] h-4 bg-slate-900/15 rounded-[100%] blur-md pointer-events-none transform scale-y-50"></div>
+                        {/* Floor Contact Ground Shadow with Chameleon Sub-Glow */}
+                        <div 
+                            className="absolute bottom-4 left-1/2 -translate-x-1/2 w-3/4 max-w-[320px] h-4 rounded-[100%] blur-md pointer-events-none transform scale-y-50 transition-all duration-500"
+                            style={{
+                                background: `radial-gradient(ellipse at center, rgba(${chameleonTheme.primaryRgb}, 0.35) 0%, rgba(15, 23, 42, 0.20) 45%, transparent 75%)`
+                            }}
+                        ></div>
 
                         <div 
                             className="w-full h-full flex items-center justify-center pointer-events-auto relative z-10"
@@ -2823,7 +2898,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                             </button>
                         )}
 
-                        {/* Nút Xuất Hóa Đơn (Hero CTA) - Nổi bật thông minh theo ngữ cảnh */}
+                        {/* Smart Contextual Action CTA - Tự động thích ứng và nổi bật theo tiến độ đơn hàng */}
                         {canRequestInvoice && !isReferenceAccount && (
                             <button 
                                 onClick={() => {
@@ -2833,10 +2908,14 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                         onRequestInvoice(resolvedOrder);
                                     }
                                 }} 
-                                className="h-8 px-4 inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-600 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/30 cursor-pointer shrink-0 active:scale-95 animate-pulse"
+                                className="h-8 px-4 inline-flex items-center gap-1.5 text-white font-bold text-xs transition-all cursor-pointer shrink-0 active:scale-95 animate-pulse rounded-xl"
+                                style={{
+                                    backgroundColor: chameleonTheme.primaryHex,
+                                    boxShadow: `0 4px 14px rgba(${chameleonTheme.primaryRgb}, 0.45)`
+                                }}
                             >
-                                <i className="fas fa-file-invoice text-[10px] text-white"></i>
-                                <span>Xuất Hóa Đơn</span>
+                                <i className={`fas ${contextualLayout.primaryHeroAction.icon} text-[11px] text-white`}></i>
+                                <span>{contextualLayout.stage === 'pending_invoice' ? 'Xuất Hóa Đơn (M-Invoice)' : 'Xuất Hóa Đơn'}</span>
                             </button>
                         )}
                     </div>

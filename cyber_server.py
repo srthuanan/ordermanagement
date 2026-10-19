@@ -536,6 +536,146 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
             return
 
+        elif parsed.path == "/api/cyber/car-design-tokens":
+            try:
+                qs = parse_qs(parsed.query)
+                color = (qs.get("color", [""])[0] or "").strip().lower()
+                model = (qs.get("model", [""])[0] or "").strip().upper()
+                
+                # Bảng màu Design Token tắc kè hoa chính hãng VinFast
+                tokens = {
+                    "primaryHex": "#0284C7", "primaryRgb": "2, 132, 199",
+                    "cardBorderGlow": "rgba(2, 132, 199, 0.45)",
+                    "shadowGlow": "0 16px 38px -10px rgba(2, 132, 199, 0.35)",
+                    "ambientStudio": "radial-gradient(ellipse 90% 60% at 50% -15%, rgba(2, 132, 199, 0.22) 0%, rgba(2, 132, 199, 0.05) 55%, transparent 100%)",
+                    "accentButtonClass": "bg-sky-600 hover:bg-sky-700 text-white shadow-sky-500/25"
+                }
+                if any(k in color for k in ["ce1u", "111u", "181u", "vàng", "yellow", "gold"]):
+                    tokens = {
+                        "primaryHex": "#D97706", "primaryRgb": "217, 119, 6",
+                        "cardBorderGlow": "rgba(217, 119, 6, 0.55)",
+                        "shadowGlow": "0 16px 38px -10px rgba(217, 119, 6, 0.38)",
+                        "ambientStudio": "radial-gradient(ellipse 90% 60% at 50% -15%, rgba(217, 119, 6, 0.25) 0%, rgba(217, 119, 6, 0.06) 55%, transparent 100%)",
+                        "accentButtonClass": "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-500/25"
+                    }
+                elif any(k in color for k in ["ce1m", "111m", "ce2q", "đỏ", "red", "ruby", "crimson"]):
+                    tokens = {
+                        "primaryHex": "#DC2626", "primaryRgb": "220, 38, 38",
+                        "cardBorderGlow": "rgba(220, 38, 38, 0.55)",
+                        "shadowGlow": "0 16px 38px -10px rgba(220, 38, 38, 0.38)",
+                        "ambientStudio": "radial-gradient(ellipse 90% 60% at 50% -15%, rgba(220, 38, 38, 0.25) 0%, rgba(220, 38, 38, 0.06) 55%, transparent 100%)",
+                        "accentButtonClass": "bg-rose-600 hover:bg-rose-700 text-white shadow-rose-500/25"
+                    }
+                elif any(k in color for k in ["ce1w", "ce2b", "ce21", "xanh lá", "green", "mint", "ocean", "criterio"]):
+                    tokens = {
+                        "primaryHex": "#059669", "primaryRgb": "5, 150, 105",
+                        "cardBorderGlow": "rgba(5, 150, 105, 0.55)",
+                        "shadowGlow": "0 16px 38px -10px rgba(5, 150, 105, 0.38)",
+                        "ambientStudio": "radial-gradient(ellipse 90% 60% at 50% -15%, rgba(5, 150, 105, 0.25) 0%, rgba(5, 150, 105, 0.06) 55%, transparent 100%)",
+                        "accentButtonClass": "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/25"
+                    }
+                elif any(k in color for k in ["ce1a", "ce32", "cam", "orange", "sunset", "vitality"]):
+                    tokens = {
+                        "primaryHex": "#EA580C", "primaryRgb": "234, 88, 12",
+                        "cardBorderGlow": "rgba(234, 88, 12, 0.55)",
+                        "shadowGlow": "0 16px 38px -10px rgba(234, 88, 12, 0.38)",
+                        "ambientStudio": "radial-gradient(ellipse 90% 60% at 50% -15%, rgba(234, 88, 12, 0.25) 0%, rgba(234, 88, 12, 0.06) 55%, transparent 100%)",
+                        "accentButtonClass": "bg-orange-600 hover:bg-orange-700 text-white shadow-orange-500/25"
+                    }
+                elif any(k in color for k in ["ce1x", "ce2k", "hồng", "pink", "berry"]):
+                    tokens = {
+                        "primaryHex": "#DB2777", "primaryRgb": "219, 39, 119",
+                        "cardBorderGlow": "rgba(219, 39, 119, 0.55)",
+                        "shadowGlow": "0 16px 38px -10px rgba(219, 39, 119, 0.38)",
+                        "ambientStudio": "radial-gradient(ellipse 90% 60% at 50% -15%, rgba(219, 39, 119, 0.25) 0%, rgba(219, 39, 119, 0.06) 55%, transparent 100%)",
+                        "accentButtonClass": "bg-pink-600 hover:bg-pink-700 text-white shadow-pink-500/25"
+                    }
+                elif any(k in color for k in ["ce14", "ce1v", "ce17", "xám", "bạc", "grey", "silver"]):
+                    tokens = {
+                        "primaryHex": "#64748B", "primaryRgb": "100, 116, 139",
+                        "cardBorderGlow": "rgba(100, 116, 139, 0.55)",
+                        "shadowGlow": "0 16px 38px -10px rgba(100, 116, 139, 0.38)",
+                        "ambientStudio": "radial-gradient(ellipse 90% 60% at 50% -15%, rgba(100, 116, 139, 0.25) 0%, rgba(100, 116, 139, 0.06) 55%, transparent 100%)",
+                        "accentButtonClass": "bg-slate-700 hover:bg-slate-800 text-white shadow-slate-600/25"
+                    }
+                elif any(k in color for k in ["ce18", "trắng", "white", "blanc"]):
+                    tokens = {
+                        "primaryHex": "#38BDF8", "primaryRgb": "56, 189, 248",
+                        "cardBorderGlow": "rgba(56, 189, 248, 0.50)",
+                        "shadowGlow": "0 16px 38px -10px rgba(56, 189, 248, 0.30)",
+                        "ambientStudio": "radial-gradient(ellipse 90% 60% at 50% -15%, rgba(248, 250, 252, 0.35) 0%, rgba(56, 189, 248, 0.08) 55%, transparent 100%)",
+                        "accentButtonClass": "bg-sky-600 hover:bg-sky-700 text-white shadow-sky-500/25"
+                    }
+                elif any(k in color for k in ["ce11", "3111", "đen", "black"]):
+                    tokens = {
+                        "primaryHex": "#334155", "primaryRgb": "51, 65, 85",
+                        "cardBorderGlow": "rgba(71, 85, 105, 0.60)",
+                        "shadowGlow": "0 16px 38px -10px rgba(15, 23, 42, 0.50)",
+                        "ambientStudio": "radial-gradient(ellipse 90% 60% at 50% -15%, rgba(51, 65, 85, 0.30) 0%, rgba(30, 41, 59, 0.10) 55%, transparent 100%)",
+                        "accentButtonClass": "bg-slate-800 hover:bg-slate-900 text-white shadow-slate-900/30"
+                    }
+
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": True, "tokens": tokens}, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/cyber/contextual-layout-engine":
+            try:
+                qs = parse_qs(parsed.query)
+                status = (qs.get("status", [""])[0] or "").strip().lower()
+                has_vin = (qs.get("has_vin", ["false"])[0] or "").lower() == "true"
+                has_invoice = (qs.get("has_invoice", ["false"])[0] or "").lower() == "true"
+                
+                stage = "unmatched"
+                stage_num = 1
+                stage_title = "Đơn Hàng Mới — Chờ Ghép VIN"
+                hero_action = {"id": "pair_vin", "label": "Ghép Xe Ngay", "icon": "fa-link", "variant": "purple", "pulse": True}
+                
+                if "đã giao" in status or "giao xe" in status:
+                    stage = "delivered"
+                    stage_num = 4
+                    stage_title = "Bàn Giao Xe Hoàn Tất"
+                    hero_action = {"id": "view_td4", "label": "Xem Phiếu Hẹn Giao (TD4)", "icon": "fa-check-circle", "variant": "success", "pulse": False}
+                elif has_invoice or "đã xuất hóa đơn" in status or "invoiced" in status:
+                    stage = "invoiced"
+                    stage_num = 3
+                    stage_title = "Hóa Đơn Đã Phát Hành"
+                    hero_action = {"id": "download_invoice", "label": "Tải Hóa Đơn PDF", "icon": "fa-file-invoice-dollar", "variant": "primary", "pulse": False}
+                elif has_vin or "chờ ký" in status:
+                    stage = "pending_invoice"
+                    stage_num = 2
+                    stage_title = "Đã Ghép VIN — Chờ Ký Hóa Đơn"
+                    hero_action = {"id": "auto_fetch_invoice", "label": "Lấy HĐ M-Invoice", "icon": "fa-bolt", "variant": "warning", "pulse": True}
+
+                blueprint = {
+                    "success": True,
+                    "stage": stage,
+                    "stageNumber": stage_num,
+                    "stageTitle": stage_title,
+                    "heroAction": hero_action
+                }
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(blueprint, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
         elif parsed.path == "/api/dms/dealers":
             try:
                 res = get_dealers_list()
