@@ -41,6 +41,11 @@
      - Ban đêm (18:30 – 07:30 sáng hôm sau): Tự động ngừng hoàn toàn (Skip), không quét để tiết kiệm tài nguyên mạng và máy chủ.
   3. **Cơ Chế Cookie DMS Tập Trung**: Lưu cấu hình cookie đại lý trong `dms_dealers_config.json`. Khi 1 tài khoản cập nhật Cookie còn hạn, toàn bộ nhân sự TVBH trong đại lý đó đều tự động được chia sẻ quyền tra cứu qua backend/Vercel serverless.
 
+- **Kiến Trúc Hạ Tầng Đám Mây & Vercel Python Serverless (Cloud-First & Zero-Downtime Fallback)**:
+  1. **API Python Serverless Trên Vercel Luôn Khả Dụng**: Toàn bộ các API Python nghiệp vụ (bao gồm tự động lấy hóa đơn M-Invoice `sync-and-notify`, DMS Radar, `cyber_server.py`) đã được triển khai chạy trực tiếp trên Vercel Serverless (`api/index.py` tại `vinfastthuanan.vercel.app`).
+  2. **Hoạt Động Độc Lập Khi Không Có Máy Văn Phòng**: Khi máy tính văn phòng tắt (offline) hoặc khi Admin/User sử dụng điện thoại di động, máy tính bảng từ xa ngoài showroom, hệ thống tự động định tuyến gọi thẳng tới API Python Serverless trên Vercel Cloud (`vinfastthuanan.vercel.app/api/*`).
+  3. **Tự Chủ 100% Không Phụ Thuộc Máy Trạm**: Cookie M-Invoice và cấu hình hệ thống đều được lưu trữ tập trung trên Supabase Cloud Storage. Mọi tác vụ lấy hóa đơn, tự động xuất file PDF, lưu trữ và tự động gửi email cho TVBH đều chạy độc lập hoàn tất 100% trên nền tảng đám mây mà không bắt buộc máy tính văn phòng phải mở.
+
 - **Kiến Trúc Giao Diện Đơn Hàng (Tri-Column Automotive Cockpit & Digital Twin)**:
   1. Tab Đơn Hàng tuân theo chuẩn mực hệ thống xe hơi hiện đại (Tesla Fleet Hub & Porsche One Cockpit): Không gian Studio ánh sáng vô cực (Cinematic Studio Lighting), mô phỏng xe 3D tương tác dạng Digital Twin với bóng gầm mềm mại.
   2. Bố cục 3 khối công thái học: Danh sách hàng đợi đơn hàng ➔ Bản sao số của xe & Hộ chiếu xe (VIN Monospace, kho bãi, thông số) ➔ Trung tâm tác nghiệp & dòng tiền (Tiến độ 5 bước, chính sách, đối soát).
