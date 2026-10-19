@@ -143,7 +143,7 @@ export const getResolvedCyberApiUrl = (): string => {
         return currentOrigin;
     }
 
-    return (customUrl || envUrl || 'https://ordermanagement-six.vercel.app').trim().replace(/\/+$/, '');
+    return (customUrl || envUrl || 'https://vinfastthuanan.vercel.app').trim().replace(/\/+$/, '');
 };
 
 interface RequestCyberOptions {
