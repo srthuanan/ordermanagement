@@ -6,7 +6,10 @@
   3. **Tuyệt Đối Không Đề Xuất Lại**: Không bao giờ đề xuất lại các tính năng: Cổng hành trình xe cho khách hàng (Customer Tracking Portal), Báo giá lăn bánh PDF 1-chạm, Bot Telegram/Zalo cảnh báo, Biên bản bàn giao PDI ký số, Bảng vinh danh TVBH trên Smart TV. Mọi đề xuất tiếp theo phải tập trung vào nghiệp vụ quản trị nội bộ sâu hơn.
 
 
-- **Deployment Protocol**: NEVER run `npm run deploy` or deploy the application to production unless explicitly requested by the user. Do not assume a deployment is needed after making code changes.
+- **Quy Chuẩn Triển Khai & Vercel CI/CD (Deployment & Git Push Protocol)**:
+  1. **Tuyệt Đối KHÔNG Chạy Lệnh `npm run deploy`**: Lệnh này là script cũ (từ thời GitHub Pages / Vercel CLI thủ công) và hoàn toàn dư thừa. Tuyệt đối không bao giờ đề xuất hoặc thực thi lệnh `npm run deploy` trong bất kỳ tình huống nào.
+  2. **Cơ Chế CI/CD Tự Động Qua Git**: Toàn bộ dự án đã tích hợp Vercel CI/CD tự động liên kết trực tiếp với GitHub (`origin/main`). Khi cần triển khai code lên môi trường Production, **CHỈ CẦN VÀ DUY NHẤT LÀ CHẠY `git push origin main`**; Vercel sẽ tự động bắt webhook, tự build và tự deploy lên Production ngay lập tức.
+  3. **Script Máy Trạm & Cầu Nối Cổng 3001**: Các file script máy trạm văn phòng (như `server-cyber.mjs`, `m_invoice_service.py`, `sync_thuan_an_allocations.py`) chạy trực tiếp tại máy nội bộ nên có hiệu lực tức thì tại chỗ ngay khi lưu file, không cần chờ đợi chu kỳ build đám mây của Vercel.
 
 - **Cyber MSSQL Query Protocol**: Khi viết script hoặc thực hiện truy vấn cơ sở dữ liệu CyberSoft (`SQLVanDao.Cybersoft.com.vn`), luôn bắt buộc tuân thủ:
   1. Khai báo `appname='CyberAppGolden'` và `autocommit=True` trong connection parameters.
