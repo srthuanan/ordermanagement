@@ -17,3 +17,24 @@
   1. **Một Lệnh Duy Nhất (Single Command)**: Khi phát sinh vấn đề cần xử lý, debug hoặc sửa lỗi, luôn gom toàn bộ các bước kiểm tra, sửa code, cập nhật công thức và đồng bộ vào **ĐÚNG 1 LỆNH DUY NHẤT** để xử lý dứt điểm, tuyệt đối không chạy lắt nhắt nhiều lệnh rời rạc.
   2. **Ghi Ngắn Gọn Mục Đích**: Trước khi thực thi bất kỳ lệnh cmd / terminal nào, luôn ghi **ngắn gọn đúng 1 câu** nêu rõ mục đích và tác dụng của lệnh đó để người dùng nắm rõ.
 
+- **Supabase & Vercel Environment Variables Protocol (Phòng Ngừa Tuyệt Đối Lỗi Màn Hình Trắng)**:
+  1. **Tuyệt đối KHÔNG BAO GIỜ viết lệnh `throw new Error(...)`** hoặc chặn sập luồng render khi các biến môi trường `VITE_SUPABASE_URL` hoặc `VITE_SUPABASE_ANON_KEY` bị rỗng / undefined.
+  2. **Bản chất cốt lõi**: File `.env` bị chặn bởi `.gitignore` nên khi Vercel Cloud build ứng dụng từ xa, máy ảo Vercel không có file `.env`. Nếu code throw exception, toàn bộ ứng dụng React sẽ crash thành màn hình trắng (White Screen of Death) ngay lập tức trước khi kịp vẽ giao diện.
+  3. Mọi vị trí gọi `import.meta.env.VITE_SUPABASE_URL` và `import.meta.env.VITE_SUPABASE_ANON_KEY` (hoặc khởi tạo `createClient`) PHẢI LUÔN LUÔN có giá trị Fallback mặc định an toàn:
+     - Fallback URL: `'https://jwvgxqrkjlbewvpkvucj.supabase.co'`
+     - Fallback Anon Key: `'sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX'`
+  4. Mọi component và hook phải ưu tiên import client từ [services/supabaseClient.ts](file:///c:/Users/Pham%20Thanh%20Nhan/Documents/ordermanagement/services/supabaseClient.ts) thay vì tự khởi tạo lại client mới.
+
+- **Cấu Trúc DMS Radar & Máy Trạm Văn Phòng (Port 3001 & Schedule Sync)**:
+  1. **Cổng Dịch Vụ Máy Văn Phòng**: Mặc định cố định là cổng `3001` (`http://localhost:3001` hoặc IP LAN) cho các dịch vụ cầu nối `server-cyber.mjs` và `cyber_server.py`.
+  2. **Lịch Đồng Bộ DMS Tự Động**:
+     - Ban ngày (07:30 – 18:30 GMT+7): Quét kiểm tra đơn hàng và tồn kho mỗi 15 phút/lần.
+     - Ban đêm (18:30 – 07:30 sáng hôm sau): Tự động ngừng hoàn toàn (Skip), không quét để tiết kiệm tài nguyên mạng và máy chủ.
+  3. **Cơ Chế Cookie DMS Tập Trung**: Lưu cấu hình cookie đại lý trong `dms_dealers_config.json`. Khi 1 tài khoản cập nhật Cookie còn hạn, toàn bộ nhân sự TVBH trong đại lý đó đều tự động được chia sẻ quyền tra cứu qua backend/Vercel serverless.
+
+- **Hiệu Năng & Tối Ưu Tải Trang (Code-Splitting & Lazy Loading)**:
+  1. Các Modal, Form hoặc báo cáo có dung lượng lớn (như `RequestInvoiceModal`, Báo cáo doanh số...) bắt buộc phải sử dụng `React.lazy()` và `<Suspense>` để tách chunk độc lập.
+  2. Không để bundle chính (index chunk) vượt quá giới hạn khuyến nghị, đảm bảo tải siêu tốc trên cả thiết bị di động và đường truyền yếu.
+
+
+
