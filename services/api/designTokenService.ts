@@ -1,5 +1,3 @@
-import React from 'react';
-
 export interface ChameleonThemeTokens {
     colorCode: string;
     colorName: string;
@@ -40,7 +38,7 @@ export interface ContextualLayoutBlueprint {
 /**
  * Trích xuất bộ Design Tokens Tắc Kè Hoa (Chameleon Theme) theo màu sơn ngoại thất xe
  */
-export const getCarChameleonTheme = (exterior?: string, model?: string): ChameleonThemeTokens => {
+export const getCarChameleonTheme = (exterior?: string, _model?: string): ChameleonThemeTokens => {
     const raw = (exterior || '').toLowerCase().trim();
     const codeMatch = raw.match(/\(([^)]+)\)/);
     const code = codeMatch ? codeMatch[1].trim().toLowerCase() : '';
