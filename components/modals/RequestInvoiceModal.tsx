@@ -164,6 +164,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         dmsVal?: string;
     }>({ status: 'idle' });
     const [isCheckingDms, setIsCheckingDms] = useState(false);
+    const prevDmsStatusRef = useRef<string>('');
+    const prevCyberApprovedRef = useRef<boolean>(false);
 
     const expectedConfig = useMemo(() => {
         const car = stockData?.find((v: any) => v.VIN === order.VIN);
@@ -491,6 +493,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 if (isManualClick) {
                     showToast('Khớp 100% DMS', 'Cấu hình xe khớp hoàn toàn với VSO trên VinFast DMS.', 'success', 3000);
                 }
+                prevDmsStatusRef.current = 'valid';
             } else {
                 setDmsVerification({
                     status: 'invalid',
@@ -500,6 +503,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     message: res.reason || 'Cấu hình xe không khớp với VSO trên VinFast DMS.',
                     details: res.details
                 });
+                prevDmsStatusRef.current = 'invalid';
                 if (isManualClick) {
                     showToast('Chưa khớp DMS', res.reason || 'Cấu hình xe chưa khớp với VSO trên VinFast DMS.', 'warning', 3500);
                 }
@@ -509,6 +513,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 status: 'invalid',
                 message: err.message || 'Lỗi khi kết nối hệ thống kiểm tra DMS.'
             });
+            prevDmsStatusRef.current = 'invalid';
             if (isManualClick) {
                 showToast('Lỗi kiểm tra DMS', err.message || 'Lỗi khi kết nối hệ thống kiểm tra DMS.', 'error', 3000);
             }
@@ -554,6 +559,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                     showToast('Chưa có HĐ trên Cyber', `Chưa tìm thấy hợp đồng ${contractCode || ''} của khách hàng trên hệ thống CyberSoft.`, 'error', 3500);
                 }
             }
+            prevCyberApprovedRef.current = res.found ? res.is_approved : false;
         } catch (err) {
             console.error("Lỗi tra cứu hợp đồng Cyber:", err);
             setCyberContractStatus({
@@ -569,6 +575,48 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             setIsCheckingCyberContract(false);
         }
     };
+
+    // -------------------------------------------------------------
+    // HỆ THỐNG TỰ ĐỘNG TRA LẠI DỮ LIỆU ĐỐI SOÁT TRONG NỀN (BACKGROUND AUTO RE-CHECK)
+    // 1. Tự động kiểm tra ngầm mỗi 6 giây khi phát hiện dữ liệu chưa khớp / HĐ chưa duyệt
+    // 2. Tự động kích hoạt ngay lập tức khi TVBH quay lại tab web (window focus / visibility change)
+    // -------------------------------------------------------------
+    const isDmsPending = dmsVerification.status === 'invalid';
+    const isCyberPending = !cyberContractStatus || !cyberContractStatus.found || !cyberContractStatus.is_approved;
+
+    useEffect(() => {
+        if (!orderNoStr) return;
+
+        // 1. Lắng nghe sự kiện người dùng chuyển tab làm việc (sang CyberSoft / DMS duyệt xong rồi quay lại):
+        const handleWindowActive = () => {
+            if (document.visibilityState === 'visible') {
+                if (!isCheckingDms && !isCheckingCyberContract) {
+                    if (isDmsPending) recheckDmsVerification(false);
+                    if (isCyberPending) recheckCyberContract(false);
+                }
+            }
+        };
+
+        window.addEventListener('focus', handleWindowActive);
+        document.addEventListener('visibilitychange', handleWindowActive);
+
+        // 2. Chu kỳ polling ngầm mỗi 6 giây khi một trong 2 bên chưa khớp:
+        let pollTimer: any = null;
+        if (isDmsPending || isCyberPending) {
+            pollTimer = setInterval(() => {
+                if (document.visibilityState === 'visible' && !isCheckingDms && !isCheckingCyberContract) {
+                    if (isDmsPending) recheckDmsVerification(false);
+                    if (isCyberPending) recheckCyberContract(false);
+                }
+            }, 6000);
+        }
+
+        return () => {
+            window.removeEventListener('focus', handleWindowActive);
+            document.removeEventListener('visibilitychange', handleWindowActive);
+            if (pollTimer) clearInterval(pollTimer);
+        };
+    }, [orderNoStr, isDmsPending, isCyberPending, isCheckingDms, isCheckingCyberContract]);
 
     useEffect(() => {
         const existing = (order?.["Mã HĐ Cyber"] || order?.ma_hd_cyber || (order as any)?.so_hop_dong || order?.["Số hợp đồng"] || '').trim();
