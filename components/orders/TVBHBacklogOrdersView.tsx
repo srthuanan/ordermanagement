@@ -3,7 +3,6 @@ import { supabase } from '../../services/supabaseClient';
 import { getBacklogOrders, updateBacklogTienDo } from '../../services/api/adminService';
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import moment from 'moment';
-import * as XLSX from 'xlsx';
 import TabbedFilter from '../ui/TabbedFilter';
 import MultiSelectDropdown from '../ui/MultiSelectDropdown';
 
@@ -83,14 +82,12 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
     userRole,
     isCurrentUserAdmin = false,
     showToast,
-    onBackToDms,
     orders = [],
     onSelectOrder
 }) => {
     const copyWithFeedback = useCopyFeedback();
     const [backlogOrders, setBacklogOrders] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isRefreshing, setIsRefreshing] = useState(false);
 
     // Active row index in Cyber table
     const [selectedRowIdx, setSelectedRowIdx] = useState<number>(0);
@@ -158,7 +155,6 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
     // Fetch backlog orders from Supabase
     const fetchOrders = useCallback(async (isSilent = false) => {
         if (!isSilent) setIsLoading(true);
-        else setIsRefreshing(true);
 
         try {
             const res = await getBacklogOrders();
@@ -170,7 +166,6 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
             showToast?.('Lỗi tải dữ liệu', err.message || 'Không thể tải danh sách đơn tồn', 'error');
         } finally {
             setIsLoading(false);
-            setIsRefreshing(false);
         }
     }, [showToast]);
 
@@ -341,8 +336,6 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
         }));
     }, [baseOrdersForUser]);
 
-    const uniqueModels = useMemo(() => modelTabs.map(t => t.id), [modelTabs]);
-
     // Danh sách TVBH cho bộ lọc:
     // - Admin: Tất cả TVBH
     // - TPKD: CHỈ CÁC TVBH trong phòng kinh doanh của mình
@@ -414,29 +407,7 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
         setSearchValue('');
     };
 
-    // Export to Excel
-    const handleExportExcel = () => {
-        if (filteredOrders.length === 0) return;
-        const exportData = filteredOrders.map((o, idx) => ({
-            'STT': idx + 1,
-            'Số HĐ': o.so_hop_dong || o.so_don_hang || '',
-            'Ngày ký': o.ngay_hop_dong ? moment(o.ngay_hop_dong).format('DD/MM/YYYY') : '',
-            'Tên khách hàng': o.khach_hang || '',
-            'Số điện thoại': o.so_dien_thoai || '',
-            'Dòng xe / Phiên bản': o.phien_ban || '',
-            'Ngoại thất': o.ngoai_that || '',
-            'Nội thất': o.noi_that || '',
-            'Tiền cọc (VNĐ)': Number(o.tien_coc || 0),
-            'Số VIN': o.vin || '',
-            'Tư vấn bán hàng': o.tvbh_name || '',
-            'Tiến độ': o.tien_do || 'Chờ xe',
-        }));
 
-        const ws = XLSX.utils.json_to_sheet(exportData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "CocTon");
-        XLSX.writeFile(wb, `Danh_Sach_Coc_Ton_${moment().format('YYYYMMDD_HHmm')}.xlsx`);
-    };
 
     return (
         <div className="flex flex-col h-full w-full font-sans select-none">
