@@ -811,14 +811,11 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         const statsButton = (
             <button
                 onClick={() => setIsPendingStatsModalOpen(true)}
-                className="group flex items-center gap-1.5 px-2.5 py-1 lg:px-2 lg:py-0.5 text-[11px] lg:text-[10px] font-bold rounded-xl transition-all duration-200 outline-none whitespace-nowrap bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-slate-700 shadow-2xs hover:shadow-xs hover:border-slate-300 active:scale-95 cursor-pointer select-none"
-                title="Báo cáo thống kê đơn hàng"
+                className="flex items-center gap-1.5 px-2.5 py-1 lg:px-2 lg:py-0.5 text-[11px] lg:text-[10px] font-medium rounded-lg bg-white/90 hover:bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80 hover:border-slate-300 shadow-2xs hover:shadow-xs transition-all duration-150 outline-none whitespace-nowrap cursor-pointer select-none"
+                title="Thống kê xe chờ ghép"
             >
-                <div className="w-4 h-4 rounded-md bg-gradient-to-tr from-sky-500 to-indigo-600 text-white flex items-center justify-center text-[9px] shadow-xs group-hover:scale-105 transition-transform">
-                    <i className="fa-solid fa-chart-column"></i>
-                </div>
-                <span className="font-bold tracking-tight">Thống kê</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20"></span>
+                <i className="fa-solid fa-chart-pie text-[10px] text-slate-400"></i>
+                <span className="font-semibold text-slate-700">Thống kê</span>
             </button>
         );
 
