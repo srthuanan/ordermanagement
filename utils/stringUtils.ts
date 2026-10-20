@@ -9,6 +9,56 @@ export const normalizeString = (str: string | undefined | null): string => {
         .trim();
 };
 
+/**
+ * Rút gọn tên màu ngoại thất xe để hiển thị đẹp trong ô Specs, đặc biệt là các xe 2-tone (như VF 3)
+ * Ví dụ: "Brahminy White Roof- Summer Yellow Body (181U)" -> "Vàng / Nóc Trắng (181U)"
+ */
+export const formatShortExteriorColor = (rawColor: string | undefined): string => {
+    if (!rawColor) return '—';
+    const trimmed = rawColor.trim();
+    const lower = trimmed.toLowerCase();
+    const codeMatch = trimmed.match(/\(([^)]+)\)/);
+    const code = codeMatch ? codeMatch[1].trim() : '';
+
+    // Xử lý các dòng 2-tone phối nóc trắng Brahminy White Roof của VF 3
+    if (lower.includes('white roof') || lower.includes('nóc trắng')) {
+        let bodyColorName = '';
+        if (lower.includes('summer yellow') || lower.includes('vàng') || code.toLowerCase() === '181u' || code.toLowerCase() === '111u') {
+            bodyColorName = 'Vàng / Nóc Trắng';
+        } else if (lower.includes('crimson red') || lower.includes('đỏ') || code.toLowerCase() === '111m' || code.toLowerCase() === '112q') {
+            bodyColorName = 'Đỏ / Nóc Trắng';
+        } else if (lower.includes('criterio green') || lower.includes('mint') || lower.includes('xanh lá') || code.toLowerCase() === '171w' || code.toLowerCase() === '1722') {
+            bodyColorName = 'Xanh / Nóc Trắng';
+        } else if (lower.includes('zenith grey') || lower.includes('xám') || code.toLowerCase() === '171v') {
+            bodyColorName = 'Xám / Nóc Trắng';
+        } else if (lower.includes('iris berry') || lower.includes('hồng') || code.toLowerCase() === '1821') {
+            bodyColorName = 'Hồng / Nóc Trắng';
+        } else if (lower.includes('champagne') || code.toLowerCase() === '1823') {
+            bodyColorName = 'Champagne / Nóc Trắng';
+        } else if (lower.includes('vitality orange') || lower.includes('cam') || code.toLowerCase() === '1832') {
+            bodyColorName = 'Cam / Nóc Trắng';
+        } else if (lower.includes('blue') || lower.includes('xanh dương') || code.toLowerCase() === '182g') {
+            bodyColorName = 'Xanh / Nóc Trắng';
+        }
+
+        if (bodyColorName) {
+            return code ? `${bodyColorName} (${code})` : bodyColorName;
+        }
+    }
+
+    if (trimmed.length > 22 && code) {
+        const namePart = trimmed.replace(/\([^)]+\)/, '').trim();
+        if (namePart.includes('-')) {
+            const parts = namePart.split('-').map(p => p.trim());
+            const bodyPart = parts.find(p => p.toLowerCase().includes('body')) || parts[parts.length - 1];
+            const cleanBody = bodyPart.replace(/body/i, '').trim();
+            return `${cleanBody} (${code})`;
+        }
+    }
+
+    return trimmed;
+};
+
 export const includesNormalized = (source: string | undefined | null, keyword: string): boolean => {
     if (!keyword) return true;
     if (!source) return false;

@@ -20,7 +20,7 @@ import { CyberTd4PrintModal } from './admin/CyberTd4PrintModal';
 import { CyberVoucherTicketItem } from '../services/api/stockService';
 import MarqueeText from './ui/MarqueeText';
 import { downloadDeliveryNoticeDocx } from '../services/deliveryNoticeService';
-import { formatShortWarehouseName, cleanCyberContractCode } from '../utils/stringUtils';
+import { formatShortWarehouseName, cleanCyberContractCode, formatShortExteriorColor } from '../utils/stringUtils';
 import { getCarChameleonTheme } from '../services/api/designTokenService';
 
 moment.locale('vi');
@@ -1336,7 +1336,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 <div className="flex items-center justify-center gap-1">
                                     <span className="w-2.5 h-2.5 rounded-full border border-slate-300 shrink-0 shadow-2xs" style={{ backgroundColor: getExteriorSwatchColor(resolvedOrder["Ngoại thất"]) }}></span>
                                     <p className="text-[9px] md:text-[10px] font-black text-slate-900 leading-tight truncate" style={getExteriorColorStyle(resolvedOrder["Ngoại thất"])}>
-                                        {resolvedOrder["Ngoại thất"] || '—'}
+                                        {formatShortExteriorColor(resolvedOrder["Ngoại thất"])}
                                     </p>
                                 </div>
                             </div>

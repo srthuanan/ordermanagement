@@ -10,24 +10,35 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
     const codeMatch = lower.match(/\(([^)]+)\)/);
     const code = codeMatch ? codeMatch[1].trim().toLowerCase() : '';
 
-    // Check by color code first
-    if (code === 'ce18' || lower.includes('ce18') || lower.includes('white') || lower.includes('trắng') || lower.includes('blanc')) return { color: '#334155' }; // Dark Slate / Charcoal for crisp readability on light backgrounds
-    if (code === 'ce1u' || code === '111u' || code === '181u' || lower.includes('ce1u') || lower.includes('111u') || lower.includes('181u')) return { color: '#D97706' }; // Rich Amber Yellow
-    if (code === 'ce1a' || lower.includes('ce1a')) return { color: '#EA580C' }; // Sunset ORB Orange
-    if (code === 'ce1m' || code === '111m' || lower.includes('ce1m') || lower.includes('111m')) return { color: '#DC2626' }; // Crimson Red
-    if (code === 'ce1n' || code === 'ce1j' || code === 'ce2j' || code === '1y26' || code === '182g' || code === '2a26' || code === 'ce33' || lower.includes('ce1n') || lower.includes('ce1j') || lower.includes('ce2j') || lower.includes('ce33')) return { color: '#2563EB' }; // VinFast Blue
-    if (code === 'ce17' || lower.includes('ce17')) return { color: '#64748B' }; // Silver / Slate
-    if (code === 'ce14' || code === 'ce1v' || code === '171v' || code === '1v18' || code === '2811' || lower.includes('ce14') || lower.includes('ce1v') || lower.includes('171v')) return { color: '#475569' }; // Neptune Grey / Zenith Grey
-    if (code === 'ce11' || code === '3111' || lower.includes('ce11')) return { color: '#0F172A' }; // Jet Black
-    if (code === 'ce1w' || code === 'ce2b' || code === 'ce1h' || code === 'ce22' || code === 'ce21' || code === '171w' || code === '1722' || lower.includes('ce21') || lower.includes('ce1w') || lower.includes('ce2b') || lower.includes('ce1h') || lower.includes('ce22')) return { color: '#059669' }; // Emerald Green / Criterio Green
-    if (code === 'ce1x' || code === 'ce2k' || code === '1821' || code === '181x' || lower.includes('ce2k') || lower.includes('ce1x')) return { color: '#DB2777' }; // Pink Gold / Iris Berry
-    if (code === 'ce2q' || code === '112q' || code === '182q' || lower.includes('ce2q') || lower.includes('112q')) return { color: '#DC2626' }; // Solar Ruby
-    if (code === 'ce23' || code === '2523' || code === '1823' || lower.includes('ce23')) return { color: '#D97706' }; // Champagne Creme
-    if (code === 'ce2n' || code === '2927' || lower.includes('ce2n')) return { color: '#92400E' }; // Introspective Brown / Mystery Bronze
-    if (code === 'ce32' || code === '1132' || code === '1832' || lower.includes('ce32')) return { color: '#EA580C' }; // Vitality Orange
-    if (code === 'ce2o' || code === '312o' || lower.includes('ce2o')) return { color: '#9333EA' }; // Mysterioso Purple
+    // 1. Kiểm tra chính xác theo MÃ MÀU (Color Code) trước tiên
+    if (code) {
+        if (code === 'ce1u' || code === '111u' || code === '181u' || code === 'ce23' || code === '2523' || code === '1823') return { color: '#D97706' }; // Vàng Summer / Amber / Gold
+        if (code === 'ce1a' || code === 'ce32' || code === '1132' || code === '1832') return { color: '#EA580C' }; // Cam Sunset / Vitality
+        if (code === 'ce1m' || code === '111m' || code === 'ce2q' || code === '112q' || code === '182q') return { color: '#DC2626' }; // Đỏ Crimson / Solar Ruby
+        if (code === 'ce1w' || code === 'ce2b' || code === 'ce1h' || code === 'ce22' || code === 'ce21' || code === '171w' || code === '1722') return { color: '#059669' }; // Xanh Emerald / Mint / Criterio
+        if (code === 'ce1n' || code === 'ce1j' || code === 'ce2j' || code === '1y26' || code === '182g' || code === '2a26' || code === 'ce33') return { color: '#2563EB' }; // Xanh VinFast Blue
+        if (code === 'ce17') return { color: '#64748B' }; // Bạc Silver
+        if (code === 'ce14' || code === 'ce1v' || code === '171v' || code === '1v18' || code === '2811') return { color: '#475569' }; // Xám Neptune / Zenith Grey
+        if (code === 'ce11' || code === '3111') return { color: '#0F172A' }; // Đen Jet Black
+        if (code === 'ce1x' || code === 'ce2k' || code === '1821' || code === '181x') return { color: '#DB2777' }; // Hồng Iris Berry
+        if (code === 'ce2n' || code === '2927') return { color: '#92400E' }; // Nâu Đồng Bronze
+        if (code === 'ce2o' || code === '312o') return { color: '#9333EA' }; // Tím Mysterioso
+        if (code === 'ce18' || code === '1818') return { color: '#334155' }; // Trắng Đơn Sắc
+    }
 
-    // 2. Keyword fallback
+    // 2. Xử lý xe 2-tone nóc trắng (Brahminy White Roof) -> Lấy màu thân xe (Body)
+    const isWhiteRoof = lower.includes('white roof') || lower.includes('nóc trắng');
+    if (isWhiteRoof) {
+        if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('summer')) return { color: '#D97706' };
+        if (lower.includes('red') || lower.includes('đỏ') || lower.includes('ruby') || lower.includes('crimson')) return { color: '#DC2626' };
+        if (lower.includes('green') || lower.includes('mint') || lower.includes('criterio') || lower.includes('xanh lá')) return { color: '#059669' };
+        if (lower.includes('blue') || lower.includes('xanh dương')) return { color: '#2563EB' };
+        if (lower.includes('grey') || lower.includes('gray') || lower.includes('xám') || lower.includes('zenith')) return { color: '#475569' };
+        if (lower.includes('pink') || lower.includes('rose') || lower.includes('hồng') || lower.includes('iris') || lower.includes('berry')) return { color: '#DB2777' };
+        if (lower.includes('orange') || lower.includes('cam')) return { color: '#EA580C' };
+    }
+
+    // 3. Keyword fallback
     if (lower.includes('criterio') || lower.includes('green') || lower.includes('mint') || lower.includes('ivy') || lower.includes('xanh lá') || lower.includes('ocean')) return { color: '#059669' };
     if (lower.includes('silver') || lower.includes('bạc') || lower.includes('desat')) return { color: '#64748B' };
     if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('creme') || lower.includes('champagne')) return { color: '#D97706' };
@@ -40,6 +51,7 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
     if (lower.includes('purple') || lower.includes('tím') || lower.includes('mysterioso')) return { color: '#9333EA' };
     if (lower.includes('brown') || lower.includes('bronze') || lower.includes('nâu')) return { color: '#92400E' };
     if (lower.includes('gold')) return { color: '#D97706' };
+    if (lower.includes('white') || lower.includes('trắng') || lower.includes('blanc') || lower.includes('ce18')) return { color: '#334155' };
 
     return {};
 };
@@ -80,19 +92,47 @@ export const getBackgroundColorStyle = (colorName: string | undefined): React.CS
     const codeMatch = lower.match(/\(([^)]+)\)/);
     const code = codeMatch ? codeMatch[1].trim().toLowerCase() : '';
 
-    if (code === 'ce18' || lower.includes('ce18') || lower.includes('white') || lower.includes('trắng') || lower.includes('blanc')) return { backgroundColor: '#FFFFFF' };
-    if (code === 'ce1u' || code === '111u' || code === '181u' || lower.includes('ce1u') || lower.includes('111u') || lower.includes('181u') || lower.includes('yellow') || lower.includes('vàng')) return { backgroundColor: '#EAB308' };
-    if (code === 'ce1a' || lower.includes('ce1a') || lower.includes('sunset') || lower.includes('orange') || lower.includes('cam')) return { backgroundColor: '#F97316' };
-    if (code === 'ce1m' || code === '111m' || lower.includes('ce1m') || lower.includes('111m') || lower.includes('red') || lower.includes('crimson') || lower.includes('đỏ')) return { backgroundColor: '#EF4444' };
-    if (code === 'ce1n' || code === 'ce1j' || code === 'ce2j' || code === '1y26' || code === '182g' || code === '2a26' || code === 'ce33' || lower.includes('blue') || lower.includes('xanh dương')) return { backgroundColor: '#2563EB' };
-    if (code === 'ce17' || lower.includes('ce17') || lower.includes('silver') || lower.includes('bạc')) return { backgroundColor: '#CBD5E1' };
-    if (code === 'ce14' || code === 'ce1v' || lower.includes('ce14') || lower.includes('ce1v') || lower.includes('grey') || lower.includes('gray') || lower.includes('xám')) return { backgroundColor: '#64748B' };
-    if (code === 'ce11' || code === '3111' || lower.includes('ce11') || lower.includes('black') || lower.includes('đen')) return { backgroundColor: '#0F172A' };
-    if (code === 'ce1w' || code === 'ce2b' || code === 'ce1h' || code === 'ce22' || code === 'ce21' || lower.includes('ce21') || lower.includes('green') || lower.includes('mint') || lower.includes('criterio') || lower.includes('xanh lá') || lower.includes('ocean')) return { backgroundColor: '#10B981' };
-    if (code === 'ce1x' || code === 'ce2k' || lower.includes('ce2k') || lower.includes('pink') || lower.includes('rose') || lower.includes('berry') || lower.includes('hồng')) return { backgroundColor: '#EC4899' };
-    if (code === 'ce2q' || code === '112q' || lower.includes('ce2q') || lower.includes('ruby')) return { backgroundColor: '#DC2626' };
-    if (code === 'ce23' || lower.includes('ce23') || lower.includes('creme') || lower.includes('champagne')) return { backgroundColor: '#F59E0B' };
-    if (code === 'ce2n' || lower.includes('ce2n') || lower.includes('brown') || lower.includes('nâu') || lower.includes('bronze')) return { backgroundColor: '#92400E' };
+    // 1. Kiểm tra chính xác theo MÃ MÀU (Color Code) trước tiên
+    if (code) {
+        if (code === 'ce1u' || code === '111u' || code === '181u' || code === 'ce23' || code === '2523' || code === '1823') return { backgroundColor: '#EAB308' }; // Vàng
+        if (code === 'ce1a' || code === 'ce32' || code === '1132' || code === '1832') return { backgroundColor: '#F97316' }; // Cam
+        if (code === 'ce1m' || code === '111m' || code === 'ce2q' || code === '112q' || code === '182q') return { backgroundColor: '#EF4444' }; // Đỏ
+        if (code === 'ce1w' || code === 'ce2b' || code === 'ce1h' || code === 'ce22' || code === 'ce21' || code === '171w' || code === '1722') return { backgroundColor: '#10B981' }; // Xanh lá / Mint
+        if (code === 'ce1n' || code === 'ce1j' || code === 'ce2j' || code === '1y26' || code === '182g' || code === '2a26' || code === 'ce33') return { backgroundColor: '#2563EB' }; // Xanh VinFast Blue
+        if (code === 'ce17') return { backgroundColor: '#CBD5E1' }; // Bạc
+        if (code === 'ce14' || code === 'ce1v' || code === '171v' || code === '1v18' || code === '2811') return { backgroundColor: '#64748B' }; // Xám
+        if (code === 'ce11' || code === '3111') return { backgroundColor: '#0F172A' }; // Đen
+        if (code === 'ce1x' || code === 'ce2k' || code === '1821' || code === '181x') return { backgroundColor: '#EC4899' }; // Hồng
+        if (code === 'ce2n' || code === '2927') return { backgroundColor: '#92400E' }; // Nâu Đồng
+        if (code === 'ce2o' || code === '312o') return { backgroundColor: '#9333EA' }; // Tím
+        if (code === 'ce18' || code === '1818') return { backgroundColor: '#FFFFFF' }; // Trắng
+    }
+
+    // 2. Xử lý xe 2-tone nóc trắng (Brahminy White Roof) -> Lấy màu thân xe (Body)
+    const isWhiteRoof = lower.includes('white roof') || lower.includes('nóc trắng');
+    if (isWhiteRoof) {
+        if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('summer')) return { backgroundColor: '#EAB308' };
+        if (lower.includes('red') || lower.includes('đỏ') || lower.includes('ruby') || lower.includes('crimson')) return { backgroundColor: '#EF4444' };
+        if (lower.includes('green') || lower.includes('mint') || lower.includes('criterio') || lower.includes('xanh lá')) return { backgroundColor: '#10B981' };
+        if (lower.includes('blue') || lower.includes('xanh dương')) return { backgroundColor: '#2563EB' };
+        if (lower.includes('grey') || lower.includes('gray') || lower.includes('xám') || lower.includes('zenith')) return { backgroundColor: '#64748B' };
+        if (lower.includes('pink') || lower.includes('rose') || lower.includes('hồng') || lower.includes('iris') || lower.includes('berry')) return { backgroundColor: '#EC4899' };
+        if (lower.includes('orange') || lower.includes('cam')) return { backgroundColor: '#F97316' };
+    }
+
+    // 3. Keyword fallback
+    if (lower.includes('criterio') || lower.includes('green') || lower.includes('mint') || lower.includes('ivy') || lower.includes('xanh lá') || lower.includes('ocean')) return { backgroundColor: '#10B981' };
+    if (lower.includes('silver') || lower.includes('bạc') || lower.includes('desat')) return { backgroundColor: '#CBD5E1' };
+    if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('creme') || lower.includes('champagne')) return { backgroundColor: '#EAB308' };
+    if (lower.includes('pink') || lower.includes('rose') || lower.includes('berry') || lower.includes('hồng')) return { backgroundColor: '#EC4899' };
+    if (lower.includes('ruby') || lower.includes('crimson') || lower.includes('red') || lower.includes('đỏ')) return { backgroundColor: '#DC2626' };
+    if (lower.includes('blue') || lower.includes('azure') || lower.includes('xanh dương') || lower.includes('xanh lam')) return { backgroundColor: '#2563EB' };
+    if (lower.includes('black') || lower.includes('đen')) return { backgroundColor: '#0F172A' };
+    if (lower.includes('grey') || lower.includes('gray') || lower.includes('xám') || lower.includes('graphite') || lower.includes('neptune') || lower.includes('zenith') || lower.includes('stealth')) return { backgroundColor: '#64748B' };
+    if (lower.includes('orange') || lower.includes('cam') || lower.includes('sunset') || lower.includes('orb') || lower.includes('vitality')) return { backgroundColor: '#F97316' };
+    if (lower.includes('purple') || lower.includes('tím') || lower.includes('mysterioso')) return { backgroundColor: '#9333EA' };
+    if (lower.includes('brown') || lower.includes('bronze') || lower.includes('nâu')) return { backgroundColor: '#92400E' };
+    if (lower.includes('white') || lower.includes('trắng') || lower.includes('blanc') || lower.includes('ce18')) return { backgroundColor: '#FFFFFF' };
 
     return { backgroundColor: '#CBD5E1' };
 };

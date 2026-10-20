@@ -22,9 +22,9 @@
   2. Tuyệt đối không thực hiện bất kỳ hành vi nào làm sai lệch, hư hại, phá hoại hoặc gây ảnh hưởng tiêu cực đến tính toàn vẹn của dữ liệu và hệ thống phần mềm CyberSoft cũng như các hệ thống nội bộ khác.
   3. Mọi truy vấn và đồng bộ dữ liệu chỉ nhằm mục đích phục vụ công tác điều hành hợp pháp của showroom; luôn đảm bảo an toàn thông tin, bảo mật dữ liệu khách hàng và chỉ đọc (Read-only) khi không có chỉ định nghiệp vụ được phê duyệt rõ ràng.
 
-- **Quy Tắc Thực Thi Lệnh Terminal (Single Command Execution & Concise Summary)**:
-  1. **Một Lệnh Duy Nhất (Single Command)**: Khi phát sinh vấn đề cần xử lý, debug hoặc sửa lỗi, luôn gom toàn bộ các bước kiểm tra, sửa code, cập nhật công thức và đồng bộ vào **ĐÚNG 1 LỆNH DUY NHẤT** để xử lý dứt điểm, tuyệt đối không chạy lắt nhắt nhiều lệnh rời rạc.
-  2. **Ghi Ngắn Gọn Mục Đích**: Trước khi thực thi bất kỳ lệnh cmd / terminal nào, luôn ghi **ngắn gọn đúng 1 câu** nêu rõ mục đích và tác dụng của lệnh đó để người dùng nắm rõ.
+- **Kỷ Luật Thép Về Một Lệnh Duy Nhất (Strict Single Command Execution Protocol)**:
+  1. **Một Lệnh Duy Nhất Xử Lý Dứt Điểm (Single Command Only)**: Khi phát sinh bất kỳ yêu cầu, vấn đề cần xử lý, debug hay cập nhật nào, AI Agent **BẮT BUỘC PHẢI GOM TOÀN BỘ CÁC BƯỚC** (từ kiểm tra, cập nhật code đến commit & push) vào **ĐÚNG 1 LỆNH TERMINAL DUY NHẤT**. Tuyệt đối không được chạy các lệnh thăm dò lắt nhắt, rời rạc làm mất thời gian và gây phiền hà cho người dùng.
+  2. **Ghi Ngắn Gọn Đúng 1 Câu Mục Đích**: Trước khi thực thi lệnh duy nhất đó, luôn ghi **ngắn gọn đúng 1 câu** nêu rõ mục đích và tác dụng để người dùng nắm rõ tức thì.
 
 - **Supabase & Vercel Environment Variables Protocol (Phòng Ngừa Tuyệt Đối Lỗi Màn Hình Trắng)**:
   1. **Tuyệt đối KHÔNG BAO GIỜ viết lệnh `throw new Error(...)`** hoặc chặn sập luồng render khi các biến môi trường `VITE_SUPABASE_URL` hoặc `VITE_SUPABASE_ANON_KEY` bị rỗng / undefined.
