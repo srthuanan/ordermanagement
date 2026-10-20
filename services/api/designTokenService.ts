@@ -10,6 +10,8 @@ export interface ChameleonThemeTokens {
     badgeText: string;
     badgeBorder: string;
     accentButtonClass: string;
+    textColor?: string;
+    border?: string;
 }
 
 export type OrderProgressStage = 'unmatched' | 'pending_invoice' | 'invoiced' | 'delivered';
@@ -165,15 +167,17 @@ export const getCarChameleonTheme = (exterior?: string, _model?: string): Chamel
         return {
             colorCode: code || 'CE18',
             colorName: 'Trắng Ngọc Trai VinFast',
-            primaryHex: '#38BDF8',
-            primaryRgb: '56, 189, 248',
-            ambientStudioGradient: 'radial-gradient(ellipse 90% 60% at 50% -15%, rgba(248, 250, 252, 0.35) 0%, rgba(56, 189, 248, 0.08) 55%, transparent 100%)',
-            cardBorderGlow: 'rgba(56, 189, 248, 0.50)',
-            shadowGlow: '0 16px 38px -10px rgba(56, 189, 248, 0.30)',
-            badgeBg: 'bg-sky-50/80 dark:bg-slate-800',
-            badgeText: 'text-sky-800 dark:text-sky-200',
-            badgeBorder: 'border-sky-200 dark:border-sky-800',
-            accentButtonClass: 'bg-sky-600 hover:bg-sky-700 text-white shadow-sky-500/25'
+            primaryHex: '#FFFFFF',
+            primaryRgb: '255, 255, 255',
+            textColor: '#0F172A',
+            border: '1.5px solid #CBD5E1',
+            ambientStudioGradient: 'radial-gradient(ellipse 90% 60% at 50% -15%, rgba(248, 250, 252, 0.65) 0%, rgba(226, 232, 240, 0.20) 55%, transparent 100%)',
+            cardBorderGlow: 'rgba(203, 213, 225, 0.85)',
+            shadowGlow: '0 12px 28px -8px rgba(0, 0, 0, 0.12)',
+            badgeBg: 'bg-slate-100 dark:bg-slate-800',
+            badgeText: 'text-slate-800 dark:text-slate-200',
+            badgeBorder: 'border-slate-300 dark:border-slate-700',
+            accentButtonClass: 'bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 shadow-sm'
         };
     }
 

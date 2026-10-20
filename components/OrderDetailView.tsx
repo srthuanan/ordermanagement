@@ -2870,13 +2870,17 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                         onRequestInvoice(resolvedOrder);
                                     }
                                 }} 
-                                className="h-8 px-4 inline-flex items-center gap-1.5 text-white font-semibold text-xs transition-all cursor-pointer shrink-0 active:scale-95 rounded-lg filter hover:brightness-110"
+                                className="h-8 px-4 inline-flex items-center gap-1.5 font-semibold text-xs transition-all cursor-pointer shrink-0 active:scale-95 rounded-lg filter hover:brightness-105"
                                 style={{
                                     backgroundColor: chameleonTheme.primaryHex,
-                                    boxShadow: `0 4px 14px rgba(${chameleonTheme.primaryRgb}, 0.35)`
+                                    color: chameleonTheme.textColor || '#FFFFFF',
+                                    border: chameleonTheme.border || 'none',
+                                    boxShadow: chameleonTheme.primaryHex === '#FFFFFF'
+                                        ? '0 2px 8px rgba(0, 0, 0, 0.12)'
+                                        : `0 4px 14px rgba(${chameleonTheme.primaryRgb}, 0.35)`
                                 }}
                             >
-                                <i className="fas fa-file-invoice text-[11px] text-white"></i>
+                                <i className={`fas fa-file-invoice text-[11px] ${chameleonTheme.textColor ? 'text-slate-700' : 'text-white'}`}></i>
                                 <span>Xuất Hóa Đơn</span>
                             </button>
                         )}
