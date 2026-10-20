@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import moment from 'moment';
 import { StockVehicle } from '../types';
-import { getExteriorColorStyle, getInteriorColorStyle, getExteriorSwatchColor } from '../utils/styleUtils';
+import { getExteriorColorStyle, getInteriorColorStyle } from '../utils/styleUtils';
 import { formatShortWarehouseName } from '../utils/stringUtils';
 import { getQuickLocationName } from '../utils/geocodeUtils';
 import CarImage from './ui/CarImage';
@@ -34,16 +34,6 @@ interface StockCardProps {
     onRefetchStock?: () => void;
 }
 
-const getInteriorSwatchColor = (interior?: string): string => {
-    if (!interior) return '#475569';
-    const lower = interior.toLowerCase();
-    if (lower.includes('black') || lower.includes('đen')) return '#1e293b';
-    if (lower.includes('brown') || lower.includes('nâu') || lower.includes('ce2n')) return '#78350f';
-    if (lower.includes('beige') || lower.includes('kem') || lower.includes('be')) return '#d97706';
-    if (lower.includes('grey') || lower.includes('gray') || lower.includes('xám')) return '#64748b';
-    if (lower.includes('white') || lower.includes('trắng')) return '#f8fafc';
-    return '#475569';
-};
 
 const StockCard: React.FC<StockCardProps> = ({
     vehicle,
@@ -213,9 +203,6 @@ const StockCard: React.FC<StockCardProps> = ({
     const hasGps = Boolean(telemetry && telemetry.lat && telemetry.lng);
     const quickLocation = hasGps ? getQuickLocationName(telemetry.lat, telemetry.lng) : '';
     const isInTransit = vehicle["Vị trí"] === 'Đang vận tải';
-
-    const exteriorSwatch = getExteriorSwatchColor(vehicle['Ngoại thất']);
-    const interiorSwatch = getInteriorSwatchColor(vehicle['Nội thất']);
 
     const renderActions = () => {
         if (isReferenceAccount) {
@@ -739,30 +726,15 @@ const StockCard: React.FC<StockCardProps> = ({
 
                 {/* 3. Specs & Color Passport */}
                 <div className="flex flex-col gap-2 mt-auto">
-                    {/* Dual Swatch & Color Row */}
+                    {/* Color Row */}
                     <div className="flex items-center justify-between gap-2 px-0.5 pb-0.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                            {/* Color Swatch Dots */}
-                            <div className="flex items-center shrink-0" title={`Sơn: ${vehicle['Ngoại thất'] || '---'} | Nội thất: ${vehicle['Nội thất'] || '---'}`}>
-                                <span 
-                                    className="w-3.5 h-3.5 rounded-full border border-black/20 shadow-2xs z-10 ring-1 ring-white" 
-                                    style={{ backgroundColor: exteriorSwatch }}
-                                />
-                                <span 
-                                    className="w-3.5 h-3.5 rounded-full border border-black/20 shadow-2xs -ml-1.5 ring-1 ring-white" 
-                                    style={{ backgroundColor: interiorSwatch }}
-                                />
-                            </div>
-                            <span className="text-[11px] font-semibold text-slate-700 truncate" style={getExteriorColorStyle(vehicle['Ngoại thất'])}>
-                                {vehicle['Ngoại thất'] || '---'}
-                            </span>
-                        </div>
+                        <span className="text-[11px] font-semibold text-slate-700 truncate" style={getExteriorColorStyle(vehicle['Ngoại thất'])}>
+                            {vehicle['Ngoại thất'] || '---'}
+                        </span>
 
-                        <div className="flex items-center gap-1 shrink-0 text-slate-400">
-                            <span className="text-[10px] font-medium text-slate-500 truncate max-w-[80px]" style={getInteriorColorStyle(vehicle['Nội thất'])}>
-                                {vehicle['Nội thất'] || '---'}
-                            </span>
-                        </div>
+                        <span className="text-[10px] font-medium text-slate-500 truncate max-w-[80px] text-right shrink-0" style={getInteriorColorStyle(vehicle['Nội thất'])}>
+                            {vehicle['Nội thất'] || '---'}
+                        </span>
                     </div>
 
                     {/* Passport Card: VIN & Warehouse */}
