@@ -2328,14 +2328,14 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                         title: '1. Ngày Cọc',
                                                         time: formatDateTime(resolvedOrder["Ngày cọc"]),
                                                         isDone: true,
-                                                        icon: 'fa-wallet'
+                                                        icon: 'fa-receipt'
                                                     },
                                                     {
                                                         id: 2,
                                                         title: '2. Tạo Yêu Cầu',
                                                         time: resolvedOrder["Thời gian nhập"] ? formatDateTime(resolvedOrder["Thời gian nhập"]) : 'Đang chờ xử lý',
                                                         isDone: Boolean(resolvedOrder["Thời gian nhập"]),
-                                                        icon: 'fa-file-lines'
+                                                        icon: 'fa-file-signature'
                                                     },
                                                     {
                                                         id: 3,
@@ -2343,21 +2343,21 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                         time: resolvedOrder["Thời gian ghép"] ? formatDateTime(resolvedOrder["Thời gian ghép"]) : 'Chưa ghép xe',
                                                         isDone: Boolean(resolvedOrder["Thời gian ghép"]),
                                                         badge: resolvedOrder["Thời gian ghép"] && daysSincePairedText !== '—' ? daysSincePairedText : null,
-                                                        icon: 'fa-car'
+                                                        icon: 'fa-car-side'
                                                     },
                                                     {
                                                         id: 4,
                                                         title: '4. Xuất Hóa Đơn',
                                                         time: resolvedOrder["Ngày xuất hóa đơn"] ? formatDateTime(resolvedOrder["Ngày xuất hóa đơn"]) : (resolvedOrder.LinkHoaDonDaXuat ? 'Đã xuất HĐ' : 'Chưa xuất HĐ'),
                                                         isDone: hasInvoiced,
-                                                        icon: 'fa-file-invoice-dollar'
+                                                        icon: 'fa-stamp'
                                                     },
                                                     {
                                                         id: 5,
                                                         title: '5. Hồ Sơ COC',
                                                         time: cocReceivedDate ? formatDateDisplay(cocReceivedDate) : 'Chưa có COC',
                                                         isDone: Boolean(cocReceivedDate),
-                                                        icon: 'fa-certificate'
+                                                        icon: 'fa-shield-halved'
                                                     }
                                                 ];
 
@@ -2365,16 +2365,17 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                     <div className="relative flex-1 flex flex-col justify-between py-1 pl-6 before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-[2px] before:bg-slate-200">
                                                         {steps.map((st) => (
                                                             <div key={st.id} className="relative flex items-center justify-between group py-1">
-                                                                {/* Continuous Timeline Node */}
-                                                                <div className={`absolute -left-6 w-[24px] h-[24px] rounded-full flex items-center justify-center transition-all ${
+                                                                {/* Automotive Semantic Micro-Badge Node */}
+                                                                <div className={`absolute -left-[25px] w-[26px] h-[26px] rounded-xl flex items-center justify-center transition-all ${
                                                                     st.isDone 
-                                                                        ? 'bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.35)] ring-4 ring-white' 
-                                                                        : 'bg-slate-100 text-slate-400 border border-slate-300 ring-4 ring-white'
+                                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-300 shadow-xs ring-4 ring-white' 
+                                                                        : 'bg-slate-100 text-slate-400 border border-slate-200 ring-4 ring-white'
                                                                 }`}>
-                                                                    {st.isDone ? (
-                                                                        <i className="fas fa-check text-[10px]"></i>
-                                                                    ) : (
-                                                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                                                                    <i className={`fas ${st.icon} text-[10.5px]`}></i>
+                                                                    {st.isDone && (
+                                                                        <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[7px] ring-1.5 ring-white shadow-2xs">
+                                                                            <i className="fas fa-check"></i>
+                                                                        </span>
                                                                     )}
                                                                 </div>
 
