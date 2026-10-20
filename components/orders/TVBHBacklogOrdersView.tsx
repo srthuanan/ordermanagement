@@ -534,7 +534,7 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
             {/* 2. TABLE CARD CONTAINER */}
             <div className="flex-1 flex flex-col min-h-0 mt-1">
                 <div className="bg-white relative rounded-2xl shadow-sm border border-slate-200/70 flex flex-col h-full overflow-hidden">
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden bg-white w-full">
+                    <div className="flex-1 overflow-auto bg-white w-full">
                 {isLoading && backlogOrders.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-white">
                         <div className="w-9 h-9 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-3"></div>
@@ -566,23 +566,23 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                         )}
                     </div>
                 ) : (
-                    <table className="w-full table-fixed border-collapse text-xs">
-                        <thead className="bg-slate-50/90 sticky top-0 z-20 shadow-2xs border-b border-slate-200/80 backdrop-blur-xs">
-                            <tr className="text-slate-500 text-center font-bold text-[11px] h-8 uppercase tracking-wider">
-                                <th className="w-9 border-r border-slate-200/60 p-0 text-center select-none">#</th>
-                                <th className="w-24 sm:w-28 px-1 border-r border-slate-200/60 text-center">Số HĐ / Ngày</th>
-                                <th className="w-[22%] px-2 border-r border-slate-200/60 text-left">Khách Hàng / SĐT</th>
-                                <th className="w-[20%] px-2 border-r border-slate-200/60 text-left">Dòng Xe & Màu</th>
-                                <th className="w-22 sm:w-26 px-1.5 border-r border-slate-200/60 text-right">Tiền Cọc</th>
-                                <th className="w-26 sm:w-30 px-1 border-r border-slate-200/60 text-center">Số VIN</th>
+                    <table className="w-full min-w-[1150px] border-collapse text-xs border border-slate-200">
+                        <thead className="bg-slate-100 sticky top-0 z-20 shadow-xs border-b border-slate-300">
+                            <tr className="text-slate-700 text-center font-bold text-[11px] h-9 uppercase tracking-wider select-none">
+                                <th className="w-10 border-r border-slate-300 p-0 text-center">#</th>
+                                <th className="w-36 border-r border-slate-300 px-2 text-center">Số HĐ / Ngày</th>
+                                <th className="w-48 border-r border-slate-300 px-3 text-left">Khách Hàng / SĐT</th>
+                                <th className="w-48 border-r border-slate-300 px-3 text-left">Dòng Xe & Màu Sắc</th>
+                                <th className="w-32 border-r border-slate-300 px-2.5 text-right">Tiền Cọc</th>
+                                <th className="w-44 border-r border-slate-300 px-2 text-center">Số VIN</th>
                                 {(isCurrentUserAdmin || isManager) && (
-                                    <th className="w-24 sm:w-28 px-2 border-r border-slate-200/60 text-left">Tư Vấn BH</th>
+                                    <th className="w-40 border-r border-slate-300 px-3 text-left">Tư Vấn BH</th>
                                 )}
-                                <th className="w-32 sm:w-36 px-1 text-center">Tiến Độ Cọc</th>
+                                <th className="w-44 px-2 text-center">Tiến Độ Cọc</th>
                             </tr>
                         </thead>
 
-                        <tbody className="divide-y divide-slate-100 text-xs">
+                        <tbody className="divide-y divide-slate-200 text-xs">
                             {filteredOrders.map((order, idx) => {
                                 const isSelected = selectedRowIdx === idx;
                                 const currentProgress: BacklogProgressType = (order.tien_do as BacklogProgressType) || 'Chờ xe';
@@ -592,37 +592,37 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                     <tr
                                         key={order.id || order.so_don_hang}
                                         onClick={() => setSelectedRowIdx(idx)}
-                                        className={`cursor-pointer border-b border-slate-100 text-xs transition-colors ${
+                                        className={`cursor-pointer border-b border-slate-200 text-xs transition-colors ${
                                             isSelected 
-                                                ? 'bg-sky-50/80 ring-1 ring-inset ring-sky-500/25' 
-                                                : 'hover:bg-slate-50/70 text-slate-800'
+                                                ? 'bg-sky-50/90 ring-1 ring-inset ring-sky-500/30' 
+                                                : 'hover:bg-slate-50/80 text-slate-800'
                                         }`}
                                     >
                                         {/* 1. STT */}
-                                        <td className="border-r border-slate-200/60 text-center font-mono text-slate-400 p-0 select-none py-2 text-xs">
+                                        <td className="border-r border-slate-200 text-center font-mono text-slate-400 p-0 select-none py-2 text-xs">
                                             {idx + 1}
                                         </td>
 
                                         {/* 2. Số HĐ & Ngày ký */}
-                                        <td className="px-1 border-r border-slate-200/60 text-center py-2">
+                                        <td className="px-2 border-r border-slate-200 text-center py-2">
                                             <div 
                                                 onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.so_hop_dong || order.so_don_hang, e); }}
                                                 title="Click copy số HĐ"
-                                                className="font-mono font-bold text-slate-800 hover:text-sky-600 cursor-pointer truncate text-[11px]"
+                                                className="font-mono font-bold text-slate-800 hover:text-sky-600 cursor-pointer text-xs"
                                             >
                                                 {order.so_hop_dong || order.so_don_hang}
                                             </div>
-                                            <div className="text-[10px] font-mono text-slate-400 truncate mt-0.5">
+                                            <div className="text-[10.5px] font-mono text-slate-400 mt-0.5">
                                                 {moment(order.ngay_hop_dong || order.ngay_giao_dich).format('DD/MM/YYYY')}
                                             </div>
                                         </td>
 
                                         {/* 3. Tên khách hàng & SĐT */}
-                                        <td className="px-2 border-r border-slate-200/60 text-left py-2">
+                                        <td className="px-3 border-r border-slate-200 text-left py-2">
                                             <div
                                                 onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.khach_hang, e); }}
                                                 title="Click copy tên khách hàng"
-                                                className="font-bold text-slate-900 uppercase truncate hover:text-sky-600 cursor-pointer text-[12px]"
+                                                className="font-bold text-slate-900 uppercase hover:text-sky-600 cursor-pointer text-xs leading-snug"
                                             >
                                                 {order.khach_hang || '—'}
                                             </div>
@@ -644,11 +644,11 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                         </td>
 
                                         {/* 4. Dòng xe & Màu sắc */}
-                                        <td className="px-2 border-r border-slate-200/60 text-left py-2">
-                                            <div className="font-semibold text-slate-800 truncate text-[12px]" title={order.phien_ban}>
+                                        <td className="px-3 border-r border-slate-200 text-left py-2">
+                                            <div className="font-semibold text-slate-800 text-xs leading-snug" title={order.phien_ban}>
                                                 {order.phien_ban || '—'}
                                             </div>
-                                            <div className="text-[11px] text-slate-500 truncate mt-0.5 font-medium">
+                                            <div className="text-[11px] text-slate-500 mt-0.5 font-medium">
                                                 {order.ngoai_that ? (
                                                     <span className="uppercase">
                                                         {order.ngoai_that}
@@ -661,23 +661,23 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                         </td>
 
                                         {/* 5. Tiền cọc */}
-                                        <td className="px-1.5 border-r border-slate-200/60 text-right py-2">
-                                            <div className="font-mono font-bold text-emerald-700 text-xs truncate">
+                                        <td className="px-2.5 border-r border-slate-200 text-right py-2">
+                                            <div className="font-mono font-bold text-emerald-700 text-xs">
                                                 {formatVND(order.tien_coc)}
                                             </div>
                                         </td>
 
                                         {/* 6. Số VIN & Liên Kết Đơn Hàng Đã Ghép */}
-                                        <td className="px-1 border-r border-slate-200/60 text-center font-mono py-2">
+                                        <td className="px-2 border-r border-slate-200 text-center font-mono py-2">
                                             {order.vin && order.vin.length > 5 ? (
-                                                <div className="flex flex-col items-center justify-center gap-0.5">
+                                                <div className="flex flex-col items-center justify-center gap-1">
                                                     <span 
                                                         onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.vin, e); }}
                                                         title="Số VIN đã ghép xe - Bấm để copy"
-                                                        className="inline-flex items-center gap-1 font-bold text-emerald-800 hover:text-emerald-950 cursor-pointer truncate max-w-full text-[10.5px] bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200/80 shadow-2xs"
+                                                        className="inline-flex items-center gap-1 font-bold text-emerald-800 hover:text-emerald-950 cursor-pointer text-[10.5px] bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 shadow-2xs"
                                                     >
                                                         <i className="fas fa-car text-[8px] text-emerald-600 shrink-0"></i>
-                                                        <span className="truncate">{order.vin}</span>
+                                                        <span>{order.vin}</span>
                                                         <i className="far fa-copy text-[7.5px] text-emerald-500 shrink-0"></i>
                                                     </span>
 
@@ -700,7 +700,7 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                                                     }
                                                                 }}
                                                                 title={`Mã đơn hàng DMS: ${order.so_don_hang}${onSelectOrder ? ' (Bấm để xem chi tiết đơn)' : ' (Bấm để copy)'}`}
-                                                                className="text-sky-700 hover:underline cursor-pointer truncate max-w-[95px] inline-flex items-center gap-0.5 font-semibold"
+                                                                className="text-sky-700 hover:underline cursor-pointer inline-flex items-center gap-0.5 font-semibold"
                                                             >
                                                                 <i className="fas fa-link text-[7.5px]"></i>
                                                                 <span>{order.so_don_hang}</span>
@@ -735,7 +735,7 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                                     )}
                                                 </div>
                                             ) : (
-                                                <span className="text-slate-400 italic text-[11px] block truncate">
+                                                <span className="text-slate-400 italic text-[11px] block">
                                                     Chưa ghép xe
                                                 </span>
                                             )}
@@ -743,16 +743,16 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
 
                                         {/* 7. Tên TVBH (Chỉ Admin & TPKD) */}
                                         {(isCurrentUserAdmin || isManager) && (
-                                            <td className="px-2 border-r border-slate-200/60 text-left py-2">
-                                                <div className="font-semibold uppercase text-slate-700 truncate text-[11px]" title={order.tvbh_name}>
+                                            <td className="px-3 border-r border-slate-200 text-left py-2">
+                                                <div className="font-semibold uppercase text-slate-800 text-xs" title={order.tvbh_name}>
                                                     {order.tvbh_name || '—'}
                                                 </div>
                                             </td>
                                         )}
 
                                         {/* 8. Tiến độ cọc: 4 nút micro gọn gàng trong capsule */}
-                                        <td className="px-1 text-center py-2">
-                                            <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200/60 gap-0.5 select-none w-full justify-center" onClick={(e) => e.stopPropagation()}>
+                                        <td className="px-2 text-center py-2">
+                                            <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200 gap-0.5 select-none w-full justify-center" onClick={(e) => e.stopPropagation()}>
                                                 {(['Chờ xe', 'Cần xe', 'Hoàn cọc', 'Hủy cọc'] as BacklogProgressType[]).map(status => {
                                                     const isCurrent = currentProgress === status;
                                                     const cfg = PROGRESS_STYLES[status];
@@ -763,11 +763,11 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                                             type="button"
                                                             disabled={isRowUpdating}
                                                             onClick={() => handleProgressChange(order.id, status, currentProgress)}
-                                                            className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold transition-all flex items-center justify-center cursor-pointer shrink-0 ${
+                                                            className={`flex-1 px-1.5 py-1 rounded-md text-[10.5px] font-semibold transition-all flex items-center justify-center cursor-pointer shrink-0 ${
                                                                 isCurrent
                                                                     ? `${cfg.activeBtnCls} shadow-xs`
                                                                     : `${cfg.idleBtnCls}`
-                                                            } ${isRowUpdating ? 'opacity-50 cursor-wait' : ''}`}
+                                                                } ${isRowUpdating ? 'opacity-50 cursor-wait' : ''}`}
                                                             title={`Đổi tiến độ sang "${cfg.label}"`}
                                                         >
                                                             <span>{cfg.shortLabel}</span>
@@ -779,9 +779,9 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                     </tr>
                                 );
                             })}
-                    </tbody>
-                </table>
-            )}
+                        </tbody>
+                    </table>
+                )}
                     </div>
                 </div>
             </div>
