@@ -413,26 +413,21 @@ const StockCard: React.FC<StockCardProps> = ({
                     <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                         <i className="fas fa-layer-group text-blue-600"></i> Thông số xe
                     </span>
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-mono font-bold text-slate-400">
-                            {vehicle.VIN?.slice(-8)}
-                        </span>
-                        {isAdmin && !isReferenceAccount && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsInlineEditing(true);
-                                    setEditMode('edit');
-                                    setEditChanges({});
-                                    setDeleteReason('');
-                                }}
-                                className="w-4 h-4 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                                title="Sửa xe (Admin)"
-                            >
-                                <i className="fas fa-pen text-[8px]"></i>
-                            </button>
-                        )}
-                    </div>
+                    {isAdmin && !isReferenceAccount && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsInlineEditing(true);
+                                setEditMode('edit');
+                                setEditChanges({});
+                                setDeleteReason('');
+                            }}
+                            className="w-5 h-5 flex items-center justify-center rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                            title="Sửa xe (Admin)"
+                        >
+                            <i className="fas fa-pen text-[9px]"></i>
+                        </button>
+                    )}
                 </div>
                 
                 <div className="flex flex-col justify-around flex-1 py-1 w-full overflow-hidden">
