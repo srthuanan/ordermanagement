@@ -2321,7 +2321,6 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
                                             {(() => {
                                                 const hasInvoiced = Boolean(resolvedOrder["Ngày xuất hóa đơn"] || resolvedOrder.LinkHoaDonDaXuat);
-                                                const isAllCompleted = Boolean(resolvedOrder["Thời gian ghép"] && hasInvoiced);
 
                                                 const steps = [
                                                     {
