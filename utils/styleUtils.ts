@@ -12,7 +12,7 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
 
     // 1. Kiểm tra chính xác theo MÃ MÀU (Color Code) trước tiên
     if (code) {
-        if (code === 'ce1u' || code === '111u' || code === '181u' || code === 'ce23' || code === '2523' || code === '1823') return { color: '#D97706' }; // Vàng Summer / Amber / Gold
+        if (code === 'ce1u' || code === '111u' || code === '181u' || code === 'ce23' || code === '2523' || code === '1823') return { color: '#CA8A04' }; // Vàng Summer / Canary Yellow
         if (code === 'ce1a' || code === 'ce32' || code === '1132' || code === '1832') return { color: '#EA580C' }; // Cam Sunset / Vitality
         if (code === 'ce1m' || code === '111m' || code === 'ce2q' || code === '112q' || code === '182q') return { color: '#DC2626' }; // Đỏ Crimson / Solar Ruby
         if (code === 'ce1w' || code === 'ce2b' || code === 'ce1h' || code === 'ce22' || code === 'ce21' || code === '171w' || code === '1722') return { color: '#059669' }; // Xanh Emerald / Mint / Criterio
@@ -29,7 +29,7 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
     // 2. Xử lý xe 2-tone nóc trắng (Brahminy White Roof) -> Lấy màu thân xe (Body)
     const isWhiteRoof = lower.includes('white roof') || lower.includes('nóc trắng');
     if (isWhiteRoof) {
-        if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('summer')) return { color: '#D97706' };
+        if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('summer')) return { color: '#CA8A04' };
         if (lower.includes('red') || lower.includes('đỏ') || lower.includes('ruby') || lower.includes('crimson')) return { color: '#DC2626' };
         if (lower.includes('green') || lower.includes('mint') || lower.includes('criterio') || lower.includes('xanh lá')) return { color: '#059669' };
         if (lower.includes('blue') || lower.includes('xanh dương')) return { color: '#2563EB' };
@@ -41,7 +41,7 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
     // 3. Keyword fallback
     if (lower.includes('criterio') || lower.includes('green') || lower.includes('mint') || lower.includes('ivy') || lower.includes('xanh lá') || lower.includes('ocean')) return { color: '#059669' };
     if (lower.includes('silver') || lower.includes('bạc') || lower.includes('desat')) return { color: '#64748B' };
-    if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('creme') || lower.includes('champagne')) return { color: '#D97706' };
+    if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('creme') || lower.includes('champagne')) return { color: '#CA8A04' };
     if (lower.includes('pink') || lower.includes('rose') || lower.includes('berry') || lower.includes('hồng')) return { color: '#DB2777' };
     if (lower.includes('ruby') || lower.includes('crimson') || lower.includes('red') || lower.includes('đỏ')) return { color: '#DC2626' };
     if (lower.includes('blue') || lower.includes('azure') || lower.includes('xanh dương') || lower.includes('xanh lam')) return { color: '#2563EB' };
@@ -50,7 +50,7 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
     if (lower.includes('orange') || lower.includes('cam') || lower.includes('sunset') || lower.includes('orb') || lower.includes('vitality')) return { color: '#EA580C' };
     if (lower.includes('purple') || lower.includes('tím') || lower.includes('mysterioso')) return { color: '#9333EA' };
     if (lower.includes('brown') || lower.includes('bronze') || lower.includes('nâu')) return { color: '#92400E' };
-    if (lower.includes('gold')) return { color: '#D97706' };
+    if (lower.includes('gold')) return { color: '#CA8A04' };
     if (lower.includes('white') || lower.includes('trắng') || lower.includes('blanc') || lower.includes('ce18')) return { color: '#334155' };
 
     return {};
@@ -94,7 +94,7 @@ export const getBackgroundColorStyle = (colorName: string | undefined): React.CS
 
     // 1. Kiểm tra chính xác theo MÃ MÀU (Color Code) trước tiên
     if (code) {
-        if (code === 'ce1u' || code === '111u' || code === '181u' || code === 'ce23' || code === '2523' || code === '1823') return { backgroundColor: '#EAB308' }; // Vàng
+        if (code === 'ce1u' || code === '111u' || code === '181u' || code === 'ce23' || code === '2523' || code === '1823') return { backgroundColor: '#FACC15' }; // Vàng tươi
         if (code === 'ce1a' || code === 'ce32' || code === '1132' || code === '1832') return { backgroundColor: '#F97316' }; // Cam
         if (code === 'ce1m' || code === '111m' || code === 'ce2q' || code === '112q' || code === '182q') return { backgroundColor: '#EF4444' }; // Đỏ
         if (code === 'ce1w' || code === 'ce2b' || code === 'ce1h' || code === 'ce22' || code === 'ce21' || code === '171w' || code === '1722') return { backgroundColor: '#10B981' }; // Xanh lá / Mint
@@ -111,7 +111,7 @@ export const getBackgroundColorStyle = (colorName: string | undefined): React.CS
     // 2. Xử lý xe 2-tone nóc trắng (Brahminy White Roof) -> Lấy màu thân xe (Body)
     const isWhiteRoof = lower.includes('white roof') || lower.includes('nóc trắng');
     if (isWhiteRoof) {
-        if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('summer')) return { backgroundColor: '#EAB308' };
+        if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('summer')) return { backgroundColor: '#FACC15' };
         if (lower.includes('red') || lower.includes('đỏ') || lower.includes('ruby') || lower.includes('crimson')) return { backgroundColor: '#EF4444' };
         if (lower.includes('green') || lower.includes('mint') || lower.includes('criterio') || lower.includes('xanh lá')) return { backgroundColor: '#10B981' };
         if (lower.includes('blue') || lower.includes('xanh dương')) return { backgroundColor: '#2563EB' };
@@ -123,7 +123,7 @@ export const getBackgroundColorStyle = (colorName: string | undefined): React.CS
     // 3. Keyword fallback
     if (lower.includes('criterio') || lower.includes('green') || lower.includes('mint') || lower.includes('ivy') || lower.includes('xanh lá') || lower.includes('ocean')) return { backgroundColor: '#10B981' };
     if (lower.includes('silver') || lower.includes('bạc') || lower.includes('desat')) return { backgroundColor: '#CBD5E1' };
-    if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('creme') || lower.includes('champagne')) return { backgroundColor: '#EAB308' };
+    if (lower.includes('yellow') || lower.includes('vàng') || lower.includes('creme') || lower.includes('champagne')) return { backgroundColor: '#FACC15' };
     if (lower.includes('pink') || lower.includes('rose') || lower.includes('berry') || lower.includes('hồng')) return { backgroundColor: '#EC4899' };
     if (lower.includes('ruby') || lower.includes('crimson') || lower.includes('red') || lower.includes('đỏ')) return { backgroundColor: '#DC2626' };
     if (lower.includes('blue') || lower.includes('azure') || lower.includes('xanh dương') || lower.includes('xanh lam')) return { backgroundColor: '#2563EB' };

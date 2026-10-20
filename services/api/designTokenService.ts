@@ -60,20 +60,21 @@ export const getCarChameleonTheme = (exterior?: string, _model?: string): Chamel
         accentButtonClass: 'bg-sky-600 hover:bg-sky-700 text-white shadow-sky-500/25'
     };
 
-    // 1. VÀNG / AMBER (CE1U, 111U, 181U, Gold, Yellow, Champagne)
-    if (code === 'ce1u' || code === '111u' || code === '181u' || code === 'ce23' || raw.includes('vàng') || raw.includes('yellow') || raw.includes('champagne') || raw.includes('creme')) {
+    // 1. VÀNG / YELLOW / SUMMER YELLOW (CE1U, 111U, 181U, Gold, Yellow, Champagne)
+    if (code === 'ce1u' || code === '111u' || code === '181u' || code === 'ce23' || raw.includes('vàng') || raw.includes('yellow') || raw.includes('summer') || raw.includes('champagne') || raw.includes('creme')) {
         return {
-            colorCode: code || 'CE1U',
-            colorName: 'Vàng Amber VinFast',
-            primaryHex: '#D97706',
-            primaryRgb: '217, 119, 6',
-            ambientStudioGradient: 'radial-gradient(ellipse 90% 60% at 50% -15%, rgba(217, 119, 6, 0.25) 0%, rgba(217, 119, 6, 0.06) 55%, transparent 100%)',
-            cardBorderGlow: 'rgba(217, 119, 6, 0.55)',
-            shadowGlow: '0 16px 38px -10px rgba(217, 119, 6, 0.38)',
-            badgeBg: 'bg-amber-50 dark:bg-amber-950/40',
-            badgeText: 'text-amber-800 dark:text-amber-200',
-            badgeBorder: 'border-amber-300 dark:border-amber-700/60',
-            accentButtonClass: 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-500/25'
+            colorCode: code || '181U',
+            colorName: 'Vàng Summer Yellow VinFast',
+            primaryHex: '#EAB308',
+            primaryRgb: '234, 179, 8',
+            textColor: '#0F172A',
+            ambientStudioGradient: 'radial-gradient(ellipse 90% 60% at 50% -15%, rgba(250, 204, 21, 0.22) 0%, rgba(234, 179, 8, 0.05) 55%, transparent 100%)',
+            cardBorderGlow: 'rgba(234, 179, 8, 0.35)',
+            shadowGlow: '0 16px 38px -10px rgba(234, 179, 8, 0.25)',
+            badgeBg: 'bg-yellow-50 dark:bg-yellow-950/40',
+            badgeText: 'text-yellow-800 dark:text-yellow-200',
+            badgeBorder: 'border-yellow-300 dark:border-yellow-700/60',
+            accentButtonClass: 'bg-yellow-500 hover:bg-yellow-600 text-slate-900 shadow-yellow-500/25'
         };
     }
 
