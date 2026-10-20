@@ -100,25 +100,27 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
 
 
   // --- STYLES ---
+  const isSelectedOrOpen = !disabled && (isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple'));
+
   const buttonClasses = useMemo(() => {
-    const base = 'flex items-center justify-between transition-all duration-200 outline-none focus:ring-2 focus:ring-accent-primary/20';
+    const base = 'flex items-center justify-between transition-all duration-200 outline-none focus:ring-2 focus:ring-slate-900/10';
     const disabledClass = disabled ? 'opacity-60 cursor-not-allowed bg-gray-50' : 'cursor-pointer';
 
     if (variant === 'modern') {
-      const sizeClass = isCompact ? 'px-2 lg:px-1.5 h-7 lg:h-6 text-[10.5px] lg:text-[10px]' : 'px-4 lg:px-3 h-10 lg:h-8 text-[13px] lg:text-[12px]';
-      const activeState = !disabled && (isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple'))
-        ? 'bg-white text-accent-primary ring-1 ring-accent-primary/20 shadow-sm'
-        : 'bg-transparent text-slate-500 hover:text-slate-800 hover:bg-white/60';
-      return `${base} rounded-lg ${sizeClass} ${activeState} ${disabledClass} font-semibold lg:font-medium transition-all duration-200`;
+      const sizeClass = isCompact ? 'px-2 lg:px-1.5 h-7 lg:h-[26px] text-[10.5px] lg:text-[10px]' : 'px-3 h-8 text-xs';
+      const activeState = isSelectedOrOpen
+        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+        : 'bg-slate-100/75 hover:bg-white text-slate-600 hover:text-slate-900 border-slate-200/80 hover:border-slate-300';
+      return `${base} rounded-xl border ${sizeClass} ${activeState} ${disabledClass} font-semibold transition-all duration-200 select-none`;
     }
 
     // Default variant
     const sizeClass = isCompact ? 'px-2 h-7 text-[10px]' : 'px-4 h-12 text-sm lg:px-6';
-    const activeState = !disabled && (isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple'))
+    const activeState = isSelectedOrOpen
       ? 'bg-white text-accent-primary border border-accent-primary/50 shadow-sm'
       : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-300 shadow-sm';
     return `${base} rounded-full ${sizeClass} ${activeState} ${disabledClass} w-full font-medium`;
-  }, [isCompact, isOpen, selectedOptions.length, variant, selectionMode, disabled]);
+  }, [isCompact, isSelectedOrOpen, variant, disabled]);
 
 
   // --- RENDER: CHIPS MODE ---
@@ -223,13 +225,25 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         disabled={disabled}
         className={buttonClasses}
       >
-        <div className={`flex items-center ${isCompact ? 'gap-1.5 lg:gap-1' : 'gap-2.5'} min-w-0`}>
-          <div className={`${isCompact ? 'w-4.5 h-4.5 lg:w-4 lg:h-4 text-[8.5px]' : 'w-6 h-6 text-[10px]'} rounded-md flex items-center justify-center transition-all ${isOpen || (selectedOptions.length > 0 && selectionMode === 'multiple') ? 'bg-accent-primary/10 text-accent-primary' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'}`}>
-            <i className={`fas ${icon} ${isCompact ? 'text-[8px]' : 'text-[10px]'}`}></i>
+        <div className={`flex items-center ${isCompact ? 'gap-1 lg:gap-1' : 'gap-2'} min-w-0`}>
+          <div className={`${isCompact ? 'w-4 h-4 text-[8px]' : 'w-5 h-5 text-[9px]'} rounded-md flex items-center justify-center transition-all ${
+            isSelectedOrOpen && variant === 'modern'
+              ? 'bg-white/20 text-white' 
+              : 'bg-white/80 text-slate-400 group-hover:text-slate-600'
+          }`}>
+            <i className={`fas ${icon}`}></i>
           </div>
-          <span className="truncate font-medium text-slate-800">{displayLabel}</span>
+          <span className={`truncate ${
+            isSelectedOrOpen && variant === 'modern'
+              ? 'text-white font-bold' 
+              : 'text-slate-700 font-semibold'
+          }`}>{displayLabel}</span>
         </div>
-        <div className={`${isCompact ? 'w-4 h-4' : 'w-5 h-5'} rounded-full flex items-center justify-center transition-all ${isOpen ? 'bg-slate-100 text-slate-900' : 'text-slate-300'}`}>
+        <div className={`${isCompact ? 'w-3.5 h-3.5' : 'w-4 h-4'} rounded-full flex items-center justify-center transition-all ml-0.5 ${
+          isSelectedOrOpen && variant === 'modern'
+            ? 'text-white/80' 
+            : 'text-slate-400'
+        }`}>
           <i className={`fas fa-chevron-down ${isCompact ? 'text-[6.5px]' : 'text-[7px]'} transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}></i>
         </div>
       </button>

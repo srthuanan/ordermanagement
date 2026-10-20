@@ -4,8 +4,6 @@ import 'moment/locale/vi';
 import { Order } from '../types';
 import StatusBadge from './ui/StatusBadge';
 import CarImage from './ui/CarImage';
-
-import vinHeroCardBgImg from '../pictures/vin_hero_card_bg.webp';
 import { getExteriorColorStyle, getInteriorColorStyle, getExteriorSwatchColor } from '../utils/styleUtils';
 import SelectPolicyModal from './modals/SelectPolicyModal';
 const RequestInvoiceModal = React.lazy(() => import('./modals/RequestInvoiceModal'));
@@ -152,27 +150,6 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     const [cancelUnmatchType, setCancelUnmatchType] = useState('Hủy luôn đơn hàng (Hủy đơn)');
     const [cancelThoiGianCanXe, setCancelThoiGianCanXe] = useState('');
     const [isCancelling, setIsCancelling] = useState(false);
-
-    // Interactive 3D Parallax Tilt State (Đề xuất 1)
-    const [car3dRotation, setCar3dRotation] = useState<{ rx: number; ry: number; active: boolean }>({ rx: 0, ry: 0, active: false });
-
-    const handleCarMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        const normX = (x / rect.width - 0.5) * 2;
-        const normY = (y / rect.height - 0.5) * 2;
-
-        setCar3dRotation({
-            ry: normX * 8.5,
-            rx: -normY * 6.0,
-            active: true
-        });
-    };
-
-    const handleCarMouseLeave = () => {
-        setCar3dRotation({ rx: 0, ry: 0, active: false });
-    };
 
     const resolvedOrder = order ? (orderList.find(o => o['Số đơn hàng'] === order['Số đơn hàng']) || order) : null;
 
@@ -1299,36 +1276,23 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         )}
                     </div>
 
-                    {/* Interactive 3D Parallax Tilt Car Display */}
-                    <div 
-                        onMouseMove={handleCarMouseMove}
-                        onMouseLeave={handleCarMouseLeave}
-                        className="flex-1 w-full min-h-0 relative z-10 flex items-center justify-center py-1 select-none cursor-grab"
-                        style={{ perspective: '1200px' }}
-                    >
+                    {/* Fixed & Non-Interactive Car Studio Display */}
+                    <div className="flex-1 w-full min-h-0 relative z-10 flex items-center justify-center py-2 select-none pointer-events-none">
                         {/* Floor Contact Ground Shadow with Chameleon Sub-Glow */}
                         <div 
-                            className="absolute bottom-4 left-1/2 -translate-x-1/2 w-3/4 max-w-[320px] h-4 rounded-[100%] blur-md pointer-events-none transform scale-y-50 transition-all duration-500"
+                            className="absolute bottom-4 left-1/2 -translate-x-1/2 w-3/4 max-w-[320px] h-4 rounded-[100%] blur-md pointer-events-none transform scale-y-50"
                             style={{
                                 background: `radial-gradient(ellipse at center, rgba(${chameleonTheme.primaryRgb}, 0.35) 0%, rgba(15, 23, 42, 0.20) 45%, transparent 75%)`
                             }}
-                        ></div>
+                        />
 
-                        <div 
-                            className="w-full h-full flex items-center justify-center pointer-events-auto relative z-10"
-                            style={{
-                                transform: car3dRotation.active 
-                                    ? `rotateX(${car3dRotation.rx.toFixed(2)}deg) rotateY(${car3dRotation.ry.toFixed(2)}deg) scale3d(1.04, 1.04, 1.04)`
-                                    : 'rotateX(2deg) rotateY(-4deg) rotateZ(1deg) scale3d(1, 1, 1)',
-                                transition: car3dRotation.active ? 'transform 0.12s ease-out' : 'transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                                transformStyle: 'preserve-3d'
-                            }}
-                        >
+                        {/* Static, Fixed Car Image */}
+                        <div className="w-full h-full flex items-center justify-center pointer-events-none relative z-10">
                             <CarImage 
                                 model={resolvedOrder['Dòng xe']} 
                                 exteriorColor={resolvedOrder['Ngoại thất']}
                                 version={resolvedOrder['Phiên bản']}
-                                className="w-full max-h-[120px] sm:max-h-[170px] md:max-h-none md:h-full object-contain filter drop-shadow-[0_12px_24px_rgba(15,23,42,0.18)]" 
+                                className="w-full max-h-[120px] sm:max-h-[170px] md:max-h-none md:h-full object-contain filter drop-shadow-[0_12px_24px_rgba(15,23,42,0.18)] pointer-events-none select-none" 
                                 hideDecal
                             />
                         </div>
@@ -2157,33 +2121,35 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         </div>
                     ) : (
                         <>
-                            {/* Executive Obsidian Platinum Hero Card: VIN & Customer */}
+                            {/* Modern Minimalist Quiet-Luxury Passport Hero Card: VIN & Customer */}
                             <div className="relative flex-shrink-0">
-                                <div id="vin-hero-card" className="p-3 sm:p-4 md:p-5 text-white rounded-xl md:rounded-[1.4rem] shadow-[0_12px_36px_-6px_rgba(15,23,42,0.45)] relative overflow-hidden group">
-                                    {/* Animated High-Tech Hologram & Laser Pulse Background */}
-                                    <img 
-                                        src={vinHeroCardBgImg} 
-                                        alt="VIN Card Background" 
-                                        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                                    />
-                                    
-                                    <div className="relative z-10 flex flex-col gap-2 md:gap-4">
+                                <div id="vin-hero-card" className="p-4 sm:p-5 text-white rounded-2xl bg-gradient-to-br from-slate-950 via-[#0B101E] to-[#0D1424] border border-white/10 shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] relative overflow-hidden group">
+                                    {/* Subtle Ambient Radial Lighting */}
+                                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(56,189,248,0.12),transparent_70%)] pointer-events-none" />
+                                    <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-32 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                                    <div className="relative z-10 flex flex-col gap-3">
+                                        {/* Top Header: VIN Monospace & Showroom Location Pill */}
                                         <div className="text-center">
-                                            <p className="text-[8.5px] md:text-[9.5px] font-bold text-sky-300/90 uppercase tracking-[0.2em] md:tracking-[0.25em] mb-1 md:mb-1.5 flex items-center justify-center gap-1.5 flex-wrap">
-                                                <i className="fas fa-barcode text-[11px] md:text-xs text-sky-400"></i> Số Khung (VIN)
+                                            <div className="flex items-center justify-center gap-2 mb-1.5 flex-wrap">
+                                                <span className="text-[9px] font-bold text-sky-400 uppercase tracking-[0.25em] flex items-center gap-1.5">
+                                                    <i className="fas fa-barcode text-[11px] text-sky-400"></i> SỐ KHUNG (VIN)
+                                                </span>
                                                 {resolvedOrder?.VIN && currentCarLocation && (
-                                                    <span className={`ml-1.5 px-2 py-0.5 rounded-full text-[8px] md:text-[8.5px] tracking-normal font-bold normal-case flex items-center gap-1 shadow-sm ${
+                                                    <span className={`px-2.5 py-0.5 rounded-full text-[8.5px] font-bold flex items-center gap-1.5 border transition-all ${
                                                         isCarInTransit 
-                                                            ? 'bg-amber-500/25 text-amber-200 border border-amber-400/40' 
-                                                            : 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/40'
+                                                            ? 'bg-amber-500/15 text-amber-300 border-amber-400/30' 
+                                                            : 'bg-emerald-500/15 text-emerald-300 border-emerald-400/30'
                                                     }`}>
-                                                        <i className={`fas ${isCarInTransit ? 'fa-truck' : 'fa-warehouse'} text-[7.5px]`}></i>
-                                                        {currentCarLocation}
+                                                        <i className={`fas ${isCarInTransit ? 'fa-truck' : 'fa-warehouse'} text-[8px]`}></i>
+                                                        <span>{currentCarLocation}</span>
                                                     </span>
                                                 )}
-                                            </p>
+                                            </div>
+
+                                            {/* VIN Monospace Display */}
                                             <div 
-                                                className="cursor-pointer group inline-block py-0.5 relative max-w-full"
+                                                className="cursor-pointer group/vin inline-block py-0.5 relative max-w-full"
                                                 onClick={(e) => {
                                                     if (!resolvedOrder.VIN) return;
                                                     e.stopPropagation();
@@ -2194,21 +2160,13 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                 }}
                                                 title={resolvedOrder.VIN ? "Click để sao chép VIN" : "Chưa có VIN"}
                                             >
-                                                <div className="px-1 py-0.5 sm:px-2 sm:py-1 md:px-3 md:py-1.5 transition-all duration-300 group-hover:scale-[1.02] group-active:scale-[0.98]">
+                                                <div className="px-3 py-1 transition-all duration-300 group-hover/vin:scale-[1.01] group-active/vin:scale-[0.99]">
                                                     <p 
-                                                        className={`text-[17px] sm:text-[21px] md:text-[28px] lg:text-[29px] font-black tracking-[0.05em] sm:tracking-[0.08em] md:tracking-[0.10em] leading-tight select-all inline-block whitespace-nowrap max-w-full ${
+                                                        className={`text-[20px] sm:text-[24px] md:text-[28px] font-black tracking-[0.10em] leading-tight select-all inline-block whitespace-nowrap max-w-full font-mono ${
                                                             resolvedOrder.VIN 
-                                                                ? 'drop-shadow-[0_2px_12px_rgba(255,255,255,0.5)] drop-shadow-[0_6px_22px_rgba(0,0,0,0.9)]' 
-                                                                : 'text-slate-500'
+                                                                ? 'text-white drop-shadow-[0_2px_16px_rgba(255,255,255,0.25)]' 
+                                                                : 'text-slate-600'
                                                         }`}
-                                                        style={{ 
-                                                            fontFamily: "'Barlow Condensed', 'Rajdhani', 'Bahnschrift', 'Space Grotesk', sans-serif",
-                                                            background: resolvedOrder.VIN 
-                                                                ? 'linear-gradient(180deg, #ffffff 0%, #f8fafc 18%, #cbd5e1 38%, #ffffff 48%, #64748b 52%, #94a3b8 72%, #cbd5e1 100%)' 
-                                                                : undefined,
-                                                            WebkitBackgroundClip: resolvedOrder.VIN ? 'text' : undefined,
-                                                            WebkitTextFillColor: resolvedOrder.VIN ? 'transparent' : undefined
-                                                        }}
                                                     >
                                                         {copiedLabel === 'vin' ? '✓ ĐÃ SAO CHÉP VIN' : resolvedOrder.VIN || 'CHƯA GHÉP XE'}
                                                     </p>
@@ -2216,125 +2174,120 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             </div>
                                         </div>
 
-                                        {/* Customer & Order Identifiers Section - Re-architected for Clarity */}
-                                        <div className="pt-2 md:pt-3 border-t border-white/10 flex flex-col gap-2">
-                                            {/* Row: Customer Name (Left) & 2 Mã HĐ nằm với nhau căn phải (Right) */}
-                                            <div className="flex items-start justify-between gap-2.5">
-                                                {/* Left Column: Tên KH, TVBH & Chứng từ xe (DNX / TD4) */}
+                                        {/* Divider */}
+                                        <div className="pt-2.5 border-t border-white/[0.08] flex items-center justify-between gap-3">
+                                            {/* Left: Customer Name & TVBH */}
+                                            <div 
+                                                className="min-w-0 flex-1 cursor-pointer group/cust"
+                                                onClick={(e) => {
+                                                    const name = resolvedOrder['Tên khách hàng'];
+                                                    if (!name) return;
+                                                    e.stopPropagation();
+                                                    navigator.clipboard.writeText(name).then(() => {
+                                                        setCopiedLabel('customer');
+                                                        setTimeout(() => setCopiedLabel(null), 2000);
+                                                    });
+                                                }}
+                                                title={resolvedOrder['Tên khách hàng'] ? `Click để sao chép: ${resolvedOrder['Tên khách hàng']}` : undefined}
+                                            >
+                                                {copiedLabel === 'customer' ? (
+                                                    <p className="text-[13px] sm:text-[14px] font-bold text-amber-300 tracking-tight uppercase truncate">
+                                                        ✓ ĐÃ SAO CHÉP TÊN KH
+                                                    </p>
+                                                ) : (
+                                                    <MarqueeText 
+                                                        text={resolvedOrder['Tên khách hàng'] || '—'}
+                                                        className="text-[13px] sm:text-[14.5px] font-extrabold text-white tracking-tight uppercase group-hover/cust:text-sky-300 transition-colors"
+                                                        speed={14}
+                                                        pauseOnHover
+                                                    />
+                                                )}
+                                                <p className="text-[10px] font-medium text-slate-400 mt-0.5 truncate flex items-center gap-1.5">
+                                                    <i className="fas fa-user-tie text-[9px] text-sky-400"></i>
+                                                    <span className="text-slate-500">TVBH:</span>
+                                                    <span className="font-semibold text-slate-300 uppercase">{resolvedOrder['Tên tư vấn bán hàng'] || 'N/A'}</span>
+                                                </p>
+                                            </div>
+
+                                            {/* Right: Mã Đơn & HĐ Cyber - Clean Modern Badges */}
+                                            <div className="flex flex-col items-end gap-1 flex-shrink-0 text-right">
+                                                {/* Mã Đơn */}
                                                 <div 
-                                                    className="min-w-0 flex-1 cursor-pointer group pr-2"
+                                                    className="flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all px-2 py-0.5 rounded-md bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06]"
                                                     onClick={(e) => {
-                                                        const name = resolvedOrder['Tên khách hàng'];
-                                                        if (!name) return;
                                                         e.stopPropagation();
-                                                        navigator.clipboard.writeText(name).then(() => {
-                                                            setCopiedLabel('customer');
+                                                        navigator.clipboard.writeText(resolvedOrder["Số đơn hàng"]).then(() => {
+                                                            setCopiedLabel('orderId');
                                                             setTimeout(() => setCopiedLabel(null), 2000);
                                                         });
                                                     }}
-                                                    title={resolvedOrder['Tên khách hàng'] ? `Click để sao chép: ${resolvedOrder['Tên khách hàng']}` : undefined}
+                                                    title="Click để sao chép mã đơn hàng"
                                                 >
-                                                    {copiedLabel === 'customer' ? (
-                                                        <p className="text-[12px] sm:text-[13px] md:text-[14.5px] font-black text-amber-200 tracking-tight uppercase truncate">
-                                                            ✓ ĐÃ SAO CHÉP TÊN KH
-                                                        </p>
-                                                    ) : (
-                                                        <MarqueeText 
-                                                            text={resolvedOrder['Tên khách hàng'] || '—'}
-                                                            className="text-[12px] sm:text-[13px] md:text-[14.5px] font-black text-white tracking-tight uppercase hover:text-amber-200 transition-colors"
-                                                            speed={14}
-                                                            pauseOnHover
-                                                        />
-                                                    )}
-                                                    <p className="text-[9.5px] md:text-[10.5px] font-medium text-slate-300 mt-0.5 truncate flex items-center gap-1.5">
-                                                        <i className="fas fa-user-tie text-[9px] text-indigo-400"></i>
-                                                        <span className="text-slate-400">TVBH:</span>
-                                                        <span className="font-bold text-slate-200 uppercase">{resolvedOrder['Tên tư vấn bán hàng'] || 'N/A'}</span>
-                                                    </p>
-
-
+                                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">MÃ ĐƠN:</span>
+                                                    <span className="text-[11px] font-bold font-mono text-white tracking-wide">
+                                                        {copiedLabel === 'orderId' ? '✓ ĐÃ COPY' : resolvedOrder['Số đơn hàng']}
+                                                    </span>
                                                 </div>
 
-                                                {/* Right Column: 2 Mã HĐ nằm với nhau căn phải - Không đóng khung */}
-                                                <div className="flex flex-col items-end gap-1 flex-shrink-0 text-right">
-                                                    {/* Mã Đơn */}
+                                                {/* HĐ Cyber */}
+                                                {(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber) && (
                                                     <div 
-                                                        className="flex items-center gap-1.5 cursor-pointer group active:scale-95 transition-all hover:opacity-90"
+                                                        className="flex items-center gap-1.5 cursor-pointer active:scale-95 transition-all px-2 py-0.5 rounded-md bg-sky-500/10 hover:bg-sky-500/20 border border-sky-400/20"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            navigator.clipboard.writeText(resolvedOrder["Số đơn hàng"]).then(() => {
-                                                                setCopiedLabel('orderId');
+                                                            const cyberId = String(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber || '');
+                                                            navigator.clipboard.writeText(cyberId).then(() => {
+                                                                setCopiedLabel('cyberId');
                                                                 setTimeout(() => setCopiedLabel(null), 2000);
                                                             });
                                                         }}
-                                                        title="Click để sao chép mã đơn hàng"
+                                                        title="Click để sao chép Mã HĐ Cyber"
                                                     >
-                                                        <span className="text-[8px] md:text-[8.5px] font-bold text-slate-400 uppercase tracking-wider">MÃ ĐƠN:</span>
-                                                        <span className="text-[10px] sm:text-[10.5px] md:text-[11.5px] font-black font-mono text-white tracking-wide">
-                                                            {copiedLabel === 'orderId' ? '✓ ĐÃ COPY' : resolvedOrder['Số đơn hàng']}
+                                                        <span className="text-[8px] font-bold text-sky-400 uppercase tracking-wider">HĐ CYBER:</span>
+                                                        <span className="text-[11px] font-bold font-mono text-sky-300 tracking-wide truncate max-w-[180px] sm:max-w-[240px]">
+                                                            {copiedLabel === 'cyberId' ? '✓ ĐÃ COPY' : (resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber)}
                                                         </span>
                                                     </div>
-
-                                                    {/* HĐ Cyber */}
-                                                    {(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber) && (
-                                                        <div 
-                                                            className="flex items-center gap-1.5 cursor-pointer group active:scale-95 transition-all hover:opacity-90"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                const cyberId = String(resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber || '');
-                                                                navigator.clipboard.writeText(cyberId).then(() => {
-                                                                    setCopiedLabel('cyberId');
-                                                                    setTimeout(() => setCopiedLabel(null), 2000);
-                                                                });
-                                                            }}
-                                                            title="Click để sao chép Mã HĐ Cyber"
-                                                        >
-                                                            <span className="text-[8px] md:text-[8.5px] font-bold text-sky-400 uppercase tracking-wider">HĐ CYBER:</span>
-                                                            <span className="text-[10px] sm:text-[10.5px] md:text-[11.5px] font-black font-mono text-sky-300 tracking-wide truncate max-w-[190px] sm:max-w-[260px]">
-                                                                {copiedLabel === 'cyberId' ? '✓ ĐÃ COPY' : (resolvedOrder['Mã HĐ Cyber'] || resolvedOrder.ma_hd_cyber)}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Executive Split Panels (Timeline & Policies OR Audit Trail) */}
-                            <div className="flex-1 min-h-0 bg-slate-50/70 backdrop-blur-xl rounded-2xl border border-slate-200/80 p-3 md:p-3.5 flex flex-col justify-between overflow-y-auto">
-                                {/* Segmented Tab Switcher */}
-                                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-200/60 shrink-0">
-                                    <div className="flex items-center p-0.5 bg-slate-200/70 rounded-xl shadow-2xs">
+                            {/* Minimalist Split Panels: Unified Timeline & Customer Privileges */}
+                            <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 md:p-4 flex flex-col justify-between overflow-y-auto">
+                                {/* Segmented Tab Switcher (macOS / iOS Minimalist Style) */}
+                                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 shrink-0">
+                                    <div className="flex items-center p-1 bg-slate-100 rounded-xl">
                                         <button
                                             type="button"
                                             onClick={() => setActiveRightTab('MILESTONES')}
-                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] md:text-[10.5px] font-bold transition-all cursor-pointer ${
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer ${
                                                 activeRightTab === 'MILESTONES'
-                                                    ? 'bg-white text-slate-900 shadow-xs'
+                                                    ? 'bg-white text-slate-900 shadow-sm'
                                                     : 'text-slate-500 hover:text-slate-800'
                                             }`}
                                         >
-                                            <i className="fa-solid fa-bars-progress text-indigo-500 text-[9.5px]"></i>
+                                            <i className="fa-solid fa-bars-progress text-sky-500 text-[10px]"></i>
                                             <span>Tiến Độ &amp; Chính Sách</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setActiveRightTab('AUDIT_TRAIL')}
-                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] md:text-[10.5px] font-bold transition-all cursor-pointer ${
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer ${
                                                 activeRightTab === 'AUDIT_TRAIL'
-                                                    ? 'bg-white text-slate-900 shadow-xs'
+                                                    ? 'bg-white text-slate-900 shadow-sm'
                                                     : 'text-slate-500 hover:text-slate-800'
                                             }`}
                                         >
-                                            <i className="fa-solid fa-clock-rotate-left text-amber-500 text-[9.5px]"></i>
+                                            <i className="fa-solid fa-clock-rotate-left text-amber-500 text-[10px]"></i>
                                             <span>Nhật Ký Thay Đổi</span>
                                             {auditLogs.length > 0 && (
                                                 <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
                                                     activeRightTab === 'AUDIT_TRAIL'
                                                         ? 'bg-amber-100 text-amber-800'
-                                                        : 'bg-slate-300/80 text-slate-700'
+                                                        : 'bg-slate-200 text-slate-700'
                                                 }`}>
                                                     {auditLogs.length}
                                                 </span>
@@ -2347,22 +2300,22 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             type="button"
                                             onClick={() => resolvedOrder?.['Số đơn hàng'] && fetchAuditLogs(resolvedOrder['Số đơn hàng'])}
                                             disabled={isLoadingLogs}
-                                            className="p-1 px-2.5 rounded-lg bg-white hover:bg-slate-100 text-slate-500 hover:text-indigo-600 text-[10px] font-bold transition-all border border-slate-200/80 shadow-2xs flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                            className="px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-sky-600 text-[10px] font-bold transition-all border border-slate-200 shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                                             title="Làm mới lịch sử"
                                         >
-                                            <i className={`fas fa-rotate-right text-[9px] ${isLoadingLogs ? 'animate-spin text-indigo-600' : ''}`}></i>
+                                            <i className={`fas fa-rotate-right text-[9px] ${isLoadingLogs ? 'animate-spin text-sky-600' : ''}`}></i>
                                             <span className="hidden sm:inline">Làm mới</span>
                                         </button>
                                     ) : null}
                                 </div>
 
                                 {activeRightTab === 'MILESTONES' ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-2.5 items-stretch flex-1">
-                                        {/* Left: 3 Stacked Frosted Milestone Cards (Phương Án 1) */}
-                                        <div className="flex flex-col justify-between gap-2.5">
-                                            <div className="flex items-center justify-between pb-0.5">
-                                                <h3 className="text-[9.5px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-                                                    <i className="fa-solid fa-bars-progress text-indigo-500 text-[10px]"></i> Tiến Độ Xử Lý
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-stretch flex-1">
+                                        {/* Left: Continuous Luminous Stepper (No Clumsy Arrows) */}
+                                        <div className="flex flex-col justify-between">
+                                            <div className="flex items-center justify-between pb-1.5">
+                                                <h3 className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <i className="fa-solid fa-circle-nodes text-sky-500 text-[11px]"></i> Tiến Độ Xử Lý
                                                 </h3>
                                             </div>
 
@@ -2370,192 +2323,105 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                 const hasInvoiced = Boolean(resolvedOrder["Ngày xuất hóa đơn"] || resolvedOrder.LinkHoaDonDaXuat);
                                                 const isAllCompleted = Boolean(resolvedOrder["Thời gian ghép"] && hasInvoiced);
 
+                                                const steps = [
+                                                    {
+                                                        id: 1,
+                                                        title: '1. Ngày Cọc',
+                                                        time: formatDateTime(resolvedOrder["Ngày cọc"]),
+                                                        isDone: true,
+                                                        icon: 'fa-wallet'
+                                                    },
+                                                    {
+                                                        id: 2,
+                                                        title: '2. Tạo Yêu Cầu',
+                                                        time: resolvedOrder["Thời gian nhập"] ? formatDateTime(resolvedOrder["Thời gian nhập"]) : 'Đang chờ xử lý',
+                                                        isDone: Boolean(resolvedOrder["Thời gian nhập"]),
+                                                        icon: 'fa-file-lines'
+                                                    },
+                                                    {
+                                                        id: 3,
+                                                        title: '3. Ghép VIN',
+                                                        time: resolvedOrder["Thời gian ghép"] ? formatDateTime(resolvedOrder["Thời gian ghép"]) : 'Chưa ghép xe',
+                                                        isDone: Boolean(resolvedOrder["Thời gian ghép"]),
+                                                        badge: resolvedOrder["Thời gian ghép"] && daysSincePairedText !== '—' ? daysSincePairedText : null,
+                                                        icon: 'fa-car'
+                                                    },
+                                                    {
+                                                        id: 4,
+                                                        title: '4. Xuất Hóa Đơn',
+                                                        time: resolvedOrder["Ngày xuất hóa đơn"] ? formatDateTime(resolvedOrder["Ngày xuất hóa đơn"]) : (resolvedOrder.LinkHoaDonDaXuat ? 'Đã xuất HĐ' : 'Chưa xuất HĐ'),
+                                                        isDone: hasInvoiced,
+                                                        icon: 'fa-file-invoice-dollar'
+                                                    },
+                                                    {
+                                                        id: 5,
+                                                        title: '5. Hồ Sơ COC',
+                                                        time: cocReceivedDate ? formatDateDisplay(cocReceivedDate) : 'Chưa có COC',
+                                                        isDone: Boolean(cocReceivedDate),
+                                                        icon: 'fa-certificate'
+                                                    }
+                                                ];
+
                                                 return (
-                                                    <div className="flex flex-col flex-1 justify-around py-0.5">
-                                                        {/* Card 1: Ngày Cọc */}
-                                                        <div className="px-3 py-1.5 md:py-2 bg-white/95 hover:bg-white rounded-xl border border-slate-200/90 shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10">
-                                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                                <div className="w-5 h-5 text-amber-500 flex items-center justify-center shrink-0">
-                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                                                                        <rect x="2" y="5" width="20" height="14" rx="2" />
-                                                                        <line x1="2" y1="10" x2="22" y2="10" />
-                                                                        <circle cx="6.5" cy="15" r="1" fill="currentColor" />
-                                                                    </svg>
-                                                                </div>
-                                                                <div className="min-w-0 flex-1 flex flex-col justify-center">
-                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">1. Ngày Cọc</p>
-                                                                    <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
-                                                                        {formatDateTime(resolvedOrder["Ngày cọc"])}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                            <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
-                                                        </div>
-
-                                                        {/* Flowchart Directional Arrow 1 -> 2 */}
-                                                        <div className="flex items-center justify-center py-0.5">
-                                                            <svg className="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                                                <line x1="12" y1="4" x2="12" y2="20" />
-                                                                <polyline points="18 14 12 20 6 14" />
-                                                            </svg>
-                                                        </div>
-
-                                                        {/* Card 2: Tạo Yêu Cầu */}
-                                                        <div className={`px-3 py-1.5 md:py-2 rounded-xl border shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10 ${
-                                                            resolvedOrder["Thời gian nhập"]
-                                                                ? 'bg-white/95 hover:bg-white border-slate-200/90'
-                                                                : 'bg-slate-100/70 border-slate-200/50 opacity-60'
-                                                        }`}>
-                                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                                <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${
-                                                                    resolvedOrder["Thời gian nhập"] ? 'text-sky-500' : 'text-slate-300'
+                                                    <div className="relative flex-1 flex flex-col justify-between py-1 pl-6 before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-[2px] before:bg-slate-200">
+                                                        {steps.map((st) => (
+                                                            <div key={st.id} className="relative flex items-center justify-between group py-1">
+                                                                {/* Continuous Timeline Node */}
+                                                                <div className={`absolute -left-6 w-[24px] h-[24px] rounded-full flex items-center justify-center transition-all ${
+                                                                    st.isDone 
+                                                                        ? 'bg-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.35)] ring-4 ring-white' 
+                                                                        : 'bg-slate-100 text-slate-400 border border-slate-300 ring-4 ring-white'
                                                                 }`}>
-                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                                    </svg>
+                                                                    {st.isDone ? (
+                                                                        <i className="fas fa-check text-[10px]"></i>
+                                                                    ) : (
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                                                                    )}
                                                                 </div>
-                                                                <div className="min-w-0 flex-1 flex flex-col justify-center">
-                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">2. Tạo Yêu Cầu</p>
-                                                                    <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
-                                                                        {resolvedOrder["Thời gian nhập"] ? formatDateTime(resolvedOrder["Thời gian nhập"]) : 'Đang chờ xử lý'}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                            {resolvedOrder["Thời gian nhập"] ? (
-                                                                <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
-                                                            ) : <div className="w-3.5" />}
-                                                        </div>
 
-                                                        {/* Flowchart Directional Arrow 2 -> 3 */}
-                                                        <div className="flex items-center justify-center py-0.5">
-                                                            <svg className={`w-3.5 h-3.5 transition-colors ${resolvedOrder["Thời gian ghép"] ? (isAllCompleted ? 'text-slate-400' : 'text-emerald-500') : 'text-slate-300'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                                                <line x1="12" y1="4" x2="12" y2="20" />
-                                                                <polyline points="18 14 12 20 6 14" />
-                                                            </svg>
-                                                        </div>
-
-                                                        {/* Card 3: Ghép VIN */}
-                                                        <div className={`px-3 py-1.5 md:py-2 rounded-xl border shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10 ${
-                                                            resolvedOrder["Thời gian ghép"]
-                                                                ? isAllCompleted
-                                                                    ? 'bg-white/95 hover:bg-white border-slate-200/90'
-                                                                    : 'bg-emerald-500/[0.08] hover:bg-emerald-500/[0.12] border-emerald-400/50 shadow-[0_0_15px_rgba(16,185,129,0.12)]'
-                                                                : 'bg-slate-100/70 border-slate-200/50 opacity-60'
-                                                        }`}>
-                                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                                <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${
-                                                                    resolvedOrder["Thời gian ghép"] ? 'text-emerald-500' : 'text-slate-300'
+                                                                {/* Step Info Row */}
+                                                                <div className={`flex-1 ml-2 px-3 py-1.5 rounded-xl border transition-all flex items-center justify-between gap-2 ${
+                                                                    st.isDone 
+                                                                        ? 'bg-slate-50/80 border-slate-200 hover:bg-slate-100/80' 
+                                                                        : 'bg-slate-50/30 border-slate-100 opacity-60'
                                                                 }`}>
-                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
-                                                                        <circle cx="7" cy="17" r="1.5" />
-                                                                        <circle cx="17" cy="17" r="1.5" />
-                                                                    </svg>
-                                                                </div>
-                                                                <div className="min-w-0 flex-1 flex flex-col justify-center">
-                                                                    <div className="flex items-center justify-between w-full mb-1">
-                                                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none text-left">3. Ghép VIN</p>
-                                                                        {resolvedOrder["Thời gian ghép"] && daysSincePairedText !== '—' && (
-                                                                            <span className="text-[8.5px] font-extrabold text-emerald-700 bg-emerald-100/90 border border-emerald-300/60 px-1.5 py-0.5 rounded-md leading-none tabular-nums shadow-2xs flex items-center gap-1">
-                                                                                <i className="fas fa-clock text-[7.5px]"></i>
-                                                                                <span>{daysSincePairedText}</span>
-                                                                            </span>
-                                                                        )}
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-[9.5px] font-semibold text-slate-400 uppercase tracking-wider leading-none mb-1">
+                                                                            {st.title}
+                                                                        </p>
+                                                                        <p className="text-[11px] font-bold text-slate-800 tracking-tight tabular-nums leading-none">
+                                                                            {st.time}
+                                                                        </p>
                                                                     </div>
-                                                                    <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
-                                                                        {resolvedOrder["Thời gian ghép"] ? formatDateTime(resolvedOrder["Thời gian ghép"]) : 'Chưa ghép xe'}
-                                                                    </p>
+
+                                                                    {st.badge && (
+                                                                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-300/60 px-2 py-0.5 rounded-md leading-none tabular-nums flex items-center gap-1 shrink-0">
+                                                                            <i className="fas fa-clock text-[8px]"></i>
+                                                                            <span>{st.badge}</span>
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             </div>
-                                                            {resolvedOrder["Thời gian ghép"] ? (
-                                                                <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
-                                                            ) : <div className="w-3.5" />}
-                                                        </div>
-
-                                                        {/* Flowchart Directional Arrow 3 -> 4 */}
-                                                        <div className="flex items-center justify-center py-0.5">
-                                                            <svg className={`w-3.5 h-3.5 transition-colors ${hasInvoiced ? (isAllCompleted ? 'text-slate-400' : 'text-blue-500') : 'text-slate-300'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                                                <line x1="12" y1="4" x2="12" y2="20" />
-                                                                <polyline points="18 14 12 20 6 14" />
-                                                            </svg>
-                                                        </div>
-
-                                                        {/* Card 4: Xuất Hóa Đơn */}
-                                                        <div className={`px-3 py-1.5 md:py-2 rounded-xl border shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10 ${
-                                                            hasInvoiced
-                                                                ? 'bg-white/95 hover:bg-white border-slate-200/90'
-                                                                : 'bg-slate-100/70 border-slate-200/50 opacity-60'
-                                                        }`}>
-                                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                                <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${
-                                                                    hasInvoiced ? 'text-indigo-500' : 'text-slate-300'
-                                                                }`}>
-                                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-                                                                    </svg>
-                                                                </div>
-                                                                <div className="min-w-0 flex-1 flex flex-col justify-center">
-                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">4. Xuất Hóa Đơn</p>
-                                                                    <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
-                                                                        {resolvedOrder["Ngày xuất hóa đơn"] ? formatDateTime(resolvedOrder["Ngày xuất hóa đơn"]) : (resolvedOrder.LinkHoaDonDaXuat ? 'Đã xuất HĐ' : 'Chưa xuất HĐ')}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                            {hasInvoiced ? (
-                                                                <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
-                                                            ) : <div className="w-3.5" />}
-                                                        </div>
-
-                                                        {/* Flowchart Directional Arrow 4 -> 5 */}
-                                                        <div className="flex items-center justify-center py-0.5">
-                                                            <svg className={`w-3.5 h-3.5 transition-colors ${cocReceivedDate ? 'text-emerald-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                                                <line x1="12" y1="4" x2="12" y2="20" />
-                                                                <polyline points="18 14 12 20 6 14" />
-                                                            </svg>
-                                                        </div>
-
-                                                        {/* Card 5: Hồ Sơ COC */}
-                                                        <div className={`px-3 py-1.5 md:py-2 rounded-xl border shadow-2xs flex items-center justify-between gap-2.5 transition-all relative z-10 ${
-                                                            cocReceivedDate
-                                                                ? 'bg-emerald-500/[0.08] hover:bg-emerald-500/[0.12] border-emerald-400/50 shadow-[0_0_15px_rgba(16,185,129,0.12)]'
-                                                                : 'bg-slate-100/70 border-slate-200/50 opacity-60'
-                                                        }`}>
-                                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                                <div className={`w-5 h-5 flex items-center justify-center shrink-0 ${
-                                                                    cocReceivedDate ? 'text-emerald-500' : 'text-slate-300'
-                                                                }`}>
-                                                                    <i className="fas fa-certificate text-sm"></i>
-                                                                </div>
-                                                                <div className="min-w-0 flex-1 flex flex-col justify-center">
-                                                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none mb-1 text-left w-full">5. Hồ Sơ COC</p>
-                                                                    <p className="text-[10px] md:text-[10.5px] font-bold text-slate-800 tracking-tight tabular-nums whitespace-nowrap leading-none text-center w-full">
-                                                                        {cocReceivedDate ? formatDateDisplay(cocReceivedDate) : 'Chưa có COC'}
-                                                                    </p>
-                                                                </div>
-                                                            </div>
-                                                            {cocReceivedDate ? (
-                                                                <span className="w-3.5 h-3.5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[8.5px] font-bold shrink-0">✓</span>
-                                                            ) : <div className="w-3.5" />}
-                                                        </div>
+                                                        ))}
                                                     </div>
                                                 );
                                             })()}
                                         </div>
 
-                                        {/* Right: Executive Policy Cards & Deal Ledger Overview */}
-                                        <div className="flex flex-col justify-between gap-2 border-t md:border-t-0 md:border-l border-slate-200/80 pt-2 md:pt-0 md:pl-2.5 flex-1">
-                                            <div className="flex items-center justify-between pb-0.5">
-                                                <h3 className="text-[9.5px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-                                                    <i className="fas fa-gift text-indigo-600 text-[10px]"></i> Chính Sách &amp; Ưu Đãi
+                                        {/* Right: Modern Minimalist Privilege & Policies Hub */}
+                                        <div className="flex flex-col justify-between gap-2 border-t md:border-t-0 md:border-l border-slate-100 pt-2.5 md:pt-0 md:pl-3.5 flex-1">
+                                            <div className="flex items-center justify-between pb-1.5">
+                                                <h3 className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <i className="fas fa-gem text-sky-500 text-[10px]"></i> Chính Sách &amp; Đặc Quyền
                                                 </h3>
                                             </div>
                                             
-                                            <div className="flex-1 flex flex-col justify-between bg-white rounded-2xl p-2.5 md:p-3 border border-slate-200/80 shadow-2xs min-h-[110px]">
+                                            <div className="flex-1 flex flex-col justify-between bg-slate-50/70 rounded-2xl p-3 border border-slate-200/80 min-h-[120px]">
                                                 {/* Danh sách chính sách / Voucher */}
-                                                <div className="flex-1 overflow-y-auto pr-0.5 space-y-1.5 mb-1.5">
+                                                <div className="flex-1 overflow-y-auto space-y-2 mb-2 pr-0.5">
                                                     {(() => {
                                                         const rawPolicy: string = String(resolvedOrder["CHÍNH SÁCH"] || (resolvedOrder as any).chinh_sach || (resolvedOrder as any)["Chính sách"] || (resolvedOrder as any).policy || '');
-                                                        if (!rawPolicy) return <p className="text-[10.5px] font-medium text-slate-400 italic my-auto text-center py-2">Không có chính sách</p>;
+                                                        if (!rawPolicy) return <p className="text-[11px] font-medium text-slate-400 italic my-auto text-center py-4">Không có chính sách hoặc ưu đãi</p>;
                                                         
                                                         const items: string[] = rawPolicy.includes('\n') 
                                                             ? rawPolicy.split('\n') 
@@ -2564,9 +2430,9 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                                 : [rawPolicy];
 
                                                         return items.map((s: string) => s.trim()).filter(Boolean).map((item: string, idx: number) => (
-                                                            <div key={idx} className="flex items-start gap-1.5 bg-slate-50/80 px-2 py-1.5 rounded-lg border border-slate-200/60 shadow-2xs">
-                                                                <i className="fas fa-check-circle text-emerald-600 text-[8.5px] mt-0.5 shrink-0"></i>
-                                                                <span className="text-[9.5px] font-medium text-slate-600 leading-snug">{item}</span>
+                                                            <div key={idx} className="flex items-start gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200/70 shadow-2xs hover:border-slate-300 transition-colors">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                                                                <span className="text-[10.5px] font-medium text-slate-700 leading-snug">{item}</span>
                                                             </div>
                                                         ));
                                                     })()}
@@ -2575,7 +2441,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                 {onSelectPolicy && !isReferenceAccount && ['chưa ghép', 'đã ghép'].includes(generalStatus) && (
                                                     <button 
                                                         onClick={() => setInlineMode('POLICY')}
-                                                        className="text-[9.5px] font-bold text-slate-700 bg-slate-100 hover:bg-slate-900 hover:text-white border border-slate-200 px-3 py-1.5 rounded-xl transition-all w-full text-center shadow-2xs active:scale-95 cursor-pointer shrink-0"
+                                                        className="text-[10.5px] font-semibold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 border border-slate-200 hover:border-slate-300 px-3 py-2 rounded-xl transition-all w-full text-center shadow-2xs active:scale-[0.98] cursor-pointer shrink-0"
                                                     >
                                                         Cập nhật chính sách
                                                     </button>

@@ -811,11 +811,15 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         const statsButton = (
             <button
                 onClick={() => setIsPendingStatsModalOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 lg:py-1 text-[12px] lg:text-[11px] font-semibold rounded-lg transition-all duration-200 outline-none whitespace-nowrap min-h-[32px] lg:min-h-0 bg-white/90 hover:bg-white text-slate-700 hover:text-amber-600 border border-slate-200/80 shadow-xs hover:shadow-sm hover:scale-[1.02] active:scale-95 cursor-pointer"
-                title="Thống kê yêu cầu"
+                className="flex items-center gap-1.5 px-2.5 py-1 lg:px-2 lg:py-0.5 text-[11px] lg:text-[10px] font-bold rounded-lg transition-all duration-200 outline-none whitespace-nowrap bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/25 shadow-2xs hover:scale-[1.02] active:scale-95 cursor-pointer select-none"
+                title="Thống kê đơn hàng"
             >
-                <i className="fas fa-chart-pie text-[12px] lg:text-[11px] text-amber-500"></i>
-                <span className="font-bold">Thống kê</span>
+                <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                </span>
+                <i className="fas fa-chart-pie text-[10px] text-amber-600 dark:text-amber-400"></i>
+                <span>Thống kê</span>
             </button>
         );
 
