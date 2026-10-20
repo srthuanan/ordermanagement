@@ -4,6 +4,8 @@ import { getBacklogOrders, updateBacklogTienDo } from '../../services/api/adminS
 import { useCopyFeedback } from '../../hooks/useCopyFeedback';
 import moment from 'moment';
 import * as XLSX from 'xlsx';
+import TabbedFilter from '../ui/TabbedFilter';
+import MultiSelectDropdown from '../ui/MultiSelectDropdown';
 
 export type BacklogProgressType = 'Chờ xe' | 'Cần xe' | 'Hoàn cọc' | 'Hủy cọc';
 
@@ -49,29 +51,29 @@ const PROGRESS_STYLES: Record<BacklogProgressType, {
         shortLabel: 'Chờ',
         label: 'Chờ xe',
         icon: 'fa-hourglass-half',
-        activeBtnCls: 'bg-sky-600 text-white font-bold shadow-2xs',
-        idleBtnCls: 'bg-white hover:bg-sky-50 text-slate-700 border-[#B5B5B5]'
+        activeBtnCls: 'bg-sky-500 text-white font-bold shadow-2xs',
+        idleBtnCls: 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/60'
     },
     'Cần xe': {
         shortLabel: '⚡ Cần',
         label: 'Cần xe',
         icon: 'fa-bolt',
         activeBtnCls: 'bg-emerald-600 text-white font-bold shadow-2xs',
-        idleBtnCls: 'bg-white hover:bg-emerald-50 text-slate-700 border-[#B5B5B5]'
+        idleBtnCls: 'text-slate-500 hover:text-emerald-700 hover:bg-emerald-50'
     },
     'Hoàn cọc': {
         shortLabel: 'Hoàn',
         label: 'Hoàn cọc',
         icon: 'fa-rotate-left',
-        activeBtnCls: 'bg-amber-500 text-white font-bold shadow-2xs',
-        idleBtnCls: 'bg-white hover:bg-amber-50 text-slate-700 border-[#B5B5B5]'
+        activeBtnCls: 'bg-amber-600 text-white font-bold shadow-2xs',
+        idleBtnCls: 'text-slate-500 hover:text-amber-700 hover:bg-amber-50'
     },
     'Hủy cọc': {
         shortLabel: 'Hủy',
         label: 'Hủy cọc',
         icon: 'fa-ban',
         activeBtnCls: 'bg-rose-600 text-white font-bold shadow-2xs',
-        idleBtnCls: 'bg-white hover:bg-rose-50 text-slate-700 border-[#B5B5B5]'
+        idleBtnCls: 'text-slate-500 hover:text-rose-700 hover:bg-rose-50'
     }
 };
 
@@ -145,11 +147,11 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
         };
     }, [isManager, currentUserName, currentUser]);
 
-    // Filters (CyberSoft style toolbar)
+    // Filters (Matching Đơn Hàng tab)
     const [activeTab, setActiveTab] = useState<string>('all');
-    const [progressFilter, setProgressFilter] = useState<string>('all');
-    const [pairingFilter, setPairingFilter] = useState<'all' | 'paired' | 'unpaired'>('all');
-    const [tvbhFilter, setTvbhFilter] = useState<string>('all');
+    const [progressFilter, setProgressFilter] = useState<string[]>([]);
+    const [pairingFilter, setPairingFilter] = useState<string[]>([]);
+    const [tvbhFilter, setTvbhFilter] = useState<string[]>([]);
     const [searchValue, setSearchValue] = useState<string>('');
     const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -323,8 +325,8 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
         );
     }, [backlogOrders, isCurrentUserAdmin, isManager, teamMembers, currentUser, currentUserName]);
 
-    // Unique Car Models for Cyber Toolbar Dropdown
-    const uniqueModels = useMemo(() => {
+    // Unique Car Models with counts for Cockpit Segmented Rail
+    const modelTabs = useMemo(() => {
         const counts: Record<string, number> = {};
         baseOrdersForUser.forEach(o => {
             const pb = o.phien_ban || '';
@@ -332,8 +334,14 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
             const m = match ? match[0].toUpperCase() : pb.split(' ')[0] || 'Khác';
             counts[m] = (counts[m] || 0) + 1;
         });
-        return Object.keys(counts).sort();
+        return Object.keys(counts).sort().map(m => ({
+            id: m,
+            label: m,
+            count: counts[m]
+        }));
     }, [baseOrdersForUser]);
+
+    const uniqueModels = useMemo(() => modelTabs.map(t => t.id), [modelTabs]);
 
     // Danh sách TVBH cho bộ lọc:
     // - Admin: Tất cả TVBH
@@ -343,6 +351,11 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
         if (!isCurrentUserAdmin && !isManager) return [];
         return Array.from(new Set(baseOrdersForUser.map(o => o.tvbh_name).filter(Boolean))).sort();
     }, [baseOrdersForUser, isCurrentUserAdmin, isManager]);
+
+    const tabs = useMemo(() => [
+        { id: 'all', label: 'Tất cả', count: baseOrdersForUser.length },
+        ...modelTabs
+    ], [baseOrdersForUser.length, modelTabs]);
 
     // Filtered data for table
     const filteredOrders = useMemo(() => {
@@ -356,21 +369,20 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
             }
 
             // Progress Filter
-            if (progressFilter !== 'all') {
+            if (progressFilter.length > 0) {
                 const td = (o.tien_do || 'Chờ xe').trim();
-                if (td !== progressFilter) return false;
+                if (!progressFilter.includes(td)) return false;
             }
 
             // Pairing Filter
-            if (pairingFilter === 'paired') {
-                if (!o.vin || o.vin.length < 5) return false;
-            } else if (pairingFilter === 'unpaired') {
-                if (o.vin && o.vin.length >= 5) return false;
+            if (pairingFilter.length === 1) {
+                if (pairingFilter.includes('Đã ghép') && (!o.vin || o.vin.length < 5)) return false;
+                if (pairingFilter.includes('Chưa ghép') && o.vin && o.vin.length >= 5) return false;
             }
 
             // TVBH Filter (Cho Admin và TPKD)
-            if ((isCurrentUserAdmin || isManager) && tvbhFilter !== 'all') {
-                if (o.tvbh_name !== tvbhFilter) return false;
+            if ((isCurrentUserAdmin || isManager) && tvbhFilter.length > 0) {
+                if (!tvbhFilter.includes(o.tvbh_name)) return false;
             }
 
             // Search Keyword
@@ -391,43 +403,14 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
         });
     }, [baseOrdersForUser, activeTab, progressFilter, pairingFilter, tvbhFilter, isCurrentUserAdmin, isManager, searchValue]);
 
-    // Summary counts
-    const { totalFilteredCoc, countCanXe, countChoXe, countHoanCoc, countHuyCoc, countDaGhep, countChuaGhep } = useMemo(() => {
-        let total = 0;
-        let canXe = 0;
-        let choXe = 0;
-        let hoanCoc = 0;
-        let huyCoc = 0;
-        let daGhep = 0;
-
-        filteredOrders.forEach(o => {
-            total += Number(o.tien_coc || 0);
-            const td = (o.tien_do || 'Chờ xe').trim();
-            if (td === 'Cần xe') canXe++;
-            else if (td === 'Hoàn cọc') hoanCoc++;
-            else if (td === 'Hủy cọc') huyCoc++;
-            else choXe++;
-
-            if (o.vin && o.vin.length >= 5) daGhep++;
-        });
-
-        return {
-            totalFilteredCoc: total,
-            countCanXe: canXe,
-            countChoXe: choXe,
-            countHoanCoc: hoanCoc,
-            countHuyCoc: huyCoc,
-            countDaGhep: daGhep,
-            countChuaGhep: filteredOrders.length - daGhep
-        };
-    }, [filteredOrders]);
+    const canReset = activeTab !== 'all' || progressFilter.length > 0 || pairingFilter.length > 0 || tvbhFilter.length > 0 || !!searchValue;
 
     // Reset filters
     const handleResetFilters = () => {
         setActiveTab('all');
-        setProgressFilter('all');
-        setPairingFilter('all');
-        setTvbhFilter('all');
+        setProgressFilter([]);
+        setPairingFilter([]);
+        setTvbhFilter([]);
         setSearchValue('');
     };
 
@@ -455,170 +438,116 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
         XLSX.writeFile(wb, `Danh_Sach_Coc_Ton_${moment().format('YYYYMMDD_HHmm')}.xlsx`);
     };
 
+    const extraActions = (
+        <div className="flex items-center gap-1">
+            <button
+                type="button"
+                onClick={() => fetchOrders(true)}
+                disabled={isRefreshing}
+                className="h-7 lg:h-[26px] px-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] lg:text-[10px] font-semibold flex items-center gap-1 shadow-2xs active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                title="Tải lại dữ liệu cọc tồn từ Cyber ERP"
+            >
+                <i className={`fas fa-rotate text-sky-600 text-[10px] ${isRefreshing ? 'animate-spin' : ''}`}></i>
+                <span className="hidden sm:inline">Làm mới</span>
+            </button>
+
+            <button
+                type="button"
+                onClick={handleExportExcel}
+                className="h-7 lg:h-[26px] px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] lg:text-[10px] font-semibold rounded-xl shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shrink-0"
+                title="Tải file Excel cọc tồn"
+            >
+                <i className="fas fa-file-excel text-[10px]"></i>
+                <span>Xuất Excel</span>
+            </button>
+        </div>
+    );
+
     return (
-        <div className="flex-1 flex flex-col min-h-0 w-full bg-[#ECE9D8] rounded border-2 border-[#0055EA] shadow-xl overflow-hidden font-sans select-none h-full">
-            {/* 1. CYBERSOFT TITLE BAR */}
-            <div className="h-7 bg-gradient-to-r from-[#0058EE] via-[#3593FF] to-[#288EFF] px-2 flex items-center justify-between text-white shrink-0">
-                <div className="flex items-center gap-1.5 overflow-hidden pr-2">
-                    <span className="w-3.5 h-3.5 bg-gradient-to-br from-amber-400 to-red-500 rounded-xs flex items-center justify-center text-[9px] font-black text-slate-900 shadow-xs border border-white/40 shrink-0">
-                        <i className="fas fa-file-invoice-dollar text-[7px] text-white"></i>
-                    </span>
-                    <span className="font-bold text-[11px] text-white tracking-tight drop-shadow-xs truncate">
-                        Quản lý hợp đồng cọc tồn - Ô tô VinFast Thuận An
-                    </span>
-                    <span className="text-[10px] text-blue-100 font-medium ml-1 hidden lg:inline shrink-0">
-                        {isCurrentUserAdmin 
-                            ? '— Toàn showroom' 
-                            : isManager 
-                                ? `— Phòng KD: ${currentUserName || currentUser}` 
-                                : `— TVBH: ${currentUserName || currentUser}`}
-                    </span>
-                </div>
-                <div className="flex items-center gap-0.5 shrink-0">
-                    {onBackToDms && (
-                        <button 
-                            type="button" 
-                            onClick={onBackToDms}
-                            className="w-4 h-3.5 bg-[#0058EE] hover:bg-[#0048CC] text-white text-[10px] font-bold flex items-center justify-center border border-white/30 rounded-xs cursor-pointer"
-                            title="Quay về danh sách đơn hàng"
-                        >_</button>
-                    )}
-                    <button 
-                        type="button" 
-                        className="w-4 h-3.5 bg-[#0058EE] text-white text-[9px] font-bold flex items-center justify-center border border-white/30 rounded-xs"
-                    >□</button>
-                    {onBackToDms && (
-                        <button 
-                            type="button" 
-                            onClick={onBackToDms}
-                            className="w-4 h-3.5 bg-[#E81123] hover:bg-[#C80113] text-white text-[10px] font-bold flex items-center justify-center border border-white/30 rounded-xs cursor-pointer"
-                            title="Đóng cửa sổ"
-                        >✕</button>
-                    )}
-                </div>
-            </div>
-
-            {/* 2. CYBERSOFT TOOLBAR (Ribbon - Responsive without horizontal scroll) */}
-            <div className="bg-[#F0F0F0] border-b border-[#CCCCCC] px-1.5 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] text-slate-800 shrink-0">
-                <div className="flex items-center gap-1 flex-wrap">
-                    {/* Nút Làm Mới */}
-                    <button 
-                        type="button" 
-                        onClick={() => fetchOrders(true)}
-                        disabled={isRefreshing}
-                        className="px-1.5 py-0.5 bg-white hover:bg-slate-100 border border-[#B5B5B5] rounded-xs shadow-2xs flex items-center gap-1 font-semibold text-slate-800 active:translate-y-px cursor-pointer disabled:opacity-50"
-                        title="Tải lại dữ liệu cọc tồn từ Cyber ERP"
-                    >
-                        <i className={`fas fa-rotate text-blue-600 text-[10px] ${isRefreshing ? 'animate-spin' : ''}`}></i>
-                        <span className="hidden sm:inline">Làm mới</span>
-                    </button>
-
-                    <div className="h-3.5 w-[1px] bg-slate-300 mx-0.5 hidden sm:block"></div>
-
-                    {/* Lọc Dòng Xe */}
-                    <div className="flex items-center gap-1">
-                        <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Xe:</span>
-                        <select
-                            value={activeTab}
-                            onChange={e => setActiveTab(e.target.value)}
-                            className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[110px]"
-                        >
-                            <option value="all">Tất cả ({baseOrdersForUser.length})</option>
-                            {uniqueModels.map(m => (
-                                <option key={m} value={m}>{m}</option>
-                            ))}
-                        </select>
+        <div className="flex flex-col h-full w-full font-sans select-none">
+            {/* 1. COMMAND FILTER RAIL (100% Đồng bộ với Tab Đơn Hàng) */}
+            <div className="flex-shrink-0 relative z-20">
+                <TabbedFilter
+                    tabs={tabs}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    searchValue={searchValue}
+                    onSearchChange={setSearchValue}
+                    searchPlaceholder="Tên, SĐT, số HĐ, VIN..."
+                    onReset={handleResetFilters}
+                    canReset={canReset}
+                    extraActions={extraActions}
+                >
+                    {/* Lọc Tiến độ */}
+                    <div className="min-w-[76px] xl:min-w-[85px] flex-shrink-0">
+                        <MultiSelectDropdown
+                            id="tien_do"
+                            label="Tiến độ"
+                            options={['Chờ xe', 'Cần xe', 'Hoàn cọc', 'Hủy cọc']}
+                            selectedOptions={progressFilter}
+                            onChange={setProgressFilter}
+                            icon="fa-tasks"
+                            displayMode="selection"
+                            size="compact"
+                            variant="modern"
+                            align="right"
+                        />
                     </div>
 
-                    {/* Lọc Tiến Độ */}
-                    <div className="flex items-center gap-1">
-                        <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Tiến độ:</span>
-                        <select
-                            value={progressFilter}
-                            onChange={e => setProgressFilter(e.target.value)}
-                            className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[110px]"
-                        >
-                            <option value="all">Tất cả</option>
-                            <option value="Chờ xe">Chờ xe</option>
-                            <option value="Cần xe">⚡ Cần xe</option>
-                            <option value="Hoàn cọc">Hoàn cọc</option>
-                            <option value="Hủy cọc">Hủy cọc</option>
-                        </select>
+                    {/* Lọc Ghép xe */}
+                    <div className="min-w-[76px] xl:min-w-[85px] flex-shrink-0">
+                        <MultiSelectDropdown
+                            id="ghep_xe"
+                            label="Ghép xe"
+                            options={['Đã ghép', 'Chưa ghép']}
+                            selectedOptions={pairingFilter}
+                            onChange={setPairingFilter}
+                            icon="fa-car"
+                            displayMode="selection"
+                            size="compact"
+                            variant="modern"
+                            align="right"
+                        />
                     </div>
 
-                    {/* Lọc Trạng Thái Ghép Xe */}
-                    <div className="flex items-center gap-1">
-                        <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Ghép xe:</span>
-                        <select
-                            value={pairingFilter}
-                            onChange={e => setPairingFilter(e.target.value as any)}
-                            className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[125px]"
-                        >
-                            <option value="all">Tất cả ({baseOrdersForUser.length})</option>
-                            <option value="paired">🟢 Đã ghép ({baseOrdersForUser.filter(o => o.vin && o.vin.length >= 5).length})</option>
-                            <option value="unpaired">⚪ Chưa ghép ({baseOrdersForUser.filter(o => !o.vin || o.vin.length < 5).length})</option>
-                        </select>
-                    </div>
-
-                    {/* Lọc TVBH (Chỉ hiển thị cho Admin và TPKD) */}
+                    {/* Lọc TVBH */}
                     {(isCurrentUserAdmin || isManager) && tvbhOptions.length > 0 && (
-                        <div className="flex items-center gap-1">
-                            <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">
-                                {isManager ? 'TVBH:' : 'Tư vấn:'}
-                            </span>
-                            <select
-                                value={tvbhFilter}
-                                onChange={e => setTvbhFilter(e.target.value)}
-                                className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[120px]"
-                            >
-                                <option value="all">Tất cả ({tvbhOptions.length})</option>
-                                {tvbhOptions.map(t => (
-                                    <option key={t} value={t}>{t}</option>
-                                ))}
-                            </select>
+                        <div className="min-w-[76px] xl:min-w-[85px] flex-shrink-0">
+                            <MultiSelectDropdown
+                                id="tvbh"
+                                label={isManager ? "TVBH" : "Tư vấn"}
+                                options={tvbhOptions}
+                                selectedOptions={tvbhFilter}
+                                onChange={setTvbhFilter}
+                                icon="fa-user-tie"
+                                displayMode="selection"
+                                size="compact"
+                                variant="modern"
+                                searchable={true}
+                                align="right"
+                            />
                         </div>
                     )}
-
-
-                </div>
-
-                {/* Filter input Người liên hệ / Tìm kiếm */}
-                <div className="flex items-center gap-1 ml-auto">
-                    <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px] hidden sm:inline">Tìm:</span>
-                    <div className="relative">
-                        <input 
-                            type="text"
-                            value={searchValue}
-                            onChange={e => setSearchValue(e.target.value)}
-                            placeholder="Tên, SĐT, số HĐ, VIN..."
-                            className="w-32 sm:w-44 h-5 px-1.5 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] text-slate-800 outline-none focus:border-blue-600 shadow-inner pr-4"
-                        />
-                        {searchValue && (
-                            <button 
-                                type="button" 
-                                onClick={() => setSearchValue('')} 
-                                className="absolute right-1 top-0.5 text-slate-400 hover:text-slate-600 text-[10px] cursor-pointer"
-                            >✕</button>
-                        )}
-                    </div>
-                </div>
+                </TabbedFilter>
             </div>
 
-            {/* 3. CYBERSOFT DATAGRID BODY: CLEAN WHITE BACKGROUND, FILLS 100% WIDTH, NO HORIZONTAL SCROLL! */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden bg-white w-full">
+            {/* 2. TABLE CARD CONTAINER */}
+            <div className="flex-1 flex flex-col min-h-0 mt-1">
+                <div className="bg-white relative rounded-2xl shadow-sm border border-slate-200/70 flex flex-col h-full overflow-hidden">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden bg-white w-full">
                 {isLoading && backlogOrders.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-white">
-                        <div className="w-10 h-10 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mb-3"></div>
+                        <div className="w-9 h-9 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mb-3"></div>
                         <p className="text-xs font-bold text-slate-700">Đang nạp dữ liệu hợp đồng cọc tồn từ Cyber ERP...</p>
                     </div>
                 ) : filteredOrders.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center p-8 text-center bg-white">
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 flex items-center justify-center text-xl mb-2 shadow-xs">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200/80 text-slate-400 flex items-center justify-center text-lg mb-2 shadow-2xs">
                             <i className="fas fa-file-invoice-dollar"></i>
                         </div>
-                        <p className="text-xs font-bold text-slate-700">Chưa có hợp đồng cọc tồn nào trong danh sách</p>
+                        <p className="text-xs font-bold text-slate-800">Chưa có hợp đồng cọc tồn nào trong danh sách</p>
                         <p className="text-[11px] text-slate-500 mt-1 max-w-sm">
-                            {searchValue || activeTab !== 'all' || progressFilter !== 'all' || tvbhFilter !== 'all'
+                            {canReset
                                 ? 'Không có hợp đồng nào khớp với điều kiện tìm kiếm. Hãy thử xóa bộ lọc.'
                                 : isCurrentUserAdmin
                                     ? 'Hiện tại showroom không có hợp đồng cọc tồn nào chưa ghép xe.'
@@ -626,38 +555,34 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                         ? 'Phòng kinh doanh của bạn hiện tại không có hợp đồng cọc tồn nào.'
                                         : 'Bạn hiện tại không có hợp đồng cọc tồn nào cần theo dõi.'}
                         </p>
-                        {(searchValue || activeTab !== 'all' || progressFilter !== 'all' || tvbhFilter !== 'all') && (
+                        {canReset && (
                             <button
                                 type="button"
                                 onClick={handleResetFilters}
-                                className="mt-3 px-3 py-1 bg-white hover:bg-slate-100 border border-[#B5B5B5] text-slate-700 text-xs font-bold rounded-xs shadow-2xs cursor-pointer"
+                                className="mt-3 px-3 py-1 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl shadow-2xs cursor-pointer"
                             >
                                 Xóa điều kiện lọc
                             </button>
                         )}
                     </div>
                 ) : (
-                    <table className="w-full table-fixed border-collapse text-[11px] font-sans" style={{ fontFamily: 'Tahoma, Arial, Segoe UI, sans-serif' }}>
-                        {/* Table Header with Smart Proportional Fixed Widths (Zero Horizontal Scroll!) */}
-                        <thead className="bg-[#EDF2F8] sticky top-0 z-20 shadow-xs border-b border-[#C4D3E3]">
-                            <tr className="text-slate-700 text-center font-bold text-[11px] h-7">
-                                <th className="w-7 sm:w-8 border-r border-[#C4D3E3] bg-[#E2EAF2] text-[10px] text-slate-600 font-bold p-0 text-center select-none">
-                                    #
-                                </th>
-                                <th className="w-24 sm:w-28 px-1 border-r border-[#C4D3E3] text-center">Số HĐ / Ngày</th>
-                                <th className="w-[22%] px-1.5 border-r border-[#C4D3E3] text-left">Khách Hàng / SĐT</th>
-                                <th className="w-[20%] px-1.5 border-r border-[#C4D3E3] text-left">Dòng Xe & Màu</th>
-                                <th className="w-20 sm:w-24 px-1 border-r border-[#C4D3E3] text-right">Tiền Cọc</th>
-                                <th className="w-24 sm:w-28 px-1 border-r border-[#C4D3E3] text-center">Số VIN</th>
+                    <table className="w-full table-fixed border-collapse text-xs">
+                        <thead className="bg-slate-50/90 sticky top-0 z-20 shadow-2xs border-b border-slate-200/80 backdrop-blur-xs">
+                            <tr className="text-slate-500 text-center font-bold text-[11px] h-8 uppercase tracking-wider">
+                                <th className="w-9 border-r border-slate-200/60 p-0 text-center select-none">#</th>
+                                <th className="w-24 sm:w-28 px-1 border-r border-slate-200/60 text-center">Số HĐ / Ngày</th>
+                                <th className="w-[22%] px-2 border-r border-slate-200/60 text-left">Khách Hàng / SĐT</th>
+                                <th className="w-[20%] px-2 border-r border-slate-200/60 text-left">Dòng Xe & Màu</th>
+                                <th className="w-22 sm:w-26 px-1.5 border-r border-slate-200/60 text-right">Tiền Cọc</th>
+                                <th className="w-26 sm:w-30 px-1 border-r border-slate-200/60 text-center">Số VIN</th>
                                 {(isCurrentUserAdmin || isManager) && (
-                                    <th className="w-24 sm:w-28 px-1.5 border-r border-[#C4D3E3] text-left">Tư Vấn BH</th>
+                                    <th className="w-24 sm:w-28 px-2 border-r border-slate-200/60 text-left">Tư Vấn BH</th>
                                 )}
                                 <th className="w-32 sm:w-36 px-1 text-center">Tiến Độ Cọc</th>
                             </tr>
                         </thead>
 
-                        {/* Table Body (Clean white rows with clear contrast & zero horizontal scroll) */}
-                        <tbody className="divide-y divide-slate-200">
+                        <tbody className="divide-y divide-slate-100 text-xs">
                             {filteredOrders.map((order, idx) => {
                                 const isSelected = selectedRowIdx === idx;
                                 const currentProgress: BacklogProgressType = (order.tien_do as BacklogProgressType) || 'Chờ xe';
@@ -667,54 +592,49 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                     <tr
                                         key={order.id || order.so_don_hang}
                                         onClick={() => setSelectedRowIdx(idx)}
-                                        className={`cursor-pointer border-b border-slate-200 text-[11px] leading-tight transition-colors ${
+                                        className={`cursor-pointer border-b border-slate-100 text-xs transition-colors ${
                                             isSelected 
-                                                ? 'bg-blue-100/90 font-bold text-slate-900 outline outline-1 outline-blue-600 z-10' 
-                                                : idx % 2 === 1 
-                                                    ? 'bg-slate-50/60 hover:bg-sky-50/80 text-slate-800' 
-                                                    : 'bg-white hover:bg-sky-50/80 text-slate-800'
+                                                ? 'bg-sky-50/80 ring-1 ring-inset ring-sky-500/25' 
+                                                : 'hover:bg-slate-50/70 text-slate-800'
                                         }`}
                                     >
-                                        {/* 1. STT with ▶ active indicator */}
-                                        <td className="border-r border-[#C4D3E3] bg-[#EDF2F8] text-[10px] text-center font-mono text-slate-600 p-0 select-none py-1">
-                                            <span className="flex items-center justify-center gap-0.5">
-                                                {isSelected ? <span className="text-[8px] text-slate-900 font-black">▶</span> : null}
-                                                <span>{idx + 1}</span>
-                                            </span>
+                                        {/* 1. STT */}
+                                        <td className="border-r border-slate-200/60 text-center font-mono text-slate-400 p-0 select-none py-2 text-xs">
+                                            {idx + 1}
                                         </td>
 
-                                        {/* 2. Số HĐ & Ngày ký (Stacked neatly) */}
-                                        <td className="px-1 border-r border-slate-200 text-center py-1">
+                                        {/* 2. Số HĐ & Ngày ký */}
+                                        <td className="px-1 border-r border-slate-200/60 text-center py-2">
                                             <div 
                                                 onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.so_hop_dong || order.so_don_hang, e); }}
                                                 title="Click copy số HĐ"
-                                                className="font-mono font-bold text-blue-900 hover:underline hover:text-blue-700 cursor-pointer truncate text-[11px]"
+                                                className="font-mono font-bold text-slate-800 hover:text-sky-600 cursor-pointer truncate text-[11px]"
                                             >
                                                 {order.so_hop_dong || order.so_don_hang}
                                             </div>
-                                            <div className="text-[10px] font-mono text-slate-500 truncate mt-0.5">
+                                            <div className="text-[10px] font-mono text-slate-400 truncate mt-0.5">
                                                 {moment(order.ngay_hop_dong || order.ngay_giao_dich).format('DD/MM/YYYY')}
                                             </div>
                                         </td>
 
-                                        {/* 3. Tên khách hàng & SĐT (Stacked neatly) */}
-                                        <td className="px-1.5 border-r border-slate-200 text-left py-1">
+                                        {/* 3. Tên khách hàng & SĐT */}
+                                        <td className="px-2 border-r border-slate-200/60 text-left py-2">
                                             <div
                                                 onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.khach_hang, e); }}
                                                 title="Click copy tên khách hàng"
-                                                className="font-bold text-slate-900 uppercase truncate hover:text-blue-700 cursor-pointer text-[11px]"
+                                                className="font-bold text-slate-900 uppercase truncate hover:text-sky-600 cursor-pointer text-[12px]"
                                             >
                                                 {order.khach_hang || '—'}
                                             </div>
-                                            <div className="text-[10px] font-mono mt-0.5">
+                                            <div className="text-[11px] font-mono mt-0.5">
                                                 {order.so_dien_thoai ? (
                                                     <a
                                                         href={`tel:${order.so_dien_thoai}`}
                                                         onClick={(e) => e.stopPropagation()}
-                                                        className="text-sky-800 font-bold hover:underline inline-flex items-center gap-1"
+                                                        className="text-sky-700 font-semibold hover:underline inline-flex items-center gap-1"
                                                         title="Bấm gọi điện"
                                                     >
-                                                        <i className="fas fa-phone-alt text-[8px] text-sky-600"></i>
+                                                        <i className="fas fa-phone-alt text-[8px] text-sky-500"></i>
                                                         {order.so_dien_thoai}
                                                     </a>
                                                 ) : (
@@ -723,14 +643,14 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                             </div>
                                         </td>
 
-                                        {/* 4. Dòng xe & Màu sắc (Stacked neatly) */}
-                                        <td className="px-1.5 border-r border-slate-200 text-left py-1">
-                                            <div className="font-semibold text-slate-900 truncate text-[11px]" title={order.phien_ban}>
+                                        {/* 4. Dòng xe & Màu sắc */}
+                                        <td className="px-2 border-r border-slate-200/60 text-left py-2">
+                                            <div className="font-semibold text-slate-800 truncate text-[12px]" title={order.phien_ban}>
                                                 {order.phien_ban || '—'}
                                             </div>
-                                            <div className="text-[10px] text-slate-600 truncate mt-0.5">
+                                            <div className="text-[11px] text-slate-500 truncate mt-0.5 font-medium">
                                                 {order.ngoai_that ? (
-                                                    <span className="uppercase font-medium text-slate-700">
+                                                    <span className="uppercase">
                                                         {order.ngoai_that}
                                                         {order.noi_that && order.noi_that !== 'Tiêu chuẩn' && ` • ${order.noi_that}`}
                                                     </span>
@@ -741,29 +661,29 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                         </td>
 
                                         {/* 5. Tiền cọc */}
-                                        <td className="px-1 border-r border-slate-200 text-right py-1">
-                                            <div className="font-mono font-bold text-emerald-800 text-[11px] truncate">
+                                        <td className="px-1.5 border-r border-slate-200/60 text-right py-2">
+                                            <div className="font-mono font-bold text-emerald-700 text-xs truncate">
                                                 {formatVND(order.tien_coc)}
                                             </div>
                                         </td>
 
                                         {/* 6. Số VIN & Liên Kết Đơn Hàng Đã Ghép */}
-                                        <td className="px-1 border-r border-slate-200 text-center font-mono py-1">
+                                        <td className="px-1 border-r border-slate-200/60 text-center font-mono py-2">
                                             {order.vin && order.vin.length > 5 ? (
                                                 <div className="flex flex-col items-center justify-center gap-0.5">
                                                     <span 
                                                         onClick={(e) => { e.stopPropagation(); copyWithFeedback(order.vin, e); }}
                                                         title="Số VIN đã ghép xe - Bấm để copy"
-                                                        className="inline-flex items-center gap-1 font-bold text-emerald-800 hover:text-emerald-950 hover:underline cursor-pointer truncate max-w-full text-[10px] bg-emerald-50 px-1 py-0.5 rounded-xs border border-emerald-300 shadow-2xs"
+                                                        className="inline-flex items-center gap-1 font-bold text-emerald-800 hover:text-emerald-950 cursor-pointer truncate max-w-full text-[10.5px] bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200/80 shadow-2xs"
                                                     >
                                                         <i className="fas fa-car text-[8px] text-emerald-600 shrink-0"></i>
                                                         <span className="truncate">{order.vin}</span>
-                                                        <i className="far fa-copy text-[7.5px] text-emerald-600 shrink-0 opacity-70 hover:opacity-100"></i>
+                                                        <i className="far fa-copy text-[7.5px] text-emerald-500 shrink-0"></i>
                                                     </span>
 
                                                     {/* Link đơn hàng DMS & vị trí kho xe */}
                                                     {order.so_don_hang && order.so_don_hang !== order.so_hop_dong ? (
-                                                        <div className="flex items-center justify-center gap-1 text-[9px] text-slate-500 font-mono">
+                                                        <div className="flex items-center justify-center gap-1 text-[9.5px] text-slate-500 font-mono">
                                                             <span 
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
@@ -780,7 +700,7 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                                                     }
                                                                 }}
                                                                 title={`Mã đơn hàng DMS: ${order.so_don_hang}${onSelectOrder ? ' (Bấm để xem chi tiết đơn)' : ' (Bấm để copy)'}`}
-                                                                className="text-blue-700 hover:text-blue-900 hover:underline cursor-pointer truncate max-w-[95px] inline-flex items-center gap-0.5 font-bold"
+                                                                className="text-sky-700 hover:underline cursor-pointer truncate max-w-[95px] inline-flex items-center gap-0.5 font-semibold"
                                                             >
                                                                 <i className="fas fa-link text-[7.5px]"></i>
                                                                 <span>{order.so_don_hang}</span>
@@ -792,13 +712,13 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                                                     window.dispatchEvent(new CustomEvent('navigate-stock', { detail: { vin: order.vin } }));
                                                                 }}
                                                                 title="Xem vị trí xe trong kho"
-                                                                className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5"
+                                                                className="text-slate-400 hover:text-sky-600 cursor-pointer p-0.5"
                                                             >
-                                                                <i className="fas fa-location-dot text-[8px]"></i>
+                                                                <i className="fas fa-location-dot text-[8.5px]"></i>
                                                             </button>
                                                         </div>
                                                     ) : (
-                                                        <div className="flex items-center justify-center gap-1 text-[9px] text-emerald-700 font-sans font-semibold">
+                                                        <div className="flex items-center justify-center gap-1 text-[9px] text-emerald-700 font-medium">
                                                             <span>Đã ghép xe</span>
                                                             <button
                                                                 type="button"
@@ -807,15 +727,15 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                                                     window.dispatchEvent(new CustomEvent('navigate-stock', { detail: { vin: order.vin } }));
                                                                 }}
                                                                 title="Xem vị trí xe trong kho"
-                                                                className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5"
+                                                                className="text-slate-400 hover:text-sky-600 cursor-pointer p-0.5"
                                                             >
-                                                                <i className="fas fa-location-dot text-[8px]"></i>
+                                                                <i className="fas fa-location-dot text-[8.5px]"></i>
                                                             </button>
                                                         </div>
                                                     )}
                                                 </div>
                                             ) : (
-                                                <span className="text-slate-400 italic text-[10px] block truncate">
+                                                <span className="text-slate-400 italic text-[11px] block truncate">
                                                     Chưa ghép xe
                                                 </span>
                                             )}
@@ -823,16 +743,16 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
 
                                         {/* 7. Tên TVBH (Chỉ Admin & TPKD) */}
                                         {(isCurrentUserAdmin || isManager) && (
-                                            <td className="px-1.5 border-r border-slate-200 text-left py-1">
-                                                <div className="font-semibold uppercase text-slate-800 truncate text-[11px]" title={order.tvbh_name}>
+                                            <td className="px-2 border-r border-slate-200/60 text-left py-2">
+                                                <div className="font-semibold uppercase text-slate-700 truncate text-[11px]" title={order.tvbh_name}>
                                                     {order.tvbh_name || '—'}
                                                 </div>
                                             </td>
                                         )}
 
-                                        {/* 8. Tiến độ cọc: 4 nút micro gọn gàng không tràn màn hình */}
-                                        <td className="px-0.5 text-center py-1">
-                                            <div className="inline-flex items-center justify-center gap-0.5 select-none w-full" onClick={(e) => e.stopPropagation()}>
+                                        {/* 8. Tiến độ cọc: 4 nút micro gọn gàng trong capsule */}
+                                        <td className="px-1 text-center py-2">
+                                            <div className="inline-flex items-center p-0.5 rounded-lg bg-slate-100 border border-slate-200/60 gap-0.5 select-none w-full justify-center" onClick={(e) => e.stopPropagation()}>
                                                 {(['Chờ xe', 'Cần xe', 'Hoàn cọc', 'Hủy cọc'] as BacklogProgressType[]).map(status => {
                                                     const isCurrent = currentProgress === status;
                                                     const cfg = PROGRESS_STYLES[status];
@@ -843,10 +763,10 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                                             type="button"
                                                             disabled={isRowUpdating}
                                                             onClick={() => handleProgressChange(order.id, status, currentProgress)}
-                                                            className={`px-1 py-0.5 rounded-xs text-[9.5px] border transition-all flex items-center justify-center cursor-pointer shrink-0 ${
+                                                            className={`px-1.5 py-0.5 rounded-md text-[10px] font-semibold transition-all flex items-center justify-center cursor-pointer shrink-0 ${
                                                                 isCurrent
-                                                                    ? `${cfg.activeBtnCls} border-transparent ring-1 ring-black/20`
-                                                                    : `${cfg.idleBtnCls} hover:bg-slate-100`
+                                                                    ? `${cfg.activeBtnCls} shadow-xs`
+                                                                    : `${cfg.idleBtnCls}`
                                                             } ${isRowUpdating ? 'opacity-50 cursor-wait' : ''}`}
                                                             title={`Đổi tiến độ sang "${cfg.label}"`}
                                                         >
@@ -859,68 +779,10 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                                     </tr>
                                 );
                             })}
-                        </tbody>
-                    </table>
-                )}
-            </div>
-
-            {/* 4. CYBERSOFT STATUS & EXECUTION BAR (Bottom bar matching CrmLeadImporterView) */}
-            <div className="bg-[#ECE9D8] border-t border-[#CCCCCC] px-2 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] select-none shrink-0 font-sans">
-                <div className="flex items-center gap-1.5 sm:gap-2.5 text-slate-700 flex-wrap">
-                    <span className="font-bold">
-                        Tổng: <strong>{filteredOrders.length}</strong> HĐ
-                    </span>
-                    <span>•</span>
-                    <span className="text-blue-700 font-bold hidden sm:inline">
-                        Dòng: <strong>{filteredOrders.length > 0 ? selectedRowIdx + 1 : 0}</strong>
-                    </span>
-                    <span className="hidden sm:inline">•</span>
-                    <span className="text-emerald-800 font-bold">
-                        Cọc: <strong className="font-mono text-emerald-900">{formatVND(totalFilteredCoc)}</strong>
-                    </span>
-                    <span>•</span>
-                    <span className="px-1 py-0.1 rounded-xs text-[9.5px] font-bold bg-sky-100 text-sky-800 border border-sky-300">
-                        Chờ: {countChoXe}
-                    </span>
-                    <span className="px-1 py-0.1 rounded-xs text-[9.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                        ⚡ Cần: {countCanXe}
-                    </span>
-                    {(countHoanCoc > 0 || countHuyCoc > 0) && (
-                        <span className="px-1 py-0.1 rounded-xs text-[9.5px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                            Hoàn/Hủy: {countHoanCoc + countHuyCoc}
-                        </span>
-                    )}
-                    <span>•</span>
-                    <span className="px-1 py-0.1 rounded-xs text-[9.5px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
-                        <i className="fas fa-car text-[8.5px]"></i> Đã ghép: {countDaGhep}
-                    </span>
-                    <span className="px-1 py-0.1 rounded-xs text-[9.5px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
-                        Chưa ghép: {countChuaGhep}
-                    </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 ml-auto">
-                    <button
-                        type="button"
-                        onClick={handleExportExcel}
-                        className="px-2 py-0.5 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-400 rounded-xs text-[10px] sm:text-[11px] font-bold shadow-2xs flex items-center gap-1 cursor-pointer"
-                        title="Tải file Excel"
-                    >
-                        <i className="fas fa-file-excel text-emerald-600"></i>
-                        <span>Xuất Excel</span>
-                    </button>
-
-                    {onBackToDms && (
-                        <button
-                            type="button"
-                            onClick={onBackToDms}
-                            className="px-2 py-0.5 bg-white hover:bg-slate-100 text-slate-700 border border-[#B5B5B5] rounded-xs text-[10px] sm:text-[11px] font-bold shadow-2xs flex items-center gap-1 cursor-pointer"
-                            title="Quay về danh sách đơn hàng DMS"
-                        >
-                            <i className="fas fa-arrow-left text-[9px] text-slate-500"></i>
-                            <span>Về Đơn Hàng</span>
-                        </button>
-                    )}
+                    </tbody>
+                </table>
+            )}
+                    </div>
                 </div>
             </div>
         </div>
