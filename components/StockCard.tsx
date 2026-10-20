@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import moment from 'moment';
 import { StockVehicle } from '../types';
-import { getExteriorColorStyle, getInteriorColorStyle } from '../utils/styleUtils';
+import { getExteriorColorStyle, getInteriorColorStyle, getExteriorSwatchColor } from '../utils/styleUtils';
 import { formatShortWarehouseName } from '../utils/stringUtils';
 import { getQuickLocationName } from '../utils/geocodeUtils';
 import CarImage from './ui/CarImage';
 import StatusBadge from './ui/StatusBadge';
 import * as apiService from '../services/apiService';
 import { useVehicleConfig } from '../hooks/useVehicleConfig';
-import { isMidAutumnSeason, isHalloweenSeason } from './ui/HolidayThemeDecorator';
-import panoramaBg from '../pictures/stock_card_panorama_trung_thu.webp';
-import HalloweenCarBackdrop from './ui/HalloweenCarBackdrop';
 import { MiniGpsMapModal } from './modals/MiniGpsMapModal';
 
 interface StockCardProps {
@@ -37,6 +34,17 @@ interface StockCardProps {
     onRefetchStock?: () => void;
 }
 
+const getInteriorSwatchColor = (interior?: string): string => {
+    if (!interior) return '#475569';
+    const lower = interior.toLowerCase();
+    if (lower.includes('black') || lower.includes('đen')) return '#1e293b';
+    if (lower.includes('brown') || lower.includes('nâu') || lower.includes('ce2n')) return '#78350f';
+    if (lower.includes('beige') || lower.includes('kem') || lower.includes('be')) return '#d97706';
+    if (lower.includes('grey') || lower.includes('gray') || lower.includes('xám')) return '#64748b';
+    if (lower.includes('white') || lower.includes('trắng')) return '#f8fafc';
+    return '#475569';
+};
+
 const StockCard: React.FC<StockCardProps> = ({
     vehicle,
     onHoldCar,
@@ -60,10 +68,7 @@ const StockCard: React.FC<StockCardProps> = ({
     onRefetchStock
 }) => {
     const { versionsMap, vehicleLines, vehicleColors, vehicleInteriors } = useVehicleConfig();
-    const isMidAutumn = React.useMemo(() => isMidAutumnSeason(), []);
-    const isHalloween = React.useMemo(() => isHalloweenSeason(), []);
     const [confirmAction, setConfirmAction] = useState<{ action: 'hold' | 'release' } | null>(null);
-    if (false) showToast?.('', '', 'success');
     const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
     const [isGpsMapOpen, setIsGpsMapOpen] = useState(false);
 
@@ -177,7 +182,6 @@ const StockCard: React.FC<StockCardProps> = ({
         });
     }, [onOpenSwapModal, userOrders, vehicle, currentUser]);
 
-
     const handleCopyVin = (e: React.MouseEvent, vin: string) => {
         e.stopPropagation();
         navigator.clipboard.writeText(vin).then(() => {
@@ -189,7 +193,6 @@ const StockCard: React.FC<StockCardProps> = ({
     };
 
     const DATE_FORMATS = ['DD/MM/YYYY HH:mm:ss', 'D/M/YYYY H:m:s', 'DD/MM/YYYY', 'YYYY-MM-DD HH:mm:ss', moment.ISO_8601];
-
 
     const isMine = vehicle["Người Giữ Xe"]?.trim().toLowerCase().normalize('NFC') === currentUser?.trim().toLowerCase().normalize('NFC');
     const isHeldByCurrentUser = vehicle["Trạng thái"] === 'Đang giữ' && isMine;
@@ -211,30 +214,35 @@ const StockCard: React.FC<StockCardProps> = ({
     const quickLocation = hasGps ? getQuickLocationName(telemetry.lat, telemetry.lng) : '';
     const isInTransit = vehicle["Vị trí"] === 'Đang vận tải';
 
+    const exteriorSwatch = getExteriorSwatchColor(vehicle['Ngoại thất']);
+    const interiorSwatch = getInteriorSwatchColor(vehicle['Nội thất']);
+
     const renderActions = () => {
         if (isReferenceAccount) {
             return (
-                <div className="flex items-center justify-center w-full h-8 bg-amber-50/30 border border-dashed border-amber-200/50 rounded-xl">
-                     <span className="text-[9px] font-black text-amber-600/60 uppercase tracking-widest">Chỉ Xem</span>
+                <div className="flex items-center justify-between w-full py-0.5">
+                    <span className="text-[10px] text-slate-400 font-medium italic">Chế độ</span>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-[9px] font-bold text-slate-500 uppercase tracking-wider">Chỉ Xem</span>
                 </div>
             );
         }
+
         if (isProcessing) {
             return (
-                <div className="flex items-center justify-center w-full h-9">
-                    <i className="fas fa-spinner fa-spin text-accent-primary text-xl"></i>
+                <div className="flex items-center justify-center w-full py-1">
+                    <i className="fas fa-circle-notch fa-spin text-blue-600 text-xs"></i>
                 </div>
             );
         }
 
         if (confirmAction) {
             return (
-                <div className="flex justify-center items-center gap-1.5 w-full animate-fade-in" style={{ animationDuration: '150ms' }}>
+                <div className="w-full flex items-center gap-1.5 animate-fade-in">
                     <button
                         onClick={(e) => { e.stopPropagation(); setConfirmAction(null); }}
-                        className="flex-1 h-8 flex items-center justify-center gap-1 bg-white border border-slate-200 text-slate-500 hover:bg-slate-50 transition-all rounded-xl text-[10px] font-black uppercase tracking-wider"
+                        className="flex-1 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10.5px] font-semibold transition-colors"
                     >
-                        HỦY
+                        Hủy
                     </button>
                     <button
                         onClick={(e) => {
@@ -246,105 +254,103 @@ const StockCard: React.FC<StockCardProps> = ({
                             }
                             setConfirmAction(null);
                         }}
-                        className="flex-1 h-8 flex items-center justify-center gap-1 bg-accent-primary text-white hover:bg-accent-primary-hover transition-all rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm"
+                        className="flex-1 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10.5px] font-semibold transition-colors"
                     >
-                        XÁC NHẬN
+                        Xác nhận
                     </button>
                 </div>
             );
         }
 
-        if (isAvailable) {
-            if (!canHoldMore) {
-                return (
-                    <div className={`flex items-center justify-center w-full h-7 ${isMidAutumn ? 'bg-slate-900/80 border border-white/10' : 'bg-slate-50/80 border border-slate-200/60'} rounded-full`}>
-                         <span className="text-[9.5px] font-semibold text-slate-400 uppercase tracking-wider">Hết lượt giữ</span>
-                    </div>
-                );
-            }
-
-            return (
-                <button
-                    onClick={(e) => { e.stopPropagation(); onHoldCar(vehicle.VIN); }}
-                    className="w-full h-7 flex items-center justify-center gap-1.5 bg-white/95 hover:bg-white backdrop-blur-md text-blue-600 hover:text-blue-700 border border-slate-200/80 hover:border-blue-300 rounded-full font-semibold text-[11.5px] shadow-sm hover:shadow active:scale-[0.97] transition-all duration-200 group"
-                    title="Giữ xe"
-                >
-                    <i className="fas fa-lock text-[10px] text-blue-500 group-hover:scale-110 transition-transform"></i>
-                    <span>Giữ xe</span>
-                </button>
-            );
-        }
-
-        if (isHeldByCurrentUser) {
-            return (
-                <div className="flex items-center gap-1.5 w-full">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onReleaseCar(vehicle.VIN); }}
-                        className="flex-1 h-7 flex items-center justify-center gap-1.5 bg-white/95 hover:bg-rose-50/90 backdrop-blur-md text-rose-600 hover:text-rose-700 border border-slate-200/80 hover:border-rose-300 rounded-full text-[11px] font-semibold shadow-sm active:scale-[0.97] transition-all"
-                    >
-                        <i className="fas fa-unlock text-[9.5px] text-rose-500"></i>
-                        <span>Nhả xe</span>
-                    </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onCreateRequestForVehicle(vehicle); }}
-                        className="flex-1 h-7 flex items-center justify-center gap-1.5 bg-white/95 hover:bg-blue-50/90 backdrop-blur-md text-blue-600 hover:text-blue-700 border border-slate-200/80 hover:border-blue-300 rounded-full text-[11px] font-semibold shadow-sm active:scale-[0.97] transition-all"
-                    >
-                        <i className="fas fa-link text-[9.5px] text-blue-500"></i>
-                        <span>Ghép</span>
-                    </button>
-                </div>
-            );
-        }
-
-        if (isTakenByOther) {
-            const isQueued = queuedVins.some(v => v?.toUpperCase() === vehicle.VIN?.toUpperCase());
-            return (
-                <div className="flex items-center gap-1.5 w-full">
-                    {isQueued ? (
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onLeaveQueue(vehicle.VIN); }}
-                            className="flex-1 h-7 flex items-center justify-center gap-1.5 bg-white/95 hover:bg-slate-100 backdrop-blur-md text-slate-500 hover:text-slate-700 border border-slate-200/80 hover:border-slate-300 rounded-full font-semibold text-[11px] shadow-sm active:scale-[0.97] transition-all group"
-                            title="Hủy đăng ký hàng chờ"
-                        >
-                             <i className="fas fa-times text-[9px] group-hover:rotate-90 transition-transform"></i>
-                             <span>Hủy chờ</span>
-                        </button>
+        return (
+            <div className="w-full flex items-center justify-center">
+                {isAvailable ? (
+                    !canHoldMore ? (
+                        <div className="w-full h-8 flex items-center justify-center bg-slate-50 text-slate-400 text-[10.5px] font-medium rounded-lg border border-slate-200/60">
+                            Hết lượt giữ xe
+                        </div>
                     ) : (
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onJoinQueue(vehicle.VIN); }}
-                            className="flex-1 h-7 flex items-center justify-center gap-1.5 bg-white/95 hover:bg-amber-50 backdrop-blur-md text-amber-700 hover:text-amber-800 border border-slate-200/80 hover:border-amber-300 rounded-full font-semibold text-[11.5px] shadow-sm active:scale-[0.97] transition-all group"
-                            title="Đăng ký hàng chờ"
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onHoldCar(vehicle.VIN); }}
+                            className="w-full h-8 px-2.5 rounded-lg bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-blue-200 flex items-center justify-between cursor-pointer transition-all group/sw"
+                            title="Bấm để giữ xe"
                         >
-                            <i className="fas fa-user-plus text-[10px] text-amber-600 group-hover:scale-110 transition-transform"></i>
-                            <span>Chờ xe</span>
-                        </button>
-                    )}
-                    
-                    {canShowSwapButton && (
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onOpenSwapModal!(vehicle); }}
-                            className="h-7 flex items-center justify-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-full px-2.5 font-semibold text-[11px] shadow-sm hover:shadow active:scale-[0.97] transition-all"
-                            title="Gửi đề nghị tráo đổi xe cùng cấu hình 100% với TVBH giữ xe"
-                        >
-                            <i className="fa-solid fa-right-left text-[9px]"></i>
-                            <span>Đổi xe</span>
-                        </button>
-                    )}
-                    
-                    {isAdmin && vehicle["Trạng thái"] === 'Đang giữ' && (
-                        <button 
-                            className="h-7 w-7 rounded-full bg-white/85 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200/80 hover:border-rose-300 shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex items-center justify-center flex-shrink-0 active:scale-[0.97] transition-all"
-                            onClick={(e) => { e.stopPropagation(); onReleaseCar(vehicle.VIN); }} 
-                            title="Admin Hủy Giữ"
-                        >
-                            <i className="fas fa-user-shield text-[10px]"></i>
-                        </button>
-                    )}
-                </div>
-            );
-        }
+                            <span className="text-[11px] font-semibold text-slate-700 group-hover/sw:text-blue-700 transition-colors">
+                                Giữ xe
+                            </span>
 
-        return null;
+                            {/* Minimal Toggle Switch */}
+                            <div className="w-7 h-4 rounded-full bg-slate-200 group-hover/sw:bg-blue-600 p-0.5 transition-colors flex items-center">
+                                <div className="w-3 h-3 rounded-full bg-white shadow-xs transition-transform duration-200 group-hover/sw:translate-x-3"></div>
+                            </div>
+                        </button>
+                    )
+                ) : isHeldByCurrentUser ? (
+                    <div className="w-full flex items-center gap-1.5">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onReleaseCar(vehicle.VIN); }}
+                            className="flex-1 h-8 rounded-lg bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200/80 text-[10.5px] font-semibold transition-colors"
+                            title="Nhả xe"
+                        >
+                            Nhả xe
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onCreateRequestForVehicle(vehicle); }}
+                            className="flex-1 h-8 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80 text-[10.5px] font-semibold transition-colors"
+                            title="Ghép xe"
+                        >
+                            Ghép xe
+                        </button>
+                    </div>
+                ) : isTakenByOther ? (
+                    <div className="flex items-center gap-1.5 w-full">
+                        {queuedVins.some(v => v?.toUpperCase() === vehicle.VIN?.toUpperCase()) ? (
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); onLeaveQueue(vehicle.VIN); }}
+                                className="w-full h-8 px-2.5 rounded-lg bg-amber-50 hover:bg-rose-50 text-amber-800 hover:text-rose-600 border border-amber-200/80 flex items-center justify-between transition-colors group/sw cursor-pointer"
+                                title="Hủy đăng ký hàng chờ"
+                            >
+                                <span className="text-[10.5px] font-semibold">Đang chờ xe</span>
+                                <span className="text-[10px] text-amber-600 group-hover/sw:text-rose-600 font-medium">Hủy chờ ✕</span>
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); onJoinQueue(vehicle.VIN); }}
+                                className="flex-1 h-8 px-2.5 rounded-lg bg-slate-50 hover:bg-amber-50/60 border border-slate-200 hover:border-amber-200 flex items-center justify-between cursor-pointer transition-all group/sw"
+                                title="Đăng ký hàng chờ"
+                            >
+                                <span className="text-[11px] font-semibold text-slate-700 group-hover/sw:text-amber-800 transition-colors">
+                                    Đăng ký chờ
+                                </span>
+                                <div className="w-7 h-4 rounded-full bg-slate-200 group-hover/sw:bg-amber-500 p-0.5 transition-colors flex items-center">
+                                    <div className="w-3 h-3 rounded-full bg-white shadow-xs transition-transform duration-200 group-hover/sw:translate-x-3"></div>
+                                </div>
+                            </button>
+                        )}
+
+                        {canShowSwapButton && (
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); onOpenSwapModal!(vehicle); }}
+                                className="h-8 px-2.5 rounded-lg bg-slate-100 hover:bg-amber-50 text-slate-600 hover:text-amber-700 text-[10.5px] font-semibold transition-colors shrink-0"
+                                title="Đề nghị đổi xe cùng cấu hình"
+                            >
+                                Đổi
+                            </button>
+                        )}
+
+                        {isAdmin && vehicle["Trạng thái"] === 'Đang giữ' && (
+                            <button 
+                                className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center shrink-0 transition-colors"
+                                onClick={(e) => { e.stopPropagation(); onReleaseCar(vehicle.VIN); }} 
+                                title="Admin Hủy Giữ"
+                            >
+                                <i className="fas fa-user-shield text-[9.5px]"></i>
+                            </button>
+                        )}
+                    </div>
+                ) : null}
+            </div>
+        );
     };
 
     const detailsList = [
@@ -364,49 +370,74 @@ const StockCard: React.FC<StockCardProps> = ({
             icon: 'fa-warehouse text-emerald-600',
             label: 'Kho xe',
             value: vehicle.isResolvedFromSatellite 
-                ? `${formatShortWarehouseName(vehicle['Vị trí'])} (Thực tế: ${vehicle.realWarehouseName || 'Bãi vệ tinh'}${vehicle.realBattery ? ` • Pin: ${vehicle.realBattery}` : ''})` 
+                ? `${formatShortWarehouseName(vehicle['Vị trí'])} (Thực tế: ${vehicle.realWarehouseName || 'Bãi ngoài'})` 
                 : (formatShortWarehouseName(vehicle['Vị trí']) || 'Chưa cập nhật'),
             copyable: false
         },
         { icon: 'fa-info-circle', label: 'Trạng thái', value: vehicle['Trạng thái'] || '---', copyable: false },
         vehicle['Người Giữ Xe'] ? { icon: 'fa-user-shield', label: 'Người giữ', value: vehicle['Người Giữ Xe'], copyable: false } : null,
-        vehicle['Thời Gian Hết Hạn Giữ'] && moment(vehicle['Thời Gian Hết Hạn Giữ'], DATE_FORMATS).isValid() ? { icon: 'fa-clock', label: 'Thời hạn', value: moment(vehicle['Thời Gian Hết Hạn Giữ'], DATE_FORMATS).format('DD/MM/YYYY HH:mm:ss'), copyable: false } : null,
+        vehicle['Thời Gian Hết Hạn Giữ'] && moment(vehicle['Thời Gian Hết Hạn Giữ'], DATE_FORMATS).isValid() ? { icon: 'fa-clock', label: 'Thời hạn', value: moment(vehicle['Thời Gian Hết Hạn Giữ'], DATE_FORMATS).format('DD/MM/YYYY HH:mm'), copyable: false } : null,
         vehicle['Ngày vận tải'] && vehicle['Ngày vận tải'] !== '#N/A' && moment(vehicle['Ngày vận tải'], DATE_FORMATS).isValid() ? { icon: 'fa-shipping-fast', label: 'Vận tải', value: moment(vehicle['Ngày vận tải'], DATE_FORMATS).format('DD/MM/YYYY'), copyable: false } : null,
         vehicle['Ghi chú dms'] && vehicle['Ghi chú dms'] !== '#N/A' && vehicle['Ghi chú dms'].trim() !== '' ? { icon: 'fa-comment-dots', label: 'Ghi chú', value: vehicle['Ghi chú dms'], copyable: false } : null,
     ].filter((item): item is { icon: string; label: string; value: string; copyable: boolean; isMapAction?: boolean; isMapGps?: boolean } => item !== null);
 
+    const isAvailableStatus = vehicle['Trạng thái'] === 'Chưa ghép';
+    const isHoldingStatus = vehicle['Trạng thái'] === 'Đang giữ';
+    const isPairedStatus = vehicle['Trạng thái'] === 'Đã ghép';
+
     return (
         <div 
             id={`stock-card-${vehicle.VIN}`}
-            className={`relative flex flex-col gap-2 rounded-2xl p-2.5 transition-all duration-300 ease-out group overflow-hidden bg-white/95 ${
-                isMissingVersion ? 'border-amber-300 ring-1 ring-amber-100/50 shadow-amber-50' : 'border border-slate-200/80 hover:border-amber-300/80'
-            } shadow-sm hover:shadow-xl hover:shadow-amber-500/10 hover:z-[99] ${
-                isHalloween ? 'hover:!border-orange-400/80 hover:!shadow-[0_0_20px_rgba(249,115,22,0.22)]' : ''
+            className={`group relative flex flex-col justify-between rounded-2xl bg-white transition-all duration-300 ease-out overflow-hidden p-3 min-h-[305px] hover:-translate-y-0.5 ${
+                isMissingVersion 
+                    ? 'border-2 border-amber-300 shadow-[0_2px_10px_-2px_rgba(245,158,11,0.2)]' 
+                    : isHeldByCurrentUser
+                    ? 'border-2 border-blue-400 shadow-[0_2px_12px_-2px_rgba(59,130,246,0.2)]'
+                    : 'border border-slate-200/90 shadow-[0_2px_8px_-2px_rgba(15,23,42,0.06),0_1px_3px_rgba(15,23,42,0.03)] hover:shadow-[0_16px_32px_-6px_rgba(15,23,42,0.12),0_4px_12px_rgba(15,23,42,0.06)] hover:border-slate-300'
             }`}
         >
-            {/* Mid-Autumn Panorama Fixed Background (Cố định tỷ lệ chuẩn 'cover', không bị méo hay biến dạng khi zoom) */}
-            {isMidAutumn && (
-                <div 
-                    className="absolute inset-0 w-full h-full pointer-events-none select-none z-0" 
-                    style={{
-                        backgroundImage: `url(${panoramaBg})`,
-                        backgroundAttachment: 'fixed',
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center top',
-                        backgroundRepeat: 'no-repeat',
-                    }}
-                />
-            )}
+            {/* Top Status Accent Line (Hairline thread) */}
+            <div className={`absolute top-0 left-0 right-0 h-[1.5px] ${
+                isAvailableStatus 
+                    ? 'bg-gradient-to-r from-emerald-400 to-teal-500' 
+                    : isHoldingStatus 
+                    ? 'bg-gradient-to-r from-amber-400 to-orange-500' 
+                    : isPairedStatus 
+                    ? 'bg-gradient-to-r from-blue-500 to-indigo-600' 
+                    : 'bg-slate-300'
+            }`} />
 
-            {/* Premium Interactive Details Overlay - Compact & Clean */}
-            <div className="absolute top-0 left-0 right-0 bottom-[46px] bg-white/98 text-slate-800 border-x border-t border-slate-200/80 backdrop-blur-md rounded-t-2xl p-2.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[100] shadow-sm flex flex-col justify-between hidden md:flex pointer-events-auto">
-                <div className="flex items-center justify-between pb-0.5">
-                    <span className="text-[9.5px] font-bold uppercase tracking-wider text-slate-500">Thông tin chi tiết</span>
+            {/* Quick Interactive Details Overlay on Desktop Hover (Unified Seamless Card) */}
+            <div className="absolute inset-0 bg-white/98 text-slate-800 backdrop-blur-md rounded-2xl p-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[90] shadow-xl flex flex-col justify-between hidden md:flex pointer-events-auto border border-slate-200/80">
+                <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 shrink-0">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                        <i className="fas fa-layer-group text-blue-600"></i> Thông số xe
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono font-bold text-slate-400">
+                            {vehicle.VIN?.slice(-8)}
+                        </span>
+                        {isAdmin && !isReferenceAccount && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsInlineEditing(true);
+                                    setEditMode('edit');
+                                    setEditChanges({});
+                                    setDeleteReason('');
+                                }}
+                                className="w-4 h-4 flex items-center justify-center rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                                title="Sửa xe (Admin)"
+                            >
+                                <i className="fas fa-pen text-[8px]"></i>
+                            </button>
+                        )}
+                    </div>
                 </div>
                 
-                <div className="flex flex-col justify-around flex-1 py-0.5 w-full overflow-hidden">
+                <div className="flex flex-col justify-around flex-1 py-1 w-full overflow-hidden">
                     {detailsList.map((item, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-[10px] leading-tight w-full gap-1 py-1 group/row">
+                        <div key={idx} className="flex items-center justify-between text-[10px] leading-tight w-full gap-1 py-0.5 group/row">
                             <span className="text-slate-500 font-semibold whitespace-nowrap text-[9.5px] flex-shrink-0 flex items-center gap-1.5">
                                 <i className={`fas ${item.icon} text-slate-400 text-[9px] w-3`}></i>
                                 {item.label}
@@ -419,22 +450,20 @@ const StockCard: React.FC<StockCardProps> = ({
                                         setIsGpsMapOpen(true);
                                     }}
                                     className="truncate max-w-[130px] text-right font-bold text-amber-700 hover:text-blue-600 hover:underline inline-flex items-center justify-end gap-1 cursor-pointer transition-colors"
-                                    title={`📍 Tọa độ GPS xe lồng\nClick để xem bản đồ`}
+                                    title="📍 Click xem bản đồ GPS"
                                 >
                                     <span className="truncate">{item.value}</span>
-                                    <i className="fas fa-map-marked-alt text-[8.5px] opacity-0 group-hover/row:opacity-100 text-blue-600 transition-opacity"></i>
+                                    <i className="fas fa-map-marked-alt text-[8.5px] text-blue-600"></i>
                                 </button>
                             ) : (
                                 <span 
-                                    className={`truncate max-w-[130px] text-right ${
-                                        (item as any).isMapAction
-                                            ? 'cursor-pointer font-bold text-blue-600 hover:text-blue-700 hover:underline text-[10.5px] flex items-center justify-end gap-1'
-                                            : item.label === 'Số VIN'
-                                            ? 'cursor-pointer font-mono font-bold text-blue-600 hover:text-blue-700 hover:underline text-[11.5px]'
+                                    className={`truncate max-w-[135px] text-right ${
+                                        item.label === 'Số VIN'
+                                            ? 'cursor-pointer font-mono font-bold text-blue-600 hover:text-blue-700 hover:underline text-[11px]'
                                             : item.label === 'Mã DMS'
-                                            ? 'cursor-pointer font-mono font-bold text-teal-600 hover:text-teal-700 hover:underline text-[10.5px]'
+                                            ? 'cursor-pointer font-mono font-bold text-teal-600 hover:text-teal-700 hover:underline text-[10px]'
                                             : item.label === 'Số máy'
-                                            ? 'cursor-pointer font-mono font-bold text-indigo-600 hover:text-indigo-700 hover:underline text-[10.5px]'
+                                            ? 'cursor-pointer font-mono font-bold text-indigo-600 hover:text-indigo-700 hover:underline text-[10px]'
                                             : item.label === 'Số COC'
                                             ? 'cursor-pointer font-mono font-bold text-amber-600 hover:text-amber-700 hover:underline text-[10px]'
                                             : 'font-bold text-slate-800 text-[10px]'
@@ -452,21 +481,26 @@ const StockCard: React.FC<StockCardProps> = ({
                                     }}
                                     title={item.value}
                                 >
-                                    {copiedLabel === item.label ? <span className="text-green-600 flex items-center gap-1 font-sans text-[9px]"><i className="fas fa-check text-[8px]"></i> Đã copy</span> : item.value}
+                                    {copiedLabel === item.label ? <span className="text-emerald-600 font-bold flex items-center gap-1 text-[9.5px]"><i className="fas fa-check text-[8px]"></i> Đã copy</span> : item.value}
                                 </span>
                             )}
                         </div>
                     ))}
                 </div>
+
+                {/* Unified Seamless Action Footer */}
+                <div className="pt-2 border-t border-slate-100 shrink-0 w-full">
+                    {renderActions()}
+                </div>
             </div>
+
             {/* Inline Admin Edit Mode Panel */}
             {isInlineEditing && (
                 <div 
-                    className="absolute inset-0 bg-white/98 backdrop-blur-xl z-[150] rounded-2xl p-2.5 flex flex-col justify-between shadow-2xl border-2 border-blue-500 animate-fade-in pointer-events-auto"
+                    className="absolute inset-0 bg-white/98 backdrop-blur-xl z-[150] rounded-2xl p-3 flex flex-col justify-between shadow-2xl border-2 border-blue-500 animate-fade-in pointer-events-auto"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Header */}
-                    <div className="flex items-center justify-between pb-1 border-b border-slate-100 shrink-0">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 shrink-0">
                         <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg">
                             <button
                                 type="button"
@@ -491,17 +525,14 @@ const StockCard: React.FC<StockCardProps> = ({
                                 setDeleteReason('');
                             }}
                             className="w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                            title="Đóng / Hủy sửa"
                         >
                             <i className="fas fa-times text-[10px]"></i>
                         </button>
                     </div>
 
-                    {/* Body */}
                     <div className="flex-1 overflow-y-auto hidden-scrollbar py-1.5 space-y-1.5 min-h-0 text-[11px]">
                         {editMode === 'edit' ? (
                             <>
-                                {/* Dòng xe & Phiên bản */}
                                 <div className="grid grid-cols-2 gap-1.5">
                                     <div>
                                         <label className="block text-[8px] font-bold text-slate-400 uppercase mb-0.5">Dòng Xe</label>
@@ -528,7 +559,6 @@ const StockCard: React.FC<StockCardProps> = ({
                                     </div>
                                 </div>
 
-                                {/* Ngoại thất & Nội thất */}
                                 <div className="grid grid-cols-2 gap-1.5">
                                     <div>
                                         <label className="block text-[8px] font-bold text-slate-400 uppercase mb-0.5">Ngoại Thất</label>
@@ -555,7 +585,6 @@ const StockCard: React.FC<StockCardProps> = ({
                                     </div>
                                 </div>
 
-                                {/* Số VIN */}
                                 <div>
                                     <label className="block text-[8px] font-bold text-slate-400 uppercase mb-0.5">Số VIN (17 ký tự)</label>
                                     <input
@@ -570,7 +599,6 @@ const StockCard: React.FC<StockCardProps> = ({
                                     )}
                                 </div>
 
-                                {/* Số máy & Mã DMS */}
                                 <div className="grid grid-cols-2 gap-1.5">
                                     <div>
                                         <label className="block text-[8px] font-bold text-slate-400 uppercase mb-0.5">Số Máy</label>
@@ -600,7 +628,7 @@ const StockCard: React.FC<StockCardProps> = ({
                                         className="w-full text-[10px] font-medium border border-slate-200 rounded-lg px-1.5 py-1 outline-none focus:border-emerald-500 bg-slate-50 text-slate-800"
                                         value={currentEditViTri || ''}
                                         onChange={(e) => handleEditFieldChange('Vị trí', e.target.value)}
-                                        placeholder="Nhập vị trí kho (VD: Hà Huy Giáp)..."
+                                        placeholder="Nhập vị trí kho..."
                                     />
                                 </div>
                             </>
@@ -626,7 +654,6 @@ const StockCard: React.FC<StockCardProps> = ({
                         )}
                     </div>
 
-                    {/* Footer */}
                     <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between gap-1.5 shrink-0">
                         <button
                             type="button"
@@ -669,127 +696,105 @@ const StockCard: React.FC<StockCardProps> = ({
                     </div>
                 </div>
             )}
-            {isMissingVersion && (
-                <div className="absolute -top-2 -right-1 z-30 flex items-center gap-1.5 px-2 py-0.5 bg-gradient-to-r from-amber-400 to-orange-400 text-white rounded-full shadow-lg text-[9px] font-bold uppercase tracking-wider animate-bounce-subtle">
-                    <i className="fas fa-edit"></i>
-                    Bổ sung PB
+
+            {/* Clickable Area for Full Car Details Modal */}
+            <div className="cursor-pointer relative z-10 flex flex-col flex-1 justify-between h-full" onClick={() => onShowDetails(vehicle)}>
+                
+                {/* 1. Header: Model + Version Pill + Status Capsule */}
+                <div className="flex items-center justify-between gap-1.5 pt-0.5 pb-1">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-[14px] font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors whitespace-nowrap">
+                            {vehicle['Dòng xe']}
+                        </span>
+                        {vehicle['Phiên bản'] ? (
+                            <span className="px-1.5 py-[2px] rounded text-[8.5px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200/80 truncate leading-none" title={vehicle['Phiên bản']}>
+                                {vehicle['Phiên bản']}
+                            </span>
+                        ) : (
+                            <span className="px-1.5 py-[2px] rounded text-[8px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200 animate-pulse leading-none">
+                                Thiếu PB
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                        <StatusBadge
+                            status={vehicle['Trạng thái']}
+                            size="sm"
+                        />
+                    </div>
                 </div>
-            )}
-            {isAdmin && !isReferenceAccount && (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setIsInlineEditing(!isInlineEditing);
-                        setEditMode('edit');
-                        setEditChanges({});
-                        setDeleteReason('');
-                    }}
-                    className={`absolute top-2 right-2 z-[160] w-6 h-6 flex items-center justify-center rounded-lg ${isInlineEditing ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-800/80 text-white opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-blue-600'} transition-all duration-200 backdrop-blur-sm shadow-sm`}
-                    title={isInlineEditing ? "Đóng sửa xe" : "Sửa / Xóa xe trực tiếp (Admin)"}
-                >
-                    <i className={`fas ${isInlineEditing ? 'fa-times' : 'fa-cog'} text-[9.5px]`}></i>
-                </button>
-            )}
 
-            <div className="cursor-pointer relative z-10" onClick={() => onShowDetails(vehicle)}>
-                {/* Car Image with Animation and Glow */}
-                <div className={`car-image-container relative flex items-center justify-center py-0.5 h-[90px] overflow-hidden rounded-lg transition-colors ${
-                    isMidAutumn || isHalloween ? 'bg-transparent' : 'bg-gradient-to-br from-gray-50 to-white'
-                }`}>
-                    {/* Halloween Moon & Spooky Backdrop */}
-                    {isHalloween && <HalloweenCarBackdrop vin={vehicle.VIN} />}
-                    {/* Static Car */}
-                    <div className={`relative z-10 w-[160px] h-[80px] flex items-center justify-center ${vehicle["Người Giữ Xe"] ? 'group-hover:blur-[1px] group-hover:opacity-90' : ''}`}>
-                        {/* Sparkles */}
-                        <div className="sparkle-container">
-                            <div className="sparkle" style={{ top: '30%', left: '30%', animationDelay: '0s', width: '8px', height: '8px' }}></div>
-                            <div className="sparkle" style={{ top: '20%', left: '70%', animationDelay: '1.2s' }}></div>
-                            <div className="sparkle" style={{ top: '60%', left: '20%', animationDelay: '0.5s', width: '6px', height: '6px' }}></div>
-                            <div className="sparkle" style={{ top: '70%', left: '80%', animationDelay: '2.5s' }}></div>
-                            <div className="sparkle" style={{ top: '40%', left: '50%', animationDelay: '3s', width: '10px', height: '10px' }}></div>
-                        </div>
+                {/* 2. Studio Showcase (Seamless Car Stage) */}
+                <div className="relative h-[124px] w-full flex items-center justify-center my-auto group/stage">
+                    {/* Realistic Tire Contact Shadow */}
+                    <div className="absolute bottom-2.5 w-[72%] h-2.5 bg-slate-900/10 rounded-[100%] blur-[3.5px] pointer-events-none transform scale-x-95 group-hover:scale-x-105 transition-transform duration-500"></div>
 
+                    {/* Car Image */}
+                    <div className="relative z-10 w-[180px] h-[90px] flex items-center justify-center">
                         <CarImage
                             model={vehicle['Dòng xe']}
                             exteriorColor={vehicle['Ngoại thất']}
                             version={vehicle['Phiên bản']}
-                            className="car-image object-contain max-w-full max-h-full transition-transform duration-300 group-hover:scale-[1.03]"
+                            className="car-image object-contain max-w-full max-h-full drop-shadow-sm transition-transform duration-500 ease-out group-hover:scale-[1.06]"
                             alt={`VinFast ${vehicle['Dòng xe']}`}
                         />
                     </div>
-
-                    {/* Keeper Info Overlay */}
-                    {vehicle["Người Giữ Xe"] && (
-                        <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
-                            <div className="bg-black/70 backdrop-blur-sm text-white rounded-lg p-2 shadow-xl border border-white/15 flex flex-col items-center transform scale-95 group-hover:scale-100 transition-transform duration-300 min-w-[100px]">
-                                <div className="flex items-center gap-1.5 mb-0.5">
-                                    <div className="w-4 h-4 rounded-full bg-accent-primary/90 flex items-center justify-center shadow-sm">
-                                        <i className="fas fa-user-shield text-white text-[8px]"></i>
-                                    </div>
-                                    <span className="font-semibold text-[10px] text-accent-primary tracking-wide uppercase">Đang Giữ</span>
-                                </div>
-                                <p className="font-bold text-xs whitespace-nowrap mb-0.5 text-shadow-sm">{vehicle["Người Giữ Xe"]}</p>
-                                {vehicle["Thời Gian Hết Hạn Giữ"] && (
-                                    <div className="flex items-center gap-1 text-[9px] text-gray-200 bg-white/10 px-1.5 py-0.5 rounded-full mt-0.5">
-                                        <i className="fas fa-clock text-[8px]"></i>
-                                        <span>{moment(vehicle["Thời Gian Hết Hạn Giữ"], DATE_FORMATS).format('HH:mm DD/MM')}</span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Shine Effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-15deg] w-full h-full animate-shine opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                 </div>
 
-                <div className="flex flex-col gap-1 mt-1">
-                    <div className="flex items-center justify-between gap-1 overflow-hidden">
-                        <div className="flex items-baseline gap-1.5 overflow-hidden flex-1">
-                            <span className={`${isMidAutumn ? 'text-slate-900 font-bold' : 'text-light-text-primary font-medium'} text-base whitespace-nowrap group-hover:text-amber-600 transition-colors`}>
-                                {vehicle['Dòng xe']}
+                {/* 3. Specs & Color Passport */}
+                <div className="flex flex-col gap-2 mt-auto">
+                    {/* Dual Swatch & Color Row */}
+                    <div className="flex items-center justify-between gap-2 px-0.5 pb-0.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                            {/* Color Swatch Dots */}
+                            <div className="flex items-center shrink-0" title={`Sơn: ${vehicle['Ngoại thất'] || '---'} | Nội thất: ${vehicle['Nội thất'] || '---'}`}>
+                                <span 
+                                    className="w-3.5 h-3.5 rounded-full border border-black/20 shadow-2xs z-10 ring-1 ring-white" 
+                                    style={{ backgroundColor: exteriorSwatch }}
+                                />
+                                <span 
+                                    className="w-3.5 h-3.5 rounded-full border border-black/20 shadow-2xs -ml-1.5 ring-1 ring-white" 
+                                    style={{ backgroundColor: interiorSwatch }}
+                                />
+                            </div>
+                            <span className="text-[11px] font-semibold text-slate-700 truncate" style={getExteriorColorStyle(vehicle['Ngoại thất'])}>
+                                {vehicle['Ngoại thất'] || '---'}
                             </span>
-                            <span className={`${isMidAutumn ? 'text-amber-700 font-semibold' : 'text-light-text-secondary'} text-xs font-medium truncate`} title={vehicle['Phiên bản']}>
-                                {vehicle['Phiên bản'] || <span className="text-amber-500 font-medium italic animate-pulse">Chưa có FB</span>}
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0 text-slate-400">
+                            <span className="text-[10px] font-medium text-slate-500 truncate max-w-[80px]" style={getInteriorColorStyle(vehicle['Nội thất'])}>
+                                {vehicle['Nội thất'] || '---'}
                             </span>
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-between gap-2 text-light-text-secondary mb-1">
-                        <div className="flex items-center gap-1.5 min-w-0" title={`Ngoại thất: ${vehicle['Ngoại thất']}`}>
-                            <p className="text-xs truncate font-medium" style={getExteriorColorStyle(vehicle['Ngoại thất'])}>{vehicle['Ngoại thất']}</p>
-                        </div>
-                        <div className="h-3 w-px bg-gray-300 mx-1"></div>
-                        <div className="flex items-center gap-1.5 min-w-0" title={`Nội thất: ${vehicle['Nội thất']}`}>
-                            <span className="material-symbols-outlined flex-shrink-0 text-light-text-tertiary" style={{ fontSize: '14px' }}>chair</span>
-                            <p className="text-xs truncate" style={getInteriorColorStyle(vehicle['Nội thất'])}>{vehicle['Nội thất']}</p>
-                        </div>
-                    </div>
-                    {/* Technical Info Group - Clean & Synchronized */}
-                    <div 
-                        className="flex flex-col gap-1 py-1 px-1.5 rounded-lg bg-slate-50/80 border border-slate-100 mt-0.5"
-                        title={`Số khung (VIN): ${vehicle.VIN}${vehicle["Mã DMS"] || (vehicle as any).ma_dms ? `\nMã DMS: ${vehicle["Mã DMS"] || (vehicle as any).ma_dms}` : ''}${vehicle["Số máy"] || (vehicle as any).so_may ? `\nSố máy: ${vehicle["Số máy"] || (vehicle as any).so_may}` : ''}${vehicle["Vị trí"] ? `\nKho: ${vehicle["Vị trí"]}` : ''}`}
-                    >
+                    {/* Passport Card: VIN & Warehouse */}
+                    <div className="flex flex-col gap-1.5 py-2.5 px-2.5 rounded-xl bg-slate-50/90 border border-slate-200/60 shadow-2xs">
+                        {/* VIN with Tactile Copy */}
                         <div
                             className="cursor-pointer flex items-center justify-between group/vin"
                             title="Click để sao chép VIN"
                             onClick={(e) => handleCopyVin(e, vehicle.VIN)}
                         >
-                            <span className="text-[10px] font-semibold text-slate-400 flex items-center gap-1">
+                            <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
                                 <i className={`fas ${copiedLabel === 'VIN_MAIN' ? 'fa-check text-emerald-500' : 'fa-fingerprint text-slate-400'} text-[9px]`}></i>
                                 VIN
                             </span>
-                            <span className={`text-[12.5px] font-mono font-bold transition-colors ${copiedLabel === 'VIN_MAIN' ? 'text-emerald-600' : 'text-blue-600 group-hover/vin:text-blue-700 group-hover/vin:underline'}`}>
-                                {copiedLabel === 'VIN_MAIN' ? 'Đã copy!' : vehicle.VIN}
+                            <span className={`text-[11.5px] font-mono font-black transition-colors ${copiedLabel === 'VIN_MAIN' ? 'text-emerald-600' : 'text-blue-600 group-hover/vin:text-blue-700 group-hover/vin:underline'}`}>
+                                {copiedLabel === 'VIN_MAIN' ? 'Đã sao chép!' : vehicle.VIN}
                             </span>
                         </div>
 
+                        {/* Location / Transit info */}
                         {vehicle["Vị trí"] && (
-                            <div className="flex items-center justify-between text-[10.5px] pt-0.5 border-t border-slate-200/50" title={`Vị trí: ${vehicle["Vị trí"]}${hasGps ? `\nGPS: ${quickLocation ? quickLocation + ' • ' : ''}${telemetry.lat.toFixed(5)}, ${telemetry.lng.toFixed(5)}` : ''}`}>
-                                <span className={`text-[10px] font-semibold flex items-center gap-1 ${isInTransit ? 'text-amber-600' : 'text-emerald-600'}`}>
-                                    <i className={`fas ${isInTransit ? 'fa-truck' : 'fa-warehouse'} text-[9px]`}></i>
+                            <div className="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-200/50">
+                                <span className={`font-bold flex items-center gap-1 ${isInTransit ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                    <i className={`fas ${isInTransit ? 'fa-truck' : 'fa-warehouse'} text-[8.5px]`}></i>
                                     {isInTransit ? 'Vận tải' : 'Kho'}
                                 </span>
+
                                 {isInTransit && hasGps ? (
                                     <button
                                         type="button"
@@ -797,21 +802,21 @@ const StockCard: React.FC<StockCardProps> = ({
                                             e.stopPropagation();
                                             setIsGpsMapOpen(true);
                                         }}
-                                        className="font-semibold text-[10.5px] text-amber-700 hover:text-blue-600 hover:underline inline-flex items-center gap-1 truncate max-w-[140px] group/frontgps cursor-pointer"
-                                        title={`📍 Vị trí xe lồng: ${quickLocation ? quickLocation + ' • ' : ''}${telemetry.lat.toFixed(5)}, ${telemetry.lng.toFixed(5)}\nClick để xem bản đồ`}
+                                        className="font-bold text-[10px] text-amber-700 hover:text-blue-600 hover:underline inline-flex items-center gap-1 truncate max-w-[130px] cursor-pointer"
+                                        title={`📍 Vị trí GPS: ${quickLocation || 'Xem bản đồ'}`}
                                     >
-                                        <span className="truncate">{quickLocation || 'Xem GPS'}</span>
-                                        <i className="fas fa-map-marked-alt text-[8px] opacity-0 group-hover/frontgps:opacity-100 text-blue-600 transition-opacity"></i>
+                                        <span className="truncate">{quickLocation || 'Bản đồ GPS'}</span>
+                                        <i className="fas fa-location-arrow text-[8px] text-blue-600"></i>
                                     </button>
                                 ) : (
-                                    <span className={`font-semibold text-[10.5px] truncate max-w-[140px] inline-flex items-center gap-1 ${isInTransit ? 'text-amber-700' : 'text-emerald-800'}`}>
+                                    <span className={`font-bold text-[10px] truncate max-w-[130px] inline-flex items-center gap-1 ${isInTransit ? 'text-amber-700' : 'text-slate-700'}`}>
                                         <span className="truncate">{formatShortWarehouseName(vehicle["Vị trí"])}</span>
                                         {vehicle.isResolvedFromSatellite && (
                                             <span 
-                                                className="shrink-0 text-[8.5px] font-bold text-emerald-800 bg-emerald-100/90 px-1 py-0.2 rounded border border-emerald-300 shadow-2xs" 
-                                                title={`Tìm thấy tại ${vehicle.realWarehouseName || 'Bãi ngoài'}${vehicle.realReceivedDate ? `\nNgày nhận: ${vehicle.realReceivedDate}` : ''}${vehicle.realBattery ? `\nPin: ${vehicle.realBattery}` : ''}`}
+                                                className="shrink-0 text-[8px] font-bold text-emerald-800 bg-emerald-100 px-1 py-0.2 rounded border border-emerald-300" 
+                                                title={`Bãi ngoài: ${vehicle.realWarehouseName || ''}`}
                                             >
-                                                ✓ Bãi TT
+                                                Bãi TT
                                             </span>
                                         )}
                                     </span>
@@ -820,44 +825,30 @@ const StockCard: React.FC<StockCardProps> = ({
                         )}
                     </div>
 
-                    <div className="flex items-center justify-between mt-1">
-                        {isHeldByCurrentUser && (isNearExpiry || hasRequestedExtension) ? (
-                            <div className="flex items-center">
-                                {hasRequestedExtension ? (
-                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-600 border border-amber-200/50 rounded-md">
-                                        <div className="w-1 h-1 bg-amber-500 rounded-full animate-pulse"></div>
-                                        <span className="text-[9px] font-black uppercase tracking-widest">Chờ duyệt</span>
-                                    </div>
-                                ) : (
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); onOpenExtensionModal(vehicle); }}
-                                        className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-all rounded-md group"
-                                    >
-                                        <i className="fas fa-history text-[10px] opacity-70 group-hover:rotate-[-45deg] transition-transform"></i>
-                                        <span className="text-[9px] font-black uppercase tracking-[0.15em]">Gia hạn</span>
-                                    </button>
-                                )}
-                            </div>
-                        ) : (
-                            <StatusBadge
-                                status={vehicle['Trạng thái']}
-                                iconOnly={!!(vehicle["Ngày vận tải"] && vehicle["Ngày vận tải"] !== '#N/A' && moment(vehicle["Ngày vận tải"]).isValid())}
-                            />
-                        )}
-
-                        <div className="flex items-center gap-1.5">
-                            {vehicle["Ngày vận tải"] && vehicle["Ngày vận tải"] !== '#N/A' && moment(vehicle["Ngày vận tải"], DATE_FORMATS).isValid() && (
-                                <div className="flex items-center gap-1 text-blue-600/80" title={`Ngày vận tải: ${moment(vehicle["Ngày vận tải"], DATE_FORMATS).format('DD/MM/YYYY')}`}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>local_shipping</span>
-                                    <span className="text-[11px] font-medium">{moment(vehicle["Ngày vận tải"], DATE_FORMATS).format('DD/MM/YYYY')}</span>
+                    {/* Expiry / Extension Alert if holding */}
+                    {isHeldByCurrentUser && (isNearExpiry || hasRequestedExtension) && (
+                        <div className="flex items-center justify-between pt-0.5">
+                            {hasRequestedExtension ? (
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg w-full justify-center">
+                                    <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></div>
+                                    <span className="text-[9.5px] font-bold uppercase tracking-wider">Đang chờ duyệt gia hạn</span>
                                 </div>
+                            ) : (
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onOpenExtensionModal(vehicle); }}
+                                    className="flex items-center justify-center gap-1.5 px-2 py-1 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-all rounded-lg w-full text-[10px] font-bold group"
+                                >
+                                    <i className="fas fa-clock text-[9px] text-amber-600 group-hover:rotate-45 transition-transform"></i>
+                                    <span>Sắp hết hạn • Bấm xin gia hạn</span>
+                                </button>
                             )}
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
-            <div className="border-t border-slate-100 mt-1 pt-1.5 flex items-center justify-center relative z-10">
+            {/* Mobile Action Bar (on touch devices where desktop hover is disabled) */}
+            <div className="md:hidden mt-2 pt-1 border-t border-slate-100/60 relative z-10">
                 {renderActions()}
             </div>
 

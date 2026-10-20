@@ -499,7 +499,7 @@ const StockView: React.FC<StockViewProps> = ({
         const activeDropdowns = dropdownConfigs.filter(d => d.key !== 'carModel');
 
         const skeletons = Array.from({ length: 12 }, (_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm h-56 flex flex-col justify-between">
+            <div key={i} className="bg-white rounded-2xl border border-slate-100 p-3 shadow-xs min-h-[305px] flex flex-col justify-between">
                 <div>
                     <div className="skeleton-item h-32 w-full rounded-lg mb-4"></div>
                     <div className="space-y-2">
@@ -579,7 +579,7 @@ const StockView: React.FC<StockViewProps> = ({
                     <div className="bg-slate-50 relative rounded-2xl shadow-sm border border-slate-200/70 flex flex-col h-full overflow-hidden transition-all duration-300">
                         <div className="flex-grow overflow-y-auto relative hidden-scrollbar p-1.5 z-10">
                             {isLoading && stockData.length === 0 ? (
-                                <div className="grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-2 p-1">
+                                <div className="grid grid-cols-[repeat(auto-fill,minmax(215px,1fr))] gap-2.5 sm:gap-3 p-1">
                                     {skeletons}
                                 </div>
                             ) : (
