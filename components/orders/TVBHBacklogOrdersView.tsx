@@ -438,31 +438,6 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
         XLSX.writeFile(wb, `Danh_Sach_Coc_Ton_${moment().format('YYYYMMDD_HHmm')}.xlsx`);
     };
 
-    const extraActions = (
-        <div className="flex items-center gap-1">
-            <button
-                type="button"
-                onClick={() => fetchOrders(true)}
-                disabled={isRefreshing}
-                className="h-7 lg:h-[26px] px-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] lg:text-[10px] font-semibold flex items-center gap-1 shadow-2xs active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
-                title="Tải lại dữ liệu cọc tồn từ Cyber ERP"
-            >
-                <i className={`fas fa-rotate text-sky-600 text-[10px] ${isRefreshing ? 'animate-spin' : ''}`}></i>
-                <span className="hidden sm:inline">Làm mới</span>
-            </button>
-
-            <button
-                type="button"
-                onClick={handleExportExcel}
-                className="h-7 lg:h-[26px] px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] lg:text-[10px] font-semibold rounded-xl shadow-xs flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shrink-0"
-                title="Tải file Excel cọc tồn"
-            >
-                <i className="fas fa-file-excel text-[10px]"></i>
-                <span>Xuất Excel</span>
-            </button>
-        </div>
-    );
-
     return (
         <div className="flex flex-col h-full w-full font-sans select-none">
             {/* 1. COMMAND FILTER RAIL (100% Đồng bộ với Tab Đơn Hàng) */}
@@ -476,7 +451,6 @@ export const TVBHBacklogOrdersView: React.FC<TVBHBacklogOrdersViewProps> = ({
                     searchPlaceholder="Tên, SĐT, số HĐ, VIN..."
                     onReset={handleResetFilters}
                     canReset={canReset}
-                    extraActions={extraActions}
                 >
                     {/* Lọc Tiến độ */}
                     <div className="min-w-[76px] xl:min-w-[85px] flex-shrink-0">
