@@ -21,7 +21,7 @@ import { CyberVoucherTicketItem } from '../services/api/stockService';
 import MarqueeText from './ui/MarqueeText';
 import { downloadDeliveryNoticeDocx } from '../services/deliveryNoticeService';
 import { formatShortWarehouseName, cleanCyberContractCode } from '../utils/stringUtils';
-import { getCarChameleonTheme, getContextualLayoutBlueprint } from '../services/api/designTokenService';
+import { getCarChameleonTheme } from '../services/api/designTokenService';
 
 moment.locale('vi');
 
@@ -176,14 +176,10 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
     const resolvedOrder = order ? (orderList.find(o => o['Số đơn hàng'] === order['Số đơn hàng']) || order) : null;
 
-    // Chameleon Adaptive Theme & Contextual Layout Engine
+    // Chameleon Adaptive Theme
     const chameleonTheme = useMemo(() => {
         return getCarChameleonTheme(resolvedOrder?.['Ngoại thất'], resolvedOrder?.['Dòng xe']);
     }, [resolvedOrder?.['Ngoại thất'], resolvedOrder?.['Dòng xe']]);
-
-    const contextualLayout = useMemo(() => {
-        return getContextualLayoutBlueprint(resolvedOrder);
-    }, [resolvedOrder]);
 
     // Tìm thông tin xe trong kho (stockData) khớp với số VIN của đơn hàng
     const matchedStockVehicle = useMemo(() => {
@@ -2864,7 +2860,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                             </button>
                         )}
 
-                        {/* Smart Contextual Action CTA - Tự động thích ứng và nổi bật theo tiến độ đơn hàng */}
+                        {/* Nút Xuất Hóa Đơn - Tinh gọn, chuẩn mực, hiện đại */}
                         {canRequestInvoice && !isReferenceAccount && (
                             <button 
                                 onClick={() => {
@@ -2874,14 +2870,10 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                         onRequestInvoice(resolvedOrder);
                                     }
                                 }} 
-                                className="h-8 px-4 inline-flex items-center gap-1.5 text-white font-bold text-xs transition-all cursor-pointer shrink-0 active:scale-95 animate-pulse rounded-xl"
-                                style={{
-                                    backgroundColor: chameleonTheme.primaryHex,
-                                    boxShadow: `0 4px 14px rgba(${chameleonTheme.primaryRgb}, 0.45)`
-                                }}
+                                className="h-8 px-4 inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-all cursor-pointer shrink-0 active:scale-95 rounded-lg shadow-sm shadow-blue-500/25"
                             >
-                                <i className={`fas ${contextualLayout.primaryHeroAction.icon} text-[11px] text-white`}></i>
-                                <span>{contextualLayout.stage === 'pending_invoice' ? 'Xuất Hóa Đơn (M-Invoice)' : 'Xuất Hóa Đơn'}</span>
+                                <i className="fas fa-file-invoice text-[11px] text-white"></i>
+                                <span>Xuất Hóa Đơn</span>
                             </button>
                         )}
                     </div>
