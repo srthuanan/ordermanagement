@@ -1,5 +1,4 @@
-﻿import React, { useMemo } from 'react';
-import { useModalBackground } from '../../utils/styleUtils';
+import React, { useMemo } from 'react';
 
 interface Variant {
     variant: string;
@@ -17,37 +16,19 @@ interface PendingStatsModalProps {
     stats: GroupedStat[];
 }
 
-const RankIndicator: React.FC<{ rank: number }> = ({ rank }) => {
-    if (rank === 1) {
-        return <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-400/20 text-amber-500" title="Hạng 1"><i className="fas fa-crown"></i></div>;
-    }
-    if (rank === 2) {
-        return <div className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-400/20 font-bold text-slate-500" title="Hạng 2">2</div>;
-    }
-    if (rank === 3) {
-        return <div className="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-600/20 font-bold text-yellow-700" title="Hạng 3">3</div>;
-    }
-    return <div className="flex items-center justify-center w-8 h-8 font-semibold text-text-secondary">{rank}</div>;
-}
-
-
 const PendingStatsModal: React.FC<PendingStatsModalProps> = ({ isOpen, onClose, stats }) => {
-    const bgStyle = useModalBackground();
-
     const flattenedStats = useMemo(() => {
         return stats
             .flatMap(group =>
                 group.variants.map(variant => {
                     const [phienBanNgoaiThat, noiThat] = variant.variant.split(' / ');
                     const parts = phienBanNgoaiThat.split(' - ');
-                    const phienBan = parts.length > 1 ? parts.slice(0, -1).join(' - ') : 'N/A';
+                    const phienBan = parts.length > 1 ? parts.slice(0, -1).join(' - ') : '';
                     const ngoaiThat = parts.length > 1 ? parts[parts.length - 1] : phienBanNgoaiThat;
 
                     return {
-                        model: group.model,
-                        version: phienBan,
-                        exterior: ngoaiThat,
-                        interior: noiThat,
+                        title: phienBan ? `${group.model} - ${phienBan}` : `${group.model}`,
+                        subtitle: noiThat ? `${ngoaiThat} / ${noiThat}` : ngoaiThat,
                         count: variant.count
                     };
                 })
@@ -55,73 +36,85 @@ const PendingStatsModal: React.FC<PendingStatsModalProps> = ({ isOpen, onClose, 
             .sort((a, b) => b.count - a.count);
     }, [stats]);
 
-
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-[9999] flex items-center justify-center p-4" onClick={onClose}>
             <div
-                className="bg-surface-card w-full md:max-w-4xl h-[100dvh] md:h-auto md:max-h-[90vh] rounded-none md:rounded-2xl shadow-xl animate-fade-in-scale-up flex flex-col"
+                className="bg-white w-full max-w-lg max-h-[85vh] rounded-2xl shadow-xl border border-slate-200/80 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 text-slate-800"
                 onClick={(e) => e.stopPropagation()}
-                style={bgStyle}
             >
-                <header className="flex-shrink-0 flex items-center justify-between p-5 border-b border-border-primary">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-amber-500/10">
-                            <i className="fas fa-chart-pie text-lg text-amber-500"></i>
-                        </div>
-                        <h2 className="text-xl font-bold text-text-primary">Thống Kê Xe Chờ Ghép</h2>
-                    </div>
-                    <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-text-secondary hover:bg-surface-hover">
-                        <i className="fas fa-times"></i>
+                {/* Header: Đơn giản, tinh tế */}
+                <header className="flex-shrink-0 flex items-center justify-between px-5 py-3.5 border-b border-slate-100">
+                    <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                        Thống Kê Xe Chờ Ghép
+                    </h2>
+                    <button
+                        onClick={onClose}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                        title="Đóng"
+                    >
+                        <i className="fa-solid fa-xmark text-sm"></i>
                     </button>
                 </header>
 
-                <main className="p-4 md:p-6 overflow-y-auto flex-grow min-h-0 bg-surface-ground">
+                {/* Table Content: Đơn giản, rõ ràng */}
+                <main className="p-4 overflow-y-auto flex-grow min-h-0">
                     {flattenedStats.length > 0 ? (
-                        <div className="bg-surface-card border border-border-primary rounded-lg shadow-sm">
-                            <header className="grid grid-cols-[3.5rem_1fr_4rem] items-center gap-4 px-4 py-2 border-b border-border-primary text-xs font-bold text-text-secondary uppercase">
-                                <span className="text-center">Hạng</span>
-                                <span>Cấu hình xe</span>
-                                <span className="text-right">Số Lượng</span>
-                            </header>
-                            <div className="divide-y divide-border-primary/70">
-                                {flattenedStats.map((item, index) => (
-                                    <div key={index} className="grid grid-cols-[3.5rem_1fr_4rem] items-center gap-4 px-4 py-3 hover:bg-surface-hover transition-colors">
-                                        <div className="flex justify-center">
-                                            <RankIndicator rank={index + 1} />
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="font-semibold text-sm text-text-primary truncate" title={`${item.model} - ${item.version}`}>
-                                                {item.model} - {item.version}
-                                            </p>
-                                            <p className="text-xs text-text-secondary truncate" title={`${item.exterior} / ${item.interior}`}>
-                                                {item.exterior} / {item.interior}
-                                            </p>
-                                        </div>
-                                        <div className="font-bold text-lg text-accent-primary text-right font-mono">
-                                            {item.count}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                        <div className="border border-slate-100 rounded-xl overflow-hidden">
+                            <table className="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr className="bg-slate-50/70 border-b border-slate-100 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                                        <th className="py-2.5 pl-4 pr-2 w-12 text-center">Hạng</th>
+                                        <th className="py-2.5 px-3">Cấu hình xe</th>
+                                        <th className="py-2.5 pl-2 pr-4 text-right w-20">Số lượng</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {flattenedStats.map((item, index) => (
+                                        <tr
+                                            key={index}
+                                            className="hover:bg-slate-50/60 transition-colors"
+                                        >
+                                            {/* Hạng */}
+                                            <td className="py-2.5 pl-4 pr-2 text-center align-middle font-mono text-slate-400 text-xs font-semibold">
+                                                {index + 1}
+                                            </td>
+
+                                            {/* Cấu hình xe */}
+                                            <td className="py-2.5 px-3 align-middle">
+                                                <div className="font-semibold text-slate-800 text-[13px] leading-tight">
+                                                    {item.title}
+                                                </div>
+                                                <div className="text-[11px] text-slate-400 mt-0.5">
+                                                    {item.subtitle}
+                                                </div>
+                                            </td>
+
+                                            {/* Số lượng */}
+                                            <td className="py-2.5 pl-2 pr-4 text-right align-middle font-mono font-bold text-slate-900 text-sm">
+                                                {item.count}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-16 px-4 h-full bg-slate-50/50 rounded-xl border border-slate-200/50">
-                            <div className="relative mb-6 group">
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 bg-amber-400/30 rounded-full blur-2xl opacity-60 group-hover:scale-125 transition-all duration-700"></div>
-                                <div className="relative w-16 h-16 bg-white/80 backdrop-blur-md rounded-full shadow-sm flex items-center justify-center border border-white/60">
-                                    <i className="fas fa-chart-pie fa-2x text-slate-300"></i>
-                                </div>
-                            </div>
-                            <h3 className="text-lg font-bold text-slate-600 mb-1">Trống!</h3>
-                            <p className="text-sm text-slate-500">Không có yêu cầu nào đang chờ.</p>
+                        <div className="py-12 text-center text-slate-400 text-xs">
+                            Không có yêu cầu chờ ghép.
                         </div>
                     )}
                 </main>
 
-                <footer className="p-4 border-t flex justify-end gap-4 bg-surface-card rounded-b-2xl">
-                    <button onClick={onClose} className="btn-secondary">Đóng</button>
+                {/* Footer: Nút Đóng gọn gàng */}
+                <footer className="flex-shrink-0 px-5 py-3 border-t border-slate-100 flex justify-end">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors"
+                    >
+                        Đóng
+                    </button>
                 </footer>
             </div>
         </div>
