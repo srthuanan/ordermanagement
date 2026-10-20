@@ -138,7 +138,7 @@ const TabbedFilter: React.FC<TabbedFilterProps> = ({
 
                         {/* Extra Actions attached to Tab Rail (e.g., Fleet Stats Button) */}
                         {tabsExtra && (
-                            <div className="flex items-center flex-shrink-0">
+                            <div className="flex items-center flex-shrink-0 ml-1 pl-1 border-l border-slate-200/80 dark:border-slate-700">
                                 {tabsExtra}
                             </div>
                         )}

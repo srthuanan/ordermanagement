@@ -811,15 +811,14 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         const statsButton = (
             <button
                 onClick={() => setIsPendingStatsModalOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1 lg:px-2 lg:py-0.5 text-[11px] lg:text-[10px] font-bold rounded-lg transition-all duration-200 outline-none whitespace-nowrap bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/25 shadow-2xs hover:scale-[1.02] active:scale-95 cursor-pointer select-none"
-                title="Thống kê đơn hàng"
+                className="group flex items-center gap-1.5 px-2.5 py-1 lg:px-2 lg:py-0.5 text-[11px] lg:text-[10px] font-bold rounded-xl transition-all duration-200 outline-none whitespace-nowrap bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-100 border border-slate-200/90 dark:border-slate-700 shadow-2xs hover:shadow-xs hover:border-slate-300 active:scale-95 cursor-pointer select-none"
+                title="Báo cáo thống kê đơn hàng"
             >
-                <span className="relative flex h-1.5 w-1.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
-                </span>
-                <i className="fas fa-chart-pie text-[10px] text-amber-600 dark:text-amber-400"></i>
-                <span>Thống kê</span>
+                <div className="w-4 h-4 rounded-md bg-gradient-to-tr from-sky-500 to-indigo-600 text-white flex items-center justify-center text-[9px] shadow-xs group-hover:scale-105 transition-transform">
+                    <i className="fa-solid fa-chart-column"></i>
+                </div>
+                <span className="font-bold tracking-tight">Thống kê</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 ring-2 ring-emerald-500/20"></span>
             </button>
         );
 
