@@ -44,6 +44,13 @@ export const getExteriorColorStyle = (exteriorValue: string | undefined): React.
     return {};
 };
 
+/**
+ * Lấy mã màu thực tế (Hex) của màu sơn ngoại thất xe để vẽ chấm tròn màu (swatch dot)
+ */
+export const getExteriorSwatchColor = (exteriorValue: string | undefined): string => {
+    return (getBackgroundColorStyle(exteriorValue)?.backgroundColor as string) || '#CBD5E1';
+};
+
 export const getInteriorColorStyle = (interiorValue: string | undefined): React.CSSProperties => {
     if (!interiorValue) return {};
     const lowerInteriorValue = interiorValue.toLowerCase().trim();

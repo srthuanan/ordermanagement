@@ -6,7 +6,7 @@ import StatusBadge from './ui/StatusBadge';
 import CarImage from './ui/CarImage';
 
 import vinHeroCardBgImg from '../pictures/vin_hero_card_bg.webp';
-import { getExteriorColorStyle, getInteriorColorStyle } from '../utils/styleUtils';
+import { getExteriorColorStyle, getInteriorColorStyle, getExteriorSwatchColor } from '../utils/styleUtils';
 import SelectPolicyModal from './modals/SelectPolicyModal';
 const RequestInvoiceModal = React.lazy(() => import('./modals/RequestInvoiceModal'));
 import { Policy, policyAdminService } from '../services/api/policyAdminService';
@@ -1334,7 +1334,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                             <div className="flex-[1.2] px-1 text-center min-w-0" title={resolvedOrder["Ngoại thất"]}>
                                 <p className="text-[8px] md:text-[8.5px] font-bold text-slate-400 uppercase tracking-wider mb-0.5 truncate">Ngoại thất</p>
                                 <div className="flex items-center justify-center gap-1">
-                                    <span className="w-2.5 h-2.5 rounded-full border border-slate-300 shrink-0" style={{ backgroundColor: getExteriorColorStyle(resolvedOrder["Ngoại thất"])?.color || '#cbd5e1' }}></span>
+                                    <span className="w-2.5 h-2.5 rounded-full border border-slate-300 shrink-0 shadow-2xs" style={{ backgroundColor: getExteriorSwatchColor(resolvedOrder["Ngoại thất"]) }}></span>
                                     <p className="text-[9px] md:text-[10px] font-black text-slate-900 leading-tight truncate" style={getExteriorColorStyle(resolvedOrder["Ngoại thất"])}>
                                         {resolvedOrder["Ngoại thất"] || '—'}
                                     </p>
