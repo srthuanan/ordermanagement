@@ -22,9 +22,13 @@
   2. Tuyệt đối không thực hiện bất kỳ hành vi nào làm sai lệch, hư hại, phá hoại hoặc gây ảnh hưởng tiêu cực đến tính toàn vẹn của dữ liệu và hệ thống phần mềm CyberSoft cũng như các hệ thống nội bộ khác.
   3. Mọi truy vấn và đồng bộ dữ liệu chỉ nhằm mục đích phục vụ công tác điều hành hợp pháp của showroom; luôn đảm bảo an toàn thông tin, bảo mật dữ liệu khách hàng và chỉ đọc (Read-only) khi không có chỉ định nghiệp vụ được phê duyệt rõ ràng.
 
-- **Kỷ Luật Thép Về Một Lệnh Duy Nhất (Strict Single Command Execution Protocol)**:
-  1. **Một Lệnh Duy Nhất Xử Lý Dứt Điểm (Single Command Only)**: Khi phát sinh bất kỳ yêu cầu, vấn đề cần xử lý, debug hay cập nhật nào, AI Agent **BẮT BUỘC PHẢI GOM TOÀN BỘ CÁC BƯỚC** (từ kiểm tra, cập nhật code đến commit & push) vào **ĐÚNG 1 LỆNH TERMINAL DUY NHẤT**. Tuyệt đối không được chạy các lệnh thăm dò lắt nhắt, rời rạc làm mất thời gian và gây phiền hà cho người dùng.
-  2. **Ghi Ngắn Gọn Đúng 1 Câu Mục Đích**: Trước khi thực thi lệnh duy nhất đó, luôn ghi **ngắn gọn đúng 1 câu** nêu rõ mục đích và tác dụng để người dùng nắm rõ tức thì.
+- **Kỷ Luật Thép Về Một Lệnh Duy Nhất & Tự Động Thực Thi Tuyệt Đối (Single Command & Zero Permission Prompts)**:
+  1. **Tự Động Thực Thi Không Xin Quyền (Zero Permission Prompts)**: Khi người dùng yêu cầu xử lý bất cứ việc gì, AI Agent phải tự chủ thực thi hoàn tất ngay. Tuyệt đối không chạy các lệnh shell tra cứu phức tạp (như grep, Select-String qua shell) vì sẽ làm IDE bật popup modal hỏi quyền xác nhận gây phiền hà và chậm trễ. Mọi thao tác đọc, tìm kiếm, sửa file code BẮT BUỘC dùng công cụ bản địa (`view_file`, `replace_file_content`, `multi_replace_file_content`).
+  2. **Một Lệnh Duy Nhất Xử Lý Dứt Điểm (Single Command Only)**: Khi cần chạy terminal, AI Agent **BẮT BUỘC PHẢI GOM TOÀN BỘ CÁC BƯỚC** vào **ĐÚNG 1 LỆNH TERMINAL DUY NHẤT** (chỉ dùng duy nhất để commit và push lên Git).
+  3. **Ghi Ngắn Gọn Đúng 1 Câu Mục Đích**: Trước khi thực thi lệnh duy nhất đó, luôn ghi **ngắn gọn đúng 1 câu** nêu rõ mục đích để người dùng nắm rõ tức thì.
+
+- **Quy Chuẩn Hiển Thị Nút Tác Nghiệp Đơn Hàng (Action Button Visibility Protocol)**:
+  1. **Nút "TB Giao Xe" (Thông Báo Giao Xe)**: Đơn hàng có trạng thái từ *Chờ phê duyệt* đến *Đã xuất hoá đơn* (bao gồm: Chờ duyệt, Yêu cầu XHĐ, Đã ghép, Chờ ký, Đã xuất hóa đơn) **TUYỆT ĐỐI KHÔNG HIỂN THỊ** nút "TB Giao Xe". Nút này chỉ xuất hiện khi đơn hàng đã hoàn tất xuất hóa đơn và chuyển sang giai đoạn bàn giao xe.
 
 - **Supabase & Vercel Environment Variables Protocol (Phòng Ngừa Tuyệt Đối Lỗi Màn Hình Trắng)**:
   1. **Tuyệt đối KHÔNG BAO GIỜ viết lệnh `throw new Error(...)`** hoặc chặn sập luồng render khi các biến môi trường `VITE_SUPABASE_URL` hoặc `VITE_SUPABASE_ANON_KEY` bị rỗng / undefined.

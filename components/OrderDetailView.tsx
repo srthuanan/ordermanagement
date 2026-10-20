@@ -1161,6 +1161,13 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         isDateValidForVC;
     const canConfirmVC = (vcStatus || generalStatus) === 'chờ xác thực vc (tvbh)';
     const canDownloadInvoice = !!resolvedOrder.LinkHoaDonDaXuat;
+    const isExcludedFromDeliveryNotice = 
+        generalStatus.includes('chờ phê duyệt') ||
+        generalStatus.includes('chờ duyệt') ||
+        generalStatus.includes('yêu cầu') ||
+        generalStatus.includes('đã ghép') ||
+        generalStatus.includes('chờ ký') ||
+        generalStatus.includes('đã xuất');
 
     let daysSincePairedText = '—';
     if (resolvedOrder["Thời gian ghép"]) {
@@ -2742,7 +2749,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                 <span>Hóa Đơn</span>
                             </button>
                         )}
-                        {resolvedOrder.VIN && (
+                        {resolvedOrder.VIN && !isExcludedFromDeliveryNotice && (
                             <button
                                 onClick={async () => {
                                     try {
