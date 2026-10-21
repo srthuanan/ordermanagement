@@ -230,7 +230,7 @@ def run_dms_stock_radar_sync():
     }
 
     dms_records = []
-    batch_size = 15
+    batch_size = 20
 
     def fetch_dms_batch(chunk_vins):
         filter_clause = " or ".join([f"xts_chassisnumber eq '{v}'" for v in chunk_vins])
@@ -241,7 +241,7 @@ def run_dms_stock_radar_sync():
             f"&$filter={filter_clause}"
         )
         try:
-            r = requests.get(url, headers=dms_headers, timeout=6, allow_redirects=False)
+            r = requests.get(url, headers=dms_headers, timeout=5, allow_redirects=False)
             if r.status_code == 200 and "application/json" in r.headers.get("Content-Type", ""):
                 data = r.json()
                 return data.get("value", [])
@@ -250,7 +250,7 @@ def run_dms_stock_radar_sync():
         return []
 
     chunks = [clean_vins[i:i + batch_size] for i in range(0, len(clean_vins), batch_size)]
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         for batch_result in executor.map(fetch_dms_batch, chunks):
             if batch_result:
                 dms_records.extend(batch_result)
@@ -372,18 +372,6 @@ def run_dms_stock_radar_sync():
         except Exception as e:
             print(f"[DMS Stock Radar] rpc_sync_dms_metadata error: {e}")
 
-        # Đồng thời PATCH trực tiếp ma_phien_ban để chắc chắn 100%
-        for item in update_list:
-            if item.get("ma_phien_ban"):
-                try:
-                    requests.patch(
-                        f"{sb_url}/rest/v1/khoxe?vin=eq.{item['vin']}",
-                        headers=sb_headers,
-                        json={"ma_phien_ban": item["ma_phien_ban"]},
-                        timeout=5
-                    )
-                except Exception:
-                    pass
 
     # 3.3 Đẩy GPS lên car_telemetry
     gps_list = list(gps_by_vin.values())
