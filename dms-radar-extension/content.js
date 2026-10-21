@@ -108,7 +108,7 @@
         var chunk = cleanVins.slice(i, i + batchSize);
         var filter = chunk.map(function (v) { return "xts_chassisnumber eq '" + v + "'"; }).join(' or ');
         try {
-          var res = await xrm.WebApi.retrieveMultipleRecords('xts_inventorynewvehicle', '?$select=xts_chassisnumber,xts_enginenumber,_xts_siteid_value,_xts_lastvehicleorderid_value,modifiedon,itv_lastlatitude,itv_lastlongitude,itv_lastlocationupdatetime,_xvf_vehiclepackage_value,_xts_productconfigurationid_value,_xts_configurationid_value,xts_productdescription&$filter=' + filter);
+          var res = await xrm.WebApi.retrieveMultipleRecords('xts_inventorynewvehicle', '?$select=xts_chassisnumber,xts_enginenumber,_xts_siteid_value,_xts_lastvehicleorderid_value,modifiedon,itv_lastlatitude,itv_lastlongitude,itv_lastlocationupdatetime,_xts_configurationid_value,xts_productdescription&$filter=' + filter);
           if (res && res.entities) dmsRecords.push.apply(dmsRecords, res.entities);
         } catch (e) {
           console.warn('[DMS Auto Sync] Lỗi đọc batch DMS:', e);
@@ -213,13 +213,9 @@
           var dmsVal = siteFormatted ? siteFormatted.split(' ')[0] : (SITE_MAP[siteId] || '');
           var engVal = best.xts_enginenumber ? String(best.xts_enginenumber).trim() : '';
           
-          var pkgFormatted = best['_xvf_vehiclepackage_value@OData.Community.Display.V1.FormattedValue'] ||
-                             best['_xts_productconfigurationid_value@OData.Community.Display.V1.FormattedValue'] ||
-                             best['_xts_configurationid_value@OData.Community.Display.V1.FormattedValue'] || '';
-          var pkgVal = pkgFormatted ? pkgFormatted.trim().toUpperCase() : '';
-          if (!pkgVal) {
-            pkgVal = resolveDmsVersion(c.dong_xe, c.phien_ban, c.ma_phien_ban);
-          }
+          var pkgFormatted = best['_xts_configurationid_value@OData.Community.Display.V1.FormattedValue'] ||
+                             best.xts_productdescription || '';
+          var pkgVal = resolveDmsVersion(c.dong_xe, c.phien_ban, pkgFormatted ? pkgFormatted.trim().toUpperCase() : c.ma_phien_ban);
 
           if (dmsVal || engVal || pkgVal) {
             updateList.push({

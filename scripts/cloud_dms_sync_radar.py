@@ -158,7 +158,7 @@ def sync_gps_live(dms_headers):
     print("📡 Đang lấy tọa độ GPS, Số máy & Mã DMS từ bảng kho xe xts_inventorynewvehicles của DMS...")
     gps_results = []
     metadata_by_vin = {}
-    inv_url = f"{DMS_BASE_URL}/api/data/v9.2/xts_inventorynewvehicles?$select=xts_chassisnumber,xts_enginenumber,_xts_siteid_value,itv_lastlatitude,itv_lastlongitude,itv_lastlocationupdatetime,_xvf_vehiclepackage_value,_xts_productconfigurationid_value,xts_configurationid"
+    inv_url = f"{DMS_BASE_URL}/api/data/v9.2/xts_inventorynewvehicles?$select=xts_chassisnumber,xts_enginenumber,_xts_siteid_value,itv_lastlatitude,itv_lastlongitude,itv_lastlocationupdatetime,_xts_configurationid_value,xts_productdescription"
     
     try:
         while inv_url:
@@ -176,7 +176,7 @@ def sync_gps_live(dms_headers):
                 sm = (item.get("xts_enginenumber") or "").strip()
                 site_id = item.get("_xts_siteid_value")
                 dms_code = DMS_SITE_MAP.get(site_id, "")
-                pkg = get_lookup_name(item, "xvf_vehiclepackage") or get_lookup_name(item, "xts_productconfigurationid") or get_lookup_name(item, "xts_configurationid") or ""
+                pkg = get_lookup_name(item, "xts_configurationid") or item.get("xts_productdescription") or ""
                 
                 if sm or dms_code or pkg:
                     m_item = {
