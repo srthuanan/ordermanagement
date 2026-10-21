@@ -1337,40 +1337,41 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             const expectedVal = dmsVerification.expectedVal;
             const dmsVal = dmsVerification.dmsVal;
 
-            // Rút gọn tối đa thông điệp cho từng lỗi
+            // Rút gọn tối đa: Lỗi sai nào cần sửa thành gì thì note ngắn gọn sửa lại thành cái gì cho đúng
             if (errorType === 'customer' || norm.includes('ten khach hang') || norm.includes('khach hang')) {
-                title = `Lệch Tên KH: Đơn [${expectedVal}] ⇄ DMS [${dmsVal}]`;
-                guide = `Sửa tên khách hàng trên DMS thành [${expectedVal}] hoặc kiểm tra lại VSO rồi bấm Tra lại.`;
+                const exp = (expectedVal || '').trim();
+                const dms = (dmsVal || '').trim();
+                title = `Lệch Tên KH: DMS [${dms}] ⇄ Đơn [${exp}]`;
+                guide = `Sửa tên khách hàng trên DMS thành [${exp}] rồi bấm Tra lại.`;
             } else if (errorType === 'canceled' || norm.includes('huy') || norm.includes('cancel') || norm.includes('void')) {
-                title = 'VSO trên DMS đã bị Hủy';
-                guide = 'Đổi số VSO đang Mở rồi bấm Tra lại.';
+                title = 'VSO trên DMS đã bị HỦY';
+                guide = 'Đổi sang số VSO đang Mở rồi bấm Tra lại.';
             } else if (errorType === 'invoiced' || norm.includes('hoa don') || norm.includes('invoiced') || norm.includes('da xuat')) {
-                title = 'VSO trên DMS đã xuất Hóa đơn';
-                guide = 'Đổi số VSO đang Mở rồi bấm Tra lại.';
+                title = 'VSO trên DMS đã xuất Hóa đơn (Đã đóng)';
+                guide = 'Đổi sang số VSO đang Mở rồi bấm Tra lại.';
             } else if (errorType === 'not_found' || norm.includes('khong tim thay')) {
                 title = 'Không tìm thấy VSO trên DMS';
-                guide = 'Đổi số VSO đang Mở rồi bấm Tra lại.';
+                guide = 'Kiểm tra lại số VSO trên DMS rồi bấm Tra lại.';
             } else if (errorType === 'exterior' || norm.includes('ngoai that')) {
                 const exp = apiService.getExteriorColorCode(expectedVal || '') || expectedVal || '';
                 const dms = apiService.getExteriorColorCode(dmsVal || '') || dmsVal || '';
-                title = `Lệch Ngoại thất: Xe [${exp}] ⇄ DMS [${dms}]`;
-                guide = `Sửa màu trên DMS thành [${exp}] rồi bấm Tra lại.`;
+                title = `Lệch Ngoại thất: DMS [${dms}] ⇄ Xe [${exp}]`;
+                guide = `Sửa màu ngoại thất trên DMS thành [${exp}] rồi bấm Tra lại.`;
             } else if (errorType === 'interior' || norm.includes('noi that')) {
                 const exp = apiService.getInteriorColorCode(expectedVal || '') || expectedVal || '';
                 const dms = apiService.getInteriorColorCode(dmsVal || '') || dmsVal || '';
-                title = `Lệch Nội thất: Xe [${exp}] ⇄ DMS [${dms}]`;
-                guide = `Sửa màu trên DMS thành [${exp}] rồi bấm Tra lại.`;
+                title = `Lệch Nội thất: DMS [${dms}] ⇄ Xe [${exp}]`;
+                guide = `Sửa màu nội thất trên DMS thành [${exp}] rồi bấm Tra lại.`;
             } else if (errorType === 'model' || norm.includes('dong xe') || norm.includes('model')) {
                 const exp = apiService.getModelCode(expectedVal || '') || expectedVal || '';
                 const dms = apiService.getModelCode(dmsVal || '') || dmsVal || '';
-                title = `Lệch Dòng xe: Xe [${exp}] ⇄ DMS [${dms}]`;
+                title = `Lệch Dòng xe: DMS [${dms}] ⇄ Xe [${exp}]`;
                 guide = `Sửa dòng xe trên DMS thành [${exp}] rồi bấm Tra lại.`;
             } else if (errorType === 'version' || norm.includes('phien ban') || norm.includes('version')) {
-                const carVin = order.VIN || (order as any).vin || '';
                 const exp = (expectedVal || '').trim();
                 const dms = (dmsVal || '').trim();
-                title = `Lệch Phiên bản: VIN xe [${exp}] ⇄ DMS [${dms}]`;
-                guide = `Đơn trên DMS phải khớp với VIN (${carVin || 'xe ghép'}): Vui lòng sửa phiên bản trên DMS thành [${exp}] rồi bấm Tra lại.`;
+                title = `Lệch Phiên bản: DMS [${dms}] ⇄ Xe [${exp}]`;
+                guide = `Sửa phiên bản trên DMS thành [${exp}] rồi bấm Tra lại.`;
             } else if (raw) {
                 title = 'Cấu hình chưa khớp DMS';
                 guide = 'Kiểm tra lại trên DMS rồi bấm Tra lại.';

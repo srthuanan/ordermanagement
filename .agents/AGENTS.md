@@ -56,5 +56,9 @@
   3. Loại bỏ hoàn toàn các chi tiết đồ họa decor gây xao nhãng (hình nền lưới caro, hoạt ảnh lễ hội che dữ liệu, icon thời tiết vụn vặt) để tập trung 100% vào tốc độ và tính chính xác của dữ liệu nghiệp vụ.
   4. Thanh tác vụ hỗ trợ Nút hành động chính thông minh (Smart Contextual CTA) tự động đổi màu và trạng thái tương thích theo quy trình (Xuất HĐ, Xác thực VinClub, Chuyển xe).
 
-
-
+- **Quy Chuẩn Cảnh Báo Lỗi Đối Soát DMS & Đơn Hàng (Actionable & Direct Error Note Protocol)**:
+  1. Khi phát hiện bất kỳ lỗi sai / không khớp nào giữa thông tin đơn hàng, số VIN xe ghép và dữ liệu VinFast DMS (Tên khách hàng, Dòng xe, Phiên bản, Ngoại thất, Nội thất, Trạng thái VSO):
+  2. Tuyệt đối không dùng các từ ngữ viết tắt thô khó hiểu (như `PLUS`, `SLIDING`) hoặc mô tả chung chung không rõ căn cứ.
+  3. Bắt buộc hiển thị theo cấu trúc cực kỳ ngắn gọn, đi thẳng vào bản chất hành động TVBH cần làm:
+     - **Tiêu đề**: `Lệch [Mục sai]: DMS [Giá trị DMS hiện tại] ⇄ Xe [Giá trị chuẩn của VIN xe]`
+     - **Hướng dẫn hành động**: `Sửa [Mục sai] trên DMS thành [Giá trị chuẩn của VIN xe] rồi bấm Tra lại.`
