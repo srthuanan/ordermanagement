@@ -1540,6 +1540,22 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                             json.dump(dealers_list, f, indent=2, ensure_ascii=False)
                     except Exception as e_save:
                         print(f"Warning: could not write dms_dealers_config.json: {e_save}")
+
+                    # Đồng bộ lên Supabase Storage để Vercel Cloud Serverless luôn dùng chung được
+                    try:
+                        sb_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co")
+                        sb_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or "sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX"
+                        supa_upload_url = f"{sb_url}/storage/v1/object/yeucauxhd-files/config/dms_dealers_config.json"
+                        headers_upload = {
+                            "apikey": sb_key,
+                            "Authorization": f"Bearer {sb_key}",
+                            "Content-Type": "application/json",
+                            "x-upsert": "true"
+                        }
+                        requests.post(supa_upload_url, headers=headers_upload, data=json.dumps(dealers_list, ensure_ascii=False).encode("utf-8"), timeout=5)
+                    except Exception as e_supa:
+                        print(f"Warning: could not upload dms_dealers_config.json to Supabase: {e_supa}")
+
                     res = {"status": "ok", "success": True, "message": f"Đã lưu cookie cho [{d_code}]"}
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")

@@ -292,6 +292,9 @@ export async function executeCyberApi<T = any>(pathname: string, options: Reques
         return await res.json();
     } catch (netErr: any) {
         if (netErr?.name === 'TypeError' || (netErr?.message && netErr.message.includes('fetch'))) {
+            if (pathname.startsWith('/api/dms/')) {
+                throw new Error(`Không thể kết nối máy chủ DMS Radar Cloud. Vui lòng thử lại hoặc mở trang VinFast DMS để cập nhật Cookie.`);
+            }
             throw new Error(`Không thể kết nối máy chủ Cyber / M-Invoice (Vui lòng đảm bảo máy tính văn phòng đã bật 'start-cyber-sync.bat').`);
         }
         throw netErr;

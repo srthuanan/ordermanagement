@@ -69,6 +69,24 @@
   }, 1000);
 
   function initAutoSync(xrm) {
+    // Luôn tự động đẩy Cookie DMS còn sống lên Serverless Vercel & máy trạm
+    try {
+      var dmsCookie = document.cookie;
+      if (dmsCookie && dmsCookie.indexOf('CrmOwinAuth') >= 0) {
+        var syncPayload = JSON.stringify({ dealer_code: 'N31913', cookie: dmsCookie });
+        fetch('https://vinfastthuanan.vercel.app/api/dms/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: syncPayload
+        }).catch(function () {});
+        fetch('http://localhost:3001/api/dms/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: syncPayload
+        }).catch(function () {});
+      }
+    } catch (_) {}
+
     var lastRun = localStorage.getItem(STORAGE_KEY);
     if (lastRun) {
       var diffMinutes = (Date.now() - parseInt(lastRun, 10)) / (1000 * 60);

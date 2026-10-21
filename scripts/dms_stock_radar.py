@@ -12,7 +12,24 @@ import requests
 from datetime import datetime, timezone
 import unicodedata
 
+from concurrent.futures import ThreadPoolExecutor
+
 def get_dealers_list():
+    # 1. Thử lấy từ Supabase Storage trước (đặc biệt khi chạy trên Vercel Cloud Serverless)
+    sb_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co")
+    sb_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or "sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX"
+    try:
+        supa_url = f"{sb_url}/storage/v1/object/authenticated/yeucauxhd-files/config/dms_dealers_config.json"
+        headers = {"apikey": sb_key, "Authorization": f"Bearer {sb_key}"}
+        r = requests.get(supa_url, headers=headers, timeout=3)
+        if r.status_code == 200 and r.text.strip():
+            data = r.json()
+            if isinstance(data, list) and data:
+                return data
+    except Exception:
+        pass
+
+    # 2. Local config file
     config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dms_dealers_config.json")
     if os.path.exists(config_path):
         try:
@@ -123,17 +140,57 @@ def resolve_dms_version(dong_xe, phien_ban, raw_code=""):
 def run_dms_stock_radar_sync():
     """
     Quét trực tiếp VinFast DMS OData API kho xe và cập nhật lên Supabase.
+    Tối ưu hóa chạy trên Vercel Serverless Function: multi-threading song song & kiểm tra cookie trước.
     """
     dealers = get_dealers_list()
-    target_dealer = next((x for x in dealers if x.get("cookie")), None)
-    if not target_dealer or not target_dealer.get("cookie"):
+    if not dealers:
         return {
             "success": False,
-            "error": "Chưa có Cookie DMS hoạt động. Vui lòng mở trang DMS VinFast một lần để cập nhật Cookie tập trung."
+            "error": "Chưa có danh sách cấu hình đại lý VinFast DMS. Vui lòng mở trang VinFast DMS một lần trên trình duyệt để Extension cập nhật."
         }
 
-    cookie = target_dealer["cookie"]
-    dealer_code = target_dealer.get("dealer_code", "N31913")
+    # Sắp xếp các dealer có cookie theo thời gian mới nhất lên đầu
+    dealers_with_cookie = [d for d in dealers if d.get("cookie")]
+    dealers_with_cookie.sort(key=lambda x: str(x.get("last_sync_time") or ""), reverse=True)
+
+    if not dealers_with_cookie:
+        return {
+            "success": False,
+            "error": "Chưa có Cookie DMS hoạt động. Vui lòng mở trang DMS VinFast một lần để tiện ích tự động lưu Cookie tập trung."
+        }
+
+    dms_base_url = "https://vinfastdms.crm5.dynamics.com"
+    active_dealer = None
+    active_cookie = None
+
+    # Pre-flight check: thử lần lượt từng cookie từ mới nhất, dừng ngay khi tìm được cookie còn sống
+    for d in dealers_with_cookie:
+        c_test = d["cookie"]
+        test_headers = {
+            "Cookie": c_test,
+            "Accept": "application/json",
+            "OData-MaxVersion": "4.0",
+            "OData-Version": "4.0"
+        }
+        try:
+            test_url = f"{dms_base_url}/api/data/v9.2/xts_inventorynewvehicles?$select=xts_chassisnumber&$top=1"
+            tr = requests.get(test_url, headers=test_headers, timeout=3.5, allow_redirects=False)
+            if tr.status_code == 200 and "application/json" in tr.headers.get("Content-Type", ""):
+                active_dealer = d
+                active_cookie = c_test
+                print(f"[DMS Stock Radar] Đã kết nối DMS thành công bằng tài khoản showroom: {d.get('dealer_code')}")
+                break
+        except Exception as e:
+            print(f"[DMS Stock Radar] Kiểm tra cookie showroom {d.get('dealer_code')} lỗi: {e}")
+
+    if not active_cookie or not active_dealer:
+        return {
+            "success": False,
+            "error": "Cookie phiên làm việc VinFast DMS hiện tại đã hết hạn (hết hạn sau 24h). Vui lòng mở trang VinFast DMS trên trình duyệt một lần để làm mới Cookie!"
+        }
+
+    cookie = active_cookie
+    dealer_code = active_dealer.get("dealer_code", "N31913")
 
     sb_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co")
     sb_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or "sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX"
@@ -148,7 +205,7 @@ def run_dms_stock_radar_sync():
         kho_res = requests.get(
             f"{sb_url}/rest/v1/khoxe?select=id,vin,dong_xe,phien_ban,so_may,ma_dms,ma_phien_ban&trang_thai=not.is.null",
             headers=sb_headers,
-            timeout=20
+            timeout=10
         )
         if kho_res.status_code != 200:
             return {"success": False, "error": f"Lỗi đọc khoxe Supabase: {kho_res.text[:200]}"}
@@ -160,11 +217,9 @@ def run_dms_stock_radar_sync():
         return {"success": True, "message": "Kho xe hiện đang trống.", "summary": {"total_stock": 0, "updated_count": 0, "gps_count": 0, "sold_removed": 0}, "cars": []}
 
     clean_vins = [c.get("vin", "").strip().upper() for c in kho_cars if c.get("vin")]
-    
-    # Map xe theo VIN để tra nhanh
     car_by_vin = {c.get("vin", "").strip().upper(): c for c in kho_cars}
 
-    # 2. Truy vấn OData API VinFast Dynamics
+    # 2. Truy vấn OData API VinFast Dynamics song song qua ThreadPool
     dms_headers = {
         "Cookie": cookie,
         "Accept": "application/json",
@@ -174,13 +229,11 @@ def run_dms_stock_radar_sync():
         "Prefer": 'odata.include-annotations="OData.Community.Display.V1.FormattedValue"'
     }
 
-    dms_base_url = "https://vinfastdms.crm5.dynamics.com"
     dms_records = []
     batch_size = 15
 
-    for i in range(0, len(clean_vins), batch_size):
-        chunk = clean_vins[i:i + batch_size]
-        filter_clause = " or ".join([f"xts_chassisnumber eq '{v}'" for v in chunk])
+    def fetch_dms_batch(chunk_vins):
+        filter_clause = " or ".join([f"xts_chassisnumber eq '{v}'" for v in chunk_vins])
         url = (
             f"{dms_base_url}/api/data/v9.2/xts_inventorynewvehicles?"
             f"$select=xts_chassisnumber,xts_enginenumber,_xts_siteid_value,_xts_lastvehicleorderid_value,"
@@ -188,19 +241,20 @@ def run_dms_stock_radar_sync():
             f"&$filter={filter_clause}"
         )
         try:
-            r = requests.get(url, headers=dms_headers, timeout=25)
-            if r.status_code == 200:
+            r = requests.get(url, headers=dms_headers, timeout=6, allow_redirects=False)
+            if r.status_code == 200 and "application/json" in r.headers.get("Content-Type", ""):
                 data = r.json()
-                dms_records.extend(data.get("value", []))
-            elif r.status_code in [401, 403]:
-                return {
-                    "success": False,
-                    "error": "Cookie DMS đã hết hạn (401 Unauthorized). Vui lòng đăng nhập lại VinFast DMS để làm mới Cookie!"
-                }
-            else:
-                print(f"[DMS Stock Radar] Batch warning {r.status_code}: {r.text[:200]}")
+                return data.get("value", [])
         except Exception as batch_err:
             print(f"[DMS Stock Radar] Batch exception: {batch_err}")
+        return []
+
+    chunks = [clean_vins[i:i + batch_size] for i in range(0, len(clean_vins), batch_size)]
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        for batch_result in executor.map(fetch_dms_batch, chunks):
+            if batch_result:
+                dms_records.extend(batch_result)
+
 
     # Gom nhóm theo VIN
     dms_by_vin = {}
