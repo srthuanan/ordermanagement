@@ -3,6 +3,7 @@ import { getStorageItem, logAction, ApiResult, postApi, getExteriorColorName, ge
 import { createNotification } from './notificationService';
 import { StockVehicle } from '../../types';
 import { versionsMap } from '../../constants';
+import { resolveMaterialVersionCode } from './orderService';
 
 export const normalizeCarModelAndVersion = (rawModel: string, rawVersion: string = ''): { dong_xe: string; phien_ban: string } => {
     if (!rawModel) return { dong_xe: '', phien_ban: rawVersion };
@@ -187,6 +188,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
             const finalSoMay = plan?.so_may || master?.so_may || '';
             const finalMaDms = plan?.ma_dms || master?.khu_vuc || '';
             const finalViTri = plan?.vi_tri || '';
+            const finalMaPhienBan = resolveMaterialVersionCode(finalModel, finalVersion, master?.ma_phien_ban || plan?.ma_phien_ban);
 
             const { error: insErr } = await supabaseAdmin.from('khoxe').insert([{ 
                 vin, 
@@ -196,6 +198,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
                 noi_that: finalInt, 
                 so_may: finalSoMay, 
                 ma_dms: finalMaDms, 
+                ma_phien_ban: finalMaPhienBan,
                 vi_tri: finalViTri,
                 trang_thai: 'Chưa ghép', 
                 ngay_nhap: new Date().toISOString() 
@@ -243,6 +246,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
                 const soMay = p?.so_may || m?.so_may || '';
                 const maDms = p?.ma_dms || m?.khu_vuc || '';
                 const viTri = p?.vi_tri || '';
+                const maPhienBan = resolveMaterialVersionCode(model, version, p?.ma_phien_ban || m?.ma_phien_ban);
 
                 const { error: insErr } = await supabaseAdmin.from('khoxe').insert([{ 
                     vin, 
@@ -252,6 +256,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
                     noi_that: int, 
                     so_may: soMay, 
                     ma_dms: maDms, 
+                    ma_phien_ban: maPhienBan,
                     vi_tri: viTri,
                     trang_thai: 'Chưa ghép', 
                     ngay_nhap: new Date().toISOString() 
@@ -321,6 +326,11 @@ export const performAdminAction = async (action: string, params: Record<string, 
                 const finalMaDms = existingInStock?.ma_dms || car.ma_dms || master?.khu_vuc || plan?.ma_dms || '';
                 const finalSoMay = existingInStock?.so_may || car.so_may || master?.so_may || plan?.so_may || '';
                 const finalViTri = car.vi_tri || existingInStock?.vi_tri || plan?.vi_tri || '';
+                const finalMaPhienBan = resolveMaterialVersionCode(
+                    finalDongXe,
+                    finalPhienBan,
+                    car.ma_phien_ban || car['Mã phiên bản'] || master?.ma_phien_ban || plan?.ma_phien_ban || existingInStock?.ma_phien_ban
+                );
 
                 if (existingInStock) {
                     updatedCount++;
@@ -337,6 +347,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
                     noi_that: finalNoiThat,
                     so_may: finalSoMay,
                     ma_dms: finalMaDms,
+                    ma_phien_ban: finalMaPhienBan,
                     vi_tri: finalViTri,
                     trang_thai: existingInStock?.trang_thai || 'Chưa ghép',
                     ngay_nhap: existingInStock?.ngay_nhap || new Date().toISOString()
@@ -1424,7 +1435,20 @@ export const performAdminAction = async (action: string, params: Record<string, 
 export const updateCarInfo = async (vin: string, updates: Partial<StockVehicle>): Promise<ApiResult> => {
     try {
         const up: any = {};
-        if (updates['Dòng xe'] !== undefined) up.dong_xe = updates['Dòng xe']; if (updates['Phiên bản'] !== undefined) up.phien_ban = updates['Phiên bản']; if (updates['Ngoại thất'] !== undefined) up.ngoai_that = updates['Ngoại thất']; if (updates['Nội thất'] !== undefined) up.noi_that = updates['Nội thất']; if (updates['Mã DMS'] !== undefined) up.ma_dms = updates['Mã DMS']; if (updates['Số máy'] !== undefined) up.so_may = updates['Số máy']; if (updates.VIN !== undefined) up.vin = updates.VIN; if (updates['Vị trí'] !== undefined) up.vi_tri = updates['Vị trí']; if ((updates as any).vi_tri !== undefined) up.vi_tri = (updates as any).vi_tri;
+        if (updates['Dòng xe'] !== undefined) up.dong_xe = updates['Dòng xe']; 
+        if (updates['Phiên bản'] !== undefined) up.phien_ban = updates['Phiên bản']; 
+        if (updates['Ngoại thất'] !== undefined) up.ngoai_that = updates['Ngoại thất']; 
+        if (updates['Nội thất'] !== undefined) up.noi_that = updates['Nội thất']; 
+        if (updates['Mã DMS'] !== undefined) up.ma_dms = updates['Mã DMS']; 
+        if (updates['Số máy'] !== undefined) up.so_may = updates['Số máy']; 
+        if (updates.VIN !== undefined) up.vin = updates.VIN; 
+        if (updates['Vị trí'] !== undefined) up.vi_tri = updates['Vị trí']; 
+        if ((updates as any).vi_tri !== undefined) up.vi_tri = (updates as any).vi_tri;
+        if ((updates as any).ma_phien_ban !== undefined || updates['Mã phiên bản'] !== undefined) {
+            up.ma_phien_ban = (updates as any).ma_phien_ban || updates['Mã phiên bản'];
+        } else if (up.dong_xe || up.phien_ban) {
+            up.ma_phien_ban = resolveMaterialVersionCode(up.dong_xe, up.phien_ban);
+        }
         // [QUAN TRỌNG]: Xóa car_hold_activities trước khi đổi VIN (FK constraint)
         if (updates.VIN !== undefined && updates.VIN !== vin) {
             await supabaseAdmin.from('car_hold_activities').delete().eq('vin', vin);

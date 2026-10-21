@@ -446,6 +446,84 @@ export const getVersionCode = (version: string): string => {
 };
 
 /**
+ * Tự động giải mã hoặc suy luận Mã Phiên Bản DMS 5 ký tự (GA1RV, TI1BV, JB12V, GC12V...)
+ * cho xe trong kho hoặc đơn hàng.
+ */
+export const resolveMaterialVersionCode = (dongXe?: string, phienBan?: string, rawMaPhienBan?: string): string => {
+    // 1. Nếu rawMaPhienBan đã có sẵn và hợp lệ
+    const cleanRaw = (rawMaPhienBan || '').trim().toUpperCase();
+    if (cleanRaw && DMS_VERSION_CODE_MAP[cleanRaw]) {
+        return cleanRaw;
+    }
+    if (cleanRaw && cleanRaw.length >= 4 && cleanRaw.length <= 6 && /^[A-Z0-9]+$/.test(cleanRaw)) {
+        return cleanRaw;
+    }
+
+    const cleanVer = (phienBan || '').trim().toUpperCase();
+    if (!cleanVer && !dongXe) return cleanRaw || '';
+
+    // 2. Nếu phienBan chính là mã DMS (ví dụ: GA1RV, TI1BV...)
+    if (DMS_VERSION_CODE_MAP[cleanVer]) {
+        return cleanVer;
+    }
+
+    // 3. Nếu phienBan có mã trong ngoặc: ví dụ "Plus (GA1RV)" hoặc "(TI1BV)"
+    const matchParen = cleanVer.match(/\(([A-Z0-9]{4,6})\)/);
+    if (matchParen) {
+        return matchParen[1].toUpperCase();
+    }
+
+    // 4. Suy luận tự động dựa trên Cặp (Dòng xe + Nhóm phiên bản)
+    const modelCode = getModelCode(dongXe || '');
+    const verCode = getVersionCode(cleanVer);
+
+    if (modelCode === 'VF3') {
+        if (verCode === 'ECO') return 'TI1CV';
+        if (verCode === 'BASE') return 'GI10V';
+        return 'TI1BV'; // VF 3 Plus mặc định
+    }
+    if (modelCode === 'VF5') {
+        if (verCode === 'ECO') return 'GA1KV';
+        return 'GA1RV'; // VF 5 Plus mặc định
+    }
+    if (modelCode === 'VF6') {
+        if (verCode === 'ECO' || verCode === 'BASE') return 'JB10V';
+        return 'JB12V'; // VF 6 Plus mặc định
+    }
+    if (modelCode === 'VF7') {
+        if (verCode === 'ECO' || verCode === 'BASE') return 'HC1BV';
+        const norm = cleanVer.toLowerCase();
+        if (norm.includes('kinh') || norm.includes('glass')) return 'GC15V';
+        return 'GC12V'; // VF 7 Plus trần thép mặc định
+    }
+    if (modelCode === 'VF8') {
+        if (verCode === 'ECO') return 'ND31V';
+        return 'ND32V'; // VF 8 Plus mặc định
+    }
+    if (modelCode === 'VF9') {
+        if (verCode === 'ECO') return 'NE3LV';
+        return 'NE3MV'; // VF 9 Plus 7 chỗ mặc định
+    }
+    if (modelCode === 'ECVAN') {
+        if (verCode === 'SLIDING') return 'TG12V';
+        if (verCode === 'PLUS') return 'TG11V';
+        return 'TG10V';
+    }
+    if (modelCode === 'LIMO') {
+        if (verCode === 'MPV7') return 'SL1WV';
+        return 'SL1VV';
+    }
+    if (modelCode === 'VF2') {
+        return 'TH14V';
+    }
+    if (modelCode === 'VFE34') {
+        return 'GK1DI';
+    }
+
+    return cleanRaw || '';
+};
+
+/**
  * Trích xuất mã màu chung (tương thích ngược)
  */
 export const extractColorCode = (str: string): string => {

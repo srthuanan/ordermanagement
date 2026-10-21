@@ -380,8 +380,10 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         return;
                     }
 
-                    const carVerCode = (car.ma_phien_ban || car['Mã phiên bản'] || '').trim().toUpperCase();
-                    const dmsVerCode = (res.dmsRecord?.ten_phien_ban || res.dmsRecord?.ma_phien_ban || '').trim().toUpperCase();
+                    const rawCarVerCode = (car.ma_phien_ban || car['Mã phiên bản'] || '').trim().toUpperCase();
+                    const carVerCode = apiService.resolveMaterialVersionCode(carModel, carVersion, rawCarVerCode);
+                    const rawDmsVerCode = (res.dmsRecord?.ten_phien_ban || res.dmsRecord?.ma_phien_ban || '').trim().toUpperCase();
+                    const dmsVerCode = apiService.resolveMaterialVersionCode(dmsModel, dmsVersion, rawDmsVerCode);
 
                     // ƯU TIÊN 1: SO SÁNH TRỰC TIẾP MÃ PHIÊN BẢN CỦA VIN XE VÀ DMS (VÍ DỤ GA1RV === GA1RV)
                     if (carVerCode && dmsVerCode) {
@@ -393,9 +395,9 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                             setDmsVerification({
                                 status: 'invalid',
                                 errorType: 'version',
-                                expectedVal: dispCarVer,
-                                dmsVal: dispDmsVer,
-                                message: `Lệch Phiên bản: Xe là [${dispCarVer}] ⇄ DMS là [${dispDmsVer}].`,
+                                expectedVal: `${dispCarVer} (${carVerCode})`,
+                                dmsVal: `${dispDmsVer} (${dmsVerCode})`,
+                                message: `Lệch Phiên bản: Xe là [${dispCarVer} (${carVerCode})] ⇄ DMS là [${dispDmsVer} (${dmsVerCode})].`,
                                 details: res.details
                             });
                             return;
