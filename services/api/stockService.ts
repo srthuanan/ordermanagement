@@ -578,7 +578,7 @@ export { executeCyberApi, getResolvedCyberApiUrl, getDaemonStatus, subscribeDaem
  */
 const cyberLocalFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const urlStr = typeof input === 'string' ? input : input.toString();
-    if (urlStr.startsWith('/api/cyber') || urlStr.startsWith('/api/minvoice')) {
+    if (urlStr.startsWith('/api/cyber') || urlStr.startsWith('/api/minvoice') || urlStr.startsWith('/api/dms')) {
         return await cyberFetch(urlStr, init);
     }
     return await window.fetch(input, init);
@@ -2894,3 +2894,47 @@ export const prewarmDnxPdfs = (tickets: Array<{ stt_rec?: string; user_name?: st
     setTimeout(processNext, 2000);
 };
 
+export interface DmsRadarResult {
+    success: boolean;
+    message?: string;
+    error?: string;
+    summary?: {
+        total_stock: number;
+        updated_count: number;
+        gps_count: number;
+        sold_removed: number;
+        dealer?: string;
+        timestamp?: string;
+    };
+    cars?: Array<{
+        vin: string;
+        dong_xe?: string;
+        phien_ban?: string;
+        ma_phien_ban?: string;
+        so_may?: string;
+        ma_dms?: string;
+        has_gps?: boolean;
+        lat?: number | null;
+        lng?: number | null;
+        status?: string;
+    }>;
+}
+
+/**
+ * Gọi API quét kho xe từ VinFast DMS Radar (Serverless Python trên Vercel / Cổng 3001)
+ * Tự động đồng bộ Số máy, Mã DMS, Mã phiên bản chuẩn và tọa độ GPS Live lên Supabase
+ */
+export const triggerDmsRadarSync = async (): Promise<DmsRadarResult> => {
+    try {
+        const res = await executeCyberApi<DmsRadarResult>('/api/dms/sync-radar', {
+            method: 'POST',
+            timeoutMs: 90000
+        });
+        return res;
+    } catch (err: any) {
+        return {
+            success: false,
+            error: err.message || 'Lỗi khi gọi API VinFast DMS Radar'
+        };
+    }
+};

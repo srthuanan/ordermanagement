@@ -8,7 +8,8 @@ import MultiSelectDropdown from './ui/MultiSelectDropdown';
 import { includesNormalized } from '../utils/stringUtils';
 import AdminCarEditModal from './modals/AdminCarEditModal';
 import { SwapCarModal } from './modals/SwapCarModal';
-import { autoSyncCyberLocationsIfNeeded } from '../services/api/stockService';
+import { autoSyncCyberLocationsIfNeeded, triggerDmsRadarSync } from '../services/api/stockService';
+import DmsRadarResultModal, { DmsRadarScanResult } from './modals/DmsRadarResultModal';
 
 
 
@@ -114,6 +115,37 @@ const StockView: React.FC<StockViewProps> = ({
 
     // Admin Edit Modal
     const [adminEditVehicle, setAdminEditVehicle] = useState<StockVehicle | null>(null);
+
+    // VinFast DMS Radar On-Demand Sync
+    const [isSyncingRadar, setIsSyncingRadar] = useState(false);
+    const [dmsRadarResult, setDmsRadarResult] = useState<DmsRadarScanResult | null>(null);
+    const [isRadarModalOpen, setIsRadarModalOpen] = useState(false);
+
+    const handleTriggerDmsRadar = async () => {
+        if (isSyncingRadar) return;
+        setIsSyncingRadar(true);
+        showToast('VinFast DMS Radar', 'Đang quét kho xe trực tiếp từ VinFast DMS OData API...', 'loading', 4000);
+        try {
+            const res = await triggerDmsRadarSync();
+            if (res.success) {
+                setDmsRadarResult(res as DmsRadarScanResult);
+                setIsRadarModalOpen(true);
+                showToast(
+                    'DMS Radar Hoàn Tất',
+                    res.message || `Đã cập nhật ${res.summary?.updated_count || 0} xe và ${res.summary?.gps_count || 0} tọa độ GPS!`,
+                    'success',
+                    5000
+                );
+                refetchStock(true);
+            } else {
+                showToast('Lỗi DMS Radar', res.error || 'Không thể đồng bộ dữ liệu từ DMS', 'error', 6000);
+            }
+        } catch (err: any) {
+            showToast('Lỗi DMS Radar', err.message || 'Lỗi kết nối khi quét DMS', 'error', 6000);
+        } finally {
+            setIsSyncingRadar(false);
+        }
+    };
     // Tự động kiểm tra và đồng bộ vị trí kho ngầm (Cách 2: Cooldown 2 giờ, tiết kiệm 100% tài nguyên Render)
     useEffect(() => {
         let isMounted = true;
@@ -554,6 +586,23 @@ const StockView: React.FC<StockViewProps> = ({
                         onSearchChange={(val) => handleFilterChange({ keyword: val })}
                         onReset={handleResetFilters}
                         canReset={true}
+                        extraActions={
+                            isAdmin ? (
+                                <button
+                                    onClick={handleTriggerDmsRadar}
+                                    disabled={isSyncingRadar}
+                                    className={`h-7 lg:h-[26px] px-2.5 flex items-center justify-center rounded-xl border text-[11px] lg:text-[10px] font-black transition-all duration-200 active:scale-95 gap-1.5 shadow-xs ${
+                                        isSyncingRadar
+                                            ? 'bg-blue-500/20 text-blue-400 border-blue-500/30 cursor-not-allowed'
+                                            : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white border-blue-500/40 shadow-blue-500/20'
+                                    }`}
+                                    title="Quét trực tiếp VinFast DMS OData: Số máy, Mã DMS, Mã phiên bản chuẩn & GPS Live"
+                                >
+                                    <i className={`fas ${isSyncingRadar ? 'fa-spinner fa-spin' : 'fa-satellite-dish'} text-[10px]`}></i>
+                                    <span className="whitespace-nowrap">{isSyncingRadar ? 'Đang quét...' : 'Quét DMS Radar'}</span>
+                                </button>
+                            ) : undefined
+                        }
                     >
                         {/* Render Secondary Filters */}
                         {activeDropdowns.map(dropdown => (
@@ -609,6 +658,14 @@ const StockView: React.FC<StockViewProps> = ({
                     onClose={() => setAdminEditVehicle(null)}
                     showToast={showToast}
                     onSuccess={() => refetchStock(true)}
+                />
+            )}
+            {isAdmin && (
+                <DmsRadarResultModal
+                    isOpen={isRadarModalOpen}
+                    data={dmsRadarResult}
+                    onClose={() => setIsRadarModalOpen(false)}
+                    onRefreshStock={() => refetchStock(true)}
                 />
             )}
             {selectedSwapVehicle && (

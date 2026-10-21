@@ -88,6 +88,7 @@ from scripts.cyber_crm_service import (
 from scripts.m_invoice_service import process_single_vin, auto_fetch_upload_and_notify
 from scripts.sync_cyber_donhang_ton import run_sync_donhang_ton
 from scripts.dms_vso_lookup import lookup_dms_vso, get_dealers_list
+from scripts.dms_stock_radar import run_dms_stock_radar_sync
 
 PORT = int(os.environ.get("CYBER_LOCAL_PORT") or os.environ.get("PORT", 3001))
 
@@ -536,6 +537,22 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
             return
 
+        elif parsed.path == "/api/dms/sync-radar":
+            try:
+                res = run_dms_stock_radar_sync()
+                self.send_response(200 if res.get("success") else 400)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
         elif parsed.path == "/api/cyber/car-design-tokens":
             try:
                 qs = parse_qs(parsed.query)
@@ -684,6 +701,19 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self._send_cors_headers()
                 self.end_headers()
                 self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+        elif parsed.path in ["/api/dms/sync-radar", "/api/dms/stock-radar"]:
+            try:
+                res = run_dms_stock_radar_sync()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -1516,6 +1546,19 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self._send_cors_headers()
                 self.end_headers()
                 self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+        elif parsed.path in ["/api/dms/sync-radar", "/api/dms/stock-radar"]:
+            try:
+                res = run_dms_stock_radar_sync()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, default=str, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
