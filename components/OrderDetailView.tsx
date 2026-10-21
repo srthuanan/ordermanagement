@@ -775,7 +775,6 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         }
 
         setIsCheckingTd4(true);
-        setTd4CheckToast({ message: 'Đang kết nối CyberSoft tra cứu tiến độ phê duyệt...', type: 'info' });
         try {
             const res = await lookupCyberVinWarehouse([targetVin]);
             if (res && res.success) {
@@ -820,33 +819,18 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                         vin: targetVin,
                         so_khung: targetVin
                     });
-                    setTd4CheckToast({
-                        message: `Đã cập nhật: Phiếu ${td?.so_ct || 'TD4'} (${postName})`,
-                        type: 'success'
-                    });
                     showToast?.('Tiến độ giấy ra cổng', `Phiếu ${td?.so_ct || 'TD4'} — [${postName}]`, 'success');
                 } else {
-                    setTd4CheckToast({
-                        message: 'Chưa có Phiếu Ra Cổng (TD4) trên CyberSoft cho xe này.',
-                        type: 'warning'
-                    });
                     showToast?.('Giấy ra cổng', 'Xe chưa được lập phiếu ra cổng trên phần mềm CyberSoft.', 'info');
                 }
             } else {
-                setTd4CheckToast({
-                    message: res?.error || 'Không thể tra cứu dữ liệu từ CyberSoft.',
-                    type: 'warning'
-                });
+                showToast?.('Tra cứu thất bại', res?.error || 'Không thể tra cứu dữ liệu từ CyberSoft.', 'warning');
             }
         } catch (e: any) {
             console.error("Lỗi tra cứu TD4:", e);
-            setTd4CheckToast({
-                message: 'Lỗi kết nối: ' + (e.message || 'Lỗi mạng'),
-                type: 'warning'
-            });
+            showToast?.('Lỗi tra cứu', 'Lỗi kết nối: ' + (e.message || 'Lỗi mạng'), 'warning');
         } finally {
             setIsCheckingTd4(false);
-            setTimeout(() => setTd4CheckToast(null), 5000);
         }
     };
 
