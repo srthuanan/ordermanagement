@@ -2336,6 +2336,50 @@ export const lookupCyberVinWarehouse = async (vinOrVins: string | string[]): Pro
     }
 };
 
+export const checkCyberTd4Status = async (vin: string): Promise<{
+    success: boolean;
+    has_td4: boolean;
+    td4?: any;
+    error?: string;
+}> => {
+    try {
+        if (!vin) return { success: false, has_td4: false, error: 'Thiếu số VIN' };
+        const cleanVin = vin.trim().toUpperCase();
+        const endpoints = getCyberEndpoints('/api/cyber/check-td4-status');
+        let lastErrorMsg = '';
+
+        for (const endpoint of endpoints) {
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ vin: cleanVin, _t: Date.now() })
+                });
+                const data = await res.json().catch(() => null);
+                if (res.ok && data && typeof data === 'object') {
+                    return data;
+                } else if (data?.error) {
+                    lastErrorMsg = data.error;
+                }
+            } catch (err: any) {
+                lastErrorMsg = err.message || '';
+            }
+        }
+        // Fallback: use lookupCyberVinWarehouse
+        const lookup = await lookupCyberVinWarehouse(cleanVin);
+        const car = lookup.cars?.[0] || lookup;
+        return {
+            success: lookup.success,
+            has_td4: Boolean(car?.has_td4 || car?.td4),
+            td4: car?.td4 || lookup.td4,
+            error: lookup.error
+        };
+    } catch (err: any) {
+        console.error("Lỗi checkCyberTd4Status:", err);
+        return { success: false, has_td4: false, error: err.message };
+    }
+};
+
 export interface CyberVoucherTicketItem {
     voucher_type: 'DNX' | 'TD4' | string;
     voucher_name: string;
@@ -2346,6 +2390,7 @@ export interface CyberVoucherTicketItem {
     ma_ct?: string;
     so_khung?: string;
     ma_post?: string;
+    ten_post?: string;
     ma_ttcp?: string;
     dien_giai?: string;
     ghi_chu?: string;

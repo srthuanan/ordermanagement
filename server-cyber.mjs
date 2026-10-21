@@ -166,6 +166,7 @@ async function handleCyberAction(pathname, method, body, queryParams = {}) {
             return await executePython([scriptPath, '--create-dnx'], mergedJson);
 
         case '/api/cyber/lookup-vin':
+        case '/api/cyber/check-td4-status':
             return await executePython([scriptPath, '--lookup-vin'], mergedJson);
 
         case '/api/cyber/voucher-tickets':

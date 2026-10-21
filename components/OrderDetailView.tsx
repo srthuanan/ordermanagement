@@ -354,10 +354,57 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
         return true;
     }, [resolvedOrder?.VIN, isCarInTransit, cyberCarStatus?.ma_kho, matchedStockVehicle, currentCarLocation]);
 
-    // Order Audit Trail States
-    const [activeRightTab, setActiveRightTab] = useState<'MILESTONES' | 'AUDIT_TRAIL'>('MILESTONES');
+    // Order Audit Trail & Gate Pass (TD4) States
+    const [activeRightTab, setActiveRightTab] = useState<'MILESTONES' | 'AUDIT_TRAIL' | 'TD4'>('MILESTONES');
     const [auditLogs, setAuditLogs] = useState<OrderAuditLogItem[]>([]);
     const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+    const [isCheckingTd4, setIsCheckingTd4] = useState(false);
+    const [td4CheckToast, setTd4CheckToast] = useState<{ message: string; type: 'success' | 'info' | 'warning' } | null>(null);
+
+    // Tính toán thông tin & tiến trình duyệt Phiếu Ra Cổng (TD4)
+    const td4Info = useMemo(() => {
+        const td = printTd4Data || cyberCarStatus?.td4_data || (cyberCarStatus as any)?.td4 || null;
+        const post = String(td?.ma_post || (hasExistingTd4 ? '3' : '')).trim();
+        const soCt = td?.so_ct || cyberCarStatus?.so_ct_td4 || (resolvedOrder as any)?.so_ct_td4 || (resolvedOrder as any)?.['Số CT TD4'] || (hasExistingTd4 ? 'TD4' : '');
+        
+        let label = 'Chưa lập phiếu';
+        let badgeColor = 'bg-slate-100 text-slate-600 border-slate-200';
+        let activeStep = 0; // 0: none, 1: lap phieu, 2: ke toan, 3: giam doc, 4: ra cong
+
+        if (hasExistingTd4 || td) {
+            if (post === '9') {
+                label = 'Đã ra cổng';
+                badgeColor = 'bg-emerald-500 text-white border-emerald-600';
+                activeStep = 4;
+            } else if (post === '5') {
+                label = 'GĐ duyệt';
+                badgeColor = 'bg-purple-600 text-white border-purple-700';
+                activeStep = 3;
+            } else if (post === '4') {
+                label = 'Kế toán duyệt';
+                badgeColor = 'bg-blue-600 text-white border-blue-700';
+                activeStep = 2;
+            } else if (post === '1') {
+                label = 'Đã hủy';
+                badgeColor = 'bg-rose-600 text-white border-rose-700';
+                activeStep = -1;
+            } else {
+                label = 'Lập phiếu';
+                badgeColor = 'bg-amber-500 text-white border-amber-600';
+                activeStep = 1;
+            }
+        }
+
+        return {
+            hasTd4: Boolean(hasExistingTd4 || td),
+            soCt,
+            post,
+            label,
+            badgeColor,
+            activeStep,
+            td
+        };
+    }, [printTd4Data, cyberCarStatus, hasExistingTd4, resolvedOrder]);
 
     const fetchAuditLogs = React.useCallback(async (orderNo: string) => {
         if (!orderNo) return;
@@ -441,15 +488,19 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                     setHasTd4(true);
                     const td = carStatus.td4_data || carStatus.td4;
                     if (td) {
+                        const post = String(td.ma_post || '3');
                         setPrintTd4Data({
                             voucher_type: 'TD4',
                             voucher_name: 'Phiếu Hẹn Giao Xe / Giấy Ra Cổng (TD4)',
                             stt_rec: td.stt_rec || '',
                             so_ct: td.so_ct || 'TD4',
                             ngay_ct: td.ngay_ct || '',
+                            gio_ct: td.gio_ct || '',
                             ma_ct: 'TD4',
-                            ma_post: td.ma_post || '3',
+                            ma_post: post,
+                            ten_post: td.ten_post || (post === '9' ? 'Đã ra cổng' : post === '5' ? 'Giám đốc duyệt' : post === '4' ? 'Kế toán duyệt' : 'Lập phiếu'),
                             dien_giai: td.dien_giai || 'Phiếu giao xe / Giấy ra cổng',
+                            ghi_chu: td.ghi_chu || '',
                             ten_kh: td.ten_kh || resolvedOrder?.['Tên khách hàng'] || '',
                             so_hd: td.so_hd || resolvedOrder?.['Số hợp đồng'] || '',
                             so_may: td.so_may || (resolvedOrder as any)?.['Số máy'] || '',
@@ -457,6 +508,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                             tong_tien: Number(td.tong_tien || 0),
                             da_thanh_toan: Number(td.da_thanh_toan || 0),
                             con_lai: Number(td.con_lai || 0),
+                            nvkd: td.nvkd || resolvedOrder?.['Tên tư vấn bán hàng'] || '',
                             vin: vin || '',
                             so_khung: vin || ''
                         });
@@ -687,15 +739,19 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     const handleOpenPrintTd4 = () => {
         if (!printTd4Data && (cyberCarStatus?.td4_data || (cyberCarStatus as any)?.td4)) {
             const td = cyberCarStatus?.td4_data || (cyberCarStatus as any)?.td4;
+            const post = String(td.ma_post || '3');
             setPrintTd4Data({
                 voucher_type: 'TD4',
                 voucher_name: 'Phiếu Hẹn Giao Xe / Giấy Ra Cổng (TD4)',
                 stt_rec: td.stt_rec || '',
                 so_ct: td.so_ct || 'TD4',
                 ngay_ct: td.ngay_ct || '',
+                gio_ct: td.gio_ct || '',
                 ma_ct: 'TD4',
-                ma_post: td.ma_post || '3',
+                ma_post: post,
+                ten_post: td.ten_post || (post === '9' ? 'Đã ra cổng' : post === '5' ? 'Giám đốc duyệt' : post === '4' ? 'Kế toán duyệt' : 'Lập phiếu'),
                 dien_giai: td.dien_giai || 'Phiếu giao xe / Giấy ra cổng',
+                ghi_chu: td.ghi_chu || '',
                 ten_kh: td.ten_kh || resolvedOrder?.['Tên khách hàng'] || '',
                 so_hd: td.so_hd || resolvedOrder?.['Số hợp đồng'] || '',
                 so_may: td.so_may || (resolvedOrder as any)?.['Số máy'] || '',
@@ -703,11 +759,96 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 tong_tien: Number(td.tong_tien || 0),
                 da_thanh_toan: Number(td.da_thanh_toan || 0),
                 con_lai: Number(td.con_lai || 0),
+                nvkd: td.nvkd || resolvedOrder?.['Tên tư vấn bán hàng'] || '',
                 vin: resolvedOrder?.VIN || '',
                 so_khung: resolvedOrder?.VIN || ''
             });
         }
         setIsPrintTd4Open(true);
+    };
+
+    // Hàm tra cứu trực tiếp tiến độ duyệt TD4 từ CyberSoft ERP theo thời gian thực
+    const handleRefreshTd4Status = async () => {
+        const targetVin = (resolvedOrder?.VIN || (resolvedOrder as any)?.vin || '').trim().toUpperCase();
+        if (!targetVin) {
+            showToast?.('Chưa có VIN', 'Đơn hàng chưa có số VIN để kiểm tra phiếu ra cổng.', 'warning');
+            return;
+        }
+
+        setIsCheckingTd4(true);
+        setTd4CheckToast({ message: 'Đang kết nối CyberSoft tra cứu tiến độ phê duyệt...', type: 'info' });
+        try {
+            const res = await lookupCyberVinWarehouse([targetVin]);
+            if (res && res.success) {
+                const car = res.cars?.[0] || res;
+                if (car.has_td4 || car.td4) {
+                    const td = car.td4 || res.td4;
+                    const post = String(td?.ma_post || '3');
+                    const postName = td?.ten_post || (post === '9' ? 'Đã ra cổng' : post === '5' ? 'Giám đốc duyệt' : post === '4' ? 'Kế toán duyệt' : 'Lập phiếu');
+                    
+                    setCyberCarStatus((prev: any) => ({
+                        ...(prev || {}),
+                        vin: targetVin,
+                        ma_kho: res.ma_kho || car.ma_kho || prev?.ma_kho,
+                        ten_kho: res.ten_kho || car.ten_kho || prev?.ten_kho,
+                        has_td4: true,
+                        so_ct_td4: td?.so_ct,
+                        ngay_ct_td4: td?.ngay_ct,
+                        td4_data: td,
+                        td4: td
+                    }));
+                    setHasTd4(true);
+                    setPrintTd4Data({
+                        voucher_type: 'TD4',
+                        voucher_name: 'Phiếu Hẹn Giao Xe / Giấy Ra Cổng (TD4)',
+                        stt_rec: td?.stt_rec || '',
+                        so_ct: td?.so_ct || 'TD4',
+                        ngay_ct: td?.ngay_ct || '',
+                        gio_ct: td?.gio_ct || '',
+                        ma_ct: 'TD4',
+                        ma_post: post,
+                        ten_post: postName,
+                        dien_giai: td?.dien_giai || 'Phiếu giao xe / Giấy ra cổng',
+                        ghi_chu: td?.ghi_chu || '',
+                        ten_kh: td?.ten_kh || resolvedOrder?.['Tên khách hàng'] || '',
+                        so_hd: td?.so_hd || resolvedOrder?.['Số hợp đồng'] || '',
+                        so_may: td?.so_may || (resolvedOrder as any)?.['Số máy'] || '',
+                        loai_xe: td?.loai_xe || resolvedOrder?.['Dòng xe'] || '',
+                        tong_tien: Number(td?.tong_tien || 0),
+                        da_thanh_toan: Number(td?.da_thanh_toan || 0),
+                        con_lai: Number(td?.con_lai || 0),
+                        nvkd: td?.nvkd || resolvedOrder?.['Tên tư vấn bán hàng'] || '',
+                        vin: targetVin,
+                        so_khung: targetVin
+                    });
+                    setTd4CheckToast({
+                        message: `Đã cập nhật: Phiếu ${td?.so_ct || 'TD4'} (${postName})`,
+                        type: 'success'
+                    });
+                    showToast?.('Tiến độ giấy ra cổng', `Phiếu ${td?.so_ct || 'TD4'} — [${postName}]`, 'success');
+                } else {
+                    setTd4CheckToast({
+                        message: 'Chưa có Phiếu Ra Cổng (TD4) trên CyberSoft cho xe này.',
+                        type: 'warning'
+                    });
+                    showToast?.('Giấy ra cổng', 'Xe chưa được lập phiếu ra cổng trên phần mềm CyberSoft.', 'info');
+                }
+            } else {
+                setTd4CheckToast({
+                    message: res?.error || 'Không thể tra cứu dữ liệu từ CyberSoft.',
+                    type: 'warning'
+                });
+            }
+        } catch (e: any) {
+            console.error("Lỗi tra cứu TD4:", e);
+            setTd4CheckToast({
+                message: 'Lỗi kết nối: ' + (e.message || 'Lỗi mạng'),
+                type: 'warning'
+            });
+        } finally {
+            setIsCheckingTd4(false);
+            setTimeout(() => setTd4CheckToast(null), 5000);
+        }
     };
 
     const handleOpenTransferMode = async () => {
@@ -1861,14 +2002,19 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                         <div className="flex items-center gap-2 min-w-0">
                                             <i className="fas fa-id-card text-violet-600 shrink-0 text-sm"></i>
                                             <div className="min-w-0">
-                                                <span className="font-bold">Xe đã có Phiếu Hẹn Giao Xe / Ra Cổng: {printTd4Data?.so_ct || cyberCarStatus?.so_ct_td4 || (resolvedOrder as any)?.so_ct_td4 || (resolvedOrder as any)?.['Số CT TD4'] || 'TD4'}</span>
-                                                <p className="text-[11px] text-violet-700 mt-0.5">Xe đã được lập thủ tục giao xe cho khách hàng, không thể tạo yêu cầu điều chuyển.</p>
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <span className="font-bold">Phiếu Ra Cổng (TD4): {td4Info.soCt || 'TD4'}</span>
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${td4Info.badgeColor}`}>
+                                                        {td4Info.label}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[11px] text-violet-700 mt-0.5">Xe đã được lập thủ tục giao xe cho khách hàng, hệ thống khóa chức năng điều chuyển.</p>
                                             </div>
                                         </div>
                                         <button
                                             type="button"
                                             onClick={handleOpenPrintTd4}
-                                            className="px-2.5 py-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-bold text-[11px] shrink-0 flex items-center gap-1 cursor-pointer"
+                                            className="px-2.5 py-1 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-bold text-[11px] shrink-0 flex items-center gap-1 cursor-pointer shadow-2xs"
                                         >
                                             <i className="fas fa-print"></i>
                                             <span>Xem TD4</span>
@@ -2258,31 +2404,31 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                             {/* Minimalist Split Panels: Unified Timeline & Customer Privileges */}
                             <div className="flex-1 min-h-0 bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 md:p-4 flex flex-col justify-between overflow-y-auto">
                                 {/* Segmented Tab Switcher (macOS / iOS Minimalist Style) */}
-                                <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 shrink-0">
-                                    <div className="flex items-center p-1 bg-slate-100 rounded-xl">
+                                <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100 shrink-0 overflow-x-auto no-scrollbar">
+                                    <div className="flex items-center gap-1 p-0.5 sm:p-1 bg-slate-100 rounded-xl shrink-0 flex-nowrap whitespace-nowrap">
                                         <button
                                             type="button"
                                             onClick={() => setActiveRightTab('MILESTONES')}
-                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer ${
+                                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                                                 activeRightTab === 'MILESTONES'
                                                     ? 'bg-white text-slate-900 shadow-sm'
                                                     : 'text-slate-500 hover:text-slate-800'
                                             }`}
                                         >
                                             <i className="fa-solid fa-bars-progress text-sky-500 text-[10px]"></i>
-                                            <span>Tiến Độ &amp; Chính Sách</span>
+                                            <span>Tiến Độ</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setActiveRightTab('AUDIT_TRAIL')}
-                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer ${
+                                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                                                 activeRightTab === 'AUDIT_TRAIL'
                                                     ? 'bg-white text-slate-900 shadow-sm'
                                                     : 'text-slate-500 hover:text-slate-800'
                                             }`}
                                         >
                                             <i className="fa-solid fa-clock-rotate-left text-amber-500 text-[10px]"></i>
-                                            <span>Nhật Ký Thay Đổi</span>
+                                            <span>Nhật Ký</span>
                                             {auditLogs.length > 0 && (
                                                 <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
                                                     activeRightTab === 'AUDIT_TRAIL'
@@ -2293,20 +2439,73 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                 </span>
                                             )}
                                         </button>
-                                    </div>
 
-                                    {activeRightTab === 'AUDIT_TRAIL' ? (
+                                        {/* Tab 3: Giấy Ra Cổng */}
                                         <button
                                             type="button"
-                                            onClick={() => resolvedOrder?.['Số đơn hàng'] && fetchAuditLogs(resolvedOrder['Số đơn hàng'])}
-                                            disabled={isLoadingLogs}
-                                            className="px-2.5 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-sky-600 text-[10px] font-bold transition-all border border-slate-200 shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                                            title="Làm mới lịch sử"
+                                            onClick={() => setActiveRightTab('TD4')}
+                                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10.5px] font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+                                                activeRightTab === 'TD4'
+                                                    ? 'bg-white text-slate-900 shadow-sm'
+                                                    : 'text-slate-500 hover:text-slate-800'
+                                            }`}
                                         >
-                                            <i className={`fas fa-rotate-right text-[9px] ${isLoadingLogs ? 'animate-spin text-sky-600' : ''}`}></i>
-                                            <span className="hidden sm:inline">Làm mới</span>
+                                            <i className="fa-solid fa-id-card text-violet-500 text-[10px]"></i>
+                                            <span>Giấy Ra Cổng</span>
+                                            {td4Info.hasTd4 && (
+                                                <span 
+                                                    className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
+                                                        activeRightTab === 'TD4'
+                                                            ? 'bg-violet-100 text-violet-800'
+                                                            : 'bg-slate-200 text-slate-700'
+                                                    }`}
+                                                    title={td4Info.post ? `CyberSoft: Post ${td4Info.post}` : undefined}
+                                                >
+                                                    {td4Info.post === '9' ? 'Đã ra' : td4Info.post === '5' ? 'GĐ duyệt' : td4Info.post === '4' ? 'KT duyệt' : td4Info.label}
+                                                </span>
+                                            )}
                                         </button>
-                                    ) : null}
+                                    </div>
+
+                                    {/* Action Buttons bên phải */}
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        {activeRightTab === 'TD4' ? (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleRefreshTd4Status}
+                                                    disabled={isCheckingTd4 || !resolvedOrder?.VIN}
+                                                    className="px-2 py-1 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 text-[10px] font-bold transition-all border border-violet-200 shadow-2xs flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                                    title="Kiểm tra trạng thái từ CyberSoft"
+                                                >
+                                                    <i className={`fas fa-rotate-right text-[9px] ${isCheckingTd4 ? 'animate-spin text-violet-600' : ''}`}></i>
+                                                    <span>Kiểm tra</span>
+                                                </button>
+                                                {td4Info.hasTd4 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleOpenPrintTd4}
+                                                        className="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
+                                                        title="In phiếu ra cổng (TD4)"
+                                                    >
+                                                        <i className="fas fa-print text-[9px]"></i>
+                                                        <span>In</span>
+                                                    </button>
+                                                )}
+                                            </>
+                                        ) : activeRightTab === 'AUDIT_TRAIL' ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => resolvedOrder?.['Số đơn hàng'] && fetchAuditLogs(resolvedOrder['Số đơn hàng'])}
+                                                disabled={isLoadingLogs}
+                                                className="px-2 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-sky-600 text-[10px] font-bold transition-all border border-slate-200 shadow-2xs flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                                title="Làm mới lịch sử"
+                                            >
+                                                <i className={`fas fa-rotate-right text-[9px] ${isLoadingLogs ? 'animate-spin text-sky-600' : ''}`}></i>
+                                                <span>Làm mới</span>
+                                            </button>
+                                        ) : null}
+                                    </div>
                                 </div>
 
                                 {activeRightTab === 'MILESTONES' ? (
@@ -2358,18 +2557,36 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                         time: cocReceivedDate ? formatDateDisplay(cocReceivedDate) : 'Chưa có COC',
                                                         isDone: Boolean(cocReceivedDate),
                                                         icon: 'fa-shield-halved'
+                                                    },
+                                                    {
+                                                        id: 6,
+                                                        title: '6. Giấy Ra Cổng',
+                                                        time: td4Info.hasTd4 
+                                                            ? (td4Info.soCt || 'Đã lập phiếu')
+                                                            : 'Chưa lập phiếu',
+                                                        isDone: td4Info.post === '9',
+                                                        badge: td4Info.hasTd4 ? td4Info.label : null,
+                                                        icon: 'fa-id-card',
+                                                        onClick: () => setActiveRightTab('TD4')
                                                     }
                                                 ];
 
                                                 return (
                                                     <div className="relative flex-1 flex flex-col justify-between py-1 pl-6 before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-[2px] before:bg-slate-200">
-                                                        {steps.map((st) => (
-                                                            <div key={st.id} className="relative flex items-center justify-between group py-1">
+                                                        {steps.map((st: any) => (
+                                                            <div 
+                                                                key={st.id} 
+                                                                onClick={st.onClick}
+                                                                className={`relative flex items-center justify-between group py-1 ${st.onClick ? 'cursor-pointer' : ''}`}
+                                                                title={st.onClick ? 'Click để xem rõ chi tiết tiến trình duyệt giấy ra cổng' : undefined}
+                                                            >
                                                                 {/* Automotive Semantic Micro-Badge Node */}
                                                                 <div className={`absolute -left-[25px] w-[26px] h-[26px] rounded-xl flex items-center justify-center transition-all ${
                                                                     st.isDone 
                                                                         ? 'bg-emerald-50 text-emerald-600 border border-emerald-300 shadow-xs ring-4 ring-white' 
-                                                                        : 'bg-slate-100 text-slate-400 border border-slate-200 ring-4 ring-white'
+                                                                        : st.id === 6 && td4Info.hasTd4
+                                                                            ? 'bg-violet-50 text-violet-600 border border-violet-300 shadow-xs ring-4 ring-white'
+                                                                            : 'bg-slate-100 text-slate-400 border border-slate-200 ring-4 ring-white'
                                                                 }`}>
                                                                     <i className={`fas ${st.icon} text-[10.5px]`}></i>
                                                                     {st.isDone && (
@@ -2383,23 +2600,34 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                                 <div className={`flex-1 ml-2 px-3 py-1.5 rounded-xl border transition-all flex items-center justify-between gap-2 ${
                                                                     st.isDone 
                                                                         ? 'bg-slate-50/80 border-slate-200 hover:bg-slate-100/80' 
-                                                                        : 'bg-slate-50/30 border-slate-100 opacity-60'
+                                                                        : st.id === 6 && td4Info.hasTd4
+                                                                            ? 'bg-violet-50/40 border-violet-200 hover:bg-violet-100/60'
+                                                                            : 'bg-slate-50/30 border-slate-100 opacity-60'
                                                                 }`}>
                                                                     <div className="min-w-0">
-                                                                        <p className="text-[9.5px] font-semibold text-slate-400 uppercase tracking-wider leading-none mb-1">
+                                                                        <p className="text-[9.5px] font-semibold text-slate-400 uppercase tracking-wider leading-none mb-1 truncate">
                                                                             {st.title}
                                                                         </p>
-                                                                        <p className="text-[11px] font-bold text-slate-800 tracking-tight tabular-nums leading-none">
+                                                                        <p className="text-[11px] font-bold text-slate-800 tracking-tight tabular-nums leading-none truncate">
                                                                             {st.time}
                                                                         </p>
                                                                     </div>
 
-                                                                    {st.badge && (
-                                                                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/90 border border-emerald-300/60 px-2 py-0.5 rounded-md leading-none tabular-nums flex items-center gap-1 shrink-0">
-                                                                            <i className="fas fa-clock text-[8px]"></i>
-                                                                            <span>{st.badge}</span>
-                                                                        </span>
-                                                                    )}
+                                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                                        {st.badge && (
+                                                                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md leading-none tabular-nums flex items-center gap-1 ${
+                                                                                st.id === 6 
+                                                                                    ? (td4Info.post === '9' ? 'text-emerald-700 bg-emerald-100/90 border border-emerald-300/60' : 'text-violet-700 bg-violet-100/90 border border-violet-300/60')
+                                                                                    : 'text-emerald-700 bg-emerald-100/90 border border-emerald-300/60'
+                                                                            }`}>
+                                                                                <i className="fas fa-clock text-[8px]"></i>
+                                                                                <span>{st.badge}</span>
+                                                                            </span>
+                                                                        )}
+                                                                        {st.onClick && (
+                                                                            <i className="fas fa-arrow-up-right-from-square text-[8.5px] text-violet-400 group-hover:text-violet-600 transition-colors"></i>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         ))}
@@ -2449,7 +2677,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             </div>
                                         </div>
                                     </div>
-                                ) : (
+                                ) : activeRightTab === 'AUDIT_TRAIL' ? (
                                     /* Audit Trail Timeline View */
                                     <div className="flex-1 min-h-0 overflow-y-auto pr-1">
                                         {isLoadingLogs ? (
@@ -2564,7 +2792,152 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                             </div>
                                         )}
                                     </div>
+                                ) : (
+                                    /* Tab 3: Giấy Ra Cổng (TD4) - Tinh gọn tối đa, 1 khối tập trung 4 bước */
+                                    <div className="flex-1 flex flex-col justify-between max-w-xl mx-auto w-full py-1 px-1 sm:px-2">
+                                        {/* Tiêu đề tóm tắt phiếu & trạng thái */}
+                                        <div className="flex items-center justify-between pb-2 mb-1.5 border-b border-slate-100 shrink-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <i className="fa-solid fa-id-card text-sky-500 text-xs"></i>
+                                                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Phiếu Ra Cổng:</span>
+                                                <span 
+                                                    onClick={() => {
+                                                        if (td4Info.soCt) {
+                                                            navigator.clipboard.writeText(td4Info.soCt);
+                                                            showToast?.('Đã sao chép', `Đã copy số phiếu: ${td4Info.soCt}`, 'info');
+                                                        }
+                                                    }}
+                                                    className="font-mono font-bold text-xs text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 cursor-pointer hover:bg-sky-100 transition-all"
+                                                    title="Click để copy số chứng từ"
+                                                >
+                                                    {td4Info.soCt || 'Chưa lập'}
+                                                </span>
+                                                {td4Info.td?.ngay_ct && (
+                                                    <span className="text-[10.5px] text-slate-400 font-medium">
+                                                        ({formatDateDisplay(td4Info.td.ngay_ct)}{td4Info.td?.gio_ct ? ` • ${td4Info.td.gio_ct}` : ''})
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className={`text-[9.5px] font-extrabold px-2.5 py-0.5 rounded-md border shrink-0 ${td4Info.hasTd4 ? td4Info.badgeColor : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                                                {td4Info.hasTd4 ? td4Info.label : 'Chưa lập phiếu'}
+                                            </span>
+                                        </div>
+
+                                        {/* 4 Bước Phê Duyệt Tuyến Tính */}
+                                        {(() => {
+                                            const post = td4Info.post;
+                                            const isCancelled = post === '1';
+                                            const isStep1Done = td4Info.hasTd4 && !isCancelled;
+                                            const isStep2Done = td4Info.hasTd4 && !isCancelled && ['4', '5', '9'].includes(post);
+                                            const isStep3Done = td4Info.hasTd4 && !isCancelled && ['5', '9'].includes(post);
+                                            const isStep4Done = td4Info.hasTd4 && !isCancelled && post === '9';
+
+                                            const pipelineSteps = [
+                                                {
+                                                    id: 1,
+                                                    title: '1. Lập Phiếu Ra Cổng',
+                                                    actor: 'TVBH / Sale Admin',
+                                                    timeText: td4Info.td?.ngay_ct ? `${formatDateDisplay(td4Info.td.ngay_ct)} ${td4Info.td?.gio_ct || ''}`.trim() : (isStep1Done ? 'Đã khởi tạo' : 'Chưa lập phiếu'),
+                                                    badge: isStep1Done ? 'ĐÃ KHỞI TẠO' : 'CHƯA LẬP',
+                                                    isDone: isStep1Done,
+                                                    isCurrent: false,
+                                                    icon: 'fa-file-signature'
+                                                },
+                                                {
+                                                    id: 2,
+                                                    title: '2. Kế Toán Phê Duyệt',
+                                                    actor: 'Kế toán công nợ',
+                                                    timeText: isStep2Done ? 'Đã duyệt điều kiện thanh toán' : (post === '3' ? 'Đang chờ Kế toán duyệt' : 'Chờ bước trước'),
+                                                    badge: isStep2Done ? 'ĐÃ DUYỆT' : (post === '3' ? 'ĐANG CHỜ' : 'CHỜ'),
+                                                    isDone: isStep2Done,
+                                                    isCurrent: post === '3',
+                                                    icon: 'fa-file-invoice-dollar'
+                                                },
+                                                {
+                                                    id: 3,
+                                                    title: '3. Giám Đốc Phê Duyệt',
+                                                    actor: 'Ban Giám Đốc',
+                                                    timeText: isStep3Done ? 'Ban Giám Đốc đã ký duyệt' : (post === '4' ? 'Đang chờ Giám đốc ký' : 'Chờ bước trước'),
+                                                    badge: isStep3Done ? 'ĐÃ DUYỆT' : (post === '4' ? 'ĐANG CHỜ' : 'CHỜ'),
+                                                    isDone: isStep3Done,
+                                                    isCurrent: post === '4',
+                                                    icon: 'fa-signature'
+                                                },
+                                                {
+                                                    id: 4,
+                                                    title: '4. Xe Lăn Bánh Ra Cổng',
+                                                    actor: 'Thủ kho & Bảo vệ',
+                                                    timeText: isStep4Done ? 'Xe đã hoàn tất ra cổng giao KH' : (post === '5' ? 'Sẵn sàng! Chờ xe qua cổng' : 'Chưa ra cổng'),
+                                                    badge: isStep4Done ? 'ĐÃ QUA CỔNG' : (post === '5' ? 'SẴN SÀNG' : 'CHƯA RA'),
+                                                    isDone: isStep4Done,
+                                                    isCurrent: post === '5',
+                                                    icon: 'fa-truck-ramp-box'
+                                                }
+                                            ];
+
+                                            return (
+                                                <div className="relative flex-1 flex flex-col justify-between py-1 pl-6 before:absolute before:left-[11px] before:top-3 before:bottom-3 before:w-[2px] before:bg-slate-200">
+                                                    {pipelineSteps.map((st) => (
+                                                        <div key={st.id} className="relative flex items-center justify-between group py-1.5">
+                                                            {/* Node tròn */}
+                                                            <div className={`absolute -left-[25px] w-[26px] h-[26px] rounded-xl flex items-center justify-center transition-all ${
+                                                                st.isDone 
+                                                                    ? 'bg-emerald-50 text-emerald-600 border border-emerald-300 shadow-xs ring-4 ring-white' 
+                                                                    : st.isCurrent
+                                                                        ? 'bg-amber-50 text-amber-600 border border-amber-300 shadow-xs ring-4 ring-white'
+                                                                        : 'bg-slate-100 text-slate-400 border border-slate-200 ring-4 ring-white'
+                                                            }`}>
+                                                                <i className={`fas ${st.icon} text-[10.5px]`}></i>
+                                                                {st.isDone && (
+                                                                    <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[7px] ring-1.5 ring-white shadow-2xs">
+                                                                        <i className="fas fa-check"></i>
+                                                                    </span>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Nội dung dòng */}
+                                                            <div className={`flex-1 ml-2 px-3.5 py-2 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                                                                st.isDone 
+                                                                    ? 'bg-slate-50/80 border-slate-200 hover:bg-slate-100/80' 
+                                                                    : st.isCurrent
+                                                                        ? 'bg-amber-50/70 border-amber-300 hover:bg-amber-100/80 ring-1 ring-amber-400/30'
+                                                                        : 'bg-slate-50/30 border-slate-100 opacity-60'
+                                                            }`}>
+                                                                <div className="min-w-0">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">
+                                                                            {st.title}
+                                                                        </span>
+                                                                        <span className="text-[9.5px] text-slate-400 font-normal">
+                                                                            ({st.actor})
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className="text-[11.5px] font-bold text-slate-800 tracking-tight leading-none mt-1">
+                                                                        {st.timeText}
+                                                                    </p>
+                                                                </div>
+
+                                                                <div className="shrink-0">
+                                                                    <span className={`text-[9.5px] font-extrabold px-2 py-0.5 rounded-md leading-none flex items-center gap-1 ${
+                                                                        st.isDone
+                                                                            ? 'text-emerald-700 bg-emerald-100/90 border border-emerald-300/60'
+                                                                            : st.isCurrent
+                                                                                ? 'text-amber-800 bg-amber-100/90 border border-amber-300/60'
+                                                                                : 'text-slate-400 bg-slate-100 border border-slate-200'
+                                                                    }`}>
+                                                                        <span>{st.badge}</span>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            );
+                                        })()}
+
+                                    </div>
                                 )}
+
                             </div>
                         </>
                     )}
@@ -2603,7 +2976,7 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                     let url = resolvedOrder.LinkHoaDonDaXuat;
                                     if (url) {
                                         if (url.includes('drive.google.com') && url.includes('/file/d/')) {
-                                            const match = url.match(/\/file\/d\/([^/]+)/);
+                                             const match = url.match(/\/file\/d\/([^/]+)/);
                                             if (match) url = `https://drive.google.com/uc?export=download&id=${match[1]}`;
                                         }
                                         window.open(url, '_blank');
@@ -2761,6 +3134,8 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                 </div>
             </footer>
             )}
+
+
 
             <SelectPolicyModal
                 isOpen={isPolicyModalOpen}

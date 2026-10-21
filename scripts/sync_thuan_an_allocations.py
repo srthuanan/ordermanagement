@@ -3237,13 +3237,23 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                 p.so_ct,
                 p.stt_rec,
                 p.ngay_ct,
+                ISNULL(p.Gio_CT, '') AS gio_ct,
                 p.ma_post,
+                ISNULL(dp.Ten_Post, N'Lập phiếu') AS ten_post,
                 p.dien_giai,
                 p.ong_ba AS ten_kh,
                 p.Ma_Hd_H AS so_hd,
                 p.so_may,
-                p.loai_xe
+                p.loai_xe,
+                ISNULL(p.Ghi_chu, '') AS ghi_chu,
+                ISNULL(p.T_TT, 0) AS tong_tien,
+                ISNULL(p.T_Da_TT, 0) AS da_thanh_toan,
+                ISNULL(p.T_CL_TT, 0) AS con_lai,
+                ISNULL(hs.Ten_Hs, p.Ma_Hs_H) AS nvkd
             FROM PHTD p WITH (NOLOCK)
+            LEFT JOIN DmPost dp WITH (NOLOCK) ON dp.Ma_Ct = 'TD4' AND dp.Ma_Post = p.Ma_Post
+            LEFT JOIN PHHDX hdx WITH (NOLOCK) ON p.Ma_Hd_H = hdx.so_ct
+            LEFT JOIN DmHs hs WITH (NOLOCK) ON (hdx.Ma_Hs_H = hs.Ma_Hs OR p.Ma_Hs_H = hs.Ma_Hs)
             LEFT JOIN BEXEPXE bx WITH (NOLOCK) ON RTRIM(p.Ma_Hd_H) = RTRIM(bx.Ma_Hd)
             WHERE p.Ma_Ct = 'TD4'
               AND (
@@ -3320,12 +3330,19 @@ def lookup_vin_warehouse(params: any = {}) -> dict:
                     "so_ct": rd.get('so_ct', ''),
                     "stt_rec": rd.get('stt_rec', ''),
                     "ngay_ct": rd.get('ngay_ct', ''),
-                    "ma_post": rd.get('ma_post', ''),
+                    "gio_ct": rd.get('gio_ct', ''),
+                    "ma_post": rd.get('ma_post', '3'),
+                    "ten_post": rd.get('ten_post', 'Lập phiếu'),
                     "dien_giai": rd.get('dien_giai', ''),
+                    "ghi_chu": rd.get('ghi_chu', ''),
                     "ten_kh": rd.get('ten_kh', ''),
                     "so_hd": rd.get('so_hd', ''),
                     "so_may": rd.get('so_may', ''),
-                    "loai_xe": rd.get('loai_xe', '')
+                    "loai_xe": rd.get('loai_xe', ''),
+                    "tong_tien": float(rd.get('tong_tien') or 0),
+                    "da_thanh_toan": float(rd.get('da_thanh_toan') or 0),
+                    "con_lai": float(rd.get('con_lai') or 0),
+                    "nvkd": rd.get('nvkd', '')
                 }
 
         dnx_map = {}

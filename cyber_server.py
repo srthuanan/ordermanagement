@@ -1190,6 +1190,42 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
             return
 
+        elif parsed.path == "/api/cyber/check-td4-status":
+            content_len = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+            try:
+                data = json.loads(body_str or "{}")
+            except Exception:
+                data = {}
+
+            print(f"[CyberSync Check TD4 Status] Request: {data}")
+            try:
+                vin = data.get("vin") or ""
+                lookup_res = lookup_vin_warehouse({"vin": vin})
+                cars = lookup_res.get("cars") or []
+                car = cars[0] if cars else {}
+                td4 = car.get("td4") or lookup_res.get("td4")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "success": True,
+                    "vin": vin,
+                    "has_td4": bool(td4),
+                    "td4": td4,
+                    "ma_kho": car.get("ma_kho") or lookup_res.get("ma_kho", ""),
+                    "ten_kho": car.get("ten_kho") or lookup_res.get("ten_kho", "")
+                }, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                print(f"[CyberSync Check TD4 Status Error]: {str(e)}", file=sys.stderr)
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
         elif parsed.path == "/api/cyber/sync-ton-kho-to-supabase":
             print("[CyberSync Cloud Sync Ton Kho] Request received. Syncing ton kho & car status to Supabase...")
             try:
