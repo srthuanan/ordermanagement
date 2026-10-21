@@ -8,7 +8,7 @@ import MultiSelectDropdown from './ui/MultiSelectDropdown';
 import { includesNormalized } from '../utils/stringUtils';
 import AdminCarEditModal from './modals/AdminCarEditModal';
 import { SwapCarModal } from './modals/SwapCarModal';
-import { autoSyncCyberLocationsIfNeeded, triggerDmsRadarSync } from '../services/api/stockService';
+import { autoSyncCyberLocationsIfNeeded, autoSyncDmsRadarIfNeeded, triggerDmsRadarSync } from '../services/api/stockService';
 import DmsRadarResultModal, { DmsRadarScanResult } from './modals/DmsRadarResultModal';
 
 
@@ -124,9 +124,9 @@ const StockView: React.FC<StockViewProps> = ({
     const handleTriggerDmsRadar = async () => {
         if (isSyncingRadar) return;
         setIsSyncingRadar(true);
-        showToast('VinFast DMS Radar', 'Đang quét kho xe trực tiếp từ VinFast DMS OData API...', 'loading', 4000);
+        showToast('VinFast DMS Radar', 'Đang quét toàn bộ kho xe từ VinFast DMS OData (khoảng 10 giây)...', 'loading', 20000);
         try {
-            const res = await triggerDmsRadarSync();
+            const res = await triggerDmsRadarSync(true, true);
             if (res.success) {
                 setDmsRadarResult(res as DmsRadarScanResult);
                 setIsRadarModalOpen(true);
@@ -162,6 +162,18 @@ const StockView: React.FC<StockViewProps> = ({
         });
         return () => { isMounted = false; };
     }, []);
+
+    // Tự động tải dữ liệu mới nhất từ DMS Radar về Supabase khi mở kho xe (Cooldown 15 phút)
+    useEffect(() => {
+        let isMounted = true;
+        autoSyncDmsRadarIfNeeded(false, true).then(res => {
+            if (!isMounted) return;
+            if (res.triggered && res.result?.success) {
+                refetchStock(true);
+            }
+        });
+        return () => { isMounted = false; };
+    }, [refetchStock]);
 
     // Stock Welcome Video/Popup Tracker
     const [showStockWelcome, setShowStockWelcome] = useState(false);

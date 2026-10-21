@@ -5,6 +5,12 @@
   2. Mọi chỉ đạo sau khi ghi nhận phải được lưu trữ và commit vào Git để vĩnh viễn không bị lãng quên hay mai một, đảm bảo toàn bộ các phiên làm việc tiếp theo luôn tự động kế thừa và tuân thủ tuyệt đối.
   3. **Tuyệt Đối Không Đề Xuất Lại**: Không bao giờ đề xuất lại các tính năng: Cổng hành trình xe cho khách hàng (Customer Tracking Portal), Báo giá lăn bánh PDF 1-chạm, Bot Telegram/Zalo cảnh báo, Biên bản bàn giao PDI ký số, Bảng vinh danh TVBH trên Smart TV. Mọi đề xuất tiếp theo phải tập trung vào nghiệp vụ quản trị nội bộ sâu hơn.
 
+- **Kỷ Luật Kiểm Thử Bắt Buộc Trước Khi Báo Cáo (Mandatory Test Verification Protocol)**:
+  1. **Bắt Buộc Phải Test Lại Thực Tế**: Sau khi sửa code, thêm tính năng, chỉnh sửa giao diện hay xử lý bất kỳ tác vụ nào, AI Agent **BẮT BUỘC PHẢI TEST LẠI NGAY LẬP TỨC** xem có hoạt động thành công thực tế hay không trước khi báo cáo với người dùng.
+  2. **Tuyệt Đối Không Giả Định**: Tuyệt đối không phỏng đoán, không nói suông "đã xong" khi chưa tự mình chạy thử để kiểm chứng kết quả (kiểm tra tính đúng đắn của dữ liệu, kiểm tra giao diện hiển thị, kiểm tra log không có lỗi).
+  3. **Minh Bạch Kết Quả Test**: Luôn nêu rõ bằng chứng kết quả kiểm thử (thời gian chạy, số lượng bản ghi cập nhật, trạng thái trả về) để người dùng nắm bắt và yên tâm tuyệt đối.
+
+
 
 - **Quy Chuẩn Triển Khai & Vercel CI/CD (Deployment & Git Push Protocol)**:
   1. **Tuyệt Đối KHÔNG Chạy Lệnh `npm run deploy`**: Lệnh này là script cũ (từ thời GitHub Pages / Vercel CLI thủ công) và hoàn toàn dư thừa. Tuyệt đối không bao giờ đề xuất hoặc thực thi lệnh `npm run deploy` trong bất kỳ tình huống nào.
@@ -38,12 +44,15 @@
      - Fallback Anon Key: `'sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX'`
   4. Mọi component và hook phải ưu tiên import client từ [services/supabaseClient.ts](file:///c:/Users/Pham%20Thanh%20Nhan/Documents/ordermanagement/services/supabaseClient.ts) thay vì tự khởi tạo lại client mới.
 
-- **Cấu Trúc DMS Radar & Máy Trạm Văn Phòng (Port 3001 & Schedule Sync)**:
-  1. **Cổng Dịch Vụ Máy Văn Phòng**: Mặc định cố định là cổng `3001` (`http://localhost:3001` hoặc IP LAN) cho các dịch vụ cầu nối `server-cyber.mjs` và `cyber_server.py`.
-  2. **Lịch Đồng Bộ DMS Tự Động**:
-     - Ban ngày (07:30 – 18:30 GMT+7): Quét kiểm tra đơn hàng và tồn kho mỗi 15 phút/lần.
-     - Ban đêm (18:30 – 07:30 sáng hôm sau): Tự động ngừng hoàn toàn (Skip), không quét để tiết kiệm tài nguyên mạng và máy chủ.
-  3. **Cơ Chế Cookie DMS Tập Trung**: Lưu cấu hình cookie đại lý trong `dms_dealers_config.json`. Khi 1 tài khoản cập nhật Cookie còn hạn, toàn bộ nhân sự TVBH trong đại lý đó đều tự động được chia sẻ quyền tra cứu qua backend/Vercel serverless.
+- **Quy Định Đồng Bộ Theo Thao Tác & Lưu Supabase (User-Triggered On-Demand Sync to Supabase Protocol)**:
+  1. **Quy Định Cốt Lõi Cho Ứng Dụng**: Tuyệt đối không quét định kỳ vô điều kiện mỗi 15 phút để tránh nghẽn băng thông mạng, lag máy trạm và quá tải hệ thống CRM VinFast.
+  2. **Tự Động Tải Dữ Liệu Mới & Lưu Lên Supabase Khi Có Thao Tác**:
+     - Bất cứ khi nào có người dùng mở ứng dụng hoặc thực hiện thao tác liên quan (vào xem Đơn hàng, Kho xe, Báo cáo tồn đọng, tra cứu VSO, giữ xe, xuất hóa đơn...): Ứng dụng tự động kiểm tra thời điểm đồng bộ gần nhất.
+     - **Nếu đã quá 15 phút (hoặc khi bấm Làm mới/Quét cưỡng bức)**: Hệ thống lập tức kích hoạt tiến trình tải dữ liệu mới nhất từ VinFast DMS Radar (quét toàn bộ các showroom chi nhánh) và **LƯU TOÀN BỘ DỮ LIỆU MỚI NHẤT VÀO SUPABASE** (gồm bảng `donhanghienhuu`, `khoxe`, và `car_telemetry`).
+     - **Nếu trong vòng 15 phút (Smart Cooldown)**: Hệ thống phục vụ tức thì (0.01s) từ cơ sở dữ liệu Supabase và bộ nhớ đệm, đảm bảo tốc độ phản hồi tối ưu mà không làm phiền CRM VinFast.
+     - **Tiến Trình Chạy Ngầm Bất Đồng Bộ (Non-blocking)**: Toàn bộ quá trình quét và lưu Supabase diễn ra ngầm, không làm giật hay chặn giao diện người dùng. Khi hoàn tất, sự kiện `dms-radar-synced` tự động làm mới giao diện tại chỗ.
+  3. **Đồng Bộ Đa Showroom**: Tự động nhận diện và quét qua **toàn bộ các showroom có cookie còn hạn** (N31913, N31911, N31903, N31923, N31920,...), gom toàn bộ đơn hàng mở vào bảng `donhanghienhuu` mà không bỏ sót bất kỳ chi nhánh nào.
+  4. **Cơ Chế Cookie DMS Tập Trung**: Lưu cấu hình cookie đại lý trong `dms_dealers_config.json`. Khi 1 tài khoản cập nhật Cookie còn hạn, toàn bộ nhân sự TVBH trong đại lý đó đều tự động được chia sẻ quyền tra cứu qua backend/Vercel serverless.
 
 - **Kiến Trúc Hạ Tầng Đám Mây & Vercel Python Serverless (Cloud-First & Zero-Downtime Fallback)**:
   1. **API Python Serverless Trên Vercel Luôn Khả Dụng**: Toàn bộ các API Python nghiệp vụ (bao gồm tự động lấy hóa đơn M-Invoice `sync-and-notify`, DMS Radar, `cyber_server.py`) đã được triển khai chạy trực tiếp trên Vercel Serverless (`api/index.py` tại `vinfastthuanan.vercel.app`).

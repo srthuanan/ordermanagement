@@ -2,16 +2,15 @@
 """
 Module: dms_stock_radar.py
 Mục đích: Đồng bộ trực tiếp Kho xe, Số máy, Mã DMS, Mã Phiên Bản & GPS Live 
-từ VinFast Dynamics OData API lên Supabase Cloud.
-Hỗ trợ chạy trên Vercel Serverless Function (Python).
+kết hợp Đơn Hàng Mở (donhanghienhuu) từ VinFast Dynamics OData API lên Supabase Cloud.
+Hỗ trợ chạy trên Vercel Serverless Function (Python) và Máy trạm văn phòng.
 """
 
 import os
 import json
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import unicodedata
-
 from concurrent.futures import ThreadPoolExecutor
 
 def get_dealers_list():
@@ -73,60 +72,50 @@ SITE_MAP = {
     "7113b85d-f73f-f111-bec6-6045bd5a3372": "N31922"
 }
 
-# Bảng tra cứu phiên bản chuẩn VinFast DMS
+# Bảng mã chuẩn DMS cho từng dòng xe
 DMS_VERSION_MAP = {
     ("VF 3", "PLUS"): "TI1BV",
-    ("VF 3", "ECO"): "TI1CV",
-    ("VF 3", "BASE"): "GI10V",
     ("VF 5", "PLUS"): "GA1RV",
-    ("VF 5", "ECO"): "GA1KV",
-    ("VF 6", "PLUS"): "JB12V",
     ("VF 6", "ECO"): "JB10V",
-    ("VF 6", "BASE"): "JB10V",
-    ("VF 7", "PLUS"): "GC12V",
-    ("VF 7", "ECO"): "HC1BV",
-    ("VF 7", "BASE"): "HC1BV",
-    ("VF 8", "PLUS"): "ND32V",
-    ("VF 8", "ECO"): "ND31V",
-    ("VF 8", "BASE"): "HC11V",
-    ("VF 9", "PLUS"): "NE3MV",
-    ("VF 9", "ECO"): "NE3LV",
-    ("EC VAN", "BASE"): "TG10V",
-    ("EC VAN", "PLUS"): "TG11V",
-    ("EC VAN", "SLIDING"): "TG12V",
-    ("LIMO", "LIMO"): "SL1VV",
-    ("LIMO", "MPV7"): "SL1WV",
-    ("VF 2", "ECO"): "TH14V",
-    ("VF 2", "MINIO"): "TH13V",
-    ("VF E34", "BASE"): "GK1DI",
+    ("VF 6", "PLUS"): "JB11V",
+    ("VF 7", "ECO"): "HC1CV",
+    ("VF 7", "PLUS"): "HC1AV",
+    ("VF 8", "ECO"): "EF10V",
+    ("VF 8", "PLUS"): "EF11V",
+    ("VF 9", "ECO"): "TG12V",
+    ("VF 9", "PLUS"): "TG13V",
+    ("LIMO", "LIMO"): "SL1WV",
+    ("VF LIMO", "LIMO"): "SL1WV",
+    ("MINIO", "MINIO"): "TB11V",
+    ("VF MINIO", "MINIO"): "TB11V",
+    ("EC VAN", "PLUS"): "VL1PV",
+    ("EC VAN", "SLIDING"): "VL1SV",
+    ("VF EC VAN", "PLUS"): "VL1PV",
+    ("VF EC VAN", "SLIDING"): "VL1SV"
 }
 
-def resolve_dms_version(dong_xe, phien_ban, raw_code=""):
-    raw = (raw_code or "").strip().upper()
-    if raw and len(raw) in [5, 6] and raw.isalnum():
-        # Kiểm tra ngoại lệ: EC Van có cửa trượt mà bị gán nhầm TG11V
-        norm_v = remove_diacritics(phien_ban)
-        if "TRUOT" in norm_v or "SLIDING" in norm_v:
-            return "TG12V"
-        return raw
+def extract_dms_package_code(raw, dong_xe="", phien_ban=""):
+    """Trích xuất mã phiên bản DMS chuẩn."""
+    if raw:
+        r_upper = raw.upper()
+        for code in ["TI1BV", "GA1RV", "JB10V", "JB11V", "HC1CV", "HC1AV", "EF10V", "EF11V", "TG12V", "TG13V", "SL1WV", "TB11V", "VL1PV", "VL1SV"]:
+            if code in r_upper:
+                return code
 
     dx = remove_diacritics(dong_xe)
     pb = remove_diacritics(phien_ban)
 
-    # Normalize dòng xe
     m_norm = "VF 5"
-    if "VF3" in dx or "VF 3" in dx: m_norm = "VF 3"
-    elif "VF5" in dx or "VF 5" in dx: m_norm = "VF 5"
-    elif "VF6" in dx or "VF 6" in dx: m_norm = "VF 6"
-    elif "VF7" in dx or "VF 7" in dx: m_norm = "VF 7"
-    elif "VF8" in dx or "VF 8" in dx: m_norm = "VF 8"
-    elif "VF9" in dx or "VF 9" in dx: m_norm = "VF 9"
-    elif "VAN" in dx: m_norm = "EC VAN"
+    if "VF 3" in dx or "VF3" in dx: m_norm = "VF 3"
+    elif "VF 5" in dx or "VF5" in dx: m_norm = "VF 5"
+    elif "VF 6" in dx or "VF6" in dx: m_norm = "VF 6"
+    elif "VF 7" in dx or "VF7" in dx: m_norm = "VF 7"
+    elif "VF 8" in dx or "VF8" in dx: m_norm = "VF 8"
+    elif "VF 9" in dx or "VF9" in dx: m_norm = "VF 9"
     elif "LIMO" in dx: m_norm = "LIMO"
-    elif "MINIO" in dx or "VF2" in dx: m_norm = "VF 2"
-    elif "E34" in dx: m_norm = "VF E34"
+    elif "MINIO" in dx: m_norm = "MINIO"
+    elif "EC VAN" in dx or "ECVAN" in dx or "VAN" in dx: m_norm = "EC VAN"
 
-    # Normalize phiên bản
     v_norm = "PLUS"
     if "TRUOT" in pb or "SLIDING" in pb: v_norm = "SLIDING"
     elif "ECO" in pb: v_norm = "ECO"
@@ -137,11 +126,166 @@ def resolve_dms_version(dong_xe, phien_ban, raw_code=""):
 
     return DMS_VERSION_MAP.get((m_norm, v_norm)) or DMS_VERSION_MAP.get((m_norm, "PLUS")) or raw or ""
 
-def run_dms_stock_radar_sync():
+def get_lookup_name(item, field):
+    if not item: return ""
+    f = field.lower()
+    for k, v in item.items():
+        kl = k.lower()
+        if f in kl and "@odata.community.display.v1.formattedvalue" in kl:
+            return str(v) if v is not None else ""
+    for k, v in item.items():
+        kl = k.lower()
+        if f in kl and "_value" in kl:
+            return str(v) if v is not None else ""
+    val = item.get(field, "")
+    return str(val) if val is not None else ""
+
+def is_open_order(item):
+    """Chỉ chấp nhận các đơn hàng thực sự MỞ (Chưa xuất hóa đơn, chưa hủy)"""
+    if item.get("xvf_sapinvoicenumber") or item.get("xvf_sapinvoicedate") or item.get("xts_salesdate"):
+        return False
+    if item.get("xts_status") in [7, 10, "7", "10"]:
+        return False
+    st = str(get_lookup_name(item, "xts_status") or "").lower()
+    for blocked in ["hóa đơn", "invoiced", "hủy", "cancel", "void", "closed", "đã giao", "hoàn tất"]:
+        if blocked in st:
+            return False
+    return True
+
+def sync_dms_orders_to_donhanghienhuu(valid_dealers, sb_url, sb_headers):
+    """
+    Quét danh sách đơn hàng MỞ từ TẤT CẢ các đại lý VinFast DMS có cookie hợp lệ
+    và tổng hợp đẩy vào bảng donhanghienhuu trên Supabase.
+    """
+    dms_base_url = "https://vinfastdms.crm5.dynamics.com"
+    all_orders = []
+    seen_so = set()
+    dealers_summary = []
+
+    for d in valid_dealers:
+        d_code = d.get("dealer_code", "DMS")
+        cookie = d.get("cookie")
+        if not cookie:
+            continue
+
+        headers = {
+            "Cookie": cookie,
+            "Accept": "application/json",
+            "Content-Type": "application/json; charset=utf-8",
+            "OData-MaxVersion": "4.0",
+            "OData-Version": "4.0",
+            "Prefer": 'odata.include-annotations="OData.Community.Display.V1.FormattedValue", odata.maxpagesize=500'
+        }
+
+        query_url = f"{dms_base_url}/api/data/v9.2/xts_newvehiclesalesorders?$filter=statecode eq 0"
+        d_order_count = 0
+
+        try:
+            pages = 0
+            while query_url and pages < 4:
+                pages += 1
+                res = requests.get(query_url, headers=headers, timeout=15)
+                if res.status_code != 200:
+                    break
+                data = res.json()
+                items = data.get("value", [])
+                for it in items:
+                    if is_open_order(it):
+                        so_dh = it.get("xts_newvehiclesalesordernumber", "")
+                        if so_dh and so_dh not in seen_so:
+                            seen_so.add(so_dh)
+                            all_orders.append(it)
+                            d_order_count += 1
+                query_url = data.get("@odata.nextLink")
+            print(f"[DMS Orders] 🏢 [{d_code}] Quét được {d_order_count} đơn hàng MỞ mới.")
+            dealers_summary.append(f"{d_code} ({d_order_count})")
+        except Exception as e:
+            print(f"[DMS Orders] Lỗi tải đơn hàng đại lý [{d_code}]: {e}")
+
+    if not all_orders:
+        return 0, []
+
+    # Map dữ liệu sang cấu trúc Supabase bảng donhanghienhuu
+    mapped_orders = []
+    for item in all_orders:
+        so_dh = item.get("xts_newvehiclesalesordernumber", "")
+        mapped_orders.append({
+            "new_vehicle_sales_order_id": item.get("xts_newvehiclesalesorderid", ""),
+            "kiem_tra_tong_cho_hang": "",
+            "ngay_sua_doi": item.get("modifiedon"),
+            "ngay_giao_dich": item.get("xts_transactiondate")[:10] if item.get("xts_transactiondate") else None,
+            "tu_van_ban_hang": get_lookup_name(item, "xts_salespersonid") or get_lookup_name(item, "ownerid") or "",
+            "so_don_hang_ban": so_dh,
+            "so_bao_gia_xe": get_lookup_name(item, "xts_newvehiclesalesquoteid") or "",
+            "ngay_xuat_hoa_don": None,
+            "khach_hang_tiem_nang": get_lookup_name(item, "xts_potentialcustomerid") or item.get("xts_potentialcustomerdescription", ""),
+            "promotion": get_lookup_name(item, "xvf_promotionid") or item.get("itv_promotiondetail", ""),
+            "ma_khach_hang": item.get("xts_customernumber", ""),
+            "mo_ta_san_pham": item.get("xts_productdescription", "") or get_lookup_name(item, "xts_productid") or "",
+            "ten_phien_ban": get_lookup_name(item, "xvf_characteristicconfiguration") or get_lookup_name(item, "xts_productconfigurationid") or "",
+            "loai_tran": get_lookup_name(item, "itv_characteristicceilingid") or "",
+            "mau_ngoai_that": item.get("xvf_exteriorcolor") or get_lookup_name(item, "xts_productexteriorcolorid") or "",
+            "mau_noi_that": item.get("xvf_interiorcolor") or get_lookup_name(item, "xts_productinteriorcolorid") or "",
+            "ma_phien_ban": get_lookup_name(item, "xvf_vehiclepackage") or "",
+            "ma_mau_ngoai_that": get_lookup_name(item, "xts_productexteriorcolorid") or "",
+            "ma_mau_noi_that": get_lookup_name(item, "xts_productinteriorcolorid") or "",
+            "trang_thai": get_lookup_name(item, "xts_status") or "Mở",
+            "pre_customer": get_lookup_name(item, "itv_customerpreorderid") or get_lookup_name(item, "itv_leadid") or "",
+            "so_vin": get_lookup_name(item, "xts_chassisid") or item.get("xts_chassisnumber") or "",
+            "accessory_serial": get_lookup_name(item, "xts_stockid") or "",
+            "ma_san_pham": get_lookup_name(item, "xts_productid") or "",
+            "so_ton_kho": get_lookup_name(item, "xts_stockid") or "",
+            "so_tien_thuc_sau_thue": item.get("xts_netamountaftertax") or item.get("xvf_grandtotal") or 0,
+            "don_hang_goc": get_lookup_name(item, "xts_originalnewvehiclesalesorderreferenceid") or "",
+            "chi_nhanh": get_lookup_name(item, "xts_businessunitid") or ""
+        })
+
+    # Dọn dẹp các đơn đã xuất hóa đơn hoặc đã hủy còn nằm trong donhanghienhuu
+    try:
+        prune_url = f"{sb_url}/rest/v1/donhanghienhuu?or=(ngay_xuat_hoa_don.not.is.null,trang_thai.ilike.*hóa đơn*,trang_thai.ilike.*invoiced*,trang_thai.ilike.*hủy*,trang_thai.ilike.*cancel*)"
+        requests.delete(prune_url, headers=sb_headers, timeout=15)
+    except Exception as e:
+        print(f"[DMS Orders] Dọn dẹp đơn cũ: {e}")
+
+    # Đẩy bulk lên donhanghienhuu
+    try:
+        orders_url = f"{sb_url}/rest/v1/donhanghienhuu?on_conflict=so_don_hang_ban"
+        headers_upsert = {**sb_headers, "Prefer": "resolution=merge-duplicates, return=minimal"}
+        CHUNK_SIZE = 100
+        for i in range(0, len(mapped_orders), CHUNK_SIZE):
+            chunk = mapped_orders[i:i+CHUNK_SIZE]
+            requests.post(orders_url, headers=headers_upsert, json=chunk, timeout=20)
+        print(f"[DMS Orders] ✅ Đã đồng bộ {len(mapped_orders)} đơn hàng MỞ từ {len(valid_dealers)} đại lý vào bảng donhanghienhuu!")
+    except Exception as e:
+        print(f"[DMS Orders] Lỗi upsert donhanghienhuu: {e}")
+
+    return len(mapped_orders), dealers_summary
+
+def is_daytime_working_hours():
+    """Kiểm tra thời điểm hiện tại có trong giờ hành chính Việt Nam (07:30 - 18:30 GMT+7)."""
+    vn_time = datetime.now(timezone(timedelta(hours=7)))
+    hour_float = vn_time.hour + vn_time.minute / 60.0
+    return 7.5 <= hour_float <= 18.5
+
+# Bộ nhớ đệm On-Demand (Smart Cache TTL = 15 phút)
+_dms_radar_cache = {"data": None, "timestamp": 0}
+
+def run_dms_stock_radar_sync(include_orders=False, force=False):
     """
     Quét trực tiếp VinFast DMS OData API kho xe và cập nhật lên Supabase.
-    Tối ưu hóa chạy trên Vercel Serverless Function: multi-threading song song & kiểm tra cookie trước.
+    Chế độ On-Demand: Nếu đã có dữ liệu quét trong vòng 15 phút và force=False,
+    trả về ngay từ bộ nhớ đệm (0 giây) để tiết kiệm tài nguyên.
     """
+    import time
+    now_ts = time.time()
+
+    # Kiểm tra cache hợp lệ
+    if not force and _dms_radar_cache["data"] and (now_ts - _dms_radar_cache["timestamp"] < 900):
+        cached_result = dict(_dms_radar_cache["data"])
+        cached_result["cached"] = True
+        cached_result["message"] = f"[Dữ liệu sẵn sàng] " + cached_result.get("message", "")
+        return cached_result
+
     dealers = get_dealers_list()
     if not dealers:
         return {
@@ -163,7 +307,8 @@ def run_dms_stock_radar_sync():
     active_dealer = None
     active_cookie = None
 
-    # Pre-flight check: thử lần lượt từng cookie từ mới nhất, dừng ngay khi tìm được cookie còn sống
+    # Pre-flight check: kiểm tra tất cả các cookie và gom danh sách các đại lý còn hoạt động
+    valid_dealers = []
     for d in dealers_with_cookie:
         c_test = d["cookie"]
         test_headers = {
@@ -176,21 +321,24 @@ def run_dms_stock_radar_sync():
             test_url = f"{dms_base_url}/api/data/v9.2/xts_inventorynewvehicles?$select=xts_chassisnumber&$top=1"
             tr = requests.get(test_url, headers=test_headers, timeout=3.5, allow_redirects=False)
             if tr.status_code == 200 and "application/json" in tr.headers.get("Content-Type", ""):
-                active_dealer = d
-                active_cookie = c_test
-                print(f"[DMS Stock Radar] Đã kết nối DMS thành công bằng tài khoản showroom: {d.get('dealer_code')}")
-                break
+                valid_dealers.append(d)
+                print(f"[DMS Stock Radar] 🟢 Showroom {d.get('dealer_code')} cookie HỢP LỆ")
         except Exception as e:
             print(f"[DMS Stock Radar] Kiểm tra cookie showroom {d.get('dealer_code')} lỗi: {e}")
 
-    if not active_cookie or not active_dealer:
+    if not valid_dealers:
         return {
             "success": False,
-            "error": "Cookie phiên làm việc VinFast DMS hiện tại đã hết hạn (hết hạn sau 24h). Vui lòng mở trang VinFast DMS trên trình duyệt một lần để làm mới Cookie!"
+            "error": "Tất cả Cookie phiên làm việc VinFast DMS hiện tại đã hết hạn (hết hạn sau 24h). Vui lòng mở trang VinFast DMS trên trình duyệt một lần để làm mới Cookie!"
         }
 
-    cookie = active_cookie
+    # Ưu tiên đại lý Thuận An N31913 làm primary dealer nếu có, hoặc lấy đại lý đầu tiên
+    thuan_an = next((d for d in valid_dealers if d.get("dealer_code") == "N31913"), None)
+    active_dealer = thuan_an or valid_dealers[0]
+    cookie = active_dealer["cookie"]
     dealer_code = active_dealer.get("dealer_code", "N31913")
+    active_codes_str = ", ".join([d.get("dealer_code", "") for d in valid_dealers])
+    print(f"[DMS Stock Radar] 🚀 Sử dụng {len(valid_dealers)} showroom có cookie: {active_codes_str}")
 
     sb_url = os.environ.get("VITE_SUPABASE_URL", "https://jwvgxqrkjlbewvpkvucj.supabase.co")
     sb_key = os.environ.get("VITE_SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or "sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX"
@@ -230,7 +378,9 @@ def run_dms_stock_radar_sync():
     }
 
     dms_records = []
-    batch_size = 20
+    batch_size = 35
+    session = requests.Session()
+    session.headers.update(dms_headers)
 
     def fetch_dms_batch(chunk_vins):
         filter_clause = " or ".join([f"xts_chassisnumber eq '{v}'" for v in chunk_vins])
@@ -241,47 +391,51 @@ def run_dms_stock_radar_sync():
             f"&$filter={filter_clause}"
         )
         try:
-            r = requests.get(url, headers=dms_headers, timeout=5, allow_redirects=False)
+            r = session.get(url, timeout=5, allow_redirects=False)
             if r.status_code == 200 and "application/json" in r.headers.get("Content-Type", ""):
                 data = r.json()
                 return data.get("value", [])
         except Exception as batch_err:
-            print(f"[DMS Stock Radar] Batch exception: {batch_err}")
-        return []
+            print(f"[DMS Stock Radar] Batch error: {batch_err}")
+            return []
 
-    chunks = [clean_vins[i:i + batch_size] for i in range(0, len(clean_vins), batch_size)]
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        for batch_result in executor.map(fetch_dms_batch, chunks):
-            if batch_result:
-                dms_records.extend(batch_result)
+    vin_chunks = [clean_vins[i:i + batch_size] for i in range(0, len(clean_vins), batch_size)]
 
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        futures = [executor.submit(fetch_dms_batch, chunk) for chunk in vin_chunks]
+        for f in futures:
+            try:
+                res_batch = f.result()
+                if res_batch:
+                    dms_records.extend(res_batch)
+            except Exception as e:
+                print(f"[DMS Stock Radar] ThreadPool batch failure: {e}")
 
-    # Gom nhóm theo VIN
     dms_by_vin = {}
     for r in dms_records:
-        v = (r.get("xts_chassisnumber") or "").strip().upper()
-        if v:
-            if v not in dms_by_vin: dms_by_vin[v] = []
-            dms_by_vin[v].append(r)
+        chassis = (r.get("xts_chassisnumber") or "").strip().upper()
+        if chassis:
+            if chassis not in dms_by_vin:
+                dms_by_vin[chassis] = []
+            dms_by_vin[chassis].append(r)
 
-    sold_vins = []
+    # 3. So khớp thông tin
     update_list = []
-    detailed_results = []
+    sold_vins = []
     gps_by_vin = {}
+    detailed_results = []
 
-    for vin in clean_vins:
-        recs = dms_by_vin.get(vin)
-        car = car_by_vin.get(vin, {})
-        dong_xe = car.get("dong_xe", "")
-        phien_ban = car.get("phien_ban", "")
-
-        if not recs:
-            # Chưa có trên DMS
+    for car in kho_cars:
+        vin = (car.get("vin") or "").strip().upper()
+        if not vin:
             continue
 
-        # Check đã xuất hóa đơn
-        if any(bool(it.get("_xts_lastvehicleorderid_value")) for it in recs):
-            sold_vins.append(vin)
+        dong_xe = car.get("dong_xe") or ""
+        phien_ban = car.get("phien_ban") or ""
+
+        recs = dms_by_vin.get(vin, [])
+
+        if not recs:
             detailed_results.append({
                 "vin": vin,
                 "dong_xe": dong_xe,
@@ -290,35 +444,41 @@ def run_dms_stock_radar_sync():
                 "so_may": car.get("so_may") or "(trống)",
                 "ma_dms": car.get("ma_dms") or "(trống)",
                 "has_gps": False,
-                "lat": None,
-                "lng": None,
+                "status": "Không tìm thấy trên DMS"
+            })
+            continue
+
+        best = max(recs, key=lambda x: str(x.get("modifiedon") or ""))
+        last_order = best.get("_xts_lastvehicleorderid_value")
+        if last_order:
+            sold_vins.append(vin)
+            detailed_results.append({
+                "vin": vin,
+                "dong_xe": dong_xe,
+                "phien_ban": phien_ban,
+                "ma_phien_ban": car.get("ma_phien_ban") or "(chưa rõ)",
+                "so_may": best.get("xts_enginenumber") or car.get("so_may") or "(trống)",
+                "ma_dms": car.get("ma_dms") or "(trống)",
+                "has_gps": False,
                 "status": "Đã xuất hóa đơn (Gỡ khỏi kho)"
             })
         else:
-            # Sắp xếp mới nhất
-            recs.sort(key=lambda x: x.get("modifiedon") or "", reverse=True)
-            best = next((it for it in recs if it.get("xts_enginenumber")), recs[0])
-
-            site_formatted = best.get("_xts_siteid_value@OData.Community.Display.V1.FormattedValue", "")
-            site_id = best.get("_xts_siteid_value")
-            dms_val = site_formatted.split(" ")[0] if site_formatted else (SITE_MAP.get(site_id) or "")
             eng_val = (best.get("xts_enginenumber") or "").strip()
+            site_guid = (best.get("_xts_siteid_value") or "").strip().lower()
+            dms_val = SITE_MAP.get(site_guid, "")
+            prod_desc = best.get("xts_productdescription") or ""
+            pkg_val = extract_dms_package_code(prod_desc, dong_xe, phien_ban)
 
-            cfg_formatted = best.get("_xts_configurationid_value@OData.Community.Display.V1.FormattedValue", "") or best.get("xts_productdescription", "")
-            pkg_val = resolve_dms_version(dong_xe, phien_ban, cfg_formatted or car.get("ma_phien_ban", ""))
-
-            has_coords = bool(best.get("itv_lastlatitude") and best.get("itv_lastlongitude") and float(best.get("itv_lastlatitude")) != 0)
-
-            if dms_val or eng_val or pkg_val or has_coords:
+            if eng_val or dms_val or pkg_val:
+                has_coords = bool(best.get("itv_lastlatitude") and best.get("itv_lastlongitude"))
                 item_payload = {
                     "vin": vin,
-                    "ma_dms": dms_val or car.get("ma_dms") or None,
-                    "so_may": eng_val or car.get("so_may") or None,
-                    "ma_phien_ban": pkg_val or car.get("ma_phien_ban") or None
+                    "so_may": eng_val or None,
+                    "ma_dms": dms_val or None,
+                    "ma_phien_ban": pkg_val or None
                 }
                 update_list.append(item_payload)
 
-                # Dữ liệu hiển thị UI chi tiết
                 detailed_results.append({
                     "vin": vin,
                     "dong_xe": dong_xe,
@@ -347,8 +507,7 @@ def run_dms_stock_radar_sync():
                     "updated_at": datetime.now(timezone.utc).isoformat()
                 }
 
-    # 3. Đẩy cập nhật lên Supabase
-    # 3.1 Gỡ xe XHĐ
+    # 4. Đẩy cập nhật lên Supabase
     if sold_vins:
         try:
             requests.post(
@@ -360,7 +519,6 @@ def run_dms_stock_radar_sync():
         except Exception as e:
             print(f"[DMS Stock Radar] Gỡ XHĐ error: {e}")
 
-    # 3.2 Cập nhật mã DMS, Số máy và Mã phiên bản cho khoxe
     if update_list:
         try:
             requests.post(
@@ -372,8 +530,6 @@ def run_dms_stock_radar_sync():
         except Exception as e:
             print(f"[DMS Stock Radar] rpc_sync_dms_metadata error: {e}")
 
-
-    # 3.3 Đẩy GPS lên car_telemetry
     gps_list = list(gps_by_vin.values())
     if gps_list:
         try:
@@ -387,16 +543,43 @@ def run_dms_stock_radar_sync():
         except Exception as e:
             print(f"[DMS Stock Radar] GPS telemetry error: {e}")
 
-    return {
+    # 5. ĐỒNG BỘ ĐƠN HÀNG HIỆN HỮU TỪ TẤT CẢ SHOWROOM (Nếu include_orders=True)
+    orders_synced = 0
+    dealers_summary = []
+    if include_orders:
+        try:
+            print(f"[DMS Stock Radar] 📋 Bắt đầu đồng bộ bảng donhanghienhuu từ {len(valid_dealers)} đại lý...")
+            orders_synced, dealers_summary = sync_dms_orders_to_donhanghienhuu(valid_dealers, sb_url, sb_headers)
+        except Exception as e:
+            print(f"[DMS Stock Radar] Lỗi đồng bộ donhanghienhuu: {e}")
+
+    dealers_label = f"{len(valid_dealers)} Showroom ({active_codes_str})"
+    final_result = {
         "success": True,
-        "message": f"Đã quét và đồng bộ thành công {len(update_list)} xe từ VinFast DMS!",
+        "message": f"Đã quét và đồng bộ thành công {len(update_list)} xe kho" + (f" & {orders_synced} đơn hàng MỞ từ {dealers_label} vào donhanghienhuu!" if include_orders else "!"),
         "summary": {
             "total_stock": len(kho_cars),
             "updated_count": len(update_list),
             "gps_count": len(gps_list),
             "sold_removed": len(sold_vins),
-            "dealer": dealer_code,
+            "orders_count": orders_synced,
+            "dealer": dealers_label,
+            "active_dealers": [d.get("dealer_code") for d in valid_dealers],
+            "dealers_summary": dealers_summary,
             "timestamp": datetime.now(timezone.utc).isoformat()
         },
-        "cars": detailed_results
+        "cars": detailed_results,
+        "orders_count": orders_synced
     }
+
+    # Lưu cache bộ nhớ đệm
+    _dms_radar_cache["data"] = final_result
+    _dms_radar_cache["timestamp"] = time.time()
+
+    return final_result
+
+if __name__ == '__main__':
+    force_sync = "--force" in sys.argv or "-f" in sys.argv
+    skip_orders = "--no-orders" in sys.argv
+    res = run_dms_stock_radar_sync(include_orders=not skip_orders, force=force_sync)
+    print(json.dumps(res, default=str, ensure_ascii=False))

@@ -2924,17 +2924,62 @@ export interface DmsRadarResult {
  * Gọi API quét kho xe từ VinFast DMS Radar (Serverless Python trên Vercel / Cổng 3001)
  * Tự động đồng bộ Số máy, Mã DMS, Mã phiên bản chuẩn và tọa độ GPS Live lên Supabase
  */
-export const triggerDmsRadarSync = async (): Promise<DmsRadarResult> => {
+export const triggerDmsRadarSync = async (force: boolean = false, includeOrders: boolean = true): Promise<DmsRadarResult> => {
     try {
-        const res = await executeCyberApi<DmsRadarResult>('/api/dms/sync-radar', {
+        const query = new URLSearchParams({
+            include_orders: includeOrders ? 'true' : 'false',
+            force: force ? 'true' : 'false'
+        }).toString();
+        const res = await executeCyberApi<DmsRadarResult>(`/api/dms/sync-radar?${query}`, {
             method: 'POST',
             timeoutMs: 90000
         });
+        if (res && res.success && typeof window !== 'undefined') {
+            localStorage.setItem('last_dms_radar_auto_sync_ts', String(Date.now()));
+            window.dispatchEvent(new CustomEvent('dms-radar-synced', { detail: res }));
+        }
         return res;
     } catch (err: any) {
         return {
             success: false,
             error: err.message || 'Lỗi khi gọi API VinFast DMS Radar'
         };
+    }
+};
+
+/**
+ * Tự động đồng bộ DMS Radar (Kho xe + Đơn hàng mở) khi người dùng thực hiện thao tác
+ * - Cơ chế On-Demand: Chỉ kích hoạt khi có người dùng thao tác / mở ứng dụng
+ * - Cooldown 15 phút (900s): Tránh gọi dồn dập, tiết kiệm băng thông và bảo vệ CRM VinFast
+ * - Tự động tải dữ liệu mới nhất và lưu trực tiếp lên Supabase (khoxe, donhanghienhuu, car_telemetry)
+ * - Chạy ngầm bất đồng bộ (non-blocking), không làm gián đoạn trải nghiệm của người dùng
+ */
+export const autoSyncDmsRadarIfNeeded = async (force: boolean = false, includeOrders: boolean = true): Promise<{ triggered: boolean; reason?: string; result?: DmsRadarResult }> => {
+    try {
+        const now = Date.now();
+        const lastSyncStr = typeof window !== 'undefined' ? localStorage.getItem('last_dms_radar_auto_sync_ts') || '0' : '0';
+        const lastSync = parseInt(lastSyncStr, 10) || 0;
+        const COOLDOWN_MS = 15 * 60 * 1000; // 15 phút cooldown
+
+        if (!force && (now - lastSync < COOLDOWN_MS)) {
+            const remainingMin = Math.max(1, Math.round((COOLDOWN_MS - (now - lastSync)) / 60000));
+            return { 
+                triggered: false, 
+                reason: `Dữ liệu DMS vừa được cập nhật gần đây (lần quét tiếp theo sau ${remainingMin} phút)` 
+            };
+        }
+
+        // Đặt timestamp ngay lập tức để chặn các request kế tiếp gọi trùng lặp
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('last_dms_radar_auto_sync_ts', String(now));
+        }
+
+        console.log('[AutoDmsRadarSync] 🛰️ Kích hoạt tải dữ liệu mới nhất từ DMS Radar và lưu vào Supabase...');
+        const res = await triggerDmsRadarSync(force, includeOrders);
+
+        return { triggered: true, result: res };
+    } catch (err: any) {
+        console.warn('[AutoDmsRadarSync] Lỗi tự động đồng bộ DMS Radar:', err);
+        return { triggered: false, reason: err.message };
     }
 };

@@ -539,7 +539,9 @@ class CyberApiHandler(BaseHTTPRequestHandler):
 
         elif parsed.path == "/api/dms/sync-radar":
             try:
-                res = run_dms_stock_radar_sync()
+                qs = parse_qs(parsed.query)
+                inc_orders = (qs.get("include_orders", ["true"])[0] or "true").lower() in ["true", "1", "yes"]
+                res = run_dms_stock_radar_sync(include_orders=inc_orders)
                 self.send_response(200 if res.get("success") else 400)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -708,7 +710,10 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.end_headers()
         elif parsed.path in ["/api/dms/sync-radar", "/api/dms/stock-radar"]:
             try:
-                res = run_dms_stock_radar_sync()
+                qs = parse_qs(parsed.query)
+                inc_orders = (qs.get("include_orders", ["true"])[0] or "true").lower() in ["true", "1", "yes"]
+                force_sync = (qs.get("force", ["false"])[0] or "false").lower() in ["true", "1", "yes"]
+                res = run_dms_stock_radar_sync(include_orders=inc_orders, force=force_sync)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -1569,7 +1574,10 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.end_headers()
         elif parsed.path in ["/api/dms/sync-radar", "/api/dms/stock-radar"]:
             try:
-                res = run_dms_stock_radar_sync()
+                qs = parse_qs(parsed.query)
+                inc_orders = (qs.get("include_orders", ["true"])[0] or "true").lower() in ["true", "1", "yes"]
+                force_sync = (qs.get("force", ["false"])[0] or "false").lower() in ["true", "1", "yes"]
+                res = run_dms_stock_radar_sync(include_orders=inc_orders, force=force_sync)
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
@@ -1670,6 +1678,34 @@ def _schedule_auto_sync_donhang_ton(interval_seconds: int = 10800):
     return t
 
 
+def _schedule_auto_sync_dms(interval_seconds: int = 900):
+    """Tự động đồng bộ DMS Radar (Kho xe + Đơn hàng hiện hữu) mỗi 15 phút trong giờ hành chính (07:30 - 18:30 GMT+7)."""
+    def _loop():
+        import time
+        from scripts.dms_stock_radar import is_daytime_working_hours, run_dms_stock_radar_sync
+        # Đợi 25s sau khi server khởi động
+        time.sleep(25)
+        while True:
+            try:
+                now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                if not is_daytime_working_hours():
+                    print(f"[AutoSync DMS Radar] 🌙 [{now_str}] Ngoài giờ hành chính (07:30 - 18:30), bỏ qua chu kỳ quét DMS.")
+                else:
+                    print(f"[AutoSync DMS Radar] 🛰️ [{now_str}] Đang quét định kỳ kho xe & donhanghienhuu từ DMS...")
+                    res = run_dms_stock_radar_sync(include_orders=True)
+                    orders_count = res.get("orders_count", 0)
+                    updated_cars = res.get("summary", {}).get("updated_count", 0)
+                    print(f"[AutoSync DMS Radar] ✅ Hoàn tất: {updated_cars} xe kho, {orders_count} đơn hàng MỞ cập nhật vào donhanghienhuu!")
+            except Exception as e:
+                print(f"[AutoSync DMS Radar Error]: {e}", file=sys.stderr)
+            time.sleep(interval_seconds)
+
+    t = threading.Thread(target=_loop, name="auto-dms-radar-sync", daemon=True)
+    t.start()
+    print(f"[AutoSync DMS Radar] 🟢 Tự động đồng bộ kho xe & donhanghienhuu mỗi {interval_seconds // 60} phút (07:30 - 18:30)")
+    return t
+
+
 def run():
     server_address = ("0.0.0.0", PORT)
     httpd = HTTPServer(server_address, CyberApiHandler)
@@ -1685,6 +1721,9 @@ def run():
     # ── Start auto-sync don hang ton (mỗi 3 tiếng chạy ngầm 1 lần)
     DON_TON_HOURS = int(os.environ.get("AUTO_SYNC_DON_TON_HOURS", "3"))
     _schedule_auto_sync_donhang_ton(interval_seconds=DON_TON_HOURS * 3600)
+
+    # ── DMS Radar & donhanghienhuu: Chế độ theo nhu cầu (On-Demand)
+    print("[DMS Radar] ⚡ Chế độ theo nhu cầu (On-Demand): Chỉ quét khi có người dùng thao tác liên quan, không chạy ngầm định kỳ.")
 
     try:
         httpd.serve_forever()
