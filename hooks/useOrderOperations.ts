@@ -78,6 +78,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
                 showToast('Giữ Xe Thành Công', `Đã giữ xe ${vin}.`, 'success', 3000);
                 logStaffActivity({ actionType: 'HOLD_CAR', actionTitle: `Giữ xe VIN ${vin}`, targetVin: vin });
                 refetchStock(true);
+                apiService.autoSyncDmsRadarIfNeeded(false, true).catch(() => {});
             }
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Không thể giữ xe.';
@@ -226,6 +227,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
             await refetchHistory();
             hideToast();
             showToast('Gửi Thành Công', 'Đã gửi yêu cầu xuất hóa đơn.', 'success', 3000);
+            apiService.autoSyncDmsRadarIfNeeded(false, true).catch(() => {});
             return true;
         } catch (error) {
             hideToast();
@@ -424,6 +426,7 @@ export const useOrderOperations = ({ showToast, hideToast, refetchHistory, refet
         setAllHistoryData((prev: Order[]) => [newOrder, ...prev].sort((a, b) => new Date(b['Thời gian nhập']).getTime() - new Date(a['Thời gian nhập']).getTime()));
         showToast('Yêu Cầu Đã Gửi', 'Yêu cầu ghép xe của bạn đã được ghi nhận thành công.', 'success', 4000);
         refetchStock(true);
+        apiService.autoSyncDmsRadarIfNeeded(false, true).catch(() => {});
         setTimeout(() => { setSelectedOrder(newOrder); }, 500);
     }, [setAllHistoryData, showToast, refetchStock, checkReference]);
 

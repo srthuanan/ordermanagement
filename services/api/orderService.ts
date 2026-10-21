@@ -2,6 +2,7 @@ import { supabase, supabaseAdmin } from '../supabaseClient';
 import { cyberFetch } from './cyberBridge';
 import { getStorageItem, mapOrderDbToUi, ApiResult, logAction, uploadToSupabase, getApi, postApi } from './baseService';
 import { createNotification } from './notificationService';
+import { autoSyncDmsRadarIfNeeded } from './stockService';
 import { Order } from '../../types';
 import { cleanCyberContractCode, cleanCustomerName, checkCustomerNameMatch } from '../../utils/stringUtils';
 
@@ -1025,6 +1026,9 @@ export const addRequest = async (formData: Record<string, string>, _chicFile: Fi
             }).then(({ error }) => { if (error) console.warn('Lỗi gửi mail addRequest match_request_pending:', error) });
         }
 
+        // Kích hoạt quét ngầm DMS Radar theo quy định khi TVBH tạo đơn hàng mới / yêu cầu ghép xe
+        autoSyncDmsRadarIfNeeded(false, true).catch(e => console.warn('[DmsSync] addRequest trigger error:', e));
+
         return { status: 'SUCCESS', message: 'Đã gửi yêu cầu thành công', newRecord: { ...mapOrderDbToUi(insertPayload) } };
     } catch (err: any) {
         return { status: 'ERROR', message: `Lỗi khi tạo đơn hàng: ${err?.message || 'Không xác định'}` };
@@ -1077,6 +1081,9 @@ export const pairVinToOrder = async (orderNumber: string, vin: string) => {
             }
         } catch(e) {}
         
+        // Kích hoạt quét ngầm DMS Radar theo quy định khi ghép xe thành công
+        autoSyncDmsRadarIfNeeded(false, true).catch(e => console.warn('[DmsSync] pairVinToOrder trigger error:', e));
+
         return { status: 'SUCCESS', message: 'Ghép xe thành công!' };
     } catch (e: any) {
         return { status: 'ERROR', message: e.message };

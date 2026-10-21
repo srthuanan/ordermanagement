@@ -8,7 +8,7 @@ import MultiSelectDropdown from './ui/MultiSelectDropdown';
 import { includesNormalized } from '../utils/stringUtils';
 import AdminCarEditModal from './modals/AdminCarEditModal';
 import { SwapCarModal } from './modals/SwapCarModal';
-import { autoSyncCyberLocationsIfNeeded, autoSyncDmsRadarIfNeeded, triggerDmsRadarSync } from '../services/api/stockService';
+import { autoSyncCyberLocationsIfNeeded, triggerDmsRadarSync } from '../services/api/stockService';
 import DmsRadarResultModal, { DmsRadarScanResult } from './modals/DmsRadarResultModal';
 
 
@@ -163,17 +163,6 @@ const StockView: React.FC<StockViewProps> = ({
         return () => { isMounted = false; };
     }, []);
 
-    // Tự động tải dữ liệu mới nhất từ DMS Radar về Supabase khi mở kho xe (Cooldown 15 phút)
-    useEffect(() => {
-        let isMounted = true;
-        autoSyncDmsRadarIfNeeded(false, true).then(res => {
-            if (!isMounted) return;
-            if (res.triggered && res.result?.success) {
-                refetchStock(true);
-            }
-        });
-        return () => { isMounted = false; };
-    }, [refetchStock]);
 
     // Stock Welcome Video/Popup Tracker
     const [showStockWelcome, setShowStockWelcome] = useState(false);

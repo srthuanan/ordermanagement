@@ -1,6 +1,7 @@
 import { supabase, supabaseAdmin } from '../supabaseClient';
 import { getStorageItem, logAction, uploadToSupabase, ApiResult, postApi } from './baseService';
 import { createNotification } from './notificationService';
+import { autoSyncDmsRadarIfNeeded } from './stockService';
 
 export const requestInvoice = async (
     orderNumber: string, contractFile: File, proposalFile: File, policy: string, commission: string, vpoint: string,
@@ -132,6 +133,9 @@ export const requestInvoice = async (
         if (error) console.error(`[ERROR-MAIL] Gửi mail tiếp nhận XHĐ cho đơn ${orderNumber} lỗi:`, error);
         else console.log(`[SUCCESS-MAIL] Đã gửi mail tiếp nhận XHĐ thành công cho đơn ${orderNumber}`);
     }).catch(e => console.error(`[CRITICAL-MAIL] Lỗi gọi EF gửi mail tiếp nhận XHĐ cho đơn ${orderNumber}:`, e));
+
+    // Kích hoạt quét ngầm DMS Radar theo quy định khi TVBH yêu cầu xuất hóa đơn
+    autoSyncDmsRadarIfNeeded(false, true).catch(e => console.warn('[DmsSync] Request invoice trigger error:', e));
 
     return { status: 'SUCCESS', message: `Đã gửi yêu cầu xuất hóa đơn cho đơn hàng ${orderNumber} và xóa xe khỏi kho.` };
 };

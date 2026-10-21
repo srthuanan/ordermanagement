@@ -82,6 +82,8 @@ export const holdCar = async (vin: string) => {
         if (error) throw error;
         if (data.status === 'SUCCESS') {
             await createNotification({ message: `TVBH ${fullName} vừa mới giữ xe ${vin}.`, type: 'info', recipient: 'ADMINS', targetView: 'admin', targetId: vin });
+            // Kích hoạt quét ngầm DMS Radar (lưu Supabase) khi TVBH thao tác giữ xe
+            autoSyncDmsRadarIfNeeded(false, true).catch(e => console.warn('[DmsSync] holdCar trigger error:', e));
             return { status: 'SUCCESS', message: data.message };
         }
         if (data.status === 'SPAM_BLOCK') {

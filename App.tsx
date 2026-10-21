@@ -257,14 +257,6 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
         };
     }, [currentUser, currentUserName, showToast]);
 
-    // Quy chuẩn ứng dụng: Tự động tải dữ liệu mới từ DMS Radar và lưu Supabase khi người dùng thao tác (Cooldown 15p)
-    useEffect(() => {
-        if (activeView === 'orders' || activeView === 'stock' || activeView === 'backlog') {
-            apiService.autoSyncDmsRadarIfNeeded(false, true).catch(err => {
-                console.warn('[DmsRadar] Sync on view change error:', err);
-            });
-        }
-    }, [activeView]);
 
     // Lắng nghe khi DMS Radar đồng bộ thành công vào Supabase để tự động cập nhật UI tức thì
     useEffect(() => {

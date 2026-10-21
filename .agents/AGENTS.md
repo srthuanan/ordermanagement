@@ -44,15 +44,20 @@
      - Fallback Anon Key: `'sb_publishable_0lT3OnREc0Qg1R9s672KBg_aDeBTdJX'`
   4. Mọi component và hook phải ưu tiên import client từ [services/supabaseClient.ts](file:///c:/Users/Pham%20Thanh%20Nhan/Documents/ordermanagement/services/supabaseClient.ts) thay vì tự khởi tạo lại client mới.
 
-- **Quy Định Đồng Bộ Theo Thao Tác & Lưu Supabase (User-Triggered On-Demand Sync to Supabase Protocol)**:
-  1. **Quy Định Cốt Lõi Cho Ứng Dụng**: Tuyệt đối không quét định kỳ vô điều kiện mỗi 15 phút để tránh nghẽn băng thông mạng, lag máy trạm và quá tải hệ thống CRM VinFast.
-  2. **Tự Động Tải Dữ Liệu Mới & Lưu Lên Supabase Khi Có Thao Tác**:
-     - Bất cứ khi nào có người dùng mở ứng dụng hoặc thực hiện thao tác liên quan (vào xem Đơn hàng, Kho xe, Báo cáo tồn đọng, tra cứu VSO, giữ xe, xuất hóa đơn...): Ứng dụng tự động kiểm tra thời điểm đồng bộ gần nhất.
-     - **Nếu đã quá 15 phút (hoặc khi bấm Làm mới/Quét cưỡng bức)**: Hệ thống lập tức kích hoạt tiến trình tải dữ liệu mới nhất từ VinFast DMS Radar (quét toàn bộ các showroom chi nhánh) và **LƯU TOÀN BỘ DỮ LIỆU MỚI NHẤT VÀO SUPABASE** (gồm bảng `donhanghienhuu`, `khoxe`, và `car_telemetry`).
-     - **Nếu trong vòng 15 phút (Smart Cooldown)**: Hệ thống phục vụ tức thì (0.01s) từ cơ sở dữ liệu Supabase và bộ nhớ đệm, đảm bảo tốc độ phản hồi tối ưu mà không làm phiền CRM VinFast.
-     - **Tiến Trình Chạy Ngầm Bất Đồng Bộ (Non-blocking)**: Toàn bộ quá trình quét và lưu Supabase diễn ra ngầm, không làm giật hay chặn giao diện người dùng. Khi hoàn tất, sự kiện `dms-radar-synced` tự động làm mới giao diện tại chỗ.
-  3. **Đồng Bộ Đa Showroom**: Tự động nhận diện và quét qua **toàn bộ các showroom có cookie còn hạn** (N31913, N31911, N31903, N31923, N31920,...), gom toàn bộ đơn hàng mở vào bảng `donhanghienhuu` mà không bỏ sót bất kỳ chi nhánh nào.
-  4. **Cơ Chế Cookie DMS Tập Trung**: Lưu cấu hình cookie đại lý trong `dms_dealers_config.json`. Khi 1 tài khoản cập nhật Cookie còn hạn, toàn bộ nhân sự TVBH trong đại lý đó đều tự động được chia sẻ quyền tra cứu qua backend/Vercel serverless.
+- **Quy Định Kích Hoạt Quét Ngầm DMS Radar & Lưu Supabase Theo 4 Thao Tác Cốt Lõi (Action-Triggered Sync Protocol)**:
+  1. **Quy Định Kích Hoạt**: Tuyệt đối **không quét định kỳ 15 phút** và **không quét khi chỉ mở app, xem danh sách hoặc đổi tab**.
+  2. **4 Thao Tác Duy Nhất Được Kích Hoạt Quét Ngầm**:
+     - **(1) TVBH bấm Giữ xe** (`holdCar`).
+     - **(2) TVBH bấm Yêu cầu xuất hóa đơn** (`requestInvoice`).
+     - **(3) TVBH bấm Tạo đơn hàng mới** (`addRequest`).
+     - **(4) TVBH bấm Yêu cầu ghép xe** (`addRequest` / `pairVinToOrder`).
+  3. **Cơ Chế Quét & Lưu Supabase Khi Thao Tác**:
+     - Khi TVBH thực hiện 1 trong 4 thao tác trên, hệ thống kiểm tra thời điểm quét gần nhất (`last_dms_radar_auto_sync_ts`).
+     - **Nếu đã quá 15 phút** (hoặc bấm Quét cưỡng bức thủ công): Kích hoạt tải dữ liệu mới nhất từ DMS Radar đa showroom ngầm và **LƯU TOÀN BỘ VÀO SUPABASE** (`donhanghienhuu`, `khoxe`, `car_telemetry`).
+     - **Nếu trong vòng 15 phút (Smart Cooldown)**: Không gửi thêm request lên DMS để bảo toàn băng thông, giữ cho hệ thống phản hồi tức thì 0.00s.
+     - **Tiến trình chạy ngầm (Non-blocking)**: Hoàn toàn không làm ảnh hưởng đến tốc độ hoàn tất thao tác của TVBH. Khi lưu Supabase xong, phát sự kiện `dms-radar-synced` để cập nhật giao diện.
+  4. **Đồng Bộ Đa Showroom**: Tự động nhận diện và quét qua **toàn bộ các showroom có cookie còn hạn** (N31913, N31911, N31903, N31923, N31920,...), gom toàn bộ đơn hàng mở vào bảng `donhanghienhuu` mà không bỏ sót bất kỳ chi nhánh nào.
+  5. **Cơ Chế Cookie DMS Tập Trung**: Lưu cấu hình cookie đại lý trong `dms_dealers_config.json`. Khi 1 tài khoản cập nhật Cookie còn hạn, toàn bộ nhân sự TVBH trong đại lý đó đều tự động được chia sẻ quyền tra cứu qua backend/Vercel serverless.
 
 - **Kiến Trúc Hạ Tầng Đám Mây & Vercel Python Serverless (Cloud-First & Zero-Downtime Fallback)**:
   1. **API Python Serverless Trên Vercel Luôn Khả Dụng**: Toàn bộ các API Python nghiệp vụ (bao gồm tự động lấy hóa đơn M-Invoice `sync-and-notify`, DMS Radar, `cyber_server.py`) đã được triển khai chạy trực tiếp trên Vercel Serverless (`api/index.py` tại `vinfastthuanan.vercel.app`).
