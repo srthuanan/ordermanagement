@@ -1366,10 +1366,11 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                 title = `Lệch Dòng xe: Xe [${exp}] ⇄ DMS [${dms}]`;
                 guide = `Sửa dòng xe trên DMS thành [${exp}] rồi bấm Tra lại.`;
             } else if (errorType === 'version' || norm.includes('phien ban') || norm.includes('version')) {
-                const exp = apiService.getVersionCode(expectedVal || '') || expectedVal || '';
-                const dms = apiService.getVersionCode(dmsVal || '') || dmsVal || '';
-                title = `Lệch Phiên bản: Xe [${exp}] ⇄ DMS [${dms}]`;
-                guide = `Sửa phiên bản trên DMS thành [${exp}] rồi bấm Tra lại.`;
+                const carVin = order.VIN || (order as any).vin || '';
+                const exp = (expectedVal || '').trim();
+                const dms = (dmsVal || '').trim();
+                title = `Lệch Phiên bản: VIN xe [${exp}] ⇄ DMS [${dms}]`;
+                guide = `Đơn trên DMS phải khớp với VIN (${carVin || 'xe ghép'}): Vui lòng sửa phiên bản trên DMS thành [${exp}] rồi bấm Tra lại.`;
             } else if (raw) {
                 title = 'Cấu hình chưa khớp DMS';
                 guide = 'Kiểm tra lại trên DMS rồi bấm Tra lại.';

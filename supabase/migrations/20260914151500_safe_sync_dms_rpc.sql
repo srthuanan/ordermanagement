@@ -9,7 +9,8 @@ BEGIN
     UPDATE public.khoxe k
     SET 
         ma_dms = COALESCE(NULLIF((c->>'ma_dms'), ''), k.ma_dms),
-        so_may = COALESCE(NULLIF((c->>'so_may'), ''), k.so_may)
+        so_may = COALESCE(NULLIF((c->>'so_may'), ''), k.so_may),
+        ma_phien_ban = COALESCE(NULLIF((c->>'ma_phien_ban'), ''), k.ma_phien_ban)
     FROM jsonb_array_elements(p_cars) c
     WHERE k.vin = (c->>'vin');
 

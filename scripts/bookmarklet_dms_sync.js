@@ -93,11 +93,17 @@
           var dmsVal = siteFormatted ? siteFormatted.split(' ')[0] : (best._xts_siteid_value || '');
           var engVal = best.xts_enginenumber ? String(best.xts_enginenumber).trim() : '';
 
-          if (dmsVal || engVal) {
+          var pkgFormatted = best['_xvf_vehiclepackage_value@OData.Community.Display.V1.FormattedValue'] ||
+                             best['_xts_productconfigurationid_value@OData.Community.Display.V1.FormattedValue'] ||
+                             best['_xts_configurationid_value@OData.Community.Display.V1.FormattedValue'] || '';
+          var pkgVal = pkgFormatted ? pkgFormatted.trim().toUpperCase() : (c.ma_phien_ban || '');
+
+          if (dmsVal || engVal || pkgVal) {
             updateList.push({
               vin: vin,
               ma_dms: dmsVal || c.ma_dms || null,
-              so_may: engVal || c.so_may || null
+              so_may: engVal || c.so_may || null,
+              ma_phien_ban: pkgVal || null
             });
           }
         }

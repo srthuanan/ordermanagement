@@ -96,7 +96,7 @@
       console.log('[DMS Auto Sync] Đang chạy ngầm đồng bộ kho xe...');
 
       // 1. Tải kho xe thực tế
-      var khoRes = await fetch(sbUrl + '/rest/v1/khoxe?select=id,vin,so_may,ma_dms&trang_thai=not.is.null', { headers: sbHeaders });
+      var khoRes = await fetch(sbUrl + '/rest/v1/khoxe?select=id,vin,so_may,ma_dms,ma_phien_ban,dong_xe,phien_ban&trang_thai=not.is.null', { headers: sbHeaders });
       if (!khoRes.ok) throw new Error('Không thể tải khoxe: ' + (await khoRes.text()));
       var khoCars = await khoRes.json();
       var cleanVins = khoCars.map(function (c) { return (c.vin || '').trim().toUpperCase(); }).filter(function (v) { return v.length > 0; });
@@ -108,7 +108,7 @@
         var chunk = cleanVins.slice(i, i + batchSize);
         var filter = chunk.map(function (v) { return "xts_chassisnumber eq '" + v + "'"; }).join(' or ');
         try {
-          var res = await xrm.WebApi.retrieveMultipleRecords('xts_inventorynewvehicle', '?$select=xts_chassisnumber,xts_enginenumber,_xts_siteid_value,_xts_lastvehicleorderid_value,modifiedon,itv_lastlatitude,itv_lastlongitude,itv_lastlocationupdatetime&$filter=' + filter);
+          var res = await xrm.WebApi.retrieveMultipleRecords('xts_inventorynewvehicle', '?$select=xts_chassisnumber,xts_enginenumber,_xts_siteid_value,_xts_lastvehicleorderid_value,modifiedon,itv_lastlatitude,itv_lastlongitude,itv_lastlocationupdatetime,_xvf_vehiclepackage_value,_xts_productconfigurationid_value,_xts_configurationid_value,xts_productdescription&$filter=' + filter);
           if (res && res.entities) dmsRecords.push.apply(dmsRecords, res.entities);
         } catch (e) {
           console.warn('[DMS Auto Sync] Lỗi đọc batch DMS:', e);
@@ -153,6 +153,41 @@
         "7113b85d-f73f-f111-bec6-6045bd5a3372": "N31922"
       };
 
+      function resolveDmsVersion(dongXe, phienBan, rawCode) {
+        if (rawCode && rawCode.length >= 4 && rawCode.length <= 6) return rawCode.toUpperCase();
+        var dx = (dongXe || '').toUpperCase();
+        var pb = (phienBan || '').toUpperCase();
+        if (pb.indexOf('(') >= 0 && pb.indexOf(')') >= 0) {
+          var m = pb.match(/\(([A-Z0-9]{4,6})\)/);
+          if (m) return m[1];
+        }
+        if (dx.indexOf('VF3') >= 0 || dx.indexOf('VF 3') >= 0) {
+          if (pb.indexOf('ECO') >= 0) return 'TI1CV';
+          return 'TI1BV';
+        }
+        if (dx.indexOf('VF5') >= 0 || dx.indexOf('VF 5') >= 0) return 'GA1RV';
+        if (dx.indexOf('VF6') >= 0 || dx.indexOf('VF 6') >= 0) {
+          if (pb.indexOf('ECO') >= 0) return 'JB10V';
+          return 'JB12V';
+        }
+        if (dx.indexOf('VF7') >= 0 || dx.indexOf('VF 7') >= 0) {
+          if (pb.indexOf('ECO') >= 0) return 'HC1BV';
+          return 'GC12V';
+        }
+        if (dx.indexOf('VF8') >= 0 || dx.indexOf('VF 8') >= 0) {
+          if (pb.indexOf('ECO') >= 0) return 'ND31V';
+          return 'ND32V';
+        }
+        if (dx.indexOf('VF9') >= 0 || dx.indexOf('VF 9') >= 0) {
+          if (pb.indexOf('ECO') >= 0) return 'NE3LV';
+          return 'NE3MV';
+        }
+        if (dx.indexOf('VAN') >= 0) return 'TG10V';
+        if (dx.indexOf('LIMO') >= 0) return 'SL1VV';
+        if (dx.indexOf('VF2') >= 0 || dx.indexOf('MINIO') >= 0) return 'TH14V';
+        return rawCode || '';
+      }
+
       var soldVins = [];
       var updateList = [];
 
@@ -177,12 +212,21 @@
           var siteId = best._xts_siteid_value;
           var dmsVal = siteFormatted ? siteFormatted.split(' ')[0] : (SITE_MAP[siteId] || '');
           var engVal = best.xts_enginenumber ? String(best.xts_enginenumber).trim() : '';
+          
+          var pkgFormatted = best['_xvf_vehiclepackage_value@OData.Community.Display.V1.FormattedValue'] ||
+                             best['_xts_productconfigurationid_value@OData.Community.Display.V1.FormattedValue'] ||
+                             best['_xts_configurationid_value@OData.Community.Display.V1.FormattedValue'] || '';
+          var pkgVal = pkgFormatted ? pkgFormatted.trim().toUpperCase() : '';
+          if (!pkgVal) {
+            pkgVal = resolveDmsVersion(c.dong_xe, c.phien_ban, c.ma_phien_ban);
+          }
 
-          if (dmsVal || engVal) {
+          if (dmsVal || engVal || pkgVal) {
             updateList.push({
               vin: vin,
               ma_dms: dmsVal || c.ma_dms || null,
-              so_may: engVal || c.so_may || null
+              so_may: engVal || c.so_may || null,
+              ma_phien_ban: pkgVal || c.ma_phien_ban || null
             });
           }
         }
@@ -197,13 +241,25 @@
         });
       }
 
-      // Cập nhật mã DMS và số máy
+      // Cập nhật mã DMS, số máy và mã phiên bản
       if (updateList.length > 0) {
         await fetch(sbUrl + '/rest/v1/rpc/rpc_sync_dms_metadata', {
           method: 'POST',
           headers: sbHeaders,
           body: JSON.stringify({ p_cars: updateList })
         });
+        
+        // Đồng thời cập nhật ma_phien_ban trực tiếp cho khoxe qua REST API (đảm bảo 100% không phụ thuộc version RPC)
+        for (var idx = 0; idx < updateList.length; idx++) {
+          var item = updateList[idx];
+          if (item.ma_phien_ban) {
+            fetch(sbUrl + '/rest/v1/khoxe?vin=eq.' + encodeURIComponent(item.vin), {
+              method: 'PATCH',
+              headers: sbHeaders,
+              body: JSON.stringify({ ma_phien_ban: item.ma_phien_ban })
+            }).catch(function () {});
+          }
+        }
       }
 
       // 3. Đồng bộ tọa độ GPS xe trong kho lên bảng car_telemetry
@@ -246,15 +302,16 @@
         }
       }
 
-      var successMsg = 'Số máy & Mã DMS: ' + updateList.length + ' xe | GPS Live: ' + gpsList.length + ' xe | Gỡ XHĐ: ' + soldVins.length;
+      var successMsg = 'Số máy, Mã DMS & Mã PB: ' + updateList.length + ' xe | GPS Live: ' + gpsList.length + ' xe | Gỡ XHĐ: ' + soldVins.length;
       console.log('[DMS Auto Sync] ✅ ' + successMsg);
       if (console.table && updateList.length > 0) {
-        console.log('[DMS Auto Sync] 📋 Danh sách chi tiết Số máy & Mã DMS đã đồng bộ:');
+        console.log('[DMS Auto Sync] 📋 Danh sách chi tiết Số máy, Mã DMS & Mã Phiên Bản đã đồng bộ:');
         console.table(updateList.map(function (x) {
           return {
             'Số VIN': x.vin,
             'Số máy': x.so_may || '(trống)',
-            'Mã DMS': x.ma_dms || '(trống)'
+            'Mã DMS': x.ma_dms || '(trống)',
+            'Mã phiên bản': x.ma_phien_ban || '(trống)'
           };
         }));
       }

@@ -450,16 +450,21 @@ export const getVersionCode = (version: string): string => {
  * cho xe trong kho hoặc đơn hàng.
  */
 export const resolveMaterialVersionCode = (dongXe?: string, phienBan?: string, rawMaPhienBan?: string): string => {
+    const cleanVer = (phienBan || '').trim().toUpperCase();
+    const normVer = normalizeNoDiacritics(phienBan || '').toUpperCase();
+    const isSliding = normVer.includes('TRUOT') || normVer.includes('SLIDING');
+
     // 1. Nếu rawMaPhienBan đã có sẵn và hợp lệ
     const cleanRaw = (rawMaPhienBan || '').trim().toUpperCase();
     if (cleanRaw && DMS_VERSION_CODE_MAP[cleanRaw]) {
+        if (isSliding && cleanRaw === 'TG11V') return 'TG12V';
         return cleanRaw;
     }
     if (cleanRaw && cleanRaw.length >= 4 && cleanRaw.length <= 6 && /^[A-Z0-9]+$/.test(cleanRaw)) {
+        if (isSliding && cleanRaw === 'TG11V') return 'TG12V';
         return cleanRaw;
     }
 
-    const cleanVer = (phienBan || '').trim().toUpperCase();
     if (!cleanVer && !dongXe) return cleanRaw || '';
 
     // 2. Nếu phienBan chính là mã DMS (ví dụ: GA1RV, TI1BV...)
@@ -505,7 +510,7 @@ export const resolveMaterialVersionCode = (dongXe?: string, phienBan?: string, r
         return 'NE3MV'; // VF 9 Plus 7 chỗ mặc định
     }
     if (modelCode === 'ECVAN') {
-        if (verCode === 'SLIDING') return 'TG12V';
+        if (verCode === 'SLIDING' || isSliding) return 'TG12V';
         if (verCode === 'PLUS') return 'TG11V';
         return 'TG10V';
     }

@@ -45,9 +45,16 @@ DMS_MAP = {
     ("VF E34", "BASE"): "GK1DI",
 }
 
+import unicodedata
+
+def remove_diacritics(text):
+    if not text: return ""
+    norm = unicodedata.normalize('NFD', text)
+    return "".join(c for c in norm if unicodedata.category(c) != 'Mn').replace('đ', 'd').replace('Đ', 'D').upper()
+
 def normalize_model(m):
     if not m: return ""
-    m = m.strip().upper()
+    m = remove_diacritics(m)
     if "VF3" in m or "VF 3" in m: return "VF 3"
     if "VF5" in m or "VF 5" in m: return "VF 5"
     if "VF6" in m or "VF 6" in m: return "VF 6"
@@ -62,16 +69,23 @@ def normalize_model(m):
 
 def normalize_ver(v):
     if not v: return "PLUS"
-    v = v.strip().upper()
-    if "SLIDING" in v or "TRUOT" in v: return "SLIDING"
-    if "ECO" in v: return "ECO"
-    if "BASE" in v or "TIEU CHUAN" in v or "STD" in v: return "BASE"
-    if "MPV" in v or "7 CHO" in v: return "MPV7"
-    if "LIMO" in v: return "LIMO"
-    if "MINIO" in v: return "MINIO"
+    norm = remove_diacritics(v)
+    if "TRUOT" in norm or "SLIDING" in norm: return "SLIDING"
+    if "ECO" in norm: return "ECO"
+    if "BASE" in norm or "TIEU CHUAN" in norm or "STD" in norm: return "BASE"
+    if "MPV" in norm or "7 CHO" in norm: return "MPV7"
+    if "LIMO" in norm: return "LIMO"
+    if "MINIO" in norm: return "MINIO"
     return "PLUS"
 
 def resolve_code(dong_xe, phien_ban, raw_code):
+    m_norm = normalize_model(dong_xe)
+    v_norm = normalize_ver(phien_ban)
+    
+    # Ưu tiên sửa sai nếu EC Van có cửa trượt mà bị gán nhầm TG11V
+    if m_norm == "EC VAN" and v_norm == "SLIDING":
+        return "TG12V"
+
     if raw_code and len(raw_code.strip()) in [5, 6]:
         return raw_code.strip().upper()
     
@@ -82,8 +96,6 @@ def resolve_code(dong_xe, phien_ban, raw_code):
         if m:
             return m.group(1)
             
-    m_norm = normalize_model(dong_xe)
-    v_norm = normalize_ver(phien_ban)
     return DMS_MAP.get((m_norm, v_norm)) or DMS_MAP.get((m_norm, "PLUS")) or ""
 
 def backfill():
