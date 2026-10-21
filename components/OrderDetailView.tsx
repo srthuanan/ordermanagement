@@ -359,7 +359,6 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     const [auditLogs, setAuditLogs] = useState<OrderAuditLogItem[]>([]);
     const [isLoadingLogs, setIsLoadingLogs] = useState(false);
     const [isCheckingTd4, setIsCheckingTd4] = useState(false);
-    const [td4CheckToast, setTd4CheckToast] = useState<{ message: string; type: 'success' | 'info' | 'warning' } | null>(null);
 
     // Tính toán thông tin & tiến trình duyệt Phiếu Ra Cổng (TD4)
     const td4Info = useMemo(() => {

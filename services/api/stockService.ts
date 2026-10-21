@@ -2372,7 +2372,7 @@ export const checkCyberTd4Status = async (vin: string): Promise<{
             success: lookup.success,
             has_td4: Boolean(car?.has_td4 || car?.td4),
             td4: car?.td4 || lookup.td4,
-            error: lookup.error
+            error: lookup.error || lastErrorMsg || undefined
         };
     } catch (err: any) {
         console.error("Lỗi checkCyberTd4Status:", err);
