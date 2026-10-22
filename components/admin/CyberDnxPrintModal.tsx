@@ -111,7 +111,10 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                 if (!isMounted) return;
 
                 if (res.success && (res.pdf_url || res.pdf_base64)) {
-                    setCyberPdfUrl(res.pdf_url || res.pdf_base64 || null);
+                    const finalUrl = res.pdf_url
+                        ? `${res.pdf_url}${res.pdf_url.includes('?') ? '&' : '?'}t=${Date.now()}`
+                        : res.pdf_base64;
+                    setCyberPdfUrl(finalUrl || null);
                     return;
                 }
             } catch (err: any) {
@@ -240,6 +243,18 @@ export const CyberDnxPrintModal: React.FC<CyberDnxPrintModalProps> = ({
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setCyberPdfUrl(null);
+                                setRetryCount(c => c + 1);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center gap-1.5 text-xs font-semibold transition-all cursor-pointer border border-slate-700 shadow-2xs"
+                            title="Tải lại bản in mới nhất từ hệ thống (xóa cache)"
+                        >
+                            <i className={`fas fa-rotate-right text-[11px] ${isCyberLoading ? 'fa-spin text-blue-400' : ''}`}></i>
+                            <span className="hidden sm:inline">Làm mới bản in</span>
+                        </button>
                         <button
                             type="button"
                             onClick={onClose}
