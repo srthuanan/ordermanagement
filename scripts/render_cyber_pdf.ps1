@@ -36,12 +36,12 @@ try {
     } elseif ($VoucherType -eq "DNX") {
         $mrtFile = "$cyberPath\Repo\PXX00.mrt"
         $cmd.CommandText = "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; EXEC CP_PrintDNX @M_Stt_Rec = @SttRec, @M_Id = '1', @M_User_Name = @UserName"
-    } elseif ($VoucherType -eq "HDX" -or $VoucherType -eq "HDX20") {
-        $mrtFile = "$cyberPath\Repo\HDX20_VF.mrt"
-        if (-not (Test-Path $mrtFile)) {
-            $mrtFile = "$cyberPath\Repo\HDX20.mrt"
+    } elseif ($VoucherType -like "HDX*") {
+        $mId = "20"
+        if ($VoucherType -match "HDX(\d+)") {
+            $mId = $matches[1]
         }
-        $cmd.CommandText = "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; EXEC CP_PrintHDX @M_Stt_Rec = @SttRec, @M_Id = '20', @M_User_Name = @UserName"
+        $cmd.CommandText = "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; EXEC CP_PrintHDX @M_Stt_Rec = @SttRec, @M_Id = '$mId', @M_User_Name = @UserName"
     } else {
         $mrtFile = "$cyberPath\Repo\TD400.mrt"
         $cmd.CommandText = "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED; EXEC CP_PrintTD4 @M_Stt_Rec = @SttRec, @M_Id = '1', @M_User_Name = @UserName"
@@ -49,11 +49,28 @@ try {
 
     $adapter = New-Object System.Data.SqlClient.SqlDataAdapter($cmd)
     $adapter.Fill($ds) | Out-Null
+
+    if ($VoucherType -like "HDX*") {
+        $repoName = "HDX20_VF"
+        if ($ds.Tables.Count -gt 0 -and $ds.Tables[0].Rows.Count -gt 0 -and $ds.Tables[0].Columns.Contains("Repo_Name")) {
+            $repoName = $ds.Tables[0].Rows[0]["Repo_Name"].ToString().Trim()
+        }
+        $mrtFile = "$cyberPath\Repo\$repoName.mrt"
+        if (-not (Test-Path $mrtFile)) {
+            if (Test-Path "$cyberPath\Repo\${repoName}_VF.mrt") {
+                $mrtFile = "$cyberPath\Repo\${repoName}_VF.mrt"
+            } elseif (Test-Path "$cyberPath\Repo\${repoName}_CN.mrt") {
+                $mrtFile = "$cyberPath\Repo\${repoName}_CN.mrt"
+            } elseif (Test-Path "$cyberPath\Repo\HDX20.mrt") {
+                $mrtFile = "$cyberPath\Repo\HDX20.mrt"
+            }
+        }
+    }
 } finally {
     $conn.Close()
 }
 
-if ($VoucherType -eq "HDX" -or $VoucherType -eq "HDX20") {
+if ($VoucherType -like "HDX*") {
     for ($i = 1; $i -lt $ds.Tables.Count; $i++) {
         $ds.Tables[$i].TableName = "Table" + ($i - 1)
     }
@@ -139,7 +156,7 @@ if ($IncludeSignatures -eq "true" -or $IncludeSignatures -eq "1" -or $IncludeSig
 }
 
 $report.RegData("CyberDataSource", $ds)
-if ($VoucherType -ne "HDX" -and $VoucherType -ne "HDX20") {
+if (-not ($VoucherType -like "HDX*")) {
     $report.Dictionary.Synchronize()
 }
 $report.Render($false)

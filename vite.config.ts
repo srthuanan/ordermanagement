@@ -478,6 +478,11 @@ function cyberSyncPlugin(): Plugin {
           runPy([crmScript], JSON.stringify(bodyObj), res);
         });
       });
+
+      const dmsRadarScript = path.resolve(__dirname, 'scripts', 'dms_stock_radar.py');
+      server.middlewares.use('/api/dms/sync-radar', (req, res, next) => {
+        runPy([dmsRadarScript], '{}', res);
+      });
     }
   };
 }

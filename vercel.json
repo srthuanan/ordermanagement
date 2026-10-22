@@ -4,6 +4,7 @@
   "outputDirectory": "dist",
   "functions": {
     "api/index.py": {
+      "maxDuration": 60,
       "includeFiles": "{scripts/**,cyber_server.py,dms_dealers_config.json}"
     }
   },

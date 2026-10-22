@@ -436,11 +436,20 @@ def auto_fetch_upload_and_notify(vin: str, order_number: str = None):
 
     # 4. Cập nhật database: yeucauxhd & donhang
     now_iso = time.strftime('%Y-%m-%dT%H:%M:%S+07:00')
-    raw_date = inv_data.get("dateSign") or inv_data.get("invoiceDate")
-    if raw_date and len(str(raw_date)) > 10 and "00:00:00" not in str(raw_date):
-        real_invoice_date = raw_date
-    elif raw_date and len(str(raw_date)[:10]) == 10:
-        real_invoice_date = f"{str(raw_date)[:10]}T{time.strftime('%H:%M:%S')}+07:00"
+    inv_date_raw = inv_data.get("invoiceDate") or inv_data.get("invDate") or inv_data.get("issueDate")
+    sign_date_raw = inv_data.get("dateSign")
+
+    # Xác định đúng ngày xuất hóa đơn theo pháp lý kế toán (luôn ưu tiên invoiceDate)
+    if inv_date_raw and len(str(inv_date_raw)[:10]) == 10:
+        base_date = str(inv_date_raw)[:10]
+        time_part = time.strftime('%H:%M:%S')
+        if sign_date_raw and "T" in str(sign_date_raw):
+            t_match = re.search(r'T(\d{2}:\d{2}:\d{2})', str(sign_date_raw))
+            if t_match:
+                time_part = t_match.group(1)
+        real_invoice_date = f"{base_date}T{time_part}+07:00"
+    elif sign_date_raw and len(str(sign_date_raw)) > 10:
+        real_invoice_date = str(sign_date_raw)
     else:
         real_invoice_date = now_iso
 
