@@ -6,6 +6,35 @@
   const COOLDOWN_MINUTES = 15; // Giãn cách 15 phút giữa 2 lần chạy để tránh lặp khi chuyển trang
   const STORAGE_KEY = 'vf_dms_last_silent_sync';
 
+  // Bảng ánh xạ định danh 25 showroom VinFast sang mã DMS chuẩn
+  var SITE_MAP = {
+    "2bd660d4-92ad-f111-aaae-000d3a8140c0": "N31925",
+    "bf9e5764-ff8f-f111-8076-000d3a821339": "N31924",
+    "4cfe574e-b361-ea11-a811-000d3a85937e": "N31901",
+    "52b1cce4-4d52-f011-877a-00224816cf50": "N31917",
+    "4ce24370-2b15-f011-998a-00224817e379": "N31915",
+    "4ee24370-2b15-f011-998a-00224817e379": "N31916",
+    "490968e0-9b28-ef11-840b-002248ec8105": "N31902",
+    "4b0968e0-9b28-ef11-840b-002248ec8105": "N31903",
+    "4d0968e0-9b28-ef11-840b-002248ec8105": "N31904",
+    "4f0968e0-9b28-ef11-840b-002248ec8105": "N31905",
+    "510968e0-9b28-ef11-840b-002248ec8105": "N31906",
+    "530968e0-9b28-ef11-840b-002248ec8105": "N31907",
+    "4c4b8713-b539-ef11-a317-002248ec8105": "N31908",
+    "f818cbd3-3d7e-ef11-ac21-002248ec8105": "N31910",
+    "fa18cbd3-3d7e-ef11-ac21-002248ec8105": "N31911",
+    "4de683b5-489c-f011-bbd2-002248ee5962": "N31918",
+    "bcfeca24-b1bb-f011-bbd3-6045bd5685f8": "N31920",
+    "5c994131-8193-ef11-8a6a-6045bd5754c8": "N31912",
+    "30fb9dbe-274a-ef11-a317-6045bd5754c8": "N31909",
+    "548d8293-af9d-ef11-8a6b-6045bd5754ce": "N31913",
+    "bc71e0bd-b1c6-ef11-b8e9-6045bd5754ce": "N31914",
+    "e24d9ffb-8b9e-f011-bbd2-6045bd576695": "N31919",
+    "dc66ab0e-6a45-f111-bec7-6045bd585385": "N31923",
+    "6f13b85d-f73f-f111-bec6-6045bd5a3372": "N31921",
+    "7113b85d-f73f-f111-bec6-6045bd5a3372": "N31922"
+  };
+
   // Hiển thị thông báo nhỏ khi thành công
   function showSuccessToast(msg) {
     const old = document.getElementById('vf-dms-success-toast');
@@ -19,7 +48,7 @@
     setTimeout(function () {
       toast.style.opacity = '0';
       setTimeout(function () { if (toast.parentElement) toast.remove(); }, 500);
-    }, 4000);
+    }, 4500);
   }
 
   // Hiển thị thông báo nhỏ chỉ khi có lỗi
@@ -142,35 +171,6 @@
         dmsByVin[v].push(r);
       });
 
-      // Bảng ánh xạ định danh 25 showroom VinFast sang mã DMS chuẩn
-      var SITE_MAP = {
-        "2bd660d4-92ad-f111-aaae-000d3a8140c0": "N31925",
-        "bf9e5764-ff8f-f111-8076-000d3a821339": "N31924",
-        "4cfe574e-b361-ea11-a811-000d3a85937e": "N31901",
-        "52b1cce4-4d52-f011-877a-00224816cf50": "N31917",
-        "4ce24370-2b15-f011-998a-00224817e379": "N31915",
-        "4ee24370-2b15-f011-998a-00224817e379": "N31916",
-        "490968e0-9b28-ef11-840b-002248ec8105": "N31902",
-        "4b0968e0-9b28-ef11-840b-002248ec8105": "N31903",
-        "4d0968e0-9b28-ef11-840b-002248ec8105": "N31904",
-        "4f0968e0-9b28-ef11-840b-002248ec8105": "N31905",
-        "510968e0-9b28-ef11-840b-002248ec8105": "N31906",
-        "530968e0-9b28-ef11-840b-002248ec8105": "N31907",
-        "4c4b8713-b539-ef11-a317-002248ec8105": "N31908",
-        "f818cbd3-3d7e-ef11-ac21-002248ec8105": "N31910",
-        "fa18cbd3-3d7e-ef11-ac21-002248ec8105": "N31911",
-        "4de683b5-489c-f011-bbd2-002248ee5962": "N31918",
-        "bcfeca24-b1bb-f011-bbd3-6045bd5685f8": "N31920",
-        "5c994131-8193-ef11-8a6a-6045bd5754c8": "N31912",
-        "30fb9dbe-274a-ef11-a317-6045bd5754c8": "N31909",
-        "548d8293-af9d-ef11-8a6b-6045bd5754ce": "N31913",
-        "bc71e0bd-b1c6-ef11-b8e9-6045bd5754ce": "N31914",
-        "e24d9ffb-8b9e-f011-bbd2-6045bd576695": "N31919",
-        "dc66ab0e-6a45-f111-bec7-6045bd585385": "N31923",
-        "6f13b85d-f73f-f111-bec6-6045bd5a3372": "N31921",
-        "7113b85d-f73f-f111-bec6-6045bd5a3372": "N31922"
-      };
-
       function resolveDmsVersion(dongXe, phienBan, rawCode) {
         if (rawCode && rawCode.length >= 4 && rawCode.length <= 6) return rawCode.toUpperCase();
         var dx = (dongXe || '').toUpperCase();
@@ -183,27 +183,28 @@
           if (pb.indexOf('ECO') >= 0) return 'TI1CV';
           return 'TI1BV';
         }
-        if (dx.indexOf('VF5') >= 0 || dx.indexOf('VF 5') >= 0) return 'GA1RV';
+        if (dx.indexOf('VF5') >= 0 || dx.indexOf('VF 5') >= 0) {
+          if (pb.indexOf('ECO') >= 0) return 'GA1KV';
+          return 'GA1RV';
+        }
         if (dx.indexOf('VF6') >= 0 || dx.indexOf('VF 6') >= 0) {
           if (pb.indexOf('ECO') >= 0) return 'JB10V';
-          return 'JB12V';
+          return 'HB14V';
         }
         if (dx.indexOf('VF7') >= 0 || dx.indexOf('VF 7') >= 0) {
-          if (pb.indexOf('ECO') >= 0) return 'HC1BV';
-          return 'GC12V';
+          if (pb.indexOf('PLUS') >= 0) return 'GC15V';
+          return 'HC1CV';
         }
         if (dx.indexOf('VF8') >= 0 || dx.indexOf('VF 8') >= 0) {
-          if (pb.indexOf('ECO') >= 0) return 'ND31V';
-          return 'ND32V';
+          if (pb.indexOf('ECO') >= 0) return 'ND41V';
+          return 'ND42V';
         }
         if (dx.indexOf('VF9') >= 0 || dx.indexOf('VF 9') >= 0) {
+          if (pb.indexOf('6') >= 0) return 'NE3NV';
           if (pb.indexOf('ECO') >= 0) return 'NE3LV';
           return 'NE3MV';
         }
-        if (dx.indexOf('VAN') >= 0) return 'TG10V';
-        if (dx.indexOf('LIMO') >= 0) return 'SL1VV';
-        if (dx.indexOf('VF2') >= 0 || dx.indexOf('MINIO') >= 0) return 'TH14V';
-        return rawCode || '';
+        return '';
       }
 
       var soldVins = [];
@@ -212,8 +213,9 @@
       khoCars.forEach(function (c) {
         var vin = (c.vin || '').trim().toUpperCase();
         if (!vin) return;
+
         var recs = dmsByVin[vin];
-        if (!recs || recs.length === 0) return; // Chưa lên DMS -> giữ nguyên
+        if (!recs || recs.length === 0) return;
 
         // Bất kỳ dòng nào có số đơn hàng cuối cùng -> ĐÃ XUẤT HÓA ĐƠN
         if (recs.some(function (it) { return !!it._xts_lastvehicleorderid_value; })) {
@@ -233,50 +235,52 @@
           
           var pkgFormatted = best['_xts_configurationid_value@OData.Community.Display.V1.FormattedValue'] ||
                              best.xts_productdescription || '';
-          var pkgVal = resolveDmsVersion(c.dong_xe, c.phien_ban, pkgFormatted ? pkgFormatted.trim().toUpperCase() : c.ma_phien_ban);
+          var resolvedVer = resolveDmsVersion(c.dong_xe, c.phien_ban, pkgFormatted);
 
-          if (dmsVal || engVal || pkgVal) {
-            updateList.push({
-              vin: vin,
-              ma_dms: dmsVal || c.ma_dms || null,
-              so_may: engVal || c.so_may || null,
-              ma_phien_ban: pkgVal || c.ma_phien_ban || null
-            });
+          var hasChange = false;
+          var patch = { vin: vin };
+
+          if (dmsVal && c.ma_dms !== dmsVal) {
+            patch.ma_dms = dmsVal;
+            hasChange = true;
+          }
+          if (engVal && c.so_may !== engVal) {
+            patch.so_may = engVal;
+            hasChange = true;
+          }
+          if (resolvedVer && c.ma_phien_ban !== resolvedVer) {
+            patch.ma_phien_ban = resolvedVer;
+            hasChange = true;
+          }
+
+          if (hasChange) {
+            updateList.push(patch);
           }
         }
       });
 
-      // Gỡ xe XHĐ khỏi khoxe (ngầm, an toàn)
+      // 3. Thực thi cập nhật đồng bộ kho
       if (soldVins.length > 0) {
         await fetch(sbUrl + '/rest/v1/rpc/rpc_auto_remove_sold_cars', {
           method: 'POST',
           headers: sbHeaders,
-          body: JSON.stringify({ p_sold_vins: soldVins, p_actor_name: 'DMS Extension Silent' })
+          body: JSON.stringify({
+            p_sold_vins: soldVins,
+            p_actor_name: 'DMS Auto Radar (Tiện ích ngầm)'
+          })
         });
+        console.log('[DMS Auto Sync] Đã tự động gỡ ' + soldVins.length + ' xe đã xuất HĐ khỏi kho xe web.');
       }
 
-      // Cập nhật mã DMS, số máy và mã phiên bản
       if (updateList.length > 0) {
         await fetch(sbUrl + '/rest/v1/rpc/rpc_sync_dms_metadata', {
           method: 'POST',
           headers: sbHeaders,
           body: JSON.stringify({ p_cars: updateList })
         });
-        
-        // Đồng thời cập nhật ma_phien_ban trực tiếp cho khoxe qua REST API (đảm bảo 100% không phụ thuộc version RPC)
-        for (var idx = 0; idx < updateList.length; idx++) {
-          var item = updateList[idx];
-          if (item.ma_phien_ban) {
-            fetch(sbUrl + '/rest/v1/khoxe?vin=eq.' + encodeURIComponent(item.vin), {
-              method: 'PATCH',
-              headers: sbHeaders,
-              body: JSON.stringify({ ma_phien_ban: item.ma_phien_ban })
-            }).catch(function () {});
-          }
-        }
       }
 
-      // 3. Đồng bộ tọa độ GPS xe trong kho lên bảng car_telemetry
+      // ĐỒNG BỘ GPS TỌA ĐỘ LIVE VÀO CAR_TELEMETRY
       var gpsByVin = {};
       dmsRecords.forEach(function (r) {
         var vin = String(r.xts_chassisnumber || '').trim().toUpperCase();
@@ -316,7 +320,10 @@
         }
       }
 
-      var successMsg = 'Số máy, Mã DMS & Mã PB: ' + updateList.length + ' xe | GPS Live: ' + gpsList.length + ' xe | Gỡ XHĐ: ' + soldVins.length;
+      var successMsg = (updateList.length > 0 
+        ? ('Cập nhật mới: ' + updateList.length + ' xe') 
+        : ('Kho xe: ' + khoCars.length + '/' + khoCars.length + ' xe đã chuẩn khớp 100%')) + 
+        ' | GPS Live: ' + gpsList.length + ' xe | Gỡ XHĐ: ' + soldVins.length;
       console.log('[DMS Auto Sync] ✅ ' + successMsg);
       if (console.table && updateList.length > 0) {
         console.log('[DMS Auto Sync] 📋 Danh sách chi tiết Số máy, Mã DMS & Mã Phiên Bản đã đồng bộ:');
@@ -333,6 +340,9 @@
 
       // 4. Tải và nạp xe chưa XHĐ vào thongtinxe
       runThongtinxeSync(xrm, sbUrl, sbHeaders);
+
+      // 5. Tự động đồng bộ Đơn hàng mở vào bảng donhanghienhuu
+      runDonHangHienHuuSync(xrm, sbUrl, sbHeaders);
 
     } catch (err) {
       console.error('[DMS Auto Sync] Lỗi:', err);
@@ -413,5 +423,149 @@
     }
 
     fetchPage('?$select=' + selectCols + '&$filter=statecode eq 0');
+  }
+
+  // 5. Tự động quét và đồng bộ Đơn hàng mở vào bảng donhanghienhuu
+  function runDonHangHienHuuSync(xrm, sbUrl, sbHeaders) {
+    console.log('[DMS Auto Sync] 📋 Bắt đầu quét đơn hàng mở (VSO) để đồng bộ vào donhanghienhuu...');
+    var allOrders = [];
+
+    function getDmsLookup(it, fld) {
+      if (!it) return '';
+      var kFmt = '_' + fld + '_value@OData.Community.Display.V1.FormattedValue';
+      if (it[kFmt]) return String(it[kFmt]).trim();
+      var kShort = fld + '@OData.Community.Display.V1.FormattedValue';
+      if (it[kShort]) return String(it[kShort]).trim();
+      var kVal = '_' + fld + '_value';
+      if (it[kVal]) return String(it[kVal]).trim();
+      return it[fld] ? String(it[fld]).trim() : '';
+    }
+
+    function isOrderOpen(it) {
+      if (!it) return false;
+      if (it.xvf_sapinvoicenumber || it.xvf_sapinvoicedate) return false;
+      var statusVal = it.xts_status;
+      if (statusVal === 7 || statusVal === 10 || statusVal === '7' || statusVal === '10') return false;
+      var st = (getDmsLookup(it, 'xts_status') || String(it.xts_status || '')).toLowerCase();
+      var blocked = ['hóa đơn', 'invoiced', 'hủy', 'cancel', 'void', 'closed', 'đã giao', 'hoàn tất'];
+      for (var b = 0; b < blocked.length; b++) {
+        if (st.indexOf(blocked[b]) !== -1) return false;
+      }
+      return true;
+    }
+
+    function fetchOrdersPage(query) {
+      xrm.WebApi.retrieveMultipleRecords('xts_newvehiclesalesorder', query).then(async function (res) {
+        if (res && res.entities && res.entities.length > 0) {
+          allOrders.push.apply(allOrders, res.entities);
+        }
+
+        var nextLink = res['@odata.nextLink'] || res.nextLink;
+        if (nextLink) {
+          fetchOrdersPage(nextLink.substring(nextLink.indexOf('?')));
+        } else {
+          console.log('[DMS Auto Sync] 📥 Đã tải tổng cộng ' + allOrders.length + ' đơn hàng từ DMS. Đang lọc đơn MỞ...');
+          var openOrders = [];
+          for (var i = 0; i < allOrders.length; i++) {
+            var item = allOrders[i];
+            if (!isOrderOpen(item)) continue;
+
+            var soDh = (item.xts_newvehiclesalesordernumber || '').trim();
+            if (!soDh) continue;
+
+            openOrders.push({
+              new_vehicle_sales_order_id: item.xts_newvehiclesalesorderid || '',
+              kiem_tra_tong_cho_hang: '',
+              ngay_sua_doi: item.modifiedon || null,
+              ngay_giao_dich: item.xts_transactiondate ? String(item.xts_transactiondate).substring(0, 10) : null,
+              tu_van_ban_hang: getDmsLookup(item, 'xts_salespersonid') || getDmsLookup(item, 'ownerid') || '',
+              so_don_hang_ban: soDh,
+              so_bao_gia_xe: getDmsLookup(item, 'xts_newvehiclesalesquoteid') || '',
+              ngay_xuat_hoa_don: null,
+              khach_hang_tiem_nang: getDmsLookup(item, 'xts_potentialcustomerid') || item.xts_potentialcustomerdescription || '',
+              promotion: getDmsLookup(item, 'xvf_promotionid') || item.itv_promotiondetail || '',
+              ma_khach_hang: item.xts_customernumber || '',
+              mo_ta_san_pham: item.xts_productdescription || getDmsLookup(item, 'xts_productid') || '',
+              ten_phien_ban: getDmsLookup(item, 'xvf_characteristicconfiguration') || getDmsLookup(item, 'xts_productconfigurationid') || '',
+              loai_tran: getDmsLookup(item, 'itv_characteristicceilingid') || '',
+              mau_ngoai_that: item.xvf_exteriorcolor || getDmsLookup(item, 'xts_productexteriorcolorid') || '',
+              mau_noi_that: item.xvf_interiorcolor || getDmsLookup(item, 'xts_productinteriorcolorid') || '',
+              ma_phien_ban: getDmsLookup(item, 'xvf_vehiclepackage') || '',
+              ma_mau_ngoai_that: getDmsLookup(item, 'xts_productexteriorcolorid') || '',
+              ma_mau_noi_that: getDmsLookup(item, 'xts_productinteriorcolorid') || '',
+              trang_thai: getDmsLookup(item, 'xts_status') || 'Mở',
+              pre_customer: getDmsLookup(item, 'itv_customerpreorderid') || getDmsLookup(item, 'itv_leadid') || '',
+              so_vin: (getDmsLookup(item, 'xts_chassisid') || item.xvf_vinnumber || item.itv_vinnumber || '').trim().toUpperCase(),
+              accessory_serial: getDmsLookup(item, 'xts_stockid') || '',
+              ma_san_pham: getDmsLookup(item, 'xts_productid') || '',
+              so_ton_kho: getDmsLookup(item, 'xts_stockid') || '',
+              so_tien_thuc_sau_thue: item.xts_netamountaftertax || item.xvf_grandtotal || item.xts_vehicleamount || 0,
+              don_hang_goc: getDmsLookup(item, 'xts_originalnewvehiclesalesorderreferenceid') || '',
+              chi_nhanh: getDmsLookup(item, 'xts_businessunitid') || ''
+            });
+          }
+
+          // Lọc trùng lặp so_don_hang_ban
+          var uniqueMap = {};
+          openOrders.forEach(function (ord) {
+            uniqueMap[ord.so_don_hang_ban] = ord;
+          });
+          var finalOrders = Object.values(uniqueMap);
+          console.log('[DMS Auto Sync] 📋 Lọc được ' + finalOrders.length + ' đơn hàng MỞ hợp lệ. Đang lưu vào Supabase donhanghienhuu...');
+
+          if (finalOrders.length > 0) {
+            // Cách 1: Ưu tiên dùng RPC rpc_sync_donhanghienhuu
+            var rpcDone = false;
+            try {
+              var rpcRes = await fetch(sbUrl + '/rest/v1/rpc/rpc_sync_donhanghienhuu', {
+                method: 'POST',
+                headers: sbHeaders,
+                body: JSON.stringify({ p_orders: finalOrders })
+              });
+              if (rpcRes.ok) {
+                var rpcData = await rpcRes.json();
+                console.log('[DMS Auto Sync] 🎉 RPC Thành công: Đã lưu ' + (rpcData.count || finalOrders.length) + ' đơn hàng MỞ vào donhanghienhuu!');
+                rpcDone = true;
+              }
+            } catch (rpcErr) {
+              console.warn('[DMS Auto Sync] RPC chưa sẵn sàng, chuyển sang REST API...', rpcErr);
+            }
+
+            // Cách 2: Fallback sang REST Bulk POST nếu RPC chưa có
+            if (!rpcDone) {
+              try {
+                var pruneUrl = sbUrl + '/rest/v1/donhanghienhuu?or=(ngay_xuat_hoa_don.not.is.null,trang_thai.ilike.*hóa đơn*,trang_thai.ilike.*invoiced*,trang_thai.ilike.*hủy*,trang_thai.ilike.*cancel*)';
+                await fetch(pruneUrl, { method: 'DELETE', headers: sbHeaders }).catch(function () {});
+              } catch (_) {}
+
+              var ordersUrl = sbUrl + '/rest/v1/donhanghienhuu?on_conflict=so_don_hang_ban';
+              var upsertHeaders = Object.assign({}, sbHeaders, {
+                'Prefer': 'resolution=merge-duplicates,return=minimal'
+              });
+
+              for (var bIdx = 0; bIdx < finalOrders.length; bIdx += 100) {
+                var bChunk = finalOrders.slice(bIdx, bIdx + 100);
+                try {
+                  await fetch(ordersUrl, {
+                    method: 'POST',
+                    headers: upsertHeaders,
+                    body: JSON.stringify(bChunk)
+                  });
+                } catch (postErr) {
+                  console.warn('[DMS Auto Sync] ⚠️ Lỗi lô ' + (Math.floor(bIdx / 100) + 1) + ' donhanghienhuu:', postErr);
+                }
+              }
+              console.log('[DMS Auto Sync] 🎉 REST API Thành công: Đã lưu ' + finalOrders.length + ' đơn hàng MỞ vào donhanghienhuu!');
+            }
+
+            showSuccessToast('Đã đồng bộ ' + finalOrders.length + ' đơn hàng MỞ vào donhanghienhuu!');
+          }
+        }
+      }, function (err) {
+        console.warn('[DMS Auto Sync] ⚠️ Lỗi đọc đơn hàng từ DMS (xts_newvehiclesalesorder):', err);
+      });
+    }
+
+    fetchOrdersPage('?$filter=statecode eq 0');
   }
 })();
