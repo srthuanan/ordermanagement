@@ -2564,51 +2564,53 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                                                                 title={st.onClick ? 'Click để xem rõ chi tiết tiến trình duyệt giấy ra cổng' : undefined}
                                                             >
                                                                 {/* Automotive Semantic Micro-Badge Node */}
-                                                                <div className={`absolute -left-[25px] w-[26px] h-[26px] rounded-xl flex items-center justify-center transition-all ${
+                                                                <div className={`absolute -left-[24px] w-[24px] h-[24px] rounded-full flex items-center justify-center transition-all ${
                                                                     st.isDone 
-                                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-300 shadow-xs ring-4 ring-white' 
+                                                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-300 shadow-2xs ring-3 ring-white' 
                                                                         : st.id === 6 && td4Info.hasTd4
-                                                                            ? 'bg-violet-50 text-violet-600 border border-violet-300 shadow-xs ring-4 ring-white'
-                                                                            : 'bg-slate-100 text-slate-400 border border-slate-200 ring-4 ring-white'
+                                                                            ? 'bg-violet-50 text-violet-600 border border-violet-300 shadow-2xs ring-3 ring-white'
+                                                                            : 'bg-slate-100 text-slate-400 border border-slate-200 ring-3 ring-white'
                                                                 }`}>
-                                                                    <i className={`fas ${st.icon} text-[10.5px]`}></i>
+                                                                    <i className={`fas ${st.icon} text-[9.5px]`}></i>
                                                                     {st.isDone && (
-                                                                        <span className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[7px] ring-1.5 ring-white shadow-2xs">
+                                                                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[6px] ring-1 ring-white shadow-2xs">
                                                                             <i className="fas fa-check"></i>
                                                                         </span>
                                                                     )}
                                                                 </div>
 
-                                                                {/* Step Info Row */}
-                                                                <div className={`flex-1 ml-2 px-3 py-1.5 rounded-xl border transition-all flex items-center justify-between gap-2 ${
-                                                                    st.isDone 
-                                                                        ? 'bg-slate-50/80 border-slate-200 hover:bg-slate-100/80' 
-                                                                        : st.id === 6 && td4Info.hasTd4
-                                                                            ? 'bg-violet-50/40 border-violet-200 hover:bg-violet-100/60'
-                                                                            : 'bg-slate-50/30 border-slate-100 opacity-60'
+                                                                {/* Step Info Row - Bỏ đóng khung, chữ nhỏ thanh thoát */}
+                                                                <div className={`flex-1 ml-2 py-0.5 flex items-center justify-between gap-2 transition-all ${
+                                                                    !st.isDone && !(st.id === 6 && td4Info.hasTd4) ? 'opacity-50' : ''
                                                                 }`}>
                                                                     <div className="min-w-0">
-                                                                        <p className="text-[9.5px] font-semibold text-slate-400 uppercase tracking-wider leading-none mb-1 truncate">
+                                                                        <p className="text-[8.5px] font-semibold text-slate-400 uppercase tracking-wider leading-none mb-0.5 truncate">
                                                                             {st.title}
                                                                         </p>
-                                                                        <p className="text-[11px] font-bold text-slate-800 tracking-tight tabular-nums leading-none truncate">
+                                                                        <p className={`text-[9.5px] tracking-tight tabular-nums leading-none truncate ${
+                                                                            st.isDone 
+                                                                                ? 'font-bold text-slate-800' 
+                                                                                : st.id === 6 && td4Info.hasTd4 
+                                                                                    ? 'font-bold text-violet-700' 
+                                                                                    : 'font-medium text-slate-400'
+                                                                        }`}>
                                                                             {st.time}
                                                                         </p>
                                                                     </div>
 
                                                                     <div className="flex items-center gap-1.5 shrink-0">
                                                                         {st.badge && (
-                                                                            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md leading-none tabular-nums flex items-center gap-1 ${
+                                                                            <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded leading-none tabular-nums flex items-center gap-1 ${
                                                                                 st.id === 6 
-                                                                                    ? (td4Info.post === '9' ? 'text-emerald-700 bg-emerald-100/90 border border-emerald-300/60' : 'text-violet-700 bg-violet-100/90 border border-violet-300/60')
-                                                                                    : 'text-emerald-700 bg-emerald-100/90 border border-emerald-300/60'
+                                                                                    ? (td4Info.post === '9' ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-violet-700 bg-violet-50 border border-violet-200')
+                                                                                    : 'text-emerald-700 bg-emerald-50 border border-emerald-200'
                                                                             }`}>
-                                                                                <i className="fas fa-clock text-[8px]"></i>
+                                                                                <i className="fas fa-clock text-[7.5px]"></i>
                                                                                 <span>{st.badge}</span>
                                                                             </span>
                                                                         )}
                                                                         {st.onClick && (
-                                                                            <i className="fas fa-arrow-up-right-from-square text-[8.5px] text-violet-400 group-hover:text-violet-600 transition-colors"></i>
+                                                                            <i className="fas fa-arrow-up-right-from-square text-[8px] text-violet-400 group-hover:text-violet-600 transition-colors"></i>
                                                                         )}
                                                                     </div>
                                                                 </div>
