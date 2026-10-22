@@ -373,6 +373,7 @@
               var tB = b.modifiedon ? new Date(b.modifiedon).getTime() : 0;
               return tB - tA;
             });
+            var best = recs.find(function (r) { return !!r.xts_enginenumber; }) || recs[0];
             var siteFormatted = best['_xts_siteid_value@OData.Community.Display.V1.FormattedValue'];
             var siteId = best._xts_siteid_value;
             var dmsKhuVuc = siteFormatted ? siteFormatted.split(' ')[0] : (SITE_MAP[siteId] || siteId || '');
