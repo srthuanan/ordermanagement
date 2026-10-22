@@ -167,15 +167,20 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const prevDmsStatusRef = useRef<string>('');
     const prevCyberApprovedRef = useRef<boolean>(false);
 
+    const [matchedCar, setMatchedCar] = useState<any>(() => {
+        return stockData?.find((v: any) => v.VIN === order?.VIN) || null;
+    });
+
     const expectedConfig = useMemo(() => {
-        const car = stockData?.find((v: any) => v.VIN === order.VIN);
+        const car = matchedCar || stockData?.find((v: any) => v.VIN === order.VIN);
         return {
             dong_xe: car?.['Dòng xe'] || order['Dòng xe'] || (order as any).dong_xe || '',
             phien_ban: car?.['Phiên bản'] || order['Phiên bản'] || (order as any).phien_ban || '',
+            ma_phien_ban: car?.['Mã phiên bản'] || car?.ma_phien_ban || '',
             ngoai_that: car?.['Màu ngoại thất'] || car?.['Ngoại thất'] || order['Ngoại thất'] || (order as any).ngoai_that || '',
             noi_that: car?.['Màu nội thất'] || car?.['Nội thất'] || order['Nội thất'] || (order as any).noi_that || '',
         };
-    }, [stockData, order]);
+    }, [stockData, order, matchedCar]);
 
     const isWholesaleDeposit = (policyInput?: any): boolean => {
         if (!policyInput) return false;
@@ -217,8 +222,8 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             showToast('Đang đối soát DMS...', 'Đang kiểm tra đối soát cấu hình thực tế với VinFast DMS...', 'info', 2000);
         }
 
-        // TÌM XE THỰC TẾ TRONG KHO THEO SỐ VIN ĐÃ GHÉP
-        let car = stockData?.find((v: any) => v.VIN === order.VIN);
+        // TÌM XE THỰC TẾ TRONG KHO THEO SỐ VIN ĐÃ GHÉP (ƯU TIÊN KHOXE -> THONGTINXE)
+        let car = matchedCar || stockData?.find((v: any) => v.VIN === order.VIN);
         if (!car && order.VIN) {
             try {
                 const { data: dbCar } = await supabase.from('khoxe').select('*').ilike('vin', order.VIN.trim()).maybeSingle();
@@ -230,11 +235,28 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         'Ngoại thất': dbCar.ngoai_that,
                         'Nội thất': dbCar.noi_that,
                         'Mã phiên bản': dbCar.ma_phien_ban,
-                        ma_phien_ban: dbCar.ma_phien_ban
+                        ma_phien_ban: dbCar.ma_phien_ban,
+                        so_may: dbCar.so_may
                     };
+                    setMatchedCar(car);
+                } else {
+                    const { data: ttCar } = await supabase.from('thongtinxe').select('*').ilike('vin', order.VIN.trim()).maybeSingle();
+                    if (ttCar) {
+                        car = {
+                            VIN: ttCar.vin,
+                            'Dòng xe': ttCar.mo_ta,
+                            'Phiên bản': ttCar.phien_ban,
+                            'Ngoại thất': ttCar.ngoai_that,
+                            'Nội thất': ttCar.noi_that,
+                            'Mã phiên bản': ttCar.phien_ban,
+                            ma_phien_ban: ttCar.phien_ban,
+                            so_may: ttCar.so_may
+                        };
+                        setMatchedCar(car);
+                    }
                 }
             } catch (carErr) {
-                console.warn('[RequestInvoiceModal] Lỗi tìm xe khoxe:', carErr);
+                console.warn('[RequestInvoiceModal] Lỗi tìm xe khoxe/thongtinxe:', carErr);
             }
         }
 
@@ -342,6 +364,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
             const targetConfig = car ? {
                 dong_xe: car['Dòng xe'] || car.dong_xe,
                 phien_ban: car['Phiên bản'] || car.phien_ban,
+                ma_phien_ban: car.ma_phien_ban || car['Mã phiên bản'] || car['Phiên bản'],
                 ngoai_that: car['Ngoại thất'] || car['Màu ngoại thất'] || car.ngoai_that,
                 noi_that: car['Nội thất'] || car['Màu nội thất'] || car.noi_that,
                 ten_khach_hang: order["Tên khách hàng"]
@@ -380,16 +403,15 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
                         return;
                     }
 
-                    const rawCarVerCode = (car.ma_phien_ban || car['Mã phiên bản'] || '').trim().toUpperCase();
+                    const rawCarVerCode = (car.ma_phien_ban || car['Mã phiên bản'] || car['Phiên bản'] || '').trim().toUpperCase();
                     const carVerCode = apiService.resolveMaterialVersionCode(carModel, carVersion, rawCarVerCode);
                     const rawDmsVerCode = (res.dmsRecord?.ten_phien_ban || res.dmsRecord?.ma_phien_ban || '').trim().toUpperCase();
                     const dmsVerCode = apiService.resolveMaterialVersionCode(dmsModel, dmsVersion, rawDmsVerCode);
 
-                    // ƯU TIÊN 1: SO SÁNH TRỰC TIẾP MÃ PHIÊN BẢN CỦA VIN XE VÀ DMS (VÍ DỤ GA1RV === GA1RV)
+                    // BẮT BUỘC SO SÁNH CHÍNH XÁC MÃ PHIÊN BẢN CỦA VIN XE VÀ DMS (VÍ DỤ GA1RV === GA1RV, TI1DV === TI1DV)
                     if (carVerCode && dmsVerCode) {
                         const isDirectMatch = carVerCode === dmsVerCode;
-                        const isGroupMatch = apiService.getVersionCode(carVerCode) === apiService.getVersionCode(dmsVerCode);
-                        if (!isDirectMatch && !isGroupMatch) {
+                        if (!isDirectMatch) {
                             const dispCarVer = apiService.DMS_VERSION_CODE_MAP[carVerCode]?.name || carVersion || carVerCode;
                             const dispDmsVer = res.details?.version || dmsVersion || dmsVerCode;
                             setDmsVerification({
@@ -882,7 +904,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
     const isVpointValid = rawVpoint === '' || (!isNaN(Number(rawVpoint)) && Number(rawVpoint) >= 0);
 
     // Kiểm tra hợp lệ cấu hình DMS và CyberSoft (Chặn không cho tiếp tục nếu có lỗi)
-    const car = stockData?.find((v: any) => v.VIN === order.VIN);
+    const car = matchedCar || stockData?.find((v: any) => v.VIN === order.VIN);
     const carExtCode = car ? (apiService.getExteriorColorCode(car['Ngoại thất'] || car['Màu ngoại thất'] || '') || (car as any).ma_mau) : '';
     const carIntCode = car ? (apiService.getInteriorColorCode(car['Nội thất'] || car['Màu nội thất'] || '') || (car as any).ma_noi_that) : '';
     const carModelCode = car ? apiService.getModelCode(car['Dòng xe'] || '') : '';
@@ -1214,7 +1236,7 @@ const RequestInvoiceModal: React.FC<RequestInvoiceModalProps> = ({ order, onClos
         }
 
         // 1. Kiểm tra đối soát cấu hình Mã màu ngoại thất, nội thất và dòng xe giữa HĐ CyberSoft và Xe ghép
-        const car = stockData?.find((v: any) => v.VIN === order.VIN);
+        const car = matchedCar || stockData?.find((v: any) => v.VIN === order.VIN);
         const carExtCode = car ? (apiService.getExteriorColorCode(car['Ngoại thất'] || car['Màu ngoại thất'] || '') || (car as any).ma_mau) : '';
         const carIntCode = car ? (apiService.getInteriorColorCode(car['Nội thất'] || car['Màu nội thất'] || '') || (car as any).ma_noi_that) : '';
         const carModelCode = car ? apiService.getModelCode(car['Dòng xe'] || '') : '';

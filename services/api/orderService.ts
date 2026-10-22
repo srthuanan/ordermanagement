@@ -111,6 +111,7 @@ export const fetchAllArchivedData = async (): Promise<ApiResult> => {
 export interface DmsVsoExpectedConfig {
     dong_xe?: string;
     phien_ban?: string;
+    ma_phien_ban?: string;
     ngoai_that?: string;
     noi_that?: string;
     ten_khach_hang?: string;
@@ -460,6 +461,10 @@ export const resolveMaterialVersionCode = (dongXe?: string, phienBan?: string, r
     if (cleanRaw && DMS_VERSION_CODE_MAP[cleanRaw]) {
         if (isSliding && cleanRaw === 'TG11V') return 'TG12V';
         return cleanRaw;
+    }
+    const matchDmsPart = cleanRaw.match(/(?:^|_)([A-Z0-9]{4,6})(?:_|$)/);
+    if (matchDmsPart && DMS_VERSION_CODE_MAP[matchDmsPart[1]]) {
+        return matchDmsPart[1];
     }
     if (cleanRaw && cleanRaw.length >= 4 && cleanRaw.length <= 6 && /^[A-Z0-9]+$/.test(cleanRaw)) {
         if (isSliding && cleanRaw === 'TG11V') return 'TG12V';
@@ -816,21 +821,40 @@ export const verifyDmsVso = async (
                 }
             }
 
-            // 3.2 Phiên bản (Version) - So sánh bằng mã phiên bản
-            if (expected.phien_ban && dmsVersion) {
-                const expVerCode = getVersionCode(expected.phien_ban);
-                const dmsVerCode = getVersionCode(dmsVersion);
+            // 3.2 Phiên bản (Version) - Bắt buộc so sánh bằng mã phiên bản vật tư DMS trực tiếp
+            if ((expected.phien_ban || expected.ma_phien_ban) && (dmsVersion || dmsRecord.ma_phien_ban)) {
+                const rawExpVerCode = (expected.ma_phien_ban || expected.phien_ban || '').trim().toUpperCase();
+                const expVerCode = resolveMaterialVersionCode(expected.dong_xe, expected.phien_ban, rawExpVerCode);
+                const rawDmsVerCode = (dmsVersion || dmsRecord.ma_phien_ban || '').trim().toUpperCase();
+                const dmsVerCode = resolveMaterialVersionCode(dmsModel, dmsVersion, rawDmsVerCode);
+
                 if (expVerCode && dmsVerCode && expVerCode !== dmsVerCode) {
-                    const dispDmsVer = formatDispVersion(dmsVersion);
+                    const dispExpVer = DMS_VERSION_CODE_MAP[expVerCode]?.name || expected.phien_ban || expVerCode;
+                    const dispDmsVer = formatDispVersion(dmsVersion) || dmsVerCode;
                     return {
                         isValid: false,
-                        reason: `Lệch Phiên bản: Xe là [${expected.phien_ban}] ⇄ DMS là [${dispDmsVer}].`,
+                        reason: `Lệch Phiên bản: Xe là [${dispExpVer} (${expVerCode})] ⇄ DMS là [${dispDmsVer} (${dmsVerCode})].`,
                         errorType: 'version',
-                        expectedVal: expected.phien_ban,
-                        dmsVal: dispDmsVer,
+                        expectedVal: `${dispExpVer} (${expVerCode})`,
+                        dmsVal: `${dispDmsVer} (${dmsVerCode})`,
                         dmsRecord,
                         details
                     };
+                } else if (!expVerCode || !dmsVerCode) {
+                    const expVerGroup = getVersionCode(expected.phien_ban || '');
+                    const dmsVerGroup = getVersionCode(dmsVersion);
+                    if (expVerGroup && dmsVerGroup && expVerGroup !== dmsVerGroup) {
+                        const dispDmsVer = formatDispVersion(dmsVersion);
+                        return {
+                            isValid: false,
+                            reason: `Lệch Phiên bản: Xe là [${expected.phien_ban}] ⇄ DMS là [${dispDmsVer}].`,
+                            errorType: 'version',
+                            expectedVal: expected.phien_ban,
+                            dmsVal: dispDmsVer,
+                            dmsRecord,
+                            details
+                        };
+                    }
                 }
             }
 
