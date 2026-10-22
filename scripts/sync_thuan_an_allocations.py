@@ -2123,9 +2123,8 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
         vins = [params.get("vin")]
 
     ma_gd = str(params.get("ma_gd") or "").strip()
-    is_gd9 = (ma_gd == '9')
-    ma_kho_xuat = ("" if is_gd9 else (params.get("ma_kho_xuat") or params.get("ma_kho_i") or "K87")).strip()
-    ma_kho_nhan = ("" if is_gd9 else (params.get("ma_kho_nhan") or params.get("ma_khoN_i") or "K83")).strip()
+    ma_kho_xuat = (params.get("ma_kho_xuat") or params.get("ma_kho_i") or "K87").strip()
+    ma_kho_nhan = (params.get("ma_kho_nhan") or params.get("ma_khoN_i") or "K83").strip()
     khach_hang  = (params.get("khach_hang") or params.get("ong_ba") or "").strip()
     ly_do       = (params.get("ly_do") or params.get("dien_giai") or "Điều chuyển xe nội bộ").strip()
     ma_dvcs     = (params.get("ma_dvcs") or "02").strip()
@@ -2133,30 +2132,70 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
     user_name   = (params.get("user_name") or "02.NHANPT").strip()
 
     WAREHOUSE_TO_TTCP = {
-        'K83': '02.01.08',
-        'K87': '02.01.08',
-        'K86': '02.01.08',
-        'K106': '02.01.08',
-        'KHCM.PVD': '02.01.08',
-        'K85': '02.01.03',
-        'K65': '02.01.12',
-        'K103': '02.01.05',
-        'K101': '02.01.05',
-        'K58': '02.01.10',
-        'K36': '02.01.09',
-        'K17': '02.01.01',
+        'K83': '02.01.08',       # Kho xe ô tô Thuận An
+        'K85': '02.01.08',       # Kho xe ô tô Dĩ An
+        'K65': '02.01.12',       # Kho xe ô tô Vinfast Vũng Tàu
+        'K87': '02.01.21',       # Kho xe ô tô QL13 - HCM
+        'KHCM.PVD': '02.01.21',  # Kho xe Phạm Văn Đồng - TPHCM
+        'K86': '02.01.20',       # Kho xe ô tô Vinfast Q12 - HCM
+        'K106': '02.01.20',      # Kho Hà Huy Giáp
+        'K61': '02.01.10',       # Kho xe Quang Trung
+        'K58': '02.01.09',       # Kho xe ô tô Lê Văn Việt
+        'K57': '02.01.06',       # Kho xe ô tô Vinfast Bắc Ninh
+        'KBN.TS': '02.01.06',    # Kho xe Từ Sơn - Bắc Ninh
+        'K55': '02.01.18',       # Kho ô tô Nguyễn Trãi
+        'KTN.TL': '02.01.23',    # Kho xe Tân Long - Thái Nguyên
+        'KTN.TT': '02.01.17',    # Kho xe Tân Thịnh - Thái Nguyên
+        'KTN.CK': '02.01.01',    # Kho cơ khí Cam Giá
+        'KTN.NM': '02.01.01',    # Kho nhà máy Cam Giá
+        'K66': '02.01.01',       # Kho đăng kiểm Cam Giá
+        'K17': '02.01.01',       # Kho Cam Giá
+        'K74': '02.01.13',       # Kho Mê Linh
+        'K63': '02.01.15',       # Kho Sóc Sơn
+        'K59': '02.01.05',       # Kho Times City
+        'K91': '02.01.19',       # Kho Ocean Park 2
+        'K69': '02.01.11',       # Kho Hòa Bình
+        'KHB.SH': '02.01.11',    # Kho Shop House Hòa Bình
     }
+
+    # Xác định TTCP xuất và TTCP nhận theo kho và loại giao dịch
+    ma_ttcp_xuat = params.get("ma_ttcp") or WAREHOUSE_TO_TTCP.get(ma_kho_xuat, "02.01.08")
     ma_ttcp_n = (params.get("ma_ttcp_n") or WAREHOUSE_TO_TTCP.get(ma_kho_nhan, "")).strip()
 
     if ma_gd not in ('4', '9'):
-        if ma_ttcp_n and ma_ttcp_n != ma_ttcp:
+        if ma_ttcp_n and ma_ttcp_n != ma_ttcp_xuat:
             ma_gd = '9'
         else:
             ma_gd = '4'
 
-    if ma_gd == '9':
-        ma_kho_xuat = ""
-        ma_kho_nhan = ""
+    # Quy chuẩn nghiệp vụ CyberSoft:
+    # - Mã 4: Điều chuyển nội bộ => TTCP xuất và TTCP nhận PHẢI GIỐNG NHAU (Thuận An 02.01.08)
+    # - Mã 9: Điều chuyển các điểm KD => TTCP xuất và TTCP nhận BẮT BUỘC PHẢI KHÁC NHAU!
+    if ma_gd == '4':
+        ma_ttcp_xuat = '02.01.08'
+        ma_ttcp_n = '02.01.08'
+    elif ma_gd == '9':
+        if not ma_ttcp_n or ma_ttcp_n == ma_ttcp_xuat:
+            # Nếu kho nhận là K65 thì TTCP nhận là Vũng Tàu 02.01.12
+            if ma_kho_nhan in ('K65', 'K72'):
+                ma_ttcp_n = '02.01.12'
+            elif ma_kho_nhan in ('K61', 'K64'):
+                ma_ttcp_n = '02.01.10'
+            elif ma_kho_nhan in ('K58',):
+                ma_ttcp_n = '02.01.09'
+            elif ma_kho_nhan in ('K86', 'K106'):
+                ma_ttcp_n = '02.01.20'
+            elif ma_kho_nhan in ('K87', 'KHCM.PVD'):
+                ma_ttcp_n = '02.01.21'
+            elif ma_kho_nhan in ('K57', 'KBN.TS'):
+                ma_ttcp_n = '02.01.06'
+            elif ma_kho_xuat in ('K65',):
+                ma_ttcp_xuat = '02.01.12'
+                ma_ttcp_n = '02.01.08'
+            else:
+                ma_ttcp_n = '02.01.12'  # Mặc định điều chuyển sang Vũng Tàu nếu chưa rõ
+
+    ma_ttcp = ma_ttcp_xuat
 
     if not vins:
         return {"success": False, "error": "Vui lòng chọn ít nhất một xe (số VIN) để lập phiếu đề nghị xuất"}
@@ -2173,7 +2212,7 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
                 database='CyberAppGolden_VanDao',
                 timeout=30,
                 appname='CyberAppGolden',
-                    autocommit=True
+                autocommit=True
             )
         except Exception:
             import pyodbc
@@ -2182,17 +2221,6 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
 
         cursor = conn.cursor(as_dict=True) if is_pymssql else conn.cursor()  # type: ignore
         ph = "%s" if is_pymssql else "?"
-
-        if not ma_ttcp_n and ma_kho_nhan:
-            try:
-                cursor.execute(f"SELECT TOP 1 ma_ttcp FROM DmKho WHERE ma_kho = {ph}", (ma_kho_nhan,))
-                r_ttcp = cursor.fetchone()
-                if r_ttcp:
-                    ma_ttcp_n = ((r_ttcp.get('ma_ttcp') if is_pymssql else r_ttcp[0]) or "").strip()
-            except Exception:
-                pass
-        if not ma_ttcp_n:
-            ma_ttcp_n = ma_ttcp
 
         # 0. CHẶN TẠO TRÙNG LẶP: Kiểm tra xem các số VIN đã tồn tại phiếu ĐNX (chưa xuất kho) hoặc phiếu TD4 chưa
         vins_clean = [v.strip().upper() for v in vins if v and len(v.strip()) >= 8]
@@ -2538,6 +2566,10 @@ def create_cyber_dnx_ticket(params: dict = {}) -> dict:
             "message": f"Đã lập thành công Phiếu Đề Nghị Xuất Xe {so_ct} trên CyberSoft ERP",
             "so_ct": str(so_ct),
             "stt_rec": str(stt_rec),
+            "ma_gd": str(ma_gd),
+            "ten_gd": "Điều chuyển xe các điểm KD" if str(ma_gd) == "9" else "Điều chuyển xe nội bộ điểm KD",
+            "ma_ttcp_xuat": str(ma_ttcp_xuat),
+            "ma_ttcp_nhan": str(ma_ttcp_n),
             "user_name": str(user_name),
             "user_id": int(user_id),
             "total_cars": int(total_qty),

@@ -276,6 +276,36 @@ const getStatusBadgeStyle = (status: string, backColor: string) => {
     };
 };
 
+const WAREHOUSE_TTCP_MAP: Record<string, string> = {
+    'K83': '02.01.08',       // Kho xe ô tô Thuận An
+    'K85': '02.01.08',       // Kho xe ô tô Dĩ An
+    'K65': '02.01.12',       // Kho xe ô tô Vinfast Vũng Tàu
+    'K87': '02.01.21',       // Kho xe ô tô QL13 - HCM
+    'KHCM.PVD': '02.01.21',  // Kho xe Phạm Văn Đồng - TPHCM
+    'K86': '02.01.20',       // Kho xe ô tô Vinfast Q12 - HCM
+    'K106': '02.01.20',      // Kho Hà Huy Giáp
+    'K61': '02.01.10',       // Kho xe Quang Trung
+    'K58': '02.01.09',       // Kho xe ô tô Lê Văn Việt
+    'K57': '02.01.06',       // Kho xe ô tô Vinfast Bắc Ninh
+    'KBN.TS': '02.01.06',    // Kho xe Từ Sơn - Bắc Ninh
+    'K55': '02.01.18',       // Kho ô tô Nguyễn Trãi
+    'KTN.TL': '02.01.23',    // Kho xe Tân Long
+    'KTN.TT': '02.01.17',    // Kho xe Tân Thịnh
+};
+
+const TTCP_NAMES: Record<string, string> = {
+    '02.01.08': 'VinFast Thuận An',
+    '02.01.12': 'VinFast Vũng Tàu',
+    '02.01.21': 'VF Phạm Văn Đồng',
+    '02.01.20': 'VF Hà Huy Giáp (Q12)',
+    '02.01.10': 'VinFast Quang Trung',
+    '02.01.09': 'VinFast Lê Văn Việt',
+    '02.01.06': 'VinFast Bắc Ninh',
+    '02.01.18': 'VinFast Nguyễn Trãi',
+    '02.01.23': 'VinFast Tân Long',
+    '02.01.17': 'VinFast Tân Thịnh',
+};
+
 export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
     showToast,
     isActive = true,
@@ -854,6 +884,20 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
         setDnxResult(null);
 
         try {
+            const maTtcpXuat = dnxMaTtcp || WAREHOUSE_TTCP_MAP[dnxMaKhoXuat] || '02.01.08';
+            let maTtcpNhan = WAREHOUSE_TTCP_MAP[dnxMaKhoNhan] || '02.01.08';
+            if (dnxMaGd === '4') {
+                maTtcpNhan = maTtcpXuat;
+            } else if (dnxMaGd === '9' && maTtcpNhan === maTtcpXuat) {
+                if (dnxMaKhoNhan === 'K65') maTtcpNhan = '02.01.12';
+                else if (dnxMaKhoNhan === 'K61') maTtcpNhan = '02.01.10';
+                else if (dnxMaKhoNhan === 'K58') maTtcpNhan = '02.01.09';
+                else if (dnxMaKhoNhan === 'K86') maTtcpNhan = '02.01.20';
+                else if (dnxMaKhoNhan === 'K87') maTtcpNhan = '02.01.21';
+                else if (dnxMaKhoNhan === 'K57') maTtcpNhan = '02.01.06';
+                else maTtcpNhan = '02.01.12';
+            }
+
             const res = await createCyberDnxTicket({
                 vins: rawVins,
                 ma_gd: dnxMaGd,
@@ -863,7 +907,8 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                 ly_do: dnxLyDo,
                 user_name: dnxUserName,
                 ma_dvcs: '02',
-                ma_ttcp: dnxMaTtcp || '02.01.08',
+                ma_ttcp: maTtcpXuat,
+                ma_ttcp_n: maTtcpNhan,
                 force: bypassExistingTicket
             });
 
@@ -4169,41 +4214,84 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 </div>
 
                                 {/* 2. Loại phiếu đề nghị xuất (CyberSoft ERP: Loại 4 vs 9) */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                    <label
-                                        onClick={() => setDnxMaGd('4')}
-                                        className={`px-2 py-1.5 sm:py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
-                                            dnxMaGd === '4'
-                                                ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-2xs ring-1 ring-blue-500/20'
-                                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="dnx_loai"
-                                            checked={dnxMaGd === '4'}
-                                            onChange={() => setDnxMaGd('4')}
-                                            className="text-blue-600 focus:ring-blue-500 cursor-pointer"
-                                        />
-                                        <span className="truncate">4. Nội bộ điểm KD (K87, K83, K86...)</span>
-                                    </label>
-                                    <label
-                                        onClick={() => setDnxMaGd('9')}
-                                        className={`px-2 py-1.5 sm:py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
-                                            dnxMaGd === '9'
-                                                ? 'bg-purple-50 border-purple-500 text-purple-900 shadow-2xs ring-1 ring-purple-500/20'
-                                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="dnx_loai"
-                                            checked={dnxMaGd === '9'}
-                                            onChange={() => setDnxMaGd('9')}
-                                            className="text-purple-600 focus:ring-purple-500 cursor-pointer"
-                                        />
-                                        <span className="truncate">9. Các điểm KD (Vũng Tàu...)</span>
-                                    </label>
+                                <div className="space-y-1.5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                        <label
+                                            onClick={() => {
+                                                setDnxMaGd('4');
+                                                if (['K65', 'K61', 'K58', 'K57', 'KTN.TL', 'KTN.TT'].includes(dnxMaKhoNhan)) {
+                                                    setDnxMaKhoNhan('K83');
+                                                }
+                                                setDnxLyDo('Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH');
+                                            }}
+                                            className={`px-2 py-1.5 sm:py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
+                                                dnxMaGd === '4'
+                                                    ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-2xs ring-1 ring-blue-500/20'
+                                                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="dnx_loai"
+                                                checked={dnxMaGd === '4'}
+                                                onChange={() => {
+                                                    setDnxMaGd('4');
+                                                    if (['K65', 'K61', 'K58', 'K57', 'KTN.TL', 'KTN.TT'].includes(dnxMaKhoNhan)) {
+                                                        setDnxMaKhoNhan('K83');
+                                                    }
+                                                    setDnxLyDo('Điều chuyển xe nội bộ làm PDI chuẩn bị giao KH');
+                                                }}
+                                                className="text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                            />
+                                            <span className="truncate">4. Nội bộ điểm KD (K87, K83, K86...)</span>
+                                        </label>
+                                        <label
+                                            onClick={() => {
+                                                setDnxMaGd('9');
+                                                if (dnxMaKhoNhan === 'K83') {
+                                                    setDnxMaKhoNhan('K65');
+                                                }
+                                                setDnxLyDo('Điều chuyển địa điểm kinh doanh sang Ô tô Vinfast Vũng Tàu (xe đã xuất HĐ)');
+                                            }}
+                                            className={`px-2 py-1.5 sm:py-1 rounded-lg border text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1.5 ${
+                                                dnxMaGd === '9'
+                                                    ? 'bg-purple-50 border-purple-500 text-purple-900 shadow-2xs ring-1 ring-purple-500/20'
+                                                    : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="dnx_loai"
+                                                checked={dnxMaGd === '9'}
+                                                onChange={() => {
+                                                    setDnxMaGd('9');
+                                                    if (dnxMaKhoNhan === 'K83') {
+                                                        setDnxMaKhoNhan('K65');
+                                                    }
+                                                    setDnxLyDo('Điều chuyển địa điểm kinh doanh sang Ô tô Vinfast Vũng Tàu (xe đã xuất HĐ)');
+                                                }}
+                                                className="text-purple-600 focus:ring-purple-500 cursor-pointer"
+                                            />
+                                            <span className="truncate">9. Các điểm KD (Vũng Tàu...)</span>
+                                        </label>
+                                    </div>
+
+                                    {/* Route Badge thông minh khi chọn Mã 9 */}
+                                    {dnxMaGd === '9' && (
+                                        <div className="p-1.5 bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 border border-purple-200 rounded-lg text-xs shadow-2xs flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                <span className="w-4 h-4 rounded-full bg-purple-600 text-white flex items-center justify-center text-[9px] font-bold shrink-0">9</span>
+                                                <div className="text-[10.5px] truncate text-purple-950">
+                                                    <span className="font-bold">{TTCP_NAMES[WAREHOUSE_TTCP_MAP[dnxMaKhoXuat] || '02.01.08'] || 'Thuận An'}</span>
+                                                    <span className="mx-1 text-purple-500 font-bold">➔</span>
+                                                    <span className="font-bold text-indigo-900">{TTCP_NAMES[WAREHOUSE_TTCP_MAP[dnxMaKhoNhan] || '02.01.12'] || 'Vũng Tàu'}</span>
+                                                </div>
+                                            </div>
+                                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-800 border border-purple-200 shrink-0">
+                                                Khác TTCP (Chuẩn Cyber)
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* 3. Kho Xuất & Kho Nhận */}
@@ -4228,13 +4316,19 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                         />
                                         <div className="flex items-center gap-1 mt-1 flex-wrap">
                                             <span className="text-[9.5px] text-slate-400 font-medium">Kho nhanh:</span>
-                                            {[
+                                            {(dnxMaGd === '9' ? [
+                                                { code: 'K83', label: 'K83 (Thuận An)' },
+                                                { code: 'K65', label: 'K65 (Vũng Tàu)' },
+                                                { code: 'K87', label: 'K87 (QL13)' },
+                                                { code: 'K86', label: 'K86 (Q12)' },
+                                                { code: 'K61', label: 'K61 (Quang Trung)' },
+                                            ] : [
                                                 { code: 'K87', label: 'K87 (QL13)' },
                                                 { code: 'K83', label: 'K83 (Thuận An)' },
                                                 { code: 'K86', label: 'K86 (Q12)' },
-                                                { code: 'K85', label: 'K85' },
+                                                { code: 'K85', label: 'K85 (Dĩ An)' },
                                                 { code: 'KHCM.PVD', label: 'PVD' },
-                                            ].map(item => (
+                                            ]).map(item => (
                                                 <button
                                                     key={item.code}
                                                     type="button"
@@ -4262,16 +4356,45 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                             value={dnxMaKhoNhan}
                                             onChange={(val) => {
                                                 setDnxMaKhoNhan(val);
-                                                if (['K83', 'K87', 'K86', 'K85', 'K106', 'KHCM.PVD'].includes(val)) {
-                                                    setDnxMaGd('4');
-                                                } else {
-                                                    setDnxMaGd('9');
+                                                // Chỉ tự động phát hiện loại khi đang ở chế độ nội bộ
+                                                if (dnxMaGd === '4') {
+                                                    if (!['K83', 'K87', 'K86', 'K85', 'K106', 'KHCM.PVD'].includes(val)) {
+                                                        setDnxMaGd('9');
+                                                    }
                                                 }
                                             }}
                                             size="sm"
                                             theme="light"
                                             placeholder="Chọn kho nhận..."
                                         />
+                                        <div className="flex items-center gap-1 mt-1 flex-wrap">
+                                            <span className="text-[9.5px] text-slate-400 font-medium">Đích nhanh:</span>
+                                            {(dnxMaGd === '9' ? [
+                                                { code: 'K65', label: 'K65 (Vũng Tàu)' },
+                                                { code: 'K83', label: 'K83 (Thuận An)' },
+                                                { code: 'K61', label: 'K61 (Quang Trung)' },
+                                                { code: 'K58', label: 'K58 (Lê Văn Việt)' },
+                                                { code: 'K57', label: 'K57 (Bắc Ninh)' },
+                                            ] : [
+                                                { code: 'K83', label: 'K83 (Thuận An)' },
+                                                { code: 'K87', label: 'K87 (QL13)' },
+                                                { code: 'K86', label: 'K86 (Q12)' },
+                                                { code: 'K85', label: 'K85 (Dĩ An)' },
+                                            ]).map(item => (
+                                                <button
+                                                    key={item.code}
+                                                    type="button"
+                                                    onClick={() => setDnxMaKhoNhan(item.code)}
+                                                    className={`px-1.5 py-0.5 rounded text-[9.5px] font-bold border transition-all cursor-pointer ${
+                                                        dnxMaKhoNhan === item.code
+                                                            ? (dnxMaGd === '9' ? 'bg-purple-600 text-white border-purple-600 shadow-xs' : 'bg-blue-600 text-white border-blue-600 shadow-xs')
+                                                            : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200'
+                                                    }`}
+                                                >
+                                                    {item.label}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -4304,32 +4427,80 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                     </div>
                                 </div>
 
-                                {/* 5. Lý do xuất + Quick Chips inline */}
+                                {/* 5. Lý do xuất + Quick Chips inline thích ứng theo loại phiếu */}
                                 <div>
                                     <div className="flex flex-wrap items-center justify-between text-[10.5px] font-bold text-slate-600 mb-0.5 gap-1">
                                         <span>Lý do xuất / điều chuyển:</span>
                                         <div className="flex flex-wrap items-center gap-1">
-                                            <button
-                                                type="button"
-                                                onClick={() => setDnxLyDo('Lấy xe từ Kho QL13 về Kho Thuận An làm PDI giao KH')}
-                                                className="px-1.5 py-0.2 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border border-slate-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
-                                            >
-                                                + PDI giao KH
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setDnxLyDo('Điều chuyển xe nội bộ giữa các kho showroom')}
-                                                className="px-1.5 py-0.2 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border border-slate-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
-                                            >
-                                                + Nội bộ
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setDnxLyDo('Lấy xe từ bãi Q12 về Thuận An làm thủ tục giao xe')}
-                                                className="px-1.5 py-0.2 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border border-slate-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
-                                            >
-                                                + Bãi Q12
-                                            </button>
+                                            {dnxMaGd === '9' ? (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setDnxMaKhoNhan('K65');
+                                                            setDnxLyDo('Điều chuyển địa điểm kinh doanh sang Ô tô Vinfast Vũng Tàu (xe đã xuất HĐ)');
+                                                        }}
+                                                        className="px-1.5 py-0.2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
+                                                    >
+                                                        + Đi Vũng Tàu (K65)
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setDnxMaKhoXuat('K65');
+                                                            setDnxMaKhoNhan('K83');
+                                                            setDnxLyDo(`Điều chuyển xe từ Ô tô Vinfast Vũng Tàu về Showroom Thuận An giao KH ${dnxKhachHang || ''}`.trim());
+                                                        }}
+                                                        className="px-1.5 py-0.2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
+                                                    >
+                                                        + Rút Vũng Tàu về
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setDnxMaKhoNhan('K61');
+                                                            setDnxLyDo('Điều chuyển địa điểm kinh doanh sang Ô tô Vinfast Quang Trung (xe đã xuất HĐ)');
+                                                        }}
+                                                        className="px-1.5 py-0.2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
+                                                    >
+                                                        + Đi Quang Trung
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setDnxMaKhoNhan('K58');
+                                                            setDnxLyDo('Điều chuyển địa điểm kinh doanh sang Ô tô Vinfast Lê Văn Việt (xe đã xuất HĐ)');
+                                                        }}
+                                                        className="px-1.5 py-0.2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
+                                                    >
+                                                        + Đi Lê Văn Việt
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setDnxLyDo('Lấy xe từ Kho QL13 về Kho Thuận An làm PDI giao KH')}
+                                                        className="px-1.5 py-0.2 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border border-slate-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
+                                                    >
+                                                        + PDI giao KH
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setDnxLyDo('Điều chuyển xe nội bộ giữa các kho showroom')}
+                                                        className="px-1.5 py-0.2 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border border-slate-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
+                                                    >
+                                                        + Nội bộ
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setDnxLyDo('Lấy xe từ bãi Q12 về Thuận An làm thủ tục giao xe')}
+                                                        className="px-1.5 py-0.2 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-600 border border-slate-200 rounded text-[9.5px] font-medium transition-all cursor-pointer"
+                                                    >
+                                                        + Bãi Q12
+                                                    </button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                     <input

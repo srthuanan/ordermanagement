@@ -12,6 +12,34 @@ interface CreateCyberDnxModalProps {
     onSuccess?: (result: CyberDnxCreateResult) => void;
 }
 
+const WAREHOUSE_TTCP_MAP: Record<string, string> = {
+    'K83': '02.01.08',       // Kho xe ô tô Thuận An
+    'K85': '02.01.08',       // Kho xe ô tô Dĩ An
+    'K65': '02.01.12',       // Kho xe ô tô Vinfast Vũng Tàu
+    'K87': '02.01.21',       // Kho xe ô tô QL13 - HCM
+    'KHCM.PVD': '02.01.21',  // Kho xe Phạm Văn Đồng - TPHCM
+    'K86': '02.01.20',       // Kho xe ô tô Vinfast Q12 - HCM
+    'K106': '02.01.20',      // Kho Hà Huy Giáp
+    'K61': '02.01.10',       // Kho xe Quang Trung
+    'K58': '02.01.09',       // Kho xe ô tô Lê Văn Việt
+    'K57': '02.01.06',       // Kho xe ô tô Vinfast Bắc Ninh
+    'KBN.TS': '02.01.06',    // Kho xe Từ Sơn - Bắc Ninh
+    'K55': '02.01.18',       // Kho ô tô Nguyễn Trãi
+    'KTN.TL': '02.01.23',    // Kho xe Tân Long
+    'KTN.TT': '02.01.17',    // Kho xe Tân Thịnh
+};
+
+const TTCP_NAMES: Record<string, string> = {
+    '02.01.08': 'VinFast Thuận An',
+    '02.01.12': 'VinFast Vũng Tàu',
+    '02.01.21': 'VF Phạm Văn Đồng',
+    '02.01.20': 'VF Hà Huy Giáp / Q12',
+    '02.01.10': 'VF Quang Trung',
+    '02.01.09': 'VF Lê Văn Việt',
+    '02.01.06': 'VF Bắc Ninh',
+    '02.01.18': 'VF Nguyễn Trãi',
+};
+
 export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
     isOpen,
     onClose,
@@ -121,6 +149,20 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
         setResultData(null);
 
         try {
+            const maTtcpXuat = WAREHOUSE_TTCP_MAP[maKhoXuat] || '02.01.08';
+            let maTtcpNhan = WAREHOUSE_TTCP_MAP[maKhoNhan] || '02.01.08';
+            if (maGd === '4') {
+                maTtcpNhan = maTtcpXuat;
+            } else if (maGd === '9' && maTtcpNhan === maTtcpXuat) {
+                if (maKhoNhan === 'K65') maTtcpNhan = '02.01.12';
+                else if (maKhoNhan === 'K61') maTtcpNhan = '02.01.10';
+                else if (maKhoNhan === 'K58') maTtcpNhan = '02.01.09';
+                else if (maKhoNhan === 'K86') maTtcpNhan = '02.01.20';
+                else if (maKhoNhan === 'K87') maTtcpNhan = '02.01.21';
+                else if (maKhoNhan === 'K57') maTtcpNhan = '02.01.06';
+                else maTtcpNhan = '02.01.12';
+            }
+
             const res = await createCyberDnxTicket({
                 vins,
                 ma_gd: maGd,
@@ -130,7 +172,8 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                 ly_do: lyDo,
                 user_name: userName,
                 ma_dvcs: '02',
-                ma_ttcp: '02.01.08'
+                ma_ttcp: maTtcpXuat,
+                ma_ttcp_n: maTtcpNhan
             });
 
             if (res.success) {
@@ -290,6 +333,22 @@ export const CreateCyberDnxModal: React.FC<CreateCyberDnxModalProps> = ({
                                         </div>
                                     </label>
                                 </div>
+
+                                {maGd === '9' && (
+                                    <div className="p-2 bg-purple-950/40 border border-purple-500/50 rounded-xl text-xs flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2 truncate">
+                                            <span className="w-4 h-4 rounded-full bg-purple-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">9</span>
+                                            <div className="text-xs truncate text-purple-200">
+                                                <span className="font-bold text-white">{TTCP_NAMES[WAREHOUSE_TTCP_MAP[maKhoXuat] || '02.01.08'] || 'Thuận An'}</span>
+                                                <span className="mx-1 text-purple-400 font-bold">➔</span>
+                                                <span className="font-bold text-emerald-300">{TTCP_NAMES[WAREHOUSE_TTCP_MAP[maKhoNhan] || '02.01.12'] || 'Vũng Tàu'}</span>
+                                            </div>
+                                        </div>
+                                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-purple-900/60 text-purple-300 border border-purple-600/40 shrink-0">
+                                            Khác TTCP (Chuẩn Cyber)
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Kho xuất & Kho nhận */}
