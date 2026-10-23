@@ -2154,6 +2154,12 @@ export const fetchK83ReconciliationData = async (
             const ngayCtTd4 = orderInfo.ngayCtTd4 || cyberStatus?.ngay_ct_td4 || cyberStatus?.td4_data?.ngay_ct || '';
             const hasTd4 = Boolean(orderInfo.hasTd4 || cyberStatus?.has_td4 || soCtTd4);
 
+            // NẾU XE ĐÃ CÓ PHIẾU TD4 TRÊN CYBERSOFT (ĐÃ LẬP LỆNH RA CỔNG GIAO XE CHO KHÁCH):
+            // Xe này bản chất là tồn TD4 chờ bàn giao khách, TUYỆT ĐỐI KHÔNG TÍNH là "xe tồn bãi showroom chưa nhập kho K83"!
+            if (hasTd4) {
+                return;
+            }
+
             const td4Data = cyberStatus?.td4_data || {};
             const rawPost = String(orderInfo.td4MaPost || td4Data.ma_post || td4Data.Ma_Post || cyberStatus?.ma_post || '').trim();
             const maPostNum = parseInt(rawPost, 10);
