@@ -110,12 +110,21 @@ function generateKpiSheet() {
     const currentRow = startRow + index;
     const row = [index + 1, name];
     
-    // Cột C đến O (Các dòng xe)
+    // Cột C đến P (Các dòng xe)
     for (let i = 0; i < DONG_XE_LIST.length; i++) {
         const colLetter = colIndexToLetter(3 + i); 
-        // Công thức: Đếm nếu TVBH khớp và Dòng xe khớp
-        // yeucauxhd!$H:$H là cột TVBH, yeucauxhd!$D:$D là cột Dòng xe
-        const formula = `=COUNTIFS(yeucauxhd!$H:$H;$B${currentRow};yeucauxhd!$D:$D;${colLetter}$2)`;
+        const carName = DONG_XE_LIST[i];
+        let formula;
+        if (carName === 'VF 8') {
+          // VF 8 bản cũ: Dòng xe 'VF 8' nhưng phiên bản KHÔNG chứa 'New'
+          formula = `=COUNTIFS(yeucauxhd!$H:$H;$B${currentRow};yeucauxhd!$D:$D;"VF 8";yeucauxhd!$E:$E;"<>*New*")`;
+        } else if (carName === 'VF 8 New') {
+          // VF 8 All New: Phiên bản chứa 'New' (hoặc dòng xe ghi trực tiếp VF 8 New)
+          formula = `=COUNTIFS(yeucauxhd!$H:$H;$B${currentRow};yeucauxhd!$D:$D;"VF 8 New") + COUNTIFS(yeucauxhd!$H:$H;$B${currentRow};yeucauxhd!$D:$D;"VF 8";yeucauxhd!$E:$E;"*New*")`;
+        } else {
+          // Công thức: Đếm nếu TVBH khớp và Dòng xe khớp
+          formula = `=COUNTIFS(yeucauxhd!$H:$H;$B${currentRow};yeucauxhd!$D:$D;${colLetter}$2)`;
+        }
         row.push(formula);
     }
     
