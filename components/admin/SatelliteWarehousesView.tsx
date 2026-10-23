@@ -1185,8 +1185,8 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
 
         const td4Alerts = allCombinedAlerts.filter(c => c.type === 'TD4');
         const missingYardAlerts = allCombinedAlerts.filter(c => c.type === 'MISSING_YARD');
-        const dnxAlerts = allCombinedAlerts.filter(c => c.type === 'DNX');
-        const k83Alerts = allCombinedAlerts.filter(c => c.type === 'K83');
+        const yardNotCyberAlerts = allCombinedAlerts.filter(c => c.type === 'YARD_NOT_IN_CYBER');
+        const cyberNotYardAlerts = allCombinedAlerts.filter(c => c.type === 'CYBER_NOT_IN_YARD');
 
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
@@ -1223,26 +1223,26 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
             text += `\n`;
         }
 
-        // 3. ĐNX Về Bãi Chưa Nhập K83 / Sổ K83 Chưa Có Bãi
-        if (dnxAlerts.length > 0) {
-            text += `📥 3. LỆCH LUÂN CHUYỂN XE ĐNX: ${dnxAlerts.length} xe\n`;
-            text += `👉 Đề nghị Kế toán kho & TVBH đối chiếu nhập kho Cyber:\n`;
+        // 3. Về Bãi Chưa Nhập K83
+        if (yardNotCyberAlerts.length > 0) {
+            text += `📥 3. XE ĐÃ VỀ BÃI THUẬN AN — CHƯA NHẬP KHO K83: ${yardNotCyberAlerts.length} xe\n`;
+            text += `👉 Đề nghị Kế toán kho làm phiếu PNK nhập kho Cyber K83 để kịp tiến độ giao xe:\n`;
             text += `----------------------------------------\n`;
-            dnxAlerts.forEach((c, i) => {
-                text += ` ${i + 1}. VIN: ${c.vin}\n`;
-                text += `    • ĐNX: ${c.soChungTu} | TVBH: ${c.tvbh || 'Chưa rõ'} | KH: ${c.customerName || 'Chưa rõ'}\n`;
+            yardNotCyberAlerts.forEach((c, i) => {
+                text += ` ${i + 1}. VIN: ${c.vin} | ${c.carModel} (${c.color || '-'})\n`;
+                text += `    • CT: ${c.soChungTu} | TVBH: ${c.tvbh || 'Chưa rõ'} | KH: ${c.customerName || 'Chưa rõ'}\n`;
                 text += `    • Tình trạng: ${c.alertTitle}\n`;
                 text += `    • Vị trí bãi: ${c.khoThucTe}\n`;
             });
             text += `\n`;
         }
 
-        // 4. Lệch K83 vs Bãi Thuận An
-        if (k83Alerts.length > 0) {
-            text += `⚖️ 4. LỆCH SỔ CYBER K83 vs BÃI THUẬN AN: ${k83Alerts.length} xe\n`;
-            text += `👉 Cần rà soát lập ĐNX điều chuyển hoặc làm PNK nhập kho:\n`;
+        // 4. Sổ K83 Còn Tồn Nhưng Thiếu Bãi
+        if (cyberNotYardAlerts.length > 0) {
+            text += `⚖️ 4. SỔ CYBER K83 CÒN TỒN — NHƯNG BÃI THỰC TẾ KHÔNG CÓ XE: ${cyberNotYardAlerts.length} xe\n`;
+            text += `👉 Cần rà soát lập ĐNX điều chuyển hoặc kiểm tra lại thực tế vị trí xe:\n`;
             text += `----------------------------------------\n`;
-            k83Alerts.forEach((c, i) => {
+            cyberNotYardAlerts.forEach((c, i) => {
                 text += ` ${i + 1}. VIN: ${c.vin} | ${c.carModel} (${c.color || '-'})\n`;
                 text += `    • Tình trạng: ${c.alertTitle}\n`;
                 text += `    • Thực tế: ${c.khoThucTe} | Cyber: ${c.khoCyber}\n`;
