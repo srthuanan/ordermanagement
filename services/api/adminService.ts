@@ -555,12 +555,11 @@ export const performAdminAction = async (action: string, params: Record<string, 
         if (action === 'requestSupplementForInvoice') {
             const nos = params.orderNumbers ? JSON.parse(params.orderNumbers) : [];
 
-            let finalReason = params.reason || '';
+            let uploadedUrls: string[] = [];
             if (params.pastedImagesBase64) {
                 try {
                     const base64Images = JSON.parse(params.pastedImagesBase64);
                     if (Array.isArray(base64Images) && base64Images.length > 0) {
-                        const uploadedUrls = [];
                         for (let i = 0; i < base64Images.length; i++) {
                             const dataUrl = base64Images[i];
                             if (dataUrl) {
@@ -584,8 +583,14 @@ export const performAdminAction = async (action: string, params: Record<string, 
             let successCount = 0;
             for (const orderNo of nos) {
                 const tr = orderNo.trim();
-                const { data: o } = await supabaseAdmin.from('donhang').select('ten_tu_van_ban_hang, vin').eq('so_don_hang', tr).maybeSingle();
+                const { data: o } = await supabaseAdmin.from('donhang').select('ten_tu_van_ban_hang, vin, ten_khach_hang').eq('so_don_hang', tr).maybeSingle();
                 if (!o) continue;
+
+                let custName = o.ten_khach_hang;
+                if (!custName || custName === 'Khách hàng') {
+                    const { data: yc } = await supabaseAdmin.from('yeucauxhd').select('ten_khach_hang').eq('so_don_hang', tr).maybeSingle();
+                    if (yc?.ten_khach_hang) custName = yc.ten_khach_hang;
+                }
 
                 await supabaseAdmin.from('yeucauxhd').update({ ghi_chu_admin: finalReason }).eq('so_don_hang', tr);
                 await supabaseAdmin.from('donhang').update({ ket_qua: 'Yêu cầu bổ sung' }).eq('so_don_hang', tr);
@@ -614,11 +619,12 @@ export const performAdminAction = async (action: string, params: Record<string, 
                             actionId: 'invoice_supplement_requested',
                             record: {
                                 tvbh: o.ten_tu_van_ban_hang,
-                                ten_khach_hang: 'Khách hàng',
+                                ten_khach_hang: custName || 'Khách hàng',
                                 so_don_hang: tr,
                                 vin: o.vin || '',
                                 ma_dms: (o as any).ma_dms || '',
-                                ghi_chu_admin: finalReason
+                                ghi_chu_admin: finalReason,
+                                image_urls: uploadedUrls
                             }
                         };
                         const { error: emailErr } = await supabaseAdmin.functions.invoke('send-email', { body: payload });
@@ -637,12 +643,11 @@ export const performAdminAction = async (action: string, params: Record<string, 
         if (action === 'requestRescanForInvoice') {
             const nos = params.orderNumbers ? JSON.parse(params.orderNumbers) : [];
 
-            let finalReason = params.reason || '';
+            let uploadedUrls: string[] = [];
             if (params.pastedImagesBase64) {
                 try {
                     const base64Images = JSON.parse(params.pastedImagesBase64);
                     if (Array.isArray(base64Images) && base64Images.length > 0) {
-                        const uploadedUrls = [];
                         for (let i = 0; i < base64Images.length; i++) {
                             const dataUrl = base64Images[i];
                             if (dataUrl) {
@@ -666,8 +671,14 @@ export const performAdminAction = async (action: string, params: Record<string, 
             let successCount = 0;
             for (const orderNo of nos) {
                 const tr = orderNo.trim();
-                const { data: o } = await supabaseAdmin.from('donhang').select('ten_tu_van_ban_hang, vin').eq('so_don_hang', tr).maybeSingle();
+                const { data: o } = await supabaseAdmin.from('donhang').select('ten_tu_van_ban_hang, vin, ten_khach_hang').eq('so_don_hang', tr).maybeSingle();
                 if (!o) continue;
+
+                let custName = o.ten_khach_hang;
+                if (!custName || custName === 'Khách hàng') {
+                    const { data: yc } = await supabaseAdmin.from('yeucauxhd').select('ten_khach_hang').eq('so_don_hang', tr).maybeSingle();
+                    if (yc?.ten_khach_hang) custName = yc.ten_khach_hang;
+                }
 
                 const rescanNote = `[YÊU CẦU SCAN LẠI]: ${finalReason}`;
                 await supabaseAdmin.from('yeucauxhd').update({ ghi_chu_admin: rescanNote }).eq('so_don_hang', tr);
@@ -691,11 +702,12 @@ export const performAdminAction = async (action: string, params: Record<string, 
                             actionId: 'invoice_supplement_requested',
                             record: {
                                 tvbh: o.ten_tu_van_ban_hang,
-                                ten_khach_hang: 'Khách hàng',
+                                ten_khach_hang: custName || 'Khách hàng',
                                 so_don_hang: tr,
                                 vin: o.vin || '',
                                 ma_dms: (o as any).ma_dms || '',
-                                ghi_chu_admin: `[YÊU CẦU SCAN LẠI] ${finalReason}`
+                                ghi_chu_admin: `[YÊU CẦU SCAN LẠI] ${finalReason}`,
+                                image_urls: uploadedUrls
                             }
                         };
                         const { error: emailErr } = await supabaseAdmin.functions.invoke('send-email', { body: payload });

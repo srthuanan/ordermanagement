@@ -94,47 +94,44 @@ async function enrichRecord(record: Record<string, any>): Promise<Record<string,
       .select('*')
       .eq('so_don_hang', record.so_don_hang)
       .maybeSingle();
-    
-    if (fullOrder) {
-      const result = {
-        ...fullOrder,
-        ...record,
-        ten_ban_hang: record.ten_ban_hang || record.ten_tu_van_ban_hang || fullOrder.ten_tu_van_ban_hang || fullOrder.ten_ban_hang,
-        ten_tu_van_ban_hang: record.ten_tu_van_ban_hang || fullOrder.ten_tu_van_ban_hang,
-        ten_khach_hang: record.ten_khach_hang || fullOrder.ten_khach_hang,
-        dong_xe: record.dong_xe || fullOrder.dong_xe,
-        phien_ban: record.phien_ban || fullOrder.phien_ban,
-        ngoai_that: record.ngoai_that || fullOrder.ngoai_that,
-        noi_that: record.noi_that || fullOrder.noi_that,
-        vin: record.vin || fullOrder.vin,
-        ngay_coc: record.ngay_coc || fullOrder.ngay_coc,
-      };
 
-      // Nếu là yêu cầu xuất hóa đơn, lấy thêm thông tin từ yeucauxhd (Link file, chính sách, hoa hồng, vpoint)
-      try {
-        const { data: requestData } = await supabase
-          .from('yeucauxhd')
-          .select('*')
-          .eq('so_don_hang', record.so_don_hang)
-          .maybeSingle();
-        
-        if (requestData) {
-          return {
-            ...result,
-            policy: record.policy || requestData.chinh_sach,
-            commission: record.commission || requestData.hoa_hong_ung,
-            vpoint: record.vpoint || requestData.vpoint,
-            url_hop_dong: record.url_hop_dong || requestData.url_hop_dong,
-            url_de_nghi_xhd: record.url_de_nghi_xhd || requestData.url_de_nghi_xhd,
-            ghi_chu_ai: record.ghi_chu_ai || requestData.ghi_chu_ai,
-          };
-        }
-      } catch (reqErr) {
-        console.warn("Error enriching from yeucauxhd:", reqErr);
-      }
-      
-      return result;
+    let requestData: any = null;
+    try {
+      const { data: req } = await supabase
+        .from('yeucauxhd')
+        .select('*')
+        .eq('so_don_hang', record.so_don_hang)
+        .maybeSingle();
+      requestData = req;
+    } catch (reqErr) {
+      console.warn("Error enriching from yeucauxhd:", reqErr);
     }
+
+    const rawCust = record.ten_khach_hang;
+    const isGenericCust = !rawCust || rawCust === 'Khách hàng' || rawCust === 'N/A';
+    const resolvedCustName = isGenericCust ? (fullOrder?.ten_khach_hang || requestData?.ten_khach_hang || rawCust) : rawCust;
+
+    const result: Record<string, any> = {
+      ...(fullOrder || {}),
+      ...(requestData || {}),
+      ...record,
+      ten_ban_hang: record.ten_ban_hang || record.ten_tu_van_ban_hang || fullOrder?.ten_tu_van_ban_hang || fullOrder?.ten_ban_hang || requestData?.tvbh,
+      ten_tu_van_ban_hang: record.ten_tu_van_ban_hang || fullOrder?.ten_tu_van_ban_hang || requestData?.tvbh,
+      ten_khach_hang: resolvedCustName,
+      dong_xe: record.dong_xe || fullOrder?.dong_xe || requestData?.dong_xe,
+      phien_ban: record.phien_ban || fullOrder?.phien_ban || requestData?.phien_ban,
+      ngoai_that: record.ngoai_that || fullOrder?.ngoai_that || requestData?.ngoai_that,
+      noi_that: record.noi_that || fullOrder?.noi_that || requestData?.noi_that,
+      vin: record.vin || fullOrder?.vin || requestData?.vin,
+      ngay_coc: record.ngay_coc || fullOrder?.ngay_coc || requestData?.ngay_coc,
+      policy: record.policy || requestData?.chinh_sach,
+      commission: record.commission || requestData?.hoa_hong_ung,
+      vpoint: record.vpoint || requestData?.vpoint,
+      url_hop_dong: record.url_hop_dong || requestData?.url_hop_dong,
+      url_de_nghi_xhd: record.url_de_nghi_xhd || requestData?.url_de_nghi_xhd,
+      ghi_chu_ai: record.ghi_chu_ai || requestData?.ghi_chu_ai,
+    };
+    return result;
   } catch (e) {
     console.warn("enrichRecord error:", e);
   }
@@ -605,17 +602,88 @@ Deno.serve(async (req: Request) => {
       }
     }
     // ============================================================
-    // 5. YÊU CẦU BỔ SUNG HỒ SƠ (invoice_supplement_requested)
+    // 5. YÊU CẦU BỔ SUNG HỒ SƠ / SCAN LẠI (invoice_supplement_requested)
     // ============================================================
     else if (actionId === 'invoice_supplement_requested') {
-      subject = `[YÊU CẦU BỔ SUNG] ĐH ${record.so_don_hang} cần nộp thêm hồ sơ`;
+      const rawReason = record.ghi_chu_admin || "Bổ sung hồ sơ";
+
+      // Trích xuất danh sách link hình ảnh từ record.image_urls hoặc từ nội dung ghi chú
+      let imageUrls: string[] = [];
+      if (Array.isArray(record.image_urls) && record.image_urls.length > 0) {
+        imageUrls = [...record.image_urls];
+      } else {
+        const urlMatches = rawReason.match(/https?:\/\/[^\s,;<>]+(?:\.png|\.jpe?g|\.webp|\.gif|\.pdf)/gi);
+        if (urlMatches) {
+          imageUrls = Array.from(new Set(urlMatches));
+        }
+      }
+
+      // Làm sạch nội dung lý do: loại bỏ các chuỗi link URL thô để giao diện email gọn gàng, chuyên nghiệp
+      let cleanReason = rawReason
+        .replace(/File đính kèm:[\s\S]*/i, '')
+        .replace(/https?:\/\/[^\s,;<>]+/gi, '')
+        .trim();
+      if (!cleanReason) cleanReason = "Vui lòng scan lại / bổ sung hồ sơ theo yêu cầu.";
+
+      // Đính kèm trực tiếp từng file ảnh vào email (attachments) để TVBH tải về ngay
+      const safeOrderNo = String(record.so_don_hang || 'DH').replace(/[^a-zA-Z0-9]/g, '_');
+      for (let i = 0; i < imageUrls.length; i++) {
+        const imgUrl = imageUrls[i];
+        try {
+          const controller = new AbortController();
+          const tId = setTimeout(() => controller.abort(), 12000);
+          const res = await fetch(imgUrl, { signal: controller.signal });
+          clearTimeout(tId);
+          if (res.ok) {
+            const buffer = await res.arrayBuffer();
+            const cleanUrl = imgUrl.split('?')[0];
+            const ext = cleanUrl.split('.').pop()?.toLowerCase() || 'png';
+            const filename = `Chung_tu_can_scan_lai_${i + 1}_${safeOrderNo}.${ext}`;
+            attachments.push({
+              filename,
+              content: new Uint8Array(buffer)
+            });
+            console.log(`📎 Đã đính kèm ảnh cần scan lại: ${filename} (${buffer.byteLength} bytes)`);
+          }
+        } catch (attErr) {
+          console.warn(`⚠️ Lỗi đính kèm ảnh ${imgUrl}:`, attErr);
+        }
+      }
+
+      // Tạo giao diện hiển thị ảnh trực quan ngay trong email
+      let galleryHtml = "";
+      if (imageUrls.length > 0) {
+        galleryHtml = `
+          <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed #cbd5e1; text-align: left;">
+            <div style="font-size: 11px; font-weight: 700; color: #b45309; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+              📸 Hình ảnh chứng từ cần scan lại (${imageUrls.length} file đính kèm):
+            </div>
+            <div>
+              ${imageUrls.map((url, idx) => `
+                <a href="${url}" target="_blank" style="display: inline-block; margin: 4px; text-decoration: none;">
+                  <img src="${url}" alt="Chứng từ ${idx + 1}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px; border: 1.5px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.06); display: block;" />
+                  <span style="display: block; font-size: 10px; color: #1e40af; font-weight: 600; text-align: center; margin-top: 3px;">Xem ảnh ${idx + 1} ↗</span>
+                </a>
+              `).join('')}
+            </div>
+            <div style="font-size: 11px; color: #64748b; font-style: italic; margin-top: 6px;">
+              💡 <b>Lưu ý:</b> Các tệp ảnh gốc cũng đã được <b>đính kèm trực tiếp trong email</b> này để Anh/Chị tải về máy nhanh chóng.
+            </div>
+          </div>
+        `;
+      }
+
+      const isRescan = rawReason.includes('[YÊU CẦU SCAN LẠI]');
+      const titleText = isRescan ? "📷 Yêu Cầu Scan Lại Chứng Từ" : "⚠️ Yêu Cầu Bổ Sung Hồ Sơ";
+      subject = `[${isRescan ? 'SCAN LẠI' : 'YÊU CẦU BỔ SUNG'}] ĐH ${record.so_don_hang} - KH ${(record.ten_khach_hang || 'KH').toUpperCase()}`;
+
       const details: Record<string, string> = {
         "Số đơn hàng": `<b>${record.so_don_hang}</b>`,
-        "Tên khách hàng": record.ten_khach_hang || "N/A",
+        "Tên khách hàng": `<b style="color: #0f172a;">${(record.ten_khach_hang || "N/A").toUpperCase()}</b>`,
         "VIN": record.vin || "N/A",
-        "Lý do yêu cầu": `<b style="color:#d97706;">${record.ghi_chu_admin || "Bổ sung hồ sơ"}</b>`,
+        "Lý do yêu cầu": `<div style="color: #d97706; font-weight: 700;">${cleanReason}</div>${galleryHtml}`,
       };
-      htmlBody = buildHtml("⚠️ Yêu Cầu Bổ Sung Hồ Sơ", tenTVBH, details, "Hồ sơ của bạn hiện đang thiếu một số chứng từ. Vui lòng vào hệ thống để tải lên bổ sung sớm nhất có thể.", "#d97706");
+      htmlBody = buildHtml(titleText, tenTVBH, details, "Hồ sơ của bạn hiện đang thiếu hoặc chứng từ scan chưa đạt yêu cầu. Vui lòng kiểm tra file đính kèm và tải lên bổ sung sớm nhất có thể.", "#d97706");
     }
     // ============================================================
     // 6. ĐÃ NỘP BỔ SUNG (invoice_supplement_submitted)
