@@ -149,8 +149,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     // 'k83_reconcile': Tra soát tồn kho Cyber K83 vs Bãi Thuận An thực tế
     // 'thuan_an_allocations': Toàn bộ xe được phân bổ cho Thuận An từ CyberSoft
     // 'other_sr_allocations': Xe phân bổ Showroom khác nhưng Thuận An xuất hóa đơn
-    // 'all': Bảng tổng hợp toàn bộ sai lệch
-    const [reconcileSubTab, setReconcileSubTab] = useState<'td4' | 'dnx' | 'missing_yard' | 'k83_reconcile' | 'all' | 'thuan_an_allocations' | 'other_sr_allocations'>(initialReconcileTab as any);
+    const [reconcileSubTab, setReconcileSubTab] = useState<'td4' | 'dnx' | 'missing_yard' | 'k83_reconcile' | 'all' | 'thuan_an_allocations' | 'other_sr_allocations'>(initialReconcileTab || 'k83_reconcile');
 
     // Đồng bộ khi parent truyền prop thay đổi
     useEffect(() => {
@@ -2121,24 +2120,24 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                     <div className="bg-[#F8FAFC] border-b border-slate-300 px-2 py-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-800 shrink-0 shadow-2xs">
                         {/* 3 Tabs Phân Hệ Đối Soát Tinh Gọn (Đã gom Cảnh Báo Sai Lệch & Tra Soát K83 làm 1) */}
                         <div className="flex items-center gap-1 bg-slate-200/90 p-0.5 rounded-lg border border-slate-300">
-                            {/* Tab 1: Cảnh Báo Sai Lệch Kho (Gom K83, ĐNX, TD4, Xuất HĐ) */}
+                            {/* Tab 1: Cảnh Báo Sai Lệch Kho (Kho K83 vs Bãi Thuận An thực tế) */}
                             <button
                                 type="button"
                                 onClick={() => {
-                                    setReconcileSubTab('all');
-                                    setAllAlertFilter('all');
+                                    setReconcileSubTab('k83_reconcile');
+                                    setK83StatusFilter('diff');
                                 }}
                                 className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                                    reconcileSubTab === 'all' || reconcileSubTab === 'td4' || reconcileSubTab === 'dnx' || reconcileSubTab === 'missing_yard' || reconcileSubTab === 'k83_reconcile'
+                                    reconcileSubTab === 'k83_reconcile' || reconcileSubTab === 'all' || reconcileSubTab === 'td4' || reconcileSubTab === 'dnx' || reconcileSubTab === 'missing_yard'
                                         ? 'bg-white text-rose-700 shadow-xs'
                                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                                 }`}
                             >
                                 <i className="fa-solid fa-triangle-exclamation text-[11px] text-amber-500"></i>
                                 <span>Cảnh Báo Sai Lệch</span>
-                                {allCombinedAlerts.length > 0 ? (
+                                {countK83Diff > 0 ? (
                                     <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-rose-600 text-white font-mono font-bold animate-pulse">
-                                        {allCombinedAlerts.length}
+                                        {countK83Diff}
                                     </span>
                                 ) : (
                                     <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-emerald-600 text-white font-mono font-bold">
@@ -2504,7 +2503,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 </>
                             )}
 
-                            {(reconcileSubTab === 'all' || reconcileSubTab === 'td4' || reconcileSubTab === 'dnx' || reconcileSubTab === 'missing_yard' || reconcileSubTab === 'k83_reconcile') && (
+                            {(reconcileSubTab === 'all' || reconcileSubTab === 'td4' || reconcileSubTab === 'dnx' || reconcileSubTab === 'missing_yard') && (
                                 <div className="flex items-center gap-1">
                                     <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Lọc loại:</span>
                                     <select

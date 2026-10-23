@@ -2088,7 +2088,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                     {/* Tab 7: Trung Tâm Đối Soát Kho */}
                     <button
                         type="button"
-                        onClick={() => setActiveSubTab('reconcile_k83')}
+                        onClick={() => setActiveSubTab('reconcile')}
                         className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all cursor-pointer ${
                             activeSubTab === 'reconcile' || activeSubTab === 'reconcile_td4' || activeSubTab === 'reconcile_dnx' || activeSubTab === 'reconcile_missing_yard' || activeSubTab === 'reconcile_k83' || activeSubTab === 'reconcile_cross_allocations' || activeSubTab === 'reconcile_other_sr_allocations'
                                 ? 'bg-indigo-600 text-white shadow-xs font-bold'
@@ -2100,21 +2100,17 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                             <span>Trung Tâm Đối Soát Kho</span>
                         </div>
                         <div className="flex items-center gap-1">
-                            {(reconcileCounts.k83DiffCount !== undefined && reconcileCounts.k83DiffCount > 0) ? (
+                            {reconcileCounts.allCount > 0 ? (
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse ${
                                     activeSubTab === 'reconcile_k83' || activeSubTab === 'reconcile'
                                         ? 'bg-rose-700 text-white border border-rose-400'
                                         : 'bg-rose-100 text-rose-800 border border-rose-300'
                                 }`}>
-                                    {reconcileCounts.k83DiffCount} lệch
-                                </span>
-                            ) : reconcileCounts.allCount > 0 ? (
-                                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                                    {reconcileCounts.allCount} cảnh báo
+                                    {reconcileCounts.allCount} lệch
                                 </span>
                             ) : (
                                 <span className="text-[10px] px-1.5 py-0.2 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                    Chuẩn
+                                    Khớp
                                 </span>
                             )}
                         </div>
@@ -5119,12 +5115,11 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                         stockData={stockData}
                         initialViewMode={activeSubTab === 'satellite_warehouses' ? 'inventory' : 'reconcile'}
                         initialReconcileTab={
-                            activeSubTab === 'reconcile_k83' ? 'k83_reconcile' :
                             activeSubTab === 'reconcile_missing_yard' ? 'missing_yard' :
                             activeSubTab === 'reconcile_td4' ? 'td4' :
                             activeSubTab === 'reconcile_dnx' ? 'dnx' :
                             activeSubTab === 'reconcile_cross_allocations' ? 'thuan_an_allocations' :
-                            activeSubTab === 'reconcile_other_sr_allocations' ? 'other_sr_allocations' : 'all'
+                            activeSubTab === 'reconcile_other_sr_allocations' ? 'other_sr_allocations' : 'k83_reconcile'
                         }
                         initialAllocSubMode="cross_showroom_billed"
                         onNavigateToTab={navigateToTab}
@@ -5137,7 +5132,7 @@ export const CyberFactoryPlanView: React.FC<CyberFactoryPlanViewProps> = ({
                                 missingYardCount: c.missingYardCount,
                                 k83Count: c.k83Count,
                                 k83DiffCount: c.k83DiffCount,
-                                allCount: c.allAlertCount,
+                                allCount: c.k83DiffCount ?? c.allAlertCount,
                                 thuanAnAllocationsCount: c.thuanAnAllocationsCount,
                                 crossPendingCount: c.crossPendingCount,
                                 otherShowroomAllocationsCount: c.otherShowroomAllocationsCount,
