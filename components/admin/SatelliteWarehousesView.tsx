@@ -1042,6 +1042,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 if (!matchVin && !matchCt && !matchTvbh && !matchKh && !matchHd && !matchModel && !matchKho) return false;
             }
             return true;
+        });
     }, [allCombinedAlerts, allAlertFilter, allAlertSearch]);
 
     // Làm mới toàn bộ đối chiếu (kéo dữ liệu mới nhất từ Google Sheets 3 bãi và CSDL CyberSoft)
