@@ -2060,8 +2060,8 @@ export const fetchK83ReconciliationData = async (
                         person = 'Kế toán kho xuất điều chuyển';
                     } else {
                         reason = `Xe đã rời bãi Thuận An ngày ${dispatchedYardCar.ngayGiao}${dispatchedYardCar.benGiao ? ` (Giao cho: ${dispatchedYardCar.benGiao})` : ''} nhưng CyberSoft HOÀN TOÀN CHƯA CÓ PHIẾU TD4 HOẶC ĐNX!`;
-                        action = `TVBH phụ trách liên hệ Kế toán lập ngay phiếu xuất giao xe (TD4) hoặc phiếu điều chuyển (ĐNX) trên CyberSoft ERP để trừ kho K83.`;
-                        person = 'TVBH phụ trách & Kế toán xuất xe';
+                        action = `TVBH phụ trách lập ngay phiếu xuất giao xe (TD4) hoặc phiếu điều chuyển (ĐNX) trên CyberSoft ERP trình KTT & BGĐ phê duyệt để trừ kho K83.`;
+                        person = 'TVBH lập phiếu TD4 / ĐNX';
                     }
                     otherYardPayload = { khoName: 'Bãi Thuận An (Đã xuất)', isTonKho: false, ngayGiao: dispatchedYardCar.ngayGiao };
                 } else if (hasDnx && dnxMaKhoXuat === 'K83' && dnxMaKhoNhan && dnxMaKhoNhan !== 'K83') {

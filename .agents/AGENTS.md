@@ -86,8 +86,9 @@
   3. **Kỷ Luật Đẩy Code Apps Script Qua Clasp**: Bất kỳ khi nào chỉnh sửa code trong `backend-gas/` hoặc `gas-showroom/`, sau khi sửa file cục bộ, AI Agent **BẮT BUỘC PHẢI CHẠY NGAY LỆNH `npx --yes @google/clasp push -f`** trong thư mục tương ứng để đẩy code trực tiếp lên Google Cloud của Google Sheets, tránh tình trạng Google Sheets vẫn chạy code cũ.
 
 - **Quy Chuẩn Đối Soát Kho & Phân Loại Xe Tồn TD4 (TD4 Exclusion in K83 Yard Reconciliation)**:
-  1. **Bản Chất Xe Tồn TD4**: Xe đã lập phiếu TD4 (Phiếu xuất xe bán cho khách hàng / Giấy ra cổng) trên CyberSoft bản chất là xe đã bước vào quy trình xuất bán và đang chờ bàn giao khách.
-  2. **Tuyệt Đối Không Tính Là Thừa Bãi K83**: Các xe đã có phiếu TD4 trên CyberSoft **TUYỆT ĐỐI KHÔNG TÍNH** vào nhóm *"Thừa bãi thực tế / Thiếu Cyber K83"* và không bao giờ được bắt Kế toán làm thủ tục ĐNX hoặc PNK nhập vào kho K83 (vì xe đã được xuất bán theo phiếu TD4).
-  3. **Theo Dõi Đúng Phân Hệ TD4**: Các trường hợp xe đã có phiếu TD4 đã duyệt nhưng vẫn nằm tại bãi xe thực tế quá 48h chỉ được phép theo dõi trong phân hệ **TD4 Quá Hạn Tồn Bãi** để đôn đốc TVBH hoàn tất bàn giao xe cho khách hàng.
+  1. **Trách Nhiệm Lập Phiếu TD4**: Phiếu TD4 (Phiếu xuất xe bán cho khách hàng / Giấy ra cổng) trên phần mềm CyberSoft ERP **do Tư vấn bán hàng (TVBH) phụ trách lập**. Kế toán trưởng (KTT) và Ban Giám Đốc (BGĐ) kiểm tra và ký phê duyệt; Thủ kho / Bảo vệ bãi căn cứ phiếu TD4 đã duyệt để cho xe ra cổng. Mọi chỉ dẫn tác nghiệp trên hệ thống bắt buộc quy đúng trách nhiệm: *TVBH lập phiếu TD4*, tuyệt đối không ghi Kế toán lập TD4.
+  2. **Bản Chất Xe Tồn TD4**: Xe đã lập phiếu TD4 trên CyberSoft bản chất là xe đã bước vào quy trình xuất bán và đang chờ bàn giao khách.
+  3. **Tuyệt Đối Không Tính Là Thừa Bãi K83**: Các xe đã có phiếu TD4 trên CyberSoft **TUYỆT ĐỐI KHÔNG TÍNH** vào nhóm *"Thừa bãi thực tế / Thiếu Cyber K83"* và không bao giờ được bắt Kế toán làm thủ tục ĐNX hoặc PNK nhập vào kho K83 (vì xe đã được xuất bán theo phiếu TD4).
+  4. **Theo Dõi Đúng Phân Hệ TD4**: Các trường hợp xe đã có phiếu TD4 đã duyệt nhưng vẫn nằm tại bãi xe thực tế quá 48h chỉ được phép theo dõi trong phân hệ **TD4 Quá Hạn Tồn Bãi** để đôn đốc TVBH hoàn tất bàn giao xe cho khách hàng.
 
 

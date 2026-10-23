@@ -135,10 +135,10 @@ export const ReconciliationDetailModal: React.FC<ReconciliationDetailModalProps>
         if (isDispatched) {
             bannerBg = 'bg-red-50 text-red-900 border-red-300';
             shortAlertTitle = 'Xe đã xuất bãi nhưng chưa có Phiếu TD4 trên CyberSoft';
-            shortProblem = `Bãi thực tế (${khoThucTe}) ghi nhận xe đã rời bãi ngày ${ngayXuatBai ? ngayXuatBai.slice(0, 10) : 'N/A'}, nhưng Kế toán chưa tạo Phiếu TD4 ra cổng để trừ tồn kho sổ sách.`;
+            shortProblem = `Bãi thực tế (${khoThucTe}) ghi nhận xe đã rời bãi ngày ${ngayXuatBai ? ngayXuatBai.slice(0, 10) : 'N/A'}, nhưng TVBH chưa tạo Phiếu TD4 (phiếu ra cổng) trên CyberSoft để làm căn cứ giao xe.`;
             actionSteps = [
-                { role: `TVBH (${tvbh})`, task: `Gửi biên bản giao xe của khách ${customerName} cho Kế toán ngay.`, color: 'text-blue-700 bg-blue-50 border-blue-200' },
-                { role: 'Kế Toán Kho', task: `Lập ngay Phiếu TD4 trên Cyber trình BGĐ duyệt để tất toán hạ tồn kho.`, color: 'text-amber-800 bg-amber-50 border-amber-200' },
+                { role: `TVBH (${tvbh})`, task: `Lập ngay Phiếu TD4 trên CyberSoft ERP trình KTT & BGĐ phê duyệt để hoàn tất thủ tục xuất xe.`, color: 'text-rose-800 bg-rose-50 border-rose-200' },
+                { role: 'Kế Toán & BGĐ', task: `Kiểm tra hồ sơ thanh toán của khách ${customerName} và duyệt hoàn tất phiếu TD4 để tất toán hạ tồn kho.`, color: 'text-amber-800 bg-amber-50 border-amber-200' },
                 { role: 'Thủ Kho Bãi', task: `Rà soát bảo vệ: Tuyệt đối không cho xe rời bãi khi chưa có Phiếu TD4 ký duyệt.`, color: 'text-slate-800 bg-slate-100 border-slate-200' }
             ];
         } else {
@@ -146,8 +146,8 @@ export const ReconciliationDetailModal: React.FC<ReconciliationDetailModalProps>
             shortAlertTitle = 'Sổ Cyber báo tồn nhưng 3 bãi ngoài không có xe';
             shortProblem = `Sổ Cyber báo xe đang ở ${khoCyber} (HĐ: ${maHdCyber || 'Đã XHĐ'}), nhưng thực tế cả 3 bãi ngoài không có xe và chưa có phiếu xuất TD4.`;
             actionSteps = [
-                { role: `TVBH (${tvbh})`, task: `Xác nhận với khách ${customerName}: Khách đã nhận xe chưa? (Giao thẳng hay chưa giao).`, color: 'text-blue-700 bg-blue-50 border-blue-200' },
-                { role: 'Kế Toán & Kho', task: `Nếu xe đã giao thực tế thì lập TD4 xuất sổ; nếu chưa giao thì truy tìm vị trí xe ngay.`, color: 'text-amber-800 bg-amber-50 border-amber-200' }
+                { role: `TVBH (${tvbh})`, task: `Xác nhận với khách ${customerName}: Khách đã nhận xe chưa? Nếu đã giao thì lập ngay Phiếu TD4 trên CyberSoft để hạ tồn kho.`, color: 'text-blue-700 bg-blue-50 border-blue-200' },
+                { role: 'Kế Toán & Kho', task: `Kiểm tra hồ sơ giao xe; nếu chưa giao thực tế thì truy tìm vị trí xe ngay.`, color: 'text-amber-800 bg-amber-50 border-amber-200' }
             ];
         }
     } 
