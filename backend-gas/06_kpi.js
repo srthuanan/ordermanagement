@@ -19,8 +19,8 @@ function generateKpiSheet() {
   sheet.clearFormats();
   sheet.getCharts().forEach(chart => sheet.removeChart(chart));
 
-  // --- Cấu hình ---
-  const DONG_XE_LIST = ['VF 2', 'VF 3', 'VF 5', 'VF 6', 'VF 7', 'VF 8', 'VF 9', 'Herio', 'Nerio', 'Limo', 'EC Van', 'Minio', 'VF Limo'];
+  // --- Cấu hình (Khớp 14 dòng xe chuẩn 1-1 với BÁO CÁO KPI) ---
+  const DONG_XE_LIST = ['VF 2', 'VF 3', 'VF 5', 'VF 6', 'VF 7', 'VF 8', 'VF 8 New', 'VF 9', 'Herio', 'Nerio', 'Limo', 'EC Van', 'Minio', 'VF Limo'];
   const BG_COLOR = "#1e293b"; // Slate 800 - Gần với màu trong ảnh
   const HEADER_COLOR = "#052061"; // Dark Blue từ ảnh
   const TEXT_COLOR = "#ffffff";

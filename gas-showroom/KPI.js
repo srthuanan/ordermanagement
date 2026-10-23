@@ -95,7 +95,7 @@ function renderKpiReportForMonth(targetMonth, ss) {
   kpiSheet.getRange('C1:D1').setNumberFormat('@');
   try { kpiSheet.getRange('C1').setValue('Tất cả TVBH'); } catch (eC1) {}
 
-  // Danh sách 26 TVBH chuẩn của Showroom
+  // Danh sách 28 TVBH chuẩn của Showroom
   var p1 = [
     'Tất Bách Tường', 'Phạm Trọng Huy', 'Nguyễn Trần Hoàng Thanh', 'Tống Thành Đạt',
     'Huỳnh Diệp Thanh Trâm', 'Phan Văn Cường', 'Lê Thị Hương Trà', 'Hà Hữu Huy',
@@ -108,14 +108,14 @@ function renderKpiReportForMonth(targetMonth, ss) {
   ];
   var p3 = [
     'Nguyễn Hoàng Phúc', 'Phạm Khánh Duy', 'Nguyễn Dư Thuận', 'Đào Minh Ký',
-    'Lê Thị Huyền Trang', 'Lê Thị Thúy Nga'
+    'Lê Thị Huyền Trang', 'Lê Thị Thúy Nga', 'Lê Trần Đồng', 'Vũ Mạnh Tiến'
   ];
 
   var p1StartRow = 5, p1EndRow = 14, p1SubRow = 15;
   var p2StartRow = 17, p2EndRow = 26, p2SubRow = 27;
-  var p3StartRow = 29, p3EndRow = 34, p3SubRow = 35;
-  var grandTotalRow = 36;
-  var totalRows = 33;
+  var p3StartRow = 29, p3EndRow = 36, p3SubRow = 37;
+  var grandTotalRow = 38;
+  var totalRows = 35;
 
   var curMaxRows = kpiSheet.getMaxRows();
   if (curMaxRows < grandTotalRow) {
@@ -473,7 +473,7 @@ function chotSoLieuVaMoKyKpiMoi() {
     }
   }
 
-  if (numRows === 0) numRows = 27; // Mặc định 26 TVBH + 1 dòng Tổng
+  if (numRows === 0) numRows = 29; // Mặc định 28 TVBH + 1 dòng Tổng
 
   // 3. ĐÓNG BĂNG DỮ LIỆU THÁNG HIỆN TẠI (Lưu thành giá trị tĩnh vĩnh viễn)
   var lc = thSheet.getLastColumn();
@@ -531,7 +531,7 @@ function chotSoLieuVaMoKyKpiMoi() {
   }
 
   try {
-    thSheet.getRange(2, 21).setFormula('=IMPORTRANGE("https://docs.google.com/spreadsheets/d/1CzYUfDAcwt4D64UIZIUC77lZ2lOYQ257xlmVXy2nZG0/edit"; "KPI!C3:P28")');
+    thSheet.getRange(2, 21).setFormula('=IMPORTRANGE("https://docs.google.com/spreadsheets/d/1CzYUfDAcwt4D64UIZIUC77lZ2lOYQ257xlmVXy2nZG0/edit"; "KPI!C3:P30")');
   } catch(eImp) {}
 
   // 5. CẬP NHẬT DROPDOWN VÀ BẢN GHI TRÊN SHEET BÁO CÁO KPI
