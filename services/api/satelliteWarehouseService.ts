@@ -1664,9 +1664,9 @@ export interface K83ReconciliationItem {
     isTd4Approved?: boolean;
 
     // Phân loại đối soát
-    reconcileType: 'MATCHED' | 'CYBER_K83_ONLY' | 'YARD_ONLY';
+    reconcileType: 'MATCHED' | 'CYBER_K83_ONLY' | 'YARD_ONLY' | 'TD4_YARD';
     reconcileTypeLabel: string;
-    severity: 'success' | 'warning' | 'danger';
+    severity: 'success' | 'warning' | 'danger' | 'info';
 
     // Chi tiết sai lệch & Hướng xử lý
     discrepancyReason: string;
@@ -2154,12 +2154,6 @@ export const fetchK83ReconciliationData = async (
             const ngayCtTd4 = orderInfo.ngayCtTd4 || cyberStatus?.ngay_ct_td4 || cyberStatus?.td4_data?.ngay_ct || '';
             const hasTd4 = Boolean(orderInfo.hasTd4 || cyberStatus?.has_td4 || soCtTd4);
 
-            // NẾU XE ĐÃ CÓ PHIẾU TD4 TRÊN CYBERSOFT (ĐÃ LẬP LỆNH RA CỔNG GIAO XE CHO KHÁCH):
-            // Xe này bản chất là tồn TD4 chờ bàn giao khách, TUYỆT ĐỐI KHÔNG TÍNH là "xe tồn bãi showroom chưa nhập kho K83"!
-            if (hasTd4) {
-                return;
-            }
-
             const td4Data = cyberStatus?.td4_data || {};
             const rawPost = String(orderInfo.td4MaPost || td4Data.ma_post || td4Data.Ma_Post || cyberStatus?.ma_post || '').trim();
             const maPostNum = parseInt(rawPost, 10);
@@ -2184,6 +2178,54 @@ export const fetchK83ReconciliationData = async (
             const orderNumber = isTrungBay 
                 ? 'HĐ Tài sản trưng bày' 
                 : (orderInfo.orderNumber || cyberStatus?.td4_data?.so_hd || '');
+
+            // NẾU XE ĐÃ CÓ PHIẾU TD4 TRÊN CYBERSOFT (ĐÃ LẬP LỆNH RA CỔNG GIAO XE CHO KHÁCH):
+            // Vẫn ghi nhận vào danh sách bãi thực tế để tổng bãi khớp 100% (43 xe),
+            // nhưng phân loại riêng là 'TD4_YARD' (Tồn TD4 chờ giao khách) - TUYỆT ĐỐI KHÔNG TÍNH LÀ LỖI LỆCH KHO K83!
+            if (hasTd4) {
+                results.push({
+                    id: `k83-td4-${vin}`,
+                    vin,
+                    carModel: yardCar.loaiXe || (cyberStatus ? cyberStatus.ten_kx : '') || '',
+                    color: yardCar.mauSac || (cyberStatus ? cyberStatus.ten_mau : '') || '',
+                    hasCyberK83: false,
+                    maKhoCyber: maKhoCyberHienTai,
+                    tenKhoCyber: tenKhoCyberHienTai,
+                    soHdCyber: orderInfo.orderNumber || cyberStatus?.td4_data?.so_hd || '',
+                    ngayHdCyber: orderInfo.ngayCtTd4 || '',
+                    isInvoiced: true,
+                    ngayTonCyber: 0,
+                    tvbhCyber: tvbh,
+                    customerName,
+                    orderNumber,
+                    hasYardStock: true,
+                    khoKey: 'tada',
+                    khoName: yardCar.khoName || 'Bãi Thuận An',
+                    isTonKhoYard: true,
+                    ngayNhanYard: yardCar.ngayNhan || '',
+                    ngayGiaoYard: '',
+                    mucPin: yardCar.mucPin || '-',
+                    pinPercent: yardCar.mucPinPercent !== undefined ? yardCar.mucPinPercent : null,
+                    noteYard: yardCar.note || '',
+                    showroomYard: yardCar.showroomQuanLy || 'Thuận An',
+                    hasDnx,
+                    soCtDnx,
+                    ngayCtDnx,
+                    hasTd4: true,
+                    soCtTd4,
+                    ngayCtTd4,
+                    td4MaPost: rawPost || undefined,
+                    td4MaPostLabel: td4MaPostLabel || undefined,
+                    isTd4Approved: isTd4Approved,
+                    reconcileType: 'TD4_YARD',
+                    reconcileTypeLabel: 'Đã lập TD4 chờ giao khách',
+                    severity: 'info',
+                    discrepancyReason: `Xe đã lập phiếu TD4 (${soCtTd4 || 'TD4'}) [${td4MaPostLabel || 'Đã duyệt'}] xuất bán, đang lưu bãi chờ bàn giao khách hàng.`,
+                    actionRequired: 'Theo dõi lịch hẹn giao xe và đôn đốc TVBH hoàn tất thủ tục bàn giao xe cho khách hàng.',
+                    responsiblePerson: 'TVBH phụ trách & Thủ kho bãi Thuận An'
+                });
+                return;
+            }
 
             // Phân tích lý do thừa bãi
             let reason = `Xe đang nằm tại bãi Thuận An thực tế nhưng sổ Cyber đang ở ${tenKhoCyberHienTai} (${maKhoCyberHienTai}), chưa nhập K83!`;
@@ -2252,10 +2294,10 @@ export const fetchK83ReconciliationData = async (
             });
         });
 
-        // Sắp xếp: Ưu tiên xe Thừa bãi TT (nguy hiểm nhất) -> Thừa Cyber K83 -> Đã khớp
+        // Sắp xếp: Ưu tiên xe Thừa bãi TT (nguy hiểm nhất) -> Thừa Cyber K83 -> Tồn TD4 -> Đã khớp
         results.sort((a, b) => {
-            const orderMap = { YARD_ONLY: 1, CYBER_K83_ONLY: 2, MATCHED: 3 };
-            const diff = orderMap[a.reconcileType] - orderMap[b.reconcileType];
+            const orderMap: Record<string, number> = { YARD_ONLY: 1, CYBER_K83_ONLY: 2, TD4_YARD: 3, MATCHED: 4 };
+            const diff = (orderMap[a.reconcileType] || 99) - (orderMap[b.reconcileType] || 99);
             if (diff !== 0) return diff;
             return a.vin.localeCompare(b.vin);
         });

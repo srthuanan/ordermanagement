@@ -273,7 +273,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     // 5. DỮ LIỆU ĐỐI SOÁT TỒN KHO CYBER K83 vs BÃI THUẬN AN THỰC TẾ
     const [k83Items, setK83Items] = useState<K83ReconciliationItem[]>([]);
     const [isLoadingK83, setIsLoadingK83] = useState(false);
-    const [k83StatusFilter, setK83StatusFilter] = useState<'all' | 'diff' | 'yard_only' | 'cyber_only' | 'matched'>('diff');
+    const [k83StatusFilter, setK83StatusFilter] = useState<'all' | 'diff' | 'yard_only' | 'cyber_only' | 'matched' | 'td4_yard'>('diff');
     const [k83ModelFilter, setK83ModelFilter] = useState<string>('all');
     const [k83TvbhFilter, setK83TvbhFilter] = useState<string>('all');
     const [k83Search, setK83Search] = useState('');
@@ -999,7 +999,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         // ---------------------------------------------------------------------
         // ƯU TIÊN 4: ĐỐI SOÁT TỒN KHO K83 vs BÃI THUẬN AN THỰC TẾ (CÁC XE CÒN LẠI)
         // ---------------------------------------------------------------------
-        k83Items.filter(item => item.reconcileType !== 'MATCHED').forEach(item => {
+        k83Items.filter(item => item.reconcileType !== 'MATCHED' && item.reconcileType !== 'TD4_YARD').forEach(item => {
             const rawV = (item.vin || '').trim().toUpperCase();
             const match17 = rawV.match(/[A-Z0-9]{17}/);
             const v = match17 ? match17[0] : rawV.split('(')[0].split(' ')[0].split('-')[0].trim();
@@ -1119,6 +1119,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         const yardOnly = k83Items.filter(c => c.reconcileType === 'YARD_ONLY');
         const cyberOnly = k83Items.filter(c => c.reconcileType === 'CYBER_K83_ONLY');
         const matched = k83Items.filter(c => c.reconcileType === 'MATCHED');
+        const td4Yard = k83Items.filter(c => c.reconcileType === 'TD4_YARD');
 
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
@@ -1127,7 +1128,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         text += `(Thời điểm kiểm tra: ${timeStr})\n`;
         text += `📊 TỔNG QUAN TỒN KHO:\n`;
         text += ` • Tồn sổ Cyber K83: ${matched.length + cyberOnly.length} xe\n`;
-        text += ` • Tồn thực tế bãi Thuận An: ${matched.length + yardOnly.length} xe\n`;
+        text += ` • Tồn thực tế bãi Thuận An: ${matched.length + td4Yard.length + yardOnly.length} xe (Kho K83: ${matched.length} xe | Đã có TD4 chờ giao: ${td4Yard.length} xe)\n`;
         text += ` • Khớp cả hai: ${matched.length} xe\n`;
         text += ` • TỔNG LỆCH KHO: ${yardOnly.length + cyberOnly.length} xe (Thừa bãi TT: ${yardOnly.length} | Thừa Cyber K83: ${cyberOnly.length})\n`;
         text += `========================================\n\n`;
@@ -1536,9 +1537,10 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     const countK83Matched = useMemo(() => k83Items.filter(c => c.reconcileType === 'MATCHED').length, [k83Items]);
     const countK83CyberOnly = useMemo(() => k83Items.filter(c => c.reconcileType === 'CYBER_K83_ONLY').length, [k83Items]);
     const countK83YardOnly = useMemo(() => k83Items.filter(c => c.reconcileType === 'YARD_ONLY').length, [k83Items]);
+    const countK83Td4Yard = useMemo(() => k83Items.filter(c => c.reconcileType === 'TD4_YARD').length, [k83Items]);
     const countK83Diff = useMemo(() => countK83CyberOnly + countK83YardOnly, [countK83CyberOnly, countK83YardOnly]);
     const countK83TotalCyber = useMemo(() => countK83Matched + countK83CyberOnly, [countK83Matched, countK83CyberOnly]);
-    const countK83TotalYard = useMemo(() => countK83Matched + countK83YardOnly, [countK83Matched, countK83YardOnly]);
+    const countK83TotalYard = useMemo(() => countK83Matched + countK83Td4Yard + countK83YardOnly, [countK83Matched, countK83Td4Yard, countK83YardOnly]);
 
     const uniqueK83Models = useMemo(() => {
         const set = new Set<string>();
@@ -1558,10 +1560,11 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
 
     const filteredK83Items = useMemo(() => {
         return k83Items.filter(c => {
-            if (k83StatusFilter === 'diff' && c.reconcileType === 'MATCHED') return false;
+            if (k83StatusFilter === 'diff' && (c.reconcileType === 'MATCHED' || c.reconcileType === 'TD4_YARD')) return false;
             if (k83StatusFilter === 'yard_only' && c.reconcileType !== 'YARD_ONLY') return false;
             if (k83StatusFilter === 'cyber_only' && c.reconcileType !== 'CYBER_K83_ONLY') return false;
             if (k83StatusFilter === 'matched' && c.reconcileType !== 'MATCHED') return false;
+            if (k83StatusFilter === 'td4_yard' && c.reconcileType !== 'TD4_YARD') return false;
 
             if (k83ModelFilter !== 'all' && c.carModel.trim() !== k83ModelFilter) return false;
             if (k83TvbhFilter !== 'all' && (c.tvbhCyber || '').trim() !== k83TvbhFilter) return false;
@@ -2209,6 +2212,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                         >
                                             <option value="diff">🚨 Chỉ xem xe lệch ({countK83Diff})</option>
                                             <option value="all">Tất cả ({k83Items.length} xe)</option>
+                                            <option value="td4_yard">🚗 Tồn TD4 chờ giao ({countK83Td4Yard})</option>
                                             <option value="yard_only">🚨 Thừa bãi TT ({countK83YardOnly})</option>
                                             <option value="cyber_only">⚠️ Thừa Cyber K83 ({countK83CyberOnly})</option>
                                             <option value="matched">✅ Khớp chuẩn ({countK83Matched})</option>
@@ -3242,7 +3246,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 <>
                     {/* KPI SUMMARY CARDS */}
                     <div className="bg-gradient-to-r from-slate-100 via-sky-50 to-amber-50 p-2 border-b border-[#CCCCCC] shrink-0">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
                             {/* 1. Tổng Tồn Sổ Cyber K83 */}
                             <div 
                                 onClick={() => setK83StatusFilter('all')}
@@ -3270,7 +3274,9 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 <div className="text-lg font-black text-emerald-900 mt-0.5 leading-none font-mono">
                                     {countK83TotalYard} <span className="text-[10px] font-normal text-slate-500">xe</span>
                                 </div>
-                                <div className="text-[9.5px] text-slate-500 mt-1 truncate">Thực tế nằm tại bãi</div>
+                                <div className="text-[9.5px] text-slate-500 mt-1 truncate" title={`Khớp K83: ${countK83Matched} xe • Tồn TD4: ${countK83Td4Yard} xe`}>
+                                    {countK83Td4Yard > 0 ? `K83: ${countK83Matched} • TD4: ${countK83Td4Yard}` : 'Thực tế nằm tại bãi'}
+                                </div>
                             </div>
 
                             {/* 3. Khớp Chuẩn Cả Hai */}
@@ -3292,7 +3298,26 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 <div className="text-[9.5px] text-emerald-600 mt-1 truncate">Có K83 & có tại bãi</div>
                             </div>
 
-                            {/* 4. Thừa Sổ Cyber K83 / Thiếu Bãi */}
+                            {/* 4. Xe Tồn TD4 Chờ Giao Khách */}
+                            <div 
+                                onClick={() => setK83StatusFilter('td4_yard')}
+                                className={`border rounded p-1.5 shadow-2xs cursor-pointer transition-all ${
+                                    k83StatusFilter === 'td4_yard' 
+                                        ? 'bg-sky-100 border-sky-500 ring-1 ring-sky-400' 
+                                        : 'bg-white/90 border-sky-300 hover:border-sky-500 hover:bg-sky-50/50'
+                                }`}
+                            >
+                                <div className="text-[10px] text-sky-800 font-bold uppercase flex items-center justify-between">
+                                    <span>Tồn TD4 Chờ Giao</span>
+                                    <i className="fas fa-car-side text-sky-600"></i>
+                                </div>
+                                <div className="text-lg font-black text-sky-900 mt-0.5 leading-none font-mono">
+                                    {countK83Td4Yard} <span className="text-[10px] font-normal text-slate-500">xe</span>
+                                </div>
+                                <div className="text-[9.5px] text-sky-600 mt-1 truncate">Đã xuất bán, chờ giao</div>
+                            </div>
+
+                            {/* 5. Thừa Sổ Cyber K83 / Thiếu Bãi */}
                             <div 
                                 onClick={() => setK83StatusFilter('cyber_only')}
                                 className={`border rounded p-1.5 shadow-2xs cursor-pointer transition-all ${
@@ -3311,7 +3336,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 <div className="text-[9.5px] text-rose-600 mt-1 truncate">Sổ K83 còn, bãi thiếu</div>
                             </div>
 
-                            {/* 5. Thừa Bãi TT / Thiếu Sổ K83 */}
+                            {/* 6. Thừa Bãi TT / Thiếu Sổ K83 */}
                             <div 
                                 onClick={() => setK83StatusFilter('yard_only')}
                                 className={`border rounded p-1.5 shadow-2xs cursor-pointer transition-all ${
@@ -3330,7 +3355,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 <div className="text-[9.5px] text-amber-600 mt-1 truncate">Bãi có xe, sổ Cyber thiếu</div>
                             </div>
 
-                            {/* 6. Tổng Lệch Cần Xử Lý */}
+                            {/* 7. Tổng Lệch Cần Xử Lý */}
                             <div 
                                 onClick={() => setK83StatusFilter('diff')}
                                 className={`border rounded p-1.5 shadow-2xs cursor-pointer transition-all ${
@@ -3384,6 +3409,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                         const isCyberOnly = item.reconcileType === 'CYBER_K83_ONLY';
                                         const isYardOnly = item.reconcileType === 'YARD_ONLY';
                                         const isMatched = item.reconcileType === 'MATCHED';
+                                        const isTd4Yard = item.reconcileType === 'TD4_YARD';
 
                                         return (
                                             <tr
@@ -3399,7 +3425,9 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                             ? 'bg-rose-50/50 hover:bg-rose-100/60'
                                                             : isYardOnly
                                                                 ? 'bg-amber-50/50 hover:bg-amber-100/60'
-                                                                : 'bg-emerald-50/20 hover:bg-emerald-100/30'
+                                                                : isTd4Yard
+                                                                    ? 'bg-sky-50/30 hover:bg-sky-100/40'
+                                                                    : 'bg-emerald-50/20 hover:bg-emerald-100/30'
                                                 }`}
                                             >
                                                 {/* STT */}
@@ -3431,6 +3459,11 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                                 Thừa Bãi / Thiếu Cyber
                                                             </span>
                                                         )}
+                                                        {isTd4Yard && (
+                                                            <span className="inline-block px-1 py-0.2 text-[9px] font-bold bg-sky-100 text-sky-800 border border-sky-300 rounded-xs">
+                                                                Tồn TD4 Chờ Giao
+                                                            </span>
+                                                        )}
                                                         {isMatched && (
                                                             <span className="inline-block px-1 py-0.2 text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xs">
                                                                 Khớp Chuẩn
@@ -3445,50 +3478,64 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                     <div className="text-[10px] text-slate-500 truncate">{item.color || '-'}</div>
                                                 </td>
 
-                                                 {/* Sổ Cyber (Kho K83) */}
-                                                 <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
-                                                     {item.hasCyberK83 ? (
-                                                         <div>
-                                                             <span className="inline-flex items-center gap-1 px-1 py-0.2 text-[9.5px] font-bold bg-blue-100 text-blue-900 border border-blue-300 rounded-xs">
-                                                                 <i className="fas fa-check text-[8px] text-blue-600"></i> Kho K83
-                                                             </span>
-                                                             <div className="text-[10px] text-slate-600 mt-0.5 space-y-0.5">
-                                                                 {item.soHdCyber && (
-                                                                     <div className="text-amber-800 font-medium truncate">
-                                                                         HĐ: {item.soHdCyber}
-                                                                     </div>
-                                                                 )}
-                                                                 {item.soCtTd4 ? (
-                                                                     <div>
-                                                                         <span className={`inline-flex items-center gap-1 px-1 py-0.2 text-[8.5px] font-bold rounded-xs border ${
-                                                                             item.isTd4Approved 
-                                                                                 ? 'bg-purple-100 text-purple-900 border-purple-300' 
-                                                                                 : 'bg-amber-100 text-amber-900 border-amber-300'
-                                                                         }`}>
-                                                                             <i className={`fas ${item.isTd4Approved ? 'fa-check-double text-purple-600' : 'fa-clock text-amber-600'} text-[7.5px]`}></i>
-                                                                             TD4: {item.soCtTd4} {item.td4MaPostLabel ? `[${item.td4MaPostLabel}]` : ''}
-                                                                         </span>
-                                                                     </div>
-                                                                 ) : null}
-                                                                 {item.soCtDnx ? (
-                                                                     <div>
-                                                                         <span className="inline-flex items-center gap-1 px-1 py-0.2 text-[8.5px] font-bold rounded-xs bg-purple-100 text-purple-900 border border-purple-300" title={`Lộ trình ĐNX: ${item.dnxTenKhoXuat || item.dnxMaKhoXuat || 'K83'} ➔ ${item.dnxTenKhoNhan || item.dnxMaKhoNhan || 'Showroom'}`}>
-                                                                             <i className="fas fa-file-invoice text-[7.5px] text-purple-600"></i>
-                                                                             ĐNX: {item.soCtDnx}
-                                                                         </span>
-                                                                         {(item.dnxMaKhoXuat || item.dnxMaKhoNhan) && (
-                                                                             <div className="text-[9px] text-purple-700 font-mono mt-0.5 truncate">
-                                                                                 {item.dnxTenKhoXuat || item.dnxMaKhoXuat} ➔ {item.dnxTenKhoNhan || item.dnxMaKhoNhan}
-                                                                             </div>
-                                                                         )}
-                                                                     </div>
-                                                                 ) : null}
-                                                                 {!item.soCtTd4 && !item.soCtDnx && !item.soHdCyber ? (
-                                                                     <span className="text-slate-500">Xe mới chưa gắn HĐ</span>
-                                                                 ) : null}
-                                                             </div>
-                                                         </div>
-                                                     ) : (
+                                                    {/* Sổ Cyber (Kho K83) */}
+                                                    <td className="py-1 px-2 border-r border-[#EBEBEB] overflow-hidden">
+                                                        {item.hasCyberK83 ? (
+                                                            <div>
+                                                                <span className="inline-flex items-center gap-1 px-1 py-0.2 text-[9.5px] font-bold bg-blue-100 text-blue-900 border border-blue-300 rounded-xs">
+                                                                    <i className="fas fa-check text-[8px] text-blue-600"></i> Kho K83
+                                                                </span>
+                                                                <div className="text-[10px] text-slate-600 mt-0.5 space-y-0.5">
+                                                                    {item.soHdCyber && (
+                                                                        <div className="text-amber-800 font-medium truncate">
+                                                                            HĐ: {item.soHdCyber}
+                                                                        </div>
+                                                                    )}
+                                                                    {item.soCtTd4 ? (
+                                                                        <div>
+                                                                            <span className={`inline-flex items-center gap-1 px-1 py-0.2 text-[8.5px] font-bold rounded-xs border ${
+                                                                                item.isTd4Approved 
+                                                                                    ? 'bg-purple-100 text-purple-900 border-purple-300' 
+                                                                                    : 'bg-amber-100 text-amber-900 border-amber-300'
+                                                                            }`}>
+                                                                                <i className={`fas ${item.isTd4Approved ? 'fa-check-double text-purple-600' : 'fa-clock text-amber-600'} text-[7.5px]`}></i>
+                                                                                TD4: {item.soCtTd4} {item.td4MaPostLabel ? `[${item.td4MaPostLabel}]` : ''}
+                                                                            </span>
+                                                                        </div>
+                                                                    ) : null}
+                                                                    {item.soCtDnx ? (
+                                                                        <div>
+                                                                            <span className="inline-flex items-center gap-1 px-1 py-0.2 text-[8.5px] font-bold rounded-xs bg-purple-100 text-purple-900 border border-purple-300" title={`Lộ trình ĐNX: ${item.dnxTenKhoXuat || item.dnxMaKhoXuat || 'K83'} ➔ ${item.dnxTenKhoNhan || item.dnxMaKhoNhan || 'Showroom'}`}>
+                                                                                <i className="fas fa-file-invoice text-[7.5px] text-purple-600"></i>
+                                                                                ĐNX: {item.soCtDnx}
+                                                                            </span>
+                                                                            {(item.dnxMaKhoXuat || item.dnxMaKhoNhan) && (
+                                                                                <div className="text-[9px] text-purple-700 font-mono mt-0.5 truncate">
+                                                                                    {item.dnxTenKhoXuat || item.dnxMaKhoXuat} ➔ {item.dnxTenKhoNhan || item.dnxMaKhoNhan}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    ) : null}
+                                                                    {!item.soCtTd4 && !item.soCtDnx && !item.soHdCyber ? (
+                                                                        <span className="text-slate-500">Xe mới chưa gắn HĐ</span>
+                                                                    ) : null}
+                                                                </div>
+                                                            </div>
+                                                        ) : isTd4Yard ? (
+                                                            <div className="space-y-0.5">
+                                                                <span className="inline-flex items-center gap-1 px-1 py-0.2 text-[9px] font-bold bg-sky-100 text-sky-900 border border-sky-300 rounded-xs">
+                                                                    <i className="fas fa-file-invoice text-[8px] text-sky-600"></i> Phiếu TD4: {item.soCtTd4 || 'TD4'}
+                                                                </span>
+                                                                <div className="text-[9.5px] text-slate-600 truncate">
+                                                                    {item.td4MaPostLabel || 'Đã duyệt xuất bán'}
+                                                                </div>
+                                                                {item.ngayCtTd4 && (
+                                                                    <div className="text-[9px] text-slate-500 font-mono">
+                                                                        Ngày lập: {item.ngayCtTd4.slice(0, 10)}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ) : (
                                                          <div className="space-y-0.5">
                                                              <div className="text-rose-700 text-[10px] font-semibold flex items-center gap-1">
                                                                  <i className="fas fa-times-circle text-[8.5px]"></i>
@@ -3576,7 +3623,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                 {/* Lệch Ở Đâu & Hướng Xử Lý */}
                                                 <td className="py-1 px-2 overflow-hidden">
                                                     <div className={`text-[10px] font-bold leading-tight truncate ${
-                                                        isCyberOnly ? 'text-rose-700' : isYardOnly ? 'text-amber-800' : 'text-emerald-700'
+                                                        isCyberOnly ? 'text-rose-700' : isYardOnly ? 'text-amber-800' : isTd4Yard ? 'text-sky-800' : 'text-emerald-700'
                                                     }`} title={item.discrepancyReason}>
                                                         {item.discrepancyReason}
                                                     </div>
@@ -3677,13 +3724,21 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                             <span>
                                 Khớp: <strong className="text-emerald-700">{countK83Matched}</strong>
                             </span>
+                            {countK83Td4Yard > 0 && (
+                                <>
+                                    <span>•</span>
+                                    <span>
+                                        Tồn TD4: <strong className="text-sky-700">{countK83Td4Yard}</strong> xe
+                                    </span>
+                                </>
+                            )}
                             <span>•</span>
                             <span>
-                                Tổng Lệch: <strong className="text-red-700">{countK83Diff}</strong> xe
+                                Tổng Lệch: <strong className={countK83Diff > 0 ? "text-red-700 font-bold" : "text-emerald-700"}>{countK83Diff}</strong> xe
                             </span>
                         </div>
                         <div className="text-[10px] text-slate-500 italic">
-                            * Bấm vào từng dòng để xem hướng dẫn xử lý chi tiết và gửi Zalo cho bộ phận liên quan.
+                            * Bãi xe thực tế: {countK83TotalYard} xe ({countK83Matched} xe kho K83 + {countK83Td4Yard} xe đã lập TD4 chờ giao khách).
                         </div>
                     </div>
                 </>
