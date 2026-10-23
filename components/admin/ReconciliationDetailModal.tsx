@@ -26,7 +26,9 @@ export const ReconciliationDetailModal: React.FC<ReconciliationDetailModalProps>
         type === 'dnx' ? 'DNX' : 'UNKNOWN'
     );
 
-    const vin = String(item.vin || item.soKhung || '').trim().toUpperCase();
+    const rawVin = String(item.vin || item.soKhung || '').trim().toUpperCase();
+    const match17 = rawVin.match(/[A-Z0-9]{17}/);
+    const vin = match17 ? match17[0] : rawVin.split('(')[0].split(' ')[0].split('-')[0].trim();
     const carModel = item.carModel || item.loaiXe || 'Chưa rõ';
     const color = item.color || item.mauSac || '';
     const customerName = item.customerName || 'Chưa rõ';
@@ -235,7 +237,10 @@ export const ReconciliationDetailModal: React.FC<ReconciliationDetailModalProps>
                             <i className="fa-regular fa-copy text-xs"></i>
                         </button>
                         <span className="text-white/60">•</span>
-                        <span className="text-white font-medium text-xs truncate">{carModel} {color ? `(${color})` : ''}</span>
+                        <span className="text-white font-medium text-xs truncate">
+                            {carModel} {color ? `(${color})` : ''}
+                            {(rawVin.includes('TRƯNG BÀY') || rawVin.includes('TRUNG BAY') || (item.note && String(item.note).toUpperCase().includes('TRƯNG BÀY'))) ? ' • [Trưng Bày]' : ''}
+                        </span>
                     </div>
                     <button
                         onClick={onClose}

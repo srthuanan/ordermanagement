@@ -203,11 +203,16 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         const map = new Map<string, SatelliteCarItem>();
         cars.forEach(car => {
             if (car.isTonKho) {
-                const clean = (car.soKhung || '').trim().toUpperCase();
+                const raw = (car.soKhung || '').trim().toUpperCase();
+                const match17 = raw.match(/[A-Z0-9]{17}/);
+                const clean = match17 ? match17[0] : raw.split('(')[0].split(' ')[0].split('-')[0].trim();
                 if (clean) {
                     map.set(clean, car);
                     if (clean.length >= 6) {
                         map.set(clean.slice(-6), car);
+                    }
+                    if (raw !== clean) {
+                        map.set(raw, car);
                     }
                 }
             }
@@ -348,11 +353,21 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
             const rows = data.slice(headerIdx + 1);
             rows.forEach((r, rIdx) => {
                 if (!r || r.length === 0) return;
-                const vin = String(r[5] || '').trim();
+                const rawVin = String(r[5] || '').trim();
                 const loaiXe = String(r[4] || '').trim();
                 const showroom = String(r[3] || '').trim();
 
-                if (!vin && !loaiXe) return;
+                if (!rawVin && !loaiXe) return;
+
+                // Chỉ tính 17 ký tự VIN chuẩn (loại bỏ phần chú thích TRƯNG BÀY, TB,...)
+                const match17 = rawVin.toUpperCase().match(/[A-Z0-9]{17}/);
+                const vin = match17 ? match17[0] : rawVin.split('(')[0].split(' ')[0].split('-')[0].trim().toUpperCase();
+
+                const isRawTrungBay = rawVin.toUpperCase().includes('TRƯNG BÀY') || rawVin.toUpperCase().includes('TRUNG BAY') || rawVin.toUpperCase().includes('(TB)');
+                const rawNote = String(r[13] || '').trim();
+                const finalNote = isRawTrungBay 
+                    ? (rawNote ? `${rawNote} • Xe trưng bày` : 'Xe trưng bày') 
+                    : rawNote;
 
                 const rowMonth = String(r[1] || '').trim();
                 const isCurrentMonthRow = !activeMonth || rowMonth.includes(activeMonth) || rowMonth === activeMonth;
@@ -400,7 +415,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                     ngayGiao: formatDate(r[10]),
                     khoaSo: formatDate(r[11]),
                     soNgayTonKho: r[12] || '',
-                    note: String(r[13] || ''),
+                    note: finalNote,
                     tinhTrang: String(r[18] || r[17] || ''),
                     isThuanAn,
                     isTonKho
@@ -986,7 +1001,9 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         // ƯU TIÊN 4: ĐỐI SOÁT TỒN KHO K83 vs BÃI THUẬN AN THỰC TẾ (CÁC XE CÒN LẠI)
         // ---------------------------------------------------------------------
         k83Items.filter(item => item.reconcileType !== 'MATCHED').forEach(item => {
-            const v = (item.vin || '').trim().toUpperCase();
+            const rawV = (item.vin || '').trim().toUpperCase();
+            const match17 = rawV.match(/[A-Z0-9]{17}/);
+            const v = match17 ? match17[0] : rawV.split('(')[0].split(' ')[0].split('-')[0].trim();
             if (!v || processedVins.has(v) || (v.length >= 6 && processedVins.has(v.slice(-6)))) {
                 return; // Đã nằm trong danh sách cảnh báo TD4 / HĐ Mất Bãi / ĐNX
             }
@@ -996,10 +1013,10 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
 
             const isCyberOnly = item.reconcileType === 'CYBER_K83_ONLY';
             list.push({
-                id: `k83-${item.vin}`,
+                id: `k83-${v}`,
                 type: isCyberOnly ? 'CYBER_NOT_IN_YARD' : 'YARD_NOT_IN_CYBER',
                 typeLabel: isCyberOnly ? 'Sổ K83 Chưa Có Bãi' : 'Về Bãi Chưa Nhập K83',
-                vin: item.vin,
+                vin: v,
                 carModel: item.carModel,
                 color: item.color,
                 tvbh: item.tvbhCyber || (item.yardCar && item.yardCar.tvbh) || 'Chưa rõ',

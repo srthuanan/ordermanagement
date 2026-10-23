@@ -93,7 +93,12 @@ export const buildSatelliteCarMap = (warehouses: Record<string, any>): Map<strin
         const rows = data.slice(headerIdx + 1);
         rows.forEach((r) => {
             if (!r || r.length === 0) return;
-            const vin = String(r[5] || '').trim().toUpperCase();
+            const rawVin = String(r[5] || '').trim().toUpperCase();
+            if (!rawVin) return;
+
+            // Chỉ lấy 17 ký tự VIN chuẩn (loại bỏ phần chú thích TRƯNG BÀY, TB,...)
+            const match17 = rawVin.match(/[A-Z0-9]{17}/);
+            const vin = match17 ? match17[0] : rawVin.split('(')[0].split(' ')[0].split('-')[0].trim();
             if (!vin) return;
 
             const rowMonth = String(r[1] || '').trim();
@@ -139,7 +144,7 @@ export const buildSatelliteCarMap = (warehouses: Record<string, any>): Map<strin
                 isTonKho
             };
 
-            // Map bằng full VIN
+            // Map bằng full VIN 17 ký tự
             map.set(vin, record);
 
             // Map bằng 6 số cuối nếu VIN đủ dài
@@ -148,6 +153,11 @@ export const buildSatelliteCarMap = (warehouses: Record<string, any>): Map<strin
                 if (!map.has(suffix)) {
                     map.set(suffix, record);
                 }
+            }
+
+            // Map thêm alias rawVin nếu có chú thích
+            if (rawVin !== vin && !map.has(rawVin)) {
+                map.set(rawVin, record);
             }
         });
     });
@@ -911,10 +921,28 @@ export const fetchTd4ReconciliationData = async (
             const maPostNum = parseInt(rawPost, 10);
 
             // Quy tắc duyệt chứng từ trên CyberSoft:
-            // - Ma_Post >= 5 hoặc 9: Ban Giám Đốc đã duyệt đủ điều kiện giao xe / Đã hạch toán sổ cái -> Đã có lệnh ra cổng. Xe tồn bãi là VI PHẠM TỒN KHO!
+            // - Ma_Post >= 5 hoặc 9: Ban Giám Đốc đã duyệt đủ điều kiện giao xe / Đã hạch toán sổ cái -> Đã có lệnh ra cổng.
             // - Ma_Post < 5 (thường là 3 hoặc 4) hoặc rỗng: Phiếu mới lập, đang trình duyệt KTT / BGĐ -> Thủ kho giữ xe tại bãi là HỢP LỆ!
             const isApproved = !isNaN(maPostNum) ? maPostNum >= 5 : (rawPost >= '5' || rawPost === '9');
-            const isViolation = isApproved;
+
+            // Tính số ngày kể từ ngày chứng từ TD4
+            let daysSinceTd4 = 0;
+            if (ngayCtTd4) {
+                const td4Date = new Date(ngayCtTd4);
+                if (!isNaN(td4Date.getTime())) {
+                    const now = new Date();
+                    const diffMs = now.getTime() - td4Date.getTime();
+                    daysSinceTd4 = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+                }
+            }
+
+            // LOGIC MỚI CHUẨN XÁC:
+            // 1. Nếu chưa duyệt: Thủ kho giữ xe tại bãi là ĐÚNG QUY ĐỊNH (isViolation = false).
+            // 2. Nếu đã duyệt:
+            //    - Trong vòng 48h (daysSinceTd4 <= 2): Đang trong quy trình chuẩn bị giao xe (rửa xe, PDI, sạc pin, chờ khách đến showroom) -> HỢP LỆ (isViolation = false).
+            //    - Đã duyệt quá 48h (daysSinceTd4 > 2) mà xe VẪN TỒN BÃI: VI PHẠM TỒN KHO THỰC TẾ (isViolation = true).
+            const isWithinGracePeriod = daysSinceTd4 <= 2;
+            const isViolation = isApproved && !isWithinGracePeriod;
 
             let maPostLabel = 'Đang trình duyệt';
             if (rawPost === '9') maPostLabel = 'Đã hạch toán (Cấp 9)';
@@ -923,9 +951,14 @@ export const fetchTd4ReconciliationData = async (
             else if (rawPost === '3') maPostLabel = 'Chờ duyệt (Cấp 3)';
             else if (rawPost) maPostLabel = `Cấp ${rawPost}`;
 
-            const warningNote = isApproved
-                ? `🚨 VI PHẠM TỒN KHO TD4: Phiếu TD4 (${soCtTd4}) đã được BGĐ phê duyệt xuất xe [${maPostLabel}] nhưng vẫn còn tồn tại ${sat.khoName} (Pin: ${sat.pin})!`
-                : `⏳ ĐANG TRÌNH DUYỆT: Phiếu TD4 (${soCtTd4}) [${maPostLabel}] chưa được BGĐ duyệt ra cổng. Xe lưu bãi ${sat.khoName} là hợp lệ.`;
+            let warningNote = '';
+            if (!isApproved) {
+                warningNote = `⏳ ĐANG TRÌNH DUYỆT: Phiếu TD4 (${soCtTd4}) [${maPostLabel}] chưa được BGĐ duyệt ra cổng. Xe lưu bãi ${sat.khoName} là đúng quy định.`;
+            } else if (isWithinGracePeriod) {
+                warningNote = `⏳ ĐANG CHUẨN BỊ GIAO XE: Phiếu TD4 (${soCtTd4}) [${maPostLabel}] duyệt ngày ${ngayCtTd4 || 'gần đây'} (trong hạn 48h). Xe đang lưu bãi ${sat.khoName} (Pin: ${sat.pin}) chờ khách nhận.`;
+            } else {
+                warningNote = `🚨 VI PHẠM TỒN KHO TD4: Phiếu TD4 (${soCtTd4}) đã được BGĐ phê duyệt [${maPostLabel}] quá 48h (${daysSinceTd4} ngày) nhưng xe vẫn còn tồn tại ${sat.khoName} (Pin: ${sat.pin})!`;
+            }
 
             results.push({
                 id: `td4-${v}`,
@@ -1010,11 +1043,13 @@ export const fetchInvoicedMissingYardReconciliationData = async (
             const { data: td4Cars } = await supabase
                 .from('cyber_car_status')
                 .select('vin, has_td4, so_ct_td4')
-                .eq('has_td4', true);
+                .or('has_td4.eq.true,so_ct_td4.not.is.null')
+                .limit(5000);
             if (td4Cars) {
                 td4Cars.forEach((r: any) => {
                     const vin = String(r.vin || '').trim().toUpperCase();
-                    const hasTd = r.has_td4 === true || (r.so_ct_td4 && String(r.so_ct_td4).trim() !== '');
+                    const soTd = String(r.so_ct_td4 || '').trim();
+                    const hasTd = r.has_td4 === true || (soTd !== '' && soTd !== 'null' && soTd !== 'None');
                     if (vin && hasTd) {
                         td4VinSet.add(vin);
                         if (vin.length >= 6) td4VinSet.add(vin.slice(-6));
@@ -1110,6 +1145,13 @@ export const fetchInvoicedMissingYardReconciliationData = async (
                     if (v) {
                         cyberMap.set(v, c);
                         if (v.length >= 6) cyberMap.set(v.slice(-6), c);
+                        
+                        const soTd = String(c.so_ct_td4 || '').trim();
+                        const hasTd = c.has_td4 === true || (soTd !== '' && soTd !== 'null' && soTd !== 'None');
+                        if (hasTd) {
+                            td4VinSet.add(v);
+                            if (v.length >= 6) td4VinSet.add(v.slice(-6));
+                        }
                     }
                 });
             }
@@ -1135,10 +1177,36 @@ export const fetchInvoicedMissingYardReconciliationData = async (
             });
         }
 
-        // 4. Lấy danh sách xe đã xuất hóa đơn từ yeucauxhd, donhang và archived_orders
+        // 4. Lấy danh sách xe đã xuất hóa đơn thuộc các ĐƠN HÀNG ĐANG MỞ (CHƯA GIAO XE)
+        // TUYỆT ĐỐI KHÔNG NẠP ARCHIVED_ORDERS VÀO KIỂM TRA MẤT BÃI (vì các đơn này đã hoàn tất giao xe từ quá khứ)
         const invoicedMap = new Map<string, any>();
+        const deliveredHistoryVins = new Set<string>();
 
-        // 4.1 yeucauxhd (Lọc các xe đã xuất hóa đơn từ 01/08/2026 đến nay)
+        // 4.0 Nạp toàn bộ xe đã giao / lưu trữ trong archived_orders để loại trừ triệt để
+        try {
+            const { data: archData } = await supabase
+                .from('archived_orders')
+                .select('vin, so_ct_td4')
+                .not('vin', 'is', null)
+                .limit(5000);
+            if (archData) {
+                archData.forEach((r: any) => {
+                    const v = String(r.vin || '').trim().toUpperCase();
+                    if (v) {
+                        deliveredHistoryVins.add(v);
+                        td4VinSet.add(v);
+                        if (v.length >= 6) {
+                            deliveredHistoryVins.add(v.slice(-6));
+                            td4VinSet.add(v.slice(-6));
+                        }
+                    }
+                });
+            }
+        } catch (eArch) {
+            console.warn('[fetchInvoicedMissingYard] archived_orders read warning:', eArch);
+        }
+
+        // 4.1 yeucauxhd (Chỉ lấy xe xuất HĐ gần đây và chưa từng giao xe / lưu trữ)
         try {
             const { data: yData } = await supabase
                 .from('yeucauxhd')
@@ -1149,6 +1217,9 @@ export const fetchInvoicedMissingYardReconciliationData = async (
                 yData.forEach((row: any) => {
                     const vin = String(row.vin || '').trim().toUpperCase();
                     if (!vin) return;
+                    // BỎ QUA NẾU XE ĐÃ GIAO XONG TRONG QUÁ KHỨ HOẶC ĐÃ CÓ TD4
+                    if (deliveredHistoryVins.has(vin) || isCarWithTd4(vin)) return;
+
                     const ngayXhd = String(row.ngay_xuat_hoa_don || '').slice(0, 10);
                     if (!ngayXhd || ngayXhd < '2026-08-01') return;
                     if (!invoicedMap.has(vin)) {
@@ -1171,46 +1242,68 @@ export const fetchInvoicedMissingYardReconciliationData = async (
             console.warn('[fetchInvoicedMissingYard] yeucauxhd read warning:', eYc);
         }
 
-        // 4.2 donhang & archived_orders (Lọc các xe đã xuất hóa đơn từ 01/08/2026 đến nay)
+        // 4.2 donhang: CHỈ LẤY CÁC XE ĐANG HOẠT ĐỘNG, CHƯA BÀN GIAO XE (ngay_giao_xe IS NULL)
         try {
-            const [dhRes, archRes] = await Promise.all([
-                supabase.from('donhang').select('vin, so_don_hang, ten_khach_hang, ten_tu_van_ban_hang, dong_xe, phien_ban, mau_ngoai_that, ngay_xuat_hoa_don, link_hoa_don_da_xuat, ma_hd_cyber, so_ct_dnx, so_ct_td4').not('vin', 'is', null).gte('ngay_xuat_hoa_don', '2026-08-01'),
-                supabase.from('archived_orders').select('vin, so_don_hang, ten_khach_hang, tvbh, dong_xe, phien_ban, mau_ngoai_that, ngay_xuat_hoa_don, url_hoa_don_da_xuat, ma_hd_cyber, so_ct_dnx, so_ct_td4').not('vin', 'is', null).gte('ngay_xuat_hoa_don', '2026-08-01')
-            ]);
+            const { data: dhData } = await supabase
+                .from('donhang')
+                .select('vin, so_don_hang, ten_khach_hang, ten_tu_van_ban_hang, dong_xe, phien_ban, mau_ngoai_that, ngay_xuat_hoa_don, link_hoa_don_da_xuat, ma_hd_cyber, so_ct_dnx, so_ct_td4, ngay_giao_xe, trang_thai')
+                .not('vin', 'is', null)
+                .gte('ngay_xuat_hoa_don', '2026-08-01');
 
-            const processOrderRow = (row: any) => {
-                const vin = String(row.vin || '').trim().toUpperCase();
-                if (!vin) return;
-                const ngayXhd = String(row.ngay_xuat_hoa_don || '').slice(0, 10);
-                if (!ngayXhd || ngayXhd < '2026-08-01') return;
+            if (dhData) {
+                dhData.forEach((row: any) => {
+                    const vin = String(row.vin || '').trim().toUpperCase();
+                    if (!vin) return;
 
-                if (!invoicedMap.has(vin)) {
-                    invoicedMap.set(vin, {
-                        vin,
-                        orderNumber: row.so_don_hang || '',
-                        customerName: row.ten_khach_hang || '',
-                        tvbh: row.tvbh || row.ten_tu_van_ban_hang || '',
-                        carModel: row.dong_xe || '',
-                        trim: row.phien_ban || '',
-                        color: row.mau_ngoai_that || '',
-                        ngayXuatHoaDon: ngayXhd,
-                        urlHoaDon: row.link_hoa_don_da_xuat || row.url_hoa_don_da_xuat || '',
-                        maHdCyber: row.ma_hd_cyber || '',
-                        soCtDnx: row.so_ct_dnx || '',
-                        hasDnx: Boolean(row.so_ct_dnx)
-                    });
-                }
-                if (row.so_ct_dnx) {
-                    const dnxObj = { soCtDnx: String(row.so_ct_dnx).trim() };
-                    dnxOrderMap.set(vin, dnxObj);
-                    if (vin.length >= 6) dnxOrderMap.set(vin.slice(-6), dnxObj);
-                }
-            };
+                    // Nếu xe đã có ngày giao xe hoặc trạng thái đã hoàn tất -> Đã giao xe xong, bỏ qua 100%!
+                    if (row.ngay_giao_xe || row.trang_thai === 'Đã giao xe' || row.trang_thai === 'Đã lưu trữ') {
+                        deliveredHistoryVins.add(vin);
+                        td4VinSet.add(vin);
+                        if (vin.length >= 6) {
+                            deliveredHistoryVins.add(vin.slice(-6));
+                            td4VinSet.add(vin.slice(-6));
+                        }
+                        return;
+                    }
 
-            (dhRes.data || []).forEach(processOrderRow);
-            (archRes.data || []).forEach(processOrderRow);
+                    // Nạp xe đã có TD4 vào td4VinSet để loại trừ cảnh báo mất bãi
+                    const soTd = String(row.so_ct_td4 || '').trim();
+                    if (soTd && soTd !== 'null' && soTd !== 'None') {
+                        td4VinSet.add(vin);
+                        if (vin.length >= 6) td4VinSet.add(vin.slice(-6));
+                        return;
+                    }
+
+                    if (deliveredHistoryVins.has(vin) || isCarWithTd4(vin)) return;
+
+                    const ngayXhd = String(row.ngay_xuat_hoa_don || '').slice(0, 10);
+                    if (!ngayXhd || ngayXhd < '2026-08-01') return;
+
+                    if (!invoicedMap.has(vin)) {
+                        invoicedMap.set(vin, {
+                            vin,
+                            orderNumber: row.so_don_hang || '',
+                            customerName: row.ten_khach_hang || '',
+                            tvbh: row.tvbh || row.ten_tu_van_ban_hang || '',
+                            carModel: row.dong_xe || '',
+                            trim: row.phien_ban || '',
+                            color: row.mau_ngoai_that || '',
+                            ngayXuatHoaDon: ngayXhd,
+                            urlHoaDon: row.link_hoa_don_da_xuat || '',
+                            maHdCyber: row.ma_hd_cyber || '',
+                            soCtDnx: row.so_ct_dnx || '',
+                            hasDnx: Boolean(row.so_ct_dnx)
+                        });
+                    }
+                    if (row.so_ct_dnx) {
+                        const dnxObj = { soCtDnx: String(row.so_ct_dnx).trim() };
+                        dnxOrderMap.set(vin, dnxObj);
+                        if (vin.length >= 6) dnxOrderMap.set(vin.slice(-6), dnxObj);
+                    }
+                });
+            }
         } catch (eOrders) {
-            console.warn('[fetchInvoicedMissingYard] donhang/archived_orders read warning:', eOrders);
+            console.warn('[fetchInvoicedMissingYard] donhang read warning:', eOrders);
         }
 
         // 4.3 cyber_ton_kho (Xe Showroom Thuận An đã xuất hóa đơn tồn trên Cyber)
@@ -1222,6 +1315,7 @@ export const fetchInvoicedMissingYardReconciliationData = async (
                 tkData.forEach((row: any) => {
                     const vin = String(row.vin || '').trim().toUpperCase();
                     if (!vin) return;
+                    if (deliveredHistoryVins.has(vin) || isCarWithTd4(vin)) return;
                     const isInv = Boolean(row.is_invoiced || (row.tinh_trang && String(row.tinh_trang).includes('HĐ')));
                     const ttcp = String(row.ten_ttcp || '');
                     const isThuanAn = ttcp.toLowerCase().includes('thuận an') || ttcp.includes('08');
@@ -1257,11 +1351,11 @@ export const fetchInvoicedMissingYardReconciliationData = async (
                 const [archRes, dhRes, ycRes] = await Promise.all([
                     supabase
                         .from('archived_orders')
-                        .select('vin, ten_khach_hang, tvbh, so_don_hang, ma_hd_cyber, dong_xe, phien_ban')
+                        .select('vin, ten_khach_hang, tvbh, so_don_hang, ma_hd_cyber, dong_xe, phien_ban, so_ct_td4')
                         .in('vin', allInvoicedVins),
                     supabase
                         .from('donhang')
-                        .select('vin, ten_khach_hang, ten_tu_van_ban_hang, so_don_hang, ma_hd_cyber, dong_xe, phien_ban')
+                        .select('vin, ten_khach_hang, ten_tu_van_ban_hang, so_don_hang, ma_hd_cyber, dong_xe, phien_ban, so_ct_td4')
                         .in('vin', allInvoicedVins),
                     supabase
                         .from('yeucauxhd')
@@ -1272,6 +1366,13 @@ export const fetchInvoicedMissingYardReconciliationData = async (
                 const mergeOrderData = (row: any, tvbhField = 'tvbh') => {
                     const v = String(row.vin || '').trim().toUpperCase();
                     if (!v) return;
+
+                    const soTd = String(row.so_ct_td4 || '').trim();
+                    if (soTd && soTd !== 'null' && soTd !== 'None') {
+                        td4VinSet.add(v);
+                        if (v.length >= 6) td4VinSet.add(v.slice(-6));
+                    }
+
                     const inv = invoicedMap.get(v) || (v.length >= 6 ? invoicedMap.get(v.slice(-6)) : null);
                     if (inv) {
                         const kh = String(row.ten_khach_hang || '').trim();
@@ -1586,7 +1687,8 @@ export const fetchK83ReconciliationData = async (
         allSatCars.forEach((c: any) => {
             const rawVin = String(c.soKhung || c.vin || '').trim().toUpperCase();
             if (!rawVin) return;
-            const cleanVin = rawVin.split(' ')[0].split('(')[0].trim();
+            const match17 = rawVin.match(/[A-Z0-9]{17}/);
+            const cleanVin = match17 ? match17[0] : rawVin.split(' ')[0].split('(')[0].trim();
             if (!cleanVin) return;
 
             const khoK = (c.khoKey || '').toLowerCase();
@@ -1909,7 +2011,10 @@ export const fetchK83ReconciliationData = async (
 
         // 4.2 Quét các xe CÓ TẠI BÃI THUẬN AN THỰC TẾ nhưng CHƯA ĐƯỢC XỬ LÝ (Tức không có trong Cyber K83)
         thuanAnYardTonMap.forEach((yardCar, rawVinKey) => {
-            const vin = String(yardCar.soKhung || yardCar.vin || rawVinKey).trim().toUpperCase();
+            const rawVin = String(yardCar.soKhung || yardCar.vin || rawVinKey).trim().toUpperCase();
+            const match17 = rawVin.match(/[A-Z0-9]{17}/);
+            const vin = match17 ? match17[0] : rawVin.split('(')[0].split(' ')[0].split('-')[0].trim();
+            if (!vin) return;
             if (processedVins.has(vin) || (vin.length >= 6 && processedVins.has(vin.slice(-6)))) {
                 return; // Đã xử lý ở trên
             }
