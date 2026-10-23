@@ -85,6 +85,14 @@
      - Cột `VF 8 New`: Đếm các xe `VF 8` có phiên bản chứa `'*New*'` (hoặc `dong_xe` ghi rõ `VF 8 New`).
   3. **Kỷ Luật Đẩy Code Apps Script Qua Clasp**: Bất kỳ khi nào chỉnh sửa code trong `backend-gas/` hoặc `gas-showroom/`, sau khi sửa file cục bộ, AI Agent **BẮT BUỘC PHẢI CHẠY NGAY LỆNH `npx --yes @google/clasp push -f`** trong thư mục tương ứng để đẩy code trực tiếp lên Google Cloud của Google Sheets, tránh tình trạng Google Sheets vẫn chạy code cũ.
 
+- **Quy Chuẩn Phân Loại Phiếu Điều Chuyển & Ứng Dụng Cyber Mobile Cho Bảo Vệ (GD9 Exclusion in Guard App)**:
+  1. **Phân Biệt Bản Chất Mã GD 4 và Mã GD 9 trên CyberSoft**:
+     - **Mã GD = 4 (Xuất điều chuyển nội bộ/kho)** hoặc **Phiếu TD4 (Giấy ra cổng)**: Là thủ tục xuất xe vật lý thực tế rời bãi/showroom (xe chạy qua cổng), **BẢO VỆ BẮT BUỘC PHẢI KIỂM TRA VÀ KÝ DUYỆT CHO XE RA CỔNG**.
+     - **Mã GD = 9 (Điều chuyển xe các điểm kinh doanh)**: Thuần túy là thủ tục điều chuyển hạn mức chỉ tiêu bán hàng / phân bổ xe trên sổ sách kế toán giữa các showroom đối với các xe đã xuất hóa đơn (ví dụ Thuận An chuyển sang Quang Trung, Hà Huy Giáp, Hòa Bình...). **XE VẬT LÝ VẪN NẰM NGUYÊN TẠI BÃI/SHOWROOM THUẬN AN, TUYỆT ĐỐI KHÔNG XUẤT ĐI ĐÂU CẢ**.
+  2. **Quy Tắc Lọc Danh Sách Xuất Xe Trên App Bảo Vệ (`CP_APPNBBE_DNX_GetList`)**:
+     - Stored Procedure `CP_APPNBBE_DNX_GetList` trên CyberSoft ERP bắt buộc phải duy trì bộ lọc loại trừ triệt để: `AND (STT_REC IN (SELECT STT_REC FROM PHDNX WHERE Ma_post = '9' AND Ma_GD <> '9'))` và `DELETE FROM #List WHERE Ma_GD = '9'`.
+     - Tuyệt đối không để bất kỳ lệnh điều chuyển ĐĐKD (Mã GD = 9) nào lọt vào màn hình *"Danh sách xuất xe"* trên App Mobile của Bảo vệ, phòng ngừa nguy cơ bảo vệ hiểu nhầm rồi cho xe rời bãi trái phép.
+
 - **Quy Chuẩn Đối Soát Kho & Phân Loại Xe Tồn TD4 (TD4 Exclusion in K83 Yard Reconciliation)**:
   1. **Trách Nhiệm Lập Phiếu TD4**: Phiếu TD4 (Phiếu xuất xe bán cho khách hàng / Giấy ra cổng) trên phần mềm CyberSoft ERP **do Tư vấn bán hàng (TVBH) phụ trách lập**. Kế toán trưởng (KTT) và Ban Giám Đốc (BGĐ) kiểm tra và ký phê duyệt; Thủ kho / Bảo vệ bãi căn cứ phiếu TD4 đã duyệt để cho xe ra cổng. Mọi chỉ dẫn tác nghiệp trên hệ thống bắt buộc quy đúng trách nhiệm: *TVBH lập phiếu TD4*, tuyệt đối không ghi Kế toán lập TD4.
   2. **Bản Chất Xe Tồn TD4**: Xe đã lập phiếu TD4 trên CyberSoft bản chất là xe đã bước vào quy trình xuất bán và đang chờ bàn giao khách.
