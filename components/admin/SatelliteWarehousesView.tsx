@@ -169,7 +169,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     }, [initialSearchVin]);
 
     // Filters cho Bảng Tổng Hợp ('all')
-    const [allAlertFilter, setAllAlertFilter] = useState<'all' | 'dnx' | 'td4' | 'missing_yard'>('all');
+    const [allAlertFilter, setAllAlertFilter] = useState<'all' | 'yard_not_cyber' | 'cyber_not_yard' | 'td4' | 'missing_yard'>('all');
     const [allAlertSearch, setAllAlertSearch] = useState('');
     const [selectedAllRowIdx, setSelectedAllRowIdx] = useState<number>(0);
 
@@ -815,7 +815,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
     const allCombinedAlerts = useMemo(() => {
         const list: {
             id: string;
-            type: 'DNX' | 'TD4';
+            type: 'YARD_NOT_IN_CYBER' | 'CYBER_NOT_IN_YARD' | 'TD4' | 'MISSING_YARD';
             typeLabel: string;
             vin: string;
             carModel: string;
@@ -834,8 +834,10 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
             severity: 'critical' | 'warning';
         }[] = [];
 
+        // Bộ Set lưu trữ các số VIN đã được xử lý để triệt tiêu 100% tình trạng trùng lặp lỗi
+        const processedVins = new Set<string>();
+
         // Tập hợp các số khung đã có TD4 để loại bỏ hoàn toàn khỏi đối chiếu ĐNX
-        // Quy tắc: "Nếu xe đã có TD4 thì bỏ qua phiếu ĐNX"
         const td4VinSet = new Set<string>();
         td4Items.forEach(t => {
             const v = (t.vin || '').trim().toUpperCase();
@@ -845,64 +847,21 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
             }
         });
 
-        // 1. Chiều Nhập: Các xe ĐNX (Đã tự động bỏ qua nếu xe đã có TD4)
-        reconcileItems.forEach(item => {
+        // ---------------------------------------------------------------------
+        // ƯU TIÊN 1: VI PHẠM TỒN KHO TD4 (ĐÃ DUYỆT XUẤT XE QUÁ 48H NHƯNG CHƯA ĐI)
+        // ---------------------------------------------------------------------
+        td4Items.filter(item => item.isViolation === true).forEach(item => {
             const v = (item.vin || '').trim().toUpperCase();
-            if (td4VinSet.has(v) || (v.length >= 6 && td4VinSet.has(v.slice(-6)))) {
-                return; // Bỏ qua phiếu ĐNX nếu xe đã có phiếu TD4
-            }
-            if (item.reconcileStatus === 'ALREADY_IN_CYBER') {
-                return; // Khớp hoàn hảo cả Cyber K83 và bãi thực tế, không đưa vào danh sách cảnh báo sai lệch
-            }
-
-            const isAtThuanAn = item.reconcileStatus === 'AT_THUAN_AN';
-            const isCyberNotYard = item.reconcileStatus === 'CYBER_K83_NOT_IN_YARD';
-
-            // Chỉ đưa các trường hợp sai lệch/vi phạm thực tế vào danh sách cảnh báo tổng hợp
-            if (!isAtThuanAn && !isCyberNotYard) {
+            if (!v || processedVins.has(v) || (v.length >= 6 && processedVins.has(v.slice(-6)))) {
                 return;
             }
+            processedVins.add(v);
+            if (v.length >= 6) processedVins.add(v.slice(-6));
 
-            list.push({
-                id: `dnx-${item.vin}`,
-                type: 'DNX',
-                typeLabel: isAtThuanAn 
-                    ? 'ĐNX Về Bãi Chưa Nhập K83' 
-                    : isCyberNotYard 
-                        ? 'Sổ K83 Chưa Có Bãi' 
-                        : 'ĐNX Đang Luân Chuyển',
-                vin: item.vin,
-                carModel: item.carModel,
-                color: item.color,
-                tvbh: item.tvbh || 'Chưa rõ',
-                customerName: item.customerName || 'Chưa rõ',
-                orderNumber: item.orderNumber || '',
-                soChungTu: item.soCtDnx || 'Chưa rõ',
-                ngayChungTu: item.ngayCtDnx || '',
-                khoCyber: item.isTonKhoCyberK83 ? 'Đã có tồn K83 trên Cyber' : `Chưa có tồn K83 (${item.tenKhoCyber || item.maKhoCyber || 'Đang vận tải'})`,
-                khoThucTe: item.satelliteYard ? `${item.satelliteYard.khoName}${item.satelliteYard.isTonKho ? '' : ' (Đã xuất)'}` : 'Chưa ghi nhận bãi',
-                mucPin: item.satelliteYard?.mucPin || '-',
-                ngayNhanBai: item.satelliteYard?.ngayNhan || '',
-                alertTitle: isAtThuanAn 
-                    ? 'XE ĐÃ VỀ BÃI THUẬN AN — CHƯA LÀM PNK CYBER' 
-                    : isCyberNotYard 
-                        ? 'SỔ CYBER ĐÃ NHẬP K83 — NHƯNG BÃI THỰC TẾ CHƯA CÓ XE' 
-                        : (item.satelliteYard ? 'Tại bãi trung chuyển QL13/Q12' : 'Đang vận chuyển'),
-                actionRequired: isAtThuanAn 
-                    ? 'TVBH báo Admin/Kế toán làm phiếu PNK nhập kho Cyber để kịp tiến độ giao xe' 
-                    : isCyberNotYard 
-                        ? 'Khẩn trương đối chiếu Kế toán kho và Thủ kho bãi nhận để xác định xe thực tế đang ở vị trí nào' 
-                        : 'Theo dõi điều phối xe về Showroom Thuận An',
-                severity: isAtThuanAn || isCyberNotYard ? 'critical' : 'warning'
-            });
-        });
-
-        // 2. Chiều Xuất: Các xe đã có phiếu TD4 và ĐÃ ĐƯỢC DUYỆT (isViolation !== false) nhưng bãi thực tế vẫn báo tồn kho
-        td4Items.filter(item => item.isViolation !== false).forEach(item => {
             list.push({
                 id: `td4-${item.vin}`,
                 type: 'TD4',
-                typeLabel: 'TD4 Vi Phạm Tồn Bãi',
+                typeLabel: 'TD4 Quá Hạn Tồn Bãi',
                 vin: item.vin,
                 carModel: item.carModel,
                 color: item.color,
@@ -915,19 +874,34 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 khoThucTe: item.satelliteYard.khoName,
                 mucPin: item.satelliteYard.pin || '-',
                 ngayNhanBai: item.satelliteYard.ngayNhan || '',
-                alertTitle: 'VI PHẠM QUY ĐỊNH: ĐÃ CÓ PHIẾU TD4 NHƯNG BÃI VẪN BÁO TỒN KHO',
+                alertTitle: item.warningNote || 'VI PHẠM QUY ĐỊNH: ĐÃ DUYỆT PHIẾU TD4 QUÁ 48H NHƯNG BÃI VẪN BÁO TỒN KHO',
                 actionRequired: 'Khẩn trương kiểm tra thực tế: Nếu xe đã giao thì cập nhật ngày xuất bãi ngay, nếu chưa giao thì báo cáo lý do!',
                 severity: 'critical'
             });
         });
 
-        // 3. Chiều Xuất Hóa Đơn: Đã xuất HĐ nhưng chưa có TD4 mà mất tồn bãi thực tế (vi phạm)
+        // ---------------------------------------------------------------------
+        // ƯU TIÊN 2: XUẤT BÃI KHÔNG CÓ LỆNH (ĐÃ XUẤT HÓA ĐƠN NHƯNG MẤT TỒN BÃI)
+        // ---------------------------------------------------------------------
         missingYardItems.filter(item => item.isViolation).forEach(item => {
+            const v = (item.vin || '').trim().toUpperCase();
+            if (!v || processedVins.has(v) || (v.length >= 6 && processedVins.has(v.slice(-6)))) {
+                return;
+            }
+            processedVins.add(v);
+            if (v.length >= 6) processedVins.add(v.slice(-6));
+
             const isDnx = item.satelliteStatus === 'IN_TRANSIT_DNX';
+            const isDispatchedNoOrder = item.satelliteStatus === 'ALREADY_DISPATCHED_WITHOUT_TD4';
+
             list.push({
                 id: `missing-${item.vin}`,
-                type: 'MISSING_YARD' as any,
-                typeLabel: isDnx ? 'ĐNX Đang Luân Chuyển' : 'Xuất Bãi Trái Quy Trình',
+                type: isDispatchedNoOrder ? 'MISSING_YARD' : 'CYBER_NOT_IN_YARD',
+                typeLabel: isDnx 
+                    ? 'ĐNX Đang Luân Chuyển' 
+                    : isDispatchedNoOrder 
+                        ? 'Xuất Bãi Trái Quy Trình' 
+                        : 'Sổ K83 Chưa Có Bãi',
                 vin: item.vin,
                 carModel: item.carModel,
                 color: item.color,
@@ -942,25 +916,119 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 ngayNhanBai: item.ngayXuatBaiThucTe || '',
                 alertTitle: isDnx 
                     ? `ĐANG LUÂN CHUYỂN THEO ĐNX (${item.soCtDnx || 'ĐNX'}) — CHỜ KHO NHẬN NHẬP KHO` 
-                    : (item.satelliteStatus === 'ALREADY_DISPATCHED_WITHOUT_TD4' 
+                    : isDispatchedNoOrder 
                         ? 'XUẤT BÃI KHÔNG CÓ LỆNH — CHƯA CÓ TD4 & KHÔNG CÓ ĐNX' 
-                        : 'SỔ CYBER CÓ KHO NHƯNG KHÔNG TỒN TẠI TRONG 3 BÃI NGOÀI'),
+                        : 'SỔ CYBER ĐÃ NHẬP K83 — NHƯNG BÃI THỰC TẾ CHƯA CÓ XE',
                 actionRequired: isDnx 
                     ? 'Theo dõi xe về bãi nhận và hoàn tất nhập kho K83 trên Cyber khi xe đến' 
-                    : 'Khẩn trương kiểm tra vị trí xe thực tế! Nguy cơ giao xe không lệnh hoặc sai lệch dữ liệu kho!',
+                    : isDispatchedNoOrder 
+                        ? 'Khẩn trương kiểm tra vị trí xe thực tế! Nguy cơ giao xe không lệnh hoặc sai lệch dữ liệu kho!' 
+                        : 'Khẩn trương đối chiếu Kế toán kho và Thủ kho bãi nhận để xác định xe thực tế đang ở vị trí nào',
                 severity: isDnx ? 'warning' : 'critical'
             });
         });
 
+        // ---------------------------------------------------------------------
+        // ƯU TIÊN 3: ĐNX LUÂN CHUYỂN XE (VỀ BÃI CHƯA NHẬP CYBER HOẶC SỔ K83 THIẾU BÃI)
+        // ---------------------------------------------------------------------
+        reconcileItems.forEach(item => {
+            const v = (item.vin || '').trim().toUpperCase();
+            if (!v || processedVins.has(v) || (v.length >= 6 && processedVins.has(v.slice(-6)))) {
+                return;
+            }
+            if (td4VinSet.has(v) || (v.length >= 6 && td4VinSet.has(v.slice(-6)))) {
+                return; // Bỏ qua phiếu ĐNX nếu xe đã có phiếu TD4
+            }
+            if (item.reconcileStatus === 'ALREADY_IN_CYBER') {
+                return; // Khớp hoàn hảo cả Cyber K83 và bãi thực tế, không đưa vào danh sách cảnh báo sai lệch
+            }
+
+            const isAtThuanAn = item.reconcileStatus === 'AT_THUAN_AN';
+            const isCyberNotYard = item.reconcileStatus === 'CYBER_K83_NOT_IN_YARD';
+
+            // Chỉ đưa các trường hợp sai lệch thực tế vào danh sách cảnh báo tổng hợp
+            if (!isAtThuanAn && !isCyberNotYard) {
+                return;
+            }
+
+            processedVins.add(v);
+            if (v.length >= 6) processedVins.add(v.slice(-6));
+
+            list.push({
+                id: `dnx-${item.vin}`,
+                type: isAtThuanAn ? 'YARD_NOT_IN_CYBER' : 'CYBER_NOT_IN_YARD',
+                typeLabel: isAtThuanAn 
+                    ? 'Về Bãi Chưa Nhập K83' 
+                    : 'Sổ K83 Chưa Có Bãi',
+                vin: item.vin,
+                carModel: item.carModel,
+                color: item.color,
+                tvbh: item.tvbh || 'Chưa rõ',
+                customerName: item.customerName || 'Chưa rõ',
+                orderNumber: item.orderNumber || '',
+                soChungTu: item.soCtDnx || 'Chưa rõ',
+                ngayChungTu: item.ngayCtDnx || '',
+                khoCyber: item.isTonKhoCyberK83 ? 'Đã có tồn K83 trên Cyber' : `Chưa có tồn K83 (${item.tenKhoCyber || item.maKhoCyber || 'Đang vận tải'})`,
+                khoThucTe: item.satelliteYard ? `${item.satelliteYard.khoName}${item.satelliteYard.isTonKho ? '' : ' (Đã xuất)'}` : 'Chưa ghi nhận bãi',
+                mucPin: item.satelliteYard?.mucPin || '-',
+                ngayNhanBai: item.satelliteYard?.ngayNhan || '',
+                alertTitle: isAtThuanAn 
+                    ? 'XE ĐÃ VỀ BÃI THUẬN AN — CHƯA LÀM PNK NHẬP KHO K83' 
+                    : 'SỔ CYBER CÒN TỒN K83 — NHƯNG BÃI THỰC TẾ KHÔNG CÓ XE',
+                actionRequired: isAtThuanAn 
+                    ? 'TVBH báo Admin/Kế toán làm phiếu PNK nhập kho Cyber K83 để kịp tiến độ giao xe' 
+                    : 'Khẩn trương đối chiếu Kế toán kho và Thủ kho bãi nhận để xác định xe thực tế đang ở vị trí nào',
+                severity: 'critical'
+            });
+        });
+
+        // ---------------------------------------------------------------------
+        // ƯU TIÊN 4: ĐỐI SOÁT TỒN KHO K83 vs BÃI THUẬN AN THỰC TẾ (CÁC XE CÒN LẠI)
+        // ---------------------------------------------------------------------
+        k83Items.filter(item => item.reconcileType !== 'MATCHED').forEach(item => {
+            const v = (item.vin || '').trim().toUpperCase();
+            if (!v || processedVins.has(v) || (v.length >= 6 && processedVins.has(v.slice(-6)))) {
+                return; // Đã nằm trong danh sách cảnh báo TD4 / HĐ Mất Bãi / ĐNX
+            }
+
+            processedVins.add(v);
+            if (v.length >= 6) processedVins.add(v.slice(-6));
+
+            const isCyberOnly = item.reconcileType === 'CYBER_K83_ONLY';
+            list.push({
+                id: `k83-${item.vin}`,
+                type: isCyberOnly ? 'CYBER_NOT_IN_YARD' : 'YARD_NOT_IN_CYBER',
+                typeLabel: isCyberOnly ? 'Sổ K83 Chưa Có Bãi' : 'Về Bãi Chưa Nhập K83',
+                vin: item.vin,
+                carModel: item.carModel,
+                color: item.color,
+                tvbh: item.tvbhCyber || (item.yardCar && item.yardCar.tvbh) || 'Chưa rõ',
+                customerName: item.customerName || (item.yardCar && item.yardCar.customerName) || 'Chưa rõ',
+                orderNumber: item.orderNumber || item.soHdCyber || '',
+                soChungTu: item.soCtDnx || item.soCtTd4 || item.soHdCyber || 'K83',
+                ngayChungTu: item.ngayCtDnx || item.ngayCtTd4 || item.ngayHdCyber || '',
+                khoCyber: item.hasCyberK83 ? 'Sổ Cyber: Tồn K83' : 'Sổ Cyber: Chưa có K83',
+                khoThucTe: item.hasYardStock ? `Bãi: ${item.khoName || 'Thuận An'}` : (item.otherYardLocation ? `Tại: ${item.otherYardLocation}` : 'Không có trong bãi'),
+                mucPin: item.mucPin || '-',
+                ngayNhanBai: item.ngayNhanYard || item.ngayGiaoYard || '',
+                alertTitle: isCyberOnly 
+                    ? 'SỔ CYBER CÒN TỒN K83 — NHƯNG BÃI THỰC TẾ KHÔNG CÓ XE' 
+                    : 'XE ĐÃ VỀ BÃI THUẬN AN — CHƯA LÀM PNK NHẬP KHO K83',
+                actionRequired: item.actionRequired || item.discrepancyReason || (isCyberOnly ? 'Khẩn trương đối chiếu Kế toán kho và Thủ kho để xác định xe thực tế đang ở vị trí nào' : 'TVBH báo Admin/Kế toán làm phiếu PNK nhập kho Cyber K83 để kịp tiến độ giao xe'),
+                severity: 'critical'
+            });
+        });
+
         return list;
-    }, [reconcileItems, td4Items, missingYardItems]);
+    }, [reconcileItems, td4Items, missingYardItems, k83Items]);
 
     // Filter cho Bảng Tổng Hợp
     const filteredAllAlerts = useMemo(() => {
         return allCombinedAlerts.filter(item => {
-            if (allAlertFilter === 'dnx' && item.type !== 'DNX') return false;
+            if (allAlertFilter === 'yard_not_cyber' && item.type !== 'YARD_NOT_IN_CYBER') return false;
+            if (allAlertFilter === 'cyber_not_yard' && item.type !== 'CYBER_NOT_IN_YARD') return false;
             if (allAlertFilter === 'td4' && item.type !== 'TD4') return false;
-            if (allAlertFilter === 'missing_yard' && (item.type as any) !== 'MISSING_YARD') return false;
+            if (allAlertFilter === 'missing_yard' && item.type !== 'MISSING_YARD') return false;
 
             if (allAlertSearch.trim()) {
                 const q = allAlertSearch.toLowerCase().trim();
@@ -974,7 +1042,6 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 if (!matchVin && !matchCt && !matchTvbh && !matchKh && !matchHd && !matchModel && !matchKho) return false;
             }
             return true;
-        });
     }, [allCombinedAlerts, allAlertFilter, allAlertSearch]);
 
     // Làm mới toàn bộ đối chiếu (kéo dữ liệu mới nhất từ Google Sheets 3 bãi và CSDL CyberSoft)
@@ -1091,85 +1158,85 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
         showToast('Đã sao chép Zalo', `Đã sao chép Báo cáo tra soát K83 vs Bãi Thuận An (${yardOnly.length + cyberOnly.length} xe lệch)!`, 'success', 2500);
     };
 
-    // Copy Báo Cáo Tổng Hợp Gửi Zalo (Cả ĐNX & TD4)
+    // Copy Báo Cáo Tổng Hợp Gửi Zalo (Đồng bộ 100% từ danh sách cảnh báo duy nhất allCombinedAlerts)
     const handleCopyZaloAllReconcile = () => {
-        const dnxAlerts = reconcileItems.filter(c => c.reconcileStatus === 'AT_THUAN_AN');
-        const cyberNotYardAlerts = reconcileItems.filter(c => c.reconcileStatus === 'CYBER_K83_NOT_IN_YARD');
+        if (allCombinedAlerts.length === 0) {
+            showToast('Thông báo', 'Tuyệt vời! Hiện không có trường hợp sai lệch kho nào.', 'success');
+            return;
+        }
+
+        const td4Alerts = allCombinedAlerts.filter(c => c.type === 'TD4');
+        const missingYardAlerts = allCombinedAlerts.filter(c => c.type === 'MISSING_YARD');
+        const dnxAlerts = allCombinedAlerts.filter(c => c.type === 'DNX');
+        const k83Alerts = allCombinedAlerts.filter(c => c.type === 'K83');
+
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
         
         let text = `🚨 BÁO CÁO TỔNG HỢP SAI LỆCH KHO: CYBERSOFT vs BÃI XE THỰC TẾ\n`;
-        text += `(Thời điểm kiểm tra: ${timeStr} - Tổng cộng: ${dnxAlerts.length + cyberNotYardAlerts.length + td4Items.length + missingYardItems.length} trường hợp lệch)\n`;
+        text += `(Thời điểm kiểm tra: ${timeStr} - Tổng cộng: ${allCombinedAlerts.length} trường hợp lệch)\n`;
         text += `========================================\n\n`;
 
-        // 1. Chiều Nhập (ĐNX Chưa Nhập Cyber)
-        text += `📥 1. ĐẦU VÀO (ĐNX ĐÃ VỀ BÃI THUẬN AN — CHƯA NHẬP K83 CYBER): ${dnxAlerts.length} xe\n`;
-        text += `👉 Đề nghị TVBH khẩn trương báo Admin/Kế toán làm PNK để kịp tiến độ giao xe:\n`;
-        text += `----------------------------------------\n`;
-        if (dnxAlerts.length === 0) {
-            text += `   (Không có xe nào tồn đọng)\n`;
-        } else {
-            dnxAlerts.forEach((c, i) => {
-                const pin = c.satelliteYard?.mucPin || '-';
-                const ngayNhan = c.satelliteYard?.ngayNhan || '';
-                text += ` ${i + 1}. VIN: ${c.vin}\n`;
-                text += `    • ĐNX: ${c.soCtDnx || 'Chưa rõ'} (Ngày: ${c.ngayCtDnx || 'N/A'})\n`;
-                text += `    • TVBH: ${c.tvbh || 'Chưa rõ'} | KH: ${c.customerName || 'Chưa rõ'}\n`;
-                text += `    • Xe: ${c.carModel} ${c.color ? `(${c.color})` : ''} | Pin: ${pin} | Về bãi: ${ngayNhan}\n`;
-            });
-        }
-        text += `\n`;
-
-        // 1B. Lệch Sổ K83 vs Bãi (Đã làm PNK K83 nhưng bãi chưa có xe)
-        if (cyberNotYardAlerts.length > 0) {
-            text += `⚠️ 1B. LỆCH SỔ SÁCH (SỔ CYBER ĐÃ NHẬP K83 — BÃI THỰC TẾ CHƯA CÓ XE): ${cyberNotYardAlerts.length} xe\n`;
-            text += `👉 Đề nghị Kế toán kho và Thủ kho đối chiếu kiểm tra vị trí xe thực tế:\n`;
+        // 1. TD4 Vi Phạm Tồn Bãi
+        if (td4Alerts.length > 0) {
+            text += `🚨 1. TD4 QUÁ HẠN TỒN BÃI (ĐÃ DUYỆT XUẤT XE QUÁ 48H): ${td4Alerts.length} xe\n`;
+            text += `👉 Đề nghị kiểm tra gấp: Đã giao thì cập nhật xuất bãi ngay, chưa giao thì giải trình:\n`;
             text += `----------------------------------------\n`;
-            cyberNotYardAlerts.forEach((c, i) => {
+            td4Alerts.forEach((c, i) => {
                 text += ` ${i + 1}. VIN: ${c.vin}\n`;
-                text += `    • ĐNX: ${c.soCtDnx || 'Chưa rõ'} | TVBH: ${c.tvbh || 'Chưa rõ'}\n`;
-                text += `    • Xe: ${c.carModel} ${c.color ? `(${c.color})` : ''}\n`;
-                text += `    • Tình trạng: ${c.reconcileNote}\n`;
+                text += `    • TD4: ${c.soChungTu} (${c.ngayChungTu ? formatDate(c.ngayChungTu) : 'N/A'})\n`;
+                text += `    • TVBH: ${c.tvbh || 'Chưa rõ'} | KH: ${c.customerName || 'Chưa rõ'}${c.orderNumber ? ` | HĐ: ${c.orderNumber}` : ''}\n`;
+                text += `    • Vị trí bãi: ${c.khoThucTe} (Pin: ${c.mucPin})\n`;
             });
             text += `\n`;
         }
 
-        // 2. Chiều Xuất (TD4 Vi Phạm Tồn)
-        text += `🚨 2. ĐẦU RA (ĐÃ LẬP PHIẾU TD4 — BÃI THỰC TẾ VẪN BÁO TỒN KHO): ${td4Items.length} xe\n`;
-        text += `👉 QUY TẮC: Phiếu TD4 là đã giao xe, KHÔNG ĐƯỢC PHÉP TỒN Ở BẤT KỲ ĐÂU!\n`;
-        text += `----------------------------------------\n`;
-        if (td4Items.length === 0) {
-            text += `   (Tuyệt vời! Không có xe nào vi phạm tồn TD4)\n`;
-        } else {
-            td4Items.forEach((c, i) => {
-                const sat = c.satelliteYard;
+        // 2. Xuất Bãi Không Có Lệnh
+        if (missingYardAlerts.length > 0) {
+            text += `🚨 2. XUẤT HÓA ĐƠN — MẤT TỒN BÃI THỰC TẾ: ${missingYardAlerts.length} xe\n`;
+            text += `👉 Nguy cơ xuất bãi chui / lệch dữ liệu kho nghiêm trọng:\n`;
+            text += `----------------------------------------\n`;
+            missingYardAlerts.forEach((c, i) => {
                 text += ` ${i + 1}. VIN: ${c.vin}\n`;
-                text += `    • TD4: ${c.soCtTd4} (Ngày lập: ${c.ngayCtTd4 || 'N/A'})\n`;
-                text += `    • TVBH: ${c.tvbh || 'Chưa rõ'} | KH: ${c.customerName || 'Chưa rõ'}${c.orderNumber ? ` | HĐ: ${c.orderNumber}` : ''}\n`;
-                text += `    • Bãi tồn: ${sat.khoName} | Pin: ${sat.pin} | Nhận bãi: ${sat.ngayNhan || 'N/A'}\n`;
-            });
-        }
-        text += `\n`;
-
-        // 3. Chiều Xuất Hóa Đơn (Đã Xuất HĐ nhưng chưa có TD4 mà mất tồn bãi)
-        text += `⚠️ 3. XUẤT HÓA ĐƠN CHƯA TD4 — MẤT TỒN BÃI THỰC TẾ: ${missingYardItems.length} xe\n`;
-        text += `👉 CẢNH BÁO NGUY CƠ: Xe chưa có phiếu TD4 không được phép rời bãi!\n`;
-        text += `----------------------------------------\n`;
-        if (missingYardItems.length === 0) {
-            text += `   (Tuyệt vời! Không có xe vi phạm)\n`;
-        } else {
-            missingYardItems.forEach((c, i) => {
-                text += ` ${i + 1}. VIN: ${c.vin}\n`;
+                text += `    • HĐ: ${c.soChungTu} (${c.ngayChungTu ? formatDate(c.ngayChungTu) : 'N/A'})\n`;
                 text += `    • TVBH: ${c.tvbh || 'Chưa rõ'} | KH: ${c.customerName || 'Chưa rõ'}\n`;
-                text += `    • Xe: ${c.carModel} ${c.color ? `(${c.color})` : ''} | Ngày xuất HĐ: ${c.ngayXuatHoaDon ? c.ngayXuatHoaDon.slice(0, 10) : 'N/A'}\n`;
-                text += `    • Tình trạng: ${c.satelliteStatusLabel}\n`;
+                text += `    • Tình trạng: ${c.alertTitle}\n`;
             });
+            text += `\n`;
         }
-        text += `\n========================================\n`;
-        text += `👉 Đề nghị Quản lý bãi, Kế toán và các TVBH phối hợp xử lý dứt điểm các trường hợp lệch trên!`;
+
+        // 3. ĐNX Về Bãi Chưa Nhập K83 / Sổ K83 Chưa Có Bãi
+        if (dnxAlerts.length > 0) {
+            text += `📥 3. LỆCH LUÂN CHUYỂN XE ĐNX: ${dnxAlerts.length} xe\n`;
+            text += `👉 Đề nghị Kế toán kho & TVBH đối chiếu nhập kho Cyber:\n`;
+            text += `----------------------------------------\n`;
+            dnxAlerts.forEach((c, i) => {
+                text += ` ${i + 1}. VIN: ${c.vin}\n`;
+                text += `    • ĐNX: ${c.soChungTu} | TVBH: ${c.tvbh || 'Chưa rõ'} | KH: ${c.customerName || 'Chưa rõ'}\n`;
+                text += `    • Tình trạng: ${c.alertTitle}\n`;
+                text += `    • Vị trí bãi: ${c.khoThucTe}\n`;
+            });
+            text += `\n`;
+        }
+
+        // 4. Lệch K83 vs Bãi Thuận An
+        if (k83Alerts.length > 0) {
+            text += `⚖️ 4. LỆCH SỔ CYBER K83 vs BÃI THUẬN AN: ${k83Alerts.length} xe\n`;
+            text += `👉 Cần rà soát lập ĐNX điều chuyển hoặc làm PNK nhập kho:\n`;
+            text += `----------------------------------------\n`;
+            k83Alerts.forEach((c, i) => {
+                text += ` ${i + 1}. VIN: ${c.vin} | ${c.carModel} (${c.color || '-'})\n`;
+                text += `    • Tình trạng: ${c.alertTitle}\n`;
+                text += `    • Thực tế: ${c.khoThucTe} | Cyber: ${c.khoCyber}\n`;
+            });
+            text += `\n`;
+        }
+
+        text += `========================================\n`;
+        text += `👉 Đề nghị Quản lý bãi, Kế toán kho và các TVBH phối hợp xử lý dứt điểm các trường hợp lệch trên!`;
 
         navigator.clipboard.writeText(text);
-        showToast('Đã sao chép Zalo', `Đã sao chép Báo cáo tổng hợp đối soát (${dnxAlerts.length + td4Items.length + missingYardItems.length} xe)!`, 'success', 2500);
+        showToast('Đã sao chép Zalo', `Đã sao chép Báo cáo tổng hợp đối soát (${allCombinedAlerts.length} xe)!`, 'success', 2500);
     };
 
     // Copy Zalo Danh Sách Xe Xuất HĐ Mất Tồn Bãi (Phân loại rõ vi phạm và xe đi theo ĐNX)
@@ -2034,46 +2101,30 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                 <>
                     {/* THANH CÔNG CỤ DUY NHẤT (Single Ribbon Toolbar ~36px) */}
                     <div className="bg-[#F8FAFC] border-b border-slate-300 px-2 py-1 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-800 shrink-0 shadow-2xs">
-                        {/* 4 Tabs Phân Hệ Đối Soát Tinh Gọn */}
+                        {/* 3 Tabs Phân Hệ Đối Soát Tinh Gọn (Đã gom Cảnh Báo Sai Lệch & Tra Soát K83 làm 1) */}
                         <div className="flex items-center gap-1 bg-slate-200/90 p-0.5 rounded-lg border border-slate-300">
-                            {/* Tab 1: Tra Soát K83 vs Bãi TT */}
+                            {/* Tab 1: Cảnh Báo Sai Lệch Kho (Gom K83, ĐNX, TD4, Xuất HĐ) */}
                             <button
                                 type="button"
-                                onClick={() => setReconcileSubTab('k83_reconcile')}
+                                onClick={() => {
+                                    setReconcileSubTab('all');
+                                    setAllAlertFilter('all');
+                                }}
                                 className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                                    reconcileSubTab === 'k83_reconcile'
-                                        ? 'bg-white text-indigo-700 shadow-xs'
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                                }`}
-                            >
-                                <i className="fa-solid fa-scale-balanced text-[11px]"></i>
-                                <span>Tra Soát K83 vs Bãi TT</span>
-                                {countK83Diff > 0 ? (
-                                    <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-rose-600 text-white font-mono font-bold animate-pulse">
-                                        {countK83Diff} lệch
-                                    </span>
-                                ) : (
-                                    <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-emerald-600 text-white font-mono font-bold">
-                                        Khớp
-                                    </span>
-                                )}
-                            </button>
-
-                            {/* Tab 2: Cảnh Báo Sai Lệch Giấy Tờ (TD4 / ĐNX) */}
-                            <button
-                                type="button"
-                                onClick={() => setReconcileSubTab('all')}
-                                className={`px-2.5 py-1 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                                    reconcileSubTab === 'all' || reconcileSubTab === 'td4' || reconcileSubTab === 'dnx' || reconcileSubTab === 'missing_yard'
-                                        ? 'bg-white text-amber-700 shadow-xs'
+                                    reconcileSubTab === 'all' || reconcileSubTab === 'td4' || reconcileSubTab === 'dnx' || reconcileSubTab === 'missing_yard' || reconcileSubTab === 'k83_reconcile'
+                                        ? 'bg-white text-rose-700 shadow-xs'
                                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                                 }`}
                             >
                                 <i className="fa-solid fa-triangle-exclamation text-[11px] text-amber-500"></i>
                                 <span>Cảnh Báo Sai Lệch</span>
-                                {allCombinedAlerts.length > 0 && (
-                                    <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-amber-500 text-white font-mono font-bold">
+                                {allCombinedAlerts.length > 0 ? (
+                                    <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-rose-600 text-white font-mono font-bold animate-pulse">
                                         {allCombinedAlerts.length}
+                                    </span>
+                                ) : (
+                                    <span className="px-1.5 py-0.2 text-[9px] rounded-full bg-emerald-600 text-white font-mono font-bold">
+                                        Khớp
                                     </span>
                                 )}
                             </button>
@@ -2435,7 +2486,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                 </>
                             )}
 
-                            {(reconcileSubTab === 'all' || reconcileSubTab === 'td4' || reconcileSubTab === 'dnx' || reconcileSubTab === 'missing_yard') && (
+                            {(reconcileSubTab === 'all' || reconcileSubTab === 'td4' || reconcileSubTab === 'dnx' || reconcileSubTab === 'missing_yard' || reconcileSubTab === 'k83_reconcile') && (
                                 <div className="flex items-center gap-1">
                                     <span className="font-semibold text-slate-700 text-[10px] sm:text-[11px]">Lọc loại:</span>
                                     <select
@@ -2444,12 +2495,13 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                             setAllAlertFilter(e.target.value as any);
                                             setReconcileSubTab('all');
                                         }}
-                                        className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] font-bold text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[200px]"
+                                        className="h-5 px-1 bg-white border border-[#7F9DB9] rounded-xs text-[10px] sm:text-[11px] font-bold text-slate-800 outline-none focus:border-blue-600 shadow-inner max-w-[230px]"
                                     >
                                         <option value="all">🚨 Tất cả cảnh báo ({allCombinedAlerts.length})</option>
-                                        <option value="td4">⚠️ Chỉ TD4 vi phạm ({td4Items.length})</option>
-                                        <option value="dnx">📥 Chỉ ĐNX chưa nhập ({countAlertThuanAn})</option>
-                                        <option value="missing_yard">🚗 Chỉ Xuất HĐ mất bãi ({missingYardItems.filter(c => c.isViolation).length})</option>
+                                        <option value="yard_not_cyber">🚨 Về bãi chưa nhập K83 ({allCombinedAlerts.filter(c => c.type === 'YARD_NOT_IN_CYBER').length})</option>
+                                        <option value="cyber_not_yard">⚠️ Sổ K83 thiếu bãi ({allCombinedAlerts.filter(c => c.type === 'CYBER_NOT_IN_YARD').length})</option>
+                                        <option value="td4">🚨 TD4 quá hạn tồn bãi ({allCombinedAlerts.filter(c => c.type === 'TD4').length})</option>
+                                        <option value="missing_yard">⚠️ Xuất bãi trái quy trình ({allCombinedAlerts.filter(c => c.type === 'MISSING_YARD').length})</option>
                                     </select>
                                 </div>
                             )}
@@ -2599,17 +2651,21 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                         </td>
                                                         <td className="py-1 px-2 border-r border-slate-200 overflow-hidden">
                                                             <div className="flex items-center gap-1.5">
-                                                                {c.type === 'DNX' ? (
+                                                                {c.type === 'YARD_NOT_IN_CYBER' ? (
                                                                     <span className="px-1 py-0.1 text-[8.5px] bg-red-100 text-red-700 font-extrabold rounded border border-red-300 shrink-0">
-                                                                        📥 ĐNX
+                                                                        🚨 CHƯA NHẬP K83
+                                                                    </span>
+                                                                ) : c.type === 'CYBER_NOT_IN_YARD' ? (
+                                                                    <span className="px-1 py-0.1 text-[8.5px] bg-indigo-100 text-indigo-900 font-extrabold rounded border border-indigo-300 shrink-0">
+                                                                        ⚠️ SỔ K83 THIẾU BÃI
                                                                     </span>
                                                                 ) : c.type === 'TD4' ? (
                                                                     <span className="px-1 py-0.1 text-[8.5px] bg-purple-100 text-purple-900 font-extrabold rounded border border-purple-300 shrink-0">
-                                                                        🚨 TD4
+                                                                        🚨 TD4 QUÁ HẠN
                                                                     </span>
                                                                 ) : (
                                                                     <span className="px-1 py-0.1 text-[8.5px] bg-amber-100 text-amber-900 font-extrabold rounded border border-amber-300 shrink-0">
-                                                                        ⚠️ HĐ MẤT BÃI
+                                                                        ⚠️ XUẤT TRÁI PHÉP
                                                                     </span>
                                                                 )}
                                                                 <span className="font-mono font-bold text-slate-900 truncate">{c.vin}</span>
@@ -2645,7 +2701,7 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                                                             </div>
                                                         </td>
                                                         <td className="py-1 px-2 overflow-hidden text-[10.5px]">
-                                                            <div className={`font-bold truncate ${c.type === 'DNX' ? 'text-red-700' : c.type === 'TD4' ? 'text-purple-900' : 'text-amber-800'}`} title={c.alertTitle}>
+                                                            <div className={`font-bold truncate ${c.type === 'YARD_NOT_IN_CYBER' ? 'text-red-700' : c.type === 'TD4' ? 'text-purple-900' : c.type === 'CYBER_NOT_IN_YARD' ? 'text-indigo-900' : 'text-amber-800'}`} title={c.alertTitle}>
                                                                 {c.alertTitle}
                                                             </div>
                                                             <div className="text-[9.5px] text-slate-600 truncate" title={c.actionRequired}>
@@ -2664,19 +2720,23 @@ export const SatelliteWarehousesView: React.FC<SatelliteWarehousesViewProps> = (
                             <div className="bg-[#ECE9D8] border-t border-[#CCCCCC] px-2 py-0.5 flex flex-wrap items-center justify-between gap-1 text-[11px] select-none shrink-0 font-sans">
                                 <div className="flex items-center gap-1.5 sm:gap-2.5 text-slate-700 flex-wrap">
                                     <span className="font-bold">
-                                        Tổng sai lệch: <strong className="text-red-700 font-mono">{filteredAllAlerts.length}</strong> xe
-                                    </span>
-                                    <span>•</span>
-                                    <span className="text-purple-800 font-bold">
-                                        TD4 vi phạm tồn bãi: <strong className="font-mono">{countTd4Approved}</strong> xe
+                                        Tổng sai lệch: <strong className="text-red-700 font-mono">{allCombinedAlerts.length}</strong> xe
                                     </span>
                                     <span>•</span>
                                     <span className="text-red-700 font-bold">
-                                        ĐNX chưa nhập K83: <strong className="font-mono">{countAlertThuanAn}</strong> xe
+                                        🚨 Về bãi chưa nhập K83: <strong className="font-mono">{allCombinedAlerts.filter(c => c.type === 'YARD_NOT_IN_CYBER').length}</strong> xe
+                                    </span>
+                                    <span>•</span>
+                                    <span className="text-indigo-800 font-bold">
+                                        ⚠️ Sổ K83 thiếu bãi: <strong className="font-mono">{allCombinedAlerts.filter(c => c.type === 'CYBER_NOT_IN_YARD').length}</strong> xe
+                                    </span>
+                                    <span>•</span>
+                                    <span className="text-purple-800 font-bold">
+                                        🚨 TD4 quá hạn tồn: <strong className="font-mono">{allCombinedAlerts.filter(c => c.type === 'TD4').length}</strong> xe
                                     </span>
                                     <span>•</span>
                                     <span className="text-amber-800 font-bold">
-                                        Xuất HĐ mất bãi: <strong className="font-mono">{missingYardItems.filter(c => c.isViolation).length}</strong> xe
+                                        ⚠️ Xuất trái quy trình: <strong className="font-mono">{allCombinedAlerts.filter(c => c.type === 'MISSING_YARD').length}</strong> xe
                                     </span>
                                 </div>
                                 <div className="text-slate-500 text-[10px] italic">
