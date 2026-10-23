@@ -87,7 +87,7 @@ from scripts.cyber_crm_service import (
 )
 from scripts.m_invoice_service import process_single_vin, auto_fetch_upload_and_notify
 from scripts.sync_cyber_donhang_ton import run_sync_donhang_ton
-from scripts.dms_vso_lookup import lookup_dms_vso, get_dealers_list
+from scripts.dms_vso_lookup import lookup_dms_vso, get_dealers_list, check_dms_cookie_health
 from scripts.dms_stock_radar import run_dms_stock_radar_sync
 
 PORT = int(os.environ.get("CYBER_LOCAL_PORT") or os.environ.get("PORT", 3001))
@@ -708,6 +708,25 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json; charset=utf-8")
                 self._send_cors_headers()
                 self.end_headers()
+
+        elif parsed.path == "/api/dms/check-cookie":
+            try:
+                qs = parse_qs(parsed.query)
+                d_code = (qs.get("dealer_code", [""])[0] or "").strip().upper()
+                c_str = (qs.get("cookie", [""])[0] or "").strip()
+                res = check_dms_cookie_health(cookie_str=c_str, dealer_code=d_code)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "valid": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
         elif parsed.path in ["/api/dms/sync-radar", "/api/dms/stock-radar"]:
             try:
                 qs = parse_qs(parsed.query)
@@ -1583,6 +1602,86 @@ class CyberApiHandler(BaseHTTPRequestHandler):
                 self._send_cors_headers()
                 self.end_headers()
                 self.wfile.write(json.dumps(res, default=str, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path == "/api/dms/check-cookie":
+            try:
+                content_len = int(self.headers.get("Content-Length", 0))
+                body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+                try:
+                    payload = json.loads(body_str) if body_str.strip() else {}
+                except Exception:
+                    payload = {}
+                d_code = (payload.get("dealer_code", "") or "").strip().upper()
+                c_str = (payload.get("cookie", "") or "").strip()
+                res = check_dms_cookie_health(cookie_str=c_str, dealer_code=d_code)
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+            except Exception as e:
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "error", "valid": False, "error": str(e)}, ensure_ascii=False).encode("utf-8"))
+            return
+
+        elif parsed.path in ["/api/dms/sync", "/sync"]:
+            try:
+                content_len = int(self.headers.get("Content-Length", 0))
+                body_str = self.rfile.read(content_len).decode("utf-8") if content_len > 0 else "{}"
+                try:
+                    payload = json.loads(body_str) if body_str.strip() else {}
+                except Exception:
+                    payload = {}
+                d_code = (payload.get("dealer_code", "") or "").strip().upper()
+                new_cookie = (payload.get("cookie", "") or "").strip()
+                if not d_code or not new_cookie:
+                    self.send_response(400)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self._send_cors_headers()
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"success": False, "error": "Thiếu dealer_code hoặc cookie"}, ensure_ascii=False).encode("utf-8"))
+                    return
+
+                config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dms_dealers_config.json")
+                dealers_list = []
+                if os.path.exists(config_path):
+                    try:
+                        with open(config_path, "r", encoding="utf-8") as f:
+                            dealers_list = json.load(f)
+                    except Exception:
+                        dealers_list = []
+
+                found = next((x for x in dealers_list if (x.get("dealer_code") or "").upper() == d_code), None)
+                if found:
+                    found["cookie"] = new_cookie
+                    found["last_sync_time"] = datetime.now().isoformat()
+                else:
+                    dealers_list.append({
+                        "dealer_code": d_code,
+                        "name": f"VinFast Showroom {d_code}",
+                        "cookie": new_cookie,
+                        "last_sync_time": datetime.now().isoformat()
+                    })
+
+                with open(config_path, "w", encoding="utf-8") as f:
+                    json.dump(dealers_list, f, indent=2, ensure_ascii=False)
+
+                print(f"[CyberServer Python] 🔑 Đã lưu Cookie mới cho Showroom [{d_code}] thành công!")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self._send_cors_headers()
+                self.end_headers()
+                self.wfile.write(json.dumps({"status": "ok", "success": True, "message": f"Đã lưu cookie cho [{d_code}]"}, ensure_ascii=False).encode("utf-8"))
             except Exception as e:
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json; charset=utf-8")

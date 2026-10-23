@@ -151,3 +151,65 @@ def lookup_dms_vso(vso_raw):
         }
     except Exception as e:
         return {"success": False, "found": False, "error": f"Lỗi gọi DMS: {str(e)}"}
+
+def check_dms_cookie_health(cookie_str=None, dealer_code=None):
+    """Kiểm tra tính hợp lệ và thời hạn (WhoAmI) của Cookie DMS."""
+    if not cookie_str and dealer_code:
+        dealers = get_dealers_list()
+        found = next((x for x in dealers if (x.get("dealer_code") or "").upper() == str(dealer_code).upper()), None)
+        if found and found.get("cookie"):
+            cookie_str = found["cookie"]
+            
+    if not cookie_str:
+        return {
+            "status": "error",
+            "valid": False,
+            "statusCode": 400,
+            "dealer_code": dealer_code or "",
+            "message": "Thiếu cookie hoặc không tìm thấy cookie của đại lý đã chọn."
+        }
+    
+    headers = {
+        "Cookie": cookie_str,
+        "Accept": "application/json",
+        "OData-MaxVersion": "4.0",
+        "OData-Version": "4.0"
+    }
+    try:
+        ping_res = requests.get("https://vinfastdms.crm5.dynamics.com/api/data/v9.2/WhoAmI", headers=headers, timeout=10)
+        if ping_res.status_code == 200:
+            data = ping_res.json()
+            return {
+                "status": "ok",
+                "valid": True,
+                "statusCode": 200,
+                "dealer_code": dealer_code or "",
+                "userId": data.get("UserId", ""),
+                "businessUnitId": data.get("BusinessUnitId", ""),
+                "message": "Cookie DMS hợp lệ và đang hoạt động tốt!"
+            }
+        elif ping_res.status_code == 401:
+            return {
+                "status": "error",
+                "valid": False,
+                "statusCode": 401,
+                "dealer_code": dealer_code or "",
+                "message": "Cookie đã hết hạn (HTTP 401 Unauthorized)."
+            }
+        else:
+            return {
+                "status": "error",
+                "valid": False,
+                "statusCode": ping_res.status_code,
+                "dealer_code": dealer_code or "",
+                "message": f"DMS phản hồi mã lỗi HTTP {ping_res.status_code}"
+            }
+    except Exception as e:
+        return {
+            "status": "error",
+            "valid": False,
+            "statusCode": 500,
+            "dealer_code": dealer_code or "",
+            "message": f"Lỗi kết nối tới DMS: {str(e)}"
+        }
+

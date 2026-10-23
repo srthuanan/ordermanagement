@@ -274,6 +274,79 @@ async function handleCyberAction(pathname, method, body, queryParams = {}) {
             return [];
         }
 
+        // Kiểm tra sống/chết (Health check / Live Ping) của Cookie DMS
+        case '/api/dms/check-cookie': {
+            const dCode = (mergedData.dealer_code || queryParams.dealer_code || '').trim().toUpperCase();
+            let checkCookie = (mergedData.cookie || queryParams.cookie || '').trim();
+
+            if (!checkCookie && dCode) {
+                const dealersFile = path.resolve(__dirname, 'dms_dealers_config.json');
+                if (fs.existsSync(dealersFile)) {
+                    try {
+                        const dealersList = JSON.parse(fs.readFileSync(dealersFile, 'utf8'));
+                        const found = dealersList.find(x => (x.dealer_code || '').toUpperCase() === dCode);
+                        if (found && found.cookie) {
+                            checkCookie = found.cookie;
+                        }
+                    } catch (_) {}
+                }
+            }
+
+            if (!checkCookie) {
+                return { status: 'error', valid: false, statusCode: 400, message: 'Thiếu cookie hoặc không tìm thấy cookie của đại lý đã chọn.' };
+            }
+
+            try {
+                const pingRes = await fetch('https://vinfastdms.crm5.dynamics.com/api/data/v9.2/WhoAmI', {
+                    method: 'GET',
+                    headers: {
+                        'Cookie': checkCookie,
+                        'Accept': 'application/json',
+                        'OData-MaxVersion': '4.0',
+                        'OData-Version': '4.0'
+                    },
+                    signal: AbortSignal.timeout(10000)
+                });
+
+                if (pingRes.status === 200) {
+                    const data = await pingRes.json();
+                    return {
+                        status: 'ok',
+                        valid: true,
+                        statusCode: 200,
+                        dealer_code: dCode || '',
+                        userId: data.UserId || '',
+                        businessUnitId: data.BusinessUnitId || '',
+                        message: 'Cookie DMS hợp lệ và đang hoạt động tốt!'
+                    };
+                } else if (pingRes.status === 401) {
+                    return {
+                        status: 'error',
+                        valid: false,
+                        statusCode: 401,
+                        dealer_code: dCode || '',
+                        message: 'Cookie đã hết hạn (HTTP 401 Unauthorized).'
+                    };
+                } else {
+                    return {
+                        status: 'error',
+                        valid: false,
+                        statusCode: pingRes.status,
+                        dealer_code: dCode || '',
+                        message: `DMS phản hồi mã lỗi HTTP ${pingRes.status}`
+                    };
+                }
+            } catch (err) {
+                return {
+                    status: 'error',
+                    valid: false,
+                    statusCode: 500,
+                    dealer_code: dCode || '',
+                    message: `Lỗi kết nối tới DMS: ${err.message}`
+                };
+            }
+        }
+
         // Nhận Cookie mới từ Extension hoặc app đồng bộ
         case '/api/dms/sync': {
             const dCode = (mergedData.dealer_code || queryParams.dealer_code || '').trim().toUpperCase();
