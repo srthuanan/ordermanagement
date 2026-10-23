@@ -76,3 +76,12 @@
   3. Bắt buộc hiển thị theo cấu trúc cực kỳ ngắn gọn, đi thẳng vào bản chất hành động TVBH cần làm:
      - **Tiêu đề**: `Lệch [Mục sai]: DMS [Giá trị DMS hiện tại] ⇄ Xe [Giá trị chuẩn của VIN xe]`
      - **Hướng dẫn hành động**: `Sửa [Mục sai] trên DMS thành [Giá trị chuẩn của VIN xe] rồi bấm Tra lại.`
+
+- **Quy Chuẩn Báo Cáo KPI Xuất Hóa Đơn & Triển Khai Google Apps Script (KPI Sync & Clasp Protocol)**:
+  1. **Danh Mục 14 Dòng Xe Chuẩn Cho Xuất Hóa Đơn**: Luôn bắt buộc đồng bộ danh sách 14 dòng xe chuẩn 1-1 giữa bảng `XUẤT HÓA ĐƠN` (`backend-gas/06_kpi.js`) và `THUẬN AN - BÁO CÁO KPI` (`gas-showroom/KPI.js`):
+     `'VF 2', 'VF 3', 'VF 5', 'VF 6', 'VF 7', 'VF 8', 'VF 8 New', 'VF 9', 'Herio', 'Nerio', 'Limo', 'EC Van', 'Minio', 'VF Limo'`.
+  2. **Quy Tắc Phân Loại VF 8 All New**: Trong bảng `yeucauxhd`, xe VF 8 All New có `dong_xe = 'VF 8'` và `phien_ban = 'All New'`. Do đó, công thức tính KPI phải phân tách:
+     - Cột `VF 8` (bản cũ): Đếm các xe `VF 8` có phiên bản không chứa `'New'`.
+     - Cột `VF 8 New`: Đếm các xe `VF 8` có phiên bản chứa `'*New*'` (hoặc `dong_xe` ghi rõ `VF 8 New`).
+  3. **Kỷ Luật Đẩy Code Apps Script Qua Clasp**: Bất kỳ khi nào chỉnh sửa code trong `backend-gas/` hoặc `gas-showroom/`, sau khi sửa file cục bộ, AI Agent **BẮT BUỘC PHẢI CHẠY NGAY LỆNH `npx --yes @google/clasp push -f`** trong thư mục tương ứng để đẩy code trực tiếp lên Google Cloud của Google Sheets, tránh tình trạng Google Sheets vẫn chạy code cũ.
+
