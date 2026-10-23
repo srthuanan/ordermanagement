@@ -534,7 +534,59 @@ export const fetchDnxReconciliationData = async (
             }
         });
 
-        // 5.3 Nguồn allOrders
+        // 5.3 Nguồn cyber_voucher_tickets (Tiến trình phiếu ĐNX chuẩn CyberSoft)
+        try {
+            const { data: vtData } = await supabase
+                .from('cyber_voucher_tickets')
+                .select('so_ct, ngay_ct, ma_ct, ma_post, ten_kh, user_name, dien_giai, lines, raw_data')
+                .eq('ma_ct', 'DNX')
+                .order('ngay_ct', { ascending: false })
+                .limit(1000);
+            if (vtData) {
+                vtData.forEach((t: any) => {
+                    const lines = Array.isArray(t.lines) ? t.lines : [];
+                    const raw = t.raw_data || {};
+                    lines.forEach((l: any) => {
+                        const rawV = String(l.so_khung || l.vin || '').trim().toUpperCase();
+                        if (!rawV) return;
+                        const match17 = rawV.match(/[A-Z0-9]{17}/);
+                        const v = match17 ? match17[0] : rawV.split(' ')[0].split('(')[0].trim();
+                        if (!v || isCarWithTd4(v)) return;
+
+                        const cyberInfo = checkCyberInfo(v);
+                        if (cyberInfo.hasTd4) return;
+
+                        if (!dnxMap.has(v)) {
+                            dnxMap.set(v, {
+                                id: `ticket-${t.so_ct}-${v}`,
+                                vin: v,
+                                soCtDnx: t.so_ct || 'DNX',
+                                ngayCtDnx: t.ngay_ct || '',
+                                khoXuat: l.ma_kho || raw.ma_kho_xuat || 'K87',
+                                khoNhan: l.ma_kho_nhan || raw.ma_kho_nhan || 'K83',
+                                maKhoCyber: cyberInfo.maKho || '',
+                                tenKhoCyber: cyberInfo.tenKho || (cyberInfo.isK83 ? 'Showroom Thuận An (K83)' : 'Đang vận tải'),
+                                isTonKhoCyberK83: cyberInfo.isK83,
+                                tvbh: l.ten_tvbh || raw.ten_tvbh || t.user_name || '',
+                                customerName: t.ten_kh || raw.ten_kh || '',
+                                orderNumber: l.so_hd || '',
+                                carModel: l.ten_kx || raw.ten_kx || cyberInfo.car?.ten_kx || '',
+                                trim: '',
+                                color: l.ten_mau || raw.ten_mau || cyberInfo.car?.ten_mau || '',
+                                reconcileStatus: 'IN_TRANSIT',
+                                reconcileNote: '',
+                                warningLevel: 'info',
+                                satelliteYard: null
+                            });
+                        }
+                    });
+                });
+            }
+        } catch (eVt) {
+            console.warn('[fetchDnxReconciliationData] cyber_voucher_tickets read warning:', eVt);
+        }
+
+        // 5.4 Nguồn allOrders
         ordersByVin.forEach((o, v) => {
             // BỎ QUA NẾU XE ĐÃ CÓ PHIẾU TD4
             if (!v || isCarWithTd4(v)) return;
@@ -1743,10 +1795,11 @@ export const fetchK83ReconciliationData = async (
         const allTargetVins = Array.from(new Set([...Array.from(cyberK83Map.keys()), ...Array.from(thuanAnYardTonMap.keys())]));
         if (allTargetVins.length > 0) {
             try {
-                const [dhRes, ycRes, xxRes] = await Promise.all([
+                const [dhRes, ycRes, xxRes, ticketRes] = await Promise.all([
                     supabase.from('donhang').select('vin, ten_khach_hang, ten_tu_van_ban_hang, so_don_hang, so_ct_dnx, so_ct_td4').in('vin', allTargetVins),
                     supabase.from('yeucauxhd').select('vin, ten_khach_hang, tvbh, so_don_hang').in('vin', allTargetVins),
-                    supabase.from('cyber_xep_xe').select('so_khung, ten_kh, ten_hs, so_ct, ma_hd').in('so_khung', allTargetVins)
+                    supabase.from('cyber_xep_xe').select('so_khung, ten_kh, ten_hs, so_ct, ma_hd').in('so_khung', allTargetVins),
+                    supabase.from('cyber_voucher_tickets').select('so_ct, ngay_ct, ma_ct, ma_post, ten_kh, user_name, dien_giai, lines, raw_data').order('ngay_ct', { ascending: false }).limit(2000)
                 ]);
 
                 const mergeExtra = (row: any, tvbhField: string) => {
@@ -1793,6 +1846,65 @@ export const fetchK83ReconciliationData = async (
                     orderInfoMap.set(v, existing);
                     if (v.length >= 6) orderInfoMap.set(v.slice(-6), existing);
                 });
+
+                // Nạp thông tin phiếu ĐNX và TD4 từ bảng cyber_voucher_tickets (Tiến trình phiếu CyberSoft mới nhất)
+                (ticketRes.data || []).forEach((t: any) => {
+                    const lines = Array.isArray(t.lines) ? t.lines : [];
+                    const raw = t.raw_data || {};
+                    const isDnx = (t.ma_ct || '').toUpperCase().includes('DNX');
+                    const isTd4 = (t.ma_ct || '').toUpperCase().includes('TD4');
+
+                    const processVin = (vCandidate: string, lineObj?: any) => {
+                        const rawV = String(vCandidate || '').trim().toUpperCase();
+                        if (!rawV) return;
+                        const match17 = rawV.match(/[A-Z0-9]{17}/);
+                        const cleanV = match17 ? match17[0] : rawV.split(' ')[0].split('(')[0].trim();
+                        if (!cleanV) return;
+
+                        const existing = orderInfoMap.get(cleanV) || (cleanV.length >= 6 ? orderInfoMap.get(cleanV.slice(-6)) : {}) || {};
+                        const l = lineObj || {};
+
+                        if (isDnx) {
+                            if (!existing.soCtDnx || (t.ngay_ct && t.ngay_ct >= (existing.ngayCtDnx || ''))) {
+                                existing.soCtDnx = t.so_ct;
+                                existing.ngayCtDnx = t.ngay_ct;
+                                existing.hasDnx = true;
+                                existing.dnxMaKhoXuat = l.ma_kho || raw.ma_kho_xuat || existing.dnxMaKhoXuat;
+                                existing.dnxTenKhoXuat = l.ten_kho || raw.ten_kho_xuat || existing.dnxTenKhoXuat;
+                                existing.dnxMaKhoNhan = l.ma_kho_nhan || raw.ma_kho_nhan || existing.dnxMaKhoNhan;
+                                existing.dnxTenKhoNhan = l.ten_kho_nhan || raw.ten_kho_nhan || existing.dnxTenKhoNhan;
+                            }
+                        }
+                        if (isTd4) {
+                            if (!existing.soCtTd4 || (t.ngay_ct && t.ngay_ct >= (existing.ngayCtTd4 || ''))) {
+                                existing.soCtTd4 = t.so_ct;
+                                existing.ngayCtTd4 = t.ngay_ct;
+                                existing.hasTd4 = true;
+                                existing.td4MaPost = t.ma_post;
+                            }
+                        }
+                        if (t.ten_kh && (!existing.customerName || existing.customerName === 'Chưa rõ')) {
+                            existing.customerName = t.ten_kh;
+                        }
+                        const tvName = l.ten_tvbh || raw.ten_tvbh || t.user_name;
+                        if (tvName && (!existing.tvbh || existing.tvbh === 'Chưa rõ')) {
+                            existing.tvbh = tvName;
+                        }
+                        if (l.so_hd && !existing.orderNumber) {
+                            existing.orderNumber = l.so_hd;
+                        }
+
+                        orderInfoMap.set(cleanV, existing);
+                        if (cleanV.length >= 6) orderInfoMap.set(cleanV.slice(-6), existing);
+                    };
+
+                    lines.forEach((l: any) => {
+                        processVin(l.so_khung || l.vin, l);
+                    });
+                    if (raw.vin || raw.so_khung) {
+                        processVin(raw.vin || raw.so_khung, raw);
+                    }
+                });
             } catch (eOrderExtra) {
                 console.warn('[fetchK83ReconciliationData] Extra orders enrich warning:', eOrderExtra);
             }
@@ -1830,10 +1942,10 @@ export const fetchK83ReconciliationData = async (
             const hasDnx = Boolean(orderInfo.hasDnx || cyberStatus?.has_dnx || soCtDnx);
 
             const dnxData = cyberStatus?.dnx_data || {};
-            const dnxMaKhoXuat = dnxData.ma_kho_xuat || '';
-            const dnxTenKhoXuat = dnxData.ten_kho_xuat || '';
-            const dnxMaKhoNhan = dnxData.ma_kho_nhan || '';
-            const dnxTenKhoNhan = dnxData.ten_kho_nhan || '';
+            const dnxMaKhoXuat = orderInfo.dnxMaKhoXuat || dnxData.ma_kho_xuat || '';
+            const dnxTenKhoXuat = orderInfo.dnxTenKhoXuat || dnxData.ten_kho_xuat || '';
+            const dnxMaKhoNhan = orderInfo.dnxMaKhoNhan || dnxData.ma_kho_nhan || '';
+            const dnxTenKhoNhan = orderInfo.dnxTenKhoNhan || dnxData.ten_kho_nhan || '';
 
             const soCtTd4 = orderInfo.soCtTd4 || cyberStatus?.so_ct_td4 || cyberStatus?.td4_data?.so_ct || '';
             const ngayCtTd4 = orderInfo.ngayCtTd4 || cyberStatus?.ngay_ct_td4 || cyberStatus?.td4_data?.ngay_ct || '';
@@ -1841,7 +1953,7 @@ export const fetchK83ReconciliationData = async (
 
             // Kiểm tra trạng thái duyệt (Ma_Post) của phiếu TD4 trên CyberSoft
             const td4Data = cyberStatus?.td4_data || {};
-            const rawPost = String(td4Data.ma_post || td4Data.Ma_Post || cyberStatus?.ma_post || '').trim();
+            const rawPost = String(orderInfo.td4MaPost || td4Data.ma_post || td4Data.Ma_Post || cyberStatus?.ma_post || '').trim();
             const maPostNum = parseInt(rawPost, 10);
             const isTd4Approved = !isNaN(maPostNum) ? maPostNum >= 5 : (rawPost === '9' || rawPost === '5');
 
@@ -2029,10 +2141,10 @@ export const fetchK83ReconciliationData = async (
             const tenKhoCyberHienTai = cyberStatus?.ten_kho || (maKhoCyberHienTai !== 'CHƯA_NHẬP' ? maKhoCyberHienTai : 'Chưa có trên Cyber');
 
             const dnxData = cyberStatus?.dnx_data || {};
-            const dnxMaKhoXuat = dnxData.ma_kho_xuat || '';
-            const dnxTenKhoXuat = dnxData.ten_kho_xuat || '';
-            const dnxMaKhoNhan = dnxData.ma_kho_nhan || '';
-            const dnxTenKhoNhan = dnxData.ten_kho_nhan || '';
+            const dnxMaKhoXuat = orderInfo.dnxMaKhoXuat || dnxData.ma_kho_xuat || '';
+            const dnxTenKhoXuat = orderInfo.dnxTenKhoXuat || dnxData.ten_kho_xuat || '';
+            const dnxMaKhoNhan = orderInfo.dnxMaKhoNhan || dnxData.ma_kho_nhan || '';
+            const dnxTenKhoNhan = orderInfo.dnxTenKhoNhan || dnxData.ten_kho_nhan || '';
 
             const soCtDnx = orderInfo.soCtDnx || cyberStatus?.so_ct_dnx || dnxData.so_ct || '';
             const ngayCtDnx = orderInfo.ngayCtDnx || cyberStatus?.ngay_ct_dnx || dnxData.ngay_ct || '';
@@ -2043,7 +2155,7 @@ export const fetchK83ReconciliationData = async (
             const hasTd4 = Boolean(orderInfo.hasTd4 || cyberStatus?.has_td4 || soCtTd4);
 
             const td4Data = cyberStatus?.td4_data || {};
-            const rawPost = String(td4Data.ma_post || td4Data.Ma_Post || cyberStatus?.ma_post || '').trim();
+            const rawPost = String(orderInfo.td4MaPost || td4Data.ma_post || td4Data.Ma_Post || cyberStatus?.ma_post || '').trim();
             const maPostNum = parseInt(rawPost, 10);
             const isTd4Approved = !isNaN(maPostNum) ? maPostNum >= 5 : (rawPost === '9' || rawPost === '5');
 
