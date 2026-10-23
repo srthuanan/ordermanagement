@@ -554,6 +554,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
         }
         if (action === 'requestSupplementForInvoice') {
             const nos = params.orderNumbers ? JSON.parse(params.orderNumbers) : [];
+            let finalReason = params.reason || '';
 
             let uploadedUrls: string[] = [];
             if (params.pastedImagesBase64) {
@@ -642,6 +643,7 @@ export const performAdminAction = async (action: string, params: Record<string, 
         }
         if (action === 'requestRescanForInvoice') {
             const nos = params.orderNumbers ? JSON.parse(params.orderNumbers) : [];
+            let finalReason = params.reason || '';
 
             let uploadedUrls: string[] = [];
             if (params.pastedImagesBase64) {
