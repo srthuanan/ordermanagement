@@ -99,4 +99,8 @@
   3. **Tuyệt Đối Không Tính Là Thừa Bãi K83**: Các xe đã có phiếu TD4 trên CyberSoft **TUYỆT ĐỐI KHÔNG TÍNH** vào nhóm *"Thừa bãi thực tế / Thiếu Cyber K83"* và không bao giờ được bắt Kế toán làm thủ tục ĐNX hoặc PNK nhập vào kho K83 (vì xe đã được xuất bán theo phiếu TD4).
   4. **Theo Dõi Đúng Phân Hệ TD4**: Các trường hợp xe đã có phiếu TD4 đã duyệt nhưng vẫn nằm tại bãi xe thực tế quá 48h chỉ được phép theo dõi trong phân hệ **TD4 Quá Hạn Tồn Bãi** để đôn đốc TVBH hoàn tất bàn giao xe cho khách hàng.
 
+- **Quy Chuẩn Ánh Xạ Hình Ảnh Mã Màu 182G (Color Code 182G to 181Y Mapping Protocol)**:
+  1. Đối với mã màu **182G** (Infinity Blanc Roof - Sky Blue), toàn bộ hệ thống (kho xe, tra cứu đơn hàng, yêu cầu ghép xe) **BẮT BUỘC KẾ THỪA VÀ DÙNG CHUNG HÌNH ẢNH CỦA MÃ MÀU 181Y** (Brahminy White Roof - Aquatic Azure Body / Zenith Gray).
+  2. Quy chuẩn này đảm bảo các dòng xe như VF 3, VF 5 khi chọn hoặc tra cứu mã 182G luôn tự động hiển thị đầy đủ hình ảnh render 3D chính hãng sắc nét từ VinFast Shop CDN thay vì bị thiếu ảnh.
+
 

@@ -212,6 +212,7 @@ const vinfastCdnImages: Record<string, string> = {
     // --- VF 3 ---
     "vf3-181u": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw6f9e51df/images/VF3/TI1BV/181U.webp",
     "vf3-181y": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw351a2879/images/VF3/TI1BV/181Y.webp",
+    "vf3-182g": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw351a2879/images/VF3/TI1BV/181Y.webp",
     "vf3-1821": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dwb8b9cf2c/images/VF3/TI1BV/1821.webp",
     "vf3-blanc": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw6d3a366b/images/VF3/TI1BV/CE18.webp",
     "vf3-ce18": "https://shop.vinfastauto.com/on/demandware.static/-/Sites-app_vinfast_vn-Library/default/dw6d3a366b/images/VF3/TI1BV/CE18.webp",
@@ -592,6 +593,10 @@ export const getCarImage = (model?: string, exteriorColor?: string, version?: st
         
         if (!cdnLink) {
             cdnLink = vinfastCdnImages[`${modelKey}-${colorCodeKey}`];
+        }
+        // Quy tắc: Mã màu 182G lấy ảnh xe của mã màu 181Y
+        if (!cdnLink && colorCodeKey === '182g') {
+            cdnLink = vinfastCdnImages[`${modelKey}-181y`];
         }
         if (cdnLink) {
             return cdnLink;
