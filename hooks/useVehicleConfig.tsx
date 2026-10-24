@@ -46,12 +46,25 @@ export const VehicleConfigProvider = ({ children }: { children: ReactNode }) => 
             const data = res.data;
             const lines = Array.from(new Set(data.filter((c: any) => c.type === 'line').map((c: any) => c.value as string)));
             const versionsMap: Record<string, string[]> = {};
-            const allPossibleVersions = Array.from(new Set(data.filter((c: any) => c.type === 'version').map((c: any) => c.value as string)));
+            const allPossibleVersions = Array.from(new Set([
+                ...data.filter((c: any) => c.type === 'version').map((c: any) => c.value as string),
+                'Base', 'High'
+            ]));
             const vehicleColors = Array.from(new Set(data.filter((c: any) => c.type === 'exterior').map((c: any) => c.value as string)));
             const vehicleInteriors = Array.from(new Set(data.filter((c: any) => c.type === 'interior').map((c: any) => c.value as string)));
             
             lines.forEach((line: string) => {
-                versionsMap[line] = data.filter((c: any) => c.type === 'version' && c.parent_value === line).map((c: any) => c.value);
+                let vers = data.filter((c: any) => c.type === 'version' && c.parent_value === line).map((c: any) => c.value);
+                if (line.toLowerCase().includes('wild')) {
+                    vers = vers.map((v: string) => {
+                        if (v.toLowerCase().includes('base')) return 'Base';
+                        if (v.toLowerCase().includes('high')) return 'High';
+                        return v;
+                    });
+                    vers = Array.from(new Set(vers));
+                    if (vers.length === 0) vers = ['Base', 'High'];
+                }
+                versionsMap[line] = vers;
             });
 
             const rawColorMappings = data.filter((c: any) => c.parent_value !== null && (c.type === 'exterior' || c.type === 'interior'));
@@ -66,10 +79,10 @@ export const VehicleConfigProvider = ({ children }: { children: ReactNode }) => 
                     matches = rawColorMappings.filter((c: any) => c.type === 'exterior' && c.parent_value?.toLowerCase().trim() === parentLine);
                 }
 
-                if (matches.length > 0) return matches.map((c: any) => c.value);
+                if (matches.length > 0) return Array.from(new Set(matches.map((c: any) => c.value)));
 
                 // Fallback
-                return getAvailableExteriors(line, version);
+                return Array.from(new Set(getAvailableExteriors(line, version)));
             };
 
             const getMappedInteriors = (line: string, version?: string) => {
@@ -82,10 +95,10 @@ export const VehicleConfigProvider = ({ children }: { children: ReactNode }) => 
                     matches = rawColorMappings.filter((c: any) => c.type === 'interior' && c.parent_value?.toLowerCase().trim() === parentLine);
                 }
 
-                if (matches.length > 0) return matches.map((c: any) => c.value);
+                if (matches.length > 0) return Array.from(new Set(matches.map((c: any) => c.value)));
 
                 // Fallback
-                return getAvailableInteriors(line, version);
+                return Array.from(new Set(getAvailableInteriors(line, version)));
             };
 
             const getAllExteriorsForLine = (line: string) => {

@@ -658,27 +658,36 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                             </div>
                                         </InputGroup>
                                         <div className="flex flex-wrap gap-2 mt-3 pl-1 min-h-[44px]">
-                                            {(formData.phien_ban && availableExteriors.length > 0) ? (
-                                                    availableExteriors.map(color => {
+                                             {(formData.phien_ban && availableExteriors.length > 0) ? (
+                                                    Array.from(new Set(availableExteriors)).map(color => {
                                                         const lower = color.toLowerCase();
                                                         const getHex = (str: string) => {
-                                                            if (str.includes('deep ocean')) return '#1a4731'; // Dark green
+                                                            if (str.includes('ce18') || str.includes('1818')) return '#ffffff';
+                                                            if (str.includes('ce33') || str.includes('1833')) return '#2563eb'; // Starburst Blue
+                                                            if (str.includes('ce2q') || str.includes('112q') || str.includes('182q')) return '#b91c1c'; // Solar Ruby
+                                                            if (str.includes('ce11') || str.includes('3111')) return '#111827'; // Jet Black
+                                                            if (str.includes('ce31')) return '#4b5563'; // Stealth Gray
+                                                            if (str.includes('ce32') || str.includes('1132') || str.includes('1832')) return '#ea580c'; // Vitality Orange
+                                                            if (str.includes('ce2o') || str.includes('312o')) return '#7e22ce'; // Mysterioso Purple
+                                                            if (str.includes('deep ocean') || str.includes('ce22')) return '#1a4731'; // Dark green
                                                             if (str.includes('orange') || str.includes('orb')) return '#ea580c';
                                                             if (str.includes('purple') || str.includes('berry')) return '#6b21a8';
-                                                            if (str.includes('mint')) return '#a7f3d0';
-                                                            if (str.includes('ruby') || str.includes('red') || str.includes('velvet') || str.includes('crimson')) return '#991b1b';
-                                                            if (str.includes('blue') || str.includes('azure') || str.includes('ocean')) return '#1d4ed8';
+                                                            if (str.includes('mint') || str.includes('ce1w')) return '#a7f3d0';
+                                                            if (str.includes('ruby') || str.includes('red') || str.includes('velvet') || str.includes('crimson') || str.includes('ce1m')) return '#991b1b';
+                                                            if (str.includes('blue') || str.includes('azure') || str.includes('ocean') || str.includes('ce1n')) return '#1d4ed8';
                                                             if (str.includes('black')) return '#111827';
-                                                            if (str.includes('gray') || str.includes('grey') || str.includes('silver') || str.includes('neptune')) return '#6b7280';
-                                                            if (str.includes('white') || str.includes('blanc') || str.includes('creme')) return '#f8fafc';
-                                                            if (str.includes('brown') || str.includes('bronze') || str.includes('bronz')) return '#78350f';
-                                                            if (str.includes('green') || str.includes('ivy')) return '#15803d';
-                                                            if (str.includes('yellow') || str.includes('champa')) return '#fde047';
-                                                            if (str.includes('pink')) return '#f472b6';
+                                                            if (str.includes('gray') || str.includes('grey') || str.includes('silver') || str.includes('neptune') || str.includes('ce17') || str.includes('ce1v') || str.includes('171v')) return '#6b7280';
+                                                            if (str.includes('white') || str.includes('blanc') || str.includes('creme')) return '#ffffff';
+                                                            if (str.includes('brown') || str.includes('bronze') || str.includes('bronz') || str.includes('ce2n')) return '#78350f';
+                                                            if (str.includes('green') || str.includes('ivy') || str.includes('ce1h')) return '#15803d';
+                                                            if (str.includes('yellow') || str.includes('champa') || str.includes('ce1u') || str.includes('111u') || str.includes('181u')) return '#facc15';
+                                                            if (str.includes('pink') || str.includes('ce21') || str.includes('1821') || str.includes('ce1x')) return '#f472b6';
                                                             return '#e5e7eb';
                                                         };
                                                         
                                                         let backgroundStyle = '';
+                                                        const isWhiteSingle = !lower.includes('-') && !lower.includes('_') && (lower.includes('white') || lower.includes('ce18') || lower.includes('blanc'));
+
                                                         if (lower.includes('-')) {
                                                             const parts = lower.split('-');
                                                             const color1 = getHex(parts[0]);
@@ -689,6 +698,8 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                             const color1 = getHex(parts[0]);
                                                             const color2 = getHex(parts[1]);
                                                             backgroundStyle = `linear-gradient(135deg, ${color1} 50%, ${color2} 50%)`;
+                                                        } else if (isWhiteSingle) {
+                                                            backgroundStyle = `linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)`;
                                                         } else {
                                                             backgroundStyle = getHex(lower);
                                                         }
@@ -698,13 +709,20 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                                                             <div 
                                                                 key={color} 
                                                                 onClick={!isPreFilled ? () => handleInputChange({ target: { name: 'ngoai_that', value: color } } as any) : undefined} 
-                                                                className={`relative flex items-center justify-center w-8 h-8 rounded-full cursor-pointer transition-all duration-300 ease-out ${isSelected ? 'ring-2 ring-accent-primary ring-offset-2 scale-110 shadow-md' : 'ring-1 ring-slate-200 hover:ring-slate-300 hover:scale-105 shadow-sm'}`} 
+                                                                className={`relative flex items-center justify-center w-8 h-8 rounded-full cursor-pointer transition-all duration-300 ease-out ${isSelected ? 'ring-2 ring-accent-primary ring-offset-2 scale-110 shadow-md' : 'ring-1 ring-slate-300 hover:ring-slate-400 hover:scale-105 shadow-sm'}`} 
                                                                 title={color}
                                                             >
-                                                                <div className="w-full h-full rounded-full overflow-hidden relative border border-black/10">
+                                                                <div className={`w-full h-full rounded-full overflow-hidden relative border ${isWhiteSingle ? 'border-slate-300 shadow-inner' : 'border-black/10'}`}>
                                                                     <div className="absolute inset-0" style={{ background: backgroundStyle }}></div>
-                                                                    <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-black/20 mix-blend-overlay rounded-full"></div>
-                                                                    <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent h-1/2 rounded-t-full"></div>
+                                                                    {!isWhiteSingle && (
+                                                                        <>
+                                                                            <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-black/20 mix-blend-overlay rounded-full"></div>
+                                                                            <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent h-1/2 rounded-t-full"></div>
+                                                                        </>
+                                                                    )}
+                                                                    {isWhiteSingle && (
+                                                                        <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-slate-200/50 rounded-full"></div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         );
