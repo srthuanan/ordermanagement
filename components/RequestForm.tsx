@@ -383,7 +383,7 @@ const RequestForm: React.FC<RequestFormProps> = ({ onSuccess, showToast, existin
                 }
             } catch (error) {
                 console.error("OCR Fail:", error);
-                setOcrStatus('Lỗi OCR (Vui lòng điền tay)');
+                setOcrStatus('Không tìm thấy ngày cọc trên UNC');
             } finally {
                 setIsProcessingOcr(false);
             }

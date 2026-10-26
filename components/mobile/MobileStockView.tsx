@@ -216,8 +216,20 @@ export const MobileStockView: React.FC<MobileStockViewProps> = ({
   const [activeDetailVehicle, setActiveDetailVehicle] = useState<StockVehicle | null>(null);
   const [detailSheetView, setDetailSheetView] = useState<'detail' | 'create-request'>('detail');
   const [selectedSwapVehicle, setSelectedSwapVehicle] = useState<StockVehicle | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [holdClock, setHoldClock] = useState(() => Date.now());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Tự động đồng bộ thông tin chiếc xe đang mở trong Sheet khi stockData thay đổi (do Giữ/Nhả/Chờ xe)
+  useEffect(() => {
+    if (!activeDetailVehicle?.VIN) return;
+    const currentVin = (activeDetailVehicle.VIN || '').trim().toUpperCase();
+    const updated = stockData.find(
+      (v) => (v.VIN || '').trim().toUpperCase() === currentVin
+    );
+    if (updated) {
+      setActiveDetailVehicle(updated);
+    }
+  }, [stockData, activeDetailVehicle?.VIN]);
 
   // Danh sách đơn hàng đang hoạt động của TVBH hiện tại
   const userOrders = useMemo(() => {
@@ -1190,8 +1202,16 @@ export const MobileStockView: React.FC<MobileStockViewProps> = ({
                           <button
                             type="button"
                             onClick={() => {
-                              setActiveDetailVehicle(null);
                               onHoldCar(detailVin);
+                              setActiveDetailVehicle((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      'Trạng thái': 'Đang giữ',
+                                      'Người Giữ Xe': currentUser,
+                                    }
+                                  : null
+                              );
                             }}
                             className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-slate-800 text-[12px] font-semibold tracking-tight text-white transition-all active:scale-[0.98] active:bg-slate-900"
                             title="Giữ xe trong 24 giờ"
@@ -1215,8 +1235,17 @@ export const MobileStockView: React.FC<MobileStockViewProps> = ({
                           <button
                             type="button"
                             onClick={() => {
-                              setActiveDetailVehicle(null);
                               onReleaseCar(detailVin);
+                              setActiveDetailVehicle((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      'Trạng thái': 'Chưa ghép',
+                                      'Người Giữ Xe': '',
+                                      'Thời Gian Hết Hạn Giữ': '',
+                                    }
+                                  : null
+                              );
                             }}
                             className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-[12px] font-medium tracking-tight text-slate-600 transition-all active:scale-[0.96] active:bg-slate-200"
                             title="Hủy giữ xe"
@@ -1253,7 +1282,6 @@ export const MobileStockView: React.FC<MobileStockViewProps> = ({
                             type="button"
                             onClick={() => {
                               const v = activeDetailVehicle;
-                              setActiveDetailVehicle(null);
                               onOpenExtensionModal(v);
                             }}
                             className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-[12px] font-medium tracking-tight text-slate-600 transition-all active:scale-[0.96] active:bg-slate-200"
@@ -1274,7 +1302,6 @@ export const MobileStockView: React.FC<MobileStockViewProps> = ({
                           <button
                             type="button"
                             onClick={() => {
-                              setActiveDetailVehicle(null);
                               onLeaveQueue(detailVin);
                             }}
                             className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-[12px] font-medium tracking-tight text-slate-600 transition-all active:scale-[0.96] active:bg-slate-200"
@@ -1287,7 +1314,6 @@ export const MobileStockView: React.FC<MobileStockViewProps> = ({
                           <button
                             type="button"
                             onClick={() => {
-                              setActiveDetailVehicle(null);
                               onJoinQueue(detailVin);
                             }}
                             className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-[12px] font-medium tracking-tight text-slate-600 transition-all active:scale-[0.96] active:bg-slate-200"
@@ -1304,7 +1330,6 @@ export const MobileStockView: React.FC<MobileStockViewProps> = ({
                           type="button"
                           onClick={() => {
                             const v = activeDetailVehicle;
-                            setActiveDetailVehicle(null);
                             setSelectedSwapVehicle(v);
                           }}
                           className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-[12px] font-medium tracking-tight text-slate-600 transition-all active:scale-[0.96] active:bg-slate-200"
@@ -1318,8 +1343,16 @@ export const MobileStockView: React.FC<MobileStockViewProps> = ({
                         <button
                           type="button"
                           onClick={() => {
-                            setActiveDetailVehicle(null);
                             onReleaseCar(detailVin);
+                            setActiveDetailVehicle((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    'Trạng thái': 'Chưa ghép',
+                                    'Người Giữ Xe': '',
+                                  }
+                                : null
+                            );
                           }}
                           className="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-slate-100 text-[12px] font-medium tracking-tight text-slate-600 transition-all active:scale-[0.96] active:bg-slate-200"
                         >

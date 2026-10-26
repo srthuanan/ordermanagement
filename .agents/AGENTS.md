@@ -134,10 +134,15 @@
      - **"Đang giữ"** (hoặc **"Tôi đang giữ"** khi TVBH hiện tại giữ): Xe đang trong thời gian giữ tạm thời 24h theo chuẩn FIFO.
   2. **Tách Biệt Trạng Thái Ghép và Vị Trí Kho**:
      - Vị trí xe như *"Đang vận tải"* hay *"Kho Thuận An"* là thuộc tính vị trí kho bãi (`Vị trí`), tuyệt đối không ghi đè lên nhãn trạng thái ghép đơn của xe.
-  3. **Bộ Lọc Kho Xe Di Động**:
-     - Bộ lọc trạng thái trên mobile bao gồm đủ 4 mục chuẩn: *Tất cả*, *Chưa ghép*, *Đang giữ*, *Đã ghép*.
   4. **Đồng Bộ Giao Diện Thẻ Trạng Thái Giữa Các Tab (Hologram Iridescent Glass Badge)**:
      - Thẻ trạng thái trên toàn bộ các tab di động (TAB Đơn hàng, TAB Kho xe) bắt buộc sử dụng chung một quy chuẩn thiết kế duy nhất: **Huy hiệu Kính Mờ Hologram Ánh Kim Sang Trọng (Frosted Glass Hologram & Iridescent Prism)**. Sử dụng lớp nền SVG chuyển sắc quang học, viền phản quang lăng kính tán sắc 1px, vệt sáng xiên 3D và chữ dập nổi kim loại, đảm bảo tính đồng bộ thị giác cao cấp tuyệt đối khi TVBH chuyển đổi giữa các tab.
 
+- **Quy Chuẩn Tạo Đơn Hàng Mobile-First (Mobile Order Creation Protocol)**:
+  1. **Tách Biệt Tuyệt Đối**: Toàn bộ thao tác bấm "Tạo Đơn Hàng" trên giao diện điện thoại (Bàn điều khiển Mobile Dashboard và nút Tạo đơn từ thẻ kho xe MobileStockView) bắt buộc sử dụng component chuyên biệt `components/mobile/MobileCreateOrderView.tsx`.
+  2. **Tối Ưu Tốc Độ 0.00s**: Tuyệt đối không import các thư viện nặng của Desktop (không import tranh 3D Showroom, không lật gương phản chiếu mờ, không chạy OCR ngầm hay tự động tải toàn bộ danh sách cọc tồn khi chưa mở).
+  3. **Cơ Chế On-Demand Cọc Tồn**: Danh sách cọc tồn Cyber chỉ được tải về khi TVBH chủ động bấm nút "Chọn Cọc tồn Cyber", giúp form mở lên phản hồi tức thì 0.00s và không gây đơ/lag trên bất kỳ thiết bị di động nào.
 
-
+- **Quy Chuẩn Ngày Cọc Bắt Buộc Trích Xuất Từ UNC (Mandatory Deposit Date OCR Protocol)**:
+  1. **Tuyệt Đối Không Điền Tay Ngày Cọc**: Trên toàn bộ hệ thống (Web Desktop, Mobile View, Mobile App), trường **Ngày Cọc (`ngay_coc`)** tuyệt đối không được phép nhập tay, sửa tay hay chọn thủ công qua date picker.
+  2. **Cơ Chế Ghi Nhận Duy Nhất**: Ngày cọc **CHỈ ĐƯỢC PHÉP GHI NHẬN TỰ ĐỘNG** thông qua việc trích xuất từ ảnh chụp Ủy Nhiệm Chi (UNC) / Biên nhận cọc bằng AI OCR (Gemini Vision / Tesseract OCR).
+  3. **Kỷ Luật Khóa Dữ Liệu**: Giao diện hiển thị trường Ngày Cọc ở trạng thái Khóa (Read-only / Locked Badge) kèm nhãn *"Từ UNC"*. Khi TVBH tải ảnh UNC, hệ thống quét ngầm và tự động điền; nếu xóa ảnh UNC, ngày cọc tự động bị hủy về rỗng; nếu ảnh UNC mờ không nhận diện được ngày giao dịch, hệ thống yêu cầu chụp lại ảnh nét hơn và kiên quyết chặn tạo đơn khi chưa trích xuất được ngày cọc.
