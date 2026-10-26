@@ -18,7 +18,6 @@ const CancelRequestModal = React.lazy(() => import('./components/modals/CancelRe
 const RequestInvoiceModal = React.lazy(() => import('./components/modals/RequestInvoiceModal'));
 const SupplementaryFileModal = React.lazy(() => import('./components/modals/SupplementaryFileModal'));
 const CreateRequestModal = React.lazy(() => import('./components/modals/CreateRequestModal'));
-const RequestForm = React.lazy(() => import('./components/RequestForm'));
 const SuperEditModal = React.lazy(() => import('./components/modals/SuperEditModal'));
 const EditOrderModal = React.lazy(() => import('./components/modals/EditOrderModal'));
 const ChangePasswordModal = React.lazy(() => import('./components/modals/ChangePasswordModal'));
@@ -52,6 +51,7 @@ import { MobileDashboardView } from './components/mobile/MobileDashboardView';
 import { MobileOrdersView } from './components/mobile/MobileOrdersView';
 import { MobileBacklogOrdersView } from './components/mobile/MobileBacklogOrdersView';
 import { MobileStockView } from './components/mobile/MobileStockView';
+import { MobileCreateOrderView } from './components/mobile/MobileCreateOrderView';
 import { ChevronLeft } from 'lucide-react';
 import BottomNav from './components/layout/BottomNav';
 import RealtimeFooterClock from './components/layout/RealtimeFooterClock';
@@ -1112,45 +1112,15 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                 />
 
                 {createRequestData.isOpen && (
-                    <div className="fixed inset-0 z-[70] flex justify-center bg-[#f2f2f7]">
-                        <div className="flex h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white">
-                            <div className="flex h-12 flex-shrink-0 items-center justify-between border-b border-slate-100 px-3">
-                                <button
-                                    type="button"
-                                    onClick={handleCreateRequestClose}
-                                    className="inline-flex h-8 items-center gap-1 rounded-lg px-1.5 text-xs font-semibold text-slate-600 active:bg-slate-100"
-                                >
-                                    <ChevronLeft size={17} />
-                                    <span>Back</span>
-                                </button>
-                                <span className="text-[12px] font-bold uppercase tracking-[0.14em] text-slate-800">
-                                    Tạo đơn hàng
-                                </span>
-                                <span className="w-12" aria-hidden="true" />
-                            </div>
-                            <div className="min-h-0 flex-1 overflow-hidden">
-                                <Suspense
-                                    fallback={(
-                                        <div className="flex h-full items-center justify-center text-xs font-medium text-slate-500">
-                                            Đang tải biểu mẫu...
-                                        </div>
-                                    )}
-                                >
-                                    <RequestForm
-                                        onSuccess={handleFormSuccess}
-                                        showToast={showToast}
-                                        hideToast={hideToast}
-                                        existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
-                                        initialVehicle={createRequestData.initialVehicle}
-                                        currentUser={currentUser}
-                                        vehicleAnalyticsData={vehicleAnalyticsData}
-                                        onOpenImagePreview={openImagePreviewModal}
-                                        embeddedMobile
-                                    />
-                                </Suspense>
-                            </div>
-                        </div>
-                    </div>
+                    <MobileCreateOrderView
+                        onSuccess={handleFormSuccess}
+                        onBack={handleCreateRequestClose}
+                        showToast={showToast}
+                        currentUser={currentUser}
+                        currentUserName={currentUserName}
+                        existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
+                        initialVehicle={createRequestData.initialVehicle}
+                    />
                 )}
 
                 <Suspense fallback={null}>
@@ -1282,28 +1252,18 @@ const App: React.FC<AppProps> = ({ onLogout, showToast, hideToast }) => {
                     canHoldMore={canHoldMore}
                     onCreateRequestForVehicle={handleCreateRequestForVehicle}
                     renderCreateRequestForm={(vehicle, onCompleted) => (
-                        <Suspense
-                            fallback={(
-                                <div className="flex h-full items-center justify-center text-xs font-medium text-slate-500">
-                                    Đang tải biểu mẫu...
-                                </div>
-                            )}
-                        >
-                            <RequestForm
-                                onSuccess={(newOrder) => {
-                                    handleFormSuccess(newOrder);
-                                    onCompleted();
-                                }}
-                                showToast={showToast}
-                                hideToast={hideToast}
-                                existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
-                                initialVehicle={vehicle}
-                                currentUser={currentUser}
-                                vehicleAnalyticsData={vehicleAnalyticsData}
-                                onOpenImagePreview={openImagePreviewModal}
-                                embeddedMobile
-                            />
-                        </Suspense>
+                        <MobileCreateOrderView
+                            onSuccess={(newOrder) => {
+                                handleFormSuccess(newOrder);
+                                onCompleted();
+                            }}
+                            onBack={onCompleted}
+                            showToast={showToast}
+                            currentUser={currentUser}
+                            currentUserName={currentUserName}
+                            existingOrderNumbers={allHistoryData.map((o: any) => o["Số đơn hàng"])}
+                            initialVehicle={vehicle}
+                        />
                     )}
                     onHoldCar={handleHoldCar}
                     onReleaseCar={handleReleaseCar}
